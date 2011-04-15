@@ -1,0 +1,805 @@
+/*
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   Product name: redemption, a FLOSS RDP proxy
+   Copyright (C) Wallix 2010
+   Author(s): Christophe Grosjean, Javier Caverni
+   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+
+   header file. rdp layer at core module
+
+*/
+
+#if !defined(__RDP_HPP__)
+#define __RDP_HPP__
+
+#include "server_sec.hpp"
+#include "client_info.hpp"
+#include "config.hpp"
+#include "error.hpp"
+#include "callback.hpp"
+#include "colors.hpp"
+#include "altoco.hpp"
+
+/* rdp */
+struct server_rdp {
+    int up_and_running;
+
+    Callback & cb;
+    int share_id;
+    int mcs_channel;
+    struct ClientInfo client_info;
+    struct server_sec sec_layer;
+
+    server_rdp(Callback & cb, Transport * trans, Inifile * ini)
+        :
+        up_and_running(0),
+        cb(cb),
+        share_id(65538),
+        mcs_channel(0),
+        client_info(ini),
+        sec_layer(&client_info, cb, trans)
+    {
+    }
+
+    ~server_rdp()
+    {
+    }
+
+    void server_rdp_set_pointer(int cache_idx) throw (Error)
+    {
+        #warning we should create some RDPData object created on init and sent before destruction
+        Stream stream(8192);
+        this->server_rdp_init_data(stream);
+        stream.out_uint16_le(RDP_POINTER_CACHED);
+        stream.out_uint16_le(0); /* pad */
+        stream.out_uint16_le(cache_idx);
+        stream.mark_end();
+        this->server_rdp_send_data(stream, RDP_DATA_PDU_POINTER);
+    }
+
+    void server_send_to_channel(int channel_id, uint8_t *data, int data_len,
+                               int total_data_len, int flags) throw (Error)
+    {
+        Stream stream(data_len + 1024); /* this should be big enough */
+        this->sec_layer.server_sec_init(stream);
+        this->sec_layer.mcs_layer.server_channel_init(&stream);
+        stream.out_copy_bytes(data, data_len);
+        stream.mark_end();
+
+        this->sec_layer.mcs_layer.server_channel_send(
+            stream, channel_id, total_data_len, flags);
+        this->sec_layer.server_sec_send(stream, channel_id);
+    }
+
+    // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
+
+    // updateType (2 bytes): A 16-bit, unsigned integer. The graphics update type.
+    // This field MUST be set to UPDATETYPE_PALETTE (0x0002).
+
+    // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding.
+    // Values in this field are ignored.
+
+    // numberColors (4 bytes): A 32-bit, unsigned integer.
+    // The number of RGB triplets in the paletteData field.
+    // This field MUST be set to NUM_8BPP_PAL_ENTRIES (256).
+
+    void server_send_palette(const RGBPalette & palette) throw (Error)
+    {
+        #warning we should create some RDPData object created on init and sent before destruction
+        Stream stream(8192);
+        this->server_rdp_init_data(stream);
+        stream.out_uint16_le(RDP_UPDATE_PALETTE);
+
+        stream.out_uint16_le(0);
+
+        stream.out_uint16_le(256); /* # of colors */
+        stream.out_uint16_le(0);
+
+        for (int i = 0; i < 256; i++) {
+            int color = palette[i];
+            uint8_t r = color >> 16;
+            uint8_t g = color >> 8;
+            uint8_t b = color;
+            stream.out_uint8(r);
+            stream.out_uint8(g);
+            stream.out_uint8(b);
+        }
+        stream.mark_end();
+        this->server_rdp_send_data(stream, RDP_DATA_PDU_UPDATE);
+    }
+
+    void server_rdp_send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
+    {
+        #warning we should create some RDPData object created on init and sent before destruction
+        Stream stream(8192);
+        this->server_rdp_init_data(stream);
+        stream.out_uint16_le(RDP_POINTER_COLOR);
+        stream.out_uint16_le(0); /* pad */
+        stream.out_uint16_le(cache_idx);
+        stream.out_uint16_le(x);
+        stream.out_uint16_le(y);
+        stream.out_uint16_le(32);
+        stream.out_uint16_le(32);
+        stream.out_uint16_le(128);
+        stream.out_uint16_le(3072);
+        #warning a memcopy (or equivalent build in stream) would be much more efficient
+        for (int i = 0; i < 32; i++) {
+            for (int j = 0; j < 32; j++) {
+                stream.out_uint8(*data++);
+                stream.out_uint8(*data++);
+                stream.out_uint8(*data++);
+            }
+        }
+        stream.out_copy_bytes(mask, 128); /* mask */
+        stream.mark_end();
+        this->server_rdp_send_data(stream, RDP_DATA_PDU_POINTER);
+    }
+
+    void server_rdp_init_data(Stream & stream) throw (Error)
+    {
+//        stream.init(65536);
+        this->sec_layer.server_sec_init(stream);
+        stream.rdp_hdr = stream.p;
+        stream.p += 18;
+    }
+
+    /*****************************************************************************/
+    /* sent 37 pdu */
+    void server_rdp_send_disconnect_query_response() throw (Error)
+    {
+        #warning strange, what is sent looks empty ?
+        Stream stream(8192);
+        this->server_rdp_init_data(stream);
+        stream.mark_end();
+        this->server_rdp_send_data(stream, 37);
+    }
+
+    void server_rdp_process_screen_update(Stream & stream) throw (Error)
+    {
+        /* int op = */ stream.in_uint32_le();
+        int left = stream.in_uint16_le();
+        int top = stream.in_uint16_le();
+        int right = stream.in_uint16_le();
+        int bottom = stream.in_uint16_le();
+        int cx = (right - left) + 1;
+        int cy = (bottom - top) + 1;
+        this->cb.callback(0x4444, left, top, cx, cy);
+    }
+
+    /*****************************************************************************/
+    void server_rdp_send_data(Stream & stream, int data_pdu_type) throw (Error)
+    {
+        stream.p = stream.rdp_hdr;
+        int len = stream.end - stream.p;
+        stream.out_uint16_le(len);
+        stream.out_uint16_le(0x10 | RDP_PDU_DATA);
+        stream.out_uint16_le(this->mcs_channel);
+        stream.out_uint32_le(this->share_id);
+        stream.out_uint8(0);
+        stream.out_uint8(1);
+        stream.out_uint16_le(len - 14);
+        stream.out_uint8(data_pdu_type);
+        stream.out_uint8(0);
+        stream.out_uint16_le(0);
+
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+    }
+
+    void server_rdp_init(Stream & stream) throw (Error)
+    {
+        this->sec_layer.server_sec_init(stream);
+        stream.rdp_hdr = stream.p;
+        stream.p += 6;
+    }
+
+    #warning activate_and_process_data is horrible because it does two largely unrelated tasks. One is to wait for the client to be up and running (initialization phase) the other is management of normal rdp packets once initialisation is finished. We should be able to separate both tasks, but it's not easy as code is quite intricated between layers.
+    void activate_and_process_data(Stream & stream)
+    {
+        int cont = 1;
+        while (cont || !this->up_and_running) {
+            int code = this->server_rdp_recv(stream);
+            switch (code) {
+            case -1:
+                this->server_rdp_send_demand_active();
+                break;
+            case 0:
+                break;
+            case RDP_PDU_CONFIRM_ACTIVE: /* 3 */
+                this->server_rdp_process_confirm_active(stream);
+                break;
+            case RDP_PDU_DATA: /* 7 */
+                // this is rdp_process_data that will set up_and_running to 1
+                // when fonts have been received
+                // we will not exit this loop until we are in this state.
+                this->server_rdp_process_data(stream);
+                break;
+            default:
+                LOG(LOG_WARNING, "unknown in session_data\n");
+                break;
+            }
+            cont = stream.next_packet && (stream.next_packet < stream.end);
+        }
+    }
+
+    int server_rdp_recv(Stream & stream) throw (Error)
+    {
+        int error;
+        int len;
+        int pdu_code;
+        int chan;
+
+        if (stream.next_packet == 0 || stream.next_packet >= stream.end) {
+            chan = 0;
+            error = this->sec_layer.server_sec_recv(stream, &chan);
+            if (error == -1) { /* special code for send demand active */
+                stream.next_packet = 0;
+                return -1;
+            }
+            if (error != 0) {
+                throw Error(ERR_SERVER_RDP_RECV_ERR);
+            }
+            if ((chan != MCS_GLOBAL_CHANNEL) && (chan > 0)) {
+                if (chan > MCS_GLOBAL_CHANNEL) {
+                    this->sec_layer.mcs_layer.server_channel_process(stream, chan);
+                }
+                stream.next_packet = 0;
+                return 0;
+            }
+            stream.next_packet = stream.p;
+        }
+        else {
+            stream.p = stream.next_packet;
+        }
+        len = stream.in_uint16_le();
+        #warning looks like length can be 8 bits, check in protocol documentation, it may be the problem with properJavaRDP.
+        if (len == 0x8000) {
+            stream.next_packet += 8;
+            return 0;
+        }
+        pdu_code = stream.in_uint16_le();
+        stream.skip_uint8(2); /* mcs user id */
+        stream.next_packet += len;
+        return pdu_code & 0xf;
+    }
+
+    /*****************************************************************************/
+    void server_rdp_send(Stream & stream, int pdu_type) throw (Error)
+    {
+        stream.p = stream.rdp_hdr;
+        int len = stream.end - stream.p;
+        stream.out_uint16_le(len);
+        stream.out_uint16_le(0x10 | pdu_type);
+        stream.out_uint16_le(this->mcs_channel);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+    }
+
+    /*****************************************************************************/
+    void server_rdp_send_data_update_sync() throw (Error)
+    {
+        Stream stream(8192);
+        this->server_rdp_init_data(stream);
+        stream.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
+        stream.out_clear_bytes(2);
+        stream.mark_end();
+        this->server_rdp_send_data(stream, RDP_DATA_PDU_UPDATE);
+    }
+
+    void server_rdp_incoming(Rsakeys * rsa_keys) throw (Error)
+    {
+        this->sec_layer.server_sec_incoming(rsa_keys);
+        this->mcs_channel = this->sec_layer.mcs_layer.userid + MCS_USERCHANNEL_BASE;
+    }
+
+    /*****************************************************************************/
+    void server_rdp_send_demand_active() throw (Error)
+    {
+        int caps_count;
+        int caps_size;
+        uint8_t* caps_count_ptr;
+        uint8_t* caps_size_ptr;
+        uint8_t* caps_ptr;
+
+        Stream stream(8192);
+        this->server_rdp_init(stream);
+
+        caps_count = 0;
+        stream.out_uint32_le(this->share_id);
+        stream.out_uint16_le(4); /* 4 chars for RDP\0 */
+        /* 2 bytes size after num caps, set later */
+        caps_size_ptr = stream.p;
+        stream.out_clear_bytes(2);
+        stream.out_copy_bytes("RDP", 4);
+        /* 4 byte num caps, set later */
+        caps_count_ptr = stream.p;
+        stream.out_clear_bytes(4);
+        caps_ptr = stream.p;
+
+        /* Output share capability set */
+        caps_count++;
+        stream.out_uint16_le(RDP_CAPSET_SHARE);
+        stream.out_uint16_le(RDP_CAPLEN_SHARE);
+        stream.out_uint16_le(this->mcs_channel);
+        stream.out_uint16_be(0xb5e2); /* 0x73e1 */
+
+        /* Output general capability set */
+        caps_count++;
+        stream.out_uint16_le(RDP_CAPSET_GENERAL); /* 1 */
+        stream.out_uint16_le(RDP_CAPLEN_GENERAL); /* 24(0x18) */
+        stream.out_uint16_le(1); /* OS major type */
+        stream.out_uint16_le(3); /* OS minor type */
+        stream.out_uint16_le(0x200); /* Protocol version */
+        stream.out_uint16_le(0); /* pad */
+        stream.out_uint16_le(0); /* Compression types */
+        stream.out_uint16_le(0); /* pad use 0x40d for rdp packets, 0 for not */
+        stream.out_uint16_le(0); /* Update capability */
+        stream.out_uint16_le(0); /* Remote unshare capability */
+        stream.out_uint16_le(0); /* Compression level */
+        stream.out_uint16_le(0); /* Pad */
+
+        /* Output bitmap capability set */
+        caps_count++;
+        stream.out_uint16_le(RDP_CAPSET_BITMAP); /* 2 */
+        stream.out_uint16_le(RDP_CAPLEN_BITMAP); /* 28(0x1c) */
+        stream.out_uint16_le(this->client_info.bpp); /* Preferred BPP */
+        stream.out_uint16_le(1); /* Receive 1 BPP */
+        stream.out_uint16_le(1); /* Receive 4 BPP */
+        stream.out_uint16_le(1); /* Receive 8 BPP */
+        stream.out_uint16_le(this->client_info.width); /* width */
+        stream.out_uint16_le(this->client_info.height); /* height */
+        stream.out_uint16_le(0); /* Pad */
+        stream.out_uint16_le(1); /* Allow resize */
+        stream.out_uint16_le(1); /* bitmap compression */
+        stream.out_uint16_le(0); /* unknown */
+        stream.out_uint16_le(0); /* unknown */
+        stream.out_uint16_le(0); /* pad */
+
+        /* Output font capability set */
+        caps_count++;
+        stream.out_uint16_le(RDP_CAPSET_FONT); /* 14 */
+        stream.out_uint16_le(RDP_CAPLEN_FONT); /* 4 */
+
+        /* Output order capability set */
+        caps_count++;
+        stream.out_uint16_le(RDP_CAPSET_ORDER); /* 3 */
+        stream.out_uint16_le(RDP_CAPLEN_ORDER); /* 88(0x58) */
+        stream.out_clear_bytes(16);
+        stream.out_uint32_be(0x40420f00);
+        stream.out_uint16_le(1); /* Cache X granularity */
+        stream.out_uint16_le(20); /* Cache Y granularity */
+        stream.out_uint16_le(0); /* Pad */
+        stream.out_uint16_le(1); /* Max order level */
+        stream.out_uint16_le(0x2f); /* Number of fonts */
+        stream.out_uint16_le(0x22); /* Capability flags */
+        /* caps */
+        stream.out_uint8(1); /* dest blt */
+        stream.out_uint8(1); /* pat blt */
+        stream.out_uint8(1); /* screen blt */
+        stream.out_uint8(1); /* mem blt */
+        stream.out_uint8(0); /* tri blt */
+        stream.out_uint8(0); /* unused */
+        stream.out_uint8(0); /* unused */
+        stream.out_uint8(0); /* nine grid */
+        stream.out_uint8(1); /* line to */
+        stream.out_uint8(0); /* multi nine grid */
+        stream.out_uint8(1); /* rect */
+        stream.out_uint8(0); /* desk save */
+        stream.out_uint8(0); /* unused */
+        stream.out_uint8(0); /* unused */
+        stream.out_uint8(0); /* unused */
+        stream.out_uint8(0); /* multi dest blt */
+        stream.out_uint8(0); /* multi pat blt */
+        stream.out_uint8(0); /* multi screen blt */
+        stream.out_uint8(0); /* multi rect */
+        stream.out_uint8(0); /* fast index */
+        stream.out_uint8(0); /* polygon */
+        stream.out_uint8(0); /* polygon */
+        stream.out_uint8(0); /* polyline */
+        stream.out_uint8(0); /* unused */
+        stream.out_uint8(0); /* fast glyph */
+        stream.out_uint8(0); /* ellipse */
+        stream.out_uint8(0); /* ellipse */
+        stream.out_uint8(0); /* ? */
+        stream.out_uint8(0); /* unused */
+        stream.out_uint8(0); /* unused */
+        stream.out_uint8(0); /* unused */
+        stream.out_uint8(0); /* unused */
+        stream.out_uint16_le(0x6a1);
+        stream.out_clear_bytes(2); /* ? */
+        stream.out_uint32_le(0x0f4240); /* desk save */
+        stream.out_uint32_le(0x0f4240); /* desk save */
+        stream.out_uint32_le(1); /* ? */
+        stream.out_uint32_le(0); /* ? */
+
+        /* Output color cache capability set */
+        caps_count++;
+        stream.out_uint16_le(RDP_CAPSET_COLCACHE);
+        stream.out_uint16_le(RDP_CAPLEN_COLCACHE);
+        stream.out_uint16_le(6); /* cache size */
+        stream.out_uint16_le(0); /* pad */
+
+        /* Output pointer capability set */
+        caps_count++;
+        stream.out_uint16_le(RDP_CAPSET_POINTER);
+        stream.out_uint16_le(RDP_CAPLEN_POINTER);
+        stream.out_uint16_le(1); /* Colour pointer */
+        stream.out_uint16_le(0x19); /* Cache size */
+        stream.out_uint16_le(0x19); /* Cache size */
+
+        /* Output input capability set */
+        caps_count++;
+        stream.out_uint16_le(RDP_CAPSET_INPUT); /* 13(0xd) */
+        stream.out_uint16_le(RDP_CAPLEN_INPUT); /* 88(0x58) */
+        stream.out_uint8(1);
+        stream.out_clear_bytes(83);
+
+        stream.out_clear_bytes(4); /* pad */
+
+        stream.mark_end();
+
+        caps_size = (int)(stream.end - caps_ptr);
+        caps_size_ptr[0] = caps_size;
+        caps_size_ptr[1] = caps_size >> 8;
+
+        caps_count_ptr[0] = caps_count;
+        caps_count_ptr[1] = caps_count >> 8;
+        caps_count_ptr[2] = caps_count >> 16;
+        caps_count_ptr[3] = caps_count >> 24;
+
+        this->server_rdp_send(stream, RDP_PDU_DEMAND_ACTIVE);
+    }
+
+    /*****************************************************************************/
+    void capset_general(Stream & stream, int len)
+    {
+        stream.skip_uint8(10);
+        int i = stream.in_uint16_le();
+        /* use_compact_packets is pretty much 'use rdp5' */
+        this->client_info.use_compact_packets = (i != 0);
+        /* op2 is a boolean to use compact bitmap headers in bitmap cache */
+        /* set it to same as 'use rdp5' boolean */
+        this->client_info.op2 = this->client_info.use_compact_packets;
+    }
+
+    /*****************************************************************************/
+    void capset_order(Stream & stream, int len)
+    {
+        int i;
+        char order_caps[32];
+
+        LOG(LOG_INFO, "order capabilities\n");
+        stream.skip_uint8(20); /* Terminal desc, pad */
+        stream.skip_uint8(2); /* Cache X granularity */
+        stream.skip_uint8(2); /* Cache Y granularity */
+        stream.skip_uint8(2); /* Pad */
+        stream.skip_uint8(2); /* Max order level */
+        stream.skip_uint8(2); /* Number of fonts */
+        stream.skip_uint8(2); /* Capability flags */
+        memcpy(order_caps, stream.in_uint8p(32), 32); /* Orders supported */
+        LOG(LOG_INFO, "dest blt-0 %d\n", order_caps[0]);
+        LOG(LOG_INFO, "pat blt-1 %d\n", order_caps[1]);
+        LOG(LOG_INFO, "screen blt-2 %d\n", order_caps[2]);
+        LOG(LOG_INFO, "memblt-3-13 %d %d\n", order_caps[3], order_caps[13]);
+        LOG(LOG_INFO, "triblt-4-14 %d %d\n", order_caps[4], order_caps[14]);
+        LOG(LOG_INFO, "line-8 %d\n", order_caps[8]);
+        LOG(LOG_INFO, "line-9 %d\n", order_caps[9]);
+        LOG(LOG_INFO, "rect-10 %d\n", order_caps[10]);
+        LOG(LOG_INFO, "desksave-11 %d\n", order_caps[11]);
+        LOG(LOG_INFO, "polygon-20 %d\n", order_caps[20]);
+        LOG(LOG_INFO, "polygon2-21 %d\n", order_caps[21]);
+        LOG(LOG_INFO, "polyline-22 %d\n", order_caps[22]);
+        LOG(LOG_INFO, "ellipse-25 %d\n", order_caps[25]);
+        LOG(LOG_INFO, "ellipse2-26 %d\n", order_caps[26]);
+        LOG(LOG_INFO, "text2-27 %d\n", order_caps[27]);
+        LOG(LOG_INFO, "order_caps dump\n");
+        stream.skip_uint8(2); /* Text capability flags */
+        stream.skip_uint8(6); /* Pad */
+        i = stream.in_uint32_le(); /* desktop cache size, usually 0x38400 */
+        this->client_info.desktop_cache = i;
+        LOG(LOG_INFO, "desktop cache size %d\n", i);
+        stream.skip_uint8(4); /* Unknown */
+        stream.skip_uint8(4); /* Unknown */
+    }
+
+    /* store the bitmap cache size in client_info */
+    void capset_bmpcache(Stream & stream, int len)
+    {
+        stream.skip_uint8(24);
+        this->client_info.cache1_entries = stream.in_uint16_le();
+        this->client_info.cache1_size = stream.in_uint16_le();
+        this->client_info.cache2_entries = stream.in_uint16_le();
+        this->client_info.cache2_size = stream.in_uint16_le();
+        this->client_info.cache3_entries = stream.in_uint16_le();
+        this->client_info.cache3_size = stream.in_uint16_le();
+        LOG(LOG_INFO, "cache1_size=%d cache2_size=%d cache3_size=%d\n",
+            this->client_info.cache1_size,
+            this->client_info.cache2_size,
+            this->client_info.cache3_size);
+    }
+
+    /* store the bitmap cache size in client_info */
+    void capset_bmpcache2(Stream & stream, int len)
+    {
+        this->client_info.bitmap_cache_version = 2;
+        int Bpp = nbbytes(this->client_info.bpp);
+        int i = stream.in_uint16_le();
+        this->client_info.bitmap_cache_persist_enable = i;
+        stream.skip_uint8(2); /* number of caches in set, 3 */
+        i = stream.in_uint32_le();
+        i = std::min(i, 2000);
+        this->client_info.cache1_entries = i;
+        this->client_info.cache1_size = 256 * Bpp;
+        i = stream.in_uint32_le();
+        i = std::min(i, 2000);
+        this->client_info.cache2_entries = i;
+        this->client_info.cache2_size = 1024 * Bpp;
+        i = stream.in_uint32_le();
+        i = i & 0x7fffffff;
+        i = std::min(i, 2000);
+        this->client_info.cache3_entries = i;
+        this->client_info.cache3_size = 4096 * Bpp;
+    }
+
+    /* store the number of client cursor cache in client_info */
+    void capset_pointercache(Stream & stream, int len)
+    {
+        stream.skip_uint8(2); /* color pointer */
+        int i = stream.in_uint16_le();
+        i = std::min(i, 32);
+        this->client_info.pointer_cache_entries = i;
+    }
+
+    /* store the number of client brush cache in client_info */
+    void capset_brushcache(Stream & stream, int len)
+    {
+        int code = stream.in_uint32_le();
+        this->client_info.brush_cache_code = code;
+    }
+
+    void server_rdp_process_confirm_active(Stream & stream)
+    {
+        stream.skip_uint8(4); /* rdp_shareid */
+        stream.skip_uint8(2); /* userid */
+        int source_len = stream.in_uint16_le(); /* sizeof RDP_SOURCE */
+        // int cap_len = stream.in_uint16_le();
+        stream.skip_uint8(2); // skip cap_len
+        stream.skip_uint8(source_len);
+        int num_caps = stream.in_uint16_le();
+        stream.skip_uint8(2); /* pad */
+        for (int index = 0; index < num_caps; index++) {
+            uint8_t *p = stream.p;
+            int type = stream.in_uint16_le();
+            int len = stream.in_uint16_le();
+
+            switch (type) {
+            case RDP_CAPSET_GENERAL: /* 1 */
+                this->capset_general(stream, len);
+                break;
+            case RDP_CAPSET_BITMAP: /* 2 */
+                break;
+            case RDP_CAPSET_ORDER: /* 3 */
+                this->capset_order(stream, len);
+                break;
+            case RDP_CAPSET_BMPCACHE: /* 4 */
+                this->capset_bmpcache(stream, len);
+                break;
+            case RDP_CAPSET_CONTROL: /* 5 */
+                break;
+            case RDP_CAPSET_ACTIVATE: /* 7 */
+                break;
+            case RDP_CAPSET_POINTER: /* 8 */
+                this->capset_pointercache(stream, len);
+                break;
+            case RDP_CAPSET_SHARE: /* 9 */
+                break;
+            case RDP_CAPSET_COLCACHE: /* 10 */
+                break;
+            case 12: /* 12 */
+                break;
+            case 13: /* 13 */
+                break;
+            case 14: /* 14 */
+                break;
+            case RDP_CAPSET_BRUSHCACHE: /* 15 */
+                this->capset_brushcache(stream, len);
+                break;
+            case 16: /* 16 */
+                break;
+            case 17: /* 17 */
+                break;
+            case RDP_CAPSET_BMPCACHE2: /* 19 */
+                this->capset_bmpcache2(stream, len);
+                break;
+            case 20: /* 20 */
+                break;
+            case 21: /* 21 */
+                break;
+            case 22: /* 22 */
+                break;
+            case 26: /* 26 */
+                break;
+            default:
+                break;
+            }
+            stream.p = p + len;
+        }
+    }
+
+    void server_rdp_send_synchronise() throw (Error)
+    {
+        #warning we should create some RDPData object created on init and sent before destruction
+        Stream stream(8192);
+        this->server_rdp_init_data(stream);
+        stream.out_uint16_le(1);
+        stream.out_uint16_le(1002);
+        stream.mark_end();
+        this->server_rdp_send_data(stream, RDP_DATA_PDU_SYNCHRONISE);
+    }
+
+    /*****************************************************************************/
+    void server_rdp_send_control(int action) throw (Error)
+    {
+        #warning we should create some RDPData object created on init and sent before destruction
+        Stream stream(8192);
+        this->server_rdp_init_data(stream);
+        stream.out_uint16_le(action);
+        stream.out_uint16_le(0); /* userid */
+        stream.out_uint32_le(1002); /* control id */
+        stream.mark_end();
+        this->server_rdp_send_data(stream, RDP_DATA_PDU_CONTROL);
+    }
+
+
+
+    /*****************************************************************************/
+    void server_rdp_send_unknown1() throw (Error)
+    {
+    static uint8_t g_unknown1[172] = { 0xff, 0x02, 0xb6, 0x00, 0x28, 0x00, 0x00, 0x00,
+                                0x27, 0x00, 0x27, 0x00, 0x03, 0x00, 0x04, 0x00,
+                                0x00, 0x00, 0x26, 0x00, 0x01, 0x00, 0x1e, 0x00,
+                                0x02, 0x00, 0x1f, 0x00, 0x03, 0x00, 0x1d, 0x00,
+                                0x04, 0x00, 0x27, 0x00, 0x05, 0x00, 0x0b, 0x00,
+                                0x06, 0x00, 0x28, 0x00, 0x08, 0x00, 0x21, 0x00,
+                                0x09, 0x00, 0x20, 0x00, 0x0a, 0x00, 0x22, 0x00,
+                                0x0b, 0x00, 0x25, 0x00, 0x0c, 0x00, 0x24, 0x00,
+                                0x0d, 0x00, 0x23, 0x00, 0x0e, 0x00, 0x19, 0x00,
+                                0x0f, 0x00, 0x16, 0x00, 0x10, 0x00, 0x15, 0x00,
+                                0x11, 0x00, 0x1c, 0x00, 0x12, 0x00, 0x1b, 0x00,
+                                0x13, 0x00, 0x1a, 0x00, 0x14, 0x00, 0x17, 0x00,
+                                0x15, 0x00, 0x18, 0x00, 0x16, 0x00, 0x0e, 0x00,
+                                0x18, 0x00, 0x0c, 0x00, 0x19, 0x00, 0x0d, 0x00,
+                                0x1a, 0x00, 0x12, 0x00, 0x1b, 0x00, 0x14, 0x00,
+                                0x1f, 0x00, 0x13, 0x00, 0x20, 0x00, 0x00, 0x00,
+                                0x21, 0x00, 0x0a, 0x00, 0x22, 0x00, 0x06, 0x00,
+                                0x23, 0x00, 0x07, 0x00, 0x24, 0x00, 0x08, 0x00,
+                                0x25, 0x00, 0x09, 0x00, 0x26, 0x00, 0x04, 0x00,
+                                0x27, 0x00, 0x03, 0x00, 0x28, 0x00, 0x02, 0x00,
+                                0x29, 0x00, 0x01, 0x00, 0x2a, 0x00, 0x05, 0x00,
+                                0x2b, 0x00, 0x2a, 0x00
+                              };
+
+        #warning we should create some RDPStream object created on init and sent before destruction
+        Stream stream(8192);
+        this->server_rdp_init_data(stream);
+        stream.out_copy_bytes((char*)g_unknown1, 172);
+        stream.mark_end();
+        this->server_rdp_send_data(stream, 0x28);
+    }
+
+    /* RDP_PDU_DATA */
+    void server_rdp_process_data(Stream & stream) throw (Error)
+    {
+        stream.skip_uint8(6);
+        stream.in_uint16_le(); // len
+        int data_type = stream.in_uint8();
+        stream.in_uint8(); // ctype
+        stream.in_uint16_le(); // clen
+        switch (data_type) {
+        case RDP_DATA_PDU_POINTER: /* 27(0x1b) */
+            break;
+        case RDP_DATA_PDU_INPUT: /* 28(0x1c) */
+            {
+                int num_events = stream.in_uint16_le();
+                stream.skip_uint8(2); /* pad */
+                for (int index = 0; index < num_events; index++) {
+                    int time = stream.in_uint32_le();
+                    uint16_t msg_type = stream.in_uint16_le();
+                    uint16_t device_flags = stream.in_uint16_le();
+                    int16_t param1 = stream.in_sint16_le();
+                    int16_t param2 = stream.in_sint16_le();
+                    /* msg_type can be
+                       RDP_INPUT_SYNCHRONIZE = 0
+                       RDP_INPUT_SCANCODE = 4
+                       RDP_INPUT_MOUSE = 0x8001 */
+                    if (msg_type == 4){
+//                        LOG(LOG_INFO, "receive input: time=%u device_flags = %u param1=%u param2=%u\n", time, device_flags, param1, param2);
+                    }
+                    this->cb.callback(msg_type, param1, param2, device_flags, time);
+                }
+            }
+            break;
+        case RDP_DATA_PDU_CONTROL: /* 20(0x14) */
+            {
+                int action = stream.in_uint16_le();
+                stream.skip_uint8(2); /* user id */
+                stream.skip_uint8(4); /* control id */
+                if (action == RDP_CTL_REQUEST_CONTROL) {
+                    this->server_rdp_send_synchronise();
+                    this->server_rdp_send_control(RDP_CTL_COOPERATE);
+                    this->server_rdp_send_control(RDP_CTL_GRANT_CONTROL);
+                }
+                else {
+                    #warning we sometimes get action 4. Add support for it
+                    if (action != 4){
+                        LOG(LOG_WARNING, "process DATA_PDU_CONTROL unknown action (%d)\n", action);
+                    }
+                }
+            }
+            break;
+        case RDP_DATA_PDU_SYNCHRONISE: /* 31(0x1f) */
+            break;
+        case 33: /* 33(0x21) ?? Invalidate an area I think */
+            this->server_rdp_process_screen_update(stream);
+            break;
+        case 35: /* 35(0x23) */
+            /* 35 ?? this comes when minimuzing a full screen mstsc.exe 2600 */
+            /* I think this is saying the client no longer wants screen */
+            /* updates and it will issue a 33 above to catch up */
+            /* so minimized apps don't take bandwidth */
+            break;
+        case 36: /* 36(0x24) ?? disconnect query? */
+            /* when this message comes, send a 37 back so the client */
+            /* is sure the connection is alive and it can ask if user */
+            /* really wants to disconnect */
+            this->server_rdp_send_disconnect_query_response(); /* send a 37 back */
+            break;
+        case RDP_DATA_PDU_FONT2: /* 39(0x27) */
+            stream.skip_uint8(2); /* num of fonts */
+            stream.skip_uint8(2); /* unknown */
+            {
+                int seq = stream.in_uint16_le();
+                /* 419 client sends Seq 1, then 2 */
+                /* 2600 clients sends only Seq 3 */
+                /* after second font message, we are up and running */
+                if (seq == 2 || seq == 3)
+                {
+                    this->server_rdp_send_unknown1();
+                    this->up_and_running = 1;
+                    this->server_rdp_send_data_update_sync();
+                }
+            }
+            break;
+        default:
+            LOG(LOG_WARNING, "unknown in server_rdp_process_data %d\n", data_type);
+            break;
+        }
+    }
+
+    void server_rdp_disconnect() throw (Error)
+    {
+        this->sec_layer.server_sec_disconnect();
+    }
+
+    void server_rdp_send_deactive() throw (Error)
+    {
+        #warning we should create some RDPStream object created on init and sent before destruction
+        Stream stream(8192);
+        this->server_rdp_init(stream);
+        stream.mark_end();
+        this->server_rdp_send(stream, RDP_PDU_DEACTIVATE);
+    }
+};
+
+#endif

@@ -1,0 +1,264 @@
+
+import os ;
+
+# Returns environment value if it exists or default otherwise.
+# Allow us to customize install path with shell variables like $PREFIX...
+# (this is bad practice and should be replaced by a site configuration file)
+rule setvar ( env : default )
+{
+    if [ os.environ $(env) ]
+    {
+        return [ os.environ $(env) ] ;
+    }
+    else
+    {
+        return $(default) ;
+    }
+}
+
+local PREFIX = [ setvar PREFIX : /usr/local ] ;
+local BIN_PREFIX = [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
+local LIB_PREFIX = [ setvar LIB_PREFIX : $(PREFIX)/lib ] ;
+local SHARE_PREFIX = [ setvar SHARE_PREFIX : $(PREFIX)/share/rdpproxy ] ;
+local ETC_PREFIX = [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
+
+local FIXTURES_PATH = [ setvar FIXTURES_PATH : ./tests/fixtures ] ;
+
+# below feature rule come from http://www.boost.org/doc/tools/build/doc/html/bbv2/extending/features.html
+
+import feature : feature ;
+
+# this feature is defined so we can add a dependency on <distri>lenny for some targets
+# disabled because in our current code it finds the right library
+#feature distri : none lenny : propagated ;
+
+# No need to make it a new variant after all
+#variant lenny : release ;
+
+
+project redemption
+    : requirements
+    <include>core
+    <include>front
+    <include>tests
+    <include>capture
+    <include>/usr/include
+    <define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
+    <define>CFG_PATH='\"$(ETC_PREFIX)\"'
+    <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
+    : default-build release
+;
+
+explicit install instexe install-bin install-test install-etc install-share install-keymaps ;
+
+alias instexe : install-bin install-test ;
+alias install : install-bin install-etc install-share install-keymaps ;
+
+install install-bin
+    : rdpproxy :  <install-type>EXE <location>$(BIN_PREFIX)
+#    <install-dependencies>on
+    ;
+
+install install-test
+    : rdp-authhook video_test
+    : <location>$(BIN_PREFIX)
+    ;
+
+install install-share
+    : [ glob sys/share/rdpproxy/[^.k]* ]
+    : <location>$(SHARE_PREFIX)
+    ;
+
+install install-keymaps
+    : [ glob sys/share/rdpproxy/keymaps/* ]
+    : <location>$(SHARE_PREFIX)/keymaps
+    ;
+
+install install-etc
+    : [ glob sys/etc/rdpproxy/*ini ] rdpproxy.ini
+    : <location>$(ETC_PREFIX)
+    ;
+
+make rdpproxy.ini : sys/etc/rdpproxy/rdpproxy.template : @filter ;
+
+make rdpproxy.ini : sys/etc/rdpproxy/rdpproxy.template.debug : @filter : <variant>debug ;
+
+actions filter
+{
+# example of filtering a reference configuration file template to get real file
+# for now it could have been done directly as template is copied but not changed.
+    cp $(>) $(<)
+}
+
+# How to use predefined boost build target ?
+lib libboost_unit_test : : <name>boost_unit_test_framework-mt <link>static ;
+lib libboost_program_options : : <name>boost_program_options-mt <link>static ;
+lib openssl : : <name>ssl <link>shared ;
+lib X11 : : <name>X11 <link>shared ;
+lib Xfixes : : <name>Xfixes <link>static ;
+lib pthread : : <name>pthread <link>shared ;
+lib pam : : <name>pam <link>static ;
+
+lib crypto : : <name>crypto <link>static ;
+lib dl : : <name>dl <link>shared ;
+
+lib lcms : : <name>lcms <link>shared ;
+
+lib tiff : : <name>tiff <link>static ;
+lib freetype : : <name>freetype <link>static ;
+lib jpeg : : <name>jpeg <link>static ;
+lib Xext : : <name>Xext <link>static ;
+
+
+obj widget : core/widget.cpp ;
+obj mainloop : core/mainloop.cpp ;
+obj session : core/session.cpp ;
+obj keymap : core/keymap.cpp ;
+obj orders : front/orders.cpp ;
+obj d3des : core/d3des.cpp ;
+obj ssl_calls : core/ssl_calls.cpp ;
+obj ini_config : core/config.cpp  ;
+obj rsa_keys : core/rsa_keys.cpp  ;
+
+#
+# Redemption
+#
+
+exe rdpproxy
+    :
+        core/main.cpp
+
+        widget
+        session
+        mainloop
+        ini_config
+        keymap
+
+        rsa_keys
+        ssl_calls
+        d3des
+
+        openssl
+        crypto
+        dl
+
+        libboost_program_options
+
+    :
+        <link>static
+    ;
+
+
+exe test_server_rdp
+    :
+        tests/test_server_rdp_layer.cpp
+        widget
+
+        ini_config
+
+        rsa_keys
+        ssl_calls
+        d3des
+        openssl
+        crypto
+        dl
+
+        libboost_program_options
+    :
+    <link>static
+    ;
+
+exe test_bouncing_bitmap
+    :
+        tests/test_server_rdp_bouncing_bitmap.cpp
+        widget
+
+        ini_config
+
+        rsa_keys
+        ssl_calls
+        d3des
+        openssl
+        crypto
+        dl
+
+        libboost_program_options
+    :
+    <link>static
+    ;
+
+exe test_server_rdp_bitmap
+    :
+        tests/test_server_rdp_bitmap.cpp
+        widget
+
+        ini_config
+
+        rsa_keys
+        ssl_calls
+        d3des
+        openssl
+        crypto
+        dl
+
+        libboost_program_options
+    :
+    <link>static
+    ;
+
+exe rdp-authhook
+    :
+        utils/authhook/authhook.cpp
+    :
+    <link>static
+    <variant>debug
+    ;
+
+exe xrdp-genkeymap
+    :
+        utils/genkeymap/genkeymap.cpp X11
+    :
+        <link>static
+        <variant>debug
+    ;
+
+exe xrdp-keygen
+    :
+        utils/keygen/keygen.cpp
+        rsa_keys
+
+        ssl_calls
+
+        openssl
+        crypto
+        dl
+
+        libboost_program_options
+    :
+        <link>static
+        <variant>debug
+    ;
+
+#
+# Unit Tests
+#
+
+import testing ;
+
+unit-test test_widget : tests/test_widget.cpp libboost_unit_test ini_config keymap rsa_keys widget mainloop session ssl_calls d3des libboost_program_options openssl crypto dl ;
+unit-test test_bitmap : tests/test_bitmap.cpp libboost_unit_test ini_config libboost_program_options ;
+unit-test test_bitmap_cache : tests/test_bitmap_cache.cpp libboost_unit_test ini_config libboost_program_options ;
+unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp libboost_unit_test ini_config libboost_program_options ;
+unit-test test_stream : tests/test_stream.cpp libboost_unit_test ;
+unit-test test_config : tests/test_config.cpp ini_config libboost_unit_test libboost_program_options ;
+unit-test test_font : tests/test_font.cpp libboost_unit_test ;
+unit-test test_rect : tests/test_rect.cpp libboost_unit_test ;
+unit-test test_compact_to_aligned : tests/test_compact_to_aligned.cpp libboost_unit_test ;
+unit-test test_region : tests/test_region.cpp libboost_unit_test ;
+unit-test test_strings : tests/test_strings.cpp libboost_unit_test ;
+unit-test test_keymap : tests/test_keymap.cpp keymap libboost_unit_test libboost_program_options ;
+unit-test test_rsa_keys : tests/test_rsa_keys.cpp rsa_keys libboost_unit_test libboost_program_options ;
+unit-test test_ordersstate : tests/test_ordersstate.cpp libboost_unit_test ;
+unit-test test_chrono : tests/test_chrono.cpp ;
+unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test : ;
+unit-test test_dico : tests/test_dico.cpp libboost_unit_test : ;
