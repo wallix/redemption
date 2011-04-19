@@ -578,6 +578,26 @@ struct Bitmap{
 
             uint8_t * expected_out = out + count * Bpp;
             position += count;
+
+            // MAGIC MIX of one pixel to comply with crap in Bitmap RLE compression
+            if ((count > 0)
+            && (opcode == FILL)
+            && (opcode == lastopcode)
+            && (out != this->data_co + this->line_size + 1)){
+                if (out < &(this->data_co[this->cx * this->Bpp])){
+                    yprev = black;
+                }
+                else {
+                     yprev = out - this->cx * this->Bpp;
+                }
+                for (int nb = 0; nb < Bpp ; ++nb){
+                    out[nb] = yprev[nb] ^ mix[nb];
+                }
+                count--;
+                out+= this->Bpp;
+            }
+            lastopcode = opcode;
+
             /* Output body */
             while (count > 0) {
 //                printf("code=%.2X opcode=%.2X count=%d mask=%.2X fom_mask=%.2X\n",
