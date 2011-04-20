@@ -58,9 +58,9 @@ struct Orders
     Stream* out_s;
     struct server_rdp* rdp_layer;
 
-    uint8_t* order_count_ptr; /* pointer to count, set when sending */
+    uint8_t* order_count_ptr;
     int order_count;
-    int order_level; /* inc for every call to init */
+    int order_level;
 
     Orders(struct server_rdp* rdp_layer) :
         common(0, Rect(0, 0, 1, 1)),
@@ -73,9 +73,9 @@ struct Orders
         text(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"")
     {
         this->order_count = 0;
-        this->order_level = 0; /* inc for every call to init */
+        this->order_level = 0;
         this->rdp_layer = rdp_layer;
-        this->out_s = new Stream(16384); // allocate 64k buffer
+        this->out_s = new Stream(16384);
     }
 
     ~Orders()
@@ -83,8 +83,6 @@ struct Orders
         delete this->out_s;
     }
 
-    /*****************************************************************************/
-    /* set all values to zero */
     void reset() throw (Error)
     {
 #warning is it necessary (or even usefull) to send remaining drawing orders before resetting ?
@@ -119,7 +117,7 @@ struct Orders
     {
 //        LOG(LOG_ERR, "Orders::send() level=%d order_count=%d", this->order_level, this->order_count);
         if (this->order_level > 0) {
-            this->order_level--; // every init should have a send
+            this->order_level--;
             if (this->order_level == 0){
                 if (this->order_count > 0){
                     this->force_send();
@@ -149,38 +147,6 @@ struct Orders
         this->out_s->out_uint16_le(this->order_count);
         this->rdp_layer->server_rdp_send_data(*this->out_s, RDP_DATA_PDU_UPDATE);
         this->order_count = 0;
-    }
-
-    int send_brush(int width, int height, int bpp, int type, int size, uint8_t* data, int cache_id)
-    {
-        using namespace RDP;
-
-        this->reserve_order(size + 12);
-
-        int order_flags = STANDARD | SECONDARY;
-        this->out_s->out_uint8(order_flags);
-        int len = (size + 6) - 7; /* length after type minus 7 */
-        this->out_s->out_uint16_le(len);
-        this->out_s->out_uint16_le(0); /* flags */
-        this->out_s->out_uint8(BRUSHCACHE); /* type */
-        this->out_s->out_uint8(cache_id);
-        this->out_s->out_uint8(bpp);
-        this->out_s->out_uint8(width);
-        this->out_s->out_uint8(height);
-        this->out_s->out_uint8(type);
-        this->out_s->out_uint8(size);
-        this->out_s->out_copy_bytes(data, size);
-
-        return 0;
-    }
-
-    inline static bool is_1_byte(int16_t value){
-        return (value >= -128) && (value <= 127);
-    }
-
-    inline static uint8_t pounder_bound(int16_t delta, uint8_t pound)
-    {
-        return ((pound * (delta != 0)) << (4 * is_1_byte(delta)));
     }
 
     int opaque_rect(const Rect & r, int color, const Rect & clip)
@@ -363,75 +329,106 @@ struct Orders
         return 0;
     }
 
+    int send_brush(int width, int height, int bpp, int type, int size, uint8_t* data, int cache_id)
+    {
+        using namespace RDP;
+
+        this->reserve_order(size + 12);
+
+        int order_flags = STANDARD | SECONDARY;
+        this->out_s->out_uint8(order_flags);
+        int len = (size + 6) - 7; /* length after type minus 7 */
+        this->out_s->out_uint16_le(len);
+        this->out_s->out_uint16_le(0); /* flags */
+        this->out_s->out_uint8(BRUSHCACHE); /* type */
+        this->out_s->out_uint8(cache_id);
+        this->out_s->out_uint8(bpp);
+        this->out_s->out_uint8(width);
+        this->out_s->out_uint8(height);
+        this->out_s->out_uint8(type);
+        this->out_s->out_uint8(size);
+        this->out_s->out_copy_bytes(data, size);
+
+        return 0;
+    }
+
     /*****************************************************************************/
     /* returns error */
     /* max size width * height * Bpp + 16 */
-    void send_bitmap(int width, int height, int bpp, const uint8_t* data, size_t bufsize, int cache_id, int cache_idx)
+    void send_bitmap(Stream & stream, Bitmap & bmp, int cache_id, int cache_idx)
     {
-        int Bpp = nbbytes(bpp);
+
+        Stream tmp(16384);
+        bmp.compress(tmp);
+        size_t bufsize = tmp.p - tmp.data;
+
         this->reserve_order(bufsize + 16);
         int order_flags = STANDARD | SECONDARY;
-        this->out_s->out_uint8(order_flags);
-        this->out_s->out_uint16_le(bufsize + 10);
-        this->out_s->out_uint16_le(8); /* flags */
-        this->out_s->out_uint8(TS_CACHE_BITMAP_COMPRESSED); /* type */
-        this->out_s->out_uint8(cache_id);
-        this->out_s->out_clear_bytes(1); /* pad */
-        this->out_s->out_uint8(width);
-        this->out_s->out_uint8(height);
-        this->out_s->out_uint8(bpp);
-        this->out_s->out_uint16_le(bufsize/* + 8*/);
-        this->out_s->out_uint16_le(cache_idx);
-
-        this->out_s->out_clear_bytes(2); /* pad */
-        this->out_s->out_uint16_le(bufsize);
-        this->out_s->out_uint16_le(width * Bpp); /* line size */
-        this->out_s->out_uint16_le(width * Bpp * height); /* final size */
-        this->out_s->out_copy_bytes(data, bufsize);
+        stream.out_uint8(order_flags);
+        stream.out_uint16_le(bufsize + 10);
+        stream.out_uint16_le(8); /* flags */
+        stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); /* type */
+        stream.out_uint8(cache_id);
+        stream.out_clear_bytes(1); /* pad */
+        stream.out_uint8(align4(bmp.cx));
+        stream.out_uint8(bmp.cy);
+        stream.out_uint8(bmp.bpp);
+        stream.out_uint16_le(bufsize/* + 8*/);
+        stream.out_uint16_le(cache_idx);
+        stream.out_clear_bytes(2); /* pad */
+        stream.out_uint16_le(bufsize);
+        stream.out_uint16_le(bmp.line_size);
+        stream.out_uint16_le(bmp.bmp_size); /* final size */
+        #warning we should compress directly into main stream to avoid useless copy
+        stream.out_copy_bytes(tmp.data, bufsize);
     }
 
 
-    void send_bitmap_small_headers(int width, int height, int bpp, const uint8_t* data, size_t bufsize, int cache_id, int cache_idx)
+    void send_bitmap_small_headers(Stream & stream, Bitmap & bmp, int cache_id, int cache_idx)
     {
+        Stream tmp(16384);
+        bmp.compress(tmp);
+        size_t bufsize = tmp.p - tmp.data;
+
         this->reserve_order(bufsize + 16);
         int order_flags = STANDARD | SECONDARY;
-        this->out_s->out_uint8(order_flags);
+        stream.out_uint8(order_flags);
         /* length after type minus 7 */
-        this->out_s->out_uint16_le(bufsize + 2);
-        this->out_s->out_uint16_le(1024); /* flags */
-        this->out_s->out_uint8(TS_CACHE_BITMAP_COMPRESSED); /* type */
+        stream.out_uint16_le(bufsize + 2);
+        stream.out_uint16_le(1024); /* flags */
+        stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); /* type */
 
-        this->out_s->out_uint8(cache_id);
-        this->out_s->out_clear_bytes(1); /* pad */
+        stream.out_uint8(cache_id);
+        stream.out_clear_bytes(1); /* pad */
 
-        this->out_s->out_uint8(width);
-        this->out_s->out_uint8(height);
-        this->out_s->out_uint8(bpp);
-        this->out_s->out_uint16_le(bufsize/* + 8*/);
-        this->out_s->out_uint16_le(cache_idx);
-        this->out_s->out_copy_bytes(data, bufsize);
+        stream.out_uint8(align4(bmp.cx));
+        stream.out_uint8(bmp.cy);
+        stream.out_uint8(bmp.bpp);
+        stream.out_uint16_le(bufsize/* + 8*/);
+        stream.out_uint16_le(cache_idx);
+        stream.out_copy_bytes(tmp.data, bufsize);
     }
 
 
-    void send_bitmap2(Bitmap & bmp, uint8_t* data, size_t bufsize, int cache_id, int cache_idx)
+    void send_bitmap2(Stream & stream, Bitmap & bmp, int cache_id, int cache_idx)
     {
-       int width = align4(bmp.cx);
-       int height = bmp.cy;
-       int bpp = bmp.bpp;
+        Stream tmp(16384);
+        bmp.compress(tmp);
+        size_t bufsize = tmp.p - tmp.data;
 
-        int Bpp = nbbytes(bpp);
+        int Bpp = nbbytes(bmp.bpp);
         this->reserve_order(bufsize + 14);
-        this->out_s->out_uint8(STANDARD | SECONDARY);
+        stream.out_uint8(STANDARD | SECONDARY);
 
-        this->out_s->out_uint16_le(bufsize - 1); /* length after type minus 7 */
-        this->out_s->out_uint16_le(0x400 | (((Bpp + 2) << 3) & 0x38) | (cache_id & 7)); /* flags */
-        this->out_s->out_uint8(TS_CACHE_BITMAP_COMPRESSED_REV2); /* type */
-        this->out_s->out_uint8(width);
-        this->out_s->out_uint8(height);
-        this->out_s->out_uint16_be(bufsize | 0x4000);
-        this->out_s->out_uint8(((cache_idx >> 8) & 0xff) | 0x80);
-        this->out_s->out_uint8(cache_idx);
-        this->out_s->out_copy_bytes(data, bufsize);
+        stream.out_uint16_le(bufsize - 1); /* length after type minus 7 */
+        stream.out_uint16_le(0x400 | (((Bpp + 2) << 3) & 0x38) | (cache_id & 7)); /* flags */
+        stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED_REV2); /* type */
+        stream.out_uint8(align4(bmp.cx));
+        stream.out_uint8(bmp.cy);
+        stream.out_uint16_be(bufsize | 0x4000);
+        stream.out_uint8(((cache_idx >> 8) & 0xff) | 0x80);
+        stream.out_uint8(cache_idx);
+        stream.out_copy_bytes(tmp.data, bufsize);
     }
 
 
@@ -485,28 +482,17 @@ struct Orders
         break;
         case COMPRESSED:
         {
-            Stream stream(16384);
-            bmp.compress(stream);
-            size_t bufsize = stream.p - stream.data;
-            this->send_bitmap(bmp.cx, bmp.cy, bmp.bpp, stream.data, bufsize, cache_id, cache_idx);
+            this->send_bitmap(*this->out_s, bmp, cache_id, cache_idx);
         }
         break;
         case COMPRESSED_SMALL_HEADERS:
         {
-            Stream stream(16384);
-            bmp.compress(stream);
-            size_t bufsize = stream.p - stream.data;
-            this->send_bitmap_small_headers(
-                align4(bmp.cx), bmp.cy, bmp.bpp,
-                stream.data, bufsize, cache_id, cache_idx);
+            this->send_bitmap_small_headers(*this->out_s, bmp, cache_id, cache_idx);
         }
         break;
         case NEW_COMPRESSED:
         {
-            Stream stream(16384);
-            bmp.compress(stream);
-            size_t bufsize = stream.p - stream.data;
-            this->send_bitmap2(bmp, stream.data, bufsize, cache_id, cache_idx);
+            this->send_bitmap2(*this->out_s, bmp, cache_id, cache_idx);
         }
         break;
         }

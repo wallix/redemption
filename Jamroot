@@ -114,7 +114,6 @@ obj widget : core/widget.cpp ;
 obj mainloop : core/mainloop.cpp ;
 obj session : core/session.cpp ;
 obj keymap : core/keymap.cpp ;
-obj orders : front/orders.cpp ;
 obj d3des : core/d3des.cpp ;
 obj ssl_calls : core/ssl_calls.cpp ;
 obj ini_config : core/config.cpp  ;

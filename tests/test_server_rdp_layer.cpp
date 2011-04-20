@@ -267,26 +267,16 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
             case COMPRESSED:
             {
                 LOG(LOG_INFO, "compressed bitmap\n");
-                Stream stream(16384);
-                #warning this does a copy of the bitmap buffer, we should be able to avoid it
-                #warning compressed bitmap should be kept in cache... it is more efficient as we do not have to compute it again and again
-                entry->bmp.compress(stream);
-                size_t bufsize = stream.p - stream.data;
-                orders->send_bitmap(entry->bmp.cx + e, entry->bmp.cy, entry->bmp.bpp, stream.data, bufsize, cache_b_id, cache_b_idx);
+                orders->send_bitmap(*orders->out_s, entry->bmp, cache_b_id, cache_b_idx);
             }
             break;
             case COMPRESSED_SMALL_HEADERS:
             {
-                LOG(LOG_INFO, "compressed small_headers bitmap\n");
-                Stream stream(16384);
-                entry->bmp.compress(stream);
-                size_t bufsize = stream.p - stream.data;
-                orders->send_bitmap_small_headers(entry->bmp.cx + e, entry->bmp.cy, entry->bmp.bpp, stream.data, bufsize, cache_b_id, cache_b_idx);
+                orders->send_bitmap_small_headers(*orders->out_s, entry->bmp, cache_b_id, cache_b_idx);
             }
             break;
             case NEW_NOT_COMPRESSED:
                 LOG(LOG_INFO, "new not compressed bitmap\n");
-                e = 0;
                 {
                     RDPBmpCache bmp(2, entry->bmp, cache_b_id, cache_b_idx);
                     // check reserved size depending on version
@@ -297,13 +287,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
             break;
             case NEW_COMPRESSED:
             {
-                LOG(LOG_INFO, "new compressed bitmap\n");
-                Stream stream(16384);
-                #warning this does a copy of the bitmap buffer, we should be able to avoid it
-                #warning compressed bitmap should be kept in cache... it is more efficient as we do not have to compute it again and again
-                entry->bmp.compress(stream);
-                size_t bufsize = stream.p - stream.data;
-                orders->send_bitmap2(entry->bmp, stream.data, bufsize, cache_b_id, cache_b_idx);
+                orders->send_bitmap2(*orders->out_s, entry->bmp, cache_b_id, cache_b_idx);
             }
             break;
         }

@@ -383,19 +383,8 @@ uint8_t compressed[] = {
     printf("\n");
 
 
-
-    Stream stream(65535);
-    bbb.compress(stream);
-
-    uint8_t * tosend = stream.data;
-    uint16_t sizetosend = stream.p - stream.data;
-
-
 //    uint8_t * tosend = compressed;
 //    uint16_t sizetosend = sizeof(compressed);
-
-    printf("size_to_send = %d\n", sizetosend);
-
 
     uint8_t width = 228;
     uint8_t height = 13;
@@ -404,12 +393,10 @@ uint8_t compressed[] = {
     printf("compression_type = %d\n", front->orders->get_compression_type());
     switch (front->orders->get_compression_type()){
         case 2:
-            front->orders->send_bitmap_small_headers(
-                width, height, front->colors.bpp, tosend, sizetosend, cid, 48);
+            front->orders->send_bitmap_small_headers(*front->orders->out_s, bbb, cid, 48);
             break;
         case 1:
-            front->orders->send_bitmap(
-                width, height, front->colors.bpp, tosend, sizetosend, cid, 48);
+            front->orders->send_bitmap(*front->orders->out_s, bbb, cid, 48);
         break;
         default:
             printf("Uncompressed bitmap\n");
