@@ -246,17 +246,19 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
             tmp[10], tmp[11], tmp[12], tmp[13], tmp[14], tmp[15], tmp[16], tmp[17], tmp[18], tmp[19]);
     };
 
+    using namespace RDP;
+
     if (send_type2 == BITMAP_ADDED_TO_CACHE){
         LOG(LOG_INFO, "Sending bitmap\n");
-        BitmapCache::compression_type_t mode = front->bmp_cache->compression_mode();
-        mode = BitmapCache::NOT_COMPRESSED;
+        int mode = front->orders->get_compression_type();
+        mode = NOT_COMPRESSED;
         switch (mode){
-            case BitmapCache::NOT_COMPRESSED:
+            case NOT_COMPRESSED:
                 LOG(LOG_INFO, "not compressed bitmap\n");
                 e = 0;
                 orders->send_raw_bitmap(1,entry->bmp.cx, entry->bmp.cy, entry->bmp.bpp, entry->bmp.data_co, cache_b_id, cache_b_idx);
             break;
-            case BitmapCache::COMPRESSED:
+            case COMPRESSED:
             {
                 LOG(LOG_INFO, "compressed bitmap\n");
                 Stream stream(16384);
@@ -267,7 +269,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
                 orders->send_bitmap(entry->bmp.cx + e, entry->bmp.cy, entry->bmp.bpp, stream.data, bufsize, cache_b_id, cache_b_idx);
             }
             break;
-            case BitmapCache::COMPRESSED_SMALL_HEADERS:
+            case COMPRESSED_SMALL_HEADERS:
             {
                 LOG(LOG_INFO, "compressed small_headers bitmap\n");
                 Stream stream(16384);
@@ -276,12 +278,12 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
                 orders->send_bitmap_small_headers(entry->bmp.cx + e, entry->bmp.cy, entry->bmp.bpp, stream.data, bufsize, cache_b_id, cache_b_idx);
             }
             break;
-            case BitmapCache::NEW_NOT_COMPRESSED:
+            case NEW_NOT_COMPRESSED:
                 LOG(LOG_INFO, "new not compressed bitmap\n");
                 e = 0;
-                orders->send_raw_bitmap(2,entry->bmp.cx, entry->bmp.cy, entry->bmp.bpp, entry->bmp.data_co, cache_b_id, cache_b_idx);
+                orders->send_raw_bitmap(2, entry->bmp.cx, entry->bmp.cy, entry->bmp.bpp, entry->bmp.data_co, cache_b_id, cache_b_idx);
             break;
-            case BitmapCache::NEW_COMPRESSED:
+            case NEW_COMPRESSED:
             {
                 LOG(LOG_INFO, "new compressed bitmap\n");
                 Stream stream(16384);
@@ -289,7 +291,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
                 #warning compressed bitmap should be kept in cache... it is more efficient as we do not have to compute it again and again
                 entry->bmp.compress(stream);
                 size_t bufsize = stream.p - stream.data;
-                orders->send_bitmap2(*front->bmp_cache, stream.data, bufsize, cache_b_id, cache_b_idx);
+                orders->send_bitmap2(entry->bmp, stream.data, bufsize, cache_b_id, cache_b_idx);
             }
             break;
         }

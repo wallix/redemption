@@ -963,139 +963,140 @@ struct rdp_rdp {
 
     void process_bitmap_updates(Stream & stream, client_mod * mod)
     {
+        // RDP-BCGR: 2.2.9.1.1.3.1.2 Bitmap Update (TS_UPDATE_BITMAP)
+        // ----------------------------------------------------------
+        // The TS_UPDATE_BITMAP structure contains one or more rectangular
+        // clippings taken from the server-side screen frame buffer (see [T128]
+        // section 8.17).
+
+        // shareDataHeader (18 bytes): Share Data Header (section 2.2.8.1.1.1.2)
+        // containing information about the packet. The type subfield of the
+        // pduType field of the Share Control Header (section 2.2.8.1.1.1.1)
+        // MUST be set to PDUTYPE_DATAPDU (7). The pduType2 field of the Share
+        // Data Header MUST be set to PDUTYPE2_UPDATE (2).
+
+        // bitmapData (variable): The actual bitmap update data, as specified in
+        // section 2.2.9.1.1.3.1.2.1.
+
+        // 2.2.9.1.1.3.1.2.1 Bitmap Update Data (TS_UPDATE_BITMAP_DATA)
+        // ------------------------------------------------------------
+        // The TS_UPDATE_BITMAP_DATA structure encapsulates the bitmap data that
+        // defines a Bitmap Update (section 2.2.9.1.1.3.1.2).
+
+        // updateType (2 bytes): A 16-bit, unsigned integer. The graphics update
+        // type. This field MUST be set to UPDATETYPE_BITMAP (0x0001).
+
         // numberRectangles (2 bytes): A 16-bit, unsigned integer.
         // The number of screen rectangles present in the rectangles field.
         size_t numberRectangles = stream.in_uint16_le();
         for (size_t i = 0; i < numberRectangles; i++) {
+            // rectangles (variable): Variable-length array of TS_BITMAP_DATA
+            // (section 2.2.9.1.1.3.1.2.2) structures, each of which contains a
+            // rectangular clipping taken from the server-side screen frame buffer.
+            // The number of screen clippings in the array is specified by the
+            // numberRectangles field.
+
+            // 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)
+            // ----------------------------------------------
+
             // The TS_BITMAP_DATA structure wraps the bitmap data bytestream
             // for a screen area rectangle containing a clipping taken from
             // the server-side screen frame buffer.
 
             // A 16-bit, unsigned integer. Left bound of the rectangle.
-            int destLeft = stream.in_uint16_le();
+            uint16_t destLeft = stream.in_uint16_le();
 
             // A 16-bit, unsigned integer. Top bound of the rectangle.
-            int destTop = stream.in_uint16_le();
+            uint16_t destTop = stream.in_uint16_le();
 
             // A 16-bit, unsigned integer. Right bound of the rectangle.
-            int destRight = stream.in_uint16_le();
+            uint16_t destRight = stream.in_uint16_le();
 
             // A 16-bit, unsigned integer. Bottom bound of the rectangle.
-            int destBottom = stream.in_uint16_le();
+            uint16_t destBottom = stream.in_uint16_le();
 
             // A 16-bit, unsigned integer. The width of the rectangle.
-            int width = stream.in_uint16_le();
+            uint16_t width = stream.in_uint16_le();
 
             // A 16-bit, unsigned integer. The height of the rectangle.
-            int height = stream.in_uint16_le();
+            uint16_t height = stream.in_uint16_le();
 
             // A 16-bit, unsigned integer. The color depth of the rectangle
             // data in bits-per-pixel.
             int bpp = stream.in_uint16_le();
-            int Bpp = nbbytes(bpp);
 
             // A 16-bit, unsigned integer. The flags describing the format
             // of the bitmap data in the bitmapDataStream field.
 
-            int Flags = stream.in_uint16_le();
-            int bitmapLength = stream.in_uint16_le();
+            // +-----------------------------------+---------------------------+
+            // | 0x0001 BITMAP_COMPRESSION         | Indicates that the bitmap |
+            // |                                   | data is compressed. This  |
+            // |                                   | implies that the          |
+            // |                                   | bitmapComprHdr field is   |
+            // |                                   | present if the NO_BITMAP_C|
+            // |                                   |OMPRESSION_HDR (0x0400)    |
+            // |                                   | flag is not set.          |
+            // +-----------------------------------+---------------------------+
+            // | 0x0400 NO_BITMAP_COMPRESSION_HDR  | Indicates that the        |
+            // |                                   | bitmapComprHdr field is   |
+            // |                                   | not present(removed for   |
+            // |                                   | bandwidth efficiency to   |
+            // |                                   | save 8 bytes).            |
+            // +-----------------------------------+---------------------------+
 
-            // note by CGR:
-            // I do not understand why protocol is passing both rect
-            // boundary and (width , height). Hypothesis: rectangle is
-            // related to target position and (width, height) to bitmap ?
-            // But why should they be different ? However real traffic
-            // shows it happen.
-    //                assert(destRight - destLeft + 1 == width);
-    //                assert(destBottom - destTop + 1 == height);
-            if (!(destRight - destLeft + 1 == width)
-            ||  !(destBottom - destTop + 1 == height)){
-    //                    LOG(LOG_DEBUG, " -----> %d - %d + 1 == %d (width = %d) , %d - %d + 1 == %d (height = %d)\n", destRight, destLeft, destRight - destLeft + 1, width, destBottom, destTop, destBottom - destTop + 1, height);
-            }
+            int flags = stream.in_uint16_le();
+            uint16_t bitmapLength = stream.in_uint16_le();
 
             Rect boundary(destLeft, destTop,
                           destRight - destLeft + 1,
                           destBottom - destTop + 1);
 
-            #warning check for memory allocation problems
-            uint8_t * bmpdata0 = (uint8_t*)malloc(width * height * Bpp);
-            uint8_t * bmpdata1 = 0;
+            // BITMAP_COMPRESSION 0x0001
+            // Indicates that the bitmap data is compressed. This implies
+            // that the bitmapComprHdr field is present if the
+            // NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not set.
 
-            try {
-                // BITMAP_COMPRESSION 0x0001
-                // Indicates that the bitmap data is compressed. This implies
-                // that the bitmapComprHdr field is present if the
-                // NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not set.
-                if (Flags) {
-                    int size = bitmapLength;;
-                    if (!(Flags & 0x400)) {
-                        // bitmapComprHdr
-                        stream.skip_uint8(2); /* pad */
-                        size = stream.in_uint16_le();
-                        stream.skip_uint8(4); /* line_size, final_size */
-                    }
+            Bitmap bitmap(bpp, width, height);
 
-                    #warning memory leak
-                    struct Bitmap* bitmap = new Bitmap(bpp, width, height);
-                    uint8_t * data = stream.in_uint8p(size);
-                    bitmap->decompress(data, size);
-
-                    bmpdata1 = orders.rdp_orders_convert_bitmap(
-                                                 bitmap->bpp,
-                                                 mod->screen.colors->bpp,
-                                                 bitmap->data_co, bitmap->cx, bitmap->cy,
-                    #warning if the palette below used for decoding of encoding ? It should only be used for decoding.
-                                                 this->orders.cache_colormap.palette[0]);
-                    mod->server_paint_rect(0xCC, boundary, bmpdata1, width, height, 0, 0);
+            if (flags & 0x0001){
+                uint16_t size = 0;
+                if (flags & 0x400) {
+                    size = bitmapLength;
                 }
-                else { /* not compressed */
-                    for (int y = 0; y < height; y++) {
-                        uint8_t *data = bmpdata0 + ((height - y) - 1) * (width * Bpp);
-                        switch (Bpp){
-                        case 1:
-                        {
-                            for (int x = 0; x < width; x++) {
-                                data[x] = stream.in_uint8();
-                            }
-                        }
-                        break;
-                        case  2:
-                        {
-                            for (int x = 0; x < width; x++) {
-                                ((uint16_t*)data)[x] = stream.in_uint16_le();
-                            }
-                        }
-                        break;
-                        case 3:
-                        {
-                            for (int x = 0; x < width; x++) {
-                                data[x * 3 + 0] = stream.in_uint8();
-                                data[x * 3 + 1] = stream.in_uint8();
-                                data[x * 3 + 2] = stream.in_uint8();
-                            }
-                        }
-                        break;
-                        default:
-                            LOG(LOG_WARNING, "unknown Bpp value\n");
-                        }
-                    }
-                    bmpdata1 = this->orders.rdp_orders_convert_bitmap(bpp, mod->screen.colors->bpp,
-                                                     bmpdata0, width, height,
-                                                     this->orders.cache_colormap.palette[0]);
-                    mod->server_paint_rect(0xCC, boundary, bmpdata1, width, height, 0, 0);
+                else {
+                // bitmapComprHdr (8 bytes): Optional Compressed Data Header
+                // structure (see Compressed Data Header (TS_CD_HEADER)
+                // (section 2.2.9.1.1.3.1.2.3)) specifying the bitmap data
+                // in the bitmapDataStream. This field MUST be present if
+                // the BITMAP_COMPRESSION (0x0001) flag is present in the
+                // Flags field, but the NO_BITMAP_COMPRESSION_HDR (0x0400)
+                // flag is not.
+                    // bitmapComprHdr
+                    stream.skip_uint8(2); /* pad */
+                    size = stream.in_uint16_le();
+                    uint16_t line_size = stream.in_uint16_le();
+                    uint16_t final_size = stream.in_uint16_le();
                 }
+
+                uint8_t * data = stream.in_uint8p(size);
+
+                bitmap.decompress(data, size);
             }
-            catch (...){
-                if (bmpdata1 != bmpdata0) {
-                    free(bmpdata1);
-                }
-                free(bmpdata0);
-                throw;
-            };
-            if (bmpdata1 != bmpdata0) {
-                free(bmpdata1);
+            else {
+                uint8_t * data = stream.in_uint8p(bitmapLength);
+                assert(bitmapLength == bitmap.bmp_size);
+                bitmap.copy(data);
             }
-            free(bmpdata0);
+            #warning rdp_orders_convert_bitmap perform memory allocation when color depth, change. This is BAD change that. We may even integrate the color depth change to bitmap constructor (I like this idea, I will probably do it, also it's easy to unit test).
+            uint8_t * bmpdata = orders.rdp_orders_convert_bitmap(
+                                 bitmap.bpp,
+                                 mod->screen.colors->bpp,
+                                 bitmap.data_co, bitmap.cx, bitmap.cy,
+                                 this->orders.cache_colormap.palette[0]);
+            mod->server_paint_rect(0xCC, boundary, bmpdata, width, height, 0, 0);
+            if (bmpdata != bitmap.data_co){
+                free(bmpdata);
+            }
         }
     }
 
@@ -1103,6 +1104,15 @@ struct rdp_rdp {
     {
         int update_type;
         int count;
+
+    // MS-RDPBCGR: 1.3.6
+    // -----------------
+    // The most fundamental output that a server can send to a connected client
+    // is bitmap images of the remote session using the Update Bitmap PDU. This
+    // allows the client to render the working space and enables a user to
+    // interact with the session running on the server. The global palette
+    // information for a session is sent to the client in the Update Palette PDU.
+
 
         update_type = stream.in_uint16_le();
         mod->server_begin_update();

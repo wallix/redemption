@@ -35,6 +35,14 @@
 
 namespace RDP {
 
+enum compression_type_t {
+    NOT_COMPRESSED,
+    COMPRESSED,
+    COMPRESSED_SMALL_HEADERS,
+    NEW_NOT_COMPRESSED,
+    NEW_COMPRESSED
+};
+
 struct Orders
 {
     // State
@@ -79,7 +87,6 @@ struct Orders
     /* set all values to zero */
     void reset() throw (Error)
     {
-//        LOG(LOG_INFO, "Orders::reset()");
 #warning is it necessary (or even usefull) to send remaining drawing orders before resetting ?
         if (this->order_count > 0){
             this->force_send();
@@ -99,11 +106,8 @@ struct Orders
         this->order_level = 0;
     }
 
-    /*****************************************************************************/
-    /* returns error */
     int init()
     {
-//        LOG(LOG_INFO, "Orders::init() level=%d count=%d", this->order_level, this->order_count);
         this->order_level++;
         if (this->order_level == 1) {
             this->order_count = 0;
@@ -111,8 +115,6 @@ struct Orders
         return 0;
     }
 
-    /*****************************************************************************/
-    /* returns error */
     void send()
     {
 //        LOG(LOG_ERR, "Orders::send() level=%d order_count=%d", this->order_level, this->order_count);
@@ -149,13 +151,8 @@ struct Orders
         this->order_count = 0;
     }
 
-    /*****************************************************************************/
-    /* returns error */
-    /* send a brush cache entry */
     int send_brush(int width, int height, int bpp, int type, int size, uint8_t* data, int cache_id)
     {
-//        LOG(LOG_INFO, "order send brush(width=%d, height=%d, bpp=%d, type=%d, size=%d, cache_id=%d\n",
-//            width, height, bpp, type, size, cache_id);
         using namespace RDP;
 
         this->reserve_order(size + 12);
@@ -174,8 +171,6 @@ struct Orders
         this->out_s->out_uint8(size);
         this->out_s->out_copy_bytes(data, size);
 
-//        LOG(LOG_INFO, "order send brush done\n");
-
         return 0;
     }
 
@@ -192,18 +187,11 @@ struct Orders
     {
         this->reserve_order(23);
 
-//        char buffer[1000];
-//        this->opaquerect.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "RECT OLD SEND: %s", buffer);
-
         RDPOpaqueRect cmd(r, color);
         RDPOrderCommon newcommon(RECT, clip);
         cmd.emit(*this->out_s, newcommon, this->common, this->opaquerect);
         this->common = newcommon;
         this->opaquerect = cmd;
-
-//        this->opaquerect.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "RECT NEW SEND: %s", buffer);
 
         return 0;
     }
@@ -212,19 +200,11 @@ struct Orders
     {
         this->reserve_order(25);
 
-//        char buffer[1000];
-//        this->scrblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "SCREENBLT OLD SEND: %s", buffer);
-
-
         RDPScrBlt cmd(r, rop, srcx, srcy);
         RDPOrderCommon newcommon(SCREENBLT, clip);
         cmd.emit(*this->out_s, newcommon, this->common, this->scrblt);
         this->common = newcommon;
         this->scrblt = cmd;
-
-//        this->scrblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "SCREENBLT NEW SEND: %s", buffer);
 
         return 0;
     }
@@ -233,19 +213,11 @@ struct Orders
     {
         this->reserve_order(21);
 
-//        char buffer[1000];
-//        this->destblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "DESTBLT OLD SEND: %s", buffer);
-
-
         RDPDestBlt cmd(r, rop);
         RDPOrderCommon newcommon(DESTBLT, clip);
         cmd.emit(*this->out_s, newcommon, this->common, this->destblt);
         this->common = newcommon;
         this->destblt = cmd;
-
-//        this->destblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "DESTBLT NEW SEND: %s", buffer);
 
         return 0;
     }
@@ -254,18 +226,11 @@ struct Orders
     {
         this->reserve_order(29);
 
-//        char buffer[1000];
-//        this->patblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "PATBLT OLD SEND: %s", buffer);
-
         RDPPatBlt cmd(r, (uint8_t)rop, bg_color, fg_color, brush);
         RDPOrderCommon newcommon(PATBLT, clip);
         cmd.emit(*this->out_s, newcommon, this->common, this->patblt);
         this->common = newcommon;
         this->patblt = cmd;
-
-//        this->patblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "PATBLT NEW SEND: %s", buffer);
 
         return 0;
     }
@@ -275,44 +240,20 @@ struct Orders
                 int rop, int bmp_cx, int bmp_cy, int srcx, int srcy,
                 int cache_idx, const Rect & clip)
     {
-        printf("mem_blt(color_table=%d, r(%d, %d, %d, %d),"
-               " rop=%.2x, bmp_cx=%d, bmp_cy=%d, srcx=%d, srcy=%d,"
-               " clip(%d, %d, %d, %d) cache %d:%d\n",
-               color_table, r.x, r.y, r.cx, r.cy, rop,
-               bmp_cx, bmp_cy, srcx, srcy,
-               clip.x, clip.y, clip.cx, clip.cy,
-               cache_id, cache_idx);
-
         this->reserve_order(30);
-
-//        char buffer[1000];
-//        this->memblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "OLD SEND: %s", buffer);
 
         RDPMemBlt cmd(cache_id + color_table * 256, r, rop, srcx, srcy, cache_idx);
         RDPOrderCommon newcommon(MEMBLT, clip);
         cmd.emit(*this->out_s, newcommon, this->common, this->memblt);
         this->common = newcommon;
         this->memblt = cmd;
-
-//        this->memblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "NEW SEND: %s", buffer);
-//        LOG(LOG_INFO, "%s", buffer);
     }
 
-    /*****************************************************************************/
-    /* returns error */
-    /* send a line order */
-    /* max size 32 */
     void line(int back_mode, int startx, int starty,
              int endx, int endy, int rop2, int back_color,
              const RDPPen & pen,
              const Rect & clip)
-
     {
-//        LOG(LOG_INFO, "Orders::line(%d, %d, %d, %d, %d, %d, %d, clip(%d, %d, %d, %d))\n",
-//            back_mode, startx, starty, endx, endy, rop2, back_color, clip.x, clip.y, clip.cx, clip.cy);
-
         #warning this should move out of Order
         if (clip.intersect(Rect(startx, starty, (endx - startx) +1, (endy - starty)+1)).isempty()){
             return;
@@ -328,18 +269,11 @@ struct Orders
 
         this->reserve_order(32);
 
-//        char buffer[1000];
-//        this->destblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "DESTBLT OLD SEND: %s", buffer);
-
         RDPLineTo cmd(back_mode, startx, starty, endx, endy, back_color, rop2, pen);
         RDPOrderCommon newcommon(LINE, clip);
         cmd.emit(*this->out_s, newcommon, this->common, this->lineto);
         this->common = newcommon;
         this->lineto = cmd;
-
-//        this->lineto.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "LINETO NEW SEND: %s", buffer);
     }
 
 
@@ -351,18 +285,12 @@ struct Orders
              int data_len, const Rect & clip)
     {
 
-//        LOG(LOG_DEBUG, "text(font=%d, flags = %x mixmode=%d, fg_color=%x, bg_color=%x,  text_clip(%d, %d, %d, %d),  box(%d, %d, %d, %d), x=%d, y=%d, datalen=%d,  clip(%d, %d, %d, %d))\n", font, mixmode,flags, fg_color, bg_color, text_clip.x, text_clip.y, text_clip.cx, text_clip.cy, box.x, box.y, box.cx, box.cy, x, y,  data_len, clip.x, clip.y, clip.cx, clip.cy);
-
         #warning this should move out of Order
         if (clip.intersect(text_clip).isempty()){
             return;
         }
 
         this->reserve_order(297);
-
-//        char buffer[1000];
-//        this->text.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "GLYPHINDEX OLD SEND: %s", buffer);
 
         RDPOrderCommon newcommon(GLYPHINDEX, clip);
         RDPGlyphIndex cmd(font, flags, 0, mixmode,
@@ -377,9 +305,6 @@ struct Orders
         cmd.emit(*this->out_s, newcommon, this->common, this->text);
         this->common = newcommon;
         this->text = cmd;
-
-//        this->text.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "GLYPHINDEX NEW SEND: %s", buffer);
     }
 
     /*****************************************************************************/
@@ -430,7 +355,6 @@ struct Orders
 
     int send_palette(const uint32_t (& palette)[256], int cache_id)
     {
-//        LOG(LOG_INFO, "Orders::send_palette(%d)", cache_id);
         this->reserve_order(2000);
 
         RDPColCache newcmd(8);
@@ -442,7 +366,6 @@ struct Orders
     /* max size width * height * Bpp + 16 */
     void send_raw_bitmap(int version, int width, int height, int bpp, const uint8_t* data, int cache_id, int cache_idx)
     {
-       printf("orders::send_raw_bitmap width=%d height=%d bpp=%d data=%p %d:%d\n", width, height, bpp, data, cache_id, cache_idx);
         #warning RDPBmpCache can probably be merged with bitmap object
         RDPBmpCache bmp(version, width, height, bpp, data, cache_id, cache_idx);
 
@@ -458,8 +381,6 @@ struct Orders
     /* max size width * height * Bpp + 16 */
     void send_bitmap(int width, int height, int bpp, const uint8_t* data, size_t bufsize, int cache_id, int cache_idx)
     {
-       printf("orders::send_bitmap width=%d height=%d bpp=%d data=%p bufsize=%d %d:%d\n", width, height, bpp, data, bufsize, cache_id, cache_idx);
-
         int Bpp = nbbytes(bpp);
         this->reserve_order(bufsize + 16);
         int order_flags = STANDARD | SECONDARY;
@@ -475,14 +396,9 @@ struct Orders
         this->out_s->out_uint16_le(bufsize/* + 8*/);
         this->out_s->out_uint16_le(cache_idx);
 
-
-
         this->out_s->out_clear_bytes(2); /* pad */
-
         this->out_s->out_uint16_le(bufsize);
-
         this->out_s->out_uint16_le(width * Bpp); /* line size */
-
         this->out_s->out_uint16_le(width * Bpp * height); /* final size */
         this->out_s->out_copy_bytes(data, bufsize);
     }
@@ -490,7 +406,6 @@ struct Orders
 
     void send_bitmap_small_headers(int width, int height, int bpp, const uint8_t* data, size_t bufsize, int cache_id, int cache_idx)
     {
-       printf("orders::send_bitmap_small_headers width=%d height=%d bpp=%d data=%p bufsize=%d %d:%d\n", width, height, bpp, data, bufsize, cache_id, cache_idx);
         this->reserve_order(bufsize + 16);
         int order_flags = STANDARD | SECONDARY;
         this->out_s->out_uint8(order_flags);
@@ -511,17 +426,11 @@ struct Orders
     }
 
 
-    /*****************************************************************************/
-    /* returns error */
-    /* max size width * height * Bpp + 14 */
-    void send_bitmap2(BitmapCache & bmp_cache, uint8_t* data, size_t bufsize, int cache_id, int cache_idx)
+    void send_bitmap2(Bitmap & bmp, uint8_t* data, size_t bufsize, int cache_id, int cache_idx)
     {
-       BitmapCacheItem * entry =  bmp_cache.get_item(cache_id, cache_idx);
-       int width = align4(entry->bmp.cx);
-       int height = entry->bmp.cy;
-       int bpp = entry->bmp.bpp;
-
-       printf("orders::send_bitmap2 width=%d height=%d bpp=%d data=%p bufsize=%d %d:%d\n", width, height, bpp, data, bufsize, cache_id, cache_idx);
+       int width = align4(bmp.cx);
+       int height = bmp.cy;
+       int bpp = bmp.bpp;
 
         int Bpp = nbbytes(bpp);
         this->reserve_order(bufsize + 14);
@@ -539,115 +448,89 @@ struct Orders
     }
 
 
-    #warning compression_mode should not be in bitmap_cache it is just about choosing right compression headers.
-    void send_bitmap_common(BitmapCache & bmp_cache, uint8_t cache_id, uint16_t cache_idx)
+    int get_compression_type()
+    {
+        int compressed_cache_type = 0;
+        switch (((this->rdp_layer->client_info.bitmap_cache_version != 0) * 4)
+              + ((this->rdp_layer->client_info.use_bitmap_comp      != 0) * 2)
+              +  (this->rdp_layer->client_info.op2                  != 0)    ){
+        case 0: case 1:
+            compressed_cache_type = NOT_COMPRESSED;
+            break;
+        case 2:
+            compressed_cache_type = COMPRESSED;
+            break;
+        case 3:
+            compressed_cache_type = COMPRESSED_SMALL_HEADERS;
+            break;
+        case 4: case 5:
+            compressed_cache_type = NEW_NOT_COMPRESSED;
+            break;
+        case 6: case 7:
+            compressed_cache_type = NEW_COMPRESSED;
+            break;
+        }
+        return compressed_cache_type;
+    }
+
+    void send_bitmap_common(Bitmap & bmp, uint8_t cache_id, uint16_t cache_idx)
     {
         using namespace RDP;
-        BitmapCacheItem * entry =  bmp_cache.get_item(cache_id, cache_idx);
 
-        switch (bmp_cache.compression_mode()){
-        case BitmapCache::NOT_COMPRESSED:
+        switch (this->get_compression_type()){
+        case NOT_COMPRESSED:
         {
-            RDPBmpCache bmp(TS_CACHE_BITMAP_UNCOMPRESSED,
-                            entry->bmp.cx, entry->bmp.cy, entry->bmp.bpp,
-                            entry->bmp.data_co, cache_id, cache_idx);
+            RDPBmpCache bmp_order(TS_CACHE_BITMAP_UNCOMPRESSED,
+                            bmp.cx, bmp.cy, bmp.bpp,
+                            bmp.data_co, cache_id, cache_idx);
             // check reserved size depending on version
-            this->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
-            bmp.emit(*this->out_s);
-            bmp.data = 0;
+            this->reserve_order(align4(bmp.cx * nbbytes(bmp.bpp)) * bmp.cy + 16);
+            bmp_order.emit(*this->out_s);
+            bmp_order.data = 0;
         }
         break;
-        case BitmapCache::NEW_NOT_COMPRESSED:
+        case NEW_NOT_COMPRESSED:
         {
-            RDPBmpCache bmp(TS_CACHE_BITMAP_UNCOMPRESSED_REV2,
-                            entry->bmp.cx, entry->bmp.cy, entry->bmp.bpp,
-                            entry->bmp.data_co, cache_id, cache_idx);
+            RDPBmpCache bmp_order(TS_CACHE_BITMAP_UNCOMPRESSED_REV2,
+                            bmp.cx, bmp.cy, bmp.bpp,
+                            bmp.data_co, cache_id, cache_idx);
             // check reserved size depending on version
-            this->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
-            bmp.emit(*this->out_s);
-            bmp.data = 0;
+            this->reserve_order(align4(bmp.cx * nbbytes(bmp.bpp)) * bmp.cy + 16);
+            bmp_order.emit(*this->out_s);
+            bmp_order.data = 0;
         }
         break;
-        case BitmapCache::COMPRESSED:
+        case COMPRESSED:
         {
             Stream stream(16384);
-            #warning this does a copy of the bitmap buffer, we should be able to avoid it
-            #warning compressed bitmap should be kept in cache... it is more efficient as we do not have to compute it again and again
-            entry->bmp.compress(stream);
+            bmp.compress(stream);
             size_t bufsize = stream.p - stream.data;
-
-            printf("------- Compressed V4 REV1---------\n");
-            for (int i = 0; i < bufsize; i++){
-                if (0==(i % 16)){
-                    printf("\n");
-                }
-                printf("0x%.2x, ", stream.data[i]);
-            }
-            printf("\n");
-            printf("\n----------------------------\n");
-            printf("\n");
-
-
-            this->send_bitmap(align4(entry->bmp.cx), entry->bmp.cy, entry->bmp.bpp, stream.data, bufsize, cache_id, cache_idx);
+            this->send_bitmap(bmp.cx, bmp.cy, bmp.bpp, stream.data, bufsize, cache_id, cache_idx);
         }
         break;
-        case BitmapCache::COMPRESSED_SMALL_HEADERS:
+        case COMPRESSED_SMALL_HEADERS:
         {
             Stream stream(16384);
-            entry->bmp.compress(stream);
+            bmp.compress(stream);
             size_t bufsize = stream.p - stream.data;
-
-            printf("------- Compressed V4 SH---------\n");
-            for (int i = 0; i < bufsize; i++){
-                if (0==(i % 16)){
-                    printf("\n");
-                }
-                printf("0x%.2x, ", stream.data[i]);
-            }
-            printf("\n");
-            printf("\n----------------------------\n");
-            printf("\n");
-
             this->send_bitmap_small_headers(
-                align4(entry->bmp.cx), entry->bmp.cy, entry->bmp.bpp,
+                align4(bmp.cx), bmp.cy, bmp.bpp,
                 stream.data, bufsize, cache_id, cache_idx);
         }
         break;
-        case BitmapCache::NEW_COMPRESSED:
+        case NEW_COMPRESSED:
         {
             Stream stream(16384);
-            #warning this does a copy of the bitmap buffer, we should be able to avoid it
-            #warning compressed bitmap should be kept in cache... it is more efficient as we do not have to compute it again and again
-            entry->bmp.compress(stream);
+            bmp.compress(stream);
             size_t bufsize = stream.p - stream.data;
-
-            printf("------- Compressed V4 REV2---------\n");
-            for (int i = 0; i < bufsize; i++){
-                if (0==(i % 16)){
-                    printf("\n");
-                }
-                printf("0x%.2x, ", stream.data[i]);
-            }
-            printf("\n");
-            printf("\n----------------------------\n");
-            printf("\n");
-
-
-            this->send_bitmap2(bmp_cache, stream.data, bufsize, cache_id, cache_idx);
+            this->send_bitmap2(bmp, stream.data, bufsize, cache_id, cache_idx);
         }
         break;
         }
     }
 
-
-    /*****************************************************************************/
-    /* returns error */
-    /* max size datasize + 18*/
-    /* todo, only sends one for now */
     void send_font(struct FontChar* font_char, int font_index, int char_index)
     {
-//        LOG(LOG_DEBUG, "orders_send_font(font_char.width=%d, font_index=%d, char_index=%d)\n"
-//          ,font_char->width, font_index, char_index);
         int datasize = (font_char->height * nbbytes(font_char->width) + 3) & ~3;
         this->reserve_order(datasize + 18);
         int order_flags = STANDARD | SECONDARY;
@@ -677,10 +560,6 @@ struct Orders
         if (this->order_count > 0) {
             size_t max_packet_size = std::min(this->out_s->capacity, (size_t)16384);
             size_t used_size = (size_t)(this->out_s->p - this->order_count_ptr);
-
-//            LOG(LOG_INFO, "reserve_order(%d) [%d(%d)/%d(%d)]\n",
-//                asked_size, used_size, this->order_count,
-//                    max_packet_size, this->out_s->capacity);
 
             if ((used_size + asked_size + 100) > max_packet_size) {
                 this->force_send();

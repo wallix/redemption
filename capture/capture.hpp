@@ -558,9 +558,14 @@ class Capture
                 uint8_t b =  px        & 0xFF;
                 switch (bpp){
                     default:
-                    case 32: case 24:
+                    case 32: 
+                        assert(false);
+                    break;
+                    case 24:
                         {
-                            px = *((uint32_t*)bmp_data + src_px_offset);
+                            px = (bmp_data[src_px_offset*3+0]<<16)
+                               + (bmp_data[src_px_offset*3+1]<<8)
+                               + (bmp_data[src_px_offset*3+2]);
 
                             r = (px >> 16) & 0xFF;
                             g = (px >> 8)  & 0xFF;
@@ -569,7 +574,8 @@ class Capture
                         break;
                     case 16:
                         {
-                            px = *((uint16_t*)bmp_data + src_px_offset);
+                            px = (bmp_data[src_px_offset*2+0]<<8)
+                               + (bmp_data[src_px_offset*2+1]);
 
                             r = (((px >> 8) & 0xf8) | ((px >> 13) & 0x7));
                             g = (((px >> 3) & 0xfc) | ((px >> 9) & 0x3));
@@ -578,7 +584,8 @@ class Capture
                         break;
                     case 15:
                         {
-                            px = *((uint16_t*)bmp_data + src_px_offset);
+                            px = (bmp_data[src_px_offset*2+0]<<8)
+                               + (bmp_data[src_px_offset*2+1]);
 
                             r = ((px >> 7) & 0xf8) | ((px >> 12) & 0x7);
                             g = ((px >> 2) & 0xf8) | ((px >> 8) & 0x7);
@@ -587,7 +594,7 @@ class Capture
                         break;
                     case 8:
                         {
-                            px = *((uint8_t*)bmp_data + src_px_offset);
+                            px = bmp_data[src_px_offset*1+0];
 
                             r = px & 7;
                             r = (r << 5) | (r << 2) | (r >> 1);

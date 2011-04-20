@@ -416,6 +416,7 @@ class RDPColCache {
         }
     }
 
+    #define warning remove printf in operator== and show palette differences in test code
     bool operator==(const RDPColCache & other) const {
         if (this->bpp != other.bpp){
             return false;
@@ -434,7 +435,6 @@ class RDPColCache {
         return true;
     }
 
-    #define warning remove printf in operator== and show palette differences in test code
     size_t str(char * buffer, size_t sz) const
     {
         size_t lg  = snprintf(

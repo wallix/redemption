@@ -126,10 +126,6 @@ public:
             gettimeofday(&now, NULL);
             if ((now.tv_sec > start.tv_sec)
             || ((now.tv_sec == start.tv_sec) && (now.tv_usec - start.tv_usec > inter_frame_interval))){
-//                    LOG(LOG_INFO, "snapshot at now=%lu:%lu start= %lu:%lu (%lu)\n",
-//                        (unsigned long)now.tv_sec, (unsigned long)now.tv_usec,
-//                        (unsigned long)start.tv_sec, (unsigned long)start.tv_usec,
-//                        inter_frame_interval);
                 // increment usec by 200ms
                 start.tv_usec += inter_frame_interval;
                 if (start.tv_usec > 1000000){
@@ -143,7 +139,10 @@ public:
                 }
                 else {
                     // ok, we are not late emit frame
-                    this->capture->snapshot(this->mouse_x, this->mouse_y, pointer_is_displayed|this->nomouse,this->notimestamp, this->timezone);
+                    this->capture->snapshot(
+                        this->mouse_x, this->mouse_y,
+                        pointer_is_displayed|this->nomouse,
+                        this->notimestamp, this->timezone);
                 }
 
             }
@@ -159,7 +158,6 @@ public:
     {
         this->orders->send();
     }
-
 
 
 // rop values:
@@ -273,7 +271,6 @@ public:
             this->orders->mem_blt(cache_id, color_table, r, rop, bmp_cx, bmp_cy, srcx, srcy, cache_idx, clip);
             if (this->capture){
                 Stream aligned_stream(65535);
-                compact_to_aligned(bmp_cx, bmp_cy, bpp, data, aligned_stream.data);
                 this->capture->mem_blt(cache_id, color_table, r, rop, bmp_cx, bmp_cy, bpp,
                           aligned_stream.data, srcx, srcy, cache_idx, clip);
             }
@@ -288,19 +285,11 @@ public:
                      int palette_id,
                      const Rect & clip)
     {
-
-        #warning bitmap are setted from wrong base reference, problem is probably in code below
         for (int j = 0; j < dst.cy ; j += 64) {
-
             int h = std::min(64, dst.cy - j);
             for (int i = 0; i < dst.cx ; i+= 64) {
                 int w = std::min(64, dst.cx - i);
-                 const Rect rect1(dst.x + i, dst.y + j, w, h);
-//                const Rect rect1(dst.x + i, dst.y + dst.cy - (src_r.cy - 1 - j + 64), w, h);
-                printf("j=%d; i=%d dst(%d, %d,%d, %d) src(%d, %d, %d, %d) -> rect(%d, %d, %d, %d)\n",
-                    j, i, dst.x, dst.y, dst.cx, dst.cy, src_r.x, src_r.y, src_r.cx, src_r.cy,
-                    rect1.x, rect1.y, rect1.cx, rect1.cy);
-
+                const Rect rect1(dst.x + i, dst.y + j, w, h);
                 const Rect & draw_rect = clip.intersect(rect1);
                 if (!draw_rect.isempty()){
                     uint8_t cache_id;
@@ -315,17 +304,17 @@ public:
                                                 colors.bpp,
                                                 cache_id, cache_idx);
 
+                    BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
+
                     if (send_type == BITMAP_ADDED_TO_CACHE){
-                        this->orders->send_bitmap_common(*this->bmp_cache, cache_id, cache_idx);
+                        this->orders->send_bitmap_common(entry->bmp, cache_id, cache_idx);
                     };
 
-                    BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
                     this->mem_blt(cache_id, palette_id,
                                   rect1, 0xcc, w, h,
                                   entry->bmp.bpp,
                                   entry->bmp.data_co,
                                   0, 0, cache_idx, clip);
-
                 }
             }
         }
@@ -339,7 +328,6 @@ public:
             this->orders->pat_blt(r, rop, bg_color, fg_color, brush, clip);
         }
     }
-
 
     /*****************************************************************************/
     /* fill in an area of the screen with one color */
@@ -386,10 +374,8 @@ public:
     void line(int rop, int x1, int y1, int x2, int y2, int bgcolor, const RDPPen & pen, const Rect & clip)
     {
         #warning if direction of line is inverted, put it back in the right order, for now just ignore lines in wrong direction
-        if (x1 >= x2
-         && y1 >= y2
-         && !clip.intersect(Rect(x1, y1, (x2 - x1) +1, (y2 - y1)+1)).isempty())
-        {
+        if (x1 >= x2 && y1 >= y2 
+        && !clip.intersect(Rect(x1, y1, (x2 - x1) +1, (y2 - y1)+1)).isempty()){
             this->orders->line(1, x1, y1, x2, y2, rop, bgcolor, pen, clip);
             if (this->capture){
                 this->capture->line(1, x1, y1, x2, y2, rop, bgcolor, pen, this->colors.bpp, clip);

@@ -230,20 +230,6 @@ struct Bitmap{
         header.clr_used = stream.in_uint32_le();
         header.clr_important = stream.in_uint32_le();
 
-        LOG(LOG_INFO, "loaded image header_size=%d width=%d height=%d planes=%d bit_count=%d compression=%d image_size=%d xppm=%d yppm=%d clr_used=%d clr_important=%d",
-        header.size,
-        header.image_width,
-        header.image_height,
-        header.planes,
-        header.bit_count,
-        header.compression,
-        header.image_size,
-        header.x_pels_per_meter,
-        header.y_pels_per_meter,
-        header.clr_used,
-        header.clr_important
-        );
-
         // skip header (including more fields that we do not read if any)
         lseek(fd, 14 + header.size, SEEK_SET);
         // compute pixel size (in Quartet) and read palette if needed
@@ -373,8 +359,6 @@ struct Bitmap{
     void decompress(uint8_t* input, size_t size)
     {
         this->pmax = this->data_co + this->bmp_size;
-        uint8_t * start = input;
-        uint8_t * outstart = this->data_co;
         uint8_t* yprev = 0;
         uint8_t* out = this->data_co;
         uint8_t* end = input + size;
@@ -387,7 +371,6 @@ struct Bitmap{
         unsigned fom_mask = 0;
         unsigned count = 0;
         int bicolor = 0;
-        int position = 0;
 
         assert(Bpp <= 3);
 
@@ -418,41 +401,9 @@ struct Bitmap{
 
         while (input < end) {
             // Read RLE operators, handle short and long forms
-//            printf("new code = %.2X\n", input[0]);
             code = input[0]; input++;
             switch (code >> 4) {
             case 0xf:
-                // F0: FILL
-                // F1: MIX
-                // F2: FOM
-                // F3: COLOR
-                // F4: COPY
-                // F6: MIX SET
-                // F7: FOM SET
-                // F8: BICOLOR
-                // F9: SPECIAL_FGBG_1
-                // FA: SPECIAL_FGBG_2
-                // FD: WHITE
-                // FE: BLACK
-
-    // Special Orders
-    // -----------------
-    // +---------------------+-------------------------------------------------+
-    // | Code Identifier     |                 Meaning                         |
-    // +---------------------+-------------------------------------------------+
-    // | 0xF9 SPECIAL_FGBG_1 | The compression order encodes a foreground/     |
-    // |                     | background image with an 8-bit bitmask of 0x03. |
-    // +---------------------+-------------------------------------------------+
-    // | 0xFA SPECIAL_FGBG_2 | The compression order encodes a foreground/     |
-    // |                     | background image with an 8-bit bitmask of 0x05. |
-    // +---------------------+-------------------------------------------------+
-    // | 0xFD WHITE          | The compression order encodes a single white    |
-    // |                     | pixel.                                          |
-    // +---------------------+-------------------------------------------------+
-    // | 0xFE BLACK          | The compression order encodes a single black    |
-    // |                     | pixel.                                          |
-    // +-----------------------------------------------------------------------+
-
                 switch (code){
                     case 0xFD:
                         opcode = WHITE;
@@ -476,7 +427,6 @@ struct Bitmap{
                         count = input[0]|(input[1] << 8);
                         input += 2;
                         // Opcodes 0xFB, 0xFC, 0xFF are some unknown orders of length 1 ?
-                        // WTF ?
                     break;
                 }
             break;
@@ -576,14 +526,11 @@ struct Bitmap{
                 break;
             }
 
-            uint8_t * expected_out = out + count * Bpp;
-            position += count;
-
             // MAGIC MIX of one pixel to comply with crap in Bitmap RLE compression
             if ((count > 0)
             && (opcode == FILL)
             && (opcode == lastopcode)
-            && (out != this->data_co + this->line_size + 1)){
+            && (out != this->data_co + this->line_size)){
                 if (out < &(this->data_co[this->cx * this->Bpp])){
                     yprev = black;
                 }
@@ -600,19 +547,6 @@ struct Bitmap{
 
             /* Output body */
             while (count > 0) {
-//                printf("code=%.2X opcode=%.2X count=%d mask=%.2X fom_mask=%.2X\n",
-//                        code, opcode, count, mask, fom_mask);
-
-                if (out > this->pmax){
-                    printf("We shouldn't exit from here, but we are at the end of target bitmap and there is still data to decompress ? WTF ?\n");
-                    printf("input: %d end:%d opcode=%d count=%d\n",
-                        (int)(input-start), (int)(end-start), (int)opcode, (int)count);
-                    printf("out=%u max=%u x=%u y=%u Bpp=%d cx=%d cy=%d\n",
-                        (int)(out-outstart), (int)(pmax-outstart),
-                        (int)(((out-outstart)%this->line_size)/this->Bpp),
-                        (int)((out-outstart)/this->line_size),
-                        (int)(this->Bpp), (int)this->cx, (int)this->cy);
-                }
                 assert(out <= this->pmax);
 
                 if ((out - this->cx * this->Bpp) < this->data_co){
@@ -623,14 +557,6 @@ struct Bitmap{
                 }
                 switch (opcode) {
                 case FILL:
-                    // MAGIC MIX of one pixel to comply with crap in Bitmap RLE compression
-//                    if ((FILL == lastopcode)
-//                    && (input != this->data_co + this->line_size + 1)){
-//                        for (int nb = 0; nb < Bpp ; ++nb){
-//                            out[nb] = yprev[nb] ^ mix[nb];
-//                        }
-//                        out+= Bpp;
-//                    }
                     for (int nb = 0; nb < Bpp ; ++nb){
                         out[nb] = yprev[nb];
                     }
@@ -703,8 +629,6 @@ struct Bitmap{
                 count--;
                 out += Bpp;
             }
-            assert(expected_out == out);
-            lastopcode = opcode;
         }
         return;
     }
@@ -936,15 +860,6 @@ struct Bitmap{
 
     void compress(Stream & out)
     {
-//        printf("Start of compress\n");
-//        printf("---- compression source ----\n");
-//        for (int i = 0; i < this->bmp_size; i++){
-//            printf("0x%.2x, ", this->data_co[i]);
-//        }
-//        printf("\n");
-//        printf("----------------------------\n");
-
-
         const uint8_t Bpp = nbbytes(this->bpp);
         uint8_t * oldp = 0;
         uint8_t * p = this->data_co;
@@ -1102,13 +1017,6 @@ struct Bitmap{
                 copy_count = 0;
             }
         }
-//        printf("---- compression result ----\n");
-//        for (int i = 0; i < (out.p - out_start); i++){
-//            printf("%.2x ", out_start[i]);
-//        }
-//        printf("\n");
-//        printf("----------------------------\n");
-
     }
 
 
@@ -1215,14 +1123,6 @@ struct BitmapCache {
     int bitmap_cache_persist_enable;
     int bitmap_cache_version;
 
-    enum compression_type_t {
-        NOT_COMPRESSED,
-        COMPRESSED,
-        COMPRESSED_SMALL_HEADERS,
-        NEW_NOT_COMPRESSED,
-        NEW_COMPRESSED
-    } compressed_cache_type;
-
     unsigned small_entries;
     unsigned small_size;
     unsigned medium_entries;
@@ -1238,7 +1138,6 @@ struct BitmapCache {
 
     BitmapCache(ClientInfo* client_info) {
 
-        LOG(LOG_INFO, "creating bitmap cache at %p\n", this);
         this->use_bitmap_comp = client_info->use_bitmap_comp;
         this->bitmap_cache_persist_enable = client_info->bitmap_cache_persist_enable;
         this->bitmap_cache_version = client_info->bitmap_cache_version;
@@ -1255,26 +1154,6 @@ struct BitmapCache {
         this->big_bitmaps = new BitmapCacheItem[client_info->cache3_entries];
 
         this->bitmap_stamp = 0;
-
-        switch (((client_info->bitmap_cache_version != 0) * 4)
-              + ((client_info->use_bitmap_comp      != 0) * 2)
-              +  (client_info->op2                  != 0)    ){
-        case 0: case 1:
-            this->compressed_cache_type = NOT_COMPRESSED;
-            break;
-        case 2:
-            this->compressed_cache_type = COMPRESSED;
-            break;
-        case 3:
-            this->compressed_cache_type = COMPRESSED_SMALL_HEADERS;
-            break;
-        case 4: case 5:
-            this->compressed_cache_type = NEW_NOT_COMPRESSED;
-            break;
-        case 6: case 7:
-            this->compressed_cache_type = NEW_COMPRESSED;
-            break;
-        }
     }
 
     ~BitmapCache()
@@ -1282,10 +1161,6 @@ struct BitmapCache {
         delete [] this->small_bitmaps;
         delete [] this->medium_bitmaps;
         delete [] this->big_bitmaps;
-    }
-
-    compression_type_t compression_mode(){
-        return this->compressed_cache_type;
     }
 
     BitmapCacheItem * get_item(unsigned cache_id, unsigned cache_idx)
@@ -1321,9 +1196,6 @@ struct BitmapCache {
                     int src_bpp,
                     uint8_t & cacheid, uint16_t & cacheidx)
     {
-        LOG(LOG_INFO, "add_bitmap cx=%d, cy=%d src=%p -> (%d, %d, %d, %d : %d) sizes[%d %d %d]",
-            src_cx, src_cy, src_data, x, y, w, h, src_bpp,
-            this->small_size, this->medium_size, this->big_size);
         int cache_idx = 0;
         BitmapCacheItem cache_item(src_cx, src_cy, src_data, x, y, w, h, src_bpp);
         this->bitmap_stamp++;
@@ -1332,23 +1204,20 @@ struct BitmapCache {
         int cache_id = 0;
 
         if (cache_item.bmp.bmp_size <= this->small_size) {
-            LOG(LOG_INFO, "small size %d", cache_item.bmp.bmp_size);
             array = this->small_bitmaps;
             entries = this->small_entries;
             cache_id = 0;
         } else if (cache_item.bmp.bmp_size <= this->medium_size) {
-            LOG(LOG_INFO, "medium size %d", cache_item.bmp.bmp_size);
             array = this->medium_bitmaps;
             entries = this->medium_entries;
             cache_id = 1;
         } else if (cache_item.bmp.bmp_size <= this->big_size) {
-            LOG(LOG_INFO, "big size %d", cache_item.bmp.bmp_size);
             array = this->big_bitmaps;
             entries = this->big_entries;
             cache_id = 2;
         }
         else {
-            LOG(LOG_INFO, "size too big %d", cache_item.bmp.bmp_size);
+            LOG(LOG_ERR, "bitmap size too big %d", cache_item.bmp.bmp_size);
             assert(false);
         }
 
@@ -1404,8 +1273,9 @@ struct BitmapCache {
             cacheidx = cache_idx;
             return BITMAP_ADDED_TO_CACHE;
 
-        } else {
-            #warning bitmap should not be sent through cache if it is too big, should it be splitted by sender ?
+        }
+        else {
+            #warning bitmap should not be sent through cache if it is too big, should allready have been splitted by sender ?
             LOG(LOG_ERR, "bitmap not added to cache, too big(%d = %d x %d x %d) [%d, %d, %d]\n", cache_item.bmp.bmp_size, w, h, cache_item.bmp.bpp, this->small_size, this->medium_size, this->big_size);
         }
         #warning should throw an error

@@ -159,70 +159,69 @@ struct rdp_orders {
     }
 
 
-    void rdp_orders_process_bmpcache(Stream & stream, int flags)
+    void rdp_orders_process_bmpcache(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
-        uint8_t* data;
-        int size = 0;
-        int pad2 = 0;
-        int row_size = 0;
-        int final_size = 0;
+        struct Bitmap* bitmap = NULL;
+        uint8_t cache_id = 0;
+        uint16_t cache_idx = 0;
+        uint8_t height = 0;
+        uint8_t width = 0;
+        uint8_t bpp = 0;
+        switch (header.type){
+        case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
+            {
+                RDPBmpCache bmp;
+                bmp.receive(stream, control, header);
+                cache_id = bmp.cache_id;
+                cache_idx = bmp.cache_idx;
+                height = bmp.height;
+                width = bmp.width;
+                bpp = bmp.bpp;
 
-        int cache_id = stream.in_uint8();
-        int pad1 = stream.in_uint8();
-        pad1 = pad1; // just to remove warning, will be optimized away
-        int width = stream.in_uint8();
-        int height = stream.in_uint8();
-        int bpp = stream.in_uint8();
-        int bufsize = stream.in_uint16_le();
-        int cache_idx = stream.in_uint16_le();
-        if (flags & 0x400) {
-            size = bufsize;
-        } else {
-            pad2 = stream.in_uint16_le();
-            size = stream.in_uint16_le();
-            row_size = stream.in_uint16_le();
-            final_size = stream.in_uint16_le();
+                bitmap = new Bitmap(bmp.bpp, width, height);
+                bitmap->copy(bmp.data);
+            }
+        break;
+        case RDP::TS_CACHE_BITMAP_COMPRESSED:
+            {
+                int flags = header.flags;
+                uint8_t* data;
+                int size = 0;
+                int pad2 = 0;
+                int row_size = 0;
+                int final_size = 0;
+
+                cache_id = stream.in_uint8();
+                int pad1 = stream.in_uint8();
+                pad1 = pad1; // just to remove warning, will be optimized away
+                width = stream.in_uint8();
+                height = stream.in_uint8();
+                bpp = stream.in_uint8();
+                int bufsize = stream.in_uint16_le();
+                cache_idx = stream.in_uint16_le();
+                if (flags & 0x400) {
+                    size = bufsize;
+                } else {
+                    pad2 = stream.in_uint16_le();
+                    size = stream.in_uint16_le();
+                    row_size = stream.in_uint16_le();
+                    final_size = stream.in_uint16_le();
+                }
+
+                data = stream.in_uint8p(size);
+
+                bitmap = new Bitmap(bpp, width, height);
+
+                assert(row_size == bitmap->line_size);
+
+                bitmap->decompress(data, size);
+            }
+        break;
+        default:
+            assert(false);
         }
 
-//        printf("\n----------------------------------------------\n");
-//        printf("Received bitmap from server:"
-//               " bpp=%d width=%d height=%d bufsize=%d"
-//               " cache_idx=%d flags=%x pad1=%d"
-//               " pad2=%d size=%d row_size=%d final_size=%d\n",
-//            bpp, width, height, bufsize,
-//            cache_idx, flags, pad1,
-//            pad2, size, row_size, final_size);
-
-        data = stream.in_uint8p(size);
-
-//        printf("------- Compressed V4---------\n");
-//        for (int i = 0; i < size; i++){
-//            if (0==(i % 16)){
-//                printf("\n");
-//            }
-//            printf("0x%.2x, ", data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
-        struct Bitmap * bitmap = new Bitmap(bpp, width, height);
-        bitmap->decompress(data, size);
-
-//        printf("------- DeCompressed V4---------\n");
-//        for (int y = 0; y < height; y++){
-//            printf("\n\n/*- %d -*/\n", y);
-//            for (int x = 0; x < row_size; x++){
-//                if (0==((y*row_size+x) % 16)){
-//                    printf("\n      ");
-//                }
-//                printf("0x%.2x, ", bitmap->data_co[y*row_size+x]);
-//            }
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
+        assert(bitmap);
 
         if (this->cache_bitmap[cache_id][cache_idx]) {
             delete this->cache_bitmap[cache_id][cache_idx];
@@ -366,15 +365,13 @@ struct rdp_orders {
     int rdp_orders_process_orders(Stream & stream, int num_orders, client_mod * mod)
     {
         using namespace RDP;
-
         int processed = 0;
         while (processed < num_orders) {
-//            LOG(LOG_INFO, "Num order = %d on %d (%p -> %p)", processed, num_orders, stream.p, stream.data);
             uint8_t control = stream.in_uint8();
 
             if (!control & STANDARD){
                 /* error, this should always be set */
-                LOG(LOG_INFO, "Non standard order detected : protocol error");
+                LOG(LOG_ERR, "Non standard order detected : protocol error");
                 break;
             }
             if (control & SECONDARY) {
@@ -383,46 +380,24 @@ struct rdp_orders {
                 RDPSecondaryOrderHeader header(stream);
                 uint8_t *next_order = stream.p + header.length + 7;
                 switch (header.type) {
+                case TS_CACHE_BITMAP_COMPRESSED:
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
-                    LOG(LOG_WARNING, "RAW_BMPCACHE");
-                    {
-                        RDPBmpCache bmp;
-                        bmp.receive(stream, control, header);
-
-                        #warning init of Bitmap is done here
-                        struct Bitmap* bitmap = new Bitmap(bmp.bpp, bmp.width, bmp.height);
-                        bitmap->copy(bmp.data);
-                        if (this->cache_bitmap[bmp.cache_id][bmp.cache_idx]) {
-                            delete(this->cache_bitmap[bmp.cache_id][bmp.cache_idx]);
-                        }
-                        this->cache_bitmap[bmp.cache_id][bmp.cache_idx] = bitmap;
-                    }
+                    this->rdp_orders_process_bmpcache(stream, control, header);
                     break;
                 case COLCACHE:
-//                    LOG(LOG_WARNING, "COLCACHE");
                     this->cache_colormap.receive(stream, control, header);
-
-                    break;
-                case TS_CACHE_BITMAP_COMPRESSED:
-//                    LOG(LOG_WARNING, "TS_CACHE_BITMAP_COMPRESSED");
-                    this->rdp_orders_process_bmpcache(stream, header.flags);
                     break;
                 case FONTCACHE:
-//                    LOG(LOG_WARNING, "FONTCACHE");
                     this->rdp_orders_process_fontcache(stream, header.flags, mod);
                     break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV2:
-                    LOG(LOG_WARNING, "TS_CACHE_BITMAP_COMPRESSED V2 not supported (1)");
                   break;
                 case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
-                    LOG(LOG_WARNING, "RAW BMPCACHE V2 not supported (0)");
                   break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV3:
-                    LOG(LOG_WARNING, "BMPCACHE V3 not supported (0)");
                   break;
-
                 default:
-                    LOG(LOG_WARNING, "unsupported SECONDARY ORDER (%d)", header.type);
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER (%d)", header.type);
                     /* error, unknown order */
                     break;
                 }
@@ -438,48 +413,38 @@ struct rdp_orders {
                 }
                 switch (this->common.order) {
                 case TEXT2:
-//                    LOG(LOG_WARNING, "TEXT2");
                     this->rdp_orders_process_text2(stream, mod, header);
                     break;
                 case DESTBLT:
-//                    LOG(LOG_WARNING, "DESTBLT");
                     this->rdp_orders_process_destblt(stream, mod, header);
                     break;
                 case PATBLT:
-//                    LOG(LOG_WARNING, "PATBLT");
                     this->rdp_orders_process_patblt(stream, mod, header);
                     break;
                 case SCREENBLT:
-//                    LOG(LOG_WARNING, "SCREENBLT");
                     this->rdp_orders_process_screenblt(stream, mod, header);
                     break;
                 case LINE:
-//                    LOG(LOG_WARNING, "LINE");
                     this->rdp_orders_process_line(stream, mod, header);
                     break;
                 case RECT:
-//                    LOG(LOG_WARNING, "RECT");
                     this->rdp_orders_process_rect(stream, mod, header);
                     break;
                 case DESKSAVE:
-//                    LOG(LOG_WARNING, "DESKSAVE");
                     this->rdp_orders_process_desksave(stream, header.fields, header.control & DELTA, mod);
                     break;
                 case MEMBLT:
-//                    LOG(LOG_WARNING, "MEMBLT");
                     this->rdp_orders_process_memblt(stream, mod, header);
                     break;
                 case TRIBLT:
-//                    LOG(LOG_WARNING, "TRIBLT");
                     rdp_orders_process_triblt(this, stream, header.fields, header.control & DELTA, mod);
                     break;
                 case POLYLINE:
-//                    LOG(LOG_WARNING, "POLYLINE");
                     this->rdp_orders_process_polyline(stream, header.fields, header.control & DELTA, mod);
                     break;
                 default:
                     /* error unknown order */
-                    LOG(LOG_WARNING, "unsupported PRIMARY ORDER (%d)", this->common.order);
+                    LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->common.order);
                     break;
                 }
                 if (header.control & BOUNDS) {
@@ -495,6 +460,7 @@ struct rdp_orders {
     /* returns pointer, it might return bmpdata if the data dosen't need to
        be converted, else it mallocs it.  The calling function must free
        it if needed */
+    #warning way too complicated, fix that
     #warning we should perform memory allocation outside, before calling this function
     uint8_t* rdp_orders_convert_bitmap(int in_bpp, int out_bpp, const uint8_t* src,
                               int width, int height, const uint32_t (& palette)[256])
@@ -638,6 +604,7 @@ struct rdp_orders {
 
     /*****************************************************************************/
     /* returns color or 0 */
+    #warning way too complicated, fix that
     int rdp_orders_convert_color(int in_bpp, int out_bpp, int in_color, const uint32_t (& palette)[256])
     {
         int pixel;
@@ -691,29 +658,14 @@ struct rdp_orders {
     }
     void rdp_orders_process_destblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-//        char buffer[1000];
-//        this->destblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "OLD RECV: %s", buffer);
-
         this->destblt.receive(stream, header);
-
-//        this->destblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "NEW RECV: %s", buffer);
 
         mod->server_fill_rect(this->destblt.rop, this->destblt.rect);
     }
 
     void rdp_orders_process_rect(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-//        char buffer[1000];
-//        this->opaquerect.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "OLD RECV: %s", buffer);
-
         this->opaquerect.receive(stream, header);
-
-//        this->opaquerect.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "NEW RECV: %s", buffer);
-
 
         int fgcolor = rdp_orders_convert_color(this->cache_colormap.bpp,
                                            mod->screen.colors->bpp,
@@ -726,37 +678,21 @@ struct rdp_orders {
 
     void rdp_orders_process_memblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-//        char buffer[1000];
-//        this->memblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "OLD RECV: %s", buffer);
-
         this->memblt.receive(stream, header);
 
-//        this->memblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "NEW RECV: %s", buffer);
-
         struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xFF][this->memblt.cache_idx];
-        uint8_t* bmpdata;
-        if (bitmap != 0 && (bitmap->cx > 0) && (bitmap->cy > 0)) {
-            assert(bitmap->data_co);
-            try {
-                bmpdata = rdp_orders_convert_bitmap(
-                    this->cache_colormap.bpp,
-                    mod->screen.colors->bpp,
-                    bitmap->data_co,
-                    bitmap->cx,
-                    bitmap->cy,
-                    this->cache_colormap.palette[(this->memblt.cache_id >> 8) & 0xFF]);
-                mod->server_paint_rect(this->memblt.rop, this->memblt.rect,
-                          bmpdata, bitmap->cx, bitmap->cy,
-                          this->memblt.srcx, this->memblt.srcy);
-            } catch (...){
-                if (bmpdata != bitmap->data_co) {
-                    free(bmpdata);
-                }
-                #warning see which exception is raised here, was source of memory leak
-                throw;
-            };
+        if (bitmap) {
+            #warning freeing memory will fail if some exeception occurs, also allocating memory inside rdp_orders_convert_bitmap is BAD. A better solution would be to pass the original bitmap, including it's bpp, to server_paint_rect and let it deal with color changes if necessary. See also similar call in rdp_rdp. Same fix can probably apply to both cases.
+            uint8_t * bmpdata = this->rdp_orders_convert_bitmap(
+                this->cache_colormap.bpp,
+                mod->screen.colors->bpp,
+                bitmap->data_co,
+                bitmap->cx,
+                bitmap->cy,
+                this->cache_colormap.palette[(this->memblt.cache_id >> 8) & 0xFF]);
+            mod->server_paint_rect(this->memblt.rop, this->memblt.rect,
+                      bmpdata, bitmap->cx, bitmap->cy,
+                      this->memblt.srcx, this->memblt.srcy);
             if (bmpdata != bitmap->data_co) {
                 free(bmpdata);
             }
@@ -765,14 +701,7 @@ struct rdp_orders {
 
     void rdp_orders_process_screenblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-//        char buffer[1000];
-//        this->scrblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "OLD RECV: %s", buffer);
-
         this->scrblt.receive(stream, header);
-
-//        this->scrblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "NEW RECV: %s", buffer);
 
         mod->server_screen_blt(this->scrblt.rop,
                                this->scrblt.rect,
@@ -782,14 +711,7 @@ struct rdp_orders {
 
     void rdp_orders_process_patblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-//        char buffer[1000];
-//        this->patblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "OLD RECV: %s", buffer);
-
         this->patblt.receive(stream, header);
-
-//        this->patblt.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "NEW RECV: %s", buffer);
 
         int fgcolor = rdp_orders_convert_color(this->cache_colormap.bpp,
                                            mod->screen.colors->bpp,
@@ -809,15 +731,7 @@ struct rdp_orders {
 
     void rdp_orders_process_line(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-//        char buffer[1000];
-//        this->lineto.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "OLD RECV: %s", buffer);
-
         this->lineto.receive(stream, header);
-
-//        this->lineto.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "NEW RECV: %s", buffer);
-
 
         int bgcolor = rdp_orders_convert_color(this->cache_colormap.bpp,
                                            mod->screen.colors->bpp,
@@ -840,14 +754,7 @@ struct rdp_orders {
 
     void rdp_orders_process_text2(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-//        char buffer[1000];
-//        this->glyph_index.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "OLD RECV: %s", buffer);
-
         this->glyph_index.receive(stream, header);
-
-//        this->glyph_index.str(buffer, 1000, this->common);
-//        LOG(LOG_INFO, "NEW RECV: %s", buffer);
 
         int fgcolor = rdp_orders_convert_color(this->cache_colormap.bpp,
                                            mod->screen.colors->bpp,
