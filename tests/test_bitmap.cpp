@@ -363,13 +363,13 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
         BOOST_CHECK_EQUAL(sizeof(expected), out.p - out.data);
         BOOST_CHECK(0 == memcmp(out.data, expected, sizeof(expected)));
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("0x%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
+        printf("------- Compressed ---------\n");
+        for (int i = 0; i < (out.p - out.data); i++){
+            printf("0x%.2x, ", out.data[i]);
+        }
+        printf("\n");
+        printf("\n----------------------------\n");
+        printf("\n");
 
         Bitmap bmp2(16, 4, 4);
         memset(bmp2.data_co, 0, 2*4*4);
@@ -377,12 +377,12 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
         BOOST_CHECK_EQUAL(bmp2.bmp_size, sizeof(data));
         BOOST_CHECK(0 == memcmp(bmp2.data_co, data, sizeof(data)));
 
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp2.bmp_size; i++){
-//            printf("%.2x ", bmp2.data_co[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
+        printf("------- Decompressed ---------\n");
+        for (int i = 0; i < bmp2.bmp_size; i++){
+            printf("%.2x ", bmp2.data_co[i]);
+        }
+        printf("\n----------------------------\n");
+        printf("\n");
 
     }
 

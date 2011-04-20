@@ -359,13 +359,12 @@ struct Bitmap{
     void decompress(uint8_t* input, size_t size)
     {
         this->pmax = this->data_co + this->bmp_size;
-        uint8_t* yprev = 0;
+        unsigned yprev = 0;
         uint8_t* out = this->data_co;
         uint8_t* end = input + size;
-        uint8_t color1[3];
-        uint8_t color2[3];
-        uint8_t mix[3];
-        uint8_t black[3];
+        unsigned color1;
+        unsigned color2;
+        unsigned mix;
         uint8_t code;
         unsigned mask = 0;
         unsigned fom_mask = 0;
@@ -374,12 +373,9 @@ struct Bitmap{
 
         assert(Bpp <= 3);
 
-        for (int nb = 0; nb < Bpp ; ++nb){
-            color1[nb] = 0;
-            color2[nb] = 0;
-            black[nb] = 0;
-            mix[nb] = 0xFF;
-        }
+        color1 = 0;
+        color2 = 0;
+        mix = 0xFFFFFFFF;
 
         enum {
             FILL    = 0,
@@ -493,31 +489,21 @@ struct Bitmap{
             break;
             case BICOLOR:
                 bicolor = 0;
-                for (int nb = 0; nb < Bpp ; ++nb){
-                    color1[nb] = input[nb];
-                }
+                color1 = in_bytes_le(Bpp, input);
                 input += Bpp;
-                for (int nb = 0; nb < Bpp ; ++nb){
-                    color2[nb] = input[nb];
-                }
+                color2 = in_bytes_le(Bpp, input);
                 input += Bpp;
                 break;
             case COLOR:
-                for (int nb = 0; nb < Bpp ; ++nb){
-                    color2[nb] = input[nb];
-                }
+                color2 = in_bytes_le(Bpp, input);
                 input += Bpp;
                 break;
             case MIX_SET:
-                for (int nb = 0; nb < Bpp ; ++nb){
-                    mix[nb] = input[nb];
-                }
+                mix = in_bytes_le(Bpp, input);
                 input += Bpp;
             break;
             case FOM_SET:
-                for (int nb = 0; nb < Bpp ; ++nb){
-                    mix[nb] = input[nb];
-                }
+                mix = in_bytes_le(Bpp, input);
                 input += Bpp;
                 mask = 1;
                 fom_mask = input[0]; input++;
@@ -532,14 +518,12 @@ struct Bitmap{
             && (opcode == lastopcode)
             && (out != this->data_co + this->line_size)){
                 if (out < &(this->data_co[this->cx * this->Bpp])){
-                    yprev = black;
+                    yprev = 0;
                 }
                 else {
-                     yprev = out - this->cx * this->Bpp;
+                     yprev = in_bytes_le(Bpp, out - this->cx * this->Bpp);
                 }
-                for (int nb = 0; nb < Bpp ; ++nb){
-                    out[nb] = yprev[nb] ^ mix[nb];
-                }
+                out_bytes_le(out, Bpp, yprev ^ mix);
                 count--;
                 out+= this->Bpp;
             }
@@ -548,24 +532,19 @@ struct Bitmap{
             /* Output body */
             while (count > 0) {
                 assert(out <= this->pmax);
-
                 if ((out - this->cx * this->Bpp) < this->data_co){
-                    yprev = black;
+                    yprev = 0;
                 }
                 else {
-                     yprev = out - this->cx * this->Bpp;
+                     yprev = in_bytes_le(Bpp, out - this->cx * this->Bpp);
                 }
                 switch (opcode) {
                 case FILL:
-                    for (int nb = 0; nb < Bpp ; ++nb){
-                        out[nb] = yprev[nb];
-                    }
+                    out_bytes_le(out, Bpp, yprev);
                     break;
                 case MIX_SET:
                 case MIX:
-                    for (int nb = 0; nb < Bpp ; ++nb){
-                        out[nb] = yprev[nb] ^ mix[nb];
-                    }
+                    out_bytes_le(out, Bpp, yprev ^ mix);
                     break;
                 case FOM_SET:
                 case FOM:
@@ -576,51 +555,35 @@ struct Bitmap{
                 case SPECIAL_FGBG_1:
                 case SPECIAL_FGBG_2:
                     if (mask & fom_mask){
-                        for (int nb = 0; nb < Bpp ; ++nb){
-                            out[nb] = yprev[nb] ^ mix[nb];
-                        }
+                        out_bytes_le(out, Bpp, yprev ^ mix);
                     }
                     else {
-                        for (int nb = 0; nb < Bpp ; ++nb){
-                            out[nb] = yprev[nb];
-                        }
+                        out_bytes_le(out, Bpp, yprev);
                     }
                     mask <<= 1;
                     break;
                 case COLOR:
-                    for (int nb = 0; nb < Bpp ; ++nb){
-                        out[nb] = color2[nb];
-                    }
+                    out_bytes_le(out, Bpp, color2);
                     break;
                 case COPY:
-                    for (int nb = 0; nb < Bpp ; ++nb){
-                        out[nb] = input[nb];
-                    }
+                    out_bytes_le(out, Bpp, in_bytes_le(Bpp, input));
                     input += Bpp;
                     break;
                 case BICOLOR:
                     if (bicolor) {
-                        for (int nb = 0; nb < Bpp ; ++nb){
-                            out[nb] = color2[nb];
-                        }
+                        out_bytes_le(out, Bpp, color2);
                         bicolor = 0;
                     }
                     else {
-                        for (int nb = 0; nb < Bpp ; ++nb){
-                            out[nb] = color1[nb];
-                        }
+                        out_bytes_le(out, Bpp, color1);
                         bicolor = 1;
                     }
                 break;
                 case WHITE:
-                    for (int nb = 0; nb < Bpp ; ++nb){
-                        out[nb] = 0xFF;
-                    }
+                    out_bytes_le(out, Bpp, 0xFFFFFFFF);
                 break;
                 case BLACK:
-                    for (int nb = 0; nb < Bpp ; ++nb){
-                        out[nb] = 0;
-                    }
+                    out_bytes_le(out, Bpp, 0);
                 break;
                 default:
                     assert(false);
