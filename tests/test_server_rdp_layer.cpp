@@ -91,7 +91,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
     int c = 0;
     int k = 0;
     for (int index = 0; index < len; index++) {
-        FontChar* font_item = font->font_items + wstr[index];
+        FontChar* font_item = font->font_items[wstr[index]];
         switch (cache->add_glyph(font_item, f, c))
         {
             case Cache::GLYPH_ADDED_TO_CACHE:
@@ -256,7 +256,13 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
             case NOT_COMPRESSED:
                 LOG(LOG_INFO, "not compressed bitmap\n");
                 e = 0;
-                orders->send_raw_bitmap(1,entry->bmp.cx, entry->bmp.cy, entry->bmp.bpp, entry->bmp.data_co, cache_b_id, cache_b_idx);
+                {
+                    RDPBmpCache bmp(1, entry->bmp, cache_b_id, cache_b_idx);
+                    // check reserved size depending on version
+                    orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
+                    bmp.emit(*orders->out_s);
+                    bmp.data = 0;
+                }
             break;
             case COMPRESSED:
             {
@@ -281,7 +287,13 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
             case NEW_NOT_COMPRESSED:
                 LOG(LOG_INFO, "new not compressed bitmap\n");
                 e = 0;
-                orders->send_raw_bitmap(2, entry->bmp.cx, entry->bmp.cy, entry->bmp.bpp, entry->bmp.data_co, cache_b_id, cache_b_idx);
+                {
+                    RDPBmpCache bmp(2, entry->bmp, cache_b_id, cache_b_idx);
+                    // check reserved size depending on version
+                    orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
+                    bmp.emit(*orders->out_s);
+                    bmp.data = 0;
+                }
             break;
             case NEW_COMPRESSED:
             {

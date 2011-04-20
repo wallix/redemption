@@ -172,7 +172,7 @@ class Stream {
                ;
     }
 
-    uint8_t *in_uint8p(unsigned int n) {
+    const uint8_t *in_uint8p(unsigned int n) {
         this->p+=n;
         return this->p - n;
     }

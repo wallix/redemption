@@ -39,25 +39,25 @@
 
 struct FontChar {
     int offset;  // leading whistespace before char
-    int baseline; // really -height (probably unused for now)
-    int width; // with of glyph acctually containing pixels
-    int height; // height of glyph in pixel
-    int incby; // width of glyph in pixel including leading and trailing whitespaces
-    uint8_t* data;
-    FontChar(){
-        this->offset = 0;
-        this->baseline = 0;
-        this->width = 0;
-        this->height = 0;
-        this->incby = 0;
-        this->data = 0;
+    int baseline; // real -height (probably unused for now)
+    int width; // width of glyph actually containing pixels
+    int height; // height of glyph (in pixels)
+    int incby; // width of glyph (in pixels) including leading and trailing whitespaces
+    uint8_t * data;
+    FontChar(int offset, int baseline, int width, int height, int incby)
+        : offset(offset),
+          baseline(baseline),
+          width(width),
+          height(height),
+          incby(incby),
+          data(new uint8_t[this->datasize()])
+    {
     }
     ~FontChar(){
+        delete [] this->data;
     }
     inline int datasize(){
-        int nb_bytes_width = nbbytes(this->width);
-        // nb total bytes rounded up to next multiple of 4
-        return (this->height * nb_bytes_width + 3) & ~3;
+        return align4(this->height * nbbytes(this->width));
     }
 
     /* compare the two font items returns 1 if they match */
@@ -100,7 +100,7 @@ struct FontChar {
 
 /* font */
 struct Font {
-    struct FontChar font_items[NUM_FONTS];
+    struct FontChar * font_items[NUM_FONTS];
     char name[32];
     int size;
     int style;
@@ -108,8 +108,11 @@ struct Font {
         int fd;
         int b;
         int index;
-        int datasize;
         int file_size;
+
+        for (int i = 0; i < NUM_FONTS ; i++){
+            font_items[i] = 0;
+        }
 
         try{
             if (access(file_path, F_OK)) {
@@ -170,36 +173,37 @@ struct Font {
     #warning we can do something much cooler using C++ facilities and moving glyph building code to FontChar. Only problem : clean error management using exceptions implies a real exception object in FontChar. We will do that later.
             index = 32; // we start at space, no glyph for chars below 32
             while (stream.check_rem(16)) {
-                struct FontChar& glyph = this->font_items[index];
-#warning height of actual pixels contained in the char (got from clip box of the char)
-                glyph.width = stream.in_sint16_le();
-#warning head of a clipping box containing that char
-                glyph.height = stream.in_sint16_le();
+                int width = stream.in_sint16_le();
+                int height = stream.in_sint16_le();
 #warning baseline is always -height (seen from the code of fontdump) looks strange. It means that baseline is probably not used in current code.
-                glyph.baseline = stream.in_sint16_le();
-#warning offset is set to leading spaces of the font
-                glyph.offset = stream.in_sint16_le();
-                glyph.incby = stream.in_sint16_le();
+                int baseline = stream.in_sint16_le();
+
+                int offset = stream.in_sint16_le();
+                int incby = stream.in_sint16_le();
                 stream.skip_uint8(6);
-                datasize = glyph.datasize();
+
+                this->font_items[index] = new FontChar(offset, baseline, width, height, incby);
+                int datasize = this->font_items[index]->datasize();
                 if (datasize < 0 || datasize > 512) {
                     /* shouldn't happen, implies broken font file*/
                     LOG(LOG_ERR,
                         "Error loading font %s. Wrong size for glyph %d"
                         "width %d height %d \n", file_path, index,
-                        glyph.width, glyph.height);
+                        this->font_items[index]->width,
+                        this->font_items[index]->height);
                     // one glyph is broken but we continue with other glyphs
                 }
-                if (!stream.check_rem(datasize)) {
-                    LOG(LOG_ERR, "Error loading font %s:"
-                        " not enough data for definition of glyph %d"
-                        " (expected %d, got %d)\n", file_path, index,
-                        datasize, stream.free_size());
-                        throw 6;
-                        // we stop loading font here, we are at end of file
+                else {
+                    if (!stream.check_rem(datasize)) {
+                        LOG(LOG_ERR, "Error loading font %s:"
+                            " not enough data for definition of glyph %d"
+                            " (expected %d, got %d)\n", file_path, index,
+                            datasize, stream.free_size());
+                            throw 6;
+                            // we stop loading font here, we are at end of file
+                    }
+                    memcpy(this->font_items[index]->data, stream.in_uint8p(datasize), datasize);
                 }
-                glyph.data = new uint8_t[datasize];
-                memcpy(glyph.data, stream.in_uint8p(datasize), datasize);
                 index++;
             }
         }
@@ -208,16 +212,8 @@ struct Font {
         return;
     }
 
-    /*****************************************************************************/
-    /* free the font and all the items */
     ~Font()
     {
-        for (int i = 0; i < NUM_FONTS; i++) {
-            // delete data only if glyph have been defined
-            if (this->font_items[i].data){
-                delete [] this->font_items[i].data;
-            }
-        }
     }
 
 };

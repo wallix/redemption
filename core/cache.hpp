@@ -30,8 +30,8 @@
 #include "font.hpp"
 struct char_item {
     int stamp;
-    struct FontChar font_item;
-    char_item(){
+    struct FontChar * font_item;
+    char_item() : font_item(0) {
         this->stamp = 0;
     }
 };
@@ -111,7 +111,9 @@ struct Cache {
         /* free all the cached font items */
         for (int i = 0; i < 12; i++) {
             for (int j = 0; j < 256; j++) {
-                delete [] this->char_items[i][j].font_item.data;
+                if (this->char_items[i][j].font_item){
+                    delete this->char_items[i][j].font_item;
+                }
             }
         }
     }
@@ -127,7 +129,9 @@ struct Cache {
         /* free all the cached font items */
         for (int i = 0; i < 12; i++) {
             for (int j = 0; j < 256; j++) {
-                delete this->char_items[i][j].font_item.data;
+                if (this->char_items[i][j].font_item){
+                    delete this->char_items[i][j].font_item;
+                }
             }
         }
 
@@ -148,28 +152,24 @@ struct Cache {
     /*****************************************************************************/
     t_glyph_cache_result add_glyph(FontChar* font_item, int & cacheid, int & cacheidx)
     {
-        int oldest;
-        int f;
-        int c;
-        int datasize;
-        struct FontChar* fi;
-
         this->char_stamp++;
         /* look for match */
         for (size_t i = 7; i < 12; i++) {
             for (size_t j = 0; j < 250; j++) {
-                if (this->char_items[i][j].font_item.item_compare(font_item)) {
-                    this->char_items[i][j].stamp = this->char_stamp;
-                    cacheidx = j;
-                    cacheid = i;
-                    return GLYPH_FOUND_IN_CACHE;
+                if (this->char_items[i][j].font_item){
+                    if (this->char_items[i][j].font_item->item_compare(font_item)) {
+                        this->char_items[i][j].stamp = this->char_stamp;
+                        cacheidx = j;
+                        cacheid = i;
+                        return GLYPH_FOUND_IN_CACHE;
+                    }
                 }
             }
         }
         /* look for oldest */
-        f = 0;
-        c = 0;
-        oldest = 0x7fffffff;
+        int f = 0;
+        int c = 0;
+        int oldest = 0x7fffffff;
         for (size_t i = 7; i < 12; i++) {
             for (size_t j = 0; j < 250; j++) {
                 if (this->char_items[i][j].stamp < oldest) {
@@ -180,24 +180,18 @@ struct Cache {
             }
         }
         /* set, send char and return */
-        fi = &this->char_items[f][c].font_item;
-        delete(fi->data);
-        datasize = ((font_item->height * nbbytes(font_item->width)) + 3) & ~3;
-        fi->data = new uint8_t[datasize];
-        memcpy(fi->data, font_item->data, datasize);
-        fi->offset = font_item->offset;
-        fi->baseline = font_item->baseline;
-        fi->width = font_item->width;
-        fi->height = font_item->height;
+        #warning define a copy constructor
+        FontChar * fi = new FontChar(font_item->offset, font_item->baseline, font_item->width, font_item->height, 0);
+        memcpy(fi->data, font_item->data, font_item->datasize());
+        this->char_items[f][c].font_item = fi;
         this->char_items[f][c].stamp = this->char_stamp;
-
         cacheidx = c;
         cacheid = f;
         return GLYPH_ADDED_TO_CACHE;
     }
 
     int add_pointer(uint8_t* data, uint8_t* mask, int x, int y, int & cache_idx){
-    #warning see with code below to avoid useless copy
+    #warning see code below to avoid useless copy
         struct pointer_item pointer_item;
 
         pointer_item.x = x;

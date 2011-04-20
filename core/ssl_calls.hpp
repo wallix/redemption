@@ -66,7 +66,7 @@ class ssllib
         SHA1_Init(sha1);
     }
 
-    static void sha1_update(SSL_SHA1 * sha1, uint8_t * data, uint32_t len)
+    static void sha1_update(SSL_SHA1 * sha1, const uint8_t * data, uint32_t len)
     {
         SHA1_Update(sha1, data, len);
     }
@@ -81,7 +81,7 @@ class ssllib
         MD5_Init(md5);
     }
 
-    static void md5_update(SSL_MD5 * md5, uint8_t * data, uint32_t len)
+    static void md5_update(SSL_MD5 * md5, const uint8_t * data, uint32_t len)
     {
         MD5_Update(md5, data, len);
     }

@@ -280,7 +280,7 @@ struct client_mod {
         int f = 0;
         int c = 0;
         for (int index = 0; index < len; index++) {
-            FontChar* font_item = this->front->font->font_items + wstr[index];
+            FontChar* font_item = this->front->font->font_items[wstr[index]];
             switch (this->front->cache->add_glyph(font_item, f, c))
             {
                 case Cache::GLYPH_ADDED_TO_CACHE:
@@ -379,7 +379,7 @@ struct client_mod {
     }
 
 
-    int server_paint_rect(int rop, const Rect & dst, uint8_t* src_data, int width, int height, int srcx, int srcy)
+    int server_paint_rect(int rop, const Rect & dst, const uint8_t* src_data, int width, int height, int srcx, int srcy)
     {
         const Rect src_r(srcx, srcy, width, height);
         this->front->send_bitmap_front(dst, src_r,  src_data,
@@ -485,7 +485,7 @@ struct client_mod {
             wchar_t wstr[len + 2];
             mbstowcs(wstr, text, len + 1);
             for (size_t index = 0; index < len; index++) {
-                FontChar *font_item = this->front->font->font_items + wstr[index];
+                FontChar *font_item = this->front->font->font_items[wstr[index]];
                 rv = rv + font_item->incby;
             }
         }
@@ -499,7 +499,7 @@ struct client_mod {
             wchar_t *wstr = new wchar_t[len + 2];
             mbstowcs(wstr, text, len + 1);
             for (int index = 0; index < len; index++) {
-                FontChar *font_item = this->front->font->font_items + wstr[index];
+                FontChar *font_item = this->front->font->font_items[wstr[index]];
                 rv = std::max(rv, font_item->height);
             }
             delete [] wstr;
@@ -559,7 +559,7 @@ struct client_mod {
 
     void server_add_char(int font, int character,
                     int offset, int baseline,
-                    int width, int height, uint8_t* data)
+                    int width, int height, const uint8_t* data)
     {
         this->front->send_glyph(font, character, offset, baseline, width, height, data);
     }

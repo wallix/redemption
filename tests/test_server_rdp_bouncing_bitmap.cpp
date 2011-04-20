@@ -53,6 +53,7 @@
 #include "log.hpp"
 #include "front.hpp"
 #include "check_files.hpp"
+#include "NewRDPOrders.hpp"
 
 #define DONT_CAPTURE_MOVIE true
 #define COLOR_IMAGE FIXTURES_PATH "/color_image2.bmp"
@@ -217,17 +218,61 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
         front->end_update();
 
         orders->init();
+
+            /* max size width * height * Bpp + 16 */
+//    void send_raw_bitmap(int version, int width, int height, int bpp, const uint8_t* data, int cache_id, int cache_idx)
+//    {
+//        RDPBmpCache bmp(1, entry_b->bmp.cx, entry_b->bmp.cy, entry_b->bmp.bpp, entry_b->bmp.data_co, cache_b_id, cache_b_idx);
+
+
+//        int bufsize = align4(width * nbbytes(bpp)) * height;
+//        // check reserved size depending on version
+//        this->reserve_order(bufsize + 16);
+//        bmp.emit(*this->out_s);
+//        bmp.data = 0;
+//    }
+
+
         BitmapCacheItem * entry_b = front->bmp_cache->get_item(cache_b_id, cache_b_idx);
-        orders->send_raw_bitmap(1,entry_b->bmp.cx, entry_b->bmp.cy, entry_b->bmp.bpp, entry_b->bmp.data_co, cache_b_id, cache_b_idx);
+        {
+            #warning RDPBmpCache can probably be merged with bitmap object
+            RDPBmpCache bmp(1, entry_b->bmp, cache_b_id, cache_b_idx);
+        // check reserved size depending on version
+            orders->reserve_order(align4(entry_b->bmp.cx * nbbytes(entry_b->bmp.bpp)) * entry_b->bmp.cy + 16);
+            bmp.emit(*orders->out_s);
+            bmp.data = 0;
+        }
 
         BitmapCacheItem * entry_b_h = front->bmp_cache->get_item(cache_b_id_h, cache_b_idx_h);
-        orders->send_raw_bitmap(1,entry_b_h->bmp.cx, entry_b_h->bmp.cy, entry_b_h->bmp.bpp, entry_b_h->bmp.data_co, cache_b_id_h, cache_b_idx_h);
+        {
+            #warning RDPBmpCache can probably be merged with bitmap object
+            RDPBmpCache bmp(1, entry_b_h->bmp, cache_b_id_h, cache_b_idx_h);
+        // check reserved size depending on version
+            orders->reserve_order(align4(entry_b_h->bmp.cx * nbbytes(entry_b_h->bmp.bpp)) * entry_b_h->bmp.cy + 16);
+            bmp.emit(*orders->out_s);
+            bmp.data = 0;
+        }
+
 
         BitmapCacheItem * entry_b_wallix = front->bmp_cache->get_item(cache_b_id_wallix, cache_b_idx_wallix);
-        orders->send_raw_bitmap(1,entry_b_wallix->bmp.cx, entry_b_wallix->bmp.cy, entry_b_wallix->bmp.bpp, entry_b_wallix->bmp.data_co, cache_b_id_wallix, cache_b_idx_wallix);
+        {
+            #warning RDPBmpCache can probably be merged with bitmap object
+            RDPBmpCache bmp(1, entry_b_wallix->bmp, cache_b_id_wallix, cache_b_idx_wallix);
+           // check reserved size depending on version
+            orders->reserve_order(align4(entry_b_wallix->bmp.cx * nbbytes(entry_b_wallix->bmp.bpp)) * entry_b_wallix->bmp.cy + 16);
+            bmp.emit(*orders->out_s);
+            bmp.data = 0;
+        }
 
         BitmapCacheItem * entry_b_h_wallix = front->bmp_cache->get_item(cache_b_id_h_wallix, cache_b_idx_h_wallix);
-        orders->send_raw_bitmap(1,entry_b_h_wallix->bmp.cx, entry_b_h_wallix->bmp.cy, entry_b_h_wallix->bmp.bpp, entry_b_h_wallix->bmp.data_co, cache_b_id_h_wallix, cache_b_idx_h_wallix);
+        {
+            #warning RDPBmpCache can probably be merged with bitmap object
+            RDPBmpCache bmp(1, entry_b_h_wallix->bmp, cache_b_id_h_wallix, cache_b_idx_h_wallix);
+        // check reserved size depending on version
+            orders->reserve_order(align4(entry_b_h_wallix->bmp.cx * nbbytes(entry_b_h_wallix->bmp.bpp)) * entry_b_h_wallix->bmp.cy + 16);
+            bmp.emit(*orders->out_s);
+            bmp.data = 0;
+        }
         orders->send();
 
         front->begin_update();

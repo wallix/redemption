@@ -107,8 +107,8 @@ struct rdp_sec {
 
     void rdp_lic_process_authreq(Stream & stream)
     {
-        uint8_t* in_token;
-        uint8_t* in_sig;
+        const uint8_t* in_token;
+        const uint8_t* in_sig;
         uint8_t out_token[LICENCE_TOKEN_SIZE];
         uint8_t decrypt_token[LICENCE_TOKEN_SIZE];
         uint8_t hwid[LICENCE_HWID_SIZE];
@@ -120,7 +120,18 @@ struct rdp_sec {
         in_token = 0;
         in_sig = 0;
         /* Parse incoming packet and save the encrypted token */
-        this->rdp_lic_parse_authreq(stream, &in_token, &in_sig);
+        stream.skip_uint8(6); /* unknown: f8 3d 15 00 04 f6 */
+
+        int tokenlen = stream.in_uint16_le();
+        if (tokenlen != LICENCE_TOKEN_SIZE) {
+            LOG(LOG_ERR, "token len = %d, expected %d\n", tokenlen, LICENCE_TOKEN_SIZE);
+        }
+        else{
+            in_token = stream.in_uint8p(tokenlen);
+            in_sig = stream.in_uint8p(LICENCE_SIGNATURE_SIZE);
+            stream.check_end();
+        }
+
         memcpy(out_token, in_token, LICENCE_TOKEN_SIZE);
         /* Decrypt the token. It should read TEST in Unicode. */
         crypt_key = ssl_rc4_info_create();
@@ -166,7 +177,6 @@ struct rdp_sec {
     void rdp_lic_process_demand(Stream & stream)
     {
         uint8_t null_data[SEC_MODULUS_SIZE];
-        uint8_t* server_random;
         uint8_t signature[LICENCE_SIGNATURE_SIZE];
         uint8_t hwid[LICENCE_HWID_SIZE];
         uint8_t* licence_data;
@@ -175,7 +185,7 @@ struct rdp_sec {
 
         licence_data = 0;
         /* Retrieve the server random from the incoming packet */
-        server_random = stream.in_uint8p(SEC_RANDOM_SIZE);
+        const uint8_t * server_random = stream.in_uint8p(SEC_RANDOM_SIZE);
 
         // RDP licence generate key
         {
@@ -355,21 +365,6 @@ struct rdp_sec {
       delete [] path;
     }
 
-    int rdp_lic_parse_authreq(Stream & stream, uint8_t** token, uint8_t** signature)
-    {
-        int tokenlen;
-
-        stream.skip_uint8(6); /* unknown: f8 3d 15 00 04 f6 */
-        tokenlen = stream.in_uint16_le();
-        if (tokenlen != LICENCE_TOKEN_SIZE) {
-            /* error("token len %d\n", tokenlen); */
-            return 0;
-        }
-        *token = stream.in_uint8p(tokenlen);
-        *signature = stream.in_uint8p(LICENCE_SIGNATURE_SIZE);
-        return stream.check_end();
-    }
-
     void rdp_lic_process_issue(Stream & stream)
     {
         uint8_t* crypt_key;
@@ -432,7 +427,7 @@ struct rdp_sec {
 
     // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
     // Both SHA1 and MD5 algorithms are used.
-    static void rdp_sec_hash_48(uint8_t* out, uint8_t* in, uint8_t* salt1, uint8_t* salt2, uint8_t salt)
+    static void rdp_sec_hash_48(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2, const uint8_t salt)
     {
         uint8_t shasig[20];
         uint8_t pad[4];
@@ -460,7 +455,7 @@ struct rdp_sec {
 
 
     // 16-byte transformation used to generate export keys (6.2.2).
-    static void rdp_sec_hash_16(uint8_t* out, uint8_t* in, uint8_t* salt1, uint8_t* salt2)
+    static void rdp_sec_hash_16(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2)
     {
         SSL_MD5 md5;
 

@@ -363,19 +363,6 @@ struct Orders
         return 0;
     }
 
-    /* max size width * height * Bpp + 16 */
-    void send_raw_bitmap(int version, int width, int height, int bpp, const uint8_t* data, int cache_id, int cache_idx)
-    {
-        #warning RDPBmpCache can probably be merged with bitmap object
-        RDPBmpCache bmp(version, width, height, bpp, data, cache_id, cache_idx);
-
-        int bufsize = align4(width * nbbytes(bpp)) * height;
-        // check reserved size depending on version
-        this->reserve_order(bufsize + 16);
-        bmp.emit(*this->out_s);
-        bmp.data = 0;
-    }
-
     /*****************************************************************************/
     /* returns error */
     /* max size width * height * Bpp + 16 */
@@ -480,9 +467,7 @@ struct Orders
         switch (this->get_compression_type()){
         case NOT_COMPRESSED:
         {
-            RDPBmpCache bmp_order(TS_CACHE_BITMAP_UNCOMPRESSED,
-                            bmp.cx, bmp.cy, bmp.bpp,
-                            bmp.data_co, cache_id, cache_idx);
+            RDPBmpCache bmp_order(TS_CACHE_BITMAP_UNCOMPRESSED, bmp, cache_id, cache_idx);
             // check reserved size depending on version
             this->reserve_order(align4(bmp.cx * nbbytes(bmp.bpp)) * bmp.cy + 16);
             bmp_order.emit(*this->out_s);
@@ -491,9 +476,7 @@ struct Orders
         break;
         case NEW_NOT_COMPRESSED:
         {
-            RDPBmpCache bmp_order(TS_CACHE_BITMAP_UNCOMPRESSED_REV2,
-                            bmp.cx, bmp.cy, bmp.bpp,
-                            bmp.data_co, cache_id, cache_idx);
+            RDPBmpCache bmp_order(TS_CACHE_BITMAP_UNCOMPRESSED_REV2, bmp, cache_id, cache_idx);
             // check reserved size depending on version
             this->reserve_order(align4(bmp.cx * nbbytes(bmp.bpp)) * bmp.cy + 16);
             bmp_order.emit(*this->out_s);
@@ -531,7 +514,7 @@ struct Orders
 
     void send_font(struct FontChar* font_char, int font_index, int char_index)
     {
-        int datasize = (font_char->height * nbbytes(font_char->width) + 3) & ~3;
+        int datasize = font_char->datasize();
         this->reserve_order(datasize + 18);
         int order_flags = STANDARD | SECONDARY;
         this->out_s->out_uint8(order_flags);
@@ -551,8 +534,6 @@ struct Orders
 
 
     /*****************************************************************************/
-    private:
-
     // check if the next order will fit in available packet size
     // if not send previous orders we got and init a new packet
     void reserve_order(size_t asked_size)

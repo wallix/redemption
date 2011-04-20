@@ -42,7 +42,7 @@
 #include "colors.hpp"
 #include <inttypes.h>
 #include "rect.hpp"
-#include "NewRDPOrders.hpp"
+//#include "NewRDPOrders.hpp"
 
 enum {
     BITMAP_FOUND_IN_CACHE,
@@ -356,12 +356,12 @@ struct Bitmap{
         memcpy(this->data_co, input, this->bmp_size);
     }
 
-    void decompress(uint8_t* input, size_t size)
+    void decompress(const uint8_t* input, size_t size)
     {
         this->pmax = this->data_co + this->bmp_size;
         unsigned yprev = 0;
         uint8_t* out = this->data_co;
-        uint8_t* end = input + size;
+        const uint8_t* end = input + size;
         unsigned color1;
         unsigned color2;
         unsigned mix;

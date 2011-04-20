@@ -185,7 +185,6 @@ struct rdp_orders {
         case RDP::TS_CACHE_BITMAP_COMPRESSED:
             {
                 int flags = header.flags;
-                uint8_t* data;
                 int size = 0;
                 int pad2 = 0;
                 int row_size = 0;
@@ -208,7 +207,7 @@ struct rdp_orders {
                     final_size = stream.in_uint16_le();
                 }
 
-                data = stream.in_uint8p(size);
+                const uint8_t* data = stream.in_uint8p(size);
 
                 bitmap = new Bitmap(bpp, width, height);
 
@@ -240,7 +239,7 @@ struct rdp_orders {
             int width = stream.in_uint16_le();
             int height = stream.in_uint16_le();
             int datasize = (height * nbbytes(width) + 3) & ~3;
-            uint8_t *data = stream.in_uint8p(datasize);
+            const uint8_t *data = stream.in_uint8p(datasize);
 
             mod->server_add_char(font, character, offset, baseline, width, height, data);
         }

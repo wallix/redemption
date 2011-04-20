@@ -1078,12 +1078,12 @@ struct rdp_rdp {
                     uint16_t final_size = stream.in_uint16_le();
                 }
 
-                uint8_t * data = stream.in_uint8p(size);
+                const uint8_t * data = stream.in_uint8p(size);
 
                 bitmap.decompress(data, size);
             }
             else {
-                uint8_t * data = stream.in_uint8p(bitmapLength);
+                const uint8_t * data = stream.in_uint8p(bitmapLength);
                 assert(bitmapLength == bitmap.bmp_size);
                 bitmap.copy(data);
             }

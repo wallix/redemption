@@ -499,7 +499,7 @@ struct mod_vnc : public client_mod {
     static void build_pointer(
         uint8_t cursor_data[32 * (32 * 3)],
         uint8_t cursor_mask[32 * (32 / 8)],
-        uint8_t * d1, uint8_t * d2, int cx, int cy, int bpp, const RGBPalette & palette)
+        const uint8_t * d1, const uint8_t * d2, int cx, int cy, int bpp, const RGBPalette & palette)
     {
         int r;
         int g;
@@ -522,7 +522,7 @@ struct mod_vnc : public client_mod {
         }
     }
 
-    static int get_pixel_safe(uint8_t* data, int x, int y, int width, int height, int bpp)
+    static int get_pixel_safe(const uint8_t* data, int x, int y, int width, int height, int bpp)
     {
         int start;
         int shift;
@@ -676,8 +676,8 @@ struct mod_vnc : public client_mod {
                     int k = nbbytes(cx) * cy;
                     Stream stream(j + k);
                     this->t->recv((char**)&stream.end, j + k);
-                    uint8_t *d1 = stream.in_uint8p(j);
-                    uint8_t *d2 = stream.in_uint8p(k);
+                    const uint8_t *d1 = stream.in_uint8p(j);
+                    const uint8_t *d2 = stream.in_uint8p(k);
 
 
                     #warning check that, smells like buffer overflow

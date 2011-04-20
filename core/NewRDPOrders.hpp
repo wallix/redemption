@@ -28,6 +28,7 @@
 #include "stream.hpp"
 #include "rect.hpp"
 #include "altoco.hpp"
+#include "bitmap.hpp"
 
 // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding
 // =======================================================
@@ -934,17 +935,14 @@ class RDPBmpCache {
     int height;
     int bpp;
     int cache_idx;
-    const uint8_t * data;
+    uint8_t * data;
     uint8_t orderType;
 
-    RDPBmpCache(int orderType,
-                int width, int height, int bpp,
-                const uint8_t* data,
-                int cache_id, int cache_idx) :
+    RDPBmpCache(int orderType, Bitmap & bmp, int cache_id, int cache_idx) :
                     cache_id(cache_id),
-                    width(width), height(height), bpp(bpp),
+                    width(bmp.cx), height(bmp.cy), bpp(bmp.bpp),
                     cache_idx(cache_idx),
-                    data(data),
+                    data(bmp.data_co),
                     orderType(orderType)
     {
     }
@@ -1259,10 +1257,7 @@ class RDPBmpCache {
         //                              2.2.9.1.1.3.1.2.2).
 
         // for uncompressed bitmaps the format is quite simple
-        for (int y = 0; y < this->height; y++) {
-            stream.out_copy_bytes(this->data + y * row_size, row_size);
-        }
-
+        stream.out_copy_bytes(this->data, this->height * row_size);
         stream.set_length(-12, length_ptr);
     }
 
@@ -1337,13 +1332,11 @@ class RDPBmpCache {
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
+        #warning I should be able to create a bitmap instead of doing this
         int row_size = align4(width * nbbytes(bpp));
         assert(row_size * height == bufsize);
         this->data = new uint8_t[bufsize];
-        #warning keeping the bitmap inverted as it is receive on network would allow to read it in one big memory chunk
-        for (int y = 0; y < this->height; y++) {
-            memcpy((void*)(this->data + y * row_size), stream.in_uint8p(row_size), row_size);
-        }
+        memcpy(this->data, stream.in_uint8p(bufsize), bufsize);
     }
 
     bool operator==(const RDPBmpCache & other) const {

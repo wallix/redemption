@@ -162,7 +162,7 @@ struct xup_mod : public client_mod {
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
                         int len_bmpdata = stream.in_uint32_le();
-                        uint8_t * bmpdata = stream.in_uint8p(len_bmpdata);
+                        const uint8_t * bmpdata = stream.in_uint8p(len_bmpdata);
                         int width = stream.in_uint16_le();
                         int height = stream.in_uint16_le();
                         int srcx = stream.in_sint16_le();

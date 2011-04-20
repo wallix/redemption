@@ -235,17 +235,11 @@ public:
 
     void send_glyph(int font, int character,
                     int offset, int baseline,
-                    int width, int height, uint8_t* data)
+                    int width, int height, const uint8_t* data)
     {
-        #warning why does front bypass font cache ?
-        struct FontChar fi;
+        struct FontChar fi(offset, baseline, width, height, 0);
 
-        fi.offset = offset;
-        fi.baseline = baseline;
-        fi.width = width;
-        fi.height = height;
-        fi.incby = 0;
-        fi.data = data;
+        memcpy(fi.data, data, fi.datasize());
         this->send_glyph(&fi, font, character);
     }
 
@@ -374,7 +368,7 @@ public:
     void line(int rop, int x1, int y1, int x2, int y2, int bgcolor, const RDPPen & pen, const Rect & clip)
     {
         #warning if direction of line is inverted, put it back in the right order, for now just ignore lines in wrong direction
-        if (x1 >= x2 && y1 >= y2 
+        if (x1 >= x2 && y1 >= y2
         && !clip.intersect(Rect(x1, y1, (x2 - x1) +1, (y2 - y1)+1)).isempty()){
             this->orders->line(1, x1, y1, x2, y2, rop, bgcolor, pen, clip);
             if (this->capture){

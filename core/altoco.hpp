@@ -29,7 +29,7 @@
 
 static inline uint32_t align4(int value)
 {
-    return ((value+3) & (-1^3));
+    return (value+3) & ~3;
 }
 
 static inline uint32_t nbbytes(unsigned value)
