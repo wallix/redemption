@@ -237,7 +237,7 @@ struct Orders
 
     void mem_blt(int cache_id,
                 int color_table, const Rect & r,
-                int rop, int bmp_cx, int bmp_cy, int srcx, int srcy,
+                int rop, int srcx, int srcy,
                 int cache_idx, const Rect & clip)
     {
         this->reserve_order(30);

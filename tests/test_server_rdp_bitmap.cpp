@@ -416,7 +416,7 @@ uint8_t compressed[] = {
             assert(false);
         break;
     }
-    front->orders->mem_blt(cid, 0, Rect(364, 356, width, height), 0xcc, width, height, 0, 0, 48, Rect(0, 0, 800, 600));
+    front->orders->mem_blt(cid, 0, Rect(364, 356, width, height), 0xcc, 0, 0, 48, Rect(0, 0, 800, 600));
     front->orders->send();
 
 

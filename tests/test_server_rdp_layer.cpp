@@ -308,7 +308,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
             break;
         }
     }
-    front->mem_blt(cache_b_id, 0, Rect(100, 450, 32, 32), 0xcc, entry->bmp.cx, entry->bmp.cy, entry->bmp.bpp, entry->bmp.data_co, 0, 0, cache_b_idx, Rect(100, 450, 32, 32));
+    front->mem_blt(cache_b_id, 0, Rect(100, 450, 32, 32), 0xcc, entry->bmp.bpp, entry->bmp.data_co, 0, 0, cache_b_idx, Rect(100, 450, 32, 32));
     front->end_update();
 
     /* Draw a little pink rect at bottom-right side of screen bottom-right rectangle */

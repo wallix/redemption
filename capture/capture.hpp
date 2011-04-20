@@ -543,29 +543,29 @@ class Capture
     void mem_blt(int cache_id,
                 int color_table, const Rect & rect,
                 int rop,
-                int bmp_cx, int bmp_cy, int bpp, const uint8_t * bmp_data,
+                int bpp, const uint8_t * bmp_data,
                 int srcx, int srcy,
                 int cache_idx, const Rect &clip)
     {
         // Where we draw -> target
+        uint32_t px = 0;
+        uint8_t r = 0;
+        uint8_t g = 0;
+        uint8_t b = 0;
         uint8_t * target = this->data + (rect.y * this->width + rect.x) * 3;
         for (int j = 0; j < rect.cy ; j++){
             for (int i = 0; i < rect.cx ; i++){
-                uint32_t src_px_offset = (j + srcy) * bmp_cx + i + srcx;
-                uint32_t px = 0;
-                uint8_t r = (px >> 16) & 0xFF;
-                uint8_t g = (px >> 8)  & 0xFF;
-                uint8_t b =  px        & 0xFF;
+                uint32_t src_px_offset = ((rect.cy - j - srcy - 1) * align4(rect.cx) + i + srcx) * nbbytes(bpp);
                 switch (bpp){
                     default:
-                    case 32: 
+                    case 32:
                         assert(false);
                     break;
                     case 24:
                         {
-                            px = (bmp_data[src_px_offset*3+0]<<16)
-                               + (bmp_data[src_px_offset*3+1]<<8)
-                               + (bmp_data[src_px_offset*3+2]);
+                            px = (bmp_data[src_px_offset+2]<<16)
+                               + (bmp_data[src_px_offset+1]<<8)
+                               + (bmp_data[src_px_offset+0]);
 
                             r = (px >> 16) & 0xFF;
                             g = (px >> 8)  & 0xFF;
@@ -574,8 +574,8 @@ class Capture
                         break;
                     case 16:
                         {
-                            px = (bmp_data[src_px_offset*2+0]<<8)
-                               + (bmp_data[src_px_offset*2+1]);
+                            px = (bmp_data[src_px_offset+1]<<8)
+                               + (bmp_data[src_px_offset+0]);
 
                             r = (((px >> 8) & 0xf8) | ((px >> 13) & 0x7));
                             g = (((px >> 3) & 0xfc) | ((px >> 9) & 0x3));
@@ -584,8 +584,8 @@ class Capture
                         break;
                     case 15:
                         {
-                            px = (bmp_data[src_px_offset*2+0]<<8)
-                               + (bmp_data[src_px_offset*2+1]);
+                            px = (bmp_data[src_px_offset+1]<<8)
+                               + (bmp_data[src_px_offset+0]);
 
                             r = ((px >> 7) & 0xf8) | ((px >> 12) & 0x7);
                             g = ((px >> 2) & 0xf8) | ((px >> 8) & 0x7);
@@ -594,7 +594,7 @@ class Capture
                         break;
                     case 8:
                         {
-                            px = bmp_data[src_px_offset*1+0];
+                            px = bmp_data[src_px_offset+0];
 
                             r = px & 7;
                             r = (r << 5) | (r << 2) | (r >> 1);

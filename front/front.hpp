@@ -257,16 +257,15 @@ public:
     void mem_blt(int cache_id,
                  int color_table, const Rect & r,
                  int rop,
-                 int bmp_cx, int bmp_cy, int bpp, uint8_t * data,
+                 int bpp, uint8_t * data,
                  int srcx, int srcy,
                  int cache_idx, const Rect & clip)
     {
         if (!clip.isempty() && !clip.intersect(r).isempty()){
-            this->orders->mem_blt(cache_id, color_table, r, rop, bmp_cx, bmp_cy, srcx, srcy, cache_idx, clip);
+            this->orders->mem_blt(cache_id, color_table, r, rop, srcx, srcy, cache_idx, clip);
             if (this->capture){
-                Stream aligned_stream(65535);
-                this->capture->mem_blt(cache_id, color_table, r, rop, bmp_cx, bmp_cy, bpp,
-                          aligned_stream.data, srcx, srcy, cache_idx, clip);
+                this->capture->mem_blt(cache_id, color_table, r, rop, bpp,
+                          data, srcx, srcy, cache_idx, clip);
             }
         }
     }
@@ -305,7 +304,7 @@ public:
                     };
 
                     this->mem_blt(cache_id, palette_id,
-                                  rect1, 0xcc, w, h,
+                                  rect1, 0xcc,
                                   entry->bmp.bpp,
                                   entry->bmp.data_co,
                                   0, 0, cache_idx, clip);
