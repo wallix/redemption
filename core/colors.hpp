@@ -30,6 +30,24 @@
 typedef uint32_t RGBcolor;
 typedef RGBcolor RGBPalette[256];
 
+// colorN (variable): an index into the current palette or an RGB triplet 
+//                    value; the actual interpretation depends on the color 
+//                    depth of the bitmap data.
+// +-------------+------------+------------------------------------------------+
+// | Color depth | Field size |                Meaning                         |
+// +-------------+------------+------------------------------------------------+
+// |       8 bpp |     1 byte |     Index into the current color palette.      |
+// +-------------+------------+------------------------------------------------+
+// |      15 bpp |    2 bytes | RGB color triplet expressed in 5-5-5 format    |
+// |             |            | (5 bits for red, 5 bits for green, and 5 bits  |
+// |             |            | for blue).                                     |
+// +-------------+------------+------------------------------------------------+
+// |      16 bpp |    2 bytes | RGB color triplet expressed in 5-6-5 format    | 
+// |             |            | (5 bits for red, 6 bits for green, and 5 bits  |
+// |             |            | for blue).                                     |
+// +-------------+------------+------------------------------------------------+
+// |    24 bpp   |    3 bytes |     RGB color triplet (1 byte per component).  |
+// +-------------+------------+------------------------------------------------+
 
 #warning we should ensure input domain for r, g and b is what we want it to be
 // rrrgggbb
@@ -38,31 +56,42 @@ inline uint8_t color8(uint8_t r, uint8_t g, uint8_t b)
   return (r & 0xE0) | ((g >> 3) & 0x1C) | ((b >> 6) & 0x03);
 }
 
-// 0rrrrrgggggbbbbb
+// 0 r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 b1 b2 b3 b4 b5
 inline uint16_t color15(const uint8_t r, const uint8_t g, const uint8_t b)
 {
-  return ((r << 7) & 0x7C00)|((g << 2) & 0x03D0) | (b >> 5);
+   // r1 r2 r3 r4 r5 r6 r7 r8
+  return ((r << 7) & 0x7C00) // 0 r1 r2 r3 r4 r5 0 0 0 0 0 0 0 0 0 0
+    // g1 g2 g3 g4 g5 g6 g7 g8
+    |((g << 2) & 0x03E0) // 0 0 0 0 0 0 g1 g2 g3 g4 g5 0 0 0 0 0
+    // b1 b2 b3 b4 b5 b6 b7 b8
+    | (b >> 3); // 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b3 b4 b5
 }
 
 inline void splitcolor15(uint8_t & r, uint8_t & g, uint8_t & b, uint32_t c)
 {
-  r = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7);
-  g = ((c >> 2) & 0xf8) | ((c >>  8) & 0x7);
-  b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7);
+  // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 b1 b2 b3 b4 b5
+  r = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
+  g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
+  b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
 }
 
-// rrrrrrggggggbbbbb
-//
+// r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 g6 b1 b2 b3 b4 b5
 inline uint16_t color16(uint8_t r, uint8_t g, uint8_t b)
 {
-  return ((r << 8) & 0xFC00)|((g << 2) & 0x03F0) | (b << 3);
+   // r1 r2 r3 r4 r5 r6 r7 r8
+   return ((r << 8) & 0xF800) // r1 r2 r3 r4 r5 0 0 0 0 0 0 0 0 0 0 0
+       // g1 g2 g3 g4 g5 g6 g7 g8
+       |((g << 3) & 0x07E0)       // 0 0 0 0 0 g1 g2 g3 g4 g5 g6 0 0 0 0 0
+       // b1 b2 b3 b4 b5 b6 b7 b8
+       | (b >> 3);                // 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b3 b4 b5
 }
 
 inline void splitcolor16(uint8_t & r, uint8_t & g, uint8_t & b, uint32_t c)
 {
-  r = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7);
-  g = ((c >> 3) & 0xfc) | ((c >>  9) & 0x3);
-  b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7);
+  // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 g6 b1 b2 b3 b4 b5
+  r = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
+  g = ((c >> 3) & 0xfc) | ((c >>  9) & 0x3); // g1 g2 g3 g4 g5 g6 g1 g2
+  b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
 }
 
 inline uint32_t color24RGB(uint8_t r, uint8_t g, uint8_t b)
@@ -121,7 +150,7 @@ inline uint32_t color_convert(const uint32_t in_pixel, const uint8_t in_bpp, con
     break;
     case 32:
     case 24:
-        return color24BGR(red, green, blue);
+        return color24RGB(red, green, blue);
     break;
     default:
         assert(false);

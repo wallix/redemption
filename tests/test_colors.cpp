@@ -53,6 +53,8 @@ BOOST_AUTO_TEST_CASE(TestColors)
 
     BOOST_CHECK_EQUAL(0, color_convert(0, 15, 15, palette));
     BOOST_CHECK_EQUAL(0x7FFF, color_convert(0x7FFF, 15, 15, palette));
+    BOOST_CHECK_EQUAL(0x7C00, color_convert(0x7C00, 15, 15, palette));
+    BOOST_CHECK_EQUAL(0x03E0, color_convert(0x03E0, 15, 15, palette));
 
     BOOST_CHECK_EQUAL(0, color_convert(0, 16, 16, palette));
     BOOST_CHECK_EQUAL(0xFFFF, color_convert(0xFFFF, 16, 16, palette));
@@ -62,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TestColors)
 
     // Convert to RED (in our case RED is palette color 1)
     BOOST_CHECK_EQUAL(0xE0, color_convert(1, 8, 8, palette));
-    BOOST_CHECK_EQUAL(0x7000, color_convert(1, 8, 15, palette));
+    BOOST_CHECK_EQUAL(0x7C00, color_convert(1, 8, 15, palette));
     BOOST_CHECK_EQUAL(0xF800, color_convert(1, 8, 16, palette));
     BOOST_CHECK_EQUAL(0xFF0000, color_convert(1, 8, 24, palette));
 
