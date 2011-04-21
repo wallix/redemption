@@ -260,3 +260,4 @@ unit-test test_rsa_keys : tests/test_rsa_keys.cpp rsa_keys libboost_unit_test li
 unit-test test_ordersstate : tests/test_ordersstate.cpp libboost_unit_test ;
 unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test : ;
 unit-test test_dico : tests/test_dico.cpp libboost_unit_test : ;
+unit-test test_colors : tests/test_colors.cpp libboost_unit_test : ;
