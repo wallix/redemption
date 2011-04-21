@@ -31,18 +31,17 @@ typedef uint32_t RGBcolor;
 typedef RGBcolor RGBPalette[256];
 
 
-#warning these functions are too complicated and inefficient, create unit tests and rewrite them. Also use them in all layers dealing with colors, currently there is some duplication.
-
 #warning we should ensure input domain for r, g and b is what we want it to be
+// rrrgggbb
 inline uint8_t color8(uint8_t r, uint8_t g, uint8_t b)
 {
-  return ((r >> 5) & 0x07)|((g >> 2) & 0x38) | (b & 0xc0);
+  return (r & 0xE0) | ((g >> 3) & 0x1C) | ((b >> 6) & 0x03);
 }
 
-inline uint16_t color15(uint8_t r, uint8_t g, uint8_t b)
+// 0rrrrrgggggbbbbb
+inline uint16_t color15(const uint8_t r, const uint8_t g, const uint8_t b)
 {
-
-  return ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+  return ((r << 7) & 0x7C00)|((g << 2) & 0x03D0) | (b >> 5);
 }
 
 inline void splitcolor15(uint8_t & r, uint8_t & g, uint8_t & b, uint32_t c)
@@ -52,9 +51,11 @@ inline void splitcolor15(uint8_t & r, uint8_t & g, uint8_t & b, uint32_t c)
   b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7);
 }
 
+// rrrrrrggggggbbbbb
+//
 inline uint16_t color16(uint8_t r, uint8_t g, uint8_t b)
 {
-  return ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);
+  return ((r << 8) & 0xFC00)|((g << 2) & 0x03F0) | (b << 3);
 }
 
 inline void splitcolor16(uint8_t & r, uint8_t & g, uint8_t & b, uint32_t c)
@@ -82,6 +83,53 @@ inline void splitcolor32(uint8_t & r, uint8_t & g, uint8_t & b, uint32_t c)
   b = c & 0xff;
 }
 
+#warning way too complicated, fix that
+inline uint32_t color_convert(const uint32_t in_pixel, const uint8_t in_bpp, const uint8_t out_bpp, const uint32_t (& palette)[256])
+{
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+
+    switch (in_bpp){
+    case 8:
+        splitcolor32(red, green, blue, palette[in_pixel]);
+    break;
+    case 15:
+        splitcolor15(red, green, blue, in_pixel);
+    break;
+    case 16:
+        splitcolor16(red, green, blue, in_pixel);
+    break;
+    case 32:
+    case 24:
+        splitcolor32(red, green, blue, in_pixel);
+    break;
+    default:
+        assert(false);
+    break;
+    }
+
+    switch (out_bpp){
+    case 8:
+        return color8(red, green, blue);
+    break;
+    case 15:
+        return color15(red, green, blue);
+    break;
+    case 16:
+        return color16(red, green, blue);
+    break;
+    case 32:
+    case 24:
+        return color24BGR(red, green, blue);
+    break;
+    default:
+        assert(false);
+    break;
+    }
+
+    return 0;
+}
 
 /* generic colors */
 struct Colors {

@@ -455,206 +455,24 @@ struct rdp_orders {
         return 0;
     }
 
-    /*****************************************************************************/
-    /* returns pointer, it might return bmpdata if the data dosen't need to
-       be converted, else it mallocs it.  The calling function must free
-       it if needed */
-    #warning way too complicated, fix that
     #warning we should perform memory allocation outside, before calling this function
+    #warning we should have two palettes, one for input, the other for output
     uint8_t* rdp_orders_convert_bitmap(int in_bpp, int out_bpp, const uint8_t* src,
                               int width, int height, const uint32_t (& palette)[256])
     {
-        uint8_t* dst = 0;
-        uint8_t* out = 0;
-        int i;
-        int j;
-        uint8_t red;
-        uint8_t green;
-        uint8_t blue;
-        int pixel;
-
-    #warning rewrite the code below in a sensible way, I don't want to be biten by unexpected cases (like in_bpp == 15 and out_bpp == 15) again.
-    #warning also remove all returns in the middle of the function, use malloc instead of new (and change the matchind deletes by free) as it is a bunch of bytes
-    #warning this code looks very alike some other code (written differently, but alike anyway) in bitmap.hpp check if they are not really the same.
-
-        if (((in_bpp == 16) && (out_bpp == 16))
-        || ((in_bpp == 15) && (out_bpp == 15))) {
-            #warning casting below is evil and dangerous, see to that
-            out = dst = (uint8_t*)src;
-        }
-        else {
-            int BPP = 4;
-            switch (out_bpp){
-                case 8:
-                    BPP = 1;
-                break;
-                case 15: case 16:
-                    BPP = 2;
-                break;
-                case 24:
-                    BPP = 3;
-                break;
-                case 32:
-                    BPP = 4;
-                break;
-                default:
-                    // should not happen
-                break;
-            }
-            out = dst = (uint8_t*)malloc(width * height * BPP);
-
-            if ((in_bpp == 8) && (out_bpp == 8)) {
-                for (i = 0; i < height; i++) {
-                    for (j = 0; j < width; j++) {
-                        pixel = *((uint8_t*)src);
-                        pixel = palette[pixel];
-                        splitcolor32(red, green, blue, pixel);
-                        pixel = color8(red, green, blue);
-                        *dst = pixel;
-                        src++;
-                        dst++;
-                    }
-                }
-            }
-            else if ((in_bpp == 8) && (out_bpp == 16)) {
-                for (i = 0; i < height; i++) {
-                    for (j = 0; j < width; j++) {
-                        pixel = *((uint8_t*)src);
-                        pixel = palette[pixel];
-                        splitcolor32(red, green, blue, pixel);
-                        pixel = color16(red, green, blue);
-                        *dst++ = pixel;
-                        *dst++ = pixel >> 8;
-                        src++;
-                    }
-                }
-            }
-            else if ((in_bpp == 8) && (out_bpp == 24)) {
-                for (i = 0; i < height; i++) {
-                    for (j = 0; j < width; j++) {
-                        pixel = *((uint8_t*)src);
-                        pixel = palette[pixel];
-                        splitcolor32(red, green, blue, pixel);
-                        pixel = color24RGB(red, green, blue);
-                        *dst++ = pixel;
-                        *dst++ = pixel >> 8;
-                        *dst++ = pixel >> 16;
-                        src++;;
-                    }
-                }
-            }
-            else if ((in_bpp == 15) && (out_bpp == 16)) {
-                for (i = 0; i < height; i++) {
-                    for (j = 0; j < width; j++) {
-                        pixel = *((uint16_t*)src);
-                        splitcolor15(red, green, blue, pixel);
-                        pixel = color16(red, green, blue);
-                        *dst++ = pixel;
-                        *dst++ = pixel >> 8;
-                        src += 2;
-                    }
-                }
-            }
-            else if ((in_bpp == 15) && (out_bpp == 24)) {
-                for (i = 0; i < height; i++) {
-                    for (j = 0; j < width; j++) {
-                        pixel = *((uint16_t*)src);
-                        splitcolor15(red, green, blue, pixel);
-                        pixel = color24RGB(red, green, blue);
-                        *dst++ = pixel;
-                        *dst++ = pixel >> 8;
-                        *dst++ = pixel >> 16;
-                        src += 2;
-                    }
-                }
-            }
-            else if ((in_bpp == 16) && (out_bpp == 24)) {
-                for (i = 0; i < height; i++) {
-                    for (j = 0; j < width; j++) {
-                        pixel = *((uint16_t*)src);
-                        splitcolor16(red, green, blue, pixel);
-                        pixel = color24RGB(red, green, blue);
-                        *dst++ = pixel;
-                        *dst++ = pixel >> 8;
-                        *dst++ = pixel >> 16;
-                        src += 2;
-                    }
-                }
-            }
-            else if ((in_bpp == 24) && (out_bpp == 24)) {
-                for (i = 0; i < height; i++) {
-                    for (j = 0; j < width; j++) {
-                        blue = *((uint8_t*)src);
-                        src++;
-                        green = *((uint8_t*)src);
-                        src++;
-                        red = *((uint8_t*)src);
-                        src++;
-                        pixel = color24RGB(red, green, blue);
-                        *dst++ = pixel;
-                        *dst++ = pixel >> 8;
-                        *dst++ = pixel >> 16;
-                    }
-                }
-            }
+        #warning if 15 or 16 bpp for both in and out, not need to perform any allocation or change anything
+        #warning we should not perform malloc here, it is evil
+        uint8_t * out = (uint8_t*)malloc(width * height * nbbytes(out_bpp));
+        uint8_t * dst = out;
+        for (int i = 0; i < width * height; i++) {
+            uint32_t pixel = color_convert(in_bytes_le(nbbytes(in_bpp), src), in_bpp, out_bpp, palette);
+            out_bytes_le(dst, nbbytes(out_bpp), pixel);
+            src += nbbytes(in_bpp);
+            dst += nbbytes(out_bpp);
         }
         return out;
     }
 
-    /*****************************************************************************/
-    /* returns color or 0 */
-    #warning way too complicated, fix that
-    int rdp_orders_convert_color(int in_bpp, int out_bpp, int in_color, const uint32_t (& palette)[256])
-    {
-        int pixel;
-        uint8_t red;
-        uint8_t green;
-        uint8_t blue;
-
-        if ((in_bpp == 8) && (out_bpp == 8)) {
-            pixel = palette[in_color];
-            splitcolor32(red, green, blue, pixel);
-            pixel = color8(red, green, blue);
-            return pixel;
-        }
-        if ((in_bpp == 8) && (out_bpp == 16)) {
-            pixel = palette[in_color];
-            splitcolor32(red, green, blue, pixel);
-            pixel = color16(red, green, blue);
-            return pixel;
-        }
-        if ((in_bpp == 8) && (out_bpp == 24)) {
-            pixel = palette[in_color];
-            splitcolor32(red, green, blue, pixel);
-            pixel = color24BGR(red, green, blue);
-            return pixel;
-        }
-        if ((in_bpp == 15) && (out_bpp == 16)) {
-            pixel = in_color;
-            splitcolor15(red, green, blue, pixel);
-            pixel = color16(red, green, blue);
-            return pixel;
-        }
-        if ((in_bpp == 15) && (out_bpp == 24)) {
-            pixel = in_color;
-            splitcolor15(red, green, blue, pixel);
-            pixel = color24BGR(red, green, blue);
-            return pixel;
-        }
-        if ((in_bpp == 16) && (out_bpp == 16)) {
-            return in_color;
-        }
-        if ((in_bpp == 16) && (out_bpp == 24)) {
-            pixel = in_color;
-            splitcolor16(red, green, blue, pixel);
-            pixel = color24BGR(red, green, blue);
-            return pixel;
-        }
-        if ((in_bpp == 24) && (out_bpp == 24)) {
-            return in_color;
-        }
-        return 0;
-    }
     void rdp_orders_process_destblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->destblt.receive(stream, header);
@@ -666,10 +484,11 @@ struct rdp_orders {
     {
         this->opaquerect.receive(stream, header);
 
-        int fgcolor = rdp_orders_convert_color(this->cache_colormap.bpp,
-                                           mod->screen.colors->bpp,
-                                           this->opaquerect.color,
-                                           this->cache_colormap.palette[0]);
+        int fgcolor = color_convert(
+                this->opaquerect.color,
+                this->cache_colormap.bpp,
+                mod->screen.colors->bpp,
+                this->cache_colormap.palette[0]);
         mod->server_set_fgcolor(fgcolor);
         mod->server_fill_rect(0xCC, this->opaquerect.rect);
     }
@@ -711,16 +530,16 @@ struct rdp_orders {
     void rdp_orders_process_patblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->patblt.receive(stream, header);
-
-        int fgcolor = rdp_orders_convert_color(this->cache_colormap.bpp,
-                                           mod->screen.colors->bpp,
-                                           this->patblt.fore_color,
-                                           this->cache_colormap.palette[0]);
+        #warning set_bgcolor or set_fg_color should probably take source bpp and palette as input and proceed themself to color conversion if it is necessary. This would avoid this code having to know anything about target color model (SMELL: inappropriate intimacy). This would also remove need to call color_convert from here.
+        int fgcolor = color_convert(this->patblt.fore_color,
+                                    this->cache_colormap.bpp,
+                                    mod->screen.colors->bpp,
+                                    this->cache_colormap.palette[0]);
         mod->server_set_fgcolor(fgcolor);
-        int bgcolor = rdp_orders_convert_color(this->cache_colormap.bpp,
-                                           mod->screen.colors->bpp,
-                                           this->patblt.back_color,
-                                           this->cache_colormap.palette[0]);
+        int bgcolor = color_convert(this->patblt.back_color,
+                                    this->cache_colormap.bpp,
+                                    mod->screen.colors->bpp,
+                                    this->cache_colormap.palette[0]);
         mod->server_set_bgcolor(bgcolor);
 
         mod->server_set_brush(this->patblt.brush);
@@ -732,14 +551,16 @@ struct rdp_orders {
     {
         this->lineto.receive(stream, header);
 
-        int bgcolor = rdp_orders_convert_color(this->cache_colormap.bpp,
-                                           mod->screen.colors->bpp,
-                                           this->lineto.back_color,
-                                           this->cache_colormap.palette[0]);
-        int fgcolor = rdp_orders_convert_color(this->cache_colormap.bpp,
-                                           mod->screen.colors->bpp,
-                                           this->lineto.pen.color,
-                                           this->cache_colormap.palette[0]);
+        int bgcolor = color_convert(this->lineto.back_color,
+                                    this->cache_colormap.bpp,
+                                    mod->screen.colors->bpp,
+                                    this->cache_colormap.palette[0]);
+        int fgcolor = color_convert(this->lineto.pen.color,
+                                    this->cache_colormap.bpp,
+                                    mod->screen.colors->bpp,
+                                    this->cache_colormap.palette[0]);
+        #warning set_bgcolor or set_fg_color should probably take source bpp and palette as input and proceed themself to color conversion if it is necessary. This would avoid this code having to know anything about target color model (SMELL: inappropriate intimacy). This would also remove need to call color_convert from here.
+
         mod->server_set_fgcolor(fgcolor);
         mod->server_set_bgcolor(bgcolor);
         mod->server_set_pen(this->lineto.pen.style, this->lineto.pen.width);
@@ -755,15 +576,16 @@ struct rdp_orders {
     {
         this->glyph_index.receive(stream, header);
 
-        int fgcolor = rdp_orders_convert_color(this->cache_colormap.bpp,
-                                           mod->screen.colors->bpp,
-                                           this->glyph_index.fore_color,
-                                           this->cache_colormap.palette[0]);
+        int fgcolor = color_convert(this->glyph_index.fore_color,
+                                    this->cache_colormap.bpp,
+                                    mod->screen.colors->bpp,
+                                    this->cache_colormap.palette[0]);
         mod->server_set_fgcolor(fgcolor);
-        int bgcolor = rdp_orders_convert_color(this->cache_colormap.bpp,
-                                           mod->screen.colors->bpp,
-                                           this->glyph_index.back_color,
-                                           this->cache_colormap.palette[0]);
+        int bgcolor = color_convert(this->glyph_index.back_color,
+                                    this->cache_colormap.bpp,
+                                    mod->screen.colors->bpp,
+                                    this->cache_colormap.palette[0]);
+        #warning set_bgcolor or set_fg_color should probably take source bpp and palette as input and proceed themself to color conversion if it is necessary. This would avoid this code having to know anything about target color model (SMELL: inappropriate intimacy). This would also remove need to call color_convert from here.
         mod->server_set_bgcolor(bgcolor);
         mod->server_draw_text2(
             this->glyph_index.cache_id,
