@@ -455,24 +455,6 @@ struct rdp_orders {
         return 0;
     }
 
-    #warning we should perform memory allocation outside, before calling this function
-    #warning we should have two palettes, one for input, the other for output
-    uint8_t* rdp_orders_convert_bitmap(int in_bpp, int out_bpp, const uint8_t* src,
-                              int width, int height, const uint32_t (& palette)[256])
-    {
-        #warning if 15 or 16 bpp for both in and out, not need to perform any allocation or change anything
-        #warning we should not perform malloc here, it is evil
-        uint8_t * out = (uint8_t*)malloc(width * height * nbbytes(out_bpp));
-        uint8_t * dst = out;
-        for (int i = 0; i < width * height; i++) {
-            uint32_t pixel = color_convert(in_bytes_le(nbbytes(in_bpp), src), in_bpp, out_bpp, palette);
-            out_bytes_le(dst, nbbytes(out_bpp), pixel);
-            src += nbbytes(in_bpp);
-            dst += nbbytes(out_bpp);
-        }
-        return out;
-    }
-
     void rdp_orders_process_destblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->destblt.receive(stream, header);
@@ -500,14 +482,22 @@ struct rdp_orders {
 
         struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xFF][this->memblt.cache_idx];
         if (bitmap) {
-            #warning freeing memory will fail if some exeception occurs, also allocating memory inside rdp_orders_convert_bitmap is BAD. A better solution would be to pass the original bitmap, including it's bpp, to server_paint_rect and let it deal with color changes if necessary. See also similar call in rdp_rdp. Same fix can probably apply to both cases.
-            uint8_t * bmpdata = this->rdp_orders_convert_bitmap(
-                this->cache_colormap.bpp,
-                mod->screen.colors->bpp,
-                bitmap->data_co,
-                bitmap->cx,
-                bitmap->cy,
-                this->cache_colormap.palette[(this->memblt.cache_id >> 8) & 0xFF]);
+            #warning A better solution would be to pass the original bitmap, including it's bpp, to server_paint_rect and let it deal with color changes if necessary. See also similar call in rdp_rdp. Same fix can probably apply to both cases.
+            const uint16_t width = bitmap->cx;
+            const uint16_t height = bitmap->cy;
+            const uint8_t palid = this->memblt.cache_id >> 8;
+            const uint8_t * src = bitmap->data_co;
+            const uint8_t in_bpp = bitmap->bpp;
+            const uint8_t out_bpp = mod->screen.colors->bpp;
+            const uint32_t (& palette)[256] = this->cache_colormap.palette[palid];
+            uint8_t * bmpdata = (uint8_t*)malloc(width * height * nbbytes(out_bpp));
+            uint8_t * dst = bmpdata;
+            for (int i = 0; i < width * height; i++) {
+                uint32_t pixel = color_convert(in_bytes_le(nbbytes(in_bpp), src), in_bpp, out_bpp, palette);
+                out_bytes_le(dst, nbbytes(out_bpp), pixel);
+                src += nbbytes(in_bpp);
+                dst += nbbytes(out_bpp);
+            }
             mod->server_paint_rect(this->memblt.rop, this->memblt.rect,
                       bmpdata, bitmap->cx, bitmap->cy,
                       this->memblt.srcx, this->memblt.srcy);

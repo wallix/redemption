@@ -154,6 +154,7 @@ class Stream {
         return ((unsigned char*)this->p)[-1] + ((unsigned char*)this->p)[-2] * 256;
     }
 
+    #warning use in_bytes_le whenever possible
     unsigned int in_uint32_le(void) {
         this->p += 4;
         return ((unsigned char*)this->p)[-4]
@@ -162,6 +163,12 @@ class Stream {
                + ((unsigned char*)this->p)[-1] * 0x1000000
                ;
     }
+
+    unsigned in_bytes_le(const uint8_t nb){
+        this->p += nb;
+        return ::in_bytes_le(nb, this->p - nb);
+    }
+
 
     unsigned int in_uint32_be(void) {
         this->p += 4;

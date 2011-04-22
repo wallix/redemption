@@ -54,16 +54,8 @@ static inline void out_bytes_le(uint8_t * ptr, const uint8_t nb, const unsigned 
 static inline unsigned in_bytes_le(const uint8_t nb, const uint8_t * ptr)
 {
     unsigned res = 0;
-    switch (nb){
-    case 3:
-        res = (ptr[2] << 16)|(ptr[1] << 8)|ptr[0];
-    break;
-    case 2:
-        res = (ptr[1] << 8)|ptr[0];
-    break;
-    case 1:
-        res = ptr[0];
-    break;
+    for (int b = 0 ; b < nb ; ++b){
+        res |= ptr[b] << (8 * b);
     }
     return res;
 }
