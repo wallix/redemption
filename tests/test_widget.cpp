@@ -40,10 +40,10 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmap)
 {
 //    cout << "Test Creating Screen object";
     #warning passing in a null front is not a good idea, define a test front
-    Widget *screen = new widget_screen((client_mod*)0, 20, 10, Colors(4));
+    Widget *screen = new widget_screen((client_mod*)0, 20, 10, Colors(8));
     BOOST_CHECK_EQUAL(20, screen->rect.cx);
     BOOST_CHECK_EQUAL(10, screen->rect.cy);
-    BOOST_CHECK_EQUAL(4, screen->colors->bpp);
+    BOOST_CHECK_EQUAL(8, screen->colors->bpp);
     BOOST_CHECK_EQUAL((int)WND_TYPE_SCREEN, screen->type);
     delete screen;
 }

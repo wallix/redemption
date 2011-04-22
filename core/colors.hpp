@@ -107,9 +107,9 @@ inline uint32_t color24BGR(uint8_t r, uint8_t g, uint8_t b)
 #warning we should have **two** splitcolor32, RGB and BGR
 inline void splitcolor32(uint8_t & r, uint8_t & g, uint8_t & b, uint32_t c)
 {
-  r = (c >> 16) & 0xff;
-  g = (c >> 8) & 0xff;
-  b = c & 0xff;
+  r = c >> 16;
+  g = c >> 8;
+  b = c;
 }
 
 #warning way too complicated, fix that
@@ -166,27 +166,6 @@ struct Colors {
     RGBcolor black, grey, dark_grey, blue, dark_blue,
              white, red, green, pink, yellow, anthracite,
              wabgreen;
-    // RGBcolor palette[256];
-
-    RGBcolor mkcolor(uint8_t red, uint8_t green, uint8_t blue){
-        uint32_t my_color = 0;
-        switch (this->bpp){
-            case 8:
-                my_color = color8(red, green, blue);
-            break;
-            case 15:
-                my_color = color15(red, green, blue);
-            break;
-            case 16:
-                my_color = color16(red, green, blue);
-            break;
-            default:
-            case 24:
-                my_color = color24BGR(red, green, blue);
-            break;
-        }
-        return my_color;
-    }
 
     void get_palette(RGBPalette & palette) const {
         //assert(bpp <= 8);
@@ -197,11 +176,14 @@ struct Colors {
         for (int bindex = 0; bindex < 4; bindex++) {
             for (int gindex = 0; gindex < 8; gindex++) {
                 for (int rindex = 0; rindex < 8; rindex++) {
-                    palette[(bindex << 6) | (gindex << 3) | rindex] =
-                        (RGBcolor)(
-                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16) |
-                        (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8) |
-                         ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
+                    palette[(rindex << 5) | (gindex << 2) | bindex] =
+                    (RGBcolor)(
+                    // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
+                    // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
+                       | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
+                    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
+                       | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
                 }
             }
         }
@@ -211,26 +193,26 @@ struct Colors {
     Colors(int bpp)
     {
         this->bpp = bpp;
-        this->black      = mkcolor(0, 0, 0);
-        this->grey       = mkcolor(0xc0, 0xc0, 0xc0);
-        this->dark_grey  = mkcolor(0x80, 0x80, 0x80);
-        this->anthracite = mkcolor(0x80, 0x80, 0x80);
-        this->blue       = mkcolor(0x00, 0x00, 0xff);
-        this->dark_blue  = mkcolor(0x00, 0x00, 0x7f);
-        this->white      = mkcolor(0xff, 0xff, 0xff);
-        this->red        = mkcolor(0xff, 0x00, 0x00);
-        this->pink       = mkcolor(0xff, 0x00, 0xff);
-        this->green      = mkcolor(0x00, 0xff, 0x00);
-        this->yellow     = mkcolor(0x00, 0xff, 0xff);
-
-        this->wabgreen   = mkcolor(0x91, 0xbe, 0x3b);
+        uint32_t palette[256];
+        if (bpp <= 8){
+            this->get_palette(palette);
+        }
+        this->black      = color_convert(0x000000, 24, bpp, palette);
+        this->grey       = color_convert(0xc0c0c0, 24, bpp, palette);
+        this->dark_grey  = color_convert(0x808080, 24, bpp, palette);
+        this->anthracite = color_convert(0x808080, 24, bpp, palette);
+        this->blue       = color_convert(0x0000ff, 24, bpp, palette);
+        this->dark_blue  = color_convert(0x00007f, 24, bpp, palette);
+        this->white      = color_convert(0xffffff, 24, bpp, palette);
+        this->red        = color_convert(0xff0000, 24, bpp, palette);
+        this->pink       = color_convert(0xff00ff, 24, bpp, palette);
+        this->green      = color_convert(0x00ff00, 24, bpp, palette);
+        this->yellow     = color_convert(0x00ffff, 24, bpp, palette);
+        this->wabgreen   = color_convert(0x3bbe91, 24, bpp, palette);
         #warning : colors are to be changed later on
         this->blue       = this->wabgreen;
         this->dark_blue  = this->wabgreen;
     }
-
-    // RGBColor black() { return mkcolor(0, 0, 0);}
-
 };
 
 #endif

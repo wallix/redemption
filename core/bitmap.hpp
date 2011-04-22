@@ -600,9 +600,7 @@ struct Bitmap{
 
     unsigned get_pixel(const uint8_t * const p) const
     {
-        uint32_t pixel = 0;
-        for(uint8_t b = 0; b < this->Bpp; b+=1){pixel |= p[b]<<(b*8);}
-        return pixel;
+        return in_bytes_le(this->Bpp, p);
     }
 
     unsigned get_pixel_above(const uint8_t * const p) const
