@@ -145,6 +145,7 @@ struct dialog_mod : public client_mod {
             this->screen.rect.cy / 2 - log_height / 2,
             log_width,
             log_height);
+        #warning valgrind say there is a memory leak here
         this->close_window = new window_dialog(this,
             r, colors, context, session,
             this->screen, // parent

@@ -319,12 +319,14 @@ struct combo_login : public window_login
         }
         this->context.cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
 
+        #warning valgrind say there is a memory leak here
         but = new widget_button(this->mod,
               Rect(regular ? 180 : 30, 160, 60, 25),
               colors, *this, 3, 1, context.get(STRAUTHID_TRANS_BUTTON_OK));
         this->child_list.push_back(but);
         this->default_button = but;
 
+        #warning valgrind say there is a memory leak here
         but = new widget_button(this->mod,
               Rect(regular ? 250 : ((r.cx - 30) - 60), 160, 60, 25),
               colors, *this, 2, 1, context.get(STRAUTHID_TRANS_BUTTON_CANCEL));
@@ -332,6 +334,7 @@ struct combo_login : public window_login
         this->esc_button = but;
 
         if (regular) {
+        #warning valgrind say there is a memory leak here
             but = new widget_button(this->mod,
                   Rect(320, 160, 60, 25), colors, *this, 1, 1, context.get(STRAUTHID_TRANS_BUTTON_HELP));
             this->child_list.push_back(but);

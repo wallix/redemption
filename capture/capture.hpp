@@ -60,6 +60,7 @@ class Capture
     Capture(int width, int height, char * path, const char * codec_id, const char * video_quality){
         this->pix_len = 0;
         this->count = 0;
+        this->inter_frame_interval = 1000;
 
         this->pix_len = width * height * 3;
         if (!this->pix_len) {

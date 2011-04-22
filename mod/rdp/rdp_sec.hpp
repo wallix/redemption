@@ -1255,7 +1255,7 @@ struct rdp_sec {
       for (size_t index = 0; index < num_channels; index++)
       {
         mcs_channel_item *channel_item_cli = channel_list[index];
-        #warning check matching delete
+        #warning check matching delete, valgrind say memory leak
         mcs_channel_item *channel_item_srv = new mcs_channel_item;
         int chanid = stream.in_uint16_le();
         channel_item_srv->chanid = chanid;

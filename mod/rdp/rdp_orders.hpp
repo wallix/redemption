@@ -209,6 +209,7 @@ struct rdp_orders {
 
                 const uint8_t* data = stream.in_uint8p(size);
 
+                #warning valgrind say there is a memory leak here
                 bitmap = new Bitmap(bpp, width, height);
 
                 assert(row_size == bitmap->line_size);

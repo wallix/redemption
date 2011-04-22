@@ -182,6 +182,7 @@ struct Font {
                 int incby = stream.in_sint16_le();
                 stream.skip_uint8(6);
 
+                #warning valgrind say there is a memory leak here
                 this->font_items[index] = new FontChar(offset, baseline, width, height, incby);
                 int datasize = this->font_items[index]->datasize();
                 if (datasize < 0 || datasize > 512) {
