@@ -564,23 +564,10 @@ struct client_mod {
         this->front->send_glyph(font, character, offset, baseline, width, height, data);
     }
 
-    void server_draw_text2(
-                     int font,
-                     int flags, int mixmode,
-                     int clip_left, int clip_top,
-                     int clip_right, int clip_bottom,
-                     int box_left, int box_top,
-                     int box_right, int box_bottom,
-                     int x, int y, uint8_t* data, int data_len)
+    void server_draw_text2(RDPGlyphIndex & glyph_index)
     {
-
-        #warning clipping here is kind of obscene... how does it occur we have **three** clip box... (and two passed as independent parameters, definitely something smell rotten in kindom of denmark).
-
-        Rect tmp_clip(clip_left, clip_top, clip_right - clip_left, clip_bottom - clip_top);
-        Rect box(box_left, box_top, box_right - box_left, box_bottom - box_top);
-
         Region region;
-        region.rects.push_back((box.cx>1)?box:tmp_clip);
+        region.rects.push_back((glyph_index.op.cx>1)?glyph_index.op:glyph_index.bk);
 
         // basically following code means that if we draw some text on screen,
         // we always draw it behind visible windows.
@@ -597,8 +584,19 @@ struct client_mod {
         for (size_t ir = 0 ; ir < region.rects.size(); ir++){
             Rect  draw_rect = region.rects[ir].intersect(this->screen.rect);
             if (!draw_rect.isempty()) {
-                this->front->draw_text2(font, flags, mixmode, box, tmp_clip,
-                                       x, y, data, data_len, this->bg_color, this->fg_color, draw_rect);
+                this->front->draw_text2(
+                    glyph_index.cache_id,
+                    glyph_index.fl_accel,
+                    glyph_index.f_op_redundant,
+                    glyph_index.op,
+                    glyph_index.bk,
+                    glyph_index.glyph_x,
+                    glyph_index.glyph_y,
+                    glyph_index.data,
+                    glyph_index.data_len,
+                    this->bg_color,
+                    this->fg_color,
+                    draw_rect);
             }
         }
     }

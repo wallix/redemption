@@ -578,22 +578,23 @@ struct rdp_orders {
                                     this->cache_colormap.palette[0]);
         #warning set_bgcolor or set_fg_color should probably take source bpp and palette as input and proceed themself to color conversion if it is necessary. This would avoid this code having to know anything about target color model (SMELL: inappropriate intimacy). This would also remove need to call color_convert from here.
         mod->server_set_bgcolor(bgcolor);
-        mod->server_draw_text2(
-            this->glyph_index.cache_id,
-            this->glyph_index.fl_accel,
-            this->glyph_index.f_op_redundant,
-            this->glyph_index.bk.x,
-            this->glyph_index.bk.y,
-            this->glyph_index.bk.x + this->glyph_index.bk.cx,
-            this->glyph_index.bk.y + this->glyph_index.bk.cy,
-            this->glyph_index.op.x,
-            this->glyph_index.op.y,
-            this->glyph_index.op.x + this->glyph_index.op.cx,
-            this->glyph_index.op.y + this->glyph_index.op.cy,
-            this->glyph_index.glyph_x,
-            this->glyph_index.glyph_y,
-            this->glyph_index.data,
-            this->glyph_index.data_len);
+        mod->server_draw_text2(this->glyph_index);
+//        mod->server_draw_text2(
+//            this->glyph_index.cache_id,
+//            this->glyph_index.fl_accel,
+//            this->glyph_index.f_op_redundant,
+//            this->glyph_index.bk.x,
+//            this->glyph_index.bk.y,
+//            this->glyph_index.bk.x + this->glyph_index.bk.cx,
+//            this->glyph_index.bk.y + this->glyph_index.bk.cy,
+//            this->glyph_index.op.x,
+//            this->glyph_index.op.y,
+//            this->glyph_index.op.x + this->glyph_index.op.cx,
+//            this->glyph_index.op.y + this->glyph_index.op.cy,
+//            this->glyph_index.glyph_x,
+//            this->glyph_index.glyph_y,
+//            this->glyph_index.data,
+//            this->glyph_index.data_len);
     }
 
 };
