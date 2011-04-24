@@ -143,7 +143,7 @@ struct mod_rdp : public client_mod {
         }
     }
 
-
+    #warning most of code below should move to rdp_rdp
     virtual int mod_event(int msg, long param1, long param2, long param3, long param4)
     {
         try{
@@ -212,6 +212,7 @@ struct mod_rdp : public client_mod {
         return 0;
     }
 
+    #warning most of code below should move to rdp_rdp
     virtual int mod_signal(void)
     {
         int type;

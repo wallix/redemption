@@ -115,190 +115,190 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 
     orders->send();
 
-    front->begin_update();
-    RDPBrush brush;
-    brush.org_x = 0;
-    brush.org_y = 0;
-    brush.style = 3;
+//    front->begin_update();
+//    RDPBrush brush;
+//    brush.org_x = 0;
+//    brush.org_y = 0;
+//    brush.style = 3;
 
-    #warning be carefull add_brush hides sending brush to rdp orders layer. Extract it to make it explicit.
-    if (client_info->brush_cache_code == 1) {
-        uint8_t pattern[8] = {0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55};
-        brush.hatch = front->cache->add_brush(pattern);
-        brush.style = 0x81;
-    }
-    front->end_update();
+//    #warning be carefull add_brush hides sending brush to rdp orders layer. Extract it to make it explicit.
+//    if (client_info->brush_cache_code == 1) {
+//        uint8_t pattern[8] = {0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55};
+//        brush.hatch = front->cache->add_brush(pattern);
+//        brush.style = 0x81;
+//    }
+//    front->end_update();
 
-    orders->init();
+//    orders->init();
 
-    orders->pat_blt(
-        Rect(50, 50, 150, 150),
-        0x5A,
-        color.pink,
-        color.white,
-        brush,
-        Rect(100, 100, 50, 50));
+//    orders->pat_blt(
+//        Rect(50, 50, 150, 150),
+//        0x5A,
+//        color.pink,
+//        color.white,
+//        brush,
+//        Rect(100, 100, 50, 50));
 
-    orders->pat_blt(
-        Rect(63, 78, 10, 13),
-        0x5A,
-        (uint32_t)color.black,
-        (uint32_t)color.white,
-        brush,
-        Rect(63, 78, 10, 13));
+//    orders->pat_blt(
+//        Rect(63, 78, 10, 13),
+//        0x5A,
+//        (uint32_t)color.black,
+//        (uint32_t)color.white,
+//        brush,
+//        Rect(63, 78, 10, 13));
 
-    orders->send();
+//    orders->send();
 
-    uint32_t picture24[100][100];
+//    uint32_t picture24[100][100];
 
-    for(int i = 0; i < 100; i++){
-        for (int j = 0; j < 100; j++){
-            picture24[i][j] = color.white;
-        }
-    }
+//    for(int i = 0; i < 100; i++){
+//        for (int j = 0; j < 100; j++){
+//            picture24[i][j] = color.white;
+//        }
+//    }
 
-    orders->init();
+//    orders->init();
 
-    RDPPen pen;
-    pen.style = 1;
-    pen.width = 10;
-    pen.color = color.blue;
+//    RDPPen pen;
+//    pen.style = 1;
+//    pen.width = 10;
+//    pen.color = color.blue;
 
-    orders->line(1, 50, 50, 150, 150, 0xCC, color.pink, pen, Rect(100, 100, 50, 50));
+//    orders->line(1, 50, 50, 150, 150, 0xCC, color.pink, pen, Rect(100, 100, 50, 50));
 
-    orders->send();
+//    orders->send();
 
-    cout << "testing front primitives\n";
+//    cout << "testing front primitives\n";
 
-    /* Draw a big white rect at right-bottom side of screen */
-    front->begin_update();
-    Region region;
-    Rect r1(0, 0, 800, 600);
-    region.rects.push_back(r1);
-    front->opaque_rect(Rect(500, 400, 200, 150), color.dark_grey, Rect(500, 400, 200, 150));
-    front->end_update();
+//    /* Draw a big white rect at right-bottom side of screen */
+//    front->begin_update();
+//    Region region;
+//    Rect r1(0, 0, 800, 600);
+//    region.rects.push_back(r1);
+//    front->opaque_rect(Rect(500, 400, 200, 150), color.dark_grey, Rect(500, 400, 200, 150));
+//    front->end_update();
 
-    /* Draw black line crossing right-bottom white rect of screen */
+//    /* Draw black line crossing right-bottom white rect of screen */
 
-    front->begin_update();
+//    front->begin_update();
 
-    pen.style = 1;
-    pen.width = 10;
-    pen.color = color.pink;
+//    pen.style = 1;
+//    pen.width = 10;
+//    pen.color = color.pink;
 
-    /* Line clipped 500, 400, 201, 151*/
-    front->line(0xCC, 700, 400, 500, 550, 0, pen, Rect(600, 400, 150, 150));
+//    /* Line clipped 500, 400, 201, 151*/
+//    front->line(0xCC, 700, 400, 500, 550, 0, pen, Rect(600, 400, 150, 150));
 
-    /*Normal line */
-    front->line(0xCC, 500, 400, 700, 550, 0, pen, Rect(500, 400, 200, 150));
+//    /*Normal line */
+//    front->line(0xCC, 500, 400, 700, 550, 0, pen, Rect(500, 400, 200, 150));
 
-    front->end_update();
+//    front->end_update();
 
-    /* Write "hello" at right-bottom white rect of screen */
+//    /* Write "hello" at right-bottom white rect of screen */
 
-    front->begin_update();
+//    front->begin_update();
 
-    front->draw_text2(7, 3, 0,
-                Rect(0, 0, 0, 0), Rect(500, 530, cx+1, cy+1),
-                501, 531+cy, data, len * 2,
-                color.black, color.dark_grey, Rect(0, 0, 800, 600));
-    front->end_update();
+//    front->draw_text2(7, 3, 0,
+//                Rect(0, 0, 0, 0), Rect(500, 530, cx+1, cy+1),
+//                501, 531+cy, data, len * 2,
+//                color.black, color.dark_grey, Rect(0, 0, 800, 600));
+//    front->end_update();
 
-    /* Draw a little grey rect at left-bottom side of screen */
+//    /* Draw a little grey rect at left-bottom side of screen */
 
-    front->begin_update();
-    front->fill_rect_rop(0x5A, Rect(0, 450, 50, 50),
-                           color.dark_grey, color.dark_grey,
-                           brush,
-                           Rect(0, 450, 50, 50));
-    front->end_update();
+//    front->begin_update();
+//    front->fill_rect_rop(0x5A, Rect(0, 450, 50, 50),
+//                           color.dark_grey, color.dark_grey,
+//                           brush,
+//                           Rect(0, 450, 50, 50));
+//    front->end_update();
 
-    /* Draw a little rect at bottom side of screen */
-    uint32_t picture16[100][100];
+//    /* Draw a little rect at bottom side of screen */
+//    uint32_t picture16[100][100];
 
-    for(int i = 0; i < 100; i++){
-        for (int j = 0; j < 100; j++){
-            picture16[i][j] = 0xFFFF00;
-        }
-    }
+//    for(int i = 0; i < 100; i++){
+//        for (int j = 0; j < 100; j++){
+//            picture16[i][j] = 0xFFFF00;
+//        }
+//    }
 
 
-    front->begin_update();
+//    front->begin_update();
 
-    uint8_t cache_b_id;
-    uint16_t cache_b_idx;
+//    uint8_t cache_b_id;
+//    uint16_t cache_b_idx;
 
-    int send_type2 = front->bmp_cache->add_bitmap(100, 100, (uint8_t*)picture16, 0, 0, 32, 32,
-                                color.bpp, cache_b_id, cache_b_idx);
+//    int send_type2 = front->bmp_cache->add_bitmap(100, 100, (uint8_t*)picture16, 0, 0, 32, 32,
+//                                color.bpp, cache_b_id, cache_b_idx);
 
-    BitmapCacheItem * entry =  front->bmp_cache->get_item(cache_b_id, cache_b_idx);
+//    BitmapCacheItem * entry =  front->bmp_cache->get_item(cache_b_id, cache_b_idx);
 
-    int e = entry->bmp.cx % 4;
-    if (e != 0) {
-        e = 4 - e;
-    }
+//    int e = entry->bmp.cx % 4;
+//    if (e != 0) {
+//        e = 4 - e;
+//    }
 
-    LOG(LOG_INFO, "new_b_bpp=%d new_b_cx=%d new_b_cy=%d", entry->bmp.bpp, entry->bmp.cx, entry->bmp.cy);
-    for (int x = 0 ; x < 100 ; x+=20){
-            unsigned char * tmp = (unsigned char*)entry->bmp.data_co + x;
-        LOG(LOG_INFO, "%0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x",
-            tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], tmp[6], tmp[7], tmp[8], tmp[9],
-            tmp[10], tmp[11], tmp[12], tmp[13], tmp[14], tmp[15], tmp[16], tmp[17], tmp[18], tmp[19]);
-    };
+//    LOG(LOG_INFO, "new_b_bpp=%d new_b_cx=%d new_b_cy=%d", entry->bmp.bpp, entry->bmp.cx, entry->bmp.cy);
+//    for (int x = 0 ; x < 100 ; x+=20){
+//            unsigned char * tmp = (unsigned char*)entry->bmp.data_co + x;
+//        LOG(LOG_INFO, "%0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x",
+//            tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], tmp[6], tmp[7], tmp[8], tmp[9],
+//            tmp[10], tmp[11], tmp[12], tmp[13], tmp[14], tmp[15], tmp[16], tmp[17], tmp[18], tmp[19]);
+//    };
 
-    using namespace RDP;
+//    using namespace RDP;
 
-    if (send_type2 == BITMAP_ADDED_TO_CACHE){
-        LOG(LOG_INFO, "Sending bitmap\n");
-        int mode = front->orders->get_compression_type();
-        mode = NOT_COMPRESSED;
-        switch (mode){
-            case NOT_COMPRESSED:
-                LOG(LOG_INFO, "not compressed bitmap\n");
-                e = 0;
-                {
-                    RDPBmpCache bmp(1, entry->bmp, cache_b_id, cache_b_idx);
-                    // check reserved size depending on version
-                    orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
-                    bmp.emit(*orders->out_s);
-                    bmp.data = 0;
-                }
-            break;
-            case COMPRESSED:
-            {
-                LOG(LOG_INFO, "compressed bitmap\n");
-                orders->send_bitmap(*orders->out_s, entry->bmp, cache_b_id, cache_b_idx);
-            }
-            break;
-            case COMPRESSED_SMALL_HEADERS:
-            {
-                orders->send_bitmap_small_headers(*orders->out_s, entry->bmp, cache_b_id, cache_b_idx);
-            }
-            break;
-            case NEW_NOT_COMPRESSED:
-                LOG(LOG_INFO, "new not compressed bitmap\n");
-                {
-                    RDPBmpCache bmp(2, entry->bmp, cache_b_id, cache_b_idx);
-                    // check reserved size depending on version
-                    orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
-                    bmp.emit(*orders->out_s);
-                    bmp.data = 0;
-                }
-            break;
-            case NEW_COMPRESSED:
-            {
-                orders->send_bitmap2(*orders->out_s, entry->bmp, cache_b_id, cache_b_idx);
-            }
-            break;
-        }
-    }
-    front->mem_blt(cache_b_id, 0, Rect(100, 450, 32, 32), 0xcc, entry->bmp.bpp, entry->bmp.data_co, 0, 0, cache_b_idx, Rect(100, 450, 32, 32));
-    front->end_update();
+//    if (send_type2 == BITMAP_ADDED_TO_CACHE){
+//        LOG(LOG_INFO, "Sending bitmap\n");
+//        int mode = front->orders->get_compression_type();
+//        mode = NOT_COMPRESSED;
+//        switch (mode){
+//            case NOT_COMPRESSED:
+//                LOG(LOG_INFO, "not compressed bitmap\n");
+//                e = 0;
+//                {
+//                    RDPBmpCache bmp(1, entry->bmp, cache_b_id, cache_b_idx);
+//                    // check reserved size depending on version
+//                    orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
+//                    bmp.emit(*orders->out_s);
+//                    bmp.data = 0;
+//                }
+//            break;
+//            case COMPRESSED:
+//            {
+//                LOG(LOG_INFO, "compressed bitmap\n");
+//                orders->send_bitmap(*orders->out_s, entry->bmp, cache_b_id, cache_b_idx);
+//            }
+//            break;
+//            case COMPRESSED_SMALL_HEADERS:
+//            {
+//                orders->send_bitmap_small_headers(*orders->out_s, entry->bmp, cache_b_id, cache_b_idx);
+//            }
+//            break;
+//            case NEW_NOT_COMPRESSED:
+//                LOG(LOG_INFO, "new not compressed bitmap\n");
+//                {
+//                    RDPBmpCache bmp(2, entry->bmp, cache_b_id, cache_b_idx);
+//                    // check reserved size depending on version
+//                    orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
+//                    bmp.emit(*orders->out_s);
+//                    bmp.data = 0;
+//                }
+//            break;
+//            case NEW_COMPRESSED:
+//            {
+//                orders->send_bitmap2(*orders->out_s, entry->bmp, cache_b_id, cache_b_idx);
+//            }
+//            break;
+//        }
+//    }
+//    front->mem_blt(cache_b_id, 0, Rect(100, 450, 32, 32), 0xcc, entry->bmp.bpp, entry->bmp.data_co, 0, 0, cache_b_idx, Rect(100, 450, 32, 32));
+//    front->end_update();
 
-    /* Draw a little pink rect at bottom-right side of screen bottom-right rectangle */
-    front->begin_update();
-    front->screen_blt(0xcc, Rect(690, 540, 50, 50), 190, 190, Rect(690, 540, 50, 50));
-    front->end_update();
+//    /* Draw a little pink rect at bottom-right side of screen bottom-right rectangle */
+//    front->begin_update();
+//    front->screen_blt(0xcc, Rect(690, 540, 50, 50), 190, 190, Rect(690, 540, 50, 50));
+//    front->end_update();
 
     cout << "waiting for 20 seconds\n";
     sleep(20);

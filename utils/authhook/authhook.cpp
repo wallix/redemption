@@ -105,10 +105,10 @@ void sendModeConsole(Stream * stream, int mode)
 
 void authentication(Stream *stream)
 {
-    const char * ip = "10.10.14.71";
-    const char * username = "QA\\Administrateur";
-    const char * password = "S3cur3!1nux";
-    const char * port = "3389";
+    const char * ip = "127.0.0.1";
+    const char * username = "any";
+    const char * password = "password";
+    const char * port = "3391";
     const char * protocol = "RDP";
 
     addKeyValue(stream, STRAUTHID_TARGET_DEVICE, ip);
@@ -116,7 +116,7 @@ void authentication(Stream *stream)
     addKeyValue(stream, STRAUTHID_TARGET_PASSWORD, password);
     addKeyValue(stream, STRAUTHID_TARGET_PROTOCOL, protocol);
     addKeyValue(stream, STRAUTHID_TARGET_PORT, port);
-    addKeyValue(stream, "INCONNU", "toto");
+    addKeyValue(stream, "Unknown", "toto");
 }
 
 void recSession(Stream *stream)
@@ -132,7 +132,7 @@ void recSession(Stream *stream)
 
 void recordingMessage(Stream *stream)
 {
-    const char * message = "Big brother is watching you<br>If you refused, you can not connect to remote host.<br>But you do what you want";
+    const char * message = "Big brother is watching you<br>If you refuse, you can not connect to remote host.<br>But you do what you want";
     addKeyValue(stream, STRAUTHID_MESSAGE, message);
     addKeyValue(stream, STRAUTHID_ACCEPT_MESSAGE, "ASK");
     addKeyValue(stream, STRAUTHID_TRANS_BUTTON_REFUSED, "refused");
@@ -215,22 +215,23 @@ int hook(int sck)
 
     int mode_console = 0; /* 0 : forbid, 1 : allow, 2 : force */
 
-    if (keepalived){
-        keepalive(&stream);
-    }
-    else if (authenticated == 0){
-        askAuthentication(&stream);
-    }
-    else if (warningMessageValidated==0){
-        warningMessage(&stream);
-    }
-    else if (recordingMessageValidated==0){
-        recordingMessage(&stream);
-    }
-    else if (recordingMessageValidated==2){
-        stopConnection(&stream);
-    }
-    else {
+//    if (keepalived){
+//        keepalive(&stream);
+//    }
+//    else if (authenticated == 0){
+//        askAuthentication(&stream);
+//    }
+//    else if (warningMessageValidated==0){
+//        warningMessage(&stream);
+//    }
+//    else if (recordingMessageValidated==0){
+//        recordingMessage(&stream);
+//    }
+//    else if (recordingMessageValidated==2){
+//        stopConnection(&stream);
+//    }
+//    else
+    {
         sendModeConsole(&stream, mode_console);
         recSession(&stream);
         closeConnection(&stream);
