@@ -115,29 +115,29 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 
     orders->send();
 
-//    front->begin_update();
-//    RDPBrush brush;
-//    brush.org_x = 0;
-//    brush.org_y = 0;
-//    brush.style = 3;
+    front->begin_update();
+    RDPBrush brush;
+    brush.org_x = 0;
+    brush.org_y = 0;
+    brush.style = 3;
 
-//    #warning be carefull add_brush hides sending brush to rdp orders layer. Extract it to make it explicit.
-//    if (client_info->brush_cache_code == 1) {
-//        uint8_t pattern[8] = {0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55};
-//        brush.hatch = front->cache->add_brush(pattern);
-//        brush.style = 0x81;
-//    }
-//    front->end_update();
+    #warning be carefull add_brush hides sending brush to rdp orders layer. Extract it to make it explicit.
+    if (client_info->brush_cache_code == 1) {
+        uint8_t pattern[8] = {0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55};
+        brush.hatch = front->cache->add_brush(pattern);
+        brush.style = 0x81;
+    }
+    front->end_update();
 
-//    orders->init();
+    orders->init();
 
-//    orders->pat_blt(
-//        Rect(50, 50, 150, 150),
-//        0x5A,
-//        color.pink,
-//        color.white,
-//        brush,
-//        Rect(100, 100, 50, 50));
+    orders->pat_blt(
+        Rect(50, 50, 150, 150),
+        0x5A,
+        color.pink,
+        color.white,
+        brush,
+        Rect(100, 100, 50, 50));
 
 //    orders->pat_blt(
 //        Rect(63, 78, 10, 13),
@@ -147,7 +147,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 //        brush,
 //        Rect(63, 78, 10, 13));
 
-//    orders->send();
+    orders->send();
 
 //    uint32_t picture24[100][100];
 
