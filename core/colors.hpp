@@ -26,6 +26,7 @@
 
 #include <stdint.h>
 #include <assert.h>
+#include "log.hpp"
 
 typedef uint32_t RGBcolor;
 typedef RGBcolor RGBPalette[256];
@@ -138,26 +139,27 @@ inline uint32_t color_convert(const uint32_t in_pixel, const uint8_t in_bpp, con
     break;
     }
 
+    uint32_t res = 0;
     switch (out_bpp){
     case 8:
-        return color8(red, green, blue);
+        res = color8(red, green, blue);
     break;
     case 15:
-        return color15(red, green, blue);
+        res = color15(red, green, blue);
     break;
     case 16:
-        return color16(red, green, blue);
+        res = color16(red, green, blue);
     break;
     case 32:
     case 24:
-        return color24RGB(red, green, blue);
+        res = color24RGB(red, green, blue);
     break;
     default:
         assert(false);
     break;
     }
 
-    return 0;
+    return res;
 }
 
 /* generic colors */

@@ -444,14 +444,16 @@ struct client_mod {
         this->clip = this->screen.rect;
     }
 
-    void server_set_fgcolor(int fgcolor)
+    void server_set_fgcolor(uint32_t color, uint8_t bpp, uint32_t (& palette)[256])
     {
+        int fgcolor = color_convert(color, bpp, this->screen.colors->bpp, palette);
         this->fg_color = fgcolor;
         this->pen.color = fgcolor;
     }
 
-    void server_set_bgcolor(int bgcolor)
+    void server_set_bgcolor(uint32_t color, uint8_t bpp, uint32_t (& palette)[256])
     {
+        int bgcolor = color_convert(color, bpp, this->screen.colors->bpp, palette);
         this->bg_color = bgcolor;
     }
 

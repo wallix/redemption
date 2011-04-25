@@ -144,10 +144,11 @@ Widget::~Widget(){
 void Widget::draw_title_bar(int bg_color, int fg_color, const Rect & clip)
 {
     assert(this->type == WND_TYPE_WND);
+    uint32_t palette[256] = {};
 
     this->mod->server_begin_update();
     this->fill_rect(0xCC, Rect(3, 3, this->rect.cx - 5, 18), bg_color, clip);
-    this->mod->server_set_fgcolor(fg_color);
+    this->mod->server_set_fgcolor(fg_color, 24, palette);
     this->mod->server_draw_text(this, 4, 4, this->caption1, clip);
     this->mod->server_end_update();
 }
@@ -267,7 +268,8 @@ void widget_edit::draw(const Rect & clip)
     /* black top line */
     this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 2, 1), this->colors->black, clip);
     /* draw text */
-    this->mod->server_set_fgcolor(this->colors->black);
+    uint32_t palette[256] = {};
+    this->mod->server_set_fgcolor(this->colors->black, 24, palette);
     char text[255];
     wchar_t wtext[255];
 
@@ -298,8 +300,9 @@ void widget_edit::draw(const Rect & clip)
 void Widget::fill_rect(int rop, const Rect & r, int fg_color, const Rect & clip)
 {
     assert(this->type != WND_TYPE_BITMAP);
+    uint32_t palette[256] = {};
 
-    this->mod->server_set_fgcolor(fg_color);
+    this->mod->server_set_fgcolor(fg_color, 24, palette);
     const Rect scr_r = this->to_screen_rect(r);
 
     const Region region = this->mod->get_visible_region(this, &this->parent, scr_r);
@@ -310,8 +313,9 @@ void Widget::fill_rect(int rop, const Rect & r, int fg_color, const Rect & clip)
 void Widget::fill_cursor_rect(const Rect & r, int fg_color, const Rect & clip)
 {
     assert(this->type != WND_TYPE_BITMAP);
+    uint32_t palette[256] = {};
 
-    this->mod->server_set_fgcolor(fg_color);
+    this->mod->server_set_fgcolor(fg_color, 24, palette);
     const Rect scr_r = this->to_screen_rect(r);
     const Region region = this->mod->get_visible_region(this, &this->parent, scr_r);
     this->mod->server_fill_rect_rop(0x5A, region, scr_r, this->to_screen_rect(clip));
@@ -321,8 +325,9 @@ void Widget::fill_cursor_rect(const Rect & r, int fg_color, const Rect & clip)
 void Widget::basic_fill_rect(int rop, const Rect & r, int fg_color, const Rect & clip)
 {
     assert(this->type != WND_TYPE_BITMAP);
+    uint32_t palette[256] = {};
 
-    this->mod->server_set_fgcolor(fg_color);
+    this->mod->server_set_fgcolor(fg_color, 24, palette);
 
     const Rect scr_r = this->to_screen_rect(r);
     const Region region = this->mod->get_visible_region(this, &this->parent, scr_r);
@@ -354,10 +359,11 @@ void widget_combo::draw(const Rect & clip)
     /* black top line */
     this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 2, 1), this->colors->black, clip);
     /* draw text */
+    uint32_t palette[256] = {};
     if (has_focus) {
-        this->mod->server_set_fgcolor(this->colors->white);
+        this->mod->server_set_fgcolor(this->colors->white, 24, palette);
     } else {
-        this->mod->server_set_fgcolor(this->colors->black);
+        this->mod->server_set_fgcolor(this->colors->black, 24, palette);
     }
 
     this->mod->server_draw_text(this, 4, 2, this->string_list[this->item_index], clip);
@@ -445,8 +451,8 @@ void widget_button::draw(const Rect & clip)
         this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), this->colors->black, clip);
     }
 
-
-    this->mod->server_set_fgcolor(this->colors->black);
+    uint32_t palette[256] = {};
+    this->mod->server_set_fgcolor(this->colors->black, 24, palette);
     this->mod->server_draw_text(this,
         this->rect.cx / 2 - w / 2 + bevel,
         this->rect.cy / 2 - h / 2 + bevel, this->caption1, clip);
@@ -461,6 +467,7 @@ void widget_button::draw(const Rect & clip)
 void widget_popup::draw(const Rect & clip)
 {
     this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), this->colors->white, clip);
+    uint32_t palette[256] = {};
 
     /* draw the list items */
     if (this->popped_from != 0) {
@@ -472,9 +479,9 @@ void widget_popup::draw(const Rect & clip)
             this->item_height = h;
             if (i == this->item_index) { // delected item
                 this->fill_rect(0xCC, Rect(0, y, this->rect.cx, h), this->colors->blue, clip);
-                this->mod->server_set_fgcolor(this->colors->white);
+                this->mod->server_set_fgcolor(this->colors->white, 24, palette);
             } else { // non selected item
-                this->mod->server_set_fgcolor(this->colors->black);
+                this->mod->server_set_fgcolor(this->colors->black, 24, palette);
             }
             this->mod->server_draw_text(this, 2, y, p, clip);
             y = y + h;
@@ -488,7 +495,9 @@ void Widget::draw(const Rect & clip)
 
 void widget_label::draw(const Rect & clip)
 {
-    this->mod->server_set_fgcolor(this->colors->black);
+    uint32_t palette[256] = {};
+
+    this->mod->server_set_fgcolor(this->colors->black, 24, palette);
     this->mod->server_draw_text(this, 0, 0, this->caption1, clip);
 }
 

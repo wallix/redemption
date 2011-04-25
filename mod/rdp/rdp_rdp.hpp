@@ -1073,6 +1073,9 @@ struct rdp_rdp {
                     size = stream.in_uint16_le();
                     uint16_t line_size = stream.in_uint16_le();
                     uint16_t final_size = stream.in_uint16_le();
+
+                    assert(line_size == bitmap.line_size);
+                    assert(final_size == bitmap.bmp_size);
                 }
 
                 const uint8_t * data = stream.in_uint8p(size);

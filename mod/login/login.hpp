@@ -44,8 +44,8 @@ struct wab_help : public window
             }
         } else if (msg == WM_PAINT) { /* 3 */
             #warning this should be in draw method of window_help, not here
-
-            this->mod->server_set_fgcolor(this->colors->black);
+            uint32_t palette[256] = {};
+            this->mod->server_set_fgcolor(this->colors->black, 24, palette);
             // "Enter target device and login as login@server"
             // "Enter a valid allowed authentication user"
             // "in the username edit box."
@@ -214,8 +214,8 @@ struct combo_help : public window
         } else if (msg == WM_PAINT) { /* 3 */
             #warning the code below is a bit too much specialized. Change it to some code able to write a paragraph of text in a given rectangle. Later we may even add some formatting support.
             #warning this should be in draw method of window_help, not here
-
-            this->mod->server_set_fgcolor(this->colors->black);
+            uint32_t palette[256]={};
+            this->mod->server_set_fgcolor(this->colors->black, 24, palette);
             const char * message =
                     "You must be authenticated before using this<br>"
                     "session.<br>"

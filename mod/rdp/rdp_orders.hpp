@@ -187,7 +187,7 @@ struct rdp_orders {
                 int flags = header.flags;
                 int size = 0;
                 int pad2 = 0;
-                int row_size = 0;
+                size_t row_size = 0;
                 int final_size = 0;
 
                 cache_id = stream.in_uint8();
@@ -467,12 +467,10 @@ struct rdp_orders {
     {
         this->opaquerect.receive(stream, header);
 
-        int fgcolor = color_convert(
+        mod->server_set_fgcolor(
                 this->opaquerect.color,
                 this->cache_colormap.bpp,
-                mod->screen.colors->bpp,
                 this->cache_colormap.palette[0]);
-        mod->server_set_fgcolor(fgcolor);
         mod->server_fill_rect(0xCC, this->opaquerect.rect);
     }
 
@@ -521,17 +519,13 @@ struct rdp_orders {
     void rdp_orders_process_patblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->patblt.receive(stream, header);
-        #warning set_bgcolor or set_fg_color should probably take source bpp and palette as input and proceed themself to color conversion if it is necessary. This would avoid this code having to know anything about target color model (SMELL: inappropriate intimacy). This would also remove need to call color_convert from here.
-        int fgcolor = color_convert(this->patblt.fore_color,
-                                    this->cache_colormap.bpp,
-                                    mod->screen.colors->bpp,
-                                    this->cache_colormap.palette[0]);
-        mod->server_set_fgcolor(fgcolor);
-        int bgcolor = color_convert(this->patblt.back_color,
-                                    this->cache_colormap.bpp,
-                                    mod->screen.colors->bpp,
-                                    this->cache_colormap.palette[0]);
-        mod->server_set_bgcolor(bgcolor);
+        mod->server_set_fgcolor(this->patblt.fore_color,
+                                this->cache_colormap.bpp,
+                                this->cache_colormap.palette[0]);
+
+        mod->server_set_bgcolor(this->patblt.back_color,
+                                this->cache_colormap.bpp,
+                                this->cache_colormap.palette[0]);
 
         mod->server_set_brush(this->patblt.brush);
 
@@ -542,18 +536,14 @@ struct rdp_orders {
     {
         this->lineto.receive(stream, header);
 
-        int bgcolor = color_convert(this->lineto.back_color,
-                                    this->cache_colormap.bpp,
-                                    mod->screen.colors->bpp,
-                                    this->cache_colormap.palette[0]);
-        int fgcolor = color_convert(this->lineto.pen.color,
-                                    this->cache_colormap.bpp,
-                                    mod->screen.colors->bpp,
-                                    this->cache_colormap.palette[0]);
-        #warning set_bgcolor or set_fg_color should probably take source bpp and palette as input and proceed themself to color conversion if it is necessary. This would avoid this code having to know anything about target color model (SMELL: inappropriate intimacy). This would also remove need to call color_convert from here.
+        mod->server_set_fgcolor(this->lineto.pen.color,
+                                this->cache_colormap.bpp,
+                                this->cache_colormap.palette[0]);
 
-        mod->server_set_fgcolor(fgcolor);
-        mod->server_set_bgcolor(bgcolor);
+        mod->server_set_bgcolor(this->lineto.back_color,
+                                this->cache_colormap.bpp,
+                                this->cache_colormap.palette[0]);
+
         mod->server_set_pen(this->lineto.pen.style, this->lineto.pen.width);
         mod->server_draw_line(this->lineto.rop2,
                               this->lineto.startx,
@@ -567,34 +557,14 @@ struct rdp_orders {
     {
         this->glyph_index.receive(stream, header);
 
-        int fgcolor = color_convert(this->glyph_index.fore_color,
-                                    this->cache_colormap.bpp,
-                                    mod->screen.colors->bpp,
-                                    this->cache_colormap.palette[0]);
-        mod->server_set_fgcolor(fgcolor);
-        int bgcolor = color_convert(this->glyph_index.back_color,
-                                    this->cache_colormap.bpp,
-                                    mod->screen.colors->bpp,
-                                    this->cache_colormap.palette[0]);
-        #warning set_bgcolor or set_fg_color should probably take source bpp and palette as input and proceed themself to color conversion if it is necessary. This would avoid this code having to know anything about target color model (SMELL: inappropriate intimacy). This would also remove need to call color_convert from here.
-        mod->server_set_bgcolor(bgcolor);
+        mod->server_set_fgcolor(this->glyph_index.fore_color,
+                                this->cache_colormap.bpp,
+                                this->cache_colormap.palette[0]);
+        mod->server_set_bgcolor(this->glyph_index.back_color,
+                                this->cache_colormap.bpp,
+                                this->cache_colormap.palette[0]);
         mod->server_draw_text2(this->glyph_index);
-//        mod->server_draw_text2(
-//            this->glyph_index.cache_id,
-//            this->glyph_index.fl_accel,
-//            this->glyph_index.f_op_redundant,
-//            this->glyph_index.bk.x,
-//            this->glyph_index.bk.y,
-//            this->glyph_index.bk.x + this->glyph_index.bk.cx,
-//            this->glyph_index.bk.y + this->glyph_index.bk.cy,
-//            this->glyph_index.op.x,
-//            this->glyph_index.op.y,
-//            this->glyph_index.op.x + this->glyph_index.op.cx,
-//            this->glyph_index.op.y + this->glyph_index.op.cy,
-//            this->glyph_index.glyph_x,
-//            this->glyph_index.glyph_y,
-//            this->glyph_index.data,
-//            this->glyph_index.data_len);
+
     }
 
 };
