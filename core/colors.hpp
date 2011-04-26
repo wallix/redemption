@@ -31,8 +31,8 @@
 typedef uint32_t RGBcolor;
 typedef RGBcolor RGBPalette[256];
 
-// colorN (variable): an index into the current palette or an RGB triplet 
-//                    value; the actual interpretation depends on the color 
+// colorN (variable): an index into the current palette or an RGB triplet
+//                    value; the actual interpretation depends on the color
 //                    depth of the bitmap data.
 // +-------------+------------+------------------------------------------------+
 // | Color depth | Field size |                Meaning                         |
@@ -43,7 +43,7 @@ typedef RGBcolor RGBPalette[256];
 // |             |            | (5 bits for red, 5 bits for green, and 5 bits  |
 // |             |            | for blue).                                     |
 // +-------------+------------+------------------------------------------------+
-// |      16 bpp |    2 bytes | RGB color triplet expressed in 5-6-5 format    | 
+// |      16 bpp |    2 bytes | RGB color triplet expressed in 5-6-5 format    |
 // |             |            | (5 bits for red, 6 bits for green, and 5 bits  |
 // |             |            | for blue).                                     |
 // +-------------+------------+------------------------------------------------+
@@ -162,59 +162,20 @@ inline uint32_t color_convert(const uint32_t in_pixel, const uint8_t in_bpp, con
     return res;
 }
 
-/* generic colors */
-struct Colors {
-    int bpp;
-    RGBcolor black, grey, dark_grey, blue, dark_blue,
-             white, red, green, pink, yellow, anthracite,
-             wabgreen;
-
-    void get_palette(RGBPalette & palette) const {
-        //assert(bpp <= 8);
-        if (bpp > 8) {
-            return;
-        }
-        /* rgb332 */
-        for (int bindex = 0; bindex < 4; bindex++) {
-            for (int gindex = 0; gindex < 8; gindex++) {
-                for (int rindex = 0; rindex < 8; rindex++) {
-                    palette[(rindex << 5) | (gindex << 2) | bindex] =
-                    (RGBcolor)(
-                    // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
-                    // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
-                       | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
-                    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
-                       | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
-                }
-            }
-        }
-    }
-
-
-    Colors(int bpp)
-    {
-        this->bpp = bpp;
-        uint32_t palette[256];
-        if (bpp <= 8){
-            this->get_palette(palette);
-        }
-        this->black      = color_convert(0x000000, 24, bpp, palette);
-        this->grey       = color_convert(0xc0c0c0, 24, bpp, palette);
-        this->dark_grey  = color_convert(0x808080, 24, bpp, palette);
-        this->anthracite = color_convert(0x808080, 24, bpp, palette);
-        this->blue       = color_convert(0x0000ff, 24, bpp, palette);
-        this->dark_blue  = color_convert(0x00007f, 24, bpp, palette);
-        this->white      = color_convert(0xffffff, 24, bpp, palette);
-        this->red        = color_convert(0xff0000, 24, bpp, palette);
-        this->pink       = color_convert(0xff00ff, 24, bpp, palette);
-        this->green      = color_convert(0x00ff00, 24, bpp, palette);
-        this->yellow     = color_convert(0x00ffff, 24, bpp, palette);
-        this->wabgreen   = color_convert(0x3bbe91, 24, bpp, palette);
-        #warning : colors are to be changed later on
-        this->blue       = this->wabgreen;
-        this->dark_blue  = this->wabgreen;
-    }
+enum {
+    BLACK      = 0x000000,
+    GREY       = 0xc0c0c0,
+    DARK_GREY  = 0x808080,
+    ANTHRACITE = 0x808080,
+    BLUE       = 0x0000ff,
+    DARK_BLUE  = 0x00007f,
+    WHITE      = 0xffffff,
+    RED        = 0xff0000,
+    PINK       = 0xff00ff,
+    GREEN      = 0x00ff00,
+    YELLOW     = 0x00ffff,
+    WABGREEN   = 0x3bbe91,
+    DARK_WABGREEN = 0x3bbe91,
 };
 
 #endif

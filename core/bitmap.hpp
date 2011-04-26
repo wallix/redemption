@@ -132,7 +132,7 @@ struct Bitmap{
     }
 
 
-    Bitmap(const char* filename, int bpp)
+    Bitmap(const char* filename, uint8_t bpp)
     {
         this->bpp = bpp;
         this->Bpp = nbbytes(bpp);

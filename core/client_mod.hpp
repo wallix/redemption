@@ -59,6 +59,8 @@ struct client_mod {
     char ip_source[256];
     int rdp_compression;
     int bitmap_cache_persist_enable;
+    RGBPalette palette332;
+    uint8_t default_bpp;
 
     wait_obj * event;
     int signal;
@@ -67,10 +69,11 @@ struct client_mod {
         : screen(this,
                  front.orders->rdp_layer->client_info.width,
                  front.orders->rdp_layer->client_info.height,
-                 front.colors),
+                 front.orders->rdp_layer->client_info.bpp),
           keys(keys),
           key_flags(key_flags),
           keymap(keymap),
+          default_bpp(24),
           signal(0)
     {
         this->current_pointer = 0;
@@ -184,11 +187,6 @@ struct client_mod {
 
             this->screen.rect.cx = client_info.width = width;
             this->screen.rect.cy = client_info.height = height;
-
-            #warning there is something unclear about colors life-cycle see to that
-            *(this->screen.colors) = Colors(bpp);
-
-
 
             /* shut down the rdp client */
             this->front->orders->rdp_layer->server_rdp_send_deactive();
@@ -368,13 +366,12 @@ struct client_mod {
 
 
     void send_bitmap_mod(const Rect & dst, const Rect & src_r, const uint8_t * src_data,
-                     const Colors & colors,
                      int palette_id,
                      const Region & clip_region){
 
         for (size_t ir = 0; ir < clip_region.rects.size(); ir++){
             const Rect & clip = clip_region.rects[ir];
-            this->front->send_bitmap_front(dst, src_r, src_data, colors, palette_id, clip);
+            this->front->send_bitmap_front(dst, src_r, src_data, palette_id, clip);
         }
     }
 
@@ -382,9 +379,7 @@ struct client_mod {
     int server_paint_rect(int rop, const Rect & dst, const uint8_t* src_data, int width, int height, int srcx, int srcy)
     {
         const Rect src_r(srcx, srcy, width, height);
-        this->front->send_bitmap_front(dst, src_r,  src_data,
-                                       *(this->screen.colors),
-                                       0, this->clip);
+        this->front->send_bitmap_front(dst, src_r,  src_data, 0, this->clip);
         return 0;
     }
 
@@ -444,16 +439,29 @@ struct client_mod {
         this->clip = this->screen.rect;
     }
 
-    void server_set_fgcolor(uint32_t color, uint8_t bpp, uint32_t (& palette)[256])
+    void server_set_fgcolor(uint32_t color)
     {
-        int fgcolor = color_convert(color, bpp, this->screen.colors->bpp, palette);
+        int fgcolor = color_convert(color, this->default_bpp, front->orders->rdp_layer->client_info.bpp, this->palette332);
         this->fg_color = fgcolor;
         this->pen.color = fgcolor;
     }
 
+    void server_set_fgcolor(uint32_t color, uint8_t bpp, uint32_t (& palette)[256])
+    {
+        int fgcolor = color_convert(color, bpp, this->front->orders->rdp_layer->client_info.bpp, palette);
+        this->fg_color = fgcolor;
+        this->pen.color = fgcolor;
+    }
+
+    void server_set_bgcolor(uint32_t color)
+    {
+        int bgcolor = color_convert(color, this->default_bpp, this->front->orders->rdp_layer->client_info.bpp, this->palette332);
+        this->bg_color = bgcolor;
+    }
+
     void server_set_bgcolor(uint32_t color, uint8_t bpp, uint32_t (& palette)[256])
     {
-        int bgcolor = color_convert(color, bpp, this->screen.colors->bpp, palette);
+        int bgcolor = color_convert(color, bpp, this->front->orders->rdp_layer->client_info.bpp, palette);
         this->bg_color = bgcolor;
     }
 
@@ -628,7 +636,8 @@ struct client_mod {
         this->set_domino_brush(r.x, r.y);
 
         this->bg_color = wdg->parent.bg_color;
-        this->fg_color = this->front->colors.black;
+        uint32_t black = 0;
+        this->fg_color = black;
 
         #warning all coordinates provided to front functions should be screen coordinates, converting window relative coordinates to screen coordinates should be responsibility of caller.
         #warning pass in scr_r in screen coordinates instead or r

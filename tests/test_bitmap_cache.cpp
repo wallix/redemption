@@ -204,8 +204,6 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
 
     const uint8_t * big_picture = (uint8_t*)big_picture8;
 
-    Colors color(24);
-
     {
     int send_type;
     uint8_t cache_id;
@@ -214,7 +212,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
 
     {
     send_type = cache.add_bitmap(100, 100, big_picture, 25, 0, 10, 10,
-                     color.bpp, cache_id, cache_idx);
+                     24, cache_id, cache_idx);
 
     BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
     BOOST_CHECK_EQUAL(cache.big_bitmaps[0].crc, cache.big_bitmaps[0].bmp.get_crc());
@@ -335,7 +333,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     }
     {
         send_type = cache.add_bitmap(100, 100, big_picture, 0, 0, 10, 10,
-                         color.bpp, cache_id, cache_idx);
+                         24, cache_id, cache_idx);
 
         BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
         BOOST_CHECK_EQUAL(0xFF0000, entry->bmp.data_co[0]+(entry->bmp.data_co[1]<<8)+(entry->bmp.data_co[2]<<16));
@@ -348,7 +346,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     {
         // request again the same picture, we should get the same cache_id
         send_type = cache.add_bitmap(100, 100, big_picture, 0, 0, 10, 10,
-                         color.bpp, cache_id, cache_idx);
+                         24, cache_id, cache_idx);
         BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
         BOOST_CHECK_EQUAL(2, cache_id);
         BOOST_CHECK_EQUAL(1, cache_idx);
@@ -358,7 +356,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
 
     {
         send_type = cache.add_bitmap(100, 100, big_picture, 25, 0, 10, 10,
-                         color.bpp, cache_id, cache_idx);
+                         24, cache_id, cache_idx);
         BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
         BOOST_CHECK_EQUAL(2, cache_id);
         BOOST_CHECK_EQUAL(0, cache_idx);
@@ -368,7 +366,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     {
         // another part of the big image, but with the same drawing, same cache_id
         send_type = cache.add_bitmap(100, 100, big_picture, 25, 40, 10, 10,
-                         color.bpp, cache_id, cache_idx);
+                         24, cache_id, cache_idx);
         BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
         BOOST_CHECK_EQUAL(2, cache_id);
         BOOST_CHECK_EQUAL(0, cache_idx);
@@ -378,7 +376,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     {
         // another picture, new cache
         send_type = cache.add_bitmap(100, 100, big_picture, 35, 0, 10, 10,
-                         color.bpp, cache_id, cache_idx);
+                         24, cache_id, cache_idx);
         BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
         BOOST_CHECK_EQUAL(2, cache_id);
         BOOST_CHECK_EQUAL(2, cache_idx);
@@ -388,7 +386,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     {
         // request again the same picture, we should get the same cache_id
         send_type = cache.add_bitmap(100, 100, big_picture, 25, 0, 10, 10,
-                         color.bpp, cache_id, cache_idx);
+                         24, cache_id, cache_idx);
         BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
         BOOST_CHECK_EQUAL(2, cache_id);
         BOOST_CHECK_EQUAL(0, cache_idx);
@@ -399,7 +397,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     // another part of the big image, but with the same drawing, same cache_id
     {
         send_type = cache.add_bitmap(100, 100, big_picture, 25, 40, 10, 10,
-                         color.bpp, cache_id, cache_idx);
+                         24, cache_id, cache_idx);
         BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
         BOOST_CHECK_EQUAL(2, cache_id);
         BOOST_CHECK_EQUAL(0, cache_idx);
@@ -408,7 +406,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     }
 
     send_type = cache.add_bitmap(100, 100, big_picture, 99, 98, 10, 10,
-                     color.bpp, cache_id, cache_idx);
+                     24, cache_id, cache_idx);
 
     BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
     BOOST_CHECK_EQUAL(1, cache_id);

@@ -111,8 +111,7 @@ static ProtocolKeyword KeywordsDefinitions[] = {
 };
 
 
-Session::Session(int sck, const char * ip_source, wait_obj * terminated_event, Inifile * ini) : colors(16)
-{
+Session::Session(int sck, const char * ip_source, wait_obj * terminated_event, Inifile * ini) {
     this->context = new ModContext(
             KeywordsDefinitions,
             sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword));
@@ -161,8 +160,6 @@ Session::Session(int sck, const char * ip_source, wait_obj * terminated_event, I
         throw 2;
     }
 
-    memset(this->palette, 0, sizeof(RGBPalette));
-
     /* keyboard info */
     memset(this->keys, 0, 256 * sizeof(int)); /* key states 0 up 1 down*/
     #warning we should be able to move all key management code to some object
@@ -171,8 +168,9 @@ Session::Session(int sck, const char * ip_source, wait_obj * terminated_event, I
 
     #warning no need to create the front here the window size is not yet available
     this->front = new Front(this->orders, this->cache,
-        this->default_font, this->colors, this->palette,
-        this->ini->globals.nomouse, this->ini->globals.notimestamp,
+        this->default_font,
+        this->ini->globals.nomouse,
+        this->ini->globals.notimestamp,
         atoi(this->context->get(STRAUTHID_TIMEZONE))
         );
     this->no_mod = new null_mod(this->keys, this->key_flags, this->keymap, *this->context, *(this->front));
@@ -337,7 +335,7 @@ static int load_pointer(const char* file_name, uint8_t* data, uint8_t* mask, int
         int bpp = stream.in_uint8();
         stream.skip_uint8(25);
 
-        int palette[16];
+        RGBPalette palette;
         if (w == 32 && h == 32) {
             if (bpp == 1) {
                 memcpy(palette, stream.in_uint8p(8), 8);
@@ -417,13 +415,10 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
 
         // if we reach this point we are up_and_running,
         // hence width and height and colors and keymap are availables
-        this->colors = Colors(this->client_info->bpp);
-        this->colors.get_palette(this->palette);
-
         /* resize the main window */
         this->mod->screen.rect.cx = this->client_info->width;
         this->mod->screen.rect.cy = this->client_info->height;
-        this->mod->screen.colors = &this->colors;
+        this->mod->screen.bpp = this->client_info->bpp;
 
         this->mod->server_reset_clip();
 
@@ -451,9 +446,24 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
 
 
         this->log.clear();
-        this->colors = Colors(this->colors.bpp);
-        this->colors.get_palette(this->palette);
-        this->front->send_palette();
+        RGBPalette palette;
+        /* rgb332 palette */
+        for (int bindex = 0; bindex < 4; bindex++) {
+            for (int gindex = 0; gindex < 8; gindex++) {
+                for (int rindex = 0; rindex < 8; rindex++) {
+                    palette[(rindex << 5) | (gindex << 2) | bindex] =
+                    (RGBcolor)(
+                    // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
+                    // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
+                       | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
+                    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
+                       | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
+                }
+            }
+        }
+
+        this->front->send_palette(palette);
 
         struct pointer_item pointer_item;
 
@@ -798,7 +808,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 char event_name[256];
                 snprintf(event_name, 255, "redemption_%8.8x_wm_login_mode_event_%p", getpid(), this);
                 this->mod_event = new wait_obj(event_name);
-                this->mod = new login_mod(this->mod_event, this->keys, this->key_flags, this->keymap,  *this->context, this->colors, *(this->front), this);
+                this->mod = new login_mod(this->mod_event, this->keys, this->key_flags, this->keymap,  *this->context, *(this->front), this);
                 // force a WM_INVALIDATE on all screen
                 this->callback(0x4444, this->mod->screen.rect.x, this->mod->screen.rect.y, this->mod->screen.rect.cx, this->mod->screen.rect.cy);
                 LOG(LOG_INFO, "Creation of new mod 'LOGIN DIALOG' (%d,%d,%d,%d) suceeded\n",
@@ -828,7 +838,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 char text[256];
                 snprintf(text, 255, "session_mod_%8.8x_event_%p", getpid(), this);
                 this->mod_event = new wait_obj(text);
-                this->mod = new dialog_mod(this->mod_event, this->keys, this->key_flags, this->keymap, *this->context, this->colors, *(this->front), this, message, button);
+                this->mod = new dialog_mod(this->mod_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this, message, button);
                 // force a WM_INVALIDATE on all screen
                 this->callback(0x4444, this->mod->screen.rect.x, this->mod->screen.rect.y, this->mod->screen.rect.cx, this->mod->screen.rect.cy);
                 Inifile ini(CFG_PATH "/" RDPPROXY_INI);
@@ -848,7 +858,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 char text[256];
                 snprintf(text, 255, "session_mod_%8.8x_event_%p", getpid(), this);
                 this->mod_event = new wait_obj(text);
-                this->mod = new close_mod(this->mod_event, this->keys, this->key_flags, this->keymap, *this->context, this->colors, *(this->front), this);
+                this->mod = new close_mod(this->mod_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this);
                 // force a WM_INVALIDATE on all screen
                 this->callback(0x4444, this->mod->screen.rect.x, this->mod->screen.rect.y, this->mod->screen.rect.cx, this->mod->screen.rect.cy);
                 LOG(LOG_INFO, "Creation of new mod 'CLOSE DIALOG' suceeded\n");
@@ -859,7 +869,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 char text[256];
                 snprintf(text, 255, "session_mod_%8.8x_event_%p", getpid(), this);
                 this->mod_event = new wait_obj(text);
-//                this->mod = new bouncer_mod(this->mod_event, this->mod->screen, this->keys, this->key_flags, this->keymap, *this->context, this->colors, *(this->front), this);
+//                this->mod = new bouncer_mod(this->mod_event, this->mod->screen, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this);
                 LOG(LOG_INFO, "Creation of new mod 'Bouncer' suceeded\n");
             break;
 
@@ -868,7 +878,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 //                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "This is a test");
 //                }
 
-//                this->mod = new close_mod(this->mod_event, this->keys, this->key_flags, this->keymap, *this->context, this->colors, *(this->front), this);
+//                this->mod = new close_mod(this->mod_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this);
 //                char text[256];
 //                snprintf(text, 255, "session_mod_%8.8x_event_%p", getpid(), this);
 //                this->mod_event = new wait_obj(text);

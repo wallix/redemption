@@ -30,8 +30,8 @@ struct wab_help : public window
     Widget & notify_to;
     char help_message[1024];
 
-    wab_help(client_mod * mod, const Rect & r, const Colors & colors, Widget & parent, Widget & notify_to, int bg_color, const char * title, const char * help_message)
-    : window(mod, r, colors, parent, bg_color, title), notify_to(notify_to)
+    wab_help(client_mod * mod, const Rect & r, Widget & parent, Widget & notify_to, int bg_color, const char * title, const char * help_message)
+    : window(mod, r, parent, bg_color, title), notify_to(notify_to)
     {
         strcpy(this->help_message, help_message);
     }
@@ -44,8 +44,8 @@ struct wab_help : public window
             }
         } else if (msg == WM_PAINT) { /* 3 */
             #warning this should be in draw method of window_help, not here
-            uint32_t palette[256] = {};
-            this->mod->server_set_fgcolor(this->colors->black, 24, palette);
+            uint32_t black = 0x000000;
+            this->mod->server_set_fgcolor(black);
             // "Enter target device and login as login@server"
             // "Enter a valid allowed authentication user"
             // "in the username edit box."
@@ -81,8 +81,8 @@ struct wab_help : public window
 
 struct wab_login : public window_login
 {
-    wab_login(client_mod * mod, const Rect & r, const Colors & colors, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
-    : window_login(mod, r, colors, context, session, parent, notify_to, bg_color, title, ini, regular)
+    wab_login(client_mod * mod, const Rect & r, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
+    : window_login(mod, r, context, session, parent, notify_to, bg_color, title, ini, regular)
     {
         context.get(STRAUTHID_PASSWORD)[0] = 0;
 
@@ -90,24 +90,24 @@ struct wab_login : public window_login
         this->ini = ini;
         struct Widget* but;
 
+        uint32_t grey = 0xc0c0c0;
         /* create help screen */
         this->help = new wab_help(this->mod,
             Rect(this->mod->screen.rect.cx / 2 - 340 / 2,
                 this->mod->screen.rect.cy / 2 - 300 / 2,
                 340,
                 300),
-            *(this->colors),
             mod->screen, // parent
             *this, // notify_to
-            colors.grey,
+            grey,
             "Login help",
             context.get(STRAUTHID_TRANS_HELP_MESSAGE));
 
         if (regular) {
-            widget_image * but = new widget_image(this->mod, 4, 4, colors, WND_TYPE_IMAGE,
-                *this, 10, 30);
-            but->Widget_load(SHARE_PATH "/" LOGIN_LOGO24);
-            #warning bitmap load below should probably be done before call
+            widget_image * but = new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE,
+                *this, 10, 30,
+                SHARE_PATH "/" LOGIN_LOGO24,
+                this->mod->screen.bpp);
             this->child_list.push_back(but);
         }
 
@@ -120,19 +120,19 @@ struct wab_login : public window_login
 
         but = new widget_button(this->mod,
             Rect(regular ? 180 : 30, 160, 60, 25),
-            colors, *this, 3, 1, context.get(STRAUTHID_TRANS_BUTTON_OK));
+            *this, 3, 1, context.get(STRAUTHID_TRANS_BUTTON_OK));
         this->child_list.push_back(but);
         this->default_button = but;
 
         but = new widget_button(this->mod,
               Rect(regular ? 250 : ((r.cx - 30) - 60), 160, 60, 25),
-              colors, *this, 2, 1, context.get(STRAUTHID_TRANS_BUTTON_CANCEL));
+              *this, 2, 1, context.get(STRAUTHID_TRANS_BUTTON_CANCEL));
         this->child_list.push_back(but);
         this->esc_button = but;
 
         if (regular) {
             but = new widget_button(this->mod,
-                  Rect(320, 160, 60, 25), colors, *this, 1, 1, context.get(STRAUTHID_TRANS_BUTTON_HELP));
+                  Rect(320, 160, 60, 25), *this, 1, 1, context.get(STRAUTHID_TRANS_BUTTON_HELP));
             this->child_list.push_back(but);
         }
 
@@ -141,38 +141,37 @@ struct wab_login : public window_login
         /* label */
         b = new widget_label(this->mod,
             Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 20),
-            *(this->colors), *this, context.get(STRAUTHID_TRANS_USERNAME));
+            *this, context.get(STRAUTHID_TRANS_USERNAME));
         this->child_list.push_back(b);
 
         b = new widget_label(this->mod,
             Rect((this->rect.cx >= 400) ?  230 : 70, 60 + 25 * count, 350, 20),
-            *(this->colors), *this, context.get(STRAUTHID_AUTH_USER));
+            *this, context.get(STRAUTHID_AUTH_USER));
         b->id = 100 + 2 * count;
         this->child_list.push_back(b);
         count ++;
 
         b = new widget_label(this->mod,
             Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 20),
-            *(this->colors), *this, context.get(STRAUTHID_TRANS_TARGET));
+            *this, context.get(STRAUTHID_TRANS_TARGET));
         this->child_list.push_back(b);
 
         b = new widget_label(this->mod,
             Rect((this->rect.cx >= 400) ?  230 : 70, 60 + 25 * count, 350, 20),
-            *(this->colors), *this, target);
+            *this, target);
         b->id = 100 + 2 * count;
         this->child_list.push_back(b);
         count ++;
 
         b = new widget_label(this->mod,
             Rect(this->rect.cx >= 400 ? 155 : 5, 60 + 25 * count, 70, 20),
-            *(this->colors), *this, context.get(STRAUTHID_TRANS_PASSWORD));
+            *this, context.get(STRAUTHID_TRANS_PASSWORD));
         b->id = 100 + 2 * count;
         this->child_list.push_back(b);
 
         /* edit */
         b = new widget_edit(this->mod,
                 Rect((this->rect.cx) >= 400 ? 230 : 70, 60 + 25 * count, 350, 20),
-                *(this->colors),
                 *this,
                 100 + 2 * count + 1, /* id */
                 1, /* tab stop */
@@ -190,6 +189,7 @@ struct wab_login : public window_login
     }
 
     ~wab_login(){
+        #warning here destroy all widgets from screen.child_list
         delete this->help;
     }
 
@@ -200,8 +200,8 @@ struct combo_help : public window
 {
     Widget & notify_to;
 
-    combo_help(client_mod * mod, const Rect & r, const Colors & colors, Widget & parent, Widget & notify_to, int bg_color, const char * title)
-    : window(mod, r, colors, parent, bg_color, title), notify_to(notify_to)
+    combo_help(client_mod * mod, const Rect & r, Widget & parent, Widget & notify_to, int bg_color, const char * title)
+    : window(mod, r, parent, bg_color, title), notify_to(notify_to)
     {
     }
 
@@ -214,8 +214,8 @@ struct combo_help : public window
         } else if (msg == WM_PAINT) { /* 3 */
             #warning the code below is a bit too much specialized. Change it to some code able to write a paragraph of text in a given rectangle. Later we may even add some formatting support.
             #warning this should be in draw method of window_help, not here
-            uint32_t palette[256]={};
-            this->mod->server_set_fgcolor(this->colors->black, 24, palette);
+            uint32_t black = 0;
+            this->mod->server_set_fgcolor(black);
             const char * message =
                     "You must be authenticated before using this<br>"
                     "session.<br>"
@@ -255,39 +255,37 @@ struct combo_help : public window
 
 struct combo_login : public window_login
 {
-    combo_login(client_mod * mod, const Rect & r, const Colors & colors, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
-    : window_login(mod, r, colors, context, session, parent, notify_to, bg_color, title, ini, regular)
+    combo_login(client_mod * mod, const Rect & r, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
+    : window_login(mod, r, context, session, parent, notify_to, bg_color, title, ini, regular)
     {
         this->session = session;
         this->ini = ini;
         struct Widget* but;
 
         /* create help screen */
+        uint32_t grey = 0xc0c0c0;
         this->help = new combo_help(this->mod,
             Rect(this->mod->screen.rect.cx / 2 - 340 / 2,
                 this->mod->screen.rect.cy / 2 - 300 / 2,
                 340,
                 300),
-            *(this->colors),
             mod->screen, // parent
             *this, // notify_to
-            colors.grey,
+            grey,
             "Login help");
 
         if (regular) {
-            widget_image * but = new widget_image(this->mod, 4, 4, colors, WND_TYPE_IMAGE, *this, 10, 30);
-            but->Widget_load(SHARE_PATH "/" LOGIN_LOGO24);
-            #warning bitmap load below should probably be done before call
+            widget_image * but = new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE, *this, 10, 30,
+                    SHARE_PATH "/" LOGIN_LOGO24, this->mod->screen.bpp);
             this->child_list.push_back(but);
         }
 
         /* label */
-        but = new widget_label(this->mod, Rect((regular ? 155 : 5), 35, 60, 20),
-            colors, *this,  "Module");
+        but = new widget_label(this->mod, Rect((regular ? 155 : 5), 35, 60, 20), *this,  "Module");
         this->child_list.push_back(but);
 
         Rect rect(regular ? 230 : 70, 35, 350, 20);
-        this->combo = new widget_combo(this->mod, rect, colors, *this, 6, 1);
+        this->combo = new widget_combo(this->mod, rect, *this, 6, 1);
 
         #warning add this to combo through constructor (pass in an array of strings ?) a list of pairs with id and string could be better.
         for (int i = 0; i < 6 ; i++){
@@ -322,21 +320,21 @@ struct combo_login : public window_login
         #warning valgrind say there is a memory leak here
         but = new widget_button(this->mod,
               Rect(regular ? 180 : 30, 160, 60, 25),
-              colors, *this, 3, 1, context.get(STRAUTHID_TRANS_BUTTON_OK));
+              *this, 3, 1, context.get(STRAUTHID_TRANS_BUTTON_OK));
         this->child_list.push_back(but);
         this->default_button = but;
 
         #warning valgrind say there is a memory leak here
         but = new widget_button(this->mod,
               Rect(regular ? 250 : ((r.cx - 30) - 60), 160, 60, 25),
-              colors, *this, 2, 1, context.get(STRAUTHID_TRANS_BUTTON_CANCEL));
+              *this, 2, 1, context.get(STRAUTHID_TRANS_BUTTON_CANCEL));
         this->child_list.push_back(but);
         this->esc_button = but;
 
         if (regular) {
         #warning valgrind say there is a memory leak here
             but = new widget_button(this->mod,
-                  Rect(320, 160, 60, 25), colors, *this, 1, 1, context.get(STRAUTHID_TRANS_BUTTON_HELP));
+                  Rect(320, 160, 60, 25), *this, 1, 1, context.get(STRAUTHID_TRANS_BUTTON_HELP));
             this->child_list.push_back(but);
         }
 
@@ -352,7 +350,6 @@ struct combo_login : public window_login
 struct login_mod : public client_mod {
     struct window_login * login_window;
     Session * session;
-    const Colors & colors;
     Widget* popup_wnd;
     Widget* button_down;
 
@@ -364,10 +361,8 @@ struct login_mod : public client_mod {
 
     login_mod(wait_obj * event,
             int (& keys)[256], int & key_flags, Keymap * &keymap,
-            ModContext & context, const Colors & colors, Front & front, Session * session)
-            :
-            client_mod(keys, key_flags, keymap, front),
-            colors(colors)
+            ModContext & context, Front & front, Session * session)
+            : client_mod(keys, key_flags, keymap, front)
     {
         this->event = event;
         this->signal = 0;
@@ -397,23 +392,24 @@ struct login_mod : public client_mod {
             log_width,
             log_height);
 
+        uint32_t grey = 0xc0c0c0;
         #warning having two completely different LOGIN modules one with password only, the other one with full behavior would probably be much more clean than passing around that wab_auth. See that.
         if (context.wab_auth){
             this->login_window = new wab_login(this,
-                r, colors, context, session,
+                r, context, session,
                 this->screen, // parent
                 this->screen, // notify_to
-                colors.grey,
+                grey,
                 "Login",
                 session->ini,
                 regular);
         }
         else {
             this->login_window = new combo_login(this,
-                r, colors, context, session,
+                r, context, session,
                 this->screen, // parent
                 this->screen, // notify_to
-                colors.grey,
+                grey,
                 "Login",
                 session->ini,
                 regular);
@@ -425,14 +421,13 @@ struct login_mod : public client_mod {
         if (regular) {
             /* image */
             widget_image * but = new widget_image(this, 4, 4,
-                colors, WND_TYPE_IMAGE,
+                WND_TYPE_IMAGE,
                 this->screen,
                 this->screen.rect.cx - 250 - 4,
-                this->screen.rect.cy - 120 - 4);
+                this->screen.rect.cy - 120 - 4,
+                SHARE_PATH "/" REDEMPTION_LOGO24,
+                this->screen.bpp);
 
-            #warning logo position should depend of size of image
-            #warning integrate load in widget_image
-            but->Widget_load(SHARE_PATH "/" REDEMPTION_LOGO24);
             this->screen.child_list.push_back(but);
         }
 
@@ -444,6 +439,7 @@ struct login_mod : public client_mod {
 
     virtual ~login_mod()
     {
+        #warning here destroy all widgets from screen.child_list
     }
 
     /*****************************************************************************/
@@ -594,7 +590,6 @@ struct login_mod : public client_mod {
                                 control->to_screeny() + control->rect.cy,
                                 control->rect.cx,
                                 100),
-                            this->colors,
                             control, // popped_from
                             this->screen, // parent
                             control->item_index); // item_index

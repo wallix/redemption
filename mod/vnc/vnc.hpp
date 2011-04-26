@@ -60,7 +60,7 @@ struct mod_vnc : public client_mod {
         const char * username = context.get(STRAUTHID_TARGET_USER);
         this->t = t;
         try {
-            int bpp = this->screen.colors->bpp;
+            int bpp = this->screen.bpp;
             memset(this->mod_name, 0, 256);
             this->mod_mouse_state = 0;
             memset(this->palette, 0, sizeof(RGBPalette));
@@ -625,7 +625,7 @@ struct mod_vnc : public client_mod {
         int encoding;
         int error = 0;
         size_t num_recs = 0;
-        int Bpp = nbbytes(this->screen.colors->bpp);
+        int Bpp = nbbytes(this->screen.bpp);
         if (Bpp == 3) {
             Bpp = 4;
         }
@@ -686,7 +686,7 @@ struct mod_vnc : public client_mod {
 
                     this->build_pointer(cursor_data, cursor_mask,
                                         d1, d2, cx, cy,
-                                        this->screen.colors->bpp,
+                                        this->screen.bpp,
                                         this->palette);
 
                     /* keep these in 32x32, vnc cursor can be alot bigger */

@@ -488,7 +488,7 @@ struct rdp_orders {
             const uint8_t palid = this->memblt.cache_id >> 8;
             const uint8_t * src = bitmap->data_co;
             const uint8_t in_bpp = bitmap->bpp;
-            const uint8_t out_bpp = mod->screen.colors->bpp;
+            const uint8_t out_bpp = mod->screen.bpp;
             const uint32_t (& palette)[256] = this->cache_colormap.palette[palid];
             uint8_t * bmpdata = (uint8_t*)malloc(width * height * nbbytes(out_bpp));
             uint8_t * dst = bmpdata;

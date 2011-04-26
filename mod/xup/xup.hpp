@@ -187,8 +187,7 @@ struct xup_mod : public client_mod {
                     case 12: /* server_set_fgcolor */
                     {
                         int fgcolor = stream.in_uint32_le();
-                        uint32_t palette[256] = {}; 
-                        this->server_set_fgcolor(fgcolor, 24, palette);
+                        this->server_set_fgcolor(fgcolor);
                     }
                     break;
                     case 14:

@@ -71,7 +71,6 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
     cout << "sending orders\n";
     const RDPBrush brush;
 //    orders->init();
-    Colors color(24);
 //    orders->opaque_rect(Rect(0, 0, 34, 34), color.pink, Rect(0, 0, 34, 34));
 
     const uint8_t cache_id = 0;
@@ -123,17 +122,14 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 //    orders->mem_blt(cache_id, 0, Rect(1, 1, 30, 30), 0xcc, 30, 30, 2, 2, cache_idx, Rect(0, 0, 34, 34));
 //    orders->send();
 
-    Colors colors(client_info->bpp);
-    front->colors = colors;
-
 #define COLOR_IMAGE FIXTURES_PATH "/color_image2.bmp"
-    Bitmap bgbmp(COLOR_IMAGE, front->colors.bpp);
+    Bitmap bgbmp(COLOR_IMAGE, client_info->bpp);
 
 #define LOGO FIXTURES_PATH "/logo-redemption.bmp"
-    Bitmap logobmp(LOGO, front->colors.bpp);
+    Bitmap logobmp(LOGO, client_info->bpp);
 
 //#define LOGO2 FIXTURES_PATH "/logo-truncated-16x2.bmp"
-//    Bitmap logobmp2(LOGO2, colors.bpp);
+//    Bitmap logobmp2(LOGO2, client_info.bpp);
 
     {
         front->begin_update();
@@ -141,8 +137,8 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
         front->send_bitmap_front(
             Rect(0, 0, bgbmp.cx, bgbmp.cy),
             Rect(0, 0, bgbmp.cx, bgbmp.cy),
-           (uint8_t*)bgbmp.data_co,
-           colors, 0, Rect(0, 0, bgbmp.cx, bgbmp.cy));
+            (uint8_t*)bgbmp.data_co,
+            0, Rect(0, 0, bgbmp.cx, bgbmp.cy));
         front->end_update();
     }
 
@@ -153,7 +149,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 //            Rect(0, 0, logobmp.cx, logobmp.cy),
 //            Rect(0, 0, logobmp.cx, logobmp.cy),
 //           (uint8_t*)logobmp.data_co,
-//           colors, 0, Rect(0, 0, 800, 600));
+//           0, Rect(0, 0, 800, 600));
 //        front->end_update();
 //    }
 
@@ -419,7 +415,7 @@ uint8_t compressed[] = {
 //        // src_r(0, 0, 256, 125)
 //        Rect(0, 0, logobmp2.cx, logobmp2.cy),
 //           (uint8_t*)logobmp2.data_co,
-//           colors, 0, Rect(0, 0, logobmp2.cx, logobmp2.cy));
+//           0, Rect(0, 0, logobmp2.cx, logobmp2.cy));
 //        front->end_update();
 //    }
 
@@ -531,11 +527,8 @@ int hook(int sck)
         ClientInfo * client_info = &(server->client_info);
         Font * default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
         Cache * cache = new Cache(orders, client_info);
-        Colors colors(16);
-        RGBPalette palette;
-        colors.get_palette(palette);
         int timezone = -3600;
-        Front * front = new Front(orders, cache, default_font, colors, palette, false, false, timezone);
+        Front * front = new Front(orders, cache, default_font, false, false, timezone);
         void_callback.front = front;
 
         Rsakeys * rsa_keys = new Rsakeys(CFG_PATH "/rsakeys.ini");

@@ -45,7 +45,6 @@
 #include "config.hpp"
 #include "wait_obj.hpp"
 #include "transport.hpp"
-#include "colors.hpp"
 #include "bitmap.hpp"
 #include "modcontext.hpp"
 
@@ -133,8 +132,6 @@ struct Session {
     #warning caches are related to rdp client. Put them in core/rdp.hpp
     #warning cache reset should also be put in core/rdp.hpp
     struct Cache* cache;
-    Colors colors;
-    RGBPalette palette;
     int mouse_x;
     int mouse_y;
 

@@ -33,25 +33,25 @@ struct window_dialog : public window
     Session * session;
     ModContext * context;
 
-    window_dialog(client_mod * mod, const Rect & r, const Colors & colors,
+    window_dialog(client_mod * mod, const Rect & r,
                   ModContext & context, Session* session,
                   Widget & parent, Widget & owner, Widget & notify_to,
                   int bg_color,
                   const char * title, Inifile * ini, int regular,
                   const char * message, const char * refuse)
-    : window(mod, r, colors, parent, bg_color, title)
+    : window(mod, r, parent, bg_color, title)
     {
         struct Widget* but;
         this->session = session;
         this->context = &context;
         this->esc_button = NULL;
 
-        but = new widget_button(this->mod, Rect(200, 160, 60, 25), colors, *this, 3, 1, "OK");
+        but = new widget_button(this->mod, Rect(200, 160, 60, 25), *this, 3, 1, "OK");
         this->child_list.push_back(but);
         this->default_button = but;
 
         if (refuse) {
-            but = new widget_button(this->mod, Rect(300, 160, 60, 25), colors, *this, 2, 1, refuse);
+            but = new widget_button(this->mod, Rect(300, 160, 60, 25), *this, 2, 1, refuse);
             this->child_list.push_back(but);
             this->esc_button = but;
             this->default_button = but;
@@ -64,7 +64,7 @@ struct window_dialog : public window
             tmp[0] = 0;
             strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
             tmp[255] = 0;
-            but = new widget_label(this->mod, Rect(50, 60 + 16 * count, 500, 40), colors, *this, tmp);
+            but = new widget_label(this->mod, Rect(50, 60 + 16 * count, 500, 40), *this, tmp);
             this->child_list.push_back(but);
             count++;
             if (!str){
@@ -104,7 +104,6 @@ struct window_dialog : public window
 struct dialog_mod : public client_mod {
     struct window_dialog * close_window;
     Session * session;
-    Colors & colors;
     Widget* button_down;
 
     int dragging;
@@ -116,11 +115,10 @@ struct dialog_mod : public client_mod {
     dialog_mod(wait_obj * event,
                int (& keys)[256], int & key_flags, Keymap * &keymap,
                ModContext & context,
-               Colors & colors, Front & front, Session * session,
+               Front & front, Session * session,
                const char *message, const char * refuse)
             :
-            client_mod(keys, key_flags, keymap, front),
-            colors(colors)
+            client_mod(keys, key_flags, keymap, front)
     {
 
         /* dragging info */
@@ -145,13 +143,14 @@ struct dialog_mod : public client_mod {
             this->screen.rect.cy / 2 - log_height / 2,
             log_width,
             log_height);
+
         #warning valgrind say there is a memory leak here
         this->close_window = new window_dialog(this,
-            r, colors, context, session,
+            r, context, session,
             this->screen, // parent
             this->screen, // owner
             this->screen, // notify_to
-            colors.grey,
+            GREY,
             "Information",
             session->ini,
             regular,

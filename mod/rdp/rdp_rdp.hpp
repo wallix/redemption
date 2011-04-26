@@ -1091,7 +1091,7 @@ struct rdp_rdp {
             #warning A better solution would be to pass the original bitmap, including it's bpp, to server_paint_rect and let it deal with color changes if necessary.
             const uint8_t * src = bitmap.data_co;
             const uint8_t in_bpp = bpp;
-            const uint8_t out_bpp = mod->screen.colors->bpp;
+            const uint8_t out_bpp = mod->screen.bpp;
             const uint32_t (& palette)[256] = this->orders.cache_colormap.palette[0];
             uint8_t * bmpdata = (uint8_t*)malloc(width * height * nbbytes(out_bpp));
             uint8_t * dst = bmpdata;

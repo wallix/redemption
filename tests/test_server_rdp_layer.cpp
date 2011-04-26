@@ -73,10 +73,8 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 
     orders->init();
 
-    Colors color(client_info->bpp);
-
-    orders->opaque_rect(Rect(50, 50, 150, 150), color.pink, Rect(50, 50, 150, 150));
-    orders->opaque_rect(Rect(520, 360, 60, 25), color.dark_grey, Rect(520, 360, 60, 25));
+    orders->opaque_rect(Rect(50, 50, 150, 150), PINK, Rect(50, 50, 150, 150));
+    orders->opaque_rect(Rect(520, 360, 60, 25), DARK_GREY, Rect(520, 360, 60, 25));
 
     // add text to glyph cache
     const char * text = "Hello";
@@ -107,7 +105,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
         cy = std::max(cy, font_item->height);
     }
 
-    orders->glyph_index(7, 3, color.black, color.yellow, 0, Rect(535, 363, cx+1, cy+1), Rect(0, 0, 0, 0), 536, 364+cy, data, len * 2, Rect(0, 0, 800, 600));
+    orders->glyph_index(7, 3, BLACK, YELLOW, 0, Rect(535, 363, cx+1, cy+1), Rect(0, 0, 0, 0), 536, 364+cy, data, len * 2, Rect(0, 0, 800, 600));
 
     //orders->screen_blt(Rect(190, 190, 50, 50), 50, 50, 0xCC, Rect(190, 190, 50, 50));
 
@@ -134,16 +132,16 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
     orders->pat_blt(
         Rect(50, 50, 150, 150),
         0x5A,
-        color.pink,
-        color.white,
+        PINK,
+        WHITE,
         brush,
         Rect(100, 100, 50, 50));
 
     orders->pat_blt(
         Rect(63, 78, 10, 13),
         0x5A,
-        (uint32_t)color.black,
-        (uint32_t)color.white,
+        BLACK,
+        WHITE,
         brush,
         Rect(63, 78, 10, 13));
 
@@ -153,7 +151,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 
     for(int i = 0; i < 100; i++){
         for (int j = 0; j < 100; j++){
-            picture24[i][j] = color.white;
+            picture24[i][j] = WHITE;
         }
     }
 
@@ -162,9 +160,9 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
     RDPPen pen;
     pen.style = 1;
     pen.width = 10;
-    pen.color = color.blue;
+    pen.color = BLUE;
 
-    orders->line(1, 50, 50, 150, 150, 0xCC, color.pink, pen, Rect(100, 100, 50, 50));
+    orders->line(1, 50, 50, 150, 150, 0xCC, PINK, pen, Rect(100, 100, 50, 50));
 
     orders->send();
 
@@ -175,7 +173,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
     Region region;
     Rect r1(0, 0, 800, 600);
     region.rects.push_back(r1);
-    front->opaque_rect(Rect(500, 400, 200, 150), color.dark_grey, Rect(500, 400, 200, 150));
+    front->opaque_rect(Rect(500, 400, 200, 150), DARK_GREY, Rect(500, 400, 200, 150));
     front->end_update();
 
     /* Draw black line crossing right-bottom white rect of screen */
@@ -184,7 +182,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 
     pen.style = 1;
     pen.width = 10;
-    pen.color = color.pink;
+    pen.color = PINK;
 
     /* Line clipped 500, 400, 201, 151*/
     front->line(0xCC, 700, 400, 500, 550, 0, pen, Rect(600, 400, 150, 150));
@@ -201,14 +199,14 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
     front->draw_text2(7, 3, 0,
                 Rect(0, 0, 0, 0), Rect(500, 530, cx+1, cy+1),
                 501, 531+cy, data, len * 2,
-                color.black, color.dark_grey, Rect(0, 0, 800, 600));
+                BLACK, DARK_GREY, Rect(0, 0, 800, 600));
     front->end_update();
 
     /* Draw a little grey rect at left-bottom side of screen */
 
     front->begin_update();
     front->fill_rect_rop(0x5A, Rect(0, 450, 50, 50),
-                           color.dark_grey, color.dark_grey,
+                           DARK_GREY, DARK_GREY,
                            brush,
                            Rect(0, 450, 50, 50));
     front->end_update();
@@ -229,7 +227,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
     uint16_t cache_b_idx;
 
     int send_type2 = front->bmp_cache->add_bitmap(100, 100, (uint8_t*)picture16, 0, 0, 32, 32,
-                                color.bpp, cache_b_id, cache_b_idx);
+                                client_info->bpp, cache_b_id, cache_b_idx);
 
     BitmapCacheItem * entry =  front->bmp_cache->get_item(cache_b_id, cache_b_idx);
 
@@ -408,11 +406,8 @@ int hook(int sck)
         ClientInfo * client_info = &(server->client_info);
         Font * default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
         Cache * cache = new Cache(orders, client_info);
-        Colors colors(16);
-        RGBPalette palette;
-        colors.get_palette(palette);
         int timezone = -3600;
-        Front * front = new Front(orders, cache, default_font, colors, palette, false, false, timezone);
+        Front * front = new Front(orders, cache, default_font, false, false, timezone);
         void_callback.front = front;
 
         Rsakeys * rsa_keys = new Rsakeys(CFG_PATH "/rsakeys.ini");

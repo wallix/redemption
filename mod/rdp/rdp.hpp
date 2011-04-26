@@ -66,7 +66,7 @@ struct mod_rdp : public client_mod {
                 client_info->rdp5_performanceflags,
                 this->screen.rect.cx,
                 this->screen.rect.cy,
-                this->screen.colors->bpp,
+                this->screen.bpp,
                 keylayout,
                 client_info->console_session),
                 in_stream(8192)

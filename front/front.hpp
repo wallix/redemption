@@ -55,8 +55,6 @@ public:
     struct RDP::Orders *orders;
     struct Font * font;
     struct Cache* cache;
-    Colors & colors;
-    RGBPalette & palette;
     int mouse_x;
     int mouse_y;
     struct timeval start;
@@ -66,15 +64,13 @@ public:
 
 #warning mouse_x, mouse_y, start not initialized
 
-    Front(struct RDP::Orders *orders, struct Cache* cache, Font *font, Colors & colors, RGBPalette & palette, bool nomouse, bool notimestamp, int timezone)
+    Front(struct RDP::Orders *orders, struct Cache* cache, Font *font, bool nomouse, bool notimestamp, int timezone)
     :
     bmp_cache(0),
     capture(0),
     orders(orders),
     font(font),
     cache(cache),
-    colors(colors),
-    palette(palette),
     nomouse(nomouse),
     notimestamp(notimestamp),
     timezone(timezone)
@@ -199,36 +195,13 @@ public:
         }
     }
 
-    void send_palette()
+    void send_palette(const RGBPalette & palette)
     {
         if (this->orders->rdp_layer->client_info.bpp <= 8) {
-            if (this->orders->order_count > 0){
-                this->orders->force_send();
-            }
-            RGBPalette palette;
-            this->colors.get_palette(palette);
             this->orders->rdp_layer->server_send_palette(palette);
             this->orders->init();
             this->orders->send_palette(palette, 0);
             this->orders->send();
-        }
-    }
-
-
-    void send_palette(const RGBPalette & palette)
-    {
-        if (this->orders->rdp_layer->client_info.bpp <= 8
-        && memcmp(this->palette, palette, 255 * sizeof(RGBcolor)) != 0) {
-           memcpy(this->palette, palette, 256 * sizeof(RGBcolor));
-            if (this->orders->rdp_layer->client_info.bpp <= 8) {
-                if (this->orders->order_count > 0){
-                    this->orders->force_send();
-                }
-                this->orders->rdp_layer->server_send_palette(palette);
-                this->orders->init();
-                this->orders->send_palette(palette, 0);
-                this->orders->send();
-            }
         }
     }
 
@@ -274,7 +247,6 @@ public:
     // draw bitmap from src_data (image rect contained in src_r) to x, y
     // clip_region is the list of visible rectangles that should be sent
     void send_bitmap_front(const Rect & dst, const Rect & src_r, const uint8_t * src_data,
-                     const Colors & colors,
                      int palette_id,
                      const Rect & clip)
     {
@@ -294,7 +266,7 @@ public:
                                                 i + src_r.x,
                                                 j + src_r.y,
                                                 w, h,
-                                                colors.bpp,
+                                                this->orders->rdp_layer->client_info.bpp,
                                                 cache_id, cache_idx);
 
                     BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
@@ -329,7 +301,7 @@ public:
         if (!clip.isempty() && !clip.intersect(r).isempty()){
             this->orders->opaque_rect(r, fgcolor, clip);
             if (this->capture){
-                this->capture->rect(r, fgcolor, this->colors.bpp, clip);
+                this->capture->rect(r, fgcolor, this->orders->rdp_layer->client_info.bpp, clip);
             }
         }
     }
@@ -341,7 +313,7 @@ public:
         #warning check: isn't it dest_blt instead of pat_blt
         this->orders->pat_blt(r, rop, bgcolor, fgcolor, brush, clip);
         if (this->capture){
-            this->capture->rect(r, fgcolor, this->colors.bpp, clip);
+            this->capture->rect(r, fgcolor, this->orders->rdp_layer->client_info.bpp, clip);
         }
     }
 
@@ -372,7 +344,7 @@ public:
         && !clip.intersect(Rect(x1, y1, (x2 - x1) +1, (y2 - y1)+1)).isempty()){
             this->orders->line(1, x1, y1, x2, y2, rop, bgcolor, pen, clip);
             if (this->capture){
-                this->capture->line(1, x1, y1, x2, y2, rop, bgcolor, pen, this->colors.bpp, clip);
+                this->capture->line(1, x1, y1, x2, y2, rop, bgcolor, pen, this->orders->rdp_layer->client_info.bpp, clip);
             }
         }
     }

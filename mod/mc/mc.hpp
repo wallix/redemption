@@ -33,8 +33,8 @@ struct window_custom : public window
 {
     Widget & notify_to;
 
-    window_custom(client_mod * mod, const Rect & r, const Colors & colors, Widget & parent, Widget & notify_to, const char * title)
-    : window(mod, r, colors, parent, colors.grey, title), notify_to(notify_to)
+    window_custom(client_mod * mod, const Rect & r, Widget & parent, Widget & notify_to, const char * title)
+    : window(mod, r, parent, GREY, title), notify_to(notify_to)
     {
     }
 
@@ -63,7 +63,6 @@ struct mc_mod : public client_mod {
         this->event = event;
         this->wnd = new window_custom(this,
             Rect(10, 10, 400, 400),
-            *(this->screen.colors),
             this->screen, // parent
             this->screen, // notify_to
             "Custom window"
@@ -73,7 +72,7 @@ struct mc_mod : public client_mod {
         /* ok button */
         struct widget_button * but = new widget_button(this,
                 Rect(300,200,60,25),
-                *this->screen.colors, *this->wnd, 1, 1, "OK");
+                *this->wnd, 1, 1, "OK");
         this->wnd->child_list.push_back(but);
         but->has_focus = true;
 

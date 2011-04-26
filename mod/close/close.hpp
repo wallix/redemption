@@ -27,17 +27,16 @@
 
 struct wab_close : public window_login
 {
-    wab_close(client_mod * mod, const Rect & r, const Colors & colors, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
-    : window_login(mod, r, colors, context, session, parent, notify_to, bg_color, title, ini, regular)
+    wab_close(client_mod * mod, const Rect & r, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
+    : window_login(mod, r, context, session, parent, notify_to, bg_color, title, ini, regular)
     {
         this->session = session;
         this->ini = ini;
         struct Widget* but;
 
         if (regular) {
-            widget_image * but = new widget_image(this->mod, 4, 4, colors, WND_TYPE_IMAGE,
-                *this, 10, 30);
-            but->Widget_load(SHARE_PATH "/" LOGIN_LOGO24);
+            widget_image * but = new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE,
+                *this, 10, 30, SHARE_PATH "/" LOGIN_LOGO24, this->mod->screen.bpp);
             #warning bitmap load below should probably be done before call
             this->child_list.push_back(but);
         }
@@ -47,12 +46,12 @@ struct wab_close : public window_login
         /* label */
         b = new widget_label(this->mod,
             Rect(10 + ((this->rect.cx >= 400) ? 155 : 5), 60 + 25 * count, 70, 20),
-            *(this->colors), *this, "Username:");
+            *this, "Username:");
 
         this->child_list.push_back(b);
         b = new widget_label(this->mod,
             Rect(10 + ((this->rect.cx >= 400) ?  230 : 70), 60 + 25 * count, 350, 20),
-            *(this->colors), *this, context.get(STRAUTHID_AUTH_USER));
+            *this, context.get(STRAUTHID_AUTH_USER));
 
         b->id = 100 + 2 * count;
         this->child_list.push_back(b);
@@ -63,12 +62,12 @@ struct wab_close : public window_login
 
         b = new widget_label(this->mod,
             Rect(10+((this->rect.cx >= 400) ? 155 : 5), 60 + 25 * count, 70, 20),
-            *(this->colors), *this, "Target:");
+            *this, "Target:");
 
         this->child_list.push_back(b);
         b = new widget_label(this->mod,
             Rect(10 + ((this->rect.cx >= 400) ?  230 : 70), 60 + 25 * count, 350, 20),
-            *(this->colors), *this, target);
+            *this, target);
 
         b->id = 100 + 2 * count;
         this->child_list.push_back(b);
@@ -76,14 +75,14 @@ struct wab_close : public window_login
 
         b = new widget_label(this->mod,
             Rect(150 + ((this->rect.cx >= 400) ? 155 : 5), 60 + 25 * count, 130, 20),
-            *(this->colors), *this, "Connection closed");
+            *this, "Connection closed");
 
         this->child_list.push_back(b);
         count ++;
 
         b = new widget_label(this->mod,
             Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 20),
-            *(this->colors), *this, "Diagnostic:");
+            *this, "Diagnostic:");
 
         this->child_list.push_back(b);
 
@@ -97,7 +96,7 @@ struct wab_close : public window_login
             tmp[0] = 0;
             strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
             tmp[255] = 0;
-            b = new widget_label(this->mod, Rect((this->rect.cx >= 400) ?  230 : 70, 60 + 25 * count + 16 * line, 350, 20), colors, *this, tmp);
+            b = new widget_label(this->mod, Rect((this->rect.cx >= 400) ?  230 : 70, 60 + 25 * count + 16 * line, 350, 20), *this, tmp);
             this->child_list.push_back(b);
             line++;
             if (!str){
@@ -111,7 +110,7 @@ struct wab_close : public window_login
         /* label */
         but = new widget_button(this->mod,
               Rect(50 + (regular ? 250 : ((r.cx - 30) - 60)), 150 + 16 * line, 60, 25),
-              colors, *this, 2, 1, "Close");
+              *this, 2, 1, "Close");
         this->child_list.push_back(but);
         this->esc_button = but;
         this->default_button = but;
@@ -126,7 +125,6 @@ struct wab_close : public window_login
 struct close_mod : public client_mod {
     struct window_login * close_window;
     Session * session;
-    Colors & colors;
     Widget* popup_wnd;
     Widget* button_down;
 
@@ -139,10 +137,8 @@ struct close_mod : public client_mod {
     close_mod(
         wait_obj * event,
         int (& keys)[256], int & key_flags, Keymap * &keymap,
-        ModContext & context, Colors & colors, Front & front, Session * session)
-            :
-            client_mod(keys, key_flags, keymap, front),
-            colors(colors)
+        ModContext & context, Front & front, Session * session)
+            : client_mod(keys, key_flags, keymap, front)
     {
         /* dragging info */
         this->dragging = 0;
@@ -187,10 +183,10 @@ struct close_mod : public client_mod {
             log_height);
 
         this->close_window = new wab_close(this,
-            r, colors, context, session,
+            r, context, session,
             this->screen, // parent
             this->screen, // notify_to
-            colors.grey,
+            GREY,
             "Login",
             session->ini,
             regular);
@@ -201,13 +197,11 @@ struct close_mod : public client_mod {
         if (regular) {
             /* image */
             widget_image * but = new widget_image(this, 4, 4,
-                colors, WND_TYPE_IMAGE, this->screen,
+                WND_TYPE_IMAGE, this->screen,
                 this->screen.rect.cx - 250 - 4,
-                this->screen.rect.cy - 120 - 4);
+                this->screen.rect.cy - 120 - 4,
+                SHARE_PATH "/" REDEMPTION_LOGO24, this->screen.bpp);
 
-            #warning logo position should depend of size of image
-            #warning integrate load in widget_image
-            but->Widget_load(SHARE_PATH "/" REDEMPTION_LOGO24);
             this->screen.child_list.push_back(but);
         }
 
@@ -218,6 +212,7 @@ struct close_mod : public client_mod {
 
     virtual ~close_mod()
     {
+        #warning here delete all widgets from this->screen.child_list
     }
 
     /*****************************************************************************/
