@@ -46,6 +46,7 @@
 #include "font.hpp"
 #include "cache.hpp"
 #include "bitmap.hpp"
+#include "bitmap_cache.hpp"
 #include "capture.hpp"
 #include "file_loc.hpp"
 #include "rsa_keys.hpp"
@@ -214,19 +215,6 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
         front->end_update();
 
         orders->init();
-
-            /* max size width * height * Bpp + 16 */
-//    void send_raw_bitmap(int version, int width, int height, int bpp, const uint8_t* data, int cache_id, int cache_idx)
-//    {
-//        RDPBmpCache bmp(1, entry_b->bmp.cx, entry_b->bmp.cy, entry_b->bmp.bpp, entry_b->bmp.data_co, cache_b_id, cache_b_idx);
-
-
-//        int bufsize = align4(width * nbbytes(bpp)) * height;
-//        // check reserved size depending on version
-//        this->reserve_order(bufsize + 16);
-//        bmp.emit(*this->out_s);
-//        bmp.data = 0;
-//    }
 
 
         BitmapCacheItem * entry_b = front->bmp_cache->get_item(cache_b_id, cache_b_idx);
@@ -448,7 +436,7 @@ int hook(int sck)
         RDP::Orders * orders = new RDP::Orders(server);
         ClientInfo * client_info = &(server->client_info);
         Font * default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
-        Cache * cache = new Cache(orders, client_info);
+        Cache * cache = new Cache(orders);
         Front * front = new Front(orders, cache, default_font, false, false, timezone);
 
         Rsakeys * rsa_keys = new Rsakeys(CFG_PATH "/rsakeys.ini");

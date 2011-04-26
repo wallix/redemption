@@ -526,7 +526,7 @@ int hook(int sck)
         RDP::Orders * orders = new RDP::Orders(server);
         ClientInfo * client_info = &(server->client_info);
         Font * default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
-        Cache * cache = new Cache(orders, client_info);
+        Cache * cache = new Cache(orders);
         int timezone = -3600;
         Front * front = new Front(orders, cache, default_font, false, false, timezone);
         void_callback.front = front;

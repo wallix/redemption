@@ -44,6 +44,7 @@
 #include "region.hpp"
 #include "capture.hpp"
 #include "bitmap.hpp"
+#include "bitmap_cache.hpp"
 #include "capture.hpp"
 #include <deque>
 #include "NewRDPOrders.hpp"

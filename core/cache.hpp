@@ -93,7 +93,7 @@ struct Cache {
     struct brush_item brush_items[64];
 
     #warning orders should be aware of cache, not the other way around
-    Cache(RDP::Orders* orders, ClientInfo* client_info) {
+    Cache(RDP::Orders* orders) {
         this->orders = orders;
         this->pointer_cache_entries = 0;
 

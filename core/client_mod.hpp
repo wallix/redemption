@@ -36,7 +36,7 @@
 #include "cache.hpp"
 #include "front.hpp"
 #include "mainloop.hpp"
-#include "cache.hpp"
+#include "bitmap_cache.hpp"
 
 struct client_mod {
     #warning there is some overlapping betwwen screen.rect and clip, correct that

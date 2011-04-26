@@ -31,6 +31,7 @@
 #include <string>
 
 #include "bitmap.hpp"
+#include "bitmap_cache.hpp"
 #include "colors.hpp"
 #include "config.hpp"
 #include <sys/time.h>

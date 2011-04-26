@@ -139,7 +139,7 @@ Session::Session(int sck, const char * ip_source, wait_obj * terminated_event, I
     this->server = new server_rdp(*this->session_callback, this->trans, ini);
     this->orders = new RDP::Orders(this->server);
     this->default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
-    this->cache = new Cache(this->orders, &this->server->client_info);
+    this->cache = new Cache(this->orders);
     this->server_stream.init(8192*2);
 
     /* set non blocking */
@@ -215,8 +215,8 @@ int Session::session_input_mouse(int device_flags, int x, int y)
 {
     if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
         this->mod->mod_event(WM_MOUSEMOVE, x, y, 0, 0);
-        this->front->mouse_x=x;
-        this->front->mouse_y=y;
+        this->front->mouse_x = x;
+        this->front->mouse_y = y;
 
     }
     if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
@@ -423,7 +423,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
         if (this->cache){
             delete this->cache;
         }
-        this->cache = new Cache(this->orders, &this->server->client_info);
+        this->cache = new Cache(this->orders);
         this->front->reset(this->orders, this->cache, this->default_font);
 
         LOG(LOG_INFO, "width=%d height=%d bpp=%d "
