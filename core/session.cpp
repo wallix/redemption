@@ -27,7 +27,6 @@
 #include "../mod/login/login.hpp"
 #include "../mod/null/null.hpp"
 #include "../mod/rdp/rdp.hpp"
-#include "../mod/mc/mc.hpp"
 #include "../mod/vnc/vnc.hpp"
 #include "../mod/xup/xup.hpp"
 #include "../mod/close/close.hpp"
@@ -864,26 +863,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
             }
             break;
 
-            case MCTX_STATUS_MC:
-                char text[256];
-                snprintf(text, 255, "session_mod_%8.8x_event_%p", getpid(), this);
-                this->mod_event = new wait_obj(text);
-//                this->mod = new bouncer_mod(this->mod_event, this->mod->screen, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this);
-                LOG(LOG_INFO, "Creation of new mod 'Bouncer' suceeded\n");
-            break;
-
-//            case MCTX_STATUS_MC:
-//                if (this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
-//                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "This is a test");
-//                }
-
-//                this->mod = new close_mod(this->mod_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this);
-//                char text[256];
-//                snprintf(text, 255, "session_mod_%8.8x_event_%p", getpid(), this);
-//                this->mod_event = new wait_obj(text);
-//                LOG(LOG_INFO, "Creation of new mod 'MC' suceeded\n");
-//            break;
-
             case MCTX_STATUS_XUP:
             {
                 SocketTransport * t = new SocketTransport(
@@ -898,7 +877,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
             }
             break;
 
-//            case MCTX_STATUS_MC:
             case MCTX_STATUS_RDP:
             {
                 // hostname is the name of the RDP host ("windows" hostname)
