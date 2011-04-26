@@ -233,6 +233,14 @@ struct client_mod {
         return 0;
     }
 
+    int server_fill_rect(const Rect & r, uint32_t & color)
+    {
+        const Rect draw_rect = r.intersect(clip);
+        if (!draw_rect.isempty()) {
+            this->front->opaque_rect(r, color, this->clip);
+        }
+        return 0;
+    }
 
     int server_draw_dragging_rect(const Rect & r, const Rect & clip)
     {

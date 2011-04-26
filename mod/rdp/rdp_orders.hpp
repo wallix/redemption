@@ -472,6 +472,8 @@ struct rdp_orders {
                 this->opaquerect.color,
                 this->cache_colormap.bpp,
                 this->cache_colormap.palette[0]);
+
+        LOG(LOG_INFO, "colormap bpp=%d\n", this->cache_colormap.bpp);
         mod->server_fill_rect(this->opaquerect.rect);
     }
 

@@ -1972,6 +1972,8 @@ class RDPOpaqueRect {
 
         uint32_t diff_color = this->color ^ oldcmd.color;
 
+        LOG(LOG_INFO, "emit opaque rect old_color = %.6x new_color = %.6x\n", oldcmd.color, this->color);
+
         header.fields =   (dr.dleft                != 0) * 0x01
                         | (dr.dtop                 != 0) * 0x02
                         | (dr.dwidth               != 0) * 0x04
@@ -2002,6 +2004,8 @@ class RDPOpaqueRect {
 
         header.receive_rect(stream, 0x01, this->rect);
 
+        uint32_t old_color = this->color;
+
         if (header.fields & 0x10) {
             unsigned i = stream.in_uint8();
             this->color = (this->color & 0xffff00) | i;
@@ -2014,6 +2018,9 @@ class RDPOpaqueRect {
             unsigned i = stream.in_uint8();
             this->color = (this->color & 0x00ffff) | (i << 16);
         }
+
+        LOG(LOG_INFO, "receive opaque rect old_color = %.6x new_color = %.6x\n", old_color, this->color);
+
     }
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
