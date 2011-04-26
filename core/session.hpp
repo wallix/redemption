@@ -107,7 +107,6 @@ struct Session {
     long id;
     struct server_rdp *server;
     struct RDP::Orders* orders;
-    struct ClientInfo* client_info;
     struct SocketTransport * trans;
     Stream server_stream;
     time_t keep_alive_time;

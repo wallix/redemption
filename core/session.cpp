@@ -139,9 +139,8 @@ Session::Session(int sck, const char * ip_source, wait_obj * terminated_event, I
     this->session_callback = new SessionCallback(*this);
     this->server = new server_rdp(*this->session_callback, this->trans, ini);
     this->orders = new RDP::Orders(this->server);
-    this->client_info = &(this->server->client_info);
     this->default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
-    this->cache = new Cache(this->orders, this->client_info);
+    this->cache = new Cache(this->orders, &this->server->client_info);
     this->server_stream.init(8192*2);
 
     /* set non blocking */
@@ -416,31 +415,31 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
         // if we reach this point we are up_and_running,
         // hence width and height and colors and keymap are availables
         /* resize the main window */
-        this->mod->screen.rect.cx = this->client_info->width;
-        this->mod->screen.rect.cy = this->client_info->height;
-        this->mod->screen.bpp = this->client_info->bpp;
+        this->mod->screen.rect.cx = this->server->client_info.width;
+        this->mod->screen.rect.cy = this->server->client_info.height;
+        this->mod->screen.bpp = this->server->client_info.bpp;
 
         this->mod->server_reset_clip();
 
         if (this->cache){
             delete this->cache;
         }
-        this->cache = new Cache(this->orders, this->client_info);
+        this->cache = new Cache(this->orders, &this->server->client_info);
         this->front->reset(this->orders, this->cache, this->default_font);
 
         LOG(LOG_INFO, "width=%d height=%d bpp=%d "
                   "cache1_entries=%d cache1_size=%d "
                   "cache2_entries=%d cache2_size=%d "
                   "cache2_entries=%d cache2_size=%d ",
-        this->client_info->width, this->client_info->height, this->client_info->bpp,
-        this->client_info->cache1_entries, this->client_info->cache1_size,
-        this->client_info->cache2_entries, this->client_info->cache2_size,
-        this->client_info->cache3_entries, this->client_info->cache3_size);
+        this->server->client_info.width, this->server->client_info.height, this->server->client_info.bpp,
+        this->server->client_info.cache1_entries, this->server->client_info.cache1_size,
+        this->server->client_info.cache2_entries, this->server->client_info.cache2_size,
+        this->server->client_info.cache3_entries, this->server->client_info.cache3_size);
 
 
         /* initialising keymap */
         char filename[256];
-        snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->client_info->keylayout);
+        snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->server->client_info.keylayout);
         LOG(LOG_DEBUG, "loading keymap %s\n", filename);
         this->keymap = new Keymap(filename);
 
@@ -494,12 +493,12 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
                          pointer_item.x,
                          pointer_item.y);
 
-        if (this->client_info->username[0]){
-            this->context->parse_username(this->client_info->username);
+        if (this->server->client_info.username[0]){
+            this->context->parse_username(this->server->client_info.username);
         }
 
-        if (this->client_info->password[0]){
-            this->context->cpy(STRAUTHID_PASSWORD, this->client_info->password);
+        if (this->server->client_info.password[0]){
+            this->context->cpy(STRAUTHID_PASSWORD, this->server->client_info.password);
         }
 
         this->internal_state = SESSION_STATE_RUNNING;
@@ -648,9 +647,9 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
                 delete this->mod;
                 this->mod = this->no_mod;
             }
-            snprintf(this->context->get(STRAUTHID_OPT_WIDTH), 10, "%d", this->client_info->width);
-            snprintf(this->context->get(STRAUTHID_OPT_HEIGHT), 10, "%d", this->client_info->height);
-            snprintf(this->context->get(STRAUTHID_OPT_BPP), 10, "%d", this->client_info->bpp);
+            snprintf(this->context->get(STRAUTHID_OPT_WIDTH), 10, "%d", this->server->client_info.width);
+            snprintf(this->context->get(STRAUTHID_OPT_HEIGHT), 10, "%d", this->server->client_info.height);
+            snprintf(this->context->get(STRAUTHID_OPT_BPP), 10, "%d", this->server->client_info.bpp);
             bool record_video = false;
             bool keep_alive = false;
             int next_state = this->sesman->ask_next_module(
@@ -757,11 +756,11 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 {
     try {
         if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"force")==0){
-            this->client_info->console_session=true;
+            this->server->client_info.console_session=true;
             LOG(LOG_INFO, "mode console : force");
         }
         else if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"forbid")==0){
-            this->client_info->console_session=false;
+            this->server->client_info.console_session=false;
             LOG(LOG_INFO, "mode console : forbid");
         }
         else {
@@ -906,8 +905,8 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 // it is **not** used to get an ip address.
                 char hostname[255];
                 hostname[0] = 0;
-                if (this->client_info->hostname){
-                    strcpy(hostname, this->client_info->hostname);
+                if (this->server->client_info.hostname){
+                    strcpy(hostname, this->server->client_info.hostname);
                 }
                 SocketTransport * t = new SocketTransport(
                                         this->context->get(STRAUTHID_TARGET_DEVICE),
@@ -919,10 +918,10 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                     this->keymap,
                                     *this->context,
                                     *(this->front),
-                                    this->client_info,
+                                    &this->server->client_info,
                                     this->server->sec_layer.mcs_layer.channel_list,
                                     hostname,
-                                    this->client_info->keylayout,
+                                    this->server->client_info.keylayout,
                                     this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
                                     this->context->get_bool(STRAUTHID_OPT_DEVICEREDIRECTION));
                 this->mod_event = new wait_obj(t->sck);
@@ -936,7 +935,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                         this->context->get(STRAUTHID_TARGET_DEVICE),
                                         atoi(this->context->get(STRAUTHID_TARGET_PORT)),
                                         0);
-                this->mod = new mod_vnc(t, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this->client_info->keylayout);
+                this->mod = new mod_vnc(t, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this->server->client_info.keylayout);
                 this->mod_event = new wait_obj(t->sck);
                 LOG(LOG_INFO, "Creation of new mod 'VNC' suceeded\n");
             }
