@@ -226,7 +226,7 @@ struct client_mod {
         }
     }
 
-    int server_fill_rect(int rop, const Rect & r)
+    int server_fill_rect(const Rect & r)
     {
         const Rect draw_rect = r.intersect(clip);
         if (!draw_rect.isempty()) {
@@ -328,7 +328,7 @@ struct client_mod {
         delete [] wstr;
     }
 
-    void server_basic_fill_rect(int rop, const Rect & rect)
+    void server_fill_rect_rop(int rop, const Rect & rect)
     {
         // rop ? or 0xF0
         this->front->fill_rect_rop(rop, rect, this->bg_color, this->fg_color,

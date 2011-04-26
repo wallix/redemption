@@ -1927,7 +1927,7 @@ class RDPOrderCommon {
 class RDPOpaqueRect {
     public:
     Rect rect;
-    int color;
+    uint32_t color;
 
     RDPOpaqueRect(Rect rect, int color) :
         rect(rect), color(color)
@@ -1972,7 +1972,7 @@ class RDPOpaqueRect {
 
         uint32_t diff_color = this->color ^ oldcmd.color;
 
-        header.fields = (dr.dleft                != 0) * 0x01
+        header.fields =   (dr.dleft                != 0) * 0x01
                         | (dr.dtop                 != 0) * 0x02
                         | (dr.dwidth               != 0) * 0x04
                         | (dr.dheight              != 0) * 0x08

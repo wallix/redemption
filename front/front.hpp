@@ -338,6 +338,7 @@ public:
     /* fill in an area of the screen with one color and operator rop*/
     void fill_rect_rop(int rop, const Rect & r, int bgcolor, int fgcolor, const RDPBrush & brush, const Rect & clip)
     {
+        #warning check: isn't it dest_blt instead of pat_blt
         this->orders->pat_blt(r, rop, bgcolor, fgcolor, brush, clip);
         if (this->capture){
             this->capture->rect(r, fgcolor, this->colors.bpp, clip);

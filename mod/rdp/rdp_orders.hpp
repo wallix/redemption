@@ -411,6 +411,7 @@ struct rdp_orders {
                 else {
                     mod->server_reset_clip();
                 }
+                LOG(LOG_INFO, "order=%d\n", this->common.order);
                 switch (this->common.order) {
                 case TEXT2:
                     this->rdp_orders_process_text2(stream, mod, header);
@@ -460,7 +461,7 @@ struct rdp_orders {
     {
         this->destblt.receive(stream, header);
 
-        mod->server_fill_rect(this->destblt.rop, this->destblt.rect);
+        mod->server_fill_rect_rop(this->destblt.rop, this->destblt.rect);
     }
 
     void rdp_orders_process_rect(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
@@ -471,7 +472,7 @@ struct rdp_orders {
                 this->opaquerect.color,
                 this->cache_colormap.bpp,
                 this->cache_colormap.palette[0]);
-        mod->server_fill_rect(0xCC, this->opaquerect.rect);
+        mod->server_fill_rect(this->opaquerect.rect);
     }
 
 
@@ -529,7 +530,7 @@ struct rdp_orders {
 
         mod->server_set_brush(this->patblt.brush);
 
-        mod->server_basic_fill_rect(this->patblt.rop, this->patblt.rect);
+        mod->server_fill_rect_rop(this->patblt.rop, this->patblt.rect);
     }
 
     void rdp_orders_process_line(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
