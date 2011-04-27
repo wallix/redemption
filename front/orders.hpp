@@ -114,7 +114,6 @@ struct Orders
 
     void send()
     {
-//        LOG(LOG_ERR, "Orders::send() level=%d order_count=%d", this->order_level, this->order_count);
         if (this->order_level > 0) {
             this->order_level--;
             if (this->order_level == 0){
@@ -171,7 +170,7 @@ struct Orders
         this->order_count = 0;
     }
 
-    int opaque_rect(const Rect & r, int color, const Rect & clip)
+    void opaque_rect(const Rect & r, int color, const Rect & clip)
     {
         this->reserve_order(23);
 
@@ -183,11 +182,9 @@ struct Orders
         cmd.emit(this->out_stream, newcommon, this->common, this->opaquerect);
         this->common = newcommon;
         this->opaquerect = cmd;
-
-        return 0;
     }
 
-    int screen_blt(const Rect & r, int16_t srcx, int16_t srcy, uint8_t rop, const Rect &clip)
+    void screen_blt(const Rect & r, int16_t srcx, int16_t srcy, uint8_t rop, const Rect &clip)
     {
         this->reserve_order(25);
 
@@ -199,11 +196,9 @@ struct Orders
         cmd.emit(this->out_stream, newcommon, this->common, this->scrblt);
         this->common = newcommon;
         this->scrblt = cmd;
-
-        return 0;
     }
 
-    int dest_blt(const Rect & r, uint8_t rop, const Rect &clip)
+    void dest_blt(const Rect & r, uint8_t rop, const Rect &clip)
     {
         this->reserve_order(21);
 
@@ -215,8 +210,6 @@ struct Orders
         cmd.emit(this->out_stream, newcommon, this->common, this->destblt);
         this->common = newcommon;
         this->destblt = cmd;
-
-        return 0;
     }
 
     void pat_blt(const Rect & r, int rop, uint32_t bg_color, uint32_t fg_color, const RDPBrush & brush, const Rect &clip)
@@ -249,24 +242,11 @@ struct Orders
         this->memblt = cmd;
     }
 
-    void line(int back_mode, int startx, int starty,
+    void line_to(int back_mode, int startx, int starty,
              int endx, int endy, int rop2, int back_color,
              const RDPPen & pen,
              const Rect & clip)
     {
-        #warning this should move out of Order
-        if (clip.intersect(Rect(startx, starty, (endx - startx) +1, (endy - starty)+1)).isempty()){
-            return;
-        }
-
-        #warning parameters should not be changed inside Order
-        if ((back_mode < 1) || (back_mode > 2)) { /* TRANSPARENT(1) or OPAQUE(2) */
-            back_mode = 1;
-        }
-        if ((rop2 < 1) || (rop2 > 0x10)) {
-            rop2 = 0x0d; /* R2_COPYPEN */
-        }
-
         this->reserve_order(32);
 
         LOG(LOG_INFO, "line[%d](back_mode=%d startx=%d starty=%d, endx=%d endy=%d rop2=%d back_color=%x pen.color=%x clip(%d, %d, %d, %d)", this->order_count, back_mode, startx, starty, endx, endy, rop2, back_color, pen.color, clip.x, clip.y, clip.cx, clip.cy);

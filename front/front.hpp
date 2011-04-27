@@ -353,10 +353,17 @@ public:
         #warning if direction of line is inverted, put it back in the right order, for now just ignore lines in wrong direction
         if (x1 >= x2 && y1 >= y2
         && !clip.intersect(Rect(x1, y1, (x2 - x1) +1, (y2 - y1)+1)).isempty()){
-            this->orders->line(1, x1, y1, x2, y2, rop, bgcolor, pen, clip);
-            if (this->capture){
-                this->capture->line(1, x1, y1, x2, y2, rop, bgcolor, pen, this->orders->rdp_layer->client_info.bpp, clip);
+            if (!clip.intersect(Rect(x1, y1, (x2 - x1) +1, (y2 - y1)+1)).isempty()){
+                uint32_t rop2 = rop;
+                if ((rop < 1) || (rop > 0x10)) {
+                    rop2 = 0x0d; /* R2_COPYPEN */
+                }
+                this->orders->line_to(1, x1, y1, x2, y2, rop2, bgcolor, pen, clip);
+                if (this->capture){
+                    this->capture->line(1, x1, y1, x2, y2, rop2, bgcolor, pen, this->orders->rdp_layer->client_info.bpp, clip);
+                }
             }
+
         }
     }
 

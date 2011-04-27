@@ -162,7 +162,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
     pen.width = 10;
     pen.color = BLUE;
 
-    orders->line(1, 50, 50, 150, 150, 0xCC, PINK, pen, Rect(100, 100, 50, 50));
+    orders->line_to(1, 50, 50, 150, 150, 0x0D, PINK, pen, Rect(100, 100, 50, 50));
 
     orders->send();
 
