@@ -268,11 +268,6 @@ struct Orders
              int data_len, const Rect & clip)
     {
 
-        #warning this should move out of Order
-        if (clip.intersect(text_clip).isempty()){
-            return;
-        }
-
         this->reserve_order(297);
 
         LOG(LOG_INFO, "glyph_index[%d](font=%d flags=%d mixmode=%d, fg_color=%x bg_color=%x text_clip(%d, %d, %d, %d) box(%d, %d, %d, %d), x=%d, y=%d data_len=%d clip(%d, %d, %d, %d)", this->order_count, font, flags, mixmode, fg_color, bg_color, text_clip.x, text_clip.y, text_clip.cx, text_clip.cy, box.x, box.y, box.cx, box.cy, x, y, data_len, clip.x, clip.y, clip.cx, clip.cy);

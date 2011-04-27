@@ -334,6 +334,10 @@ public:
                 int fgcolor, int bgcolor, const Rect & draw_rect)
     {
         LOG(LOG_INFO, "draw_text2\n");
+        if (draw_rect.intersect(clip_rect).isempty()){
+            return;
+        }
+
         this->orders->glyph_index(font, flags, mixmode,
                             fgcolor, bgcolor,
                             clip_rect, box,
