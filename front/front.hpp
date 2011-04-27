@@ -188,24 +188,6 @@ public:
     }
 
 
-    void send_glyph(int font, int character,
-                    int offset, int baseline,
-                    int width, int height, const uint8_t* data)
-    {
-        LOG(LOG_INFO, "send_glyph\n");
-        struct FontChar fi(offset, baseline, width, height, 0);
-
-        memcpy(fi.data, data, fi.datasize());
-        this->send_glyph(&fi, font, character);
-    }
-
-    int send_glyph(FontChar* font_char, int font_index, int char_index)
-    {
-        LOG(LOG_INFO, "send_glyph 2\n");
-        this->orders->send_font(font_char, font_index, char_index);
-        return 0;
-    }
-
     int get_channel_id(char* name)
     {
         LOG(LOG_INFO, "get_channel_id\n");
@@ -385,6 +367,24 @@ public:
                 }
             }
         }
+    }
+
+    #warning harmonize names with orders send_glyph or send_font
+    void send_glyph(int font, int character,
+                    int offset, int baseline,
+                    int width, int height, const uint8_t* data)
+    {
+        LOG(LOG_INFO, "send_glyph\n");
+        struct FontChar fi(offset, baseline, width, height, 0);
+
+        memcpy(fi.data, data, fi.datasize());
+        this->send_glyph(&fi, font, character);
+    }
+
+    void send_glyph(FontChar* font_char, int font_index, int char_index)
+    {
+        LOG(LOG_INFO, "send_glyph 2\n");
+        this->orders->send_font(font_char, font_index, char_index);
     }
 
 };

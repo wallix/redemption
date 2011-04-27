@@ -384,7 +384,7 @@ struct rdp_orders {
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
                     this->rdp_orders_process_bmpcache(stream, control, header);
                     break;
-                case COLCACHE:
+                case TS_CACHE_COLOR_TABLE:
                     this->cache_colormap.receive(stream, control, header);
                     break;
                 case FONTCACHE:
@@ -457,6 +457,28 @@ struct rdp_orders {
         return 0;
     }
 
+    #warning harmonize names -> opaque_rect
+    void rdp_orders_process_rect(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
+    {
+        LOG(LOG_INFO, "sending opaquerect\n");
+        this->opaquerect.receive(stream, header);
+        mod->server_fill_rect(this->opaquerect.rect, this->opaquerect.color);
+        LOG(LOG_INFO, "sending opaquerect ok\n");
+    }
+
+    #warning harmonize names -> screen_blt
+    void rdp_orders_process_screenblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
+    {
+        this->scrblt.receive(stream, header);
+        LOG(LOG_INFO, "sending screenblt\n");
+        mod->server_screen_blt(this->scrblt.rop,
+                               this->scrblt.rect,
+                               this->scrblt.srcx,
+                               this->scrblt.srcy);
+        LOG(LOG_INFO, "sending screenblt ok\n");
+    }
+
+    #warning harmonize names -> dest_blt
     void rdp_orders_process_destblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         LOG(LOG_INFO, "sending destblt\n");
@@ -466,15 +488,20 @@ struct rdp_orders {
         LOG(LOG_INFO, "sending destblt ok\n");
     }
 
-    void rdp_orders_process_rect(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
+    #warning harmonize names -> pat_blt
+    void rdp_orders_process_patblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-        LOG(LOG_INFO, "sending opaquerect\n");
-        this->opaquerect.receive(stream, header);
-        mod->server_fill_rect(this->opaquerect.rect, this->opaquerect.color);
-        LOG(LOG_INFO, "sending opaquerect ok\n");
+        this->patblt.receive(stream, header);
+        LOG(LOG_INFO, "sending patblt\n");
+        mod->server_set_brush(this->patblt.brush);
+        mod->server_fill_rect_rop(this->patblt.rop,
+            this->patblt.rect,
+            this->patblt.fore_color,
+            this->patblt.back_color);
+        LOG(LOG_INFO, "sending patblt ok\n");
     }
 
-
+    #warning harmonize names -> mem_blt
     void rdp_orders_process_memblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->memblt.receive(stream, header);
@@ -507,28 +534,6 @@ struct rdp_orders {
         LOG(LOG_INFO, "sending memblt ok\n");
     }
 
-    void rdp_orders_process_screenblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
-    {
-        this->scrblt.receive(stream, header);
-        LOG(LOG_INFO, "sending screenblt\n");
-        mod->server_screen_blt(this->scrblt.rop,
-                               this->scrblt.rect,
-                               this->scrblt.srcx,
-                               this->scrblt.srcy);
-        LOG(LOG_INFO, "sending screenblt ok\n");
-    }
-
-    void rdp_orders_process_patblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
-    {
-        this->patblt.receive(stream, header);
-        LOG(LOG_INFO, "sending patblt\n");
-        mod->server_set_brush(this->patblt.brush);
-        mod->server_fill_rect_rop(this->patblt.rop,
-            this->patblt.rect,
-            this->patblt.fore_color,
-            this->patblt.back_color);
-        LOG(LOG_INFO, "sending patblt ok\n");
-    }
 
     void rdp_orders_process_line(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {

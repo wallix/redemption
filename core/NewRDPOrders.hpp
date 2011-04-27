@@ -192,7 +192,7 @@ namespace RDP {
         TS_CACHE_BITMAP_UNCOMPRESSED  = 0,
      // TS_CACHE_COLOR_TABLE - Cache Color Table
      // (MS-RDPEGDI section 2.2.2.2.1.2.4)
-        COLCACHE      = 1,
+        TS_CACHE_COLOR_TABLE      = 1,
      // TS_CACHE_BITMAP_COMPRESSED - Cache Bitmap - Revision 1
      // (MS-RDPEGDI section 2.2.2.2.1.2.2)
         TS_CACHE_BITMAP_COMPRESSED      = 2,
@@ -384,7 +384,7 @@ class RDPColCache {
         uint16_t len = 1027 - 7;    // length after type minus 7
         stream.out_uint16_le(len);
         stream.out_uint16_le(0);    // flags
-        stream.out_uint8(COLCACHE); // type
+        stream.out_uint8(TS_CACHE_COLOR_TABLE); // type
 
         stream.out_uint8(cacheIndex);
         stream.out_uint16_le(256); /* num colors */
