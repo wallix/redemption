@@ -177,16 +177,19 @@ public:
 
     void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
     {
+        LOG(LOG_INFO, "send_pointer\n");
         this->orders->rdp_layer->server_rdp_send_pointer(cache_idx, data, mask, x, y);
     }
 
     void set_pointer(int cache_idx) throw (Error)
     {
+        LOG(LOG_INFO, "set_pointer\n");
         this->orders->rdp_layer->server_rdp_set_pointer(cache_idx);
     }
 
     void screen_blt(int rop, const Rect & r, int srcx, int srcy, const Rect &clip)
     {
+        LOG(LOG_INFO, "screen_blt\n");
         if (!clip.isempty() && !clip.intersect(r).isempty()){
             // this one is used when dragging a visible window on screen
             this->orders->screen_blt(r, srcx, srcy, rop, clip);
@@ -198,6 +201,7 @@ public:
 
     void send_palette(const RGBPalette & palette)
     {
+        LOG(LOG_INFO, "send_palette\n");
         if (this->orders->rdp_layer->client_info.bpp <= 8) {
             this->orders->rdp_layer->server_send_palette(palette);
             this->orders->init();
@@ -211,6 +215,7 @@ public:
                     int offset, int baseline,
                     int width, int height, const uint8_t* data)
     {
+        LOG(LOG_INFO, "send_glyph\n");
         struct FontChar fi(offset, baseline, width, height, 0);
 
         memcpy(fi.data, data, fi.datasize());
@@ -219,12 +224,14 @@ public:
 
     int send_glyph(FontChar* font_char, int font_index, int char_index)
     {
+        LOG(LOG_INFO, "send_glyph 2\n");
         this->orders->send_font(font_char, font_index, char_index);
         return 0;
     }
 
     int get_channel_id(char* name)
     {
+        LOG(LOG_INFO, "get_channel_id\n");
         return this->orders->rdp_layer->sec_layer.mcs_layer.server_mcs_get_channel_id(name);
     }
 
@@ -235,6 +242,8 @@ public:
                  int srcx, int srcy,
                  int cache_idx, const Rect & clip)
     {
+        LOG(LOG_INFO, "mem_blt\n");
+
         if (!clip.isempty() && !clip.intersect(r).isempty()){
             this->orders->mem_blt(cache_id, color_table, r, rop, srcx, srcy, cache_idx, clip);
             if (this->capture){
@@ -251,6 +260,7 @@ public:
                      int palette_id,
                      const Rect & clip)
     {
+        LOG(LOG_INFO, "send_bitmap_front\n");
         for (int j = 0; j < dst.cy ; j += 64) {
             int h = std::min(64, dst.cy - j);
             for (int i = 0; i < dst.cx ; i+= 64) {
@@ -290,15 +300,21 @@ public:
                 uint32_t fg_color, const RDPBrush & brush,
                 const Rect &clip)
     {
+        LOG(LOG_INFO, "pat_blt r(%d, %d, %d, %d) rop=%d bg_color=%d fg_color=%d brush=%p clip(%d, %d, %d, %d)\n", r.x, r.y, r.cx, r.cy, rop, bg_color, fg_color, &brush, clip.x, clip.y, clip.cx, clip.cy);
         if (!clip.intersect(r).isempty()){
             this->orders->pat_blt(r, rop, bg_color, fg_color, brush, clip);
         }
+        else {
+            LOG(LOG_INFO, "pat_blt nothing to do\n");
+        }
+        LOG(LOG_INFO, "pat_blt ok\n");
     }
 
     /*****************************************************************************/
     /* fill in an area of the screen with one color */
     void opaque_rect(const Rect & r, int fgcolor, const Rect & clip)
     {
+        LOG(LOG_INFO, "opaque_rect\n");
         if (!clip.isempty() && !clip.intersect(r).isempty()){
             this->orders->opaque_rect(r, fgcolor, clip);
             if (this->capture){
@@ -311,6 +327,7 @@ public:
     /* fill in an area of the screen with one color and operator rop*/
     void fill_rect_rop(int rop, const Rect & r, int bgcolor, int fgcolor, const RDPBrush & brush, const Rect & clip)
     {
+        LOG(LOG_INFO, "fill_rect_rop\n");
         #warning check: isn't it dest_blt instead of pat_blt
         this->orders->pat_blt(r, rop, bgcolor, fgcolor, brush, clip);
         if (this->capture){
@@ -325,6 +342,7 @@ public:
                 int x, int y, uint8_t* data, int data_len,
                 int fgcolor, int bgcolor, const Rect & draw_rect)
     {
+        LOG(LOG_INFO, "draw_text2\n");
         this->orders->glyph_index(font, flags, mixmode,
                             fgcolor, bgcolor,
                             clip_rect, box,
@@ -340,6 +358,7 @@ public:
     /*****************************************************************************/
     void line(int rop, int x1, int y1, int x2, int y2, int bgcolor, const RDPPen & pen, const Rect & clip)
     {
+        LOG(LOG_INFO, "line\n");
         #warning if direction of line is inverted, put it back in the right order, for now just ignore lines in wrong direction
         if (x1 >= x2 && y1 >= y2
         && !clip.intersect(Rect(x1, y1, (x2 - x1) +1, (y2 - y1)+1)).isempty()){

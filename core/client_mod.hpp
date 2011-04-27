@@ -233,7 +233,7 @@ struct client_mod {
         return 0;
     }
 
-    int server_fill_rect(const Rect & r, uint32_t & color)
+    int server_fill_rect(const Rect & r, const uint32_t color)
     {
         const Rect draw_rect = r.intersect(clip);
         if (!draw_rect.isempty()) {
@@ -341,6 +341,12 @@ struct client_mod {
                                     this->brush, this->clip);
     }
 
+
+    void server_fill_rect_rop(int rop, const Rect & rect, const uint32_t fgcolor, const uint32_t bgcolor)
+    {
+        // rop ? or 0xF0
+        this->front->fill_rect_rop(rop, rect, bgcolor, fgcolor, this->brush, this->clip);
+    }
 
     void server_fill_rect_rop(int rop, const Region & region, const Rect & r, const Rect & clip)
     {
@@ -575,6 +581,13 @@ struct client_mod {
         }
     }
 
+    void server_draw_line(int rop, int x1, int y1, int x2, int y2, uint32_t pen_color, uint32_t back_color)
+    {
+        this->pen.color = pen_color;
+        this->front->line(rop, x1, y1, x2, y2, back_color, this->pen, this->clip);
+    }
+
+
     void server_add_char(int font, int character,
                     int offset, int baseline,
                     int width, int height, const uint8_t* data)
@@ -582,42 +595,23 @@ struct client_mod {
         this->front->send_glyph(font, character, offset, baseline, width, height, data);
     }
 
-    void server_draw_text2(RDPGlyphIndex & glyph_index)
+    void server_glyph_index(RDPGlyphIndex & glyph_index)
     {
-        Region region;
-        region.rects.push_back((glyph_index.op.cx>1)?glyph_index.op:glyph_index.bk);
-
-        // basically following code means that if we draw some text on screen,
-        // we always draw it behind visible windows.
-        // Looks overly complicated and should be necessary for OSD only.
-
-        // This finds visibles portions of text rectangles
-        for (size_t i = 0; i < this->nb_windows(); i++) {
-            Widget *p = this->window(i);
-            region.subtract_rect(p->rect);
-        }
-
-        // now we iterate on visible rectangles and show only visible portions
-        // of text.
-        for (size_t ir = 0 ; ir < region.rects.size(); ir++){
-            Rect  draw_rect = region.rects[ir].intersect(this->screen.rect);
-            if (!draw_rect.isempty()) {
-                this->front->draw_text2(
-                    glyph_index.cache_id,
-                    glyph_index.fl_accel,
-                    glyph_index.f_op_redundant,
-                    glyph_index.op,
-                    glyph_index.bk,
-                    glyph_index.glyph_x,
-                    glyph_index.glyph_y,
-                    glyph_index.data,
-                    glyph_index.data_len,
-                    this->bg_color,
-                    this->fg_color,
-                    draw_rect);
-            }
-        }
+        this->front->draw_text2(
+            glyph_index.cache_id,
+            glyph_index.fl_accel,
+            glyph_index.f_op_redundant,
+            glyph_index.op,
+            glyph_index.bk,
+            glyph_index.glyph_x,
+            glyph_index.glyph_y,
+            glyph_index.data,
+            glyph_index.data_len,
+            glyph_index.back_color,
+            glyph_index.fore_color,
+            this->clip);
     }
+
 
     int server_get_channel_id(char* name)
     {

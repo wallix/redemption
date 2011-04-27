@@ -191,7 +191,7 @@ class SocketTransport : public Transport {
                     this->wait_ready(RECV, 10);
                     break;
                 case 0: /* no data received, socket closed */
-                    LOG(LOG_INFO, "no data received socket closed on recv\n");
+                    LOG(LOG_INFO, "no data received socket %d closed on recv\n", this->sck);
                     this->sck_closed = 1;
                     throw Error(ERR_SOCKET_CLOSED);
                 default: /* some data received */

@@ -1124,7 +1124,7 @@ BOOST_AUTO_TEST_CASE(TestOrdersState)
     {
         Stream stream(1000);
 
-        RDPColCache newcmd(8);
+        RDPColCache newcmd;
         for (int i = 0; i < 256; ++i){
             newcmd.palette[0][i] = (((i >> 6) & 3) << 16) + (((i>>3) & 7) << 8) + (i & 7);
         }
@@ -1211,7 +1211,7 @@ BOOST_AUTO_TEST_CASE(TestOrdersState)
         uint8_t control = stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
         RDPSecondaryOrderHeader header(stream);
-        RDPColCache cmd(8);
+        RDPColCache cmd;
         cmd.receive(stream, control, header);
 
         check<RDPColCache>(cmd, newcmd, "Color Cache 1");

@@ -323,7 +323,7 @@ struct Orders
     {
         this->reserve_order(2000);
 
-        RDPColCache newcmd(8);
+        RDPColCache newcmd;
         memcpy(newcmd.palette[0], palette, 256);
         newcmd.emit(*this->out_s, 0);
         return 0;

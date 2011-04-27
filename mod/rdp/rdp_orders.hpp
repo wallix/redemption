@@ -122,7 +122,7 @@ struct rdp_orders {
     struct Bitmap * cache_bitmap[3][600];
 
     #warning it looks strange that rdp_orders object should be depending on bpp parameter, it looks more like a cache implementation detail that should be abstracted here.
-    rdp_orders(int bpp) :
+    rdp_orders() :
         common(0, Rect()),
         memblt(0, Rect(), 0, 0, 0, 0),
         opaquerect(Rect(), 0),
@@ -131,7 +131,7 @@ struct rdp_orders {
         patblt(Rect(), 0, 0, 0, RDPBrush()),
         lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
         glyph_index(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
-        cache_colormap(bpp)
+        cache_colormap()
     {
         memset(this->cache_bitmap, 0, sizeof(this->cache_bitmap));
     }
@@ -459,29 +459,26 @@ struct rdp_orders {
 
     void rdp_orders_process_destblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
+        LOG(LOG_INFO, "sending destblt\n");
         this->destblt.receive(stream, header);
 
         mod->server_fill_rect_rop(this->destblt.rop, this->destblt.rect);
+        LOG(LOG_INFO, "sending destblt ok\n");
     }
 
     void rdp_orders_process_rect(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
+        LOG(LOG_INFO, "sending opaquerect\n");
         this->opaquerect.receive(stream, header);
-
-        mod->server_set_fgcolor(
-                this->opaquerect.color,
-                this->cache_colormap.bpp,
-                this->cache_colormap.palette[0]);
-
-        LOG(LOG_INFO, "colormap bpp=%d\n", this->cache_colormap.bpp);
-        mod->server_fill_rect(this->opaquerect.rect);
+        mod->server_fill_rect(this->opaquerect.rect, this->opaquerect.color);
+        LOG(LOG_INFO, "sending opaquerect ok\n");
     }
 
 
     void rdp_orders_process_memblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->memblt.receive(stream, header);
-
+        LOG(LOG_INFO, "sending memblt\n");
         struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xFF][this->memblt.cache_idx];
         if (bitmap) {
             #warning A better solution would be to pass the original bitmap, including it's bpp, to server_paint_rect and let it deal with color changes if necessary. See also similar call in rdp_rdp. Same fix can probably apply to both cases.
@@ -507,66 +504,51 @@ struct rdp_orders {
                 free(bmpdata);
             }
         }
+        LOG(LOG_INFO, "sending memblt ok\n");
     }
 
     void rdp_orders_process_screenblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->scrblt.receive(stream, header);
-
+        LOG(LOG_INFO, "sending screenblt\n");
         mod->server_screen_blt(this->scrblt.rop,
                                this->scrblt.rect,
                                this->scrblt.srcx,
                                this->scrblt.srcy);
+        LOG(LOG_INFO, "sending screenblt ok\n");
     }
 
     void rdp_orders_process_patblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->patblt.receive(stream, header);
-        mod->server_set_fgcolor(this->patblt.fore_color,
-                                this->cache_colormap.bpp,
-                                this->cache_colormap.palette[0]);
-
-        mod->server_set_bgcolor(this->patblt.back_color,
-                                this->cache_colormap.bpp,
-                                this->cache_colormap.palette[0]);
-
+        LOG(LOG_INFO, "sending patblt\n");
         mod->server_set_brush(this->patblt.brush);
-
-        mod->server_fill_rect_rop(this->patblt.rop, this->patblt.rect);
+        mod->server_fill_rect_rop(this->patblt.rop,
+            this->patblt.rect,
+            this->patblt.fore_color,
+            this->patblt.back_color);
+        LOG(LOG_INFO, "sending patblt ok\n");
     }
 
     void rdp_orders_process_line(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->lineto.receive(stream, header);
-
-        mod->server_set_fgcolor(this->lineto.pen.color,
-                                this->cache_colormap.bpp,
-                                this->cache_colormap.palette[0]);
-
-        mod->server_set_bgcolor(this->lineto.back_color,
-                                this->cache_colormap.bpp,
-                                this->cache_colormap.palette[0]);
-
+        LOG(LOG_INFO, "sending line\n");
         mod->server_set_pen(this->lineto.pen.style, this->lineto.pen.width);
         mod->server_draw_line(this->lineto.rop2,
                               this->lineto.startx,
                               this->lineto.starty,
                               this->lineto.endx,
-                              this->lineto.endy);
-
+                              this->lineto.endy,
+                              this->lineto.pen.color,
+                              this->lineto.back_color);
+        LOG(LOG_INFO, "sending line ok\n");
     }
 
     void rdp_orders_process_text2(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->glyph_index.receive(stream, header);
-
-        mod->server_set_fgcolor(this->glyph_index.fore_color,
-                                this->cache_colormap.bpp,
-                                this->cache_colormap.palette[0]);
-        mod->server_set_bgcolor(this->glyph_index.back_color,
-                                this->cache_colormap.bpp,
-                                this->cache_colormap.palette[0]);
-        mod->server_draw_text2(this->glyph_index);
+        mod->server_glyph_index(this->glyph_index);
 
     }
 

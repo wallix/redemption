@@ -48,40 +48,43 @@ struct rdp_rdp {
     char directory[256];
     int keylayout;
     bool console_session;
+    int bpp;
 
     struct rdp_cursor cursors[32];
     rdp_rdp(struct mod_rdp* owner, Transport *t, const char * username, const char * password, const char * hostname, vector<mcs_channel_item*> channel_list, int rdp_performance_flags, int width, int height, int bpp, int keylayout, bool console_session)
-        : sec_layer(t, this->use_rdp5, hostname, username), orders(bpp) {
-        this->share_id = 0;
-        this->use_rdp5 = 0;
-        this->bitmap_compression = 1;
-        this->bitmap_cache = 1;
-        this->desktop_save = 0;
-        this->polygon_ellipse_orders = 0;
-        this->console_session = console_session;
+        #warning initialize members through constructor
+        : sec_layer(t, this->use_rdp5, hostname, username), bpp(bpp) 
+        {
+            LOG(LOG_INFO, "rdp_rdp login:%s host=%s\n", username, hostname);
+            this->share_id = 0;
+            this->use_rdp5 = 0;
+            this->bitmap_compression = 1;
+            this->bitmap_cache = 1;
+            this->desktop_save = 0;
+            this->polygon_ellipse_orders = 0;
+            this->console_session = console_session;
 
-        memset(this->password, 0, 256);
-        strcpy(this->password, password);
+            memset(this->password, 0, 256);
+            strcpy(this->password, password);
 
-        memset(this->domain, 0, 256);
-        memset(this->program, 0, 256);
-        memset(this->directory, 0, 256);
+            memset(this->domain, 0, 256);
+            memset(this->program, 0, 256);
+            memset(this->directory, 0, 256);
 
-        this->keylayout = keylayout;
-        LOG(LOG_INFO, "Server key layout is %x\n", this->keylayout);
+            this->keylayout = keylayout;
+            LOG(LOG_INFO, "Server key layout is %x\n", this->keylayout);
 
-        #warning I should change that to RAII by merging instanciation of sec_layer and connection, it should also remove some unecessary parameters from rdp_rdp object
-        this->sec_layer.rdp_sec_connect(channel_list, width, height, bpp, keylayout, console_session);
-
+            #warning I should change that to RAII by merging instanciation of sec_layer and connection, it should also remove some unecessary parameters from rdp_rdp object
+            this->sec_layer.rdp_sec_connect(channel_list, width, height, bpp, keylayout, console_session);
     }
     ~rdp_rdp(){
         LOG(LOG_INFO, "End of rdp connection\n");
     }
 
     private:
-        int out_general_caps(Stream & stream)
+        void out_general_caps(Stream & stream)
         {
-//            LOG(LOG_INFO, "Sending general caps\n");
+            LOG(LOG_INFO, "Sending general caps to server\n");
             stream.out_uint16_le(RDP_CAPSET_GENERAL);
             stream.out_uint16_le(RDP_CAPLEN_GENERAL);
             stream.out_uint16_le(1); /* OS major type */
@@ -94,15 +97,14 @@ struct rdp_rdp {
             stream.out_uint16_le(0); /* Remote unshare capability */
             stream.out_uint16_le(0); /* Compression level */
             stream.out_uint16_le(0); /* Pad */
-            return 0;
         }
 
-        int out_bitmap_caps(Stream & stream)
+        void out_bitmap_caps(Stream & stream)
         {
-//            LOG(LOG_INFO, "Sending bitmap caps\n");
+            LOG(LOG_INFO, "Sending bitmap caps to server\n");
             stream.out_uint16_le(RDP_CAPSET_BITMAP);
             stream.out_uint16_le(RDP_CAPLEN_BITMAP);
-            stream.out_uint16_le(this->orders.cache_colormap.bpp); /* Preferred bpp */
+            stream.out_uint16_le(this->bpp); /* Preferred bpp */
             stream.out_uint16_le(1); /* Receive 1 BPP */
             stream.out_uint16_le(1); /* Receive 4 BPP */
             stream.out_uint16_le(1); /* Receive 8 BPP */
@@ -114,14 +116,13 @@ struct rdp_rdp {
             stream.out_uint16_le(0); /* Unknown */
             stream.out_uint16_le(1); /* Unknown */
             stream.out_uint16_le(0); /* Pad */
-            return 0;
         }
 
 
 
-        int out_order_caps(Stream & stream)
+        void out_order_caps(Stream & stream)
         {
-//            LOG(LOG_INFO, "Sending order caps\n");
+            LOG(LOG_INFO, "Sending order caps to server\n");
 
             char order_caps[32];
 
@@ -158,16 +159,15 @@ struct rdp_rdp {
             stream.out_uint32_le(this->desktop_save * 0x38400); /* Desktop cache size */
             stream.out_uint32_le(0); /* Unknown */
             stream.out_uint32_le(0x4e4); /* Unknown */
-            return 0;
         }
 
-        int out_bmpcache_caps(Stream & stream)
+        void out_bmpcache_caps(Stream & stream)
         {
-//            LOG(LOG_INFO, "Sending bmpcache caps\n");
+            LOG(LOG_INFO, "Sending bmpcache caps to server\n");
             #warning see details for bmpcache caps
             stream.out_uint16_le(RDP_CAPSET_BMPCACHE);
             stream.out_uint16_le(RDP_CAPLEN_BMPCACHE);
-            int Bpp = nbbytes(this->orders.cache_colormap.bpp);
+            int Bpp = nbbytes(this->bpp);
             stream.out_clear_bytes(24); /* unused */
             stream.out_uint16_le(0x258); /* entries */
             stream.out_uint16_le(0x100 * Bpp); /* max cell size */
@@ -175,76 +175,68 @@ struct rdp_rdp {
             stream.out_uint16_le(0x400 * Bpp); /* max cell size */
             stream.out_uint16_le(0x106); /* entries */
             stream.out_uint16_le(0x1000 * Bpp); /* max cell size */
-            return 0;
         }
-
-
 
 
         /* Output control capability set */
-        int out_control_caps(Stream & stream)
+        void out_control_caps(Stream & stream)
         {
-//            LOG(LOG_INFO, "Sending control caps\n");
-            stream.out_uint16_le( RDP_CAPSET_CONTROL);
-            stream.out_uint16_le( RDP_CAPLEN_CONTROL);
-            stream.out_uint16_le( 0); /* Control capabilities */
-            stream.out_uint16_le( 0); /* Remote detach */
-            stream.out_uint16_le( 2); /* Control interest */
-            stream.out_uint16_le( 2); /* Detach interest */
-            return 0;
+            LOG(LOG_INFO, "Sending control caps to server\n");
+            stream.out_uint16_le(RDP_CAPSET_CONTROL);
+            stream.out_uint16_le(RDP_CAPLEN_CONTROL);
+            stream.out_uint16_le(0); /* Control capabilities */
+            stream.out_uint16_le(0); /* Remote detach */
+            stream.out_uint16_le(2); /* Control interest */
+            stream.out_uint16_le(2); /* Detach interest */
         }
 
 
-        int out_activate_caps(Stream & stream)
+        void out_activate_caps(Stream & stream)
         {
-//            LOG(LOG_INFO, "Activate caps\n");
+            LOG(LOG_INFO, "Sending Activate caps to server\n");
 
-            stream.out_uint16_le( RDP_CAPSET_ACTIVATE);
-            stream.out_uint16_le( RDP_CAPLEN_ACTIVATE);
-            stream.out_uint16_le( 0); /* Help key */
-            stream.out_uint16_le( 0); /* Help index key */
-            stream.out_uint16_le( 0); /* Extended help key */
-            stream.out_uint16_le( 0); /* Window activate */
-            return 0;
+            stream.out_uint16_le(RDP_CAPSET_ACTIVATE);
+            stream.out_uint16_le(RDP_CAPLEN_ACTIVATE);
+            stream.out_uint16_le(0); /* Help key */
+            stream.out_uint16_le(0); /* Help index key */
+            stream.out_uint16_le(0); /* Extended help key */
+            stream.out_uint16_le(0); /* Window activate */
         }
 
-        int out_pointer_caps(Stream & stream)
+        void out_pointer_caps(Stream & stream)
         {
-//            LOG(LOG_INFO, "Pointer caps\n");
+            LOG(LOG_INFO, "Sending Pointer caps to server\n");
 
-            stream.out_uint16_le( RDP_CAPSET_POINTER);
-            stream.out_uint16_le( RDP_CAPLEN_POINTER_MONO);
-            stream.out_uint16_le( 0); /* Color pointer */
-            stream.out_uint16_le( 20); /* Cache size */
-            return 0;
+            stream.out_uint16_le(RDP_CAPSET_POINTER);
+            stream.out_uint16_le(RDP_CAPLEN_POINTER_MONO);
+            stream.out_uint16_le(0); /* Color pointer */
+            stream.out_uint16_le(20); /* Cache size */
         }
 
-        int out_share_caps(Stream & stream)
+        void out_share_caps(Stream & stream)
         {
-//            LOG(LOG_INFO, "Sending share caps\n");
+            LOG(LOG_INFO, "Sending share caps to server\n");
 
-            stream.out_uint16_le( RDP_CAPSET_SHARE);
-            stream.out_uint16_le( RDP_CAPLEN_SHARE);
-            stream.out_uint16_le( 0); /* userid */
-            stream.out_uint16_le( 0); /* pad */
-            return 0;
+            stream.out_uint16_le(RDP_CAPSET_SHARE);
+            stream.out_uint16_le(RDP_CAPLEN_SHARE);
+            stream.out_uint16_le(0); /* userid */
+            stream.out_uint16_le(0); /* pad */
         }
 
-        int out_colcache_caps(Stream & stream)
+        void out_colcache_caps(Stream & stream)
         {
-//            LOG(LOG_INFO, "Sending colcache caps\n");
+            LOG(LOG_INFO, "Sending colcache caps to server\n");
 
-            stream.out_uint16_le( RDP_CAPSET_COLCACHE);
-            stream.out_uint16_le( RDP_CAPLEN_COLCACHE);
-            stream.out_uint16_le( 6); /* cache size */
-            stream.out_uint16_le( 0); /* pad */
-            return 0;
+            stream.out_uint16_le(RDP_CAPSET_COLCACHE);
+            stream.out_uint16_le(RDP_CAPLEN_COLCACHE);
+            stream.out_uint16_le(6); /* cache size */
+            stream.out_uint16_le(0); /* pad */
         }
 
 
         void send_confirm_active(Stream & stream, client_mod * mod) throw(Error)
         {
-//            LOG(LOG_INFO, "Sending confirm active\n");
+            LOG(LOG_INFO, "Sending confirm active to server\n");
 
             char caps_0x0d[] = {
             0x01, 0x00, 0x00, 0x00, 0x09, 0x04, 0x00, 0x00,
@@ -273,12 +265,9 @@ struct rdp_rdp {
             0x00, 0x01, 0x00, 0x01, 0x02, 0x00, 0x00, 0x00
             };
 
-            int sec_flags;
-            int caplen;
-
-            sec_flags = SEC_ENCRYPT;
+            int sec_flags = SEC_ENCRYPT;
             //sec_flags = RDP5_FLAG | SEC_ENCRYPT;
-            caplen = RDP_CAPLEN_GENERAL + RDP_CAPLEN_BITMAP + RDP_CAPLEN_ORDER +
+            int caplen = RDP_CAPLEN_GENERAL + RDP_CAPLEN_BITMAP + RDP_CAPLEN_ORDER +
                     RDP_CAPLEN_BMPCACHE + RDP_CAPLEN_COLCACHE +
                     RDP_CAPLEN_ACTIVATE + RDP_CAPLEN_CONTROL +
                     RDP_CAPLEN_POINTER_MONO + RDP_CAPLEN_SHARE +
@@ -299,6 +288,7 @@ struct rdp_rdp {
             this->out_bitmap_caps(stream);
             this->out_order_caps(stream);
 
+            #warning two identical calls in a row, this is strange, check documentation
             this->out_bmpcache_caps(stream);
             if(this->use_rdp5 == 0){
                 this->out_bmpcache_caps(stream);
@@ -318,34 +308,31 @@ struct rdp_rdp {
             stream.mark_end();
             this->sec_layer.rdp_sec_send(stream, sec_flags);
             LOG(LOG_INFO, "Waiting for answer to confirm active\n");
-            return;
         }
 
 
-        int out_unknown_caps(Stream & stream, int id, int length, char* caps)
+        void out_unknown_caps(Stream & stream, int id, int length, char* caps)
         {
-            stream.out_uint16_le( id);
-            stream.out_uint16_le( length);
-            stream.out_copy_bytes( caps, length - 4);
-            return 0;
+            LOG(LOG_INFO, "Sending unknown caps to server\n");
+            stream.out_uint16_le(id);
+            stream.out_uint16_le(length);
+            stream.out_copy_bytes(caps, length - 4);
         }
 
 
-        int process_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
+        void process_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
         {
-            int message_type;
-            int x;
-            int y;
-            int rv;
+            LOG(LOG_INFO, "Process pointer PDU\n");
 
-            rv = 0;
-            message_type = stream.in_uint16_le();
+            int message_type = stream.in_uint16_le();
             stream.skip_uint8(2); /* pad */
             switch (message_type) {
             case RDP_POINTER_MOVE:
-                x = stream.in_uint16_le();
-                y = stream.in_uint16_le();
-                break;
+            {
+                int x = stream.in_uint16_le();
+                int y = stream.in_uint16_le();
+            }
+            break;
             case RDP_POINTER_COLOR:
                 this->process_color_pointer_pdu(stream, mod);
                 break;
@@ -358,11 +345,12 @@ struct rdp_rdp {
             default:
                 break;
             }
-            return rv;
         }
 
         void process_palette(Stream & stream)
         {
+            LOG(LOG_INFO, "Process palette\n");
+
             stream.skip_uint8(2); /* pad */
             uint16_t numberColors = stream.in_uint16_le();
             assert(numberColors == 256);
@@ -374,40 +362,39 @@ struct rdp_rdp {
 
 
 
-        int process_disconnect_pdu(Stream & stream)
+        void process_disconnect_pdu(Stream & stream)
         {
-//            LOG(LOG_INFO, "process disconnect pdu\n");
-            return 0;
+            LOG(LOG_INFO, "process disconnect pdu\n");
         }
 
         void process_general_caps(Stream & stream)
         {
-            int extraflags;
-
+            LOG(LOG_INFO, "process general caps\n");
             stream.skip_uint8(10);
             /* Receiving rdp_5 extra flags supported for RDP 5.0 and later versions*/
-            extraflags = stream.in_uint16_le();
+            int extraflags = stream.in_uint16_le();
             if (extraflags == 0){
                 this->use_rdp5 = 0;
             }
-//            LOG(LOG_INFO, "process general caps %d\n", extraflags);
+            LOG(LOG_INFO, "process general caps %d ok\n", extraflags);
         }
 
         /* Process a bitmap capability set */
         void process_bitmap_caps(Stream & stream)
         {
-            this->orders.cache_colormap.bpp = stream.in_uint16_le();
+            LOG(LOG_INFO, "process bitmap caps\n");
+            uint16_t bpp = stream.in_uint16_le();
             stream.skip_uint8(6);
             int width = stream.in_uint16_le();
             int height = stream.in_uint16_le();
             /* todo, call reset if needed and use width and height */
-            LOG(LOG_INFO, "process bitmap caps (%dx%dx%d)\n",
-                        width, height, this->orders.cache_colormap.bpp);
+            LOG(LOG_INFO, "process bitmap caps (%dx%dx%d) ok\n", width, height, bpp);
         }
 
 
         void process_server_caps(Stream & stream, int len)
         {
+            LOG(LOG_INFO, "process server caps\n");
             int n;
             int ncapsets;
             int capset_type;
@@ -437,15 +424,16 @@ struct rdp_rdp {
                 }
                 stream.p = next;
             }
+            LOG(LOG_INFO, "process server ok\n");
         }
 
 
         void send_control(Stream & stream, int action) throw (Error)
         {
             this->init_data(stream);
-            stream.out_uint16_le( action);
-            stream.out_uint16_le( 0); /* userid */
-            stream.out_uint32_le( 0); /* control id */
+            stream.out_uint16_le(action);
+            stream.out_uint16_le(0); /* userid */
+            stream.out_uint32_le(0); /* control id */
             stream.mark_end();
             this->send_data(stream, RDP_DATA_PDU_CONTROL, MCS_GLOBAL_CHANNEL);
         }
@@ -454,8 +442,8 @@ struct rdp_rdp {
         void send_synchronise(Stream & stream) throw (Error)
         {
             this->init_data(stream);
-            stream.out_uint16_le( 1); /* type */
-            stream.out_uint16_le( 1002);
+            stream.out_uint16_le(1); /* type */
+            stream.out_uint16_le(1002);
             stream.mark_end();
             this->send_data(stream, RDP_DATA_PDU_SYNCHRONISE, MCS_GLOBAL_CHANNEL);
         }
@@ -463,10 +451,10 @@ struct rdp_rdp {
         void send_fonts(Stream & stream, int seq) throw(Error)
         {
             this->init_data(stream);
-            stream.out_uint16_le( 0); /* number of fonts */
-            stream.out_uint16_le( 0); /* pad? */
-            stream.out_uint16_le( seq); /* unknown */
-            stream.out_uint16_le( 0x32); /* entry size */
+            stream.out_uint16_le(0); /* number of fonts */
+            stream.out_uint16_le(0); /* pad? */
+            stream.out_uint16_le(seq); /* unknown */
+            stream.out_uint16_le(0x32); /* entry size */
             stream.mark_end();
             this->send_data(stream, RDP_DATA_PDU_FONT2, MCS_GLOBAL_CHANNEL);
         }
@@ -502,9 +490,9 @@ struct rdp_rdp {
 
         }
 
-
         void send_login_info(int flags, int rdp5_performanceflags) throw(Error)
         {
+            LOG(LOG_INFO, "send login info to server\n");
             time_t t = time(NULL);
             time_t tzone;
 
@@ -608,20 +596,14 @@ struct rdp_rdp {
             }
             stream.mark_end();
             this->sec_layer.rdp_sec_send(stream, sec_flags);
+            LOG(LOG_INFO, "send login info ok\n");
         }
 
-
-        void connect() throw(Error)
-        {
-        }
 
         void send(Stream & stream, int pdu_type) throw(Error)
         {
-            int len;
-            int sec_flags;
-
             stream.p = stream.rdp_hdr;
-            len = stream.end - stream.p;
+            int len = stream.end - stream.p;
             stream.out_uint16_le(len);
 
             /* Added in order to adapt to version 5 packet */
@@ -641,7 +623,7 @@ struct rdp_rdp {
                 stream. out_uint16_le(pdu_type | 0x10);
                 stream.out_uint16_le(this->sec_layer.mcs_layer.userid);
             }
-            sec_flags = SEC_ENCRYPT;
+            int sec_flags = SEC_ENCRYPT;
             this->sec_layer.rdp_sec_send(stream, sec_flags);
         }
 
@@ -657,11 +639,8 @@ struct rdp_rdp {
         /* Send an RDP data packet */
         void send_data(Stream & stream, int pdu_data_type, int chan_id) throw(Error)
         {
-            int len;
-            int sec_flags;
-
             stream.p = stream.rdp_hdr;
-            len = stream.end - stream.p;
+            int len = stream.end - stream.p;
             stream.out_uint16_le(len);
             stream.out_uint16_le(RDP_PDU_DATA | 0x10);
             stream.out_uint16_le(this->sec_layer.mcs_layer.userid);
@@ -672,7 +651,7 @@ struct rdp_rdp {
             stream.out_uint8(pdu_data_type);
             stream.out_uint8(0); /* compress type */
             stream.out_uint16_le(0); /* compress len */
-            sec_flags = SEC_ENCRYPT;
+            int sec_flags = SEC_ENCRYPT;
             this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, chan_id);
         }
 
@@ -755,15 +734,13 @@ struct rdp_rdp {
         }
 
 
-        int process_data_pdu(Stream & stream, client_mod * mod)
+        void process_data_pdu(Stream & stream, client_mod * mod)
         {
             int data_pdu_type;
             int ctype;
             int clen;
             int len;
-            int rv;
 
-            rv = 0;
             stream.skip_uint8(6); /* shareid, pad, Streamid */
             len = stream.in_uint16_le();
             data_pdu_type = stream.in_uint8();
@@ -772,14 +749,14 @@ struct rdp_rdp {
             clen -= 18;
             switch (data_pdu_type) {
             case RDP_DATA_PDU_UPDATE:
-                rv = this->process_update_pdu(stream, mod);
+                this->process_update_pdu(stream, mod);
                 break;
             case RDP_DATA_PDU_CONTROL:
                 break;
             case RDP_DATA_PDU_SYNCHRONISE:
                 break;
             case RDP_DATA_PDU_POINTER:
-                rv = this->process_pointer_pdu(stream, mod);
+                this->process_pointer_pdu(stream, mod);
                 break;
             case RDP_DATA_PDU_BELL:
                 break;
@@ -788,12 +765,11 @@ struct rdp_rdp {
                 break;
             case RDP_DATA_PDU_DISCONNECT:
 //                LOG(LOG_INFO, "DATA PDU DISCONNECT\n");
-                rv = this->process_disconnect_pdu(stream);
+                this->process_disconnect_pdu(stream);
                 break;
             default:
                 break;
             }
-            return rv;
         }
 
 
@@ -1108,7 +1084,7 @@ struct rdp_rdp {
         }
     }
 
-    int process_update_pdu(Stream & stream, client_mod * mod)
+    void process_update_pdu(Stream & stream, client_mod * mod)
     {
         int update_type;
         int count;
@@ -1143,7 +1119,6 @@ struct rdp_rdp {
             break;
         }
         mod->server_end_update();
-        return 0;
     }
 
     void out_bmpcache2_caps(Stream & stream, client_mod * mod)

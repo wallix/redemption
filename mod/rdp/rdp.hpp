@@ -74,7 +74,7 @@ struct mod_rdp : public client_mod {
     {
         const char * password = context.get(STRAUTHID_TARGET_PASSWORD);
 
-//        LOG(LOG_INFO, "username=%s password=%s\n", username, password);
+        LOG(LOG_INFO, "mod_rdp connect\n");
         this->t = 0;
         try {
             this->t = t;

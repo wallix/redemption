@@ -368,11 +368,9 @@ class RDPColCache {
     // field are arbitrary and MUST be ignored.
 
     public:
-    #warning bpp should probably not be put in RDPColCache
-    int bpp;
     uint32_t palette[6][256];
 
-    RDPColCache(int bpp) : bpp(bpp)
+    RDPColCache()
     {
         memset(this->palette, 0, sizeof(palette));
     }
@@ -419,17 +417,12 @@ class RDPColCache {
 
     #define warning remove printf in operator== and show palette differences in test code
     bool operator==(const RDPColCache & other) const {
-        if (this->bpp != other.bpp){
-            return false;
-        }
-        if (this->bpp <= 8){
-            for (uint8_t cacheIndex = 0; cacheIndex < 6 ; ++cacheIndex){
-                for (size_t i = 0; i < 256 ; ++i){
-                    if (this->palette[cacheIndex][i] != other.palette[cacheIndex][i]){
-                        printf("palette differs at index %d: %x != %x\n",
-                            (int)i, this->palette[cacheIndex][i], other.palette[cacheIndex][i]);
-                        return false;
-                    }
+        for (uint8_t cacheIndex = 0; cacheIndex < 6 ; ++cacheIndex){
+            for (size_t i = 0; i < 256 ; ++i){
+                if (this->palette[cacheIndex][i] != other.palette[cacheIndex][i]){
+                    printf("palette differs at index %d: %x != %x\n",
+                        (int)i, this->palette[cacheIndex][i], other.palette[cacheIndex][i]);
+                    return false;
                 }
             }
         }
@@ -441,13 +434,13 @@ class RDPColCache {
         size_t lg  = snprintf(
             buffer,
             sz,
-            "RDPColCache(%d, "
+            "RDPColCache("
             "[%d, %d, %d,...]"
             "[%d, %d, %d,...]"
             "[%d, %d, %d,...]"
             "[%d, %d, %d,...]"
             "[%d, %d, %d,...]"
-            "[%d, %d, %d,...])\n", this->bpp,
+            "[%d, %d, %d,...])\n",
             this->palette[0][0], this->palette[0][1], this->palette[0][2],
             this->palette[1][0], this->palette[1][1], this->palette[1][2],
             this->palette[2][0], this->palette[2][1], this->palette[2][2],
@@ -1972,7 +1965,7 @@ class RDPOpaqueRect {
 
         uint32_t diff_color = this->color ^ oldcmd.color;
 
-        LOG(LOG_INFO, "emit opaque rect old_color = %.6x new_color = %.6x\n", oldcmd.color, this->color);
+//        LOG(LOG_INFO, "emit opaque rect old_color = %.6x new_color = %.6x\n", oldcmd.color, this->color);
 
         header.fields =   (dr.dleft                != 0) * 0x01
                         | (dr.dtop                 != 0) * 0x02
