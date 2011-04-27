@@ -154,8 +154,6 @@ struct Session {
 
     int session_main_loop();
     int session_reset(int width, int height, int bpp);
-    void session_send_to_channel(int channel_id, uint8_t* data, int data_len,
-                            int total_data_len, int flags);
     int callback(int msg, long param1, long param2, long param3, long param4);
 
     void parse_username(void);
