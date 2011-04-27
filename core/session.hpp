@@ -167,7 +167,6 @@ struct Session {
     int step_STATE_CLOSE_CONNECTION();
 
 
-    int session_channel_count();
     void session_query_channel(int index, char* channel_name, int& channel_flags);
     int session_input_mouse(int device_flags, int x, int y);
     bool session_setup_mod(int next_state, const ModContext * context);
