@@ -337,7 +337,7 @@ struct client_mod {
     void server_fill_rect_rop(int rop, const Rect & rect)
     {
         // rop ? or 0xF0
-        this->front->fill_rect_rop(rop, rect, this->bg_color, this->fg_color,
+        this->front->pat_blt(rect, rop, this->bg_color, this->fg_color,
                                     this->brush, this->clip);
     }
 
@@ -345,7 +345,7 @@ struct client_mod {
     void server_fill_rect_rop(int rop, const Rect & rect, const uint32_t fgcolor, const uint32_t bgcolor)
     {
         // rop ? or 0xF0
-        this->front->fill_rect_rop(rop, rect, bgcolor, fgcolor, this->brush, this->clip);
+        this->front->pat_blt(rect, rop, bgcolor, fgcolor, this->brush, this->clip);
     }
 
     void server_fill_rect_rop(int rop, const Region & region, const Rect & r, const Rect & clip)
@@ -353,7 +353,7 @@ struct client_mod {
         for (size_t ir = 0 ; ir != region.rects.size(); ir++){
             Rect draw_rect = region.rects[ir].intersect(clip);
             if (!draw_rect.isempty()) {
-                this->front->fill_rect_rop(rop, r,
+                this->front->pat_blt(r, rop,
                                     this->bg_color, this->fg_color,
                                     this->brush, draw_rect);
             }
@@ -664,7 +664,7 @@ struct client_mod {
         for (size_t ir = 0 ; ir != region0.rects.size(); ir++){
             Rect draw_rect = region0.rects[ir].intersect(clip);
             if (!draw_rect.isempty()) {
-                this->front->fill_rect_rop(0xF0, r.offset(clip.x, clip.y),
+                this->front->pat_blt(r.offset(clip.x, clip.y), 0xF0,
                                     this->bg_color, this->fg_color,
                                     this->brush, draw_rect);
             }
@@ -681,7 +681,7 @@ struct client_mod {
         for (size_t ir = 0 ; ir != region1.rects.size(); ir++){
             Rect draw_rect = region1.rects[ir].intersect(clip);
             if (!draw_rect.isempty()) {
-                this->front->fill_rect_rop(0xF0, r.offset(clip.x, clip.y),
+                this->front->pat_blt(r.offset(clip.x, clip.y), 0xF0,
                                     this->bg_color, this->fg_color,
                                     this->brush, draw_rect);
             }
@@ -696,7 +696,7 @@ struct client_mod {
         for (size_t ir = 0 ; ir != region2.rects.size(); ir++){
             Rect draw_rect = region2.rects[ir].intersect(clip);
             if (!draw_rect.isempty()) {
-                this->front->fill_rect_rop(0xF0, r.offset(clip.x, clip.y),
+                this->front->pat_blt(r.offset(clip.x, clip.y), 0xF0,
                                     this->bg_color, this->fg_color,
                                     this->brush, draw_rect);
             }
@@ -712,7 +712,7 @@ struct client_mod {
         for (size_t ir = 0 ; ir != region3.rects.size(); ir++){
             Rect draw_rect = region3.rects[ir].intersect(clip);
             if (!draw_rect.isempty()) {
-                this->front->fill_rect_rop(0xF0, r.offset(clip.x, clip.y),
+                this->front->pat_blt(r.offset(clip.x, clip.y), 0xF0,
                                     this->bg_color, this->fg_color,
                                     this->brush, draw_rect);
             }

@@ -296,13 +296,16 @@ public:
         }
     }
 
-    void pat_blt(const Rect & r, int rop, uint32_t bg_color,
-                uint32_t fg_color, const RDPBrush & brush,
-                const Rect &clip)
+    /*****************************************************************************/
+    /* fill in an area of the screen with one color and operator rop*/
+    void pat_blt(const Rect & r, int rop, uint32_t bg_color,  uint32_t fg_color, const RDPBrush & brush, const Rect &clip)
     {
         LOG(LOG_INFO, "pat_blt r(%d, %d, %d, %d) rop=%d bg_color=%d fg_color=%d brush=%p clip(%d, %d, %d, %d)\n", r.x, r.y, r.cx, r.cy, rop, bg_color, fg_color, &brush, clip.x, clip.y, clip.cx, clip.cy);
         if (!clip.intersect(r).isempty()){
             this->orders->pat_blt(r, rop, bg_color, fg_color, brush, clip);
+            if (this->capture){
+                this->capture->rect(r, fg_color, this->orders->rdp_layer->client_info.bpp, clip);
+            }
         }
         else {
             LOG(LOG_INFO, "pat_blt nothing to do\n");
@@ -320,18 +323,6 @@ public:
             if (this->capture){
                 this->capture->rect(r, fgcolor, this->orders->rdp_layer->client_info.bpp, clip);
             }
-        }
-    }
-
-    /*****************************************************************************/
-    /* fill in an area of the screen with one color and operator rop*/
-    void fill_rect_rop(int rop, const Rect & r, int bgcolor, int fgcolor, const RDPBrush & brush, const Rect & clip)
-    {
-        LOG(LOG_INFO, "fill_rect_rop\n");
-        #warning check: isn't it dest_blt instead of pat_blt
-        this->orders->pat_blt(r, rop, bgcolor, fgcolor, brush, clip);
-        if (this->capture){
-            this->capture->rect(r, fgcolor, this->orders->rdp_layer->client_info.bpp, clip);
         }
     }
 

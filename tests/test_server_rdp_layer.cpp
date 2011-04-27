@@ -205,7 +205,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
     /* Draw a little grey rect at left-bottom side of screen */
 
     front->begin_update();
-    front->fill_rect_rop(0x5A, Rect(0, 450, 50, 50),
+    front->pat_blt(Rect(0, 450, 50, 50), 0x5A,
                            DARK_GREY, DARK_GREY,
                            brush,
                            Rect(0, 450, 50, 50));
@@ -258,19 +258,19 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
                     RDPBmpCache bmp(1, entry->bmp, cache_b_id, cache_b_idx);
                     // check reserved size depending on version
                     orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
-                    bmp.emit(*orders->out_s);
+                    bmp.emit(orders->out_stream);
                     bmp.data = 0;
                 }
             break;
             case COMPRESSED:
             {
                 LOG(LOG_INFO, "compressed bitmap\n");
-                orders->send_bitmap(*orders->out_s, entry->bmp, cache_b_id, cache_b_idx);
+                orders->send_bitmap(orders->out_stream, entry->bmp, cache_b_id, cache_b_idx);
             }
             break;
             case COMPRESSED_SMALL_HEADERS:
             {
-                orders->send_bitmap_small_headers(*orders->out_s, entry->bmp, cache_b_id, cache_b_idx);
+                orders->send_bitmap_small_headers(orders->out_stream, entry->bmp, cache_b_id, cache_b_idx);
             }
             break;
             case NEW_NOT_COMPRESSED:
@@ -279,13 +279,13 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
                     RDPBmpCache bmp(2, entry->bmp, cache_b_id, cache_b_idx);
                     // check reserved size depending on version
                     orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
-                    bmp.emit(*orders->out_s);
+                    bmp.emit(orders->out_stream);
                     bmp.data = 0;
                 }
             break;
             case NEW_COMPRESSED:
             {
-                orders->send_bitmap2(*orders->out_s, entry->bmp, cache_b_id, cache_b_idx);
+                orders->send_bitmap2(orders->out_stream, entry->bmp, cache_b_id, cache_b_idx);
             }
             break;
         }
