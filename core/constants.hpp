@@ -40,6 +40,11 @@ enum {
 };
 
 enum {
+    BRUSH_TO_SEND = 0,
+    BRUSH_ALLREADY_SENT
+};
+
+enum {
     ISO_PDU_CR = 0xE0, /* Connection Request */
     ISO_PDU_CC = 0xD0, /* Connection Confirm */
     ISO_PDU_DR = 0x80, /* Disconnect Request */

@@ -187,17 +187,6 @@ public:
         this->orders->rdp_layer->server_rdp_set_pointer(cache_idx);
     }
 
-    void send_palette(const RGBPalette & palette)
-    {
-        LOG(LOG_INFO, "send_palette\n");
-        if (this->orders->rdp_layer->client_info.bpp <= 8) {
-            this->orders->rdp_layer->server_send_palette(palette);
-            this->orders->init();
-            this->orders->send_palette(palette, 0);
-            this->orders->send();
-        }
-    }
-
 
     void send_glyph(int font, int character,
                     int offset, int baseline,
@@ -261,8 +250,6 @@ public:
     }
 
 
-    /*****************************************************************************/
-    /* fill in an area of the screen with one color and operator rop*/
     void pat_blt(const Rect & r, int rop, uint32_t bg_color,  uint32_t fg_color, const RDPBrush & brush, const Rect &clip)
     {
         LOG(LOG_INFO, "pat_blt r(%d, %d, %d, %d) rop=%d bg_color=%d fg_color=%d brush=%p clip(%d, %d, %d, %d)\n", r.x, r.y, r.cx, r.cy, rop, bg_color, fg_color, &brush, clip.x, clip.y, clip.cx, clip.cy);
@@ -282,21 +269,81 @@ public:
     void mem_blt(int cache_id,
                  int color_table, const Rect & r,
                  int rop,
-                 int bpp, uint8_t * data,
+                 int in_bpp, uint8_t * data,
                  int srcx, int srcy,
                  int cache_idx, const Rect & clip)
     {
         LOG(LOG_INFO, "mem_blt\n");
 
-        if (!clip.isempty() && !clip.intersect(r).isempty()){
+        if (!clip.intersect(r).isempty()){
             this->orders->mem_blt(cache_id, color_table, r, rop, srcx, srcy, cache_idx, clip);
             if (this->capture){
-                #warning why is bpp provided to capture ? Should be useless like in orders
-                this->capture->mem_blt(cache_id, color_table, r, rop, bpp, data, srcx, srcy, cache_idx, clip);
+                #warning why are bpp and data provided to mem_blt ? Should be useless like in orders. We should read bitmap from cache using cache_id and cache_idx instead. front has access to bitmap_cache
+                this->capture->mem_blt(cache_id, color_table, r, rop, in_bpp, data, srcx, srcy, cache_idx, clip);
             }
         }
     }
 
+    #warning harmonize name of function -> line_to
+    void line(int rop, int x1, int y1, int x2, int y2, int bgcolor, const RDPPen & pen, const Rect & clip)
+    {
+        LOG(LOG_INFO, "line\n");
+        #warning if direction of line is inverted, put it back in the right order, for now just ignore lines in wrong direction
+        if (x1 >= x2 && y1 >= y2
+        && !clip.intersect(Rect(x1, y1, (x2 - x1) +1, (y2 - y1)+1)).isempty()){
+            if (!clip.intersect(Rect(x1, y1, (x2 - x1) +1, (y2 - y1)+1)).isempty()){
+                uint32_t rop2 = rop;
+                if ((rop < 1) || (rop > 0x10)) {
+                    rop2 = 0x0d; /* R2_COPYPEN */
+                }
+                this->orders->line_to(1, x1, y1, x2, y2, rop2, bgcolor, pen, clip);
+                if (this->capture){
+                    this->capture->line(1, x1, y1, x2, y2, rop2, bgcolor, pen, this->orders->rdp_layer->client_info.bpp, clip);
+                }
+            }
+
+        }
+    }
+
+    #warning harmonize name of function -> glyph_index
+    void draw_text2(int font, int flags, int mixmode,
+                const Rect & box, const Rect & clip_rect,
+                int x, int y, uint8_t* data, int data_len,
+                int fgcolor, int bgcolor, const Rect & draw_rect)
+    {
+        LOG(LOG_INFO, "draw_text2\n");
+        if (draw_rect.intersect(clip_rect).isempty()){
+            return;
+        }
+
+        this->orders->glyph_index(font, flags, mixmode,
+                            fgcolor, bgcolor,
+                            clip_rect, box,
+                            x, y, data, data_len, draw_rect);
+        if (this->capture){
+            this->capture->text(font, flags, mixmode,
+                            fgcolor, bgcolor,
+                            clip_rect, box,
+                            x, y, data, data_len, draw_rect);
+        }
+    }
+
+    void send_palette(const RGBPalette & palette)
+    {
+        LOG(LOG_INFO, "send_palette\n");
+        if (this->orders->rdp_layer->client_info.bpp <= 8) {
+            this->orders->rdp_layer->server_send_palette(palette);
+            this->orders->init();
+            this->orders->send_palette(palette, 0);
+            this->orders->send();
+        }
+    }
+
+    void send_brush(const int index)
+    {
+        this->orders->send_brush(8, 8, 1, 0x81, 8, this->cache->brush_items[index].pattern, index);
+
+    }
 
     // draw bitmap from src_data (image rect contained in src_r) to x, y
     // clip_region is the list of visible rectangles that should be sent
@@ -337,50 +384,6 @@ public:
                                   0, 0, cache_idx, clip);
                 }
             }
-        }
-    }
-
-    /*****************************************************************************/
-    void draw_text2(int font, int flags, int mixmode,
-                const Rect & box, const Rect & clip_rect,
-                int x, int y, uint8_t* data, int data_len,
-                int fgcolor, int bgcolor, const Rect & draw_rect)
-    {
-        LOG(LOG_INFO, "draw_text2\n");
-        if (draw_rect.intersect(clip_rect).isempty()){
-            return;
-        }
-
-        this->orders->glyph_index(font, flags, mixmode,
-                            fgcolor, bgcolor,
-                            clip_rect, box,
-                            x, y, data, data_len, draw_rect);
-        if (this->capture){
-            this->capture->text(font, flags, mixmode,
-                            fgcolor, bgcolor,
-                            clip_rect, box,
-                            x, y, data, data_len, draw_rect);
-        }
-    }
-
-    /*****************************************************************************/
-    void line(int rop, int x1, int y1, int x2, int y2, int bgcolor, const RDPPen & pen, const Rect & clip)
-    {
-        LOG(LOG_INFO, "line\n");
-        #warning if direction of line is inverted, put it back in the right order, for now just ignore lines in wrong direction
-        if (x1 >= x2 && y1 >= y2
-        && !clip.intersect(Rect(x1, y1, (x2 - x1) +1, (y2 - y1)+1)).isempty()){
-            if (!clip.intersect(Rect(x1, y1, (x2 - x1) +1, (y2 - y1)+1)).isempty()){
-                uint32_t rop2 = rop;
-                if ((rop < 1) || (rop > 0x10)) {
-                    rop2 = 0x0d; /* R2_COPYPEN */
-                }
-                this->orders->line_to(1, x1, y1, x2, y2, rop2, bgcolor, pen, clip);
-                if (this->capture){
-                    this->capture->line(1, x1, y1, x2, y2, rop2, bgcolor, pen, this->orders->rdp_layer->client_info.bpp, clip);
-                }
-            }
-
         }
     }
 

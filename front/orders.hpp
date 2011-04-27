@@ -262,7 +262,6 @@ struct Orders
 
 
     /*****************************************************************************/
-    /* returns error */
     void glyph_index(int font, int flags, int mixmode, int fg_color, int bg_color,
              const Rect & text_clip, const Rect & box, int x, int y, uint8_t* data,
              int data_len, const Rect & clip)

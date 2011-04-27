@@ -252,7 +252,7 @@ struct Cache {
 
     /*****************************************************************************/
     /* this does not take owership of brush_item_data, it makes a copy */
-    int add_brush(uint8_t* brush_item_data)
+    int add_brush(uint8_t* brush_item_data, int & cache_idx)
     {
         int i;
         int oldest;
@@ -266,7 +266,8 @@ struct Cache {
         for (i = 0; i < 64; i++) {
             if (memcmp(this->brush_items[i].pattern, brush_item_data, 8) == 0) {
                 this->brush_items[i].stamp = this->brush_stamp;
-                return i;
+                cache_idx = i;
+                return BRUSH_ALLREADY_SENT;
             }
         }
         /* look for oldest */
@@ -280,8 +281,8 @@ struct Cache {
         }
         memcpy(this->brush_items[index].pattern, brush_item_data, 8);
         this->brush_items[index].stamp = this->brush_stamp;
-        this->orders->send_brush(8, 8, 1, 0x81, 8, this->brush_items[index].pattern, index);
-        return index;
+        cache_idx = index;
+        return BRUSH_TO_SEND;
     }
 
 };

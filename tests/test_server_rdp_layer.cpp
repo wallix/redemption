@@ -119,10 +119,13 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
     brush.org_y = 0;
     brush.style = 3;
 
-    #warning be carefull add_brush hides sending brush to rdp orders layer. Extract it to make it explicit.
     if (client_info->brush_cache_code == 1) {
         uint8_t pattern[8] = {0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55};
-        brush.hatch = front->cache->add_brush(pattern);
+        int cache_idx = 0;
+        if (BRUSH_TO_SEND == front->cache->add_brush(pattern, cache_idx)){
+            front->send_brush(cache_idx);
+        }
+        brush.hatch = cache_idx;
         brush.style = 0x81;
     }
     front->end_update();

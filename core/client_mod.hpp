@@ -491,11 +491,14 @@ struct client_mod {
 
         if (brush.style == 3){
             if (this->front->orders->rdp_layer->client_info.brush_cache_code == 1) {
-                #warning add_brush hides sending brush to rdp layer
                 uint8_t pattern[8];
                 pattern[0] = this->brush.hatch;
                 memcpy(pattern+1, this->brush.extra, 7);
-                this->brush.hatch = this->front->cache->add_brush(pattern);
+                int cache_idx = 0;
+                if (BRUSH_TO_SEND == this->front->cache->add_brush(pattern, cache_idx)){
+                    this->front->send_brush(cache_idx);
+                }
+                this->brush.hatch = cache_idx;
                 this->brush.style = 0x81;
             }
         }
@@ -741,12 +744,14 @@ struct client_mod {
 
         // brush style 3 is not supported by windows 7, we **MUST** use cache
         if (this->front->orders->rdp_layer->client_info.brush_cache_code == 1) {
-        #warning add_brush hides sending brush to rdp orders layer. Extract it to make it explicit.
             uint8_t pattern[8];
             pattern[0] = this->brush.hatch;
             memcpy(pattern+1, this->brush.extra, 7);
-            uint8_t cacheidx = this->front->cache->add_brush(pattern);
-            this->brush.hatch = cacheidx;
+            int cache_idx = 0;
+            if (BRUSH_TO_SEND == this->front->cache->add_brush(pattern, cache_idx)){
+                this->front->send_brush(cache_idx);
+            }
+            this->brush.hatch = cache_idx;
             this->brush.style = 0x81;
         }
     }
