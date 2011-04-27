@@ -334,7 +334,7 @@ struct Orders
     // pad1Octet (1 byte): An 8-bit, unsigned integer. Padding. Values in this
     // field are arbitrary and MUST be ignored.
 
-    int send_palette(const uint32_t (& palette)[256], int cache_id)
+    void send_palette(const uint32_t (& palette)[256], int cache_id)
     {
         this->reserve_order(2000);
 
@@ -343,10 +343,9 @@ struct Orders
         RDPColCache newcmd;
         memcpy(newcmd.palette[0], palette, 256);
         newcmd.emit(this->out_stream, 0);
-        return 0;
     }
 
-    int send_brush(int width, int height, int bpp, int type, int size, uint8_t* data, int cache_id)
+    void send_brush(int width, int height, int bpp, int type, int size, uint8_t* data, int cache_id)
     {
         using namespace RDP;
 
@@ -367,16 +366,10 @@ struct Orders
         this->out_stream.out_uint8(type);
         this->out_stream.out_uint8(size);
         this->out_stream.out_copy_bytes(data, size);
-
-        return 0;
     }
 
-    /*****************************************************************************/
-    /* returns error */
-    /* max size width * height * Bpp + 16 */
     void send_bitmap(Stream & stream, Bitmap & bmp, int cache_id, int cache_idx)
     {
-
         Stream tmp(16384);
         bmp.compress(tmp);
         size_t bufsize = tmp.p - tmp.data;
