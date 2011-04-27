@@ -936,11 +936,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 }
 
 
-int Session::session_get_channel_id(char* name)
-{
-    return this->front->get_channel_id(name);
-}
-
 void Session::session_send_to_channel(int channel_id, uint8_t* data, int data_len, int total_data_len, int flags)
 {
     this->front->orders->rdp_layer->server_send_to_channel(channel_id, data, data_len, total_data_len, flags);

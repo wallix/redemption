@@ -153,7 +153,6 @@ struct Session {
     int pointer(char* data, char* mask, int x, int y);
 
     int session_main_loop();
-    int session_get_channel_id(char* name);
     int session_reset(int width, int height, int bpp);
     void session_send_to_channel(int channel_id, uint8_t* data, int data_len,
                             int total_data_len, int flags);
