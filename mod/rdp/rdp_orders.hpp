@@ -462,7 +462,7 @@ struct rdp_orders {
         LOG(LOG_INFO, "sending destblt\n");
         this->destblt.receive(stream, header);
 
-        mod->server_fill_rect_rop(this->destblt.rop, this->destblt.rect);
+        mod->server_destblt(this->destblt.rop, this->destblt.rect);
         LOG(LOG_INFO, "sending destblt ok\n");
     }
 

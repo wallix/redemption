@@ -187,18 +187,6 @@ public:
         this->orders->rdp_layer->server_rdp_set_pointer(cache_idx);
     }
 
-    void screen_blt(int rop, const Rect & r, int srcx, int srcy, const Rect &clip)
-    {
-        LOG(LOG_INFO, "screen_blt\n");
-        if (!clip.isempty() && !clip.intersect(r).isempty()){
-            // this one is used when dragging a visible window on screen
-            this->orders->screen_blt(r, srcx, srcy, rop, clip);
-            if (this->capture){
-                this->capture->screen_blt(r, srcx, srcy, rop, clip);
-            }
-        }
-    }
-
     void send_palette(const RGBPalette & palette)
     {
         LOG(LOG_INFO, "send_palette\n");
@@ -235,6 +223,62 @@ public:
         return this->orders->rdp_layer->sec_layer.mcs_layer.server_mcs_get_channel_id(name);
     }
 
+
+    /* fill in an area of the screen with one color */
+    void opaque_rect(const Rect & r, int fgcolor, const Rect & clip)
+    {
+        LOG(LOG_INFO, "opaque_rect\n");
+        if (!clip.isempty() && !clip.intersect(r).isempty()){
+            this->orders->opaque_rect(r, fgcolor, clip);
+            if (this->capture){
+                this->capture->rect(r, fgcolor, this->orders->rdp_layer->client_info.bpp, clip);
+            }
+        }
+    }
+
+    void screen_blt(int rop, const Rect & r, int srcx, int srcy, const Rect &clip)
+    {
+        LOG(LOG_INFO, "screen_blt\n");
+        if (!clip.isempty() && !clip.intersect(r).isempty()){
+            // this one is used when dragging a visible window on screen
+            this->orders->screen_blt(r, srcx, srcy, rop, clip);
+            if (this->capture){
+                this->capture->screen_blt(r, srcx, srcy, rop, clip);
+            }
+        }
+    }
+
+    void dest_blt(const Rect & r, int rop, const Rect &clip)
+    {
+        LOG(LOG_INFO, "dest_blt r(%d, %d, %d, %d) rop=%d clip(%d, %d, %d, %d)\n", r.x, r.y, r.cx, r.cy, rop, clip.x, clip.y, clip.cx, clip.cy);
+        if (!clip.intersect(r).isempty()){
+            this->orders->dest_blt(r, rop, clip);
+            if (this->capture){
+                #warning missing code in capture, apply some logical operator inplace
+                this->capture->rect(r, WHITE, this->orders->rdp_layer->client_info.bpp, clip);
+            }
+        }
+    }
+
+
+    /*****************************************************************************/
+    /* fill in an area of the screen with one color and operator rop*/
+    void pat_blt(const Rect & r, int rop, uint32_t bg_color,  uint32_t fg_color, const RDPBrush & brush, const Rect &clip)
+    {
+        LOG(LOG_INFO, "pat_blt r(%d, %d, %d, %d) rop=%d bg_color=%d fg_color=%d brush=%p clip(%d, %d, %d, %d)\n", r.x, r.y, r.cx, r.cy, rop, bg_color, fg_color, &brush, clip.x, clip.y, clip.cx, clip.cy);
+        if (!clip.intersect(r).isempty()){
+            this->orders->pat_blt(r, rop, bg_color, fg_color, brush, clip);
+            if (this->capture){
+                this->capture->rect(r, fg_color, this->orders->rdp_layer->client_info.bpp, clip);
+            }
+        }
+        else {
+            LOG(LOG_INFO, "pat_blt nothing to do\n");
+        }
+        LOG(LOG_INFO, "pat_blt ok\n");
+    }
+
+
     void mem_blt(int cache_id,
                  int color_table, const Rect & r,
                  int rop,
@@ -247,8 +291,8 @@ public:
         if (!clip.isempty() && !clip.intersect(r).isempty()){
             this->orders->mem_blt(cache_id, color_table, r, rop, srcx, srcy, cache_idx, clip);
             if (this->capture){
-                this->capture->mem_blt(cache_id, color_table, r, rop, bpp,
-                          data, srcx, srcy, cache_idx, clip);
+                #warning why is bpp provided to capture ? Should be useless like in orders
+                this->capture->mem_blt(cache_id, color_table, r, rop, bpp, data, srcx, srcy, cache_idx, clip);
             }
         }
     }
@@ -295,37 +339,6 @@ public:
             }
         }
     }
-
-    /*****************************************************************************/
-    /* fill in an area of the screen with one color and operator rop*/
-    void pat_blt(const Rect & r, int rop, uint32_t bg_color,  uint32_t fg_color, const RDPBrush & brush, const Rect &clip)
-    {
-        LOG(LOG_INFO, "pat_blt r(%d, %d, %d, %d) rop=%d bg_color=%d fg_color=%d brush=%p clip(%d, %d, %d, %d)\n", r.x, r.y, r.cx, r.cy, rop, bg_color, fg_color, &brush, clip.x, clip.y, clip.cx, clip.cy);
-        if (!clip.intersect(r).isempty()){
-            this->orders->pat_blt(r, rop, bg_color, fg_color, brush, clip);
-            if (this->capture){
-                this->capture->rect(r, fg_color, this->orders->rdp_layer->client_info.bpp, clip);
-            }
-        }
-        else {
-            LOG(LOG_INFO, "pat_blt nothing to do\n");
-        }
-        LOG(LOG_INFO, "pat_blt ok\n");
-    }
-
-    /*****************************************************************************/
-    /* fill in an area of the screen with one color */
-    void opaque_rect(const Rect & r, int fgcolor, const Rect & clip)
-    {
-        LOG(LOG_INFO, "opaque_rect\n");
-        if (!clip.isempty() && !clip.intersect(r).isempty()){
-            this->orders->opaque_rect(r, fgcolor, clip);
-            if (this->capture){
-                this->capture->rect(r, fgcolor, this->orders->rdp_layer->client_info.bpp, clip);
-            }
-        }
-    }
-
 
     /*****************************************************************************/
     void draw_text2(int font, int flags, int mixmode,

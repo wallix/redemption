@@ -334,6 +334,12 @@ struct client_mod {
         delete [] wstr;
     }
 
+    void server_destblt(int rop, const Rect & rect)
+    {
+        this->front->dest_blt(rect, rop, this->clip);
+    }
+
+
     void server_fill_rect_rop(int rop, const Rect & rect)
     {
         // rop ? or 0xF0
