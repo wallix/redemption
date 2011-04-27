@@ -411,6 +411,9 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
             return SESSION_STATE_STOP;
         };
 
+
+        #warning there seems to be some code here that belongs to mod or to front
+
         // if we reach this point we are up_and_running,
         // hence width and height and colors and keymap are availables
         /* resize the main window */
@@ -441,7 +444,6 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
         snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->server->client_info.keylayout);
         LOG(LOG_DEBUG, "loading keymap %s\n", filename);
         this->keymap = new Keymap(filename);
-
 
         this->log.clear();
         RGBPalette palette;
@@ -486,6 +488,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
             &pointer_item.x,
             &pointer_item.y);
         this->cache->add_pointer_static(&pointer_item, 1);
+
         this->server->server_rdp_send_pointer(1,
                          pointer_item.data,
                          pointer_item.mask,
