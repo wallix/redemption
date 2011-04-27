@@ -934,10 +934,3 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 
     return true;
 }
-
-void Session::session_query_channel(int index, char* channel_name, int& channel_flags)
-{
-    struct mcs_channel_item* channel_item = this->server->sec_layer.mcs_layer.get_channel(index);
-    strncpy(channel_name, channel_item->name, 8);
-    channel_flags = channel_item->flags;
-}
