@@ -189,23 +189,22 @@ struct server_mcs {
 
     void server_mcs_recv_connect_initial(Stream & client_mcs_data) throw (Error)
     {
-        int len = 0;
         Stream stream(8192);
         this->iso_layer.iso_recv(stream);
 
         #warning ber_parse should probably be some kind of stream primitive
-        this->server_mcs_ber_parse_header(stream, MCS_CONNECT_INITIAL, &len);
-        this->server_mcs_ber_parse_header(stream, BER_TAG_OCTET_STRING, &len);
+        int len = this->ber_parse_header(stream, MCS_CONNECT_INITIAL);
+        len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
         stream.skip_uint8(len);
-        this->server_mcs_ber_parse_header(stream, BER_TAG_OCTET_STRING, &len);
+        len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
         stream.skip_uint8(len);
-        this->server_mcs_ber_parse_header(stream, BER_TAG_BOOLEAN, &len);
+        len = this->ber_parse_header(stream, BER_TAG_BOOLEAN);
         stream.skip_uint8(len);
 
         this->server_mcs_parse_domain_params(stream);
         this->server_mcs_parse_domain_params(stream);
         this->server_mcs_parse_domain_params(stream);
-        this->server_mcs_ber_parse_header(stream, BER_TAG_OCTET_STRING, &len);
+        len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
 
         /* make a copy of client mcs data */
         client_mcs_data.init(len);
@@ -418,8 +417,9 @@ struct server_mcs {
 
     private:
 
-    void server_mcs_ber_parse_header(Stream & stream, int tag_val, int* len) throw (Error)
+    int ber_parse_header(Stream & stream, int tag_val) throw (Error)
     {
+        #warning this should be some kind of check val stream primitive
         int tag = 0;
         if (tag_val > 0xff) {
             tag = stream.in_uint16_be();
@@ -430,30 +430,25 @@ struct server_mcs {
         if (tag != tag_val) {
             throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
         }
+        #warning seems to be some kind of multi bytes read. Use explicit primitive in stream.
         int l = stream.in_uint8();
+        int len = l;
         if (l & 0x80) {
-            l = l & ~0x80;
-            *len = 0;
-            while (l > 0) {
-                int i = stream.in_uint8();
-                *len = (*len << 8) | i;
-                l--;
+            len = 0;
+            for (l = l & ~0x80; l > 0 ; l--) {
+                len = (len << 8) | stream.in_uint8();
             }
-        }
-        else {
-            *len = l;
         }
         #warning we should change check behavior here and check before accessing data, not after, use check_rem
         if (!stream.check()) {
             throw Error(ERR_MCS_BER_HEADER_TRUNCATED);
         }
+        return len;
     }
 
     void server_mcs_parse_domain_params(Stream & stream)
     {
-        int len  = 0;
-
-        this->server_mcs_ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS, &len);
+        int len = this->ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
         stream.skip_uint8(len);
         #warning we should change check behavior here and check before accessing data, not after, use check_rem
         if (!stream.check()) {

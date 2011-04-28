@@ -37,8 +37,7 @@ struct rdp_mcs {
     int userid;
     vector<struct mcs_channel_item *> channel_list;
 
-    rdp_mcs(Transport * t)
-        : iso_layer(t), userid(1)
+    rdp_mcs(Transport * t) : iso_layer(t), userid(1)
     {
     }
 
@@ -131,57 +130,37 @@ struct rdp_mcs {
         stream.mark_end();
         this->iso_layer.iso_send(stream);
     }
-    /*****************************************************************************/
-    /* returns error */
-    void rdp_mcs_ber_parse_header(Stream & stream, int tag_val, int* len) throw(Error)
+
+    int ber_parse_header(Stream & stream, int tag_val) throw(Error)
     {
-        int tag;
-        int l;
-        int i;
 
-
+        #warning this should be some kind of check val stream primitive
+        int tag = 0;
         if (tag_val > 0xff) {
             tag = stream.in_uint16_be();
-        } else {
+        } 
+        else {
             tag = stream.in_uint8();
         }
         if (tag != tag_val) {
-            throw Error(ERR_MCS_BER_PARSE_HEADER_VAL_NOT_MATCH);}
-        l = stream.in_uint8();
+            throw Error(ERR_MCS_BER_PARSE_HEADER_VAL_NOT_MATCH);
+        }
+        #warning seems to be some kind of multi bytes read. Use explicit primitive in stream.
+        int l = stream.in_uint8();
+        int len = l;
         if (l & 0x80) {
-            l = l & ~0x80;
-            *len = 0;
-            while (l > 0) {
-                i = stream.in_uint8();
-                *len = (*len << 8) | i;
-                l--;
+            len = 0;
+            for (l = l & ~0x80; l > 0 ; l--) {
+                len = (len << 8) | stream.in_uint8();
             }
-        } else {
-            *len = l;
         }
+        #warning we should change check behavior here and check before accessing data, not after, use check_rem
         if (!stream.check()) {
-            throw Error(ERR_MCS_BER_PARSE_HEADER_ERROR_CHECKING_STREAM);;
+            throw Error(ERR_MCS_BER_PARSE_HEADER_ERROR_CHECKING_STREAM);
         }
+        return len;
     }
 
-
-
-    /*****************************************************************************/
-    /* returns error */
-    void rdp_mcs_parse_domain_params(Stream & stream) throw(Error)
-    {
-        int len;
-
-        this->rdp_mcs_ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS, &len);
-        stream.skip_uint8(len);
-        if (!stream.check()) {
-            throw Error(ERR_MCS_PARSE_DOMAIN_PARAMS_ERROR_CHECKING_STREAM);
-        }
-    }
-
-    /*****************************************************************************/
-
-    /* returns error */
     void rdp_mcs_send_edrq() throw (Error)
     {
         Stream stream(8192);
@@ -195,8 +174,6 @@ struct rdp_mcs {
     }
 
 
-    /*****************************************************************************/
-    /* returns error */
     void rdp_mcs_send_aurq() throw (Error)
     {
         Stream stream(8192);
@@ -207,8 +184,6 @@ struct rdp_mcs {
         this->iso_layer.iso_send(stream);
     }
 
-    /*****************************************************************************/
-    /* returns error */
     void rdp_mcs_recv_aucf() throw(Error)
     {
         Stream stream(8192);
@@ -270,25 +245,19 @@ struct rdp_mcs {
         }
     }
 
-    /*****************************************************************************/
-    /* returns error */
-    int rdp_mcs_init(Stream & stream)
+    void rdp_mcs_init(Stream & stream)
     {
         stream.init(8192);
         this->iso_layer.iso_init(stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-        return 0;
     }
 
     /* Send an MCS transport data packet to a specific channel */
     void rdp_mcs_send_to_channel(Stream & stream, int chan_id)
     {
-        int len;
-
         stream.p = stream.mcs_hdr;
-        len = (stream.end - stream.p) - 8;
-        len = len | 0x8000;
+        int len = ((stream.end - stream.p) - 8) | 0x8000;
         stream.out_uint8(MCS_SDRQ << 2);
         stream.out_uint16_be(this->userid);
         stream.out_uint16_be(chan_id);

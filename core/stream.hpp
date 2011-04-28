@@ -100,9 +100,9 @@ class Stream {
         this->next_packet = (uint8_t*)0;
     }
 
-    /* Buffer underflow, false if read after the end of the buffer
-       (a previous read accessed after buffer end)
-    */
+//    /* Buffer underflow, false if read after the end of the buffer
+//       (a previous read accessed after buffer end)
+//    */
 #warning:CGR: replace buffer underflow condition by checking if there is enough data in buffer before reading using check_rem(), should be easy to do as there is not many calls to check remaining
     bool check(void) {
         return this->p <= this->end;

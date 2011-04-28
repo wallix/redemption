@@ -1153,6 +1153,51 @@ struct rdp_sec {
         }
     }
 
+
+// 2.2.1.4  Server MCS Connect Response PDU with GCC Conference Create Response
+// ----------------------------------------------------------------------------
+// The MCS Connect Response PDU is an RDP Connection Sequence PDU sent from 
+// server to client during the Basic Settings Exchange phase (see section 
+// 1.3.1.1). It is sent as a response to the MCS Connect Initial PDU (section 
+// 2.2.1.3). The MCS Connect Response PDU encapsulates a GCC Conference Create 
+// Response, which encapsulates concatenated blocks of settings data. 
+
+// A basic high-level overview of the nested structure for the Server MCS 
+// Connect Response PDU is illustrated in section 1.3.1.1, in the figure 
+// specifying MCS Connect Response PDU. Note that the order of the settings 
+// data blocks is allowed to vary from that shown in the previously mentioned 
+// figure and the message syntax layout that follows. This is possible because 
+// each data block is identified by a User Data Header structure (section 
+// 2.2.1.4.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224] 
+// section 13.7.
+
+// mcsCrsp (variable): Variable-length BER-encoded MCS Connect Response 
+//   structure (using definite-length encoding) as described in [T125] 
+//   (the ASN.1 structure definition is detailed in [T125] section 7, part 2).
+//   The userData field of the MCS Connect Response encapsulates the GCC 
+//   Conference Create Response data (contained in the gccCCrsp and subsequent 
+//   fields).
+
+// gccCCrsp (variable): Variable-length PER-encoded GCC Connect Data structure 
+//   which encapsulates a Connect GCC PDU that contains a GCC Conference Create 
+//   Response structure as described in [T124] (the ASN.1 structure definitions 
+//   are specified in [T124] section 8.7) appended as user data to the MCS 
+//   Connect Response (using the format specified in [T124] sections 9.5 and 
+//   9.6). The userData field of the GCC Conference Create Response contains
+//   one user data set consisting of concatenated server data blocks.
+
+// serverCoreData (12 bytes): Server Core Data structure (section 2.2.1.4.2).
+
+// serverSecurityData (variable): Variable-length Server Security Data structure
+//   (section 2.2.1.4.3).
+
+// serverNetworkData (variable): Variable-length Server Network Data structure 
+//   (section 2.2.1.4.4).
+
     /*****************************************************************************/
     /* Establish a secure connection */
     void rdp_sec_connect(vector<mcs_channel_item*> channel_list,
@@ -1187,18 +1232,24 @@ struct rdp_sec {
             Stream stream(8192);
 
             this->mcs_layer.iso_layer.iso_recv(stream);
-            this->mcs_layer.rdp_mcs_ber_parse_header(stream, MCS_CONNECT_RESPONSE, &len);
-            this->mcs_layer.rdp_mcs_ber_parse_header(stream, BER_TAG_RESULT, &len);
+            len = this->mcs_layer.ber_parse_header(stream, MCS_CONNECT_RESPONSE);
+            len = this->mcs_layer.ber_parse_header(stream, BER_TAG_RESULT);
 
             int res = stream.in_uint8();
 
             if (res != 0) {
                 throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
             }
-            this->mcs_layer.rdp_mcs_ber_parse_header(stream, BER_TAG_INTEGER, &len);
+            len = this->mcs_layer.ber_parse_header(stream, BER_TAG_INTEGER);
             stream.skip_uint8(len); /* connect id */
-            this->mcs_layer.rdp_mcs_parse_domain_params(stream);
-            this->mcs_layer.rdp_mcs_ber_parse_header(stream, BER_TAG_OCTET_STRING, &len);
+
+            len = this->mcs_layer.ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
+            if (!stream.check_rem(len)) {
+                throw Error(ERR_MCS_PARSE_DOMAIN_PARAMS_ERROR_CHECKING_STREAM);
+            }
+            stream.skip_uint8(len);
+
+            len = this->mcs_layer.ber_parse_header(stream, BER_TAG_OCTET_STRING);
 
             this->rdp_sec_process_mcs_data(stream, channel_list);
 
@@ -1285,6 +1336,234 @@ struct rdp_sec {
       return 0;
     }
 
+// 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
+// ------------------------------------------
+
+//The TS_UD_CS_CORE data block contains core client connection-related 
+// information.
+
+//header (4 bytes): GCC user data block header, as specified in section 
+//                  2.2.1.3.1. The User Data Header type field MUST be set to
+//                  CS_CORE (0xC001).
+
+// version (4 bytes): A 32-bit, unsigned integer. Client version number for the 
+//                    RDP. The major version number is stored in the high 2 
+//                    bytes, while the minor version number is stored in the
+//                    low 2 bytes.
+// +------------+------------------------------------+
+// |   Value    |    Meaning                         |
+// +------------+------------------------------------+
+// | 0x00080001 | RDP 4.0 clients                    |
+// +------------+------------------------------------+
+// | 0x00080004 | RDP 5.0, 5.1, 5.2, and 6.0 clients |
+// +------------+------------------------------------+
+
+// desktopWidth (2 bytes): A 16-bit, unsigned integer. The requested desktop 
+//                         width in pixels (up to a maximum value of 4096 
+//                         pixels).
+
+// desktopHeight (2 bytes): A 16-bit, unsigned integer. The requested desktop 
+//                          height in pixels (up to a maximum value of 2048 
+//                          pixels).
+
+// colorDepth (2 bytes): A 16-bit, unsigned integer. The requested color depth.
+//                       Values in this field MUST be ignored if the 
+//                       postBeta2ColorDepth field is present.
+// +--------------------------+-------------------------+
+// |     Value                |        Meaning          |
+// +--------------------------+-------------------------+
+// | 0xCA00 RNS_UD_COLOR_4BPP | 4 bits-per-pixel (bpp)  |
+// +--------------------------+-------------------------+
+// | 0xCA01 RNS_UD_COLOR_8BPP | 8 bpp                   |
+// +--------------------------+-------------------------+
+
+// SASSequence (2 bytes): A 16-bit, unsigned integer. Secure access sequence. 
+//                        This field SHOULD be set to RNS_UD_SAS_DEL (0xAA03).
+
+// keyboardLayout (4 bytes): A 32-bit, unsigned integer. Keyboard layout (active
+//                           input locale identifier). For a list of possible 
+//                           input locales, see [MSDN-MUI].
+
+// clientBuild (4 bytes): A 32-bit, unsigned integer. The build number of the 
+//                        client.
+
+// clientName (32 bytes): Name of the client computer. This field contains up to
+//                        15 Unicode characters plus a null terminator.
+
+// keyboardType (4 bytes): A 32-bit, unsigned integer. The keyboard type.
+// +-------+--------------------------------------------+
+// | Value |              Meaning                       |
+// +-------+--------------------------------------------+
+// |   1   | IBM PC/XT or compatible (83-key) keyboard  |
+// +-------+--------------------------------------------+
+// |   2   | Olivetti "ICO" (102-key) keyboard          |
+// +-------+--------------------------------------------+
+// |   3   | IBM PC/AT (84-key) and similar keyboards   |
+// +-------+--------------------------------------------+
+// |   4   | IBM enhanced (101- or 102-key) keyboard    |
+// +-------+--------------------------------------------+
+// |   5   | Nokia 1050 and similar keyboards           |
+// +-------+--------------------------------------------+
+// |   6   | Nokia 9140 and similar keyboards           |
+// +-------+--------------------------------------------+
+// |   7   | Japanese keyboard                          |
+// +-------+--------------------------------------------+
+
+// keyboardSubType (4 bytes): A 32-bit, unsigned integer. The keyboard subtype 
+//                            (an original equipment manufacturer-dependent 
+//                            value).
+
+// keyboardFunctionKey (4 bytes): A 32-bit, unsigned integer. The number of 
+//                                function keys on the keyboard.
+
+// imeFileName (64 bytes): A 64-byte field. The Input Method Editor (IME) file 
+//                         name associated with the input locale. This field 
+//                         contains up to 31 Unicode characters plus a null 
+//                         terminator.
+
+// postBeta2ColorDepth (2 bytes): A 16-bit, unsigned integer. The requested 
+//                                color depth. Values in this field MUST be 
+//                                ignored if the highColorDepth field is 
+//                                present.
+// +--------------------------+-------------------------+
+// |      Value               |         Meaning         |
+// +--------------------------+-------------------------+
+// | 0xCA00 RNS_UD_COLOR_4BPP | 4 bits-per-pixel (bpp)  |
+// +--------------------------+-------------------------+
+// | 0xCA01 RNS_UD_COLOR_8BPP | 8 bpp                   |
+// +--------------------------+-------------------------+
+// If this field is present, then all of the preceding fields MUST also be 
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// clientProductId (2 bytes): A 16-bit, unsigned integer. The client product ID.
+//                            This field SHOULD be initialized to 1. If this 
+//                            field is present, then all of the preceding fields
+//                            MUST also be present. If this field is not  
+//                            present, then none of the subsequent fields MUST 
+//                            be present.
+
+// serialNumber (4 bytes): A 32-bit, unsigned integer. Serial number. This field
+//                         SHOULD be initialized to 0. If this field is present,
+//                         then all of the preceding fields MUST also be 
+//                         present. If this field is not present, then none of 
+//                         the subsequent fields MUST be present.
+
+// highColorDepth (2 bytes): A 16-bit, unsigned integer. The requested color 
+//                           depth.
+// +-------+-------------------------------------------------------------------+
+// | Value |                      Meaning                                      |
+// +-------+-------------------------------------------------------------------+
+// |     4 |   4 bpp                                                           |
+// +-------+-------------------------------------------------------------------+
+// |     8 |   8 bpp                                                           |
+// +-------+-------------------------------------------------------------------+
+// |    15 |  15-bit 555 RGB mask                                              |
+// |       |  (5 bits for red, 5 bits for green, and 5 bits for blue)          |
+// +-------+-------------------------------------------------------------------+
+// |    16 |  16-bit 565 RGB mask                                              |
+// |       |  (5 bits for red, 6 bits for green, and 5 bits for blue)          |
+// +-------+-------------------------------------------------------------------+
+// |    24 |  24-bit RGB mask                                                  |
+// |       |  (8 bits for red, 8 bits for green, and 8 bits for blue)          |
+// +-------+-------------------------------------------------------------------+
+// If this field is present, then all of the preceding fields MUST also be 
+// present. If this field is not present, then none of the subsequent fields 
+// MUST be present.
+
+// supportedColorDepths (2 bytes): A 16-bit, unsigned integer. Specifies the 
+//                                 high color depths that the client is capable 
+//                                 of supporting.
+// +-----------------------------+---------------------------------------------+
+// |          Flag               |                Meaning                      |
+// +-----------------------------+---------------------------------------------+
+// | 0x0001 RNS_UD_24BPP_SUPPORT | 24-bit RGB mask                             |
+// |                             | (8 bits for red, 8 bits for green,          |
+// |                             | and 8 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// | 0x0002 RNS_UD_16BPP_SUPPORT | 16-bit 565 RGB mask                         |
+// |                             | (5 bits for red, 6 bits for green,          |
+// |                             | and 5 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// | 0x0004 RNS_UD_15BPP_SUPPORT | 15-bit 555 RGB mask                         |
+// |                             | (5 bits for red, 5 bits for green,          |
+// |                             | and 5 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// | 0x0008 RNS_UD_32BPP_SUPPORT | 32-bit RGB mask                             |
+// |                             | (8 bits for the alpha channel,              |
+// |                             | 8 bits for red, 8 bits for green,           |
+// |                             | and 8 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// If this field is present, then all of the preceding fields MUST also be 
+// present. If this field is not present, then none of the subsequent fields 
+// MUST be present.
+
+// earlyCapabilityFlags (2 bytes): A 16-bit, unsigned integer. It specifies 
+// capabilities early in the connection sequence.
+// +---------------------------------------------+-----------------------------|
+// |                Flag                         |              Meaning        |
+// +---------------------------------------------+-----------------------------|
+// | 0x0001 RNS_UD_CS_SUPPORT_ERRINFO_PDU        | Indicates that the client   |
+// |                                             | supports the Set Error Info |
+// |                                             | PDU (section 2.2.5.1).      |
+// +---------------------------------------------+-----------------------------|
+// | 0x0002 RNS_UD_CS_WANT_32BPP_SESSION         | Indicates that the client is|
+// |                                             | requesting a session color  |
+// |                                             | depth of 32 bpp. This flag  |
+// |                                             | is necessary because the    |
+// |                                             | highColorDepth field does   |
+// |                                             | not support a value of 32.  |
+// |                                             | If this flag is set, the    |
+// |                                             | highColorDepth field SHOULD |
+// |                                             | be set to 24 to provide an  |
+// |                                             | acceptable fallback for the |
+// |                                             | scenario where the server   |
+// |                                             | does not support 32 bpp     |
+// |                                             | color.                      |
+// +---------------------------------------------+-----------------------------|
+// | 0x0004 RNS_UD_CS_SUPPORT_STATUSINFO_PDU     | Indicates that the client   |
+// |                                             | supports the Server Status  |
+// |                                             | Info PDU (section 2.2.5.2). |
+// +---------------------------------------------+-----------------------------|
+// | 0x0008 RNS_UD_CS_STRONG_ASYMMETRIC_KEYS     | Indicates that the client   |
+// |                                             | supports asymmetric keys    |
+// |                                             | larger than 512 bits for use|
+// |                                             | with the Server Certificate |
+// |                                             | (section 2.2.1.4.3.1) sent  |
+// |                                             | in the Server Security Data | 
+// |                                             | block (section 2.2.1.4.3).  |
+// +---------------------------------------------+-----------------------------|
+// | 0x0020 RNS_UD_CS_RESERVED1                  | Reserved for future use.    |
+// |                                             | This flag is ignored by the |
+// |                                             | server.                     |
+// +---------------------------------------------+-----------------------------+
+// | 0x0040 RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU | Indicates that the client   |
+// |                                             | supports the Monitor Layout |
+// |                                             | PDU (section 2.2.12.1).     |
+// +---------------------------------------------+-----------------------------|
+// If this field is present, then all of the preceding fields MUST also be 
+// present. If this field is not present, then none of the subsequent fields 
+// MUST be present.
+
+// clientDigProductId (64 bytes): Contains a value that uniquely identifies the 
+//                                client. If this field is present, then all of 
+//                                the preceding fields MUST also be present. If 
+//                                this field is not present, then none of the 
+//                                subsequent fields MUST be present.
+
+// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding to align the
+//   serverSelectedProtocol field on the correct byte boundary.
+// If this field is present, then all of the preceding fields MUST also be 
+// present. If this field is not present, then none of the subsequent fields 
+// MUST be present.
+
+// serverSelectedProtocol (4 bytes): A 32-bit, unsigned integer. It contains the value returned
+//   by the server in the selectedProtocol field of the RDP Negotiation Response structure
+//   (section 2.2.1.2.1). In the event that an RDP Negotiation Response structure was not sent,
+//   this field MUST be initialized to PROTOCOL_RDP (0). If this field is present, then all of the
+//   preceding fields MUST also be present.
+
+
     /* Output connect initial data blob */
     void rdp_sec_out_mcs_data(
             Stream & client_mcs_data,
@@ -1356,7 +1635,7 @@ struct rdp_sec {
         client_mcs_data.out_uint32_le(0); // g_keyboard_subtype
         client_mcs_data.out_uint32_le(12); // g_keyboard_functionkeys
         client_mcs_data.out_clear_bytes(64); /* reserved? 4 + 12 doublewords */
-        client_mcs_data.out_uint16_le(0xca01); /* color depth? */
+        client_mcs_data.out_uint16_le(0xca01); /* color depth 8bpp */
         client_mcs_data.out_uint16_le(1);
 
         client_mcs_data.out_uint32_le(0);
