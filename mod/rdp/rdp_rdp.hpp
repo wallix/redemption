@@ -53,7 +53,7 @@ struct rdp_rdp {
     struct rdp_cursor cursors[32];
     rdp_rdp(struct mod_rdp* owner, Transport *t, const char * username, const char * password, const char * hostname, vector<mcs_channel_item*> channel_list, int rdp_performance_flags, int width, int height, int bpp, int keylayout, bool console_session)
         #warning initialize members through constructor
-        : sec_layer(t, this->use_rdp5, hostname, username), bpp(bpp) 
+        : sec_layer(t, this->use_rdp5, hostname, username), bpp(bpp)
         {
             LOG(LOG_INFO, "rdp_rdp login:%s host=%s\n", username, hostname);
             this->share_id = 0;
@@ -347,7 +347,7 @@ struct rdp_rdp {
             }
         }
 
-        void process_palette(Stream & stream)
+        void process_palette(Stream & stream, client_mod * mod)
         {
             LOG(LOG_INFO, "Process palette\n");
 
@@ -356,10 +356,11 @@ struct rdp_rdp {
             assert(numberColors == 256);
             stream.skip_uint8(2); /* pad */
             for (int i = 0; i < 256; i++) {
-                this->orders.cache_colormap.palette[0][i] = stream.in_bytes_le(3);
+                uint32_t color = stream.in_bytes_le(3);
+                this->orders.cache_colormap.palette[0][i] = color;
             }
+            mod->set_mod_palette(this->orders.cache_colormap.palette[0]);
         }
-
 
 
         void process_disconnect_pdu(Stream & stream)
@@ -1128,15 +1129,17 @@ struct rdp_rdp {
             }
             #warning We may integrate the color depth change to bitmap constructor (I like this idea, I will probably do it, also it's easy to unit test). I may even be possible to integrate in inside decompressor, which would avoid useless copy of data (this would imply converting each pixel to target color inside decompressor, but it looks pretty easy now and low cost). (Not so sure it will be easy when tiling is necessary).
             #warning A better solution would be to pass the original bitmap, including it's bpp, to server_paint_rect and let it deal with color changes if necessary.
+            #warning as a first step we could move the copy and color conversion to server paint rect
             const uint8_t * src = bitmap.data_co;
             const uint8_t in_bpp = bpp;
             const uint8_t out_bpp = mod->screen.bpp;
-            const uint32_t (& palette)[256] = this->orders.cache_colormap.palette[0];
             uint8_t * bmpdata = (uint8_t*)malloc(width * height * nbbytes(out_bpp));
             uint8_t * dst = bmpdata;
             for (int i = 0; i < width * height; i++) {
-                uint32_t pixel = color_convert(in_bytes_le(nbbytes(in_bpp), src), in_bpp, out_bpp, palette);
-                out_bytes_le(dst, nbbytes(out_bpp), pixel);
+                uint32_t pixel = color_decode(in_bytes_le(nbbytes(in_bpp), src),
+                                              in_bpp,
+                                              this->orders.cache_colormap.palette[0]);
+                out_bytes_le(dst, nbbytes(out_bpp), color_encode(pixel, out_bpp, mod->palette332));
                 src += nbbytes(in_bpp);
                 dst += nbbytes(out_bpp);
             }
@@ -1174,7 +1177,7 @@ struct rdp_rdp {
             this->process_bitmap_updates(stream, mod);
             break;
         case RDP_UPDATE_PALETTE:
-            this->process_palette(stream);
+            this->process_palette(stream, mod);
             break;
         case RDP_UPDATE_SYNCHRONIZE:
             break;

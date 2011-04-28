@@ -65,7 +65,6 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
                                     RDP::Orders * orders,
                                     Cache * cache,
                                     Font * font,
-                                    ClientInfo * client_info,
                                     Front * front)
 {
     cout << "sending orders\n";
@@ -123,13 +122,13 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 //    orders->send();
 
 #define COLOR_IMAGE FIXTURES_PATH "/color_image2.bmp"
-    Bitmap bgbmp(COLOR_IMAGE, client_info->bpp);
+    Bitmap bgbmp(COLOR_IMAGE, front->orders->rdp_layer->client_info.bpp);
 
 #define LOGO FIXTURES_PATH "/logo-redemption.bmp"
-    Bitmap logobmp(LOGO, client_info->bpp);
+    Bitmap logobmp(LOGO, front->orders->rdp_layer->client_info.bpp);
 
 //#define LOGO2 FIXTURES_PATH "/logo-truncated-16x2.bmp"
-//    Bitmap logobmp2(LOGO2, client_info.bpp);
+//    Bitmap logobmp2(LOGO2, front->orders->rdp_layer->client_info.bpp);
 
     {
         front->begin_update();
@@ -524,7 +523,6 @@ int hook(int sck)
         SocketTransport * trans = new SocketTransport(sck, NULL);
         server_rdp * server = new server_rdp(void_callback, trans, &ini);
         RDP::Orders * orders = new RDP::Orders(server);
-        ClientInfo * client_info = &(server->client_info);
         Font * default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
         Cache * cache = new Cache(orders);
         int timezone = -3600;
@@ -565,7 +563,6 @@ int hook(int sck)
                                                     orders,
                                                     cache,
                                                     default_font,
-                                                    client_info,
                                                     front);
                 break;
                 default:

@@ -48,25 +48,25 @@ BOOST_AUTO_TEST_CASE(TestColors)
         0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFFFFFF,
     };
 
-    BOOST_CHECK_EQUAL(0, color_convert(0, 8, 8, palette));
-    BOOST_CHECK_EQUAL(0xFF, color_convert(0xFF, 8, 8, palette));
+    BOOST_CHECK_EQUAL(0, color_decode(0, 8, palette));
+    BOOST_CHECK_EQUAL(0xFFFFFF, color_decode(0xFF, 8, palette));
 
-    BOOST_CHECK_EQUAL(0, color_convert(0, 15, 15, palette));
-    BOOST_CHECK_EQUAL(0x7FFF, color_convert(0x7FFF, 15, 15, palette));
-    BOOST_CHECK_EQUAL(0x7C00, color_convert(0x7C00, 15, 15, palette));
-    BOOST_CHECK_EQUAL(0x03E0, color_convert(0x03E0, 15, 15, palette));
+    BOOST_CHECK_EQUAL(0, color_decode(0, 15, palette));
+    BOOST_CHECK_EQUAL(0xFFFFFF, color_decode(0x7FFF, 15, palette));
+    BOOST_CHECK_EQUAL(0xFF0000, color_decode(0x7C00, 15, palette));
+    BOOST_CHECK_EQUAL(0x00FF00, color_decode(0x03E0, 15, palette));
+    BOOST_CHECK_EQUAL(0x0000FF, color_decode(0x001F, 15, palette));
 
-    BOOST_CHECK_EQUAL(0, color_convert(0, 16, 16, palette));
-    BOOST_CHECK_EQUAL(0xFFFF, color_convert(0xFFFF, 16, 16, palette));
+    BOOST_CHECK_EQUAL(0, color_decode(0, 16, palette));
+    BOOST_CHECK_EQUAL(0xFFFFFF, color_decode(0xFFFF, 16, palette));
+    BOOST_CHECK_EQUAL(0xFF0000, color_decode(0xF800, 16, palette));
+    BOOST_CHECK_EQUAL(0x00FF00, color_decode(0x07E0, 16, palette));
+    BOOST_CHECK_EQUAL(0x0000FF, color_decode(0x001F, 16, palette));
 
-    BOOST_CHECK_EQUAL(0, color_convert(0, 24, 24, palette));
-    BOOST_CHECK_EQUAL(0xFFFFFF, color_convert(0xFFFFFF, 24, 24, palette));
-
-    // Convert to RED (in our case RED is palette color 1)
-    BOOST_CHECK_EQUAL(0xE0, color_convert(1, 8, 8, palette));
-    BOOST_CHECK_EQUAL(0x7C00, color_convert(1, 8, 15, palette));
-    BOOST_CHECK_EQUAL(0xF800, color_convert(1, 8, 16, palette));
-    BOOST_CHECK_EQUAL(0xFF0000, color_convert(1, 8, 24, palette));
-
+    BOOST_CHECK_EQUAL(0, color_decode(0, 24, palette));
+    BOOST_CHECK_EQUAL(0xFFFFFF, color_decode(0xFFFFFF, 24, palette));
+    BOOST_CHECK_EQUAL(0xFF0000, color_decode(0xFF0000, 24, palette));
+    BOOST_CHECK_EQUAL(0x00FF00, color_decode(0x00FF00, 24, palette));
+    BOOST_CHECK_EQUAL(0x0000FF, color_decode(0x0000FF, 24, palette));
 
 }

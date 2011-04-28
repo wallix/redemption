@@ -85,6 +85,7 @@ struct server_rdp {
     }
 
     // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
+    // -------------------------------------------------------------------
 
     // updateType (2 bytes): A 16-bit, unsigned integer. The graphics update type.
     // This field MUST be set to UPDATETYPE_PALETTE (0x0002).
@@ -98,6 +99,7 @@ struct server_rdp {
 
     void server_send_palette(const RGBPalette & palette) throw (Error)
     {
+        LOG(LOG_INFO, "server_rdp::server_send_palette()");
         #warning we should create some RDPData object created on init and sent before destruction
         Stream stream(8192);
         this->server_rdp_init_data(stream);
@@ -113,9 +115,9 @@ struct server_rdp {
             uint8_t r = color >> 16;
             uint8_t g = color >> 8;
             uint8_t b = color;
-            stream.out_uint8(r);
-            stream.out_uint8(g);
             stream.out_uint8(b);
+            stream.out_uint8(g);
+            stream.out_uint8(r);
         }
         stream.mark_end();
         this->server_rdp_send_data(stream, RDP_DATA_PDU_UPDATE);
@@ -578,6 +580,7 @@ struct server_rdp {
         stream.skip_uint8(source_len);
         int num_caps = stream.in_uint16_le();
         stream.skip_uint8(2); /* pad */
+
         for (int index = 0; index < num_caps; index++) {
             uint8_t *p = stream.p;
             int type = stream.in_uint16_le();

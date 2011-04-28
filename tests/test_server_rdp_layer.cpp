@@ -66,7 +66,6 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
                                     RDP::Orders * orders,
                                     Cache * cache,
                                     Font * font,
-                                    ClientInfo * client_info,
                                     Front * front)
 {
     cout << "sending orders\n";
@@ -119,7 +118,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
     brush.org_y = 0;
     brush.style = 3;
 
-    if (client_info->brush_cache_code == 1) {
+    if (front->orders->rdp_layer->client_info.brush_cache_code == 1) {
         uint8_t pattern[8] = {0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55};
         int cache_idx = 0;
         if (BRUSH_TO_SEND == front->cache->add_brush(pattern, cache_idx)){
@@ -230,7 +229,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
     uint16_t cache_b_idx;
 
     int send_type2 = front->bmp_cache->add_bitmap(100, 100, (uint8_t*)picture16, 0, 0, 32, 32,
-                                client_info->bpp, cache_b_id, cache_b_idx);
+                                front->orders->rdp_layer->client_info.bpp, cache_b_id, cache_b_idx);
 
     BitmapCacheItem * entry =  front->bmp_cache->get_item(cache_b_id, cache_b_idx);
 
@@ -406,7 +405,6 @@ int hook(int sck)
         SocketTransport * trans = new SocketTransport(sck, NULL);
         server_rdp * server = new server_rdp(void_callback, trans, &ini);
         RDP::Orders * orders = new RDP::Orders(server);
-        ClientInfo * client_info = &(server->client_info);
         Font * default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
         Cache * cache = new Cache(orders);
         int timezone = -3600;
@@ -447,7 +445,6 @@ int hook(int sck)
                                                     orders,
                                                     cache,
                                                     default_font,
-                                                    client_info,
                                                     front);
                 break;
                 default:

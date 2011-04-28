@@ -204,6 +204,8 @@ struct widget_button : public Widget
 
     void draw(const Rect & clip);
 
+    void draw_focus_rect(Widget * wdg, const Rect & r, const Rect & clip);
+
 };
 
 struct widget_edit : public Widget {

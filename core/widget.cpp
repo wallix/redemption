@@ -129,8 +129,7 @@ void Widget::draw_title_bar(int bg_color, int fg_color, const Rect & clip)
     assert(this->type == WND_TYPE_WND);
     this->mod->server_begin_update();
     this->fill_rect(0xCC, Rect(3, 3, this->rect.cx - 5, 18), bg_color, clip);
-    this->mod->server_set_fgcolor(fg_color);
-    this->mod->server_draw_text(this, 4, 4, this->caption1, clip);
+    this->mod->server_draw_text(this, 4, 4, this->caption1, fg_color, clip);
     this->mod->server_end_update();
 }
 
@@ -249,7 +248,6 @@ void widget_edit::draw(const Rect & clip)
     /* black top line */
     this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 2, 1), BLACK, clip);
     /* draw text */
-    this->mod->server_set_fgcolor(BLACK);
     char text[255];
     wchar_t wtext[255];
 
@@ -257,9 +255,10 @@ void widget_edit::draw(const Rect & clip)
         int i = mbstowcs(0, this->buffer, 0);
         memset(text, this->password_char, i);
         text[i] = 0;
-        this->mod->server_draw_text(this, 4, 2, text, clip);
-    } else {
-        this->mod->server_draw_text(this, 4, 2, this->buffer, clip);
+        this->mod->server_draw_text(this, 4, 2, text, BLACK, clip);
+    }
+    else {
+        this->mod->server_draw_text(this, 4, 2, this->buffer, BLACK, clip);
     }
     /* draw xor box(cursor) */
     if (has_focus) {
@@ -280,33 +279,30 @@ void widget_edit::draw(const Rect & clip)
 void Widget::fill_rect(int rop, const Rect & r, int fg_color, const Rect & clip)
 {
     assert(this->type != WND_TYPE_BITMAP);
-    this->mod->server_set_fgcolor(fg_color);
     const Rect scr_r = this->to_screen_rect(r);
 
     const Region region = this->mod->get_visible_region(this, &this->parent, scr_r);
-    this->mod->server_fill_rect(region, scr_r, this->to_screen_rect(clip));
+    this->mod->server_fill_rect(region, scr_r, fg_color, this->to_screen_rect(clip));
 }
 
 #warning should merge with basic_fill_rect (and probably with fill_rect but there is some rop transposition code to change on the fly if we want to do this)0xf0
 void Widget::fill_cursor_rect(const Rect & r, int fg_color, const Rect & clip)
 {
     assert(this->type != WND_TYPE_BITMAP);
-    this->mod->server_set_fgcolor(fg_color);
     const Rect scr_r = this->to_screen_rect(r);
     const Region region = this->mod->get_visible_region(this, &this->parent, scr_r);
-    this->mod->server_fill_rect_rop(0x5A, region, scr_r, this->to_screen_rect(clip));
+    this->mod->server_fill_rect_rop(0x5A, region, scr_r, fg_color, BLACK, this->to_screen_rect(clip));
 }
 
 
 void Widget::basic_fill_rect(int rop, const Rect & r, int fg_color, const Rect & clip)
 {
     assert(this->type != WND_TYPE_BITMAP);
-    this->mod->server_set_fgcolor(fg_color);
 
     const Rect scr_r = this->to_screen_rect(r);
     const Region region = this->mod->get_visible_region(this, &this->parent, scr_r);
     // rop ? or 0xF0
-    this->mod->server_fill_rect_rop(rop, region, scr_r, this->to_screen_rect(clip));
+    this->mod->server_fill_rect_rop(rop, region, scr_r, fg_color, BLACK, this->to_screen_rect(clip));
 }
 
 
@@ -332,14 +328,10 @@ void widget_combo::draw(const Rect & clip)
     this->fill_rect(0xCC, Rect(1, 1, 1, this->rect.cy - 2), BLACK, clip);
     /* black top line */
     this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 2, 1), BLACK, clip);
-    /* draw text */
-    if (has_focus) {
-        this->mod->server_set_fgcolor(WHITE);
-    } else {
-        this->mod->server_set_fgcolor(BLACK);
-    }
 
-    this->mod->server_draw_text(this, 4, 2, this->string_list[this->item_index], clip);
+    /* draw text */
+    const uint32_t fg_color = has_focus?WHITE:BLACK;
+    this->mod->server_draw_text(this, 4, 2, this->string_list[this->item_index], fg_color, clip);
     /* draw button on right */
     Rect r(this->rect.cx - 20, 2, 18, this->rect.cy - 4);
     if (this->state == BUTTON_STATE_UP) { /* 0 */
@@ -377,6 +369,90 @@ void widget_combo::draw(const Rect & clip)
         this->fill_rect(0xCC, Rect(r.x, r.y + (r.cx - 1), r.cy, 1), BLACK, clip);
         /* black right line */
         this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK, clip);
+    }
+}
+
+void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & clip)
+{
+    LOG(LOG_INFO, "widget::draw_focus_rect");
+    #warning is passing r.x, r.y necessary here for drawing pattern ?
+    this->mod->set_domino_brush(r.x, r.y);
+
+    #warning all coordinates provided to front functions should be screen coordinates, converting window relative coordinates to screen coordinates should be responsibility of caller.
+    #warning pass in scr_r in screen coordinates instead or r
+    Rect scr_r = wdg->to_screen_rect(r);
+
+    Region covering_windows;
+    for (size_t i = 0; i < this->mod->nb_windows(); i++) {
+        Widget * p = this->mod->window(i);
+        if (p == wdg || p == &wdg->parent) {
+            break;
+        }
+        covering_windows.rects.push_back(p->rect);
+    }
+
+    /* top */
+    struct Region region0;
+    region0.rects.push_back(Rect(scr_r.x, scr_r.y, scr_r.cx, 1));
+    /* loop through all windows in z order */
+    for (size_t ir = 0; ir < covering_windows.rects.size(); ir++) {
+        region0.subtract_rect(covering_windows.rects[ir]);
+    }
+    for (size_t ir = 0 ; ir != region0.rects.size(); ir++){
+        Rect draw_rect = region0.rects[ir].intersect(clip);
+        if (!draw_rect.isempty()) {
+            this->mod->server_set_clip(draw_rect);
+            this->mod->server_fill_rect_rop(0xF0, r.offset(clip.x, clip.y),
+                                            wdg->parent.bg_color, BLACK);
+        }
+    }
+
+
+
+    /* bottom */
+    struct Region region1;
+    region1.rects.push_back(Rect(scr_r.x, scr_r.y + (scr_r.cy - 1), scr_r.cx, 1));
+    for (size_t ir = 0; ir < covering_windows.rects.size(); ir++) {
+        region1.subtract_rect(covering_windows.rects[ir]);
+    }
+    for (size_t ir = 0 ; ir != region1.rects.size(); ir++){
+        Rect draw_rect = region1.rects[ir].intersect(clip);
+        if (!draw_rect.isempty()) {
+            this->mod->server_set_clip(draw_rect);
+            this->mod->server_fill_rect_rop(0xF0, r.offset(clip.x, clip.y),
+                                            wdg->parent.bg_color, BLACK);
+        }
+    }
+
+    /* left */
+    struct Region region2;
+    region2.rects.push_back(Rect(scr_r.x, scr_r.y + 1, 1, scr_r.cy - 2));
+    for (size_t ir = 0; ir < covering_windows.rects.size(); ir++) {
+        region2.subtract_rect(covering_windows.rects[ir]);
+    }
+    for (size_t ir = 0 ; ir != region2.rects.size(); ir++){
+        Rect draw_rect = region2.rects[ir].intersect(clip);
+        if (!draw_rect.isempty()) {
+            this->mod->server_set_clip(draw_rect);
+            this->mod->server_fill_rect_rop(0xF0, r.offset(clip.x, clip.y),
+                                            wdg->parent.bg_color, BLACK);
+        }
+    }
+
+
+    /* right */
+    struct Region region3;
+    region3.rects.push_back(Rect(scr_r.x + (scr_r.cx - 1), scr_r.y + 1, 1, scr_r.cy - 2));
+    for (size_t ir = 0; ir < covering_windows.rects.size(); ir++) {
+        region3.subtract_rect(covering_windows.rects[ir]);
+    }
+    for (size_t ir = 0 ; ir != region3.rects.size(); ir++){
+        Rect draw_rect = region3.rects[ir].intersect(clip);
+        if (!draw_rect.isempty()) {
+            this->mod->server_set_clip(draw_rect);
+            this->mod->server_fill_rect_rop(0xF0, r.offset(clip.x, clip.y),
+                                wdg->parent.bg_color, BLACK);
+        }
     }
 }
 
@@ -424,13 +500,12 @@ void widget_button::draw(const Rect & clip)
         this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK, clip);
     }
 
-    this->mod->server_set_fgcolor(BLACK);
     this->mod->server_draw_text(this,
         this->rect.cx / 2 - w / 2 + bevel,
-        this->rect.cy / 2 - h / 2 + bevel, this->caption1, clip);
+        this->rect.cy / 2 - h / 2 + bevel, this->caption1, BLACK, clip);
 
     if (has_focus) {
-        this->mod->draw_focus_rect(this,
+        this->draw_focus_rect(this,
             Rect(4, 4, this->rect.cx - 8, this->rect.cy - 8), this->to_screen_rect(clip));
     }
 }
@@ -448,13 +523,10 @@ void widget_popup::draw(const Rect & clip)
             char * p = this->popped_from->string_list[i];
             int h = this->mod->text_height(p);
             this->item_height = h;
-            if (i == this->item_index) { // delected item
+            if (i == this->item_index) { // deleted item
                 this->fill_rect(0xCC, Rect(0, y, this->rect.cx, h), WABGREEN, clip);
-                this->mod->server_set_fgcolor(WHITE);
-            } else { // non selected item
-                this->mod->server_set_fgcolor(BLACK);
             }
-            this->mod->server_draw_text(this, 2, y, p, clip);
+            this->mod->server_draw_text(this, 2, y, p, (i == this->item_index)?WHITE:BLACK, clip);
             y = y + h;
         }
     }
@@ -466,8 +538,7 @@ void Widget::draw(const Rect & clip)
 
 void widget_label::draw(const Rect & clip)
 {
-    this->mod->server_set_fgcolor(BLACK);
-    this->mod->server_draw_text(this, 0, 0, this->caption1, clip);
+    this->mod->server_draw_text(this, 0, 0, this->caption1, BLACK, clip);
 }
 
 // transform a rectangle relative to current widget to rectangle relative to screen

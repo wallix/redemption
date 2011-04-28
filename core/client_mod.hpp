@@ -48,8 +48,6 @@ struct client_mod {
     Rect clip;
     int current_pointer;
     RDPPen pen;
-    int fg_color;
-    int bg_color;
     RDPBrush brush;
     bool clipboard_enable;
     bool pointer_displayed;
@@ -60,6 +58,7 @@ struct client_mod {
     int rdp_compression;
     int bitmap_cache_persist_enable;
     RGBPalette palette332;
+    RGBPalette mod_palette;
     uint8_t default_bpp;
     uint8_t mod_bpp;
 
@@ -82,6 +81,23 @@ struct client_mod {
         this->front = &front;
         this->clip = Rect(0,0,4096,2048);
         this->pointer_displayed = false;
+
+        /* rgb332 palette */
+        for (int bindex = 0; bindex < 4; bindex++) {
+            for (int gindex = 0; gindex < 8; gindex++) {
+                for (int rindex = 0; rindex < 8; rindex++) {
+                    this->palette332[(rindex << 5) | (gindex << 2) | bindex] =
+                    (RGBcolor)(
+                    // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
+                    // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
+                       | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
+                    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
+                       | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
+                }
+            }
+        }
+
     }
 
     virtual ~client_mod()
@@ -89,12 +105,29 @@ struct client_mod {
         this->screen.delete_all_childs();
     }
 
+    void set_mod_palette(RGBPalette palette)
+    {
+        for (unsigned i = 0; i < 256 ; i++){
+            this->mod_palette[i] = palette[i];
+        }
+        this->mod_bpp = 8;
+    }
+
     uint32_t convert(uint32_t color)
     {
-        return color_convert(color,
-                    this->mod_bpp,
-                    this->front->orders->rdp_layer->client_info.bpp,
-                    this->palette332);
+        uint32_t color24 = color_decode(color, this->mod_bpp, this->mod_palette);
+        return color_encode(color24, this->front->orders->rdp_layer->client_info.bpp, this->palette332);
+    }
+
+    uint32_t convert_le(uint32_t color)
+    {
+        uint32_t color24 = color_decode(color, this->mod_bpp, this->mod_palette);
+
+        color24 = (color24 & 0x00FF00)
+                | ((color24 >> 16) & 0xFF)
+                | ((color24 & 0xFF) << 16);
+
+        return color_encode(color24, this->front->orders->rdp_layer->client_info.bpp, this->palette332);
     }
 
     /* client functions */
@@ -224,25 +257,15 @@ struct client_mod {
 
     /*****************************************************************************/
     /* fill in an area of the screen with one color */
-    void server_fill_rect(const Region & region, const Rect & r, const Rect & clip)
+    void server_fill_rect(const Region & region, const Rect & r, const uint32_t fgcolor, const Rect & clip)
     {
-        LOG(LOG_INFO, "client_mod::server_fill_rect[OSD](fgcolor=%x)", this->fg_color);
+        LOG(LOG_INFO, "client_mod::server_fill_rect[OSD](fgcolor=%x)", fgcolor);
         for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
             const Rect draw_rect = region.rects[ir].intersect(clip);
             if (!draw_rect.isempty()) {
-                this->front->opaque_rect(r, this->fg_color, draw_rect);
+                this->front->opaque_rect(r, convert(fgcolor), draw_rect);
             }
         }
-    }
-
-    int server_fill_rect(const Rect & r)
-    {
-        LOG(LOG_INFO, "client_mod::server_fill_rect");
-        const Rect draw_rect = r.intersect(clip);
-        if (!draw_rect.isempty()) {
-            this->front->opaque_rect(r, this->fg_color, this->clip);
-        }
-        return 0;
     }
 
     int server_fill_rect(const Rect & r, const uint32_t color)
@@ -267,20 +290,26 @@ struct client_mod {
         // 0xAA = noop -> pat_blt( ... 0xFB ...
         // 0xCC = copy -> pat_blt( ... 0xF0 ...
         // 0x88 = and -> pat_blt( ...  0xC0 ...
-        int white = convert(WHITE);
-        int black = convert(BLACK);
         int xor_rop = 0x5A;
 
-        this->front->pat_blt(Rect(r.x, r.y, r.cx, 5), xor_rop, black, white, this->brush, clip);
-        this->front->pat_blt(Rect(r.x, r.y + (r.cy - 5), r.cx, 5), xor_rop, black, white, this->brush, clip);
-        this->front->pat_blt(Rect(r.x, r.y + 5, 5, r.cy - 10), xor_rop, black, white, this->brush, clip);
-        this->front->pat_blt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10), xor_rop, black, white, this->brush, clip);
+        this->front->pat_blt(Rect(r.x, r.y, r.cx, 5),
+                             xor_rop, convert(BLACK), convert(WHITE),
+                             this->brush, clip);
+        this->front->pat_blt(Rect(r.x, r.y + (r.cy - 5), r.cx, 5),
+                             xor_rop, convert(BLACK), convert(WHITE),
+                             this->brush, clip);
+        this->front->pat_blt(Rect(r.x, r.y + 5, 5, r.cy - 10),
+                             xor_rop, convert(BLACK), convert(WHITE),
+                             this->brush, clip);
+        this->front->pat_blt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10),
+                             xor_rop, convert(BLACK), convert(WHITE),
+                             this->brush, clip);
 
         this->front->end_update();
         return 0;
     }
 
-    void server_draw_text(struct Widget* wdg, int x, int y, const char* text, const Rect & clip){
+    void server_draw_text(struct Widget* wdg, int x, int y, const char* text, const uint32_t fgcolor, const Rect & clip){
         setlocale(LC_CTYPE, "fr_FR.UTF-8");
         assert(wdg->type != WND_TYPE_BITMAP);
         int len = mbstowcs(0, text, 0);
@@ -331,8 +360,6 @@ struct client_mod {
         x += wdg->to_screenx();
         y += wdg->to_screeny();
 
-        this->bg_color = convert(0);
-
         for (size_t ir = 0 ; ir < region.rects.size(); ir++){
             Rect draw_rect = region.rects[ir].intersect(clip_rect);
             if (!draw_rect.isempty()) {
@@ -341,7 +368,7 @@ struct client_mod {
                 /* 0x03 0x73; TEXT2_IMPLICIT_X and something else */
                 this->front->draw_text2(f, 0x03, 0, box, rect,
                     x, y + total_height,
-                    data, len * 2, this->fg_color, this->bg_color, clip_rect);
+                    data, len * 2, convert(fgcolor), convert(BLACK), clip_rect);
             }
         }
         delete [] data;
@@ -354,14 +381,6 @@ struct client_mod {
     }
 
 
-    void server_fill_rect_rop(int rop, const Rect & rect)
-    {
-        LOG(LOG_INFO, "client_mod::server_fill_rect_rop");
-        // rop ? or 0xF0
-        this->front->pat_blt(rect, rop, this->bg_color, this->fg_color, this->brush, this->clip);
-    }
-
-
     void server_fill_rect_rop(int rop, const Rect & rect, const uint32_t fgcolor, const uint32_t bgcolor)
     {
         // rop ? or 0xF0
@@ -369,14 +388,16 @@ struct client_mod {
         this->front->pat_blt(rect, rop, convert(bgcolor), convert(fgcolor), this->brush, this->clip);
     }
 
-    void server_fill_rect_rop(int rop, const Region & region, const Rect & r, const Rect & clip)
+    void server_fill_rect_rop(int rop, const Region & region,
+                              const Rect & r,
+                              const uint32_t fgcolor, const uint32_t bgcolor,
+                              const Rect & clip)
     {
         LOG(LOG_INFO, "client_mod::server_fill_rect_rop with OSD");
         for (size_t ir = 0 ; ir != region.rects.size(); ir++){
             Rect draw_rect = region.rects[ir].intersect(clip);
             if (!draw_rect.isempty()) {
-                this->front->pat_blt(r, rop,
-                                    this->bg_color, this->fg_color,
+                this->front->pat_blt(r, rop, convert(bgcolor), convert(fgcolor),
                                     this->brush, draw_rect);
             }
         }
@@ -475,29 +496,6 @@ struct client_mod {
         this->clip = this->screen.rect;
     }
 
-    void server_set_fgcolor(uint32_t color)
-    {
-        this->pen.color = this->fg_color = convert(color);
-    }
-
-    void server_set_fgcolor(uint32_t color, uint8_t bpp, uint32_t (& palette)[256])
-    {
-        int fgcolor = color_convert(color, bpp, this->front->orders->rdp_layer->client_info.bpp, palette);
-        this->fg_color = fgcolor;
-        this->pen.color = fgcolor;
-    }
-
-    void server_set_bgcolor(uint32_t color)
-    {
-        this->bg_color = convert(color);
-    }
-
-    void server_set_bgcolor(uint32_t color, uint8_t bpp, uint32_t (& palette)[256])
-    {
-        int bgcolor = color_convert(color, bpp, this->front->orders->rdp_layer->client_info.bpp, palette);
-        this->bg_color = bgcolor;
-    }
-
     void server_set_brush(const RDPBrush & brush)
     {
         this->brush = brush;
@@ -569,40 +567,6 @@ struct client_mod {
         return region;
     }
 
-
-    void server_draw_line(int rop, int x1, int y1, int x2, int y2)
-    {
-        if (rop < 0x01 || rop > 0x10) {
-            rop = (rop & 0xf) + 1;
-        }
-
-        struct Region region;
-        // the rectangle below is the rectangle containing the line
-        region.rects.push_back(
-            Rect(std::min(x1, x2), std::min(y1, y2),
-            abs(x1-x2) + 1, abs(y1-y2) + 1));
-
-        // basically following code means that if we draw a line,
-        // we always draw it behind visible windows.
-        // Should be necessary for OSD only.
-
-        // This finds visible parts of line rectangles
-        #warning add management of window ordering
-        for (size_t i = 0; i < this->nb_windows(); i++) {
-            Widget *p = this->window(i);
-            region.subtract_rect(p->rect);
-        }
-
-        // now we iterate on visible rectangles and show only visible portions
-        // of line.
-        for (size_t ir = 0 ; ir < region.rects.size(); ir++){
-            Rect draw_rect = region.rects[ir].intersect(this->clip);
-            if (!draw_rect.isempty()) {
-                this->front->line(rop, x1, y1, x2, y2, this->bg_color, this->pen, draw_rect);
-            }
-        }
-    }
-
     void server_draw_line(int rop, int x1, int y1, int x2, int y2, uint32_t pen_color, uint32_t back_color)
     {
         this->pen.color = convert(pen_color);
@@ -654,92 +618,6 @@ struct client_mod {
         return this->screen.child_list.size();
     }
 
-    void draw_focus_rect(Widget * wdg, const Rect & r, const Rect & clip)
-    {
-        LOG(LOG_INFO, "client_mod::draw_focus_rect");
-        #warning is passing r.x, r.y necessary here for drawing pattern ?
-        this->set_domino_brush(r.x, r.y);
-
-        this->bg_color = convert(wdg->parent.bg_color);
-        this->fg_color = convert(BLACK);
-
-        #warning all coordinates provided to front functions should be screen coordinates, converting window relative coordinates to screen coordinates should be responsibility of caller.
-        #warning pass in scr_r in screen coordinates instead or r
-        Rect scr_r = wdg->to_screen_rect(r);
-
-        Region covering_windows;
-        for (size_t i = 0; i < this->nb_windows(); i++) {
-            Widget * p = this->window(i);
-            if (p == wdg || p == &wdg->parent) {
-                break;
-            }
-            covering_windows.rects.push_back(p->rect);
-        }
-
-        /* top */
-        struct Region region0;
-        region0.rects.push_back(Rect(scr_r.x, scr_r.y, scr_r.cx, 1));
-        /* loop through all windows in z order */
-        for (size_t ir = 0; ir < covering_windows.rects.size(); ir++) {
-            region0.subtract_rect(covering_windows.rects[ir]);
-        }
-        for (size_t ir = 0 ; ir != region0.rects.size(); ir++){
-            Rect draw_rect = region0.rects[ir].intersect(clip);
-            if (!draw_rect.isempty()) {
-                this->front->pat_blt(r.offset(clip.x, clip.y), 0xF0,
-                                    this->bg_color, this->fg_color,
-                                    this->brush, draw_rect);
-            }
-        }
-
-
-
-        /* bottom */
-        struct Region region1;
-        region1.rects.push_back(Rect(scr_r.x, scr_r.y + (scr_r.cy - 1), scr_r.cx, 1));
-        for (size_t ir = 0; ir < covering_windows.rects.size(); ir++) {
-            region1.subtract_rect(covering_windows.rects[ir]);
-        }
-        for (size_t ir = 0 ; ir != region1.rects.size(); ir++){
-            Rect draw_rect = region1.rects[ir].intersect(clip);
-            if (!draw_rect.isempty()) {
-                this->front->pat_blt(r.offset(clip.x, clip.y), 0xF0,
-                                    this->bg_color, this->fg_color,
-                                    this->brush, draw_rect);
-            }
-        }
-
-        /* left */
-        struct Region region2;
-        region2.rects.push_back(Rect(scr_r.x, scr_r.y + 1, 1, scr_r.cy - 2));
-        for (size_t ir = 0; ir < covering_windows.rects.size(); ir++) {
-            region2.subtract_rect(covering_windows.rects[ir]);
-        }
-        for (size_t ir = 0 ; ir != region2.rects.size(); ir++){
-            Rect draw_rect = region2.rects[ir].intersect(clip);
-            if (!draw_rect.isempty()) {
-                this->front->pat_blt(r.offset(clip.x, clip.y), 0xF0,
-                                    this->bg_color, this->fg_color,
-                                    this->brush, draw_rect);
-            }
-        }
-
-
-        /* right */
-        struct Region region3;
-        region3.rects.push_back(Rect(scr_r.x + (scr_r.cx - 1), scr_r.y + 1, 1, scr_r.cy - 2));
-        for (size_t ir = 0; ir < covering_windows.rects.size(); ir++) {
-            region3.subtract_rect(covering_windows.rects[ir]);
-        }
-        for (size_t ir = 0 ; ir != region3.rects.size(); ir++){
-            Rect draw_rect = region3.rects[ir].intersect(clip);
-            if (!draw_rect.isempty()) {
-                this->front->pat_blt(r.offset(clip.x, clip.y), 0xF0,
-                                    this->bg_color, this->fg_color,
-                                    this->brush, draw_rect);
-            }
-        }
-    }
 
     void set_domino_brush(int x, int y)
     {

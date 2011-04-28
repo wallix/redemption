@@ -595,7 +595,7 @@ struct mod_vnc : public client_mod {
         switch (bpp) {
         case 8:
             if (pixel >= 0 && pixel < 256) {
-                splitcolor32(r, g, b, palette[pixel]);
+                splitcolor32RGB(r, g, b, palette[pixel]);
             }
             else {
                 LOG(LOG_ERR, "error in split_color, pixel value outside palette (bpp=%d, pixel=%d)\n", bpp, pixel);
@@ -609,7 +609,7 @@ struct mod_vnc : public client_mod {
             splitcolor16(r, g, b, pixel);
         break;
         case 24: case 32:
-            splitcolor32(r, g, b, pixel);
+            splitcolor32RGB(r, g, b, pixel);
         break;
         default:
             LOG(LOG_ERR, "error in split_color bpp %d\n", bpp);

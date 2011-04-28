@@ -95,34 +95,38 @@ inline void splitcolor16(uint8_t & r, uint8_t & g, uint8_t & b, uint32_t c)
   b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
 }
 
-inline uint32_t color24RGB(uint8_t r, uint8_t g, uint8_t b)
+inline uint32_t color24RGB(const uint8_t r, const uint8_t g, const uint8_t b)
 {
   return (r << 16) | (g << 8) | b;
 }
 
-inline uint32_t color24BGR(uint8_t r, uint8_t g, uint8_t b)
+inline uint32_t color24BGR(const uint8_t r, const uint8_t g, const uint8_t b)
 {
   return color24RGB(b, g, r);
 }
 
-#warning we should have **two** splitcolor32, RGB and BGR
-inline void splitcolor32(uint8_t & r, uint8_t & g, uint8_t & b, uint32_t c)
+inline void splitcolor32RGB(uint8_t & r, uint8_t & g, uint8_t & b, uint32_t c)
 {
   r = c >> 16;
   g = c >> 8;
   b = c;
 }
 
-#warning way too complicated, fix that
-inline uint32_t color_convert(const uint32_t in_pixel, const uint8_t in_bpp, const uint8_t out_bpp, const uint32_t (& palette)[256])
+inline void splitcolor32BGR(uint8_t & r, uint8_t & g, uint8_t & b, uint32_t c)
 {
+  b = c >> 16;
+  g = c >> 8;
+  r = c;
+}
+
+inline uint32_t color_decode(const uint32_t in_pixel, const uint8_t in_bpp, const uint32_t (& palette)[256]){
     uint8_t red;
     uint8_t green;
     uint8_t blue;
 
     switch (in_bpp){
     case 8:
-        splitcolor32(red, green, blue, palette[in_pixel]);
+        splitcolor32RGB(red, green, blue, palette[in_pixel]);
     break;
     case 15:
         splitcolor15(red, green, blue, in_pixel);
@@ -132,27 +136,31 @@ inline uint32_t color_convert(const uint32_t in_pixel, const uint8_t in_bpp, con
     break;
     case 32:
     case 24:
-        splitcolor32(red, green, blue, in_pixel);
+        splitcolor32RGB(red, green, blue, in_pixel);
     break;
     default:
         assert(false);
     break;
     }
 
+    return (red << 16) | (green << 8) | blue;
+}
+
+inline uint32_t color_encode(const uint32_t in_pixel, const uint8_t out_bpp, const uint32_t (& palette)[256]){
     uint32_t res = 0;
     switch (out_bpp){
     case 8:
-        res = color8(red, green, blue);
+        res = color8((in_pixel >> 16) & 0xFF, (in_pixel >> 8) & 0xFF, in_pixel & 0xFF);
     break;
     case 15:
-        res = color15(red, green, blue);
+        res = color15((in_pixel >> 16) & 0xFF, (in_pixel >> 8) & 0xFF, in_pixel & 0xFF);
     break;
     case 16:
-        res = color16(red, green, blue);
+        res = color16((in_pixel >> 16) & 0xFF, (in_pixel >> 8) & 0xFF, in_pixel & 0xFF);
     break;
     case 32:
     case 24:
-        res = color24RGB(red, green, blue);
+        res = color24RGB((in_pixel >> 16) & 0xFF, (in_pixel >> 8) & 0xFF, in_pixel & 0xFF);
     break;
     default:
         assert(false);
@@ -160,6 +168,11 @@ inline uint32_t color_convert(const uint32_t in_pixel, const uint8_t in_bpp, con
     }
 
     return res;
+}
+
+inline uint32_t color_convert(const uint32_t in_pixel, const uint8_t in_bpp, const uint8_t out_bpp, const uint32_t (& palette)[256])
+{
+    return color_encode(color_decode(in_pixel, in_bpp, palette), out_bpp, palette);
 }
 
 enum {

@@ -43,9 +43,6 @@ struct wab_help : public window
                     this->notify_to.notify(this, 100, 1, 0); /* ok */
             }
         } else if (msg == WM_PAINT) { /* 3 */
-            #warning this should be in draw method of window_help, not here
-            uint32_t black = 0x000000;
-            this->mod->server_set_fgcolor(black);
             // "Enter target device and login as login@server"
             // "Enter a valid allowed authentication user"
             // "in the username edit box."
@@ -63,7 +60,7 @@ struct wab_help : public window
                 tmp[0] = 0;
                 strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
                 tmp[255] = 0;
-                this->mod->server_draw_text(this, 10, 30 + 16 * count, tmp, this->rect.wh());
+                this->mod->server_draw_text(this, 10, 30 + 16 * count, tmp, BLACK, this->rect.wh());
                 count++;
                 if (!str){
                     done = true;
@@ -213,9 +210,6 @@ struct combo_help : public window
             }
         } else if (msg == WM_PAINT) { /* 3 */
             #warning the code below is a bit too much specialized. Change it to some code able to write a paragraph of text in a given rectangle. Later we may even add some formatting support.
-            #warning this should be in draw method of window_help, not here
-            uint32_t black = 0;
-            this->mod->server_set_fgcolor(black);
             const char * message =
                     "You must be authenticated before using this<br>"
                     "session.<br>"
@@ -237,7 +231,7 @@ struct combo_help : public window
                 tmp[0] = 0;
                 strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
                 tmp[255] = 0;
-                this->mod->server_draw_text(this, 10, 30 + 16 * count, tmp, this->rect.wh());
+                this->mod->server_draw_text(this, 10, 30 + 16 * count, tmp, BLACK, this->rect.wh());
                 count++;
                 if (!str){
                     done = true;

@@ -41,6 +41,7 @@ struct xup_mod : public client_mod {
     int bpp;
     Transport *t;
     int rop;
+    int fgcolor;
 
     xup_mod(Transport * t, int (& keys)[256], int & key_flags, Keymap * &keymap,
                 struct ModContext & context, struct Front & front)
@@ -139,7 +140,7 @@ struct xup_mod : public client_mod {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                         this->server_fill_rect_rop(this->rop, r);
+                         this->server_fill_rect_rop(this->rop, r, BLACK, WHITE);
                          rv = 0;
                     }
                     break;
@@ -186,8 +187,7 @@ struct xup_mod : public client_mod {
                     break;
                     case 12: /* server_set_fgcolor */
                     {
-                        int fgcolor = stream.in_uint32_le();
-                        this->server_set_fgcolor(fgcolor);
+                        this->fgcolor = stream.in_uint32_le();
                     }
                     break;
                     case 14:
@@ -206,7 +206,7 @@ struct xup_mod : public client_mod {
                         int y1 = stream.in_sint16_le();
                         int x2 = stream.in_sint16_le();
                         int y2 = stream.in_sint16_le();
-                        this->server_draw_line(this->rop, x1, y1, x2, y2);
+                        this->server_draw_line(this->rop, x1, y1, x2, y2, this->fgcolor, WHITE);
                     }
                     break;
                     case 19:
