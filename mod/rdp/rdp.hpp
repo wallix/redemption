@@ -230,6 +230,7 @@ struct mod_rdp : public client_mod {
                     break;
                 case RDP_PDU_DEMAND_ACTIVE:
                     this->rdp_layer.process_demand_active(this->in_stream, this);
+                    this->mod_bpp = this->rdp_layer.bpp;
                     this->up_and_running = 1;
                     break;
                 case RDP_PDU_DEACTIVATE:

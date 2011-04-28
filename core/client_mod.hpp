@@ -61,6 +61,7 @@ struct client_mod {
     int bitmap_cache_persist_enable;
     RGBPalette palette332;
     uint8_t default_bpp;
+    uint8_t mod_bpp;
 
     wait_obj * event;
     int signal;
@@ -74,6 +75,7 @@ struct client_mod {
           key_flags(key_flags),
           keymap(keymap),
           default_bpp(24),
+          mod_bpp(24),
           signal(0)
     {
         this->current_pointer = 0;
@@ -85,6 +87,14 @@ struct client_mod {
     virtual ~client_mod()
     {
         this->screen.delete_all_childs();
+    }
+
+    uint32_t convert(uint32_t color)
+    {
+        return color_convert(color,
+                    this->mod_bpp,
+                    this->front->orders->rdp_layer->client_info.bpp,
+                    this->palette332);
     }
 
     /* client functions */
@@ -216,6 +226,7 @@ struct client_mod {
     /* fill in an area of the screen with one color */
     void server_fill_rect(const Region & region, const Rect & r, const Rect & clip)
     {
+        LOG(LOG_INFO, "client_mod::server_fill_rect[OSD](fgcolor=%x)", this->fg_color);
         for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
             const Rect draw_rect = region.rects[ir].intersect(clip);
             if (!draw_rect.isempty()) {
@@ -226,6 +237,7 @@ struct client_mod {
 
     int server_fill_rect(const Rect & r)
     {
+        LOG(LOG_INFO, "client_mod::server_fill_rect");
         const Rect draw_rect = r.intersect(clip);
         if (!draw_rect.isempty()) {
             this->front->opaque_rect(r, this->fg_color, this->clip);
@@ -235,15 +247,18 @@ struct client_mod {
 
     int server_fill_rect(const Rect & r, const uint32_t color)
     {
+        LOG(LOG_INFO, "client_mod::server_fill_rect with color");
         const Rect draw_rect = r.intersect(clip);
         if (!draw_rect.isempty()) {
-            this->front->opaque_rect(r, color, this->clip);
+            this->front->opaque_rect(r, convert(color), this->clip);
         }
         return 0;
     }
 
     int server_draw_dragging_rect(const Rect & r, const Rect & clip)
     {
+        LOG(LOG_INFO, "client_mod::server_draw_dragging_rect");
+
         this->front->begin_update();
         this->set_domino_brush(0, 0);
 
@@ -252,9 +267,8 @@ struct client_mod {
         // 0xAA = noop -> pat_blt( ... 0xFB ...
         // 0xCC = copy -> pat_blt( ... 0xF0 ...
         // 0x88 = and -> pat_blt( ...  0xC0 ...
-        #warning make that constants
-        int white = 16777215;
-        int black = 0;
+        int white = convert(WHITE);
+        int black = convert(BLACK);
         int xor_rop = 0x5A;
 
         this->front->pat_blt(Rect(r.x, r.y, r.cx, 5), xor_rop, black, white, this->brush, clip);
@@ -317,7 +331,7 @@ struct client_mod {
         x += wdg->to_screenx();
         y += wdg->to_screeny();
 
-        this->bg_color = 0;
+        this->bg_color = convert(0);
 
         for (size_t ir = 0 ; ir < region.rects.size(); ir++){
             Rect draw_rect = region.rects[ir].intersect(clip_rect);
@@ -342,20 +356,22 @@ struct client_mod {
 
     void server_fill_rect_rop(int rop, const Rect & rect)
     {
+        LOG(LOG_INFO, "client_mod::server_fill_rect_rop");
         // rop ? or 0xF0
-        this->front->pat_blt(rect, rop, this->bg_color, this->fg_color,
-                                    this->brush, this->clip);
+        this->front->pat_blt(rect, rop, this->bg_color, this->fg_color, this->brush, this->clip);
     }
 
 
     void server_fill_rect_rop(int rop, const Rect & rect, const uint32_t fgcolor, const uint32_t bgcolor)
     {
         // rop ? or 0xF0
-        this->front->pat_blt(rect, rop, bgcolor, fgcolor, this->brush, this->clip);
+        LOG(LOG_INFO, "client_mod::server_fill_rect_rop with colors");
+        this->front->pat_blt(rect, rop, convert(bgcolor), convert(fgcolor), this->brush, this->clip);
     }
 
     void server_fill_rect_rop(int rop, const Region & region, const Rect & r, const Rect & clip)
     {
+        LOG(LOG_INFO, "client_mod::server_fill_rect_rop with OSD");
         for (size_t ir = 0 ; ir != region.rects.size(); ir++){
             Rect draw_rect = region.rects[ir].intersect(clip);
             if (!draw_rect.isempty()) {
@@ -461,9 +477,7 @@ struct client_mod {
 
     void server_set_fgcolor(uint32_t color)
     {
-        int fgcolor = color_convert(color, this->default_bpp, front->orders->rdp_layer->client_info.bpp, this->palette332);
-        this->fg_color = fgcolor;
-        this->pen.color = fgcolor;
+        this->pen.color = this->fg_color = convert(color);
     }
 
     void server_set_fgcolor(uint32_t color, uint8_t bpp, uint32_t (& palette)[256])
@@ -475,8 +489,7 @@ struct client_mod {
 
     void server_set_bgcolor(uint32_t color)
     {
-        int bgcolor = color_convert(color, this->default_bpp, this->front->orders->rdp_layer->client_info.bpp, this->palette332);
-        this->bg_color = bgcolor;
+        this->bg_color = convert(color);
     }
 
     void server_set_bgcolor(uint32_t color, uint8_t bpp, uint32_t (& palette)[256])
@@ -592,8 +605,8 @@ struct client_mod {
 
     void server_draw_line(int rop, int x1, int y1, int x2, int y2, uint32_t pen_color, uint32_t back_color)
     {
-        this->pen.color = pen_color;
-        this->front->line(rop, x1, y1, x2, y2, back_color, this->pen, this->clip);
+        this->pen.color = convert(pen_color);
+        this->front->line(rop, x1, y1, x2, y2, convert(back_color), this->pen, this->clip);
     }
 
 
@@ -616,8 +629,8 @@ struct client_mod {
             glyph_index.glyph_y,
             glyph_index.data,
             glyph_index.data_len,
-            glyph_index.back_color,
-            glyph_index.fore_color,
+            convert(glyph_index.back_color),
+            convert(glyph_index.fore_color),
             this->clip);
     }
 
@@ -643,12 +656,12 @@ struct client_mod {
 
     void draw_focus_rect(Widget * wdg, const Rect & r, const Rect & clip)
     {
-        #warning is passing r.x, r.y necessary here for drawinf pattern ?
+        LOG(LOG_INFO, "client_mod::draw_focus_rect");
+        #warning is passing r.x, r.y necessary here for drawing pattern ?
         this->set_domino_brush(r.x, r.y);
 
-        this->bg_color = wdg->parent.bg_color;
-        uint32_t black = 0;
-        this->fg_color = black;
+        this->bg_color = convert(wdg->parent.bg_color);
+        this->fg_color = convert(BLACK);
 
         #warning all coordinates provided to front functions should be screen coordinates, converting window relative coordinates to screen coordinates should be responsibility of caller.
         #warning pass in scr_r in screen coordinates instead or r

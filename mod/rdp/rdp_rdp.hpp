@@ -446,12 +446,12 @@ struct rdp_rdp {
         void process_bitmap_caps(Stream & stream)
         {
             LOG(LOG_INFO, "process bitmap caps\n");
-            uint16_t bpp = stream.in_uint16_le();
+            this->bpp = stream.in_uint16_le();
             stream.skip_uint8(6);
             int width = stream.in_uint16_le();
             int height = stream.in_uint16_le();
             /* todo, call reset if needed and use width and height */
-            LOG(LOG_INFO, "process bitmap caps (%dx%dx%d) ok\n", width, height, bpp);
+            LOG(LOG_INFO, "process bitmap caps (%dx%dx%d) [bpp=%d] ok\n", width, height, bpp, this->bpp);
         }
 
 
@@ -868,7 +868,7 @@ struct rdp_rdp {
             }
             this->recv(stream, &type, mod); /* RDP_PDU_UNKNOWN 0x28 (Fonts?) */
             this->orders.rdp_orders_reset_state();
-            LOG(LOG_INFO, "process demand active ok, reset state\n");
+            LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->bpp);
         }
 
         void send_redirect_pdu(long param1, long param2, long param3, int param4,
