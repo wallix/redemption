@@ -202,7 +202,7 @@ struct Orders
     {
         this->reserve_order(21);
 
-        LOG(LOG_INFO, "dest_blt[%d](r(%d, %d, %d, %d) rop=%d clip(%d, %d, %d, %d)",
+        LOG(LOG_INFO, "destblt[%d](r(%d, %d, %d, %d) rop=%d clip(%d, %d, %d, %d)",
             this->order_count, r.x, r.y, r.cx, r.cy, rop, clip.x, clip.y, clip.cx, clip.cy);
 
         RDPDestBlt cmd(r, rop);

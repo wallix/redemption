@@ -255,19 +255,6 @@ struct client_mod {
         return this->screen.child_list[i];
     }
 
-    /*****************************************************************************/
-    /* fill in an area of the screen with one color */
-    void server_fill_rect(const Region & region, const Rect & r, const uint32_t fgcolor, const Rect & clip)
-    {
-        LOG(LOG_INFO, "client_mod::server_fill_rect[OSD](fgcolor=%x)", fgcolor);
-        for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-            const Rect draw_rect = region.rects[ir].intersect(clip);
-            if (!draw_rect.isempty()) {
-                this->front->opaque_rect(r, convert(fgcolor), draw_rect);
-            }
-        }
-    }
-
     int server_fill_rect(const Rect & r, const uint32_t color)
     {
         LOG(LOG_INFO, "client_mod::server_fill_rect with color");
@@ -375,32 +362,16 @@ struct client_mod {
         delete [] wstr;
     }
 
-    void server_destblt(int rop, const Rect & rect)
+    void dest_blt(int rop, const Rect & rect)
     {
         this->front->dest_blt(rect, rop, this->clip);
     }
 
 
-    void server_fill_rect_rop(int rop, const Rect & rect, const uint32_t fgcolor, const uint32_t bgcolor)
+    void pat_blt(int rop, const Rect & rect, const uint32_t fgcolor, const uint32_t bgcolor)
     {
-        // rop ? or 0xF0
-        LOG(LOG_INFO, "client_mod::server_fill_rect_rop with colors");
+        LOG(LOG_INFO, "client_mod::pat_blt(rop=%x, r(%d, %d, %d, %d), fg=%x, bg=%x", rop, rect.x, rect.y, rect.cx, rect.cy, fgcolor, bgcolor);
         this->front->pat_blt(rect, rop, convert(bgcolor), convert(fgcolor), this->brush, this->clip);
-    }
-
-    void server_fill_rect_rop(int rop, const Region & region,
-                              const Rect & r,
-                              const uint32_t fgcolor, const uint32_t bgcolor,
-                              const Rect & clip)
-    {
-        LOG(LOG_INFO, "client_mod::server_fill_rect_rop with OSD");
-        for (size_t ir = 0 ; ir != region.rects.size(); ir++){
-            Rect draw_rect = region.rects[ir].intersect(clip);
-            if (!draw_rect.isempty()) {
-                this->front->pat_blt(r, rop, convert(bgcolor), convert(fgcolor),
-                                    this->brush, draw_rect);
-            }
-        }
     }
 
     int server_screen_blt(int rop, const Rect & r, int srcx, int srcy)

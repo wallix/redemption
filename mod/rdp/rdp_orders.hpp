@@ -417,10 +417,10 @@ struct rdp_orders {
                     this->rdp_orders_process_text2(stream, mod, header);
                     break;
                 case DESTBLT:
-                    this->rdp_orders_process_destblt(stream, mod, header);
+                    this->process_dest_blt(stream, mod, header);
                     break;
                 case PATBLT:
-                    this->rdp_orders_process_patblt(stream, mod, header);
+                    this->process_pat_blt(stream, mod, header);
                     break;
                 case SCREENBLT:
                     this->rdp_orders_process_screenblt(stream, mod, header);
@@ -478,26 +478,18 @@ struct rdp_orders {
         LOG(LOG_INFO, "sending screenblt ok\n");
     }
 
-    #warning harmonize names -> dest_blt
-    void rdp_orders_process_destblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
+    void process_dest_blt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-        LOG(LOG_INFO, "sending destblt\n");
         this->destblt.receive(stream, header);
-
-        mod->server_destblt(this->destblt.rop, this->destblt.rect);
-        LOG(LOG_INFO, "sending destblt ok\n");
+        mod->dest_blt(this->destblt.rop, this->destblt.rect);
     }
 
-    #warning harmonize names -> pat_blt
-    void rdp_orders_process_patblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
+    void process_pat_blt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->patblt.receive(stream, header);
         LOG(LOG_INFO, "sending patblt\n");
         mod->server_set_brush(this->patblt.brush);
-        mod->server_fill_rect_rop(this->patblt.rop,
-            this->patblt.rect,
-            this->patblt.fore_color,
-            this->patblt.back_color);
+        mod->pat_blt(this->patblt.rop, this->patblt.rect, this->patblt.fore_color, this->patblt.back_color);
         LOG(LOG_INFO, "sending patblt ok\n");
     }
 

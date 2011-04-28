@@ -282,16 +282,27 @@ void Widget::fill_rect(int rop, const Rect & r, int fg_color, const Rect & clip)
     const Rect scr_r = this->to_screen_rect(r);
 
     const Region region = this->mod->get_visible_region(this, &this->parent, scr_r);
-    this->mod->server_fill_rect(region, scr_r, fg_color, this->to_screen_rect(clip));
+
+    for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+        this->mod->server_fill_rect(scr_r, fg_color);
+    }
 }
 
-#warning should merge with basic_fill_rect (and probably with fill_rect but there is some rop transposition code to change on the fly if we want to do this)0xf0
+#warning should merge with basic_fill_rect (and probably with fill_rect but there is some rop transposition code to change on the fly if we want to do this)
 void Widget::fill_cursor_rect(const Rect & r, int fg_color, const Rect & clip)
 {
     assert(this->type != WND_TYPE_BITMAP);
     const Rect scr_r = this->to_screen_rect(r);
     const Region region = this->mod->get_visible_region(this, &this->parent, scr_r);
-    this->mod->server_fill_rect_rop(0x5A, region, scr_r, fg_color, BLACK, this->to_screen_rect(clip));
+
+    for (size_t ir = 0 ; ir != region.rects.size(); ir++){
+        Rect draw_rect = region.rects[ir].intersect(this->to_screen_rect(clip));
+        if (!draw_rect.isempty()) {
+            this->mod->server_set_clip(draw_rect);
+            this->mod->pat_blt(0x5A, scr_r, fg_color, BLACK);
+        }
+    }
 }
 
 
@@ -301,8 +312,15 @@ void Widget::basic_fill_rect(int rop, const Rect & r, int fg_color, const Rect &
 
     const Rect scr_r = this->to_screen_rect(r);
     const Region region = this->mod->get_visible_region(this, &this->parent, scr_r);
-    // rop ? or 0xF0
-    this->mod->server_fill_rect_rop(rop, region, scr_r, fg_color, BLACK, this->to_screen_rect(clip));
+
+    for (size_t ir = 0 ; ir != region.rects.size(); ir++){
+        Rect draw_rect = region.rects[ir].intersect(this->to_screen_rect(clip));
+        if (!draw_rect.isempty()) {
+            this->mod->server_set_clip(draw_rect);
+            this->mod->pat_blt(rop, scr_r, fg_color, BLACK);
+        }
+    }
+
 }
 
 
@@ -402,7 +420,7 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
         Rect draw_rect = region0.rects[ir].intersect(clip);
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
-            this->mod->server_fill_rect_rop(0xF0, r.offset(clip.x, clip.y),
+            this->mod->pat_blt(0xF0, r.offset(clip.x, clip.y),
                                             wdg->parent.bg_color, BLACK);
         }
     }
@@ -419,7 +437,7 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
         Rect draw_rect = region1.rects[ir].intersect(clip);
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
-            this->mod->server_fill_rect_rop(0xF0, r.offset(clip.x, clip.y),
+            this->mod->pat_blt(0xF0, r.offset(clip.x, clip.y),
                                             wdg->parent.bg_color, BLACK);
         }
     }
@@ -434,7 +452,7 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
         Rect draw_rect = region2.rects[ir].intersect(clip);
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
-            this->mod->server_fill_rect_rop(0xF0, r.offset(clip.x, clip.y),
+            this->mod->pat_blt(0xF0, r.offset(clip.x, clip.y),
                                             wdg->parent.bg_color, BLACK);
         }
     }
@@ -450,7 +468,7 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
         Rect draw_rect = region3.rects[ir].intersect(clip);
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
-            this->mod->server_fill_rect_rop(0xF0, r.offset(clip.x, clip.y),
+            this->mod->pat_blt(0xF0, r.offset(clip.x, clip.y),
                                 wdg->parent.bg_color, BLACK);
         }
     }

@@ -140,7 +140,7 @@ struct xup_mod : public client_mod {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                         this->server_fill_rect_rop(this->rop, r, BLACK, WHITE);
+                         this->pat_blt(this->rop, r, BLACK, WHITE);
                          rv = 0;
                     }
                     break;
