@@ -583,9 +583,12 @@ void widget_image::draw(const Rect & clip)
 {
     Rect image_screen_rect = this->to_screen_rect();
     Rect intersection = image_screen_rect.intersect(this->to_screen_rect(clip));
-
     const Region region = this->mod->get_visible_region(this, &this->parent, intersection);
-    this->mod->send_bitmap_mod(image_screen_rect, this->rect.wh(), this->bmp.data_co, 0, region);
+
+    for (size_t ir = 0; ir < region.rects.size(); ir++){
+        this->mod->server_set_clip(region.rects[ir]);
+        this->mod->server_paint_rect(bmp, image_screen_rect, 0, 0, this->mod->palette332); 
+    }
 }
 
 int Widget::Widget_invalidate_clip(const Rect & clip)

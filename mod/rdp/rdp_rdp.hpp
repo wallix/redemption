@@ -1127,7 +1127,7 @@ struct rdp_rdp {
                 assert(bitmapLength == bitmap.bmp_size);
                 bitmap.copy(data);
             }
-            mod->server_paint_rect(bitmap, 0xCC, boundary, 0, 0, this->orders.cache_colormap.palette[0]);
+            mod->server_paint_rect(bitmap, boundary, 0, 0, this->orders.cache_colormap.palette[0]);
         }
     }
 

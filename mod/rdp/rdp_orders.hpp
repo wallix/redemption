@@ -494,7 +494,7 @@ struct rdp_orders {
         LOG(LOG_INFO, "sending memblt\n");
         struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xFF][this->memblt.cache_idx];
         if (bitmap) {
-            mod->server_paint_rect(*bitmap, this->memblt.rop, this->memblt.rect, this->memblt.srcx, this->memblt.srcy, this->cache_colormap.palette[this->memblt.cache_id >> 8]);
+            mod->server_paint_rect(*bitmap, this->memblt.rect, this->memblt.srcx, this->memblt.srcy, this->cache_colormap.palette[this->memblt.cache_id >> 8]);
         }
         LOG(LOG_INFO, "sending memblt ok\n");
     }

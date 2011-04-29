@@ -155,7 +155,7 @@ struct xup_mod : public client_mod {
                         this->screen_blt(this->rop, r, srcx, srcy);
                     }
                     break;
-                    case 5: /* server_paint_rect */
+                    case 5:
                     {
                         const Rect r(
                             stream.in_sint16_le(),
@@ -170,7 +170,7 @@ struct xup_mod : public client_mod {
                         int srcy = stream.in_sint16_le();
                         Bitmap bmp(bpp, width, height);
                         bmp.copy(bmpdata);
-                        this->server_paint_rect(bmp, this->rop, r, srcx, srcy, this->palette332);
+                        this->server_paint_rect(bmp, r, srcx, srcy, this->palette332);
                     }
                     break;
                     case 10: /* server_set_clip */

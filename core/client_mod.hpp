@@ -119,6 +119,11 @@ struct client_mod {
         return color_encode(color24, this->front->orders->rdp_layer->client_info.bpp, this->palette332);
     }
 
+    uint32_t convert_to_black(uint32_t color)
+    {
+        return 0;
+    }
+
     uint32_t convert_le(uint32_t color)
     {
         uint32_t color24 = color_decode(color, this->mod_bpp, this->mod_palette);
@@ -270,16 +275,16 @@ struct client_mod {
         int xor_rop = 0x5A;
 
         this->front->pat_blt(Rect(r.x, r.y, r.cx, 5),
-                             xor_rop, convert(BLACK), convert(WHITE),
+                             xor_rop, convert_to_black(BLACK), convert_to_black(WHITE),
                              this->brush, clip);
         this->front->pat_blt(Rect(r.x, r.y + (r.cy - 5), r.cx, 5),
-                             xor_rop, convert(BLACK), convert(WHITE),
+                             xor_rop, convert_to_black(BLACK), convert_to_black(WHITE),
                              this->brush, clip);
         this->front->pat_blt(Rect(r.x, r.y + 5, 5, r.cy - 10),
-                             xor_rop, convert(BLACK), convert(WHITE),
+                             xor_rop, convert_to_black(BLACK), convert_to_black(WHITE),
                              this->brush, clip);
         this->front->pat_blt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10),
-                             xor_rop, convert(BLACK), convert(WHITE),
+                             xor_rop, convert_to_black(BLACK), convert_to_black(WHITE),
                              this->brush, clip);
 
         this->front->end_update();
@@ -345,7 +350,7 @@ struct client_mod {
                 /* 0x03 0x73; TEXT2_IMPLICIT_X and something else */
                 this->front->draw_text2(f, 0x03, 0, box, rect,
                     x, y + total_height,
-                    data, len * 2, convert(fgcolor), convert(BLACK), clip_rect);
+                    data, len * 2, convert_to_black(fgcolor), convert_to_black(BLACK), clip_rect);
             }
         }
         delete [] data;
@@ -373,7 +378,7 @@ struct client_mod {
     {
         LOG(LOG_INFO, "client_mod::pat_blt(rop=%x, r(%d, %d, %d, %d), fg=%x, bg=%x", rop, rect.x, rect.y, rect.cx, rect.cy, fgcolor, bgcolor);
         if (!rect.intersect(this->clip).isempty()) {
-            this->front->pat_blt(rect, rop, convert(bgcolor), convert(fgcolor), this->brush, this->clip);
+            this->front->pat_blt(rect, rop, convert_to_black(bgcolor), convert_to_black(fgcolor), this->brush, this->clip);
         }
     }
 
@@ -381,22 +386,11 @@ struct client_mod {
     {
         LOG(LOG_INFO, "client_mod::opaque_rect(r(%d, %d, %d, %d), color=%x", rect.x, rect.y, rect.cx, rect.cy, color);
         if (!rect.intersect(clip).isempty()) {
-            this->front->opaque_rect(rect, convert(color), this->clip);
+            this->front->opaque_rect(rect, convert_to_black(color), this->clip);
         }
     }
 
-    void send_bitmap_mod(const Rect & dst, const Rect & src_r, const uint8_t * src_data,
-                     int palette_id,
-                     const Region & clip_region){
-
-        for (size_t ir = 0; ir < clip_region.rects.size(); ir++){
-            const Rect & clip = clip_region.rects[ir];
-            this->front->send_bitmap_front(dst, src_r, src_data, palette_id, clip);
-        }
-    }
-
-
-    void server_paint_rect(Bitmap & bitmap, int rop, const Rect & dst, int srcx, int srcy, const RGBPalette & palette)
+    void server_paint_rect(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const RGBPalette & palette)
     {
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
@@ -409,7 +403,9 @@ struct client_mod {
             uint32_t pixel = color_decode(in_bytes_le(nbbytes(in_bpp), src),
                                           in_bpp,
                                           palette);
-            out_bytes_le(dest, nbbytes(out_bpp), color_encode(pixel, out_bpp, this->palette332));
+            uint32_t target_pixel = color_encode(pixel, out_bpp, this->palette332);
+//            target_pixel = 0;
+            out_bytes_le(dest, nbbytes(out_bpp), target_pixel);
             src += nbbytes(in_bpp);
             dest += nbbytes(out_bpp);
         }
@@ -548,8 +544,8 @@ struct client_mod {
 
     void server_draw_line(int rop, int x1, int y1, int x2, int y2, uint32_t pen_color, uint32_t back_color)
     {
-        this->pen.color = convert(pen_color);
-        this->front->line(rop, x1, y1, x2, y2, convert(back_color), this->pen, this->clip);
+        this->pen.color = convert_to_black(pen_color);
+        this->front->line(rop, x1, y1, x2, y2, convert_to_black(back_color), this->pen, this->clip);
     }
 
 
@@ -572,8 +568,8 @@ struct client_mod {
             glyph_index.glyph_y,
             glyph_index.data,
             glyph_index.data_len,
-            convert(glyph_index.back_color),
-            convert(glyph_index.fore_color),
+            convert_to_black(glyph_index.back_color),
+            convert_to_black(glyph_index.fore_color),
             this->clip);
     }
 

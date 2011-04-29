@@ -658,7 +658,7 @@ struct mod_vnc : public client_mod {
 
                     Bitmap bmp(this->screen.bpp, cx, cy);
                     bmp.copy(raw.data);
-                    this->server_paint_rect(bmp, 0xcc, Rect(x, y, cx, cy), 0, 0, this->palette332);
+                    this->server_paint_rect(bmp, Rect(x, y, cx, cy), 0, 0, this->palette332);
                 }
                 break;
                 case 1: /* copy rect */
