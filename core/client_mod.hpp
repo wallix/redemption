@@ -275,22 +275,25 @@ struct client_mod {
         int xor_rop = 0x5A;
 
         this->front->pat_blt(Rect(r.x, r.y, r.cx, 5),
-                             xor_rop, convert_to_black(BLACK), convert_to_black(WHITE),
+                             xor_rop, convert(BLACK), convert(WHITE),
                              this->brush, clip);
         this->front->pat_blt(Rect(r.x, r.y + (r.cy - 5), r.cx, 5),
-                             xor_rop, convert_to_black(BLACK), convert_to_black(WHITE),
+                             xor_rop, convert(BLACK), convert(WHITE),
                              this->brush, clip);
         this->front->pat_blt(Rect(r.x, r.y + 5, 5, r.cy - 10),
-                             xor_rop, convert_to_black(BLACK), convert_to_black(WHITE),
+                             xor_rop, convert(BLACK), convert(WHITE),
                              this->brush, clip);
         this->front->pat_blt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10),
-                             xor_rop, convert_to_black(BLACK), convert_to_black(WHITE),
+                             xor_rop, convert(BLACK), convert(WHITE),
                              this->brush, clip);
 
         this->front->end_update();
         return 0;
     }
 
+    #warning fgcolor is unused, see how to integrate pen settings here
+    #warning this should move to widget and client_mod contain some more simple version
+    #warning text clipping using region information should be managed here
     void server_draw_text(struct Widget* wdg, int x, int y, const char* text, const uint32_t fgcolor, const Rect & clip){
         setlocale(LC_CTYPE, "fr_FR.UTF-8");
         assert(wdg->type != WND_TYPE_BITMAP);
@@ -386,7 +389,7 @@ struct client_mod {
     {
         LOG(LOG_INFO, "client_mod::opaque_rect(r(%d, %d, %d, %d), color=%x", rect.x, rect.y, rect.cx, rect.cy, color);
         if (!rect.intersect(clip).isempty()) {
-            this->front->opaque_rect(rect, convert_to_black(color), this->clip);
+            this->front->opaque_rect(rect, convert(color), this->clip);
         }
     }
 
