@@ -307,35 +307,9 @@ struct Bitmap{
                     pixel = palette1[pixel];
                 break;
                 }
-                // set pixel
-                uint32_t target_pixel = color_encode(pixel, this->bpp, palette1);
-//                LOG(LOG_INFO, "bpp=%d pixel=%x target_pixel=%x", this->bpp, pixel, target_pixel);
-//                ::out_bytes_le(this->data_co+y*this->line_size + x*nbbytes(this->bpp), nbbytes(this->bpp), target_pixel);
+                uint32_t px = color_encodeBGR24(pixel, this->bpp, palette1);
+                ::out_bytes_le(this->data_co+y*this->line_size + x*nbbytes(this->bpp), nbbytes(this->bpp), px);
 
-                {
-                    switch (this->bpp){
-                    case 8:
-                        // from a 24 bits pixel RRGGBB
-                        // we want to get a 8 bits value : bbgggrrr
-                        this->data_co[y*this->line_size + x*1] = target_pixel;
-                    break;
-                    case 15:
-//                        pixel = color15(r, g, b);
-                        this->data_co[(y*this->line_size + x*2)] = target_pixel;
-                        this->data_co[(y*this->line_size + x*2) + 1] = target_pixel >> 8;
-                    break;
-                    case 16:
-//                        pixel = color16(r, g, b);
-                        this->data_co[(y*this->line_size + x*2)] = target_pixel;
-                        this->data_co[(y*this->line_size + x*2)+1] = target_pixel >> 8;
-                    break;
-                    case 24:
-                        this->data_co[(y*(this->line_size) + x*3)] = target_pixel;
-                        this->data_co[(y*(this->line_size) + x*3) + 1] = target_pixel >> 8;
-                        this->data_co[(y*(this->line_size) + x*3) + 2] = target_pixel >> 16;
-                    break;
-                    }
-                }
             }
         }
         return;

@@ -146,6 +146,32 @@ inline uint32_t color_decode(const uint32_t in_pixel, const uint8_t in_bpp, cons
     return (red << 16) | (green << 8) | blue;
 }
 
+
+inline uint32_t color_encodeBGR24(const uint32_t pix, const uint8_t out_bpp, const uint32_t (& palette)[256]){
+    uint32_t res = 0;
+    switch (out_bpp){
+    case 8:
+        res = color8(pix & 0xFF, (pix >> 8) & 0xFF, (pix >> 16) & 0xFF);
+    break;
+    case 15:
+        res = color15(pix & 0xFF, (pix >> 8) & 0xFF, (pix >> 16) & 0xFF);
+    break;
+    case 16:
+        res = color16(pix & 0xFF, (pix >> 8) & 0xFF, (pix >> 16) & 0xFF);
+    break;
+    case 32:
+    case 24:
+        res = color24RGB(pix & 0xFF, (pix >> 8) & 0xFF, (pix >> 16) & 0xFF);
+    break;
+    default:
+        assert(false);
+    break;
+    }
+
+    return res;
+}
+
+
 inline uint32_t color_encode(const uint32_t in_pixel, const uint8_t out_bpp, const uint32_t (& palette)[256]){
     uint32_t res = 0;
     switch (out_bpp){

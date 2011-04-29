@@ -121,7 +121,7 @@ struct client_mod {
 
     uint32_t convert_to_black(uint32_t color)
     {
-        return 0;
+        return 0; // convert(color);
     }
 
     uint32_t convert_le(uint32_t color)
