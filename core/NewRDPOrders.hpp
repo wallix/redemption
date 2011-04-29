@@ -1976,6 +1976,8 @@ class RDPOpaqueRect {
                         | ((diff_color & 0xFF0000) != 0) * 0x40
                         ;
 
+        #warning dirty hack to fix color problems with opaque_rect. It seems I will have to pass in bpp if I want to fix it. (And how it should be fixed is not obvious as - as far I can see - support for 16bpp and 15bpp is undocumented in official documentation provided by Microsoft). It seems I will have to guess.
+        if (diff_color) { header.fields |= 0x70; }
         common.emit(stream, header, oldcommon);
 
         header.emit_rect(stream, 0x01, this->rect, oldcmd.rect);

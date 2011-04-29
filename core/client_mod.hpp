@@ -389,7 +389,22 @@ struct client_mod {
     {
         LOG(LOG_INFO, "client_mod::opaque_rect(r(%d, %d, %d, %d), color=%x", rect.x, rect.y, rect.cx, rect.cy, color);
         if (!rect.intersect(clip).isempty()) {
-            this->front->opaque_rect(rect, convert(color), this->clip);
+
+            #warning dirty hack to fix color problems with opaque_rect
+            uint32_t color24 = color_decode(color, this->mod_bpp, this->mod_palette);
+
+            if (this->front->orders->rdp_layer->client_info.bpp == 24){
+                color24 = ((color24 << 16) & 0xFF0000)
+                        |  (color24 & 0x00FF00)
+                        | ((color24 >> 16) & 0x0000FF);
+            }
+
+            uint32_t target_color = color_encode(color24,
+                                this->front->orders->rdp_layer->client_info.bpp,
+                                this->palette332);
+
+
+            this->front->opaque_rect(rect, target_color, this->clip);
         }
     }
 

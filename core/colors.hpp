@@ -213,8 +213,8 @@ enum {
     PINK       = 0xff00ff,
     GREEN      = 0x00ff00,
     YELLOW     = 0x00ffff,
-    WABGREEN   = 0x3bbe91,
-    DARK_WABGREEN = 0x3bbe91,
+    WABGREEN   = 0x91BE2B,
+    DARK_WABGREEN = 0x91BE2B,
 };
 
 #endif
