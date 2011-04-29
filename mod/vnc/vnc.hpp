@@ -653,10 +653,12 @@ struct mod_vnc : public client_mod {
                     int need_size = cx * cy * Bpp;
                     Stream raw(need_size);
                     this->t->recv((char**)&raw.end, need_size);
-                    if (0 != this->server_paint_rect(0xcc, Rect(x, y, cx, cy), raw.data, cx, cy, 0, 0))
-                    {
-                        throw Error(ERR_SERVER_PAINT_RECT);
-                    }
+
+                    #warning see server_paint_rect and Bitmap below, suspicious code, does it works ?
+
+                    Bitmap bmp(this->screen.bpp, cx, cy);
+                    bmp.copy(raw.data);
+                    this->server_paint_rect(bmp, 0xcc, Rect(x, y, cx, cy), 0, 0, this->palette332);
                 }
                 break;
                 case 1: /* copy rect */
@@ -665,9 +667,7 @@ struct mod_vnc : public client_mod {
                     this->t->recv((char**)&stream.end, 4);
                     int srcx = stream.in_uint16_be();
                     int srcy = stream.in_uint16_be();
-                    if (0 != this->server_screen_blt(0xcc, Rect(x, y, cx, cy), srcx, srcy)){
-                        throw Error(ERR_SERVER_SCREEN_BLT);
-                    }
+                    this->screen_blt(0xcc, Rect(x, y, cx, cy), srcx, srcy);
                 }
                 break;
                 case 0xffffff11: /* cursor */

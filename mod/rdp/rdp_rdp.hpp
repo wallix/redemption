@@ -1127,26 +1127,7 @@ struct rdp_rdp {
                 assert(bitmapLength == bitmap.bmp_size);
                 bitmap.copy(data);
             }
-            #warning We may integrate the color depth change to bitmap constructor (I like this idea, I will probably do it, also it's easy to unit test). I may even be possible to integrate in inside decompressor, which would avoid useless copy of data (this would imply converting each pixel to target color inside decompressor, but it looks pretty easy now and low cost). (Not so sure it will be easy when tiling is necessary).
-            #warning A better solution would be to pass the original bitmap, including it's bpp, to server_paint_rect and let it deal with color changes if necessary.
-            #warning as a first step we could move the copy and color conversion to server paint rect
-            const uint8_t * src = bitmap.data_co;
-            const uint8_t in_bpp = bpp;
-            const uint8_t out_bpp = mod->screen.bpp;
-            uint8_t * bmpdata = (uint8_t*)malloc(width * height * nbbytes(out_bpp));
-            uint8_t * dst = bmpdata;
-            for (int i = 0; i < width * height; i++) {
-                uint32_t pixel = color_decode(in_bytes_le(nbbytes(in_bpp), src),
-                                              in_bpp,
-                                              this->orders.cache_colormap.palette[0]);
-                out_bytes_le(dst, nbbytes(out_bpp), color_encode(pixel, out_bpp, mod->palette332));
-                src += nbbytes(in_bpp);
-                dst += nbbytes(out_bpp);
-            }
-            mod->server_paint_rect(0xCC, boundary, bmpdata, width, height, 0, 0);
-            if (bmpdata != bitmap.data_co){
-                free(bmpdata);
-            }
+            mod->server_paint_rect(bitmap, 0xCC, boundary, 0, 0, this->orders.cache_colormap.palette[0]);
         }
     }
 

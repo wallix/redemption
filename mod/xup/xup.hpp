@@ -133,7 +133,7 @@ struct xup_mod : public client_mod {
                     case 2: /* server_end_update */
                         rv = this->server_end_update();
                         break;
-                    case 3: /* server_fill_rect */
+                    case 3:
                     {
                         const Rect r(
                             stream.in_sint16_le(),
@@ -141,10 +141,9 @@ struct xup_mod : public client_mod {
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
                          this->pat_blt(this->rop, r, BLACK, WHITE);
-                         rv = 0;
                     }
                     break;
-                    case 4: /* server_screen_blt */
+                    case 4:
                     {
                         const Rect r(
                             stream.in_sint16_le(),
@@ -153,7 +152,7 @@ struct xup_mod : public client_mod {
                             stream.in_uint16_le());
                         int srcx = stream.in_sint16_le();
                         int srcy = stream.in_sint16_le();
-                        rv = this->server_screen_blt(this->rop, r, srcx, srcy);
+                        this->screen_blt(this->rop, r, srcx, srcy);
                     }
                     break;
                     case 5: /* server_paint_rect */
@@ -169,7 +168,9 @@ struct xup_mod : public client_mod {
                         int height = stream.in_uint16_le();
                         int srcx = stream.in_sint16_le();
                         int srcy = stream.in_sint16_le();
-                        rv = this->server_paint_rect(this->rop, r, bmpdata, width, height, srcx, srcy);
+                        Bitmap bmp(bpp, width, height);
+                        bmp.copy(bmpdata);
+                        this->server_paint_rect(bmp, this->rop, r, srcx, srcy, this->palette332);
                     }
                     break;
                     case 10: /* server_set_clip */

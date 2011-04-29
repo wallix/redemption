@@ -255,16 +255,6 @@ struct client_mod {
         return this->screen.child_list[i];
     }
 
-    int server_fill_rect(const Rect & r, const uint32_t color)
-    {
-        LOG(LOG_INFO, "client_mod::server_fill_rect with color");
-        const Rect draw_rect = r.intersect(clip);
-        if (!draw_rect.isempty()) {
-            this->front->opaque_rect(r, convert(color), this->clip);
-        }
-        return 0;
-    }
-
     int server_draw_dragging_rect(const Rect & r, const Rect & clip)
     {
         LOG(LOG_INFO, "client_mod::server_draw_dragging_rect");
@@ -362,36 +352,38 @@ struct client_mod {
         delete [] wstr;
     }
 
+    void screen_blt(int rop, const Rect & rect, int srcx, int srcy)
+    {
+        LOG(LOG_INFO, "client_mod::screen_blt(rop=%x, r(%d, %d, %d, %d), srcx=%d, srcy=%d", rop, rect.x, rect.y, rect.cx, rect.cy, srcx, srcy);
+        if (!rect.intersect(this->clip).isempty()) {
+            this->front->screen_blt(0xcc, rect, srcx, srcy, this->clip);
+        }
+    }
+
     void dest_blt(int rop, const Rect & rect)
     {
-        this->front->dest_blt(rect, rop, this->clip);
+        LOG(LOG_INFO, "client_mod::dest_blt(rop=%x, r(%d, %d, %d, %d)", rop, rect.x, rect.y, rect.cx, rect.cy);
+        if (!rect.intersect(this->clip).isempty()) {
+            this->front->dest_blt(rect, rop, this->clip);
+        }
     }
 
 
     void pat_blt(int rop, const Rect & rect, const uint32_t fgcolor, const uint32_t bgcolor)
     {
         LOG(LOG_INFO, "client_mod::pat_blt(rop=%x, r(%d, %d, %d, %d), fg=%x, bg=%x", rop, rect.x, rect.y, rect.cx, rect.cy, fgcolor, bgcolor);
-        this->front->pat_blt(rect, rop, convert(bgcolor), convert(fgcolor), this->brush, this->clip);
-    }
-
-    int server_screen_blt(int rop, const Rect & r, int srcx, int srcy)
-    {
-        #warning we could probably move that to front and remove dependency to screen
-        struct Rect draw_rect;
-        struct Rect rect2;
-
-        Region region;
-        region.rects.push_back(r);
-        /* loop through all windows in z order */
-
-        draw_rect = r.intersect(this->clip);
-        if (!draw_rect.isempty()) {
-            #warning looks like we could just intersect r and draw_rect to avoid passing both, check that.
-            this->front->screen_blt(0xcc, r, srcx, srcy, draw_rect);
+        if (!rect.intersect(this->clip).isempty()) {
+            this->front->pat_blt(rect, rop, convert(bgcolor), convert(fgcolor), this->brush, this->clip);
         }
-        return 0;
     }
 
+    void opaque_rect(const Rect & rect, const uint32_t color)
+    {
+        LOG(LOG_INFO, "client_mod::opaque_rect(r(%d, %d, %d, %d), color=%x", rect.x, rect.y, rect.cx, rect.cy, color);
+        if (!rect.intersect(clip).isempty()) {
+            this->front->opaque_rect(rect, convert(color), this->clip);
+        }
+    }
 
     void send_bitmap_mod(const Rect & dst, const Rect & src_r, const uint8_t * src_data,
                      int palette_id,
@@ -404,11 +396,27 @@ struct client_mod {
     }
 
 
-    int server_paint_rect(int rop, const Rect & dst, const uint8_t* src_data, int width, int height, int srcx, int srcy)
+    void server_paint_rect(Bitmap & bitmap, int rop, const Rect & dst, int srcx, int srcy, const RGBPalette & palette)
     {
+        const uint16_t width = bitmap.cx;
+        const uint16_t height = bitmap.cy;
+        const uint8_t * src = bitmap.data_co;
+        const uint8_t in_bpp = bitmap.bpp;
+        const uint8_t out_bpp = this->front->orders->rdp_layer->client_info.bpp;
+        uint8_t * bmpdata = (uint8_t*)malloc(width * height * nbbytes(out_bpp));
+        uint8_t * dest = bmpdata;
+        for (int i = 0; i < width * height; i++) {
+            uint32_t pixel = color_decode(in_bytes_le(nbbytes(in_bpp), src),
+                                          in_bpp,
+                                          palette);
+            out_bytes_le(dest, nbbytes(out_bpp), color_encode(pixel, out_bpp, this->palette332));
+            src += nbbytes(in_bpp);
+            dest += nbbytes(out_bpp);
+        }
         const Rect src_r(srcx, srcy, width, height);
-        this->front->send_bitmap_front(dst, src_r,  src_data, 0, this->clip);
-        return 0;
+        this->front->send_bitmap_front(dst, src_r, bmpdata, 0, this->clip);
+
+        free(bmpdata);
     }
 
     int send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y)

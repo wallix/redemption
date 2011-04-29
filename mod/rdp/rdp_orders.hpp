@@ -349,7 +349,7 @@ struct rdp_orders {
             uint8_t r = stream.in_uint8();
             uint8_t g = stream.in_uint8();
             uint8_t b = stream.in_uint8();
-            this->state.polyline_fgcolor = r | (g << 8) | (b << 16);
+            this->state.polyline_fgcolor = (r << 16) | (g << 8) | b;
         }
         if (present & 0x20) {
             this->state.polyline_lines = stream.in_uint8();
@@ -423,13 +423,13 @@ struct rdp_orders {
                     this->process_pat_blt(stream, mod, header);
                     break;
                 case SCREENBLT:
-                    this->rdp_orders_process_screenblt(stream, mod, header);
+                    this->process_screen_blt(stream, mod, header);
                     break;
                 case LINE:
                     this->rdp_orders_process_line(stream, mod, header);
                     break;
                 case RECT:
-                    this->rdp_orders_process_rect(stream, mod, header);
+                    this->process_opaque_rect(stream, mod, header);
                     break;
                 case DESKSAVE:
                     this->rdp_orders_process_desksave(stream, header.fields, header.control & DELTA, mod);
@@ -457,25 +457,19 @@ struct rdp_orders {
         return 0;
     }
 
-    #warning harmonize names -> opaque_rect
-    void rdp_orders_process_rect(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
+    void process_opaque_rect(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-        LOG(LOG_INFO, "sending opaquerect\n");
         this->opaquerect.receive(stream, header);
-        mod->server_fill_rect(this->opaquerect.rect, this->opaquerect.color);
-        LOG(LOG_INFO, "sending opaquerect ok\n");
+        mod->opaque_rect(this->opaquerect.rect, this->opaquerect.color);
     }
 
-    #warning harmonize names -> screen_blt
-    void rdp_orders_process_screenblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
+    void process_screen_blt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->scrblt.receive(stream, header);
-        LOG(LOG_INFO, "sending screenblt\n");
-        mod->server_screen_blt(this->scrblt.rop,
+        mod->screen_blt(this->scrblt.rop,
                                this->scrblt.rect,
                                this->scrblt.srcx,
                                this->scrblt.srcy);
-        LOG(LOG_INFO, "sending screenblt ok\n");
     }
 
     void process_dest_blt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
@@ -500,31 +494,7 @@ struct rdp_orders {
         LOG(LOG_INFO, "sending memblt\n");
         struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xFF][this->memblt.cache_idx];
         if (bitmap) {
-            #warning A better solution would be to pass the original bitmap, including it's bpp, to server_paint_rect and let it deal with color changes if necessary. See also similar call in rdp_rdp. Same fix can probably apply to both cases.
-            const uint16_t width = bitmap->cx;
-            const uint16_t height = bitmap->cy;
-            const uint8_t * src = bitmap->data_co;
-            const uint8_t in_bpp = bitmap->bpp;
-            const uint8_t out_bpp = mod->screen.bpp;
-            uint8_t * bmpdata = (uint8_t*)malloc(width * height * nbbytes(out_bpp));
-            uint8_t * dst = bmpdata;
-            for (int i = 0; i < width * height; i++) {
-                uint32_t pixel = color_decode(in_bytes_le(nbbytes(in_bpp), src),
-                                              in_bpp,
-                                              this->cache_colormap.palette[this->memblt.cache_id >> 8]);
-                pixel   = (pixel & 0x00FF00)
-                        | ((pixel >> 16) & 0xFF)
-                        | ((pixel & 0xFF) << 16);
-                out_bytes_le(dst, nbbytes(out_bpp), color_encode(pixel, out_bpp, mod->palette332));
-                src += nbbytes(in_bpp);
-                dst += nbbytes(out_bpp);
-            }
-            mod->server_paint_rect(this->memblt.rop, this->memblt.rect,
-                      bmpdata, bitmap->cx, bitmap->cy,
-                      this->memblt.srcx, this->memblt.srcy);
-            if (bmpdata != bitmap->data_co) {
-                free(bmpdata);
-            }
+            mod->server_paint_rect(*bitmap, this->memblt.rop, this->memblt.rect, this->memblt.srcx, this->memblt.srcy, this->cache_colormap.palette[this->memblt.cache_id >> 8]);
         }
         LOG(LOG_INFO, "sending memblt ok\n");
     }
