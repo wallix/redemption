@@ -77,7 +77,7 @@ inline void splitcolor15(uint8_t & r, uint8_t & g, uint8_t & b, uint32_t c)
 }
 
 // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 g6 b1 b2 b3 b4 b5
-inline uint16_t color16(uint8_t r, uint8_t g, uint8_t b)
+inline uint32_t color16(uint8_t r, uint8_t g, uint8_t b)
 {
    // r1 r2 r3 r4 r5 r6 r7 r8
    return ((r << 8) & 0xF800) // r1 r2 r3 r4 r5 0 0 0 0 0 0 0 0 0 0 0

@@ -157,11 +157,11 @@ class Stream {
     #warning use in_bytes_le whenever possible
     unsigned int in_uint32_le(void) {
         this->p += 4;
-        return ((unsigned char*)this->p)[-4]
-               + ((unsigned char*)this->p)[-3] * 0x100
-               + ((unsigned char*)this->p)[-2] * 0x10000
-               + ((unsigned char*)this->p)[-1] * 0x1000000
-               ;
+        return this->p[-4]
+             | (this->p[-3] << 8)
+             | (this->p[-2] << 16)
+             | (this->p[-1] << 24)
+             ;
     }
 
     unsigned in_bytes_le(const uint8_t nb){
@@ -237,6 +237,7 @@ class Stream {
         this->p[0] = (v >> 8) & 0xFF;
         this->p+=2;
     }
+
 
     void out_uint32_le(unsigned int v) {
         this->p[0] = v & 0xFF;

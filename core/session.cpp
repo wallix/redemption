@@ -448,17 +448,17 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
         this->log.clear();
         RGBPalette palette;
         /* rgb332 palette */
-        for (int bindex = 0; bindex < 4; bindex++) {
+        for (int rindex = 0; rindex < 8; rindex++) {
             for (int gindex = 0; gindex < 8; gindex++) {
-                for (int rindex = 0; rindex < 8; rindex++) {
+                for (int bindex = 0; bindex < 4; bindex++) {
                     palette[(rindex << 5) | (gindex << 2) | bindex] =
                     (RGBcolor)(
                     // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
+                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<0)
                     // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
                        | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
                     // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
-                       | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
+                       | (((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)) << 16) );
                 }
             }
         }

@@ -133,7 +133,7 @@ struct Bitmap{
 
         int pixel;
         int size;
-        int palette1[256];
+        RGBPalette palette1;
         char type1[4];
 
         /* header for bmp file */
@@ -241,7 +241,11 @@ struct Bitmap{
                 throw Error(ERR_BITMAP_LOAD_FAILED);
             }
             for (int i = 0; i < header.clr_used; i++) {
-                palette1[i] = stream.in_uint32_le();
+                uint8_t r = stream.in_uint8();
+                uint8_t g = stream.in_uint8();
+                uint8_t b = stream.in_uint8();
+                uint8_t a = stream.in_uint8();
+                palette1[i] = (r << 16)|(g << 8)|b;
             }
             break;
         default:
@@ -277,25 +281,20 @@ struct Bitmap{
         }
         close(fd); // from now on all is in memory
 
-        uint8_t r = 0;
-        uint8_t g = 0;
-        uint8_t b = 0;
-
-        #warning there seems to be underlaying common code with other constructors
         int k = 0;
         for (unsigned y = 0; y < this->cy ; y++) {
             for (unsigned x = 0 ; x < this->cx; x++) {
                 switch (header.bit_count){
                 case 24:
-                    r = stream.in_uint8();
-                    g = stream.in_uint8();
-                    b = stream.in_uint8();
+                {
+                    uint8_t r = stream.in_uint8();
+                    uint8_t g = stream.in_uint8();
+                    uint8_t b = stream.in_uint8();
+                    pixel = (r << 16) | (g << 8) | b;
+                }
                 break;
                 case 8:
                     pixel = palette1[stream.in_uint8()];
-                    b = pixel >> 16;
-                    g = pixel >> 8;
-                    r = pixel;
                 break;
                 case 4:
                     if ((x & 1) == 0) {
@@ -306,35 +305,34 @@ struct Bitmap{
                         pixel = k & 0xf;
                     }
                     pixel = palette1[pixel];
-                    b = pixel >> 16;
-                    g = pixel >> 8;
-                    r = pixel;
                 break;
                 }
                 // set pixel
+                uint32_t target_pixel = color_encode(pixel, this->bpp, palette1);
+//                LOG(LOG_INFO, "bpp=%d pixel=%x target_pixel=%x", this->bpp, pixel, target_pixel);
+//                ::out_bytes_le(this->data_co+y*this->line_size + x*nbbytes(this->bpp), nbbytes(this->bpp), target_pixel);
+
                 {
-                    int pixel = 0;
                     switch (this->bpp){
                     case 8:
                         // from a 24 bits pixel RRGGBB
                         // we want to get a 8 bits value : bbgggrrr
-                        pixel = color8(r, g, b);
-                        this->data_co[y*this->line_size + x*1] = pixel;
+                        this->data_co[y*this->line_size + x*1] = target_pixel;
                     break;
                     case 15:
-                        pixel = color15(r, g, b);
-                        this->data_co[(y*this->line_size + x*2)] = pixel;
-                        this->data_co[(y*this->line_size + x*2) + 1] = pixel >> 8;
+//                        pixel = color15(r, g, b);
+                        this->data_co[(y*this->line_size + x*2)] = target_pixel;
+                        this->data_co[(y*this->line_size + x*2) + 1] = target_pixel >> 8;
                     break;
                     case 16:
-                        pixel = color16(r, g, b);
-                        this->data_co[(y*this->line_size + x*2)] = pixel;
-                        this->data_co[(y*this->line_size + x*2)+1] = pixel >> 8;
+//                        pixel = color16(r, g, b);
+                        this->data_co[(y*this->line_size + x*2)] = target_pixel;
+                        this->data_co[(y*this->line_size + x*2)+1] = target_pixel >> 8;
                     break;
                     case 24:
-                        this->data_co[(y*(this->line_size) + x*3)] = r;
-                        this->data_co[(y*(this->line_size) + x*3) + 1] = g;
-                        this->data_co[(y*(this->line_size) + x*3) + 2] = b;
+                        this->data_co[(y*(this->line_size) + x*3)] = target_pixel;
+                        this->data_co[(y*(this->line_size) + x*3) + 1] = target_pixel >> 8;
+                        this->data_co[(y*(this->line_size) + x*3) + 2] = target_pixel >> 16;
                     break;
                     }
                 }

@@ -356,8 +356,13 @@ struct rdp_rdp {
             assert(numberColors == 256);
             stream.skip_uint8(2); /* pad */
             for (int i = 0; i < 256; i++) {
-                uint32_t color = stream.in_bytes_le(3);
-                this->orders.cache_colormap.palette[0][i] = color;
+                uint8_t r = stream.in_uint8();
+                uint8_t g = stream.in_uint8();
+                uint8_t b = stream.in_uint8();
+//                uint32_t color = stream.in_bytes_le(3);
+                this->orders.cache_colormap.palette[0][i] = (r << 16)
+                                                          | (g << 8)
+                                                          |  b;
             }
             mod->set_mod_palette(this->orders.cache_colormap.palette[0]);
         }

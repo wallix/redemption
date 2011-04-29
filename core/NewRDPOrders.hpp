@@ -393,9 +393,9 @@ class RDPColCache {
             uint8_t r = color >> 16;
             uint8_t g = color >> 8;
             uint8_t b = color;
-            stream.out_uint8(b);
-            stream.out_uint8(g);
             stream.out_uint8(r);
+            stream.out_uint8(g);
+            stream.out_uint8(b);
             stream.out_uint8(0x00);
         }
     }

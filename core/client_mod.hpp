@@ -404,7 +404,7 @@ struct client_mod {
                                           in_bpp,
                                           palette);
             uint32_t target_pixel = color_encode(pixel, out_bpp, this->palette332);
-//            target_pixel = 0;
+            target_pixel = 0xFFFFFF & target_pixel;
             out_bytes_le(dest, nbbytes(out_bpp), target_pixel);
             src += nbbytes(in_bpp);
             dest += nbbytes(out_bpp);
