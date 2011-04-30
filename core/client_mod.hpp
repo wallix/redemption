@@ -254,36 +254,6 @@ struct client_mod {
         return this->screen.child_list[i];
     }
 
-    int server_draw_dragging_rect(const Rect & r, const Rect & clip)
-    {
-        LOG(LOG_INFO, "client_mod::server_draw_dragging_rect");
-
-        this->front->begin_update();
-        this->set_domino_brush(0, 0);
-
-        // draw rectangles by drawing each edge top/bottom/left/right
-        // 0x66 = xor -> pat_blt( ... 0x5A ...
-        // 0xAA = noop -> pat_blt( ... 0xFB ...
-        // 0xCC = copy -> pat_blt( ... 0xF0 ...
-        // 0x88 = and -> pat_blt( ...  0xC0 ...
-        int xor_rop = 0x5A;
-
-        this->front->pat_blt(Rect(r.x, r.y, r.cx, 5),
-                             xor_rop, this->convert(BLACK), this->convert(WHITE),
-                             this->brush, clip);
-        this->front->pat_blt(Rect(r.x, r.y + (r.cy - 5), r.cx, 5),
-                             xor_rop, this->convert(BLACK), this->convert(WHITE),
-                             this->brush, clip);
-        this->front->pat_blt(Rect(r.x, r.y + 5, 5, r.cy - 10),
-                             xor_rop, this->convert(BLACK), this->convert(WHITE),
-                             this->brush, clip);
-        this->front->pat_blt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10),
-                             xor_rop, this->convert(BLACK), this->convert(WHITE),
-                             this->brush, clip);
-
-        this->front->end_update();
-        return 0;
-    }
 
 
     void server_glyph_index(RDPGlyphIndex & glyph_index)
@@ -327,6 +297,31 @@ struct client_mod {
             this->front->pat_blt(rect, rop, this->convert(bgcolor), this->convert(fgcolor), this->brush, this->clip);
         }
     }
+
+    #warning move that to widget
+    int server_draw_dragging_rect(const Rect & r, const Rect & clip)
+    {
+        LOG(LOG_INFO, "client_mod::server_draw_dragging_rect");
+
+        this->front->begin_update();
+        this->set_domino_brush(0, 0);
+
+        // draw rectangles by drawing each edge top/bottom/left/right
+        // 0x66 = xor -> pat_blt( ... 0x5A ...
+        // 0xAA = noop -> pat_blt( ... 0xFB ...
+        // 0xCC = copy -> pat_blt( ... 0xF0 ...
+        // 0x88 = and -> pat_blt( ...  0xC0 ...
+
+        this->server_set_clip(clip);
+        this->pat_blt(0x5A, Rect(r.x, r.y, r.cx, 5), BLACK, WHITE);
+        this->pat_blt(0x5A, Rect(r.x, r.y + (r.cy - 5), r.cx, 5), BLACK, WHITE);
+        this->pat_blt(0x5A, Rect(r.x, r.y + 5, 5, r.cy - 10), BLACK, WHITE);
+        this->pat_blt(0x5A, Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10), BLACK, WHITE);
+
+        this->front->end_update();
+        return 0;
+    }
+
 
     void opaque_rect(const Rect & rect, const uint32_t color)
     {
@@ -480,7 +475,7 @@ struct client_mod {
         return this->screen.child_list.size();
     }
 
-
+    #warning move that to widget
     void set_domino_brush(int x, int y)
     {
         this->brush.hatch = 0xaa;

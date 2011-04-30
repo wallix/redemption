@@ -386,14 +386,13 @@ struct login_mod : public client_mod {
             log_width,
             log_height);
 
-        uint32_t grey = 0xc0c0c0;
         #warning having two completely different LOGIN modules one with password only, the other one with full behavior would probably be much more clean than passing around that wab_auth. See that.
         if (context.wab_auth){
             this->login_window = new wab_login(this,
                 r, context, session,
                 this->screen, // parent
                 this->screen, // notify_to
-                grey,
+                GREY,
                 "Login",
                 session->ini,
                 regular);
@@ -403,7 +402,7 @@ struct login_mod : public client_mod {
                 r, context, session,
                 this->screen, // parent
                 this->screen, // notify_to
-                grey,
+                GREY,
                 "Login",
                 session->ini,
                 regular);
