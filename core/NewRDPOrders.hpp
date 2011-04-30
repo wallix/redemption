@@ -3630,8 +3630,8 @@ class RDPGlyphIndex {
 
         // DELTA flag Does not seems to works as usual for this function
         // (at least in rdesktop)
-        // hence coordinates fields are transmitted are absolute fields
-        // DELTA may also aise some problems with empty rects,
+        // hence coordinates fields are transmitted as absolute fields
+        // DELTA may also raise some problems with empty rects,
         // if initial rect is empty DELTA should not be used
 //        control |=
 //            (is_1_byte(this->bk.x               - oldcmd.bk.x                )

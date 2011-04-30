@@ -197,26 +197,20 @@ struct client_mod {
         return 0;
     }
 
-    void invalidate(const Rect & rect)
-    {
-        if (!rect.isempty()) {
-            this->server_begin_update();
-            Rect r(0, 0, this->screen.rect.cx, this->screen.rect.cy);
-            this->mod_event(WM_INVALIDATE,
-                ((r.x & 0xffff) << 16) | (r.y & 0xffff),
-                ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
-                0, 0);
+    int get_server_screen_bpp(){
+        return this->front->orders->rdp_layer->client_info.bpp;
+    }
 
-            /* draw any child windows in the area */
-            for (size_t i = 0; i < this->nb_windows(); i++) {
-                Widget *b = this->window(i);
-                Rect r2 = rect.intersect(b->rect.wh());
-                if (!r2.isempty()) {
-                    b->Widget_invalidate_clip(r2);
-                }
-            }
-            this->server_end_update();
-        }
+    int get_server_screen_width(){
+        return this->front->orders->rdp_layer->client_info.width;
+    }
+
+    int get_server_screen_height(){
+        return this->front->orders->rdp_layer->client_info.height;
+    }
+
+    const Rect get_server_screen_rect(){
+        return Rect(0, 0, this->get_server_screen_width(), get_server_screen_height());
     }
 
     void server_resize(int width, int height, int bpp)
@@ -275,89 +269,38 @@ struct client_mod {
         int xor_rop = 0x5A;
 
         this->front->pat_blt(Rect(r.x, r.y, r.cx, 5),
-                             xor_rop, convert(BLACK), convert(WHITE),
+                             xor_rop, this->convert(BLACK), this->convert(WHITE),
                              this->brush, clip);
         this->front->pat_blt(Rect(r.x, r.y + (r.cy - 5), r.cx, 5),
-                             xor_rop, convert(BLACK), convert(WHITE),
+                             xor_rop, this->convert(BLACK), this->convert(WHITE),
                              this->brush, clip);
         this->front->pat_blt(Rect(r.x, r.y + 5, 5, r.cy - 10),
-                             xor_rop, convert(BLACK), convert(WHITE),
+                             xor_rop, this->convert(BLACK), this->convert(WHITE),
                              this->brush, clip);
         this->front->pat_blt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10),
-                             xor_rop, convert(BLACK), convert(WHITE),
+                             xor_rop, this->convert(BLACK), this->convert(WHITE),
                              this->brush, clip);
 
         this->front->end_update();
         return 0;
     }
 
-    #warning fgcolor is unused, see how to integrate pen settings here
-    #warning this should move to widget and client_mod contain some more simple version
-    #warning text clipping using region information should be managed here
-    void server_draw_text(struct Widget* wdg, int x, int y, const char* text, const uint32_t fgcolor, const Rect & clip){
-        setlocale(LC_CTYPE, "fr_FR.UTF-8");
-        assert(wdg->type != WND_TYPE_BITMAP);
-        int len = mbstowcs(0, text, 0);
-        if (len < 1) {
-            return;
-        }
 
-        const Rect & clip_rect = wdg->to_screen_rect(clip);
-        /* convert to wide char */
-        wchar_t* wstr = new wchar_t[len + 2];
-        mbstowcs(wstr, text, len + 1);
-        int k = 0;
-        int total_width = 0;
-        int total_height = 0;
-        uint8_t *data = new uint8_t[len * 4];
-        memset(data, 0, len * 4);
-        int f = 0;
-        int c = 0;
-        for (int index = 0; index < len; index++) {
-            FontChar* font_item = this->front->font->font_items[wstr[index]];
-            switch (this->front->cache->add_glyph(font_item, f, c))
-            {
-                case Cache::GLYPH_ADDED_TO_CACHE:
-                    this->front->send_glyph(font_item, f, c);
-                break;
-                default:
-                break;
-            }
-            data[index * 2] = c;
-            data[index * 2 + 1] = k;
-            k = font_item->incby;
-            total_width += k;
-            total_height = std::max(total_height, font_item->height);
-        }
-
-        Rect initial_region = wdg->to_screen_rect(Rect(x, y, total_width, total_height));
-
-        struct Region region;
-        region.rects.push_back(initial_region);
-        /* loop through all windows in z order */
-        for (size_t i = 0; i < this->nb_windows(); i++) {
-            Widget *p = this->window(i);
-            if (p == wdg || p == &wdg->parent) {
-                break;
-            }
-            region.subtract_rect(p->rect);
-        }
-        x += wdg->to_screenx();
-        y += wdg->to_screeny();
-
-        for (size_t ir = 0 ; ir < region.rects.size(); ir++){
-            Rect draw_rect = region.rects[ir].intersect(clip_rect);
-            if (!draw_rect.isempty()) {
-                const Rect box(0, 0, 0, 0);
-                const Rect rect(x-1, y-1, total_width + 1, total_height + 1);
-                /* 0x03 0x73; TEXT2_IMPLICIT_X and something else */
-                this->front->draw_text2(f, 0x03, 0, box, rect,
-                    x, y + total_height,
-                    data, len * 2, convert_to_black(fgcolor), convert_to_black(BLACK), clip_rect);
-            }
-        }
-        delete [] data;
-        delete [] wstr;
+    void server_glyph_index(RDPGlyphIndex & glyph_index)
+    {
+        this->front->draw_text2(
+            glyph_index.cache_id,
+            glyph_index.fl_accel,
+            glyph_index.f_op_redundant,
+            glyph_index.op,
+            glyph_index.bk,
+            glyph_index.glyph_x,
+            glyph_index.glyph_y,
+            glyph_index.data,
+            glyph_index.data_len,
+            this->convert(glyph_index.back_color),
+            this->convert(glyph_index.fore_color),
+            this->clip);
     }
 
     void screen_blt(int rop, const Rect & rect, int srcx, int srcy)
@@ -381,7 +324,7 @@ struct client_mod {
     {
         LOG(LOG_INFO, "client_mod::pat_blt(rop=%x, r(%d, %d, %d, %d), fg=%x, bg=%x", rop, rect.x, rect.y, rect.cx, rect.cy, fgcolor, bgcolor);
         if (!rect.intersect(this->clip).isempty()) {
-            this->front->pat_blt(rect, rop, convert_to_black(bgcolor), convert_to_black(fgcolor), this->brush, this->clip);
+            this->front->pat_blt(rect, rop, this->convert(bgcolor), this->convert(fgcolor), this->brush, this->clip);
         }
     }
 
@@ -410,6 +353,7 @@ struct client_mod {
 
     void server_paint_rect(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const RGBPalette & palette)
     {
+        #warning color conversion should probably go into bitmap. Something like a copy constructor that change color on the fly ? We may even choose to keep several versions of the same bitmap with different bpp ?
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
         const uint8_t * src = bitmap.data_co;
@@ -515,55 +459,10 @@ struct client_mod {
         return 0;
     }
 
-    int text_width(char* text){
-        int rv = 0;
-        if (text) {
-            size_t len = mbstowcs(0, text, 0);
-            wchar_t wstr[len + 2];
-            mbstowcs(wstr, text, len + 1);
-            for (size_t index = 0; index < len; index++) {
-                FontChar *font_item = this->front->font->font_items[wstr[index]];
-                rv = rv + font_item->incby;
-            }
-        }
-        return rv;
-    }
-
-    int text_height(char* text){
-        int rv = 0;
-        if (text) {
-            int len = mbstowcs(0, text, 0);
-            wchar_t *wstr = new wchar_t[len + 2];
-            mbstowcs(wstr, text, len + 1);
-            for (int index = 0; index < len; index++) {
-                FontChar *font_item = this->front->font->font_items[wstr[index]];
-                rv = std::max(rv, font_item->height);
-            }
-            delete [] wstr;
-        }
-        return rv;
-    }
-
-    #warning we should be able to pass only one pointer, either window if we are dealing with a window or this->parent if we are dealing with any other kind of widget
-    const Region get_visible_region(Widget * window, Widget * widget, const Rect & rect)
-    {
-        Region region;
-        region.rects.push_back(rect);
-        /* loop through all windows in z order */
-        for (size_t i = 0; i < this->nb_windows(); i++) {
-            Widget *p = this->window(i);
-            if (p == window || p == widget) {
-                break;
-            }
-            region.subtract_rect(p->rect);
-        }
-        return region;
-    }
-
     void server_draw_line(int rop, int x1, int y1, int x2, int y2, uint32_t pen_color, uint32_t back_color)
     {
-        this->pen.color = convert_to_black(pen_color);
-        this->front->line(rop, x1, y1, x2, y2, convert_to_black(back_color), this->pen, this->clip);
+        this->pen.color = this->convert(pen_color);
+        this->front->line(rop, x1, y1, x2, y2, this->convert(back_color), this->pen, this->clip);
     }
 
 
@@ -573,24 +472,6 @@ struct client_mod {
     {
         this->front->send_glyph(font, character, offset, baseline, width, height, data);
     }
-
-    void server_glyph_index(RDPGlyphIndex & glyph_index)
-    {
-        this->front->draw_text2(
-            glyph_index.cache_id,
-            glyph_index.fl_accel,
-            glyph_index.f_op_redundant,
-            glyph_index.op,
-            glyph_index.bk,
-            glyph_index.glyph_x,
-            glyph_index.glyph_y,
-            glyph_index.data,
-            glyph_index.data_len,
-            convert_to_black(glyph_index.back_color),
-            convert_to_black(glyph_index.fore_color),
-            this->clip);
-    }
-
 
     int server_get_channel_id(char* name)
     {
@@ -602,8 +483,6 @@ struct client_mod {
                            int total_data_len, int flags)
     {
         this->front->orders->rdp_layer->server_send_to_channel(channel_id, data, data_len, total_data_len, flags);
-
-
     }
 
     size_t nb_windows()

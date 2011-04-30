@@ -105,6 +105,7 @@ struct Session {
     ModContext * context;
     int internal_state;
     long id;
+    #warning we can probably provide a mod instead of a session to SessionCallback, thus enabling to move callback to client_mod. Or even find something better to simplify this. There is definitely something wrong here around server_rdp, SessionCallback, client_mod, etc. Find what it is and correct it.
     struct server_rdp *server;
     struct RDP::Orders* orders;
     struct SocketTransport * trans;
@@ -126,7 +127,6 @@ struct Session {
     struct client_mod * mod; /* module interface */
     struct client_mod * no_mod;
 
-    struct Screen *screen;
     struct Front* front;
     #warning caches are related to rdp client. Put them in core/rdp.hpp
     #warning cache reset should also be put in core/rdp.hpp
@@ -151,6 +151,7 @@ struct Session {
         const char * ip_source, wait_obj * terminated_event, Inifile * ini);
     ~Session();
     int pointer(char* data, char* mask, int x, int y);
+    void invalidate(const Rect & rect);
 
     int session_main_loop();
     int session_reset(int width, int height, int bpp);

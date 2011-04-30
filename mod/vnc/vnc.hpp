@@ -60,7 +60,7 @@ struct mod_vnc : public client_mod {
         const char * username = context.get(STRAUTHID_TARGET_USER);
         this->t = t;
         try {
-            int bpp = this->screen.bpp;
+            int bpp = this->get_server_screen_bpp();
             memset(this->mod_name, 0, 256);
             this->mod_mouse_state = 0;
             memset(this->palette, 0, sizeof(RGBPalette));
@@ -625,7 +625,7 @@ struct mod_vnc : public client_mod {
         int encoding;
         int error = 0;
         size_t num_recs = 0;
-        int Bpp = nbbytes(this->screen.bpp);
+        int Bpp = nbbytes(this->get_server_screen_bpp());
         if (Bpp == 3) {
             Bpp = 4;
         }
@@ -656,7 +656,7 @@ struct mod_vnc : public client_mod {
 
                     #warning see server_paint_rect and Bitmap below, suspicious code, does it works ?
 
-                    Bitmap bmp(this->screen.bpp, cx, cy);
+                    Bitmap bmp(this->get_server_screen_bpp(), cx, cy);
                     bmp.copy(raw.data);
                     this->server_paint_rect(bmp, Rect(x, y, cx, cy), 0, 0, this->palette332);
                 }
@@ -684,9 +684,10 @@ struct mod_vnc : public client_mod {
                     uint8_t cursor_data[32 * (32 * 3)];
                     uint8_t cursor_mask[32 * (32 / 8)];
 
+                    #warning palette should be kept synchronized with bpp. Is it ok ?
                     this->build_pointer(cursor_data, cursor_mask,
                                         d1, d2, cx, cy,
-                                        this->screen.bpp,
+                                        this->get_server_screen_bpp(),
                                         this->palette);
 
                     /* keep these in 32x32, vnc cursor can be alot bigger */

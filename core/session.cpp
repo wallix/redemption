@@ -210,6 +210,29 @@ Session::~Session()
     delete this->context;
 }
 
+void Session::invalidate(const Rect & rect)
+{
+    if (!rect.isempty()) {
+        this->mod->server_begin_update();
+        Rect r(0, 0, this->mod->screen.rect.cx, this->mod->screen.rect.cy);
+        this->mod->mod_event(WM_INVALIDATE,
+            ((r.x & 0xffff) << 16) | (r.y & 0xffff),
+            ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
+            0, 0);
+
+        /* draw any child windows in the area */
+        for (size_t i = 0; i < this->mod->nb_windows(); i++) {
+            Widget *b = this->mod->window(i);
+            Rect r2 = rect.intersect(b->rect.wh());
+            if (!r2.isempty()) {
+                b->Widget_invalidate_clip(r2);
+            }
+        }
+        this->mod->server_end_update();
+    }
+}
+
+
 /*****************************************************************************/
 int Session::session_input_mouse(int device_flags, int x, int y)
 {
@@ -245,6 +268,8 @@ int Session::session_input_mouse(int device_flags, int x, int y)
     return 0;
 }
 
+
+#warning this and the two functions above should move to client mod, but to do that we also have to hook session_callback on client_mod
 int Session::callback(int msg, long param1, long param2, long param3, long param4)
 {
     //printf("msg=%x param1=%lx param2=%lx param3=%lx param4=%lx\n",msg, param1, param2, param3, param4);
@@ -252,7 +277,7 @@ int Session::callback(int msg, long param1, long param2, long param3, long param
     switch (msg) {
     case 0: /* RDP_INPUT_SYNCHRONIZE */
         /* happens when client gets focus and sends key modifier info */
-        this->key_flags = param1;
+        this->mod->key_flags = param1;
         // why do we not keep device flags ?
         this->mod->mod_event(17, param1, param3, param1, param3);
         break;
@@ -266,7 +291,7 @@ int Session::callback(int msg, long param1, long param2, long param3, long param
         /* invalidate, this is not from RDP_DATA_PDU_INPUT */
         /* like the rest, its from RDP_PDU_DATA with code 33 */
         /* its the rdp client asking for a screen update */
-        this->mod->invalidate(Rect(param1, param2, param3, param4));
+        this->invalidate(Rect(param1, param2, param3, param4));
         break;
     case WM_CHANNELDATA:
         /* called from server_channel.c, channel data has come in,

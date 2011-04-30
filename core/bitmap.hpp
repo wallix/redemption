@@ -244,7 +244,7 @@ struct Bitmap{
                 uint8_t r = stream.in_uint8();
                 uint8_t g = stream.in_uint8();
                 uint8_t b = stream.in_uint8();
-                uint8_t a = stream.in_uint8();
+                stream.skip_uint8(1); // skip alpha channel
                 palette1[i] = (r << 16)|(g << 8)|b;
             }
             break;
@@ -582,6 +582,7 @@ struct Bitmap{
         return 1 + get_color_count(p+this->Bpp, color);
     }
 
+    #warning derecursive it
     unsigned get_bicolor_count(const uint8_t * p, unsigned color1, unsigned color2) const
     {
         if  (p >= this->pmax) {
@@ -614,6 +615,7 @@ struct Bitmap{
         return acc;
     }
 
+    #warning derecursive it
     unsigned get_mix_count(const uint8_t * p, unsigned foreground) const
     {
         if  (p >= this->pmax) {
@@ -625,6 +627,7 @@ struct Bitmap{
         return 1 + get_mix_count(p+this->Bpp, foreground);
     }
 
+    #warning derecursive it
     // get mix_count and set the foreground
     // (the foreground matching for the first pixel)
     unsigned get_mix_count_set(const uint8_t * p, unsigned & foreground) const
@@ -660,6 +663,7 @@ struct Bitmap{
     }
 
 
+    #warning derecursive it
     unsigned get_fom_count_set(const uint8_t * p, unsigned & foreground, unsigned & flags) const
     {
         // flags : 1 = fill, 2 = MIX, 3 = (1+2) = FOM
@@ -713,6 +717,7 @@ struct Bitmap{
     }
 
 
+    #warning derecursive it
     unsigned get_fom_count(const uint8_t * p, unsigned foreground) const
     {
         unsigned fill_count = this->get_fill_count(p);
@@ -747,6 +752,7 @@ struct Bitmap{
 
     }
 
+    #warning derecursive it
     unsigned get_fom_count_fill(const uint8_t * p, unsigned foreground) const
     {
 
@@ -768,6 +774,7 @@ struct Bitmap{
     }
 
 
+    #warning derecursive it
     unsigned get_fom_count_mix(const uint8_t * p, unsigned foreground) const
     {
         unsigned mix_count = get_mix_count(p, foreground);
@@ -783,6 +790,8 @@ struct Bitmap{
         return mix_count + this->get_fom_count_fill(p + mix_count * this->Bpp, foreground);
     }
 
+    #warning simplify and enhance compression using 1 pixel orders BLACK or WHITE.
+    #warning get allready compressed bitmaps in cache to avoid useless computations
     void compress(Stream & out)
     {
         const uint8_t Bpp = nbbytes(this->bpp);

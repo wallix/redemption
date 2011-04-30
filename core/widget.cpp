@@ -129,7 +129,7 @@ void Widget::draw_title_bar(int bg_color, int fg_color, const Rect & clip)
     assert(this->type == WND_TYPE_WND);
     this->mod->server_begin_update();
     this->fill_rect(0xCC, Rect(3, 3, this->rect.cx - 5, 18), bg_color, clip);
-    this->mod->server_draw_text(this, 4, 4, this->caption1, fg_color, clip);
+    this->server_draw_text(this, 4, 4, this->caption1, fg_color, clip);
     this->mod->server_end_update();
 }
 
@@ -195,6 +195,134 @@ struct Widget* Widget::widget_at_pos(int x, int y) {
     return this;
 }
 
+int Widget::text_width(char* text){
+    int rv = 0;
+    if (text) {
+        size_t len = mbstowcs(0, text, 0);
+        wchar_t wstr[len + 2];
+        mbstowcs(wstr, text, len + 1);
+        for (size_t index = 0; index < len; index++) {
+            FontChar *font_item = this->mod->front->font->font_items[wstr[index]];
+            rv = rv + font_item->incby;
+        }
+    }
+    return rv;
+}
+
+int Widget::text_height(char* text){
+    int rv = 0;
+    if (text) {
+        int len = mbstowcs(0, text, 0);
+        wchar_t *wstr = new wchar_t[len + 2];
+        mbstowcs(wstr, text, len + 1);
+        for (int index = 0; index < len; index++) {
+            FontChar *font_item = this->mod->front->font->font_items[wstr[index]];
+            rv = std::max(rv, font_item->height);
+        }
+        delete [] wstr;
+    }
+    return rv;
+}
+
+    #warning we should be able to pass only one pointer, either window if we are dealing with a window or this->parent if we are dealing with any other kind of widget
+const Region Widget::get_visible_region(Widget * window, Widget * widget, const Rect & rect)
+{
+    Region region;
+    region.rects.push_back(rect);
+    /* loop through all windows in z order */
+    for (size_t i = 0; i < this->mod->nb_windows(); i++) {
+        Widget *p = this->mod->window(i);
+        if (p == window || p == widget) {
+            break;
+        }
+        region.subtract_rect(p->rect);
+    }
+    return region;
+}
+
+#warning text clipping using region information should be managed here
+void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text, const uint32_t fgcolor, const Rect & clip){
+    setlocale(LC_CTYPE, "fr_FR.UTF-8");
+    assert(wdg->type != WND_TYPE_BITMAP);
+    int len = mbstowcs(0, text, 0);
+    if (len < 1) {
+        return;
+    }
+
+    const Rect & clip_rect = wdg->to_screen_rect(clip);
+    /* convert to wide char */
+    wchar_t* wstr = new wchar_t[len + 2];
+    mbstowcs(wstr, text, len + 1);
+    int k = 0;
+    int total_width = 0;
+    int total_height = 0;
+    uint8_t *data = new uint8_t[len * 4];
+    memset(data, 0, len * 4);
+    int f = 0;
+    int c = 0;
+    for (int index = 0; index < len; index++) {
+        FontChar* font_item = this->mod->front->font->font_items[wstr[index]];
+        switch (this->mod->front->cache->add_glyph(font_item, f, c))
+        {
+            case Cache::GLYPH_ADDED_TO_CACHE:
+                this->mod->front->send_glyph(font_item, f, c);
+            break;
+            default:
+            break;
+        }
+        data[index * 2] = c;
+        data[index * 2 + 1] = k;
+        k = font_item->incby;
+        total_width += k;
+        total_height = std::max(total_height, font_item->height);
+    }
+
+    Rect initial_region = wdg->to_screen_rect(Rect(x, y, total_width, total_height));
+
+    struct Region region;
+    region.rects.push_back(initial_region);
+    /* loop through all windows in z order */
+    for (size_t i = 0; i < this->mod->nb_windows(); i++) {
+        Widget *p = this->mod->window(i);
+        if (p == wdg || p == &wdg->parent) {
+            break;
+        }
+        region.subtract_rect(p->rect);
+    }
+    x += wdg->to_screenx();
+    y += wdg->to_screeny();
+
+    for (size_t ir = 0 ; ir < region.rects.size(); ir++){
+        Rect draw_rect = region.rects[ir].intersect(clip_rect);
+        if (!draw_rect.isempty()) {
+            const Rect box(0, 0, 0, 0);
+            const Rect rect(x-1, y-1, total_width + 1, total_height + 1);
+            /* 0x03 0x73; TEXT2_IMPLICIT_X and something else */
+
+            this->mod->server_set_clip(clip_rect);
+            RDPGlyphIndex text(
+                f, // cache_id
+                0x03, // fl_accel
+                1, // ui_charinc
+                0, // f_op_redundant,
+                BLACK, // bgcolor
+                fgcolor, // fgcolor
+                rect, // bk
+                box, // op
+                this->mod->brush, // brush
+                x,  // glyph_x
+                y + total_height, // glyph_y
+                len * 2, // data_len in bytes
+                data // data (utf16)
+            );
+            this->mod->server_glyph_index(text);
+        }
+    }
+    delete [] data;
+    delete [] wstr;
+}
+
+
 void window::draw(const Rect & clip)
 {
     /* draw grey background */
@@ -227,7 +355,6 @@ void window::draw(const Rect & clip)
     }
 }
 
-
 void widget_edit::draw(const Rect & clip)
 {
     // LOG(LOG_INFO, "widget_edit::draw\n");
@@ -255,10 +382,10 @@ void widget_edit::draw(const Rect & clip)
         int i = mbstowcs(0, this->buffer, 0);
         memset(text, this->password_char, i);
         text[i] = 0;
-        this->mod->server_draw_text(this, 4, 2, text, BLACK, clip);
+        this->server_draw_text(this, 4, 2, text, BLACK, clip);
     }
     else {
-        this->mod->server_draw_text(this, 4, 2, this->buffer, BLACK, clip);
+        this->server_draw_text(this, 4, 2, this->buffer, BLACK, clip);
     }
     /* draw xor box(cursor) */
     if (has_focus) {
@@ -271,7 +398,7 @@ void widget_edit::draw(const Rect & clip)
             wtext[this->edit_pos] = 0;
             wcstombs(text, wtext, 255);
         }
-        Rect r(4 + this->mod->text_width(text), 3, 2, this->rect.cy - 6);
+        Rect r(4 + this->text_width(text), 3, 2, this->rect.cy - 6);
         this->fill_cursor_rect(r, WHITE, clip);
     }
 }
@@ -281,7 +408,7 @@ void Widget::fill_rect(int rop, const Rect & r, int fg_color, const Rect & clip)
     assert(this->type != WND_TYPE_BITMAP);
     const Rect scr_r = this->to_screen_rect(r);
 
-    const Region region = this->mod->get_visible_region(this, &this->parent, scr_r);
+    const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
@@ -294,7 +421,7 @@ void Widget::fill_cursor_rect(const Rect & r, int fg_color, const Rect & clip)
 {
     assert(this->type != WND_TYPE_BITMAP);
     const Rect scr_r = this->to_screen_rect(r);
-    const Region region = this->mod->get_visible_region(this, &this->parent, scr_r);
+    const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir != region.rects.size(); ir++){
         Rect draw_rect = region.rects[ir].intersect(this->to_screen_rect(clip));
@@ -311,7 +438,7 @@ void Widget::basic_fill_rect(int rop, const Rect & r, int fg_color, const Rect &
     assert(this->type != WND_TYPE_BITMAP);
 
     const Rect scr_r = this->to_screen_rect(r);
-    const Region region = this->mod->get_visible_region(this, &this->parent, scr_r);
+    const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir != region.rects.size(); ir++){
         Rect draw_rect = region.rects[ir].intersect(this->to_screen_rect(clip));
@@ -349,7 +476,7 @@ void widget_combo::draw(const Rect & clip)
 
     /* draw text */
     const uint32_t fg_color = has_focus?WHITE:BLACK;
-    this->mod->server_draw_text(this, 4, 2, this->string_list[this->item_index], fg_color, clip);
+    this->server_draw_text(this, 4, 2, this->string_list[this->item_index], fg_color, clip);
     /* draw button on right */
     Rect r(this->rect.cx - 20, 2, 18, this->rect.cy - 4);
     if (this->state == BUTTON_STATE_UP) { /* 0 */
@@ -479,8 +606,8 @@ void widget_button::draw(const Rect & clip)
 {
     int bevel = (this->state == BUTTON_STATE_DOWN)?1:0;
 
-    int w = this->mod->text_width(this->caption1);
-    int h = this->mod->text_height(this->caption1);
+    int w = this->text_width(this->caption1);
+    int h = this->text_height(this->caption1);
     Rect r(0, 0, this->rect.cx, this->rect.cy);
     if (this->state == BUTTON_STATE_DOWN) {
         /* gray box */
@@ -518,7 +645,7 @@ void widget_button::draw(const Rect & clip)
         this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK, clip);
     }
 
-    this->mod->server_draw_text(this,
+    this->server_draw_text(this,
         this->rect.cx / 2 - w / 2 + bevel,
         this->rect.cy / 2 - h / 2 + bevel, this->caption1, BLACK, clip);
 
@@ -539,12 +666,12 @@ void widget_popup::draw(const Rect & clip)
         size_t list_count = this->popped_from->string_list.size();
         for (unsigned i = 0; i < list_count; i++) {
             char * p = this->popped_from->string_list[i];
-            int h = this->mod->text_height(p);
+            int h = this->text_height(p);
             this->item_height = h;
             if (i == this->item_index) { // deleted item
                 this->fill_rect(0xCC, Rect(0, y, this->rect.cx, h), WABGREEN, clip);
             }
-            this->mod->server_draw_text(this, 2, y, p, (i == this->item_index)?WHITE:BLACK, clip);
+            this->server_draw_text(this, 2, y, p, (i == this->item_index)?WHITE:BLACK, clip);
             y = y + h;
         }
     }
@@ -556,7 +683,7 @@ void Widget::draw(const Rect & clip)
 
 void widget_label::draw(const Rect & clip)
 {
-    this->mod->server_draw_text(this, 0, 0, this->caption1, BLACK, clip);
+    this->server_draw_text(this, 0, 0, this->caption1, BLACK, clip);
 }
 
 // transform a rectangle relative to current widget to rectangle relative to screen
@@ -583,11 +710,11 @@ void widget_image::draw(const Rect & clip)
 {
     Rect image_screen_rect = this->to_screen_rect();
     Rect intersection = image_screen_rect.intersect(this->to_screen_rect(clip));
-    const Region region = this->mod->get_visible_region(this, &this->parent, intersection);
+    const Region region = this->get_visible_region(this, &this->parent, intersection);
 
     for (size_t ir = 0; ir < region.rects.size(); ir++){
         this->mod->server_set_clip(region.rects[ir]);
-        this->mod->server_paint_rect(bmp, image_screen_rect, 0, 0, this->mod->palette332); 
+        this->mod->server_paint_rect(bmp, image_screen_rect, 0, 0, this->mod->palette332);
     }
 }
 

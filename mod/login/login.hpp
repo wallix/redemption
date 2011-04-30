@@ -60,7 +60,7 @@ struct wab_help : public window
                 tmp[0] = 0;
                 strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
                 tmp[255] = 0;
-                this->mod->server_draw_text(this, 10, 30 + 16 * count, tmp, BLACK, this->rect.wh());
+                this->server_draw_text(this, 10, 30 + 16 * count, tmp, BLACK, this->rect.wh());
                 count++;
                 if (!str){
                     done = true;
@@ -231,7 +231,7 @@ struct combo_help : public window
                 tmp[0] = 0;
                 strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
                 tmp[255] = 0;
-                this->mod->server_draw_text(this, 10, 30 + 16 * count, tmp, BLACK, this->rect.wh());
+                this->server_draw_text(this, 10, 30 + 16 * count, tmp, BLACK, this->rect.wh());
                 count++;
                 if (!str){
                     done = true;
