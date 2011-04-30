@@ -521,7 +521,31 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
 {
     LOG(LOG_INFO, "widget::draw_focus_rect");
     #warning is passing r.x, r.y necessary here for drawing pattern ?
-    this->mod->set_domino_brush(r.x, r.y);
+    #warning create some set_brush primitive in client_mod
+    this->mod->brush.hatch = 0xaa;
+    this->mod->brush.extra[0] = 0x55;
+    this->mod->brush.extra[1] = 0xaa;
+    this->mod->brush.extra[2] = 0x55;
+    this->mod->brush.extra[3] = 0xaa;
+    this->mod->brush.extra[4] = 0x55;
+    this->mod->brush.extra[5] = 0xaa;
+    this->mod->brush.extra[6] = 0x55;
+    this->mod->brush.org_x = r.x;
+    this->mod->brush.org_y = r.y;
+    this->mod->brush.style = 3;
+
+    // brush style 3 is not supported by windows 7, we **MUST** use cache
+    if (this->mod->front->orders->rdp_layer->client_info.brush_cache_code == 1) {
+        uint8_t pattern[8];
+        pattern[0] = this->mod->brush.hatch;
+        memcpy(pattern+1, this->mod->brush.extra, 7);
+        int cache_idx = 0;
+        if (BRUSH_TO_SEND == this->mod->front->cache->add_brush(pattern, cache_idx)){
+            this->mod->front->send_brush(cache_idx);
+        }
+        this->mod->brush.hatch = cache_idx;
+        this->mod->brush.style = 0x81;
+    }
 
     #warning all coordinates provided to front functions should be screen coordinates, converting window relative coordinates to screen coordinates should be responsibility of caller.
     #warning pass in scr_r in screen coordinates instead or r
