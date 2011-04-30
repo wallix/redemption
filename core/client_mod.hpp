@@ -377,25 +377,15 @@ struct client_mod {
         free(bmpdata);
     }
 
-    int send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y)
+    void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y)
     {
-        try {
-            this->front->send_pointer(cache_idx, data, mask, x, y);
-        }
-        catch (...){
-        }
-        return 0;
+        this->front->send_pointer(cache_idx, data, mask, x, y);
     }
 
-    int set_pointer(int cache_idx)
+    void set_pointer(int cache_idx)
     {
-        try {
-            this->front->set_pointer(cache_idx);
-            this->current_pointer = cache_idx;
-        }
-        catch (...){
-        }
-        return 0;
+        this->front->set_pointer(cache_idx);
+        this->current_pointer = cache_idx;
     }
 
     void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
