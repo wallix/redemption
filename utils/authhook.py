@@ -13,25 +13,31 @@ class Authentifier(object):
     # It will certainly change to something stronger to avoid storing passwords
     # at all. Comparing hashes is enough anyway.
     passwords = {
-        'toto': 'totopass',
-        'foo' : 'foopass',
-        'bar' : 'baz',
-        'vnc' : 'vncpass'
+        'xp': 'xp',
+        'n' : 'n',
+        'cgr' : 'cgr',
     }
     targets = {
-        'toto' : {
+        'xp' : {
             'proxy_type': 'RDP',
             'target_login' : r'qa\administrateur',
             'target_device' : '10.10.14.111',
             'target_password' : 'S3cur3!1nux',
             'target_port':'3389'
         },
-        'vnc' : {
+        'n' : {
             'proxy_type': 'VNC',
             'target_login' : r'vnc',
-            'target_device' : '127.0.0.1',
+            'target_device' : '10.10.14.70',
+            'target_password' : 'SecureLi',
+            'target_port':'5900'
+        },
+        'cgr' : {
+            'proxy_type': 'VNC',
+            'target_login' : r'vnc',
+            'target_device' : '10.10.4.13',
             'target_password' : 'secure',
-            'target_port':'5901'
+            'target_port':'5900'
         }
     }
 

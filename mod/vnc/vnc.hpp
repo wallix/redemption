@@ -73,6 +73,8 @@ struct mod_vnc : public client_mod {
             this->clip_chanid = 0;
             this->clip_data_size = 0;
 
+            LOG(LOG_INFO, "username=%s password=%s", username, password);
+
             strcpy(this->username, username);
             strcpy(this->password, password);
             // not used for vnc
@@ -82,10 +84,8 @@ struct mod_vnc : public client_mod {
             uint8_t cursor_data[32 * (32 * 3)];
             uint8_t cursor_mask[32 * (32 / 8)];
             int error = 0;
-            int i;
-            int check_sec_result;
 
-            check_sec_result = 1;
+            int check_sec_result = 1;
             if ((bpp != 8) && (bpp != 15) && (bpp != 16) && (bpp != 24)) {
                 LOG(LOG_INFO, "error - only supporting 8, 15, 16 and 24 bpp rdp connections\n");
                 throw Error(ERR_VNC_BAD_BPP);
@@ -104,10 +104,12 @@ struct mod_vnc : public client_mod {
                 LOG(LOG_INFO, "security level is %d "
                               "(1 = none, 2 = standard)\n",
                               security_level);
+
                 switch (security_level){
                     case 1: /* none */
                         break;
                     case 2: /* dec the password and the server random */
+                    {
                         stream.init(8192);
                         this->t->recv((char**)&stream.end, 16);
                         this->rfbEncryptBytes(stream.data, this->password);
@@ -116,14 +118,15 @@ struct mod_vnc : public client_mod {
                         /* sec result */
                         stream.init(8192);
                         this->t->recv((char**)&stream.end, 4);
-                        i = stream.in_uint32_be();
+                        int i = stream.in_uint32_be();
                         if (i != 0) {
                             LOG(LOG_INFO, "vnc password failed\n");
                             throw 2;
                         } else {
                             LOG(LOG_INFO, "vnc password ok\n");
                         }
-                        break;
+                    }
+                    break;
                     default:
                         throw 1;
                 }
@@ -139,7 +142,12 @@ struct mod_vnc : public client_mod {
                 this->t->recv((char**)&stream.end, 4); /* server init */
                 int width = stream.in_uint16_be();
                 int height = stream.in_uint16_be();
+
+                LOG(LOG_INFO, "VNC received: width=%s height=%s", width, height);
+
                 this->server_set_clip(Rect(0, 0, width, height));
+
+
 
                 stream.init(8192); /* pixel format */
                 #warning send and recv should be stream aware
@@ -149,7 +157,7 @@ struct mod_vnc : public client_mod {
                 stream.init(8192);
                 this->t->recv((char**)&stream.end, 4); /* name len */
 
-                i = stream.in_uint32_be();
+                int i = stream.in_uint32_be();
                 if (i > 255 || i < 0) {
                     throw 3;
                 }

@@ -268,7 +268,7 @@ class SessionManager {
 
             else if (this->context.get_bool(STRAUTHID_AUTHENTICATED)){
 
-                LOG(LOG_INFO, "NOW WE SHOULD START AN RDP CONNEXION\n");
+                LOG(LOG_INFO, "NOW WE SHOULD START A REMOTE CONNEXION\n");
                 next_state = this->get_mod_from_protocol();
                 this->context.mod_state = MOD_STATE_CONNECTED_RDP;
                 record_video = this->context.get_bool(STRAUTHID_OPT_MOVIE);

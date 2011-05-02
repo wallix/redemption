@@ -804,6 +804,8 @@ bool Session::session_setup_mod(int status, const ModContext * context)
             this->mod = this->no_mod;
         }
 
+        LOG(LOG_INFO, "Status=%d", status);
+
         switch (status)
         {
             case MCTX_STATUS_CLI:
