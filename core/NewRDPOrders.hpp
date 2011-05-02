@@ -389,14 +389,7 @@ class RDPColCache {
         stream.out_uint8(cacheIndex);
         stream.out_uint16_le(256); /* num colors */
         for (int i = 0; i < 256; i++) {
-            int color = this->palette[cacheIndex][i];
-            uint8_t r = color >> 16;
-            uint8_t g = color >> 8;
-            uint8_t b = color;
-            stream.out_uint8(r);
-            stream.out_uint8(g);
-            stream.out_uint8(b);
-            stream.out_uint8(0x00);
+            stream.out_uint32_le(this->palette[cacheIndex][i]);
         }
     }
 
