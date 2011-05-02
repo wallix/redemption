@@ -367,7 +367,7 @@ struct Orders
         this->out_stream.out_copy_bytes(data, size);
     }
 
-    void send_bitmap(Stream & stream, Bitmap & bmp, int cache_id, int cache_idx)
+    void send_bitmap(Stream & stream, Bitmap & bmp, int cache_id, int cache_idx, bool small_headers)
     {
         Stream tmp(16384);
         bmp.compress(tmp);
@@ -375,44 +375,14 @@ struct Orders
 
         this->reserve_order(bufsize + 16);
 
-        LOG(LOG_INFO, "send_bitmap[%d](cache_id=%d, cache_idx=%d)\n", this->order_count, cache_id, cache_idx);
-
-        int order_flags = STANDARD | SECONDARY;
-        stream.out_uint8(order_flags);
-        stream.out_uint16_le(bufsize + 10);
-        stream.out_uint16_le(8); /* flags */
-        stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); /* type */
-        stream.out_uint8(cache_id);
-        stream.out_clear_bytes(1); /* pad */
-        stream.out_uint8(align4(bmp.cx));
-        stream.out_uint8(bmp.cy);
-        stream.out_uint8(bmp.bpp);
-        stream.out_uint16_le(bufsize/* + 8*/);
-        stream.out_uint16_le(cache_idx);
-        stream.out_clear_bytes(2); /* pad */
-        stream.out_uint16_le(bufsize);
-        stream.out_uint16_le(bmp.line_size);
-        stream.out_uint16_le(bmp.bmp_size); /* final size */
-        #warning we should compress directly into main stream to avoid useless copy
-        stream.out_copy_bytes(tmp.data, bufsize);
-    }
-
-
-    void send_bitmap_small_headers(Stream & stream, Bitmap & bmp, int cache_id, int cache_idx)
-    {
-        Stream tmp(16384);
-        bmp.compress(tmp);
-        size_t bufsize = tmp.p - tmp.data;
-
-        this->reserve_order(bufsize + 16);
-
-        LOG(LOG_INFO, "send_bitmap_small_headers[%d](cache_id=%d, cache_idx=%d)\n", this->order_count, cache_id, cache_idx);
+        LOG(LOG_INFO, "send_bitmap[%d](cache_id=%d, cache_idx=%dn, sh=%d)\n",
+                this->order_count, cache_id, cache_idx, small_headers);
 
         int order_flags = STANDARD | SECONDARY;
         stream.out_uint8(order_flags);
         /* length after type minus 7 */
-        stream.out_uint16_le(bufsize + 2);
-        stream.out_uint16_le(1024); /* flags */
+        stream.out_uint16_le(bufsize + (small_headers?2:10));
+        stream.out_uint16_le(small_headers?1024:8); /* flags */
         stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); /* type */
 
         stream.out_uint8(cache_id);
@@ -423,6 +393,14 @@ struct Orders
         stream.out_uint8(bmp.bpp);
         stream.out_uint16_le(bufsize/* + 8*/);
         stream.out_uint16_le(cache_idx);
+
+        if (!small_headers){
+            stream.out_clear_bytes(2); /* pad */
+            stream.out_uint16_le(bufsize);
+            stream.out_uint16_le(bmp.line_size);
+            stream.out_uint16_le(bmp.bmp_size); /* final size */
+        }
+
         stream.out_copy_bytes(tmp.data, bufsize);
     }
 
@@ -508,12 +486,12 @@ struct Orders
         break;
         case COMPRESSED:
         {
-            this->send_bitmap(this->out_stream, bmp, cache_id, cache_idx);
+            this->send_bitmap(this->out_stream, bmp, cache_id, cache_idx, false);
         }
         break;
         case COMPRESSED_SMALL_HEADERS:
         {
-            this->send_bitmap_small_headers(this->out_stream, bmp, cache_id, cache_idx);
+            this->send_bitmap(this->out_stream, bmp, cache_id, cache_idx, true);
         }
         break;
         case NEW_COMPRESSED:

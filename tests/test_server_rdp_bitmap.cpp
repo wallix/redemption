@@ -388,10 +388,10 @@ uint8_t compressed[] = {
     printf("compression_type = %d\n", front->orders->get_compression_type());
     switch (front->orders->get_compression_type()){
         case 2:
-            front->orders->send_bitmap_small_headers(front->orders->out_stream, bbb, cid, 48);
+            front->orders->send_bitmap(front->orders->out_stream, bbb, cid, 48, true);
             break;
         case 1:
-            front->orders->send_bitmap(front->orders->out_stream, bbb, cid, 48);
+            front->orders->send_bitmap(front->orders->out_stream, bbb, cid, 48, false);
         break;
         default:
             printf("Uncompressed bitmap\n");

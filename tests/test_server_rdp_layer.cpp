@@ -267,12 +267,12 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
             case COMPRESSED:
             {
                 LOG(LOG_INFO, "compressed bitmap\n");
-                orders->send_bitmap(orders->out_stream, entry->bmp, cache_b_id, cache_b_idx);
+                orders->send_bitmap(orders->out_stream, entry->bmp, cache_b_id, cache_b_idx, false);
             }
             break;
             case COMPRESSED_SMALL_HEADERS:
             {
-                orders->send_bitmap_small_headers(orders->out_stream, entry->bmp, cache_b_id, cache_b_idx);
+                orders->send_bitmap(orders->out_stream, entry->bmp, cache_b_id, cache_b_idx, true);
             }
             break;
             case NEW_NOT_COMPRESSED:
