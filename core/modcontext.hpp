@@ -145,6 +145,11 @@ struct ModContext : public Dico {
             target_user[iusername] = 0;
             target_device[ihost] = 0;
             auth_user[iauthuser] = 0;
+            if ((iusername > 0) && (ihost == 0) && (iauthuser == 0)){
+                memcpy(auth_user, target_user, iusername);
+                auth_user[iusername] = 0;
+                target_user[0] = 0;
+            }
         }
     }
 };

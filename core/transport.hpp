@@ -232,7 +232,7 @@ class SocketTransport : public Transport {
 
     private:
     void connect(const char* ip, int port,
-                 int nbretry = 0, int retry_delai_ms = 1000000) throw (Error)
+                 int nbretry = 2, int retry_delai_ms = 1000) throw (Error)
     {
         LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
         // we will try connection several time
@@ -243,22 +243,26 @@ class SocketTransport : public Transport {
             try {
                 this->sck = socket(PF_INET, SOCK_STREAM, 0);
 
-                /* reuse same port if a previous daemon was stopped */
                 unsigned int option_len;
-                int allow_reuse = 1;
-                setsockopt(this->sck, SOL_SOCKET, SO_REUSEADDR,
-                    (char*)&allow_reuse, sizeof(allow_reuse));
 
                 /* set snd buffer to at least 32 Kbytes */
                 int snd_buffer_size;
                 option_len = sizeof(snd_buffer_size);
-                if (0 == getsockopt(this->sck, SOL_SOCKET, SO_SNDBUF,
-                                (char*)&snd_buffer_size, &option_len)) {
+                if (0 == getsockopt(this->sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, &option_len)) {
                     if (snd_buffer_size < 32768) {
                         snd_buffer_size = 32768;
-                        setsockopt(this->sck, SOL_SOCKET, SO_SNDBUF,
-                            (char*)&snd_buffer_size, sizeof(snd_buffer_size));
+                        if (-1 == setsockopt(this->sck,
+                                SOL_SOCKET,
+                                SO_SNDBUF,
+                                &snd_buffer_size, sizeof(snd_buffer_size))){
+                            LOG(LOG_WARNING, "setsockopt failed with errno=%d", errno);
+                            throw Error(ERR_SOCKET_CONNECT_FAILED);
+                        }
                     }
+                }
+                else {
+                    LOG(LOG_WARNING, "getsockopt failed with errno=%d", errno);
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
 
                 struct sockaddr_in s;
@@ -271,14 +275,20 @@ class SocketTransport : public Transport {
                     LOG(LOG_INFO, "Asking ip to DNS for %s\n", ip);
                     struct hostent *h = gethostbyname(ip);
                     if (!h) {
-                        LOG(LOG_ERR, "DNS resolution failed for %s\n", ip);
+                        LOG(LOG_ERR, "DNS resolution failed for %s"
+                            " with errno =%d (%s)\n",
+                            ip,
+                            errno, strerror(errno));
                         throw Error(ERR_SOCKET_GETHOSTBYNAME_FAILED);
                     }
                     s.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
                 }
                 #warning we should control and detect timeout instead of relying on default connect behavior. Maybe set O_NONBLOCK and use poll to manage timeouts ?
-                if (::connect(this->sck, (struct sockaddr*)&s, sizeof(s))){
-                    LOG(LOG_INFO, "connection to %s failed\n", ip);
+                if (-1 == ::connect(this->sck, (struct sockaddr*)&s, sizeof(s))){
+                    LOG(LOG_INFO, "connection to %s failed"
+                        " with errno = %d (%s)\n",
+                        ip,
+                        errno, strerror(errno));
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
                 fcntl(this->sck, F_SETFL, fcntl(this->sck, F_GETFL) | O_NONBLOCK);

@@ -59,11 +59,6 @@ install install-bin
 #    <install-dependencies>on
     ;
 
-install install-test
-    : rdp-authhook video_test
-    : <location>$(BIN_PREFIX)
-    ;
-
 install install-share
     : [ glob sys/share/rdpproxy/[^.k]* ]
     : <location>$(SHARE_PREFIX)
@@ -203,14 +198,6 @@ exe test_server_rdp_bitmap
         libboost_program_options
     :
     <link>static
-    ;
-
-exe rdp-authhook
-    :
-        utils/authhook/authhook.cpp
-    :
-    <link>static
-    <variant>debug
     ;
 
 exe xrdp-genkeymap

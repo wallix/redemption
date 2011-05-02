@@ -124,17 +124,6 @@ struct client_mod {
         return 0; // convert(color);
     }
 
-    uint32_t convert_le(uint32_t color)
-    {
-        uint32_t color24 = color_decode(color, this->mod_bpp, this->mod_palette);
-
-        color24 = (color24 & 0x00FF00)
-                | ((color24 >> 16) & 0xFF)
-                | ((color24 & 0xFF) << 16);
-
-        return color_encode(color24, this->front->orders->rdp_layer->client_info.bpp, this->palette332);
-    }
-
     /* client functions */
     virtual int mod_event(int msg, long param1, long param2, long param3, long param4) = 0;
 
