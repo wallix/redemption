@@ -334,17 +334,24 @@ struct rdp_rdp {
             }
             break;
             case RDP_POINTER_COLOR:
+                LOG(LOG_INFO, "Process pointer color\n");
                 this->process_color_pointer_pdu(stream, mod);
+                LOG(LOG_INFO, "Process pointer color done\n");
                 break;
             case RDP_POINTER_CACHED:
+                LOG(LOG_INFO, "Process pointer cached\n");
                 this->process_cached_pointer_pdu(stream, mod);
+                LOG(LOG_INFO, "Process pointer cached done\n");
                 break;
             case RDP_POINTER_SYSTEM:
+                LOG(LOG_INFO, "Process pointer system\n");
                 this->process_system_pointer_pdu(stream, mod);
+                LOG(LOG_INFO, "Process pointer system done\n");
                 break;
             default:
                 break;
             }
+            LOG(LOG_INFO, "Process pointer PDU done\n");
         }
 
         void process_palette(Stream & stream, client_mod * mod)
@@ -1063,9 +1070,13 @@ struct rdp_rdp {
             // A 16-bit, unsigned integer. The height of the rectangle.
             const uint16_t height = stream.in_uint16_le();
 
+            LOG(LOG_INFO, "bpp=%d width=%d height=%d", bpp, width, height);
+
             // A 16-bit, unsigned integer. The color depth of the rectangle
             // data in bits-per-pixel.
-            const uint8_t bpp = stream.in_uint16_le();
+            uint8_t bpp = stream.in_uint16_le();
+
+            assert(bpp == 24 || bpp == 16 || bpp == 8 || bpp == 15);
 
             // A 16-bit, unsigned integer. The flags describing the format
             // of the bitmap data in the bitmapDataStream field.
@@ -1099,6 +1110,8 @@ struct rdp_rdp {
             // NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not set.
 
             Bitmap bitmap(bpp, width, height);
+
+            LOG(LOG_INFO, "bpp=%d (%d) width=%d height=%d", bpp, bitmap.bpp, width, height);
 
             if (flags & 0x0001){
                 uint16_t size = 0;

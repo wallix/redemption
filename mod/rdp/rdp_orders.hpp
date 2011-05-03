@@ -119,7 +119,7 @@ struct rdp_orders {
     // mode it's probably not enough to store both in the same structure.
     struct RDPColCache cache_colormap;
     #warning this cache_bitmap here looks strange. At least it's size should ne negotiated. And why is it not managed by the other cache management code ? This probably hide some kind of problem. See when working on cache secondary order primitives.
-    struct Bitmap * cache_bitmap[3][600];
+    struct Bitmap * cache_bitmap[3][10000];
 
     #warning it looks strange that rdp_orders object should be depending on bpp parameter, it looks more like a cache implementation detail that should be abstracted here.
     rdp_orders() :
@@ -177,13 +177,13 @@ struct rdp_orders {
                 height = bmp.bmp->cy;
                 width = bmp.bmp->cx;
                 bpp = bmp.bmp->bpp;
-
                 bitmap = bmp.bmp;
+                bmp.bmp = 0;
             }
         break;
         case RDP::TS_CACHE_BITMAP_COMPRESSED:
             {
-                #warning move that to RDPBmpCache
+                #warning move that to RDPBmpCache -> receive
                 int flags = header.flags;
                 int size = 0;
                 int pad2 = 0;
@@ -491,12 +491,13 @@ struct rdp_orders {
     void rdp_orders_process_memblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->memblt.receive(stream, header);
-        LOG(LOG_INFO, "sending memblt\n");
+        LOG(LOG_INFO, "receiving memblt : cache_id=%d cache_idx=%d\n",
+                this->memblt.cache_id & 0xFF, this->memblt.cache_idx);
         struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xFF][this->memblt.cache_idx];
         if (bitmap) {
             mod->server_paint_rect(*bitmap, this->memblt.rect, this->memblt.srcx, this->memblt.srcy, this->cache_colormap.palette[this->memblt.cache_id >> 8]);
         }
-        LOG(LOG_INFO, "sending memblt ok\n");
+        LOG(LOG_INFO, "receiving memblt ok\n");
     }
 
 

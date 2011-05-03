@@ -29,6 +29,7 @@
 #include "rect.hpp"
 #include "altoco.hpp"
 #include "bitmap.hpp"
+#include "client_info.hpp"
 
 // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding
 // =======================================================
@@ -920,16 +921,22 @@ class RDPBmpCache {
     Bitmap * bmp;
     int cache_idx;
     uint8_t orderType;
+    const ClientInfo * client_info;
 
-    RDPBmpCache(int orderType, Bitmap * bmp, int cache_id, int cache_idx) :
+    RDPBmpCache(int orderType, Bitmap * bmp, int cache_id, int cache_idx, ClientInfo * client_info) :
                     cache_id(cache_id),
                     bmp(bmp),
                     cache_idx(cache_idx),
-                    orderType(orderType)
+                    orderType(orderType),
+                    client_info(client_info)
     {
     }
 
     RDPBmpCache()
+    {
+    }
+
+    ~RDPBmpCache()
     {
         if (bmp){
             delete this->bmp;
@@ -943,10 +950,78 @@ class RDPBmpCache {
             case TS_CACHE_BITMAP_UNCOMPRESSED:
                 this->emit_raw_v1(stream);
             break;
+            case TS_CACHE_BITMAP_COMPRESSED:
+                this->emit_v1_compressed(stream);
+            break;
             case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
                 this->emit_raw_v2(stream);
             break;
+            case TS_CACHE_BITMAP_COMPRESSED_REV2:
+                this->emit_v2_compressed(stream);
+            break;
         }
+    }
+
+    void emit_v1_compressed(Stream & stream)
+    {
+        using namespace RDP;
+
+        bool small_headers = this->client_info->op2;
+        Stream tmp(16384);
+        this->bmp->compress(tmp);
+        size_t bufsize = tmp.p - tmp.data;
+
+        LOG(LOG_INFO, "emit_v1_compressed(cache_id=%d, cache_idx=%dn, sh=%d)\n",
+                this->cache_id, this->cache_idx, small_headers);
+
+        int order_flags = STANDARD | SECONDARY;
+        stream.out_uint8(order_flags);
+        /* length after type minus 7 */
+        stream.out_uint16_le(bufsize + (small_headers?2:10));
+        stream.out_uint16_le(small_headers?1024:8); /* flags */
+        stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); /* type */
+
+        stream.out_uint8(cache_id);
+        stream.out_clear_bytes(1); /* pad */
+
+        stream.out_uint8(align4(this->bmp->cx));
+        stream.out_uint8(this->bmp->cy);
+        stream.out_uint8(this->bmp->bpp);
+        stream.out_uint16_le(bufsize/* + 8*/);
+        stream.out_uint16_le(this->cache_idx);
+
+        if (!small_headers){
+            stream.out_clear_bytes(2); /* pad */
+            stream.out_uint16_le(bufsize);
+            stream.out_uint16_le(this->bmp->line_size);
+            stream.out_uint16_le(this->bmp->bmp_size); /* final size */
+        }
+
+        stream.out_copy_bytes(tmp.data, bufsize);
+
+    }
+
+    void emit_v2_compressed(Stream & stream)
+    {
+        using namespace RDP;
+
+        Stream tmp(16384);
+        this->bmp->compress(tmp);
+        size_t bufsize = tmp.p - tmp.data;
+
+        int Bpp = nbbytes(this->bmp->bpp);
+
+        stream.out_uint8(STANDARD | SECONDARY);
+
+        stream.out_uint16_le(bufsize - 1); /* length after type minus 7 */
+        stream.out_uint16_le(0x400 | (((Bpp + 2) << 3) & 0x38) | (cache_id & 7)); /* flags */
+        stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED_REV2); /* type */
+        stream.out_uint8(align4(this->bmp->cx));
+        stream.out_uint8(this->bmp->cy);
+        stream.out_uint16_be(bufsize | 0x4000);
+        stream.out_uint8(((this->cache_idx >> 8) & 0xff) | 0x80);
+        stream.out_uint8(this->cache_idx);
+        stream.out_copy_bytes(tmp.data, bufsize);
     }
 
     void emit_raw_v1(Stream & stream)

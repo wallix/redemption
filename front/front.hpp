@@ -179,12 +179,14 @@ public:
     {
         LOG(LOG_INFO, "front::send_pointer\n");
         this->orders->rdp_layer->server_rdp_send_pointer(cache_idx, data, mask, x, y);
+        LOG(LOG_INFO, "front::send_pointer done\n");
     }
 
     void set_pointer(int cache_idx) throw (Error)
     {
         LOG(LOG_INFO, "front::set_pointer\n");
         this->orders->rdp_layer->server_rdp_set_pointer(cache_idx);
+        LOG(LOG_INFO, "front::set_pointer done\n");
     }
 
 
@@ -315,6 +317,7 @@ public:
             this->orders->send_palette(palette, 0);
             this->orders->send();
         }
+        LOG(LOG_INFO, "front::send_palette done\n");
     }
 
     void send_brush(const int index)
