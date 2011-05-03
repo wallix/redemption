@@ -139,6 +139,7 @@ inline uint32_t color_decode(const uint32_t in_pixel, const uint8_t in_bpp, cons
         splitcolor32RGB(red, green, blue, in_pixel);
     break;
     default:
+        LOG(LOG_ERR, "in_bpp = %d", in_bpp);
         assert(false);
     break;
     }

@@ -257,7 +257,7 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
                 LOG(LOG_INFO, "not compressed bitmap\n");
                 e = 0;
                 {
-                    RDPBmpCache bmp(1, &entry->bmp, cache_b_id, cache_b_idx);
+                    RDPBmpCache bmp(TS_CACHE_BITMAP_UNCOMPRESSED, &entry->bmp, cache_b_id, cache_b_idx, &front->orders->rdp_layer->client_info);
                     // check reserved size depending on version
                     orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
                     bmp.emit(orders->out_stream);
@@ -266,28 +266,31 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
             break;
             case COMPRESSED:
             {
-                LOG(LOG_INFO, "compressed bitmap\n");
-                orders->send_bitmap(orders->out_stream, entry->bmp, cache_b_id, cache_b_idx, false);
-            }
-            break;
-            case COMPRESSED_SMALL_HEADERS:
-            {
-                orders->send_bitmap(orders->out_stream, entry->bmp, cache_b_id, cache_b_idx, true);
+                RDPBmpCache bmp_order(TS_CACHE_BITMAP_COMPRESSED, &entry->bmp, cache_b_id, cache_b_idx,
+                        &front->orders->rdp_layer->client_info);
+                front->orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
+                bmp_order.emit(front->orders->out_stream);
+                bmp_order.bmp = 0; // we do not want RDPBmpCache to desallocate bmp
             }
             break;
             case NEW_NOT_COMPRESSED:
-                LOG(LOG_INFO, "new not compressed bitmap\n");
-                {
-                    RDPBmpCache bmp(2, &entry->bmp, cache_b_id, cache_b_idx);
-                    // check reserved size depending on version
-                    orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
-                    bmp.emit(orders->out_stream);
-                    bmp.bmp = 0;
-                }
+            {
+                RDPBmpCache bmp(TS_CACHE_BITMAP_UNCOMPRESSED_REV2, &entry->bmp, cache_b_id, cache_b_idx,
+                    &front->orders->rdp_layer->client_info);
+                // check reserved size depending on version
+                orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
+                bmp.emit(orders->out_stream);
+                bmp.bmp = 0;
+            }
             break;
             case NEW_COMPRESSED:
             {
-                orders->send_bitmap2(orders->out_stream, entry->bmp, cache_b_id, cache_b_idx);
+                RDPBmpCache bmp(TS_CACHE_BITMAP_COMPRESSED_REV2, &entry->bmp, cache_b_id, cache_b_idx,
+                    &front->orders->rdp_layer->client_info);
+                // check reserved size depending on version
+                orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
+                bmp.emit(orders->out_stream);
+                bmp.bmp = 0;
             }
             break;
         }

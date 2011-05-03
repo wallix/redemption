@@ -216,16 +216,19 @@ struct server_rdp {
             switch (code) {
             case -1:
                 this->server_rdp_send_demand_active();
+                LOG(LOG_INFO, "Client : send demand active");
                 break;
             case 0:
                 break;
             case RDP_PDU_CONFIRM_ACTIVE: /* 3 */
+                LOG(LOG_INFO, "Client : receive confirm active");
                 this->server_rdp_process_confirm_active(stream);
                 break;
             case RDP_PDU_DATA: /* 7 */
                 // this is rdp_process_data that will set up_and_running to 1
                 // when fonts have been received
                 // we will not exit this loop until we are in this state.
+                LOG(LOG_INFO, "Client : receive PDU data");
                 this->server_rdp_process_data(stream);
                 break;
             default:

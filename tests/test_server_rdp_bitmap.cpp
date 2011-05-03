@@ -72,9 +72,6 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 //    orders->init();
 //    orders->opaque_rect(Rect(0, 0, 34, 34), color.pink, Rect(0, 0, 34, 34));
 
-    const uint8_t cache_id = 0;
-    const uint8_t cache_idx = 0;
-
 #define PIXWHITE 0xFF, 0xFF, 0xFF
 #define PIX4WHITE PIXWHITE, PIXWHITE, PIXWHITE, PIXWHITE
 #define PIX8WHITE PIX4WHITE, PIX4WHITE
@@ -88,7 +85,6 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 #define PIX32BLUEWHITE PIX8BLUE, PIX8BLUE, PIX8WHITE, PIX8WHITE
 #define PIX32WHITEBLUE PIX8WHITE, PIX8WHITE, PIX8BLUE, PIX8BLUE
 
-
 //    uint8_t data[32*32*3] = {
 //        PIX32BLUEWHITE, PIX32BLUEWHITE, PIX32BLUEWHITE, PIX32BLUEWHITE,
 //        PIX32BLUEWHITE, PIX32BLUEWHITE, PIX32BLUEWHITE, PIX32BLUEWHITE,
@@ -100,20 +96,6 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 //        PIX32WHITEBLUE, PIX32WHITEBLUE, PIX32WHITEBLUE, PIX32WHITEBLUE,
 //        PIX32WHITEBLUE, PIX32WHITEBLUE, PIX32WHITEBLUE, PIX32WHITEBLUE
 //    };
-
-
-    uint8_t data[32*32*3] = {
-        PIX32BLUE, PIX32BLUE, PIX32BLUE, PIX32BLUE,
-        PIX32BLUE, PIX32BLUE, PIX32BLUE, PIX32BLUE,
-        PIX32BLUE, PIX32BLUE, PIX32BLUE, PIX32BLUE,
-        PIX32BLUE, PIX32BLUE, PIX32BLUE, PIX32BLUE,
-
-        PIX32BLUE, PIX32BLUE, PIX32BLUE, PIX32BLUE,
-        PIX32BLUE, PIX32BLUE, PIX32BLUE, PIX32BLUE,
-        PIX32BLUE, PIX32BLUE, PIX32BLUE, PIX32BLUE,
-        PIX32BLUE, PIX32BLUE, PIX32BLUE, PIX32BLUE,
-    };
-
 
 //    // color encoding is BGR
 //    orders->send_raw_bitmap(32, 32, 24, data, cache_id, cache_idx);
@@ -364,9 +346,9 @@ uint8_t compressed[] = {
     bbb.decompress(compressed, sizeof(compressed));
 
     printf("------- Not Compressed V4 (%d x %d x %d) ---------\n", bbb.cx, bbb.cy, bbb.bpp);
-    for (int y = 0; y < bbb.cy; y++){
+    for (size_t y = 0; y < bbb.cy; y++){
         printf("\n\n/*- %d -*/\n", y);
-        for (int x = 0; x < bbb.line_size; x++){
+        for (size_t x = 0; x < bbb.line_size; x++){
             if (0==((y*bbb.line_size+x) % 16)){
                 printf("\n      ");
             }
@@ -381,23 +363,16 @@ uint8_t compressed[] = {
 //    uint8_t * tosend = compressed;
 //    uint16_t sizetosend = sizeof(compressed);
 
+    using namespace RDP;
+
     uint8_t width = 228;
     uint8_t height = 13;
     uint8_t cid = 1;
     front->orders->init();
-    printf("compression_type = %d\n", front->orders->get_compression_type());
-    switch (front->orders->get_compression_type()){
-        case 2:
-            front->orders->send_bitmap(front->orders->out_stream, bbb, cid, 48, true);
-            break;
-        case 1:
-            front->orders->send_bitmap(front->orders->out_stream, bbb, cid, 48, false);
-        break;
-        default:
-            printf("Uncompressed bitmap\n");
-            assert(false);
-        break;
-    }
+    RDPBmpCache bmp_order(TS_CACHE_BITMAP_COMPRESSED, &bbb, cid, 48, &front->orders->rdp_layer->client_info);
+    front->orders->reserve_order(align4(bbb.cx * nbbytes(bbb.bpp)) * bbb.cy + 16);
+    bmp_order.emit(front->orders->out_stream);
+    bmp_order.bmp = 0; // we do not want RDPBmpCache to desallocate bmp
     front->orders->mem_blt(cid, 0, Rect(364, 356, width, height), 0xcc, 0, 0, 48, Rect(0, 0, 800, 600));
     front->orders->send();
 

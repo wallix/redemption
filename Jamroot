@@ -65,27 +65,15 @@ install install-share
     ;
 
 install install-keymaps
-    : [ glob sys/share/rdpproxy/keymaps/* ]
+    : [ glob sys/share/rdpproxy/keymaps/[^.]* ]
     : <location>$(SHARE_PREFIX)/keymaps
     ;
 
 install install-etc
-    : [ glob sys/etc/rdpproxy/*ini ] rdpproxy.ini
+    : [ glob sys/etc/rdpproxy/*ini ]
     : <location>$(ETC_PREFIX)
     ;
 
-make rdpproxy.ini : sys/etc/rdpproxy/rdpproxy.template : @filter ;
-
-make rdpproxy.ini : sys/etc/rdpproxy/rdpproxy.template.debug : @filter : <variant>debug ;
-
-actions filter
-{
-# example of filtering a reference configuration file template to get real file
-# for now it could have been done directly as template is copied but not changed.
-    cp $(>) $(<)
-}
-
-# How to use predefined boost build target ?
 lib libboost_unit_test : : <name>boost_unit_test_framework-mt <link>static ;
 lib libboost_program_options : : <name>boost_program_options-mt <link>static ;
 lib openssl : : <name>ssl <link>shared ;
