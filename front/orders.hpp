@@ -433,22 +433,18 @@ struct Orders
     int get_compression_type()
     {
         int compressed_cache_type = 0;
-        switch (((this->rdp_layer->client_info.bitmap_cache_version != 0) * 4)
-              + ((this->rdp_layer->client_info.use_bitmap_comp      != 0) * 2)
-              +  (this->rdp_layer->client_info.op2                  != 0)    ){
-        case 0: case 1:
+        switch (((this->rdp_layer->client_info.bitmap_cache_version != 0) * 2)
+              + ((this->rdp_layer->client_info.use_bitmap_comp      != 0))){
+        case 0:
             compressed_cache_type = NOT_COMPRESSED;
             break;
-        case 2:
+        case 1:
             compressed_cache_type = COMPRESSED;
             break;
-        case 3:
-            compressed_cache_type = COMPRESSED_SMALL_HEADERS;
-            break;
-        case 4: case 5:
+        case 2:
             compressed_cache_type = NEW_NOT_COMPRESSED;
             break;
-        case 6: case 7:
+        case 3:
             compressed_cache_type = NEW_COMPRESSED;
             break;
         }
@@ -462,41 +458,51 @@ struct Orders
         switch (this->get_compression_type()){
         case NOT_COMPRESSED:
         {
-            RDPBmpCache bmp_order(TS_CACHE_BITMAP_UNCOMPRESSED, bmp, cache_id, cache_idx);
+            RDPBmpCache bmp_order(TS_CACHE_BITMAP_UNCOMPRESSED, &bmp, cache_id, cache_idx);
             // check reserved size depending on version
             this->reserve_order(align4(bmp.cx * nbbytes(bmp.bpp)) * bmp.cy + 16);
 
             LOG(LOG_INFO, "send_bitmap_common::UNCOMPRESSED[%d](cache_id=%d, cache_idx=%d)\n", this->order_count, cache_id, cache_idx);
 
             bmp_order.emit(this->out_stream);
-            bmp_order.data = 0;
+            bmp_order.bmp = 0;
         }
         break;
         case NEW_NOT_COMPRESSED:
         {
-            RDPBmpCache bmp_order(TS_CACHE_BITMAP_UNCOMPRESSED_REV2, bmp, cache_id, cache_idx);
+            RDPBmpCache bmp_order(TS_CACHE_BITMAP_UNCOMPRESSED_REV2, &bmp, cache_id, cache_idx);
             // check reserved size depending on version
             this->reserve_order(align4(bmp.cx * nbbytes(bmp.bpp)) * bmp.cy + 16);
 
             LOG(LOG_INFO, "send_bitmap_common::UNCOMPRESSED_REV2[%d](cache_id=%d, cache_idx=%d)\n", this->order_count, cache_id, cache_idx);
 
             bmp_order.emit(this->out_stream);
-            bmp_order.data = 0;
+            bmp_order.bmp = 0;
         }
         break;
         case COMPRESSED:
         {
-            this->send_bitmap(this->out_stream, bmp, cache_id, cache_idx, false);
-        }
-        break;
-        case COMPRESSED_SMALL_HEADERS:
-        {
-            this->send_bitmap(this->out_stream, bmp, cache_id, cache_idx, true);
+            LOG(LOG_INFO, "send_bitmap_common::COMPRESSED[%d](cache_id=%d, cache_idx=%d)\n",
+                this->order_count, cache_id, cache_idx);
+//            RDPBmpCache bmp_order(TS_CACHE_BITMAP_UNCOMPRESSED, bmp, cache_id, cache_idx);
+            this->send_bitmap(this->out_stream, bmp, cache_id, cache_idx,
+                              this->rdp_layer->client_info.op2);
+//            this->reserve_order(align4(bmp.cx * nbbytes(bmp.bpp)) * bmp.cy + 16);
+
+//            bmp_order.emit(this->out_stream);
+//            bmp_order.data = 0;
         }
         break;
         case NEW_COMPRESSED:
         {
+            LOG(LOG_INFO, "send_bitmap_common::NEW_COMPRESSED[%d](cache_id=%d, cache_idx=%d)\n",
+                this->order_count, cache_id, cache_idx);
+//            RDPBmpCache bmp_order(TS_CACHE_BITMAP_COMPRESSED_REV2, bmp, cache_id, cache_idx);
             this->send_bitmap2(this->out_stream, bmp, cache_id, cache_idx);
+//            this->reserve_order(align4(bmp.cx * nbbytes(bmp.bpp)) * bmp.cy + 16);
+
+//            bmp_order.emit(this->out_stream);
+//            bmp_order.data = 0;
         }
         break;
         }

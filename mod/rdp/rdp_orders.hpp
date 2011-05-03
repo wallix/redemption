@@ -174,16 +174,16 @@ struct rdp_orders {
                 bmp.receive(stream, control, header);
                 cache_id = bmp.cache_id;
                 cache_idx = bmp.cache_idx;
-                height = bmp.height;
-                width = bmp.width;
-                bpp = bmp.bpp;
+                height = bmp.bmp->cy;
+                width = bmp.bmp->cx;
+                bpp = bmp.bmp->bpp;
 
-                bitmap = new Bitmap(bmp.bpp, width, height);
-                bitmap->copy(bmp.data);
+                bitmap = bmp.bmp;
             }
         break;
         case RDP::TS_CACHE_BITMAP_COMPRESSED:
             {
+                #warning move that to RDPBmpCache
                 int flags = header.flags;
                 int size = 0;
                 int pad2 = 0;

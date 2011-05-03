@@ -218,43 +218,39 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 
         BitmapCacheItem * entry_b = front->bmp_cache->get_item(cache_b_id, cache_b_idx);
         {
-            #warning RDPBmpCache can probably be merged with bitmap object
-            RDPBmpCache bmp(1, entry_b->bmp, cache_b_id, cache_b_idx);
+            RDPBmpCache bmp(1, &entry_b->bmp, cache_b_id, cache_b_idx);
         // check reserved size depending on version
             orders->reserve_order(align4(entry_b->bmp.cx * nbbytes(entry_b->bmp.bpp)) * entry_b->bmp.cy + 16);
             bmp.emit(orders->out_stream);
-            bmp.data = 0;
+            bmp.bmp = 0;
         }
 
         BitmapCacheItem * entry_b_h = front->bmp_cache->get_item(cache_b_id_h, cache_b_idx_h);
         {
-            #warning RDPBmpCache can probably be merged with bitmap object
-            RDPBmpCache bmp(1, entry_b_h->bmp, cache_b_id_h, cache_b_idx_h);
+            RDPBmpCache bmp(1, &entry_b_h->bmp, cache_b_id_h, cache_b_idx_h);
         // check reserved size depending on version
             orders->reserve_order(align4(entry_b_h->bmp.cx * nbbytes(entry_b_h->bmp.bpp)) * entry_b_h->bmp.cy + 16);
             bmp.emit(orders->out_stream);
-            bmp.data = 0;
+            bmp.bmp = 0;
         }
 
 
         BitmapCacheItem * entry_b_wallix = front->bmp_cache->get_item(cache_b_id_wallix, cache_b_idx_wallix);
         {
-            #warning RDPBmpCache can probably be merged with bitmap object
-            RDPBmpCache bmp(1, entry_b_wallix->bmp, cache_b_id_wallix, cache_b_idx_wallix);
+            RDPBmpCache bmp(1, &entry_b_wallix->bmp, cache_b_id_wallix, cache_b_idx_wallix);
            // check reserved size depending on version
             orders->reserve_order(align4(entry_b_wallix->bmp.cx * nbbytes(entry_b_wallix->bmp.bpp)) * entry_b_wallix->bmp.cy + 16);
             bmp.emit(orders->out_stream);
-            bmp.data = 0;
+            bmp.bmp = 0;
         }
 
         BitmapCacheItem * entry_b_h_wallix = front->bmp_cache->get_item(cache_b_id_h_wallix, cache_b_idx_h_wallix);
         {
-            #warning RDPBmpCache can probably be merged with bitmap object
-            RDPBmpCache bmp(1, entry_b_h_wallix->bmp, cache_b_id_h_wallix, cache_b_idx_h_wallix);
+            RDPBmpCache bmp(1, &entry_b_h_wallix->bmp, cache_b_id_h_wallix, cache_b_idx_h_wallix);
         // check reserved size depending on version
             orders->reserve_order(align4(entry_b_h_wallix->bmp.cx * nbbytes(entry_b_h_wallix->bmp.bpp)) * entry_b_h_wallix->bmp.cy + 16);
             bmp.emit(orders->out_stream);
-            bmp.data = 0;
+            bmp.bmp = 0;
         }
         orders->send();
 

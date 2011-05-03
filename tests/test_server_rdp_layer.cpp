@@ -257,11 +257,11 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
                 LOG(LOG_INFO, "not compressed bitmap\n");
                 e = 0;
                 {
-                    RDPBmpCache bmp(1, entry->bmp, cache_b_id, cache_b_idx);
+                    RDPBmpCache bmp(1, &entry->bmp, cache_b_id, cache_b_idx);
                     // check reserved size depending on version
                     orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
                     bmp.emit(orders->out_stream);
-                    bmp.data = 0;
+                    bmp.bmp = 0;
                 }
             break;
             case COMPRESSED:
@@ -278,11 +278,11 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
             case NEW_NOT_COMPRESSED:
                 LOG(LOG_INFO, "new not compressed bitmap\n");
                 {
-                    RDPBmpCache bmp(2, entry->bmp, cache_b_id, cache_b_idx);
+                    RDPBmpCache bmp(2, &entry->bmp, cache_b_id, cache_b_idx);
                     // check reserved size depending on version
                     orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
                     bmp.emit(orders->out_stream);
-                    bmp.data = 0;
+                    bmp.bmp = 0;
                 }
             break;
             case NEW_COMPRESSED:

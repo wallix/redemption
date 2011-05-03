@@ -917,24 +917,23 @@ class RDPBmpCache {
 
     public:
     int cache_id;
-    int width;
-    int height;
-    int bpp;
+    Bitmap * bmp;
     int cache_idx;
-    uint8_t * data;
     uint8_t orderType;
 
-    RDPBmpCache(int orderType, Bitmap & bmp, int cache_id, int cache_idx) :
+    RDPBmpCache(int orderType, Bitmap * bmp, int cache_id, int cache_idx) :
                     cache_id(cache_id),
-                    width(bmp.cx), height(bmp.cy), bpp(bmp.bpp),
+                    bmp(bmp),
                     cache_idx(cache_idx),
-                    data(bmp.data_co),
                     orderType(orderType)
     {
     }
 
     RDPBmpCache()
     {
+        if (bmp){
+            delete this->bmp;
+        }
     }
 
     void emit(Stream & stream)
@@ -953,14 +952,14 @@ class RDPBmpCache {
     void emit_raw_v1(Stream & stream)
     {
         using namespace RDP;
-        unsigned int row_size = align4(width * nbbytes(bpp));
+        unsigned int row_size = align4(this->bmp->cx * nbbytes(this->bmp->bpp));
 
         #warning this should become some kind of emit header
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);
 //        LOG(LOG_INFO, "out_uint8::Standard and secondary");
 
-        stream.out_uint16_le(9 + this->height * row_size  - 7); // length after orderType - 7
+        stream.out_uint16_le(9 + this->bmp->cy * row_size  - 7); // length after orderType - 7
 //        LOG(LOG_INFO, "out_uint16_le::len %d\n", 9 + this->height * row_size - 7);
 
         stream.out_uint16_le(8);        // extraFlags
@@ -986,13 +985,13 @@ class RDPBmpCache {
         // bitmapWidth (1 byte): An 8-bit, unsigned integer. The width of the
         // bitmap in pixels.
 
-        stream.out_uint8(this->width);
+        stream.out_uint8(this->bmp->cx);
 //        LOG(LOG_INFO, "out_uint8::width=%d\n", width);
 
         // bitmapHeight (1 byte): An 8-bit, unsigned integer. The height of the
         //  bitmap in pixels.
 
-        stream.out_uint8(this->height);
+        stream.out_uint8(this->bmp->cy);
 //        LOG(LOG_INFO, "out_uint8::height=%d\n", height);
 
         // bitmapBitsPerPel (1 byte): An 8-bit, unsigned integer. The color
@@ -1003,7 +1002,7 @@ class RDPBmpCache {
         //  0x18 24-bit color depth.
         //  0x20 32-bit color depth.
 
-        stream.out_uint8(this->bpp);
+        stream.out_uint8(this->bmp->bpp);
 //        LOG(LOG_INFO, "out_uint8::bpp=%d\n", bpp);
 
         // bitmapLength (2 bytes): A 16-bit, unsigned integer. The size in
@@ -1011,7 +1010,7 @@ class RDPBmpCache {
         //  fields.
 
 //        LOG(LOG_INFO, "out_uint16::bufsize=%d\n", bufsize);
-        stream.out_uint16_le(this->height * row_size);
+        stream.out_uint16_le(this->bmp->cy * row_size);
 
         // cacheIndex (2 bytes): A 16-bit, unsigned integer. An entry in the
         // bitmap cache (specified by the cacheId field) where the bitmap MUST
@@ -1031,8 +1030,8 @@ class RDPBmpCache {
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
-        for (int y = 0 ; y < this->height; y++) {
-            stream.out_copy_bytes(this->data + y * row_size, row_size);
+        for (size_t y = 0 ; y < this->bmp->cy; y++) {
+            stream.out_copy_bytes(this->bmp->data_co + y * row_size, row_size);
         }
     }
 
@@ -1165,7 +1164,7 @@ class RDPBmpCache {
     void emit_raw_v2(Stream & stream)
     {
         using namespace RDP;
-        unsigned int row_size = align4(width * nbbytes(bpp));
+        unsigned int row_size = align4(this->bmp->cx * nbbytes(this->bmp->bpp));
 
         #warning this should become some kind of emit header
         uint8_t control = STANDARD | SECONDARY;
@@ -1175,7 +1174,7 @@ class RDPBmpCache {
         uint8_t * length_ptr = stream.p;
         stream.skip_uint8(2);
 
-        int bitsPerPixelId = nbbytes(this->bpp)+2;
+        int bitsPerPixelId = nbbytes(this->bmp->bpp)+2;
 
         #warning some optimisations are possible here if we manage flags, but what will we do with persistant bitmaps ? We definitely do not want to save them on disk from here. There must be some kind of persistant structure where to save them and check if they exist.
         uint16_t flags = 0;
@@ -1200,18 +1199,18 @@ class RDPBmpCache {
         // bitmapWidth (variable): A Two-Byte Unsigned Encoding (section
         //                         2.2.2.2.1.2.1.2) structure. The width of the
         //                         bitmap in pixels.
-        stream.out_uint8(align4(this->width));
+        stream.out_uint8(align4(this->bmp->cx));
 
         // bitmapHeight (variable): A Two-Byte Unsigned Encoding (section
         //                          2.2.2.2.1.2.1.2) structure. The height of the
         //                          bitmap in pixels.
-        stream.out_uint8(this->height);
+        stream.out_uint8(this->bmp->cy);
 
         // bitmapLength (variable): A Four-Byte Unsigned Encoding (section
         //                          2.2.2.2.1.2.1.4) structure. The size in bytes
         //                          of the data in the bitmapComprHdr and
         //                          bitmapDataStream fields.
-        stream.out_uint16_be((this->height * row_size) | 0x4000);
+        stream.out_uint16_be((this->bmp->cy * row_size) | 0x4000);
 
         // cacheIndex (variable): A Two-Byte Unsigned Encoding (section
         //                        2.2.2.2.1.2.1.2) structure. An entry in the bitmap
@@ -1243,7 +1242,7 @@ class RDPBmpCache {
         //                              2.2.9.1.1.3.1.2.2).
 
         // for uncompressed bitmaps the format is quite simple
-        stream.out_copy_bytes(this->data, this->height * row_size);
+        stream.out_copy_bytes(this->bmp->data_co, this->bmp->cy * row_size);
         stream.set_length(-12, length_ptr);
     }
 
@@ -1277,12 +1276,12 @@ class RDPBmpCache {
         // bitmapWidth (1 byte): An 8-bit, unsigned integer. The width of the
         // bitmap in pixels.
 
-        this->width = stream.in_uint8();
+        uint8_t width = stream.in_uint8();
 
         // bitmapHeight (1 byte): An 8-bit, unsigned integer. The height of the
         //  bitmap in pixels.
 
-        this->height = stream.in_uint8();
+        uint8_t height = stream.in_uint8();
 
         // bitmapBitsPerPel (1 byte): An 8-bit, unsigned integer. The color
         //  depth of the bitmap data in bits-per-pixel. This field MUST be one
@@ -1292,7 +1291,7 @@ class RDPBmpCache {
         //  0x18 24-bit color depth.
         //  0x20 32-bit color depth.
 
-        this->bpp = stream.in_uint8();
+        uint8_t bpp = stream.in_uint8();
 
         // bitmapLength (2 bytes): A 16-bit, unsigned integer. The size in
         //  bytes of the data in the bitmapComprHdr and bitmapDataStream
@@ -1318,11 +1317,9 @@ class RDPBmpCache {
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
-        #warning I should be able to create a bitmap instead of doing this
-        int row_size = align4(width * nbbytes(bpp));
-        assert(row_size * height == bufsize);
-        this->data = new uint8_t[bufsize];
-        memcpy(this->data, stream.in_uint8p(bufsize), bufsize);
+        this->bmp = new Bitmap(bpp, width, height);
+        assert(bufsize == this->bmp->bmp_size);
+        memcpy(this->bmp->data_co, stream.in_uint8p(bufsize), bufsize);
     }
 
     bool operator==(const RDPBmpCache & other) const {
