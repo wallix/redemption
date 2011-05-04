@@ -61,7 +61,7 @@ class Authentifier(object):
         print self.dic
         _login = self.dic.get('login')
         _password = self.dic.get('password')
-        if self.passwords.get(_login) == _password:
+        if _password and self.passwords.get(_login) == _password:
             print "Password OK"
             self.dic.update(self.targets.get(_login, {}))
         else:
