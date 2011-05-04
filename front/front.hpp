@@ -354,7 +354,9 @@ public:
 
                     BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
 
+
                     if (send_type == BITMAP_ADDED_TO_CACHE){
+                        LOG(LOG_INFO, "Added to cache: id=%d idx=%d", cache_id, cache_idx);
                         this->orders->send_bitmap_common(entry->bmp, cache_id, cache_idx);
                     };
 

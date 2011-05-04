@@ -369,7 +369,7 @@ uint8_t compressed[] = {
     uint8_t height = 13;
     uint8_t cid = 1;
     front->orders->init();
-    RDPBmpCache bmp_order(TS_CACHE_BITMAP_COMPRESSED, &bbb, cid, 48, &front->orders->rdp_layer->client_info);
+    RDPBmpCache bmp_order(&bbb, cid, 48, &front->orders->rdp_layer->client_info);
     front->orders->reserve_order(align4(bbb.cx * nbbytes(bbb.bpp)) * bbb.cy + 16);
     bmp_order.emit(front->orders->out_stream);
     bmp_order.bmp = 0; // we do not want RDPBmpCache to desallocate bmp

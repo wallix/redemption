@@ -920,14 +920,12 @@ class RDPBmpCache {
     int cache_id;
     Bitmap * bmp;
     int cache_idx;
-    uint8_t orderType;
     const ClientInfo * client_info;
 
-    RDPBmpCache(int orderType, Bitmap * bmp, int cache_id, int cache_idx, ClientInfo * client_info) :
+    RDPBmpCache(Bitmap * bmp, int cache_id, int cache_idx, ClientInfo * client_info) :
                     cache_id(cache_id),
                     bmp(bmp),
                     cache_idx(cache_idx),
-                    orderType(orderType),
                     client_info(client_info)
     {
     }
@@ -938,27 +936,26 @@ class RDPBmpCache {
 
     ~RDPBmpCache()
     {
-        if (bmp){
-            delete this->bmp;
-        }
     }
 
     void emit(Stream & stream)
     {
         using namespace RDP;
-        switch (this->orderType){
-            case TS_CACHE_BITMAP_UNCOMPRESSED:
-                this->emit_raw_v1(stream);
-            break;
-            case TS_CACHE_BITMAP_COMPRESSED:
+        if (0 == this->client_info->bitmap_cache_version){
+            if (0 == this->client_info->use_bitmap_comp){
                 this->emit_v1_compressed(stream);
-            break;
-            case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
-                this->emit_raw_v2(stream);
-            break;
-            case TS_CACHE_BITMAP_COMPRESSED_REV2:
+            }
+            else {
+                this->emit_raw_v1(stream);
+            }
+        }
+        else {
+            if (0 == this->client_info->use_bitmap_comp){
                 this->emit_v2_compressed(stream);
-            break;
+            }
+            else {
+                this->emit_raw_v2(stream);
+            }
         }
     }
 
