@@ -367,36 +367,14 @@ struct Orders
         this->out_stream.out_copy_bytes(data, size);
     }
 
-    int get_compression_type()
-    {
-        int compressed_cache_type = 0;
-        switch (((this->rdp_layer->client_info.bitmap_cache_version != 0) * 2)
-              + ((this->rdp_layer->client_info.use_bitmap_comp      != 0))){
-        case 0:
-            compressed_cache_type = TS_CACHE_BITMAP_UNCOMPRESSED;
-            break;
-        case 1:
-            compressed_cache_type = TS_CACHE_BITMAP_COMPRESSED;
-            break;
-        case 2:
-            compressed_cache_type = TS_CACHE_BITMAP_UNCOMPRESSED_REV2;
-            break;
-        case 3:
-            compressed_cache_type = TS_CACHE_BITMAP_COMPRESSED_REV2;
-            break;
-        }
-        return compressed_cache_type;
-    }
-
     void send_bitmap_common(Bitmap & bmp, uint8_t cache_id, uint16_t cache_idx)
     {
         using namespace RDP;
 
-        RDPBmpCache bmp_order(this->get_compression_type(), &bmp, cache_id, cache_idx, &this->rdp_layer->client_info);
+        RDPBmpCache bmp_order(&bmp, cache_id, cache_idx, &this->rdp_layer->client_info);
         #warning really when using compression we'll use less space
         this->reserve_order(align4(bmp.cx * nbbytes(bmp.bpp)) * bmp.cy + 16);
         bmp_order.emit(this->out_stream);
-        bmp_order.bmp = 0;
     }
 
     void send_font(struct FontChar* font_char, int font_index, int char_index)

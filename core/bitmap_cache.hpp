@@ -52,6 +52,7 @@ enum {
 
 struct BitmapCacheItem {
     int stamp;
+    #warning crc is a bitmap property, should not be here
     unsigned crc;
     Bitmap bmp;
 
@@ -68,6 +69,7 @@ struct BitmapCacheItem {
     }
 
     ~BitmapCacheItem(){
+        #warning allocating and desallocation bitmaps instead of their data parts would be more natural and less error prone
         if (this->bmp.data_co){
             free((uint8_t*)this->bmp.data_co);
             this->bmp.data_co = 0;
@@ -205,15 +207,17 @@ struct BitmapCache {
 
                     if (cache_item.bmp.data_co){
                         free(cache_item.bmp.data_co);
-                        cache_item.bmp.data_co  = 0;
                     }
+                    #warning this one is tricky, we always must set data_co to 0 or it will be desallocated when cache_item goes out of scope... see warning below as a way to avoid this kind of unwanted effects
+                    #warning allocating and desallocation bitmaps instead of their data parts would be more natural and less error prone
+                    cache_item.bmp.data_co  = 0;
                     return BITMAP_FOUND_IN_CACHE;
                 }
             }
 
             // cache_idx contains oldest
             if (array[cache_idx].bmp.data_co){
-                free(array[cache_idx].bmp.data_co);
+                #warning allocating and desallocation bitmaps instead of their data parts would be more natural and less error prone                free(array[cache_idx].bmp.data_co);
                 array[cache_idx].bmp.data_co = 0;
             }
 

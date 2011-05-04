@@ -250,50 +250,10 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 
     if (send_type2 == BITMAP_ADDED_TO_CACHE){
         LOG(LOG_INFO, "Sending bitmap\n");
-        int mode = front->orders->get_compression_type();
-        mode = NOT_COMPRESSED;
-        switch (mode){
-            case NOT_COMPRESSED:
-                LOG(LOG_INFO, "not compressed bitmap\n");
-                e = 0;
-                {
-                    RDPBmpCache bmp(TS_CACHE_BITMAP_UNCOMPRESSED, &entry->bmp, cache_b_id, cache_b_idx, &front->orders->rdp_layer->client_info);
-                    // check reserved size depending on version
-                    orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
-                    bmp.emit(orders->out_stream);
-                    bmp.bmp = 0;
-                }
-            break;
-            case COMPRESSED:
-            {
-                RDPBmpCache bmp_order(TS_CACHE_BITMAP_COMPRESSED, &entry->bmp, cache_b_id, cache_b_idx,
-                        &front->orders->rdp_layer->client_info);
-                front->orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
-                bmp_order.emit(front->orders->out_stream);
-                bmp_order.bmp = 0; // we do not want RDPBmpCache to desallocate bmp
-            }
-            break;
-            case NEW_NOT_COMPRESSED:
-            {
-                RDPBmpCache bmp(TS_CACHE_BITMAP_UNCOMPRESSED_REV2, &entry->bmp, cache_b_id, cache_b_idx,
-                    &front->orders->rdp_layer->client_info);
-                // check reserved size depending on version
-                orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
-                bmp.emit(orders->out_stream);
-                bmp.bmp = 0;
-            }
-            break;
-            case NEW_COMPRESSED:
-            {
-                RDPBmpCache bmp(TS_CACHE_BITMAP_COMPRESSED_REV2, &entry->bmp, cache_b_id, cache_b_idx,
-                    &front->orders->rdp_layer->client_info);
-                // check reserved size depending on version
-                orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
-                bmp.emit(orders->out_stream);
-                bmp.bmp = 0;
-            }
-            break;
-        }
+        RDPBmpCache bmp(&entry->bmp, cache_b_id, cache_b_idx, &front->orders->rdp_layer->client_info);
+        // check reserved size depending on version
+        orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
+        bmp.emit(orders->out_stream);
     }
     front->mem_blt(cache_b_id, 0, Rect(100, 450, 32, 32), 0xcc, entry->bmp.bpp, entry->bmp.data_co, 0, 0, cache_b_idx, Rect(100, 450, 32, 32));
     front->end_update();

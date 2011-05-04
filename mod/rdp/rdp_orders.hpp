@@ -164,21 +164,15 @@ struct rdp_orders {
         struct Bitmap* bitmap = NULL;
         uint8_t cache_id = 0;
         uint16_t cache_idx = 0;
-        uint8_t height = 0;
-        uint8_t width = 0;
-        uint8_t bpp = 0;
         switch (header.type){
         case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
             {
+                #warning RDPBmpCache is used to create bitmap
                 RDPBmpCache bmp;
                 bmp.receive(stream, control, header);
                 cache_id = bmp.cache_id;
                 cache_idx = bmp.cache_idx;
-                height = bmp.bmp->cy;
-                width = bmp.bmp->cx;
-                bpp = bmp.bmp->bpp;
                 bitmap = bmp.bmp;
-                bmp.bmp = 0;
             }
         break;
         case RDP::TS_CACHE_BITMAP_COMPRESSED:
@@ -193,9 +187,9 @@ struct rdp_orders {
                 cache_id = stream.in_uint8();
                 int pad1 = stream.in_uint8();
                 pad1 = pad1; // just to remove warning, will be optimized away
-                width = stream.in_uint8();
-                height = stream.in_uint8();
-                bpp = stream.in_uint8();
+                uint8_t width = stream.in_uint8();
+                uint8_t height = stream.in_uint8();
+                uint8_t bpp = stream.in_uint8();
                 int bufsize = stream.in_uint16_le();
                 cache_idx = stream.in_uint16_le();
                 if (flags & 0x400) {
