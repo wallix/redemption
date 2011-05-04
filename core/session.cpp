@@ -210,6 +210,7 @@ Session::~Session()
     delete this->context;
 }
 
+#warning should not be here, move that to widgets
 void Session::invalidate(const Rect & rect)
 {
     if (!rect.isempty()) {
