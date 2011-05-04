@@ -28,8 +28,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdlib.h>
+#include <stdint.h>"
 
-#include "../../core/colors.hpp"
+#include "colors.hpp"
 
 #include "stream.hpp"
 #include "d3des.hpp"
@@ -131,77 +132,90 @@ struct mod_vnc : public client_mod {
                         throw 1;
                 }
 
-                stream.init(8192);
-                stream.data[0] = 1;
-                #warning send and recv should be stream aware
-                #warning we should always send at stream.p, not stream.data
-                this->t->send((char*)stream.data, 1); /* share flag */
-
-                stream.init(8192);
-                #warning send and recv should be stream aware
-                this->t->recv((char**)&stream.end, 4); /* server init */
-                int width = stream.in_uint16_be();
-                int height = stream.in_uint16_be();
-
-                LOG(LOG_INFO, "VNC received: width=%s height=%s", width, height);
-
-                this->server_set_clip(Rect(0, 0, width, height));
-
-
-
-                stream.init(8192); /* pixel format */
-                #warning send and recv should be stream aware
-                this->t->recv((char**)&stream.end, 16);
-                #warning why do we not use what is received ?
-
-                stream.init(8192);
-                this->t->recv((char**)&stream.end, 4); /* name len */
-
-                int i = stream.in_uint32_be();
-                if (i > 255 || i < 0) {
-                    throw 3;
+                {
+                    Stream stream(8192);
+                    stream.data[0] = 1;
+                    #warning send and recv should be stream aware
+                    #warning we should always send at stream.p, not stream.data
+                    this->t->send((char*)stream.data, 1); /* share flag */
                 }
-                char * end = this->mod_name;
-                this->t->recv(&end, i);
-                this->mod_name[i] = 0;
 
-                /* should be connected */
+                int width = 1024;
+                int height = 768;
+                {
+                    Stream stream(8192);
+                    #warning send and recv should be stream aware
+                    this->t->recv((char**)&stream.end, 4); /* server init */
+                    width = stream.in_uint16_be();
+                    height = stream.in_uint16_be();
+                    LOG(LOG_INFO, "VNC received: width=%d height=%d", width, height);
 
-                /* SetPixelFormat */
-                stream.init(8192);
-                stream.out_uint8(0);
-                stream.out_uint8(0);
-                stream.out_uint8(0);
-                stream.out_uint8(0);
+                    this->server_set_clip(Rect(0, 0, width, height));
+                }
 
-                stream.out_copy_bytes(get_pixel_format(bpp), 16);
-                this->t->send((char*)stream.data, 20);
 
-                /* SetEncodings */
-                stream.init(8192);
-                stream.out_uint8(2);
-                stream.out_uint8(0);
-                stream.out_uint16_be(3);
-                stream.out_uint32_be(0); /* raw */
-                stream.out_uint32_be(1); /* copy rect */
-                stream.out_uint32_be(0xffffff11); /* cursor */
+                {
+                    Stream stream(8192); /* pixel format */
+                    #warning send and recv should be stream aware
+                    this->t->recv((char**)&stream.end, 16);
+                    #warning why do we not use what is received ?
+                }
 
-                this->t->send((char*)stream.data, 4 + 3 * 4);
+                {
+                    Stream stream(8192);
+                    this->t->recv((char**)&stream.end, 4); /* name len */
+
+                    int i = stream.in_uint32_be();
+                    if (i > 255 || i < 0) {
+                        throw 3;
+                    }
+                    char * end = this->mod_name;
+                    this->t->recv(&end, i);
+                    this->mod_name[i] = 0;
+                }
+                    /* should be connected */
+
+                {
+                    /* SetPixelFormat */
+                    Stream stream(8192);
+                    stream.out_uint8(0);
+                    stream.out_uint8(0);
+                    stream.out_uint8(0);
+                    stream.out_uint8(0);
+
+                    stream.out_copy_bytes(get_pixel_format(bpp), 16);
+                    this->t->send((char*)stream.data, 20);
+                }
+
+                {
+                    /* SetEncodings */
+                    Stream stream(8192);
+                    stream.out_uint8(2);
+                    stream.out_uint8(0);
+                    stream.out_uint16_be(3);
+                    stream.out_uint32_be(0); /* raw */
+                    stream.out_uint32_be(1); /* copy rect */
+                    stream.out_uint32_be(0xffffff11); /* cursor */
+
+                    this->t->send((char*)stream.data, 4 + 3 * 4);
+                }
 
                 this->server_resize(width, height, bpp);
 
-                /* FrambufferUpdateRequest */
-                stream.init(8192);
-                stream.out_uint8(3);
-                stream.out_uint8(0);
-                #warning we could create some out_rect primitive at stream level
-                stream.out_uint16_be(0);
-                stream.out_uint16_be(0);
-                stream.out_uint16_be(width);
-                stream.out_uint16_be(height);
+                {
+                    /* FrambufferUpdateRequest */
+                    Stream stream(8192);
+                    stream.out_uint8(3);
+                    stream.out_uint8(0);
+                    #warning we could create some out_rect primitive at stream level
+                    stream.out_uint16_be(0);
+                    stream.out_uint16_be(0);
+                    stream.out_uint16_be(width);
+                    stream.out_uint16_be(height);
 
-                // sending framebuffer update request
-                this->t->send((char*)stream.data, 10);
+                    // sending framebuffer update request
+                    this->t->send((char*)stream.data, 10);
+                }
 
                 /* set almost null cursor, this is the little dot cursor */
                 memset(cursor_data, 0, 32 * (32 * 3));
@@ -225,6 +239,7 @@ struct mod_vnc : public client_mod {
 
             LOG(LOG_INFO, "VNC connection complete, connected ok\n");
             this->lib_open_clip_channel();
+            LOG(LOG_INFO, "VNC lib open clip channel ok\n");
         } catch(...){
             delete this->t;
             throw;
@@ -509,9 +524,6 @@ struct mod_vnc : public client_mod {
         uint8_t cursor_mask[32 * (32 / 8)],
         const uint8_t * d1, const uint8_t * d2, int cx, int cy, int bpp, const RGBPalette & palette)
     {
-        int r;
-        int g;
-        int b;
         int pixel;
         memset(cursor_data, 0, 32 * (32 * 3));
         memset(cursor_mask, 0, 32 * (32 / 8));
@@ -522,9 +534,8 @@ struct mod_vnc : public client_mod {
                 set_pixel_safe(cursor_mask, k, j, 32, 32, 1, !pixel);
                 if (pixel) {
                     pixel = get_pixel_safe(d1, k, 31 - j, cx, cy, bpp);
-                    split_color(pixel, &r, &g, &b, bpp, palette);
-                    pixel = color24RGB(r, g, b);
-                    set_pixel_safe(cursor_data, k, j, 32, 32, 24, pixel);
+                    uint32_t color24 = color_decode(pixel, bpp, palette);
+                    set_pixel_safe(cursor_data, k, j, 32, 32, 24, color24);
                 }
             }
         }
@@ -591,41 +602,6 @@ struct mod_vnc : public client_mod {
         default:
             LOG(LOG_ERR,"error in set_pixel_safe bpp %d\n", bpp);
         }
-    }
-
-    #warning merge into build pointer
-    static int split_color(int pixel, int * pr, int* pg, int* pb, int bpp, const RGBPalette & palette)
-    {
-        uint8_t r = *pr;
-        uint8_t g = *pg;
-        uint8_t b = *pb;
-
-        switch (bpp) {
-        case 8:
-            if (pixel >= 0 && pixel < 256) {
-                splitcolor32RGB(r, g, b, palette[pixel]);
-            }
-            else {
-                LOG(LOG_ERR, "error in split_color, pixel value outside palette (bpp=%d, pixel=%d)\n", bpp, pixel);
-                r = g = b = 0;
-            }
-        break;
-        case 15:
-            splitcolor15(r, g, b, pixel);
-        break;
-        case 16:
-            splitcolor16(r, g, b, pixel);
-        break;
-        case 24: case 32:
-            splitcolor32RGB(r, g, b, pixel);
-        break;
-        default:
-            LOG(LOG_ERR, "error in split_color bpp %d\n", bpp);
-        }
-        *pr = r;
-        *pg = g;
-        *pb = b;
-        return 0;
     }
 
     int lib_framebuffer_update() throw (Error)
@@ -804,6 +780,8 @@ struct mod_vnc : public client_mod {
     /******************************************************************************/
     int lib_open_clip_channel(void)
     {
+        #warning not working, see why
+        return 0;
         uint8_t init_data[12] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
         this->clip_chanid = this->server_get_channel_id((char*)"cliprdr");

@@ -26,18 +26,20 @@ class Authentifier(object):
             'target_port':'3389'
         },
         'n' : {
-            'proxy_type': 'VNC',
+            'proxy_type': 'RDP',
             'target_login' : r'vnc',
-            'target_device' : '10.10.14.70',
-            'target_password' : 'SecureLi',
-            'target_port':'5900'
+            'target_device' : '10.10.4.163',
+            'target_password' : 'tabra',
+            'target_port':'5900',
+            'proto_dest': 'VNC'
         },
         'cgr' : {
-            'proxy_type': 'VNC',
+            'proxy_type': 'RDP',
             'target_login' : r'vnc',
             'target_device' : '10.10.4.13',
             'target_password' : 'secure',
-            'target_port':'5900'
+            'target_port':'5900',
+            'proto_dest': 'VNC'
         }
     }
 
