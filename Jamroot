@@ -83,6 +83,7 @@ lib pthread : : <name>pthread <link>shared ;
 lib pam : : <name>pam <link>static ;
 
 lib crypto : : <name>crypto <link>static ;
+lib z : : <name>z <link>static ;
 lib dl : : <name>dl <link>shared ;
 
 lib lcms : : <name>lcms <link>shared ;
@@ -122,6 +123,7 @@ exe rdpproxy
 
         openssl
         crypto
+        z
         dl
 
         libboost_program_options
@@ -143,6 +145,7 @@ exe test_server_rdp
         d3des
         openssl
         crypto
+        z
         dl
 
         libboost_program_options
@@ -162,6 +165,7 @@ exe test_bouncing_bitmap
         d3des
         openssl
         crypto
+        z
         dl
 
         libboost_program_options
@@ -181,6 +185,7 @@ exe test_server_rdp_bitmap
         d3des
         openssl
         crypto
+        z
         dl
 
         libboost_program_options
@@ -205,6 +210,7 @@ exe xrdp-keygen
 
         openssl
         crypto
+        z
         dl
 
         libboost_program_options
@@ -219,7 +225,7 @@ exe xrdp-keygen
 
 import testing ;
 
-unit-test test_widget : tests/test_widget.cpp libboost_unit_test ini_config keymap rsa_keys widget mainloop session ssl_calls d3des libboost_program_options openssl crypto dl ;
+unit-test test_widget : tests/test_widget.cpp libboost_unit_test ini_config keymap rsa_keys widget mainloop session ssl_calls d3des libboost_program_options openssl crypto z dl ;
 unit-test test_bitmap : tests/test_bitmap.cpp libboost_unit_test ini_config libboost_program_options ;
 unit-test test_bitmap_cache : tests/test_bitmap_cache.cpp libboost_unit_test ini_config libboost_program_options ;
 unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp libboost_unit_test ini_config libboost_program_options ;

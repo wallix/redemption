@@ -233,14 +233,14 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 
     BitmapCacheItem * entry =  front->bmp_cache->get_item(cache_b_id, cache_b_idx);
 
-    int e = entry->bmp.cx % 4;
+    int e = entry->pbmp->cx % 4;
     if (e != 0) {
         e = 4 - e;
     }
 
-    LOG(LOG_INFO, "new_b_bpp=%d new_b_cx=%d new_b_cy=%d", entry->bmp.bpp, entry->bmp.cx, entry->bmp.cy);
+    LOG(LOG_INFO, "new_b_bpp=%d new_b_cx=%d new_b_cy=%d", entry->pbmp->bpp, entry->pbmp->cx, entry->pbmp->cy);
     for (int x = 0 ; x < 100 ; x+=20){
-            unsigned char * tmp = (unsigned char*)entry->bmp.data_co + x;
+            unsigned char * tmp = (unsigned char*)entry->pbmp->data_co + x;
         LOG(LOG_INFO, "%0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x %0.2x",
             tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], tmp[6], tmp[7], tmp[8], tmp[9],
             tmp[10], tmp[11], tmp[12], tmp[13], tmp[14], tmp[15], tmp[16], tmp[17], tmp[18], tmp[19]);
@@ -250,12 +250,12 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 
     if (send_type2 == BITMAP_ADDED_TO_CACHE){
         LOG(LOG_INFO, "Sending bitmap\n");
-        RDPBmpCache bmp(&entry->bmp, cache_b_id, cache_b_idx, &front->orders->rdp_layer->client_info);
+        RDPBmpCache bmp(entry->pbmp, cache_b_id, cache_b_idx, &front->orders->rdp_layer->client_info);
         // check reserved size depending on version
-        orders->reserve_order(align4(entry->bmp.cx * nbbytes(entry->bmp.bpp)) * entry->bmp.cy + 16);
+        orders->reserve_order(align4(entry->pbmp->cx * nbbytes(entry->pbmp->bpp)) * entry->pbmp->cy + 16);
         bmp.emit(orders->out_stream);
     }
-    front->mem_blt(cache_b_id, 0, Rect(100, 450, 32, 32), 0xcc, entry->bmp.bpp, entry->bmp.data_co, 0, 0, cache_b_idx, Rect(100, 450, 32, 32));
+    front->mem_blt(cache_b_id, 0, Rect(100, 450, 32, 32), 0xcc, entry->pbmp->bpp, entry->pbmp->data_co, 0, 0, cache_b_idx, Rect(100, 450, 32, 32));
     front->end_update();
 
     /* Draw a little pink rect at bottom-right side of screen bottom-right rectangle */

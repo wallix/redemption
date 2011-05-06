@@ -218,43 +218,43 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 
         BitmapCacheItem * entry_b = front->bmp_cache->get_item(cache_b_id, cache_b_idx);
         {
-            RDPBmpCache bmp(&entry_b->bmp, cache_b_id, cache_b_idx, &front->orders->rdp_layer->client_info);
+            RDPBmpCache bmp(entry_b->pbmp, cache_b_id, cache_b_idx, &front->orders->rdp_layer->client_info);
         // check reserved size depending on version
-            orders->reserve_order(align4(entry_b->bmp.cx * nbbytes(entry_b->bmp.bpp)) * entry_b->bmp.cy + 16);
+            orders->reserve_order(align4(entry_b->pbmp->cx * nbbytes(entry_b->pbmp->bpp)) * entry_b->pbmp->cy + 16);
             bmp.emit(orders->out_stream);
         }
 
         BitmapCacheItem * entry_b_h = front->bmp_cache->get_item(cache_b_id_h, cache_b_idx_h);
         {
-            RDPBmpCache bmp(&entry_b_h->bmp, cache_b_id_h, cache_b_idx_h, &front->orders->rdp_layer->client_info);
+            RDPBmpCache bmp(entry_b_h->pbmp, cache_b_id_h, cache_b_idx_h, &front->orders->rdp_layer->client_info);
         // check reserved size depending on version
-            orders->reserve_order(align4(entry_b_h->bmp.cx * nbbytes(entry_b_h->bmp.bpp)) * entry_b_h->bmp.cy + 16);
+            orders->reserve_order(align4(entry_b_h->pbmp->cx * nbbytes(entry_b_h->pbmp->bpp)) * entry_b_h->pbmp->cy + 16);
             bmp.emit(orders->out_stream);
         }
 
 
         BitmapCacheItem * entry_b_wallix = front->bmp_cache->get_item(cache_b_id_wallix, cache_b_idx_wallix);
         {
-            RDPBmpCache bmp(&entry_b_wallix->bmp, cache_b_id_wallix, cache_b_idx_wallix, &front->orders->rdp_layer->client_info);
+            RDPBmpCache bmp(entry_b_wallix->pbmp, cache_b_id_wallix, cache_b_idx_wallix, &front->orders->rdp_layer->client_info);
            // check reserved size depending on version
-            orders->reserve_order(align4(entry_b_wallix->bmp.cx * nbbytes(entry_b_wallix->bmp.bpp)) * entry_b_wallix->bmp.cy + 16);
+            orders->reserve_order(align4(entry_b_wallix->pbmp->cx * nbbytes(entry_b_wallix->pbmp->bpp)) * entry_b_wallix->pbmp->cy + 16);
             bmp.emit(orders->out_stream);
         }
 
         BitmapCacheItem * entry_b_h_wallix = front->bmp_cache->get_item(cache_b_id_h_wallix, cache_b_idx_h_wallix);
         {
-            RDPBmpCache bmp(&entry_b_h_wallix->bmp, cache_b_id_h_wallix, cache_b_idx_h_wallix, &front->orders->rdp_layer->client_info);
+            RDPBmpCache bmp(entry_b_h_wallix->pbmp, cache_b_id_h_wallix, cache_b_idx_h_wallix, &front->orders->rdp_layer->client_info);
         // check reserved size depending on version
-            orders->reserve_order(align4(entry_b_h_wallix->bmp.cx * nbbytes(entry_b_h_wallix->bmp.bpp)) * entry_b_h_wallix->bmp.cy + 16);
+            orders->reserve_order(align4(entry_b_h_wallix->pbmp->cx * nbbytes(entry_b_h_wallix->pbmp->bpp)) * entry_b_h_wallix->pbmp->cy + 16);
             bmp.emit(orders->out_stream);
         }
         orders->send();
 
         front->begin_update();
-        front->mem_blt(cache_b_id, 0, fill_rect1, 0xcc, entry_b->bmp.bpp, entry_b->bmp.data_co, 0, 0, cache_b_idx,fill_rect1);
-        front->mem_blt(cache_b_id_h, 0, fill_rect2, 0xcc, entry_b_h->bmp.bpp, entry_b_h->bmp.data_co, 0, 0, cache_b_idx_h, fill_rect2);
-        front->mem_blt(cache_b_id_wallix, 0, fill_rect_wallix, 0xcc, entry_b_wallix->bmp.bpp, entry_b_wallix->bmp.data_co, 0, 0, cache_b_idx_wallix,fill_rect_wallix);
-        front->mem_blt(cache_b_id_h_wallix, 0, fill_rect_wallix_h, 0xcc, entry_b_h_wallix->bmp.bpp, entry_b_h_wallix->bmp.data_co, 0, 0, cache_b_idx_h_wallix, fill_rect_wallix_h);
+        front->mem_blt(cache_b_id, 0, fill_rect1, 0xcc, entry_b->pbmp->bpp, entry_b->pbmp->data_co, 0, 0, cache_b_idx,fill_rect1);
+        front->mem_blt(cache_b_id_h, 0, fill_rect2, 0xcc, entry_b_h->pbmp->bpp, entry_b_h->pbmp->data_co, 0, 0, cache_b_idx_h, fill_rect2);
+        front->mem_blt(cache_b_id_wallix, 0, fill_rect_wallix, 0xcc, entry_b_wallix->pbmp->bpp, entry_b_wallix->pbmp->data_co, 0, 0, cache_b_idx_wallix,fill_rect_wallix);
+        front->mem_blt(cache_b_id_h_wallix, 0, fill_rect_wallix_h, 0xcc, entry_b_h_wallix->pbmp->bpp, entry_b_h_wallix->pbmp->data_co, 0, 0, cache_b_idx_h_wallix, fill_rect_wallix_h);
         front->end_update();
 
         src_x = src_x + 10;

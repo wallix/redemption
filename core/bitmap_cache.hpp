@@ -54,26 +54,19 @@ struct BitmapCacheItem {
     int stamp;
     #warning crc is a bitmap property, should not be here
     unsigned crc;
-    Bitmap bmp;
+    Bitmap * pbmp;
 
-    BitmapCacheItem() : bmp() {
+    BitmapCacheItem() : pbmp(0) {
         this->stamp = 0;
         this->crc = 0;
     };
 
-    BitmapCacheItem(int src_cx, int src_cy, const uint8_t * src_data, int x, int y, int cx, int cy, int bpp)
-    : bmp(bpp, Rect(x, y, cx, cy), src_cx, src_cy, src_data)
-    {
+    BitmapCacheItem(Bitmap * pbmp) : pbmp(pbmp) {
         this->stamp = 0;
-        this->crc = this->bmp.get_crc();
-    }
+        this->crc = pbmp->get_crc();
+    };
 
     ~BitmapCacheItem(){
-        #warning allocating and desallocation bitmaps instead of their data parts would be more natural and less error prone
-        if (this->bmp.data_co){
-            free((uint8_t*)this->bmp.data_co);
-            this->bmp.data_co = 0;
-        }
     }
 };
 
@@ -118,6 +111,21 @@ struct BitmapCache {
 
     ~BitmapCache()
     {
+        for (size_t i = 0 ; i < this->small_entries ; i++){
+            if (this->small_bitmaps[i].pbmp){
+                delete this->small_bitmaps[i].pbmp;
+            }
+        }
+        for (size_t i = 0 ; i < this->medium_entries ; i++){
+            if (this->medium_bitmaps[i].pbmp){
+                delete this->medium_bitmaps[i].pbmp;
+            }
+        }
+        for (size_t i = 0 ; i < this->big_entries ; i++){
+            if (this->big_bitmaps[i].pbmp){
+                delete this->big_bitmaps[i].pbmp;
+            }
+        }
         delete [] this->small_bitmaps;
         delete [] this->medium_bitmaps;
         delete [] this->big_bitmaps;
@@ -144,92 +152,82 @@ struct BitmapCache {
             break;
         }
 
-        assert(item && item->stamp && item->bmp.data_co);
+        assert(item && item->stamp && item->pbmp);
 
         return item;
     }
 
     /* returns cache id, cx, cy, bpp, data_co */
     #warning we should use some kind of cache item object at least for passing result
+    #warning we should pass in src as a bitmap
     int add_bitmap(int src_cx, int src_cy, const uint8_t * src_data,
                     int x, int y, int w, int h,
                     int src_bpp,
                     uint8_t & cacheid, uint16_t & cacheidx)
     {
         int cache_idx = 0;
-        BitmapCacheItem cache_item(src_cx, src_cy, src_data, x, y, w, h, src_bpp);
+        Bitmap * pbitmap = new Bitmap(src_bpp, Rect(x, y, w, h), src_cx, src_cy, src_data);
+        BitmapCacheItem cache_item(pbitmap);
         this->bitmap_stamp++;
         int entries = 0;
         BitmapCacheItem * array = 0;
         int cache_id = 0;
 
-        if (cache_item.bmp.bmp_size <= this->small_size) {
+        if (cache_item.pbmp->bmp_size <= this->small_size) {
             array = this->small_bitmaps;
             entries = this->small_entries;
             cache_id = 0;
-        } else if (cache_item.bmp.bmp_size <= this->medium_size) {
+        } else if (cache_item.pbmp->bmp_size <= this->medium_size) {
             array = this->medium_bitmaps;
             entries = this->medium_entries;
             cache_id = 1;
-        } else if (cache_item.bmp.bmp_size <= this->big_size) {
+        } else if (cache_item.pbmp->bmp_size <= this->big_size) {
             array = this->big_bitmaps;
             entries = this->big_entries;
             cache_id = 2;
         }
         else {
-            LOG(LOG_ERR, "bitmap size too big %d", cache_item.bmp.bmp_size);
+            LOG(LOG_ERR, "bitmap size too big %d", cache_item.pbmp->bmp_size);
             assert(false);
         }
 
         if (array){
             cache_item.stamp = this->bitmap_stamp;
-            /* look for oldest */
             cache_idx = 0;
             int oldest = 0x7fffffff;
             for (int j = 0; j < entries; j++) {
-                // look for the oldest
                 if (array[j].stamp < oldest) {
+                    // Keep oldest
                     oldest = array[j].stamp;
                     cache_idx = j;
                 }
-                // look if cache item found
-                if (array[j].bmp.data_co
-                && array[j].bmp.bpp == cache_item.bmp.bpp
-                && array[j].bmp.cx == cache_item.bmp.cx
-                && array[j].bmp.cy == cache_item.bmp.cy
+
+                if (array[j].pbmp
+                && array[j].pbmp->bpp == cache_item.pbmp->bpp
+                && array[j].pbmp->cx == cache_item.pbmp->cx
+                && array[j].pbmp->cy == cache_item.pbmp->cy
                 && array[j].crc == cache_item.crc)
                 {
+                    delete pbitmap;
                     array[j].stamp = this->bitmap_stamp;
 
-                    // returned value
                     cacheid = cache_id;
                     cacheidx = j;
-
-                    if (cache_item.bmp.data_co){
-                        free(cache_item.bmp.data_co);
-                    }
-                    #warning this one is tricky, we always must set data_co to 0 or it will be desallocated when cache_item goes out of scope... see warning below as a way to avoid this kind of unwanted effects
-                    #warning allocating and desallocation bitmaps instead of their data parts would be more natural and less error prone
-                    cache_item.bmp.data_co  = 0;
                     return BITMAP_FOUND_IN_CACHE;
                 }
             }
 
             // cache_idx contains oldest
-            if (array[cache_idx].bmp.data_co){
-                #warning allocating and desallocation bitmaps instead of their data parts would be more natural and less error prone                free(array[cache_idx].bmp.data_co);
-                array[cache_idx].bmp.data_co = 0;
+            if (array[cache_idx].pbmp){
+                delete array[cache_idx].pbmp;
             }
 
-            // returned value
-            array[cache_idx].bmp = cache_item.bmp;
+            array[cache_idx].pbmp = pbitmap;
             array[cache_idx].crc = cache_item.crc;
             array[cache_idx].stamp = cache_item.stamp;
 
-            assert(cache_item.bmp.data_co == array[cache_idx].bmp.data_co);
-            assert(cache_item.bmp.bpp == src_bpp);
-
-            cache_item.bmp.data_co = 0;
+            assert(pbitmap == array[cache_idx].pbmp);
+            assert(cache_item.pbmp->bpp == src_bpp);
 
             cacheid = cache_id;
             cacheidx = cache_idx;
@@ -238,7 +236,7 @@ struct BitmapCache {
         }
         else {
             #warning bitmap should not be sent through cache if it is too big, should allready have been splitted by sender ?
-            LOG(LOG_ERR, "bitmap not added to cache, too big(%d = %d x %d x %d) [%d, %d, %d]\n", cache_item.bmp.bmp_size, w, h, cache_item.bmp.bpp, this->small_size, this->medium_size, this->big_size);
+            LOG(LOG_ERR, "bitmap not added to cache, too big(%d = %d x %d x %d) [%d, %d, %d]\n", cache_item.pbmp->bmp_size, w, h, cache_item.pbmp->bpp, this->small_size, this->medium_size, this->big_size);
         }
         #warning should throw an error
         assert(false);
