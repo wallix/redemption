@@ -421,6 +421,7 @@ struct mod_vnc : public client_mod {
     virtual int mod_event(int msg, long param1, long param2, long param3, long param4)
     {
         int error = 0;
+        LOG(LOG_INFO, "----------------> mod_event msg=%d", msg);
 
         Stream stream(8192);
         switch (msg){
@@ -437,8 +438,6 @@ struct mod_vnc : public client_mod {
                 stream.mark_end();
                 stream.p = stream.data;
                 error = this->lib_process_channel_data(chanid, flags, size, &stream, total_size);
-            } else {
-                error = 1;
             }
         }
         break;
@@ -451,12 +450,7 @@ struct mod_vnc : public client_mod {
                 stream.out_uint8(msg == 15); /* down flag */
                 stream.out_clear_bytes(2);
                 stream.out_uint32_be(key);
-                try {
-                    this->t->send((char*)stream.data, 8);
-                    error = 0;
-                } catch (...) {
-                    error = 1;
-                }
+                this->t->send((char*)stream.data, 8);
             }
         }
         break;
@@ -510,15 +504,11 @@ struct mod_vnc : public client_mod {
             stream.out_uint8(this->mod_mouse_state);
             stream.out_uint16_be(param1);
             stream.out_uint16_be(param2);
-            try {
-                this->t->send((char*)stream.data, 6);
-                error = 0;
-            } catch (...) {
-                error = 1;
-            }
+            this->t->send((char*)stream.data, 6);
         break;
         case WM_INVALIDATE:
         { /* invalidate */
+
             /* FrambufferUpdateRequest */
             stream.out_uint8(3);
             stream.out_uint8(0);
@@ -531,12 +521,7 @@ struct mod_vnc : public client_mod {
             int cy = param2 & 0xffff;
             stream.out_uint16_be(cy);
 
-            try {
-                this->t->send((char*)stream.data, 10);
-                error = 0;
-            } catch (...) {
-                error = 1;
-            }
+            this->t->send((char*)stream.data, 10);
         }
         break;
         default:
@@ -662,7 +647,8 @@ struct mod_vnc : public client_mod {
                 if (pixel) {
                     pixel = get_pixel_safe(d1, k, 31 - j, cx, cy, bpp);
                     uint32_t color24 = color_decode(pixel, bpp, palette);
-                    set_pixel_safe(cursor_data, k, j, 32, 32, 24, color24);
+                    uint32_t color16 = color_encode(color24, bpp, palette);
+                    set_pixel_safe(cursor_data, k, j, 32, 32, bpp, color16);
                 }
             }
         }
@@ -755,38 +741,46 @@ struct mod_vnc : public client_mod {
                 int cx = stream.in_uint16_be();
                 int cy = stream.in_uint16_be();
                 encoding = stream.in_uint32_be();
+
+                LOG(LOG_INFO, "----------------> x=%d y=%d cx=%d cy=%d encoding=%d", x, y, cx, cy, encoding);
+
                 switch (encoding){
                 case 0: /* raw */
                 {
                     int need_size = cx * cy * Bpp;
+                    LOG(LOG_INFO, "raw: x=%d y=%d cx=%d cy=%d encoding=%d need_size=%d", x, y, cx, cy, encoding, need_size);
                     Stream raw(need_size);
                     this->t->recv((char**)&raw.end, need_size);
 
                     #warning see server_paint_rect and Bitmap below, suspicious code, does it works ?
 
+                    #warning we should manage *two* color depth, front color depth and back color depth. Code below only works because we forced front color depth to the same depth as VNC server.
                     Bitmap bmp(this->get_server_screen_bpp(), cx, cy);
-                    bmp.copy(raw.data);
+                    bmp.copy_upsidedown(raw.data);
                     this->server_paint_rect(bmp, Rect(x, y, cx, cy), 0, 0, this->palette332);
                 }
                 break;
                 case 1: /* copy rect */
                 {
+                    LOG(LOG_INFO, "copy rect");
                     Stream stream(4);
                     this->t->recv((char**)&stream.end, 4);
                     int srcx = stream.in_uint16_be();
                     int srcy = stream.in_uint16_be();
+                    LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
                     this->screen_blt(0xcc, Rect(x, y, cx, cy), srcx, srcy);
                 }
                 break;
                 case 0xffffff11: /* cursor */
                 {
+                    LOG(LOG_INFO, "cursor");
                     int j = cx * cy * Bpp;
                     int k = (cx?(cx+7)/8:1) * cy;
                     Stream stream(j + k);
                     this->t->recv((char**)&stream.end, j + k);
+
                     const uint8_t *d1 = stream.in_uint8p(j);
                     const uint8_t *d2 = stream.in_uint8p(k);
-
 
                     #warning check that, smells like buffer overflow
                     uint8_t cursor_data[32 * (32 * 3)];
@@ -795,7 +789,7 @@ struct mod_vnc : public client_mod {
                     #warning palette should be kept synchronized with bpp. Is it ok ?
                     this->build_pointer(cursor_data, cursor_mask,
                                         d1, d2, cx, cy,
-                                        this->get_server_screen_bpp(),
+                                        this->bpp,
                                         this->palette);
 
                     /* keep these in 32x32, vnc cursor can be alot bigger */
@@ -810,7 +804,9 @@ struct mod_vnc : public client_mod {
                 }
             }
             this->server_end_update();
+
             {
+                LOG(LOG_INFO, "Frame buffer Update");
                 /* FrambufferUpdateRequest */
                 Stream stream(8192);
                 stream.out_uint8(3);
@@ -824,6 +820,7 @@ struct mod_vnc : public client_mod {
             }
         }
         catch(...) {
+            LOG(LOG_INFO, "************** ERROR CATCHED ***************");
             error = 1;
         }
         return error;

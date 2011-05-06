@@ -321,6 +321,24 @@ struct Bitmap{
         memcpy(this->data_co, input, this->bmp_size);
     }
 
+
+    void copy_upsidedown(const uint8_t* input)
+    {
+
+        uint8_t * d8 = this->data_co + (this->cy-1) * this->line_size;
+        const uint8_t * s8 = input;
+        uint32_t src_width = this->cx * this->Bpp;
+
+        for (unsigned i = 0; i < this->cy; i++) {
+            memcpy(d8, s8, src_width);
+            if (this->line_size > src_width){
+                memset(d8+src_width, 0, this->line_size - src_width);
+            }
+            s8 += src_width;
+            d8 -= this->line_size;
+        }
+    }
+
     void decompress(const uint8_t* input, size_t size)
     {
         this->pmax = this->data_co + this->bmp_size;
