@@ -357,13 +357,13 @@ public:
 
                     if (send_type == BITMAP_ADDED_TO_CACHE){
                         LOG(LOG_INFO, "Added to cache: id=%d idx=%d", cache_id, cache_idx);
-                        this->orders->send_bitmap_common(entry->bmp, cache_id, cache_idx);
+                        this->orders->send_bitmap_common(*entry->pbmp, cache_id, cache_idx);
                     };
 
                     this->mem_blt(cache_id, palette_id,
                                   rect1, 0xcc,
-                                  entry->bmp.bpp,
-                                  entry->bmp.data_co,
+                                  entry->pbmp->bpp,
+                                  entry->pbmp->data_co,
                                   0, 0, cache_idx, clip);
                 }
             }

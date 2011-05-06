@@ -18,7 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
-   This file implement the cache used for bitmaps item
+   This file implement the bitmap items data structure
+   including RDP RLE compression and decompression algorithms
 
 */
 
