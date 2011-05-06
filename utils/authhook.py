@@ -38,7 +38,7 @@ class Authentifier(object):
             'target_login' : r'vnc',
             'target_device' : '10.10.4.13',
             'target_password' : 'secure',
-            'target_port':'5900',
+            'target_port':'5901',
             'proto_dest': 'VNC'
         }
     }

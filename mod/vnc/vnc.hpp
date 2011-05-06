@@ -35,7 +35,13 @@
 #include "stream.hpp"
 #include "d3des.hpp"
 
+// got extracts of VNC documentation from
+// http://tigervnc.sourceforge.net/cgi-bin/rfbproto
+
+#warning remove this inheritance. Client_mod should be an interface object provided to mod_vnc (and other mods)
 struct mod_vnc : public client_mod {
+    char dummy[1024];
+    uint8_t bpp;
     /* mod data */
     char mod_name[256];
     int mod_mouse_state;
@@ -50,6 +56,9 @@ struct mod_vnc : public client_mod {
     int clip_chanid;
     Stream clip_data;
     int clip_data_size;
+    uint16_t width;
+    uint16_t height;
+
 
     mod_vnc(Transport * t,
             int (& keys)[256], int & key_flags, Keymap * &keymap,
@@ -61,7 +70,6 @@ struct mod_vnc : public client_mod {
         const char * username = context.get(STRAUTHID_TARGET_USER);
         this->t = t;
         try {
-            int bpp = this->get_server_screen_bpp();
             memset(this->mod_name, 0, 256);
             this->mod_mouse_state = 0;
             memset(this->palette, 0, sizeof(RGBPalette));
@@ -87,10 +95,6 @@ struct mod_vnc : public client_mod {
             int error = 0;
 
             int check_sec_result = 1;
-            if ((bpp != 8) && (bpp != 15) && (bpp != 16) && (bpp != 24)) {
-                LOG(LOG_INFO, "error - only supporting 8, 15, 16 and 24 bpp rdp connections\n");
-                throw Error(ERR_VNC_BAD_BPP);
-            }
 
             try {
                 /* protocol version */
@@ -140,53 +144,215 @@ struct mod_vnc : public client_mod {
                     this->t->send((char*)stream.data, 1); /* share flag */
                 }
 
-                int width = 1024;
-                int height = 768;
+                // 7.3.2   ServerInit
+                // ------------------
+
+                // After receiving the ClientInit message, the server sends a
+                // ServerInit message. This tells the client the width and
+                // height of the server's framebuffer, its pixel format and the
+                // name associated with the desktop:
+
+                // framebuffer-width  : 2 bytes
+                // framebuffer-height : 2 bytes
+
+                // PIXEL_FORMAT       : 16 bytes
+                // VNC pixel_format capabilities
+                // -----------------------------
+                // Server-pixel-format specifies the server's natural pixel
+                // format. This pixel format will be used unless the client
+                // requests a different format using the SetPixelFormat message
+                // (SetPixelFormat).
+
+                // PIXEL_FORMAT::bits per pixel  : 1 byte
+                // PIXEL_FORMAT::color depth     : 1 byte
+
+                // Bits-per-pixel is the number of bits used for each pixel
+                // value on the wire. This must be greater than or equal to the
+                // depth which is the number of useful bits in the pixel value.
+                // Currently bits-per-pixel must be 8, 16 or 32. Less than 8-bit
+                // pixels are not yet supported.
+
+                // PIXEL_FORMAT::endianess       : 1 byte (0 = LE, 1 = BE)
+
+                // Big-endian-flag is non-zero (true) if multi-byte pixels are
+                // interpreted as big endian. Of course this is meaningless
+                // for 8 bits-per-pixel.
+
+                // PIXEL_FORMAT::true color flag : 1 byte
+                // PIXEL_FORMAT::red max         : 2 bytes
+                // PIXEL_FORMAT::green max       : 2 bytes
+                // PIXEL_FORMAT::blue max        : 2 bytes
+                // PIXEL_FORMAT::red shift       : 1 bytes
+                // PIXEL_FORMAT::green shift     : 1 bytes
+                // PIXEL_FORMAT::blue shift      : 1 bytes
+
+                // If true-colour-flag is non-zero (true) then the last six
+                // items specify how to extract the red, green and blue
+                // intensities from the pixel value. Red-max is the maximum
+                // red value (= 2^n - 1 where n is the number of bits used
+                // for red). Note this value is always in big endian order.
+                // Red-shift is the number of shifts needed to get the red
+                // value in a pixel to the least significant bit. Green-max,
+                // green-shift and blue-max, blue-shift are similar for green
+                // and blue. For example, to find the red value (between 0 and
+                // red-max) from a given pixel, do the following:
+
+                // * Swap the pixel value according to big-endian-flag (e.g.
+                // if big-endian-flag is zero (false) and host byte order is
+                // big endian, then swap).
+                // * Shift right by red-shift.
+                // * AND with red-max (in host byte order).
+
+                // If true-colour-flag is zero (false) then the server uses
+                // pixel values which are not directly composed from the red,
+                // green and blue intensities, but which serve as indices into
+                // a colour map. Entries in the colour map are set by the
+                // server using the SetColourMapEntries message
+                // (SetColourMapEntries).
+
+                // PIXEL_FORMAT::padding         : 3 bytes
+
+                // name-length        : 4 bytes
+                // name-string        : variable
+
+                // The text encoding used for name-string is historically undefined but it is strongly recommended to use UTF-8 (see String Encodings for more details).
+
+
+                #warning not yet supported
+                // If the Tight Security Type is activated, the server init
+                // message is extended with an interaction capabilities section.
+
                 {
                     Stream stream(8192);
-                    #warning send and recv should be stream aware
-                    this->t->recv((char**)&stream.end, 4); /* server init */
-                    width = stream.in_uint16_be();
-                    height = stream.in_uint16_be();
-                    LOG(LOG_INFO, "VNC received: width=%d height=%d", width, height);
+                    this->t->recv((char**)&stream.end, 24); /* server init */
+                    this->width = stream.in_uint16_be();
+                    this->height = stream.in_uint16_be();
+                    this->bpp    = stream.in_uint8();
+                    LOG(LOG_INFO, "VNC received: width=%d height=%d b=%d", this->width, this->height, this->bpp);
+                    assert(this->bpp==8 || this->bpp==16 || this->bpp == 24 || this->bpp == 15);
 
                     this->server_set_clip(Rect(0, 0, width, height));
-                }
 
+                    stream.skip_uint8(15);
 
-                {
-                    Stream stream(8192); /* pixel format */
-                    #warning send and recv should be stream aware
-                    this->t->recv((char**)&stream.end, 16);
-                    #warning why do we not use what is received ?
-                }
+                    int lg = stream.in_uint32_be();
 
-                {
-                    Stream stream(8192);
-                    this->t->recv((char**)&stream.end, 4); /* name len */
-
-                    int i = stream.in_uint32_be();
-                    if (i > 255 || i < 0) {
+                    if (lg > 255 || lg < 0) {
                         throw 3;
                     }
                     char * end = this->mod_name;
-                    this->t->recv(&end, i);
-                    this->mod_name[i] = 0;
+                    this->t->recv(&end, lg);
+                    this->mod_name[lg] = 0;
                 }
-                    /* should be connected */
+
+                /* should be connected */
 
                 {
-                    /* SetPixelFormat */
+
+                // 7.4.1   SetPixelFormat
+                // ----------------------
+
+                // Sets the format in which pixel values should be sent in
+                // FramebufferUpdate messages. If the client does not send
+                // a SetPixelFormat message then the server sends pixel values
+                // in its natural format as specified in the ServerInit message
+                // (ServerInit).
+
+                // If true-colour-flag is zero (false) then this indicates that
+                // a "colour map" is to be used. The server can set any of the
+                // entries in the colour map using the SetColourMapEntries
+                // message (SetColourMapEntries). Immediately after the client
+                // has sent this message the colour map is empty, even if
+                // entries had previously been set by the server.
+
+                // Note that a client must not have an outstanding
+                // FramebufferUpdateRequest when it sends SetPixelFormat
+                // as it would be impossible to determine if the next *
+                // FramebufferUpdate is using the new or the previous pixel
+                // format.
+
                     Stream stream(8192);
+                    // Set Pixel format
                     stream.out_uint8(0);
+
+                    // Padding 3 bytes
                     stream.out_uint8(0);
                     stream.out_uint8(0);
                     stream.out_uint8(0);
 
-                    stream.out_copy_bytes(get_pixel_format(bpp), 16);
+                    // VNC pixel_format capabilities
+                    // -----------------------------
+                    // bits per pixel  : 1 byte
+                    // color depth     : 1 byte
+                    // endianess       : 1 byte (0 = LE, 1 = BE)
+                    // true color flag : 1 byte
+                    // red max         : 2 bytes
+                    // green max       : 2 bytes
+                    // blue max        : 2 bytes
+                    // red shift       : 1 bytes
+                    // green shift     : 1 bytes
+                    // blue shift      : 1 bytes
+                    // padding         : 3 bytes
+
+                    // 8 bpp
+                    // -----
+                    // "\x08\x08\x00"
+                    // "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                    // "\0\0\0"
+
+                    // 15 bpp
+                    // ------
+                    // "\x10\x0F\x00"
+                    // "\x01\x00\x1F\x00\x1F\x00\x1F\x0A\x05\x00"
+                    // "\0\0\0"
+
+                    // 24 bpp
+                    // ------
+                    // "\x20\x18\x00"
+                    // "\x01\x00\xFF\x00\xFF\x00\xFF\x10\x08\x00"
+                    // "\0\0\0"
+
+                    // 16 bpp
+                    // ------
+                    // "\x10\x10\x00"
+                    // "\x01\x00\x1F\x00\x2F\x00\x1F\x0B\x05\x00"
+                    // "\0\0\0"
+
+                    const char * pixel_format =
+                        "\x10" // bits per pixel  : 1 byte =  16
+                        "\x10" // color depth     : 1 byte =  16
+                        "\x00" // endianess       : 1 byte =  LE
+                        "\x01" // true color flag : 1 byte = yes
+                        "\x00\x1F" // red max     : 2 bytes = 31
+                        "\x00\x2F" // green max   : 2 bytes = 63
+                        "\x00\x1F" // blue max    : 2 bytes = 31
+                        "\x0B" // red shift       : 1 bytes = 11
+                        "\x05" // green shift     : 1 bytes =  5
+                        "\x00" // blue shift      : 1 bytes =  0
+                        "\0\0\0"; // padding      : 3 bytes
+                    stream.out_copy_bytes(pixel_format, 16);
                     this->t->send((char*)stream.data, 20);
                 }
 
+
+                // 7.4.2   SetEncodings
+                // --------------------
+
+                // Sets the encoding types in which pixel data can be sent by
+                // the server. The order of the encoding types given in this
+                // message is a hint by the client as to its preference (the
+                // first encoding specified being most preferred). The server
+                // may or may not choose to make use of this hint. Pixel data
+                // may always be sent in raw encoding even if not specified
+                // explicitly here.
+
+                // In addition to genuine encodings, a client can request
+                // "pseudo-encodings" to declare to the server that it supports
+                // certain extensions to the protocol. A server which does not
+                // support the extension will simply ignore the pseudo-encoding.
+                // Note that this means the client must assume that the server
+                // does not support the extension until it gets some extension-
+                // -specific confirmation from the server.
                 {
                     /* SetEncodings */
                     Stream stream(8192);
@@ -200,7 +366,9 @@ struct mod_vnc : public client_mod {
                     this->t->send((char*)stream.data, 4 + 3 * 4);
                 }
 
-                this->server_resize(width, height, bpp);
+                LOG(LOG_INFO, "Server resize(%d, %d, %d)", this->width, this->height, this->bpp);
+                this->server_resize(this->width, this->height, this->bpp);
+                LOG(LOG_INFO, "Server resize done(%d, %d, %d)", this->width, this->height, this->bpp);
 
                 {
                     /* FrambufferUpdateRequest */
@@ -248,47 +416,6 @@ struct mod_vnc : public client_mod {
 
     virtual ~mod_vnc(){
         delete this->t;
-    }
-
-
-    static const char * get_pixel_format(int bpp){
-    // VNC pixel_format capabilities
-    // -----------------------------
-    // bits per pixel  : 1 byte
-    // color depth     : 1 byte
-    // endianess       : 1 byte (0 = LE, 1 = BE)
-    // true color flag : 1 byte
-    // red max         : 2 bytes
-    // green max       : 2 bytes
-    // blue max        : 2 bytes
-    // red shift       : 1 bytes
-    // green shift     : 1 bytes
-    // blue shift      : 1 bytes
-    // padding         : 3 bytes
-
-        switch (bpp){
-        case 8:
-            return "\x08\x08\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\0\0\0";
-        break;
-        case 15:
-            return "\x10\x0F\x00"
-            "\x01\x00\x1F\x00\x1F\x00\x1F\x0A\x05\x00"
-            "\0\0\0";
-        break;
-        case 16:
-            return "\x10\x10\x00"
-            "\x01\x00\x1F\x00\x2F\x00\x1F\x0B\x05\x00"
-            "\0\0\0";
-        break;
-        default:
-        case 24:
-            return "\x20\x18\x00"
-            "\x01\x00\xFF\x00\xFF\x00\xFF\x10\x08\x00"
-            "\0\0\0";
-        break;
-        }
     }
 
     virtual int mod_event(int msg, long param1, long param2, long param3, long param4)
@@ -609,10 +736,7 @@ struct mod_vnc : public client_mod {
         int encoding;
         int error = 0;
         size_t num_recs = 0;
-        int Bpp = nbbytes(this->get_server_screen_bpp());
-        if (Bpp == 3) {
-            Bpp = 4;
-        }
+        int Bpp = nbbytes(this->bpp);
         try {
                 {
                     Stream stream(8192);
@@ -657,7 +781,7 @@ struct mod_vnc : public client_mod {
                 case 0xffffff11: /* cursor */
                 {
                     int j = cx * cy * Bpp;
-                    int k = nbbytes(cx) * cy;
+                    int k = (cx?(cx+7)/8:1) * cy;
                     Stream stream(j + k);
                     this->t->recv((char**)&stream.end, j + k);
                     const uint8_t *d1 = stream.in_uint8p(j);
