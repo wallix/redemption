@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
+              Olivier Hervieu, Martin Potier
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
 
@@ -143,7 +144,7 @@ const char * copyright_notice =
 "\n"
 "Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
 "Copyright (C) Wallix 2010.\n"
-"Christophe Grosjean, Javier Caverni, Xavier Dunat and Olivier Hervieu\n"
+"Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu and Martin Potier\n"
 "\n"
 ;
 
