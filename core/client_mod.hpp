@@ -38,6 +38,9 @@
 #include "mainloop.hpp"
 #include "bitmap_cache.hpp"
 
+#warning server_ naming convention is really confusing, it means internal RDP server, it would be clearer to call that front (like in front.hpp).
+#warning also maybe client_mod and front should collapse (#SMELL: parallel hierarchy)
+
 struct client_mod {
     #warning there is some overlapping betwwen screen.rect and clip, correct that
     widget_screen screen;
@@ -218,6 +221,7 @@ struct client_mod {
 
             this->screen.rect.cx = client_info.width = width;
             this->screen.rect.cy = client_info.height = height;
+            client_info.bpp = bpp;
 
             /* shut down the rdp client */
             this->front->orders->rdp_layer->server_rdp_send_deactive();
