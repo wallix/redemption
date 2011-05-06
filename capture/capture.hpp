@@ -556,6 +556,10 @@ class Capture
         uint8_t * target = this->data + (rect.y * this->width + rect.x) * 3;
         for (int j = 0; j < rect.cy ; j++){
             for (int i = 0; i < rect.cx ; i++){
+                #warning: it would be nicer to manage clipping earlier and not test every pixel
+                if (!(clip.rect_contains_pt(i + rect.x, j + rect.y))) {
+                  continue;
+                }
                 uint32_t src_px_offset = ((rect.cy - j - srcy - 1) * align4(rect.cx) + i + srcx) * nbbytes(bpp);
                 switch (bpp){
                     default:
