@@ -632,98 +632,6 @@ struct mod_vnc : public client_mod {
         return 0;
     }
 
-    #warning there is something strange here, cursor_data always reserve room for 24 bits cursor.
-    #warning simplify and inline set_pixel_safe and get_pixel_safe, then inline build pointer
-    #warning write some unit test for that, it's just too complicated to avoid unit test
-    static void build_pointer(
-        uint8_t cursor_data[32 * (32 * 3)],
-        uint8_t cursor_mask[32 * (32 / 8)],
-        const uint8_t * d1, const uint8_t * d2, int cx, int cy, int bpp, const RGBPalette & palette)
-    {
-        int pixel;
-        memset(cursor_data, 0, 32 * (32 * 3));
-        memset(cursor_mask, 0, 32 * (32 / 8));
-
-        for (int j = 0; j < 32; j++) {
-            for (int k = 0; k < 32; k++) {
-                if (d2[((31-j) * nbbytes(cx)) + (k / 8)] & (0x80 >> (k & 7))){
-                    cursor_mask[(j * 4) + (k / 8)] &= ~(0x80 >> (k & 7));
-                }
-                else {
-                    cursor_mask[(j * 4) + (k / 8)] |= (0x80 >> (k & 7));
-                    pixel = get_pixel_safe(d1, k, 31 - j, cx, cy, bpp);
-                    uint32_t color24 = color_decode(pixel, bpp, palette);
-                    uint32_t color16 = color_encode(color24, bpp, palette);
-                    set_pixel_safe(cursor_data, k, j, 32, 32, bpp, color16);
-                }
-            }
-        }
-    }
-
-
-    static int get_pixel_safe(const uint8_t* data, int x, int y, int width, int height, int bpp)
-    {
-        int start;
-        int shift;
-
-        if ((x < 0) || (y < 0) || (x >= width) || (y >= height)) {
-            return 0;
-        }
-        switch (bpp){
-        case 1:
-            width = nbbytes(width);
-            start = (y * width) + x / 8;
-            shift = x % 8;
-            return (data[start] & (0x80 >> shift)) != 0;
-        case 4:
-            width = (width + 1) / 2;
-            start = y * width + x / 2;
-            shift = x % 2;
-            return (shift == 0)?(data[start] & 0xf0) >> 4:data[start] & 0x0f;
-        case 8:
-            return *(((unsigned char*)data) + (y * width + x));
-        case 15: case 16:
-            return *(((unsigned short*)data) + (y * width + x));
-        case 24: case 32:
-            return *(((unsigned int*)data) + (y * width + x));
-        default:
-            LOG(LOG_ERR,"error in get_pixel_safe bpp %d\n", bpp);
-        }
-        return 0;
-    }
-
-    static void set_pixel_safe(uint8_t* data, int x, int y, int width, int height, int bpp,
-                   int pixel)
-    {
-        if ((x < 0) || (y < 0) || (x >= width) || (y >= height)) {
-            return;
-        }
-        switch (bpp){
-        case 1:
-        {
-            width = nbbytes(width);
-            int start = (y * width) + x / 8;
-            int shift = x % 8;
-            if (pixel & 1) {
-                data[start] = data[start] | (0x80 >> shift);
-            } else {
-                data[start] = data[start] & ~(0x80 >> shift);
-            }
-        }
-        break;
-        case 15: case 16:
-            *(((unsigned short*)data) + (y * width + x)) = pixel;
-        break;
-        case 24:
-            *(data + (3 * (y * width + x)) + 0) = pixel >> 0;
-            *(data + (3 * (y * width + x)) + 1) = pixel >> 8;
-            *(data + (3 * (y * width + x)) + 2) = pixel >> 16;
-        break;
-        default:
-            LOG(LOG_ERR,"error in set_pixel_safe bpp %d\n", bpp);
-        }
-    }
-
     int lib_framebuffer_update() throw (Error)
     {
         int encoding;
@@ -779,31 +687,84 @@ struct mod_vnc : public client_mod {
                 }
                 break;
                 case 0xffffff11: /* cursor */
-                {
-                    LOG(LOG_INFO, "cursor");
-                    int j = cx * cy * Bpp;
-                    int k = (cx?(cx+7)/8:1) * cy;
-                    Stream stream(j + k);
-                    this->t->recv((char**)&stream.end, j + k);
+                #warning see why we get these empty rects ?
+                if (cx > 0 && cy > 0) {
+                // 7.7.2   Cursor Pseudo-encoding
+                // ------------------------------
 
-                    const uint8_t *d1 = stream.in_uint8p(j);
-                    const uint8_t *d2 = stream.in_uint8p(k);
+                // A client which requests the Cursor pseudo-encoding is
+                // declaring that it is capable of drawing a mouse cursor
+                // locally. This can significantly improve perceived performance
+                // over slow links.
 
-                    #warning check that, smells like buffer overflow
-                    #warning seems overcomplicated, as we will provide pointer to server_set_pointer then forget it
-                    uint8_t cursor_data[32 * (32 * 3)];
-                    uint8_t cursor_mask[32 * (32 / 8)];
+                // The server sets the cursor shape by sending a pseudo-rectangle
+                // with the Cursor pseudo-encoding as part of an update.
 
-                    #warning palette should be kept synchronized with bpp. Is it ok ?
-                    this->build_pointer(cursor_data, cursor_mask,
-                                        d1, d2, cx, cy,
-                                        this->bpp,
-                                        this->palette);
+                // x, y : The pseudo-rectangle's x-position and y-position indicate
+                // the hotspot of the cursor,
 
+                // cx, cy : width and height indicate the width and height of
+                // the cursor in pixels.
+
+                // The data consists of width * height pixel values followed by
+                // a bitmask.
+
+                // PIXEL array : width * height * bytesPerPixel
+                // bitmask     : floor((width + 7) / 8) * height
+
+                // The bitmask consists of left-to-right, top-to-bottom
+                // scanlines, where each scanline is padded to a whole number of
+                // bytes floor((width + 7) / 8). Within each byte the most
+                // significant bit represents the leftmost pixel, with a 1-bit
+                // meaning the corresponding pixel in the cursor is valid.
+
+                    const int sz_pixel_array = cx * cy * Bpp;
+                    const int sz_bitmask = nbbytes(cx) * cy;
+                    Stream stream(sz_pixel_array + sz_bitmask);
+                    this->t->recv((char**)&stream.end, sz_pixel_array + sz_bitmask);
+
+                    const uint8_t *vnc_pointer_data = stream.in_uint8p(sz_pixel_array);
+                    const uint8_t *vnc_pointer_mask = stream.in_uint8p(sz_bitmask);
+
+                    uint8_t rdp_cursor_data[32 * (32 * 3)] = {};
+                    uint8_t rdp_cursor_mask[32 * (32 / 8)] = {};
+
+                    for (int y = 0; y < 32; y++) {
+                        for (int mask_x = 0; mask_x < nbbytes(32); mask_x++) {
+                            rdp_cursor_mask[y*nbbytes(32) + mask_x] = 0xFF;
+                        }
+                    }
+
+                    for (int y = 0; y < cy; y++) {
+                        for (int mask_x = 0; mask_x < (cx/8); mask_x++) {
+                            if ((y < 32) && (mask_x < 4)){
+                                rdp_cursor_mask[y * nbbytes(32) + mask_x] =
+                                    ~vnc_pointer_mask[((31-y) * nbbytes(cx)) + mask_x];
+                            }
+                        }
+                    }
+
+                    for (int y = 0; y < 32; y++) {
+                        for (int x = 0; x < 32; x++) {
+                            int pixel = 0;
+                            if ((x <= cx) && (y <= cy)){
+                                pixel = vnc_pointer_data[Bpp * ((31-y) * cx + x)];
+                            }
+                            uint32_t color24 = color_decode(pixel, 24, this->palette);
+                            if (rdp_cursor_mask[y * nbbytes(32) + (x / 8)] & (1 << (x&7))) {
+                                color24 = 0;
+                            }
+                            rdp_cursor_data[3 * (y * 32 + x) + 0] = color24 >> 0;
+                            rdp_cursor_data[3 * (y * 32 + x) + 1] = color24 >> 8;
+                            rdp_cursor_data[3 * (y * 32 + x) + 2] = color24 >> 16;
+                        }
+                    }
                     /* keep these in 32x32, vnc cursor can be alot bigger */
+                    /* (anyway hotspot is usually 0, 0)                   */
                     if (x > 31) { x = 31; }
                     if (y > 31) { y = 31; }
-                    this->server_set_pointer(x, y, cursor_data, cursor_mask);
+    #warning we should manage cursors bigger then 32 x 32, this is not an RDP protocol limitation
+                    this->server_set_pointer(x, y, rdp_cursor_data, rdp_cursor_mask);
                 }
                 break;
                 default:

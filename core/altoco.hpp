@@ -34,7 +34,6 @@ static inline uint32_t align4(int value)
 
 static inline uint32_t nbbytes(unsigned value)
 {
-    assert(value); // we don't want to use it for 0 as it does not work for it
     return ((value+7) / 8);
 }
 
