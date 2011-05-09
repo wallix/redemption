@@ -58,18 +58,6 @@ struct server_rdp {
     {
     }
 
-    void server_rdp_set_pointer(int cache_idx) throw (Error)
-    {
-        #warning we should create some RDPData object created on init and sent before destruction
-        Stream stream(8192);
-        this->server_rdp_init_data(stream);
-        stream.out_uint16_le(RDP_POINTER_CACHED);
-        stream.out_uint16_le(0); /* pad */
-        stream.out_uint16_le(cache_idx);
-        stream.mark_end();
-        this->server_rdp_send_data(stream, RDP_DATA_PDU_POINTER);
-    }
-
     void server_send_to_channel(int channel_id, uint8_t *data, int data_len,
                                int total_data_len, int flags) throw (Error)
     {
@@ -232,10 +220,22 @@ struct server_rdp {
 //    color pointer, as specified in [T128] section 8.14.3. This pointer update
 //    is used for both monochrome and color pointers in RDP.
 
+    void server_rdp_send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
+    {
+        Stream stream(8192);
+        this->sec_layer.server_sec_init(stream);
+        stream.rdp_hdr = stream.p;
+        stream.p += 18;
+
+        stream.out_uint16_le(RDP_POINTER_COLOR);
+        stream.out_uint16_le(0); /* pad */
+
 //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
 //      entry in the pointer cache in which to store the pointer image. The
 //      number of cache entries is negotiated using the Pointer Capability Set
 //      (section 2.2.7.1.5).
+
+        stream.out_uint16_le(cache_idx);
 
 //    hotSpot (4 bytes): Point (section 2.2.9.1.1.4.1) structure containing the
 //      x-coordinates and y-coordinates of the pointer hotspot.
@@ -247,20 +247,32 @@ struct server_rdp {
 //            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
 //              relative to the top-left corner of the server's desktop.
 
+        stream.out_uint16_le(x);
+
 //            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
 //              relative to the top-left corner of the server's desktop.
+
+        stream.out_uint16_le(y);
 
 //    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
 //      pixels (the maximum allowed pointer width is 32 pixels).
 
+        stream.out_uint16_le(32);
+
 //    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
 //      in pixels (the maximum allowed pointer height is 32 pixels).
+
+        stream.out_uint16_le(32);
 
 //    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the andMaskData field.
 
+        stream.out_uint16_le(128);
+
 //    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the xorMaskData field.
+
+        stream.out_uint16_le(3072);
 
 //    xorMaskData (variable): Variable number of bytes: Contains the 24-bpp,
 //      bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte
@@ -269,6 +281,16 @@ struct server_rdp {
 //      scan-line multiplied by 3 bpp, rounded up to the next even number of
 //      bytes).
 
+
+        #warning a memcopy (or equivalent build in stream) would be much more efficient
+        for (int i = 0; i < 32; i++) {
+            for (int j = 0; j < 32; j++) {
+                stream.out_uint8(*data++);
+                stream.out_uint8(*data++);
+                stream.out_uint8(*data++);
+            }
+        }
+
 //    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
 //      bottom-up AND mask scan-line data. The AND mask is padded to a 2-byte
 //      boundary for each encoded scan-line. For example, if a 7x7 pixel cursor
@@ -276,8 +298,16 @@ struct server_rdp {
 //      scan-line multiplied by 1 bpp, rounded up to the next even number of
 //      bytes).
 
+
+        stream.out_copy_bytes(mask, 128); /* mask */
+
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
+
+        stream.mark_end();
+        this->server_rdp_send_data(stream, RDP_DATA_PDU_POINTER);
+    }
+
 
 //    2.2.9.1.1.4.5    New Pointer Update (TS_POINTERATTRIBUTE)
 //    ---------------------------------------------------------
@@ -310,32 +340,21 @@ struct server_rdp {
 //      cached using either the Color Pointer Update (section 2.2.9.1.1.4.4) or
 //      New Pointer Update (section 2.2.9.1.1.4.5).
 
-    void server_rdp_send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
+    void server_rdp_set_pointer(int cache_idx) throw (Error)
     {
-        #warning we should create some RDPData object created on init and sent before destruction
         Stream stream(8192);
-        this->server_rdp_init_data(stream);
-        stream.out_uint16_le(RDP_POINTER_COLOR);
+        this->sec_layer.server_sec_init(stream);
+        stream.rdp_hdr = stream.p;
+        stream.p += 18;
+
+        stream.out_uint16_le(RDP_POINTER_CACHED);
         stream.out_uint16_le(0); /* pad */
         stream.out_uint16_le(cache_idx);
-        stream.out_uint16_le(x);
-        stream.out_uint16_le(y);
-        stream.out_uint16_le(32);
-        stream.out_uint16_le(32);
-        stream.out_uint16_le(128);
-        stream.out_uint16_le(3072);
-        #warning a memcopy (or equivalent build in stream) would be much more efficient
-        for (int i = 0; i < 32; i++) {
-            for (int j = 0; j < 32; j++) {
-                stream.out_uint8(*data++);
-                stream.out_uint8(*data++);
-                stream.out_uint8(*data++);
-            }
-        }
-        stream.out_copy_bytes(mask, 128); /* mask */
         stream.mark_end();
+
         this->server_rdp_send_data(stream, RDP_DATA_PDU_POINTER);
     }
+
 
     void server_rdp_init_data(Stream & stream) throw (Error)
     {
