@@ -340,11 +340,6 @@ struct client_mod {
         free(bmpdata);
     }
 
-    void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y)
-    {
-        this->front->send_pointer(cache_idx, data, mask, x, y);
-    }
-
     void set_pointer(int cache_idx)
     {
         this->front->set_pointer(cache_idx);
@@ -356,7 +351,7 @@ struct client_mod {
         int cacheidx = 0;
         switch (this->front->cache->add_pointer(data, mask, x, y, cacheidx)){
         case POINTER_TO_SEND:
-            this->send_pointer(cacheidx, data, mask, x, y);
+            this->front->send_pointer(cacheidx, data, mask, x, y);
         break;
         default:
         case POINTER_ALLREADY_SENT:
