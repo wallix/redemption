@@ -385,6 +385,7 @@ struct mod_vnc : public client_mod {
                     this->t->send((char*)stream.data, 10);
                 }
 
+                #warning define some constants, not need to use dynamic data
                 /* set almost null cursor, this is the little dot cursor */
                 memset(cursor_data, 0, 32 * (32 * 3));
                 memset(cursor_data + (32 * (32 * 3) - 1 * 32 * 3), 0xff, 9);
@@ -470,34 +471,34 @@ struct mod_vnc : public client_mod {
             case WM_MOUSEMOVE:
                 break;
             case WM_LBUTTONUP:
-                this->mod_mouse_state &= ~1;
+                this->mod_mouse_state &= ~1; // clear bit 0
                 break;
             case WM_LBUTTONDOWN:
-                this->mod_mouse_state |= 1;
+                this->mod_mouse_state |= 1; // set bit 0
                 break;
             case WM_RBUTTONUP:
-                this->mod_mouse_state &= ~4;
+                this->mod_mouse_state &= ~4; // clear bit 2
                 break;
             case WM_RBUTTONDOWN:
-                this->mod_mouse_state |= 4;
+                this->mod_mouse_state |= 4; // set bit 2
                 break;
             case WM_BUTTON3UP:
-                this->mod_mouse_state &= ~2;
+                this->mod_mouse_state &= ~2; // clear bit 1
                 break;
             case WM_BUTTON3DOWN:
-                this->mod_mouse_state |= 2;
+                this->mod_mouse_state |= 2; // set bit 1
                 break;
             case WM_BUTTON4UP:
-                this->mod_mouse_state &= ~8;
+                this->mod_mouse_state &= ~8; // clear bit 3
                 break;
             case WM_BUTTON4DOWN:
-                this->mod_mouse_state |= 8;
+                this->mod_mouse_state |= 8; // set bit 3
                 break;
             case WM_BUTTON5UP:
-                this->mod_mouse_state &= ~16;
+                this->mod_mouse_state &= ~16; // clear bit 4
                 break;
             case WM_BUTTON5DOWN:
-                this->mod_mouse_state |= 16;
+                this->mod_mouse_state |= 16; // set bit 4
                 break;
             }
             stream.out_uint8(5);
@@ -631,6 +632,9 @@ struct mod_vnc : public client_mod {
         return 0;
     }
 
+    #warning there is something strange here, cursor_data always reserve room for 24 bits cursor.
+    #warning simplify and inline set_pixel_safe and get_pixel_safe, then inline build pointer
+    #warning write some unit test for that, it's just too complicated to avoid unit test
     static void build_pointer(
         uint8_t cursor_data[32 * (32 * 3)],
         uint8_t cursor_mask[32 * (32 / 8)],
@@ -642,9 +646,11 @@ struct mod_vnc : public client_mod {
 
         for (int j = 0; j < 32; j++) {
             for (int k = 0; k < 32; k++) {
-                pixel = get_pixel_safe(d2, k, 31 - j, cx, cy, 1);
-                set_pixel_safe(cursor_mask, k, j, 32, 32, 1, !pixel);
-                if (pixel) {
+                if (d2[((31-j) * nbbytes(cx)) + (k / 8)] & (0x80 >> (k & 7))){
+                    cursor_mask[(j * 4) + (k / 8)] &= ~(0x80 >> (k & 7));
+                }
+                else {
+                    cursor_mask[(j * 4) + (k / 8)] |= (0x80 >> (k & 7));
                     pixel = get_pixel_safe(d1, k, 31 - j, cx, cy, bpp);
                     uint32_t color24 = color_decode(pixel, bpp, palette);
                     uint32_t color16 = color_encode(color24, bpp, palette);
@@ -653,6 +659,7 @@ struct mod_vnc : public client_mod {
             }
         }
     }
+
 
     static int get_pixel_safe(const uint8_t* data, int x, int y, int width, int height, int bpp)
     {
@@ -783,6 +790,7 @@ struct mod_vnc : public client_mod {
                     const uint8_t *d2 = stream.in_uint8p(k);
 
                     #warning check that, smells like buffer overflow
+                    #warning seems overcomplicated, as we will provide pointer to server_set_pointer then forget it
                     uint8_t cursor_data[32 * (32 * 3)];
                     uint8_t cursor_mask[32 * (32 / 8)];
 
