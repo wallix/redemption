@@ -48,6 +48,8 @@ class Capture
     int real_time;
     uint8_t * data;
     int count;
+    int framenb;
+    char * path;
 
     char timestamp_data[ts_width * ts_height * 3];
     char previous_timestamp[50];
@@ -60,7 +62,7 @@ class Capture
     Capture(int width, int height, char * path, const char * codec_id, const char * video_quality){
         this->pix_len = 0;
         this->count = 0;
-        this->inter_frame_interval = 1000;
+        this->inter_frame_interval = 1000000; // 1 000 000 us is 1 sec (default)
 
         this->pix_len = width * height * 3;
         if (!this->pix_len) {
@@ -388,6 +390,20 @@ class Capture
             }
 
             // HERE WE CAN CAPTURE RAW FRAMES
+            char rawImagePath[256]     = {0};
+            char rawImageMetaPath[256] = {0};
+            snprintf(rawImagePath,     254, "/dev/shm/%d-%d", getpid(), this->framenb++);
+            snprintf(rawImageMetaPath, 254, "%s.meta", rawImagePath);
+            FILE * fd = fopen(rawImageMetaPath, "w");
+            if (fd) {
+               fprintf(fd, "%d,%d,%s\n", this->width, this->height, this->previous_timestamp);
+            }
+            fclose(fd);
+            fd = fopen(rawImagePath, "w");
+            if (fd) {
+                fwrite(this->data, 3, this->width*this->height, fd);
+            }
+            fclose(fd);
 
             // Time to restore mouse/timestamp for the next frame (otherwise it piles up)
             if (!pointer_already_displayed){

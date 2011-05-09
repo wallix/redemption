@@ -115,33 +115,27 @@ public:
         }
     }
 
+    uint64_t difftimeval(const struct timeval endtime, const struct timeval starttime)
+    {
+      uint64_t sec;
+      sec =(endtime.tv_sec  - starttime.tv_sec ) * 1000000;
+      sec+=(endtime.tv_usec - starttime.tv_usec);
+      return sec;
+    }
+
     void periodic_snapshot(bool pointer_is_displayed)
     {
         if (this->capture){
             const long inter_frame_interval = this->capture->inter_frame_interval;
             struct timeval now;
             gettimeofday(&now, NULL);
-            if ((now.tv_sec > start.tv_sec)
-            || ((now.tv_sec == start.tv_sec) && (now.tv_usec - start.tv_usec > inter_frame_interval))){
-                // increment usec by 200ms
-                start.tv_usec += inter_frame_interval;
-                if (start.tv_usec > 1000000){
-                    start.tv_sec++;
-                    start.tv_usec -= 1000000;
-                }
-                // if we are still late, drop frames
-                if ((now.tv_sec > start.tv_sec)
-                || ((now.tv_sec  == start.tv_sec) && (now.tv_usec > start.tv_usec + inter_frame_interval))){
-                    start = now;
-                }
-                else {
-                    // ok, we are not late emit frame
-                    this->capture->snapshot(
-                        this->mouse_x, this->mouse_y,
-                        pointer_is_displayed|this->nomouse,
-                        this->notimestamp, this->timezone);
-                }
-
+            if (difftimeval(now, this->start) > inter_frame_interval)
+            {
+                this->start = now;
+                this->capture->snapshot(
+                    this->mouse_x, this->mouse_y,
+                    pointer_is_displayed|this->nomouse,
+                    this->notimestamp, this->timezone);
             }
         }
     }
