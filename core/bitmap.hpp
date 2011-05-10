@@ -322,12 +322,11 @@ struct Bitmap{
     }
 
 
-    void copy_upsidedown(const uint8_t* input)
+    void copy_upsidedown(const uint8_t* input, uint16_t cx)
     {
-
         uint8_t * d8 = this->data_co + (this->cy-1) * this->line_size;
         const uint8_t * s8 = input;
-        uint32_t src_width = this->cx * this->Bpp;
+        uint32_t src_width = cx * this->Bpp;
 
         for (unsigned i = 0; i < this->cy; i++) {
             memcpy(d8, s8, src_width);

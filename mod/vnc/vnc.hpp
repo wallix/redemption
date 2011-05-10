@@ -341,8 +341,8 @@ struct mod_vnc : public client_mod {
                         "\x00\x1F" // red max     : 2 bytes = 31
                         "\x00\x3F" // green max   : 2 bytes = 63
                         "\x00\x1F" // blue max    : 2 bytes = 31
-                        "\x0A" // red shift       : 1 bytes = 10
-                        "\x06" // green shift     : 1 bytes =  6
+                        "\x0B" // red shift       : 1 bytes = 10
+                        "\x05" // green shift     : 1 bytes =  6
                         "\x00" // blue shift      : 1 bytes =  0
                         "\0\0\0"; // padding      : 3 bytes
                     stream.out_copy_bytes(pixel_format, 16);
@@ -694,8 +694,8 @@ struct mod_vnc : public client_mod {
                     #warning see server_paint_rect and Bitmap below, suspicious code, does it works ?
 
                     #warning we should manage *two* color depth, front color depth and back color depth. Code below only works because we forced front color depth to the same depth as VNC server.
-                    Bitmap bmp(this->get_server_screen_bpp(), cx, cy);
-                    bmp.copy_upsidedown(raw.data);
+                    Bitmap bmp(this->get_server_screen_bpp(), align4(cx), cy);
+                    bmp.copy_upsidedown(raw.data, cx);
                     this->server_paint_rect(bmp, Rect(x, y, cx, cy), 0, 0, this->palette332);
                 }
                 break;
