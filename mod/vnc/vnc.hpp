@@ -688,14 +688,16 @@ struct mod_vnc : public client_mod {
                 {
                     int need_size = cx * cy * Bpp;
                     LOG(LOG_INFO, "raw: x=%d y=%d cx=%d cy=%d encoding=%d need_size=%d", x, y, cx, cy, encoding, need_size);
-                    Stream raw(need_size);
-                    this->t->recv((char**)&raw.end, need_size);
-
-                    #warning see server_paint_rect and Bitmap below, suspicious code, does it works ?
+                    uint8_t * raw = (uint8_t *)malloc(need_size);
+                    assert(raw);
+                    uint8_t * tmp = raw;
+                    this->t->recv((char**)&tmp, need_size);
 
                     #warning we should manage *two* color depth, front color depth and back color depth. Code below only works because we forced front color depth to the same depth as VNC server.
                     Bitmap bmp(this->get_server_screen_bpp(), align4(cx), cy);
-                    bmp.copy_upsidedown(raw.data, cx);
+                    bmp.copy_upsidedown(raw, cx);
+                    free(raw);
+                    #warning see server_paint_rect and Bitmap below, suspicious code, does it works ?
                     this->server_paint_rect(bmp, Rect(x, y, cx, cy), 0, 0, this->palette332);
                 }
                 break;

@@ -335,7 +335,9 @@ struct client_mod {
             dest += nbbytes(out_bpp);
         }
         const Rect src_r(srcx, srcy, width, height);
+        front->begin_update();
         this->front->send_bitmap_front(dst, src_r, bmpdata, 0, this->clip);
+        front->end_update();
 
         free(bmpdata);
     }

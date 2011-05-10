@@ -133,7 +133,7 @@ struct Orders
             size_t max_packet_size = std::min(this->out_stream.capacity, (size_t)16384);
             size_t used_size = (size_t)(this->out_stream.p - this->order_count_ptr);
 
-            if ((used_size + asked_size + 100) > max_packet_size) {
+            if (1 || (used_size + asked_size + 100) > max_packet_size) {
                 this->force_send();
             }
         }
@@ -373,16 +373,22 @@ struct Orders
 
         RDPBmpCache bmp_order(&bmp, cache_id, cache_idx, &this->rdp_layer->client_info);
         #warning really when using compression we'll use less space
-        this->reserve_order(align4(bmp.cx * nbbytes(bmp.bpp)) * bmp.cy + 16);
+        this->reserve_order(bmp.bmp_size + 16);
+
+        LOG(LOG_INFO, "send_bitmap[%d](bmp(bpp=%d, cx=%d, cy=%d, data=%p), cache_id=%d, cache_idx=%d)\n", this->order_count, bmp.bpp, bmp.cx, bmp.cy, bmp.data_co, cache_id, cache_idx);
+
+
         bmp_order.emit(this->out_stream);
     }
 
     void send_font(struct FontChar* font_char, int font_index, int char_index)
     {
-        LOG(LOG_INFO, "send_font[%d](font_index=%d, char_index=%d)\n", this->order_count, font_index, char_index);
 
         int datasize = font_char->datasize();
         this->reserve_order(datasize + 18);
+
+        LOG(LOG_INFO, "send_font[%d](font_index=%d, char_index=%d)\n", this->order_count, font_index, char_index);
+
         int order_flags = STANDARD | SECONDARY;
         this->out_stream.out_uint8(order_flags);
         int len = (datasize + 12) - 7; /* length after type minus 7 */
