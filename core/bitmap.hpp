@@ -378,8 +378,10 @@ struct Bitmap{
         uint8_t lastopcode = 0xFF;
 
         while (input < end) {
+
             // Read RLE operators, handle short and long forms
             code = input[0]; input++;
+//            printf("[%d]code=%.2x\n", size-(end-input), code);
             switch (code >> 4) {
             case 0xf:
                 switch (code){
@@ -512,6 +514,8 @@ struct Bitmap{
             lastopcode = opcode;
 
             /* Output body */
+//            printf("count=%d\n", count);
+
             while (count > 0) {
                 assert(out <= this->pmax);
                 if ((out - this->cx * this->Bpp) < this->data_co){
