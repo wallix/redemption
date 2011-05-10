@@ -217,13 +217,13 @@ class SessionManager {
     }
 
 
-    int ask_next_module(long & keepalive_time, const char * auth_host, int authport, bool & record_video, bool & keep_alive)
+    int ask_next_module(long & keepalive_time, const char * auth_host, int auth_port, bool & record_video, bool & keep_alive)
     {
         int next_state = MCTX_STATUS_EXIT;
         switch (this->context.mod_state){
         default:
             LOG(LOG_INFO, "DEFAULT MOD STATE\n");
-            next_state = this->ask_next_module_remote(auth_host, 3350);
+            next_state = this->ask_next_module_remote(auth_host, auth_port);
             if (next_state == MCTX_STATUS_CLOSE){
                 next_state = MCTX_STATUS_TRANSITORY;
                 this->context.mod_state = MOD_STATE_RECEIVED_CREDENTIALS;
