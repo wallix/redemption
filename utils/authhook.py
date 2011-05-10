@@ -14,6 +14,7 @@ class Authentifier(object):
     # at all. Comparing hashes is enough anyway.
     passwords = {
         'xp': 'xp',
+        'v' : 'v',
         'n' : 'n',
         'cgr' : 'cgr',
     }
@@ -30,6 +31,14 @@ class Authentifier(object):
             'target_login' : r'vnc',
             'target_device' : '10.10.4.163',
             'target_password' : 'tabra',
+            'target_port':'5900',
+            'proto_dest': 'VNC'
+        },
+        'v' : {
+            'proxy_type': 'RDP',
+            'target_login' : r'vnc',
+            'target_device' : '192.168.1.28',
+            'target_password' : 'secure',
             'target_port':'5900',
             'proto_dest': 'VNC'
         },
@@ -82,7 +91,7 @@ class Authentifier(object):
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server.bind(('127.0.0.1', 3350))
+server.bind(('127.0.0.1', 3450))
 server.listen(5)
 wsockets = []
 manager ={}

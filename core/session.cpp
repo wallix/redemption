@@ -683,7 +683,7 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
             int next_state = this->sesman->ask_next_module(
                                                 this->keep_alive_time,
                                                 this->ini->globals.authip,
-                                                3350,
+                                                this->ini->globals.authport,
                                                 record_video, keep_alive);
             if (next_state != MCTX_STATUS_WAITING){
                 this->internal_state = SESSION_STATE_STOP;

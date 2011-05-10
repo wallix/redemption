@@ -434,7 +434,7 @@ struct server_rdp {
                 // this is rdp_process_data that will set up_and_running to 1
                 // when fonts have been received
                 // we will not exit this loop until we are in this state.
-                LOG(LOG_INFO, "Client : receive PDU data");
+//                LOG(LOG_INFO, "Client : receive PDU data");
                 this->server_rdp_process_data(stream);
                 break;
             default:

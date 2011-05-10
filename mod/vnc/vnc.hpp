@@ -41,7 +41,6 @@
 #warning remove this inheritance. Client_mod should be an interface object provided to mod_vnc (and other mods)
 struct mod_vnc : public client_mod {
     char dummy[1024];
-    uint8_t bpp;
     /* mod data */
     char mod_name[256];
     int mod_mouse_state;
@@ -58,7 +57,16 @@ struct mod_vnc : public client_mod {
     int clip_data_size;
     uint16_t width;
     uint16_t height;
-
+    uint8_t bpp;
+    uint8_t depth;
+    uint8_t endianess;
+    uint8_t true_color_flag;
+    uint16_t red_max;
+    uint16_t green_max;
+    uint16_t blue_max;
+    uint8_t red_shift;
+    uint8_t green_shift;
+    uint8_t blue_shift;
 
     mod_vnc(Transport * t,
             int (& keys)[256], int & key_flags, Keymap * &keymap,
@@ -90,8 +98,6 @@ struct mod_vnc : public client_mod {
             // strcpy(this->hostname, hostname);
             if (0 != keylayout) { this->keylayout = keylayout; }
 
-            uint8_t cursor_data[32 * (32 * 3)];
-            uint8_t cursor_mask[32 * (32 / 8)];
             int error = 0;
 
             int check_sec_result = 1;
@@ -228,12 +234,21 @@ struct mod_vnc : public client_mod {
                     this->width = stream.in_uint16_be();
                     this->height = stream.in_uint16_be();
                     this->bpp    = stream.in_uint8();
-                    LOG(LOG_INFO, "VNC received: width=%d height=%d b=%d", this->width, this->height, this->bpp);
-                    assert(this->bpp==8 || this->bpp==16 || this->bpp == 24 || this->bpp == 15);
+                    this->depth  = stream.in_uint8();
+                    this->endianess = stream.in_uint8();
+                    this->true_color_flag = stream.in_uint8();
+                    this->red_max = stream.in_uint16_be();
+                    this->green_max = stream.in_uint16_be();
+                    this->blue_max = stream.in_uint16_be();
+                    this->red_shift = stream.in_uint8();
+                    this->green_shift = stream.in_uint8();
+                    this->blue_shift = stream.in_uint8();
+                    stream.skip_uint8(3); // skip padding
+
+                    LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
 
                     this->server_set_clip(Rect(0, 0, width, height));
 
-                    stream.skip_uint8(15);
 
                     int lg = stream.in_uint32_be();
 
@@ -324,14 +339,25 @@ struct mod_vnc : public client_mod {
                         "\x00" // endianess       : 1 byte =  LE
                         "\x01" // true color flag : 1 byte = yes
                         "\x00\x1F" // red max     : 2 bytes = 31
-                        "\x00\x2F" // green max   : 2 bytes = 63
+                        "\x00\x3F" // green max   : 2 bytes = 63
                         "\x00\x1F" // blue max    : 2 bytes = 31
-                        "\x0B" // red shift       : 1 bytes = 11
-                        "\x05" // green shift     : 1 bytes =  5
+                        "\x0A" // red shift       : 1 bytes = 10
+                        "\x06" // green shift     : 1 bytes =  6
                         "\x00" // blue shift      : 1 bytes =  0
                         "\0\0\0"; // padding      : 3 bytes
                     stream.out_copy_bytes(pixel_format, 16);
                     this->t->send((char*)stream.data, 20);
+
+                    this->bpp = 16;
+                    this->depth  = 16;
+                    this->endianess = 0;
+                    this->true_color_flag = 1;
+                    this->red_max = 0x1F;
+                    this->green_max = 0x3F;
+                    this->blue_max = 0x1F;
+                    this->red_shift = 10;
+                    this->green_shift = 6;
+                    this->blue_shift = 0;
                 }
 
 
@@ -387,14 +413,14 @@ struct mod_vnc : public client_mod {
 
                 #warning define some constants, not need to use dynamic data
                 /* set almost null cursor, this is the little dot cursor */
-                memset(cursor_data, 0, 32 * (32 * 3));
-                memset(cursor_data + (32 * (32 * 3) - 1 * 32 * 3), 0xff, 9);
-                memset(cursor_data + (32 * (32 * 3) - 2 * 32 * 3), 0xff, 9);
-                memset(cursor_data + (32 * (32 * 3) - 3 * 32 * 3), 0xff, 9);
-                memset(cursor_mask, 0xff, 32 * (32 / 8));
-
-                // sending cursor
-                this->server_set_pointer(3, 3, cursor_data, cursor_mask);
+                uint8_t rdp_cursor_data[32 * (32 * 3)];
+                uint8_t rdp_cursor_mask[32 * (32 / 8)];
+                memset(rdp_cursor_data, 0, 32 * (32 * 3));
+                memset(rdp_cursor_data + (32 * (32 * 3) - 1 * 32 * 3), 0xff, 9);
+                memset(rdp_cursor_data + (32 * (32 * 3) - 2 * 32 * 3), 0xff, 9);
+                memset(rdp_cursor_data + (32 * (32 * 3) - 3 * 32 * 3), 0xff, 9);
+                memset(rdp_cursor_mask, 0xff, 32 * (32 / 8));
+                this->server_set_pointer(3, 3, rdp_cursor_data, rdp_cursor_mask);
             } catch(int i) {
                 error = i;
             } catch(...) {
@@ -422,8 +448,6 @@ struct mod_vnc : public client_mod {
     virtual int mod_event(int msg, long param1, long param2, long param3, long param4)
     {
         int error = 0;
-        LOG(LOG_INFO, "----------------> mod_event msg=%d", msg);
-
         Stream stream(8192);
         switch (msg){
         case WM_CHANNELDATA:
@@ -714,9 +738,9 @@ struct mod_vnc : public client_mod {
 
                 // The bitmask consists of left-to-right, top-to-bottom
                 // scanlines, where each scanline is padded to a whole number of
-                // bytes floor((width + 7) / 8). Within each byte the most
-                // significant bit represents the leftmost pixel, with a 1-bit
-                // meaning the corresponding pixel in the cursor is valid.
+                // bytes. Within each byte the most significant bit represents
+                // the leftmost pixel, with a 1-bit meaning the corresponding
+                // pixel in the cursor is valid.
 
                     const int sz_pixel_array = cx * cy * Bpp;
                     const int sz_bitmask = nbbytes(cx) * cy;
@@ -726,39 +750,34 @@ struct mod_vnc : public client_mod {
                     const uint8_t *vnc_pointer_data = stream.in_uint8p(sz_pixel_array);
                     const uint8_t *vnc_pointer_mask = stream.in_uint8p(sz_bitmask);
 
-                    uint8_t rdp_cursor_data[32 * (32 * 3)] = {};
                     uint8_t rdp_cursor_mask[32 * (32 / 8)] = {};
 
-                    for (int y = 0; y < 32; y++) {
+                    // clear target cursor mask
+                    for (int tmpy = 0; tmpy < 32; tmpy++) {
                         for (int mask_x = 0; mask_x < nbbytes(32); mask_x++) {
-                            rdp_cursor_mask[y*nbbytes(32) + mask_x] = 0xFF;
+                            rdp_cursor_mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
                         }
                     }
 
-                    for (int y = 0; y < cy; y++) {
-                        for (int mask_x = 0; mask_x < (cx/8); mask_x++) {
-                            if ((y < 32) && (mask_x < 4)){
-                                rdp_cursor_mask[y * nbbytes(32) + mask_x] =
-                                    ~vnc_pointer_mask[((31-y) * nbbytes(cx)) + mask_x];
+                    // copy vnc pointer and mask to rdp pointer and mask
+                    uint8_t rdp_cursor_data[32 * (32 * 3)] = {};
+                    for (int yy = 0; yy < cy; yy++) {
+                        for (int xx = 0 ; xx < cx ; xx++){
+                            if (vnc_pointer_mask[yy * nbbytes(cx) + xx / 8 ] & (0x80 >> (xx&7))){
+                                if ((yy < 32) && (xx < 32)){
+                                    rdp_cursor_mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
+                                    int pixel = 0;
+                                    for (int tt = 0 ; tt < Bpp; tt++){
+                                        pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
+                                    }
+                                    rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 0] = pixel >> 16;
+                                    rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 1] = pixel >> 8;
+                                    rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 2] = pixel;
+                                }
                             }
                         }
                     }
 
-                    for (int y = 0; y < 32; y++) {
-                        for (int x = 0; x < 32; x++) {
-                            int pixel = 0;
-                            if ((x <= cx) && (y <= cy)){
-                                pixel = vnc_pointer_data[Bpp * ((31-y) * cx + x)];
-                            }
-                            uint32_t color24 = color_decode(pixel, 24, this->palette);
-                            if (rdp_cursor_mask[y * nbbytes(32) + (x / 8)] & (1 << (x&7))) {
-                                color24 = 0;
-                            }
-                            rdp_cursor_data[3 * (y * 32 + x) + 0] = color24 >> 0;
-                            rdp_cursor_data[3 * (y * 32 + x) + 1] = color24 >> 8;
-                            rdp_cursor_data[3 * (y * 32 + x) + 2] = color24 >> 16;
-                        }
-                    }
                     /* keep these in 32x32, vnc cursor can be alot bigger */
                     /* (anyway hotspot is usually 0, 0)                   */
                     if (x > 31) { x = 31; }
