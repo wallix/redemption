@@ -351,18 +351,18 @@ public:
 
                     if (send_type == BITMAP_ADDED_TO_CACHE){
                         LOG(LOG_INFO, "Added to cache: id=%d idx=%d", cache_id, cache_idx);
-                        if (rect1.x == 64 && rect1.y == 320) {
-                            printf("------- Bogus Not Compressed (%d)---------\n", entry->pbmp->bmp_size);
-                            for (int i = 0; i < entry->pbmp->bmp_size; i++){
-                                if (0==(i % 16)){
-                                    printf("\n");
-                                }
-                                printf("0x%.2x, ", entry->pbmp->data_co[i]);
-                            }
-                            printf("\n");
-                            printf("\n----------------------------\n");
-                            printf("\n");
-                        }
+//                        if (rect1.x == 64 && rect1.y == 320) {
+//                            printf("------- Bogus Not Compressed (%d)---------\n", entry->pbmp->bmp_size);
+//                            for (int i = 0; i < entry->pbmp->bmp_size; i++){
+//                                if (0==(i % 16)){
+//                                    printf("\n");
+//                                }
+//                                printf("0x%.2x, ", entry->pbmp->data_co[i]);
+//                            }
+//                            printf("\n");
+//                            printf("\n----------------------------\n");
+//                            printf("\n");
+//                        }
                         this->orders->send_bitmap_common(*entry->pbmp, cache_id, cache_idx);
                     };
 
