@@ -353,7 +353,7 @@ struct Bitmap{
         unsigned count = 0;
         int bicolor = 0;
 
-        assert(Bpp <= 3);
+        assert(this->Bpp <= 3);
 
         color1 = 0;
         color2 = 0;
@@ -381,7 +381,7 @@ struct Bitmap{
 
             // Read RLE operators, handle short and long forms
             code = input[0]; input++;
-//            printf("[%d]code=%.2x\n", size-(end-input), code);
+
             switch (code >> 4) {
             case 0xf:
                 switch (code){
@@ -473,22 +473,22 @@ struct Bitmap{
             break;
             case BICOLOR:
                 bicolor = 0;
-                color1 = in_bytes_le(Bpp, input);
-                input += Bpp;
-                color2 = in_bytes_le(Bpp, input);
-                input += Bpp;
+                color1 = in_bytes_le(this->Bpp, input);
+                input += this->Bpp;
+                color2 = in_bytes_le(this->Bpp, input);
+                input += this->Bpp;
                 break;
             case COLOR:
-                color2 = in_bytes_le(Bpp, input);
-                input += Bpp;
+                color2 = in_bytes_le(this->Bpp, input);
+                input += this->Bpp;
                 break;
             case MIX_SET:
-                mix = in_bytes_le(Bpp, input);
-                input += Bpp;
+                mix = in_bytes_le(this->Bpp, input);
+                input += this->Bpp;
             break;
             case FOM_SET:
-                mix = in_bytes_le(Bpp, input);
-                input += Bpp;
+                mix = in_bytes_le(this->Bpp, input);
+                input += this->Bpp;
                 mask = 1;
                 fom_mask = input[0]; input++;
                 break;
@@ -505,32 +505,30 @@ struct Bitmap{
                     yprev = 0;
                 }
                 else {
-                     yprev = in_bytes_le(Bpp, out - this->cx * this->Bpp);
+                     yprev = in_bytes_le(this->Bpp, out - this->cx * this->Bpp);
                 }
-                out_bytes_le(out, Bpp, yprev ^ mix);
+                out_bytes_le(out, this->Bpp, yprev ^ mix);
                 count--;
                 out+= this->Bpp;
             }
             lastopcode = opcode;
 
             /* Output body */
-//            printf("count=%d\n", count);
-
             while (count > 0) {
                 assert(out <= this->pmax);
                 if ((out - this->cx * this->Bpp) < this->data_co){
                     yprev = 0;
                 }
                 else {
-                     yprev = in_bytes_le(Bpp, out - this->cx * this->Bpp);
+                     yprev = in_bytes_le(this->Bpp, out - this->cx * this->Bpp);
                 }
                 switch (opcode) {
                 case FILL:
-                    out_bytes_le(out, Bpp, yprev);
+                    out_bytes_le(out, this->Bpp, yprev);
                     break;
                 case MIX_SET:
                 case MIX:
-                    out_bytes_le(out, Bpp, yprev ^ mix);
+                    out_bytes_le(out, this->Bpp, yprev ^ mix);
                     break;
                 case FOM_SET:
                 case FOM:
@@ -541,42 +539,42 @@ struct Bitmap{
                 case SPECIAL_FGBG_1:
                 case SPECIAL_FGBG_2:
                     if (mask & fom_mask){
-                        out_bytes_le(out, Bpp, yprev ^ mix);
+                        out_bytes_le(out, this->Bpp, yprev ^ mix);
                     }
                     else {
-                        out_bytes_le(out, Bpp, yprev);
+                        out_bytes_le(out, this->Bpp, yprev);
                     }
                     mask <<= 1;
                     break;
                 case COLOR:
-                    out_bytes_le(out, Bpp, color2);
+                    out_bytes_le(out, this->Bpp, color2);
                     break;
                 case COPY:
-                    out_bytes_le(out, Bpp, in_bytes_le(Bpp, input));
-                    input += Bpp;
+                    out_bytes_le(out, this->Bpp, in_bytes_le(Bpp, input));
+                    input += this->Bpp;
                     break;
                 case BICOLOR:
                     if (bicolor) {
-                        out_bytes_le(out, Bpp, color2);
+                        out_bytes_le(out, this->Bpp, color2);
                         bicolor = 0;
                     }
                     else {
-                        out_bytes_le(out, Bpp, color1);
+                        out_bytes_le(out, this->Bpp, color1);
                         bicolor = 1;
                     }
                 break;
                 case WHITE:
-                    out_bytes_le(out, Bpp, 0xFFFFFFFF);
+                    out_bytes_le(out, this->Bpp, 0xFFFFFFFF);
                 break;
                 case BLACK:
-                    out_bytes_le(out, Bpp, 0);
+                    out_bytes_le(out, this->Bpp, 0);
                 break;
                 default:
                     assert(false);
                     break;
                 }
                 count--;
-                out += Bpp;
+                out += this->Bpp;
             }
         }
         return;
@@ -923,6 +921,7 @@ struct Bitmap{
                     copy_count = 0;
                 }
 
+                #warning use symbolic values for flags
                 switch (flags){
                     case 9:
                         out.out_bicolor_sequence(Bpp, bicolor_count, color, color2);

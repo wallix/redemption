@@ -529,7 +529,7 @@ class Stream {
     void out_fom_count_set(const int in_count)
     {
         if (in_count < 256){
-            if (in_count & 7){
+            if (in_count & 0x87){
                 this->out_uint8(0xD0);
                 this->out_uint8(in_count - 1);
             }

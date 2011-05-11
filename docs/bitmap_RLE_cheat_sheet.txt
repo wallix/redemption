@@ -24,7 +24,7 @@ Two consecutive FILL on the same line inject a magic background colored pixel
 | C0: MIX SET       SI+16  CCC         |                                       |
 | C-: MIX SET       -      CCC         |                                       |
 | D0: FOM SET       SI +1  CCC M ...   |                                       |
-| D-: FOM SET       SI *8  CCC M ...   |                                       |
+| D-: FOM SET        - *8  CCC M ...   |                                       |
 | E0: BICOLOR       SI+16  CC1 CC2     |                                       |
 | E-: BICOLOR       -      CC1 CC2     |                                       |
 +--------------------------------------+---------------------------------------+
