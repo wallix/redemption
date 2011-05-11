@@ -225,11 +225,12 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
 
     front->begin_update();
 
-    uint8_t cache_b_id;
-    uint16_t cache_b_idx;
+    uint32_t cache_ref = front->bmp_cache->add_bitmap(100, 100, (uint8_t*)picture16, 0, 0, 32, 32,
+                                front->orders->rdp_layer->client_info.bpp);
 
-    int send_type2 = front->bmp_cache->add_bitmap(100, 100, (uint8_t*)picture16, 0, 0, 32, 32,
-                                front->orders->rdp_layer->client_info.bpp, cache_b_id, cache_b_idx);
+    uint8_t send_type2 = (cache_ref >> 24);
+    uint8_t cache_b_id = (cache_ref >> 16);
+    uint16_t cache_b_idx = (cache_ref & 0xFFFF);
 
     BitmapCacheItem * entry =  front->bmp_cache->get_item(cache_b_id, cache_b_idx);
 

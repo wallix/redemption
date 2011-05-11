@@ -268,7 +268,7 @@ struct client_mod {
 
     void screen_blt(int rop, const Rect & rect, int srcx, int srcy)
     {
-        LOG(LOG_INFO, "client_mod::screen_blt(rop=%x, r(%d, %d, %d, %d), srcx=%d, srcy=%d", rop, rect.x, rect.y, rect.cx, rect.cy, srcx, srcy);
+//        LOG(LOG_INFO, "client_mod::screen_blt(rop=%x, r(%d, %d, %d, %d), srcx=%d, srcy=%d", rop, rect.x, rect.y, rect.cx, rect.cy, srcx, srcy);
         if (!rect.intersect(this->clip).isempty()) {
             this->front->screen_blt(0xcc, rect, srcx, srcy, this->clip);
         }
@@ -276,7 +276,7 @@ struct client_mod {
 
     void dest_blt(int rop, const Rect & rect)
     {
-        LOG(LOG_INFO, "client_mod::dest_blt(rop=%x, r(%d, %d, %d, %d)", rop, rect.x, rect.y, rect.cx, rect.cy);
+//        LOG(LOG_INFO, "client_mod::dest_blt(rop=%x, r(%d, %d, %d, %d)", rop, rect.x, rect.y, rect.cx, rect.cy);
         if (!rect.intersect(this->clip).isempty()) {
             this->front->dest_blt(rect, rop, this->clip);
         }
@@ -285,7 +285,7 @@ struct client_mod {
 
     void pat_blt(int rop, const Rect & rect, const uint32_t fgcolor, const uint32_t bgcolor)
     {
-        LOG(LOG_INFO, "client_mod::pat_blt(rop=%x, r(%d, %d, %d, %d), fg=%x, bg=%x", rop, rect.x, rect.y, rect.cx, rect.cy, fgcolor, bgcolor);
+//        LOG(LOG_INFO, "client_mod::pat_blt(rop=%x, r(%d, %d, %d, %d), fg=%x, bg=%x", rop, rect.x, rect.y, rect.cx, rect.cy, fgcolor, bgcolor);
         if (!rect.intersect(this->clip).isempty()) {
             this->front->pat_blt(rect, rop, this->convert(bgcolor), this->convert(fgcolor), this->brush, this->clip);
         }
@@ -293,7 +293,7 @@ struct client_mod {
 
     void opaque_rect(const Rect & rect, const uint32_t color)
     {
-        LOG(LOG_INFO, "client_mod::opaque_rect(r(%d, %d, %d, %d), color=%x", rect.x, rect.y, rect.cx, rect.cy, color);
+//        LOG(LOG_INFO, "client_mod::opaque_rect(r(%d, %d, %d, %d), color=%x", rect.x, rect.y, rect.cx, rect.cy, color);
         if (!rect.intersect(clip).isempty()) {
 
             #warning dirty hack to fix color problems with opaque_rect

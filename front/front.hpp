@@ -27,7 +27,7 @@
 
 #include "log.hpp"
 #include <stdlib.h>
-
+#include <stdint.h>
 #include "stream.hpp"
 #include "constants.hpp"
 #include "ssl_calls.hpp"
@@ -117,16 +117,15 @@ public:
 
     uint64_t difftimeval(const struct timeval endtime, const struct timeval starttime)
     {
-      uint64_t sec;
-      sec =(endtime.tv_sec  - starttime.tv_sec ) * 1000000;
-      sec+=(endtime.tv_usec - starttime.tv_usec);
+      uint64_t sec = (endtime.tv_sec  - starttime.tv_sec ) * 1000000
+                   + (endtime.tv_usec - starttime.tv_usec);
       return sec;
     }
 
     void periodic_snapshot(bool pointer_is_displayed)
     {
         if (this->capture){
-            const long inter_frame_interval = this->capture->inter_frame_interval;
+            const uint64_t inter_frame_interval = this->capture->inter_frame_interval;
             struct timeval now;
             gettimeofday(&now, NULL);
             if (difftimeval(now, this->start) > inter_frame_interval)
@@ -171,22 +170,22 @@ public:
 
     void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
     {
-        LOG(LOG_INFO, "front::send_pointer\n");
+//        LOG(LOG_INFO, "front::send_pointer\n");
         this->orders->rdp_layer->server_rdp_send_pointer(cache_idx, data, mask, x, y);
-        LOG(LOG_INFO, "front::send_pointer done\n");
+//        LOG(LOG_INFO, "front::send_pointer done\n");
     }
 
     void set_pointer(int cache_idx) throw (Error)
     {
-        LOG(LOG_INFO, "front::set_pointer\n");
+//        LOG(LOG_INFO, "front::set_pointer\n");
         this->orders->rdp_layer->server_rdp_set_pointer(cache_idx);
-        LOG(LOG_INFO, "front::set_pointer done\n");
+//        LOG(LOG_INFO, "front::set_pointer done\n");
     }
 
 
     int get_channel_id(char* name)
     {
-        LOG(LOG_INFO, "front::get_channel_id\n");
+//        LOG(LOG_INFO, "front::get_channel_id\n");
         return this->orders->rdp_layer->sec_layer.mcs_layer.server_mcs_get_channel_id(name);
     }
 
@@ -194,7 +193,7 @@ public:
     /* fill in an area of the screen with one color */
     void opaque_rect(const Rect & r, int fgcolor, const Rect & clip)
     {
-        LOG(LOG_INFO, "front::opaque_rect\n");
+//        LOG(LOG_INFO, "front::opaque_rect\n");
         if (!clip.isempty() && !clip.intersect(r).isempty()){
             this->orders->opaque_rect(r, fgcolor, clip);
             if (this->capture){
@@ -205,7 +204,7 @@ public:
 
     void screen_blt(int rop, const Rect & r, int srcx, int srcy, const Rect &clip)
     {
-        LOG(LOG_INFO, "front::screen_blt\n");
+//        LOG(LOG_INFO, "front::screen_blt\n");
         if (!clip.isempty() && !clip.intersect(r).isempty()){
             // this one is used when dragging a visible window on screen
             this->orders->screen_blt(r, srcx, srcy, rop, clip);
@@ -217,7 +216,7 @@ public:
 
     void dest_blt(const Rect & r, int rop, const Rect &clip)
     {
-        LOG(LOG_INFO, "front::dest_blt r(%d, %d, %d, %d) rop=%d clip(%d, %d, %d, %d)\n", r.x, r.y, r.cx, r.cy, rop, clip.x, clip.y, clip.cx, clip.cy);
+//        LOG(LOG_INFO, "front::dest_blt r(%d, %d, %d, %d) rop=%d clip(%d, %d, %d, %d)\n", r.x, r.y, r.cx, r.cy, rop, clip.x, clip.y, clip.cx, clip.cy);
         if (!clip.intersect(r).isempty()){
             this->orders->dest_blt(r, rop, clip);
             if (this->capture){
@@ -230,7 +229,7 @@ public:
 
     void pat_blt(const Rect & r, int rop, uint32_t bg_color,  uint32_t fg_color, const RDPBrush & brush, const Rect &clip)
     {
-        LOG(LOG_INFO, "front::pat_blt r(%d, %d, %d, %d) rop=%d bg_color=%d fg_color=%d brush=%p clip(%d, %d, %d, %d)\n", r.x, r.y, r.cx, r.cy, rop, bg_color, fg_color, &brush, clip.x, clip.y, clip.cx, clip.cy);
+//        LOG(LOG_INFO, "front::pat_blt r(%d, %d, %d, %d) rop=%d bg_color=%d fg_color=%d brush=%p clip(%d, %d, %d, %d)\n", r.x, r.y, r.cx, r.cy, rop, bg_color, fg_color, &brush, clip.x, clip.y, clip.cx, clip.cy);
         if (!clip.intersect(r).isempty()){
             this->orders->pat_blt(r, rop, bg_color, fg_color, brush, clip);
             if (this->capture){
@@ -247,7 +246,7 @@ public:
                  int srcx, int srcy,
                  int cache_idx, const Rect & clip)
     {
-        LOG(LOG_INFO, "front::mem_blt\n");
+//        LOG(LOG_INFO, "front::mem_blt\n");
 
         if (!clip.intersect(r).isempty()){
             this->orders->mem_blt(cache_id, color_table, r, rop, srcx, srcy, cache_idx, clip);
@@ -261,7 +260,7 @@ public:
     #warning harmonize name of function -> line_to
     void line(int rop, int x1, int y1, int x2, int y2, int bgcolor, const RDPPen & pen, const Rect & clip)
     {
-        LOG(LOG_INFO, "front::line\n");
+//        LOG(LOG_INFO, "front::line\n");
         #warning if direction of line is inverted, put it back in the right order, for now just ignore lines in wrong direction
         if (x1 >= x2 && y1 >= y2
         && !clip.intersect(Rect(x1, y1, (x2 - x1) +1, (y2 - y1)+1)).isempty()){
@@ -285,7 +284,7 @@ public:
                 int x, int y, uint8_t* data, int data_len,
                 int fgcolor, int bgcolor, const Rect & draw_rect)
     {
-        LOG(LOG_INFO, "front::draw_text2\n");
+//        LOG(LOG_INFO, "front::draw_text2\n");
         if (draw_rect.intersect(clip_rect).isempty()){
             return;
         }
@@ -304,14 +303,14 @@ public:
 
     void send_palette(const RGBPalette & palette)
     {
-        LOG(LOG_INFO, "front::send_palette\n");
+//        LOG(LOG_INFO, "front::send_palette\n");
         if (this->orders->rdp_layer->client_info.bpp <= 8) {
             this->orders->rdp_layer->server_send_palette(palette);
             this->orders->init();
             this->orders->send_palette(palette, 0);
             this->orders->send();
         }
-        LOG(LOG_INFO, "front::send_palette done\n");
+//        LOG(LOG_INFO, "front::send_palette done\n");
     }
 
     void send_brush(const int index)
@@ -326,7 +325,7 @@ public:
                      int palette_id,
                      const Rect & clip)
     {
-        LOG(LOG_INFO, "front::send_bitmap_front bpp=%d\n", this->orders->rdp_layer->client_info.bpp);
+//        LOG(LOG_INFO, "front::send_bitmap_front bpp=%d\n", this->orders->rdp_layer->client_info.bpp);
         for (int j = 0; j < dst.cy ; j += 64) {
             int h = std::min(64, dst.cy - j);
             for (int i = 0; i < dst.cx ; i+= 64) {
@@ -334,23 +333,23 @@ public:
                 const Rect rect1(dst.x + i, dst.y + j, w, h);
                 const Rect & draw_rect = clip.intersect(rect1);
                 if (!draw_rect.isempty()){
-                    uint8_t cache_id;
-                    uint16_t cache_idx;
-
-                    uint8_t send_type = this->bmp_cache->add_bitmap(
+                     uint32_t cache_ref = this->bmp_cache->add_bitmap(
                                                 src_r.cx, src_r.cy,
                                                 src_data,
                                                 i + src_r.x,
                                                 j + src_r.y,
                                                 w, h,
-                                                this->orders->rdp_layer->client_info.bpp,
-                                                cache_id, cache_idx);
+                                                this->orders->rdp_layer->client_info.bpp);
+
+                    uint8_t send_type = (cache_ref >> 24);
+                    uint8_t cache_id  = (cache_ref >> 16);
+                    uint16_t cache_idx = (cache_ref & 0xFFFF);
 
                     BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
 
 
                     if (send_type == BITMAP_ADDED_TO_CACHE){
-                        LOG(LOG_INFO, "Added to cache: id=%d idx=%d", cache_id, cache_idx);
+//                        LOG(LOG_INFO, "Added to cache: id=%d idx=%d", cache_id, cache_idx);
 //                        if (rect1.x == 64 && rect1.y == 320) {
 //                            printf("------- Bogus Not Compressed (%d)---------\n", entry->pbmp->bmp_size);
 //                            for (int i = 0; i < entry->pbmp->bmp_size; i++){
@@ -381,7 +380,7 @@ public:
                     int offset, int baseline,
                     int width, int height, const uint8_t* data)
     {
-        LOG(LOG_INFO, "front::send_glyph\n");
+//        LOG(LOG_INFO, "front::send_glyph\n");
         struct FontChar fi(offset, baseline, width, height, 0);
 
         memcpy(fi.data, data, fi.datasize());
@@ -390,7 +389,7 @@ public:
 
     void send_glyph(FontChar* font_char, int font_index, int char_index)
     {
-        LOG(LOG_INFO, "front::send_glyph 2\n");
+//        LOG(LOG_INFO, "front::send_glyph 2\n");
         this->orders->send_font(font_char, font_index, char_index);
     }
 

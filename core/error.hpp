@@ -157,6 +157,8 @@ enum {
 
     ERR_BITMAP_LOAD_FAILED = 17000,
 
+    ERR_BITMAP_CACHE = 18000,
+    ERR_BITMAP_CACHE_TOO_BIG,
 };
 
 class Error {

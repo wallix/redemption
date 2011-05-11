@@ -90,8 +90,6 @@ struct mod_vnc : public client_mod {
             this->clip_chanid = 0;
             this->clip_data_size = 0;
 
-            LOG(LOG_INFO, "username=%s password=%s", username, password);
-
             strcpy(this->username, username);
             strcpy(this->password, password);
             // not used for vnc
@@ -99,8 +97,6 @@ struct mod_vnc : public client_mod {
             if (0 != keylayout) { this->keylayout = keylayout; }
 
             int error = 0;
-
-            int check_sec_result = 1;
 
             try {
                 /* protocol version */
@@ -134,7 +130,7 @@ struct mod_vnc : public client_mod {
                             LOG(LOG_INFO, "vnc password failed\n");
                             throw 2;
                         } else {
-                            LOG(LOG_INFO, "vnc password ok\n");
+//                            LOG(LOG_INFO, "vnc password ok\n");
                         }
                     }
                     break;
@@ -245,7 +241,7 @@ struct mod_vnc : public client_mod {
                     this->blue_shift = stream.in_uint8();
                     stream.skip_uint8(3); // skip padding
 
-                    LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
+//                    LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
 
                     this->server_set_clip(Rect(0, 0, width, height));
 
@@ -392,9 +388,9 @@ struct mod_vnc : public client_mod {
                     this->t->send((char*)stream.data, 4 + 3 * 4);
                 }
 
-                LOG(LOG_INFO, "Server resize(%d, %d, %d)", this->width, this->height, this->bpp);
+//                LOG(LOG_INFO, "Server resize(%d, %d, %d)", this->width, this->height, this->bpp);
                 this->server_resize(this->width, this->height, this->bpp);
-                LOG(LOG_INFO, "Server resize done(%d, %d, %d)", this->width, this->height, this->bpp);
+//                LOG(LOG_INFO, "Server resize(%d, %d, %d)", this->width, this->height, this->bpp);
 
                 {
                     /* FrambufferUpdateRequest */
@@ -432,9 +428,9 @@ struct mod_vnc : public client_mod {
                 throw Error(ERR_VNC_CONNECTION_ERROR);
             }
 
-            LOG(LOG_INFO, "VNC connection complete, connected ok\n");
+//            LOG(LOG_INFO, "VNC connection complete, connected ok\n");
             this->lib_open_clip_channel();
-            LOG(LOG_INFO, "VNC lib open clip channel ok\n");
+//            LOG(LOG_INFO, "VNC lib open clip channel ok\n");
         } catch(...){
             delete this->t;
             throw;
@@ -567,19 +563,20 @@ struct mod_vnc : public client_mod {
             switch (type)
             {
                 case 0: /* framebuffer update */
-                    rv = this->lib_framebuffer_update();
+                    this->lib_framebuffer_update();
                 break;
                 case 1: /* palette */
-                    rv = this->lib_palette_update();
+                    this->lib_palette_update();
                 break;
                 case 3: /* clipboard */
-                    rv = this->lib_clip_data();
+                    this->lib_clip_data();
                 break;
                 default:
                 LOG(LOG_INFO, "unknown in vnc_lib_mod_signal %d\n", type);
             }
         }
         catch(...) {
+            LOG(LOG_INFO, "exception raised");
             rv = 1;
         }
         return rv;
@@ -656,65 +653,66 @@ struct mod_vnc : public client_mod {
         return 0;
     }
 
-    int lib_framebuffer_update() throw (Error)
+    void lib_framebuffer_update() throw (Error)
     {
         int encoding;
-        int error = 0;
         size_t num_recs = 0;
         int Bpp = nbbytes(this->bpp);
-        try {
-                {
-                    Stream stream(8192);
-                    this->t->recv((char**)&stream.end, 3);
-                    stream.skip_uint8(1);
-                    num_recs = stream.in_uint16_be();
-                }
+        {
+            Stream stream(8192);
+            this->t->recv((char**)&stream.end, 3);
+            stream.skip_uint8(1);
+            num_recs = stream.in_uint16_be();
+        }
 
-            this->server_begin_update();
+        this->server_begin_update();
 
-            for (size_t i = 0; i < num_recs; i++) {
-                Stream stream(8192);
-                this->t->recv((char**)&stream.end, 12);
-                int x = stream.in_uint16_be();
-                int y = stream.in_uint16_be();
-                int cx = stream.in_uint16_be();
-                int cy = stream.in_uint16_be();
-                encoding = stream.in_uint32_be();
+        for (size_t i = 0; i < num_recs; i++) {
+            Stream stream(8192);
+            this->t->recv((char**)&stream.end, 12);
+            int x = stream.in_uint16_be();
+            int y = stream.in_uint16_be();
+            int cx = stream.in_uint16_be();
+            int cy = stream.in_uint16_be();
+            encoding = stream.in_uint32_be();
 
-                LOG(LOG_INFO, "----------------> x=%d y=%d cx=%d cy=%d encoding=%d", x, y, cx, cy, encoding);
+//                LOG(LOG_INFO, "----------------> x=%d y=%d cx=%d cy=%d encoding=%d", x, y, cx, cy, encoding);
 
-                switch (encoding){
-                case 0: /* raw */
-                {
-                    int need_size = cx * cy * Bpp;
-                    LOG(LOG_INFO, "raw: x=%d y=%d cx=%d cy=%d encoding=%d need_size=%d", x, y, cx, cy, encoding, need_size);
-                    uint8_t * raw = (uint8_t *)malloc(need_size);
+            switch (encoding){
+            case 0: /* raw */
+            {
+                int need_size = cx * cy * Bpp;
+//                    LOG(LOG_INFO, "raw: x=%d y=%d cx=%d cy=%d encoding=%d need_size=%d", x, y, cx, cy, encoding, need_size);
+                uint8_t * raw = (uint8_t *)malloc(need_size);
+                if (!raw){
+                    LOG(LOG_ERR, "Memory allocation failed for raw buffer in VNC");
                     assert(raw);
-                    uint8_t * tmp = raw;
-                    this->t->recv((char**)&tmp, need_size);
+                }
+                uint8_t * tmp = raw;
+                this->t->recv((char**)&tmp, need_size);
 
-                    #warning we should manage *two* color depth, front color depth and back color depth. Code below only works because we forced front color depth to the same depth as VNC server.
-                    Bitmap bmp(this->get_server_screen_bpp(), align4(cx), cy);
-                    bmp.copy_upsidedown(raw, cx);
-                    free(raw);
-                    #warning see server_paint_rect and Bitmap below, suspicious code, does it works ?
-                    this->server_paint_rect(bmp, Rect(x, y, cx, cy), 0, 0, this->palette332);
-                }
-                break;
-                case 1: /* copy rect */
-                {
-                    LOG(LOG_INFO, "copy rect");
-                    Stream stream(4);
-                    this->t->recv((char**)&stream.end, 4);
-                    int srcx = stream.in_uint16_be();
-                    int srcy = stream.in_uint16_be();
-                    LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
-                    this->screen_blt(0xcc, Rect(x, y, cx, cy), srcx, srcy);
-                }
-                break;
-                case 0xffffff11: /* cursor */
-                #warning see why we get these empty rects ?
-                if (cx > 0 && cy > 0) {
+                #warning we should manage *two* color depth, front color depth and back color depth. Code below only works because we forced front color depth to the same depth as VNC server.
+                Bitmap bmp(this->bpp, align4(cx), cy);
+                bmp.copy_upsidedown(raw, cx);
+                free(raw);
+                #warning see server_paint_rect and Bitmap below, suspicious code, does it works ?
+                this->server_paint_rect(bmp, Rect(x, y, cx, cy), 0, 0, this->palette332);
+            }
+            break;
+            case 1: /* copy rect */
+            {
+//                    LOG(LOG_INFO, "copy rect");
+                Stream stream(4);
+                this->t->recv((char**)&stream.end, 4);
+                int srcx = stream.in_uint16_be();
+                int srcy = stream.in_uint16_be();
+//                    LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
+                this->screen_blt(0xcc, Rect(x, y, cx, cy), srcx, srcy);
+            }
+            break;
+            case 0xffffff11: /* cursor */
+            #warning see why we get these empty rects ?
+            if (cx > 0 && cy > 0) {
                 // 7.7.2   Cursor Pseudo-encoding
                 // ------------------------------
 
@@ -726,8 +724,8 @@ struct mod_vnc : public client_mod {
                 // The server sets the cursor shape by sending a pseudo-rectangle
                 // with the Cursor pseudo-encoding as part of an update.
 
-                // x, y : The pseudo-rectangle's x-position and y-position indicate
-                // the hotspot of the cursor,
+                // x, y : The pseudo-rectangle's x-position and y-position
+                // indicate the hotspot of the cursor,
 
                 // cx, cy : width and height indicate the width and height of
                 // the cursor in pixels.
@@ -744,155 +742,134 @@ struct mod_vnc : public client_mod {
                 // the leftmost pixel, with a 1-bit meaning the corresponding
                 // pixel in the cursor is valid.
 
-                    const int sz_pixel_array = cx * cy * Bpp;
-                    const int sz_bitmask = nbbytes(cx) * cy;
-                    Stream stream(sz_pixel_array + sz_bitmask);
-                    this->t->recv((char**)&stream.end, sz_pixel_array + sz_bitmask);
+                const int sz_pixel_array = cx * cy * Bpp;
+                const int sz_bitmask = nbbytes(cx) * cy;
+                Stream stream(sz_pixel_array + sz_bitmask);
+                this->t->recv((char**)&stream.end, sz_pixel_array + sz_bitmask);
 
-                    const uint8_t *vnc_pointer_data = stream.in_uint8p(sz_pixel_array);
-                    const uint8_t *vnc_pointer_mask = stream.in_uint8p(sz_bitmask);
+                const uint8_t *vnc_pointer_data = stream.in_uint8p(sz_pixel_array);
+                const uint8_t *vnc_pointer_mask = stream.in_uint8p(sz_bitmask);
 
-                    uint8_t rdp_cursor_mask[32 * (32 / 8)] = {};
+                uint8_t rdp_cursor_mask[32 * (32 / 8)] = {};
 
-                    // clear target cursor mask
-                    for (int tmpy = 0; tmpy < 32; tmpy++) {
-                        for (int mask_x = 0; mask_x < nbbytes(32); mask_x++) {
-                            rdp_cursor_mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
-                        }
+                // clear target cursor mask
+                for (size_t tmpy = 0; tmpy < 32; tmpy++) {
+                    for (size_t mask_x = 0; mask_x < nbbytes(32); mask_x++) {
+                        rdp_cursor_mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
                     }
+                }
 
-                    // copy vnc pointer and mask to rdp pointer and mask
-                    uint8_t rdp_cursor_data[32 * (32 * 3)] = {};
-                    for (int yy = 0; yy < cy; yy++) {
-                        for (int xx = 0 ; xx < cx ; xx++){
-                            if (vnc_pointer_mask[yy * nbbytes(cx) + xx / 8 ] & (0x80 >> (xx&7))){
-                                if ((yy < 32) && (xx < 32)){
-                                    rdp_cursor_mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
-                                    int pixel = 0;
-                                    for (int tt = 0 ; tt < Bpp; tt++){
-                                        pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
-                                    }
-                                    rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 0] = pixel >> 16;
-                                    rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 1] = pixel >> 8;
-                                    rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 2] = pixel;
+                // copy vnc pointer and mask to rdp pointer and mask
+                uint8_t rdp_cursor_data[32 * (32 * 3)] = {};
+                for (int yy = 0; yy < cy; yy++) {
+                    for (int xx = 0 ; xx < cx ; xx++){
+                        if (vnc_pointer_mask[yy * nbbytes(cx) + xx / 8 ] & (0x80 >> (xx&7))){
+                            if ((yy < 32) && (xx < 32)){
+                                rdp_cursor_mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
+                                int pixel = 0;
+                                for (int tt = 0 ; tt < Bpp; tt++){
+                                    pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
                                 }
+                                rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 0] = pixel >> 16;
+                                rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 1] = pixel >> 8;
+                                rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 2] = pixel;
                             }
                         }
                     }
-
-                    /* keep these in 32x32, vnc cursor can be alot bigger */
-                    /* (anyway hotspot is usually 0, 0)                   */
-                    if (x > 31) { x = 31; }
-                    if (y > 31) { y = 31; }
-    #warning we should manage cursors bigger then 32 x 32, this is not an RDP protocol limitation
-                    this->server_set_pointer(x, y, rdp_cursor_data, rdp_cursor_mask);
                 }
+
+                /* keep these in 32x32, vnc cursor can be alot bigger */
+                /* (anyway hotspot is usually 0, 0)                   */
+                if (x > 31) { x = 31; }
+                if (y > 31) { y = 31; }
+#warning we should manage cursors bigger then 32 x 32, this is not an RDP protocol limitation
+                this->server_set_pointer(x, y, rdp_cursor_data, rdp_cursor_mask);
+            }
+            break;
+            default:
+                throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
                 break;
-                default:
-                    throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
-                    break;
-                }
-            }
-            this->server_end_update();
-
-            {
-                LOG(LOG_INFO, "Frame buffer Update");
-                /* FrambufferUpdateRequest */
-                Stream stream(8192);
-                stream.out_uint8(3);
-                stream.out_uint8(1);
-                stream.out_uint16_be(0);
-                stream.out_uint16_be(0);
-
-                stream.out_uint16_be(this->clip.cx);
-                stream.out_uint16_be(this->clip.cy);
-                this->t->send((char*)stream.data, 10);
             }
         }
-        catch(...) {
-            LOG(LOG_INFO, "************** ERROR CATCHED ***************");
-            error = 1;
+        this->server_end_update();
+
+        {
+//                LOG(LOG_INFO, "Frame buffer Update");
+            /* FrambufferUpdateRequest */
+            Stream stream(8192);
+            stream.out_uint8(3);
+            stream.out_uint8(1);
+            stream.out_uint16_be(0);
+            stream.out_uint16_be(0);
+
+            stream.out_uint16_be(this->clip.cx);
+            stream.out_uint16_be(this->clip.cy);
+            this->t->send((char*)stream.data, 10);
         }
-        return error;
     }
 
-    int lib_clip_data(void)
+    void lib_clip_data(void)
     {
-        int size;
-        int error;
-        try {
-            Stream stream(8192);
-            this->t->recv((char**)&stream.end, 7);
-            stream.skip_uint8(3);
-            size = stream.in_uint32_be();
+        Stream stream(8192);
+        this->t->recv((char**)&stream.end, 7);
+        stream.skip_uint8(3);
+        int size = stream.in_uint32_be();
 
-            this->clip_data.init(size);
-            this->clip_data_size = size;
-            this->t->recv((char**)&this->clip_data.end, size);
+        this->clip_data.init(size);
+        this->clip_data_size = size;
+        this->t->recv((char**)&this->clip_data.end, size);
 
-            Stream out_s(8192);
-            out_s.out_uint16_le(2);
-            out_s.out_uint16_le(0);
-            out_s.out_uint32_le(0x90);
-            out_s.out_uint8(0x0d);
-            out_s.out_clear_bytes(35);
-            out_s.out_uint8(0x10);
-            out_s.out_clear_bytes(35);
-            out_s.out_uint8(0x01);
-            out_s.out_clear_bytes(35);
-            out_s.out_uint8(0x07);
-            out_s.out_clear_bytes(35);
-            out_s.out_clear_bytes(4);
-            out_s.mark_end();
-            size = (int)(out_s.end - out_s.data);
-            this->server_send_to_channel_mod(this->clip_chanid, out_s.data, size, size, 3);
-        }
-        catch(...) {
-            error = 1;
-        }
-        return error;
+        Stream out_s(8192);
+        out_s.out_uint16_le(2);
+        out_s.out_uint16_le(0);
+        out_s.out_uint32_le(0x90);
+        out_s.out_uint8(0x0d);
+        out_s.out_clear_bytes(35);
+        out_s.out_uint8(0x10);
+        out_s.out_clear_bytes(35);
+        out_s.out_uint8(0x01);
+        out_s.out_clear_bytes(35);
+        out_s.out_uint8(0x07);
+        out_s.out_clear_bytes(35);
+        out_s.out_clear_bytes(4);
+        out_s.mark_end();
+        size = (int)(out_s.end - out_s.data);
+        this->server_send_to_channel_mod(this->clip_chanid, out_s.data, size, size, 3);
     }
 
     /******************************************************************************/
-    int lib_palette_update(void)
+    void lib_palette_update(void)
     {
-        int error = 0;
-        try {
-            Stream stream(8192);
-            this->t->recv((char**)&stream.end, 5);
-            stream.skip_uint8(1);
-            int first_color = stream.in_uint16_be();
-            int num_colors = stream.in_uint16_be();
+        Stream stream(8192);
+        this->t->recv((char**)&stream.end, 5);
+        stream.skip_uint8(1);
+        int first_color = stream.in_uint16_be();
+        int num_colors = stream.in_uint16_be();
 
-            Stream stream2(8192);
-            this->t->recv((char**)&stream2.end, num_colors * 6);
+        Stream stream2(8192);
+        this->t->recv((char**)&stream2.end, num_colors * 6);
 
-            if (num_colors <= 256){
-                for (int i = 0; i < num_colors; i++) {
-                    int r = stream2.in_uint16_be() >> 8;
-                    int g = stream2.in_uint16_be() >> 8;
-                    int b = stream2.in_uint16_be() >> 8;
-                    this->palette[first_color + i] = (r << 16) | (g << 8) | b;
-                }
+        if (num_colors <= 256){
+            for (int i = 0; i < num_colors; i++) {
+                int r = stream2.in_uint16_be() >> 8;
+                int g = stream2.in_uint16_be() >> 8;
+                int b = stream2.in_uint16_be() >> 8;
+                this->palette[first_color + i] = (r << 16) | (g << 8) | b;
             }
-            else {
-                LOG(LOG_ERR, "VNC: number of palette colors too large: %d\n", num_colors);
-            }
-            this->server_begin_update();
-            this->server_palette(this->palette);
-            this->server_end_update();
-        } catch (...) {
-            error = 1;
         }
-        return error;
-
+        else {
+            LOG(LOG_ERR, "VNC: number of palette colors too large: %d\n", num_colors);
+        }
+        this->server_begin_update();
+        this->server_palette(this->palette);
+        this->server_end_update();
     }
 
     /******************************************************************************/
-    int lib_open_clip_channel(void)
+    void lib_open_clip_channel(void)
     {
         #warning not working, see why
-        return 0;
+        return;
         uint8_t init_data[12] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
         this->clip_chanid = this->server_get_channel_id((char*)"cliprdr");
@@ -900,9 +877,7 @@ struct mod_vnc : public client_mod {
         if (this->clip_chanid >= 0) {
             this->server_send_to_channel_mod(this->clip_chanid, init_data, 12, 12, 3);
         }
-        return 0;
     }
-
 
     private:
     /* taken from vncauth.c */
