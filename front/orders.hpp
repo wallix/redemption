@@ -133,7 +133,7 @@ struct Orders
             size_t max_packet_size = std::min(this->out_stream.capacity, (size_t)16384);
             size_t used_size = (size_t)(this->out_stream.p - this->order_count_ptr);
 
-            if (1 || (used_size + asked_size + 100) > max_packet_size) {
+            if ((used_size + asked_size + 100) > max_packet_size) {
                 this->force_send();
             }
         }
@@ -149,7 +149,7 @@ struct Orders
 
     void force_init()
     {
-        LOG(LOG_INFO, "Orders::force_init()");
+//        LOG(LOG_INFO, "Orders::force_init()");
         #warning see with order limit is this big enough ?
         this->out_stream.init(16384);
         this->rdp_layer->server_rdp_init_data(this->out_stream);
@@ -162,7 +162,7 @@ struct Orders
 
     void force_send()
     {
-        LOG(LOG_ERR, "force_send: level=%d order_count=%d", this->order_level, this->order_count);
+//        LOG(LOG_ERR, "force_send: level=%d order_count=%d", this->order_level, this->order_count);
         this->out_stream.mark_end();
         this->out_stream.p = this->order_count_ptr;
         this->out_stream.out_uint16_le(this->order_count);
@@ -174,8 +174,8 @@ struct Orders
     {
         this->reserve_order(23);
 
-        LOG(LOG_INFO, "opaque_rect[%d](r(%d, %d, %d, %d) color=%x clip(%d, %d, %d, %d)",
-            this->order_count, r.x, r.y, r.cx, r.cy, color, clip.x, clip.y, clip.cx, clip.cy);
+//        LOG(LOG_INFO, "opaque_rect[%d](r(%d, %d, %d, %d) color=%x clip(%d, %d, %d, %d)",
+//            this->order_count, r.x, r.y, r.cx, r.cy, color, clip.x, clip.y, clip.cx, clip.cy);
 
         RDPOpaqueRect cmd(r, color);
         RDPOrderCommon newcommon(RECT, clip);
@@ -188,8 +188,8 @@ struct Orders
     {
         this->reserve_order(25);
 
-        LOG(LOG_INFO, "screen_blt[%d](r(%d, %d, %d, %d) srcx=%d srcy=%d rop=%d clip(%d, %d, %d, %d)",
-            this->order_count, r.x, r.y, r.cx, r.cy, srcx, srcy, rop, clip.x, clip.y, clip.cx, clip.cy);
+//        LOG(LOG_INFO, "screen_blt[%d](r(%d, %d, %d, %d) srcx=%d srcy=%d rop=%d clip(%d, %d, %d, %d)",
+//            this->order_count, r.x, r.y, r.cx, r.cy, srcx, srcy, rop, clip.x, clip.y, clip.cx, clip.cy);
 
         RDPScrBlt cmd(r, rop, srcx, srcy);
         RDPOrderCommon newcommon(SCREENBLT, clip);
@@ -202,8 +202,8 @@ struct Orders
     {
         this->reserve_order(21);
 
-        LOG(LOG_INFO, "destblt[%d](r(%d, %d, %d, %d) rop=%d clip(%d, %d, %d, %d)",
-            this->order_count, r.x, r.y, r.cx, r.cy, rop, clip.x, clip.y, clip.cx, clip.cy);
+//        LOG(LOG_INFO, "destblt[%d](r(%d, %d, %d, %d) rop=%d clip(%d, %d, %d, %d)",
+//            this->order_count, r.x, r.y, r.cx, r.cy, rop, clip.x, clip.y, clip.cx, clip.cy);
 
         RDPDestBlt cmd(r, rop);
         RDPOrderCommon newcommon(DESTBLT, clip);
@@ -216,8 +216,8 @@ struct Orders
     {
         this->reserve_order(29);
 
-        LOG(LOG_INFO, "pat_blt[%d](r(%d, %d, %d, %d) bg_color=%x fg_color=%d brush.style=%d clip(%d, %d, %d, %d)",
-            this->order_count, r.x, r.y, r.cx, r.cy, bg_color, fg_color, brush.style, clip.x, clip.y, clip.cx, clip.cy);
+//        LOG(LOG_INFO, "pat_blt[%d](r(%d, %d, %d, %d) bg_color=%x fg_color=%d brush.style=%d clip(%d, %d, %d, %d)",
+//            this->order_count, r.x, r.y, r.cx, r.cy, bg_color, fg_color, brush.style, clip.x, clip.y, clip.cx, clip.cy);
 
         RDPPatBlt cmd(r, (uint8_t)rop, bg_color, fg_color, brush);
         RDPOrderCommon newcommon(PATBLT, clip);
@@ -233,7 +233,7 @@ struct Orders
     {
         this->reserve_order(30);
 
-        LOG(LOG_INFO, "mem_blt[%d](cache_id=%d color_table=%d r(%d, %d, %d, %d) rop=%d srcx=%d srcy=%d cache_idx=%d clip(%d, %d, %d, %d)", this->order_count, cache_id, color_table, r.x, r.y, r.cx, r.cy, rop, srcx, srcy, cache_idx, clip.x, clip.y, clip.cx, clip.cy);
+//        LOG(LOG_INFO, "mem_blt[%d](cache_id=%d color_table=%d r(%d, %d, %d, %d) rop=%d srcx=%d srcy=%d cache_idx=%d clip(%d, %d, %d, %d)", this->order_count, cache_id, color_table, r.x, r.y, r.cx, r.cy, rop, srcx, srcy, cache_idx, clip.x, clip.y, clip.cx, clip.cy);
 
         RDPMemBlt cmd(cache_id + color_table * 256, r, rop, srcx, srcy, cache_idx);
         RDPOrderCommon newcommon(MEMBLT, clip);
@@ -249,7 +249,7 @@ struct Orders
     {
         this->reserve_order(32);
 
-        LOG(LOG_INFO, "line[%d](back_mode=%d startx=%d starty=%d, endx=%d endy=%d rop2=%d back_color=%x pen.color=%x clip(%d, %d, %d, %d)", this->order_count, back_mode, startx, starty, endx, endy, rop2, back_color, pen.color, clip.x, clip.y, clip.cx, clip.cy);
+//        LOG(LOG_INFO, "line[%d](back_mode=%d startx=%d starty=%d, endx=%d endy=%d rop2=%d back_color=%x pen.color=%x clip(%d, %d, %d, %d)", this->order_count, back_mode, startx, starty, endx, endy, rop2, back_color, pen.color, clip.x, clip.y, clip.cx, clip.cy);
 
 
         RDPLineTo cmd(back_mode, startx, starty, endx, endy, back_color, rop2, pen);
@@ -269,7 +269,7 @@ struct Orders
 
         this->reserve_order(297);
 
-        LOG(LOG_INFO, "glyph_index[%d](font=%d flags=%d mixmode=%d, fg_color=%x bg_color=%x text_clip(%d, %d, %d, %d) box(%d, %d, %d, %d), x=%d, y=%d data_len=%d clip(%d, %d, %d, %d)", this->order_count, font, flags, mixmode, fg_color, bg_color, text_clip.x, text_clip.y, text_clip.cx, text_clip.cy, box.x, box.y, box.cx, box.cy, x, y, data_len, clip.x, clip.y, clip.cx, clip.cy);
+//        LOG(LOG_INFO, "glyph_index[%d](font=%d flags=%d mixmode=%d, fg_color=%x bg_color=%x text_clip(%d, %d, %d, %d) box(%d, %d, %d, %d), x=%d, y=%d data_len=%d clip(%d, %d, %d, %d)", this->order_count, font, flags, mixmode, fg_color, bg_color, text_clip.x, text_clip.y, text_clip.cx, text_clip.cy, box.x, box.y, box.cx, box.cy, x, y, data_len, clip.x, clip.y, clip.cx, clip.cy);
 
 
         RDPOrderCommon newcommon(GLYPHINDEX, clip);
@@ -337,7 +337,7 @@ struct Orders
     {
         this->reserve_order(2000);
 
-        LOG(LOG_INFO, "send_palette[%d](cache_id=%d)\n", this->order_count, cache_id);
+//        LOG(LOG_INFO, "send_palette[%d](cache_id=%d)\n", this->order_count, cache_id);
 
         RDPColCache newcmd;
         memcpy(newcmd.palette[0], palette, 256);
@@ -350,7 +350,7 @@ struct Orders
 
         this->reserve_order(size + 12);
 
-        LOG(LOG_INFO, "send_brush[%d](width=%d, height=%d bpp=%d type=%d, size=%d, cache_id=%d)\n", this->order_count, width, height, bpp, type, size, cache_id);
+//        LOG(LOG_INFO, "send_brush[%d](width=%d, height=%d bpp=%d type=%d, size=%d, cache_id=%d)\n", this->order_count, width, height, bpp, type, size, cache_id);
 
         int order_flags = STANDARD | SECONDARY;
         this->out_stream.out_uint8(order_flags);
@@ -375,7 +375,7 @@ struct Orders
         #warning really when using compression we'll use less space
         this->reserve_order(bmp.bmp_size + 16);
 
-        LOG(LOG_INFO, "send_bitmap[%d](bmp(bpp=%d, cx=%d, cy=%d, data=%p), cache_id=%d, cache_idx=%d)\n", this->order_count, bmp.bpp, bmp.cx, bmp.cy, bmp.data_co, cache_id, cache_idx);
+//        LOG(LOG_INFO, "send_bitmap[%d](bmp(bpp=%d, cx=%d, cy=%d, data=%p), cache_id=%d, cache_idx=%d)\n", this->order_count, bmp.bpp, bmp.cx, bmp.cy, bmp.data_co, cache_id, cache_idx);
 
 
         bmp_order.emit(this->out_stream);
@@ -387,7 +387,7 @@ struct Orders
         int datasize = font_char->datasize();
         this->reserve_order(datasize + 18);
 
-        LOG(LOG_INFO, "send_font[%d](font_index=%d, char_index=%d)\n", this->order_count, font_index, char_index);
+//        LOG(LOG_INFO, "send_font[%d](font_index=%d, char_index=%d)\n", this->order_count, font_index, char_index);
 
         int order_flags = STANDARD | SECONDARY;
         this->out_stream.out_uint8(order_flags);

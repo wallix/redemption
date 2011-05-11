@@ -405,7 +405,7 @@ struct rdp_orders {
                 else {
                     mod->server_reset_clip();
                 }
-                LOG(LOG_INFO, "order=%d\n", this->common.order);
+//                LOG(LOG_INFO, "order=%d\n", this->common.order);
                 switch (this->common.order) {
                 case TEXT2:
                     this->rdp_orders_process_text2(stream, mod, header);
@@ -475,30 +475,30 @@ struct rdp_orders {
     void process_pat_blt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->patblt.receive(stream, header);
-        LOG(LOG_INFO, "sending patblt\n");
+//        LOG(LOG_INFO, "sending patblt\n");
         mod->server_set_brush(this->patblt.brush);
         mod->pat_blt(this->patblt.rop, this->patblt.rect, this->patblt.fore_color, this->patblt.back_color);
-        LOG(LOG_INFO, "sending patblt ok\n");
+//        LOG(LOG_INFO, "sending patblt ok\n");
     }
 
     #warning harmonize names -> mem_blt
     void rdp_orders_process_memblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->memblt.receive(stream, header);
-        LOG(LOG_INFO, "receiving memblt : cache_id=%d cache_idx=%d\n",
-                this->memblt.cache_id & 0xFF, this->memblt.cache_idx);
+//        LOG(LOG_INFO, "receiving memblt : cache_id=%d cache_idx=%d\n",
+//                this->memblt.cache_id & 0xFF, this->memblt.cache_idx);
         struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xFF][this->memblt.cache_idx];
         if (bitmap) {
             mod->server_paint_rect(*bitmap, this->memblt.rect, this->memblt.srcx, this->memblt.srcy, this->cache_colormap.palette[this->memblt.cache_id >> 8]);
         }
-        LOG(LOG_INFO, "receiving memblt ok\n");
+//        LOG(LOG_INFO, "receiving memblt ok\n");
     }
 
 
     void rdp_orders_process_line(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
         this->lineto.receive(stream, header);
-        LOG(LOG_INFO, "sending line\n");
+//        LOG(LOG_INFO, "sending line\n");
         mod->server_set_pen(this->lineto.pen.style, this->lineto.pen.width);
         mod->server_draw_line(this->lineto.rop2,
                               this->lineto.startx,
@@ -507,7 +507,7 @@ struct rdp_orders {
                               this->lineto.endy,
                               this->lineto.pen.color,
                               this->lineto.back_color);
-        LOG(LOG_INFO, "sending line ok\n");
+//        LOG(LOG_INFO, "sending line ok\n");
     }
 
     void rdp_orders_process_text2(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)

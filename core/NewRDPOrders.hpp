@@ -968,8 +968,8 @@ class RDPBmpCache {
         this->bmp->compress(tmp);
         size_t bufsize = tmp.p - tmp.data;
 
-        LOG(LOG_INFO, "emit_v1_compressed(cache_id=%d, cache_idx=%d, sh=%d)\n",
-                this->cache_id, this->cache_idx, small_headers);
+//        LOG(LOG_INFO, "emit_v1_compressed(cache_id=%d, cache_idx=%d, sh=%d)\n",
+//                this->cache_id, this->cache_idx, small_headers);
 
         int order_flags = STANDARD | SECONDARY;
         stream.out_uint8(order_flags);
@@ -1023,8 +1023,8 @@ class RDPBmpCache {
 
     void emit_raw_v1(Stream & stream)
     {
-        LOG(LOG_INFO, "emit_raw_v1(cache_id=%d, cache_idx=%d)\n",
-                this->cache_id, this->cache_idx);
+//        LOG(LOG_INFO, "emit_raw_v1(cache_id=%d, cache_idx=%d)\n",
+//                this->cache_id, this->cache_idx);
 
         using namespace RDP;
         unsigned int row_size = align4(this->bmp->cx * nbbytes(this->bmp->bpp));
@@ -2079,7 +2079,7 @@ class RDPOpaqueRect {
             this->color = (this->color & 0x00ffff) | (i << 16);
         }
 
-        LOG(LOG_INFO, "receive opaque rect old_color = %.6x new_color = %.6x\n", old_color, this->color);
+//        LOG(LOG_INFO, "receive opaque rect old_color = %.6x new_color = %.6x\n", old_color, this->color);
 
     }
 

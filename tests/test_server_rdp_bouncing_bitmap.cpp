@@ -109,14 +109,6 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
     int src_y_wallix = 300;
     Bitmap bmp(SHARE_PATH "/ad24b.bmp", front->orders->rdp_layer->client_info.bpp);
     Bitmap bmp_wallix(SHARE_PATH "/ad256.bmp", front->orders->rdp_layer->client_info.bpp);
-    uint8_t cache_b_id;
-    uint16_t cache_b_idx;
-    uint8_t cache_b_id_h;
-    uint16_t cache_b_idx_h;
-    uint8_t cache_b_id_wallix;
-    uint16_t cache_b_idx_wallix;
-    uint8_t cache_b_id_h_wallix;
-    uint16_t cache_b_idx_h_wallix;
     bouncing_state state = LEFT;
     bouncing_state wallix_state = LEFT_WALLIX;
 
@@ -132,31 +124,53 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
         Rect fill_rect_wallix = Rect(src_x_wallix, src_y_wallix, 10, 140);
         Rect fill_rect_wallix_h = Rect(src_x_wallix, src_y_wallix, 140, 10);
 
-        front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x - 10, src_y, 10, 140,
-                                        front->orders->rdp_layer->client_info.bpp, cache_b_id, cache_b_idx);
-        front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x, src_y - 10, 140, 10,
-                                        front->orders->rdp_layer->client_info.bpp, cache_b_id_h, cache_b_idx_h);
+        uint32_t cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x - 10, src_y, 10, 140,
+                                        front->orders->rdp_layer->client_info.bpp);
 
-        front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix, src_y_wallix, 10, 140,
-                                        front->orders->rdp_layer->client_info.bpp, cache_b_id_wallix, cache_b_idx_wallix);
-        front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix, src_y_wallix - 10, 140, 10,
-                                        front->orders->rdp_layer->client_info.bpp, cache_b_id_h_wallix, cache_b_idx_h_wallix);
+        uint8_t cache_b_id = (cache_ref >> 16);
+        uint16_t cache_b_idx = (cache_ref & 0xFFFF);
+
+        cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x, src_y - 10, 140, 10,
+                                        front->orders->rdp_layer->client_info.bpp);
+
+        uint8_t cache_b_id_h = (cache_ref >> 16);
+        uint16_t cache_b_idx_h = (cache_ref & 0xFFFF);
+
+        cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix, src_y_wallix, 10, 140, front->orders->rdp_layer->client_info.bpp);
+
+        uint8_t cache_b_id_wallix = (cache_ref >> 16);
+        uint16_t cache_b_idx_wallix = (cache_ref & 0xFFFF);
+
+        cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix, src_y_wallix - 10, 140, 10, front->orders->rdp_layer->client_info.bpp);
+
+        uint8_t cache_b_id_h_wallix = (cache_ref >> 16);
+        uint16_t cache_b_idx_h_wallix = (cache_ref & 0xFFFF);
+
         switch (state){
             case BOTTOM:
                 fill_rect1 = Rect(src_x , src_y, 10, 140);
                 fill_rect2 = Rect(src_x , src_y + 140, 140, 10);
-                front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x , src_y, 10, 140,
-                                        front->orders->rdp_layer->client_info.bpp, cache_b_id, cache_b_idx);
-                front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x , src_y + 140, 140, 10,
-                                        front->orders->rdp_layer->client_info.bpp, cache_b_id_h, cache_b_idx_h);
+                cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x , src_y, 10, 140, front->orders->rdp_layer->client_info.bpp);
+                cache_b_id = (cache_ref >> 16);
+                cache_b_idx = (cache_ref & 0xFFFF);
+
+                cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x , src_y + 140, 140, 10, front->orders->rdp_layer->client_info.bpp);
+
+                cache_b_id_h = (cache_ref >> 16);
+                cache_b_idx_h = (cache_ref & 0xFFFF);
+
             break;
             case RIGHT:
                 fill_rect1 = Rect(src_x + 140, src_y, 10, 140);
                 fill_rect2 = Rect(src_x + 10, src_y + 140, 140, 10);
-                front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co,src_x + 140, src_y, 10, 140,
-                                            front->orders->rdp_layer->client_info.bpp, cache_b_id, cache_b_idx);
-                front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x + 10, src_y + 140, 140, 10,
-                                            front->orders->rdp_layer->client_info.bpp, cache_b_id_h, cache_b_idx_h);
+                cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co,src_x + 140, src_y, 10, 140, front->orders->rdp_layer->client_info.bpp);
+
+                cache_b_id = (cache_ref >> 16);
+                cache_b_idx = (cache_ref & 0xFFFF);
+
+                cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x + 10, src_y + 140, 140, 10, front->orders->rdp_layer->client_info.bpp);
+                cache_b_id_h = (cache_ref >> 16);
+                cache_b_idx_h = (cache_ref & 0xFFFF);
             break;
             default:
             break;
@@ -164,10 +178,13 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
                 fill_rect1 = Rect(src_x, src_y, 140, 10);
                 fill_rect2 = Rect(src_x + 140, src_y, 20, 140);
 
-                front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x, src_y, 140, 10,
-                                            front->orders->rdp_layer->client_info.bpp, cache_b_id, cache_b_idx);
-                front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x + 140, src_y, 20, 140,
-                                            front->orders->rdp_layer->client_info.bpp, cache_b_id_h, cache_b_idx_h);
+                cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x, src_y, 140, 10, front->orders->rdp_layer->client_info.bpp);
+                cache_b_id = (cache_ref >> 16);
+                cache_b_idx = (cache_ref & 0xFFFF);
+
+                cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x + 140, src_y, 20, 140, front->orders->rdp_layer->client_info.bpp);
+                cache_b_id_h = (cache_ref >> 16);
+                cache_b_idx_h = (cache_ref & 0xFFFF);
             break;
         }
         switch (wallix_state){
@@ -175,30 +192,35 @@ t_internal_state step_STATE_RUNNING(struct timeval & time,
                 fill_rect_wallix = Rect(src_x_wallix, src_y_wallix, 10, 140);
                 fill_rect_wallix_h = Rect(src_x_wallix, src_y_wallix + 140, 140, 10);
 
-                front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix , src_y_wallix, 10, 140,
-                                        front->orders->rdp_layer->client_info.bpp, cache_b_id_wallix, cache_b_idx_wallix);
-                front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix , src_y_wallix + 140, 140, 10,
-                                        front->orders->rdp_layer->client_info.bpp, cache_b_id_h_wallix, cache_b_idx_h_wallix);
+                cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix , src_y_wallix, 10, 140, front->orders->rdp_layer->client_info.bpp);
+                cache_b_id_wallix = (cache_ref >> 16);
+                cache_b_idx_wallix = (cache_ref & 0xFFFF);
+                cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix , src_y_wallix + 140, 140, 10, front->orders->rdp_layer->client_info.bpp);
+                cache_b_id_h_wallix = (cache_ref >> 16);
+                cache_b_idx_h_wallix = (cache_ref & 0xFFFF);
             break;
             case RIGHT_WALLIX:
                 fill_rect_wallix = Rect(src_x_wallix + 140, src_y_wallix, 10, 140);
                 fill_rect_wallix_h = Rect(src_x_wallix + 10, src_y_wallix + 140, 140, 10);
 
-                front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix + 140 , src_y_wallix, 10, 140,
-                                            front->orders->rdp_layer->client_info.bpp, cache_b_id_wallix, cache_b_idx_wallix);
-                front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix + 10, src_y_wallix + 140, 140, 10,
-                                            front->orders->rdp_layer->client_info.bpp, cache_b_id_h_wallix, cache_b_idx_h_wallix);
+                cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix + 140 , src_y_wallix, 10, 140, front->orders->rdp_layer->client_info.bpp);
+                cache_b_id_wallix = (cache_ref >> 16);
+                cache_b_idx_wallix = (cache_ref & 0xFFFF);
+                cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix + 10, src_y_wallix + 140, 140, 10, front->orders->rdp_layer->client_info.bpp);
+                cache_b_id_h_wallix = (cache_ref >> 16);
+                cache_b_idx_h_wallix = (cache_ref & 0xFFFF);
             break;
             default:
             break;
             case TOP_WALLIX:
                 fill_rect_wallix = Rect(src_x_wallix, src_y_wallix, 140, 10);
                 fill_rect_wallix_h = Rect(src_x_wallix + 140, src_y_wallix, 20, 140);
-
-                front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix , src_y_wallix, 140, 10,
-                                            front->orders->rdp_layer->client_info.bpp, cache_b_id_wallix, cache_b_idx_wallix);
-                front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix + 140, src_y_wallix, 20, 140,
-                                            front->orders->rdp_layer->client_info.bpp, cache_b_id_h_wallix, cache_b_idx_h_wallix);
+                cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix , src_y_wallix, 140, 10, front->orders->rdp_layer->client_info.bpp);
+                cache_b_id_wallix = (cache_ref >> 16);
+                cache_b_idx_wallix = (cache_ref & 0xFFFF);
+                cache_ref = front->bmp_cache->add_bitmap(800, 600, bmp_background.data_co, src_x_wallix + 140, src_y_wallix, 20, 140, front->orders->rdp_layer->client_info.bpp);
+                cache_b_id_h_wallix = (cache_ref >> 16);
+                cache_b_idx_h_wallix = (cache_ref & 0xFFFF);
             break;
         }
 

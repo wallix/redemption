@@ -132,7 +132,6 @@ struct Bitmap{
         this->data_co = 0;
         this->pmax = 0;
 
-        int pixel;
         int size;
         RGBPalette palette1;
         char type1[4];
@@ -285,6 +284,7 @@ struct Bitmap{
         int k = 0;
         for (unsigned y = 0; y < this->cy ; y++) {
             for (unsigned x = 0 ; x < this->cx; x++) {
+                uint32_t pixel = 0;
                 switch (header.bit_count){
                 case 24:
                 {

@@ -55,7 +55,7 @@ struct rdp_rdp {
         #warning initialize members through constructor
         : sec_layer(t, this->use_rdp5, hostname, username), bpp(bpp)
         {
-            LOG(LOG_INFO, "rdp_rdp login:%s host=%s\n", username, hostname);
+            LOG(LOG_INFO, "rdp remote login:%s host=%s\n", username, hostname);
             this->share_id = 0;
             this->use_rdp5 = 0;
             this->bitmap_compression = 1;
@@ -322,7 +322,7 @@ struct rdp_rdp {
 
         void process_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
         {
-            LOG(LOG_INFO, "Process pointer PDU\n");
+//            LOG(LOG_INFO, "Process pointer PDU\n");
 
             int message_type = stream.in_uint16_le();
             stream.skip_uint8(2); /* pad */
@@ -334,24 +334,24 @@ struct rdp_rdp {
             }
             break;
             case RDP_POINTER_COLOR:
-                LOG(LOG_INFO, "Process pointer color\n");
+//                LOG(LOG_INFO, "Process pointer color\n");
                 this->process_color_pointer_pdu(stream, mod);
-                LOG(LOG_INFO, "Process pointer color done\n");
+//                LOG(LOG_INFO, "Process pointer color done\n");
                 break;
             case RDP_POINTER_CACHED:
-                LOG(LOG_INFO, "Process pointer cached\n");
+//                LOG(LOG_INFO, "Process pointer cached\n");
                 this->process_cached_pointer_pdu(stream, mod);
-                LOG(LOG_INFO, "Process pointer cached done\n");
+//                LOG(LOG_INFO, "Process pointer cached done\n");
                 break;
             case RDP_POINTER_SYSTEM:
-                LOG(LOG_INFO, "Process pointer system\n");
+//                LOG(LOG_INFO, "Process pointer system\n");
                 this->process_system_pointer_pdu(stream, mod);
-                LOG(LOG_INFO, "Process pointer system done\n");
+//                LOG(LOG_INFO, "Process pointer system done\n");
                 break;
             default:
                 break;
             }
-            LOG(LOG_INFO, "Process pointer PDU done\n");
+//            LOG(LOG_INFO, "Process pointer PDU done\n");
         }
 
         void process_palette(Stream & stream, client_mod * mod)
@@ -1070,7 +1070,7 @@ struct rdp_rdp {
             // A 16-bit, unsigned integer. The height of the rectangle.
             const uint16_t height = stream.in_uint16_le();
 
-            LOG(LOG_INFO, "bpp=%d width=%d height=%d", bpp, width, height);
+//            LOG(LOG_INFO, "bpp=%d width=%d height=%d", bpp, width, height);
 
             // A 16-bit, unsigned integer. The color depth of the rectangle
             // data in bits-per-pixel.
@@ -1111,7 +1111,7 @@ struct rdp_rdp {
 
             Bitmap bitmap(bpp, width, height);
 
-            LOG(LOG_INFO, "bpp=%d (%d) width=%d height=%d", bpp, bitmap.bpp, width, height);
+//            LOG(LOG_INFO, "bpp=%d (%d) width=%d height=%d", bpp, bitmap.bpp, width, height);
 
             if (flags & 0x0001){
                 uint16_t size = 0;

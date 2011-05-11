@@ -29,7 +29,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-
+#include <stdint.h>
 #include "bitmap.hpp"
 #include "bitmap_cache.hpp"
 #include "colors.hpp"
@@ -207,14 +207,14 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     const uint8_t * big_picture = (uint8_t*)big_picture8;
 
     {
-    int send_type;
-    uint8_t cache_id;
-    uint16_t cache_idx;
 
 
     {
-    send_type = cache.add_bitmap(100, 100, big_picture, 25, 0, 10, 10,
-                     24, cache_id, cache_idx);
+    uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 25, 0, 10, 10, 24);
+
+//    uint8_t send_type = (cache_ref >> 24);
+    uint8_t cache_id  = (cache_ref >> 16);
+    uint16_t cache_idx = (cache_ref & 0xFFFF);
 
     BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
     BOOST_CHECK_EQUAL(cache.big_bitmaps[0].crc, cache.big_bitmaps[0].pbmp->get_crc());
@@ -334,7 +334,11 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     // RrrRrrRrrRrrRrrRrrRrrRrrRrrRrr..
     }
     {
-        send_type = cache.add_bitmap(100, 100, big_picture, 0, 0, 10, 10, 24, cache_id, cache_idx);
+        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 0, 0, 10, 10, 24);
+
+//    uint8_t send_type = (cache_ref >> 24);
+        uint8_t cache_id  = (cache_ref >> 16);
+        uint16_t cache_idx = (cache_ref & 0xFFFF);
 
         BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
         BOOST_CHECK_EQUAL(0xFF0000, entry->pbmp->data_co[0]+(entry->pbmp->data_co[1]<<8)+(entry->pbmp->data_co[2]<<16));
@@ -346,8 +350,12 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     }
     {
         // request again the same picture, we should get the same cache_id
-        send_type = cache.add_bitmap(100, 100, big_picture, 0, 0, 10, 10,
-                         24, cache_id, cache_idx);
+        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 0, 0, 10, 10, 24);
+
+//    uint8_t send_type = (cache_ref >> 24);
+        uint8_t cache_id  = (cache_ref >> 16);
+        uint16_t cache_idx = (cache_ref & 0xFFFF);
+
         BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
         BOOST_CHECK_EQUAL(2, cache_id);
         BOOST_CHECK_EQUAL(1, cache_idx);
@@ -356,8 +364,12 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     }
 
     {
-        send_type = cache.add_bitmap(100, 100, big_picture, 25, 0, 10, 10,
-                         24, cache_id, cache_idx);
+        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 25, 0, 10, 10, 24);
+
+//    uint8_t send_type = (cache_ref >> 24);
+        uint8_t cache_id  = (cache_ref >> 16);
+        uint16_t cache_idx = (cache_ref & 0xFFFF);
+
         BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
         BOOST_CHECK_EQUAL(2, cache_id);
         BOOST_CHECK_EQUAL(0, cache_idx);
@@ -366,8 +378,12 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     }
     {
         // another part of the big image, but with the same drawing, same cache_id
-        send_type = cache.add_bitmap(100, 100, big_picture, 25, 40, 10, 10,
-                         24, cache_id, cache_idx);
+        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 25, 40, 10, 10, 24);
+
+//    uint8_t send_type = (cache_ref >> 24);
+        uint8_t cache_id  = (cache_ref >> 16);
+        uint16_t cache_idx = (cache_ref & 0xFFFF);
+
         BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
         BOOST_CHECK_EQUAL(2, cache_id);
         BOOST_CHECK_EQUAL(0, cache_idx);
@@ -376,8 +392,12 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     }
     {
         // another picture, new cache
-        send_type = cache.add_bitmap(100, 100, big_picture, 35, 0, 10, 10,
-                         24, cache_id, cache_idx);
+        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 35, 0, 10, 10, 24);
+
+//    uint8_t send_type = (cache_ref >> 24);
+        uint8_t cache_id  = (cache_ref >> 16);
+        uint16_t cache_idx = (cache_ref & 0xFFFF);
+
         BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
         BOOST_CHECK_EQUAL(2, cache_id);
         BOOST_CHECK_EQUAL(2, cache_idx);
@@ -386,8 +406,12 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     }
     {
         // request again the same picture, we should get the same cache_id
-        send_type = cache.add_bitmap(100, 100, big_picture, 25, 0, 10, 10,
-                         24, cache_id, cache_idx);
+        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 25, 0, 10, 10, 24);
+
+//    uint8_t send_type = (cache_ref >> 24);
+        uint8_t cache_id  = (cache_ref >> 16);
+        uint16_t cache_idx = (cache_ref & 0xFFFF);
+
         BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
         BOOST_CHECK_EQUAL(2, cache_id);
         BOOST_CHECK_EQUAL(0, cache_idx);
@@ -397,8 +421,12 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
 
     // another part of the big image, but with the same drawing, same cache_id
     {
-        send_type = cache.add_bitmap(100, 100, big_picture, 25, 40, 10, 10,
-                         24, cache_id, cache_idx);
+        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 25, 40, 10, 10, 24);
+
+//    uint8_t send_type = (cache_ref >> 24);
+        uint8_t cache_id  = (cache_ref >> 16);
+        uint16_t cache_idx = (cache_ref & 0xFFFF);
+
         BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
         BOOST_CHECK_EQUAL(2, cache_id);
         BOOST_CHECK_EQUAL(0, cache_idx);
@@ -406,8 +434,11 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
         BOOST_CHECK_EQUAL(10, entry->pbmp->cy);
     }
 
-    send_type = cache.add_bitmap(100, 100, big_picture, 99, 98, 10, 10,
-                     24, cache_id, cache_idx);
+    uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 99, 98, 10, 10, 24);
+
+//    uint8_t send_type = (cache_ref >> 24);
+    uint8_t cache_id  = (cache_ref >> 16);
+    uint16_t cache_idx = (cache_ref & 0xFFFF);
 
     BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
     BOOST_CHECK_EQUAL(1, cache_id);

@@ -86,7 +86,7 @@ struct rdp_sec {
         this->hostname[15] = 0;
         #warning and if username is really larger, what happens ? We should at least emit a warning log
         strncpy(this->username, username, 127);
-        this->hostname[127] = 0;
+        this->username[127] = 0;
         memset(this->client_crypt_random, 0, 512);
         memset(this->decrypt_key, 0, 16);
         memset(this->encrypt_key, 0, 16);
@@ -1156,37 +1156,37 @@ struct rdp_sec {
 
 // 2.2.1.4  Server MCS Connect Response PDU with GCC Conference Create Response
 // ----------------------------------------------------------------------------
-// The MCS Connect Response PDU is an RDP Connection Sequence PDU sent from 
-// server to client during the Basic Settings Exchange phase (see section 
-// 1.3.1.1). It is sent as a response to the MCS Connect Initial PDU (section 
-// 2.2.1.3). The MCS Connect Response PDU encapsulates a GCC Conference Create 
-// Response, which encapsulates concatenated blocks of settings data. 
+// The MCS Connect Response PDU is an RDP Connection Sequence PDU sent from
+// server to client during the Basic Settings Exchange phase (see section
+// 1.3.1.1). It is sent as a response to the MCS Connect Initial PDU (section
+// 2.2.1.3). The MCS Connect Response PDU encapsulates a GCC Conference Create
+// Response, which encapsulates concatenated blocks of settings data.
 
-// A basic high-level overview of the nested structure for the Server MCS 
-// Connect Response PDU is illustrated in section 1.3.1.1, in the figure 
-// specifying MCS Connect Response PDU. Note that the order of the settings 
-// data blocks is allowed to vary from that shown in the previously mentioned 
-// figure and the message syntax layout that follows. This is possible because 
-// each data block is identified by a User Data Header structure (section 
+// A basic high-level overview of the nested structure for the Server MCS
+// Connect Response PDU is illustrated in section 1.3.1.1, in the figure
+// specifying MCS Connect Response PDU. Note that the order of the settings
+// data blocks is allowed to vary from that shown in the previously mentioned
+// figure and the message syntax layout that follows. This is possible because
+// each data block is identified by a User Data Header structure (section
 // 2.2.1.4.1).
 
 // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
 
-// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224] 
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
 // section 13.7.
 
-// mcsCrsp (variable): Variable-length BER-encoded MCS Connect Response 
-//   structure (using definite-length encoding) as described in [T125] 
+// mcsCrsp (variable): Variable-length BER-encoded MCS Connect Response
+//   structure (using definite-length encoding) as described in [T125]
 //   (the ASN.1 structure definition is detailed in [T125] section 7, part 2).
-//   The userData field of the MCS Connect Response encapsulates the GCC 
-//   Conference Create Response data (contained in the gccCCrsp and subsequent 
+//   The userData field of the MCS Connect Response encapsulates the GCC
+//   Conference Create Response data (contained in the gccCCrsp and subsequent
 //   fields).
 
-// gccCCrsp (variable): Variable-length PER-encoded GCC Connect Data structure 
-//   which encapsulates a Connect GCC PDU that contains a GCC Conference Create 
-//   Response structure as described in [T124] (the ASN.1 structure definitions 
-//   are specified in [T124] section 8.7) appended as user data to the MCS 
-//   Connect Response (using the format specified in [T124] sections 9.5 and 
+// gccCCrsp (variable): Variable-length PER-encoded GCC Connect Data structure
+//   which encapsulates a Connect GCC PDU that contains a GCC Conference Create
+//   Response structure as described in [T124] (the ASN.1 structure definitions
+//   are specified in [T124] section 8.7) appended as user data to the MCS
+//   Connect Response (using the format specified in [T124] sections 9.5 and
 //   9.6). The userData field of the GCC Conference Create Response contains
 //   one user data set consisting of concatenated server data blocks.
 
@@ -1195,7 +1195,7 @@ struct rdp_sec {
 // serverSecurityData (variable): Variable-length Server Security Data structure
 //   (section 2.2.1.4.3).
 
-// serverNetworkData (variable): Variable-length Server Network Data structure 
+// serverNetworkData (variable): Variable-length Server Network Data structure
 //   (section 2.2.1.4.4).
 
     /*****************************************************************************/
@@ -1339,15 +1339,15 @@ struct rdp_sec {
 // 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
 // ------------------------------------------
 
-//The TS_UD_CS_CORE data block contains core client connection-related 
+//The TS_UD_CS_CORE data block contains core client connection-related
 // information.
 
-//header (4 bytes): GCC user data block header, as specified in section 
+//header (4 bytes): GCC user data block header, as specified in section
 //                  2.2.1.3.1. The User Data Header type field MUST be set to
 //                  CS_CORE (0xC001).
 
-// version (4 bytes): A 32-bit, unsigned integer. Client version number for the 
-//                    RDP. The major version number is stored in the high 2 
+// version (4 bytes): A 32-bit, unsigned integer. Client version number for the
+//                    RDP. The major version number is stored in the high 2
 //                    bytes, while the minor version number is stored in the
 //                    low 2 bytes.
 // +------------+------------------------------------+
@@ -1358,16 +1358,16 @@ struct rdp_sec {
 // | 0x00080004 | RDP 5.0, 5.1, 5.2, and 6.0 clients |
 // +------------+------------------------------------+
 
-// desktopWidth (2 bytes): A 16-bit, unsigned integer. The requested desktop 
-//                         width in pixels (up to a maximum value of 4096 
+// desktopWidth (2 bytes): A 16-bit, unsigned integer. The requested desktop
+//                         width in pixels (up to a maximum value of 4096
 //                         pixels).
 
-// desktopHeight (2 bytes): A 16-bit, unsigned integer. The requested desktop 
-//                          height in pixels (up to a maximum value of 2048 
+// desktopHeight (2 bytes): A 16-bit, unsigned integer. The requested desktop
+//                          height in pixels (up to a maximum value of 2048
 //                          pixels).
 
 // colorDepth (2 bytes): A 16-bit, unsigned integer. The requested color depth.
-//                       Values in this field MUST be ignored if the 
+//                       Values in this field MUST be ignored if the
 //                       postBeta2ColorDepth field is present.
 // +--------------------------+-------------------------+
 // |     Value                |        Meaning          |
@@ -1377,14 +1377,14 @@ struct rdp_sec {
 // | 0xCA01 RNS_UD_COLOR_8BPP | 8 bpp                   |
 // +--------------------------+-------------------------+
 
-// SASSequence (2 bytes): A 16-bit, unsigned integer. Secure access sequence. 
+// SASSequence (2 bytes): A 16-bit, unsigned integer. Secure access sequence.
 //                        This field SHOULD be set to RNS_UD_SAS_DEL (0xAA03).
 
 // keyboardLayout (4 bytes): A 32-bit, unsigned integer. Keyboard layout (active
-//                           input locale identifier). For a list of possible 
+//                           input locale identifier). For a list of possible
 //                           input locales, see [MSDN-MUI].
 
-// clientBuild (4 bytes): A 32-bit, unsigned integer. The build number of the 
+// clientBuild (4 bytes): A 32-bit, unsigned integer. The build number of the
 //                        client.
 
 // clientName (32 bytes): Name of the client computer. This field contains up to
@@ -1409,21 +1409,21 @@ struct rdp_sec {
 // |   7   | Japanese keyboard                          |
 // +-------+--------------------------------------------+
 
-// keyboardSubType (4 bytes): A 32-bit, unsigned integer. The keyboard subtype 
-//                            (an original equipment manufacturer-dependent 
+// keyboardSubType (4 bytes): A 32-bit, unsigned integer. The keyboard subtype
+//                            (an original equipment manufacturer-dependent
 //                            value).
 
-// keyboardFunctionKey (4 bytes): A 32-bit, unsigned integer. The number of 
+// keyboardFunctionKey (4 bytes): A 32-bit, unsigned integer. The number of
 //                                function keys on the keyboard.
 
-// imeFileName (64 bytes): A 64-byte field. The Input Method Editor (IME) file 
-//                         name associated with the input locale. This field 
-//                         contains up to 31 Unicode characters plus a null 
+// imeFileName (64 bytes): A 64-byte field. The Input Method Editor (IME) file
+//                         name associated with the input locale. This field
+//                         contains up to 31 Unicode characters plus a null
 //                         terminator.
 
-// postBeta2ColorDepth (2 bytes): A 16-bit, unsigned integer. The requested 
-//                                color depth. Values in this field MUST be 
-//                                ignored if the highColorDepth field is 
+// postBeta2ColorDepth (2 bytes): A 16-bit, unsigned integer. The requested
+//                                color depth. Values in this field MUST be
+//                                ignored if the highColorDepth field is
 //                                present.
 // +--------------------------+-------------------------+
 // |      Value               |         Meaning         |
@@ -1432,24 +1432,24 @@ struct rdp_sec {
 // +--------------------------+-------------------------+
 // | 0xCA01 RNS_UD_COLOR_8BPP | 8 bpp                   |
 // +--------------------------+-------------------------+
-// If this field is present, then all of the preceding fields MUST also be 
+// If this field is present, then all of the preceding fields MUST also be
 // present. If this field is not present, then none of the subsequent fields
 // MUST be present.
 
 // clientProductId (2 bytes): A 16-bit, unsigned integer. The client product ID.
-//                            This field SHOULD be initialized to 1. If this 
+//                            This field SHOULD be initialized to 1. If this
 //                            field is present, then all of the preceding fields
-//                            MUST also be present. If this field is not  
-//                            present, then none of the subsequent fields MUST 
+//                            MUST also be present. If this field is not
+//                            present, then none of the subsequent fields MUST
 //                            be present.
 
 // serialNumber (4 bytes): A 32-bit, unsigned integer. Serial number. This field
 //                         SHOULD be initialized to 0. If this field is present,
-//                         then all of the preceding fields MUST also be 
-//                         present. If this field is not present, then none of 
+//                         then all of the preceding fields MUST also be
+//                         present. If this field is not present, then none of
 //                         the subsequent fields MUST be present.
 
-// highColorDepth (2 bytes): A 16-bit, unsigned integer. The requested color 
+// highColorDepth (2 bytes): A 16-bit, unsigned integer. The requested color
 //                           depth.
 // +-------+-------------------------------------------------------------------+
 // | Value |                      Meaning                                      |
@@ -1467,12 +1467,12 @@ struct rdp_sec {
 // |    24 |  24-bit RGB mask                                                  |
 // |       |  (8 bits for red, 8 bits for green, and 8 bits for blue)          |
 // +-------+-------------------------------------------------------------------+
-// If this field is present, then all of the preceding fields MUST also be 
-// present. If this field is not present, then none of the subsequent fields 
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
 // MUST be present.
 
-// supportedColorDepths (2 bytes): A 16-bit, unsigned integer. Specifies the 
-//                                 high color depths that the client is capable 
+// supportedColorDepths (2 bytes): A 16-bit, unsigned integer. Specifies the
+//                                 high color depths that the client is capable
 //                                 of supporting.
 // +-----------------------------+---------------------------------------------+
 // |          Flag               |                Meaning                      |
@@ -1494,11 +1494,11 @@ struct rdp_sec {
 // |                             | 8 bits for red, 8 bits for green,           |
 // |                             | and 8 bits for blue)                        |
 // +-----------------------------+---------------------------------------------+
-// If this field is present, then all of the preceding fields MUST also be 
-// present. If this field is not present, then none of the subsequent fields 
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
 // MUST be present.
 
-// earlyCapabilityFlags (2 bytes): A 16-bit, unsigned integer. It specifies 
+// earlyCapabilityFlags (2 bytes): A 16-bit, unsigned integer. It specifies
 // capabilities early in the connection sequence.
 // +---------------------------------------------+-----------------------------|
 // |                Flag                         |              Meaning        |
@@ -1530,7 +1530,7 @@ struct rdp_sec {
 // |                                             | larger than 512 bits for use|
 // |                                             | with the Server Certificate |
 // |                                             | (section 2.2.1.4.3.1) sent  |
-// |                                             | in the Server Security Data | 
+// |                                             | in the Server Security Data |
 // |                                             | block (section 2.2.1.4.3).  |
 // +---------------------------------------------+-----------------------------|
 // | 0x0020 RNS_UD_CS_RESERVED1                  | Reserved for future use.    |
@@ -1541,20 +1541,20 @@ struct rdp_sec {
 // |                                             | supports the Monitor Layout |
 // |                                             | PDU (section 2.2.12.1).     |
 // +---------------------------------------------+-----------------------------|
-// If this field is present, then all of the preceding fields MUST also be 
-// present. If this field is not present, then none of the subsequent fields 
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
 // MUST be present.
 
-// clientDigProductId (64 bytes): Contains a value that uniquely identifies the 
-//                                client. If this field is present, then all of 
-//                                the preceding fields MUST also be present. If 
-//                                this field is not present, then none of the 
+// clientDigProductId (64 bytes): Contains a value that uniquely identifies the
+//                                client. If this field is present, then all of
+//                                the preceding fields MUST also be present. If
+//                                this field is not present, then none of the
 //                                subsequent fields MUST be present.
 
 // pad2octets (2 bytes): A 16-bit, unsigned integer. Padding to align the
 //   serverSelectedProtocol field on the correct byte boundary.
-// If this field is present, then all of the preceding fields MUST also be 
-// present. If this field is not present, then none of the subsequent fields 
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
 // MUST be present.
 
 // serverSelectedProtocol (4 bytes): A 32-bit, unsigned integer. It contains the value returned
