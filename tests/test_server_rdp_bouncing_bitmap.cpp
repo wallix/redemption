@@ -444,7 +444,7 @@ int hook(int sck)
         cout << "\n";
 
         Inifile ini(CFG_PATH "/rdpproxy.ini");
-        SocketTransport * trans = new SocketTransport(sck, NULL);
+        SocketTransport * trans = new SocketTransport(sck);
         server_rdp * server = new server_rdp(void_callback, trans, &ini);
         RDP::Orders * orders = new RDP::Orders(server);
         Font * default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);

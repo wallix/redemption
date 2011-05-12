@@ -110,7 +110,7 @@ static ProtocolKeyword KeywordsDefinitions[] = {
 };
 
 
-Session::Session(int sck, const char * ip_source, wait_obj * terminated_event, Inifile * ini) {
+Session::Session(int sck, const char * ip_source, Inifile * ini) {
     this->context = new ModContext(
             KeywordsDefinitions,
             sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword));
@@ -120,24 +120,15 @@ Session::Session(int sck, const char * ip_source, wait_obj * terminated_event, I
     this->mod = 0;
 
     this->internal_state = SESSION_STATE_RSA_KEY_HANDSHAKE;
-    this->self_term_event = 0;
     this->ini = ini;
     this->sck = sck;
-    this->client_event = new wait_obj(sck);
+    this->front_event = new wait_obj(sck);
 
     /* create these when up and running */
-    this->terminated_event = terminated_event;
-
-    char event_name[256];
-    snprintf(event_name, 255, "redemption_%8.8x_session_self_term_event_%p", getpid(), this);
-    this->self_term_event = new wait_obj(event_name);
-
-    snprintf(event_name, 255, "redemption_%8.8x_session_accept_event_%p", getpid(), this);
-    this->accept_event = new wait_obj(event_name);
-    this->trans = new SocketTransport(sck, g_is_term);
+    this->trans = new SocketTransport(sck);
     this->session_callback = new SessionCallback(*this);
-    this->server = new server_rdp(*this->session_callback, this->trans, ini);
-    this->orders = new RDP::Orders(this->server);
+    this->front_server = new server_rdp(*this->session_callback, this->trans, ini);
+    this->orders = new RDP::Orders(this->front_server);
     this->default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
     this->cache = new Cache(this->orders);
     this->server_stream.init(8192*2);
@@ -177,7 +168,7 @@ Session::Session(int sck, const char * ip_source, wait_obj * terminated_event, I
     this->context->cpy(STRAUTHID_HOST, ip_source);
 
     /* module interface */
-    this->mod_event = 0;
+    this->back_event = 0;
     this->keymap = 0;
     this->keep_alive_time = 0;
 
@@ -193,18 +184,16 @@ Session::~Session()
     delete this->front;
     delete this->default_font;
     delete this->orders;
-    delete this->server;
-    delete this->self_term_event;
-    delete this->client_event;
+    delete this->front_server;
+    delete this->front_event;
     delete this->trans;
-    if (this->mod_event){
-        delete this->mod_event;
+    if (this->back_event){
+        delete this->back_event;
     }
     if (this->mod != this->no_mod){
         delete this->mod;
         this->mod = this->no_mod;
     }
-    delete this->accept_event;
     delete this->no_mod;
     delete this->sesman;
     delete this->context;
@@ -412,26 +401,11 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
     FD_ZERO(&wfds);
 
 
-    #warning it should be possible to merge terminated_event (client socket closed) and self_term_event (proxy killed)
-    this->terminated_event->add_to_fd_set(rfds, max);
-    this->self_term_event->add_to_fd_set(rfds, max);
-    this->client_event->add_to_fd_set(rfds, max);
-
-    int i = select(max + 1, &rfds, &wfds, 0, &time_mark);
-    if (((i < 0)
-            && (errno != EAGAIN)
-            && (errno != EWOULDBLOCK)
-            && (errno != EINPROGRESS)
-            && (errno != EINTR))
-        || this->terminated_event->is_set()
-        || this->self_term_event->is_set())
-    {
-        return SESSION_STATE_STOP;
-    }
-
-    if (this->client_event->is_set()) {
+    this->front_event->add_to_fd_set(rfds, max);
+    select(max + 1, &rfds, &wfds, 0, &time_mark);
+    if (this->front_event->is_set()) {
         try {
-            this->server->activate_and_process_data(this->server_stream);
+            this->front_server->activate_and_process_data(this->server_stream);
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -443,9 +417,9 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
         // if we reach this point we are up_and_running,
         // hence width and height and colors and keymap are availables
         /* resize the main window */
-        this->mod->screen.rect.cx = this->server->client_info.width;
-        this->mod->screen.rect.cy = this->server->client_info.height;
-        this->mod->screen.bpp = this->server->client_info.bpp;
+        this->mod->screen.rect.cx = this->front_server->client_info.width;
+        this->mod->screen.rect.cy = this->front_server->client_info.height;
+        this->mod->screen.bpp = this->front_server->client_info.bpp;
 
         this->mod->server_reset_clip();
 
@@ -459,15 +433,15 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
                   "cache1_entries=%d cache1_size=%d "
                   "cache2_entries=%d cache2_size=%d "
                   "cache2_entries=%d cache2_size=%d ",
-        this->server->client_info.width, this->server->client_info.height, this->server->client_info.bpp,
-        this->server->client_info.cache1_entries, this->server->client_info.cache1_size,
-        this->server->client_info.cache2_entries, this->server->client_info.cache2_size,
-        this->server->client_info.cache3_entries, this->server->client_info.cache3_size);
+        this->front_server->client_info.width, this->front_server->client_info.height, this->front_server->client_info.bpp,
+        this->front_server->client_info.cache1_entries, this->front_server->client_info.cache1_size,
+        this->front_server->client_info.cache2_entries, this->front_server->client_info.cache2_size,
+        this->front_server->client_info.cache3_entries, this->front_server->client_info.cache3_size);
 
 
         /* initialising keymap */
         char filename[256];
-        snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->server->client_info.keylayout);
+        snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->front_server->client_info.keylayout);
         LOG(LOG_DEBUG, "loading keymap %s\n", filename);
         this->keymap = new Keymap(filename);
 
@@ -501,7 +475,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
             &pointer_item.y);
 
         this->cache->add_pointer_static(&pointer_item, 0);
-        this->server->server_rdp_send_pointer(0,
+        this->front_server->server_rdp_send_pointer(0,
                          pointer_item.data,
                          pointer_item.mask,
                          pointer_item.x,
@@ -515,18 +489,18 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
             &pointer_item.y);
         this->cache->add_pointer_static(&pointer_item, 1);
 
-        this->server->server_rdp_send_pointer(1,
+        this->front_server->server_rdp_send_pointer(1,
                          pointer_item.data,
                          pointer_item.mask,
                          pointer_item.x,
                          pointer_item.y);
 
-        if (this->server->client_info.username[0]){
-            this->context->parse_username(this->server->client_info.username);
+        if (this->front_server->client_info.username[0]){
+            this->context->parse_username(this->front_server->client_info.username);
         }
 
-        if (this->server->client_info.password[0]){
-            this->context->cpy(STRAUTHID_PASSWORD, this->server->client_info.password);
+        if (this->front_server->client_info.password[0]){
+            this->context->cpy(STRAUTHID_PASSWORD, this->front_server->client_info.password);
         }
 
         this->internal_state = SESSION_STATE_RUNNING;
@@ -544,15 +518,15 @@ int Session::step_STATE_CLOSE_CONNECTION()
 
     FD_ZERO(&rfds);
 
-    this->client_event->add_to_fd_set(rfds, max);
-    this->mod_event->add_to_fd_set(rfds, max);
+    this->front_event->add_to_fd_set(rfds, max);
+    this->back_event->add_to_fd_set(rfds, max);
 
-    if (this->mod_event->is_set()) {
+    if (this->back_event->is_set()) {
         return SESSION_STATE_STOP;
     }
-    if (this->client_event->is_set()) {
+    if (this->front_event->is_set()) {
         try {
-            this->server->activate_and_process_data(this->server_stream);
+            this->front_server->activate_and_process_data(this->server_stream);
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -565,7 +539,7 @@ int Session::step_STATE_CLOSE_CONNECTION()
 
 int Session::step_STATE_WAITING_FOR_NEXT_MODULE(struct timeval & time_mark)
 {
-    assert(this->server->up_and_running);
+    assert(this->front_server->up_and_running);
 
     unsigned max = 0;
     fd_set rfds;
@@ -574,26 +548,12 @@ int Session::step_STATE_WAITING_FOR_NEXT_MODULE(struct timeval & time_mark)
     FD_ZERO(&rfds);
     FD_ZERO(&wfds);
 
-    this->terminated_event->add_to_fd_set(rfds, max);
-    this->client_event->add_to_fd_set(rfds, max);
-    this->self_term_event->add_to_fd_set(rfds, max);
+    this->front_event->add_to_fd_set(rfds, max);
     this->sesman->add_to_fd_set(rfds, max);
-
-    int i = select(max + 1, &rfds, &wfds, 0, &time_mark);
-    if (((i < 0)
-            && (errno != EAGAIN)
-            && (errno != EWOULDBLOCK)
-            && (errno != EINPROGRESS)
-            && (errno != EINTR))
-        || this->terminated_event->is_set()
-        || this->self_term_event->is_set())
-    {
-        return SESSION_STATE_STOP;
-    }
-
-    if (this->client_event->is_set()) { /* incoming client data */
+    select(max + 1, &rfds, &wfds, 0, &time_mark);
+    if (this->front_event->is_set()) { /* incoming client data */
         try {
-            this->server->activate_and_process_data(this->server_stream);
+            this->front_server->activate_and_process_data(this->server_stream);
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -620,32 +580,19 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
     FD_ZERO(&rfds);
     FD_ZERO(&wfds);
 
-    this->terminated_event->add_to_fd_set(rfds, max);
-    this->client_event->add_to_fd_set(rfds, max);
-    this->self_term_event->add_to_fd_set(rfds, max);
+    this->front_event->add_to_fd_set(rfds, max);
 
-    this->mod_event->add_to_fd_set(rfds, max);
+    this->back_event->add_to_fd_set(rfds, max);
     this->sesman->add_to_fd_set(rfds, max);
-
-    int i = select(max + 1, &rfds, &wfds, 0, &time_mark);
-    if (((i < 0)
-            && (errno != EAGAIN)
-            && (errno != EWOULDBLOCK)
-            && (errno != EINPROGRESS)
-            && (errno != EINTR))
-        || this->terminated_event->is_set()
-        || this->self_term_event->is_set())
-    {
-        return SESSION_STATE_STOP;
-    }
+    select(max + 1, &rfds, &wfds, 0, &time_mark);
 
     time_t timestamp = time(NULL);
     this->front->periodic_snapshot(this->mod->get_pointer_displayed());
 
-    if (this->client_event->is_set()) { /* incoming client data */
+    if (this->front_event->is_set()) { /* incoming client data */
         try {
         #warning it should be possible to remove the while hidden in activate_and_process_data and work only with the external loop (need to understand well the next_packet working)
-            this->server->activate_and_process_data(this->server_stream);
+            this->front_server->activate_and_process_data(this->server_stream);
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -667,7 +614,7 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
         this->front->stop_capture();
     }
 
-    if (this->mod_event->is_set()){ // data incoming from server module
+    if (this->back_event->is_set()){ // data incoming from server module
         int signal = this->mod->mod_signal();
         if (signal){ // signal is the return status from module
                      // (used only for internal modules)
@@ -675,9 +622,9 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
                 delete this->mod;
                 this->mod = this->no_mod;
             }
-            snprintf(this->context->get(STRAUTHID_OPT_WIDTH), 10, "%d", this->server->client_info.width);
-            snprintf(this->context->get(STRAUTHID_OPT_HEIGHT), 10, "%d", this->server->client_info.height);
-            snprintf(this->context->get(STRAUTHID_OPT_BPP), 10, "%d", this->server->client_info.bpp);
+            snprintf(this->context->get(STRAUTHID_OPT_WIDTH), 10, "%d", this->front_server->client_info.width);
+            snprintf(this->context->get(STRAUTHID_OPT_HEIGHT), 10, "%d", this->front_server->client_info.height);
+            snprintf(this->context->get(STRAUTHID_OPT_BPP), 10, "%d", this->front_server->client_info.bpp);
             bool record_video = false;
             bool keep_alive = false;
             int next_state = this->sesman->ask_next_module(
@@ -707,7 +654,7 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
                 }
             }
             else {
-                // this->mod_event->reset();
+                // this->back_event->reset();
                 this->internal_state = SESSION_STATE_WAITING_FOR_NEXT_MODULE;
             }
         }
@@ -734,7 +681,7 @@ int Session::session_main_loop()
                 case SESSION_STATE_RSA_KEY_HANDSHAKE:
                     if (this->internal_state != previous_state)
                         LOG(LOG_DEBUG, "RSA Key Handshake\n");
-                    this->server->server_rdp_incoming(&rsa_keys);
+                    this->front_server->server_rdp_incoming(&rsa_keys);
                     this->internal_state = SESSION_STATE_ENTRY;
                 break;
                 case SESSION_STATE_ENTRY:
@@ -766,7 +713,7 @@ int Session::session_main_loop()
                 break;
             }
         }
-        this->server->server_rdp_disconnect();
+        this->front_server->server_rdp_disconnect();
     }
     catch(...){
         rv = 1;
@@ -784,11 +731,11 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 {
     try {
         if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"force")==0){
-            this->server->client_info.console_session=true;
+            this->front_server->client_info.console_session=true;
             LOG(LOG_INFO, "mode console : force");
         }
         else if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"forbid")==0){
-            this->server->client_info.console_session=false;
+            this->front_server->client_info.console_session=false;
             LOG(LOG_INFO, "mode console : forbid");
         }
         else {
@@ -796,9 +743,9 @@ bool Session::session_setup_mod(int status, const ModContext * context)
         }
 
         #warning wait_obj should become implementation details of modules, sesman and front end
-        if (this->mod_event) {
-            delete this->mod_event;
-            this->mod_event = 0;
+        if (this->back_event) {
+            delete this->back_event;
+            this->back_event = 0;
         }
         if (this->mod != this->no_mod) {
             delete this->mod;
@@ -811,33 +758,27 @@ bool Session::session_setup_mod(int status, const ModContext * context)
         {
             case MCTX_STATUS_CLI:
             {
-                char event_name[256];
-                snprintf(event_name, 255, "redemption_%8.8x_wm_transitory_mode_event_%p", getpid(), this);
-                this->mod_event = new wait_obj(event_name);
+                this->back_event = new wait_obj(-1);
                 this->mod = new cli_mod(this->keys, this->key_flags, this->keymap, *this->context, *(this->front));
-                this->mod_event->set();
+                this->back_event->set();
                 LOG(LOG_INFO, "Creation of new mod 'CLI parse' suceeded\n");
             }
             break;
 
             case MCTX_STATUS_TRANSITORY:
             {
-                char event_name[256];
-                snprintf(event_name, 255, "redemption_%8.8x_wm_transitory_mode_event_%p", getpid(), this);
-                this->mod_event = new wait_obj(event_name);
+                this->back_event = new wait_obj(-1);
                 this->mod = new transitory_mod(this->keys, this->key_flags, this->keymap, *this->context, *(this->front));
                 // Transitory finish immediately
-                this->mod_event->set();
+                this->back_event->set();
                 LOG(LOG_INFO, "Creation of new mod 'TRANSITORY' suceeded\n");
             }
             break;
 
             case MCTX_STATUS_LOGIN:
             {
-                char event_name[256];
-                snprintf(event_name, 255, "redemption_%8.8x_wm_login_mode_event_%p", getpid(), this);
-                this->mod_event = new wait_obj(event_name);
-                this->mod = new login_mod(this->mod_event, this->keys, this->key_flags, this->keymap,  *this->context, *(this->front), this);
+                this->back_event = new wait_obj(-1);
+                this->mod = new login_mod(this->back_event, this->keys, this->key_flags, this->keymap,  *this->context, *(this->front), this);
                 // force a WM_INVALIDATE on all screen
                 this->callback(0x4444, this->mod->screen.rect.x, this->mod->screen.rect.y, this->mod->screen.rect.cx, this->mod->screen.rect.cy);
                 LOG(LOG_INFO, "Creation of new mod 'LOGIN DIALOG' (%d,%d,%d,%d) suceeded\n",
@@ -864,10 +805,8 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 }
 
                 LOG(LOG_INFO, "Creation of new mod 'STATUS DIALOG' suceeded\n");
-                char text[256];
-                snprintf(text, 255, "session_mod_%8.8x_event_%p", getpid(), this);
-                this->mod_event = new wait_obj(text);
-                this->mod = new dialog_mod(this->mod_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this, message, button);
+                this->back_event = new wait_obj(-1);
+                this->mod = new dialog_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this, message, button);
                 // force a WM_INVALIDATE on all screen
                 this->callback(0x4444, this->mod->screen.rect.x, this->mod->screen.rect.y, this->mod->screen.rect.cx, this->mod->screen.rect.cy);
                 Inifile ini(CFG_PATH "/" RDPPROXY_INI);
@@ -884,10 +823,8 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 if (this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                     this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection to server failed");
                 }
-                char text[256];
-                snprintf(text, 255, "session_mod_%8.8x_event_%p", getpid(), this);
-                this->mod_event = new wait_obj(text);
-                this->mod = new close_mod(this->mod_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this);
+                this->back_event = new wait_obj(-1);
+                this->mod = new close_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this);
                 // force a WM_INVALIDATE on all screen
                 this->callback(0x4444, this->mod->screen.rect.x, this->mod->screen.rect.y, this->mod->screen.rect.cx, this->mod->screen.rect.cy);
                 LOG(LOG_INFO, "Creation of new mod 'CLOSE DIALOG' suceeded\n");
@@ -899,9 +836,9 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 SocketTransport * t = new SocketTransport(
                                             this->context->get(STRAUTHID_TARGET_DEVICE),
                                             atoi(this->context->get(STRAUTHID_TARGET_PORT)),
-                                            0, 4, 2500000);
+                                            4, 2500000);
 
-                this->mod_event = new wait_obj(t->sck);
+                this->back_event = new wait_obj(t->sck);
                 this->mod = new xup_mod(t, this->keys, this->key_flags, this->keymap, *this->context, *(this->front));
                 LOG(LOG_INFO, "Creation of new mod 'XUP' suceeded\n");
 
@@ -914,26 +851,25 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 // it is **not** used to get an ip address.
                 char hostname[255];
                 hostname[0] = 0;
-                if (this->server->client_info.hostname){
-                    strcpy(hostname, this->server->client_info.hostname);
+                if (this->front_server->client_info.hostname){
+                    strcpy(hostname, this->front_server->client_info.hostname);
                 }
                 SocketTransport * t = new SocketTransport(
                                         this->context->get(STRAUTHID_TARGET_DEVICE),
-                                        atoi(this->context->get(STRAUTHID_TARGET_PORT)),
-                                        0);
+                                        atoi(this->context->get(STRAUTHID_TARGET_PORT)));
+                this->back_event = new wait_obj(t->sck);
                 this->mod = new mod_rdp(t,
                                     this->keys,
                                     this->key_flags,
                                     this->keymap,
                                     *this->context,
                                     *(this->front),
-                                    &this->server->client_info,
-                                    this->server->sec_layer.mcs_layer.channel_list,
+                                    &this->front_server->client_info,
+                                    this->front_server->sec_layer.mcs_layer.channel_list,
                                     hostname,
-                                    this->server->client_info.keylayout,
+                                    this->front_server->client_info.keylayout,
                                     this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
                                     this->context->get_bool(STRAUTHID_OPT_DEVICEREDIRECTION));
-                this->mod_event = new wait_obj(t->sck);
                 LOG(LOG_INFO, "Creation of new mod 'RDP' suceeded\n");
             }
             break;
@@ -942,10 +878,9 @@ bool Session::session_setup_mod(int status, const ModContext * context)
             {
                 SocketTransport *t = new SocketTransport(
                                         this->context->get(STRAUTHID_TARGET_DEVICE),
-                                        atoi(this->context->get(STRAUTHID_TARGET_PORT)),
-                                        0);
-                this->mod = new mod_vnc(t, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this->server->client_info.keylayout);
-                this->mod_event = new wait_obj(t->sck);
+                                        atoi(this->context->get(STRAUTHID_TARGET_PORT)));
+                this->back_event = new wait_obj(t->sck);
+                this->mod = new mod_vnc(t, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this->front_server->client_info.keylayout);
                 LOG(LOG_INFO, "Creation of new mod 'VNC' suceeded\n");
             }
             break;

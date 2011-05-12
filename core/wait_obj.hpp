@@ -29,129 +29,80 @@
 
 class wait_obj
 {
-
     public:
-
     int obj;
-
-    wait_obj(const char* name) : obj(0)
-    {
-        #warning sun_path is limited in size (107 char), check for buffer space to throw som exception if necessary, and use snprintf instead of sprintf
-        struct sockaddr_un sa;
-        int len;
-        int sck;
-        int i;
-
-        sck = socket(PF_UNIX, SOCK_DGRAM, 0);
-        if (sck < 0) {
-            throw Error(ERR_WAIT_OBJ_SOCKET);
-        }
-        memset(&sa, 0, sizeof(sa));
-        sa.sun_family = AF_UNIX;
-        if ((name == 0) || (strlen(name) == 0)) {
-            //g_random((char*)&i, sizeof(i));
-            int fd;
-
-            memset((char*)&i, 0x44,  sizeof(i));
-            fd = open("/dev/urandom", O_RDONLY);
-            if (fd == -1) {
-                fd = open("/dev/random", O_RDONLY);
-            }
-            if (fd != -1) {
-                if (read(fd, (char*)&i,  sizeof(i)) !=  sizeof(i)) {
-                }
-                close(fd);
-            }
-
-            sprintf(sa.sun_path, "/tmp/auto%8.8x", i);
-            while ((0 == access(sa.sun_path, F_OK))) {
-                //g_random((char*)&i, sizeof(i));
-                int fd;
-
-                memset((char*)&i, 0x44,  sizeof(i));
-                fd = open("/dev/urandom", O_RDONLY);
-                if (fd == -1) {
-                    fd = open("/dev/random", O_RDONLY);
-                }
-                if (fd != -1) {
-                    if (read(fd, (char*)&i,  sizeof(i)) !=  sizeof(i)) {
-                    }
-                    close(fd);
-                }
-                sprintf(sa.sun_path, "/tmp/auto%8.8x", i);
-            }
-        } else {
-            sprintf(sa.sun_path, "/tmp/%s", name);
-        }
-        unlink(sa.sun_path);
-        len = sizeof(sa);
-        if (bind(sck, (struct sockaddr*)&sa, len) < 0) {
-            close(sck);
-            throw Error(ERR_WAIT_OBJ_SOCKET);
-        }
-        this->obj = sck;
-    }
-
-    wait_obj(int sck)
-    {
-        this->obj = sck;
-    }
+    bool set_state;
+    wait_obj(int sck) : obj(sck), set_state(false) {}
 
     ~wait_obj()
     {
-        struct sockaddr_un sa;
-        socklen_t sa_size = sizeof(sa);
+        if (this->obj > 0){
+            struct sockaddr_un sa;
+            socklen_t sa_size = sizeof(sa);
 
-        if (getsockname(this->obj, (struct sockaddr*)&sa, &sa_size) < 0) {
-            /* socket is in error state : can't close */
-            return;
+            if (getsockname(this->obj, (struct sockaddr*)&sa, &sa_size) < 0) {
+                /* socket is in error state : can't close */
+                return;
+            }
+            close(this->obj);
         }
-        close(this->obj);
-        unlink(sa.sun_path);
     }
 
     void add_to_fd_set(fd_set & rfds, unsigned & max)
     {
-        FD_SET(this->obj, &rfds);
-        max = ((unsigned)this->obj > max)?this->obj:max;
+        if (this->obj > 0){
+            FD_SET(this->obj, &rfds);
+            max = ((unsigned)this->obj > max)?this->obj:max;
+        }
     }
 
     void reset()
     {
-        char buf[64];
-        while (this->can_recv()) {
-            recvfrom(this->obj, &buf, 64, 0, 0, 0);
+        set_state = false;
+        if (this->obj > 0){
+            char buf[64];
+            while (this->can_recv()) {
+                #warning if I actually read data ? May I not lose data doint that ?
+                recvfrom(this->obj, &buf, 64, 0, 0, 0);
+            }
         }
     }
 
     bool is_set()
     {
-        return this->can_recv();
+        if (this->obj > 0){
+            return this->can_recv();
+        }
+        else {
+            return set_state;
+        }
     }
 
-    int set()
+    void set()
     {
-        socklen_t sa_size;
-        int s;
-        struct sockaddr_un sa;
+        set_state = true;
+        if (this->obj) {
+            socklen_t sa_size;
+            int s;
+            struct sockaddr_un sa;
 
-        if (this->can_recv()) {
-            /* already signalled */
-            return false;
+            if (this->can_recv()) {
+                /* already signalled */
+                throw Error(ERR_SOCKET_ERROR);
+            }
+            sa_size = sizeof(sa);
+            if (getsockname(this->obj, (struct sockaddr*)&sa, &sa_size) < 0) {
+                return;
+            }
+            s = socket(PF_UNIX, SOCK_DGRAM, 0);
+            if (s < 0) {
+                throw Error(ERR_SOCKET_ERROR);
+            }
+            sendto(s, "sig", 4, 0, (struct sockaddr*)&sa, sa_size);
+            close(s);
+            return;
         }
-        sa_size = sizeof(sa);
-        if (getsockname(this->obj, (struct sockaddr*)&sa, &sa_size) < 0) {
-            return true;
-        }
-        s = socket(PF_UNIX, SOCK_DGRAM, 0);
-        if (s < 0) {
-            return true;
-        }
-        sendto(s, "sig", 4, 0, (struct sockaddr*)&sa, sa_size);
-        close(s);
-        return false;
     }
-
 
     private:
     bool can_recv()

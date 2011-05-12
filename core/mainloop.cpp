@@ -41,21 +41,11 @@
 #include "session.hpp"
 
 
-static wait_obj * g_term_event = 0;
-
 /*****************************************************************************/
 void xrdp_shutdown(int sig)
 {
     LOG(LOG_INFO, "shutting down : signal %d pid=%d\n", sig, getpid());
-    if (!g_term_event->is_set()) {
-        g_term_event->set();
-    }
-}
-
-/*****************************************************************************/
-int g_is_term(void)
-{
-    return g_term_event->is_set();
+    exit(1);
 }
 
 /*****************************************************************************/
@@ -172,32 +162,23 @@ void redemption_new_session()
     init_signals();
     snprintf(text, 255, "redemption_%8.8x_main_term", getpid());
 
-    g_term_event = new wait_obj(text);
     getpeername(0, (struct sockaddr *)&from, (socklen_t *)&sock_len);
     strcpy(ip_source, inet_ntoa(from.sin_addr));
 
     try {
-        Session session(0, ip_source, g_term_event, &ini);
+        Session session(0, ip_source, &ini);
         session.session_main_loop();
     } catch(...) {
     };
-    delete g_term_event;
 }
 
 void redemption_main_loop()
 {
 
-    char text[256];
-
     init_signals();
 
-    snprintf(text, 255, "redemption_%8.8x_main_term", getpid());
-    g_term_event = new wait_obj(text);
-
     { /* block to ensure destructor is called immediately */
-        Listen listener(g_term_event);
+        Listen listener;
         listener.listen_main_loop();
     }
-
-    delete g_term_event;
 }

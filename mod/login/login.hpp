@@ -110,7 +110,7 @@ struct wab_login : public window_login
 
         /* label */
 
-        const char * target = strtok(this->session->server->client_info.username, ":" );
+        const char * target = strtok(this->session->front_server->client_info.username, ":" );
         if (!target){
             target = "";
         }

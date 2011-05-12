@@ -76,22 +76,18 @@ class SocketTransport : public Transport {
     public:
         int sck;
         int sck_closed;
-        int (*is_term)(void);
 
-    SocketTransport(int sck, int (*is_term)(void))
+    SocketTransport(int sck)
     {
         this->sck = sck;
         this->sck_closed = 0;
-        this->is_term = is_term;
     }
 
 
-    SocketTransport(const char* ip, int port, int (*is_term)(void),
-            int nbretry = 0, int retry_delai_ms = 1000000)
+    SocketTransport(const char* ip, int port, int nbretry = 0, int retry_delai_ms = 1000000)
     {
         this->sck = 0;
         this->sck_closed = 0;
-        this->is_term = is_term;
         this->connect(ip, port, nbretry, retry_delai_ms);
     }
 
@@ -156,10 +152,6 @@ class SocketTransport : public Transport {
             (d & RECV)? &fds : 0,
             (d & SEND)? &fds : 0,
             0, &time) > 0) {
-            // Test if manager asked for closing current session
-            if (this->is_term && (*this->is_term)()) {
-                throw Error(ERR_SESSION_TERMINATED);
-            }
             int opt = 0;
             unsigned int opt_len = sizeof(opt);
             getsockopt(this->sck, SOL_SOCKET, SO_ERROR, (char*)(&opt), &opt_len);
