@@ -45,13 +45,10 @@ using namespace std;
 /* rdp listener */
 struct Listen {
     int sck;
-    wait_obj * terminated_event;
 
-    Listen(wait_obj * terminated_event) {
-        this->terminated_event = terminated_event;
+    Listen() {
         this->sck = 0;
     }
-
 
     ~Listen()
     {
@@ -116,7 +113,6 @@ struct Listen {
             while (1) {
                 int robjs_count = 0;
                 unsigned robjs[8];
-                robjs[robjs_count++] = this->terminated_event->obj;
                 robjs[robjs_count++] = listen_event.obj;
 
                 fd_set rfds;
@@ -142,11 +138,6 @@ struct Listen {
                 }
                 if (i < 0) {
                     LOG(LOG_WARNING, "socket error detected in listen (%s)\n", strerror(errno));
-                    break;
-                }
-
-                if (terminated_event->is_set()) {
-                    LOG(LOG_WARNING, "socket Listener : terminated event\n");
                     break;
                 }
 
@@ -177,9 +168,7 @@ struct Listen {
                     try {
                         close(this->sck);
                         LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
-                        Session session(sck, ip_source,
-                                        this->terminated_event,
-                                        &ini);
+                        Session session(sck, ip_source, &ini);
                         session.session_main_loop();
                     } catch (...) {
                     };

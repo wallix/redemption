@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import select
 import httplib, socket
 from socket import error

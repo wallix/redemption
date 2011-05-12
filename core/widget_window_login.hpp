@@ -319,7 +319,6 @@ struct window_login : public window
 
     int cancel_clicked()
     {
-        this->session->self_term_event->set();
         return 0;
     }
 

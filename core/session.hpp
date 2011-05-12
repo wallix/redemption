@@ -106,7 +106,7 @@ struct Session {
     int internal_state;
     long id;
     #warning we can probably provide a mod instead of a session to SessionCallback, thus enabling to move callback to client_mod. Or even find something better to simplify this. There is definitely something wrong here around server_rdp, SessionCallback, client_mod, etc. Find what it is and correct it.
-    struct server_rdp *server;
+    struct server_rdp *front_server;
     struct RDP::Orders* orders;
     struct SocketTransport * trans;
     Stream server_stream;
@@ -114,13 +114,8 @@ struct Session {
 
 
     int sck;
-    wait_obj * self_term_event;
-    wait_obj * terminated_event;
-    wait_obj * client_event;
-    wait_obj * mod_event;
-    wait_obj * login_mode_event;
-    wait_obj * accept_event;
-    int login_mode;
+    wait_obj * front_event;
+    wait_obj * back_event;
 
     Inifile * ini;
 
@@ -147,8 +142,7 @@ struct Session {
 
     SessionManager * sesman;
 
-    Session(int sck,
-        const char * ip_source, wait_obj * terminated_event, Inifile * ini);
+    Session(int sck, const char * ip_source, Inifile * ini);
     ~Session();
     int pointer(char* data, char* mask, int x, int y);
     void invalidate(const Rect & rect);
