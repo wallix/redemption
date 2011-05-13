@@ -418,6 +418,7 @@ struct server_rdp {
     {
         int cont = 1;
         while (cont || !this->up_and_running) {
+            LOG(LOG_INFO, "Client : Looping on server_rdp_recv");
             int code = this->server_rdp_recv(stream);
             switch (code) {
             case -1:
@@ -431,6 +432,7 @@ struct server_rdp {
                 this->server_rdp_process_confirm_active(stream);
                 break;
             case RDP_PDU_DATA: /* 7 */
+                LOG(LOG_INFO, "Client : RDP_PDU_DATA");
                 // this is rdp_process_data that will set up_and_running to 1
                 // when fonts have been received
                 // we will not exit this loop until we are in this state.
@@ -447,6 +449,7 @@ struct server_rdp {
 
     int server_rdp_recv(Stream & stream) throw (Error)
     {
+        LOG(LOG_INFO, "server_rdp_recv");
         int error;
         int len;
         int pdu_code;
@@ -454,6 +457,7 @@ struct server_rdp {
 
         if (stream.next_packet == 0 || stream.next_packet >= stream.end) {
             chan = 0;
+            LOG(LOG_INFO, "sec_layer.server_sec_recv");
             error = this->sec_layer.server_sec_recv(stream, &chan);
             if (error == -1) { /* special code for send demand active */
                 stream.next_packet = 0;
@@ -464,6 +468,7 @@ struct server_rdp {
             }
             if ((chan != MCS_GLOBAL_CHANNEL) && (chan > 0)) {
                 if (chan > MCS_GLOBAL_CHANNEL) {
+                    LOG(LOG_INFO, "sec_layer.mcs_layer.server_channel_process");
                     this->sec_layer.mcs_layer.server_channel_process(stream, chan);
                 }
                 stream.next_packet = 0;
@@ -483,6 +488,7 @@ struct server_rdp {
         pdu_code = stream.in_uint16_le();
         stream.skip_uint8(2); /* mcs user id */
         stream.next_packet += len;
+        LOG(LOG_INFO, "server_rdp_recv done");
         return pdu_code & 0xf;
     }
 

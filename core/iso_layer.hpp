@@ -195,9 +195,11 @@ struct IsoLayer {
 
     int iso_recv_msg(Stream & stream) throw (Error)
     {
+        LOG(LOG_INFO, "iso_recv_msg");
         stream.init(4);
         this->t->recv((char**)(&(stream.end)), 4);
 
+        LOG(LOG_INFO, "data received, parsing");
         int version = stream.in_uint8();
         if (3 != version) {
             throw Error(ERR_ISO_RECV_MSG_VER_NOT_3);
@@ -207,6 +209,8 @@ struct IsoLayer {
         int len = stream.in_uint16_be();
         stream.init(len - 4);
         this->t->recv((char**)(&(stream.end)), len - 4);
+
+        #warning check receive len is what is expected and remove check_end test in server_mcs layer
 
         // class 0 x 224 TPDU (3 bytes)
         // ----------------------------
@@ -223,6 +227,7 @@ struct IsoLayer {
         stream.skip_uint8(1);
         int code = stream.in_uint8();
         stream.skip_uint8((code == ISO_PDU_DT)?1:5);
+        LOG(LOG_INFO, "iso_recv_msg done");
         return code;
     }
 
@@ -274,10 +279,13 @@ struct IsoLayer {
     public:
     void iso_recv(Stream & stream) throw (Error)
     {
+        LOG(LOG_INFO, "iso_recv");
         int code = this->iso_recv_msg(stream);
         if (code != ISO_PDU_DT) {
-            throw Error(ERR_ISO_RECV_CODE_NOT_PDU_DT);
+            LOG(LOG_INFO, "code =%d not ISO_PDU_DT", code);
+//            throw Error(ERR_ISO_RECV_CODE_NOT_PDU_DT);
         }
+        LOG(LOG_INFO, "iso_recv ok");
     }
 
     void iso_init(Stream & stream) throw (Error)

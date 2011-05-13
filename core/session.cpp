@@ -386,16 +386,11 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
             return SESSION_STATE_STOP;
         };
 
-
-        #warning there seems to be some code here that belongs to mod or to front
-
         // if we reach this point we are up_and_running,
         // hence width and height and colors and keymap are availables
         /* resize the main window */
         this->mod->front_resize();
-
         this->mod->server_reset_clip();
-
         if (this->cache){
             delete this->cache;
         }
