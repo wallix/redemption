@@ -25,7 +25,6 @@
 
 #include "client_mod.hpp"
 #include "session.hpp"
-#include "widget.hpp"
 
 // Null module receive every event and does nothing. It allow session code to always have a receiving module active, thus avoidind to test that so back_end is available.
 

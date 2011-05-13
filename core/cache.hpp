@@ -36,16 +36,6 @@ struct char_item {
     }
 };
 
-#include "widget.hpp"
-struct Widget_item {
-    int stamp;
-    struct Widget* bitmap;
-    Widget_item() {
-        this->stamp = 0;
-        this->bitmap = 0;
-    };
-};
-
 struct brush_item {
     int stamp;
     /* expand this to a structure to handle more complicated brushes

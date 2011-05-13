@@ -30,7 +30,7 @@ struct wab_help : public window
     Widget & notify_to;
     char help_message[1024];
 
-    wab_help(client_mod * mod, const Rect & r, Widget & parent, Widget & notify_to, int bg_color, const char * title, const char * help_message)
+    wab_help(internal_mod * mod, const Rect & r, Widget & parent, Widget & notify_to, int bg_color, const char * title, const char * help_message)
     : window(mod, r, parent, bg_color, title), notify_to(notify_to)
     {
         strcpy(this->help_message, help_message);
@@ -78,7 +78,7 @@ struct wab_help : public window
 
 struct wab_login : public window_login
 {
-    wab_login(client_mod * mod, const Rect & r, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
+    wab_login(internal_mod * mod, const Rect & r, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
     : window_login(mod, r, context, session, parent, notify_to, bg_color, title, ini, regular)
     {
         context.get(STRAUTHID_PASSWORD)[0] = 0;
@@ -197,7 +197,7 @@ struct combo_help : public window
 {
     Widget & notify_to;
 
-    combo_help(client_mod * mod, const Rect & r, Widget & parent, Widget & notify_to, int bg_color, const char * title)
+    combo_help(internal_mod * mod, const Rect & r, Widget & parent, Widget & notify_to, int bg_color, const char * title)
     : window(mod, r, parent, bg_color, title), notify_to(notify_to)
     {
     }
@@ -249,7 +249,7 @@ struct combo_help : public window
 
 struct combo_login : public window_login
 {
-    combo_login(client_mod * mod, const Rect & r, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
+    combo_login(internal_mod * mod, const Rect & r, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
     : window_login(mod, r, context, session, parent, notify_to, bg_color, title, ini, regular)
     {
         this->session = session;
@@ -341,7 +341,7 @@ struct combo_login : public window_login
 
 };
 
-struct login_mod : public client_mod {
+struct login_mod : public internal_mod {
     struct window_login * login_window;
     Session * session;
     Widget* popup_wnd;
@@ -355,11 +355,11 @@ struct login_mod : public client_mod {
 
     void server_draw_dragging_rect(const Rect & r, const Rect & clip)
     {
-        LOG(LOG_INFO, "client_mod::server_draw_dragging_rect");
+        LOG(LOG_INFO, "login_mod::server_draw_dragging_rect");
 
         this->front->begin_update();
 
-        #warning create some set_brush primitive in client_mod
+        #warning create some set_brush primitive in internal_mod
         this->brush.hatch = 0xaa;
         this->brush.extra[0] = 0x55;
         this->brush.extra[1] = 0xaa;
@@ -402,7 +402,7 @@ struct login_mod : public client_mod {
     login_mod(wait_obj * event,
             int (& keys)[256], int & key_flags, Keymap * &keymap,
             ModContext & context, Front & front, Session * session)
-            : client_mod(keys, key_flags, keymap, front)
+            : internal_mod(keys, key_flags, keymap, front)
     {
         this->event = event;
         this->signal = 0;
@@ -472,7 +472,7 @@ struct login_mod : public client_mod {
 
         this->login_window->focus(this->login_window->rect);
 
-        #warning create some set_brush primitive in client_mod
+        #warning create some set_brush primitive in internal_mod
         #warning we probably need some begin_update, end_update to send brush
         this->brush.hatch = 0xaa;
         this->brush.extra[0] = 0x55;

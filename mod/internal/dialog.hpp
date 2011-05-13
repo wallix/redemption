@@ -33,7 +33,7 @@ struct window_dialog : public window
     Session * session;
     ModContext * context;
 
-    window_dialog(client_mod * mod, const Rect & r,
+    window_dialog(internal_mod * mod, const Rect & r,
                   ModContext & context, Session* session,
                   Widget & parent, Widget & owner, Widget & notify_to,
                   int bg_color,
@@ -101,7 +101,7 @@ struct window_dialog : public window
     }
 };
 
-struct dialog_mod : public client_mod {
+struct dialog_mod : public internal_mod {
     struct window_dialog * close_window;
     Session * session;
     Widget* button_down;
@@ -118,7 +118,7 @@ struct dialog_mod : public client_mod {
                Front & front, Session * session,
                const char *message, const char * refuse)
             :
-            client_mod(keys, key_flags, keymap, front)
+            internal_mod(keys, key_flags, keymap, front)
     {
 
         /* dragging info */
@@ -168,11 +168,11 @@ struct dialog_mod : public client_mod {
 
     void server_draw_dragging_rect(const Rect & r, const Rect & clip)
     {
-        LOG(LOG_INFO, "client_mod::server_draw_dragging_rect");
+        LOG(LOG_INFO, "dialog_mod::server_draw_dragging_rect");
 
         this->front->begin_update();
 
-        #warning create some set_brush primitive in client_mod
+        #warning create some set_brush primitive in internal_mod
         this->brush.hatch = 0xaa;
         this->brush.extra[0] = 0x55;
         this->brush.extra[1] = 0xaa;
@@ -414,6 +414,7 @@ struct dialog_mod : public client_mod {
     {
         return this->signal;
     }
+
     int clear_popup()
     {
         return 0;

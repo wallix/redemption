@@ -40,7 +40,6 @@
 #include "font.hpp"
 #include "cache.hpp"
 #include "font.hpp"
-#include "widget.hpp"
 #include "region.hpp"
 #include "capture.hpp"
 #include "bitmap.hpp"

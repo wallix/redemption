@@ -27,7 +27,7 @@
 
 struct wab_close : public window_login
 {
-    wab_close(client_mod * mod, const Rect & r, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
+    wab_close(internal_mod * mod, const Rect & r, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
     : window_login(mod, r, context, session, parent, notify_to, bg_color, title, ini, regular)
     {
         this->session = session;
@@ -122,7 +122,7 @@ struct wab_close : public window_login
 
 };
 
-struct close_mod : public client_mod {
+struct close_mod : public internal_mod {
     struct window_login * close_window;
     Session * session;
     Widget* popup_wnd;
@@ -138,7 +138,7 @@ struct close_mod : public client_mod {
         wait_obj * event,
         int (& keys)[256], int & key_flags, Keymap * &keymap,
         ModContext & context, Front & front, Session * session)
-            : client_mod(keys, key_flags, keymap, front)
+            : internal_mod(keys, key_flags, keymap, front)
     {
         /* dragging info */
         this->dragging = 0;
@@ -260,7 +260,7 @@ struct close_mod : public client_mod {
 
     void server_draw_dragging_rect(const Rect & r, const Rect & clip)
     {
-        LOG(LOG_INFO, "client_mod::server_draw_dragging_rect");
+        LOG(LOG_INFO, "close_mod::server_draw_dragging_rect");
 
         this->front->begin_update();
 
