@@ -177,14 +177,17 @@ struct server_sec {
 
     int server_sec_recv(Stream & stream, int* chan) throw (Error)
     {
+        LOG(LOG_INFO, "server_sec_recv");
         this->mcs_layer.server_mcs_recv(stream, chan);
 
         uint32_t flags = stream.in_uint32_le();
         if (flags & SEC_ENCRYPT) { /* 0x08 */
+            LOG(LOG_INFO, "server_rdp_recv SEC_ENCRYPT");
             stream.skip_uint8(8); /* signature */
             this->server_sec_decrypt(stream.p, (int)(stream.end - stream.p));
         }
         if (flags & SEC_CLIENT_RANDOM) { /* 0x01 */
+            LOG(LOG_INFO, "server_rdp_recv SEC_CLIENT_RANDOM");
             stream.in_uint32_le(); // len
             memcpy(this->client_crypt_random, stream.in_uint8p(64), 64);
             this->server_sec_rsa_op(this->client_random, this->client_crypt_random,
@@ -194,6 +197,7 @@ struct server_sec {
             return 0;
         }
         if (flags & SEC_LOGON_INFO) { /* 0x40 */
+            LOG(LOG_INFO, "server_rdp_recv SEC_LOGON_INFO");
             this->server_sec_process_logon_info(stream);
             if (this->client_info->is_mce) {
                 this->server_sec_send_media_lic_response();
@@ -204,6 +208,7 @@ struct server_sec {
             return 0;
         }
         if (flags & SEC_LICENCE_NEG) { /* 0x80 */
+            LOG(LOG_INFO, "server_rdp_recv SEC_LICENCE_NEG");
             this->server_sec_send_lic_response();
             return -1; /* special error that means send demand active */
         }
@@ -260,6 +265,7 @@ struct server_sec {
             switch (tag){
                 case CS_CORE:
                     #warning we should check length to call the two variants of core_data (or begin by reading the common part then the extended part)
+                    LOG(LOG_INFO, "CS_CORE\n");
                     this->server_sec_parse_mcs_data_cs_core(stream);
                 break;
                 case CS_SECURITY:
@@ -267,28 +273,28 @@ struct server_sec {
                     this->server_sec_parse_mcs_data_cs_security(stream);
                 break;
                 case CS_NET:
-                    this->server_sec_parse_mcs_data_cs_net(stream);
                     LOG(LOG_INFO, "CS_NET\n");
+                    this->server_sec_parse_mcs_data_cs_net(stream);
                 break;
                 case CS_CLUSTER:
-                    this->server_sec_parse_mcs_data_cs_cluster(stream);
                     LOG(LOG_INFO, "CS_CLUSTER\n");
+                    this->server_sec_parse_mcs_data_cs_cluster(stream);
                 break;
                 case CS_MONITOR:
-                    this->server_sec_parse_mcs_data_cs_monitor(stream);
                     LOG(LOG_INFO, "CS_MONITOR\n");
+                    this->server_sec_parse_mcs_data_cs_monitor(stream);
                 break;
                 case SC_CORE:
-                    this->server_sec_parse_mcs_data_sc_core(stream);
                     LOG(LOG_INFO, "SC_CORE\n");
+                    this->server_sec_parse_mcs_data_sc_core(stream);
                 break;
                 case SC_SECURITY:
-                    this->server_sec_parse_mcs_data_sc_security(stream);
                     LOG(LOG_INFO, "SC_SECURITY\n");
+                    this->server_sec_parse_mcs_data_sc_security(stream);
                 break;
                 case SC_NET:
-                    this->server_sec_parse_mcs_data_sc_net(stream);
                     LOG(LOG_INFO, "SC_NET\n");
+                    this->server_sec_parse_mcs_data_sc_net(stream);
                 break;
                 default:
                     LOG(LOG_INFO, "Unknown data block tag\n");
@@ -1254,27 +1260,233 @@ struct server_sec {
         #warning probably move that to mcs_data layer, but decrypted buffer should also move there
         #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
         this->server_sec_process_mcs_data(this->client_mcs_data);
+
         this->server_sec_out_mcs_data(this->mcs_layer.data);
 
         this->mcs_layer.server_mcs_send_connect_response();
-        // 2.2.1.5 Client MCS Erect Domain Request PDU
-        this->mcs_layer.server_mcs_recv_edrq();
+
+
+        //   2.2.1.5 Client MCS Erect Domain Request PDU
+        //   -------------------------------------------
+        //   The MCS Erect Domain Request PDU is an RDP Connection Sequence PDU sent
+        //   from client to server during the Channel Connection phase (see section
+        //   1.3.1.1). It is sent after receiving the MCS Connect Response PDU (section
+        //   2.2.1.4).
+
+        //   tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+        //   x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+        //      section 13.7.
+
+        // See iso_layer.hpp for description of tpktHeader and x224Data
+
+        //   mcsEDrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an MCS
+        //      Erect Domain Request structure, as specified in [T125] (the ASN.1
+        //      structure definitions are given in [T125] section 7, parts 3 and 10).
+        {
+            Stream stream(8192);
+            this->mcs_layer.iso_layer.iso_recv(stream);
+            uint8_t opcode = stream.in_uint8();
+            if ((opcode >> 2) != MCS_EDRQ) {
+                throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
+            }
+            stream.skip_uint8(2);
+            stream.skip_uint8(2);
+            if (opcode & 2) {
+                this->mcs_layer.userid = stream.in_uint16_be();
+            }
+            if (!stream.check_end()) {
+                throw Error(ERR_MCS_RECV_EDQR_TRUNCATED);
+            }
+        }
+
         // 2.2.1.6 Client MCS Attach User Request PDU
-        this->mcs_layer.server_mcs_recv_aurq();
-        // 2.2.1.7 Server MCS Attach User Confirm PDU
-        this->mcs_layer.server_mcs_send_attach_user_confirm_PDU(this->mcs_layer.userid);
-        // 2.2.1.8 Client MCS Channel Join Request PDU
-        this->mcs_layer.server_mcs_recv_channel_join_request_PDU();
-        // 2.2.1.9 Server MCS Channel Join Confirm PDU
-        this->mcs_layer.server_mcs_send_channel_join_confirm_PDU(
-            this->mcs_layer.userid,
-            this->mcs_layer.userid + MCS_USERCHANNEL_BASE);
-        // 2.2.1.8 Client MCS Channel Join Request PDU
-        this->mcs_layer.server_mcs_recv_channel_join_request_PDU();
-        // 2.2.1.9 Server MCS Channel Join Confirm PDU
-        this->mcs_layer.server_mcs_send_channel_join_confirm_PDU(
-            this->mcs_layer.userid,
-            MCS_GLOBAL_CHANNEL);
+        // ------------------------------------------
+        // The MCS Attach User Request PDU is an RDP Connection Sequence PDU
+        // sent from client to server during the Channel Connection phase (see
+        // section 1.3.1.1) to request a user channel ID. It is sent after
+        // transmitting the MCS Erect Domain Request PDU (section 2.2.1.5).
+
+        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+        // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+        //   [X224] section 13.7.
+
+        // mcsAUrq (1 byte): PER-encoded MCS Domain PDU which encapsulates an
+        //  MCS Attach User Request structure, as specified in [T125] (the ASN.1
+        //  structure definitions are given in [T125] section 7, parts 5 and 10).
+
+        {
+            Stream stream(8192);
+            this->mcs_layer.iso_layer.iso_recv(stream);
+            uint8_t opcode = stream.in_uint8();
+            if ((opcode >> 2) != MCS_AURQ) {
+                throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
+            }
+            if (opcode & 2) {
+                this->mcs_layer.userid = stream.in_uint16_be();
+            }
+            if (!stream.check_end()) {
+                throw Error(ERR_MCS_RECV_AURQ_TRUNCATED);
+            }
+
+            // 2.2.1.7 Server MCS Attach User Confirm PDU
+            // ------------------------------------------
+            // The MCS Attach User Confirm PDU is an RDP Connection Sequence
+            // PDU sent from server to client during the Channel Connection
+            // phase (see section 1.3.1.1). It is sent as a response to the MCS
+            // Attach User Request PDU (section 2.2.1.6).
+
+            // tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+            //   section 8.
+
+            // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+            //   section [X224] 13.7.
+
+            // mcsAUcf (4 bytes): PER-encoded MCS Domain PDU which encapsulates
+            //   an MCS Attach User Confirm structure, as specified in [T125]
+            //   (the ASN.1 structure definitions are given in [T125] section 7,
+            // parts 5 and 10).
+
+            this->mcs_layer.server_mcs_send_attach_user_confirm_PDU(this->mcs_layer.userid);
+        }
+
+        {
+            Stream stream(8192);
+            // read tpktHeader (4 bytes = 3 0 len)
+            // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+            this->mcs_layer.iso_layer.iso_recv(stream);
+
+            int opcode = stream.in_uint8();
+            if ((opcode >> 2) != MCS_CJRQ) {
+                throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
+            }
+            // 2.2.1.8 Client MCS Channel Join Request PDU
+            // -------------------------------------------
+            // The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
+            // from client to server during the Channel Connection phase (see section
+            // 1.3.1.1). It is sent after receiving the MCS Attach User Confirm PDU
+            // (section 2.2.1.7). The client uses the MCS Channel Join Request PDU to
+            // join the user channel obtained from the Attach User Confirm PDU, the
+            // I/O channel and all of the static virtual channels obtained from the
+            // Server Network Data structure (section 2.2.1.4.4).
+
+            // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+            // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+            //                     section 13.7.
+
+            // mcsCJrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an
+            //                    MCS Channel Join Request structure as specified in
+            //                    [T125] sections 10.19 and I.3 (the ASN.1 structure
+            //                    definitions are given in [T125] section 7, parts 6
+            //                    and 10).
+
+            // ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+            // {
+            //     initiator UserId
+            //     channelId ChannelId
+            //               -- may be zero
+            // }
+            stream.skip_uint8(4);
+            if (opcode & 2) {
+                stream.skip_uint8(2);
+            }
+            // test if we went further than the end, this should be changed...
+            if (!stream.check_end()) {
+                throw Error(ERR_MCS_RECV_CJRQ_TRUNCATED);
+            }
+
+            // 2.2.1.9 Server MCS Channel Join Confirm PDU
+            // -------------------------------------------
+            // The MCS Channel Join Confirm PDU is an RDP Connection Sequence
+            // PDU sent from server to client during the Channel Connection
+            // phase (see section 1.3.1.1). It is sent as a response to the MCS
+            // Channel Join Request PDU (section 2.2.1.8).
+
+            // tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+            //   section 8.
+
+            // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+            //  [X224] section 13.7.
+
+            // mcsCJcf (8 bytes): PER-encoded MCS Domain PDU which encapsulates
+            //  an MCS Channel Join Confirm PDU structure, as specified in
+            //  [T125] (the ASN.1 structure definitions are given in [T125]
+            //  section 7, parts 6 and 10).
+
+            this->mcs_layer.server_mcs_send_channel_join_confirm_PDU(
+                this->mcs_layer.userid,
+                this->mcs_layer.userid + MCS_USERCHANNEL_BASE);
+        }
+
+        {
+            Stream stream(8192);
+            // read tpktHeader (4 bytes = 3 0 len)
+            // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+            this->mcs_layer.iso_layer.iso_recv(stream);
+
+            int opcode = stream.in_uint8();
+            if ((opcode >> 2) != MCS_CJRQ) {
+                throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
+            }
+            // 2.2.1.8 Client MCS Channel Join Request PDU
+            // -------------------------------------------
+            // The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
+            // from client to server during the Channel Connection phase (see section
+            // 1.3.1.1). It is sent after receiving the MCS Attach User Confirm PDU
+            // (section 2.2.1.7). The client uses the MCS Channel Join Request PDU to
+            // join the user channel obtained from the Attach User Confirm PDU, the
+            // I/O channel and all of the static virtual channels obtained from the
+            // Server Network Data structure (section 2.2.1.4.4).
+
+            // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+            // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+            //                     section 13.7.
+
+            // mcsCJrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an
+            //                    MCS Channel Join Request structure as specified in
+            //                    [T125] sections 10.19 and I.3 (the ASN.1 structure
+            //                    definitions are given in [T125] section 7, parts 6
+            //                    and 10).
+
+            // ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+            // {
+            //     initiator UserId
+            //     channelId ChannelId
+            //               -- may be zero
+            // }
+            stream.skip_uint8(4);
+            if (opcode & 2) {
+                stream.skip_uint8(2);
+            }
+            // test if we went further than the end, this should be changed...
+            if (!stream.check_end()) {
+                throw Error(ERR_MCS_RECV_CJRQ_TRUNCATED);
+            }
+
+            // 2.2.1.9 Server MCS Channel Join Confirm PDU
+            // -------------------------------------------
+            // The MCS Channel Join Confirm PDU is an RDP Connection Sequence
+            // PDU sent from server to client during the Channel Connection
+            // phase (see section 1.3.1.1). It is sent as a response to the MCS
+            // Channel Join Request PDU (section 2.2.1.8).
+
+            // tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+            //   section 8.
+
+            // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+            //  [X224] section 13.7.
+
+            // mcsCJcf (8 bytes): PER-encoded MCS Domain PDU which encapsulates
+            //  an MCS Channel Join Confirm PDU structure, as specified in
+            //  [T125] (the ASN.1 structure definitions are given in [T125]
+            //  section 7, parts 6 and 10).
+            this->mcs_layer.server_mcs_send_channel_join_confirm_PDU(
+                this->mcs_layer.userid,
+                this->mcs_layer.userid + MCS_GLOBAL_CHANNEL);
+        }
     }
 
 
@@ -1282,6 +1494,7 @@ struct server_sec {
     /* prepare server mcs data to send in mcs layer */
     void server_sec_out_mcs_data(Stream  & stream)
     {
+        LOG(LOG_INFO, "server_sec_out_mcs_data");
         /* Same code above using list_test */
         int num_channels = (int) this->mcs_layer.channel_list.size();
         int num_channels_even = num_channels + (num_channels & 1);
@@ -1352,6 +1565,7 @@ struct server_sec {
         stream.out_clear_bytes(8); /* pad */
         /* end certificate */
         stream.mark_end();
+        LOG(LOG_INFO, "server_sec_out_mcs_data done");
     }
 
 };

@@ -159,10 +159,12 @@ struct server_mcs {
 
     void server_mcs_recv(Stream & stream, int* chan) throw (Error)
     {
+        LOG(LOG_INFO, "server_mcs_recv");
         this->iso_layer.iso_recv(stream);
         int appid = stream.in_uint8() >> 2;
         /* Channel Join ReQuest datagram */
         while(appid == MCS_CJRQ) {
+            LOG(LOG_INFO, "server_mcs_recv MCS_CJRQ");
             /* this is channels getting added from the client */
             int userid = stream.in_uint16_be();
             int chanid = stream.in_uint16_be();
@@ -172,10 +174,12 @@ struct server_mcs {
         }
         /* Disconnect Provider Ultimatum datagram */
         if (appid == MCS_DPUM) {
+            LOG(LOG_INFO, "server_mcs_recv MCS_DPUM");
             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
         }
         /* SenD ReQuest datagram */
         if (appid != MCS_SDRQ) {
+            LOG(LOG_INFO, "server_mcs_recv MCS_SDRQ");
             throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
         }
         stream.skip_uint8(2);
@@ -185,6 +189,7 @@ struct server_mcs {
         if (len & 0x80) {
             stream.skip_uint8(1);
         }
+        LOG(LOG_INFO, "server_mcs_recv done");
     }
 
     void server_mcs_recv_connect_initial(Stream & client_mcs_data) throw (Error)
@@ -217,89 +222,6 @@ struct server_mcs {
         }
     }
 
-    void server_mcs_recv_edrq() throw(Error)
-    {
-        Stream stream(8192);
-        this->iso_layer.iso_recv(stream);
-        int opcode = stream.in_uint8();
-        if ((opcode >> 2) != MCS_EDRQ) {
-            throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
-        }
-        stream.skip_uint8(2);
-        stream.skip_uint8(2);
-        if (opcode & 2) {
-            this->userid = stream.in_uint16_be();
-        }
-        if (!stream.check_end()) {
-            throw Error(ERR_MCS_RECV_EDQR_TRUNCATED);
-        }
-    }
-
-    void server_mcs_recv_aurq() throw(Error)
-    {
-        Stream stream(8192);
-        this->iso_layer.iso_recv(stream);
-        int opcode = stream.in_uint8();
-        if ((opcode >> 2) != MCS_AURQ) {
-            throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
-        }
-        if (opcode & 2) {
-            this->userid = stream.in_uint16_be();
-        }
-        if (!stream.check_end()) {
-            throw Error(ERR_MCS_RECV_AURQ_TRUNCATED);
-        }
-    }
-
-    // 2.2.1.8 Client MCS Channel Join Request PDU
-    // -------------------------------------------
-    // The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
-    // from client to server during the Channel Connection phase (see section
-    // 1.3.1.1). It is sent after receiving the MCS Attach User Confirm PDU
-    // (section 2.2.1.7). The client uses the MCS Channel Join Request PDU to
-    // join the user channel obtained from the Attach User Confirm PDU, the
-    // I/O channel and all of the static virtual channels obtained from the
-    // Server Network Data structure (section 2.2.1.4.4).
-
-    // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-    // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
-    //                     section 13.7.
-
-    // mcsCJrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an
-    //                    MCS Channel Join Request structure as specified in
-    //                    [T125] sections 10.19 and I.3 (the ASN.1 structure
-    //                    definitions are given in [T125] section 7, parts 6
-    //                    and 10).
-
-    // ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
-    // {
-    //     initiator UserId
-    //     channelId ChannelId
-    //               -- may be zero
-    // }
-
-
-    void server_mcs_recv_channel_join_request_PDU() throw(Error)
-    {
-            Stream stream(8192);
-            // read tpktHeader (4 bytes = 3 0 len)
-            // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-            this->iso_layer.iso_recv(stream);
-
-            int opcode = stream.in_uint8();
-            if ((opcode >> 2) != MCS_CJRQ) {
-                throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
-            }
-            stream.skip_uint8(4);
-            if (opcode & 2) {
-                stream.skip_uint8(2);
-            }
-            // test if we went further than the end, this should be changed...
-            if (!stream.check_end()) {
-                throw Error(ERR_MCS_RECV_CJRQ_TRUNCATED);
-            }
-    }
 
     void server_mcs_send_channel_join_confirm_PDU(int userid, int chanid) throw(Error)
     {
