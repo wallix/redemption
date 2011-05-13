@@ -554,7 +554,6 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
     FD_ZERO(&wfds);
 
     this->front_event->add_to_fd_set(rfds, max);
-
     this->back_event->add_to_fd_set(rfds, max);
     this->sesman->add_to_fd_set(rfds, max);
     select(max + 1, &rfds, &wfds, 0, &time_mark);
@@ -588,9 +587,13 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
     }
 
     if (this->back_event->is_set()){ // data incoming from server module
+        LOG(LOG_INFO, "back_event fired");
         int signal = this->mod->mod_signal();
         if (signal){ // signal is the return status from module
                      // (used only for internal modules)
+            if (signal == 4){
+                return SESSION_STATE_STOP;
+            }
             if (this->mod != this->no_mod){
                 delete this->mod;
                 this->mod = this->no_mod;

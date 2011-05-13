@@ -319,6 +319,8 @@ struct window_login : public window
 
     int cancel_clicked()
     {
+        this->mod->signal = 4;
+        this->mod->event->set();
         return 0;
     }
 
