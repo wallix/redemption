@@ -94,7 +94,7 @@ lib jpeg : : <name>jpeg <link>static ;
 lib Xext : : <name>Xext <link>static ;
 
 
-obj widget : core/widget.cpp ;
+obj widget : mod/internal/widget.cpp ;
 obj mainloop : core/mainloop.cpp ;
 obj session : core/session.cpp ;
 obj keymap : core/keymap.cpp ;

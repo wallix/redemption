@@ -19,7 +19,7 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    widget, drawable
-   this is an object that can be drawn on trough a client_mod
+   this is an object that can be drawn on trough an internal_mod
    all windows, bitmaps, even the screen are of this type
 
 */
@@ -34,7 +34,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "client_mod.hpp"
+#include "../mod/internal/internal_mod.hpp"
 
 
 /*****************************************************************************/
@@ -68,7 +68,7 @@ static void wchar_repeat(wchar_t* dest, int dest_size_in_wchars, wchar_t ch, int
 }
 
 
-Widget::Widget(client_mod * mod, int width, int height, Widget & parent, int type) : parent(parent) {
+Widget::Widget(internal_mod * mod, int width, int height, Widget & parent, int type) : parent(parent) {
     this->mod = mod;
     /* for all but bitmap */
     this->pointer = 0;
@@ -521,7 +521,7 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
 {
     LOG(LOG_INFO, "widget::draw_focus_rect");
     #warning is passing r.x, r.y necessary here for drawing pattern ?
-    #warning create some set_brush primitive in client_mod
+    #warning create some set_brush primitive in internal_mod
     this->mod->brush.hatch = 0xaa;
     this->mod->brush.extra[0] = 0x55;
     this->mod->brush.extra[1] = 0xaa;

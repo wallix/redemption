@@ -24,15 +24,15 @@
 
 #include "colors.hpp"
 #include "rect.hpp"
-#include "../mod/login/login.hpp"
+#include "../mod/internal/login.hpp"
+#include "../mod/internal/bouncer.hpp"
+#include "../mod/internal/close.hpp"
+#include "../mod/internal/dialog.hpp"
 #include "../mod/null/null.hpp"
 #include "../mod/rdp/rdp.hpp"
 #include "../mod/vnc/vnc.hpp"
 #include "../mod/xup/xup.hpp"
-#include "../mod/close/close.hpp"
-#include "../mod/dialog/dialog.hpp"
 #include "../mod/transitory/transitory.hpp"
-#include "../mod/bouncer/bouncer.hpp"
 #include "../mod/cli/cli_mod.hpp"
 
 #include "session.hpp"
@@ -47,7 +47,6 @@
 #include "region.hpp"
 #include "log.hpp"
 #include "client_mod.hpp"
-#include "widget.hpp"
 #include "transport.hpp"
 #include "config.hpp"
 #include "front.hpp"
@@ -199,30 +198,6 @@ Session::~Session()
     delete this->context;
 }
 
-#warning should not be here, move that to widgets
-void Session::invalidate(const Rect & rect)
-{
-    if (!rect.isempty()) {
-        this->mod->server_begin_update();
-        Rect r(0, 0, this->mod->screen.rect.cx, this->mod->screen.rect.cy);
-        this->mod->mod_event(WM_INVALIDATE,
-            ((r.x & 0xffff) << 16) | (r.y & 0xffff),
-            ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
-            0, 0);
-
-        /* draw any child windows in the area */
-        for (size_t i = 0; i < this->mod->nb_windows(); i++) {
-            Widget *b = this->mod->window(i);
-            Rect r2 = rect.intersect(b->rect.wh());
-            if (!r2.isempty()) {
-                b->Widget_invalidate_clip(r2);
-            }
-        }
-        this->mod->server_end_update();
-    }
-}
-
-
 /*****************************************************************************/
 int Session::session_input_mouse(int device_flags, int x, int y)
 {
@@ -281,7 +256,7 @@ int Session::callback(int msg, long param1, long param2, long param3, long param
         /* invalidate, this is not from RDP_DATA_PDU_INPUT */
         /* like the rest, its from RDP_PDU_DATA with code 33 */
         /* its the rdp client asking for a screen update */
-        this->invalidate(Rect(param1, param2, param3, param4));
+        this->mod->invalidate(Rect(param1, param2, param3, param4));
         break;
     case WM_CHANNELDATA:
         /* called from server_channel.c, channel data has come in,
@@ -417,9 +392,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
         // if we reach this point we are up_and_running,
         // hence width and height and colors and keymap are availables
         /* resize the main window */
-        this->mod->screen.rect.cx = this->front_server->client_info.width;
-        this->mod->screen.rect.cy = this->front_server->client_info.height;
-        this->mod->screen.bpp = this->front_server->client_info.bpp;
+        this->mod->front_resize();
 
         this->mod->server_reset_clip();
 
@@ -637,8 +610,8 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
                 if (this->session_setup_mod(next_state, this->context)){
                     if (record_video) {
                         this->front->start_capture(
-                            this->mod->screen.rect.cx,
-                            this->mod->screen.rect.cy,
+                            this->mod->get_front_width(),
+                            this->mod->get_front_height(),
                             this->context->get_bool(STRAUTHID_OPT_MOVIE),
                             this->context->get(STRAUTHID_OPT_MOVIE_PATH),
                             this->context->get(STRAUTHID_OPT_CODEC_ID),
@@ -780,13 +753,9 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 this->back_event = new wait_obj(-1);
                 this->mod = new login_mod(this->back_event, this->keys, this->key_flags, this->keymap,  *this->context, *(this->front), this);
                 // force a WM_INVALIDATE on all screen
-                this->callback(0x4444, this->mod->screen.rect.x, this->mod->screen.rect.y, this->mod->screen.rect.cx, this->mod->screen.rect.cy);
+                this->callback(0x4444, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
                 LOG(LOG_INFO, "Creation of new mod 'LOGIN DIALOG' (%d,%d,%d,%d) suceeded\n",
-                    this->mod->screen.rect.x,
-                    this->mod->screen.rect.y,
-                    this->mod->screen.rect.cx,
-                    this->mod->screen.rect.cy
-                );
+                    0, 0, this->mod->get_front_width(), this->mod->get_front_height());
             }
             break;
 
@@ -808,7 +777,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 this->back_event = new wait_obj(-1);
                 this->mod = new dialog_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this, message, button);
                 // force a WM_INVALIDATE on all screen
-                this->callback(0x4444, this->mod->screen.rect.x, this->mod->screen.rect.y, this->mod->screen.rect.cx, this->mod->screen.rect.cy);
+                this->callback(0x4444, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
                 Inifile ini(CFG_PATH "/" RDPPROXY_INI);
                 if (htons(ini.globals.autovalidate)) {
                     LOG(LOG_INFO, "dialog autovalidated");
@@ -826,7 +795,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 this->back_event = new wait_obj(-1);
                 this->mod = new close_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this);
                 // force a WM_INVALIDATE on all screen
-                this->callback(0x4444, this->mod->screen.rect.x, this->mod->screen.rect.y, this->mod->screen.rect.cx, this->mod->screen.rect.cy);
+                this->callback(0x4444, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
                 LOG(LOG_INFO, "Creation of new mod 'CLOSE DIALOG' suceeded\n");
             }
             break;

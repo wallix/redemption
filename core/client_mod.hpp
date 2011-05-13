@@ -30,20 +30,19 @@
 #include <arpa/inet.h>
 #include <locale.h>
 
-#include "widget.hpp"
 #include "client_info.hpp"
 #include "font.hpp"
 #include "cache.hpp"
 #include "front.hpp"
 #include "mainloop.hpp"
 #include "bitmap_cache.hpp"
+#include "wait_obj.hpp"
+#include "keymap.hpp"
 
 #warning server_ naming convention is really confusing, it means internal RDP server, it would be clearer to call that front (like in front.hpp).
 #warning also maybe client_mod and front should collapse (#SMELL: parallel hierarchy)
 
 struct client_mod {
-    #warning there is some overlapping betwwen screen.rect and clip, correct that
-    widget_screen screen;
     int (& keys)[256];
     int & key_flags;
     Keymap * &keymap;
@@ -69,11 +68,7 @@ struct client_mod {
     int signal;
 
     client_mod(int (& keys)[256], int & key_flags, Keymap * &keymap, Front & front)
-        : screen(this,
-                 front.orders->rdp_layer->client_info.width,
-                 front.orders->rdp_layer->client_info.height,
-                 front.orders->rdp_layer->client_info.bpp),
-          keys(keys),
+        : keys(keys),
           key_flags(key_flags),
           keymap(keymap),
           default_bpp(24),
@@ -105,7 +100,6 @@ struct client_mod {
 
     virtual ~client_mod()
     {
-        this->screen.delete_all_childs();
     }
 
     void set_mod_palette(RGBPalette palette)
@@ -174,11 +168,6 @@ struct client_mod {
         }
     }
 
-
-    widget_screen * get_screen_wdg(){
-        return &(this->screen);
-    }
-
     int server_begin_update() {
         this->front->begin_update();
         return 0;
@@ -189,20 +178,23 @@ struct client_mod {
         return 0;
     }
 
-    int get_server_screen_bpp(){
+    int get_front_bpp(){
         return this->front->orders->rdp_layer->client_info.bpp;
     }
 
-    int get_server_screen_width(){
+    int get_front_width(){
         return this->front->orders->rdp_layer->client_info.width;
     }
 
-    int get_server_screen_height(){
+    int get_front_height(){
         return this->front->orders->rdp_layer->client_info.height;
     }
 
-    const Rect get_server_screen_rect(){
-        return Rect(0, 0, this->get_server_screen_width(), get_server_screen_height());
+    virtual void front_resize() {
+    }
+
+    const Rect get_front_rect(){
+        return Rect(0, 0, this->get_front_width(), get_front_height());
     }
 
     void server_resize(int width, int height, int bpp)
@@ -219,9 +211,11 @@ struct client_mod {
             }
             LOG(LOG_INFO, "Resizing client to : %d x %d x %d\n", width, height, bpp);
 
-            this->screen.rect.cx = client_info.width = width;
-            this->screen.rect.cy = client_info.height = height;
+            client_info.width = width;
+            client_info.height = height;
             client_info.bpp = bpp;
+
+            this->front_resize();
 
             /* shut down the rdp client */
             this->front->orders->rdp_layer->server_rdp_send_deactive();
@@ -241,12 +235,6 @@ struct client_mod {
 
         this->server_reset_clip();
     }
-
-    Widget * window(int i)
-    {
-        return this->screen.child_list[i];
-    }
-
 
 
     void server_glyph_index(RDPGlyphIndex & glyph_index)
@@ -360,7 +348,10 @@ struct client_mod {
             this->set_pointer(cacheidx);
         break;
         }
-        this->screen.pointer = cacheidx;
+    }
+
+    virtual void invalidate(const Rect & rect)
+    {
     }
 
     void server_palette(const uint32_t (& palette)[256])
@@ -380,7 +371,7 @@ struct client_mod {
 
     void server_reset_clip()
     {
-        this->clip = this->screen.rect;
+        this->clip = this->get_front_rect();
     }
 
     void server_set_brush(const RDPBrush & brush)
@@ -433,11 +424,6 @@ struct client_mod {
                            int total_data_len, int flags)
     {
         this->front->orders->rdp_layer->server_send_to_channel(channel_id, data, data_len, total_data_len, flags);
-    }
-
-    size_t nb_windows()
-    {
-        return this->screen.child_list.size();
     }
 
     bool get_pointer_displayed() {

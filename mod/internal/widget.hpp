@@ -27,21 +27,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 #include "log.hpp"
-#include "session.hpp"
 #include "constants.hpp"
 #include "rect.hpp"
 #include "region.hpp"
+#include "bitmap.hpp"
 
 #include "keymap.hpp"
 
 #include <iostream>
 #include <list>
-using namespace std;
 
 struct Widget {
-    client_mod * mod;
+    class internal_mod * mod;
     bool has_focus;
 
     /* 0 = bitmap 1 = window 2 = screen 3 = button 4 = image 5 = edit
@@ -85,7 +85,7 @@ struct Widget {
     public:
 
 
-    Widget(client_mod * mod, int width, int height, Widget & parent, int type);
+    Widget(internal_mod * mod, int width, int height, Widget & parent, int type);
 
     ~Widget();
 
@@ -187,7 +187,7 @@ struct Widget {
 struct widget_button : public Widget
 {
 
-    widget_button(client_mod * mod, const Rect & r, Widget & parent, int id, int tab_stop, const char * caption)
+    widget_button(internal_mod * mod, const Rect & r, Widget & parent, int id, int tab_stop, const char * caption)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_BUTTON) {
 
         assert(type == WND_TYPE_BUTTON);
@@ -216,7 +216,7 @@ struct widget_edit : public Widget {
 
     char buffer[256];
 
-    widget_edit(client_mod * mod, const Rect & r, Widget & parent, int id, int tab_stop, const char * caption, int pointer, int edit_pos)
+    widget_edit(internal_mod * mod, const Rect & r, Widget & parent, int id, int tab_stop, const char * caption, int pointer, int edit_pos)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_EDIT) {
 
         assert(type == WND_TYPE_EDIT);
@@ -246,7 +246,7 @@ struct widget_edit : public Widget {
 
 struct window : public Widget
 {
-    window(client_mod * mod, const Rect & r, Widget & parent, int bg_color, const char * title)
+    window(internal_mod * mod, const Rect & r, Widget & parent, int bg_color, const char * title)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_WND) {
 
         assert(type == WND_TYPE_WND);
@@ -282,7 +282,7 @@ struct window : public Widget
 struct widget_screen : public Widget {
     uint8_t bpp;
 
-    widget_screen(client_mod * mod, int width, int height, uint8_t bpp)
+    widget_screen(internal_mod * mod, int width, int height, uint8_t bpp)
     : Widget(mod, width, height, *this, WND_TYPE_SCREEN), bpp(bpp) {
         assert(type == WND_TYPE_SCREEN);
     }
@@ -312,7 +312,7 @@ struct widget_screen : public Widget {
 
 struct widget_label : public Widget {
 
-    widget_label(client_mod * mod, const Rect & r, Widget & parent, const char * title)
+    widget_label(internal_mod * mod, const Rect & r, Widget & parent, const char * title)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_LABEL) {
 
         assert(type == WND_TYPE_LABEL);
@@ -333,7 +333,7 @@ struct widget_label : public Widget {
 struct widget_popup : public Widget
 {
 
-    widget_popup(client_mod * mod, const Rect & r,
+    widget_popup(internal_mod * mod, const Rect & r,
          Widget * popped_from,
          Widget & parent,
          int item_index)
@@ -353,7 +353,7 @@ struct widget_popup : public Widget
 
 struct widget_combo : public Widget
 {
-    widget_combo(client_mod * mod, const Rect & r,
+    widget_combo(internal_mod * mod, const Rect & r,
                 Widget & parent, int id, int tab_stop)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_COMBO){
         this->rect.x = r.x;
@@ -373,7 +373,7 @@ struct widget_combo : public Widget
 struct widget_image : public Widget {
     Bitmap bmp;
 
-    widget_image(client_mod * mod, int width, int height, int type, Widget & parent, int x, int y, const char* filename, uint8_t bpp)
+    widget_image(internal_mod * mod, int width, int height, int type, Widget & parent, int x, int y, const char* filename, uint8_t bpp)
     : Widget(mod, width, height, parent, type), bmp(filename, bpp) {
 
         assert(type == WND_TYPE_IMAGE);

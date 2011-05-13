@@ -64,9 +64,9 @@ struct mod_rdp : public client_mod {
                 context.get(STRAUTHID_TARGET_PASSWORD),
                 hostname, channel_list,
                 client_info->rdp5_performanceflags,
-                this->screen.rect.cx,
-                this->screen.rect.cy,
-                this->screen.bpp,
+                this->get_front_width(),
+                this->get_front_height(),
+                this->get_front_bpp(),
                 keylayout,
                 client_info->console_session),
                 in_stream(8192)
