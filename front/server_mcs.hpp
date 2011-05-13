@@ -156,6 +156,60 @@ struct server_mcs {
         return this->channel_list[index];
     }
 
+    void server_mcs_recv_edrq() throw(Error)
+    {
+        Stream stream(8192);
+        this->iso_layer.iso_recv(stream);
+        int opcode = stream.in_uint8();
+        if ((opcode >> 2) != MCS_EDRQ) {
+            throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
+        }
+        stream.skip_uint8(2);
+        stream.skip_uint8(2);
+        if (opcode & 2) {
+            this->userid = stream.in_uint16_be();
+        }
+        if (!stream.check_end()) {
+            throw Error(ERR_MCS_RECV_EDQR_TRUNCATED);
+        }
+    }
+
+    void server_mcs_recv_aurq() throw(Error)
+    {
+        Stream stream(8192);
+        this->iso_layer.iso_recv(stream);
+        int opcode = stream.in_uint8();
+        if ((opcode >> 2) != MCS_AURQ) {
+            throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
+        }
+        if (opcode & 2) {
+            this->userid = stream.in_uint16_be();
+        }
+        if (!stream.check_end()) {
+            throw Error(ERR_MCS_RECV_AURQ_TRUNCATED);
+        }
+    }
+
+    void server_mcs_recv_channel_join_request_PDU() throw(Error)
+    {
+            Stream stream(8192);
+            // read tpktHeader (4 bytes = 3 0 len)
+            // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+            this->iso_layer.iso_recv(stream);
+
+            int opcode = stream.in_uint8();
+            if ((opcode >> 2) != MCS_CJRQ) {
+                throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
+            }
+            stream.skip_uint8(4);
+            if (opcode & 2) {
+                stream.skip_uint8(2);
+            }
+            // test if we went further than the end, this should be changed...
+            if (!stream.check_end()) {
+                throw Error(ERR_MCS_RECV_CJRQ_TRUNCATED);
+            }
+    }
 
     void server_mcs_recv(Stream & stream, int* chan) throw (Error)
     {
@@ -337,8 +391,6 @@ struct server_mcs {
         return rv;
     }
 
-    private:
-
     int ber_parse_header(Stream & stream, int tag_val) throw (Error)
     {
         #warning this should be some kind of check val stream primitive
@@ -378,6 +430,7 @@ struct server_mcs {
         }
     }
 
+    private:
 
     static void server_mcs_ber_out_header(Stream & stream, int tag_val, int len)
     {

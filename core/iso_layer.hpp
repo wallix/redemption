@@ -283,7 +283,7 @@ struct IsoLayer {
         int code = this->iso_recv_msg(stream);
         if (code != ISO_PDU_DT) {
             LOG(LOG_INFO, "code =%d not ISO_PDU_DT", code);
-//            throw Error(ERR_ISO_RECV_CODE_NOT_PDU_DT);
+            throw Error(ERR_ISO_RECV_CODE_NOT_PDU_DT);
         }
         LOG(LOG_INFO, "iso_recv ok");
     }
