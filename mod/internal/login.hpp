@@ -553,6 +553,7 @@ struct login_mod : public internal_mod {
     // module received an event from client
     virtual int mod_event(int msg, long x, long y, long param4, long param5)
     {
+        LOG(LOG_INFO, "mod_event(%d, %ld, %ld, %ld %ld)", msg, x, y, param4, param5);
         switch (msg){
         case WM_KEYDOWN:
             if (!this->popup_wnd && this->login_window->has_focus) {
@@ -665,11 +666,15 @@ struct login_mod : public internal_mod {
                 case WND_TYPE_WND:
                     /* drag by clicking in title bar and keeping button down */
                     if (y < (control->rect.y + 21)) {
-                        this->dragging = 1;
+                        this->dragging = 1;                this->event->set();
+                this->signal = 1;
+
                         this->dragging_window = control;
 
                         this->draggingdx = x - control->rect.x;
-                        this->draggingdy = y - control->rect.y;
+                        this->draggingdy = y - control->rect.y;                this->event->set();
+                this->signal = 1;
+
 
                         this->dragging_rect = Rect(
                             x - this->draggingdx, y - this->draggingdy,
