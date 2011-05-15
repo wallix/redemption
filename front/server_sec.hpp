@@ -36,9 +36,7 @@
 #include <assert.h>
 #include <stdint.h>
 
-#warning vector seems not to be used here
 #include <iostream>
-#include <vector>
 using namespace std;
 
 /* sec */
@@ -178,7 +176,35 @@ struct server_sec {
     int server_sec_recv(Stream & stream, int* chan) throw (Error)
     {
         LOG(LOG_INFO, "server_sec_recv");
-        this->mcs_layer.server_mcs_recv(stream, chan);
+        this->mcs_layer.iso_layer.iso_recv(stream);
+        int appid = stream.in_uint8() >> 2;
+        /* Channel Join ReQuest datagram */
+        while(appid == MCS_CJRQ) {
+            LOG(LOG_INFO, "server_mcs_recv MCS_CJRQ");
+            /* this is channels getting added from the client */
+            int userid = stream.in_uint16_be();
+            int chanid = stream.in_uint16_be();
+            this->mcs_layer.server_mcs_send_channel_join_confirm_PDU(userid, chanid);
+            this->mcs_layer.iso_layer.iso_recv(stream);
+            appid = stream.in_uint8() >> 2;
+        }
+        /* Disconnect Provider Ultimatum datagram */
+        if (appid == MCS_DPUM) {
+            LOG(LOG_INFO, "server_mcs_recv MCS_DPUM");
+            throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+        }
+        /* SenD ReQuest datagram */
+        if (appid != MCS_SDRQ) {
+            LOG(LOG_INFO, "server_mcs_recv MCS_SDRQ");
+            throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+        }
+        stream.skip_uint8(2);
+        *chan = stream.in_uint16_be();
+        stream.skip_uint8(1);
+        int len = stream.in_uint8();
+        if (len & 0x80) {
+            stream.skip_uint8(1);
+        }
 
         uint32_t flags = stream.in_uint32_le();
         if (flags & SEC_ENCRYPT) { /* 0x08 */
@@ -1232,128 +1258,6 @@ struct server_sec {
     {
         this->mcs_layer.server_mcs_disconnect();
     }
-
-    /*****************************************************************************/
-    void server_sec_incoming0(Rsakeys * rsa_keys) throw (Error)
-    {
-        //g_random(this->server_random, 32);
-        int fd;
-
-        memset(this->server_random, 0x44, 32);
-        fd = open("/dev/urandom", O_RDONLY);
-        if (fd == -1) {
-            fd = open("/dev/random", O_RDONLY);
-        }
-        if (fd != -1) {
-            if (read(fd, this->server_random, 32) != 32) {
-            }
-            close(fd);
-        }
-
-        memcpy(this->pub_exp, rsa_keys->pub_exp, 4);
-        memcpy(this->pub_mod, rsa_keys->pub_mod, 64);
-        memcpy(this->pub_sig, rsa_keys->pub_sig, 64);
-        memcpy(this->pri_exp, rsa_keys->pri_exp, 64);
-
-        this->mcs_layer.iso_layer.iso_incoming();
-//        this->mcs_layer.server_mcs_recv_connect_initial(this->client_mcs_data);
-        // MCS Receive Connect Initial
-        // ---------------------------
-        {
-            Stream stream(8192);
-            this->mcs_layer.iso_layer.iso_recv(stream);
-
-            #warning ber_parse should probably be some kind of stream primitive
-            int len = this->mcs_layer.ber_parse_header(stream, MCS_CONNECT_INITIAL);
-            len = this->mcs_layer.ber_parse_header(stream, BER_TAG_OCTET_STRING);
-            stream.skip_uint8(len);
-            len = this->mcs_layer.ber_parse_header(stream, BER_TAG_OCTET_STRING);
-            stream.skip_uint8(len);
-            len = this->mcs_layer.ber_parse_header(stream, BER_TAG_BOOLEAN);
-            stream.skip_uint8(len);
-            len = this->mcs_layer.ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
-            stream.skip_uint8(len);
-            len = this->mcs_layer.ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
-            stream.skip_uint8(len);
-            len = this->mcs_layer.ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
-            stream.skip_uint8(len);
-            len = this->mcs_layer.ber_parse_header(stream, BER_TAG_OCTET_STRING);
-
-            /* make a copy of client mcs data */
-            this->client_mcs_data.init(len);
-            this->client_mcs_data.out_copy_bytes(stream.p, len);
-            this->client_mcs_data.mark_end();
-
-            stream.skip_uint8(len);
-            if (!stream.check_end()) {
-                throw Error(ERR_MCS_RECV_CONNECT_INITIAL_TRUNCATED);
-            }
-        }
-
-
-        #warning probably move that to mcs_data layer, but decrypted buffer should also move there
-        #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
-        this->server_sec_process_mcs_data(this->client_mcs_data);
-        this->server_sec_out_mcs_data(this->mcs_layer.data);
-
-        this->mcs_layer.server_mcs_send_connect_response();
-
-//        // 2.2.1.5 Client MCS Erect Domain Request PDU
-//        this->mcs_layer.server_mcs_recv_edrq();
-
-        //   2.2.1.5 Client MCS Erect Domain Request PDU
-        //   -------------------------------------------
-        //   The MCS Erect Domain Request PDU is an RDP Connection Sequence PDU sent
-        //   from client to server during the Channel Connection phase (see section
-        //   1.3.1.1). It is sent after receiving the MCS Connect Response PDU (section
-        //   2.2.1.4).
-
-        //   tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-        //   x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
-        //      section 13.7.
-
-        // See iso_layer.hpp for description of tpktHeader and x224Data
-
-        //   mcsEDrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an MCS
-        //      Erect Domain Request structure, as specified in [T125] (the ASN.1
-        //      structure definitions are given in [T125] section 7, parts 3 and 10).
-        {
-            Stream stream(8192);
-            this->mcs_layer.iso_layer.iso_recv(stream);
-            uint8_t opcode = stream.in_uint8();
-            if ((opcode >> 2) != MCS_EDRQ) {
-                throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
-            }
-            stream.skip_uint8(2);
-            stream.skip_uint8(2);
-            if (opcode & 2) {
-                this->mcs_layer.userid = stream.in_uint16_be();
-            }
-            if (!stream.check_end()) {
-                throw Error(ERR_MCS_RECV_EDQR_TRUNCATED);
-            }
-        }
-
-
-        // 2.2.1.6 Client MCS Attach User Request PDU
-        this->mcs_layer.server_mcs_recv_aurq();
-        // 2.2.1.7 Server MCS Attach User Confirm PDU
-        this->mcs_layer.server_mcs_send_attach_user_confirm_PDU(this->mcs_layer.userid);
-        // 2.2.1.8 Client MCS Channel Join Request PDU
-        this->mcs_layer.server_mcs_recv_channel_join_request_PDU();
-        // 2.2.1.9 Server MCS Channel Join Confirm PDU
-        this->mcs_layer.server_mcs_send_channel_join_confirm_PDU(
-            this->mcs_layer.userid,
-            this->mcs_layer.userid + MCS_USERCHANNEL_BASE);
-        // 2.2.1.8 Client MCS Channel Join Request PDU
-        this->mcs_layer.server_mcs_recv_channel_join_request_PDU();
-        // 2.2.1.9 Server MCS Channel Join Confirm PDU
-        this->mcs_layer.server_mcs_send_channel_join_confirm_PDU(
-            this->mcs_layer.userid,
-            MCS_GLOBAL_CHANNEL);
-    }
-
 
 
     void server_sec_incoming(Rsakeys * rsa_keys) throw (Error)

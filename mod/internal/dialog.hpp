@@ -168,52 +168,6 @@ struct dialog_mod : public internal_mod {
     ~dialog_mod() {
     }
 
-    void server_draw_dragging_rect(const Rect & r, const Rect & clip)
-    {
-        LOG(LOG_INFO, "dialog_mod::server_draw_dragging_rect");
-
-        this->front->begin_update();
-
-        #warning create some set_brush primitive in internal_mod
-        this->brush.hatch = 0xaa;
-        this->brush.extra[0] = 0x55;
-        this->brush.extra[1] = 0xaa;
-        this->brush.extra[2] = 0x55;
-        this->brush.extra[3] = 0xaa;
-        this->brush.extra[4] = 0x55;
-        this->brush.extra[5] = 0xaa;
-        this->brush.extra[6] = 0x55;
-        this->brush.org_x = 0;
-        this->brush.org_y = 0;
-        this->brush.style = 3;
-
-        // brush style 3 is not supported by windows 7, we **MUST** use cache
-        if (this->front->orders->rdp_layer->client_info.brush_cache_code == 1) {
-            uint8_t pattern[8];
-            pattern[0] = this->brush.hatch;
-            memcpy(pattern+1, this->brush.extra, 7);
-            int cache_idx = 0;
-            if (BRUSH_TO_SEND == this->front->cache->add_brush(pattern, cache_idx)){
-                this->front->send_brush(cache_idx);
-            }
-            this->brush.hatch = cache_idx;
-            this->brush.style = 0x81;
-        }
-
-        // draw rectangles by drawing each edge top/bottom/left/right
-        // 0x66 = xor -> pat_blt( ... 0x5A ...
-        // 0xAA = noop -> pat_blt( ... 0xFB ...
-        // 0xCC = copy -> pat_blt( ... 0xF0 ...
-        // 0x88 = and -> pat_blt( ...  0xC0 ...
-
-        this->server_set_clip(clip);
-        this->pat_blt(0x5A, Rect(r.x, r.y, r.cx, 5), BLACK, WHITE);
-        this->pat_blt(0x5A, Rect(r.x, r.y + (r.cy - 5), r.cx, 5), BLACK, WHITE);
-        this->pat_blt(0x5A, Rect(r.x, r.y + 5, 5, r.cy - 10), BLACK, WHITE);
-        this->pat_blt(0x5A, Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10), BLACK, WHITE);
-        this->front->end_update();
-    }
-
     // module received an event from client
     virtual int mod_event(int msg, long x, long y, long param4, long param5)
     {

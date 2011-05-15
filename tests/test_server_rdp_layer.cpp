@@ -294,11 +294,10 @@ t_internal_state step_STATE_ENTRY(struct timeval & time, wait_obj & evt, int sck
         return STATE_STOP;
     }
 
-    Stream s(8192);
     if (evt.is_set()) {
         try {
             LOG(LOG_DEBUG, "waiting for up_and_runing\n");
-            front->orders->rdp_layer->activate_and_process_data(s);
+            front->orders->rdp_layer->activate_and_process_data();
             LOG(LOG_DEBUG, "now up_and_running\n");
 
         front->reset(front->orders, front->cache, front->font);
