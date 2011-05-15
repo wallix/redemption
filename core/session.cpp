@@ -130,7 +130,6 @@ Session::Session(int sck, const char * ip_source, Inifile * ini) {
     this->orders = new RDP::Orders(this->front_server);
     this->default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
     this->cache = new Cache(this->orders);
-    this->server_stream.init(8192*2);
 
     /* set non blocking */
     int rv = 0;
@@ -380,7 +379,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
     select(max + 1, &rfds, &wfds, 0, &time_mark);
     if (this->front_event->is_set()) {
         try {
-            this->front_server->activate_and_process_data(this->server_stream);
+            this->front_server->activate_and_process_data();
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -494,7 +493,7 @@ int Session::step_STATE_CLOSE_CONNECTION()
     }
     if (this->front_event->is_set()) {
         try {
-            this->front_server->activate_and_process_data(this->server_stream);
+            this->front_server->activate_and_process_data();
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -521,7 +520,7 @@ int Session::step_STATE_WAITING_FOR_NEXT_MODULE(struct timeval & time_mark)
     select(max + 1, &rfds, &wfds, 0, &time_mark);
     if (this->front_event->is_set()) { /* incoming client data */
         try {
-            this->front_server->activate_and_process_data(this->server_stream);
+            this->front_server->activate_and_process_data();
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -559,7 +558,7 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
     if (this->front_event->is_set()) { /* incoming client data */
         try {
         #warning it should be possible to remove the while hidden in activate_and_process_data and work only with the external loop (need to understand well the next_packet working)
-            this->front_server->activate_and_process_data(this->server_stream);
+            this->front_server->activate_and_process_data();
         }
         catch(...){
             return SESSION_STATE_STOP;
