@@ -175,12 +175,10 @@ struct server_sec {
 
     int server_sec_recv(Stream & stream, int* chan) throw (Error)
     {
-        LOG(LOG_INFO, "server_sec_recv");
         this->mcs_layer.iso_layer.iso_recv(stream);
         int appid = stream.in_uint8() >> 2;
         /* Channel Join ReQuest datagram */
         while(appid == MCS_CJRQ) {
-            LOG(LOG_INFO, "server_mcs_recv MCS_CJRQ");
             /* this is channels getting added from the client */
             int userid = stream.in_uint16_be();
             int chanid = stream.in_uint16_be();
@@ -190,12 +188,10 @@ struct server_sec {
         }
         /* Disconnect Provider Ultimatum datagram */
         if (appid == MCS_DPUM) {
-            LOG(LOG_INFO, "server_mcs_recv MCS_DPUM");
             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
         }
         /* SenD ReQuest datagram */
         if (appid != MCS_SDRQ) {
-            LOG(LOG_INFO, "server_mcs_recv MCS_SDRQ");
             throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
         }
         stream.skip_uint8(2);
@@ -208,12 +204,10 @@ struct server_sec {
 
         uint32_t flags = stream.in_uint32_le();
         if (flags & SEC_ENCRYPT) { /* 0x08 */
-            LOG(LOG_INFO, "server_rdp_recv SEC_ENCRYPT");
             stream.skip_uint8(8); /* signature */
             this->server_sec_decrypt(stream.p, (int)(stream.end - stream.p));
         }
         if (flags & SEC_CLIENT_RANDOM) { /* 0x01 */
-            LOG(LOG_INFO, "server_rdp_recv SEC_CLIENT_RANDOM");
             stream.in_uint32_le(); // len
             memcpy(this->client_crypt_random, stream.in_uint8p(64), 64);
             this->server_sec_rsa_op(this->client_random, this->client_crypt_random,
@@ -223,7 +217,6 @@ struct server_sec {
             return 0;
         }
         if (flags & SEC_LOGON_INFO) { /* 0x40 */
-            LOG(LOG_INFO, "server_rdp_recv SEC_LOGON_INFO");
             this->server_sec_process_logon_info(stream);
             if (this->client_info->is_mce) {
                 this->server_sec_send_media_lic_response();
@@ -234,14 +227,11 @@ struct server_sec {
             return 0;
         }
         if (flags & SEC_LICENCE_NEG) { /* 0x80 */
-            LOG(LOG_INFO, "server_rdp_recv SEC_LICENCE_NEG");
             this->server_sec_send_lic_response();
             return -1; /* special error that means send demand active */
         }
         return 0;
     }
-
-
 
     /* process the mcs client data we received from the mcs layer */
     void server_sec_process_mcs_data(Stream & stream) throw (Error)
@@ -278,11 +268,9 @@ struct server_sec {
         while (stream.check_rem(4)) {
             uint8_t * current_header = stream.p;
             uint16_t tag = stream.in_uint16_le();
-            LOG(LOG_INFO, "data block type: TAG_CLI %u\n", tag);
             uint16_t length = stream.in_uint16_le();
-            LOG(LOG_INFO, "data block length: length = %u\n", length);
             if (length < 4 || !stream.check_rem(length - 4)) {
-                LOG(LOG_INFO,
+                LOG(LOG_ERR,
                     "error reading block tag %d size %d\n",
                     tag, length);
                 break;
@@ -291,35 +279,27 @@ struct server_sec {
             switch (tag){
                 case CS_CORE:
                     #warning we should check length to call the two variants of core_data (or begin by reading the common part then the extended part)
-                    LOG(LOG_INFO, "CS_CORE\n");
                     this->server_sec_parse_mcs_data_cs_core(stream);
                 break;
                 case CS_SECURITY:
-                    LOG(LOG_INFO, "CS_SECURITY\n");
                     this->server_sec_parse_mcs_data_cs_security(stream);
                 break;
                 case CS_NET:
-                    LOG(LOG_INFO, "CS_NET\n");
                     this->server_sec_parse_mcs_data_cs_net(stream);
                 break;
                 case CS_CLUSTER:
-                    LOG(LOG_INFO, "CS_CLUSTER\n");
                     this->server_sec_parse_mcs_data_cs_cluster(stream);
                 break;
                 case CS_MONITOR:
-                    LOG(LOG_INFO, "CS_MONITOR\n");
                     this->server_sec_parse_mcs_data_cs_monitor(stream);
                 break;
                 case SC_CORE:
-                    LOG(LOG_INFO, "SC_CORE\n");
                     this->server_sec_parse_mcs_data_sc_core(stream);
                 break;
                 case SC_SECURITY:
-                    LOG(LOG_INFO, "SC_SECURITY\n");
                     this->server_sec_parse_mcs_data_sc_security(stream);
                 break;
                 case SC_NET:
-                    LOG(LOG_INFO, "SC_NET\n");
                     this->server_sec_parse_mcs_data_sc_net(stream);
                 break;
                 default:
@@ -1552,7 +1532,6 @@ struct server_sec {
     /* prepare server mcs data to send in mcs layer */
     void server_sec_out_mcs_data(Stream  & stream)
     {
-        LOG(LOG_INFO, "server_sec_out_mcs_data");
         /* Same code above using list_test */
         int num_channels = (int) this->mcs_layer.channel_list.size();
         int num_channels_even = num_channels + (num_channels & 1);
@@ -1623,7 +1602,6 @@ struct server_sec {
         stream.out_clear_bytes(8); /* pad */
         /* end certificate */
         stream.mark_end();
-        LOG(LOG_INFO, "server_sec_out_mcs_data done");
     }
 
 };

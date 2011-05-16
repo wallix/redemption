@@ -89,7 +89,6 @@ struct server_rdp {
 
     void server_send_palette(const RGBPalette & palette) throw (Error)
     {
-        LOG(LOG_INFO, "server_rdp::server_send_palette()");
         #warning we should create some RDPData object created on init and sent before destruction
         Stream stream(8192);
         this->server_rdp_init_data(stream);
@@ -420,29 +419,24 @@ struct server_rdp {
     {
         int cont = 1;
         while (cont || !this->up_and_running) {
-            LOG(LOG_INFO, "Client : Looping on server_rdp_recv");
             int code = this->server_rdp_recv(this->front_stream);
             switch (code) {
             case -1:
                 this->server_rdp_send_demand_active();
-                LOG(LOG_INFO, "Client : send demand active");
                 break;
             case 0:
                 break;
             case RDP_PDU_CONFIRM_ACTIVE: /* 3 */
-                LOG(LOG_INFO, "Client : receive confirm active");
                 this->server_rdp_process_confirm_active();
                 break;
             case RDP_PDU_DATA: /* 7 */
-                LOG(LOG_INFO, "Client : RDP_PDU_DATA");
                 // this is rdp_process_data that will set up_and_running to 1
                 // when fonts have been received
                 // we will not exit this loop until we are in this state.
-//                LOG(LOG_INFO, "Client : receive PDU data");
                 this->server_rdp_process_data();
                 break;
             default:
-                LOG(LOG_WARNING, "unknown in session_data\n");
+                LOG(LOG_WARNING, "unknown in session_data (%d)\n", code);
                 break;
             }
             cont = this->front_stream.next_packet
@@ -452,10 +446,8 @@ struct server_rdp {
 
     int server_rdp_recv(Stream & stream) throw (Error)
     {
-        LOG(LOG_INFO, "server_rdp_recv");
         if (this->front_stream.next_packet == 0 || this->front_stream.next_packet >= stream.end) {
             int chan = 0;
-            LOG(LOG_INFO, "sec_layer.server_sec_recv");
             int error = this->sec_layer.server_sec_recv(this->front_stream, &chan);
             if (error == -1) { /* special code for send demand active */
                 this->front_stream.next_packet = 0;
@@ -466,7 +458,6 @@ struct server_rdp {
             }
             if ((chan != MCS_GLOBAL_CHANNEL) && (chan > 0)) {
                 if (chan > MCS_GLOBAL_CHANNEL) {
-                    LOG(LOG_INFO, "sec_layer.mcs_layer.server_channel_process");
                     this->sec_layer.mcs_layer.server_channel_process(this->front_stream, chan);
                 }
                 this->front_stream.next_packet = 0;
@@ -486,7 +477,6 @@ struct server_rdp {
         int pdu_code = this->front_stream.in_uint16_le();
         this->front_stream.skip_uint8(2); /* mcs user id */
         this->front_stream.next_packet += len;
-        LOG(LOG_INFO, "server_rdp_recv done");
         return pdu_code & 0xf;
     }
 
@@ -691,10 +681,7 @@ struct server_rdp {
     /*****************************************************************************/
     void capset_order(Stream & stream, int len)
     {
-        int i;
-        char order_caps[32];
 
-        LOG(LOG_INFO, "order capabilities\n");
         stream.skip_uint8(20); /* Terminal desc, pad */
         stream.skip_uint8(2); /* Cache X granularity */
         stream.skip_uint8(2); /* Cache Y granularity */
@@ -702,6 +689,7 @@ struct server_rdp {
         stream.skip_uint8(2); /* Max order level */
         stream.skip_uint8(2); /* Number of fonts */
         stream.skip_uint8(2); /* Capability flags */
+        char order_caps[32];
         memcpy(order_caps, stream.in_uint8p(32), 32); /* Orders supported */
         LOG(LOG_INFO, "dest blt-0 %d\n", order_caps[0]);
         LOG(LOG_INFO, "pat blt-1 %d\n", order_caps[1]);
@@ -721,9 +709,9 @@ struct server_rdp {
         LOG(LOG_INFO, "order_caps dump\n");
         stream.skip_uint8(2); /* Text capability flags */
         stream.skip_uint8(6); /* Pad */
-        i = stream.in_uint32_le(); /* desktop cache size, usually 0x38400 */
-        this->client_info.desktop_cache = i;
-        LOG(LOG_INFO, "desktop cache size %d\n", i);
+        /* desktop cache size, usually 0x38400 */
+        this->client_info.desktop_cache = stream.in_uint32_le();;
+        LOG(LOG_INFO, "desktop cache size %d\n", this->client_info.desktop_cache);
         stream.skip_uint8(4); /* Unknown */
         stream.skip_uint8(4); /* Unknown */
     }
