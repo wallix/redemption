@@ -519,7 +519,7 @@ void widget_combo::draw(const Rect & clip)
 
 void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & clip)
 {
-    LOG(LOG_INFO, "widget::draw_focus_rect");
+//    LOG(LOG_INFO, "widget::draw_focus_rect");
     #warning is passing r.x, r.y necessary here for drawing pattern ?
     #warning create some set_brush primitive in internal_mod
     this->mod->brush.hatch = 0xaa;

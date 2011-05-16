@@ -18,10 +18,14 @@
    Author(s): Christophe Grosjean, Javier Caverni
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
+   Close Window with message
+
 */
 
 #if !defined(__CLOSE_HPP__)
 #define __CLOSE_HPP__
+
+#warning merge with dialog.hpp
 
 #include "widget_window_login.hpp"
 
@@ -128,25 +132,12 @@ struct close_mod : public internal_mod {
     Widget* popup_wnd;
     Widget* button_down;
 
-    int dragging;
-    Rect dragging_rect;
-    int draggingdx; // distance between mouse and top angle of dragged window
-    int draggingdy; // distance between mouse and top angle of dragged window
-    struct Widget* dragging_window;
-
     close_mod(
         wait_obj * event,
         int (& keys)[256], int & key_flags, Keymap * &keymap,
         ModContext & context, Front & front, Session * session)
             : internal_mod(keys, key_flags, keymap, front)
     {
-        /* dragging info */
-        this->dragging = 0;
-        this->event = event;
-        // dragging_rect is (0,0,0,0)
-        this->draggingdx = 0; // distance between mouse and top angle of dragged window
-        this->draggingdy = 0; // distance between mouse and top angle of dragged window
-        this->dragging_window = 0;
         this->button_down = 0;
 
         int log_width = 600;
@@ -258,6 +249,7 @@ struct close_mod : public internal_mod {
     }
 
 
+    #warning unify close login and dialog and move to internal_mod
     // module received an event from client
     virtual int mod_event(int msg, long x, long y, long param4, long param5)
     {
