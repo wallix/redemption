@@ -28,6 +28,12 @@
 struct internal_mod : public client_mod {
     public:
     widget_screen screen;
+    int dragging;
+    Rect dragging_rect;
+    int draggingdx; // distance between mouse and top angle of dragged window
+    int draggingdy; // distance between mouse and top angle of dragged window
+    struct Widget* dragging_window;
+
     internal_mod(int (& keys)[256], int & key_flags, Keymap * &keymap, Front & front)
             : client_mod(keys, key_flags, keymap, front),
                 screen(this,
@@ -35,13 +41,14 @@ struct internal_mod : public client_mod {
                  front.orders->rdp_layer->client_info.height,
                  front.orders->rdp_layer->client_info.bpp)
     {
+        /* dragging info */
+        this->dragging = 0;
+        this->event = event;
+        // dragging_rect is (0,0,0,0)
+        this->draggingdx = 0; // distance between mouse and top angle of dragged window
+        this->draggingdy = 0; // distance between mouse and top angle of dragged window
+        this->dragging_window = 0;
     }
-
-    int dragging;
-    Rect dragging_rect;
-    int draggingdx; // distance between mouse and top angle of dragged window
-    int draggingdy; // distance between mouse and top angle of dragged window
-    struct Widget* dragging_window;
 
     void server_draw_dragging_rect(const Rect & r, const Rect & clip)
     {

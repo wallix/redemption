@@ -15,12 +15,20 @@ class Authentifier(object):
     # It will certainly change to something stronger to avoid storing passwords
     # at all. Comparing hashes is enough anyway.
     passwords = {
+        'w2008': 'w2008',
         'xp': 'xp',
         'v' : 'v',
         'n' : 'n',
         'cgr' : 'cgr',
     }
     targets = {
+        'w2008' : {
+            'proxy_type': 'RDP',
+            'target_login' : r'qa\administrateur',
+            'target_device' : '10.10.14.78',
+            'target_password' : 'S3cur3!1nux',
+            'target_port':'3389'
+        },
         'xp' : {
             'proxy_type': 'RDP',
             'target_login' : r'qa\administrateur',

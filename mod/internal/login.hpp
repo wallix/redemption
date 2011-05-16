@@ -18,6 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
+   Login Window
+
 */
 
 #if !defined(__LOGIN_HPP__)
@@ -355,12 +357,6 @@ struct login_mod : public internal_mod {
     {
         this->event = event;
         this->signal = 0;
-        /* dragging info */
-        this->dragging = 0;
-        // dragging_rect is (0,0,0,0)
-        this->draggingdx = 0; // distance between mouse and top angle of dragged window
-        this->draggingdy = 0; // distance between mouse and top angle of dragged window
-        this->dragging_window = 0;
         this->button_down = 0;
 
         int log_width = 600;
@@ -499,10 +495,11 @@ struct login_mod : public internal_mod {
     }
 
 
+    #warning unify close login and dialog and move to internal_mod
     // module received an event from client
     virtual int mod_event(int msg, long x, long y, long param4, long param5)
     {
-        LOG(LOG_INFO, "mod_event(%d, %ld, %ld, %ld %ld)", msg, x, y, param4, param5);
+//        LOG(LOG_INFO, "mod_event(%d, %ld, %ld, %ld %ld)", msg, x, y, param4, param5);
         switch (msg){
         case WM_KEYDOWN:
             if (!this->popup_wnd && this->login_window->has_focus) {
@@ -518,6 +515,7 @@ struct login_mod : public internal_mod {
             this->screen.fill_rect(0xCC, this->screen.rect, this->screen.bg_color, this->screen.rect);
             break;
         case WM_MOUSEMOVE:
+//            LOG(LOG_INFO, "dragging = %d\n", this->dragging);
             if (this->dragging) {
                 long dragx = (x < 0)                         ? 0
                            : (x < this->screen.rect.cx) ? x
@@ -615,16 +613,10 @@ struct login_mod : public internal_mod {
                 case WND_TYPE_WND:
                     /* drag by clicking in title bar and keeping button down */
                     if (y < (control->rect.y + 21)) {
-                        this->dragging = 1;                this->event->set();
-                this->signal = 1;
-
+                        this->dragging = 1;
                         this->dragging_window = control;
-
                         this->draggingdx = x - control->rect.x;
-                        this->draggingdy = y - control->rect.y;                this->event->set();
-                this->signal = 1;
-
-
+                        this->draggingdy = y - control->rect.y;
                         this->dragging_rect = Rect(
                             x - this->draggingdx, y - this->draggingdy,
                             control->rect.cx, control->rect.cy);
