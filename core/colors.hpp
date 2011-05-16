@@ -119,32 +119,36 @@ inline void splitcolor32BGR(uint8_t & r, uint8_t & g, uint8_t & b, uint32_t c)
   r = c;
 }
 
-inline uint32_t color_decode(const uint32_t in_pixel, const uint8_t in_bpp, const uint32_t (& palette)[256]){
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
-
+inline uint32_t color_decode(const uint32_t c, const uint8_t in_bpp, const uint32_t (& palette)[256]){
     switch (in_bpp){
     case 8:
-        splitcolor32RGB(red, green, blue, palette[in_pixel]);
-    break;
+      return palette[c] & 0xFFFFFF;
     case 15:
-        splitcolor15(red, green, blue, in_pixel);
+    {
+        // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 b1 b2 b3 b4 b5
+        uint8_t r = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
+        uint8_t g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
+        uint8_t b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
+        return (r << 16) | (g << 8) | b;
+    }
     break;
     case 16:
-        splitcolor16(red, green, blue, in_pixel);
-    break;
+    {
+        // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 g6 b1 b2 b3 b4 b5
+        uint8_t r = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
+        uint8_t g = ((c >> 3) & 0xfc) | ((c >>  9) & 0x3); // g1 g2 g3 g4 g5 g6 g1 g2
+        uint8_t b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
+        return (r << 16) | (g << 8) | b;
+    }
     case 32:
     case 24:
-        splitcolor32RGB(red, green, blue, in_pixel);
-    break;
+      return c & 0xFFFFFF;
     default:
         LOG(LOG_ERR, "in_bpp = %d", in_bpp);
         assert(false);
-    break;
+        break;
     }
-
-    return (red << 16) | (green << 8) | blue;
+    return 0;
 }
 
 
