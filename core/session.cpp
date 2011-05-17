@@ -810,7 +810,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 {
                     char * target = this->context->get(STRAUTHID_TARGET_DEVICE);
                     LOG(LOG_INFO, "target=%s", target);
-                    if (target && 0 == strncmp(target, "bouncer", 7)){
+                    if (target && 0 == strncmp(target, "bouncer", 8)){
                         LOG(LOG_INFO, "target is bouncer");
                         this->mod = new bouncer_mod(
                                         this->back_event,
@@ -821,7 +821,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                         *this->front,
                                         this);
                     }
-                    else if (target && 0 == strncmp(target, "test", 4)){
+                    else if (target && 0 == strncmp(target, "test", 5)){
                         LOG(LOG_INFO, "target is internal mod");
                         this->mod = new test_internal_mod(
                                         this->back_event,

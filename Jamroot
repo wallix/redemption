@@ -132,47 +132,6 @@ exe rdpproxy
         <link>static
     ;
 
-
-exe test_server_rdp
-    :
-        tests/test_server_rdp_layer.cpp
-        widget
-
-        ini_config
-
-        rsa_keys
-        ssl_calls
-        d3des
-        openssl
-        crypto
-        z
-        dl
-
-        libboost_program_options
-    :
-    <link>static
-    ;
-
-exe test_server_rdp_bitmap
-    :
-        tests/test_server_rdp_bitmap.cpp
-        widget
-
-        ini_config
-
-        rsa_keys
-        ssl_calls
-        d3des
-        openssl
-        crypto
-        z
-        dl
-
-        libboost_program_options
-    :
-    <link>static
-    ;
-
 exe xrdp-genkeymap
     :
         utils/genkeymap/genkeymap.cpp X11
