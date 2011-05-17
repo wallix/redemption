@@ -20,7 +20,10 @@ class Authentifier(object):
         'v' : 'v',
         'n' : 'n',
         'cgr' : 'cgr',
-        'bouncer' : 'bouncer'
+        'bouncer' : 'bouncer',
+        'test' : 'test',
+        'card' : 'card',
+        'error_invalid' : 'error_invalid'
     }
     targets = {
         'w2008' : {
@@ -39,6 +42,17 @@ class Authentifier(object):
         },
         'bouncer' : {
             'proxy_type': 'RDP',
+            'target_device' : 'bouncer',
+            'proto_dest': 'INTERNAL'
+        },
+        'test' : {
+            'proxy_type': 'RDP',
+            'target_device' : 'test',
+            'proto_dest': 'INTERNAL'
+        },
+        'card' : {
+            'proxy_type': 'RDP',
+            'target_device' : 'test_card',
             'proto_dest': 'INTERNAL'
         },
         'n' : {
@@ -64,7 +78,12 @@ class Authentifier(object):
             'target_password' : 'secure',
             'target_port':'5901',
             'proto_dest': 'VNC'
-        }
+        },
+        'error_invalid' : {
+            'target_device': "10.10.3.54" ,
+            'target_login': "administrateur",
+            'authenticated': 'False',
+            'rejected':"Invalid IP Source"}
     }
 
     def __init__(self, sck):
@@ -89,7 +108,10 @@ class Authentifier(object):
         _password = self.dic.get('password')
         if _password and self.passwords.get(_login) == _password:
             print "Password OK"
-            self.dic.update(self.targets.get(_login, {}))
+            if _login[:5] == 'error':
+                self.dic = self.targets.get(_login, {})
+            else:
+                self.dic.update(self.targets.get(_login, {}))
         else:
             print "Wrong Password"
             self.dic = {'login' : 'ASK' }
