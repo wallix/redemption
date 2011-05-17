@@ -321,6 +321,9 @@ struct Bitmap{
         memcpy(this->data_co, input, this->bmp_size);
     }
 
+    void zero(){
+        memset(this->data_co, 0, this->bmp_size);
+    }
 
     void copy_upsidedown(const uint8_t* input, uint16_t cx)
     {

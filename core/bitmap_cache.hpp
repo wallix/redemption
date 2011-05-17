@@ -72,10 +72,6 @@ struct BitmapCacheItem {
 
 struct BitmapCache {
     /* client info */
-    int use_bitmap_comp;
-    int bitmap_cache_persist_enable;
-    int bitmap_cache_version;
-
     unsigned small_entries;
     unsigned small_size;
     unsigned medium_entries;
@@ -90,11 +86,6 @@ struct BitmapCache {
     BitmapCacheItem * big_bitmaps;
 
     BitmapCache(ClientInfo* client_info) {
-
-        this->use_bitmap_comp = client_info->use_bitmap_comp;
-        this->bitmap_cache_persist_enable = client_info->bitmap_cache_persist_enable;
-        this->bitmap_cache_version = client_info->bitmap_cache_version;
-
         this->small_entries = client_info->cache1_entries;
         this->small_size = client_info->cache1_size;
         this->medium_entries = client_info->cache2_entries;
@@ -158,7 +149,6 @@ struct BitmapCache {
     }
 
     /* returns cache id, cx, cy, bpp, data_co */
-    #warning we should use some kind of cache item object at least for passing result
     #warning we should pass in src as a bitmap
     uint32_t add_bitmap(int src_cx, int src_cy, const uint8_t * src_data,
                     int x, int y, int w, int h,
@@ -201,6 +191,7 @@ struct BitmapCache {
                     cache_idx = j;
                 }
 
+                #warning create a comparizon function in bitmap_cache_item
                 if (array[j].pbmp
                 && array[j].pbmp->bpp == cache_item.pbmp->bpp
                 && array[j].pbmp->cx == cache_item.pbmp->cx
@@ -209,7 +200,7 @@ struct BitmapCache {
                 {
                     delete pbitmap;
                     array[j].stamp = this->bitmap_stamp;
-
+                    LOG(LOG_INFO, "FOUND [entry=%p] [bitmap=%p]", &array[j], array[j].pbmp);
                     return (BITMAP_FOUND_IN_CACHE << 24)|(cache_id << 16)|j;
                 }
             }
@@ -219,12 +210,8 @@ struct BitmapCache {
                 delete array[cache_idx].pbmp;
             }
 
-            array[cache_idx].pbmp = pbitmap;
-            array[cache_idx].crc = cache_item.crc;
-            array[cache_idx].stamp = cache_item.stamp;
-
-            assert(pbitmap == array[cache_idx].pbmp);
-            assert(cache_item.pbmp->bpp == src_bpp);
+            array[cache_idx] = cache_item;
+            LOG(LOG_INFO, "ADDED [entry=%p] [bitmap=%p]", &array[cache_idx], array[cache_idx].pbmp);
 
             return (BITMAP_ADDED_TO_CACHE<<24)|(cache_id << 16)|cache_idx;
         }

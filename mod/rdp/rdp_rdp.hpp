@@ -458,7 +458,7 @@ struct rdp_rdp {
         /* Process a bitmap capability set */
         void process_bitmap_caps(Stream & stream)
         {
-            LOG(LOG_INFO, "process bitmap caps\n");
+//            LOG(LOG_INFO, "process bitmap caps\n");
             this->bpp = stream.in_uint16_le();
             stream.skip_uint8(6);
             int width = stream.in_uint16_le();
@@ -500,12 +500,13 @@ struct rdp_rdp {
                 }
                 stream.p = next;
             }
-            LOG(LOG_INFO, "process server ok\n");
+//            LOG(LOG_INFO, "process server ok\n");
         }
 
 
         void send_control(Stream & stream, int action) throw (Error)
         {
+//            LOG(LOG_INFO, "send_control\n");
             this->init_data(stream);
             stream.out_uint16_le(action);
             stream.out_uint16_le(0); /* userid */
@@ -517,6 +518,7 @@ struct rdp_rdp {
 
         void send_synchronise(Stream & stream) throw (Error)
         {
+//            LOG(LOG_INFO, "send_synchronize\n");
             this->init_data(stream);
             stream.out_uint16_le(1); /* type */
             stream.out_uint16_le(1002);
@@ -526,6 +528,7 @@ struct rdp_rdp {
 
         void send_fonts(Stream & stream, int seq) throw(Error)
         {
+//            LOG(LOG_INFO, "send_fonts\n");
             this->init_data(stream);
             stream.out_uint16_le(0); /* number of fonts */
             stream.out_uint16_le(0); /* pad? */
@@ -568,7 +571,7 @@ struct rdp_rdp {
 
         void send_login_info(int flags, int rdp5_performanceflags) throw(Error)
         {
-            LOG(LOG_INFO, "send login info to server\n");
+//            LOG(LOG_INFO, "send login info to server\n");
             time_t t = time(NULL);
             time_t tzone;
 
@@ -735,6 +738,8 @@ struct rdp_rdp {
         void send_input(Stream & stream, int time, int message_type,
                         int device_flags, int param1, int param2) throw(Error)
         {
+//            LOG(LOG_INFO, "send_input\n");
+
             if (this->init_data(stream) != 0) {
                 throw Error(ERR_RDP_SEND_INPUT_INIT_DATA_NOK);
             }
@@ -751,6 +756,7 @@ struct rdp_rdp {
 
         void send_invalidate(Stream & stream,int left, int top, int width, int height) throw(Error)
         {
+//            LOG(LOG_INFO, "send_invalidate\n");
             if (this->init_data(stream) != 0) {
                 throw Error(ERR_RDP_SEND_INVALIDATE_INIT_DATA_NOK);
             }
@@ -766,6 +772,7 @@ struct rdp_rdp {
 
         void recv(Stream & stream, int* type, client_mod * mod) throw(Error)
         {
+//            LOG(LOG_INFO, "recv\n");
             int len;
             int pdu_type;
             int chan;
@@ -812,6 +819,7 @@ struct rdp_rdp {
 
         void process_data_pdu(Stream & stream, client_mod * mod)
         {
+//            LOG(LOG_INFO, "process_data_pdu\n");
             int data_pdu_type;
             int ctype;
             int clen;
@@ -851,7 +859,7 @@ struct rdp_rdp {
 
         void process_demand_active(Stream & stream, client_mod * mod) throw(Error)
         {
-//            LOG(LOG_INFO, "process demand active\n");
+            LOG(LOG_INFO, "process demand active\n");
 
             int type;
             int len_src_descriptor;
@@ -887,6 +895,7 @@ struct rdp_rdp {
         void send_redirect_pdu(long param1, long param2, long param3, int param4,
                                       vector<mcs_channel_item*> channel_list) throw(Error)
         {
+//            LOG(LOG_INFO, "send_redirect_pdu\n");
             char* data;
             char* name;
             int chan_id;
@@ -951,6 +960,7 @@ struct rdp_rdp {
 
     void process_color_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
     {
+        LOG(LOG_INFO, "process_color_pointer_pdu\n");
         unsigned cache_idx;
         unsigned dlen;
         unsigned mlen;
@@ -977,9 +987,9 @@ struct rdp_rdp {
 
     void process_cached_pointer_pdu(Stream & stream, client_mod * mod)
     {
-        int cache_idx;
+        LOG(LOG_INFO, "process_cached_pointer_pdu\n");
 
-        cache_idx = stream.in_uint16_le();
+        int cache_idx = stream.in_uint16_le();
         if (cache_idx < 0){
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_LESS_0);
         }
@@ -992,9 +1002,8 @@ struct rdp_rdp {
 
     void process_system_pointer_pdu(Stream & stream, client_mod * mod)
     {
-        int system_pointer_type;
-
-        system_pointer_type = stream.in_uint16_le();
+        LOG(LOG_INFO, "process_system_pointer_pdu\n");
+        int system_pointer_type = stream.in_uint16_le();
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
             {
@@ -1012,6 +1021,7 @@ struct rdp_rdp {
 
     void process_bitmap_updates(Stream & stream, client_mod * mod)
     {
+        LOG(LOG_INFO, "process_bitmap_updates\n");
         // RDP-BCGR: 2.2.9.1.1.3.1.2 Bitmap Update (TS_UPDATE_BITMAP)
         // ----------------------------------------------------------
         // The TS_UPDATE_BITMAP structure contains one or more rectangular
@@ -1038,6 +1048,7 @@ struct rdp_rdp {
         // numberRectangles (2 bytes): A 16-bit, unsigned integer.
         // The number of screen rectangles present in the rectangles field.
         size_t numberRectangles = stream.in_uint16_le();
+        LOG(LOG_INFO, "---------------- Sending %d rectangles -----------------\n", numberRectangles);
         for (size_t i = 0; i < numberRectangles; i++) {
             // rectangles (variable): Variable-length array of TS_BITMAP_DATA
             // (section 2.2.9.1.1.3.1.2.2) structures, each of which contains a
@@ -1070,8 +1081,6 @@ struct rdp_rdp {
             // A 16-bit, unsigned integer. The height of the rectangle.
             const uint16_t height = stream.in_uint16_le();
 
-//            LOG(LOG_INFO, "bpp=%d width=%d height=%d", bpp, width, height);
-
             // A 16-bit, unsigned integer. The color depth of the rectangle
             // data in bits-per-pixel.
             uint8_t bpp = stream.in_uint16_le();
@@ -1100,9 +1109,7 @@ struct rdp_rdp {
             int flags = stream.in_uint16_le();
             uint16_t bitmapLength = stream.in_uint16_le();
 
-            Rect boundary(destLeft, destTop,
-                          destRight - destLeft + 1,
-                          destBottom - destTop + 1);
+            Rect boundary(destLeft, destTop, destRight - destLeft + 1, destBottom - destTop + 1);
 
             // BITMAP_COMPRESSION 0x0001
             // Indicates that the bitmap data is compressed. This implies
@@ -1111,9 +1118,11 @@ struct rdp_rdp {
 
             Bitmap bitmap(bpp, width, height);
 
-//            LOG(LOG_INFO, "bpp=%d (%d) width=%d height=%d", bpp, bitmap.bpp, width, height);
+            LOG(LOG_INFO, "Rect [%d] bpp=%d (%d) width=%d height=%d b(%d, %d, %d, %d)", i, bpp, bitmap.bpp, width, height,
+                boundary.x, boundary.y, boundary.cx, boundary.cy);
 
             if (flags & 0x0001){
+                LOG(LOG_INFO, "Compressed Bitmap");
                 uint16_t size = 0;
                 if (flags & 0x400) {
                     size = bitmapLength;
@@ -1137,23 +1146,25 @@ struct rdp_rdp {
                 }
 
                 const uint8_t * data = stream.in_uint8p(size);
-
                 bitmap.decompress(data, size);
             }
             else {
+                LOG(LOG_INFO, "Not Compressed Bitmap");
                 const uint8_t * data = stream.in_uint8p(bitmapLength);
                 assert(bitmapLength == bitmap.bmp_size);
                 bitmap.copy(data);
             }
+
+            mod->clip = boundary;
             mod->server_paint_rect(bitmap, boundary, 0, 0, this->orders.cache_colormap.palette[0]);
         }
+        LOG(LOG_INFO, "---------------- Sending %d rectangles -Done--\n", numberRectangles);
+
     }
 
     void process_update_pdu(Stream & stream, client_mod * mod)
     {
-        int update_type;
-        int count;
-
+//        LOG(LOG_INFO, "process_update_pdu\n");
     // MS-RDPBCGR: 1.3.6
     // -----------------
     // The most fundamental output that a server can send to a connected client
@@ -1162,15 +1173,16 @@ struct rdp_rdp {
     // interact with the session running on the server. The global palette
     // information for a session is sent to the client in the Update Palette PDU.
 
-
-        update_type = stream.in_uint16_le();
+        int update_type = stream.in_uint16_le();
         mod->server_begin_update();
         switch (update_type) {
         case RDP_UPDATE_ORDERS:
-            stream.skip_uint8(2); /* pad */
-            count = stream.in_uint16_le();
-            stream.skip_uint8(2); /* pad */
-            this->orders.rdp_orders_process_orders(stream, count, mod);
+            {
+                stream.skip_uint8(2); /* pad */
+                int count = stream.in_uint16_le();
+                stream.skip_uint8(2); /* pad */
+                this->orders.rdp_orders_process_orders(stream, count, mod);
+            }
             break;
         case RDP_UPDATE_BITMAP:
             this->process_bitmap_updates(stream, mod);
@@ -1215,8 +1227,5 @@ struct rdp_rdp {
         stream.out_clear_bytes(20);	/* other bitmap caches not used */
     }
 };
-
-
-
 
 #endif
