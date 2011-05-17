@@ -8,7 +8,7 @@ set(CMAKE_VERBOSE_MAKEFILE true)
 project (ReDemPtion)
 
 add_library(localobjects STATIC
-    core/widget.cpp
+    mod/internal/widget.cpp
     core/session.cpp
     core/mainloop.cpp
     core/config.cpp
@@ -47,7 +47,7 @@ endif (X11)
 set(Boost_USE_STATIC_LIBS        ON)
 set(Boost_USE_MULTITHREADED      ON)
 set(Boost_USE_STATIC_RUNTIME    OFF)
-find_package( Boost 1.46.0 COMPONENTS program_options unit_test_framework)
+find_package( Boost COMPONENTS program_options unit_test_framework)
 
 include_directories(
     ${Boost_INCLUDE_DIRS}
@@ -70,48 +70,6 @@ target_link_libraries (rdpproxy
 )
 
 # NOW ABOUT FUNCTIONAL TESTS ------------------------------------------------- #
-add_executable(test_server_rdp
-    #files
-    tests/test_server_rdp_layer.cpp
-)
-target_link_libraries (test_server_rdp
-    #libs
-    localobjects
-    ${SSL}
-    ${CRYPTO}
-    ${DL}
-    ${Boost_LIBRARIES}
-)
-
-# another one
-add_executable(test_bouncing_bitmap
-    #files
-    tests/test_server_rdp_bouncing_bitmap.cpp
-)
-target_link_libraries (test_bouncing_bitmap
-    #libs
-    localobjects
-    ${SSL}
-    ${CRYPTO}
-    ${DL}
-    ${Boost_LIBRARIES}
-)
-
-# and another one
-add_executable(test_server_rdp_bitmap
-    #files
-    tests/test_server_rdp_bitmap.cpp
-)
-target_link_libraries (test_server_rdp_bitmap
-    #libs
-    localobjects
-    ${SSL}
-    ${CRYPTO}
-    ${DL}
-    ${Boost_LIBRARIES}
-)
-
-# and another one
 add_executable        (xrdp-genkeymap utils/genkeymap/genkeymap.cpp)
 target_link_libraries (xrdp-genkeymap ${X11})
 
@@ -132,9 +90,6 @@ target_link_libraries (xrdp-keygen
 # INSTALL stuff
 install (TARGETS 
             rdpproxy
-            test_server_rdp
-            test_bouncing_bitmap
-            test_server_rdp_bitmap
             xrdp-genkeymap
             xrdp-keygen 
          DESTINATION bin)
