@@ -20,6 +20,7 @@ class Authentifier(object):
         'v' : 'v',
         'n' : 'n',
         'cgr' : 'cgr',
+        'bouncer' : 'bouncer'
     }
     targets = {
         'w2008' : {
@@ -35,6 +36,10 @@ class Authentifier(object):
             'target_device' : '10.10.14.111',
             'target_password' : 'S3cur3!1nux',
             'target_port':'3389'
+        },
+        'bouncer' : {
+            'proxy_type': 'RDP',
+            'proto_dest': 'INTERNAL'
         },
         'n' : {
             'proxy_type': 'RDP',
