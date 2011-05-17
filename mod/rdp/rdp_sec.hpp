@@ -208,8 +208,6 @@ struct rdp_sec {
 
         licence_size = 0;
 
-        /* todo load_licence(&licence_data); */
-
         licence_size = this->rdp_load_licence(&licence_data);
         if (licence_size > 0) {
             /* Generate a signature for the HWID buffer */
@@ -292,19 +290,14 @@ struct rdp_sec {
     #warning see string management for load_licence and save_licence
     int rdp_load_licence(uint8_t **data)
     {
-      int fd;
-      int length;
-      char * path;
       struct stat st;
-
-      path = NULL;
 
       #warning beware of memory allocation here
       /* TODO: verify if location that we've stablished is right or not */
-      path = new char [256];
+      char * path = new char [256];
       sprintf(path, "etc/xrdp/.xrdp/licence.%s", this->hostname);
 
-      fd = open(path, O_RDONLY);
+      int fd = open(path, O_RDONLY);
       if (fd == -1){
         return -1;
       }
@@ -313,7 +306,7 @@ struct rdp_sec {
       }
       #warning beware of memory allocation here
       *data = new uint8_t[st.st_size];
-      length = read(fd, *data, st.st_size);
+      int length = read(fd, *data, st.st_size);
       close(fd);
       delete [] path;
 
@@ -402,9 +395,7 @@ struct rdp_sec {
 
     void rdp_lic_process(Stream & stream)
     {
-        int tag;
-
-        tag = stream.in_uint8();
+        uint8_t tag = stream.in_uint8();
         stream.skip_uint8(3); /* version, length */
         switch (tag) {
         case LICENCE_TAG_DEMAND:
