@@ -29,6 +29,8 @@
 #include "../mod/internal/close.hpp"
 #include "../mod/internal/dialog.hpp"
 #include "../mod/internal/bouncer.hpp"
+#include "../mod/internal/test_card.hpp"
+#include "../mod/internal/test_internal.hpp"
 #include "../mod/null/null.hpp"
 #include "../mod/rdp/rdp.hpp"
 #include "../mod/vnc/vnc.hpp"
@@ -804,7 +806,44 @@ bool Session::session_setup_mod(int status, const ModContext * context)
             {
                 #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of mod_event.
                 this->back_event = new wait_obj(-1);
-                this->mod = new bouncer_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *this->front, this);
+
+                {
+                    char * target = this->context->get(STRAUTHID_TARGET_DEVICE);
+                    LOG(LOG_INFO, "target=%s", target);
+                    if (target && 0 == strncmp(target, "bouncer", 7)){
+                        LOG(LOG_INFO, "target is bouncer");
+                        this->mod = new bouncer_mod(
+                                        this->back_event,
+                                        this->keys,
+                                        this->key_flags,
+                                        this->keymap,
+                                        *this->context,
+                                        *this->front,
+                                        this);
+                    }
+                    else if (target && 0 == strncmp(target, "test", 4)){
+                        LOG(LOG_INFO, "target is internal mod");
+                        this->mod = new test_internal_mod(
+                                        this->back_event,
+                                        this->keys,
+                                        this->key_flags,
+                                        this->keymap,
+                                        *this->context,
+                                        *this->front,
+                                        this);
+                    }
+                    else {
+                        LOG(LOG_INFO, "target is test_card mod");
+                        this->mod = new test_card_mod(
+                                        this->back_event,
+                                        this->keys,
+                                        this->key_flags,
+                                        this->keymap,
+                                        *this->context,
+                                        *this->front,
+                                        this);
+                    }
+                }
                 // force a WM_INVALIDATE on all screen
                 this->callback(0x4444, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
                 LOG(LOG_INFO, "Creation of new mod 'CLOSE DIALOG' suceeded\n");
