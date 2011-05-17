@@ -31,6 +31,7 @@ class Authentifier(object):
             'target_login' : r'qa\administrateur',
             'target_device' : '10.10.14.78',
             'target_password' : 'S3cur3!1nux',
+            'proto_dest': 'RDP',
             'target_port':'3389'
         },
         'xp' : {
@@ -38,6 +39,7 @@ class Authentifier(object):
             'target_login' : r'qa\administrateur',
             'target_device' : '10.10.14.111',
             'target_password' : 'S3cur3!1nux',
+            'proto_dest': 'RDP',
             'target_port':'3389'
         },
         'bouncer' : {
@@ -105,16 +107,17 @@ class Authentifier(object):
 
         print self.dic
         _login = self.dic.get('login')
-        _password = self.dic.get('password')
-        if _password and self.passwords.get(_login) == _password:
-            print "Password OK"
-            if _login[:5] == 'error':
-                self.dic = self.targets.get(_login, {})
+        if _login:
+            _password = self.dic.get('password')
+            if _password and self.passwords.get(_login) == _password:
+                print "Password OK"
+                if _login[:5] == 'error':
+                    self.dic = self.targets.get(_login, {})
+                else:
+                    self.dic.update(self.targets.get(_login, {}))
             else:
-                self.dic.update(self.targets.get(_login, {}))
-        else:
-            print "Wrong Password"
-            self.dic = {'login' : 'ASK' }
+                print "Wrong Password"
+                self.dic = {'login' : 'ASK' }
         self.send()
         return True
 

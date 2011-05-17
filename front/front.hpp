@@ -324,7 +324,7 @@ public:
                      int palette_id,
                      const Rect & clip)
     {
-//        LOG(LOG_INFO, "front::send_bitmap_front bpp=%d\n", this->orders->rdp_layer->client_info.bpp);
+        LOG(LOG_INFO, "front::send_bitmap_front(dst(%d, %d, %d, %d), src_r(%d, %d, %d, %d) src_data=%p clip(%d, %d, %d, %d) bpp=%d\n", dst.x, dst.y, dst.cx, dst.cy, src_r.x, src_r.y, src_r.cx, src_r.cy, src_data, clip.x, clip.y, clip.cx, clip.cy, this->orders->rdp_layer->client_info.bpp);
         for (int j = 0; j < dst.cy ; j += 64) {
             int h = std::min(64, dst.cy - j);
             for (int i = 0; i < dst.cx ; i+= 64) {
@@ -345,10 +345,10 @@ public:
                     uint16_t cache_idx = (cache_ref & 0xFFFF);
 
                     BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
-
+                    LOG(LOG_INFO, "entry=%p bitmap=%p", entry, entry->pbmp);
 
                     if (send_type == BITMAP_ADDED_TO_CACHE){
-//                        LOG(LOG_INFO, "Added to cache: id=%d idx=%d", cache_id, cache_idx);
+                        LOG(LOG_INFO, "Added to cache: id=%d idx=%d", cache_id, cache_idx);
 //                        if (rect1.x == 64 && rect1.y == 320) {
 //                            printf("------- Bogus Not Compressed (%d)---------\n", entry->pbmp->bmp_size);
 //                            for (int i = 0; i < entry->pbmp->bmp_size; i++){
@@ -362,7 +362,10 @@ public:
 //                            printf("\n");
 //                        }
                         this->orders->send_bitmap_common(*entry->pbmp, cache_id, cache_idx);
-                    };
+                    }
+                    else {
+                        LOG(LOG_INFO, "Found in cache at: id=%d idx=%d", cache_id, cache_idx);
+                    }
 
                     this->mem_blt(cache_id, palette_id,
                                   rect1, 0xcc,
