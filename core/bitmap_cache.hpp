@@ -200,7 +200,6 @@ struct BitmapCache {
                 {
                     delete pbitmap;
                     array[j].stamp = this->bitmap_stamp;
-                    LOG(LOG_INFO, "FOUND [entry=%p] [bitmap=%p]", &array[j], array[j].pbmp);
                     return (BITMAP_FOUND_IN_CACHE << 24)|(cache_id << 16)|j;
                 }
             }
@@ -211,8 +210,6 @@ struct BitmapCache {
             }
 
             array[cache_idx] = cache_item;
-            LOG(LOG_INFO, "ADDED [entry=%p] [bitmap=%p]", &array[cache_idx], array[cache_idx].pbmp);
-
             return (BITMAP_ADDED_TO_CACHE<<24)|(cache_id << 16)|cache_idx;
         }
         else {

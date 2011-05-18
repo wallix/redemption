@@ -113,7 +113,7 @@ struct client_mod {
     uint32_t convert(uint32_t color)
     {
         uint32_t color24 = color_decode(color, this->mod_bpp, this->mod_palette);
-        return color_encode(color24, this->front->orders->rdp_layer->client_info.bpp, this->palette332);
+        return color_encode(color24, this->get_front_bpp(), this->palette332);
     }
 
     uint32_t convert_to_black(uint32_t color)
@@ -287,14 +287,14 @@ struct client_mod {
             #warning dirty hack to fix color problems with opaque_rect
             uint32_t color24 = color_decode(color, this->mod_bpp, this->mod_palette);
 
-            if (this->front->orders->rdp_layer->client_info.bpp == 24){
+            if (this->get_front_bpp() == 24){
                 color24 = ((color24 << 16) & 0xFF0000)
                         |  (color24 & 0x00FF00)
                         | ((color24 >> 16) & 0x0000FF);
             }
 
             uint32_t target_color = color_encode(color24,
-                                this->front->orders->rdp_layer->client_info.bpp,
+                                this->get_front_bpp(),
                                 this->palette332);
 
 
@@ -309,7 +309,7 @@ struct client_mod {
         const uint16_t height = bitmap.cy;
         const uint8_t * src = bitmap.data_co;
         const uint8_t in_bpp = bitmap.bpp;
-        const uint8_t out_bpp = this->front->orders->rdp_layer->client_info.bpp;
+        const uint8_t out_bpp = this->get_front_bpp();
         uint8_t * bmpdata = (uint8_t*)malloc(width * height * nbbytes(out_bpp));
         uint8_t * dest = bmpdata;
         for (int i = 0; i < width * height; i++) {

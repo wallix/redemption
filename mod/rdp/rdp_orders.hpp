@@ -143,7 +143,7 @@ struct rdp_orders {
     #warning smells like code duplication, it would probably be better to destroy rdp_orders object and recreate it instead of calling that reset_state.
     void rdp_orders_reset_state()
     {
-        LOG(LOG_INFO, "rdp_orders_reset_state");
+        LOG(LOG_INFO, "/* rdp_orders_reset_state */");
         using namespace RDP;
 
         memset(&this->state, 0, sizeof(this->state));
@@ -162,7 +162,7 @@ struct rdp_orders {
 
     void rdp_orders_process_bmpcache(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
-        LOG(LOG_INFO, "rdp_orders_process_bmpcache");
+//        LOG(LOG_INFO, "rdp_orders_process_bmpcache");
         struct Bitmap* bitmap = NULL;
         uint8_t cache_id = 0;
         uint16_t cache_idx = 0;
@@ -227,7 +227,7 @@ struct rdp_orders {
 
     void rdp_orders_process_fontcache(Stream & stream, int flags, client_mod * mod)
     {
-        LOG(LOG_INFO, "rdp_orders_process_fontcache");
+//        LOG(LOG_INFO, "rdp_orders_process_fontcache");
         int font = stream.in_uint8();
         int nglyphs = stream.in_uint8();
         for (int i = 0; i < nglyphs; i++) {
@@ -245,7 +245,7 @@ struct rdp_orders {
 
     static void rdp_orders_parse_brush(Stream & stream, struct RDPBrush* brush, int present)
     {
-        LOG(LOG_INFO, "rdp_orders_parse_brush");
+        LOG(LOG_INFO, "/* rdp_orders_parse_brush */");
         if (present & 1) {
             brush->org_x = stream.in_uint8();
         }
@@ -263,7 +263,7 @@ struct rdp_orders {
 
     void rdp_orders_process_desksave(Stream & stream, int present, int delta, client_mod * mod)
     {
-        LOG(LOG_INFO, "rdp_orders_process_desksave");
+//        LOG(LOG_INFO, "rdp_orders_process_desksave");
         int width;
         int height;
 
@@ -318,7 +318,7 @@ struct rdp_orders {
     /* Process a 3-way blt order */
     static void rdp_orders_process_triblt(struct rdp_orders* self, Stream & stream, int present, int delta, client_mod * mod)
     {
-        LOG(LOG_INFO, "rdp_orders_process_triblt");
+//        LOG(LOG_INFO, "rdp_orders_process_triblt");
         /* not used */
     }
 
@@ -326,7 +326,7 @@ struct rdp_orders {
     /* Process a polyline order */
     void rdp_orders_process_polyline(Stream & stream, int present, int delta, client_mod * mod)
     {
-        LOG(LOG_INFO, "rdp_orders_process_polyline");
+//        LOG(LOG_INFO, "rdp_orders_process_polyline");
         if (present & 0x01) {
             if (delta){
                 this->state.polyline_x += stream.in_sint8();
@@ -413,7 +413,7 @@ struct rdp_orders {
                 else {
                     mod->server_reset_clip();
                 }
-                LOG(LOG_INFO, "order=%d ordername=%s\n", this->common.order, ordernames[this->common.order]);
+                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
                 case TEXT2:
                     this->rdp_orders_process_text2(stream, mod, header);
@@ -461,14 +461,14 @@ struct rdp_orders {
 
     void process_opaque_rect(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-        LOG(LOG_INFO, "process_opaque_rect");
+//        LOG(LOG_INFO, "process_opaque_rect");
         this->opaquerect.receive(stream, header);
         mod->opaque_rect(this->opaquerect.rect, this->opaquerect.color);
     }
 
     void process_screen_blt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-        LOG(LOG_INFO, "process_screen_blt");
+//        LOG(LOG_INFO, "process_screen_blt");
         this->scrblt.receive(stream, header);
         mod->screen_blt(this->scrblt.rop,
                                this->scrblt.rect,
@@ -478,14 +478,14 @@ struct rdp_orders {
 
     void process_dest_blt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-        LOG(LOG_INFO, "process_dest_blt");
+//        LOG(LOG_INFO, "process_dest_blt");
         this->destblt.receive(stream, header);
         mod->dest_blt(this->destblt.rop, this->destblt.rect);
     }
 
     void process_pat_blt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-        LOG(LOG_INFO, "process_pat_blt");
+//        LOG(LOG_INFO, "process_pat_blt");
         this->patblt.receive(stream, header);
 //        LOG(LOG_INFO, "sending patblt\n");
         mod->server_set_brush(this->patblt.brush);
@@ -496,7 +496,7 @@ struct rdp_orders {
     #warning harmonize names -> mem_blt
     void rdp_orders_process_memblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-        LOG(LOG_INFO, "rdp_orders_process_memblt");
+//        LOG(LOG_INFO, "rdp_orders_process_memblt");
         this->memblt.receive(stream, header);
 //        LOG(LOG_INFO, "receiving memblt : cache_id=%d cache_idx=%d\n",
 //                this->memblt.cache_id & 0xFF, this->memblt.cache_idx);
@@ -510,7 +510,7 @@ struct rdp_orders {
 
     void rdp_orders_process_line(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-        LOG(LOG_INFO, "rdp_orders_process_line");
+//        LOG(LOG_INFO, "rdp_orders_process_line");
         this->lineto.receive(stream, header);
 //        LOG(LOG_INFO, "sending line\n");
         mod->server_set_pen(this->lineto.pen.style, this->lineto.pen.width);
@@ -526,7 +526,7 @@ struct rdp_orders {
 
     void rdp_orders_process_text2(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
     {
-        LOG(LOG_INFO, "rdp_orders_process_text2");
+//        LOG(LOG_INFO, "rdp_orders_process_text2");
         this->glyph_index.receive(stream, header);
         mod->server_glyph_index(this->glyph_index);
 

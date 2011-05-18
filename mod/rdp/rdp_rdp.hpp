@@ -960,7 +960,7 @@ struct rdp_rdp {
 
     void process_color_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
     {
-        LOG(LOG_INFO, "process_color_pointer_pdu\n");
+        LOG(LOG_INFO, "/* process_color_pointer_pdu */\n");
         unsigned cache_idx;
         unsigned dlen;
         unsigned mlen;
@@ -987,7 +987,7 @@ struct rdp_rdp {
 
     void process_cached_pointer_pdu(Stream & stream, client_mod * mod)
     {
-        LOG(LOG_INFO, "process_cached_pointer_pdu\n");
+        LOG(LOG_INFO, "/* process_cached_pointer_pdu */\n");
 
         int cache_idx = stream.in_uint16_le();
         if (cache_idx < 0){
@@ -1002,7 +1002,7 @@ struct rdp_rdp {
 
     void process_system_pointer_pdu(Stream & stream, client_mod * mod)
     {
-        LOG(LOG_INFO, "process_system_pointer_pdu\n");
+        LOG(LOG_INFO, "/* process_system_pointer_pdu */\n");
         int system_pointer_type = stream.in_uint16_le();
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
@@ -1021,7 +1021,7 @@ struct rdp_rdp {
 
     void process_bitmap_updates(Stream & stream, client_mod * mod)
     {
-        LOG(LOG_INFO, "process_bitmap_updates\n");
+        LOG(LOG_INFO, "/* process_bitmap_updates */\n");
         // RDP-BCGR: 2.2.9.1.1.3.1.2 Bitmap Update (TS_UPDATE_BITMAP)
         // ----------------------------------------------------------
         // The TS_UPDATE_BITMAP structure contains one or more rectangular
@@ -1048,7 +1048,7 @@ struct rdp_rdp {
         // numberRectangles (2 bytes): A 16-bit, unsigned integer.
         // The number of screen rectangles present in the rectangles field.
         size_t numberRectangles = stream.in_uint16_le();
-        LOG(LOG_INFO, "---------------- Sending %d rectangles -----------------\n", numberRectangles);
+        LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */\n", numberRectangles);
         for (size_t i = 0; i < numberRectangles; i++) {
             // rectangles (variable): Variable-length array of TS_BITMAP_DATA
             // (section 2.2.9.1.1.3.1.2.2) structures, each of which contains a
@@ -1118,11 +1118,11 @@ struct rdp_rdp {
 
             Bitmap bitmap(bpp, width, height);
 
-            LOG(LOG_INFO, "Rect [%d] bpp=%d (%d) width=%d height=%d b(%d, %d, %d, %d)", i, bpp, bitmap.bpp, width, height,
+            LOG(LOG_INFO, "/* Rect [%d] bpp=%d (%d) width=%d height=%d b(%d, %d, %d, %d) */", i, bpp, bitmap.bpp, width, height,
                 boundary.x, boundary.y, boundary.cx, boundary.cy);
 
             if (flags & 0x0001){
-                LOG(LOG_INFO, "Compressed Bitmap");
+                LOG(LOG_INFO, "/* Compressed Bitmap */");
                 uint16_t size = 0;
                 if (flags & 0x400) {
                     size = bitmapLength;
@@ -1149,7 +1149,7 @@ struct rdp_rdp {
                 bitmap.decompress(data, size);
             }
             else {
-                LOG(LOG_INFO, "Not Compressed Bitmap");
+                LOG(LOG_INFO, "/* Not Compressed Bitmap */");
                 const uint8_t * data = stream.in_uint8p(bitmapLength);
                 assert(bitmapLength == bitmap.bmp_size);
                 bitmap.copy(data);
@@ -1158,7 +1158,7 @@ struct rdp_rdp {
             mod->clip = boundary;
             mod->server_paint_rect(bitmap, boundary, 0, 0, this->orders.cache_colormap.palette[0]);
         }
-        LOG(LOG_INFO, "---------------- Sending %d rectangles -Done--\n", numberRectangles);
+        LOG(LOG_INFO, "/* ---------------- Sending %d rectangles -Done-- */\n", numberRectangles);
 
     }
 

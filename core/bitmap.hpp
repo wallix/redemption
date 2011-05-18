@@ -79,7 +79,22 @@ struct Bitmap{
         this->data_co = (uint8_t*)malloc(this->bmp_size);
         assert(this->data_co);
         this->pmax = this->data_co + this->bmp_size;
-    };
+    }
+
+    Bitmap(int bpp, int cx, int cy, const uint8_t * data, const size_t size)
+    {
+        this->bpp = bpp;
+        this->Bpp = nbbytes(bpp);
+        this->cx = cx;
+        this->cy = cy;
+
+        this->line_size = row_size(cx, bpp);
+        this->bmp_size = this->line_size * cy;
+        this->data_co = (uint8_t*)malloc(this->bmp_size);
+        assert(this->data_co);
+        this->pmax = this->data_co + this->bmp_size;
+        memcpy(this->data_co, data, size);
+    }
 
     Bitmap(int bpp, const Rect & r, int src_cx, int src_cy, const uint8_t * src_data)
     {
@@ -316,6 +331,44 @@ struct Bitmap{
         return;
     }
 
+    void dump(){
+//        LOG(LOG_INFO, "------- Dumping bitmap RAW data [%p]---------\n", this);
+//        LOG(LOG_INFO, "cx=%d cy=%d bpp=%d BPP=%d line_size=%d bmp_size=%d data=%p pmax=%p\n",
+//            this->cx, this->cy, this->bpp, this->Bpp, this->line_size, this->bmp_size, this->data_co, this->pmax);
+        assert(this->bpp);
+        assert(this->Bpp);
+        assert(this->line_size);
+        assert(this->cx);
+        assert(this->cy);
+        assert(this->data_co);
+        assert(this->pmax);
+        assert(this->bmp_size);
+        assert(this->data_co + this->bmp_size == this->pmax);
+
+        LOG(LOG_INFO, "uint8_t raw%p[] = {", this);
+
+        for (int j = 0 ; j < this->cy ; j++){
+            LOG(LOG_INFO, "/* line %d */", (this->cy - j - 1));
+            char buffer[2048];
+            char * line = buffer;
+            buffer[0] = 0;
+            for (int i = 0; i < this->line_size; i++){
+                line += snprintf(line, 1024, "0x%.2x, ", this->data_co[j*this->line_size+i]);
+                if (i % 16 == 15){
+                    LOG(LOG_INFO, buffer);
+                    line = buffer;
+                    buffer[0] = 0;
+                }
+            }
+            if (line != buffer){
+                LOG(LOG_INFO, buffer);
+            }
+        }
+        LOG(LOG_INFO, "}; /* %p */", this);
+        LOG(LOG_INFO, "Bitmap bmp%p(%d, %d, %d, raw%p, sizeof(raw%p));", this, this->bpp, this->cx, this->cy, this, this);
+
+//        LOG(LOG_INFO, "\n-----End of dump [%p] -----------------------\n", this);
+    }
 
     void copy(const uint8_t* input){
         memcpy(this->data_co, input, this->bmp_size);
