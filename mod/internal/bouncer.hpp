@@ -264,10 +264,10 @@ struct bouncer_mod : public internal_mod {
         front.orders->send();
 
         front.begin_update();
-        front.mem_blt(cache_b_id, 0, fill_rect1, 0xcc, entry_b->pbmp->bpp, entry_b->pbmp->data_co, 0, 0, cache_b_idx,fill_rect1);
-        front.mem_blt(cache_b_id_h, 0, fill_rect2, 0xcc, entry_b_h->pbmp->bpp, entry_b_h->pbmp->data_co, 0, 0, cache_b_idx_h, fill_rect2);
-        front.mem_blt(cache_b_id_wallix, 0, fill_rect_wallix, 0xcc, entry_b_wallix->pbmp->bpp, entry_b_wallix->pbmp->data_co, 0, 0, cache_b_idx_wallix,fill_rect_wallix);
-        front.mem_blt(cache_b_id_h_wallix, 0, fill_rect_wallix_h, 0xcc, entry_b_h_wallix->pbmp->bpp, entry_b_h_wallix->pbmp->data_co, 0, 0, cache_b_idx_h_wallix, fill_rect_wallix_h);
+        front.mem_blt(cache_b_id, 0, fill_rect1, 0xcc, 0, 0, cache_b_idx,fill_rect1);
+        front.mem_blt(cache_b_id_h, 0, fill_rect2, 0xcc, 0, 0, cache_b_idx_h, fill_rect2);
+        front.mem_blt(cache_b_id_wallix, 0, fill_rect_wallix, 0xcc, 0, 0, cache_b_idx_wallix,fill_rect_wallix);
+        front.mem_blt(cache_b_id_h_wallix, 0, fill_rect_wallix_h, 0xcc, 0, 0, cache_b_idx_h_wallix, fill_rect_wallix_h);
         front.end_update();
 
         src_x = src_x + 10;

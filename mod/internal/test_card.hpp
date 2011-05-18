@@ -237,7 +237,7 @@ struct test_card_mod : public internal_mod {
             front.orders->reserve_order(align4(entry->pbmp->cx * nbbytes(entry->pbmp->bpp)) * entry->pbmp->cy + 16);
             bmp.emit(front.orders->out_stream);
         }
-        front.mem_blt(cache_b_id, 0, Rect(100, 450, 32, 32), 0xcc, entry->pbmp->bpp, entry->pbmp->data_co, 0, 0, cache_b_idx, Rect(100, 450, 32, 32));
+        front.mem_blt(cache_b_id, 0, Rect(100, 450, 32, 32), 0xcc, 0, 0, cache_b_idx, Rect(100, 450, 32, 32));
         front.end_update();
 
         /* Draw a little pink rect at bottom-right side of screen bottom-right rectangle */

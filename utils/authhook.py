@@ -16,6 +16,7 @@ class Authentifier(object):
     # at all. Comparing hashes is enough anyway.
     passwords = {
         'w2008': 'w2008',
+        'w7': 'w7',
         'xp': 'xp',
         'v' : 'v',
         'n' : 'n',
@@ -30,6 +31,14 @@ class Authentifier(object):
             'proxy_type': 'RDP',
             'target_login' : r'qa\administrateur',
             'target_device' : '10.10.14.78',
+            'target_password' : 'S3cur3!1nux',
+            'proto_dest': 'RDP',
+            'target_port':'3389'
+        },
+        'w7' : {
+            'proxy_type': 'RDP',
+            'target_login' : r'qa\administrateur',
+            'target_device' : '10.10.14.77',
             'target_password' : 'S3cur3!1nux',
             'proto_dest': 'RDP',
             'target_port':'3389'

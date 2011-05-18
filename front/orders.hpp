@@ -233,7 +233,7 @@ struct Orders
     {
         this->reserve_order(30);
 
-//        LOG(LOG_INFO, "mem_blt[%d](cache_id=%d color_table=%d r(%d, %d, %d, %d) rop=%d srcx=%d srcy=%d cache_idx=%d clip(%d, %d, %d, %d)", this->order_count, cache_id, color_table, r.x, r.y, r.cx, r.cy, rop, srcx, srcy, cache_idx, clip.x, clip.y, clip.cx, clip.cy);
+        LOG(LOG_INFO, "/* mem_blt[%d](cache_id=%d color_table=%d r(%d, %d, %d, %d) rop=%d srcx=%d srcy=%d cache_idx=%d clip(%d, %d, %d, %d)) */", this->order_count, cache_id, color_table, r.x, r.y, r.cx, r.cy, rop, srcx, srcy, cache_idx, clip.x, clip.y, clip.cx, clip.cy);
 
         RDPMemBlt cmd(cache_id + color_table * 256, r, rop, srcx, srcy, cache_idx);
         RDPOrderCommon newcommon(MEMBLT, clip);

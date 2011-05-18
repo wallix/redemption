@@ -241,7 +241,6 @@ public:
     void mem_blt(int cache_id,
                  int color_table, const Rect & r,
                  int rop,
-                 int in_bpp, uint8_t * data,
                  int srcx, int srcy,
                  int cache_idx, const Rect & clip)
     {
@@ -250,8 +249,8 @@ public:
         if (!clip.intersect(r).isempty()){
             this->orders->mem_blt(cache_id, color_table, r, rop, srcx, srcy, cache_idx, clip);
             if (this->capture){
-                #warning why are bpp and data provided to mem_blt ? Should be useless like in orders. We should read bitmap from cache using cache_id and cache_idx instead. front has access to bitmap_cache
-                this->capture->mem_blt(cache_id, color_table, r, rop, in_bpp, data, srcx, srcy, cache_idx, clip);
+                BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
+                this->capture->mem_blt(cache_id, color_table, r, rop, entry->pbmp->bpp, entry->pbmp->data_co, srcx, srcy, cache_idx, clip);
             }
         }
     }
@@ -324,54 +323,75 @@ public:
                      int palette_id,
                      const Rect & clip)
     {
-        LOG(LOG_INFO, "front::send_bitmap_front(dst(%d, %d, %d, %d), src_r(%d, %d, %d, %d) src_data=%p clip(%d, %d, %d, %d) bpp=%d\n", dst.x, dst.y, dst.cx, dst.cy, src_r.x, src_r.y, src_r.cx, src_r.cy, src_data, clip.x, clip.y, clip.cx, clip.cy, this->orders->rdp_layer->client_info.bpp);
-        for (int j = 0; j < dst.cy ; j += 64) {
-            int h = std::min(64, dst.cy - j);
-            for (int i = 0; i < dst.cx ; i+= 64) {
-                int w = std::min(64, dst.cx - i);
-                const Rect rect1(dst.x + i, dst.y + j, w, h);
-                const Rect & draw_rect = clip.intersect(rect1);
-                if (!draw_rect.isempty()){
-                     uint32_t cache_ref = this->bmp_cache->add_bitmap(
-                                                src_r.cx, src_r.cy,
-                                                src_data,
-                                                i + src_r.x,
-                                                j + src_r.y,
-                                                w, h,
-                                                this->orders->rdp_layer->client_info.bpp);
 
-                    uint8_t send_type = (cache_ref >> 24);
-                    uint8_t cache_id  = (cache_ref >> 16);
-                    uint16_t cache_idx = (cache_ref & 0xFFFF);
+        const int block_cx = 64;
+        const int block_cy = 64;
 
-                    BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
-                    LOG(LOG_INFO, "entry=%p bitmap=%p", entry, entry->pbmp);
+        LOG(LOG_INFO, "/* front::send_bitmap_front(dst(%d, %d, %d, %d), src_r(%d, %d, %d, %d) src_data=%p clip(%d, %d, %d, %d) bpp=%d */\n", dst.x, dst.y, dst.cx, dst.cy, src_r.x, src_r.y, src_r.cx, src_r.cy, src_data, clip.x, clip.y, clip.cx, clip.cy, this->orders->rdp_layer->client_info.bpp);
 
-                    if (send_type == BITMAP_ADDED_TO_CACHE){
-                        LOG(LOG_INFO, "Added to cache: id=%d idx=%d", cache_id, cache_idx);
-//                        if (rect1.x == 64 && rect1.y == 320) {
-//                            printf("------- Bogus Not Compressed (%d)---------\n", entry->pbmp->bmp_size);
-//                            for (int i = 0; i < entry->pbmp->bmp_size; i++){
-//                                if (0==(i % 16)){
-//                                    printf("\n");
-//                                }
-//                                printf("0x%.2x, ", entry->pbmp->data_co[i]);
-//                            }
-//                            printf("\n");
-//                            printf("\n----------------------------\n");
-//                            printf("\n");
-//                        }
-                        this->orders->send_bitmap_common(*entry->pbmp, cache_id, cache_idx);
+        if ((align4(dst.cx) * dst.cy * nbbytes(this->orders->rdp_layer->client_info.bpp)
+            <= this->bmp_cache->big_size)){
+            LOG(LOG_INFO, "// sending bitmap in one piece: (%d, %d, %d, %d) size=%d big_size=%d",
+                dst.x, dst.y, dst.cx, dst.cy, align4(dst.cx) * dst.cy * nbbytes(this->orders->rdp_layer->client_info.bpp), this->bmp_cache->big_size);
+            const Rect & draw_rect = clip.intersect(dst);
+            if (!draw_rect.isempty()){
+               uint32_t cache_ref = this->bmp_cache->add_bitmap(
+                                            src_r.cx, src_r.cy,
+                                            src_data,
+                                            src_r.x,
+                                            src_r.y,
+                                            dst.cx, dst.cy,
+                                            this->orders->rdp_layer->client_info.bpp);
+
+                uint8_t send_type = (cache_ref >> 24);
+                uint8_t cache_id  = (cache_ref >> 16);
+                uint16_t cache_idx = (cache_ref & 0xFFFF);
+
+                BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
+
+                if (send_type == BITMAP_ADDED_TO_CACHE){
+//                    LOG(LOG_INFO, "Added to cache [one piece]: id=%d idx=%d", cache_id, cache_idx);
+                    entry->pbmp->dump();
+                    LOG(LOG_INFO, "this->front.orders->send_bitmap_common(bmp%p, %d, %d);", entry->pbmp, cache_id, cache_idx);
+                    this->orders->send_bitmap_common(*entry->pbmp, cache_id, cache_idx);
+                }
+                LOG(LOG_INFO, "this->front.orders->mem_blt(%d, 0, Rect(%d, %d, %d, %d), 0xCC, 0, 0, %d, Rect(%d, %d, %d, %d));", cache_id, dst.x, dst.y, dst.cx, dst.cy, cache_idx, clip.x, clip.y, clip.cx, clip.cy);
+
+                this->mem_blt(cache_id, palette_id, dst, 0xcc, 0, 0, cache_idx, clip);
+            }
+        }
+        else {
+            for (int j = 0; j < dst.cy ; j += block_cy) {
+                int h = std::min(block_cy, dst.cy - j);
+                for (int i = 0; i < dst.cx ; i+= block_cx) {
+                    int w = std::min(block_cx, dst.cx - i);
+                    const Rect rect1(dst.x + i, dst.y + j, w, h);
+                    const Rect & draw_rect = clip.intersect(rect1);
+                    if (!draw_rect.isempty()){
+                       uint32_t cache_ref = this->bmp_cache->add_bitmap(
+                                                    src_r.cx, src_r.cy,
+                                                    src_data,
+                                                    i + src_r.x,
+                                                    j + src_r.y,
+                                                    w, h,
+                                                    this->orders->rdp_layer->client_info.bpp);
+
+                        uint8_t send_type = (cache_ref >> 24);
+                        uint8_t cache_id  = (cache_ref >> 16);
+                        uint16_t cache_idx = (cache_ref & 0xFFFF);
+
+                        BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
+
+                        if (send_type == BITMAP_ADDED_TO_CACHE){
+//                            LOG(LOG_INFO, "Added to cache: id=%d idx=%d i=%d j=%d", cache_id, cache_idx, i, j);
+                            entry->pbmp->dump();
+                            LOG(LOG_INFO, "this->front.orders->send_bitmap_common(bmp%p, %d, %d);", entry->pbmp, cache_id, cache_idx);
+                            this->orders->send_bitmap_common(*entry->pbmp, cache_id, cache_idx);
+                        }
+
+                        LOG(LOG_INFO, "this->front.orders->mem_blt(%d, 0, Rect(%d, %d, %d, %d), 0xCC, 0, 0, %d, Rect(%d, %d, %d, %d));", cache_id, rect1.x, rect1.y, rect1.cx, rect1.cy, cache_idx, clip.x, clip.y, clip.cx, clip.cy);
+                        this->mem_blt(cache_id, palette_id, rect1, 0xcc, 0, 0, cache_idx, clip);
                     }
-                    else {
-                        LOG(LOG_INFO, "Found in cache at: id=%d idx=%d", cache_id, cache_idx);
-                    }
-
-                    this->mem_blt(cache_id, palette_id,
-                                  rect1, 0xcc,
-                                  entry->pbmp->bpp,
-                                  entry->pbmp->data_co,
-                                  0, 0, cache_idx, clip);
                 }
             }
         }
