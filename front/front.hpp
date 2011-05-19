@@ -329,7 +329,9 @@ public:
 
         LOG(LOG_INFO, "/* front::send_bitmap_front(dst(%d, %d, %d, %d), src_r(%d, %d, %d, %d) src_data=%p clip(%d, %d, %d, %d) bpp=%d */\n", dst.x, dst.y, dst.cx, dst.cy, src_r.x, src_r.y, src_r.cx, src_r.cy, src_data, clip.x, clip.y, clip.cx, clip.cy, this->orders->rdp_layer->client_info.bpp);
 
-        if ((align4(dst.cx) * dst.cy * nbbytes(this->orders->rdp_layer->client_info.bpp)
+        if ((align4(dst.cx) < 256) 
+	    && (dst.cy < 256) 
+	    && (align4(dst.cx) * dst.cy * nbbytes(this->orders->rdp_layer->client_info.bpp)
             <= this->bmp_cache->big_size)){
             LOG(LOG_INFO, "// sending bitmap in one piece: (%d, %d, %d, %d) size=%d big_size=%d",
                 dst.x, dst.y, dst.cx, dst.cy, align4(dst.cx) * dst.cy * nbbytes(this->orders->rdp_layer->client_info.bpp), this->bmp_cache->big_size);
