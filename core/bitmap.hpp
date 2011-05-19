@@ -332,6 +332,7 @@ struct Bitmap{
     }
 
     void dump(){
+      return;
 //        LOG(LOG_INFO, "------- Dumping bitmap RAW data [%p]---------\n", this);
 //        LOG(LOG_INFO, "cx=%d cy=%d bpp=%d BPP=%d line_size=%d bmp_size=%d data=%p pmax=%p\n",
 //            this->cx, this->cy, this->bpp, this->Bpp, this->line_size, this->bmp_size, this->data_co, this->pmax);

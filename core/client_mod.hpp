@@ -330,6 +330,34 @@ struct client_mod {
         free(bmpdata);
     }
 
+    void server_memblt(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const RGBPalette & palette)
+    {
+        #warning color conversion should probably go into bitmap. Something like a copy constructor that change color on the fly ? We may even choose to keep several versions of the same bitmap with different bpp ?
+        const uint16_t width = bitmap.cx;
+        const uint16_t height = bitmap.cy;
+        const uint8_t * src = bitmap.data_co;
+        const uint8_t in_bpp = bitmap.bpp;
+        const uint8_t out_bpp = this->get_front_bpp();
+        uint8_t * bmpdata = (uint8_t*)malloc(width * height * nbbytes(out_bpp));
+        uint8_t * dest = bmpdata;
+        for (int i = 0; i < width * height; i++) {
+            uint32_t pixel = color_decode(in_bytes_le(nbbytes(in_bpp), src),
+                                          in_bpp,
+                                          palette);
+            uint32_t target_pixel = color_encode(pixel, out_bpp, this->palette332);
+            target_pixel = 0xFFFFFF & target_pixel;
+            out_bytes_le(dest, nbbytes(out_bpp), target_pixel);
+            src += nbbytes(in_bpp);
+            dest += nbbytes(out_bpp);
+        }
+        const Rect src_r(srcx, srcy, width, height);
+        front->begin_update();
+        this->front->send_bitmap_front2(dst, src_r, bmpdata, 0, this->clip);
+        front->end_update();
+
+        free(bmpdata);
+    }
+
     void set_pointer(int cache_idx)
     {
         this->front->set_pointer(cache_idx);
