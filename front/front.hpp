@@ -192,7 +192,8 @@ public:
     /* fill in an area of the screen with one color */
     void opaque_rect(const Rect & r, int fgcolor, const Rect & clip)
     {
-//        LOG(LOG_INFO, "front::opaque_rect\n");
+      LOG(LOG_INFO, "this->front.orders->opaque_rect(Rect(%d, %d, %d, %d), 0x%.6x, Rect(%d, %d, %d, %d));", r.x, r.y, r.cx, r.cy, fgcolor, clip.x, clip.y, clip.cx, clip.cy);
+
         if (!clip.isempty() && !clip.intersect(r).isempty()){
             this->orders->opaque_rect(r, fgcolor, clip);
             if (this->capture){
@@ -201,8 +202,11 @@ public:
         }
     }
 
+    #warning unify API with orders
     void screen_blt(int rop, const Rect & r, int srcx, int srcy, const Rect &clip)
     {
+      LOG(LOG_INFO, "this->front.orders->screen_blt(Rect(%d, %d, %d, %d), %d, %d, 0x.2x, Rect(%d, %d, %d, %d));", r.x, r.y, r.cx, r.cy, srcx, srcy, rop, clip.x, clip.y, clip.cx, clip.cy);
+
 //        LOG(LOG_INFO, "front::screen_blt\n");
         if (!clip.isempty() && !clip.intersect(r).isempty()){
             // this one is used when dragging a visible window on screen
@@ -215,7 +219,8 @@ public:
 
     void dest_blt(const Rect & r, int rop, const Rect &clip)
     {
-//        LOG(LOG_INFO, "front::dest_blt r(%d, %d, %d, %d) rop=%d clip(%d, %d, %d, %d)\n", r.x, r.y, r.cx, r.cy, rop, clip.x, clip.y, clip.cx, clip.cy);
+      LOG(LOG_INFO, "this->front.orders->dest_blt(Rect(%d, %d, %d, %d), 0x%.2x, Rect(%d, %d, %d, %d));", r.x, r.y, r.cx, r.cy, rop, clip.x, clip.y, clip.cx, clip.cy);
+
         if (!clip.intersect(r).isempty()){
             this->orders->dest_blt(r, rop, clip);
             if (this->capture){
@@ -228,7 +233,8 @@ public:
 
     void pat_blt(const Rect & r, int rop, uint32_t bg_color,  uint32_t fg_color, const RDPBrush & brush, const Rect &clip)
     {
-//        LOG(LOG_INFO, "front::pat_blt r(%d, %d, %d, %d) rop=%d bg_color=%d fg_color=%d brush=%p clip(%d, %d, %d, %d)\n", r.x, r.y, r.cx, r.cy, rop, bg_color, fg_color, &brush, clip.x, clip.y, clip.cx, clip.cy);
+      LOG(LOG_INFO, "this->front.orders->pat_blt(Rect(%d, %d, %d, %d), 0x%.2x, 0x%.6x, 0x%.6x, this->brush, Rect(%d, %d, %d, %d));", r.x, r.y, r.cx, r.cy, rop, bg_color, fg_color, clip.x, clip.y, clip.cx, clip.cy);
+
         if (!clip.intersect(r).isempty()){
             this->orders->pat_blt(r, rop, bg_color, fg_color, brush, clip);
             if (this->capture){
@@ -244,7 +250,8 @@ public:
                  int srcx, int srcy,
                  int cache_idx, const Rect & clip)
     {
-//        LOG(LOG_INFO, "front::mem_blt\n");
+      LOG(LOG_INFO, "this->front.orders->mem_blt(%d, %d, Rect(%d, %d, %d, %d), 0x%.2x, %d, %d, %d, Rect(%d, %d, %d, %d));", cache_id, color_table, r.x, r.y, r.cx, r.cy, rop, srcx, srcy, cache_idx, clip.x, clip.y, clip.cx, clip.cy);
+
 
         if (!clip.intersect(r).isempty()){
             this->orders->mem_blt(cache_id, color_table, r, rop, srcx, srcy, cache_idx, clip);
@@ -317,88 +324,157 @@ public:
 
     }
 
+
     // draw bitmap from src_data (image rect contained in src_r) to x, y
     // clip_region is the list of visible rectangles that should be sent
     void send_bitmap_front(const Rect & dst, const Rect & src_r, const uint8_t * src_data,
                      int palette_id,
                      const Rect & clip)
     {
+//        LOG(LOG_INFO, "front::send_bitmap_front bpp=%d\n", this->orders->rdp_layer->client_info.bpp);
+        for (int j = 0; j < dst.cy ; j += 64) {
+            int h = std::min(64, dst.cy - j);
+            for (int i = 0; i < dst.cx ; i+= 64) {
+                int w = std::min(64, dst.cx - i);
+                const Rect rect1(dst.x + i, dst.y + j, w, h);
+                const Rect & draw_rect = clip.intersect(rect1);
+                if (!draw_rect.isempty()){
+                     uint32_t cache_ref = this->bmp_cache->add_bitmap(
+                                                src_r.cx, src_r.cy,
+                                                src_data,
+                                                i + src_r.x,
+                                                j + src_r.y,
+                                                w, h,
+                                                this->orders->rdp_layer->client_info.bpp);
+
+                    uint8_t send_type = (cache_ref >> 24);
+                    uint8_t cache_id  = (cache_ref >> 16);
+                    uint16_t cache_idx = (cache_ref & 0xFFFF);
+
+                    BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
+
+
+                    if (send_type == BITMAP_ADDED_TO_CACHE){
+                        this->orders->send_bitmap_common(*entry->pbmp, cache_id, cache_idx);
+                    };
+
+                    this->mem_blt(cache_id, palette_id,
+                                  rect1, 0xcc,
+                                  0, 0, cache_idx, clip);
+                }
+            }
+        }
+    }
+
+    // draw bitmap from src_data (image rect contained in src_r) to x, y
+    // clip_region is the list of visible rectangles that should be sent
+    void send_bitmap_front2_old(const Rect & dst, const Rect & src_r, const uint8_t * src_data,
+                     int palette_id,
+                     const Rect & clip)
+    {
+//        LOG(LOG_INFO, "front::send_bitmap_front bpp=%d\n", this->orders->rdp_layer->client_info.bpp);
+        for (int j = 0; j < dst.cy ; j += 64) {
+            int h = std::min(64, dst.cy - j);
+            for (int i = 0; i < dst.cx ; i+= 64) {
+                int w = std::min(64, dst.cx - i);
+                const Rect rect1(dst.x + i, dst.y + j, w, h);
+                const Rect & draw_rect = clip.intersect(rect1);
+                if (!draw_rect.isempty()){
+                     uint32_t cache_ref = this->bmp_cache->add_bitmap(
+                                                src_r.cx, src_r.cy,
+                                                src_data,
+                                                i + src_r.x,
+                                                j + src_r.y,
+                                                w, h,
+                                                this->orders->rdp_layer->client_info.bpp);
+
+                    uint8_t send_type = (cache_ref >> 24);
+                    uint8_t cache_id  = (cache_ref >> 16);
+                    uint16_t cache_idx = (cache_ref & 0xFFFF);
+
+                    BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
+
+
+                    if (send_type == BITMAP_ADDED_TO_CACHE){
+                        this->orders->send_bitmap_common(*entry->pbmp, cache_id, cache_idx);
+                    };
+
+                    this->mem_blt(cache_id, palette_id,
+                                  rect1, 0xcc,
+                                  0, 0, cache_idx, clip);
+                }
+            }
+        }
+    }
+
+
+  void send_tile(const uint16_t x, const uint16_t y, const Rect & tile, 
+		 const uint16_t src_cx, const uint16_t src_cy, const uint8_t * src_data, 
+		 int palette_id, const Rect & clip)
+  {
+    if (!tile.intersect(clip).isempty()){
+      uint32_t cache_ref = this->bmp_cache->add_bitmap(src_cx, src_cy, src_data,
+						       tile.x, tile.y,
+						       tile.cx, tile.cy,
+						       this->orders->rdp_layer->client_info.bpp); 
+      uint8_t send_type = (cache_ref >> 24);
+      uint8_t cache_id  = (cache_ref >> 16);
+      uint16_t cache_idx = (cache_ref & 0xFFFF);
+      
+      if (send_type == BITMAP_ADDED_TO_CACHE){
+	BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
+	this->orders->send_bitmap_common(*entry->pbmp, cache_id, cache_idx);
+      }
+      this->mem_blt(cache_id, palette_id, tile.offset(x, y), 0xcc, 0, 0, cache_idx, clip);
+    }
+  }
+
+    // draw bitmap from src_data (image rect contained in src_r) to x, y
+    // clip_region is the list of visible rectangles that should be sent
+    void send_bitmap_front2(const Rect & dst, const Rect & src_r, const uint8_t * src_data,
+                     int palette_id,
+                     const Rect & clip)
+    {
+      assert(src_r.x == 0);
+	assert(src_r.y == 0);
 
         const int block_cx = 64;
         const int block_cy = 64;
 
         LOG(LOG_INFO, "/* front::send_bitmap_front(dst(%d, %d, %d, %d), src_r(%d, %d, %d, %d) src_data=%p clip(%d, %d, %d, %d) bpp=%d */\n", dst.x, dst.y, dst.cx, dst.cy, src_r.x, src_r.y, src_r.cx, src_r.cy, src_data, clip.x, clip.y, clip.cx, clip.cy, this->orders->rdp_layer->client_info.bpp);
 
-        if ((align4(dst.cx) < 256) 
-	    && (dst.cy < 256) 
-	    && (align4(dst.cx) * dst.cy * nbbytes(this->orders->rdp_layer->client_info.bpp)
-            <= this->bmp_cache->big_size)){
-            LOG(LOG_INFO, "// sending bitmap in one piece: (%d, %d, %d, %d) size=%d big_size=%d",
-                dst.x, dst.y, dst.cx, dst.cy, align4(dst.cx) * dst.cy * nbbytes(this->orders->rdp_layer->client_info.bpp), this->bmp_cache->big_size);
-            const Rect & draw_rect = clip.intersect(dst);
-            if (!draw_rect.isempty()){
-               uint32_t cache_ref = this->bmp_cache->add_bitmap(
-                                            src_r.cx, src_r.cy,
-                                            src_data,
-                                            src_r.x,
-                                            src_r.y,
-                                            dst.cx, dst.cy,
-                                            this->orders->rdp_layer->client_info.bpp);
-
-                uint8_t send_type = (cache_ref >> 24);
-                uint8_t cache_id  = (cache_ref >> 16);
-                uint16_t cache_idx = (cache_ref & 0xFFFF);
-
-                BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
-
-                if (send_type == BITMAP_ADDED_TO_CACHE){
-//                    LOG(LOG_INFO, "Added to cache [one piece]: id=%d idx=%d", cache_id, cache_idx);
-                    entry->pbmp->dump();
-                    LOG(LOG_INFO, "this->front.orders->send_bitmap_common(bmp%p, %d, %d);", entry->pbmp, cache_id, cache_idx);
-                    this->orders->send_bitmap_common(*entry->pbmp, cache_id, cache_idx);
-                }
-                LOG(LOG_INFO, "this->front.orders->mem_blt(%d, 0, Rect(%d, %d, %d, %d), 0xCC, 0, 0, %d, Rect(%d, %d, %d, %d));", cache_id, dst.x, dst.y, dst.cx, dst.cy, cache_idx, clip.x, clip.y, clip.cx, clip.cy);
-
-                this->mem_blt(cache_id, palette_id, dst, 0xcc, 0, 0, cache_idx, clip);
-            }
-        }
-        else {
-            for (int j = 0; j < dst.cy ; j += block_cy) {
-                int h = std::min(block_cy, dst.cy - j);
-                for (int i = 0; i < dst.cx ; i+= block_cx) {
-                    int w = std::min(block_cx, dst.cx - i);
-                    const Rect rect1(dst.x + i, dst.y + j, w, h);
-                    const Rect & draw_rect = clip.intersect(rect1);
-                    if (!draw_rect.isempty()){
-                       uint32_t cache_ref = this->bmp_cache->add_bitmap(
-                                                    src_r.cx, src_r.cy,
-                                                    src_data,
-                                                    i + src_r.x,
-                                                    j + src_r.y,
-                                                    w, h,
-                                                    this->orders->rdp_layer->client_info.bpp);
-
-                        uint8_t send_type = (cache_ref >> 24);
-                        uint8_t cache_id  = (cache_ref >> 16);
-                        uint16_t cache_idx = (cache_ref & 0xFFFF);
-
-                        BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
-
-                        if (send_type == BITMAP_ADDED_TO_CACHE){
-//                            LOG(LOG_INFO, "Added to cache: id=%d idx=%d i=%d j=%d", cache_id, cache_idx, i, j);
-                            entry->pbmp->dump();
-                            LOG(LOG_INFO, "this->front.orders->send_bitmap_common(bmp%p, %d, %d);", entry->pbmp, cache_id, cache_idx);
-                            this->orders->send_bitmap_common(*entry->pbmp, cache_id, cache_idx);
-                        }
-
-                        LOG(LOG_INFO, "this->front.orders->mem_blt(%d, 0, Rect(%d, %d, %d, %d), 0xCC, 0, 0, %d, Rect(%d, %d, %d, %d));", cache_id, rect1.x, rect1.y, rect1.cx, rect1.cy, cache_idx, clip.x, clip.y, clip.cx, clip.cy);
-                        this->mem_blt(cache_id, palette_id, rect1, 0xcc, 0, 0, cache_idx, clip);
-                    }
-                }
-            }
-        }
+	for (int j = 0; j + block_cy < dst.cy ; j += block_cy) {
+	  for (int i = 0; i + block_cx < dst.cx ; i+= block_cx) {
+	    this->send_tile(dst.x, dst.y, 
+			    Rect(i, 
+				 j, 
+				 block_cx, 
+				 block_cy), 
+			    src_r.cx, src_r.cy, src_data, palette_id, clip);
+	  }
+	  this->send_tile(dst.x, dst.y, 
+			  Rect(dst.cx - dst.cx % block_cx,
+			       j,
+			       dst.cx % block_cx, 
+			       dst.cy % block_cy), 
+			  src_r.cx, src_r.cy, src_data, palette_id, clip);
+	}
+	for (int i = 0; i + block_cx < dst.cx ; i+= block_cx) {
+	  this->send_tile(dst.x, dst.y, 
+			  Rect(i, 
+			       dst.cy - dst.cy % block_cy,
+			       block_cx, 
+			       dst.cy % block_cy),
+			  src_r.cx, src_r.cy, src_data, palette_id, clip);
+	}
+	this->send_tile(dst.x, dst.y, 
+			Rect(dst.cx - dst.cx % block_cx, 
+			     dst.cy - dst.cy % block_cy, 
+			     dst.cx % block_cx, 
+			     dst.cy % block_cy),
+			src_r.cx, src_r.cy, src_data, palette_id, clip);
     }
-
+  
     #warning harmonize names with orders send_glyph or send_font
     void send_glyph(int font, int character,
                     int offset, int baseline,
