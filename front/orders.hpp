@@ -375,7 +375,7 @@ struct Orders
         #warning really when using compression we'll use less space
         this->reserve_order(bmp.bmp_size + 16);
 
-//        LOG(LOG_INFO, "send_bitmap[%d](bmp(bpp=%d, cx=%d, cy=%d, data=%p), cache_id=%d, cache_idx=%d)\n", this->order_count, bmp.bpp, bmp.cx, bmp.cy, bmp.data_co, cache_id, cache_idx);
+        LOG(LOG_INFO, "/* send_bitmap[%d](bmp(bpp=%d, cx=%d, cy=%d, data=%p), cache_id=%d, cache_idx=%d) */\n", this->order_count, bmp.bpp, bmp.cx, bmp.cy, bmp.data_co, cache_id, cache_idx);
 
 
         bmp_order.emit(this->out_stream);

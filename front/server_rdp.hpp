@@ -669,13 +669,19 @@ struct server_rdp {
     /*****************************************************************************/
     void capset_general(Stream & stream, int len)
     {
+        LOG(LOG_INFO, "capset_general");
         stream.skip_uint8(10);
-        int i = stream.in_uint16_le();
         /* use_compact_packets is pretty much 'use rdp5' */
-        this->client_info.use_compact_packets = (i != 0);
+        this->client_info.use_compact_packets = stream.in_uint16_le();
+        if (this->client_info.use_compact_packets){
+            LOG(LOG_INFO, "Use compact packets");
+        }
         /* op2 is a boolean to use compact bitmap headers in bitmap cache */
         /* set it to same as 'use rdp5' boolean */
         this->client_info.op2 = this->client_info.use_compact_packets;
+        if (this->client_info.op2){
+            LOG(LOG_INFO, "Use compact headers for cache");
+        }
     }
 
     /*****************************************************************************/
@@ -719,6 +725,7 @@ struct server_rdp {
     /* store the bitmap cache size in client_info */
     void capset_bmpcache(Stream & stream, int len)
     {
+        LOG(LOG_INFO, "capset_bmpcache");
         stream.skip_uint8(24);
         this->client_info.cache1_entries = stream.in_uint16_le();
         this->client_info.cache1_size = stream.in_uint16_le();
@@ -726,32 +733,27 @@ struct server_rdp {
         this->client_info.cache2_size = stream.in_uint16_le();
         this->client_info.cache3_entries = stream.in_uint16_le();
         this->client_info.cache3_size = stream.in_uint16_le();
-        LOG(LOG_INFO, "cache1_size=%d cache2_size=%d cache3_size=%d\n",
-            this->client_info.cache1_size,
-            this->client_info.cache2_size,
-            this->client_info.cache3_size);
+        LOG(LOG_INFO, "cache1_entries=%d cache1_size=%d "
+                      "cache2_entries=%d cache2_size=%d "
+                      "cache3_entries=%d cache3_size=%d\n",
+            this->client_info.cache1_entries, this->client_info.cache1_size,
+            this->client_info.cache2_entries, this->client_info.cache2_size,
+            this->client_info.cache3_entries, this->client_info.cache3_size);
     }
 
     /* store the bitmap cache size in client_info */
     void capset_bmpcache2(Stream & stream, int len)
     {
+        LOG(LOG_INFO, "capset_bmpcache2");
         this->client_info.bitmap_cache_version = 2;
         int Bpp = nbbytes(this->client_info.bpp);
-        int i = stream.in_uint16_le();
-        this->client_info.bitmap_cache_persist_enable = i;
+        this->client_info.bitmap_cache_persist_enable = stream.in_uint16_le();
         stream.skip_uint8(2); /* number of caches in set, 3 */
-        i = stream.in_uint32_le();
-        i = std::min(i, 2000);
-        this->client_info.cache1_entries = i;
+        this->client_info.cache1_entries = stream.in_uint32_le();
         this->client_info.cache1_size = 256 * Bpp;
-        i = stream.in_uint32_le();
-        i = std::min(i, 2000);
-        this->client_info.cache2_entries = i;
+        this->client_info.cache2_entries = stream.in_uint32_le();
         this->client_info.cache2_size = 1024 * Bpp;
-        i = stream.in_uint32_le();
-        i = i & 0x7fffffff;
-        i = std::min(i, 2000);
-        this->client_info.cache3_entries = i;
+        this->client_info.cache3_entries = (stream.in_uint32_le() & 0x7fffffff);
         this->client_info.cache3_size = 4096 * Bpp;
     }
 
