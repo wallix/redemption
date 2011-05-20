@@ -615,7 +615,8 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
                             this->context->get_bool(STRAUTHID_OPT_MOVIE),
                             this->context->get(STRAUTHID_OPT_MOVIE_PATH),
                             this->context->get(STRAUTHID_OPT_CODEC_ID),
-                            this->context->get(STRAUTHID_VIDEO_QUALITY));
+                            this->context->get(STRAUTHID_VIDEO_QUALITY),
+                            atoi(this->context->get(STRAUTHID_TIMEZONE)));
                     }
                     else {
                         this->front->stop_capture();

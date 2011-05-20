@@ -97,8 +97,9 @@ public:
         this->bmp_cache = new BitmapCache(&(orders->rdp_layer->client_info));
     }
 
-    void start_capture(int width, int height, bool flag, char * path, const char * codec_id, const char * quality)
+    void start_capture(int width, int height, bool flag, char * path, const char * codec_id, const char * quality, int timezone)
     {
+        this->timezone = timezone;
         if (flag){
             this->stop_capture();
             gettimeofday(&this->start, NULL);
