@@ -52,8 +52,6 @@ struct internal_mod : public client_mod {
 
     void server_draw_dragging_rect(const Rect & r, const Rect & clip)
     {
-        LOG(LOG_INFO, "internal_mod::server_draw_dragging_rect");
-
         this->front->begin_update();
 
         #warning create some set_brush primitive in internal_mod
@@ -71,13 +69,11 @@ struct internal_mod : public client_mod {
 
         // brush style 3 is not supported by windows 7, we **MUST** use cache
         if (this->front->orders->rdp_layer->client_info.brush_cache_code == 1) {
-            LOG(LOG_INFO, "use cache brush");
             uint8_t pattern[8];
             pattern[0] = this->brush.hatch;
             memcpy(pattern+1, this->brush.extra, 7);
             int cache_idx = 0;
             if (BRUSH_TO_SEND == this->front->cache->add_brush(pattern, cache_idx)){
-                LOG(LOG_INFO, "brush to send");
                 this->front->send_brush(cache_idx);
             }
             this->brush.hatch = cache_idx;
