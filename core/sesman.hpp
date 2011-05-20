@@ -225,7 +225,7 @@ class SessionManager {
         int next_state = MCTX_STATUS_EXIT;
         switch (this->context.mod_state){
         default:
-            LOG(LOG_INFO, "DEFAULT MOD STATE\n");
+            LOG(LOG_INFO, "Default Mod Stae\n");
             next_state = this->ask_next_module_remote(auth_host, auth_port);
             if (next_state == MCTX_STATUS_CLOSE){
                 next_state = MCTX_STATUS_TRANSITORY;
@@ -233,7 +233,7 @@ class SessionManager {
             }
         break;
         case MOD_STATE_RECEIVED_CREDENTIALS:
-        LOG(LOG_INFO, "RECEIVED CREDENTIALS\n");
+        LOG(LOG_INFO, "Received Credentials\n");
         {
             if (this->context.is_asked(STRAUTHID_AUTH_USER)){
                 this->context.wab_auth = 0;
@@ -271,7 +271,6 @@ class SessionManager {
 
             else if (this->context.get_bool(STRAUTHID_AUTHENTICATED)){
 
-                LOG(LOG_INFO, "NOW WE SHOULD START A REMOTE CONNEXION\n");
                 next_state = this->get_mod_from_protocol();
                 this->context.mod_state = MOD_STATE_CONNECTED_RDP;
                 record_video = this->context.get_bool(STRAUTHID_OPT_MOVIE);
@@ -299,17 +298,17 @@ class SessionManager {
         }
         break;
         case MOD_STATE_MESSAGE_CONNEXION_CLOSE_AT_LIMIT:
-        LOG(LOG_INFO, "MESSAGE CONNEXION CLOSE AT LIMIT\n");
+//        LOG(LOG_INFO, "MESSAGE CONNEXION CLOSE AT LIMIT\n");
         {
         }
         break;
         case MOD_STATE_CONNECTED_RDP:
-        LOG(LOG_INFO, "CONNECTED RDP\n");
+//        LOG(LOG_INFO, "CONNECTED RDP\n");
         this->context.mod_state = MOD_STATE_CLOSE;
         next_state = MCTX_STATUS_CLOSE;
         break;
         case MOD_STATE_CLOSE:
-        LOG(LOG_INFO, "CLOSE\n");
+//        LOG(LOG_INFO, "CLOSE\n");
         {
             this->context.mod_state = MOD_STATE_CLOSE;
             next_state = MCTX_STATUS_EXIT;

@@ -143,7 +143,7 @@ struct rdp_orders {
     #warning smells like code duplication, it would probably be better to destroy rdp_orders object and recreate it instead of calling that reset_state.
     void rdp_orders_reset_state()
     {
-        LOG(LOG_INFO, "/* rdp_orders_reset_state */");
+        LOG(LOG_INFO, "rdp orders: reset state");
         using namespace RDP;
 
         memset(&this->state, 0, sizeof(this->state));
@@ -245,7 +245,7 @@ struct rdp_orders {
 
     static void rdp_orders_parse_brush(Stream & stream, struct RDPBrush* brush, int present)
     {
-        LOG(LOG_INFO, "/* rdp_orders_parse_brush */");
+//        LOG(LOG_INFO, "rdp_orders_parse_brush");
         if (present & 1) {
             brush->org_x = stream.in_uint8();
         }
@@ -379,7 +379,7 @@ struct rdp_orders {
                 using namespace RDP;
 
                 RDPSecondaryOrderHeader header(stream);
-                LOG(LOG_INFO, "secondary order=%d\n", header.type);
+//                LOG(LOG_INFO, "secondary order=%d\n", header.type);
                 uint8_t *next_order = stream.p + header.length + 7;
                 switch (header.type) {
                 case TS_CACHE_BITMAP_COMPRESSED:
@@ -413,7 +413,7 @@ struct rdp_orders {
                 else {
                     mod->server_reset_clip();
                 }
-                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
+//                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
                 case TEXT2:
                     this->rdp_orders_process_text2(stream, mod, header);

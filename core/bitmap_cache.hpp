@@ -151,11 +151,10 @@ struct BitmapCache {
     /* returns cache id, cx, cy, bpp, data_co */
     #warning we should pass in src as a bitmap
     uint32_t add_bitmap(int src_cx, int src_cy, const uint8_t * src_data,
-                    int x, int y, int w, int h,
-                    int src_bpp)
+                    const Rect & tile, int src_bpp)
     {
         int cache_idx = 0;
-        Bitmap * pbitmap = new Bitmap(src_bpp, Rect(x, y, w, h), src_cx, src_cy, src_data);
+        Bitmap * pbitmap = new Bitmap(src_bpp, tile, src_cx, src_cy, src_data);
         BitmapCacheItem cache_item(pbitmap);
         this->bitmap_stamp++;
         int entries = 0;
@@ -214,7 +213,7 @@ struct BitmapCache {
         }
         else {
             #warning bitmap should not be sent through cache if it is too big, should allready have been splitted by sender ?
-            LOG(LOG_ERR, "bitmap not added to cache, too big(%d = %d x %d x %d) [%d, %d, %d]\n", cache_item.pbmp->bmp_size, w, h, cache_item.pbmp->bpp, this->small_size, this->medium_size, this->big_size);
+            LOG(LOG_ERR, "bitmap not added to cache, too big(%d = %d x %d x %d) [%d, %d, %d]\n", cache_item.pbmp->bmp_size, tile.cx, tile.cy, cache_item.pbmp->bpp, this->small_size, this->medium_size, this->big_size);
         }
         throw Error(ERR_BITMAP_CACHE_TOO_BIG);
     }
