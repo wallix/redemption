@@ -974,24 +974,24 @@ class RDPBmpCache {
     {
         using namespace RDP;
         if (0 == this->client_info->bitmap_cache_version){
-            LOG(LOG_INFO, "/* BMP Cache emit V1 */");
+//            LOG(LOG_INFO, "/* BMP Cache emit V1 */");
             if (this->client_info->use_bitmap_comp){
-                LOG(LOG_INFO, "/* BMP Cache compressed V1 */");
+//                LOG(LOG_INFO, "/* BMP Cache compressed V1 */");
                 this->emit_v1_compressed(stream);
             }
             else {
-                LOG(LOG_INFO, "/* BMP Cache raw V1 */");
+//                LOG(LOG_INFO, "/* BMP Cache raw V1 */");
                 this->emit_raw_v1(stream);
             }
         }
         else {
-            LOG(LOG_INFO, "/* BMP Cache emit V2 */");
+//            LOG(LOG_INFO, "/* BMP Cache emit V2 */");
             if (this->client_info->use_bitmap_comp){
-                LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
+//                LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
                 this->emit_v2_compressed(stream);
             }
             else {
-                LOG(LOG_INFO, "/* BMP Cache raw V2 */");
+//                LOG(LOG_INFO, "/* BMP Cache raw V2 */");
                 this->emit_raw_v2(stream);
             }
         }

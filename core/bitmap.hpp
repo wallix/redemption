@@ -332,10 +332,9 @@ struct Bitmap{
     }
 
     void dump(){
-      return;
-//        LOG(LOG_INFO, "------- Dumping bitmap RAW data [%p]---------\n", this);
-//        LOG(LOG_INFO, "cx=%d cy=%d bpp=%d BPP=%d line_size=%d bmp_size=%d data=%p pmax=%p\n",
-//            this->cx, this->cy, this->bpp, this->Bpp, this->line_size, this->bmp_size, this->data_co, this->pmax);
+        LOG(LOG_INFO, "------- Dumping bitmap RAW data [%p]---------\n", this);
+        LOG(LOG_INFO, "cx=%d cy=%d bpp=%d BPP=%d line_size=%d bmp_size=%d data=%p pmax=%p\n",
+            this->cx, this->cy, this->bpp, this->Bpp, this->line_size, this->bmp_size, this->data_co, this->pmax);
         assert(this->bpp);
         assert(this->Bpp);
         assert(this->line_size);
@@ -373,6 +372,7 @@ struct Bitmap{
 
     void copy(const uint8_t* input){
         memcpy(this->data_co, input, this->bmp_size);
+        this->pmax = this->data_co + this->bmp_size;
     }
 
     void zero(){
@@ -457,6 +457,13 @@ struct Bitmap{
                     case 0xF9:
                         opcode = SPECIAL_FGBG_2;
                         count = 8;
+                    break;
+                    case 0xF8:
+                        opcode = code & 0xf;
+                        assert(opcode != 11 && opcode != 12 && opcode != 15);
+                        count = input[0]|(input[1] << 8);
+                        count += count;
+                        input += 2;
                     break;
                     default:
                         opcode = code & 0xf;

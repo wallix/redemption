@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
 
 
     {
-    uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 25, 0, 10, 10, 24);
+    uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, Rect(25, 0, 10, 10), 24);
 
 //    uint8_t send_type = (cache_ref >> 24);
     uint8_t cache_id  = (cache_ref >> 16);
@@ -334,7 +334,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     // RrrRrrRrrRrrRrrRrrRrrRrrRrrRrr..
     }
     {
-        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 0, 0, 10, 10, 24);
+        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, Rect(0, 0, 10, 10), 24);
 
 //    uint8_t send_type = (cache_ref >> 24);
         uint8_t cache_id  = (cache_ref >> 16);
@@ -350,7 +350,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     }
     {
         // request again the same picture, we should get the same cache_id
-        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 0, 0, 10, 10, 24);
+        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, Rect(0, 0, 10, 10), 24);
 
 //    uint8_t send_type = (cache_ref >> 24);
         uint8_t cache_id  = (cache_ref >> 16);
@@ -364,7 +364,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     }
 
     {
-        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 25, 0, 10, 10, 24);
+        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, Rect(25, 0, 10, 10), 24);
 
 //    uint8_t send_type = (cache_ref >> 24);
         uint8_t cache_id  = (cache_ref >> 16);
@@ -378,7 +378,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     }
     {
         // another part of the big image, but with the same drawing, same cache_id
-        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 25, 40, 10, 10, 24);
+        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, Rect(25, 40, 10, 10), 24);
 
 //    uint8_t send_type = (cache_ref >> 24);
         uint8_t cache_id  = (cache_ref >> 16);
@@ -392,7 +392,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     }
     {
         // another picture, new cache
-        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 35, 0, 10, 10, 24);
+        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, Rect(35, 0, 10, 10), 24);
 
 //    uint8_t send_type = (cache_ref >> 24);
         uint8_t cache_id  = (cache_ref >> 16);
@@ -406,7 +406,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     }
     {
         // request again the same picture, we should get the same cache_id
-        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 25, 0, 10, 10, 24);
+        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, Rect(25, 0, 10, 10), 24);
 
 //    uint8_t send_type = (cache_ref >> 24);
         uint8_t cache_id  = (cache_ref >> 16);
@@ -421,7 +421,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
 
     // another part of the big image, but with the same drawing, same cache_id
     {
-        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 25, 40, 10, 10, 24);
+        uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, Rect(25, 40, 10, 10), 24);
 
 //    uint8_t send_type = (cache_ref >> 24);
         uint8_t cache_id  = (cache_ref >> 16);
@@ -434,7 +434,7 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
         BOOST_CHECK_EQUAL(10, entry->pbmp->cy);
     }
 
-    uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, 99, 98, 10, 10, 24);
+    uint32_t cache_ref = cache.add_bitmap(100, 100, big_picture, Rect(99, 98, 10, 10), 24);
 
 //    uint8_t send_type = (cache_ref >> 24);
     uint8_t cache_id  = (cache_ref >> 16);

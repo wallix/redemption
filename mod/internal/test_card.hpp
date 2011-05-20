@@ -204,7 +204,7 @@ struct test_card_mod : public internal_mod {
 
         front.begin_update();
 
-        uint32_t cache_ref = front.bmp_cache->add_bitmap(100, 100, (uint8_t*)picture16, 0, 0, 32, 32,
+        uint32_t cache_ref = front.bmp_cache->add_bitmap(100, 100, (uint8_t*)picture16, Rect(0, 0, 32, 32),
                                     front.orders->rdp_layer->client_info.bpp);
 
         uint8_t send_type2 = (cache_ref >> 24);
