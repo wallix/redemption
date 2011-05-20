@@ -796,7 +796,38 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 }
                 #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of mod_event.
                 this->back_event = new wait_obj(-1);
-                this->mod = new close_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *this->front, this);
+		this->mod = new close_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *this->front, this);
+
+		struct pointer_item pointer_item;
+
+		memset(&pointer_item, 0, sizeof(pointer_item));
+		load_pointer(SHARE_PATH "/" CURSOR0,
+		    pointer_item.data,
+		    pointer_item.mask,
+		    &pointer_item.x,
+		    &pointer_item.y);
+
+		this->cache->add_pointer_static(&pointer_item, 0);
+		this->front_server->server_rdp_send_pointer(0,
+				 pointer_item.data,
+				 pointer_item.mask,
+				 pointer_item.x,
+				 pointer_item.y);
+
+		memset(&pointer_item, 0, sizeof(pointer_item));
+		load_pointer(SHARE_PATH "/" CURSOR1,
+		    pointer_item.data,
+		    pointer_item.mask,
+		    &pointer_item.x,
+		    &pointer_item.y);
+		this->cache->add_pointer_static(&pointer_item, 1);
+
+		this->front_server->server_rdp_send_pointer(1,
+				 pointer_item.data,
+				 pointer_item.mask,
+				 pointer_item.x,
+				 pointer_item.y);
+
                 // force a WM_INVALIDATE on all screen
                 this->callback(0x4444, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
                 LOG(LOG_INFO, "Creation of new mod 'CLOSE DIALOG' suceeded\n");

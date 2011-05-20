@@ -131,13 +131,16 @@ struct close_mod : public internal_mod {
     Session * session;
     Widget* popup_wnd;
     Widget* button_down;
+    int signal;
 
     close_mod(
         wait_obj * event,
         int (& keys)[256], int & key_flags, Keymap * &keymap,
         ModContext & context, Front & front, Session * session)
-            : internal_mod(keys, key_flags, keymap, front)
+            : internal_mod(keys, key_flags, keymap, front), signal(0)
     {
+        this->event = event;
+        this->event->set();
         this->button_down = 0;
 
         int log_width = 600;
@@ -259,6 +262,10 @@ struct close_mod : public internal_mod {
                 this->clear_popup();
             } else if (this->close_window->has_focus) {
                 this->close_window->def_proc(msg, param4, param5);
+                this->signal = 4;
+                this->event->set();
+            } else {
+                this->close_window->has_focus = 1;
             }
         break;
         case WM_KEYDOWN:
@@ -428,6 +435,8 @@ struct close_mod : public internal_mod {
                         control->state = 0;
                         control->Widget_invalidate(control->rect.wh());
                         control->notify(control, 1, x, y);
+                        this->signal = 4;
+                        this->event->set();
                     }
                 break;
                 default:
@@ -448,7 +457,8 @@ struct close_mod : public internal_mod {
     // module got an internal event (like incoming data) and want to sent it outside
     virtual int mod_signal()
     {
-        return 0;
+        this->event->reset();
+        return signal;
     }
 
 };

@@ -87,7 +87,7 @@ void init_signals(void)
     sigaddset(&sa.sa_mask, SIGUSR1);
     sigaddset(&sa.sa_mask, SIGUSR2);
 
-    sa.sa_handler = SIG_DFL;
+    sa.sa_handler = SIG_IGN;
     sigaction(SIGSEGV, &sa, NULL);
 
     sa.sa_handler = SIG_DFL;
