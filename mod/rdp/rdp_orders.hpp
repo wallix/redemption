@@ -413,31 +413,65 @@ struct rdp_orders {
                 else {
                     mod->server_reset_clip();
                 }
-//                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
+                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
                 case TEXT2:
-                    this->rdp_orders_process_text2(stream, mod, header);
+                    this->glyph_index.receive(stream, header);
+                    mod->server_glyph_index(this->glyph_index);
                     break;
                 case DESTBLT:
-                    this->process_dest_blt(stream, mod, header);
+                    this->destblt.receive(stream, header);
+                    #warning transmit this->destblt
+                    mod->dest_blt(this->destblt.rop, this->destblt.rect);
                     break;
                 case PATBLT:
-                    this->process_pat_blt(stream, mod, header);
+                    #warning transmit this->patblt
+                    this->patblt.receive(stream, header);
+                    mod->server_set_brush(this->patblt.brush);
+                    mod->pat_blt(this->patblt.rop, this->patblt.rect, this->patblt.fore_color, this->patblt.back_color);
                     break;
                 case SCREENBLT:
-                    this->process_screen_blt(stream, mod, header);
+                    this->scrblt.receive(stream, header);
+                    #warning transmit this->scrblt
+                    mod->screen_blt(this->scrblt.rop,
+                                   this->scrblt.rect,
+                                   this->scrblt.srcx,
+                                   this->scrblt.srcy);
                     break;
                 case LINE:
-                    this->rdp_orders_process_line(stream, mod, header);
+                    this->lineto.receive(stream, header);
+                    mod->server_set_pen(this->lineto.pen.style, this->lineto.pen.width);
+                    #warning transmit this->lineto
+                    mod->server_draw_line(this->lineto.rop2,
+                                          this->lineto.startx,
+                                          this->lineto.starty,
+                                          this->lineto.endx,
+                                          this->lineto.endy,
+                                          this->lineto.pen.color,
+                                          this->lineto.back_color);
                     break;
                 case RECT:
-                    this->process_opaque_rect(stream, mod, header);
+                    this->opaquerect.receive(stream, header);
+                    #warning transmit this->opaquerect
+                    mod->opaque_rect(this->opaquerect.rect, this->opaquerect.color);
                     break;
                 case DESKSAVE:
                     this->rdp_orders_process_desksave(stream, header.fields, header.control & DELTA, mod);
                     break;
                 case MEMBLT:
-                    this->rdp_orders_process_memblt(stream, mod, header);
+                    this->memblt.receive(stream, header);
+                    {
+                        struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xFF][this->memblt.cache_idx];
+                        if (bitmap) {
+                            #warning transmit memblt and back cache manager
+                            mod->server_memblt(
+                                *bitmap,
+                                this->memblt.rect,
+                                this->memblt.srcx,
+                                this->memblt.srcy,
+                                this->cache_colormap.palette[this->memblt.cache_id >> 8]);
+                        }
+                    }
                     break;
                 case TRIBLT:
                     rdp_orders_process_triblt(this, stream, header.fields, header.control & DELTA, mod);
@@ -458,80 +492,6 @@ struct rdp_orders {
         }
         return 0;
     }
-
-    void process_opaque_rect(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
-    {
-//        LOG(LOG_INFO, "process_opaque_rect");
-        this->opaquerect.receive(stream, header);
-        mod->opaque_rect(this->opaquerect.rect, this->opaquerect.color);
-    }
-
-    void process_screen_blt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
-    {
-//        LOG(LOG_INFO, "process_screen_blt");
-        this->scrblt.receive(stream, header);
-        mod->screen_blt(this->scrblt.rop,
-                               this->scrblt.rect,
-                               this->scrblt.srcx,
-                               this->scrblt.srcy);
-    }
-
-    void process_dest_blt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
-    {
-//        LOG(LOG_INFO, "process_dest_blt");
-        this->destblt.receive(stream, header);
-        mod->dest_blt(this->destblt.rop, this->destblt.rect);
-    }
-
-    void process_pat_blt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
-    {
-//        LOG(LOG_INFO, "process_pat_blt");
-        this->patblt.receive(stream, header);
-//        LOG(LOG_INFO, "sending patblt\n");
-        mod->server_set_brush(this->patblt.brush);
-        mod->pat_blt(this->patblt.rop, this->patblt.rect, this->patblt.fore_color, this->patblt.back_color);
-//        LOG(LOG_INFO, "sending patblt ok\n");
-    }
-
-    #warning harmonize names -> mem_blt
-    void rdp_orders_process_memblt(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
-    {
-//        LOG(LOG_INFO, "rdp_orders_process_memblt");
-        this->memblt.receive(stream, header);
-//        LOG(LOG_INFO, "receiving memblt : cache_id=%d cache_idx=%d\n",
-//                this->memblt.cache_id & 0xFF, this->memblt.cache_idx);
-        struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xFF][this->memblt.cache_idx];
-        if (bitmap) {
-            mod->server_memblt(*bitmap, this->memblt.rect, this->memblt.srcx, this->memblt.srcy, this->cache_colormap.palette[this->memblt.cache_id >> 8]);
-        }
-//        LOG(LOG_INFO, "receiving memblt ok\n");
-    }
-
-
-    void rdp_orders_process_line(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
-    {
-//        LOG(LOG_INFO, "rdp_orders_process_line");
-        this->lineto.receive(stream, header);
-//        LOG(LOG_INFO, "sending line\n");
-        mod->server_set_pen(this->lineto.pen.style, this->lineto.pen.width);
-        mod->server_draw_line(this->lineto.rop2,
-                              this->lineto.startx,
-                              this->lineto.starty,
-                              this->lineto.endx,
-                              this->lineto.endy,
-                              this->lineto.pen.color,
-                              this->lineto.back_color);
-//        LOG(LOG_INFO, "sending line ok\n");
-    }
-
-    void rdp_orders_process_text2(Stream & stream, client_mod * mod, const RDPPrimaryOrderHeader & header)
-    {
-//        LOG(LOG_INFO, "rdp_orders_process_text2");
-        this->glyph_index.receive(stream, header);
-        mod->server_glyph_index(this->glyph_index);
-
-    }
-
 };
 
 #endif
