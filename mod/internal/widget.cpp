@@ -412,7 +412,8 @@ void Widget::fill_rect(int rop, const Rect & r, int fg_color, const Rect & clip)
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->opaque_rect(scr_r, fg_color);
+        const RDPOpaqueRect orect(scr_r, fg_color);
+        this->mod->opaque_rect(orect);
     }
 }
 

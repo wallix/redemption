@@ -279,9 +279,12 @@ struct client_mod {
         }
     }
 
-    void opaque_rect(const Rect & rect, const uint32_t color)
+
+    void opaque_rect(const RDPOpaqueRect & opaquerect)
     {
 //        LOG(LOG_INFO, "client_mod::opaque_rect(r(%d, %d, %d, %d), color=%x", rect.x, rect.y, rect.cx, rect.cy, color);
+        const Rect & rect = opaquerect.rect;
+        const uint32_t color = opaquerect.color;
         if (!rect.intersect(clip).isempty()) {
 
             #warning dirty hack to fix color problems with opaque_rect
@@ -301,6 +304,29 @@ struct client_mod {
             this->front->opaque_rect(rect, target_color, this->clip);
         }
     }
+
+//    void opaque_rect(const Rect & rect, const uint32_t color)
+//    {
+////        LOG(LOG_INFO, "client_mod::opaque_rect(r(%d, %d, %d, %d), color=%x", rect.x, rect.y, rect.cx, rect.cy, color);
+//        if (!rect.intersect(clip).isempty()) {
+
+//            #warning dirty hack to fix color problems with opaque_rect
+//            uint32_t color24 = color_decode(color, this->mod_bpp, this->mod_palette);
+
+//            if (this->get_front_bpp() == 24){
+//                color24 = ((color24 << 16) & 0xFF0000)
+//                        |  (color24 & 0x00FF00)
+//                        | ((color24 >> 16) & 0x0000FF);
+//            }
+
+//            uint32_t target_color = color_encode(color24,
+//                                this->get_front_bpp(),
+//                                this->palette332);
+
+
+//            this->front->opaque_rect(rect, target_color, this->clip);
+//        }
+//    }
 
     #warning this should become BITMAP UPDATE, we should be able to send bitmaps either through orders and cache or through BITMAP UPDATE
     void server_paint_rect(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const RGBPalette & palette)

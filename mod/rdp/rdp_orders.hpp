@@ -452,8 +452,7 @@ struct rdp_orders {
                     break;
                 case RECT:
                     this->opaquerect.receive(stream, header);
-                    #warning transmit this->opaquerect
-                    mod->opaque_rect(this->opaquerect.rect, this->opaquerect.color);
+                    mod->opaque_rect(this->opaquerect);
                     break;
                 case DESKSAVE:
                     this->rdp_orders_process_desksave(stream, header.fields, header.control & DELTA, mod);
