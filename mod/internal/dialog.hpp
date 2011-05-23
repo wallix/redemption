@@ -116,7 +116,7 @@ struct dialog_mod : public internal_mod {
             :
             internal_mod(keys, key_flags, keymap, front)
     {
-
+        this->event = event;
         this->button_down = 0;
 
         int log_width = 600;
