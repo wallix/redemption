@@ -71,7 +71,7 @@ struct bouncer_mod : public internal_mod {
             front(front),
             bmp_background(COLOR_IMAGE, front.orders->rdp_layer->client_info.bpp),
             bmp(SHARE_PATH "/ad24b.bmp", front.orders->rdp_layer->client_info.bpp),
-            bmp_wallix(SHARE_PATH "/ad256.bmp", front.orders->rdp_layer->client_info.bpp),
+            bmp_wallix(SHARE_PATH "/ad24b.bmp", front.orders->rdp_layer->client_info.bpp),
             state(LEFT),
             wallix_state(LEFT_WALLIX),
             index(0),

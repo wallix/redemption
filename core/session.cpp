@@ -25,7 +25,7 @@
 #include "colors.hpp"
 #include "rect.hpp"
 #include "../mod/internal/login.hpp"
-#include "../mod/internal/bouncer.hpp"
+#include "../mod/internal/bouncer2.hpp"
 #include "../mod/internal/close.hpp"
 #include "../mod/internal/dialog.hpp"
 #include "../mod/internal/bouncer.hpp"
@@ -852,6 +852,14 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                         *this->context,
                                         *this->front,
                                         this);
+                    }
+                    else if (target && 0 == strncmp(target, "bouncer2", 9)){
+                        LOG(LOG_INFO, "target is bouncer 2");
+                        this->mod = new bouncer2_mod(
+                                        this->keys,
+                                        this->key_flags,
+                                        this->keymap,
+                                        *this->front);
                     }
                     else if (target && 0 == strncmp(target, "test", 5)){
                         LOG(LOG_INFO, "target is internal mod");
