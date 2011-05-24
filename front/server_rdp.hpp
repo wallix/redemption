@@ -409,7 +409,7 @@ struct server_rdp {
     {
         int cont = 1;
         while (cont || !this->up_and_running) {
-            int code = this->server_rdp_recv(this->front_stream);
+            int code = this->server_rdp_recv();
             switch (code) {
             case -1:
                 this->server_rdp_send_demand_active();
@@ -434,9 +434,10 @@ struct server_rdp {
         }
     }
 
-    int server_rdp_recv(Stream & stream) throw (Error)
+    int server_rdp_recv() throw (Error)
     {
-        if (this->front_stream.next_packet == 0 || this->front_stream.next_packet >= stream.end) {
+        if (this->front_stream.next_packet == 0
+        || this->front_stream.next_packet >= this->front_stream.end) {
             int chan = 0;
             int error = this->sec_layer.server_sec_recv(this->front_stream, &chan);
             if (error == -1) { /* special code for send demand active */
@@ -485,16 +486,20 @@ struct server_rdp {
         else {
             this->front_stream.p = this->front_stream.next_packet;
         }
+
+        int rv = 0;
         int len = this->front_stream.in_uint16_le();
         #warning looks like length can be 8 bits, check in protocol documentation, it may be the problem with properJavaRDP.
         if (len == 0x8000) {
             this->front_stream.next_packet += 8;
-            return 0;
         }
-        int pdu_code = this->front_stream.in_uint16_le();
-        this->front_stream.skip_uint8(2); /* mcs user id */
-        this->front_stream.next_packet += len;
-        return pdu_code & 0xf;
+        else {
+            int pdu_code = this->front_stream.in_uint16_le();
+            this->front_stream.skip_uint8(2); /* mcs user id */
+            this->front_stream.next_packet += len;
+            rv = pdu_code & 0xf;
+        }
+        return rv;
     }
 
     /*****************************************************************************/

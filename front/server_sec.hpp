@@ -201,11 +201,13 @@ struct server_sec {
             stream.skip_uint8(1);
         }
 
-        uint32_t flags = stream.in_uint32_le();
+        const uint32_t flags = stream.in_uint32_le();
         if (flags & SEC_ENCRYPT) { /* 0x08 */
             stream.skip_uint8(8); /* signature */
             this->server_sec_decrypt(stream.p, (int)(stream.end - stream.p));
         }
+
+        int rv = 0;
         if (flags & SEC_CLIENT_RANDOM) { /* 0x01 */
             stream.in_uint32_le(); // len
             memcpy(this->client_crypt_random, stream.in_uint8p(64), 64);
@@ -213,23 +215,23 @@ struct server_sec {
                             this->pub_mod, this->pri_exp);
             this->server_sec_establish_keys();
             *chan = 1; /* just set a non existing channel and exit */
-            return 0;
         }
-        if (flags & SEC_LOGON_INFO) { /* 0x40 */
+        else if (flags & SEC_LOGON_INFO) { /* 0x40 */
             this->server_sec_process_logon_info(stream);
             if (this->client_info->is_mce) {
                 this->server_sec_send_media_lic_response();
-                return -1; /* special error that means send demand active */
+                rv = -1; /* special error that means send demand active */
             }
-            this->server_sec_send_lic_initial();
-            *chan = 1; /* just set a non existing channel and exit */
-            return 0;
+            else {
+                this->server_sec_send_lic_initial();
+                *chan = 1; /* just set a non existing channel and exit */
+            }
         }
-        if (flags & SEC_LICENCE_NEG) { /* 0x80 */
+        else if (flags & SEC_LICENCE_NEG) { /* 0x80 */
             this->server_sec_send_lic_response();
-            return -1; /* special error that means send demand active */
+            rv = -1; /* special error that means send demand active */
         }
-        return 0;
+        return rv;
     }
 
     /* process the mcs client data we received from the mcs layer */
