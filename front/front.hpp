@@ -333,7 +333,7 @@ public:
 
     // draw bitmap from src_data (image rect contained in src_r) to x, y
     // clip_region is the list of visible rectangles that should be sent
-    void send_bitmap_front(const Rect & dst, const Rect & src_r, const uint8_t * src_data,
+    void send_bitmap_front(const Rect & dst, const Rect & src_r, const uint8_t rop, const uint8_t * src_data,
                      int palette_id,
                      const Rect & clip)
     {
@@ -360,19 +360,18 @@ public:
 
 
                     this->mem_blt(cache_id, palette_id,
-                                  tile.offset(dst.x, dst.y), 0xcc,
+                                  tile.offset(dst.x, dst.y), rop,
                                   0, 0, cache_idx, clip);
                 }
             }
         }
     }
 
-    #warning this should become BITMAP UPDATE used to send bitmap bypassing cache
-    void send_bitmap_front2(const Rect & dst, const Rect & src_r, const uint8_t * src_data,
+    void send_bitmap_front2(const Rect & dst, const Rect & src_r, const uint8_t rop, const uint8_t * src_data,
                      int palette_id,
                      const Rect & clip)
     {
-        this->send_bitmap_front(dst, src_r, src_data, palette_id, clip);
+        this->send_bitmap_front(dst, src_r, rop, src_data, palette_id, clip);
     }
 
     #warning harmonize names with orders send_glyph or send_font
