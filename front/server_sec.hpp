@@ -172,68 +172,6 @@ struct server_sec {
         ssl_rc4_info_delete(rc4_info);
     }
 
-    int server_sec_recv(Stream & stream, int* chan) throw (Error)
-    {
-        this->mcs_layer.iso_layer.iso_recv(stream);
-        int appid = stream.in_uint8() >> 2;
-        /* Channel Join ReQuest datagram */
-        while(appid == MCS_CJRQ) {
-            /* this is channels getting added from the client */
-            int userid = stream.in_uint16_be();
-            int chanid = stream.in_uint16_be();
-            this->mcs_layer.server_mcs_send_channel_join_confirm_PDU(userid, chanid);
-            this->mcs_layer.iso_layer.iso_recv(stream);
-            appid = stream.in_uint8() >> 2;
-        }
-        /* Disconnect Provider Ultimatum datagram */
-        if (appid == MCS_DPUM) {
-            throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
-        }
-        /* SenD ReQuest datagram */
-        if (appid != MCS_SDRQ) {
-            throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-        }
-        stream.skip_uint8(2);
-        *chan = stream.in_uint16_be();
-        stream.skip_uint8(1);
-        int len = stream.in_uint8();
-        if (len & 0x80) {
-            stream.skip_uint8(1);
-        }
-
-        const uint32_t flags = stream.in_uint32_le();
-        if (flags & SEC_ENCRYPT) { /* 0x08 */
-            stream.skip_uint8(8); /* signature */
-            this->server_sec_decrypt(stream.p, (int)(stream.end - stream.p));
-        }
-
-        int rv = 0;
-        if (flags & SEC_CLIENT_RANDOM) { /* 0x01 */
-            stream.in_uint32_le(); // len
-            memcpy(this->client_crypt_random, stream.in_uint8p(64), 64);
-            this->server_sec_rsa_op(this->client_random, this->client_crypt_random,
-                            this->pub_mod, this->pri_exp);
-            this->server_sec_establish_keys();
-            *chan = 1; /* just set a non existing channel and exit */
-        }
-        else if (flags & SEC_LOGON_INFO) { /* 0x40 */
-            this->server_sec_process_logon_info(stream);
-            if (this->client_info->is_mce) {
-                this->server_sec_send_media_lic_response();
-                rv = -1; /* special error that means send demand active */
-            }
-            else {
-                this->server_sec_send_lic_initial();
-                *chan = 1; /* just set a non existing channel and exit */
-            }
-        }
-        else if (flags & SEC_LICENCE_NEG) { /* 0x80 */
-            this->server_sec_send_lic_response();
-            rv = -1; /* special error that means send demand active */
-        }
-        return rv;
-    }
-
     /* process the mcs client data we received from the mcs layer */
     void server_sec_process_mcs_data(Stream & stream) throw (Error)
     {
