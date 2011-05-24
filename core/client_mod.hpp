@@ -254,22 +254,16 @@ struct client_mod {
             this->clip);
     }
 
-    void scr_blt(const RDPScrBlt & scrblt)
+    void screen_blt(int rop, const Rect & rect, int srcx, int srcy)
     {
-        const int rop = scrblt.rop;
-        const Rect & rect = scrblt.rect;
-        const int srcx = scrblt.srcx;
-        const int srcy = scrblt.srcy;
 //        LOG(LOG_INFO, "client_mod::screen_blt(rop=%x, r(%d, %d, %d, %d), srcx=%d, srcy=%d", rop, rect.x, rect.y, rect.cx, rect.cy, srcx, srcy);
         if (!rect.intersect(this->clip).isempty()) {
-            this->front->screen_blt(rop, rect, srcx, srcy, this->clip);
+            this->front->screen_blt(0xcc, rect, srcx, srcy, this->clip);
         }
     }
 
-    void dest_blt(const RDPDestBlt & destblt)
+    void dest_blt(int rop, const Rect & rect)
     {
-        const int rop = destblt.rop;
-        const Rect & rect = destblt.rect;
 //        LOG(LOG_INFO, "client_mod::dest_blt(rop=%x, r(%d, %d, %d, %d)", rop, rect.x, rect.y, rect.cx, rect.cy);
         if (!rect.intersect(this->clip).isempty()) {
             this->front->dest_blt(rect, rop, this->clip);
@@ -311,28 +305,28 @@ struct client_mod {
         }
     }
 
-    #warning move out server_set_pen
-    int server_set_pen(int style, int width)
-    {
-        this->pen.style = style;
-        this->pen.width = width;
-        return 0;
-    }
+//    void opaque_rect(const Rect & rect, const uint32_t color)
+//    {
+////        LOG(LOG_INFO, "client_mod::opaque_rect(r(%d, %d, %d, %d), color=%x", rect.x, rect.y, rect.cx, rect.cy, color);
+//        if (!rect.intersect(clip).isempty()) {
 
-    void line_to(const RDPLineTo & lineto)
-    {
-        this->server_set_pen(lineto.pen.style, lineto.pen.width);
-        const int rop = lineto.rop2;
-        const int x1 = lineto.startx;
-        const int y1 = lineto.starty;
-        const int x2 = lineto.endx;
-        const int y2 = lineto.endy;
-        const uint32_t pen_color = lineto.pen.color;
-        const uint32_t back_color = lineto.back_color;
-        this->pen.color = this->convert(pen_color);
-        this->front->line(rop, x1, y1, x2, y2, this->convert(back_color), this->pen, this->clip);
-    }
+//            #warning dirty hack to fix color problems with opaque_rect
+//            uint32_t color24 = color_decode(color, this->mod_bpp, this->mod_palette);
 
+//            if (this->get_front_bpp() == 24){
+//                color24 = ((color24 << 16) & 0xFF0000)
+//                        |  (color24 & 0x00FF00)
+//                        | ((color24 >> 16) & 0x0000FF);
+//            }
+
+//            uint32_t target_color = color_encode(color24,
+//                                this->get_front_bpp(),
+//                                this->palette332);
+
+
+//            this->front->opaque_rect(rect, target_color, this->clip);
+//        }
+//    }
 
     #warning this should become BITMAP UPDATE, we should be able to send bitmaps either through orders and cache or through BITMAP UPDATE
     void server_paint_rect(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const RGBPalette & palette)
@@ -357,17 +351,14 @@ struct client_mod {
         }
         const Rect src_r(srcx, srcy, width, height);
         front->begin_update();
-        this->front->send_bitmap_front(dst, src_r, 0xCC, bmpdata, 0, this->clip);
+        this->front->send_bitmap_front(dst, src_r, bmpdata, 0, this->clip);
         front->end_update();
 
         free(bmpdata);
     }
 
-    void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const RGBPalette & palette)
+    void server_memblt(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const RGBPalette & palette)
     {
-        const Rect & dst = memblt.rect;
-        const int srcx = memblt.srcx;
-        const int srcy = memblt.srcy;
         #warning color conversion should probably go into bitmap. Something like a copy constructor that change color on the fly ? We may even choose to keep several versions of the same bitmap with different bpp ?
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
@@ -388,7 +379,7 @@ struct client_mod {
         }
         const Rect src_r(srcx, srcy, width, height);
         front->begin_update();
-        this->front->send_bitmap_front2(dst, src_r, memblt.rop, bmpdata, 0, this->clip);
+        this->front->send_bitmap_front2(dst, src_r, bmpdata, 0, this->clip);
         front->end_update();
 
         free(bmpdata);
@@ -456,6 +447,20 @@ struct client_mod {
             }
         }
     }
+
+    int server_set_pen(int style, int width)
+    {
+        this->pen.style = style;
+        this->pen.width = width;
+        return 0;
+    }
+
+    void server_draw_line(int rop, int x1, int y1, int x2, int y2, uint32_t pen_color, uint32_t back_color)
+    {
+        this->pen.color = this->convert(pen_color);
+        this->front->line(rop, x1, y1, x2, y2, this->convert(back_color), this->pen, this->clip);
+    }
+
 
     void server_add_char(int font, int character,
                     int offset, int baseline,

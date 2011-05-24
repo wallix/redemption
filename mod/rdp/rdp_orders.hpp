@@ -421,7 +421,8 @@ struct rdp_orders {
                     break;
                 case DESTBLT:
                     this->destblt.receive(stream, header);
-                    mod->dest_blt(this->destblt);
+                    #warning transmit this->destblt
+                    mod->dest_blt(this->destblt.rop, this->destblt.rect);
                     break;
                 case PATBLT:
                     #warning transmit this->patblt
@@ -431,11 +432,23 @@ struct rdp_orders {
                     break;
                 case SCREENBLT:
                     this->scrblt.receive(stream, header);
-                    mod->scr_blt(this->scrblt);
+                    #warning transmit this->scrblt
+                    mod->screen_blt(this->scrblt.rop,
+                                   this->scrblt.rect,
+                                   this->scrblt.srcx,
+                                   this->scrblt.srcy);
                     break;
                 case LINE:
                     this->lineto.receive(stream, header);
-                    mod->line_to(this->lineto);
+                    mod->server_set_pen(this->lineto.pen.style, this->lineto.pen.width);
+                    #warning transmit this->lineto
+                    mod->server_draw_line(this->lineto.rop2,
+                                          this->lineto.startx,
+                                          this->lineto.starty,
+                                          this->lineto.endx,
+                                          this->lineto.endy,
+                                          this->lineto.pen.color,
+                                          this->lineto.back_color);
                     break;
                 case RECT:
                     this->opaquerect.receive(stream, header);
@@ -449,9 +462,12 @@ struct rdp_orders {
                     {
                         struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xFF][this->memblt.cache_idx];
                         if (bitmap) {
-                            mod->mem_blt(
-                                this->memblt,
+                            #warning transmit memblt and back cache manager
+                            mod->server_memblt(
                                 *bitmap,
+                                this->memblt.rect,
+                                this->memblt.srcx,
+                                this->memblt.srcy,
                                 this->cache_colormap.palette[this->memblt.cache_id >> 8]);
                         }
                     }

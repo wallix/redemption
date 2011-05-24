@@ -437,7 +437,6 @@ class Capture
         };
     }
 
-    #warning use color_decode
     // Helper function for converting px to r, g and b :
     void pxtorgb(const int px, int & r, int & g, int & b, const int bpp) {
         switch (bpp){
@@ -460,7 +459,6 @@ class Capture
             case 15:
                 {
                     r = ((px >> 7) & 0xf8) | ((px >> 12) & 0x7);
-                    #warning differs from color_decode ? Bogus ?
                     g = ((px >> 2) & 0xf8) | ((px >> 8)  & 0x7);
                     b = ((px << 3) & 0xf8) | ((px >> 2)  & 0x7);
 
@@ -686,7 +684,6 @@ class Capture
         int miny = std::min(starty, endy);
 
         Rect drect = Rect(minx, miny, abs(endx - startx), abs(endy - starty));
-        #warning clip should be managed
         const Rect trect = clip.intersect(drect);
 
         // Color handling

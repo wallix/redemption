@@ -704,12 +704,10 @@ struct mod_vnc : public client_mod {
 //                    LOG(LOG_INFO, "copy rect");
                 Stream stream(4);
                 this->t->recv((char**)&stream.end, 4);
-                const int srcx = stream.in_uint16_be();
-                const int srcy = stream.in_uint16_be();
+                int srcx = stream.in_uint16_be();
+                int srcy = stream.in_uint16_be();
 //                    LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
-                #warning should we not set clip rectangle ?
-                const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
-                this->scr_blt(scrblt);
+                this->screen_blt(0xcc, Rect(x, y, cx, cy), srcx, srcy);
             }
             break;
             case 0xffffff11: /* cursor */

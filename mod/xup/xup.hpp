@@ -150,10 +150,9 @@ struct xup_mod : public client_mod {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                        const int srcx = stream.in_sint16_le();
-                        const int srcy = stream.in_sint16_le();
-                        const RDPScrBlt scrblt(r, 0xCC, srcx, srcy);
-                        this->scr_blt(scrblt);
+                        int srcx = stream.in_sint16_le();
+                        int srcy = stream.in_sint16_le();
+                        this->screen_blt(this->rop, r, srcx, srcy);
                     }
                     break;
                     case 5:
@@ -208,10 +207,7 @@ struct xup_mod : public client_mod {
                         int y1 = stream.in_sint16_le();
                         int x2 = stream.in_sint16_le();
                         int y2 = stream.in_sint16_le();
-                        const RDPLineTo lineto(1, x1, y1, x2, y2, WHITE,
-                                               this->rop,
-                                               RDPPen(this->pen.style, this->pen.width, this->fgcolor));
-                        this->line_to(lineto);
+                        this->server_draw_line(this->rop, x1, y1, x2, y2, this->fgcolor, WHITE);
                     }
                     break;
                     case 19:
