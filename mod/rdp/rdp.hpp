@@ -111,7 +111,7 @@ struct mod_rdp : public client_mod {
         delete this->t;
     }
 
-    virtual void mod_event_scancode(long param1, long param2, long device_flags, long time, int & key_flags, Keymap & keymap, int keys[]){
+    virtual void scancode(long param1, long param2, long device_flags, long time, int & key_flags, Keymap & keymap, int keys[]){
         long p1 = param1 % 128;
         int msg = WM_KEYUP;
         keys[p1] = 1 | device_flags;
@@ -154,7 +154,7 @@ struct mod_rdp : public client_mod {
             switch (msg) {
             case WM_KEYDOWN:
             case WM_KEYUP:
-                #warning bypassed by mod_event_scancode, need some code cleanup here, we would probably be better of with less key decoding.
+                #warning bypassed by call to scancode, need some code cleanup here, we would probably be better of with less key decoding.
                 assert(false);
                 // this->rdp_layer.send_input(&stream, 0, RDP_INPUT_SCANCODE, param4, param3, 0);
                 break;

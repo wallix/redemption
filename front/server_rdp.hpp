@@ -413,10 +413,6 @@ struct server_rdp {
             switch (code) {
             case -1:
                 this->server_rdp_send_demand_active();
-                #warning do we need to call this for every mcs packet? maybe every 5 or so
-                /* Inform the callback that an mcs packet has been sent.  This is needed so
-                the module can send any high priority mcs packets like audio. */
-                this->cb.callback(0x5556, 0, 0, 0, 0);
                 break;
             case 0:
                 break;
@@ -474,7 +470,7 @@ struct server_rdp {
 
                     int size = (int)(this->front_stream.end - this->front_stream.p);
                     #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
-                    int rv = this->cb.callback(0x5555,
+                    int rv = this->cb.callback(WM_CHANNELDATA,
                                            ((flags & 0xffff) << 16) | (channel_id & 0xffff),
                                            size, (long)(this->front_stream.p), length);
                     if (rv != 0){
@@ -891,6 +887,7 @@ struct server_rdp {
         this->sec_layer.server_sec_init(stream);
         stream.rdp_hdr = stream.p;
         stream.p += 18;
+
         stream.out_uint16_le(action);
         stream.out_uint16_le(0); /* userid */
         stream.out_uint32_le(1002); /* control id */
@@ -1029,21 +1026,8 @@ struct server_rdp {
                     stream.out_uint16_le(0);
 
                     this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
-
-                    #warning do we need to call this for every mcs packet? maybe every 5 or so
-                    /* Inform the callback that an mcs packet has been sent.  This is needed so
-                    the module can send any high priority mcs packets like audio. */
-                    this->cb.callback(0x5556, 0, 0, 0, 0);
                     this->server_rdp_send_control(RDP_CTL_COOPERATE);
-                    #warning do we need to call this for every mcs packet? maybe every 5 or so
-                    /* Inform the callback that an mcs packet has been sent.  This is needed so
-                   the module can send any high priority mcs packets like audio. */
-                    this->cb.callback(0x5556, 0, 0, 0, 0);
                     this->server_rdp_send_control(RDP_CTL_GRANT_CONTROL);
-                    #warning do we need to call this for every mcs packet? maybe every 5 or so
-                    /* Inform the callback that an mcs packet has been sent.  This is needed so
-                   the module can send any high priority mcs packets like audio. */
-                    this->cb.callback(0x5556, 0, 0, 0, 0);
 
                 }
                 else {
@@ -1099,11 +1083,6 @@ struct server_rdp {
                 stream.out_uint16_le(0);
 
                 this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
-
-                #warning do we need to call this for every mcs packet? maybe every 5 or so
-                /* Inform the callback that an mcs packet has been sent.  This is needed so
-               the module can send any high priority mcs packets like audio. */
-                this->cb.callback(0x5556, 0, 0, 0, 0);
             }
             break;
         case RDP_DATA_PDU_FONT2: /* 39(0x27) */
@@ -1117,16 +1096,8 @@ struct server_rdp {
                 if (seq == 2 || seq == 3)
                 {
                     this->server_rdp_send_unknown1();
-                    #warning do we need to call this for every mcs packet? maybe every 5 or so
-                    /* Inform the callback that an mcs packet has been sent.  This is needed so
-                   the module can send any high priority mcs packets like audio. */
-                    this->cb.callback(0x5556, 0, 0, 0, 0);
                     this->up_and_running = 1;
                     this->server_rdp_send_data_update_sync();
-                    #warning do we need to call this for every mcs packet? maybe every 5 or so
-                    /* Inform the callback that an mcs packet has been sent.  This is needed so
-                    the module can send any high priority mcs packets like audio. */
-                    this->cb.callback(0x5556, 0, 0, 0, 0);
                 }
             }
             break;

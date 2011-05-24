@@ -131,7 +131,7 @@ struct client_mod {
     // and returns 0 as long as the connection with server is still active.
     virtual int mod_signal(void) = 0;
 
-    virtual void mod_event_scancode(long param1, long param2, long param3, long param4, int & key_flags, Keymap & keymap, int keys[]){
+    virtual void scancode(long param1, long param2, long param3, long param4, int & key_flags, Keymap & keymap, int keys[]){
         param1 = param1 % 128;
         int msg = WM_KEYUP;
         keys[param1] = 1 | param3;
@@ -219,17 +219,9 @@ struct client_mod {
 
             /* shut down the rdp client */
             this->front->orders->rdp_layer->server_rdp_send_deactive();
-            #warning do we need to call this for every mcs packet? maybe every 5 or so
-            /* Inform the callback that an mcs packet has been sent.  This is needed so
-            the module can send any high priority mcs packets like audio. */
-            this->front->orders->rdp_layer->cb.callback(0x5556, 0, 0, 0, 0);
 
             /* this should do the resizing */
             this->front->orders->rdp_layer->server_rdp_send_demand_active();
-            #warning do we need to call this for every mcs packet? maybe every 5 or so
-            /* Inform the callback that an mcs packet has been sent.  This is needed so
-            the module can send any high priority mcs packets like audio. */
-            this->front->orders->rdp_layer->cb.callback(0x5556, 0, 0, 0, 0);
 
 
             this->front->orders->reset();
@@ -483,13 +475,6 @@ struct client_mod {
                            int total_data_len, int flags)
     {
         this->front->orders->rdp_layer->server_send_to_channel(channel_id, data, data_len, total_data_len, flags);
-        #warning do we need to call this for every mcs packet? maybe every 5 or so
-        if (channel_id == MCS_GLOBAL_CHANNEL) {
-            /* Inform the callback that an mcs packet has been sent.  This is needed so
-           the module can send any high priority mcs packets like audio. */
-            this->front->orders->rdp_layer->cb.callback(0x5556, 0, 0, 0, 0);
-        }
-
     }
 
     bool get_pointer_displayed() {
@@ -499,6 +484,42 @@ struct client_mod {
     void set_pointer_display() {
         this->pointer_displayed = true;
     }
+
+    int input_mouse(int device_flags, int x, int y)
+    {
+        if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
+            this->mod_event(WM_MOUSEMOVE, x, y, 0, 0);
+            this->front->mouse_x = x;
+            this->front->mouse_y = y;
+
+        }
+        if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
+            this->mod_event(
+                WM_LBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
+                x, y, 0, 0);
+        }
+        if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
+            this->mod_event(
+                WM_RBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
+                x, y, 0, 0);
+        }
+        if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
+            this->mod_event(
+                WM_BUTTON3UP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
+                x, y, 0, 0);
+        }
+        if (device_flags == MOUSE_FLAG_BUTTON4 || /* 0x0280 */ device_flags == 0x0278) {
+            this->mod_event(WM_BUTTON4DOWN, x, y, 0, 0);
+            this->mod_event(WM_BUTTON4UP, x, y, 0, 0);
+        }
+        if (device_flags == MOUSE_FLAG_BUTTON5 || /* 0x0380 */ device_flags == 0x0388) {
+            this->mod_event(WM_BUTTON5DOWN, x, y, 0, 0);
+            this->mod_event(WM_BUTTON5UP, x, y, 0, 0);
+        }
+        return 0;
+    }
+
+
 
 };
 
