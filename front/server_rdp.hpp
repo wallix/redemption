@@ -60,17 +60,41 @@ struct server_rdp {
     {
     }
 
+
+    enum {
+        CHANNEL_CHUNK_LENGTH = 8192,
+        CHANNEL_FLAG_FIRST = 0x01,
+        CHANNEL_FLAG_LAST = 0x02,
+        CHANNEL_FLAG_SHOW_PROTOCOL = 0x10,
+    };
+
+
     void server_send_to_channel(int channel_id, uint8_t *data, int data_len,
                                int total_data_len, int flags) throw (Error)
     {
         Stream stream(data_len + 1024); /* this should be big enough */
         this->sec_layer.server_sec_init(stream);
-        this->sec_layer.mcs_layer.server_channel_init(&stream);
+        stream.channel_hdr = stream.p;
+        stream.p += 8;
+
         stream.out_copy_bytes(data, data_len);
         stream.mark_end();
 
-        this->sec_layer.mcs_layer.server_channel_send(
-            stream, channel_id, total_data_len, flags);
+        int index = channel_id - MCS_GLOBAL_CHANNEL - 1;
+        int count = (int) this->sec_layer.mcs_layer.channel_list.size();
+        if (index < 0 || index >= count) {
+            throw Error(ERR_MCS_CHANNEL_NOT_FOUND);
+        }
+        mcs_channel_item* channel = this->sec_layer.mcs_layer.channel_list[index];
+
+        stream.p = stream.channel_hdr;
+        stream.out_uint32_le(total_data_len);
+        if (channel->flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
+            flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
+        }
+        stream.out_uint32_le(flags);
+        assert(channel->chanid == channel_id);
+
         this->sec_layer.server_sec_send(stream, channel_id);
     }
 

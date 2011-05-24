@@ -74,48 +74,7 @@ struct server_mcs {
         }
     }
 
-    enum {
-        CHANNEL_CHUNK_LENGTH = 8192,
-        CHANNEL_FLAG_FIRST = 0x01,
-        CHANNEL_FLAG_LAST = 0x02,
-        CHANNEL_FLAG_SHOW_PROTOCOL = 0x10,
-    };
-
     public:
-
-    void server_channel_init(Stream* s) throw (Error)
-    {
-        s->channel_hdr = s->p;
-        s->p += 8;
-    }
-
-    void server_channel_send(Stream & stream, int channel_id, int total_data_len, int flags) throw (Error)
-    {
-        int chanid = (channel_id - MCS_GLOBAL_CHANNEL) - 1;
-
-        struct mcs_channel_item* channel = this->get_channel(chanid);
-        stream.p = stream.channel_hdr;
-        stream.out_uint32_le(total_data_len);
-        if (channel->flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
-            flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
-        }
-        stream.out_uint32_le(flags);
-        assert(channel->chanid == channel_id);
-    }
-
-    int channel_count(){
-        int rv = (int) this->channel_list.size();
-        return rv;
-    }
-
-    mcs_channel_item * get_channel(int index) throw (Error)
-    {
-        int count = (int) this->channel_list.size();
-        if (index < 0 || index >= count) {
-            throw Error(ERR_MCS_CHANNEL_NOT_FOUND);
-        }
-        return this->channel_list[index];
-    }
 
     void server_mcs_send_channel_join_confirm_PDU(int userid, int chanid) throw(Error)
     {
