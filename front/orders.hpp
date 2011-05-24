@@ -150,9 +150,13 @@ struct Orders
     void force_init()
     {
 //        LOG(LOG_INFO, "Orders::force_init()");
-        #warning see with order limit is this big enough ?
+        #warning see with order limit : is this big enough ?
         this->out_stream.init(16384);
-        this->rdp_layer->server_rdp_init_data(this->out_stream);
+
+        this->rdp_layer->sec_layer.server_sec_init(this->out_stream);
+        this->out_stream.rdp_hdr = this->out_stream.p;
+        this->out_stream.p += 18;
+
         this->out_stream.out_uint16_le(RDP_UPDATE_ORDERS);
         this->out_stream.out_clear_bytes(2); /* pad */
         this->order_count_ptr = this->out_stream.p;
@@ -166,7 +170,22 @@ struct Orders
         this->out_stream.mark_end();
         this->out_stream.p = this->order_count_ptr;
         this->out_stream.out_uint16_le(this->order_count);
-        this->rdp_layer->server_rdp_send_data(this->out_stream, RDP_DATA_PDU_UPDATE);
+
+        this->out_stream.p = this->out_stream.rdp_hdr;
+        int len = this->out_stream.end - this->out_stream.p;
+        this->out_stream.out_uint16_le(len);
+        this->out_stream.out_uint16_le(0x10 | RDP_PDU_DATA);
+        this->out_stream.out_uint16_le(this->rdp_layer->mcs_channel);
+        this->out_stream.out_uint32_le(this->rdp_layer->share_id);
+        this->out_stream.out_uint8(0);
+        this->out_stream.out_uint8(1);
+        this->out_stream.out_uint16_le(len - 14);
+        this->out_stream.out_uint8(RDP_DATA_PDU_UPDATE);
+        this->out_stream.out_uint8(0);
+        this->out_stream.out_uint16_le(0);
+
+        this->rdp_layer->sec_layer.server_sec_send(this->out_stream, MCS_GLOBAL_CHANNEL);
+
         this->order_count = 0;
     }
 

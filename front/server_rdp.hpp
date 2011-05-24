@@ -91,7 +91,9 @@ struct server_rdp {
     {
         #warning we should create some RDPData object created on init and sent before destruction
         Stream stream(8192);
-        this->server_rdp_init_data(stream);
+        this->sec_layer.server_sec_init(stream);
+        stream.rdp_hdr = stream.p;
+        stream.p += 18;
         stream.out_uint16_le(RDP_UPDATE_PALETTE);
 
         stream.out_uint16_le(0);
@@ -109,7 +111,23 @@ struct server_rdp {
             stream.out_uint8(r);
         }
         stream.mark_end();
-        this->server_rdp_send_data(stream, RDP_DATA_PDU_UPDATE);
+
+        stream.p = stream.rdp_hdr;
+        int len = stream.end - stream.p;
+        stream.out_uint16_le(len);
+        stream.out_uint16_le(0x10 | RDP_PDU_DATA);
+        stream.out_uint16_le(this->mcs_channel);
+        stream.out_uint32_le(this->share_id);
+        stream.out_uint8(0);
+        stream.out_uint8(1);
+        stream.out_uint16_le(len - 14);
+        stream.out_uint8(RDP_DATA_PDU_UPDATE);
+        stream.out_uint8(0);
+        stream.out_uint16_le(0);
+
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+
+
     }
 
 //    2.2.9.1.1.4     Server Pointer Update PDU (TS_POINTER_PDU)
@@ -306,7 +324,22 @@ struct server_rdp {
 //      The contents of this byte should be ignored.
 
         stream.mark_end();
-        this->server_rdp_send_data(stream, RDP_DATA_PDU_POINTER);
+
+        stream.p = stream.rdp_hdr;
+        int len = stream.end - stream.p;
+        stream.out_uint16_le(len);
+        stream.out_uint16_le(0x10 | RDP_PDU_DATA);
+        stream.out_uint16_le(this->mcs_channel);
+        stream.out_uint32_le(this->share_id);
+        stream.out_uint8(0);
+        stream.out_uint8(1);
+        stream.out_uint16_le(len - 14);
+        stream.out_uint8(RDP_DATA_PDU_POINTER);
+        stream.out_uint8(0);
+        stream.out_uint16_le(0);
+
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+
     }
 
 
@@ -353,21 +386,6 @@ struct server_rdp {
         stream.out_uint16_le(cache_idx);
         stream.mark_end();
 
-        this->server_rdp_send_data(stream, RDP_DATA_PDU_POINTER);
-    }
-
-
-    void server_rdp_init_data(Stream & stream) throw (Error)
-    {
-//        stream.init(65536);
-        this->sec_layer.server_sec_init(stream);
-        stream.rdp_hdr = stream.p;
-        stream.p += 18;
-    }
-
-    /*****************************************************************************/
-    void server_rdp_send_data(Stream & stream, int data_pdu_type) throw (Error)
-    {
         stream.p = stream.rdp_hdr;
         int len = stream.end - stream.p;
         stream.out_uint16_le(len);
@@ -377,19 +395,14 @@ struct server_rdp {
         stream.out_uint8(0);
         stream.out_uint8(1);
         stream.out_uint16_le(len - 14);
-        stream.out_uint8(data_pdu_type);
+        stream.out_uint8(RDP_DATA_PDU_POINTER);
         stream.out_uint8(0);
         stream.out_uint16_le(0);
 
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+
     }
 
-    void server_rdp_init(Stream & stream) throw (Error)
-    {
-        this->sec_layer.server_sec_init(stream);
-        stream.rdp_hdr = stream.p;
-        stream.p += 6;
-    }
 
     #warning activate_and_process_data is horrible because it does two largely unrelated tasks. One is to wait for the client to be up and running (initialization phase) the other is management of normal rdp packets once initialisation is finished. We should be able to separate both tasks, but it's not easy as code is quite intricated between layers.
     void activate_and_process_data()
@@ -503,11 +516,27 @@ struct server_rdp {
     void server_rdp_send_data_update_sync() throw (Error)
     {
         Stream stream(8192);
-        this->server_rdp_init_data(stream);
+        this->sec_layer.server_sec_init(stream);
+        stream.rdp_hdr = stream.p;
+        stream.p += 18;
         stream.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
         stream.out_clear_bytes(2);
         stream.mark_end();
-        this->server_rdp_send_data(stream, RDP_DATA_PDU_UPDATE);
+
+        stream.p = stream.rdp_hdr;
+        int len = stream.end - stream.p;
+        stream.out_uint16_le(len);
+        stream.out_uint16_le(0x10 | RDP_PDU_DATA);
+        stream.out_uint16_le(this->mcs_channel);
+        stream.out_uint32_le(this->share_id);
+        stream.out_uint8(0);
+        stream.out_uint8(1);
+        stream.out_uint16_le(len - 14);
+        stream.out_uint8(RDP_DATA_PDU_UPDATE);
+        stream.out_uint8(0);
+        stream.out_uint16_le(0);
+
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
     void server_rdp_incoming(Rsakeys * rsa_keys) throw (Error)
@@ -526,7 +555,10 @@ struct server_rdp {
         uint8_t* caps_ptr;
 
         Stream stream(8192);
-        this->server_rdp_init(stream);
+
+        this->sec_layer.server_sec_init(stream);
+        stream.rdp_hdr = stream.p;
+        stream.p += 6;
 
         caps_count = 0;
         stream.out_uint32_le(this->share_id);
@@ -851,28 +883,35 @@ struct server_rdp {
         }
     }
 
-    void server_rdp_send_synchronise() throw (Error)
-    {
-        #warning we should create some RDPData object created on init and sent before destruction
-        Stream stream(8192);
-        this->server_rdp_init_data(stream);
-        stream.out_uint16_le(1);
-        stream.out_uint16_le(1002);
-        stream.mark_end();
-        this->server_rdp_send_data(stream, RDP_DATA_PDU_SYNCHRONISE);
-    }
-
     /*****************************************************************************/
     void server_rdp_send_control(int action) throw (Error)
     {
         #warning we should create some RDPData object created on init and sent before destruction
         Stream stream(8192);
-        this->server_rdp_init_data(stream);
+        this->sec_layer.server_sec_init(stream);
+        stream.rdp_hdr = stream.p;
+        stream.p += 18;
         stream.out_uint16_le(action);
         stream.out_uint16_le(0); /* userid */
         stream.out_uint32_le(1002); /* control id */
         stream.mark_end();
-        this->server_rdp_send_data(stream, RDP_DATA_PDU_CONTROL);
+
+        stream.p = stream.rdp_hdr;
+        int len = stream.end - stream.p;
+        stream.out_uint16_le(len);
+        stream.out_uint16_le(0x10 | RDP_PDU_DATA);
+        stream.out_uint16_le(this->mcs_channel);
+        stream.out_uint32_le(this->share_id);
+        stream.out_uint8(0);
+        stream.out_uint8(1);
+        stream.out_uint16_le(len - 14);
+        stream.out_uint8(RDP_DATA_PDU_CONTROL);
+        stream.out_uint8(0);
+        stream.out_uint16_le(0);
+
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+
+
     }
 
 
@@ -906,10 +945,27 @@ struct server_rdp {
 
         #warning we should create some RDPStream object created on init and sent before destruction
         Stream stream(8192);
-        this->server_rdp_init_data(stream);
+        this->sec_layer.server_sec_init(stream);
+        stream.rdp_hdr = stream.p;
+        stream.p += 18;
         stream.out_copy_bytes((char*)g_unknown1, 172);
         stream.mark_end();
-        this->server_rdp_send_data(stream, 0x28);
+
+        stream.p = stream.rdp_hdr;
+        int len = stream.end - stream.p;
+        stream.out_uint16_le(len);
+        stream.out_uint16_le(0x10 | RDP_PDU_DATA);
+        stream.out_uint16_le(this->mcs_channel);
+        stream.out_uint32_le(this->share_id);
+        stream.out_uint8(0);
+        stream.out_uint8(1);
+        stream.out_uint16_le(len - 14);
+        stream.out_uint8(0x28);
+        stream.out_uint8(0);
+        stream.out_uint16_le(0);
+
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+
     }
 
     /* RDP_PDU_DATA */
@@ -950,7 +1006,30 @@ struct server_rdp {
                 this->front_stream.skip_uint8(2); /* user id */
                 this->front_stream.skip_uint8(4); /* control id */
                 if (action == RDP_CTL_REQUEST_CONTROL) {
-                    this->server_rdp_send_synchronise();
+                    #warning we should create some RDPData object created on init and sent before destruction
+                    Stream stream(8192);
+                    this->sec_layer.server_sec_init(stream);
+                    stream.rdp_hdr = stream.p;
+                    stream.p += 18;
+                    stream.out_uint16_le(1);
+                    stream.out_uint16_le(1002);
+                    stream.mark_end();
+
+                    stream.p = stream.rdp_hdr;
+                    int len = stream.end - stream.p;
+                    stream.out_uint16_le(len);
+                    stream.out_uint16_le(0x10 | RDP_PDU_DATA);
+                    stream.out_uint16_le(this->mcs_channel);
+                    stream.out_uint32_le(this->share_id);
+                    stream.out_uint8(0);
+                    stream.out_uint8(1);
+                    stream.out_uint16_le(len - 14);
+                    stream.out_uint8(RDP_DATA_PDU_SYNCHRONISE);
+                    stream.out_uint8(0);
+                    stream.out_uint16_le(0);
+
+                    this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+
                     #warning do we need to call this for every mcs packet? maybe every 5 or so
                     /* Inform the callback that an mcs packet has been sent.  This is needed so
                     the module can send any high priority mcs packets like audio. */
@@ -1001,9 +1080,26 @@ struct server_rdp {
                 /* is sure the connection is alive and it can ask if user */
                 /* really wants to disconnect */
                 Stream stream(8192);
-                this->server_rdp_init_data(stream);
+                this->sec_layer.server_sec_init(stream);
+                stream.rdp_hdr = stream.p;
+                stream.p += 18;
                 stream.mark_end();
-                this->server_rdp_send_data(stream, 37);
+
+                stream.p = stream.rdp_hdr;
+                int len = stream.end - stream.p;
+                stream.out_uint16_le(len);
+                stream.out_uint16_le(0x10 | RDP_PDU_DATA);
+                stream.out_uint16_le(this->mcs_channel);
+                stream.out_uint32_le(this->share_id);
+                stream.out_uint8(0);
+                stream.out_uint8(1);
+                stream.out_uint16_le(len - 14);
+                stream.out_uint8(37);
+                stream.out_uint8(0);
+                stream.out_uint16_le(0);
+
+                this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+
                 #warning do we need to call this for every mcs packet? maybe every 5 or so
                 /* Inform the callback that an mcs packet has been sent.  This is needed so
                the module can send any high priority mcs packets like audio. */
@@ -1049,7 +1145,9 @@ struct server_rdp {
     {
         #warning we should create some RDPStream object created on init and sent before destruction
         Stream stream(8192);
-        this->server_rdp_init(stream);
+        this->sec_layer.server_sec_init(stream);
+        stream.rdp_hdr = stream.p;
+        stream.p += 6;
         stream.mark_end();
         this->server_rdp_send(stream, RDP_PDU_DEACTIVATE);
     }
