@@ -406,14 +406,7 @@ struct server_rdp {
     void activate_and_process_data()
     {
         Stream & stream = this->front_stream;
-        int cont = 1;
-        while (cont || !this->up_and_running) {
-            if (stream.next_packet && stream.next_packet < stream.end){
-                stream.p = stream.next_packet;
-                cont =   stream.next_packet  && (stream.next_packet < stream.end);
-                continue;
-            }
-
+        do {
             this->sec_layer.mcs_layer.iso_layer.iso_recv(stream);
             int appid = stream.in_uint8() >> 2;
             /* Channel Join ReQuest datagram */
@@ -454,28 +447,29 @@ struct server_rdp {
                 this->sec_layer.server_sec_rsa_op(this->sec_layer.client_random, this->sec_layer.client_crypt_random,
                                 this->sec_layer.pub_mod, this->sec_layer.pri_exp);
                 this->sec_layer.server_sec_establish_keys();
-                stream.next_packet = 0;
+                if (!this->up_and_running){ continue; }
             }
             else if (flags & SEC_LOGON_INFO) { /* 0x40 */
                 this->sec_layer.server_sec_process_logon_info(stream);
                 if (this->sec_layer.client_info->is_mce) {
                     this->sec_layer.server_sec_send_media_lic_response();
-                    stream.next_packet = 0;
                     /* special error that means send demand active */
                     this->server_rdp_send_demand_active();
+                    if (!this->up_and_running){ continue; }
                 }
                 else {
                     this->sec_layer.server_sec_send_lic_initial();
-                    stream.next_packet = 0;
+                    if (!this->up_and_running){ continue; }
                 }
             }
             else if (flags & SEC_LICENCE_NEG) { /* 0x80 */
                 this->sec_layer.server_sec_send_lic_response();
-                stream.next_packet = 0;
                 /* special error that means send demand active */
                 this->server_rdp_send_demand_active();
+                if (!this->up_and_running){ continue; }
             }
             else if (chan > MCS_GLOBAL_CHANNEL) {
+            #warning is it possible to get channel data when we are not up and running ?
                 /*****************************************************************************/
                 /* This is called from the secure layer to process an incoming non global
                    channel packet.
@@ -504,39 +498,39 @@ struct server_rdp {
                 if (rv != 0){
                     throw Error(ERR_CHANNEL_SESSION_CALLBACK_FAILED);
                 }
-                stream.next_packet = 0;
+                if (!this->up_and_running){ continue; }
+            }
+
+            stream.next_packet = stream.p;
+
+            int length = stream.in_uint16_le();
+            if (length == 0x8000) {
+                stream.next_packet += 8;
             }
             else {
-                stream.next_packet = stream.p;
-
-                int len = stream.in_uint16_le();
-                if (len == 0x8000) {
-                    stream.next_packet += 8;
-                }
-                else {
-                    int pdu_code = stream.in_uint16_le();
-                    stream.skip_uint8(2); /* mcs user id */
-                    stream.next_packet += len;
-                    switch (pdu_code & 0xf) {
-                    case 0:
-                        break;
-                    case RDP_PDU_CONFIRM_ACTIVE: /* 3 */
-                        this->server_rdp_process_confirm_active(stream);
-                        break;
-                    case RDP_PDU_DATA: /* 7 */
-                        // this is rdp_process_data that will set up_and_running to 1
-                        // when fonts have been received
-                        // we will not exit this loop until we are in this state.
-                        this->server_rdp_process_data(stream);
-                        break;
-                    default:
-                        LOG(LOG_WARNING, "unknown in session_data (%d)\n", pdu_code & 0xf);
-                        break;
-                    }
+                int pdu_code = stream.in_uint16_le();
+                stream.skip_uint8(2); /* mcs user id */
+                stream.next_packet += length;
+                switch (pdu_code & 0xf) {
+                case 0:
+                    break;
+                case RDP_PDU_CONFIRM_ACTIVE: /* 3 */
+                    this->server_rdp_process_confirm_active(stream);
+                    break;
+                case RDP_PDU_DATA: /* 7 */
+                    // this is rdp_process_data that will set up_and_running to 1
+                    // when fonts have been received
+                    // we will not exit this loop until we are in this state.
+                    this->server_rdp_process_data(stream);
+                    break;
+                default:
+                    LOG(LOG_WARNING, "unknown in session_data (%d)\n", pdu_code & 0xf);
+                    break;
                 }
             }
-            cont =   stream.next_packet  && (stream.next_packet < stream.end);
-        }
+        } while ((stream.next_packet < stream.end) || !this->up_and_running);
+
+        #warning the postcondition could be changed to signify we want to get hand back immediately, because we still have data to process.
     }
 
     /*****************************************************************************/
