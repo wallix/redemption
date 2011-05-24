@@ -409,7 +409,132 @@ struct server_rdp {
     {
         int cont = 1;
         while (cont || !this->up_and_running) {
-            int code = this->server_rdp_recv();
+            int code = 0;
+            if (this->front_stream.next_packet == 0
+            || this->front_stream.next_packet >= this->front_stream.end) {
+                this->sec_layer.mcs_layer.iso_layer.iso_recv(this->front_stream);
+                int appid = this->front_stream.in_uint8() >> 2;
+                /* Channel Join ReQuest datagram */
+                while(appid == MCS_CJRQ) {
+                    /* this is channels getting added from the client */
+                    int userid = this->front_stream.in_uint16_be();
+                    int chanid = this->front_stream.in_uint16_be();
+                    this->sec_layer.mcs_layer.server_mcs_send_channel_join_confirm_PDU(userid, chanid);
+                    this->sec_layer.mcs_layer.iso_layer.iso_recv(this->front_stream);
+                    appid = this->front_stream.in_uint8() >> 2;
+                }
+                /* Disconnect Provider Ultimatum datagram */
+                if (appid == MCS_DPUM) {
+                    throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+                }
+                /* SenD ReQuest datagram */
+                if (appid != MCS_SDRQ) {
+                    throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+                }
+                this->front_stream.skip_uint8(2);
+
+                int chan = this->front_stream.in_uint16_be();
+                this->front_stream.skip_uint8(1);
+                int len = this->front_stream.in_uint8();
+                if (len & 0x80) {
+                    this->front_stream.skip_uint8(1);
+                }
+
+                const uint32_t flags = this->front_stream.in_uint32_le();
+                if (flags & SEC_ENCRYPT) { /* 0x08 */
+                    this->front_stream.skip_uint8(8); /* signature */
+                    this->sec_layer.server_sec_decrypt(this->front_stream.p, (int)(this->front_stream.end - this->front_stream.p));
+                }
+
+                if (flags & SEC_CLIENT_RANDOM) { /* 0x01 */
+                    this->front_stream.in_uint32_le(); // len
+                    memcpy(this->sec_layer.client_crypt_random, this->front_stream.in_uint8p(64), 64);
+                    this->sec_layer.server_sec_rsa_op(this->sec_layer.client_random, this->sec_layer.client_crypt_random,
+                                    this->sec_layer.pub_mod, this->sec_layer.pri_exp);
+                    this->sec_layer.server_sec_establish_keys();
+                    this->front_stream.next_packet = 0;
+                }
+                else if (flags & SEC_LOGON_INFO) { /* 0x40 */
+                    this->sec_layer.server_sec_process_logon_info(this->front_stream);
+                    if (this->sec_layer.client_info->is_mce) {
+                        this->sec_layer.server_sec_send_media_lic_response();
+                        this->front_stream.next_packet = 0;
+                        /* special error that means send demand active */
+                        code = -1;
+                    }
+                    else {
+                        this->sec_layer.server_sec_send_lic_initial();
+                        this->front_stream.next_packet = 0;
+                    }
+                }
+                else if (flags & SEC_LICENCE_NEG) { /* 0x80 */
+                    this->sec_layer.server_sec_send_lic_response();
+                    this->front_stream.next_packet = 0;
+                    /* special error that means send demand active */
+                    code = -1;
+                }
+                else if (chan > MCS_GLOBAL_CHANNEL) {
+                    /*****************************************************************************/
+                    /* This is called from the secure layer to process an incoming non global
+                       channel packet.
+                       'chan' passed in here is the mcs channel id so it is
+                       MCS_GLOBAL_CHANNEL plus something. */
+
+                    /* this assumes that the channels are in order of chanid(mcs channel id)
+                       but they should be, see server_sec_process_mcs_data_channels
+                       the first channel should be MCS_GLOBAL_CHANNEL + 1, second
+                       one should be MCS_GLOBAL_CHANNEL + 2, and so on */
+                    int channel_id = (chan - MCS_GLOBAL_CHANNEL) - 1;
+
+                    struct mcs_channel_item* channel = this->sec_layer.mcs_layer.channel_list[channel_id];
+
+                    if (channel == 0) {
+                        throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
+                    }
+                    int length = this->front_stream.in_uint32_le();
+                    int flags = this->front_stream.in_uint32_le();
+
+                    int size = (int)(this->front_stream.end - this->front_stream.p);
+                    #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
+                    int rv = this->cb.callback(WM_CHANNELDATA,
+                                           ((flags & 0xffff) << 16) | (channel_id & 0xffff),
+                                           size, (long)(this->front_stream.p), length);
+                    if (rv != 0){
+                        throw Error(ERR_CHANNEL_SESSION_CALLBACK_FAILED);
+                    }
+                    this->front_stream.next_packet = 0;
+                    code = 0;
+                }
+                else {
+                    this->front_stream.next_packet = this->front_stream.p;
+                    int len = this->front_stream.in_uint16_le();
+                    #warning looks like length can be 8 bits, check in protocol documentation, it may be the problem with properJavaRDP.
+                    if (len == 0x8000) {
+                        this->front_stream.next_packet += 8;
+                    }
+                    else {
+                        int pdu_code = this->front_stream.in_uint16_le();
+                        this->front_stream.skip_uint8(2); /* mcs user id */
+                        this->front_stream.next_packet += len;
+                        code = pdu_code & 0xf;
+                    }
+                }
+            }
+            else {
+                this->front_stream.p = this->front_stream.next_packet;
+                int len = this->front_stream.in_uint16_le();
+                #warning looks like length can be 8 bits, check in protocol documentation, it may be the problem with properJavaRDP.
+                if (len == 0x8000) {
+                    this->front_stream.next_packet += 8;
+                }
+                else {
+                    int pdu_code = this->front_stream.in_uint16_le();
+                    this->front_stream.skip_uint8(2); /* mcs user id */
+                    this->front_stream.next_packet += len;
+                    code = pdu_code & 0xf;
+                }
+            }
+
             switch (code) {
             case -1:
                 this->server_rdp_send_demand_active();
@@ -429,140 +554,9 @@ struct server_rdp {
                 LOG(LOG_WARNING, "unknown in session_data (%d)\n", code);
                 break;
             }
-            cont = this->front_stream.next_packet
-                && (this->front_stream.next_packet < this->front_stream.end);
+            cont =   this->front_stream.next_packet
+                 && (this->front_stream.next_packet < this->front_stream.end);
         }
-    }
-
-    int server_rdp_recv() throw (Error)
-    {
-        int rv = 0;
-        if (this->front_stream.next_packet == 0
-        || this->front_stream.next_packet >= this->front_stream.end) {
-            this->sec_layer.mcs_layer.iso_layer.iso_recv(this->front_stream);
-            int appid = this->front_stream.in_uint8() >> 2;
-            /* Channel Join ReQuest datagram */
-            while(appid == MCS_CJRQ) {
-                /* this is channels getting added from the client */
-                int userid = this->front_stream.in_uint16_be();
-                int chanid = this->front_stream.in_uint16_be();
-                this->sec_layer.mcs_layer.server_mcs_send_channel_join_confirm_PDU(userid, chanid);
-                this->sec_layer.mcs_layer.iso_layer.iso_recv(this->front_stream);
-                appid = this->front_stream.in_uint8() >> 2;
-            }
-            /* Disconnect Provider Ultimatum datagram */
-            if (appid == MCS_DPUM) {
-                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
-            }
-            /* SenD ReQuest datagram */
-            if (appid != MCS_SDRQ) {
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-            }
-            this->front_stream.skip_uint8(2);
-
-            int chan = this->front_stream.in_uint16_be();
-            this->front_stream.skip_uint8(1);
-            int len = this->front_stream.in_uint8();
-            if (len & 0x80) {
-                this->front_stream.skip_uint8(1);
-            }
-
-            const uint32_t flags = this->front_stream.in_uint32_le();
-            if (flags & SEC_ENCRYPT) { /* 0x08 */
-                this->front_stream.skip_uint8(8); /* signature */
-                this->sec_layer.server_sec_decrypt(this->front_stream.p, (int)(this->front_stream.end - this->front_stream.p));
-            }
-
-            if (flags & SEC_CLIENT_RANDOM) { /* 0x01 */
-                this->front_stream.in_uint32_le(); // len
-                memcpy(this->sec_layer.client_crypt_random, this->front_stream.in_uint8p(64), 64);
-                this->sec_layer.server_sec_rsa_op(this->sec_layer.client_random, this->sec_layer.client_crypt_random,
-                                this->sec_layer.pub_mod, this->sec_layer.pri_exp);
-                this->sec_layer.server_sec_establish_keys();
-                this->front_stream.next_packet = 0;
-            }
-            else if (flags & SEC_LOGON_INFO) { /* 0x40 */
-                this->sec_layer.server_sec_process_logon_info(this->front_stream);
-                if (this->sec_layer.client_info->is_mce) {
-                    this->sec_layer.server_sec_send_media_lic_response();
-                    this->front_stream.next_packet = 0;
-                    /* special error that means send demand active */
-                    rv = -1;
-                }
-                else {
-                    this->sec_layer.server_sec_send_lic_initial();
-                    this->front_stream.next_packet = 0;
-                }
-            }
-            else if (flags & SEC_LICENCE_NEG) { /* 0x80 */
-                this->sec_layer.server_sec_send_lic_response();
-                this->front_stream.next_packet = 0;
-                /* special error that means send demand active */
-                rv = -1;
-            }
-            else if (chan > MCS_GLOBAL_CHANNEL) {
-                /*****************************************************************************/
-                /* This is called from the secure layer to process an incoming non global
-                   channel packet.
-                   'chan' passed in here is the mcs channel id so it is
-                   MCS_GLOBAL_CHANNEL plus something. */
-
-                /* this assumes that the channels are in order of chanid(mcs channel id)
-                   but they should be, see server_sec_process_mcs_data_channels
-                   the first channel should be MCS_GLOBAL_CHANNEL + 1, second
-                   one should be MCS_GLOBAL_CHANNEL + 2, and so on */
-                int channel_id = (chan - MCS_GLOBAL_CHANNEL) - 1;
-
-                struct mcs_channel_item* channel = this->sec_layer.mcs_layer.channel_list[channel_id];
-
-                if (channel == 0) {
-                    throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
-                }
-                int length = this->front_stream.in_uint32_le();
-                int flags = this->front_stream.in_uint32_le();
-
-                int size = (int)(this->front_stream.end - this->front_stream.p);
-                #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
-                int rv = this->cb.callback(WM_CHANNELDATA,
-                                       ((flags & 0xffff) << 16) | (channel_id & 0xffff),
-                                       size, (long)(this->front_stream.p), length);
-                if (rv != 0){
-                    throw Error(ERR_CHANNEL_SESSION_CALLBACK_FAILED);
-                }
-                this->front_stream.next_packet = 0;
-                rv = 0;
-            }
-            else {
-                this->front_stream.next_packet = this->front_stream.p;
-                int len = this->front_stream.in_uint16_le();
-                #warning looks like length can be 8 bits, check in protocol documentation, it may be the problem with properJavaRDP.
-                if (len == 0x8000) {
-                    this->front_stream.next_packet += 8;
-                }
-                else {
-                    int pdu_code = this->front_stream.in_uint16_le();
-                    this->front_stream.skip_uint8(2); /* mcs user id */
-                    this->front_stream.next_packet += len;
-                    rv = pdu_code & 0xf;
-                }
-            }
-        }
-        else {
-            this->front_stream.p = this->front_stream.next_packet;
-            int len = this->front_stream.in_uint16_le();
-            #warning looks like length can be 8 bits, check in protocol documentation, it may be the problem with properJavaRDP.
-            if (len == 0x8000) {
-                this->front_stream.next_packet += 8;
-            }
-            else {
-                int pdu_code = this->front_stream.in_uint16_le();
-                this->front_stream.skip_uint8(2); /* mcs user id */
-                this->front_stream.next_packet += len;
-                rv = pdu_code & 0xf;
-            }
-        }
-        return rv;
-
     }
 
     /*****************************************************************************/
