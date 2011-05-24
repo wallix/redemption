@@ -30,7 +30,6 @@
 #include "file_loc.hpp"
 #include "log.hpp"
 #include "iso_layer.hpp"
-#include "callback.hpp"
 
 #include <string.h>
 #include <unistd.h>
@@ -55,14 +54,13 @@ struct mcs_channel_item {
 
 /* mcs */
 struct server_mcs {
-    Callback & cb;
     struct IsoLayer iso_layer;
     int userid;
     int chanid;
     Stream data;
     vector<struct mcs_channel_item *> channel_list;
-    server_mcs(Callback & cb, struct Transport *trans)
-        : cb(cb), iso_layer(trans), userid(1), chanid(1001)
+    server_mcs(struct Transport *trans)
+        : iso_layer(trans), userid(1), chanid(1001)
     {
     }
 
@@ -104,39 +102,6 @@ struct server_mcs {
         stream.out_uint32_le(flags);
         assert(channel->chanid == channel_id);
     }
-
-    /*****************************************************************************/
-    /* This is called from the secure layer to process an incoming non global
-       channel packet.
-       'chanid' passed in here is the mcs channel id so it MCS_GLOBAL_CHANNEL
-       plus something. */
-    void server_channel_process(Stream & stream, int chanid) throw (Error)
-    {
-        /* this assumes that the channels are in order of chanid(mcs channel id)
-           but they should be, see server_sec_process_mcs_data_channels
-           the first channel should be MCS_GLOBAL_CHANNEL + 1, second
-           one should be MCS_GLOBAL_CHANNEL + 2, and so on */
-        int channel_id = (chanid - MCS_GLOBAL_CHANNEL) - 1;
-
-        struct mcs_channel_item* channel = this->channel_list[channel_id];
-
-        if (channel == 0) {
-            throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
-        }
-        int length = stream.in_uint32_le();
-        int flags = stream.in_uint32_le();
-
-        int size = (int)(stream.end - stream.p);
-        #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
-        int rv = this->cb.callback(0x5555,
-                               ((flags & 0xffff) << 16) | (channel_id & 0xffff),
-                               size, (long)(stream.p), length);
-        if (rv != 0){
-            throw Error(ERR_CHANNEL_SESSION_CALLBACK_FAILED);
-        }
-
-    }
-
 
     int channel_count(){
         int rv = (int) this->channel_list.size();
@@ -223,10 +188,6 @@ struct server_mcs {
             stream.end--;
         }
         this->iso_layer.iso_send(stream);
-        #warning do we need to call this for every mcs packet? maybe every 5 or so
-        if (chan == MCS_GLOBAL_CHANNEL) {
-            this->server_mcs_call_callback();
-        }
     }
 
     void server_mcs_disconnect() throw (Error)
@@ -351,15 +312,6 @@ struct server_mcs {
         this->server_mcs_ber_out_int24(stream, max_pdu_size);
         this->server_mcs_ber_out_int8(stream, 2);
     }
-
-    /* Inform the callback that an mcs packet has been sent.  This is needed so
-       the module can send any high priority mcs packets like audio. */
-    int server_mcs_call_callback()
-    {
-        return this->cb.callback(0x5556, 0, 0, 0, 0);
-    }
-
-
 };
 
 

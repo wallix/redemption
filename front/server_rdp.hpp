@@ -51,7 +51,7 @@ struct server_rdp {
         share_id(65538),
         mcs_channel(0),
         client_info(ini),
-        sec_layer(&client_info, cb, trans),
+        sec_layer(&client_info, trans),
         front_stream(16384)
     {
     }
@@ -72,6 +72,12 @@ struct server_rdp {
         this->sec_layer.mcs_layer.server_channel_send(
             stream, channel_id, total_data_len, flags);
         this->sec_layer.server_sec_send(stream, channel_id);
+        #warning do we need to call this for every mcs packet? maybe every 5 or so
+        if (channel_id == MCS_GLOBAL_CHANNEL) {
+            /* Inform the callback that an mcs packet has been sent.  This is needed so
+           the module can send any high priority mcs packets like audio. */
+            this->cb.callback(0x5556, 0, 0, 0, 0);
+        }
     }
 
     // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
@@ -405,6 +411,10 @@ struct server_rdp {
         stream.out_uint16_le(0);
 
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        #warning do we need to call this for every mcs packet? maybe every 5 or so
+        /* Inform the callback that an mcs packet has been sent.  This is needed so
+       the module can send any high priority mcs packets like audio. */
+        this->cb.callback(0x5556, 0, 0, 0, 0);
     }
 
     void server_rdp_init(Stream & stream) throw (Error)
@@ -458,7 +468,34 @@ struct server_rdp {
             }
             if ((chan != MCS_GLOBAL_CHANNEL) && (chan > 0)) {
                 if (chan > MCS_GLOBAL_CHANNEL) {
-                    this->sec_layer.mcs_layer.server_channel_process(this->front_stream, chan);
+                    /*****************************************************************************/
+                    /* This is called from the secure layer to process an incoming non global
+                       channel packet.
+                       'chan' passed in here is the mcs channel id so it is
+                       MCS_GLOBAL_CHANNEL plus something. */
+
+                    /* this assumes that the channels are in order of chanid(mcs channel id)
+                       but they should be, see server_sec_process_mcs_data_channels
+                       the first channel should be MCS_GLOBAL_CHANNEL + 1, second
+                       one should be MCS_GLOBAL_CHANNEL + 2, and so on */
+                    int channel_id = (chan - MCS_GLOBAL_CHANNEL) - 1;
+
+                    struct mcs_channel_item* channel = this->sec_layer.mcs_layer.channel_list[channel_id];
+
+                    if (channel == 0) {
+                        throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
+                    }
+                    int length = this->front_stream.in_uint32_le();
+                    int flags = this->front_stream.in_uint32_le();
+
+                    int size = (int)(this->front_stream.end - this->front_stream.p);
+                    #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
+                    int rv = this->cb.callback(0x5555,
+                                           ((flags & 0xffff) << 16) | (channel_id & 0xffff),
+                                           size, (long)(this->front_stream.p), length);
+                    if (rv != 0){
+                        throw Error(ERR_CHANNEL_SESSION_CALLBACK_FAILED);
+                    }
                 }
                 this->front_stream.next_packet = 0;
                 return 0;
@@ -489,6 +526,10 @@ struct server_rdp {
         stream.out_uint16_le(0x10 | pdu_type);
         stream.out_uint16_le(this->mcs_channel);
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        #warning do we need to call this for every mcs packet? maybe every 5 or so
+        /* Inform the callback that an mcs packet has been sent.  This is needed so
+       the module can send any high priority mcs packets like audio. */
+        this->cb.callback(0x5556, 0, 0, 0, 0);
     }
 
     /*****************************************************************************/
