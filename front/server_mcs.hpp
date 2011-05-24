@@ -105,19 +105,6 @@ struct server_mcs {
         assert(channel->chanid == channel_id);
     }
 
-    /* this will inform the callback that some channel data is ready */
-    void server_channel_call_callback(Stream & stream, int channel_id, int total_data_len, int flags) throw (Error)
-    {
-        int size = (int)(stream.end - stream.p);
-        #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
-        int rv = this->cb.callback(0x5555,
-                               ((flags & 0xffff) << 16) | (channel_id & 0xffff),
-                               size, (long)(stream.p), total_data_len);
-        if (rv != 0){
-            throw Error(ERR_CHANNEL_SESSION_CALLBACK_FAILED);
-        }
-    }
-
     /*****************************************************************************/
     /* This is called from the secure layer to process an incoming non global
        channel packet.
@@ -138,7 +125,16 @@ struct server_mcs {
         }
         int length = stream.in_uint32_le();
         int flags = stream.in_uint32_le();
-        this->server_channel_call_callback(stream, channel_id, length, flags);
+
+        int size = (int)(stream.end - stream.p);
+        #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
+        int rv = this->cb.callback(0x5555,
+                               ((flags & 0xffff) << 16) | (channel_id & 0xffff),
+                               size, (long)(stream.p), length);
+        if (rv != 0){
+            throw Error(ERR_CHANNEL_SESSION_CALLBACK_FAILED);
+        }
+
     }
 
 
