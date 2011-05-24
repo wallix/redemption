@@ -72,12 +72,6 @@ struct server_rdp {
         this->sec_layer.mcs_layer.server_channel_send(
             stream, channel_id, total_data_len, flags);
         this->sec_layer.server_sec_send(stream, channel_id);
-        #warning do we need to call this for every mcs packet? maybe every 5 or so
-        if (channel_id == MCS_GLOBAL_CHANNEL) {
-            /* Inform the callback that an mcs packet has been sent.  This is needed so
-           the module can send any high priority mcs packets like audio. */
-            this->cb.callback(0x5556, 0, 0, 0, 0);
-        }
     }
 
     // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
@@ -372,29 +366,6 @@ struct server_rdp {
     }
 
     /*****************************************************************************/
-    /* sent 37 pdu */
-    void server_rdp_send_disconnect_query_response() throw (Error)
-    {
-        #warning strange, what is sent looks empty ?
-        Stream stream(8192);
-        this->server_rdp_init_data(stream);
-        stream.mark_end();
-        this->server_rdp_send_data(stream, 37);
-    }
-
-    void server_rdp_process_screen_update() throw (Error)
-    {
-        /* int op = */ this->front_stream.in_uint32_le();
-        int left = this->front_stream.in_uint16_le();
-        int top = this->front_stream.in_uint16_le();
-        int right = this->front_stream.in_uint16_le();
-        int bottom = this->front_stream.in_uint16_le();
-        int cx = (right - left) + 1;
-        int cy = (bottom - top) + 1;
-        this->cb.callback(0x4444, left, top, cx, cy);
-    }
-
-    /*****************************************************************************/
     void server_rdp_send_data(Stream & stream, int data_pdu_type) throw (Error)
     {
         stream.p = stream.rdp_hdr;
@@ -411,10 +382,6 @@ struct server_rdp {
         stream.out_uint16_le(0);
 
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
-        #warning do we need to call this for every mcs packet? maybe every 5 or so
-        /* Inform the callback that an mcs packet has been sent.  This is needed so
-       the module can send any high priority mcs packets like audio. */
-        this->cb.callback(0x5556, 0, 0, 0, 0);
     }
 
     void server_rdp_init(Stream & stream) throw (Error)
@@ -433,6 +400,10 @@ struct server_rdp {
             switch (code) {
             case -1:
                 this->server_rdp_send_demand_active();
+                #warning do we need to call this for every mcs packet? maybe every 5 or so
+                /* Inform the callback that an mcs packet has been sent.  This is needed so
+                the module can send any high priority mcs packets like audio. */
+                this->cb.callback(0x5556, 0, 0, 0, 0);
                 break;
             case 0:
                 break;
@@ -526,10 +497,6 @@ struct server_rdp {
         stream.out_uint16_le(0x10 | pdu_type);
         stream.out_uint16_le(this->mcs_channel);
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
-        #warning do we need to call this for every mcs packet? maybe every 5 or so
-        /* Inform the callback that an mcs packet has been sent.  This is needed so
-       the module can send any high priority mcs packets like audio. */
-        this->cb.callback(0x5556, 0, 0, 0, 0);
     }
 
     /*****************************************************************************/
@@ -984,8 +951,21 @@ struct server_rdp {
                 this->front_stream.skip_uint8(4); /* control id */
                 if (action == RDP_CTL_REQUEST_CONTROL) {
                     this->server_rdp_send_synchronise();
+                    #warning do we need to call this for every mcs packet? maybe every 5 or so
+                    /* Inform the callback that an mcs packet has been sent.  This is needed so
+                    the module can send any high priority mcs packets like audio. */
+                    this->cb.callback(0x5556, 0, 0, 0, 0);
                     this->server_rdp_send_control(RDP_CTL_COOPERATE);
+                    #warning do we need to call this for every mcs packet? maybe every 5 or so
+                    /* Inform the callback that an mcs packet has been sent.  This is needed so
+                   the module can send any high priority mcs packets like audio. */
+                    this->cb.callback(0x5556, 0, 0, 0, 0);
                     this->server_rdp_send_control(RDP_CTL_GRANT_CONTROL);
+                    #warning do we need to call this for every mcs packet? maybe every 5 or so
+                    /* Inform the callback that an mcs packet has been sent.  This is needed so
+                   the module can send any high priority mcs packets like audio. */
+                    this->cb.callback(0x5556, 0, 0, 0, 0);
+
                 }
                 else {
                     #warning we sometimes get action 4. Add support for it
@@ -998,7 +978,16 @@ struct server_rdp {
         case RDP_DATA_PDU_SYNCHRONISE: /* 31(0x1f) */
             break;
         case 33: /* 33(0x21) ?? Invalidate an area I think */
-            this->server_rdp_process_screen_update();
+            {
+                /* int op = */ this->front_stream.in_uint32_le();
+                int left = this->front_stream.in_uint16_le();
+                int top = this->front_stream.in_uint16_le();
+                int right = this->front_stream.in_uint16_le();
+                int bottom = this->front_stream.in_uint16_le();
+                int cx = (right - left) + 1;
+                int cy = (bottom - top) + 1;
+                this->cb.callback(0x4444, left, top, cx, cy);
+            }
             break;
         case 35: /* 35(0x23) */
             /* 35 ?? this comes when minimuzing a full screen mstsc.exe 2600 */
@@ -1007,10 +996,19 @@ struct server_rdp {
             /* so minimized apps don't take bandwidth */
             break;
         case 36: /* 36(0x24) ?? disconnect query? */
-            /* when this message comes, send a 37 back so the client */
-            /* is sure the connection is alive and it can ask if user */
-            /* really wants to disconnect */
-            this->server_rdp_send_disconnect_query_response(); /* send a 37 back */
+            {
+                /* when this message comes, send a 37 back so the client */
+                /* is sure the connection is alive and it can ask if user */
+                /* really wants to disconnect */
+                Stream stream(8192);
+                this->server_rdp_init_data(stream);
+                stream.mark_end();
+                this->server_rdp_send_data(stream, 37);
+                #warning do we need to call this for every mcs packet? maybe every 5 or so
+                /* Inform the callback that an mcs packet has been sent.  This is needed so
+               the module can send any high priority mcs packets like audio. */
+                this->cb.callback(0x5556, 0, 0, 0, 0);
+            }
             break;
         case RDP_DATA_PDU_FONT2: /* 39(0x27) */
             this->front_stream.skip_uint8(2); /* num of fonts */
@@ -1023,8 +1021,16 @@ struct server_rdp {
                 if (seq == 2 || seq == 3)
                 {
                     this->server_rdp_send_unknown1();
+                    #warning do we need to call this for every mcs packet? maybe every 5 or so
+                    /* Inform the callback that an mcs packet has been sent.  This is needed so
+                   the module can send any high priority mcs packets like audio. */
+                    this->cb.callback(0x5556, 0, 0, 0, 0);
                     this->up_and_running = 1;
                     this->server_rdp_send_data_update_sync();
+                    #warning do we need to call this for every mcs packet? maybe every 5 or so
+                    /* Inform the callback that an mcs packet has been sent.  This is needed so
+                    the module can send any high priority mcs packets like audio. */
+                    this->cb.callback(0x5556, 0, 0, 0, 0);
                 }
             }
             break;

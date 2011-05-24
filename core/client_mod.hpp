@@ -219,9 +219,18 @@ struct client_mod {
 
             /* shut down the rdp client */
             this->front->orders->rdp_layer->server_rdp_send_deactive();
+            #warning do we need to call this for every mcs packet? maybe every 5 or so
+            /* Inform the callback that an mcs packet has been sent.  This is needed so
+            the module can send any high priority mcs packets like audio. */
+            this->front->orders->rdp_layer->cb.callback(0x5556, 0, 0, 0, 0);
 
             /* this should do the resizing */
             this->front->orders->rdp_layer->server_rdp_send_demand_active();
+            #warning do we need to call this for every mcs packet? maybe every 5 or so
+            /* Inform the callback that an mcs packet has been sent.  This is needed so
+            the module can send any high priority mcs packets like audio. */
+            this->front->orders->rdp_layer->cb.callback(0x5556, 0, 0, 0, 0);
+
 
             this->front->orders->reset();
             this->front->cache->reset(&client_info);
@@ -474,6 +483,13 @@ struct client_mod {
                            int total_data_len, int flags)
     {
         this->front->orders->rdp_layer->server_send_to_channel(channel_id, data, data_len, total_data_len, flags);
+        #warning do we need to call this for every mcs packet? maybe every 5 or so
+        if (channel_id == MCS_GLOBAL_CHANNEL) {
+            /* Inform the callback that an mcs packet has been sent.  This is needed so
+           the module can send any high priority mcs packets like audio. */
+            this->front->orders->rdp_layer->cb.callback(0x5556, 0, 0, 0, 0);
+        }
+
     }
 
     bool get_pointer_displayed() {
