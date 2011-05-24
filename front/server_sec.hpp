@@ -30,7 +30,6 @@
 #include "ssl_calls.hpp"
 #include "client_info.hpp"
 #include "rsa_keys.hpp"
-#include "callback.hpp"
 #include "constants.hpp"
 
 #include <assert.h>
@@ -66,9 +65,9 @@ struct server_sec {
 
     /*****************************************************************************/
 
-    server_sec(ClientInfo * client_info, Callback & cb, Transport * trans) :
+    server_sec(ClientInfo * client_info, Transport * trans) :
         client_info(client_info),
-        mcs_layer(cb, trans)
+        mcs_layer(trans)
     {
         // CGR: see if init has influence for the 3 following fields
         memset(this->server_random, 0, 32);
@@ -624,7 +623,6 @@ struct server_sec {
             this->client_info->rdp5_performanceflags = stream.in_uint32_le();
         }
     }
-
 
     void server_sec_send(Stream & stream, int chan)
     {
