@@ -403,139 +403,112 @@ struct server_rdp {
 
     }
 
-
-    #warning activate_and_process_data is horrible because it does two largely unrelated tasks. One is to wait for the client to be up and running (initialization phase) the other is management of normal rdp packets once initialisation is finished. We should be able to separate both tasks, but it's not easy as code is quite intricated between layers.
     void activate_and_process_data()
     {
         Stream & stream = this->front_stream;
         int cont = 1;
         while (cont || !this->up_and_running) {
-            if (stream.next_packet == 0
-            || stream.next_packet >= stream.end) {
+            if (stream.next_packet && stream.next_packet < stream.end){
+                stream.p = stream.next_packet;
+                cont =   stream.next_packet  && (stream.next_packet < stream.end);
+                continue;
+            }
+
+            this->sec_layer.mcs_layer.iso_layer.iso_recv(stream);
+            int appid = stream.in_uint8() >> 2;
+            /* Channel Join ReQuest datagram */
+            while(appid == MCS_CJRQ) {
+                /* this is channels getting added from the client */
+                int userid = stream.in_uint16_be();
+                int chanid = stream.in_uint16_be();
+                this->sec_layer.mcs_layer.server_mcs_send_channel_join_confirm_PDU(userid, chanid);
                 this->sec_layer.mcs_layer.iso_layer.iso_recv(stream);
-                int appid = stream.in_uint8() >> 2;
-                /* Channel Join ReQuest datagram */
-                while(appid == MCS_CJRQ) {
-                    /* this is channels getting added from the client */
-                    int userid = stream.in_uint16_be();
-                    int chanid = stream.in_uint16_be();
-                    this->sec_layer.mcs_layer.server_mcs_send_channel_join_confirm_PDU(userid, chanid);
-                    this->sec_layer.mcs_layer.iso_layer.iso_recv(stream);
-                    appid = stream.in_uint8() >> 2;
-                }
-                /* Disconnect Provider Ultimatum datagram */
-                if (appid == MCS_DPUM) {
-                    throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
-                }
-                /* SenD ReQuest datagram */
-                if (appid != MCS_SDRQ) {
-                    throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-                }
-                stream.skip_uint8(2);
+                appid = stream.in_uint8() >> 2;
+            }
+            /* Disconnect Provider Ultimatum datagram */
+            if (appid == MCS_DPUM) {
+                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+            }
+            /* SenD ReQuest datagram */
+            if (appid != MCS_SDRQ) {
+                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+            }
+            stream.skip_uint8(2);
 
-                int chan = stream.in_uint16_be();
+            int chan = stream.in_uint16_be();
+            stream.skip_uint8(1);
+            int len = stream.in_uint8();
+            if (len & 0x80) {
                 stream.skip_uint8(1);
-                int len = stream.in_uint8();
-                if (len & 0x80) {
-                    stream.skip_uint8(1);
-                }
+            }
 
-                const uint32_t flags = stream.in_uint32_le();
-                if (flags & SEC_ENCRYPT) { /* 0x08 */
-                    stream.skip_uint8(8); /* signature */
-                    this->sec_layer.server_sec_decrypt(stream.p, (int)(stream.end - stream.p));
-                }
+            const uint32_t flags = stream.in_uint32_le();
+            if (flags & SEC_ENCRYPT) { /* 0x08 */
+                stream.skip_uint8(8); /* signature */
+                this->sec_layer.server_sec_decrypt(stream.p, (int)(stream.end - stream.p));
+            }
 
-                if (flags & SEC_CLIENT_RANDOM) { /* 0x01 */
-                    stream.in_uint32_le(); // len
-                    memcpy(this->sec_layer.client_crypt_random, stream.in_uint8p(64), 64);
-                    this->sec_layer.server_sec_rsa_op(this->sec_layer.client_random, this->sec_layer.client_crypt_random,
-                                    this->sec_layer.pub_mod, this->sec_layer.pri_exp);
-                    this->sec_layer.server_sec_establish_keys();
-                    stream.next_packet = 0;
-                }
-                else if (flags & SEC_LOGON_INFO) { /* 0x40 */
-                    this->sec_layer.server_sec_process_logon_info(stream);
-                    if (this->sec_layer.client_info->is_mce) {
-                        this->sec_layer.server_sec_send_media_lic_response();
-                        stream.next_packet = 0;
-                        /* special error that means send demand active */
-                        this->server_rdp_send_demand_active();
-                    }
-                    else {
-                        this->sec_layer.server_sec_send_lic_initial();
-                        stream.next_packet = 0;
-                    }
-                }
-                else if (flags & SEC_LICENCE_NEG) { /* 0x80 */
-                    this->sec_layer.server_sec_send_lic_response();
+            if (flags & SEC_CLIENT_RANDOM) { /* 0x01 */
+                stream.in_uint32_le(); // len
+                memcpy(this->sec_layer.client_crypt_random, stream.in_uint8p(64), 64);
+                this->sec_layer.server_sec_rsa_op(this->sec_layer.client_random, this->sec_layer.client_crypt_random,
+                                this->sec_layer.pub_mod, this->sec_layer.pri_exp);
+                this->sec_layer.server_sec_establish_keys();
+                stream.next_packet = 0;
+            }
+            else if (flags & SEC_LOGON_INFO) { /* 0x40 */
+                this->sec_layer.server_sec_process_logon_info(stream);
+                if (this->sec_layer.client_info->is_mce) {
+                    this->sec_layer.server_sec_send_media_lic_response();
                     stream.next_packet = 0;
                     /* special error that means send demand active */
                     this->server_rdp_send_demand_active();
                 }
-                else if (chan > MCS_GLOBAL_CHANNEL) {
-                    /*****************************************************************************/
-                    /* This is called from the secure layer to process an incoming non global
-                       channel packet.
-                       'chan' passed in here is the mcs channel id so it is
-                       MCS_GLOBAL_CHANNEL plus something. */
-
-                    /* this assumes that the channels are in order of chanid(mcs channel id)
-                       but they should be, see server_sec_process_mcs_data_channels
-                       the first channel should be MCS_GLOBAL_CHANNEL + 1, second
-                       one should be MCS_GLOBAL_CHANNEL + 2, and so on */
-                    int channel_id = (chan - MCS_GLOBAL_CHANNEL) - 1;
-
-                    struct mcs_channel_item* channel = this->sec_layer.mcs_layer.channel_list[channel_id];
-
-                    if (channel == 0) {
-                        throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
-                    }
-                    int length = stream.in_uint32_le();
-                    int flags = stream.in_uint32_le();
-
-                    int size = (int)(stream.end - stream.p);
-                    #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
-                    int rv = this->cb.callback(WM_CHANNELDATA,
-                                           ((flags & 0xffff) << 16) | (channel_id & 0xffff),
-                                           size, (long)(stream.p), length);
-                    if (rv != 0){
-                        throw Error(ERR_CHANNEL_SESSION_CALLBACK_FAILED);
-                    }
+                else {
+                    this->sec_layer.server_sec_send_lic_initial();
                     stream.next_packet = 0;
                 }
-                else {
-                    stream.next_packet = stream.p;
+            }
+            else if (flags & SEC_LICENCE_NEG) { /* 0x80 */
+                this->sec_layer.server_sec_send_lic_response();
+                stream.next_packet = 0;
+                /* special error that means send demand active */
+                this->server_rdp_send_demand_active();
+            }
+            else if (chan > MCS_GLOBAL_CHANNEL) {
+                /*****************************************************************************/
+                /* This is called from the secure layer to process an incoming non global
+                   channel packet.
+                   'chan' passed in here is the mcs channel id so it is
+                   MCS_GLOBAL_CHANNEL plus something. */
 
-                    int len = stream.in_uint16_le();
-                    if (len == 0x8000) {
-                        stream.next_packet += 8;
-                    }
-                    else {
-                        int pdu_code = stream.in_uint16_le();
-                        stream.skip_uint8(2); /* mcs user id */
-                        stream.next_packet += len;
-                        switch (pdu_code & 0xf) {
-                        case 0:
-                            break;
-                        case RDP_PDU_CONFIRM_ACTIVE: /* 3 */
-                            this->server_rdp_process_confirm_active(stream);
-                            break;
-                        case RDP_PDU_DATA: /* 7 */
-                            // this is rdp_process_data that will set up_and_running to 1
-                            // when fonts have been received
-                            // we will not exit this loop until we are in this state.
-                            this->server_rdp_process_data(stream);
-                            break;
-                        default:
-                            LOG(LOG_WARNING, "unknown in session_data (%d)\n", pdu_code & 0xf);
-                            break;
-                        }
-                    }
+                /* this assumes that the channels are in order of chanid(mcs channel id)
+                   but they should be, see server_sec_process_mcs_data_channels
+                   the first channel should be MCS_GLOBAL_CHANNEL + 1, second
+                   one should be MCS_GLOBAL_CHANNEL + 2, and so on */
+                int channel_id = (chan - MCS_GLOBAL_CHANNEL) - 1;
+
+                struct mcs_channel_item* channel = this->sec_layer.mcs_layer.channel_list[channel_id];
+
+                if (channel == 0) {
+                    throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                 }
+                int length = stream.in_uint32_le();
+                int flags = stream.in_uint32_le();
+
+                int size = (int)(stream.end - stream.p);
+                #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
+                int rv = this->cb.callback(WM_CHANNELDATA,
+                                       ((flags & 0xffff) << 16) | (channel_id & 0xffff),
+                                       size, (long)(stream.p), length);
+                if (rv != 0){
+                    throw Error(ERR_CHANNEL_SESSION_CALLBACK_FAILED);
+                }
+                stream.next_packet = 0;
             }
             else {
-                stream.p = stream.next_packet;
+                stream.next_packet = stream.p;
+
                 int len = stream.in_uint16_le();
                 if (len == 0x8000) {
                     stream.next_packet += 8;
