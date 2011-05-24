@@ -85,6 +85,7 @@ struct bouncer_mod : public internal_mod {
         front.send_bitmap_front(
             Rect(0, 0, this->bmp_background.cx, this->bmp_background.cy),
             Rect(0, 0, this->bmp_background.cx, this->bmp_background.cy),
+            0xCC,
             (uint8_t*)this->bmp_background.data_co,
             0, Rect(0, 0, 800, 600));
         front.screen_blt(0xcc, Rect(0,0,800,600), 0, 0, Rect(0,0,800,600));
@@ -221,10 +222,12 @@ struct bouncer_mod : public internal_mod {
         front.send_bitmap_front(
             Rect(src_x, src_y, bmp.cx, bmp.cy),
             Rect(0, 0, bmp.cx, bmp.cy),
+            0xCC,
             bmp.data_co, 0, Rect(0, 0, 800, 600));
         front.send_bitmap_front(
             Rect(src_x_wallix , src_y_wallix, bmp_wallix.cx, bmp_wallix.cy),
             Rect(0, 0, bmp_wallix.cx, bmp_wallix.cy),
+            0xCC,
             bmp_wallix.data_co, 0, Rect(0, 0, 800, 600));
         front.end_update();
 
