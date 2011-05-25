@@ -388,7 +388,6 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
         LOG(LOG_DEBUG, "loading keymap %s\n", filename);
         this->keymap = new Keymap(filename);
 
-        this->log.clear();
         RGBPalette palette;
         /* rgb332 palette */
         for (int rindex = 0; rindex < 8; rindex++) {

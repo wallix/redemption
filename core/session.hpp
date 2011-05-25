@@ -52,10 +52,7 @@
 #include "callback.hpp"
 #include "sesman.hpp"
 #include "orders.hpp"
-//#include "front.hpp"
 
-#include <iostream>
-#include <vector>
 using namespace std;
 
 enum {
@@ -123,7 +120,6 @@ struct Session {
     int key_flags; // scrool_lock = 1, num_lock = 2, caps_lock = 4
     struct Keymap * keymap;
 
-    struct vector<char*> log;
     struct Font* default_font;
 
     SessionManager * sesman;
