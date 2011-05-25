@@ -467,9 +467,8 @@ struct server_rdp {
 
             if (flags & SEC_CLIENT_RANDOM) { /* 0x01 */
                 stream.in_uint32_le(); // len
-                memcpy(this->sec_layer.client_crypt_random, stream.in_uint8p(64), 64);
-                this->sec_layer.server_sec_rsa_op(this->sec_layer.client_random, this->sec_layer.client_crypt_random,
-                                this->sec_layer.pub_mod, this->sec_layer.pri_exp);
+                this->sec_layer.server_sec_init_client_crypt_random(stream);
+                this->sec_layer.server_sec_rsa_op();
                 this->sec_layer.server_sec_establish_keys();
                 if (!this->up_and_running){ continue; }
             }
@@ -477,7 +476,6 @@ struct server_rdp {
                 this->sec_layer.server_sec_process_logon_info(stream);
                 if (this->sec_layer.client_info->is_mce) {
                     this->sec_layer.server_sec_send_media_lic_response();
-                    /* special error that means send demand active */
                     this->server_rdp_send_demand_active();
                     if (!this->up_and_running){ continue; }
                 }
@@ -488,7 +486,6 @@ struct server_rdp {
             }
             else if (flags & SEC_LICENCE_NEG) { /* 0x80 */
                 this->sec_layer.server_sec_send_lic_response();
-                /* special error that means send demand active */
                 this->server_rdp_send_demand_active();
                 if (!this->up_and_running){ continue; }
             }
@@ -516,12 +513,9 @@ struct server_rdp {
 
                 int size = (int)(stream.end - stream.p);
                 #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
-                int rv = this->cb.callback(WM_CHANNELDATA,
-                                       ((flags & 0xffff) << 16) | (channel_id & 0xffff),
-                                       size, (long)(stream.p), length);
-                if (rv != 0){
-                    throw Error(ERR_CHANNEL_SESSION_CALLBACK_FAILED);
-                }
+                this->cb.callback(WM_CHANNELDATA,
+                                  ((flags & 0xffff) << 16) | (channel_id & 0xffff),
+                                  size, (long)(stream.p), length);
                 if (!this->up_and_running){ continue; }
             }
 
@@ -595,9 +589,9 @@ struct server_rdp {
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
-    void server_rdp_incoming(Rsakeys * rsa_keys) throw (Error)
+    void server_rdp_incoming() throw (Error)
     {
-        this->sec_layer.server_sec_incoming(rsa_keys);
+        this->sec_layer.server_sec_incoming();
         this->mcs_channel = this->sec_layer.mcs_layer.userid + MCS_USERCHANNEL_BASE;
     }
 

@@ -271,6 +271,77 @@ struct server_mcs {
         this->server_mcs_ber_out_int24(stream, max_pdu_size);
         this->server_mcs_ber_out_int8(stream, 2);
     }
+
+public:
+    void join_channel(uint16_t channel_id)
+    {
+        Stream stream(8192);
+        // read tpktHeader (4 bytes = 3 0 len)
+        // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+        this->iso_layer.iso_recv(stream);
+
+        int opcode = stream.in_uint8();
+        if ((opcode >> 2) != MCS_CJRQ) {
+            throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
+        }
+        // 2.2.1.8 Client MCS Channel Join Request PDU
+        // -------------------------------------------
+        // The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
+        // from client to server during the Channel Connection phase (see section
+        // 1.3.1.1). It is sent after receiving the MCS Attach User Confirm PDU
+        // (section 2.2.1.7). The client uses the MCS Channel Join Request PDU to
+        // join the user channel obtained from the Attach User Confirm PDU, the
+        // I/O channel and all of the static virtual channels obtained from the
+        // Server Network Data structure (section 2.2.1.4.4).
+
+        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+        // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+        //                     section 13.7.
+
+        // mcsCJrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an
+        //                    MCS Channel Join Request structure as specified in
+        //                    [T125] sections 10.19 and I.3 (the ASN.1 structure
+        //                    definitions are given in [T125] section 7, parts 6
+        //                    and 10).
+
+        // ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+        // {
+        //     initiator UserId
+        //     channelId ChannelId
+        //               -- may be zero
+        // }
+        stream.skip_uint8(4);
+        if (opcode & 2) {
+            stream.skip_uint8(2);
+        }
+        // test if we went further than the end, this should be changed...
+        if (!stream.check_end()) {
+            throw Error(ERR_MCS_RECV_CJRQ_TRUNCATED);
+        }
+
+        // 2.2.1.9 Server MCS Channel Join Confirm PDU
+        // -------------------------------------------
+        // The MCS Channel Join Confirm PDU is an RDP Connection Sequence
+        // PDU sent from server to client during the Channel Connection
+        // phase (see section 1.3.1.1). It is sent as a response to the MCS
+        // Channel Join Request PDU (section 2.2.1.8).
+
+        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+        //   section 8.
+
+        // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+        //  [X224] section 13.7.
+
+        // mcsCJcf (8 bytes): PER-encoded MCS Domain PDU which encapsulates
+        //  an MCS Channel Join Confirm PDU structure, as specified in
+        //  [T125] (the ASN.1 structure definitions are given in [T125]
+        //  section 7, parts 6 and 10).
+
+        this->server_mcs_send_channel_join_confirm_PDU(this->userid, channel_id);
+    }
+
+
 };
 
 
