@@ -64,20 +64,11 @@ enum {
     // initial state no module loaded, init not done
     SESSION_STATE_ENTRY,
     // no module loaded
-    // init done
-    // connection phase with remote client init done
-    // creating login window gui done
-    SESSION_STATE_LOGIN_WINDOW_INIT_DONE,
-    // no module loaded
     // init_done
     // login window destoyed if necessary
     // user clicked on OK to run module  or provided connection info on cmd line
     // but did not received credentials yet
     SESSION_STATE_WAITING_FOR_NEXT_MODULE,
-    // Validate message when session is writing
-    SESSION_STATE_VALIDATE_WRITING_SESSION,
-    // Validate warning message
-    SESSION_STATE_VALIDATE_WARNING_MESSAGE,
     // init_done, module loaded and running
     SESSION_STATE_RUNNING,
     // display dialog when connection is closed
@@ -111,7 +102,6 @@ struct Session {
     struct SocketTransport * trans;
     time_t keep_alive_time;
 
-
     int sck;
     wait_obj * front_event;
     wait_obj * back_event;
@@ -122,8 +112,7 @@ struct Session {
     struct client_mod * no_mod;
 
     struct Front* front;
-    #warning caches are related to rdp client. Put them in core/rdp.hpp
-    #warning cache reset should also be put in core/rdp.hpp
+    #warning caches are related to rdp client. Put them in rdp.hpp or client_mod
     struct Cache* cache;
     int mouse_x;
     int mouse_y;
@@ -134,10 +123,8 @@ struct Session {
     int key_flags; // scrool_lock = 1, num_lock = 2, caps_lock = 4
     struct Keymap * keymap;
 
-    /* session log */
     struct vector<char*> log;
     struct Font* default_font;
-    bool init_done;
 
     SessionManager * sesman;
 
@@ -147,20 +134,14 @@ struct Session {
     void invalidate(const Rect & rect);
 
     int session_main_loop();
-    int session_reset(int width, int height, int bpp);
     int callback(int msg, long param1, long param2, long param3, long param4);
 
-    void parse_username(void);
+    int step_STATE_KEY_HANDSHAKE(struct timeval & time);
     int step_STATE_ENTRY(struct timeval & time);
-    int step_STATE_SERVER_INIT_DONE();
-    int step_STATE_LOGIN_WINDOW_INIT_DONE(struct timeval & time);
     int step_STATE_WAITING_FOR_NEXT_MODULE(struct timeval & time);
     int step_STATE_RUNNING(struct timeval & time);
-    int step_STATE_VALIDATE_WRITING_SESSION(struct timeval & time);
-    int step_STATE_VALIDATE_WARNING_MESSAGE(struct timeval & time);
     int step_STATE_CLOSE_CONNECTION();
 
-    int session_input_mouse(int device_flags, int x, int y);
     bool session_setup_mod(int next_state, const ModContext * context);
 
 

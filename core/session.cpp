@@ -334,6 +334,13 @@ static int load_pointer(const char* file_name, uint8_t* data, uint8_t* mask, int
 }
 
 
+int Session::step_STATE_KEY_HANDSHAKE(struct timeval & time_mark)
+{
+    this->front_server->server_rdp_incoming();
+    return SESSION_STATE_ENTRY;
+}
+
+
 int Session::step_STATE_ENTRY(struct timeval & time_mark)
 {
     unsigned max = 0;
@@ -604,8 +611,6 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
 
 int Session::session_main_loop()
 {
-    Rsakeys rsa_keys(CFG_PATH "/" RSAKEYS_INI);
-
     int rv = 0;
     try {
         int previous_state = SESSION_STATE_STOP;
@@ -621,8 +626,7 @@ int Session::session_main_loop()
                 case SESSION_STATE_RSA_KEY_HANDSHAKE:
                     if (this->internal_state != previous_state)
                         LOG(LOG_DEBUG, "RSA Key Handshake\n");
-                    this->front_server->server_rdp_incoming(&rsa_keys);
-                    this->internal_state = SESSION_STATE_ENTRY;
+                    this->internal_state = this->step_STATE_KEY_HANDSHAKE(time_mark);
                 break;
                 case SESSION_STATE_ENTRY:
                     if (this->internal_state != previous_state)
