@@ -850,18 +850,8 @@ struct server_rdp {
     /* store the number of client cursor cache in client_info */
     void capset_pointercache(Stream & stream, int len)
     {
-        stream.skip_uint8(2); /* color pointer */
-        int i = stream.in_uint16_le();
-        i = std::min(i, 32);
-        this->client_info.pointer_cache_entries = i;
     }
 
-    /* store the number of client brush cache in client_info */
-    void capset_brushcache(Stream & stream, int len)
-    {
-        int code = stream.in_uint32_le();
-        this->client_info.brush_cache_code = code;
-    }
 
     void server_rdp_process_confirm_active(Stream & stream)
     {
@@ -896,7 +886,11 @@ struct server_rdp {
             case RDP_CAPSET_ACTIVATE: /* 7 */
                 break;
             case RDP_CAPSET_POINTER: /* 8 */
-                this->capset_pointercache(stream, len);
+                {
+                    stream.skip_uint8(2); /* color pointer */
+                    int i = stream.in_uint16_le();
+                    this->client_info.pointer_cache_entries = std::min(i, 32);
+                }
                 break;
             case RDP_CAPSET_SHARE: /* 9 */
                 break;
@@ -909,7 +903,7 @@ struct server_rdp {
             case 14: /* 14 */
                 break;
             case RDP_CAPSET_BRUSHCACHE: /* 15 */
-                this->capset_brushcache(stream, len);
+                this->client_info.brush_cache_code = stream.in_uint32_le();
                 break;
             case 16: /* 16 */
                 break;
