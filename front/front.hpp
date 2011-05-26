@@ -57,7 +57,6 @@ public:
     struct BitmapCache *bmp_cache;
     struct Capture * capture;
     struct Font * font;
-    struct Cache* cache;
     int mouse_x;
     int mouse_y;
     struct timeval start;
@@ -66,19 +65,20 @@ public:
     int timezone;
     struct server_rdp rdp_layer;
     struct RDP::Orders orders;
+    Cache cache;
 
 #warning mouse_x, mouse_y, start not initialized
 
-    Front(SocketTransport * trans, Inifile * ini, struct Cache* cache, Font *font, bool nomouse, bool notimestamp, int timezone)
+    Front(SocketTransport * trans, Inifile * ini, Font *font, bool nomouse, bool notimestamp, int timezone)
     :
     bmp_cache(0),
     capture(0),
     font(font),
-    cache(cache),
     nomouse(nomouse),
     notimestamp(notimestamp),
     timezone(timezone),
-    rdp_layer(trans, ini)
+    rdp_layer(trans, ini),
+    cache(&this->orders)
     {
         ;
     }
@@ -92,7 +92,7 @@ public:
         }
     }
 
-    void reset(struct Cache* cache, Font *font){
+    void reset(Font *font){
         this->font = font;
         this->cache = cache;
         #warning is it necessary (or even usefull) to send remaining drawing orders before resetting ?
@@ -105,6 +105,19 @@ public:
             delete this->bmp_cache;
         }
         this->bmp_cache = new BitmapCache(&(this->rdp_layer.client_info));
+        this->cache.reset(this->rdp_layer.client_info);
+
+        LOG(LOG_INFO, "width=%d height=%d bpp=%d "
+                  "cache1_entries=%d cache1_size=%d "
+                  "cache2_entries=%d cache2_size=%d "
+                  "cache2_entries=%d cache2_size=%d ",
+        this->rdp_layer.client_info.width, this->rdp_layer.client_info.height, this->rdp_layer.client_info.bpp,
+        this->rdp_layer.client_info.cache1_entries, this->rdp_layer.client_info.cache1_size,
+        this->rdp_layer.client_info.cache2_entries, this->rdp_layer.client_info.cache2_size,
+        this->rdp_layer.client_info.cache3_entries, this->rdp_layer.client_info.cache3_size);
+
+
+
     }
 
     void send()
@@ -419,7 +432,7 @@ public:
         const int size = 8;
         this->reserve_order(size + 12);
 
-        this->orders.send_brush(8, 8, 1, 0x81, size, this->cache->brush_items[index].pattern, index);
+        this->orders.send_brush(8, 8, 1, 0x81, size, this->cache.brush_items[index].pattern, index);
 
     }
 

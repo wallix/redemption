@@ -58,7 +58,6 @@
 #include "error.hpp"
 #include "wait_obj.hpp"
 #include "constants.hpp"
-#include "cache.hpp"
 
 #define DEV_REDIRECTION_ENABLE true
 
@@ -130,7 +129,6 @@ Session::Session(int sck, const char * ip_source, Inifile * ini) {
     this->trans = new SocketTransport(sck);
     this->session_callback = new SessionCallback(*this);
     this->default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
-    this->cache = new Cache(&this->front->orders);
 
     /* set non blocking */
     int rv = 0;
@@ -154,8 +152,7 @@ Session::Session(int sck, const char * ip_source, Inifile * ini) {
     // scrool_lock = 1, num_lock = 2, caps_lock = 4
     this->key_flags = 0;
 
-    this->front = new Front(this->trans, ini, this->cache,
-        this->default_font,
+    this->front = new Front(this->trans, ini, this->default_font,
         this->ini->globals.nomouse,
         this->ini->globals.notimestamp,
         atoi(this->context->get(STRAUTHID_TIMEZONE))
@@ -178,7 +175,6 @@ Session::~Session()
     if (this->keymap){
         delete this->keymap;
     }
-    delete this->cache;
     delete this->front;
     delete this->default_font;
     delete this->front_event;
@@ -361,21 +357,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
         /* resize the main window */
         this->mod->front_resize();
         this->mod->server_reset_clip();
-        if (this->cache){
-            delete this->cache;
-        }
-        this->cache = new Cache(&this->front->orders);
-        this->front->reset(this->cache, this->default_font);
-
-        LOG(LOG_INFO, "width=%d height=%d bpp=%d "
-                  "cache1_entries=%d cache1_size=%d "
-                  "cache2_entries=%d cache2_size=%d "
-                  "cache2_entries=%d cache2_size=%d ",
-        this->front->rdp_layer.client_info.width, this->front->rdp_layer.client_info.height, this->front->rdp_layer.client_info.bpp,
-        this->front->rdp_layer.client_info.cache1_entries, this->front->rdp_layer.client_info.cache1_size,
-        this->front->rdp_layer.client_info.cache2_entries, this->front->rdp_layer.client_info.cache2_size,
-        this->front->rdp_layer.client_info.cache3_entries, this->front->rdp_layer.client_info.cache3_size);
-
+        this->front->reset(this->default_font);
 
         /* initialising keymap */
         char filename[256];
@@ -411,7 +393,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
             &pointer_item.x,
             &pointer_item.y);
 
-        this->cache->add_pointer_static(&pointer_item, 0);
+        this->front->cache.add_pointer_static(&pointer_item, 0);
         this->front->rdp_layer.server_rdp_send_pointer(0,
                          pointer_item.data,
                          pointer_item.mask,
@@ -424,7 +406,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
             pointer_item.mask,
             &pointer_item.x,
             &pointer_item.y);
-        this->cache->add_pointer_static(&pointer_item, 1);
+        this->front->cache.add_pointer_static(&pointer_item, 1);
 
         this->front->rdp_layer.server_rdp_send_pointer(1,
                          pointer_item.data,
@@ -771,7 +753,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 		    &pointer_item.x,
 		    &pointer_item.y);
 
-		this->cache->add_pointer_static(&pointer_item, 0);
+		this->front->cache.add_pointer_static(&pointer_item, 0);
 		this->front->rdp_layer.server_rdp_send_pointer(0,
 				 pointer_item.data,
 				 pointer_item.mask,
@@ -784,7 +766,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 		    pointer_item.mask,
 		    &pointer_item.x,
 		    &pointer_item.y);
-		this->cache->add_pointer_static(&pointer_item, 1);
+		this->front->cache.add_pointer_static(&pointer_item, 1);
 
 		this->front->rdp_layer.server_rdp_send_pointer(1,
 				 pointer_item.data,

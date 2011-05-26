@@ -105,8 +105,6 @@ struct Session {
     struct client_mod * no_mod;
 
     struct Front* front;
-    #warning caches are related to rdp client. Put them in rdp.hpp or client_mod
-    struct Cache* cache;
     int mouse_x;
     int mouse_y;
 

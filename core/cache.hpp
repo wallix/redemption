@@ -97,7 +97,6 @@ struct Cache {
 
     ~Cache()
     {
-        #warning see if destructor is called when deleting caches
         /* free all the cached font items */
         for (int i = 0; i < 12; i++) {
             for (int j = 0; j < 256; j++) {
@@ -110,8 +109,8 @@ struct Cache {
 
     int load_static_pointers();
 
-    #warning much duplicated code with constructor and destructor, create some intermediate functions
-    int reset(struct ClientInfo* client_info)
+    #warning much duplicated code with constructor and destructor, create some intermediate functions or object
+    int reset(struct ClientInfo & client_info)
     {
         /* save this one */
         struct RDP::Orders* orders = this->orders;
@@ -130,7 +129,7 @@ struct Cache {
         memset(this, 0, sizeof(struct Cache));
         /* set some stuff back */
         this->orders = orders;
-        this->pointer_cache_entries = client_info->pointer_cache_entries;
+        this->pointer_cache_entries = client_info.pointer_cache_entries;
         return 0;
     }
 
