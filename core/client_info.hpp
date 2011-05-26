@@ -33,12 +33,12 @@ struct ClientInfo {
     int width;
     int height;
     /* bitmap cache info */
-    int cache1_entries;
-    int cache1_size;
-    int cache2_entries;
-    int cache2_size;
-    int cache3_entries;
-    int cache3_size;
+    uint32_t cache1_entries;
+    uint32_t cache1_size;
+    uint32_t cache2_entries;
+    uint32_t cache2_size;
+    uint32_t cache3_entries;
+    uint32_t cache3_size;
     int bitmap_cache_persist_enable; /* 0 or 2 */
     int bitmap_cache_version; /* 0 = original version, 2 = v2 */
     /* pointer info */
