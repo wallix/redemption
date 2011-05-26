@@ -69,9 +69,9 @@ struct bouncer_mod : public internal_mod {
         ModContext & context, Front & front, Session * session):
             internal_mod(keys, key_flags, keymap, front),
             front(front),
-            bmp_background(COLOR_IMAGE, front.rdp_layer->client_info.bpp),
-            bmp(SHARE_PATH "/ad24b.bmp", front.rdp_layer->client_info.bpp),
-            bmp_wallix(SHARE_PATH "/ad24b.bmp", front.rdp_layer->client_info.bpp),
+            bmp_background(COLOR_IMAGE, front.rdp_layer.client_info.bpp),
+            bmp(SHARE_PATH "/ad24b.bmp", front.rdp_layer.client_info.bpp),
+            bmp_wallix(SHARE_PATH "/ad24b.bmp", front.rdp_layer.client_info.bpp),
             state(LEFT),
             wallix_state(LEFT_WALLIX),
             index(0),
@@ -120,22 +120,22 @@ struct bouncer_mod : public internal_mod {
         Rect fill_rect_wallix = Rect(src_x_wallix, src_y_wallix, 10, 140);
         Rect fill_rect_wallix_h = Rect(src_x_wallix, src_y_wallix, 140, 10);
 
-        uint32_t cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x - 10, src_y, 10, 140), this->front.rdp_layer->client_info.bpp);
+        uint32_t cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x - 10, src_y, 10, 140), this->front.rdp_layer.client_info.bpp);
 
         uint8_t cache_b_id = (cache_ref >> 16);
         uint16_t cache_b_idx = (cache_ref & 0xFFFF);
 
-        cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x, src_y - 10, 140, 10), this->front.rdp_layer->client_info.bpp);
+        cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x, src_y - 10, 140, 10), this->front.rdp_layer.client_info.bpp);
 
         uint8_t cache_b_id_h = (cache_ref >> 16);
         uint16_t cache_b_idx_h = (cache_ref & 0xFFFF);
 
-        cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix, src_y_wallix, 10, 140), this->front.rdp_layer->client_info.bpp);
+        cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix, src_y_wallix, 10, 140), this->front.rdp_layer.client_info.bpp);
 
         uint8_t cache_b_id_wallix = (cache_ref >> 16);
         uint16_t cache_b_idx_wallix = (cache_ref & 0xFFFF);
 
-        cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix, src_y_wallix - 10, 140, 10), this->front.rdp_layer->client_info.bpp);
+        cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix, src_y_wallix - 10, 140, 10), this->front.rdp_layer.client_info.bpp);
 
         uint8_t cache_b_id_h_wallix = (cache_ref >> 16);
         uint16_t cache_b_idx_h_wallix = (cache_ref & 0xFFFF);
@@ -144,11 +144,11 @@ struct bouncer_mod : public internal_mod {
             case BOTTOM:
                 fill_rect1 = Rect(src_x , src_y, 10, 140);
                 fill_rect2 = Rect(src_x , src_y + 140, 140, 10);
-                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x , src_y, 10, 140), this->front.rdp_layer->client_info.bpp);
+                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x , src_y, 10, 140), this->front.rdp_layer.client_info.bpp);
                 cache_b_id = (cache_ref >> 16);
                 cache_b_idx = (cache_ref & 0xFFFF);
 
-                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x , src_y + 140, 140, 10), this->front.rdp_layer->client_info.bpp);
+                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x , src_y + 140, 140, 10), this->front.rdp_layer.client_info.bpp);
 
                 cache_b_id_h = (cache_ref >> 16);
                 cache_b_idx_h = (cache_ref & 0xFFFF);
@@ -157,12 +157,12 @@ struct bouncer_mod : public internal_mod {
             case RIGHT:
                 fill_rect1 = Rect(src_x + 140, src_y, 10, 140);
                 fill_rect2 = Rect(src_x + 10, src_y + 140, 140, 10);
-                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x + 140, src_y, 10, 140), this->front.rdp_layer->client_info.bpp);
+                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x + 140, src_y, 10, 140), this->front.rdp_layer.client_info.bpp);
 
                 cache_b_id = (cache_ref >> 16);
                 cache_b_idx = (cache_ref & 0xFFFF);
 
-                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x + 10, src_y + 140, 140, 10), this->front.rdp_layer->client_info.bpp);
+                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x + 10, src_y + 140, 140, 10), this->front.rdp_layer.client_info.bpp);
                 cache_b_id_h = (cache_ref >> 16);
                 cache_b_idx_h = (cache_ref & 0xFFFF);
             break;
@@ -172,11 +172,11 @@ struct bouncer_mod : public internal_mod {
                 fill_rect1 = Rect(src_x, src_y, 140, 10);
                 fill_rect2 = Rect(src_x + 140, src_y, 20, 140);
 
-                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x, src_y, 140, 10), this->front.rdp_layer->client_info.bpp);
+                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x, src_y, 140, 10), this->front.rdp_layer.client_info.bpp);
                 cache_b_id = (cache_ref >> 16);
                 cache_b_idx = (cache_ref & 0xFFFF);
 
-                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x + 140, src_y, 20, 140), this->front.rdp_layer->client_info.bpp);
+                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x + 140, src_y, 20, 140), this->front.rdp_layer.client_info.bpp);
                 cache_b_id_h = (cache_ref >> 16);
                 cache_b_idx_h = (cache_ref & 0xFFFF);
             break;
@@ -186,10 +186,10 @@ struct bouncer_mod : public internal_mod {
                 fill_rect_wallix = Rect(src_x_wallix, src_y_wallix, 10, 140);
                 fill_rect_wallix_h = Rect(src_x_wallix, src_y_wallix + 140, 140, 10);
 
-                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix , src_y_wallix, 10, 140), this->front.rdp_layer->client_info.bpp);
+                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix , src_y_wallix, 10, 140), this->front.rdp_layer.client_info.bpp);
                 cache_b_id_wallix = (cache_ref >> 16);
                 cache_b_idx_wallix = (cache_ref & 0xFFFF);
-                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix , src_y_wallix + 140, 140, 10), this->front.rdp_layer->client_info.bpp);
+                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix , src_y_wallix + 140, 140, 10), this->front.rdp_layer.client_info.bpp);
                 cache_b_id_h_wallix = (cache_ref >> 16);
                 cache_b_idx_h_wallix = (cache_ref & 0xFFFF);
             break;
@@ -197,10 +197,10 @@ struct bouncer_mod : public internal_mod {
                 fill_rect_wallix = Rect(src_x_wallix + 140, src_y_wallix, 10, 140);
                 fill_rect_wallix_h = Rect(src_x_wallix + 10, src_y_wallix + 140, 140, 10);
 
-                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix + 140 , src_y_wallix, 10, 140), this->front.rdp_layer->client_info.bpp);
+                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix + 140 , src_y_wallix, 10, 140), this->front.rdp_layer.client_info.bpp);
                 cache_b_id_wallix = (cache_ref >> 16);
                 cache_b_idx_wallix = (cache_ref & 0xFFFF);
-                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix + 10, src_y_wallix + 140, 140, 10), this->front.rdp_layer->client_info.bpp);
+                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix + 10, src_y_wallix + 140, 140, 10), this->front.rdp_layer.client_info.bpp);
                 cache_b_id_h_wallix = (cache_ref >> 16);
                 cache_b_idx_h_wallix = (cache_ref & 0xFFFF);
             break;
@@ -209,10 +209,10 @@ struct bouncer_mod : public internal_mod {
             case TOP_WALLIX:
                 fill_rect_wallix = Rect(src_x_wallix, src_y_wallix, 140, 10);
                 fill_rect_wallix_h = Rect(src_x_wallix + 140, src_y_wallix, 20, 140);
-                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix , src_y_wallix, 140, 10), this->front.rdp_layer->client_info.bpp);
+                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix , src_y_wallix, 140, 10), this->front.rdp_layer.client_info.bpp);
                 cache_b_id_wallix = (cache_ref >> 16);
                 cache_b_idx_wallix = (cache_ref & 0xFFFF);
-                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix + 140, src_y_wallix, 20, 140), this->front.rdp_layer->client_info.bpp);
+                cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix + 140, src_y_wallix, 20, 140), this->front.rdp_layer.client_info.bpp);
                 cache_b_id_h_wallix = (cache_ref >> 16);
                 cache_b_idx_h_wallix = (cache_ref & 0xFFFF);
             break;
@@ -235,7 +235,7 @@ struct bouncer_mod : public internal_mod {
 
         BitmapCacheItem * entry_b = front.bmp_cache->get_item(cache_b_id, cache_b_idx);
         {
-            RDPBmpCache bmp(entry_b->pbmp, cache_b_id, cache_b_idx, &this->front.rdp_layer->client_info);
+            RDPBmpCache bmp(entry_b->pbmp, cache_b_id, cache_b_idx, &this->front.rdp_layer.client_info);
         // check reserved size depending on version
             this->front.reserve_order(align4(entry_b->pbmp->cx * nbbytes(entry_b->pbmp->bpp)) * entry_b->pbmp->cy + 16);
             bmp.emit(this->front.orders.out_stream);
@@ -243,7 +243,7 @@ struct bouncer_mod : public internal_mod {
 
         BitmapCacheItem * entry_b_h = front.bmp_cache->get_item(cache_b_id_h, cache_b_idx_h);
         {
-            RDPBmpCache bmp(entry_b_h->pbmp, cache_b_id_h, cache_b_idx_h, &this->front.rdp_layer->client_info);
+            RDPBmpCache bmp(entry_b_h->pbmp, cache_b_id_h, cache_b_idx_h, &this->front.rdp_layer.client_info);
         // check reserved size depending on version
             this->front.reserve_order(align4(entry_b_h->pbmp->cx * nbbytes(entry_b_h->pbmp->bpp)) * entry_b_h->pbmp->cy + 16);
             bmp.emit(this->front.orders.out_stream);
@@ -251,7 +251,7 @@ struct bouncer_mod : public internal_mod {
 
         BitmapCacheItem * entry_b_wallix = front.bmp_cache->get_item(cache_b_id_wallix, cache_b_idx_wallix);
         {
-            RDPBmpCache bmp(entry_b_wallix->pbmp, cache_b_id_wallix, cache_b_idx_wallix, &this->front.rdp_layer->client_info);
+            RDPBmpCache bmp(entry_b_wallix->pbmp, cache_b_id_wallix, cache_b_idx_wallix, &this->front.rdp_layer.client_info);
            // check reserved size depending on version
             front.reserve_order(align4(entry_b_wallix->pbmp->cx * nbbytes(entry_b_wallix->pbmp->bpp)) * entry_b_wallix->pbmp->cy + 16);
             bmp.emit(this->front.orders.out_stream);
@@ -259,7 +259,7 @@ struct bouncer_mod : public internal_mod {
 
         BitmapCacheItem * entry_b_h_wallix = front.bmp_cache->get_item(cache_b_id_h_wallix, cache_b_idx_h_wallix);
         {
-            RDPBmpCache bmp(entry_b_h_wallix->pbmp, cache_b_id_h_wallix, cache_b_idx_h_wallix, &this->front.rdp_layer->client_info);
+            RDPBmpCache bmp(entry_b_h_wallix->pbmp, cache_b_id_h_wallix, cache_b_idx_h_wallix, &this->front.rdp_layer.client_info);
         // check reserved size depending on version
             this->front.reserve_order(align4(entry_b_h_wallix->pbmp->cx * nbbytes(entry_b_h_wallix->pbmp->bpp)) * entry_b_h_wallix->pbmp->cy + 16);
             bmp.emit(this->front.orders.out_stream);

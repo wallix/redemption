@@ -84,7 +84,7 @@ struct test_card_mod : public internal_mod {
 
         LOG(LOG_INFO, "6666");
 
-        if (front.rdp_layer->client_info.brush_cache_code == 1) {
+        if (front.rdp_layer.client_info.brush_cache_code == 1) {
             uint8_t pattern[8] = {0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55};
             int cache_idx = 0;
             if (BRUSH_TO_SEND == front.cache->add_brush(pattern, cache_idx)){
@@ -205,7 +205,7 @@ struct test_card_mod : public internal_mod {
         front.begin_update();
 
         uint32_t cache_ref = front.bmp_cache->add_bitmap(100, 100, (uint8_t*)picture16, Rect(0, 0, 32, 32),
-                                    front.rdp_layer->client_info.bpp);
+                                    front.rdp_layer.client_info.bpp);
 
         uint8_t send_type2 = (cache_ref >> 24);
         uint8_t cache_b_id = (cache_ref >> 16);
@@ -232,7 +232,7 @@ struct test_card_mod : public internal_mod {
 
         if (send_type2 == BITMAP_ADDED_TO_CACHE){
             LOG(LOG_INFO, "Sending bitmap\n");
-            RDPBmpCache bmp(entry->pbmp, cache_b_id, cache_b_idx, &front.rdp_layer->client_info);
+            RDPBmpCache bmp(entry->pbmp, cache_b_id, cache_b_idx, &front.rdp_layer.client_info);
             // check reserved size depending on version
             front.reserve_order(align4(entry->pbmp->cx * nbbytes(entry->pbmp->bpp)) * entry->pbmp->cy + 16);
             bmp.emit(front.orders.out_stream);

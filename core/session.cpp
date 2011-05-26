@@ -129,7 +129,6 @@ Session::Session(int sck, const char * ip_source, Inifile * ini) {
     /* create these when up and running */
     this->trans = new SocketTransport(sck);
     this->session_callback = new SessionCallback(*this);
-    this->front_server = new server_rdp(this->trans, ini);
     this->default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
     this->cache = new Cache(&this->front->orders);
 
@@ -155,8 +154,7 @@ Session::Session(int sck, const char * ip_source, Inifile * ini) {
     // scrool_lock = 1, num_lock = 2, caps_lock = 4
     this->key_flags = 0;
 
-    #warning no need to create the front here the window size is not yet available
-    this->front = new Front(this->front_server, this->cache,
+    this->front = new Front(this->trans, ini, this->cache,
         this->default_font,
         this->ini->globals.nomouse,
         this->ini->globals.notimestamp,
@@ -183,7 +181,6 @@ Session::~Session()
     delete this->cache;
     delete this->front;
     delete this->default_font;
-    delete this->front_server;
     delete this->front_event;
     delete this->trans;
     if (this->back_event){
@@ -334,7 +331,7 @@ static int load_pointer(const char* file_name, uint8_t* data, uint8_t* mask, int
 
 int Session::step_STATE_KEY_HANDSHAKE(struct timeval & time_mark)
 {
-    this->front_server->server_rdp_incoming();
+    this->front->rdp_layer.server_rdp_incoming();
     return SESSION_STATE_ENTRY;
 }
 
@@ -353,7 +350,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
     select(max + 1, &rfds, &wfds, 0, &time_mark);
     if (this->front_event->is_set()) {
         try {
-            this->front_server->activate_and_process_data(*this->session_callback);
+            this->front->rdp_layer.activate_and_process_data(*this->session_callback);
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -374,15 +371,15 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
                   "cache1_entries=%d cache1_size=%d "
                   "cache2_entries=%d cache2_size=%d "
                   "cache2_entries=%d cache2_size=%d ",
-        this->front_server->client_info.width, this->front_server->client_info.height, this->front_server->client_info.bpp,
-        this->front_server->client_info.cache1_entries, this->front_server->client_info.cache1_size,
-        this->front_server->client_info.cache2_entries, this->front_server->client_info.cache2_size,
-        this->front_server->client_info.cache3_entries, this->front_server->client_info.cache3_size);
+        this->front->rdp_layer.client_info.width, this->front->rdp_layer.client_info.height, this->front->rdp_layer.client_info.bpp,
+        this->front->rdp_layer.client_info.cache1_entries, this->front->rdp_layer.client_info.cache1_size,
+        this->front->rdp_layer.client_info.cache2_entries, this->front->rdp_layer.client_info.cache2_size,
+        this->front->rdp_layer.client_info.cache3_entries, this->front->rdp_layer.client_info.cache3_size);
 
 
         /* initialising keymap */
         char filename[256];
-        snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->front_server->client_info.keylayout);
+        snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->front->rdp_layer.client_info.keylayout);
         LOG(LOG_DEBUG, "loading keymap %s\n", filename);
         this->keymap = new Keymap(filename);
 
@@ -415,7 +412,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
             &pointer_item.y);
 
         this->cache->add_pointer_static(&pointer_item, 0);
-        this->front_server->server_rdp_send_pointer(0,
+        this->front->rdp_layer.server_rdp_send_pointer(0,
                          pointer_item.data,
                          pointer_item.mask,
                          pointer_item.x,
@@ -429,18 +426,18 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
             &pointer_item.y);
         this->cache->add_pointer_static(&pointer_item, 1);
 
-        this->front_server->server_rdp_send_pointer(1,
+        this->front->rdp_layer.server_rdp_send_pointer(1,
                          pointer_item.data,
                          pointer_item.mask,
                          pointer_item.x,
                          pointer_item.y);
 
-        if (this->front_server->client_info.username[0]){
-            this->context->parse_username(this->front_server->client_info.username);
+        if (this->front->rdp_layer.client_info.username[0]){
+            this->context->parse_username(this->front->rdp_layer.client_info.username);
         }
 
-        if (this->front_server->client_info.password[0]){
-            this->context->cpy(STRAUTHID_PASSWORD, this->front_server->client_info.password);
+        if (this->front->rdp_layer.client_info.password[0]){
+            this->context->cpy(STRAUTHID_PASSWORD, this->front->rdp_layer.client_info.password);
         }
 
         this->internal_state = SESSION_STATE_RUNNING;
@@ -466,7 +463,7 @@ int Session::step_STATE_CLOSE_CONNECTION()
     }
     if (this->front_event->is_set()) {
         try {
-            this->front_server->activate_and_process_data(*this->session_callback);
+            this->front->rdp_layer.activate_and_process_data(*this->session_callback);
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -479,7 +476,7 @@ int Session::step_STATE_CLOSE_CONNECTION()
 
 int Session::step_STATE_WAITING_FOR_NEXT_MODULE(struct timeval & time_mark)
 {
-    assert(this->front_server->up_and_running);
+    assert(this->front->rdp_layer.up_and_running);
 
     unsigned max = 0;
     fd_set rfds;
@@ -493,7 +490,7 @@ int Session::step_STATE_WAITING_FOR_NEXT_MODULE(struct timeval & time_mark)
     select(max + 1, &rfds, &wfds, 0, &time_mark);
     if (this->front_event->is_set()) { /* incoming client data */
         try {
-            this->front_server->activate_and_process_data(*this->session_callback);
+            this->front->rdp_layer.activate_and_process_data(*this->session_callback);
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -531,7 +528,7 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
     if (this->front_event->is_set()) { /* incoming client data */
         try {
         #warning it should be possible to remove the while hidden in activate_and_process_data and work only with the external loop (need to understand well the next_packet working)
-            this->front_server->activate_and_process_data(*this->session_callback);
+            this->front->rdp_layer.activate_and_process_data(*this->session_callback);
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -565,9 +562,9 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
                 delete this->mod;
                 this->mod = this->no_mod;
             }
-            snprintf(this->context->get(STRAUTHID_OPT_WIDTH), 10, "%d", this->front_server->client_info.width);
-            snprintf(this->context->get(STRAUTHID_OPT_HEIGHT), 10, "%d", this->front_server->client_info.height);
-            snprintf(this->context->get(STRAUTHID_OPT_BPP), 10, "%d", this->front_server->client_info.bpp);
+            snprintf(this->context->get(STRAUTHID_OPT_WIDTH), 10, "%d", this->front->rdp_layer.client_info.width);
+            snprintf(this->context->get(STRAUTHID_OPT_HEIGHT), 10, "%d", this->front->rdp_layer.client_info.height);
+            snprintf(this->context->get(STRAUTHID_OPT_BPP), 10, "%d", this->front->rdp_layer.client_info.bpp);
             bool record_video = false;
             bool keep_alive = false;
             int next_state = this->sesman->ask_next_module(
@@ -654,7 +651,7 @@ int Session::session_main_loop()
                 break;
             }
         }
-        this->front_server->server_rdp_disconnect();
+        this->front->rdp_layer.server_rdp_disconnect();
     }
     catch(...){
         rv = 1;
@@ -672,11 +669,11 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 {
     try {
         if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"force")==0){
-            this->front_server->client_info.console_session=true;
+            this->front->rdp_layer.client_info.console_session=true;
             LOG(LOG_INFO, "mode console : force");
         }
         else if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"forbid")==0){
-            this->front_server->client_info.console_session=false;
+            this->front->rdp_layer.client_info.console_session=false;
             LOG(LOG_INFO, "mode console : forbid");
         }
         else {
@@ -775,7 +772,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 		    &pointer_item.y);
 
 		this->cache->add_pointer_static(&pointer_item, 0);
-		this->front_server->server_rdp_send_pointer(0,
+		this->front->rdp_layer.server_rdp_send_pointer(0,
 				 pointer_item.data,
 				 pointer_item.mask,
 				 pointer_item.x,
@@ -789,7 +786,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 		    &pointer_item.y);
 		this->cache->add_pointer_static(&pointer_item, 1);
 
-		this->front_server->server_rdp_send_pointer(1,
+		this->front->rdp_layer.server_rdp_send_pointer(1,
 				 pointer_item.data,
 				 pointer_item.mask,
 				 pointer_item.x,
@@ -876,8 +873,8 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 // it is **not** used to get an ip address.
                 char hostname[255];
                 hostname[0] = 0;
-                if (this->front_server->client_info.hostname){
-                    strcpy(hostname, this->front_server->client_info.hostname);
+                if (this->front->rdp_layer.client_info.hostname){
+                    strcpy(hostname, this->front->rdp_layer.client_info.hostname);
                 }
                 #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of mod_event.
                 SocketTransport * t = new SocketTransport(
@@ -890,10 +887,10 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                     this->keymap,
                                     *this->context,
                                     *(this->front),
-                                    &this->front_server->client_info,
-                                    this->front_server->sec_layer.mcs_layer.channel_list,
+                                    &this->front->rdp_layer.client_info,
+                                    this->front->rdp_layer.sec_layer.mcs_layer.channel_list,
                                     hostname,
-                                    this->front_server->client_info.keylayout,
+                                    this->front->rdp_layer.client_info.keylayout,
                                     this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
                                     this->context->get_bool(STRAUTHID_OPT_DEVICEREDIRECTION));
                 LOG(LOG_INFO, "Creation of new mod 'RDP' suceeded\n");
@@ -907,7 +904,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                         this->context->get(STRAUTHID_TARGET_DEVICE),
                                         atoi(this->context->get(STRAUTHID_TARGET_PORT)));
                 this->back_event = new wait_obj(t->sck);
-                this->mod = new mod_vnc(t, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this->front_server->client_info.keylayout);
+                this->mod = new mod_vnc(t, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this->front->rdp_layer.client_info.keylayout);
                 LOG(LOG_INFO, "Creation of new mod 'VNC' suceeded\n");
             }
             break;

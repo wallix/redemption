@@ -92,8 +92,6 @@ struct Session {
     ModContext * context;
     int internal_state;
     long id;
-    #warning we can probably provide a mod instead of a session to SessionCallback, thus enabling to move callback to client_mod. Or even find something better to simplify this. There is definitely something wrong here around server_rdp, SessionCallback, client_mod, etc. Find what it is and correct it.
-    struct server_rdp *front_server;
     struct SocketTransport * trans;
     time_t keep_alive_time;
 
