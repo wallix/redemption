@@ -262,7 +262,7 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
     int c = 0;
     for (int index = 0; index < len; index++) {
         FontChar* font_item = this->mod->front->font->font_items[wstr[index]];
-        switch (this->mod->front->cache->add_glyph(font_item, f, c))
+        switch (this->mod->front->cache.add_glyph(font_item, f, c))
         {
             case Cache::GLYPH_ADDED_TO_CACHE:
                 this->mod->front->send_glyph(font_item, f, c);
@@ -541,7 +541,7 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
         pattern[0] = this->mod->brush.hatch;
         memcpy(pattern+1, this->mod->brush.extra, 7);
         int cache_idx = 0;
-        if (BRUSH_TO_SEND == this->mod->front->cache->add_brush(pattern, cache_idx)){
+        if (BRUSH_TO_SEND == this->mod->front->cache.add_brush(pattern, cache_idx)){
             this->mod->front->send_brush(cache_idx);
         }
         this->mod->brush.hatch = cache_idx;

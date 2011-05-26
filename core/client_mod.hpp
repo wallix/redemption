@@ -225,7 +225,7 @@ struct client_mod {
 
 
             this->front->orders.reset_xx();
-            this->front->cache->reset(&client_info);
+            this->front->cache.reset(client_info);
 
             if (this->front->bmp_cache){
                 delete this->front->bmp_cache;
@@ -404,7 +404,7 @@ struct client_mod {
     void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
     {
         int cacheidx = 0;
-        switch (this->front->cache->add_pointer(data, mask, x, y, cacheidx)){
+        switch (this->front->cache.add_pointer(data, mask, x, y, cacheidx)){
         case POINTER_TO_SEND:
             this->front->send_pointer(cacheidx, data, mask, x, y);
         break;
@@ -449,7 +449,7 @@ struct client_mod {
                 pattern[0] = this->brush.hatch;
                 memcpy(pattern+1, this->brush.extra, 7);
                 int cache_idx = 0;
-                if (BRUSH_TO_SEND == this->front->cache->add_brush(pattern, cache_idx)){
+                if (BRUSH_TO_SEND == this->front->cache.add_brush(pattern, cache_idx)){
                     this->front->send_brush(cache_idx);
                 }
                 this->brush.hatch = cache_idx;

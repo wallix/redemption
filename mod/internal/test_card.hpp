@@ -53,7 +53,7 @@ struct test_card_mod : public internal_mod {
         int k = 0;
         for (int index = 0; index < len; index++) {
             FontChar* font_item = front.font->font_items[wstr[index]];
-            switch (front.cache->add_glyph(font_item, f, c))
+            switch (front.cache.add_glyph(font_item, f, c))
             {
                 case Cache::GLYPH_ADDED_TO_CACHE:
                     front.orders.send_font(font_item, f, c);
@@ -87,7 +87,7 @@ struct test_card_mod : public internal_mod {
         if (front.rdp_layer.client_info.brush_cache_code == 1) {
             uint8_t pattern[8] = {0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55};
             int cache_idx = 0;
-            if (BRUSH_TO_SEND == front.cache->add_brush(pattern, cache_idx)){
+            if (BRUSH_TO_SEND == front.cache.add_brush(pattern, cache_idx)){
                 front.send_brush(cache_idx);
             }
             brush.hatch = cache_idx;
