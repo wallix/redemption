@@ -23,7 +23,6 @@
 #if !defined(__ORDERS_HPP__)
 #define __ORDERS_HPP__
 
-#include "server_rdp.hpp"
 #include "font.hpp"
 #include "constants.hpp"
 #include "error.hpp"
@@ -56,13 +55,12 @@ struct Orders
     RDPGlyphIndex text;
 
     Stream out_stream;
-    struct server_rdp* rdp_layer;
 
     uint8_t* order_count_ptr;
     int order_count;
     int order_level;
 
-    Orders(struct server_rdp* rdp_layer) :
+    Orders() :
         common(0, Rect(0, 0, 1, 1)),
         memblt(0, Rect(), 0, 0, 0, 0),
         opaquerect(Rect(), 0),
@@ -75,20 +73,14 @@ struct Orders
     {
         this->order_count = 0;
         this->order_level = 0;
-        this->rdp_layer = rdp_layer;
     }
 
     ~Orders()
     {
     }
 
-    void reset() throw (Error)
+    void reset_xx() throw (Error)
     {
-#warning is it necessary (or even usefull) to send remaining drawing orders before resetting ?
-        if (this->order_count > 0){
-            this->force_send();
-        }
-
         common = RDPOrderCommon(0,  Rect(0, 0, 1, 1));
         memblt = RDPMemBlt(0, Rect(), 0, 0, 0, 0);
         opaquerect = RDPOpaqueRect(Rect(), 0);
@@ -112,87 +104,9 @@ struct Orders
         return 0;
     }
 
-    void send()
-    {
-        if (this->order_level > 0) {
-            this->order_level--;
-            if (this->order_level == 0){
-                if (this->order_count > 0){
-                    this->force_send();
-                }
-            }
-        }
-    }
-
-    /*****************************************************************************/
-    // check if the next order will fit in available packet size
-    // if not send previous orders we got and init a new packet
-    void reserve_order(size_t asked_size)
-    {
-        if (this->order_count > 0) {
-            size_t max_packet_size = std::min(this->out_stream.capacity, (size_t)16384);
-            size_t used_size = (size_t)(this->out_stream.p - this->order_count_ptr);
-
-            if ((used_size + asked_size + 100) > max_packet_size) {
-                this->force_send();
-            }
-        }
-        if (0 == this->order_count){
-            // we initialize only when **sure** there will be orders to send,
-            // (ie: when reserve_order(xx) is called),
-            // RDP does not support empty orders batch
-            // at this point we know at least one order will be emited
-            this->force_init();
-        }
-        this->order_count++;
-    }
-
-    void force_init()
-    {
-//        LOG(LOG_INFO, "Orders::force_init()");
-        #warning see with order limit : is this big enough ?
-        this->out_stream.init(16384);
-
-        this->rdp_layer->sec_layer.server_sec_init(this->out_stream);
-        this->out_stream.rdp_hdr = this->out_stream.p;
-        this->out_stream.p += 18;
-
-        this->out_stream.out_uint16_le(RDP_UPDATE_ORDERS);
-        this->out_stream.out_clear_bytes(2); /* pad */
-        this->order_count_ptr = this->out_stream.p;
-        this->out_stream.out_clear_bytes(2); /* number of orders, set later */
-        this->out_stream.out_clear_bytes(2); /* pad */
-    }
-
-    void force_send()
-    {
-//        LOG(LOG_ERR, "force_send: level=%d order_count=%d", this->order_level, this->order_count);
-        this->out_stream.mark_end();
-        this->out_stream.p = this->order_count_ptr;
-        this->out_stream.out_uint16_le(this->order_count);
-
-        this->out_stream.p = this->out_stream.rdp_hdr;
-        int len = this->out_stream.end - this->out_stream.p;
-        this->out_stream.out_uint16_le(len);
-        this->out_stream.out_uint16_le(0x10 | RDP_PDU_DATA);
-        this->out_stream.out_uint16_le(this->rdp_layer->mcs_channel);
-        this->out_stream.out_uint32_le(this->rdp_layer->share_id);
-        this->out_stream.out_uint8(0);
-        this->out_stream.out_uint8(1);
-        this->out_stream.out_uint16_le(len - 14);
-        this->out_stream.out_uint8(RDP_DATA_PDU_UPDATE);
-        this->out_stream.out_uint8(0);
-        this->out_stream.out_uint16_le(0);
-
-        this->rdp_layer->sec_layer.server_sec_send(this->out_stream, MCS_GLOBAL_CHANNEL);
-
-        this->order_count = 0;
-    }
 
     void opaque_rect(const Rect & r, int color, const Rect & clip)
     {
-        this->reserve_order(23);
-
 //        LOG(LOG_INFO, "opaque_rect[%d](r(%d, %d, %d, %d) color=%x clip(%d, %d, %d, %d)",
 //            this->order_count, r.x, r.y, r.cx, r.cy, color, clip.x, clip.y, clip.cx, clip.cy);
 
@@ -205,8 +119,6 @@ struct Orders
 
     void screen_blt(const Rect & r, int16_t srcx, int16_t srcy, uint8_t rop, const Rect &clip)
     {
-        this->reserve_order(25);
-
 //        LOG(LOG_INFO, "screen_blt[%d](r(%d, %d, %d, %d) srcx=%d srcy=%d rop=%d clip(%d, %d, %d, %d)",
 //            this->order_count, r.x, r.y, r.cx, r.cy, srcx, srcy, rop, clip.x, clip.y, clip.cx, clip.cy);
 
@@ -219,8 +131,6 @@ struct Orders
 
     void dest_blt(const Rect & r, uint8_t rop, const Rect &clip)
     {
-        this->reserve_order(21);
-
 //        LOG(LOG_INFO, "destblt[%d](r(%d, %d, %d, %d) rop=%d clip(%d, %d, %d, %d)",
 //            this->order_count, r.x, r.y, r.cx, r.cy, rop, clip.x, clip.y, clip.cx, clip.cy);
 
@@ -233,8 +143,6 @@ struct Orders
 
     void pat_blt(const Rect & r, int rop, uint32_t bg_color, uint32_t fg_color, const RDPBrush & brush, const Rect &clip)
     {
-        this->reserve_order(29);
-
 //        LOG(LOG_INFO, "pat_blt[%d](r(%d, %d, %d, %d) bg_color=%x fg_color=%d brush.style=%d clip(%d, %d, %d, %d)",
 //            this->order_count, r.x, r.y, r.cx, r.cy, bg_color, fg_color, brush.style, clip.x, clip.y, clip.cx, clip.cy);
 
@@ -250,8 +158,6 @@ struct Orders
                 int rop, int srcx, int srcy,
                 int cache_idx, const Rect & clip)
     {
-        this->reserve_order(30);
-
 //        LOG(LOG_INFO, "/* mem_blt[%d](cache_id=%d color_table=%d r(%d, %d, %d, %d) rop=%d srcx=%d srcy=%d cache_idx=%d clip(%d, %d, %d, %d)) */", this->order_count, cache_id, color_table, r.x, r.y, r.cx, r.cy, rop, srcx, srcy, cache_idx, clip.x, clip.y, clip.cx, clip.cy);
 
         RDPMemBlt cmd(cache_id + color_table * 256, r, rop, srcx, srcy, cache_idx);
@@ -266,10 +172,7 @@ struct Orders
              const RDPPen & pen,
              const Rect & clip)
     {
-        this->reserve_order(32);
-
 //        LOG(LOG_INFO, "line[%d](back_mode=%d startx=%d starty=%d, endx=%d endy=%d rop2=%d back_color=%x pen.color=%x clip(%d, %d, %d, %d)", this->order_count, back_mode, startx, starty, endx, endy, rop2, back_color, pen.color, clip.x, clip.y, clip.cx, clip.cy);
-
 
         RDPLineTo cmd(back_mode, startx, starty, endx, endy, back_color, rop2, pen);
         RDPOrderCommon newcommon(LINE, clip);
@@ -286,10 +189,7 @@ struct Orders
              int data_len, const Rect & clip)
     {
 
-        this->reserve_order(297);
-
 //        LOG(LOG_INFO, "glyph_index[%d](font=%d flags=%d mixmode=%d, fg_color=%x bg_color=%x text_clip(%d, %d, %d, %d) box(%d, %d, %d, %d), x=%d, y=%d data_len=%d clip(%d, %d, %d, %d)", this->order_count, font, flags, mixmode, fg_color, bg_color, text_clip.x, text_clip.y, text_clip.cx, text_clip.cy, box.x, box.y, box.cx, box.cy, x, y, data_len, clip.x, clip.y, clip.cx, clip.cy);
-
 
         RDPOrderCommon newcommon(GLYPHINDEX, clip);
         RDPGlyphIndex cmd(font, flags, 0, mixmode,
@@ -354,8 +254,6 @@ struct Orders
 
     void send_palette(const uint32_t (& palette)[256], int cache_id)
     {
-        this->reserve_order(2000);
-
 //        LOG(LOG_INFO, "send_palette[%d](cache_id=%d)\n", this->order_count, cache_id);
 
         RDPColCache newcmd;
@@ -366,8 +264,6 @@ struct Orders
     void send_brush(int width, int height, int bpp, int type, int size, uint8_t* data, int cache_id)
     {
         using namespace RDP;
-
-        this->reserve_order(size + 12);
 
 //        LOG(LOG_INFO, "send_brush[%d](width=%d, height=%d bpp=%d type=%d, size=%d, cache_id=%d)\n", this->order_count, width, height, bpp, type, size, cache_id);
 
@@ -386,13 +282,11 @@ struct Orders
         this->out_stream.out_copy_bytes(data, size);
     }
 
-    void send_bitmap_common(Bitmap & bmp, uint8_t cache_id, uint16_t cache_idx)
+    void send_bitmap_common(ClientInfo* client_info, Bitmap & bmp, uint8_t cache_id, uint16_t cache_idx)
     {
         using namespace RDP;
 
-        RDPBmpCache bmp_order(&bmp, cache_id, cache_idx, &this->rdp_layer->client_info);
-        #warning really when using compression we'll use less space
-        this->reserve_order(bmp.bmp_size + 16);
+        RDPBmpCache bmp_order(&bmp, cache_id, cache_idx, client_info);
 
 //        LOG(LOG_INFO, "/* send_bitmap[%d](bmp(bpp=%d, cx=%d, cy=%d, data=%p), cache_id=%d, cache_idx=%d) */\n", this->order_count, bmp.bpp, bmp.cx, bmp.cy, bmp.data_co, cache_id, cache_idx);
 
@@ -403,7 +297,6 @@ struct Orders
     {
 
         int datasize = font_char->datasize();
-        this->reserve_order(datasize + 18);
 
 //        LOG(LOG_INFO, "send_font[%d](font_index=%d, char_index=%d)\n", this->order_count, font_index, char_index);
 

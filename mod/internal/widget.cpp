@@ -536,7 +536,7 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
     this->mod->brush.style = 3;
 
     // brush style 3 is not supported by windows 7, we **MUST** use cache
-    if (this->mod->front->orders->rdp_layer->client_info.brush_cache_code == 1) {
+    if (this->mod->front->rdp_layer->client_info.brush_cache_code == 1) {
         uint8_t pattern[8];
         pattern[0] = this->mod->brush.hatch;
         memcpy(pattern+1, this->mod->brush.extra, 7);

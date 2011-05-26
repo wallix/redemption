@@ -24,6 +24,7 @@
 
 #include "../mod/internal/widget.hpp"
 #include "client_mod.hpp"
+#include "server_rdp.hpp"
 
 struct internal_mod : public client_mod {
     public:
@@ -37,9 +38,9 @@ struct internal_mod : public client_mod {
     internal_mod(int (& keys)[256], int & key_flags, Keymap * &keymap, Front & front)
             : client_mod(keys, key_flags, keymap, front),
                 screen(this,
-                 front.orders->rdp_layer->client_info.width,
-                 front.orders->rdp_layer->client_info.height,
-                 front.orders->rdp_layer->client_info.bpp)
+                 front.rdp_layer->client_info.width,
+                 front.rdp_layer->client_info.height,
+                 front.rdp_layer->client_info.bpp)
     {
         /* dragging info */
         this->dragging = 0;
@@ -68,7 +69,7 @@ struct internal_mod : public client_mod {
         this->brush.style = 3;
 
         // brush style 3 is not supported by windows 7, we **MUST** use cache
-        if (this->front->orders->rdp_layer->client_info.brush_cache_code == 1) {
+        if (this->front->rdp_layer->client_info.brush_cache_code == 1) {
             uint8_t pattern[8];
             pattern[0] = this->brush.hatch;
             memcpy(pattern+1, this->brush.extra, 7);
@@ -107,9 +108,9 @@ struct internal_mod : public client_mod {
 
 
     virtual void front_resize() {
-        this->screen.rect.cx = this->front->orders->rdp_layer->client_info.width;
-        this->screen.rect.cy = this->front->orders->rdp_layer->client_info.height;
-        this->screen.bpp = this->front->orders->rdp_layer->client_info.bpp;
+        this->screen.rect.cx = this->front->rdp_layer->client_info.width;
+        this->screen.rect.cy = this->front->rdp_layer->client_info.height;
+        this->screen.bpp = this->front->rdp_layer->client_info.bpp;
     }
 
     Widget * window(int i)

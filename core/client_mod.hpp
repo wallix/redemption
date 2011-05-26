@@ -179,15 +179,15 @@ struct client_mod {
     }
 
     int get_front_bpp(){
-        return this->front->orders->rdp_layer->client_info.bpp;
+        return this->front->rdp_layer->client_info.bpp;
     }
 
     int get_front_width(){
-        return this->front->orders->rdp_layer->client_info.width;
+        return this->front->rdp_layer->client_info.width;
     }
 
     int get_front_height(){
-        return this->front->orders->rdp_layer->client_info.height;
+        return this->front->rdp_layer->client_info.height;
     }
 
     virtual void front_resize() {
@@ -199,7 +199,7 @@ struct client_mod {
 
     void server_resize(int width, int height, int bpp)
     {
-        struct ClientInfo & client_info = this->front->orders->rdp_layer->client_info;
+        struct ClientInfo & client_info = this->front->rdp_layer->client_info;
 
         if (client_info.width != width
         || client_info.height != height
@@ -218,13 +218,13 @@ struct client_mod {
             this->front_resize();
 
             /* shut down the rdp client */
-            this->front->orders->rdp_layer->server_rdp_send_deactive();
+            this->front->rdp_layer->server_rdp_send_deactive();
 
             /* this should do the resizing */
-            this->front->orders->rdp_layer->server_rdp_send_demand_active();
+            this->front->rdp_layer->server_rdp_send_demand_active();
 
 
-            this->front->orders->reset();
+            this->front->orders.reset_xx();
             this->front->cache->reset(&client_info);
 
             if (this->front->bmp_cache){
@@ -444,7 +444,7 @@ struct client_mod {
         this->brush = brush;
 
         if (brush.style == 3){
-            if (this->front->orders->rdp_layer->client_info.brush_cache_code == 1) {
+            if (this->front->rdp_layer->client_info.brush_cache_code == 1) {
                 uint8_t pattern[8];
                 pattern[0] = this->brush.hatch;
                 memcpy(pattern+1, this->brush.extra, 7);
@@ -474,7 +474,7 @@ struct client_mod {
                            uint8_t* data, int data_len,
                            int total_data_len, int flags)
     {
-        this->front->orders->rdp_layer->server_send_to_channel(channel_id, data, data_len, total_data_len, flags);
+        this->front->rdp_layer->server_send_to_channel(channel_id, data, data_len, total_data_len, flags);
     }
 
     bool get_pointer_displayed() {
