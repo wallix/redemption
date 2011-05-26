@@ -52,7 +52,7 @@ struct test_card_mod : public internal_mod {
         int c = 0;
         int k = 0;
         for (int index = 0; index < len; index++) {
-            FontChar* font_item = front.font->font_items[wstr[index]];
+            FontChar* font_item = front.font.font_items[wstr[index]];
             switch (front.cache.add_glyph(font_item, f, c))
             {
                 case Cache::GLYPH_ADDED_TO_CACHE:

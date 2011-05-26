@@ -127,7 +127,6 @@ Session::Session(int sck, const char * ip_source, Inifile * ini) {
 
     /* create these when up and running */
     this->trans = new SocketTransport(sck);
-    this->default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
 
     /* set non blocking */
     int rv = 0;
@@ -151,11 +150,7 @@ Session::Session(int sck, const char * ip_source, Inifile * ini) {
     // scrool_lock = 1, num_lock = 2, caps_lock = 4
     this->key_flags = 0;
 
-    this->front = new Front(this->trans, ini, this->default_font,
-        this->ini->globals.nomouse,
-        this->ini->globals.notimestamp,
-        atoi(this->context->get(STRAUTHID_TIMEZONE))
-        );
+    this->front = new Front(this->trans, ini);
     this->no_mod = new null_mod(this->keys, this->key_flags, this->keymap, *this->context, *(this->front));
     this->mod = this->no_mod;
 
@@ -175,7 +170,6 @@ Session::~Session()
         delete this->keymap;
     }
     delete this->front;
-    delete this->default_font;
     delete this->front_event;
     delete this->trans;
     if (this->back_event){
@@ -322,7 +316,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
         /* resize the main window */
         this->mod->front_resize();
         this->mod->server_reset_clip();
-        this->front->reset(this->default_font);
+        this->front->reset();
 
         /* initialising keymap */
         char filename[256];

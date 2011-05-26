@@ -56,7 +56,7 @@ class Front {
 public:
     struct BitmapCache *bmp_cache;
     struct Capture * capture;
-    struct Font * font;
+    struct Font font;
     int mouse_x;
     int mouse_y;
     struct timeval start;
@@ -69,14 +69,14 @@ public:
 
 #warning mouse_x, mouse_y, start not initialized
 
-    Front(SocketTransport * trans, Inifile * ini, Font *font, bool nomouse, bool notimestamp, int timezone)
+    Front(SocketTransport * trans, Inifile * ini)
     :
     bmp_cache(0),
     capture(0),
-    font(font),
-    nomouse(nomouse),
-    notimestamp(notimestamp),
-    timezone(timezone),
+    font(SHARE_PATH "/" DEFAULT_FONT_NAME),
+    nomouse(ini->globals.nomouse),
+    notimestamp(ini->globals.notimestamp),
+    timezone(0),
     rdp_layer(trans, ini),
     cache(&this->orders)
     {
@@ -92,8 +92,7 @@ public:
         }
     }
 
-    void reset(Font *font){
-        this->font = font;
+    void reset(){
         this->cache = cache;
         #warning is it necessary (or even usefull) to send remaining drawing orders before resetting ?
         if (this->orders.order_count > 0){
