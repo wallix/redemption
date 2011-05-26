@@ -49,6 +49,8 @@
 #include "server_rdp.hpp"
 #include "NewRDPOrders.hpp"
 #include "orders.hpp"
+#include "transport.hpp"
+#include "config.hpp"
 
 class Front {
 public:
@@ -62,12 +64,12 @@ public:
     bool nomouse;
     bool notimestamp;
     int timezone;
-    struct server_rdp * rdp_layer;
+    struct server_rdp rdp_layer;
     struct RDP::Orders orders;
 
 #warning mouse_x, mouse_y, start not initialized
 
-    Front(struct server_rdp * rdp_layer, struct Cache* cache, Font *font, bool nomouse, bool notimestamp, int timezone)
+    Front(SocketTransport * trans, Inifile * ini, struct Cache* cache, Font *font, bool nomouse, bool notimestamp, int timezone)
     :
     bmp_cache(0),
     capture(0),
@@ -76,7 +78,7 @@ public:
     nomouse(nomouse),
     notimestamp(notimestamp),
     timezone(timezone),
-    rdp_layer(rdp_layer)
+    rdp_layer(trans, ini)
     {
         ;
     }
@@ -102,7 +104,7 @@ public:
         if (this->bmp_cache){
             delete this->bmp_cache;
         }
-        this->bmp_cache = new BitmapCache(&(this->rdp_layer->client_info));
+        this->bmp_cache = new BitmapCache(&(this->rdp_layer.client_info));
     }
 
     void send()
@@ -146,7 +148,7 @@ public:
         #warning see with order limit : is this big enough ?
         this->orders.out_stream.init(16384);
 
-        this->rdp_layer->sec_layer.server_sec_init(this->orders.out_stream);
+        this->rdp_layer.sec_layer.server_sec_init(this->orders.out_stream);
         this->orders.out_stream.rdp_hdr = this->orders.out_stream.p;
         this->orders.out_stream.p += 18;
 
@@ -168,8 +170,8 @@ public:
         int len = this->orders.out_stream.end - this->orders.out_stream.p;
         this->orders.out_stream.out_uint16_le(len);
         this->orders.out_stream.out_uint16_le(0x10 | RDP_PDU_DATA);
-        this->orders.out_stream.out_uint16_le(this->rdp_layer->mcs_channel);
-        this->orders.out_stream.out_uint32_le(this->rdp_layer->share_id);
+        this->orders.out_stream.out_uint16_le(this->rdp_layer.mcs_channel);
+        this->orders.out_stream.out_uint32_le(this->rdp_layer.share_id);
         this->orders.out_stream.out_uint8(0);
         this->orders.out_stream.out_uint8(1);
         this->orders.out_stream.out_uint16_le(len - 14);
@@ -177,7 +179,7 @@ public:
         this->orders.out_stream.out_uint8(0);
         this->orders.out_stream.out_uint16_le(0);
 
-        this->rdp_layer->sec_layer.server_sec_send(this->orders.out_stream, MCS_GLOBAL_CHANNEL);
+        this->rdp_layer.sec_layer.server_sec_send(this->orders.out_stream, MCS_GLOBAL_CHANNEL);
 
         this->orders.order_count = 0;
     }
@@ -257,14 +259,14 @@ public:
     void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
     {
 //        LOG(LOG_INFO, "front::send_pointer\n");
-        this->rdp_layer->server_rdp_send_pointer(cache_idx, data, mask, x, y);
+        this->rdp_layer.server_rdp_send_pointer(cache_idx, data, mask, x, y);
 //        LOG(LOG_INFO, "front::send_pointer done\n");
     }
 
     void set_pointer(int cache_idx) throw (Error)
     {
 //        LOG(LOG_INFO, "front::set_pointer\n");
-        this->rdp_layer->server_rdp_set_pointer(cache_idx);
+        this->rdp_layer.server_rdp_set_pointer(cache_idx);
 //        LOG(LOG_INFO, "front::set_pointer done\n");
     }
 
@@ -272,7 +274,7 @@ public:
     int get_channel_id(char* name)
     {
 //        LOG(LOG_INFO, "front::get_channel_id\n");
-        return this->rdp_layer->sec_layer.mcs_layer.server_mcs_get_channel_id(name);
+        return this->rdp_layer.sec_layer.mcs_layer.server_mcs_get_channel_id(name);
     }
 
 
@@ -285,7 +287,7 @@ public:
             this->reserve_order(23);
             this->orders.opaque_rect(r, fgcolor, clip);
             if (this->capture){
-                this->capture->rect(r, fgcolor, this->rdp_layer->client_info.bpp, clip);
+                this->capture->rect(r, fgcolor, this->rdp_layer.client_info.bpp, clip);
             }
         }
     }
@@ -315,7 +317,7 @@ public:
             this->orders.dest_blt(r, rop, clip);
             if (this->capture){
                 #warning missing code in capture, apply some logical operator inplace
-                this->capture->rect(r, WHITE, this->rdp_layer->client_info.bpp, clip);
+                this->capture->rect(r, WHITE, this->rdp_layer.client_info.bpp, clip);
             }
         }
     }
@@ -329,7 +331,7 @@ public:
             this->reserve_order(29);
             this->orders.pat_blt(r, rop, bg_color, fg_color, brush, clip);
             if (this->capture){
-                this->capture->rect(r, fg_color, this->rdp_layer->client_info.bpp, clip);
+                this->capture->rect(r, fg_color, this->rdp_layer.client_info.bpp, clip);
             }
         }
     }
@@ -368,7 +370,7 @@ public:
                 this->reserve_order(32);
                 this->orders.line_to(1, x1, y1, x2, y2, rop2, bgcolor, pen, clip);
                 if (this->capture){
-                    this->capture->line(1, x1, y1, x2, y2, rop2, bgcolor, pen, this->rdp_layer->client_info.bpp, clip);
+                    this->capture->line(1, x1, y1, x2, y2, rop2, bgcolor, pen, this->rdp_layer.client_info.bpp, clip);
                 }
             }
 
@@ -402,8 +404,8 @@ public:
     void send_palette(const RGBPalette & palette)
     {
 //        LOG(LOG_INFO, "front::send_palette\n");
-        if (this->rdp_layer->client_info.bpp <= 8) {
-            this->rdp_layer->server_send_palette(palette);
+        if (this->rdp_layer.client_info.bpp <= 8) {
+            this->rdp_layer.server_send_palette(palette);
             this->orders.init();
             this->reserve_order(2000);
             this->orders.send_palette(palette, 0);
@@ -429,7 +431,7 @@ public:
         #warning really when using compression we'll use less space
         this->reserve_order(entry->pbmp->bmp_size + 16);
 
-        this->orders.send_bitmap_common(&this->rdp_layer->client_info, *entry->pbmp, cache_id, cache_idx);
+        this->orders.send_bitmap_common(&this->rdp_layer.client_info, *entry->pbmp, cache_id, cache_idx);
     }
 
     // draw bitmap from src_data (image rect contained in src_r) to x, y
@@ -438,7 +440,7 @@ public:
                      int palette_id,
                      const Rect & clip)
     {
-//        LOG(LOG_INFO, "front::send_bitmap_front bpp=%d\n", this->rdp_layer->client_info.bpp);
+//        LOG(LOG_INFO, "front::send_bitmap_front bpp=%d\n", this->rdp_layer.client_info.bpp);
         for (int y = 0; y < dst.cy ; y += 64) {
             int cy = std::min(64, dst.cy - y);
             for (int x = 0; x < dst.cx ; x += 64) {
@@ -449,7 +451,7 @@ public:
                                                 src_r.cx, src_r.cy,
                                                 src_data,
                                                 tile.offset(src_r.x, src_r.y),
-                                                this->rdp_layer->client_info.bpp);
+                                                this->rdp_layer.client_info.bpp);
 
                     uint8_t send_type = (cache_ref >> 24);
                     uint8_t cache_id  = (cache_ref >> 16);

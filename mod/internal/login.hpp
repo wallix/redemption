@@ -112,7 +112,7 @@ struct wab_login : public window_login
 
         /* label */
 
-        const char * target = strtok(this->session->front_server->client_info.username, ":" );
+        const char * target = strtok(this->session->front->rdp_layer.client_info.username, ":" );
         if (!target){
             target = "";
         }
@@ -432,7 +432,7 @@ struct login_mod : public internal_mod {
         this->brush.style = 3;
 
         // brush style 3 is not supported by windows 7, we **MUST** use cache
-        if (this->front->rdp_layer->client_info.brush_cache_code == 1) {
+        if (this->front->rdp_layer.client_info.brush_cache_code == 1) {
             uint8_t pattern[8];
             pattern[0] = this->brush.hatch;
             memcpy(pattern+1, this->brush.extra, 7);
