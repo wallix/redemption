@@ -35,9 +35,9 @@ struct test_card_mod : public internal_mod {
     {
         this->event = event;
 
-        front.orders->init();
-        front.orders->opaque_rect(Rect(50, 50, 150, 150), PINK, Rect(50, 50, 150, 150));
-        front.orders->opaque_rect(Rect(520, 360, 60, 25), DARK_GREY, Rect(520, 360, 60, 25));
+        front.orders.init();
+        front.orders.opaque_rect(Rect(50, 50, 150, 150), PINK, Rect(50, 50, 150, 150));
+        front.orders.opaque_rect(Rect(520, 360, 60, 25), DARK_GREY, Rect(520, 360, 60, 25));
 
         // add text to glyph cache
         const char * text = "Hello";
@@ -56,7 +56,7 @@ struct test_card_mod : public internal_mod {
             switch (front.cache->add_glyph(font_item, f, c))
             {
                 case Cache::GLYPH_ADDED_TO_CACHE:
-                    front.orders->send_font(font_item, f, c);
+                    front.orders.send_font(font_item, f, c);
                 break;
                 default:
                 break;
@@ -68,13 +68,13 @@ struct test_card_mod : public internal_mod {
             cy = std::max(cy, font_item->height);
         }
 
-        front.orders->glyph_index(7, 3, BLACK, YELLOW, 0, Rect(535, 363, cx+1, cy+1), Rect(0, 0, 0, 0), 536, 364+cy, data, len * 2, Rect(0, 0, 800, 600));
+        front.orders.glyph_index(7, 3, BLACK, YELLOW, 0, Rect(535, 363, cx+1, cy+1), Rect(0, 0, 0, 0), 536, 364+cy, data, len * 2, Rect(0, 0, 800, 600));
 
-        //front.orders->screen_blt(Rect(190, 190, 50, 50), 50, 50, 0xCC, Rect(190, 190, 50, 50));
+        //front.orders.screen_blt(Rect(190, 190, 50, 50), 50, 50, 0xCC, Rect(190, 190, 50, 50));
 
-        front.orders->dest_blt(Rect(60, 60, 50, 50), 0, Rect(60, 60, 50, 50));
+        front.orders.dest_blt(Rect(60, 60, 50, 50), 0, Rect(60, 60, 50, 50));
 
-        front.orders->send();
+        front.send();
 
         front.begin_update();
         RDPBrush brush;
@@ -84,7 +84,7 @@ struct test_card_mod : public internal_mod {
 
         LOG(LOG_INFO, "6666");
 
-        if (front.orders->rdp_layer->client_info.brush_cache_code == 1) {
+        if (front.rdp_layer->client_info.brush_cache_code == 1) {
             uint8_t pattern[8] = {0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55};
             int cache_idx = 0;
             if (BRUSH_TO_SEND == front.cache->add_brush(pattern, cache_idx)){
@@ -97,9 +97,9 @@ struct test_card_mod : public internal_mod {
 
         LOG(LOG_INFO, "7777");
 
-        front.orders->init();
+        front.orders.init();
 
-        front.orders->pat_blt(
+        front.orders.pat_blt(
             Rect(50, 50, 150, 150),
             0x5A,
             PINK,
@@ -107,7 +107,7 @@ struct test_card_mod : public internal_mod {
             brush,
             Rect(100, 100, 50, 50));
 
-        front.orders->pat_blt(
+        front.orders.pat_blt(
             Rect(63, 78, 10, 13),
             0x5A,
             BLACK,
@@ -115,7 +115,7 @@ struct test_card_mod : public internal_mod {
             brush,
             Rect(63, 78, 10, 13));
 
-        front.orders->send();
+        front.send();
 
         uint32_t picture24[100][100];
 
@@ -127,16 +127,16 @@ struct test_card_mod : public internal_mod {
 
         LOG(LOG_INFO, "BBBB");
 
-        front.orders->init();
+        front.orders.init();
 
         RDPPen pen;
         pen.style = 1;
         pen.width = 10;
         pen.color = BLUE;
 
-        front.orders->line_to(1, 50, 50, 150, 150, 0x0D, PINK, pen, Rect(100, 100, 50, 50));
+        front.orders.line_to(1, 50, 50, 150, 150, 0x0D, PINK, pen, Rect(100, 100, 50, 50));
 
-        front.orders->send();
+        front.send();
 
         LOG(LOG_INFO, "BBBB");
 
@@ -205,7 +205,7 @@ struct test_card_mod : public internal_mod {
         front.begin_update();
 
         uint32_t cache_ref = front.bmp_cache->add_bitmap(100, 100, (uint8_t*)picture16, Rect(0, 0, 32, 32),
-                                    front.orders->rdp_layer->client_info.bpp);
+                                    front.rdp_layer->client_info.bpp);
 
         uint8_t send_type2 = (cache_ref >> 24);
         uint8_t cache_b_id = (cache_ref >> 16);
@@ -232,10 +232,10 @@ struct test_card_mod : public internal_mod {
 
         if (send_type2 == BITMAP_ADDED_TO_CACHE){
             LOG(LOG_INFO, "Sending bitmap\n");
-            RDPBmpCache bmp(entry->pbmp, cache_b_id, cache_b_idx, &front.orders->rdp_layer->client_info);
+            RDPBmpCache bmp(entry->pbmp, cache_b_id, cache_b_idx, &front.rdp_layer->client_info);
             // check reserved size depending on version
-            front.orders->reserve_order(align4(entry->pbmp->cx * nbbytes(entry->pbmp->bpp)) * entry->pbmp->cy + 16);
-            bmp.emit(front.orders->out_stream);
+            front.reserve_order(align4(entry->pbmp->cx * nbbytes(entry->pbmp->bpp)) * entry->pbmp->cy + 16);
+            bmp.emit(front.orders.out_stream);
         }
         front.mem_blt(cache_b_id, 0, Rect(100, 450, 32, 32), 0xcc, 0, 0, cache_b_idx, Rect(100, 450, 32, 32));
         front.end_update();

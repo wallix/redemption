@@ -130,9 +130,9 @@ Session::Session(int sck, const char * ip_source, Inifile * ini) {
     this->trans = new SocketTransport(sck);
     this->session_callback = new SessionCallback(*this);
     this->front_server = new server_rdp(*this->session_callback, this->trans, ini);
-    this->orders = new RDP::Orders(this->front_server);
+//    this->orders = new RDP::Orders(this->front_server);
     this->default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
-    this->cache = new Cache(this->orders);
+    this->cache = new Cache(&this->front->orders);
 
     /* set non blocking */
     int rv = 0;
@@ -157,7 +157,7 @@ Session::Session(int sck, const char * ip_source, Inifile * ini) {
     this->key_flags = 0;
 
     #warning no need to create the front here the window size is not yet available
-    this->front = new Front(this->orders, this->cache,
+    this->front = new Front(this->front_server, this->cache,
         this->default_font,
         this->ini->globals.nomouse,
         this->ini->globals.notimestamp,
@@ -184,7 +184,6 @@ Session::~Session()
     delete this->cache;
     delete this->front;
     delete this->default_font;
-    delete this->orders;
     delete this->front_server;
     delete this->front_event;
     delete this->trans;
@@ -369,8 +368,8 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
         if (this->cache){
             delete this->cache;
         }
-        this->cache = new Cache(this->orders);
-        this->front->reset(this->orders, this->cache, this->default_font);
+        this->cache = new Cache(&this->front->orders);
+        this->front->reset(this->cache, this->default_font);
 
         LOG(LOG_INFO, "width=%d height=%d bpp=%d "
                   "cache1_entries=%d cache1_size=%d "

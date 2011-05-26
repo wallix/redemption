@@ -432,7 +432,7 @@ struct login_mod : public internal_mod {
         this->brush.style = 3;
 
         // brush style 3 is not supported by windows 7, we **MUST** use cache
-        if (this->front->orders->rdp_layer->client_info.brush_cache_code == 1) {
+        if (this->front->rdp_layer->client_info.brush_cache_code == 1) {
             uint8_t pattern[8];
             pattern[0] = this->brush.hatch;
             memcpy(pattern+1, this->brush.extra, 7);

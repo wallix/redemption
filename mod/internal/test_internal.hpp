@@ -59,7 +59,7 @@ struct test_internal_mod : public internal_mod {
 
         this->event->reset();
         this->front.begin_update();
-        this->front.orders->opaque_rect(Rect(0, 0, 1024, 768), color_encode(YELLOW, this->get_front_bpp(), this->palette332), Rect(0, 0, 1024, 768));
+        this->front.orders.opaque_rect(Rect(0, 0, 1024, 768), color_encode(YELLOW, this->get_front_bpp(), this->palette332), Rect(0, 0, 1024, 768));
 
         // ------- Compressed Data ---------- size=19
         // 0xf8, 0x12, 0x01, 0x10, 0xe5, 0xef, 0x1a, BICOLOR 274

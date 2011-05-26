@@ -1187,20 +1187,20 @@ struct rdp_rdp {
 
         /* version */
         stream.out_uint16_le(
-            mod->front->orders->rdp_layer->client_info.bitmap_cache_persist_enable ? 2 : 0);
+            mod->front->rdp_layer->client_info.bitmap_cache_persist_enable ? 2 : 0);
 
         stream.out_uint16_be(3);	/* number of caches in this set */
 
 
         /* Sending bitmap capabilities version 2 */
         #warning no need any more to set a limit at 2000, use real figures
-        i = mod->front->orders->rdp_layer->client_info.cache1_entries;
+        i = mod->front->rdp_layer->client_info.cache1_entries;
         i = std::min(i, 2000);
         stream.out_uint32_le(i);
-        i = mod->front->orders->rdp_layer->client_info.cache2_entries;
+        i = mod->front->rdp_layer->client_info.cache2_entries;
         i = std::min(i, 2000);
         stream.out_uint32_le(i);
-        i = mod->front->orders->rdp_layer->client_info.cache3_entries;
+        i = mod->front->rdp_layer->client_info.cache3_entries;
         i = std::min(i, 2000);
         stream.out_uint32_le(i);
 
