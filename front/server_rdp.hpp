@@ -37,17 +37,15 @@
 struct server_rdp {
     int up_and_running;
 
-    Callback & cb;
     int share_id;
     int mcs_channel;
     struct ClientInfo client_info;
     struct server_sec sec_layer;
     Stream front_stream;
 
-    server_rdp(Callback & cb, Transport * trans, Inifile * ini)
+    server_rdp(Transport * trans, Inifile * ini)
         :
         up_and_running(0),
-        cb(cb),
         share_id(65538),
         mcs_channel(0),
         client_info(ini),
@@ -427,7 +425,7 @@ struct server_rdp {
 
     }
 
-    void activate_and_process_data()
+    void activate_and_process_data(Callback & cb)
     {
         Stream & stream = this->front_stream;
         do {
@@ -513,7 +511,7 @@ struct server_rdp {
 
                 int size = (int)(stream.end - stream.p);
                 #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
-                this->cb.callback(WM_CHANNELDATA,
+                cb.callback(WM_CHANNELDATA,
                                   ((flags & 0xffff) << 16) | (channel_id & 0xffff),
                                   size, (long)(stream.p), length);
                 if (!this->up_and_running){ continue; }
@@ -539,7 +537,7 @@ struct server_rdp {
                     // this is rdp_process_data that will set up_and_running to 1
                     // when fonts have been received
                     // we will not exit this loop until we are in this state.
-                    this->server_rdp_process_data(stream);
+                    this->server_rdp_process_data(stream, cb);
                     break;
                 default:
                     LOG(LOG_WARNING, "unknown in session_data (%d)\n", pdu_code & 0xf);
@@ -1014,7 +1012,7 @@ struct server_rdp {
     }
 
     /* RDP_PDU_DATA */
-    void server_rdp_process_data(Stream & stream) throw (Error)
+    void server_rdp_process_data(Stream & stream, Callback & cb) throw (Error)
     {
         stream.skip_uint8(6);
         stream.in_uint16_le(); // len
@@ -1041,7 +1039,7 @@ struct server_rdp {
                     if (msg_type == 4){
 //                        LOG(LOG_INFO, "receive input: time=%u device_flags = %u param1=%u param2=%u\n", time, device_flags, param1, param2);
                     }
-                    this->cb.callback(msg_type, param1, param2, device_flags, time);
+                    cb.callback(msg_type, param1, param2, device_flags, time);
                 }
             }
             break;
@@ -1097,7 +1095,7 @@ struct server_rdp {
                 int bottom = stream.in_uint16_le();
                 int cx = (right - left) + 1;
                 int cy = (bottom - top) + 1;
-                this->cb.callback(0x4444, left, top, cx, cy);
+                cb.callback(0x4444, left, top, cx, cy);
             }
             break;
         case 35: /* 35(0x23) */

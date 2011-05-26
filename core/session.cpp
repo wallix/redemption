@@ -129,8 +129,7 @@ Session::Session(int sck, const char * ip_source, Inifile * ini) {
     /* create these when up and running */
     this->trans = new SocketTransport(sck);
     this->session_callback = new SessionCallback(*this);
-    this->front_server = new server_rdp(*this->session_callback, this->trans, ini);
-//    this->orders = new RDP::Orders(this->front_server);
+    this->front_server = new server_rdp(this->trans, ini);
     this->default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
     this->cache = new Cache(&this->front->orders);
 
@@ -354,7 +353,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
     select(max + 1, &rfds, &wfds, 0, &time_mark);
     if (this->front_event->is_set()) {
         try {
-            this->front_server->activate_and_process_data();
+            this->front_server->activate_and_process_data(*this->session_callback);
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -467,7 +466,7 @@ int Session::step_STATE_CLOSE_CONNECTION()
     }
     if (this->front_event->is_set()) {
         try {
-            this->front_server->activate_and_process_data();
+            this->front_server->activate_and_process_data(*this->session_callback);
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -494,7 +493,7 @@ int Session::step_STATE_WAITING_FOR_NEXT_MODULE(struct timeval & time_mark)
     select(max + 1, &rfds, &wfds, 0, &time_mark);
     if (this->front_event->is_set()) { /* incoming client data */
         try {
-            this->front_server->activate_and_process_data();
+            this->front_server->activate_and_process_data(*this->session_callback);
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -532,7 +531,7 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
     if (this->front_event->is_set()) { /* incoming client data */
         try {
         #warning it should be possible to remove the while hidden in activate_and_process_data and work only with the external loop (need to understand well the next_packet working)
-            this->front_server->activate_and_process_data();
+            this->front_server->activate_and_process_data(*this->session_callback);
         }
         catch(...){
             return SESSION_STATE_STOP;
