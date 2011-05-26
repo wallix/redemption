@@ -202,7 +202,7 @@ int Widget::text_width(char* text){
         wchar_t wstr[len + 2];
         mbstowcs(wstr, text, len + 1);
         for (size_t index = 0; index < len; index++) {
-            FontChar *font_item = this->mod->front->font->font_items[wstr[index]];
+            FontChar *font_item = this->mod->front->font.font_items[wstr[index]];
             rv = rv + font_item->incby;
         }
     }
@@ -216,7 +216,7 @@ int Widget::text_height(char* text){
         wchar_t *wstr = new wchar_t[len + 2];
         mbstowcs(wstr, text, len + 1);
         for (int index = 0; index < len; index++) {
-            FontChar *font_item = this->mod->front->font->font_items[wstr[index]];
+            FontChar *font_item = this->mod->front->font.font_items[wstr[index]];
             rv = std::max(rv, font_item->height);
         }
         delete [] wstr;
@@ -261,7 +261,7 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
     int f = 0;
     int c = 0;
     for (int index = 0; index < len; index++) {
-        FontChar* font_item = this->mod->front->font->font_items[wstr[index]];
+        FontChar* font_item = this->mod->front->font.font_items[wstr[index]];
         switch (this->mod->front->cache.add_glyph(font_item, f, c))
         {
             case Cache::GLYPH_ADDED_TO_CACHE:

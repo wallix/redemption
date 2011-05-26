@@ -99,8 +99,6 @@ struct Session {
     int key_flags; // scrool_lock = 1, num_lock = 2, caps_lock = 4
     struct Keymap * keymap;
 
-    struct Font* default_font;
-
     SessionManager * sesman;
 
     Session(int sck, const char * ip_source, Inifile * ini);
