@@ -49,7 +49,6 @@
 #include "modcontext.hpp"
 
 #include "keymap.hpp"
-#include "callback.hpp"
 #include "sesman.hpp"
 
 using namespace std;
@@ -74,20 +73,6 @@ enum {
 };
 
 struct Session {
-
-    struct SessionCallback : public Callback
-    {
-        Session & session;
-        SessionCallback(Session & session) : session(session)
-        {
-        }
-
-        virtual int callback(int msg, long param1, long param2, long param3, long param4)
-        {
-            return this->session.callback(msg, param1, param2, param3, param4);
-        }
-    } * session_callback;
-
 
     ModContext * context;
     int internal_state;
@@ -124,7 +109,6 @@ struct Session {
     void invalidate(const Rect & rect);
 
     int session_main_loop();
-    int callback(int msg, long param1, long param2, long param3, long param4);
 
     int step_STATE_KEY_HANDSHAKE(struct timeval & time);
     int step_STATE_ENTRY(struct timeval & time);

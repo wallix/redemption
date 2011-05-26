@@ -38,11 +38,11 @@
 #include "bitmap_cache.hpp"
 #include "wait_obj.hpp"
 #include "keymap.hpp"
+#include "callback.hpp"
 
 #warning server_ naming convention is really confusing, it means internal RDP server, it would be clearer to call that front (like in front.hpp).
-#warning also maybe client_mod and front should collapse (#SMELL: parallel hierarchy)
 
-struct client_mod {
+struct client_mod : public Callback {
     int (& keys)[256];
     int & key_flags;
     Keymap * &keymap;
@@ -101,6 +101,42 @@ struct client_mod {
     virtual ~client_mod()
     {
     }
+
+
+    int callback(int msg, long param1, long param2, long param3, long param4)
+    {
+        //printf("msg=%x param1=%lx param2=%lx param3=%lx param4=%lx\n",msg, param1, param2, param3, param4);
+        int rv = 0;
+        switch (msg) {
+        case 0: /* RDP_INPUT_SYNCHRONIZE */
+            /* happens when client gets focus and sends key modifier info */
+            this->key_flags = param1;
+            // why do we not keep device flags ?
+            this->mod_event(17, param1, param3, param1, param3);
+            break;
+        case RDP_INPUT_SCANCODE:
+            this->scancode(param1, param2, param3, param4, this->key_flags, *this->keymap, this->keys);
+            break;
+        case 0x8001: /* RDP_INPUT_MOUSE */
+            rv = this->input_mouse(param3, param1, param2);
+            break;
+        case WM_SCREENUPDATE:
+            /* invalidate, this is not from RDP_DATA_PDU_INPUT */
+            /* like the rest, its from RDP_PDU_DATA with code 33 */
+            /* its the rdp client asking for a screen update */
+            this->invalidate(Rect(param1, param2, param3, param4));
+            break;
+        case WM_CHANNELDATA:
+            /* called from server_channel.c, channel data has come in,
+            pass it to module if there is one */
+            rv = this->mod_event(WM_CHANNELDATA, param1, param2, param3, param4);
+            break;
+        default:
+            break;
+        }
+        return rv;
+    }
+
 
     void set_mod_palette(RGBPalette palette)
     {
