@@ -127,7 +127,6 @@ Session::Session(int sck, const char * ip_source, Inifile * ini) {
 
     /* create these when up and running */
     this->trans = new SocketTransport(sck);
-    this->session_callback = new SessionCallback(*this);
     this->default_font = new Font(SHARE_PATH "/" DEFAULT_FONT_NAME);
 
     /* set non blocking */
@@ -193,40 +192,6 @@ Session::~Session()
 
 /*****************************************************************************/
 
-#warning this and the two functions above should move to client mod, but to do that we also have to hook session_callback on client_mod
-int Session::callback(int msg, long param1, long param2, long param3, long param4)
-{
-    //printf("msg=%x param1=%lx param2=%lx param3=%lx param4=%lx\n",msg, param1, param2, param3, param4);
-    int rv = 0;
-    switch (msg) {
-    case 0: /* RDP_INPUT_SYNCHRONIZE */
-        /* happens when client gets focus and sends key modifier info */
-        this->mod->key_flags = param1;
-        // why do we not keep device flags ?
-        this->mod->mod_event(17, param1, param3, param1, param3);
-        break;
-    case RDP_INPUT_SCANCODE:
-        this->mod->scancode(param1, param2, param3, param4, this->key_flags, *this->keymap, this->keys);
-        break;
-    case 0x8001: /* RDP_INPUT_MOUSE */
-        rv = this->mod->input_mouse(param3, param1, param2);
-        break;
-    case WM_SCREENUPDATE:
-        /* invalidate, this is not from RDP_DATA_PDU_INPUT */
-        /* like the rest, its from RDP_PDU_DATA with code 33 */
-        /* its the rdp client asking for a screen update */
-        this->mod->invalidate(Rect(param1, param2, param3, param4));
-        break;
-    case WM_CHANNELDATA:
-        /* called from server_channel.c, channel data has come in,
-        pass it to module if there is one */
-        rv = this->mod->mod_event(WM_CHANNELDATA, param1, param2, param3, param4);
-        break;
-    default:
-        break;
-    }
-    return rv;
-}
 
 static int get_pixel(uint8_t* data, int x, int y, int width, int bpp)
 {
@@ -346,7 +311,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
     select(max + 1, &rfds, &wfds, 0, &time_mark);
     if (this->front_event->is_set()) {
         try {
-            this->front->rdp_layer.activate_and_process_data(*this->session_callback);
+            this->front->rdp_layer.activate_and_process_data(*this->mod);
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -445,7 +410,7 @@ int Session::step_STATE_CLOSE_CONNECTION()
     }
     if (this->front_event->is_set()) {
         try {
-            this->front->rdp_layer.activate_and_process_data(*this->session_callback);
+            this->front->rdp_layer.activate_and_process_data(*this->mod);
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -472,7 +437,7 @@ int Session::step_STATE_WAITING_FOR_NEXT_MODULE(struct timeval & time_mark)
     select(max + 1, &rfds, &wfds, 0, &time_mark);
     if (this->front_event->is_set()) { /* incoming client data */
         try {
-            this->front->rdp_layer.activate_and_process_data(*this->session_callback);
+            this->front->rdp_layer.activate_and_process_data(*this->mod);
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -510,7 +475,7 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
     if (this->front_event->is_set()) { /* incoming client data */
         try {
         #warning it should be possible to remove the while hidden in activate_and_process_data and work only with the external loop (need to understand well the next_packet working)
-            this->front->rdp_layer.activate_and_process_data(*this->session_callback);
+            this->front->rdp_layer.activate_and_process_data(*this->mod);
         }
         catch(...){
             return SESSION_STATE_STOP;
@@ -701,7 +666,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 this->back_event = new wait_obj(-1);
                 this->mod = new login_mod(this->back_event, this->keys, this->key_flags, this->keymap,  *this->context, *(this->front), this);
                 // force a WM_INVALIDATE on all screen
-                this->callback(WM_SCREENUPDATE, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
+                this->mod->callback(WM_SCREENUPDATE, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
                 LOG(LOG_INFO, "Creation of new mod 'LOGIN DIALOG' (%d,%d,%d,%d) suceeded\n",
                     0, 0, this->mod->get_front_width(), this->mod->get_front_height());
             }
@@ -725,7 +690,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 this->back_event = new wait_obj(-1);
                 this->mod = new dialog_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this, message, button);
                 // force a WM_INVALIDATE on all screen
-                this->callback(WM_SCREENUPDATE, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
+                this->mod->callback(WM_SCREENUPDATE, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
                 LOG(LOG_INFO, "Creation of new mod 'STATUS DIALOG' suceeded\n");
                 Inifile ini(CFG_PATH "/" RDPPROXY_INI);
                 if (htons(ini.globals.autovalidate)) {
@@ -775,7 +740,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 				 pointer_item.y);
 
                 // force a WM_INVALIDATE on all screen
-                this->callback(WM_SCREENUPDATE, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
+                this->mod->callback(WM_SCREENUPDATE, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
                 LOG(LOG_INFO, "Creation of new mod 'CLOSE DIALOG' suceeded\n");
             }
             break;
@@ -831,7 +796,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                     }
                 }
                 // force a WM_INVALIDATE on all screen
-                this->callback(WM_SCREENUPDATE, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
+                this->mod->callback(WM_SCREENUPDATE, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
                 LOG(LOG_INFO, "Creation of new mod 'CLOSE DIALOG' suceeded\n");
             }
             break;
