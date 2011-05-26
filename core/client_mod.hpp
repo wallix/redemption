@@ -214,15 +214,20 @@ struct client_mod : public Callback {
         return 0;
     }
 
-    int get_front_bpp(){
+
+    const ClientInfo & get_client_info() const {
+        return this->front->rdp_layer.client_info;
+    }
+
+    int get_front_bpp() const {
         return this->front->rdp_layer.client_info.bpp;
     }
 
-    int get_front_width(){
+    int get_front_width() const {
         return this->front->rdp_layer.client_info.width;
     }
 
-    int get_front_height(){
+    int get_front_height() const {
         return this->front->rdp_layer.client_info.height;
     }
 

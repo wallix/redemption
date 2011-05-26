@@ -294,7 +294,7 @@ struct rdp_rdp {
                 this->out_bmpcache_caps(stream);
             }
             else {
-                this->out_bmpcache2_caps(stream, mod);
+                this->out_bmpcache2_caps(stream, mod->get_client_info());
             }
             this->out_colcache_caps(stream);
             this->out_activate_caps(stream);
@@ -1178,31 +1178,20 @@ struct rdp_rdp {
         mod->server_end_update();
     }
 
-    void out_bmpcache2_caps(Stream & stream, client_mod * mod)
+    void out_bmpcache2_caps(Stream & stream, const ClientInfo & client_info)
     {
-        int i;
-
         stream.out_uint16_le(RDP_CAPSET_BMPCACHE2);
         stream.out_uint16_le(RDP_CAPLEN_BMPCACHE2);
 
         /* version */
-        stream.out_uint16_le(
-            mod->front->rdp_layer.client_info.bitmap_cache_persist_enable ? 2 : 0);
-
+        stream.out_uint16_le(client_info.bitmap_cache_persist_enable ? 2 : 0);
         stream.out_uint16_be(3);	/* number of caches in this set */
-
 
         /* Sending bitmap capabilities version 2 */
         #warning no need any more to set a limit at 2000, use real figures
-        i = mod->front->rdp_layer.client_info.cache1_entries;
-        i = std::min(i, 2000);
-        stream.out_uint32_le(i);
-        i = mod->front->rdp_layer.client_info.cache2_entries;
-        i = std::min(i, 2000);
-        stream.out_uint32_le(i);
-        i = mod->front->rdp_layer.client_info.cache3_entries;
-        i = std::min(i, 2000);
-        stream.out_uint32_le(i);
+        stream.out_uint32_le(std::min(client_info.cache1_entries, (uint32_t)2000));
+        stream.out_uint32_le(std::min(client_info.cache2_entries, (uint32_t)2000));
+        stream.out_uint32_le(std::min(client_info.cache3_entries, (uint32_t)2000));
 
         stream.out_clear_bytes(20);	/* other bitmap caches not used */
     }
