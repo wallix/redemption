@@ -144,6 +144,8 @@ struct Rect {
             if ( ((this->y + this->cy) - (intersect.y + intersect.cy)) > 0 ) {
                 it.callback(Rect(this->x, intersect.y + intersect.cy, this->cx, (this->y + this->cy) - (intersect.y + intersect.cy)));
             }
+        } else {
+            it.callback(*this);
         }
     }
 
