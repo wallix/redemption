@@ -26,13 +26,11 @@
 #define __TEST_INTERNAL_HPP__
 
 struct test_internal_mod : public internal_mod {
-    Front & front;
     test_internal_mod(
         wait_obj * event,
         int (& keys)[256], int & key_flags, Keymap * &keymap,
         ModContext & context, Front & front, Session * session):
-            internal_mod(keys, key_flags, keymap, front),
-            front(front)
+            internal_mod(keys, key_flags, keymap, front)
     {
         this->mod_bpp = 16;
         this->event = event;
@@ -58,8 +56,9 @@ struct test_internal_mod : public internal_mod {
         uint8_t cache_idx;
 
         this->event->reset();
-        this->front.begin_update();
-        this->front.orders.opaque_rect(Rect(0, 0, 1024, 768), color_encode(YELLOW, this->get_front_bpp(), this->palette332), Rect(0, 0, 1024, 768));
+        this->server_begin_update();
+        this->server_set_clip(Rect(0, 0, 1024, 768));
+        this->opaque_rect(RDPOpaqueRect(Rect(0, 0, 1024, 768), YELLOW));
 
         // ------- Compressed Data ---------- size=19
         // 0xf8, 0x12, 0x01, 0x10, 0xe5, 0xef, 0x1a, BICOLOR 274
@@ -355,7 +354,7 @@ struct test_internal_mod : public internal_mod {
         RGBPalette palette;
         this->server_paint_rect(bmp0x7fff19736a90, Rect(180, 418, 548, 4), 0, 0, palette);
 
-        this->front.end_update();
+        this->server_end_update();
         return 0;
     }
 

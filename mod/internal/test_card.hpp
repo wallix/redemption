@@ -35,9 +35,11 @@ struct test_card_mod : public internal_mod {
     {
         this->event = event;
 
-        front.orders.init();
-        front.orders.opaque_rect(Rect(50, 50, 150, 150), PINK, Rect(50, 50, 150, 150));
-        front.orders.opaque_rect(Rect(520, 360, 60, 25), DARK_GREY, Rect(520, 360, 60, 25));
+        this->server_begin_update();
+        this->server_set_clip(Rect(50, 50, 150, 150));
+        this->opaque_rect(RDPOpaqueRect(Rect(50, 50, 150, 150), PINK));
+        this->server_set_clip(Rect(520, 360, 60, 25));
+        this->opaque_rect(RDPOpaqueRect(Rect(520, 360, 60, 25), DARK_GREY));
 
         // add text to glyph cache
         const char * text = "Hello";
