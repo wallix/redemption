@@ -31,6 +31,7 @@
 #include <iostream>
 #include <string>
 #include <string.h>
+#include <stdio.h>
 
 
 BOOST_AUTO_TEST_CASE(TestRect)
@@ -256,4 +257,53 @@ BOOST_AUTO_TEST_CASE(TestRect)
 
     dr2.dheight = 1024;
     BOOST_CHECK_EQUAL(false, dr2.fully_relative());
+
+    {
+        /* Test difference */
+        Rect a(10, 10, 10, 10);
+        Rect b(21, 21, 11, 11);
+
+        struct RectI1 : public Rect::RectIterator {
+            void callback(const Rect & b) {
+                BOOST_CHECK(false);
+            }
+        };
+
+        RectI1 it;
+        a.difference(b, it);
+    }
+
+    {
+        Rect a(10, 10, 50, 50);
+        Rect b(20, 20, 10, 5);
+
+        struct RectI1 : public Rect::RectIterator {
+            int counter;
+            
+            RectI1() : counter(0) {}
+
+            void callback(const Rect & b) {
+                switch(counter) {
+                    case 0:
+                        BOOST_CHECK(b == Rect(10, 10, 50, 10));
+                    break;
+                    case 1:
+                        BOOST_CHECK(b == Rect(10, 20, 10, 5));
+                    break;
+                    case 2:
+                        BOOST_CHECK(b == Rect(30, 20, 30, 5));
+                    break;
+                    case 3:
+                        BOOST_CHECK(b == Rect(10, 25, 50, 35));
+                    break;
+                    default:
+                        BOOST_CHECK(false);
+                }
+                this->counter++;
+            }
+        };
+
+        RectI1 it;
+        a.difference(b, it);
+    }
 }
