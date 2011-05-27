@@ -265,7 +265,7 @@ BOOST_AUTO_TEST_CASE(TestRect)
 
         struct RectI1 : public Rect::RectIterator {
             void callback(const Rect & b) {
-                BOOST_CHECK(false);
+                BOOST_CHECK(b == (Rect(10, 10, 10, 10)));
             }
         };
 
