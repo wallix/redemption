@@ -35,6 +35,10 @@ struct Rect {
     int cx;
     int cy;
 
+    struct RectIterator {
+        virtual void callback(const Rect & rect) = 0;
+    };
+
     int right() const {
         return this->x + this->cx;
     }
@@ -105,6 +109,44 @@ struct Rect {
         return Rect(this->x + this->cx - 1, this->cy, 1, this->cy);
     }
 
+    const Rect intersect(const Rect & in) const
+    {
+        Rect res(0, 0, 0, 0);
+
+        res.x = std::max(in.x, this->x);
+        res.y = std::max(in.y, this->y);
+        res.cx = std::min(in.x + in.cx, this->x + this->cx) - res.x;
+        res.cy = std::min(in.y + in.cy, this->y + this->cy) - res.y;
+
+        // Is it necessary to force empty rect to be canonical ?
+        if (res.isempty()){
+            Rect empty;
+            res = empty;
+        }
+        return res;
+    }
+
+    // Ensemblist difference
+    void difference(const Rect & a, RectIterator & it)
+    {
+        const Rect & intersect = this->intersect(a);
+        
+        if (!intersect.isempty()) {
+            if ( (intersect.y - this->y > 0) ) {
+                it.callback(Rect(this->x, this->y, this->cx, intersect.y - this->y));
+            }
+            if ( ((intersect.x - this->x) > 0) ) {
+                it.callback(Rect(this->x, intersect.y, intersect.x - this->x, intersect.cy));
+            }
+            if ( (((this->x + this->cx) - (intersect.x + intersect.cx)) > 0) ) {
+                it.callback(Rect(intersect.x + intersect.cx, intersect.y, (this->x + this->cx) - (intersect.x + intersect.cx), intersect.cy));
+            }
+            if ( ((this->y + this->cy) - (intersect.y + intersect.cy)) > 0 ) {
+                it.callback(Rect(this->x, intersect.y + intersect.cy, this->cx, (this->y + this->cy) - (intersect.y + intersect.cy)));
+            }
+        }
+    }
+
     /* adjust the bounds to fit in the bitmap */
     /* return false if there is nothing to draw else return true */
     bool check_bounds(int* x, int* y, int* cx, int* cy)
@@ -136,23 +178,6 @@ struct Rect {
             *cy = this->cy - *y;
         }
         return true;
-    }
-
-    const Rect intersect(const Rect & in) const
-    {
-        Rect res(0, 0, 0, 0);
-
-        res.x = std::max(in.x, this->x);
-        res.y = std::max(in.y, this->y);
-        res.cx = std::min(in.x + in.cx, this->x + this->cx) - res.x;
-        res.cy = std::min(in.y + in.cy, this->y + this->cy) - res.y;
-
-        // Is it necessary to force empty rect to be canonical ?
-        if (res.isempty()){
-            Rect empty;
-            res = empty;
-        }
-        return res;
     }
 
     /*****************************************************************************/

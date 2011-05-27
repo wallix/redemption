@@ -58,6 +58,7 @@ struct bouncer2_mod : public internal_mod {
     // This should come from FRONT!
     virtual int mod_event(int msg, long x, long y, long param4, long param5)
     {
+        printf("%d %d %d %d %d\n", msg, x, y, param4, param5);
         return 0;
     }
 
@@ -100,13 +101,27 @@ struct bouncer2_mod : public internal_mod {
         this->wipe(oldrect, *this->dancing_rect, 0x00FF00);
         this->server_end_update();
         
-        usleep(100000);
+        //usleep(100000);
 
         return 0;
     }
 
     void wipe(Rect oldrect, Rect newrect, int color) {
-        this->opaque_rect(RDPOpaqueRect(newrect, color));
+        // new RectIterator
+        struct RectIt : public Rect::RectIterator {
+            int color;
+            bouncer2_mod & b;
+
+            RectIt(int color, bouncer2_mod & b) : color(color), b(b)
+            {}
+
+            void callback(const Rect & a) {
+                b.opaque_rect(RDPOpaqueRect(a, color));
+            }
+        } it(color, *this);
+
+        // Use my iterator
+        oldrect.difference(newrect, it);
     }
 };
 
