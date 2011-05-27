@@ -36,7 +36,7 @@ typedef enum {
     STATE_STOP
 } t_internal_state;
 
-
+namespace bouncer {
 typedef enum {
     NOT_STATE,
     LEFT,
@@ -48,6 +48,7 @@ typedef enum {
     TOP_WALLIX,
     BOTTOM_WALLIX
 } bouncing_state;
+};
 
 struct bouncer_mod : public internal_mod {
     Session * session;
@@ -55,8 +56,8 @@ struct bouncer_mod : public internal_mod {
     Bitmap bmp_background;
     Bitmap bmp;
     Bitmap bmp_wallix;
-    bouncing_state state;
-    bouncing_state wallix_state;
+    bouncer::bouncing_state state;
+    bouncer::bouncing_state wallix_state;
     int index;
     int src_x;
     int src_y;
@@ -72,8 +73,8 @@ struct bouncer_mod : public internal_mod {
             bmp_background(COLOR_IMAGE, front.rdp_layer.client_info.bpp),
             bmp(SHARE_PATH "/ad24b.bmp", front.rdp_layer.client_info.bpp),
             bmp_wallix(SHARE_PATH "/ad24b.bmp", front.rdp_layer.client_info.bpp),
-            state(LEFT),
-            wallix_state(LEFT_WALLIX),
+            state(bouncer::LEFT),
+            wallix_state(bouncer::LEFT_WALLIX),
             index(0),
             src_x(100),
             src_y(100),
@@ -141,7 +142,7 @@ struct bouncer_mod : public internal_mod {
         uint16_t cache_b_idx_h_wallix = (cache_ref & 0xFFFF);
 
         switch (state){
-            case BOTTOM:
+            case bouncer::BOTTOM:
                 fill_rect1 = Rect(src_x , src_y, 10, 140);
                 fill_rect2 = Rect(src_x , src_y + 140, 140, 10);
                 cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x , src_y, 10, 140), this->front.rdp_layer.client_info.bpp);
@@ -154,7 +155,7 @@ struct bouncer_mod : public internal_mod {
                 cache_b_idx_h = (cache_ref & 0xFFFF);
 
             break;
-            case RIGHT:
+            case bouncer::RIGHT:
                 fill_rect1 = Rect(src_x + 140, src_y, 10, 140);
                 fill_rect2 = Rect(src_x + 10, src_y + 140, 140, 10);
                 cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x + 140, src_y, 10, 140), this->front.rdp_layer.client_info.bpp);
@@ -168,7 +169,7 @@ struct bouncer_mod : public internal_mod {
             break;
             default:
             break;
-            case TOP:
+            case bouncer::TOP:
                 fill_rect1 = Rect(src_x, src_y, 140, 10);
                 fill_rect2 = Rect(src_x + 140, src_y, 20, 140);
 
@@ -182,7 +183,7 @@ struct bouncer_mod : public internal_mod {
             break;
         }
         switch (wallix_state){
-            case BOTTOM_WALLIX:
+            case bouncer::BOTTOM_WALLIX:
                 fill_rect_wallix = Rect(src_x_wallix, src_y_wallix, 10, 140);
                 fill_rect_wallix_h = Rect(src_x_wallix, src_y_wallix + 140, 140, 10);
 
@@ -193,7 +194,7 @@ struct bouncer_mod : public internal_mod {
                 cache_b_id_h_wallix = (cache_ref >> 16);
                 cache_b_idx_h_wallix = (cache_ref & 0xFFFF);
             break;
-            case RIGHT_WALLIX:
+            case bouncer::RIGHT_WALLIX:
                 fill_rect_wallix = Rect(src_x_wallix + 140, src_y_wallix, 10, 140);
                 fill_rect_wallix_h = Rect(src_x_wallix + 10, src_y_wallix + 140, 140, 10);
 
@@ -206,7 +207,7 @@ struct bouncer_mod : public internal_mod {
             break;
             default:
             break;
-            case TOP_WALLIX:
+            case bouncer::TOP_WALLIX:
                 fill_rect_wallix = Rect(src_x_wallix, src_y_wallix, 140, 10);
                 fill_rect_wallix_h = Rect(src_x_wallix + 140, src_y_wallix, 20, 140);
                 cache_ref = front.bmp_cache->add_bitmap(800, 600, this->bmp_background.data_co, Rect(src_x_wallix , src_y_wallix, 140, 10), this->front.rdp_layer.client_info.bpp);
@@ -278,39 +279,39 @@ struct bouncer_mod : public internal_mod {
         src_x_wallix = src_x_wallix + 10;
         src_y_wallix = src_y_wallix + 10;
 
-        if (((((src_y_wallix + 140) >= 600) && ((src_x_wallix + 140) < 800)) && (src_x_wallix > 0)) || (wallix_state == BOTTOM_WALLIX)){
+        if (((((src_y_wallix + 140) >= 600) && ((src_x_wallix + 140) < 800)) && (src_x_wallix > 0)) || (wallix_state == bouncer::BOTTOM_WALLIX)){
             src_y_wallix = src_y_wallix - 20;
-            wallix_state = BOTTOM_WALLIX;
+            wallix_state = bouncer::BOTTOM_WALLIX;
         }
-        if (((src_y_wallix > 0) && ((src_y_wallix + 140) < 600) && ((src_x_wallix + 140) >= 800)) || (wallix_state == RIGHT_WALLIX)){
+        if (((src_y_wallix > 0) && ((src_y_wallix + 140) < 600) && ((src_x_wallix + 140) >= 800)) || (wallix_state == bouncer::RIGHT_WALLIX)){
             src_x_wallix = src_x_wallix - 20;
             src_y_wallix = src_y_wallix - 20;
-            wallix_state = RIGHT_WALLIX;
+            wallix_state = bouncer::RIGHT_WALLIX;
         }
 
-        if (((src_y_wallix  <= 10) && ((src_x_wallix + 140) < 800) && (src_x_wallix > 0)) || (wallix_state == TOP_WALLIX)){
+        if (((src_y_wallix  <= 10) && ((src_x_wallix + 140) < 800) && (src_x_wallix > 0)) || (wallix_state == bouncer::TOP_WALLIX)){
             src_x_wallix = src_x_wallix - 20;
-            wallix_state = TOP_WALLIX;
+            wallix_state = bouncer::TOP_WALLIX;
         }
-        if (((src_y_wallix  > 0) && ((src_y_wallix + 140) < 600) && (src_x_wallix <= 10)) || (wallix_state == LEFT_WALLIX)){
-            wallix_state = LEFT_WALLIX;
+        if (((src_y_wallix  > 0) && ((src_y_wallix + 140) < 600) && (src_x_wallix <= 10)) || (wallix_state == bouncer::LEFT_WALLIX)){
+            wallix_state = bouncer::LEFT_WALLIX;
         }
-        if (((((src_y + 140) >= 600) && ((src_x + 140) < 800)) && (src_x > 0)) || (state == BOTTOM)){
+        if (((((src_y + 140) >= 600) && ((src_x + 140) < 800)) && (src_x > 0)) || (state == bouncer::BOTTOM)){
             src_y = src_y - 20;
-            state = BOTTOM;
+            state = bouncer::BOTTOM;
         }
-        if (((src_y > 0) && ((src_y + 140) < 600) && ((src_x + 140) >= 800)) ||  (state == RIGHT)){
+        if (((src_y > 0) && ((src_y + 140) < 600) && ((src_x + 140) >= 800)) ||  (state == bouncer::RIGHT)){
             src_x = src_x - 20;
             src_y = src_y - 20;
-            state = RIGHT;
+            state = bouncer::RIGHT;
         }
-        if (((src_y  <= 10) && ((src_x + 140) < 800) && (src_x > 0)) ||  (state == TOP)){
+        if (((src_y  <= 10) && ((src_x + 140) < 800) && (src_x > 0)) ||  (state == bouncer::TOP)){
             src_x = src_x - 20;
-            state = TOP;
+            state = bouncer::TOP;
         }
 
-        if (((src_y  > 0) && ((src_y + 140) < 600) && (src_x <= 10)) ||(state == LEFT)){
-            state = LEFT;
+        if (((src_y  > 0) && ((src_y + 140) < 600) && (src_x <= 10)) ||(state == bouncer::LEFT)){
+            state = bouncer::LEFT;
         }
         LOG(LOG_INFO, "out of mod_signal");
         this->event->set();

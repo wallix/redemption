@@ -761,6 +761,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                     else if (target && 0 == strncmp(target, "bouncer2", 9)){
                         LOG(LOG_INFO, "target is bouncer 2");
                         this->mod = new bouncer2_mod(
+                                        this->back_event,
                                         this->keys,
                                         this->key_flags,
                                         this->keymap,
