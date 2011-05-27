@@ -53,7 +53,7 @@ struct client_mod : public Callback {
     RDPBrush brush;
     bool clipboard_enable;
     bool pointer_displayed;
-    struct Front* front;
+    struct Front * front;
     int sck;
     vector<struct mcs_channel_item *> channel_list;
     char ip_source[256];
