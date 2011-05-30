@@ -376,14 +376,7 @@ struct client_mod : public Callback {
 
     void scr_blt(const RDPScrBlt & scrblt)
     {
-        const int rop = scrblt.rop;
-        const Rect & rect = scrblt.rect;
-        const int srcx = scrblt.srcx;
-        const int srcy = scrblt.srcy;
-//        LOG(LOG_INFO, "client_mod::screen_blt(rop=%x, r(%d, %d, %d, %d), srcx=%d, srcy=%d", rop, rect.x, rect.y, rect.cx, rect.cy, srcx, srcy);
-        if (!rect.intersect(this->clip).isempty()) {
-            this->front->screen_blt(rop, rect, srcx, srcy, this->clip);
-        }
+        this->front->scr_blt(scrblt, this->clip);
     }
 
     void dest_blt(const RDPDestBlt & destblt)

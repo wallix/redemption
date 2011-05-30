@@ -89,7 +89,7 @@ struct bouncer_mod : public internal_mod {
             0xCC,
             (uint8_t*)this->bmp_background.data_co,
             0, Rect(0, 0, 800, 600));
-        front.screen_blt(0xcc, Rect(0,0,800,600), 0, 0, Rect(0,0,800,600));
+        front.scr_blt(RDPScrBlt(Rect(0,0,800,600), 0xcc, 0, 0), Rect(0,0,800,600));
         front.end_update();
         event->set();
     }
