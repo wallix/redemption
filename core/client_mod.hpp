@@ -279,6 +279,44 @@ struct client_mod : public Callback {
     }
 
 
+    #warning this function is written in a quite insane way, so don't use it, and rewrite it in a saner way.
+    void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor)
+    {
+        // add text to glyph cache
+        int len = mbstowcs(0, text, 0);
+        wchar_t* wstr = new wchar_t[len + 2];
+        mbstowcs(wstr, text, len + 1);
+        int cx = 0;
+        int cy = 0;
+        uint8_t *data = new uint8_t[len * 4];
+        memset(data, 0, len * 4);
+        int f = 0;
+        int c = 0;
+        int k = 0;
+        for (int index = 0; index < len; index++) {
+            FontChar* font_item = this->front->font.font_items[wstr[index]];
+            switch (this->front->cache.add_glyph(font_item, f, c))
+            {
+                case Cache::GLYPH_ADDED_TO_CACHE:
+                    LOG(LOG_INFO, "Add glyph to cache");
+                    this->front->orders.send_font(font_item, f, c);
+                break;
+                default:
+                break;
+            }
+            data[index * 2] = c;
+            data[index * 2 + 1] = k;
+            k = font_item->incby;
+            cx += k;
+            cy = std::max(cy, font_item->height);
+        }
+
+        this->front->orders.glyph_index(7, 3, fgcolor, bgcolor, 0, Rect(x, y, cx+1, cy+1), Rect(0, 0, 0, 0), x+1, y+1+cy, data, len * 2, this->clip);
+        delete wstr;
+        delete data;
+    }
+
+
     void server_glyph_index(RDPGlyphIndex & glyph_index)
     {
         this->front->draw_text2(

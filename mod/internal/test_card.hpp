@@ -36,47 +36,21 @@ struct test_card_mod : public internal_mod {
         this->event = event;
 
         this->server_begin_update();
+        this->opaque_rect(RDPOpaqueRect(this->screen.rect, BLUE));
+
         this->server_set_clip(Rect(50, 50, 150, 150));
         this->opaque_rect(RDPOpaqueRect(Rect(50, 50, 150, 150), PINK));
         this->server_set_clip(Rect(520, 360, 60, 25));
         this->opaque_rect(RDPOpaqueRect(Rect(520, 360, 60, 25), DARK_GREY));
 
-        // add text to glyph cache
-        const char * text = "Hello";
-        int len = mbstowcs(0, text, 0);
-        wchar_t* wstr = new wchar_t[len + 2];
-        mbstowcs(wstr, text, len + 1);
-        int cx = 0;
-        int cy = 0;
-        uint8_t *data = new uint8_t[len * 4];
-        memset(data, 0, len * 4);
-        int f = 0;
-        int c = 0;
-        int k = 0;
-        for (int index = 0; index < len; index++) {
-            FontChar* font_item = front.font.font_items[wstr[index]];
-            switch (front.cache.add_glyph(font_item, f, c))
-            {
-                case Cache::GLYPH_ADDED_TO_CACHE:
-                    front.orders.send_font(font_item, f, c);
-                break;
-                default:
-                break;
-            }
-            data[index * 2] = c;
-            data[index * 2 + 1] = k;
-            k = font_item->incby;
-            cx += k;
-            cy = std::max(cy, font_item->height);
-        }
-
-        front.orders.glyph_index(7, 3, BLACK, YELLOW, 0, Rect(535, 363, cx+1, cy+1), Rect(0, 0, 0, 0), 536, 364+cy, data, len * 2, Rect(0, 0, 800, 600));
+        this->server_set_clip(Rect(0, 0, 800, 600));
+        this->server_draw_text(535, 363, "Hello", BLACK, YELLOW);
 
         //front.orders.screen_blt(Rect(190, 190, 50, 50), 50, 50, 0xCC, Rect(190, 190, 50, 50));
 
         front.orders.dest_blt(Rect(60, 60, 50, 50), 0, Rect(60, 60, 50, 50));
 
-        front.send();
+        this->server_end_update();
 
         front.begin_update();
         RDPBrush brush;
@@ -175,11 +149,8 @@ struct test_card_mod : public internal_mod {
         /* Write "hello" at right-bottom white rect of screen */
 
         front.begin_update();
-
-        front.draw_text2(7, 3, 0,
-                    Rect(0, 0, 0, 0), Rect(500, 530, cx+1, cy+1),
-                    501, 531+cy, data, len * 2,
-                    BLACK, DARK_GREY, Rect(0, 0, 800, 600));
+        this->server_set_clip(Rect(0, 0, 800, 600));
+        this->server_draw_text(500, 530, "Hello", BLACK, DARK_GREY);
         front.end_update();
 
         /* Draw a little grey rect at left-bottom side of screen */
