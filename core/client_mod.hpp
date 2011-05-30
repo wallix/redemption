@@ -280,12 +280,14 @@ struct client_mod : public Callback {
 
 
     #warning this function is written in a quite insane way, so don't use it, and rewrite it in a saner way.
-    void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor)
+    #warning also merge with the similar code in widget.
+    void server_draw_text(uint16_t x, uint16_t y, const char * utf8text, uint32_t fgcolor, uint32_t bgcolor)
     {
         // add text to glyph cache
-        int len = mbstowcs(0, text, 0);
+        #warning use mbsrtowcs instead
+        int len = mbstowcs(0, utf8text, 0);
         wchar_t* wstr = new wchar_t[len + 2];
-        mbstowcs(wstr, text, len + 1);
+        mbstowcs(wstr, utf8text, len + 1);
         int cx = 0;
         int cy = 0;
         uint8_t *data = new uint8_t[len * 4];
@@ -298,8 +300,8 @@ struct client_mod : public Callback {
             switch (this->front->cache.add_glyph(font_item, f, c))
             {
                 case Cache::GLYPH_ADDED_TO_CACHE:
-                    LOG(LOG_INFO, "Add glyph to cache");
-                    this->front->orders.send_font(font_item, f, c);
+                    LOG(LOG_INFO, "Add glyph %d to cache", c);
+                    this->front->send_glyph(*font_item, f, c);
                 break;
                 default:
                 break;
@@ -311,27 +313,65 @@ struct client_mod : public Callback {
             cy = std::max(cy, font_item->height);
         }
 
-        this->front->orders.glyph_index(7, 3, fgcolor, bgcolor, 0, Rect(x, y, cx+1, cy+1), Rect(0, 0, 0, 0), x+1, y+1+cy, data, len * 2, this->clip);
-        delete wstr;
-        delete data;
+
+        this->brush.hatch = 0xaa;
+        this->brush.extra[0] = 0x55;
+        this->brush.extra[1] = 0xaa;
+        this->brush.extra[2] = 0x55;
+        this->brush.extra[3] = 0xaa;
+        this->brush.extra[4] = 0x55;
+        this->brush.extra[5] = 0xaa;
+        this->brush.extra[6] = 0x55;
+        this->brush.org_x = 0;
+        this->brush.org_y = 0;
+        this->brush.style = 3;
+
+        // brush style 3 is not supported by windows 7, we **MUST** use cache
+        if (this->front->rdp_layer.client_info.brush_cache_code == 1) {
+            uint8_t pattern[8];
+            pattern[0] = this->brush.hatch;
+            memcpy(pattern+1, this->brush.extra, 7);
+            int cache_idx = 0;
+            if (BRUSH_TO_SEND == this->front->cache.add_brush(pattern, cache_idx)){
+                this->front->send_brush(cache_idx);
+            }
+            this->brush.hatch = cache_idx;
+            this->brush.style = 0x81;
+        }
+
+        #warning there seems to be some strange behavior with bk rect (and op ?). Same problem as usual, we have a rectangle but we don't know if boundaries (right, bottom) are included or not. Check actual behavior with rdesktop and with mstsc client. Nevertheless we shouldn't have to add 1 here.
+        const Rect bk(x, y, cx, cy);
+        LOG(LOG_INFO, "Glyph_index bk_rect(%d, %d, %d, %d)", bk.x, bk.y, bk.cx, bk.cy);
+
+        RDPGlyphIndex text(
+            f, // cache_id
+            0x03, // fl_accel
+            1, // ui_charinc
+            1, // f_op_redundant,
+            bgcolor, // bgcolor
+            fgcolor, // fgcolor
+            bk, // bk
+            Rect(), // op
+            this->brush, // brush
+            x,  // glyph_x
+            y + cy, // glyph_y
+            len * 2, // data_len in bytes
+            data // data (utf16)
+        );
+        this->server_glyph_index(text);
+
+        delete [] wstr;
+        delete [] data;
     }
 
 
-    void server_glyph_index(RDPGlyphIndex & glyph_index)
+    void server_glyph_index(const RDPGlyphIndex & glyph_index)
     {
-        this->front->draw_text2(
-            glyph_index.cache_id,
-            glyph_index.fl_accel,
-            glyph_index.f_op_redundant,
-            glyph_index.op,
-            glyph_index.bk,
-            glyph_index.glyph_x,
-            glyph_index.glyph_y,
-            glyph_index.data,
-            glyph_index.data_len,
-            this->convert(glyph_index.back_color),
-            this->convert(glyph_index.fore_color),
-            this->clip);
+        RDPGlyphIndex new_glyph_index = glyph_index;
+        new_glyph_index.back_color = this->convert(glyph_index.back_color);
+        new_glyph_index.fore_color = this->convert(glyph_index.fore_color);
+
+        this->front->glyph_index(new_glyph_index, this->clip);
     }
 
     void scr_blt(const RDPScrBlt & scrblt)
@@ -541,7 +581,9 @@ struct client_mod : public Callback {
                     int offset, int baseline,
                     int width, int height, const uint8_t* data)
     {
-        this->front->send_glyph(font, character, offset, baseline, width, height, data);
+        struct FontChar fi(offset, baseline, width, height, 0);
+        memcpy(fi.data, data, fi.datasize());
+        this->front->send_glyph(fi, font, character);
     }
 
     int server_get_channel_id(char* name)

@@ -184,26 +184,15 @@ struct Orders
 
 
     /*****************************************************************************/
-    void glyph_index(int font, int flags, int mixmode, int fg_color, int bg_color,
-             const Rect & text_clip, const Rect & box, int x, int y, uint8_t* data,
-             int data_len, const Rect & clip)
+    void glyph_index(const RDPGlyphIndex & glyph_index, const Rect & clip)
     {
 
 //        LOG(LOG_INFO, "glyph_index[%d](font=%d flags=%d mixmode=%d, fg_color=%x bg_color=%x text_clip(%d, %d, %d, %d) box(%d, %d, %d, %d), x=%d, y=%d data_len=%d clip(%d, %d, %d, %d)", this->order_count, font, flags, mixmode, fg_color, bg_color, text_clip.x, text_clip.y, text_clip.cx, text_clip.cy, box.x, box.y, box.cx, box.cy, x, y, data_len, clip.x, clip.y, clip.cx, clip.cy);
 
         RDPOrderCommon newcommon(GLYPHINDEX, clip);
-        RDPGlyphIndex cmd(font, flags, 0, mixmode,
-                         fg_color,
-                         bg_color,
-                         text_clip,
-                         box,
-                         RDPBrush(),
-                         x, y,
-                         data_len, data);
-
-        cmd.emit(this->out_stream, newcommon, this->common, this->text);
+        glyph_index.emit(this->out_stream, newcommon, this->common, this->text);
         this->common = newcommon;
-        this->text = cmd;
+        this->text = glyph_index;
     }
 
     /*****************************************************************************/
@@ -293,10 +282,10 @@ struct Orders
         bmp_order.emit(this->out_stream);
     }
 
-    void send_font(struct FontChar* font_char, int font_index, int char_index)
+    void send_font(const FontChar & font_char, int font_index, int char_index)
     {
 
-        int datasize = font_char->datasize();
+        int datasize = font_char.datasize();
 
 //        LOG(LOG_INFO, "send_font[%d](font_index=%d, char_index=%d)\n", this->order_count, font_index, char_index);
 
@@ -309,11 +298,11 @@ struct Orders
         this->out_stream.out_uint8(font_index);
         this->out_stream.out_uint8(1); /* num of chars */
         this->out_stream.out_uint16_le(char_index);
-        this->out_stream.out_uint16_le(font_char->offset);
-        this->out_stream.out_uint16_le(font_char->baseline);
-        this->out_stream.out_uint16_le(font_char->width);
-        this->out_stream.out_uint16_le(font_char->height);
-        this->out_stream.out_copy_bytes(font_char->data, datasize);
+        this->out_stream.out_uint16_le(font_char.offset);
+        this->out_stream.out_uint16_le(font_char.baseline);
+        this->out_stream.out_uint16_le(font_char.width);
+        this->out_stream.out_uint16_le(font_char.height);
+        this->out_stream.out_copy_bytes(font_char.data, datasize);
     }
 
 };

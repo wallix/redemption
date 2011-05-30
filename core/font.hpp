@@ -56,7 +56,7 @@ struct FontChar {
     ~FontChar(){
         delete [] this->data;
     }
-    inline int datasize(){
+    inline int datasize() const {
         return align4(this->height * nbbytes(this->width));
     }
 

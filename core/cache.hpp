@@ -25,8 +25,6 @@
 #if !defined(__CACHE_HPP__)
 #define __CACHE_HPP__
 
-#include "orders.hpp"
-
 #include "font.hpp"
 struct char_item {
     int stamp;
@@ -66,8 +64,6 @@ struct pointer_item {
 
 /* difference caches */
 struct Cache {
-    RDP::Orders* orders;
-
     int pointer_cache_entries;
 
     /* font */
@@ -82,9 +78,7 @@ struct Cache {
     int brush_stamp;
     struct brush_item brush_items[64];
 
-    #warning orders should be aware of cache, not the other way around
-    Cache(RDP::Orders* orders) {
-        this->orders = orders;
+    Cache() {
         this->pointer_cache_entries = 0;
 
         /* font */
@@ -112,9 +106,6 @@ struct Cache {
     #warning much duplicated code with constructor and destructor, create some intermediate functions or object
     int reset(struct ClientInfo & client_info)
     {
-        /* save this one */
-        struct RDP::Orders* orders = this->orders;
-
         /* free all the cached font items */
         for (int i = 0; i < 12; i++) {
             for (int j = 0; j < 256; j++) {
@@ -128,7 +119,6 @@ struct Cache {
         /* set whole struct to zero */
         memset(this, 0, sizeof(struct Cache));
         /* set some stuff back */
-        this->orders = orders;
         this->pointer_cache_entries = client_info.pointer_cache_entries;
         return 0;
     }

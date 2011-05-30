@@ -729,9 +729,7 @@ class Capture
         }
     }
 
-    void text(int font, int flags, int mixmode, int fg_color, int bg_color,
-                 const Rect & clip, const Rect & box, int x, int y,
-                 const uint8_t* data, int data_len, const Rect & rect)
+    void glyph_index(const RDPGlyphIndex & glyph_index, const Rect & clip)
     {
        return;
     }
