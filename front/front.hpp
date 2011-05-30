@@ -301,18 +301,14 @@ public:
         }
     }
 
-    #warning unify API with orders
-    void screen_blt(int rop, const Rect & r, int srcx, int srcy, const Rect &clip)
+    void scr_blt(const RDPScrBlt & scrblt, const Rect &clip)
     {
-//      LOG(LOG_INFO, "this->front.orders->screen_blt(Rect(%d, %d, %d, %d), %d, %d, 0x.2x, Rect(%d, %d, %d, %d));", r.x, r.y, r.cx, r.cy, srcx, srcy, rop, clip.x, clip.y, clip.cx, clip.cy);
-
-//        LOG(LOG_INFO, "front::screen_blt\n");
-        if (!clip.isempty() && !clip.intersect(r).isempty()){
+        if (!clip.isempty() && !clip.intersect(scrblt.rect).isempty()){
             // this one is used when dragging a visible window on screen
             this->reserve_order(25);
-            this->orders.screen_blt(r, srcx, srcy, rop, clip);
+            this->orders.scr_blt(scrblt, clip);
             if (this->capture){
-                this->capture->screen_blt(r, srcx, srcy, rop, clip);
+                this->capture->scr_blt(scrblt, clip);
             }
         }
     }

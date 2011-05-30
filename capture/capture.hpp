@@ -477,14 +477,14 @@ class Capture
         }
     }
 
-    void screen_blt(const Rect & dst, int srcx, int srcy, int rop, const Rect &clip)
+    void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
     {
         // Destination rectangle : drect
-        const Rect & drect = dst.intersect(clip);
+        const Rect & drect = cmd.rect.intersect(clip);
         if (drect.isempty()){ return; }
 
         // Source rectangle : srect
-        const Rect srect((srcx + drect.x - dst.x), (srcy + drect.y - dst.y), drect.cx, drect.cy);
+        const Rect srect((cmd.srcx + drect.x - cmd.rect.x), (cmd.srcy + drect.y - cmd.rect.y), drect.cx, drect.cy);
 
         // If the destination area overlaps the source area, then the src
         // is broken in three non overlapping zones
@@ -530,11 +530,11 @@ class Capture
                 brother = brother.offset(0, big.cy);
              }
 
-            screen_blt(big.offset(deltax, deltay), big.x, big.y, rop, clip);
-            screen_blt(brother.offset(deltax, deltay), brother.x, brother.y, rop, clip);
+            this->scr_blt(RDPScrBlt(big.offset(deltax, deltay), cmd.rop, big.x, big.y), clip);
+            this->scr_blt(RDPScrBlt(brother.offset(deltax, deltay), cmd.rop, brother.x, brother.y), clip);
 
             // Last thing to do : copy the conflict zone.
-            screen_blt(overlap, conflict_zone.x, conflict_zone.y, rop, clip);
+            this->scr_blt(RDPScrBlt(overlap, cmd.rop, conflict_zone.x, conflict_zone.y), clip);
             return;
         }
 

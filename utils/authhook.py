@@ -17,6 +17,7 @@ class Authentifier(object):
     passwords = {
         'w2008': 'w2008',
         'w7': 'w7',
+        'w2000': 'w2000',
         'xp': 'xp',
         'v' : 'v',
         'n' : 'n',
@@ -41,6 +42,14 @@ class Authentifier(object):
             'target_login' : r'qa\administrateur',
             'target_device' : '10.10.14.77',
             'target_password' : 'S3cur3!1nux',
+            'proto_dest': 'RDP',
+            'target_port':'3389'
+        },
+        'w2000' : {
+            'proxy_type': 'RDP',
+            'target_login' : r'administrateur',
+            'target_device' : '10.10.14.64',
+            'target_password' : 'SecureLinux',
             'proto_dest': 'RDP',
             'target_port':'3389'
         },

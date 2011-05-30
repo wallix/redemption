@@ -117,12 +117,11 @@ struct Orders
         this->opaquerect = cmd;
     }
 
-    void screen_blt(const Rect & r, int16_t srcx, int16_t srcy, uint8_t rop, const Rect &clip)
+    void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
     {
 //        LOG(LOG_INFO, "screen_blt[%d](r(%d, %d, %d, %d) srcx=%d srcy=%d rop=%d clip(%d, %d, %d, %d)",
 //            this->order_count, r.x, r.y, r.cx, r.cy, srcx, srcy, rop, clip.x, clip.y, clip.cx, clip.cy);
 
-        RDPScrBlt cmd(r, rop, srcx, srcy);
         RDPOrderCommon newcommon(SCREENBLT, clip);
         cmd.emit(this->out_stream, newcommon, this->common, this->scrblt);
         this->common = newcommon;
