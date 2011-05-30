@@ -41,13 +41,11 @@ struct bouncer2_mod : public internal_mod {
     bouncer2_mod(wait_obj * back_event, int (& keys)[256], int & key_flags, Keymap * &keymap, Front & front) :
         internal_mod(keys, key_flags, keymap, front), event(back_event), speedx(5), speedy(5), dancing_rect(NULL)
     {
-        printf("Pouwap !\n");
-
         this->server_begin_update();
         this->opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00));
         this->server_end_update();
         
-        this->dancing_rect = new Rect(0,0,40,30);
+        this->dancing_rect = new Rect(0,0,100,100);
 
         this->event->set();
     }
@@ -58,7 +56,25 @@ struct bouncer2_mod : public internal_mod {
     // This should come from FRONT!
     virtual int mod_event(int msg, long x, long y, long param4, long param5)
     {
-        printf("%d %d %d %d %d\n", msg, x, y, param4, param5);
+        // Get x% of the screen cx and cy
+        int scarex = this->screen.rect.cx / 5;
+        int scarey = this->screen.rect.cx / 5;
+        Rect scareZone(this->dancing_rect->getCenteredX() - (scarex / 2),this->dancing_rect->getCenteredY() - (scarey / 2),scarex,scarey);
+
+        // Calculating new speedx and speedy, if cube encounters a mouse pointer, it flees
+        // The closer the faster
+        if (scareZone.rect_contains_pt(x,y)) {
+            if (((this->dancing_rect->getCenteredX() - x) < scarex) && this->dancing_rect->getCenteredX() > x) {
+                this->speedx = 2;
+            } else if (((x - this->dancing_rect->getCenteredX()) < scarex) && x > this->dancing_rect->getCenteredX()) {
+                this->speedx = -2;
+            }
+            if (((this->dancing_rect->getCenteredY() - y) < scarey) && this->dancing_rect->getCenteredY() > y) {
+                this->speedy = 2;
+            } else if (((y - this->dancing_rect->getCenteredY()) < scarey) && y > this->dancing_rect->getCenteredY()) {
+                this->speedy = -2;
+            }
+        }
         return 0;
     }
 
@@ -101,8 +117,6 @@ struct bouncer2_mod : public internal_mod {
         this->wipe(oldrect, *this->dancing_rect, 0x00FF00);
         this->server_end_update();
         
-        //usleep(100000);
-
         return 0;
     }
 

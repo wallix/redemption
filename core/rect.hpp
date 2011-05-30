@@ -85,6 +85,14 @@ struct Rect {
         return this->cx <= 0 || this->cy <= 0;
     }
 
+    int getCenteredX() {
+        return this->x + (this->cx / 2);
+    }
+
+    int getCenteredY() {
+        return this->y + (this->cy / 2);
+    }
+
     const Rect wh() {
         return Rect(0, 0, this->cx, this->cy);
     }
