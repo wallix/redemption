@@ -78,10 +78,7 @@ public:
     notimestamp(ini->globals.notimestamp),
     timezone(0),
     rdp_layer(trans, ini),
-    cache(&this->orders)
-    {
-        ;
-    }
+    cache() {}
 
     ~Front(){
         if (this->capture){
@@ -389,27 +386,17 @@ public:
         }
     }
 
-    #warning harmonize name of function -> glyph_index
-    void draw_text2(int font, int flags, int mixmode,
-                const Rect & box, const Rect & clip_rect,
-                int x, int y, uint8_t* data, int data_len,
-                int fgcolor, int bgcolor, const Rect & draw_rect)
+    void glyph_index(const RDPGlyphIndex & glyph_index, const Rect & clip)
     {
-//        LOG(LOG_INFO, "front::draw_text2\n");
-        if (draw_rect.intersect(clip_rect).isempty()){
+//        LOG(LOG_INFO, "front::glyph_index\n");
+        if (glyph_index.bk.intersect(clip).isempty()){
             return;
         }
 
         this->reserve_order(297);
-        this->orders.glyph_index(font, flags, mixmode,
-                            fgcolor, bgcolor,
-                            clip_rect, box,
-                            x, y, data, data_len, draw_rect);
+        this->orders.glyph_index(glyph_index, clip);
         if (this->capture){
-            this->capture->text(font, flags, mixmode,
-                            fgcolor, bgcolor,
-                            clip_rect, box,
-                            x, y, data, data_len, draw_rect);
+            this->capture->glyph_index(glyph_index, clip);
         }
     }
 
@@ -489,25 +476,23 @@ public:
         this->send_bitmap_front(dst, src_r, rop, src_data, palette_id, clip);
     }
 
-    #warning harmonize names with orders send_glyph or send_font
-    void send_glyph(int font, int character,
-                    int offset, int baseline,
-                    int width, int height, const uint8_t* data)
-    {
-//        LOG(LOG_INFO, "front::send_glyph\n");
-        struct FontChar fi(offset, baseline, width, height, 0);
+//    #warning harmonize names with orders send_glyph or send_font
+//    void send_glyph(int font, int character,
+//                    int offset, int baseline,
+//                    int width, int height, const uint8_t* data)
+//    {
+////        LOG(LOG_INFO, "front::send_glyph\n");
+//        struct FontChar fi(offset, baseline, width, height, 0);
 
-        memcpy(fi.data, data, fi.datasize());
-        this->send_glyph(&fi, font, character);
-    }
+//        memcpy(fi.data, data, fi.datasize());
+//        this->send_glyph(&fi, font, character);
+//    }
 
-    void send_glyph(FontChar* font_char, int font_index, int char_index)
+    void send_glyph(const FontChar & font_char, int font_index, int char_index)
     {
 //        LOG(LOG_INFO, "front::send_glyph 2\n");
 
-        int datasize = font_char->datasize();
-        this->reserve_order(datasize + 18);
-
+        this->reserve_order(font_char.datasize() + 18);
         this->orders.send_font(font_char, font_index, char_index);
     }
 

@@ -252,6 +252,7 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
     const Rect & clip_rect = wdg->to_screen_rect(clip);
     /* convert to wide char */
     wchar_t* wstr = new wchar_t[len + 2];
+    #warning use mbsrtowcs instead
     mbstowcs(wstr, text, len + 1);
     int k = 0;
     int total_width = 0;
@@ -265,7 +266,7 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
         switch (this->mod->front->cache.add_glyph(font_item, f, c))
         {
             case Cache::GLYPH_ADDED_TO_CACHE:
-                this->mod->front->send_glyph(font_item, f, c);
+                this->mod->front->send_glyph(*font_item, f, c);
             break;
             default:
             break;
