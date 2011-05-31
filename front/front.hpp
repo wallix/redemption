@@ -44,7 +44,6 @@
 #include "capture.hpp"
 #include "bitmap.hpp"
 #include "bitmap_cache.hpp"
-#include "capture.hpp"
 #include <deque>
 #include "server_rdp.hpp"
 #include "NewRDPOrders.hpp"

@@ -33,6 +33,7 @@
 #include "error.hpp"
 #include "config.hpp"
 #include "bitmap_cache.hpp"
+#include "colors.hpp"
 
 class Capture
 {
@@ -56,12 +57,30 @@ class Capture
     int width;
     int height;
     int bpp;
+    RGBPalette palette;
 
-    Capture(int width, int height, int bpp, char * path, const char * codec_id, const char * video_quality){
+    Capture(int width, int height, int bpp, char * path, const char * codec_id, const char * video_quality) {
         this->bpp = bpp;
         this->pix_len = 0;
         this->count = 0;
         this->inter_frame_interval = 1000000; // 1 000 000 us is 1 sec (default)
+
+        /* rgb332 palette */
+        for (int bindex = 0; bindex < 4; bindex++) {
+            for (int gindex = 0; gindex < 8; gindex++) {
+                for (int rindex = 0; rindex < 8; rindex++) {
+                    this->palette[(rindex << 5) | (gindex << 2) | bindex] =
+                    (RGBcolor)(
+                    // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
+                    // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
+                       | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
+                    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
+                       | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
+                }
+            }
+        }
+
 
         this->pix_len = width * height * 3;
         if (!this->pix_len) {
@@ -436,46 +455,6 @@ class Capture
         };
     }
 
-    #warning use color_decode
-    // Helper function for converting px to r, g and b :
-    void pxtorgb(const int px, int & r, int & g, int & b, const int bpp) {
-        switch (bpp){
-            default:
-            case 32: case 24:
-                {
-                    r =  px        & 0xFF;
-                    g = (px >> 8)  & 0xFF;
-                    b = (px >> 16) & 0xFF;
-                }
-                break;
-            case 16:
-                {
-                    r = (((px >> 8) & 0xf8) | ((px >> 13) & 0x7));
-                    g = (((px >> 3) & 0xfc) | ((px >> 9)  & 0x3));
-                    b = (((px << 3) & 0xf8) | ((px >> 2)  & 0x7));
-
-                }
-                break;
-            case 15:
-                {
-                    r = ((px >> 7) & 0xf8) | ((px >> 12) & 0x7);
-                    #warning differs from color_decode ? Bogus ?
-                    g = ((px >> 2) & 0xf8) | ((px >> 8)  & 0x7);
-                    b = ((px << 3) & 0xf8) | ((px >> 2)  & 0x7);
-
-                }
-                break;
-            case 8:
-                {
-                    r =   px & 7      ; r = (r << 5) | (r << 2) | (r >> 1);
-                    g =  (px >> 3) & 7; g = (g << 5) | (g << 2) | (g >> 1);
-                    b =  (px >> 6) & 3; b = (b << 6) | (b << 4) | (b << 2) | b;
-
-                }
-                break;
-        }
-    }
-
     void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
     {
         // Destination rectangle : drect
@@ -644,19 +623,17 @@ class Capture
 
     void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        int r, g, b;
-        #warning get that from client_info
         const Rect trect = clip.intersect(cmd.rect);
-        pxtorgb(cmd.color, r, g, b, this->bpp);
+        uint32_t color = color_decode(cmd.color, this->bpp, this->palette);
 
         // base adress (*3 because it has 3 color components)
         uint8_t * base = this->data + (trect.y * this->width + trect.x) * 3;
         for (int j = 0; j < trect.cy ; j++){
             for (int i = 0; i < trect.cx ; i++){
                uint8_t * p = base + (j * this->width + i) * 3;
-               p[0] = b;
-               p[1] = g;
-               p[2] = r;
+               p[0] = color >> 16; // r
+               p[1] = color >> 8;  // g
+               p[2] = color;       // b
             }
         }
     }
@@ -696,9 +673,7 @@ class Capture
         const Rect trect = clip.intersect(drect);
 
         // Color handling
-        int r, g, b;
-        const int & px = pen.color;
-        pxtorgb(px, r, g, b, bpp);
+        const uint32_t color = color_decode(pen.color, this->bpp, this->palette);
 
         // base adress (*3 because it has 3 color components) also base of the new coordinate system
         uint8_t * base = this->data + (starty * this->width + startx) * 3;
@@ -717,9 +692,9 @@ class Capture
             uint8_t * p = base + (y0 * this->width + x0) * 3;
 
             // Drawing of a pixel
-            p[0] = b;
-            p[1] = g;
-            p[2] = r;
+            p[0] = color >> 16; // r
+            p[1] = color >> 8;  // g
+            p[2] = color;       // b
 
             if ((x0 == x1) && (y0 == y1)) { break; }
             // Calculating pixel position
