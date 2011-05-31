@@ -58,8 +58,10 @@ class Capture
     long inter_frame_interval;
     int width;
     int height;
+    int bpp;
 
-    Capture(int width, int height, char * path, const char * codec_id, const char * video_quality){
+    Capture(int width, int height, int bpp, char * path, const char * codec_id, const char * video_quality){
+        this->bpp = bpp;
         this->pix_len = 0;
         this->count = 0;
         this->inter_frame_interval = 1000000; // 1 000 000 us is 1 sec (default)
@@ -637,11 +639,13 @@ class Capture
         }
     }
 
-    void rect(const Rect & rect, int px, int bpp, const Rect & clip)
+    void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         int r, g, b;
-        const Rect trect = clip.intersect(rect);
-        pxtorgb(px, r, g, b, bpp);
+        #warning get that from client_info
+        int bpp = 24;
+        const Rect trect = clip.intersect(cmd.rect);
+        pxtorgb(cmd.color, r, g, b, bpp);
 
         // base adress (*3 because it has 3 color components)
         uint8_t * base = this->data + (trect.y * this->width + trect.x) * 3;

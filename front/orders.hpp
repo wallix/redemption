@@ -105,12 +105,11 @@ struct Orders
     }
 
 
-    void opaque_rect(const Rect & r, int color, const Rect & clip)
+    void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
     {
 //        LOG(LOG_INFO, "opaque_rect[%d](r(%d, %d, %d, %d) color=%x clip(%d, %d, %d, %d)",
 //            this->order_count, r.x, r.y, r.cx, r.cy, color, clip.x, clip.y, clip.cx, clip.cy);
 
-        RDPOpaqueRect cmd(r, color);
         RDPOrderCommon newcommon(RECT, clip);
         cmd.emit(this->out_stream, newcommon, this->common, this->opaquerect);
         this->common = newcommon;
