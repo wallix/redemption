@@ -122,7 +122,7 @@ struct BitmapCache {
         delete [] this->big_bitmaps;
     }
 
-    BitmapCacheItem * get_item(unsigned cache_id, unsigned cache_idx)
+    BitmapCacheItem * get_item(const uint8_t cache_id, const uint16_t cache_idx) const
     {
         BitmapCacheItem * item = 0;
         switch (cache_id){

@@ -32,6 +32,7 @@
 #include "NewRDPOrders.hpp"
 #include "error.hpp"
 #include "config.hpp"
+#include "bitmap_cache.hpp"
 
 class Capture
 {
@@ -557,13 +558,19 @@ class Capture
      * a cache (data) and insert a subpart (srcx, srcy) to the local
      * image cache (this->data) at the given position (rect).
      */
-    void mem_blt(int cache_id,
-                int color_table, const Rect & rect,
-                int rop,
-                int bpp, const uint8_t * bmp_data,
-                int srcx, int srcy,
-                int cache_idx, const Rect &clip)
+    void mem_blt(const RDPMemBlt & memblt, const BitmapCache & bmp_cache, const Rect & clip)
     {
+        #warning we should use rop parameter to change mem_blt behavior and palette_id part of cache_id
+        const uint8_t cache_id = memblt.cache_id & 0xFF;
+        const Rect & rect = memblt.rect;
+        const uint16_t srcx = memblt.srcx;
+        const uint16_t srcy = memblt.srcy;
+        const uint16_t cache_idx = memblt.cache_idx;
+        const BitmapCacheItem * entry =  bmp_cache.get_item(cache_id & 0xFF, cache_idx);
+        const uint8_t * const bmp_data = entry->pbmp->data_co;
+        const uint8_t bpp = entry->pbmp->bpp;
+        assert(bpp == this->bpp);
+
         // Where we draw -> target
         uint32_t px = 0;
         uint8_t r = 0;

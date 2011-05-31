@@ -42,7 +42,8 @@ class Authentifier(object):
             'target_device' : '10.10.14.77',
             'target_password' : 'S3cur3!1nux',
             'proto_dest': 'RDP',
-            'target_port':'3389'
+            'target_port':'3389',
+            'is_rec' : 'true'
         },
         'w2000' : {
             'proxy_type': 'RDP',
