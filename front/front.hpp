@@ -337,20 +337,14 @@ public:
     }
 
 
-    void mem_blt(int cache_id,
-                 int color_table, const Rect & r,
-                 int rop,
-                 int srcx, int srcy,
-                 int cache_idx, const Rect & clip)
+    void mem_blt(const RDPMemBlt & memblt, const Rect & clip)
     {
-//      LOG(LOG_INFO, "this->front.orders->mem_blt(%d, %d, Rect(%d, %d, %d, %d), 0x%.2x, %d, %d, %d, Rect(%d, %d, %d, %d));", cache_id, color_table, r.x, r.y, r.cx, r.cy, rop, srcx, srcy, cache_idx, clip.x, clip.y, clip.cx, clip.cy);
         this->reserve_order(30);
 
-        if (!clip.isempty() && !clip.intersect(r).isempty()){
-            this->orders.mem_blt(cache_id, color_table, r, rop, srcx, srcy, cache_idx, clip);
+        if (!clip.isempty() && !clip.intersect(memblt.rect).isempty()){
+            this->orders.mem_blt(memblt, clip);
             if (this->capture){
-                BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
-                this->capture->mem_blt(cache_id, color_table, r, rop, entry->pbmp->bpp, entry->pbmp->data_co, srcx, srcy, cache_idx, clip);
+                this->capture->mem_blt(memblt, *this->bmp_cache, clip);
             }
         }
     }
@@ -451,10 +445,8 @@ public:
                         this->send_bitmap_common(cache_id, cache_idx);
                     };
 
-
-                    this->mem_blt(cache_id, palette_id,
-                                  tile.offset(dst.x, dst.y), rop,
-                                  0, 0, cache_idx, clip);
+                    const RDPMemBlt cmd(cache_id + palette_id * 256, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
+                    this->mem_blt(cmd, clip);
                 }
             }
         }
