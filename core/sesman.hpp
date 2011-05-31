@@ -211,7 +211,7 @@ class SessionManager {
             res = MCTX_STATUS_XUP;
         }
         else if (strncasecmp(protocol, "INTERNAL", 4) == 0){
-            res = MCTX_STATUS_BOUNCER;
+            res = MCTX_STATUS_INTERNAL;
         }
         else {
             assert(false);

@@ -28,7 +28,6 @@
 #include "../mod/internal/bouncer2.hpp"
 #include "../mod/internal/close.hpp"
 #include "../mod/internal/dialog.hpp"
-#include "../mod/internal/bouncer.hpp"
 #include "../mod/internal/test_card.hpp"
 #include "../mod/internal/test_internal.hpp"
 #include "../mod/null/null.hpp"
@@ -739,7 +738,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
             }
             break;
 
-            case MCTX_STATUS_BOUNCER:
+            case MCTX_STATUS_INTERNAL:
             {
                 #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of mod_event.
                 this->back_event = new wait_obj(-1);
@@ -747,18 +746,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 {
                     char * target = this->context->get(STRAUTHID_TARGET_DEVICE);
                     LOG(LOG_INFO, "target=%s", target);
-                    if (target && 0 == strncmp(target, "bouncer", 8)){
-                        LOG(LOG_INFO, "target is bouncer");
-                        this->mod = new bouncer_mod(
-                                        this->back_event,
-                                        this->keys,
-                                        this->key_flags,
-                                        this->keymap,
-                                        *this->context,
-                                        *this->front,
-                                        this);
-                    }
-                    else if (target && 0 == strncmp(target, "bouncer2", 9)){
+                    if (target && 0 == strncmp(target, "bouncer2", 9)){
                         LOG(LOG_INFO, "target is bouncer 2");
                         this->mod = new bouncer2_mod(
                                         this->back_event,

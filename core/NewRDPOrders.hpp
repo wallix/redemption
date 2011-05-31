@@ -3927,30 +3927,4 @@ class RDPGlyphIndex {
     }
 };
 
-
-class RDPOrderState{
-    public:
-    RDPOrderCommon common;
-    RDPDestBlt destblt;
-    RDPPatBlt patblt;
-    RDPScrBlt scrblt;
-    RDPOpaqueRect orect;
-    RDPMemBlt memblt;
-    RDPLineTo lineto;
-    RDPGlyphIndex text;
-
-    RDPOrderState() :
-        common(0, Rect()),
-        destblt(Rect(), 0),
-        patblt(Rect(), 0, 0, 0, RDPBrush()),
-        scrblt(Rect(), 0, 0, 0),
-        orect(Rect(), 0),
-        memblt(0, Rect(), 0, 0, 0, 0),
-        lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
-        text(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"")
-        {}
-
-};
-
-
 #endif

@@ -46,11 +46,11 @@ struct Orders
 {
     // State
     RDPOrderCommon common;
-    RDPMemBlt memblt;
-    RDPOpaqueRect opaquerect;
-    RDPScrBlt scrblt;
     RDPDestBlt destblt;
     RDPPatBlt patblt;
+    RDPScrBlt scrblt;
+    RDPOpaqueRect opaquerect;
+    RDPMemBlt memblt;
     RDPLineTo lineto;
     RDPGlyphIndex text;
 
@@ -62,11 +62,11 @@ struct Orders
 
     Orders() :
         common(0, Rect(0, 0, 1, 1)),
-        memblt(0, Rect(), 0, 0, 0, 0),
-        opaquerect(Rect(), 0),
-        scrblt(Rect(), 0, 0, 0),
         destblt(Rect(), 0),
         patblt(Rect(), 0, 0, 0, RDPBrush()),
+        scrblt(Rect(), 0, 0, 0),
+        opaquerect(Rect(), 0),
+        memblt(0, Rect(), 0, 0, 0, 0),
         lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
         text(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
         out_stream(16384)

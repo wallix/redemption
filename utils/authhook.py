@@ -22,7 +22,6 @@ class Authentifier(object):
         'v' : 'v',
         'n' : 'n',
         'cgr' : 'cgr',
-        'bouncer' : 'bouncer',
         'bouncer2' : 'bouncer2',
         'test' : 'test',
         'card' : 'card',
@@ -60,11 +59,6 @@ class Authentifier(object):
             'target_password' : 'S3cur3!1nux',
             'proto_dest': 'RDP',
             'target_port':'3389'
-        },
-        'bouncer' : {
-            'proxy_type': 'RDP',
-            'target_device' : 'bouncer',
-            'proto_dest': 'INTERNAL'
         },
         'bouncer2' : {
             'proxy_type': 'RDP',
