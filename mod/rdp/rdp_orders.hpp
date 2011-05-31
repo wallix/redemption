@@ -424,10 +424,8 @@ struct rdp_orders {
                     mod->dest_blt(this->destblt);
                     break;
                 case PATBLT:
-                    #warning transmit this->patblt
                     this->patblt.receive(stream, header);
-                    mod->server_set_brush(this->patblt.brush);
-                    mod->pat_blt(this->patblt.rop, this->patblt.rect, this->patblt.fore_color, this->patblt.back_color);
+                    mod->pat_blt(this->patblt);
                     break;
                 case SCREENBLT:
                     this->scrblt.receive(stream, header);

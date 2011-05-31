@@ -135,9 +135,8 @@ struct Orders
         this->destblt = cmd;
     }
 
-    void pat_blt(const Rect & r, int rop, uint32_t bg_color, uint32_t fg_color, const RDPBrush & brush, const Rect &clip)
+    void pat_blt(const RDPPatBlt & cmd, const Rect &clip)
     {
-        RDPPatBlt cmd(r, (uint8_t)rop, bg_color, fg_color, brush);
         RDPOrderCommon newcommon(PATBLT, clip);
         cmd.emit(this->out_stream, newcommon, this->common, this->patblt);
         this->common = newcommon;

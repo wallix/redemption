@@ -313,8 +313,6 @@ public:
 
     void dest_blt(const RDPDestBlt & cmd, const Rect &clip)
     {
-//      LOG(LOG_INFO, "this->front.orders->dest_blt(Rect(%d, %d, %d, %d), 0x%.2x, Rect(%d, %d, %d, %d));", r.x, r.y, r.cx, r.cy, rop, clip.x, clip.y, clip.cx, clip.cy);
-
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->reserve_order(21);
             this->orders.dest_blt(cmd, clip);
@@ -326,15 +324,14 @@ public:
     }
 
 
-    void pat_blt(const Rect & r, int rop, uint32_t bg_color, uint32_t fg_color, const RDPBrush & brush, const Rect &clip)
+    void pat_blt(const RDPPatBlt & cmd, const Rect &clip)
     {
-//      LOG(LOG_INFO, "this->front.orders->pat_blt(Rect(%d, %d, %d, %d), 0x%.2x, 0x%.6x, 0x%.6x, this->brush, Rect(%d, %d, %d, %d));", r.x, r.y, r.cx, r.cy, rop, bg_color, fg_color, clip.x, clip.y, clip.cx, clip.cy);
-
-        if (!clip.isempty() && !clip.intersect(r).isempty()){
+        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->reserve_order(29);
-            this->orders.pat_blt(r, rop, bg_color, fg_color, brush, clip);
+            this->orders.pat_blt(cmd, clip);
             if (this->capture){
-                this->capture->opaque_rect(RDPOpaqueRect(r, fg_color), clip);
+                #warning missing code in capture, apply full pat_blt
+                this->capture->opaque_rect(RDPOpaqueRect(cmd.rect, cmd.fore_color), clip);
             }
         }
     }

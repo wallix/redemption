@@ -88,10 +88,14 @@ struct internal_mod : public client_mod {
         // 0x88 = and -> pat_blt( ...  0xC0 ...
 
         this->server_set_clip(clip);
-        this->pat_blt(0x5A, Rect(r.x, r.y, r.cx, 5), BLACK, WHITE);
-        this->pat_blt(0x5A, Rect(r.x, r.y + (r.cy - 5), r.cx, 5), BLACK, WHITE);
-        this->pat_blt(0x5A, Rect(r.x, r.y + 5, 5, r.cy - 10), BLACK, WHITE);
-        this->pat_blt(0x5A, Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10), BLACK, WHITE);
+        this->pat_blt(
+            RDPPatBlt(Rect(r.x, r.y, r.cx, 5), 0x5A, BLACK, WHITE, this->brush));
+        this->pat_blt(
+            RDPPatBlt(Rect(r.x, r.y + (r.cy - 5), r.cx, 5), 0x5A, BLACK, WHITE, this->brush));
+        this->pat_blt(
+            RDPPatBlt(Rect(r.x, r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush));
+        this->pat_blt(
+            RDPPatBlt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush));
         this->front->end_update();
     }
 
