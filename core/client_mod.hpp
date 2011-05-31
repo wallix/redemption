@@ -379,23 +379,15 @@ struct client_mod : public Callback {
         this->front->scr_blt(scrblt, this->clip);
     }
 
-    void dest_blt(const RDPDestBlt & destblt)
+    void dest_blt(const RDPDestBlt & cmd)
     {
-        const int rop = destblt.rop;
-        const Rect & rect = destblt.rect;
-//        LOG(LOG_INFO, "client_mod::dest_blt(rop=%x, r(%d, %d, %d, %d)", rop, rect.x, rect.y, rect.cx, rect.cy);
-        if (!rect.intersect(this->clip).isempty()) {
-            this->front->dest_blt(rect, rop, this->clip);
-        }
+        this->front->dest_blt(cmd, this->clip);
     }
 
 
     void pat_blt(int rop, const Rect & rect, const uint32_t fgcolor, const uint32_t bgcolor)
     {
-//        LOG(LOG_INFO, "client_mod::pat_blt(rop=%x, r(%d, %d, %d, %d), fg=%x, bg=%x", rop, rect.x, rect.y, rect.cx, rect.cy, fgcolor, bgcolor);
-        if (!rect.intersect(this->clip).isempty()) {
-            this->front->pat_blt(rect, rop, this->convert(bgcolor), this->convert(fgcolor), this->brush, this->clip);
-        }
+        this->front->pat_blt(rect, rop, this->convert(bgcolor), this->convert(fgcolor), this->brush, this->clip);
     }
 
 

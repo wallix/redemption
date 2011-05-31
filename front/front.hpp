@@ -112,8 +112,6 @@ public:
         this->rdp_layer.client_info.cache2_entries, this->rdp_layer.client_info.cache2_size,
         this->rdp_layer.client_info.cache3_entries, this->rdp_layer.client_info.cache3_size);
 
-
-
     }
 
     void send()
@@ -313,26 +311,26 @@ public:
         }
     }
 
-    void dest_blt(const Rect & r, int rop, const Rect &clip)
+    void dest_blt(const RDPDestBlt & cmd, const Rect &clip)
     {
 //      LOG(LOG_INFO, "this->front.orders->dest_blt(Rect(%d, %d, %d, %d), 0x%.2x, Rect(%d, %d, %d, %d));", r.x, r.y, r.cx, r.cy, rop, clip.x, clip.y, clip.cx, clip.cy);
 
-        if (!clip.intersect(r).isempty()){
+        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->reserve_order(21);
-            this->orders.dest_blt(r, rop, clip);
+            this->orders.dest_blt(cmd, clip);
             if (this->capture){
                 #warning missing code in capture, apply some logical operator inplace
-                this->capture->opaque_rect(RDPOpaqueRect(r, WHITE), clip);
+                this->capture->opaque_rect(RDPOpaqueRect(cmd.rect, WHITE), clip);
             }
         }
     }
 
 
-    void pat_blt(const Rect & r, int rop, uint32_t bg_color,  uint32_t fg_color, const RDPBrush & brush, const Rect &clip)
+    void pat_blt(const Rect & r, int rop, uint32_t bg_color, uint32_t fg_color, const RDPBrush & brush, const Rect &clip)
     {
 //      LOG(LOG_INFO, "this->front.orders->pat_blt(Rect(%d, %d, %d, %d), 0x%.2x, 0x%.6x, 0x%.6x, this->brush, Rect(%d, %d, %d, %d));", r.x, r.y, r.cx, r.cy, rop, bg_color, fg_color, clip.x, clip.y, clip.cx, clip.cy);
 
-        if (!clip.intersect(r).isempty()){
+        if (!clip.isempty() && !clip.intersect(r).isempty()){
             this->reserve_order(29);
             this->orders.pat_blt(r, rop, bg_color, fg_color, brush, clip);
             if (this->capture){
@@ -351,7 +349,7 @@ public:
 //      LOG(LOG_INFO, "this->front.orders->mem_blt(%d, %d, Rect(%d, %d, %d, %d), 0x%.2x, %d, %d, %d, Rect(%d, %d, %d, %d));", cache_id, color_table, r.x, r.y, r.cx, r.cy, rop, srcx, srcy, cache_idx, clip.x, clip.y, clip.cx, clip.cy);
         this->reserve_order(30);
 
-        if (!clip.intersect(r).isempty()){
+        if (!clip.isempty() && !clip.intersect(r).isempty()){
             this->orders.mem_blt(cache_id, color_table, r, rop, srcx, srcy, cache_idx, clip);
             if (this->capture){
                 BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);

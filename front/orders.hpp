@@ -127,12 +127,8 @@ struct Orders
         this->scrblt = cmd;
     }
 
-    void dest_blt(const Rect & r, uint8_t rop, const Rect &clip)
+    void dest_blt(const RDPDestBlt & cmd, const Rect &clip)
     {
-//        LOG(LOG_INFO, "destblt[%d](r(%d, %d, %d, %d) rop=%d clip(%d, %d, %d, %d)",
-//            this->order_count, r.x, r.y, r.cx, r.cy, rop, clip.x, clip.y, clip.cx, clip.cy);
-
-        RDPDestBlt cmd(r, rop);
         RDPOrderCommon newcommon(DESTBLT, clip);
         cmd.emit(this->out_stream, newcommon, this->common, this->destblt);
         this->common = newcommon;
@@ -141,9 +137,6 @@ struct Orders
 
     void pat_blt(const Rect & r, int rop, uint32_t bg_color, uint32_t fg_color, const RDPBrush & brush, const Rect &clip)
     {
-//        LOG(LOG_INFO, "pat_blt[%d](r(%d, %d, %d, %d) bg_color=%x fg_color=%d brush.style=%d clip(%d, %d, %d, %d)",
-//            this->order_count, r.x, r.y, r.cx, r.cy, bg_color, fg_color, brush.style, clip.x, clip.y, clip.cx, clip.cy);
-
         RDPPatBlt cmd(r, (uint8_t)rop, bg_color, fg_color, brush);
         RDPOrderCommon newcommon(PATBLT, clip);
         cmd.emit(this->out_stream, newcommon, this->common, this->patblt);
@@ -156,8 +149,6 @@ struct Orders
                 int rop, int srcx, int srcy,
                 int cache_idx, const Rect & clip)
     {
-//        LOG(LOG_INFO, "/* mem_blt[%d](cache_id=%d color_table=%d r(%d, %d, %d, %d) rop=%d srcx=%d srcy=%d cache_idx=%d clip(%d, %d, %d, %d)) */", this->order_count, cache_id, color_table, r.x, r.y, r.cx, r.cy, rop, srcx, srcy, cache_idx, clip.x, clip.y, clip.cx, clip.cy);
-
         RDPMemBlt cmd(cache_id + color_table * 256, r, rop, srcx, srcy, cache_idx);
         RDPOrderCommon newcommon(MEMBLT, clip);
         cmd.emit(this->out_stream, newcommon, this->common, this->memblt);
