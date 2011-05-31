@@ -365,13 +365,13 @@ struct client_mod : public Callback {
     }
 
 
-    void server_glyph_index(const RDPGlyphIndex & glyph_index)
+    void server_glyph_index(const RDPGlyphIndex & cmd)
     {
-        RDPGlyphIndex new_glyph_index = glyph_index;
-        new_glyph_index.back_color = this->convert(glyph_index.back_color);
-        new_glyph_index.fore_color = this->convert(glyph_index.fore_color);
+        RDPGlyphIndex new_cmd = cmd;
+        new_cmd.back_color = this->convert(cmd.back_color);
+        new_cmd.fore_color = this->convert(cmd.fore_color);
 
-        this->front->glyph_index(new_glyph_index, this->clip);
+        this->front->glyph_index(new_cmd, this->clip);
     }
 
     void scr_blt(const RDPScrBlt & scrblt)
@@ -384,16 +384,17 @@ struct client_mod : public Callback {
         this->front->dest_blt(cmd, this->clip);
     }
 
-
-    void pat_blt(int rop, const Rect & rect, const uint32_t fgcolor, const uint32_t bgcolor)
+    void pat_blt(const RDPPatBlt & cmd)
     {
-        this->front->pat_blt(rect, rop, this->convert(bgcolor), this->convert(fgcolor), this->brush, this->clip);
-    }
+        RDPPatBlt new_cmd = cmd;
+        new_cmd.back_color = this->convert(cmd.back_color);
+        new_cmd.fore_color = this->convert(cmd.fore_color);
 
+        this->front->pat_blt(new_cmd, this->clip);
+    }
 
     void opaque_rect(const RDPOpaqueRect & cmd)
     {
-//        LOG(LOG_INFO, "client_mod::opaque_rect(r(%d, %d, %d, %d), color=%x", rect.x, rect.y, rect.cx, rect.cy, color);
         RDPOpaqueRect new_cmd = cmd;
 
         #warning dirty hack to fix color problems with opaque_rect

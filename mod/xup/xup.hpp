@@ -140,7 +140,7 @@ struct xup_mod : public client_mod {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                         this->pat_blt(this->rop, r, BLACK, WHITE);
+                         this->pat_blt(RDPPatBlt(r, this->rop, BLACK, WHITE, this->brush));
                     }
                     break;
                     case 4:

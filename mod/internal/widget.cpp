@@ -429,7 +429,7 @@ void Widget::fill_cursor_rect(const Rect & r, int fg_color, const Rect & clip)
         Rect draw_rect = region.rects[ir].intersect(this->to_screen_rect(clip));
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
-            this->mod->pat_blt(0x5A, scr_r, fg_color, BLACK);
+            this->mod->pat_blt(RDPPatBlt(scr_r, 0x5A, fg_color, BLACK, this->mod->brush));
         }
     }
 }
@@ -446,7 +446,7 @@ void Widget::basic_fill_rect(int rop, const Rect & r, int fg_color, const Rect &
         Rect draw_rect = region.rects[ir].intersect(this->to_screen_rect(clip));
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
-            this->mod->pat_blt(rop, scr_r, fg_color, BLACK);
+            this->mod->pat_blt(RDPPatBlt(scr_r, rop, fg_color, BLACK, this->mod->brush));
         }
     }
 
@@ -562,6 +562,8 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
         covering_windows.rects.push_back(p->rect);
     }
 
+    #warning use difference iterator in rect to avoid repeating four nearly identical blocks as below
+
     /* top */
     struct Region region0;
     region0.rects.push_back(Rect(scr_r.x, scr_r.y, scr_r.cx, 1));
@@ -573,8 +575,7 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
         Rect draw_rect = region0.rects[ir].intersect(clip);
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
-            this->mod->pat_blt(0xF0, r.offset(clip.x, clip.y),
-                                            wdg->parent.bg_color, BLACK);
+            this->mod->pat_blt(RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, BLACK, this->mod->brush));
         }
     }
 
@@ -590,8 +591,8 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
         Rect draw_rect = region1.rects[ir].intersect(clip);
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
-            this->mod->pat_blt(0xF0, r.offset(clip.x, clip.y),
-                                            wdg->parent.bg_color, BLACK);
+            this->mod->pat_blt(
+                RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, BLACK, this->mod->brush));
         }
     }
 
@@ -605,8 +606,8 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
         Rect draw_rect = region2.rects[ir].intersect(clip);
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
-            this->mod->pat_blt(0xF0, r.offset(clip.x, clip.y),
-                                            wdg->parent.bg_color, BLACK);
+            this->mod->pat_blt(
+                RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, BLACK, this->mod->brush));
         }
     }
 
@@ -621,8 +622,8 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
         Rect draw_rect = region3.rects[ir].intersect(clip);
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
-            this->mod->pat_blt(0xF0, r.offset(clip.x, clip.y),
-                                wdg->parent.bg_color, BLACK);
+            this->mod->pat_blt(
+                RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, BLACK, this->mod->brush));
         }
     }
 }
