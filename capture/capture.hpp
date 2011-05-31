@@ -562,6 +562,7 @@ class Capture
                 if (!(clip.rect_contains_pt(i + rect.x, j + rect.y))) {
                   continue;
                 }
+                #warning this should not be done here, implement bitmap color conversion and use it here
                 uint32_t src_px_offset = ((rect.cy - j - srcy - 1) * align4(rect.cx) + i + srcx) * nbbytes(bpp);
                 switch (bpp){
                     default:
