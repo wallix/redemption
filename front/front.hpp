@@ -200,7 +200,7 @@ public:
         if (flag){
             this->stop_capture();
             gettimeofday(&this->start, NULL);
-            this->capture = new Capture(width, height, path, codec_id, quality);
+            this->capture = new Capture(width, height, this->rdp_layer.client_info.bpp, path, codec_id, quality);
         }
     }
 
@@ -288,15 +288,15 @@ public:
 
 
     /* fill in an area of the screen with one color */
-    void opaque_rect(const Rect & r, int fgcolor, const Rect & clip)
+    void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
     {
 //      LOG(LOG_INFO, "this->front.orders->opaque_rect(Rect(%d, %d, %d, %d), 0x%.6x, Rect(%d, %d, %d, %d));", r.x, r.y, r.cx, r.cy, fgcolor, clip.x, clip.y, clip.cx, clip.cy);
 
-        if (!clip.isempty() && !clip.intersect(r).isempty()){
+        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->reserve_order(23);
-            this->orders.opaque_rect(r, fgcolor, clip);
+            this->orders.opaque_rect(cmd, clip);
             if (this->capture){
-                this->capture->rect(r, fgcolor, this->rdp_layer.client_info.bpp, clip);
+                this->capture->opaque_rect(cmd, clip);
             }
         }
     }
@@ -322,7 +322,7 @@ public:
             this->orders.dest_blt(r, rop, clip);
             if (this->capture){
                 #warning missing code in capture, apply some logical operator inplace
-                this->capture->rect(r, WHITE, this->rdp_layer.client_info.bpp, clip);
+                this->capture->opaque_rect(RDPOpaqueRect(r, WHITE), clip);
             }
         }
     }
@@ -336,7 +336,7 @@ public:
             this->reserve_order(29);
             this->orders.pat_blt(r, rop, bg_color, fg_color, brush, clip);
             if (this->capture){
-                this->capture->rect(r, fg_color, this->rdp_layer.client_info.bpp, clip);
+                this->capture->opaque_rect(RDPOpaqueRect(r, fg_color), clip);
             }
         }
     }
