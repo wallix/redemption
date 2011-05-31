@@ -33,10 +33,6 @@
 #include "error.hpp"
 #include "config.hpp"
 
-#define N 16
-//extern "C" { void principalTest(int Q[N*N], int R[N*N]); }
-
-
 class Capture
 {
     enum {
@@ -559,7 +555,7 @@ class Capture
     /*
      * The name doesn't say it : mem_blt COPIES a decoded bitmap from
      * a cache (data) and insert a subpart (srcx, srcy) to the local
-     * image cache (this->data) a the given position (rect).
+     * image cache (this->data) at the given position (rect).
      */
     void mem_blt(int cache_id,
                 int color_table, const Rect & rect,
@@ -643,9 +639,8 @@ class Capture
     {
         int r, g, b;
         #warning get that from client_info
-        int bpp = 24;
         const Rect trect = clip.intersect(cmd.rect);
-        pxtorgb(cmd.color, r, g, b, bpp);
+        pxtorgb(cmd.color, r, g, b, this->bpp);
 
         // base adress (*3 because it has 3 color components)
         uint8_t * base = this->data + (trect.y * this->width + trect.x) * 3;

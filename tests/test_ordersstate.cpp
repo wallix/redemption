@@ -199,7 +199,6 @@ BOOST_AUTO_TEST_CASE(TestOrdersState)
 
     {
         Stream stream(1000);
-        RDPOrderState state;
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), 0xFFFFFF);
 
@@ -270,7 +269,6 @@ BOOST_AUTO_TEST_CASE(TestOrdersState)
 
     {
         Stream stream(1000);
-        RDPOrderState state;
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), 0xFFFFFF);
 
@@ -608,7 +606,6 @@ BOOST_AUTO_TEST_CASE(TestOrdersState)
 
     {
         Stream stream(1000);
-        RDPOrderState state;
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         RDPScrBlt state_scrblt(Rect(310, 390, 10, 10), 0xFF, 110, 140);
 
@@ -692,7 +689,6 @@ BOOST_AUTO_TEST_CASE(TestOrdersState)
         uint16_t cache_id = 1;
         uint16_t cache_idx = 15;
 
-        RDPOrderState state;
         RDPOrderCommon state_common(0, Rect(311, 0, 800, 600));
         RDPMemBlt state_memblt(cache_id, Rect(310, 390, 10, 10), 0xFF, 0, 0, cache_idx);
 
