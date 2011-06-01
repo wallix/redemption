@@ -39,7 +39,7 @@ struct bouncer2_mod : public internal_mod {
     public:
 
     bouncer2_mod(wait_obj * back_event, int (& keys)[256], int & key_flags, Keymap * &keymap, Front & front) :
-        internal_mod(keys, key_flags, keymap, front), event(back_event), speedx(5), speedy(5), dancing_rect(NULL)
+        internal_mod(keys, key_flags, keymap, front), event(back_event), speedx(10), speedy(10), dancing_rect(NULL)
     {
         this->server_begin_update();
         this->opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00));
@@ -47,7 +47,8 @@ struct bouncer2_mod : public internal_mod {
         
         this->dancing_rect = new Rect(0,0,100,100);
 
-        this->event->set();
+        // Using µsec set
+        this->event->set(33333);
     }
 
     ~bouncer2_mod()
@@ -117,6 +118,8 @@ struct bouncer2_mod : public internal_mod {
         this->wipe(oldrect, *this->dancing_rect, 0x00FF00);
         this->server_end_update();
         
+        // Final with setting next idle time
+        this->event->set(33333); // 0.3s is 30fps
         return 0;
     }
 
