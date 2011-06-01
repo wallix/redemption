@@ -172,6 +172,7 @@ unit-test test_stream : tests/test_stream.cpp libboost_unit_test ;
 unit-test test_config : tests/test_config.cpp ini_config libboost_unit_test libboost_program_options ;
 unit-test test_font : tests/test_font.cpp libboost_unit_test ;
 unit-test test_rect : tests/test_rect.cpp libboost_unit_test ;
+unit-test test_urt : tests/test_urt.cpp libboost_unit_test ;
 unit-test test_compact_to_aligned : tests/test_compact_to_aligned.cpp libboost_unit_test ;
 unit-test test_region : tests/test_region.cpp libboost_unit_test ;
 unit-test test_strings : tests/test_strings.cpp libboost_unit_test ;

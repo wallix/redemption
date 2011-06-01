@@ -113,11 +113,18 @@ foreach(unitname IN ITEMS
     test_strings
     test_keymap
     test_rsa_keys
-    test_ordersstate
     test_context_as_map
     test_dico
     test_colors
-    test_urt)
+    test_urt
+    test_primary_order_dest_blt
+    test_primary_order_glyph_index
+    test_primary_order_line_to
+    test_primary_order_opaque_rect
+    test_primary_order_mem_blt
+    test_primary_order_pat_blt
+    test_primary_order_scr_blt
+    test_secondary_order_col_cache)
 
     message(" > adding unit test ${unitname}")
     add_executable(${unitname} tests/${unitname}.cpp)
