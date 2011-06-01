@@ -26,13 +26,15 @@
 #define __WAIT_OBJS_HPP__
 
 #include "error.hpp"
+#include "urt.hpp"
 
 class wait_obj
 {
     public:
     int obj;
     bool set_state;
-    wait_obj(int sck) : obj(sck), set_state(false) {}
+    URT trigger_time;
+    wait_obj(int sck) : obj(sck), set_state(false), trigger_time(URT()) {}
 
     ~wait_obj()
     {
@@ -74,7 +76,8 @@ class wait_obj
             return this->can_recv();
         }
         else {
-            return set_state;
+            URT now;
+            return (set_state) && ( now > this->trigger_time);
         }
     }
 
@@ -102,6 +105,15 @@ class wait_obj
             close(s);
             return;
         }
+    }
+
+    // Idle time in millisecond
+    void set(uint64_t idle_usec)
+    {
+        set_state = true;
+        URT idle_time(idle_usec);
+        URT now;
+        this->trigger_time = now + idle_time;
     }
 
     private:

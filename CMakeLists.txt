@@ -116,7 +116,8 @@ foreach(unitname IN ITEMS
     test_ordersstate
     test_context_as_map
     test_dico
-    test_colors)
+    test_colors
+    test_urt)
 
     message(" > adding unit test ${unitname}")
     add_executable(${unitname} tests/${unitname}.cpp)
