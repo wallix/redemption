@@ -46,15 +46,14 @@ BOOST_AUTO_TEST_CASE(TestURT_test_instances)
         BOOST_CHECK_EQUAL(t.tv_usec, time.tv.tv_usec);
     }
 
-    // This should be quick enough (<0,1s) to pass :)
     {
         timeval t;
         gettimeofday(&t, NULL);
 
         URT time;
 
-        BOOST_CHECK_EQUAL(t.tv_sec, time.tv.tv_sec);
-        BOOST_CHECK_EQUAL(t.tv_usec, time.tv.tv_usec);
+        BOOST_CHECK(t.tv_sec  <= time.tv.tv_sec);
+        BOOST_CHECK(t.tv_usec <= time.tv.tv_usec);
     }
 
     {
