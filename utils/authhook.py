@@ -22,7 +22,7 @@ class Authentifier(object):
         'v' : 'v',
         'n' : 'n',
         'cgr' : 'cgr',
-        'bouncer2' : 'bouncer2',
+        'bouncer' : 'bouncer',
         'test' : 'test',
         'card' : 'card',
         'error_invalid' : 'error_invalid'
@@ -61,7 +61,7 @@ class Authentifier(object):
             'proto_dest': 'RDP',
             'target_port':'3389'
         },
-        'bouncer2' : {
+        'bouncer' : {
             'proxy_type': 'RDP',
             'target_device' : 'bouncer2',
             'proto_dest': 'INTERNAL'
