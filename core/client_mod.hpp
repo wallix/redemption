@@ -294,22 +294,21 @@ struct client_mod : public Callback {
         memset(data, 0, len * 4);
         int f = 0;
         int c = 0;
-        int k = 0;
         for (int index = 0; index < len; index++) {
             FontChar* font_item = this->front->font.font_items[wstr[index]];
+            #warning avoid passing parameters by reference to get results
             switch (this->front->cache.add_glyph(font_item, f, c))
             {
                 case Cache::GLYPH_ADDED_TO_CACHE:
-                    LOG(LOG_INFO, "Add glyph %d to cache", c);
+                    LOG(LOG_INFO, "Add glyph %d to cache (%d %c)", c, wstr[index], wstr[index]&0xFF);
                     this->front->send_glyph(*font_item, f, c);
                 break;
                 default:
                 break;
             }
             data[index * 2] = c;
-            data[index * 2 + 1] = k;
-            k = font_item->incby;
-            cx += k;
+            data[index * 2 + 1] = 0;
+            cx += font_item->incby;
             cy = std::max(cy, font_item->height);
         }
 

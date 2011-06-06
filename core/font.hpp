@@ -68,6 +68,7 @@ struct FontChar {
             && (this->baseline == glyph->baseline)
             && (this->width == glyph->width)
             && (this->height == glyph->height)
+            && (this->incby == glyph->incby)
             && (0 == memcmp(this->data, glyph->data, glyph->datasize()));
     }
 
