@@ -146,14 +146,8 @@ struct Orders
         this->memblt = cmd;
     }
 
-    void line_to(int back_mode, int startx, int starty,
-             int endx, int endy, int rop2, int back_color,
-             const RDPPen & pen,
-             const Rect & clip)
+    void line_to(const RDPLineTo & cmd, const Rect & clip)
     {
-//        LOG(LOG_INFO, "line[%d](back_mode=%d startx=%d starty=%d, endx=%d endy=%d rop2=%d back_color=%x pen.color=%x clip(%d, %d, %d, %d)", this->order_count, back_mode, startx, starty, endx, endy, rop2, back_color, pen.color, clip.x, clip.y, clip.cx, clip.cy);
-
-        RDPLineTo cmd(back_mode, startx, starty, endx, endy, back_color, rop2, pen);
         RDPOrderCommon newcommon(LINE, clip);
         cmd.emit(this->out_stream, newcommon, this->common, this->lineto);
         this->common = newcommon;
