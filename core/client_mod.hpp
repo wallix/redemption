@@ -416,18 +416,12 @@ struct client_mod : public Callback {
         return 0;
     }
 
-    void line_to(const RDPLineTo & lineto)
+    void line_to(const RDPLineTo & cmd)
     {
-        this->server_set_pen(lineto.pen.style, lineto.pen.width);
-        const int rop = lineto.rop2;
-        const int x1 = lineto.startx;
-        const int y1 = lineto.starty;
-        const int x2 = lineto.endx;
-        const int y2 = lineto.endy;
-        const uint32_t pen_color = lineto.pen.color;
-        const uint32_t back_color = lineto.back_color;
-        this->pen.color = this->convert(pen_color);
-        this->front->line(rop, x1, y1, x2, y2, this->convert(back_color), this->pen, this->clip);
+        RDPLineTo new_cmd = cmd;
+        new_cmd.back_color = this->convert(cmd.back_color);
+        new_cmd.pen.color = this->convert(cmd.pen.color);
+        this->front->line_to(new_cmd, this->clip);
     }
 
 

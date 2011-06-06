@@ -348,26 +348,22 @@ public:
         }
     }
 
-    #warning harmonize name of function -> line_to
-    void line(int rop, int x1, int y1, int x2, int y2, int bgcolor, const RDPPen & pen, const Rect & clip)
+    void line_to(const RDPLineTo& lineto, const Rect & clip)
     {
-//        LOG(LOG_INFO, "front::line\n");
-        #warning if direction of line is inverted, put it back in the right order, for now just ignore lines in wrong direction
-        if (x1 >= x2 && y1 >= y2
-        && !clip.intersect(Rect(x1, y1, (x2 - x1) +1, (y2 - y1)+1)).isempty()){
-            if (!clip.intersect(Rect(x1, y1, (x2 - x1) +1, (y2 - y1)+1)).isempty()){
-                uint32_t rop2 = rop;
-                if ((rop < 1) || (rop > 0x10)) {
-                    rop2 = 0x0d; /* R2_COPYPEN */
-                }
-                this->reserve_order(32);
-                this->orders.line_to(1, x1, y1, x2, y2, rop2, bgcolor, pen, clip);
-                if (this->capture){
-                    this->capture->line(1, x1, y1, x2, y2, rop2, bgcolor, pen, this->rdp_layer.client_info.bpp, clip);
-                }
-            }
+        const Rect rect(
+            (lineto.startx <= lineto.endx)?lineto.startx:lineto.endx,
+            (lineto.starty <= lineto.endy)?lineto.starty:lineto.endy,
+            (lineto.startx <= lineto.endx)?(lineto.endx-lineto.startx+1):(lineto.startx-lineto.endx+1),
+            (lineto.starty <= lineto.endy)?(lineto.endy-lineto.starty+1):(lineto.starty-lineto.endy+1));
 
+        if (!clip.isempty() && !clip.intersect(rect).isempty()){
+            this->reserve_order(32);
+            this->orders.line_to(lineto, clip);
+            if (this->capture){
+                this->capture->line_to(lineto, clip);
+            }
         }
+
     }
 
     void glyph_index(const RDPGlyphIndex & glyph_index, const Rect & clip)

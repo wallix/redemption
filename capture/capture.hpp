@@ -657,15 +657,25 @@ class Capture
  *  Anyway, we base the line drawing on bresenham's algorithm
  */
 
-    void line(int mix_mode, int startx, int starty, int endx, int endy, int rop,
-              int bg_color, const RDPPen & pen, int bpp, const Rect & clip)
-    {
-        // If the line is given backwards, we call the function with proper arguments :
-        if (startx > endx) {
-            line(0, endx, endy, startx, starty, rop, bg_color, pen, bpp, clip);
-            return;
-        }
 
+    void line_to(const RDPLineTo & lineto, const Rect & clip)
+    {
+
+        if (lineto.startx >= lineto.starty){
+            line(lineto.back_mode,
+                 lineto.startx, lineto.starty, lineto.endx, lineto.endy,
+                 lineto.rop2, lineto.back_color, lineto.pen, clip);
+        }
+        else {
+            line(lineto.back_mode,
+                 lineto.endx, lineto.starty, lineto.startx, lineto.endy,
+                 lineto.rop2, lineto.back_color, lineto.pen, clip);
+        }
+    }
+
+    void line(const int mix_mode, const int startx, const int starty, const int endx, const int endy, const int rop2,
+              const int bg_color, const RDPPen & pen, const Rect & clip)
+    {
         int minx = std::min(startx, endx);
         int miny = std::min(starty, endy);
 
