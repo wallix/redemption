@@ -254,7 +254,6 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
     wchar_t* wstr = new wchar_t[len + 2];
     #warning use mbsrtowcs instead
     mbstowcs(wstr, text, len + 1);
-    int k = 0;
     int total_width = 0;
     int total_height = 0;
     uint8_t *data = new uint8_t[len * 4];
@@ -263,18 +262,19 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
     int c = 0;
     for (int index = 0; index < len; index++) {
         FontChar* font_item = this->mod->front->font.font_items[wstr[index]];
+        #warning avoid passing parameters by reference to get results
         switch (this->mod->front->cache.add_glyph(font_item, f, c))
         {
             case Cache::GLYPH_ADDED_TO_CACHE:
+                LOG(LOG_INFO, "Add glyph %d to cache", c);
                 this->mod->front->send_glyph(*font_item, f, c);
             break;
             default:
             break;
         }
         data[index * 2] = c;
-        data[index * 2 + 1] = k;
-        k = font_item->incby;
-        total_width += k;
+        data[index * 2 + 1] = 0;
+        total_width += font_item->incby;
         total_height = std::max(total_height, font_item->height);
     }
 
