@@ -294,6 +294,7 @@ struct client_mod : public Callback {
         memset(data, 0, len * 4);
         int f = 0;
         int c = 0;
+        int k = 0;
         for (int index = 0; index < len; index++) {
             FontChar* font_item = this->front->font.font_items[wstr[index]];
             #warning avoid passing parameters by reference to get results
@@ -307,8 +308,10 @@ struct client_mod : public Callback {
                 break;
             }
             data[index * 2] = c;
-            data[index * 2 + 1] = 0;
-            cx += font_item->incby;
+            data[index * 2 + 1] = k; // k is not neutral
+            // We're in a loop so it is used to set next data to last incby :/
+            k = font_item->incby;
+            cx += k;
             cy = std::max(cy, font_item->height);
         }
 
