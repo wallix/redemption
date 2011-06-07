@@ -41,11 +41,11 @@
 // Primary Drawing Order History (section 3.2.1.1) store. This store holds three
 // pieces of information:
 
-//  -Last primary order type constructed.
+//  - Last primary order type constructed.
 
-//  -Current bounding rectangle.
+//  - Current bounding rectangle.
 
-//  -Per-order record of the last value used in each field.
+//  - Per-order record of the last value used in each field.
 
 //  These stored records allow the server to use the minimum amount of data when
 //  constructing an order; if a field is unchanged from the value that it had

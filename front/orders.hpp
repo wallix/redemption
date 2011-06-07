@@ -283,8 +283,8 @@ struct Orders
 //   (the number of glyphs is specified by the cGlyphs field) defined using
 //   Cache Glyph Data structures.
 
-//    2.2.2.2.1.2.5.1 Cache Glyph Data (TS_CACHE_GLYPH_DATA)
-//    -------------------------------------------------------
+//    MS-RDPEGDI 2.2.2.2.1.2.5.1 Cache Glyph Data (TS_CACHE_GLYPH_DATA)
+//    -----------------------------------------------------------------
 //    The TS_CACHE_GLYPH_DATA structure contains information describing a single
 //    glyph.
 

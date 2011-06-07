@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
                              Rect(3,4,50,70),
                              RDPBrush(3, 4, 0x03, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7"),
                              5, 6,
-     #warning actual data is much more complex, than a text, we should create a spécialized object to store, serialize and replay it. This should be done after the RDP layer includes cache management primitives
+     #warning actual data is much more complex, than a text, we should create a specialized object to store, serialize and replay it. This should be done after the RDP layer includes cache management primitives
                              12, (uint8_t*)"Hello, World");
 
         newcmd.emit(stream, newcommon, state_common, statecmd);
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
                           Rect(3,4,50,70),
                           RDPBrush(3, 4, 0x03, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7"),
                           5, 6,
-     #warning actual data is much more complex, than a text, we should create a spécialized object to store, serialize and replay it. This should be done after the RDP layer includes cache management primitives
+     #warning actual data is much more complex than a text, we should create a specialized object to store, serialize and replay it. This should be done after the RDP layer includes cache management primitives
                           12, (uint8_t*)"Hello, World"),
             "Text 1");
     }

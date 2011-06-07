@@ -240,7 +240,8 @@ const Region Widget::get_visible_region(Widget * window, Widget * widget, const 
     return region;
 }
 
-#warning text clipping using region information should be managed here
+#warning implementation of the server_draw_text function below is totally broken, especially data. MS-RDPEGDI See 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
+
 void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text, const uint32_t fgcolor, const Rect & clip){
     setlocale(LC_CTYPE, "fr_FR.UTF-8");
     assert(wdg->type != WND_TYPE_BITMAP);
@@ -260,7 +261,7 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
     memset(data, 0, len * 4);
     int f = 0;
     int c = 0;
-    int k = 0;
+    int distance_from_previous_fragment = 0;
     for (int index = 0; index < len; index++) {
         FontChar* font_item = this->mod->front->font.font_items[wstr[index]];
         #warning avoid passing parameters by reference to get results
@@ -274,10 +275,9 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
             break;
         }
         data[index * 2] = c;
-        data[index * 2 + 1] = k; // k is not neutral
-        // We're in a loop so it is used to set next data to last incby :/
-        k = font_item->incby;
-        total_width += k;
+        data[index * 2 + 1] = distance_from_previous_fragment;
+        distance_from_previous_fragment = font_item->incby;
+        total_width += font_item->incby;
         total_height = std::max(total_height, font_item->height);
     }
 
@@ -299,20 +299,19 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
     for (size_t ir = 0 ; ir < region.rects.size(); ir++){
         Rect draw_rect = region.rects[ir].intersect(clip_rect);
         if (!draw_rect.isempty()) {
-            const Rect box(0, 0, 0, 0);
-            const Rect rect(x-1, y-1, total_width + 1, total_height + 1);
+            const Rect rect(x, y, total_width, total_height);
             /* 0x03 0x73; TEXT2_IMPLICIT_X and something else */
 
             this->mod->server_set_clip(clip_rect);
             RDPGlyphIndex text(
                 f, // cache_id
                 0x03, // fl_accel
-                1, // ui_charinc
+                0x00, // ui_charinc
                 0, // f_op_redundant,
                 BLACK, // bgcolor
                 fgcolor, // fgcolor
                 rect, // bk
-                box, // op
+                Rect(), // op
                 this->mod->brush, // brush
                 x,  // glyph_x
                 y + total_height, // glyph_y
