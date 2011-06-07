@@ -105,28 +105,33 @@ struct client_mod : public Callback {
 
     int callback(int msg, long param1, long param2, long param3, long param4)
     {
+        LOG(LOG_INFO, "client_mod::callback()");
         //printf("msg=%x param1=%lx param2=%lx param3=%lx param4=%lx\n",msg, param1, param2, param3, param4);
         int rv = 0;
         switch (msg) {
         case 0: /* RDP_INPUT_SYNCHRONIZE */
             /* happens when client gets focus and sends key modifier info */
+            LOG(LOG_INFO, "client_mod::callback():RDP_INPUT_SYNCHRONIZE");
             this->key_flags = param1;
             // why do we not keep device flags ?
             this->mod_event(17, param1, param3, param1, param3);
             break;
         case RDP_INPUT_SCANCODE:
+            LOG(LOG_INFO, "client_mod::callback():RDP_INPUT_SCANCODE");
             this->scancode(param1, param2, param3, param4, this->key_flags, *this->keymap, this->keys);
             break;
         case 0x8001: /* RDP_INPUT_MOUSE */
             rv = this->input_mouse(param3, param1, param2);
             break;
         case WM_SCREENUPDATE:
+            LOG(LOG_INFO, "client_mod::callback():WM_SCREENUPDATE");
             /* invalidate, this is not from RDP_DATA_PDU_INPUT */
             /* like the rest, its from RDP_PDU_DATA with code 33 */
             /* its the rdp client asking for a screen update */
             this->invalidate(Rect(param1, param2, param3, param4));
             break;
         case WM_CHANNELDATA:
+            LOG(LOG_INFO, "client_mod::callback():WM_CHANNELDATA");
             /* called from server_channel.c, channel data has come in,
             pass it to module if there is one */
             rv = this->mod_event(WM_CHANNELDATA, param1, param2, param3, param4);
@@ -140,6 +145,7 @@ struct client_mod : public Callback {
 
     void set_mod_palette(RGBPalette palette)
     {
+        LOG(LOG_INFO, "client_mod::set_mod_palette");
         for (unsigned i = 0; i < 256 ; i++){
             this->mod_palette[i] = palette[i];
         }
@@ -168,6 +174,7 @@ struct client_mod : public Callback {
     virtual int mod_signal(void) = 0;
 
     virtual void scancode(long param1, long param2, long param3, long param4, int & key_flags, Keymap & keymap, int keys[]){
+        LOG(LOG_INFO, "client_mod::scancode");
         param1 = param1 % 128;
         int msg = WM_KEYUP;
         keys[param1] = 1 | param3;
@@ -205,11 +212,13 @@ struct client_mod : public Callback {
     }
 
     int server_begin_update() {
+        LOG(LOG_INFO, "client_mod::server_begin_update");
         this->front->begin_update();
         return 0;
     }
 
     int server_end_update(){
+        LOG(LOG_INFO, "client_mod::server_end_update");
         this->front->end_update();
         return 0;
     }
@@ -240,6 +249,7 @@ struct client_mod : public Callback {
 
     void server_resize(int width, int height, int bpp)
     {
+        LOG(LOG_INFO, "client_mod::server_resize");
         struct ClientInfo & client_info = this->front->rdp_layer.client_info;
 
         if (client_info.width != width
@@ -285,6 +295,8 @@ struct client_mod : public Callback {
 
     void server_draw_text(uint16_t x, uint16_t y, const char * utf8text, uint32_t fgcolor, uint32_t bgcolor)
     {
+        LOG(LOG_INFO, "client_mod::server_draw_text");
+
         // add text to glyph cache
         #warning use mbsrtowcs instead
         int len = mbstowcs(0, utf8text, 0);
@@ -343,6 +355,7 @@ struct client_mod : public Callback {
 
     void server_glyph_index(const RDPGlyphIndex & cmd)
     {
+        LOG(LOG_INFO, "client_mod::server_glyph_index");
         RDPGlyphIndex new_cmd = cmd;
         new_cmd.back_color = this->convert(cmd.back_color);
         new_cmd.fore_color = this->convert(cmd.fore_color);
@@ -352,16 +365,19 @@ struct client_mod : public Callback {
 
     void scr_blt(const RDPScrBlt & scrblt)
     {
+        LOG(LOG_INFO, "client_mod::scr_blt");
         this->front->scr_blt(scrblt, this->clip);
     }
 
     void dest_blt(const RDPDestBlt & cmd)
     {
+        LOG(LOG_INFO, "client_mod::dest_blt");
         this->front->dest_blt(cmd, this->clip);
     }
 
     void pat_blt(const RDPPatBlt & cmd)
     {
+        LOG(LOG_INFO, "client_mod::pat_blt");
         RDPPatBlt new_cmd = cmd;
         new_cmd.back_color = this->convert(cmd.back_color);
         new_cmd.fore_color = this->convert(cmd.fore_color);
@@ -371,6 +387,7 @@ struct client_mod : public Callback {
 
     void opaque_rect(const RDPOpaqueRect & cmd)
     {
+        LOG(LOG_INFO, "client_mod::opaque_rect");
         RDPOpaqueRect new_cmd = cmd;
 
         #warning dirty hack to fix color problems with opaque_rect
@@ -387,6 +404,7 @@ struct client_mod : public Callback {
     #warning move out server_set_pen
     int server_set_pen(int style, int width)
     {
+        LOG(LOG_INFO, "client_mod::server_set_pen");
         this->pen.style = style;
         this->pen.width = width;
         return 0;
@@ -394,6 +412,7 @@ struct client_mod : public Callback {
 
     void line_to(const RDPLineTo & cmd)
     {
+        LOG(LOG_INFO, "client_mod::line_to");
         RDPLineTo new_cmd = cmd;
         new_cmd.back_color = this->convert(cmd.back_color);
         new_cmd.pen.color = this->convert(cmd.pen.color);
@@ -404,6 +423,8 @@ struct client_mod : public Callback {
     #warning this should become BITMAP UPDATE, we should be able to send bitmaps either through orders and cache or through BITMAP UPDATE
     void server_paint_rect(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const RGBPalette & palette)
     {
+        LOG(LOG_INFO, "client_mod::server_paint_rect dst(%d, %d, %d, %d) srcx=%d srcy=%d", dst.x, dst.y, dst.cx, dst.cy, srcx, srcy);
+
         #warning color conversion should probably go into bitmap. Something like a copy constructor that change color on the fly ? We may even choose to keep several versions of the same bitmap with different bpp ?
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
@@ -432,6 +453,7 @@ struct client_mod : public Callback {
 
     void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const RGBPalette & palette)
     {
+        LOG(LOG_INFO, "client_mod::mem_blt");
         const Rect & dst = memblt.rect;
         const int srcx = memblt.srcx;
         const int srcy = memblt.srcy;
@@ -463,12 +485,14 @@ struct client_mod : public Callback {
 
     void set_pointer(int cache_idx)
     {
+        LOG(LOG_INFO, "client_mod::set_pointer");
         this->front->set_pointer(cache_idx);
         this->current_pointer = cache_idx;
     }
 
     void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
     {
+        LOG(LOG_INFO, "client_mod::server_set_pointer");
         int cacheidx = 0;
         switch (this->front->cache.add_pointer(data, mask, x, y, cacheidx)){
         case POINTER_TO_SEND:
@@ -483,10 +507,12 @@ struct client_mod : public Callback {
 
     virtual void invalidate(const Rect & rect)
     {
+        LOG(LOG_INFO, "client_mod::invalidate");
     }
 
     void server_palette(const uint32_t (& palette)[256])
     {
+        LOG(LOG_INFO, "client_mod::server_palette");
         this->front->send_palette(palette);
     }
 
@@ -497,16 +523,19 @@ struct client_mod : public Callback {
 
     void server_set_clip(const Rect & rect)
     {
+        LOG(LOG_INFO, "client_mod::server_set_clip");
         this->clip = rect;
     }
 
     void server_reset_clip()
     {
+        LOG(LOG_INFO, "client_mod::server_reset_clip");
         this->clip = this->get_front_rect();
     }
 
     void server_set_brush(const RDPBrush & brush)
     {
+        LOG(LOG_INFO, "client_mod::server_set_brush");
         this->brush = brush;
 
         if (brush.style == 3){
@@ -528,6 +557,7 @@ struct client_mod : public Callback {
                     int offset, int baseline,
                     int width, int height, const uint8_t* data)
     {
+        LOG(LOG_INFO, "client_mod::server_add_char");
         struct FontChar fi(offset, baseline, width, height, 0);
         memcpy(fi.data, data, fi.datasize());
         this->front->send_glyph(fi, font, character);
@@ -535,6 +565,7 @@ struct client_mod : public Callback {
 
     int server_get_channel_id(char* name)
     {
+        LOG(LOG_INFO, "client_mod::server_get_channel_id");
         return this->front->get_channel_id(name);
     }
 
@@ -542,6 +573,7 @@ struct client_mod : public Callback {
                            uint8_t* data, int data_len,
                            int total_data_len, int flags)
     {
+        LOG(LOG_INFO, "client_mod::server_send_to_channel_mod");
         this->front->rdp_layer.server_send_to_channel(channel_id, data, data_len, total_data_len, flags);
     }
 
@@ -555,6 +587,7 @@ struct client_mod : public Callback {
 
     int input_mouse(int device_flags, int x, int y)
     {
+        LOG(LOG_INFO, "client_mod::input_mouse");
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
             this->mod_event(WM_MOUSEMOVE, x, y, 0, 0);
             this->front->mouse_x = x;

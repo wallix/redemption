@@ -890,7 +890,7 @@ struct rdp_rdp {
         void send_redirect_pdu(long param1, long param2, long param3, int param4,
                                       vector<mcs_channel_item*> channel_list) throw(Error)
         {
-//            LOG(LOG_INFO, "send_redirect_pdu\n");
+            LOG(LOG_INFO, "send_redirect_pdu\n");
             char* name = 0;
             struct mcs_channel_item* channel_item;
             /* We need to verify this in order to right process the stream passed */
@@ -911,16 +911,20 @@ struct rdp_rdp {
                     name = channel_item->name;
                 }
             }
+            LOG(LOG_INFO, "send_redirect_pdu channel=%s\n", name);
             /* Here, we're going to search the correct channel in order to send
             information throughout this channel to RDP server */
             int channel_id = 0;
             int num_channels_dst = (int) this->sec_layer.mcs_layer.channel_list.size();
             for (int index = 0; index < num_channels_dst; index++){
                 channel_item = this->sec_layer.mcs_layer.channel_list[index];
+                LOG(LOG_INFO, "send_redirect_pdu testint channel %s\n", channel_item->name);
                 if (strcmp(name, channel_item->name) == 0){
+                    LOG(LOG_INFO, "send_redirect_pdu channel found=%s\n", name);
                     channel_id = channel_item->chanid;
                 }
             }
+            LOG(LOG_INFO, "send_redirect_pdu channel_id %d\n", channel_id);
             #warning what to do if no matching channel was found in back-end ?
             assert(channel_id);
             /*Copy data from s to data and after that close stream and send
@@ -942,6 +946,7 @@ struct rdp_rdp {
             int sec_flags = SEC_ENCRYPT;
             /* We need to call send_data but with another code because we need to build an
             virtual_channel packet and not an MCS_GLOBAL_CHANNEL packet */
+            LOG(LOG_INFO, "this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, channel_id)");
             this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, channel_id);
         }
 
@@ -1035,7 +1040,7 @@ struct rdp_rdp {
         // numberRectangles (2 bytes): A 16-bit, unsigned integer.
         // The number of screen rectangles present in the rectangles field.
         size_t numberRectangles = stream.in_uint16_le();
-//        LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */\n", numberRectangles);
+        LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */\n", numberRectangles);
         for (size_t i = 0; i < numberRectangles; i++) {
             // rectangles (variable): Variable-length array of TS_BITMAP_DATA
             // (section 2.2.9.1.1.3.1.2.2) structures, each of which contains a
@@ -1105,7 +1110,7 @@ struct rdp_rdp {
 
             Bitmap bitmap(bpp, width, height);
 
-//            LOG(LOG_INFO, "/* Rect [%d] bpp=%d (%d) width=%d height=%d b(%d, %d, %d, %d) */", i, bpp, bitmap.bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
+            LOG(LOG_INFO, "/* Rect [%d] bpp=%d (%d) width=%d height=%d b(%d, %d, %d, %d) */", i, bpp, bitmap.bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
 
             if (flags & 0x0001){
                 uint16_t size = bufsize;
