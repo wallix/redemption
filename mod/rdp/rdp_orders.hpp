@@ -389,7 +389,7 @@ struct rdp_orders {
                 case TS_CACHE_COLOR_TABLE:
                     this->cache_colormap.receive(stream, control, header);
                     break;
-                case FONTCACHE:
+                case TS_CACHE_GLYPH:
                     this->rdp_orders_process_fontcache(stream, header.flags, mod);
                     break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV2:

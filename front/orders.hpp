@@ -255,6 +255,72 @@ struct Orders
         bmp_order.emit(this->out_stream);
     }
 
+
+// MS-RDPEGDI 2.2.2.2.1.2.5     Cache Glyph - Revision 1 (CACHE_GLYPH_ORDER)
+// =========================================================================
+//  The Cache Glyph - Revision 1 Secondary Drawing Order is used by the server
+//  to instruct the client to store a glyph in a particular Glyph Cache entry.
+//  Support for glyph caching is negotiated in the Glyph Cache Capability Set
+//  (see [MS-RDPBCGR] section 2.2.7.1.8).
+
+//  header (6 bytes): A Secondary Order Header, as defined in section
+//  2.2.2.2.1.2.1.1. The embedded orderType field MUST be set to TS_CACHE_GLYPH
+// (0x03). The embedded extraFlags field MAY contain the following flag.
+
+// +----------------------------------+----------------------------------------+
+// | 0x00100 CG_GLYPH_UNICODE_PRESENT | Indicates that the unicodeCharacters   |
+// |                                  | field is present.                      |
+// +----------------------------------+----------------------------------------+
+
+// cacheId (1 byte): An 8-bit, unsigned integer. The glyph cache into which to
+//   store the glyph data. This value MUST be in the range negotiated by the
+//   Glyph Cache Capability Set (see [MS-RDPBCGR] section 2.2.7.1.8).
+
+// cGlyphs (1 byte): An 8-bit, unsigned integer. The number of glyph entries in
+//   the glyphData field.
+
+// glyphData (variable): The specification for each of the glyphs in this order
+//   (the number of glyphs is specified by the cGlyphs field) defined using
+//   Cache Glyph Data structures.
+
+//    2.2.2.2.1.2.5.1 Cache Glyph Data (TS_CACHE_GLYPH_DATA)
+//    -------------------------------------------------------
+//    The TS_CACHE_GLYPH_DATA structure contains information describing a single
+//    glyph.
+
+// glyphData::cacheIndex (2 bytes): A 16-bit, unsigned integer. The index within
+//   a specified Glyph Cache where the glyph data MUST be stored. This value
+//   MUST be in the range negotiated by the Glyph Cache Capability Set (see
+//   [MS-RDPBCGR] section 2.2.7.1.8).
+
+// glyphData::x (2 bytes): A 16-bit, signed integer. The X component of the
+//   coordinate that defines the origin of the character within the glyph
+//   bitmap. The top-left corner of the bitmap is (0, 0).
+
+// glyphData::y (2 bytes): A 16-bit, signed integer. The Y component of the
+//   coordinate that defines the origin of the character within the glyph
+//   bitmap. The top-left corner of the bitmap is (0, 0).
+
+// glyphData::cx (2 bytes): A 16-bit, unsigned integer. The width of the glyph
+//   bitmap in pixels.
+
+// glyphData::cy (2 bytes): A 16-bit, unsigned integer. The height of the glyph
+//   bitmap in pixels.
+
+// glyphData::aj (variable): A variable-sized byte array containing a
+//   1-bit-per-pixel bitmap of the glyph. The individual scan lines are encoded
+//   in top-down order, and each scan line MUST be byte-aligned.
+//   Once the array has been populated with bitmap data, it MUST be padded to a
+//   double-word boundary (the size of the structure in bytes MUST be a multiple
+//   of 4). For examples of 1-bit-per-pixel encoded glyph bitmaps, see sections
+//   4.6.1 and 4.6.2.
+
+// unicodeCharacters (variable): Contains the Unicode character representation
+//   of each glyph in the glyphData field. The number of bytes in the field is
+//   given by cGlyphs * 2. This string is used for diagnostic purposes only and
+//   is not necessary for successfully decoding and caching the glyphs in the
+//   glyphData field.
+
     void send_font(const FontChar & font_char, int font_index, int char_index)
     {
 
@@ -267,8 +333,9 @@ struct Orders
         int len = (datasize + 12) - 7; /* length after type minus 7 */
         this->out_stream.out_uint16_le(len);
         this->out_stream.out_uint16_le(8); /* flags */
-        this->out_stream.out_uint8(FONTCACHE); /* type */
+        this->out_stream.out_uint8(TS_CACHE_GLYPH); /* type */
         this->out_stream.out_uint8(font_index);
+
         this->out_stream.out_uint8(1); /* num of chars */
         this->out_stream.out_uint16_le(char_index);
         this->out_stream.out_uint16_le(font_char.offset);
