@@ -39,9 +39,4 @@
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
-// Primary Drawing Orders
-// -------------------------
-
-
-
 #endif

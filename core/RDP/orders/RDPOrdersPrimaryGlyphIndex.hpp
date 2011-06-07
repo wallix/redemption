@@ -138,7 +138,7 @@ class RDPGlyphIndex {
 //          && is_1_byte(this->op.y + this->op.cy - oldcmd.op.y + oldcmd.op.cy )
 //          && is_1_byte(this->glyph_x            - oldcmd.glyph_x             )
 //          && is_1_byte(this->glyph_y            - oldcmd.glyph_y             )
-//                                                                      ) * DELTA;
+//                                                                    ) * DELTA;
 
         header.fields =
             (this->cache_id           != oldcmd.cache_id            ) * 0x000001
@@ -168,7 +168,7 @@ class RDPGlyphIndex {
           | (this->glyph_x            != oldcmd.glyph_x             ) * 0x080000
           | (this->glyph_y            != oldcmd.glyph_y             ) * 0x100000
           | (data_len                 != 0                          ) * 0x200000
-              ;
+          ;
 
         common.emit(stream, header, oldcommon);
 

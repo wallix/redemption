@@ -281,6 +281,8 @@ struct client_mod : public Callback {
 
     #warning this function is written in a quite insane way, so don't use it, and rewrite it in a saner way.
     #warning also merge with the similar code in widget.
+    #warning implementation of the server_draw_text function below is totally broken, especially data. MS-RDPEGDI See 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
+
     void server_draw_text(uint16_t x, uint16_t y, const char * utf8text, uint32_t fgcolor, uint32_t bgcolor)
     {
         // add text to glyph cache
@@ -288,67 +290,39 @@ struct client_mod : public Callback {
         int len = mbstowcs(0, utf8text, 0);
         wchar_t* wstr = new wchar_t[len + 2];
         mbstowcs(wstr, utf8text, len + 1);
-        int cx = 0;
-        int cy = 0;
+        int total_width = 0;
+        int total_height = 0;
         uint8_t *data = new uint8_t[len * 4];
         memset(data, 0, len * 4);
         int f = 0;
         int c = 0;
-        int k = 0;
+        int distance_from_previous_fragment = 0;
         for (int index = 0; index < len; index++) {
             FontChar* font_item = this->front->font.font_items[wstr[index]];
             #warning avoid passing parameters by reference to get results
             switch (this->front->cache.add_glyph(font_item, f, c))
             {
                 case Cache::GLYPH_ADDED_TO_CACHE:
-                    LOG(LOG_INFO, "Add glyph %d to cache (%d %c)", c, wstr[index], wstr[index]&0xFF);
+                    //LOG(LOG_INFO, "Add glyph %d to cache (%d %c)", c, wstr[index], wstr[index]&0xFF);
                     this->front->send_glyph(*font_item, f, c);
                 break;
                 default:
                 break;
             }
             data[index * 2] = c;
-            data[index * 2 + 1] = k; // k is not neutral
-            // We're in a loop so it is used to set next data to last incby :/
-            k = font_item->incby;
-            cx += k;
-            cy = std::max(cy, font_item->height);
-        }
-
-
-        this->brush.hatch = 0xaa;
-        this->brush.extra[0] = 0x55;
-        this->brush.extra[1] = 0xaa;
-        this->brush.extra[2] = 0x55;
-        this->brush.extra[3] = 0xaa;
-        this->brush.extra[4] = 0x55;
-        this->brush.extra[5] = 0xaa;
-        this->brush.extra[6] = 0x55;
-        this->brush.org_x = 0;
-        this->brush.org_y = 0;
-        this->brush.style = 3;
-
-        // brush style 3 is not supported by windows 7, we **MUST** use cache
-        if (this->front->rdp_layer.client_info.brush_cache_code == 1) {
-            uint8_t pattern[8];
-            pattern[0] = this->brush.hatch;
-            memcpy(pattern+1, this->brush.extra, 7);
-            int cache_idx = 0;
-            if (BRUSH_TO_SEND == this->front->cache.add_brush(pattern, cache_idx)){
-                this->front->send_brush(cache_idx);
-            }
-            this->brush.hatch = cache_idx;
-            this->brush.style = 0x81;
+            data[index * 2 + 1] = distance_from_previous_fragment;
+            distance_from_previous_fragment = font_item->incby;
+            total_width += font_item->incby;
+            total_height = std::max(total_height, font_item->height);
         }
 
         #warning there seems to be some strange behavior with bk rect (and op ?). Same problem as usual, we have a rectangle but we don't know if boundaries (right, bottom) are included or not. Check actual behavior with rdesktop and with mstsc client. Nevertheless we shouldn't have to add 1 here.
-        const Rect bk(x, y, cx, cy);
-        LOG(LOG_INFO, "Glyph_index bk_rect(%d, %d, %d, %d)", bk.x, bk.y, bk.cx, bk.cy);
+        const Rect bk(x, y, total_width, total_height);
 
         RDPGlyphIndex text(
             f, // cache_id
             0x03, // fl_accel
-            1, // ui_charinc
+            0x0, // ui_charinc
             1, // f_op_redundant,
             bgcolor, // bgcolor
             fgcolor, // fgcolor
@@ -356,9 +330,9 @@ struct client_mod : public Callback {
             Rect(), // op
             this->brush, // brush
             x,  // glyph_x
-            y + cy, // glyph_y
+            y + total_height, // glyph_y
             len * 2, // data_len in bytes
-            data // data (utf16)
+            data // data
         );
         this->server_glyph_index(text);
 
