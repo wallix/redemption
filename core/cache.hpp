@@ -160,7 +160,7 @@ struct Cache {
         }
         /* set, send char and return */
         #warning define a copy constructor
-        FontChar * fi = new FontChar(font_item->offset, font_item->baseline, font_item->width, font_item->height, 0);
+        FontChar * fi = new FontChar(font_item->offset, font_item->baseline, font_item->width, font_item->height, font_item->incby);
         memcpy(fi->data, font_item->data, font_item->datasize());
         this->char_items[f][c].font_item = fi;
         this->char_items[f][c].stamp = this->char_stamp;

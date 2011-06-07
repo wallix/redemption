@@ -31,6 +31,49 @@
 #include "bitmap.hpp"
 #include "client_info.hpp"
 
+
+//MS-RDPEGDI 3.3.5.1.1.1       Construction of a Primary Drawing Order
+//====================================================================
+
+//  All primary drawing orders MUST conform to the structure and rules defined
+//  in section 2.2.2.2.1.1.2.
+
+// To efficiently construct a primary drawing order, the server MUST use a
+// Primary Drawing Order History (section 3.2.1.1) store. This store holds three
+// pieces of information:
+
+//  -Last primary order type constructed.
+
+//  -Current bounding rectangle.
+
+//  -Per-order record of the last value used in each field.
+
+//  These stored records allow the server to use the minimum amount of data when
+//  constructing an order; if a field is unchanged from the value that it had
+//  when the order type was last sent, it SHOULD NOT be included in the order
+//  being constructed. Hence, only fields that have new values are required to
+//  be sent to the client. The fields that are present in the order MUST be
+//  indicated by the fieldFlags field.
+
+//  If all of the Coord-type fields (see section 2.2.2.2.1.1.1.1) in an order
+//  can be represented as a signed delta in the range -127 to 128 from the
+//  previous field value, the size of the order SHOULD be optimized by using
+//  delta-coordinates (see sections 2.2.2.2.1.1.1.1 and 2.2.2.2.1.1.2). In that
+//  case, all of the fields SHOULD be represented using delta-coordinates, and
+//  the TS_DELTA_COORDINATES (0x10) flag MUST be used in the primary drawing
+//  order header to indicate this fact.
+
+//  Before a given order is sent, the server MUST also ensure that all of the
+//  data required to process the order is accessible to the client. For example,
+//  if the order refers to a cached item, that item MUST be present in the
+//  client-side cache when the order is processed. Or, if palettized color is
+//  being used, the correct palette MUST be applied at the client-side.
+
+//  Once a primary drawing order has been constructed and transmitted to the
+//  client, the server MUST update the records in the Primary Drawing Order
+//  History (section 3.3.1.2) to ensure that future encodings use the minimum
+//  fields and data required.
+
 // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding
 // =======================================================
 // (TWO_BYTE_UNSIGNED_ENCODING)
@@ -233,7 +276,7 @@ namespace RDP {
      // (MS-RDPEGDI section 2.2.2.2.1.2.5)
      // or Cache Glyph - Revision 2
      // (MS-RDPEGDI section 2.2.2.2.1.2.6) (choice through extra flags)
-        FONTCACHE     = 3,
+        TS_CACHE_GLYPH     = 3,
      // TS_CACHE_BITMAP_UNCOMPRESSED_REV2 : Cache Bitmap - Revision 2
      // (MS-RDPEGDI section 2.2.2.2.1.2.3)
         TS_CACHE_BITMAP_UNCOMPRESSED_REV2 = 4,
