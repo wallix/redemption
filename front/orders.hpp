@@ -142,6 +142,11 @@ struct Orders
 //        RDPMemBlt cmd(cache_id + color_table * 256, r, rop, srcx, srcy, cache_idx);
         RDPOrderCommon newcommon(MEMBLT, clip);
         cmd.emit(this->out_stream, newcommon, this->common, this->memblt);
+
+        char buffer[1024];
+        cmd.str(buffer, 1024, this->common);
+        LOG(LOG_INFO, "%s", buffer);
+
         this->common = newcommon;
         this->memblt = cmd;
     }
