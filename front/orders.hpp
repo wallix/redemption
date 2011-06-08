@@ -183,20 +183,6 @@ struct Orders
         newcmd.emit(this->out_stream, 0);
     }
 
-    void brush_cache(int width, int height, int bpp, int type, int size, uint8_t* data, int cache_id)
-    {
-        RDPBrushCache newcmd;
-        #warning define a construcot with emit parameters
-        newcmd.bpp = bpp;
-        newcmd.width = width;
-        newcmd.height = height;
-        newcmd.type = type;
-        newcmd.size = size;
-        newcmd.data = data;
-        newcmd.emit(this->out_stream, cache_id);
-        newcmd.data = 0;
-    }
-
 };
 } /* namespaces */
 
