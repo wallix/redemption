@@ -269,7 +269,7 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
         {
             case Cache::GLYPH_ADDED_TO_CACHE:
                 LOG(LOG_INFO, "Add glyph %d to cache", c);
-                this->mod->front->send_glyph(*font_item, f, c);
+                this->mod->front->glyph_cache(*font_item, f, c);
             break;
             default:
             break;

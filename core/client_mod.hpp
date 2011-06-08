@@ -316,7 +316,7 @@ struct client_mod : public Callback {
             {
                 case Cache::GLYPH_ADDED_TO_CACHE:
                     //LOG(LOG_INFO, "Add glyph %d to cache (%d %c)", c, wstr[index], wstr[index]&0xFF);
-                    this->front->send_glyph(*font_item, f, c);
+                    this->front->glyph_cache(*font_item, f, c);
                 break;
                 default:
                 break;
@@ -560,7 +560,7 @@ struct client_mod : public Callback {
         LOG(LOG_INFO, "client_mod::server_add_char");
         struct FontChar fi(offset, baseline, width, height, 0);
         memcpy(fi.data, data, fi.datasize());
-        this->front->send_glyph(fi, font, character);
+        this->front->glyph_cache(fi, font, character);
     }
 
     int server_get_channel_id(char* name)
