@@ -457,7 +457,22 @@ public:
     void glyph_cache(const FontChar & font_char, int font_index, int char_index)
     {
         this->reserve_order(font_char.datasize() + 18);
-        this->orders.glyph_cache(font_char, font_index, char_index);
+
+        using namespace RDP;
+
+        #warning define a construcot with emit parameters
+
+        RDPGlyphCache newcmd;
+        newcmd.size = font_char.datasize();
+        newcmd.cacheId = font_index;
+        newcmd.glyphData_cacheIndex = char_index;
+        newcmd.glyphData_x = font_char.offset;
+        newcmd.glyphData_y = font_char.baseline;
+        newcmd.glyphData_cx = font_char.width;
+        newcmd.glyphData_cy = font_char.height;
+        newcmd.glyphData_aj = font_char.data;
+        newcmd.emit(this->orders.out_stream);
+        newcmd.glyphData_aj = 0;
     }
 
 };
