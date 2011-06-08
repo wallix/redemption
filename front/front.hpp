@@ -398,8 +398,18 @@ public:
         const int size = 8;
         this->reserve_order(size + 12);
 
-        this->orders.brush_cache(8, 8, 1, 0x81, size, this->cache.brush_items[index].pattern, index);
+        using namespace RDP;
 
+        RDPBrushCache newcmd;
+        #warning define a construcot with emit parameters
+        newcmd.bpp = 1;
+        newcmd.width = 8;
+        newcmd.height = 8;
+        newcmd.type = 0x81;
+        newcmd.size = size;
+        newcmd.data = this->cache.brush_items[index].pattern;
+        newcmd.emit(this->orders.out_stream, index);
+        newcmd.data = 0;
     }
 
 
