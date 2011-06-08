@@ -410,7 +410,10 @@ public:
         #warning really when using compression we'll use less space
         this->reserve_order(entry->pbmp->bmp_size + 16);
 
-        this->orders.send_bitmap_common(&this->rdp_layer.client_info, *entry->pbmp, cache_id, cache_idx);
+        using namespace RDP;
+
+        RDPBmpCache bmp_order(entry->pbmp, cache_id, cache_idx, &this->rdp_layer.client_info);
+        bmp_order.emit(this->orders.out_stream);
     }
 
     // draw bitmap from src_data (image rect contained in src_r) to x, y

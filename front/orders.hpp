@@ -197,14 +197,6 @@ struct Orders
         newcmd.data = 0;
     }
 
-    void send_bitmap_common(ClientInfo* client_info, Bitmap & bmp, uint8_t cache_id, uint16_t cache_idx)
-    {
-        using namespace RDP;
-
-        RDPBmpCache bmp_order(&bmp, cache_id, cache_idx, client_info);
-        bmp_order.emit(this->out_stream);
-    }
-
 };
 } /* namespaces */
 
