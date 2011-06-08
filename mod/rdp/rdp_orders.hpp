@@ -32,6 +32,7 @@
 
 #include "stream.hpp"
 #include "client_mod.hpp"
+#include "RDP/orders/RDPOrdersNames.hpp"
 #include "NewRDPOrders.hpp"
 #include "log.hpp"
 

@@ -139,7 +139,6 @@ struct Orders
 
     void mem_blt(const RDPMemBlt & cmd, const Rect & clip)
     {
-//        RDPMemBlt cmd(cache_id + color_table * 256, r, rop, srcx, srcy, cache_idx);
         RDPOrderCommon newcommon(MEMBLT, clip);
         cmd.emit(this->out_stream, newcommon, this->common, this->memblt);
 
@@ -165,61 +164,14 @@ struct Orders
     void glyph_index(const RDPGlyphIndex & glyph_index, const Rect & clip)
     {
 
-//        LOG(LOG_INFO, "glyph_index[%d](font=%d flags=%d mixmode=%d, fg_color=%x bg_color=%x text_clip(%d, %d, %d, %d) box(%d, %d, %d, %d), x=%d, y=%d data_len=%d clip(%d, %d, %d, %d)", this->order_count, font, flags, mixmode, fg_color, bg_color, text_clip.x, text_clip.y, text_clip.cx, text_clip.cy, box.x, box.y, box.cx, box.cy, x, y, data_len, clip.x, clip.y, clip.cx, clip.cy);
-
         RDPOrderCommon newcommon(GLYPHINDEX, clip);
         glyph_index.emit(this->out_stream, newcommon, this->common, this->text);
         this->common = newcommon;
         this->text = glyph_index;
     }
 
-    /*****************************************************************************/
-    // [MS-RDPGDI] 2.2.2.2.1.2.4 Cache Color Table (CACHE_COLOR_TABLE_ORDER)
 
-    // The Cache Color Table Secondary Drawing Order is used by the server
-    // to instruct the client to store a color table in a particular Color Table
-    // Cache entry. Color tables are used in the MemBlt (section 2.2.2.2.1.1.2.9)
-    // and Mem3Blt (section 2.2.2.2.1.1.2.10) Primary Drawing Orders.
-
-    // Support for color table caching is not negotiated in the Color Table Cache
-    // Capability Set (section 2.2.1.1), but is instead implied by support for
-    // the MemBlt (section 2.2.2.2.1.1.2.9) and Mem3Blt (section 2.2.2.2.1.1.2.10)
-    // Primary Drawing Orders. If support for these orders is advertised in the
-    // Order Capability Set (see [MS-RDPBCGR] section 2.2.7.1.3), the existence
-    // of a color table cache with entries for six palettes is assumed when
-    // palettized color is being used, and the Cache Color Table is used to
-    // update these palettes.
-
-    // header (6 bytes): A Secondary Order Header, as defined in section
-    // 2.2.2.2.1.2.1.1. The embedded orderType field MUST be set to
-    // TS_CACHE_COLOR_TABLE (0x01).
-
-    // cacheIndex (1 byte): An 8-bit, unsigned integer. An entry in the Cache
-    // Color Table where the color table MUST be stored. This value MUST be in
-    // the range 0 to 5 (inclusive).
-
-    // numberColors (2 bytes): A 16-bit, unsigned integer. The number of Color Quad
-    // (section 2.2.2.2.1.2.4.1) structures in the colorTable field. This field
-    // MUST be set to 256 entries.
-
-    // colorTable (variable): A Color Table composed of an array of Color Quad
-    // (section 2.2.2.2.1.2.4.1) structures. The number of entries in the array
-    // is given by the numberColors field.
-
-    // 2.2.2.2.1.2.4.1 Color Quad (TS_COLOR_QUAD)
-    // The TS_COLOR_QUAD structure is used to express the red, green, and blue
-    // components necessary to reproduce a color in the additive RGB space.
-
-    // blue (1 byte): An 8-bit, unsigned integer. The blue RGB color component.
-
-    // green (1 byte): An 8-bit, unsigned integer. The green RGB color component.
-
-    // red (1 byte): An 8-bit, unsigned integer. The red RGB color component.
-
-    // pad1Octet (1 byte): An 8-bit, unsigned integer. Padding. Values in this
-    // field are arbitrary and MUST be ignored.
-
-    void send_palette(const uint32_t (& palette)[256], int cache_id)
+    void color_cache(const uint32_t (& palette)[256], int cache_id)
     {
 //        LOG(LOG_INFO, "send_palette[%d](cache_id=%d)\n", this->order_count, cache_id);
 

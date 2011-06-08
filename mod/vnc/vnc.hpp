@@ -863,7 +863,7 @@ struct mod_vnc : public client_mod {
             LOG(LOG_ERR, "VNC: number of palette colors too large: %d\n", num_colors);
         }
         this->server_begin_update();
-        this->server_palette(this->palette);
+        this->color_cache(this->palette);
         this->server_end_update();
     }
 
