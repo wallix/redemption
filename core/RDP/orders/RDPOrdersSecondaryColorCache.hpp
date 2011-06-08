@@ -80,6 +80,7 @@ class RDPColCache {
         memset(this->palette, 0, sizeof(palette));
     }
 
+    #warning cacheIndex should be inside instance and array of color cache (patterns) outside color_cache
     void emit(Stream & stream, uint8_t cacheIndex)
     {
         using namespace RDP;

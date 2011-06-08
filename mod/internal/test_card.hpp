@@ -74,7 +74,7 @@ struct test_card_mod : public internal_mod {
 //            uint8_t pattern[8] = {0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55};
 //            int cache_idx = 0;
 //            if (BRUSH_TO_SEND == front.cache.add_brush(pattern, cache_idx)){
-//                front.send_brush(cache_idx);
+//                front.brush_cache(cache_idx);
 //            }
 //            brush.hatch = cache_idx;
 //            brush.style = 0x81;

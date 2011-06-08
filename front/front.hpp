@@ -393,12 +393,12 @@ public:
 //        LOG(LOG_INFO, "front::color_cache done\n");
     }
 
-    void send_brush(const int index)
+    void brush_cache(const int index)
     {
         const int size = 8;
         this->reserve_order(size + 12);
 
-        this->orders.send_brush(8, 8, 1, 0x81, size, this->cache.brush_items[index].pattern, index);
+        this->orders.brush_cache(8, 8, 1, 0x81, size, this->cache.brush_items[index].pattern, index);
 
     }
 

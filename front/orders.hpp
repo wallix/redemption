@@ -28,6 +28,7 @@
 #include "error.hpp"
 #include "rect.hpp"
 #include "NewRDPOrders.hpp"
+#include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include <algorithm>
 #include "altoco.hpp"
 #include "bitmap.hpp"
@@ -173,32 +174,26 @@ struct Orders
 
     void color_cache(const uint32_t (& palette)[256], int cache_id)
     {
-//        LOG(LOG_INFO, "send_palette[%d](cache_id=%d)\n", this->order_count, cache_id);
+//        LOG(LOG_INFO, "color_cache[%d](cache_id=%d)\n", this->order_count, cache_id);
 
         RDPColCache newcmd;
+        #warning why is it always palette 0 ? use cache_id
         memcpy(newcmd.palette[0], palette, 256);
         newcmd.emit(this->out_stream, 0);
     }
 
-    void send_brush(int width, int height, int bpp, int type, int size, uint8_t* data, int cache_id)
+    void brush_cache(int width, int height, int bpp, int type, int size, uint8_t* data, int cache_id)
     {
-        using namespace RDP;
-
-//        LOG(LOG_INFO, "send_brush[%d](width=%d, height=%d bpp=%d type=%d, size=%d, cache_id=%d)\n", this->order_count, width, height, bpp, type, size, cache_id);
-
-        int order_flags = STANDARD | SECONDARY;
-        this->out_stream.out_uint8(order_flags);
-        int len = (size + 6) - 7; /* length after type minus 7 */
-        this->out_stream.out_uint16_le(len);
-        this->out_stream.out_uint16_le(0); /* flags */
-        this->out_stream.out_uint8(BRUSHCACHE); /* type */
-        this->out_stream.out_uint8(cache_id);
-        this->out_stream.out_uint8(bpp);
-        this->out_stream.out_uint8(width);
-        this->out_stream.out_uint8(height);
-        this->out_stream.out_uint8(type);
-        this->out_stream.out_uint8(size);
-        this->out_stream.out_copy_bytes(data, size);
+        RDPBrushCache newcmd;
+        #warning define a construcot with emit parameters
+        newcmd.bpp = bpp;
+        newcmd.width = width;
+        newcmd.height = height;
+        newcmd.type = type;
+        newcmd.size = size;
+        newcmd.data = data;
+        newcmd.emit(this->out_stream, cache_id);
+        newcmd.data = 0;
     }
 
     void send_bitmap_common(ClientInfo* client_info, Bitmap & bmp, uint8_t cache_id, uint16_t cache_idx)

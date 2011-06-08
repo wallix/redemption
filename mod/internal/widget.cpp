@@ -545,7 +545,7 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
         memcpy(pattern+1, this->mod->brush.extra, 7);
         int cache_idx = 0;
         if (BRUSH_TO_SEND == this->mod->front->cache.add_brush(pattern, cache_idx)){
-            this->mod->front->send_brush(cache_idx);
+            this->mod->front->brush_cache(cache_idx);
         }
         this->mod->brush.hatch = cache_idx;
         this->mod->brush.style = 0x81;
