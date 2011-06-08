@@ -454,24 +454,10 @@ public:
         this->send_bitmap_front(dst, src_r, rop, src_data, palette_id, clip);
     }
 
-//    #warning harmonize names with orders send_glyph or send_font
-//    void send_glyph(int font, int character,
-//                    int offset, int baseline,
-//                    int width, int height, const uint8_t* data)
-//    {
-////        LOG(LOG_INFO, "front::send_glyph\n");
-//        struct FontChar fi(offset, baseline, width, height, 0);
-
-//        memcpy(fi.data, data, fi.datasize());
-//        this->send_glyph(&fi, font, character);
-//    }
-
-    void send_glyph(const FontChar & font_char, int font_index, int char_index)
+    void glyph_cache(const FontChar & font_char, int font_index, int char_index)
     {
-//        LOG(LOG_INFO, "front::send_glyph 2\n");
-
         this->reserve_order(font_char.datasize() + 18);
-        this->orders.send_font(font_char, font_index, char_index);
+        this->orders.glyph_cache(font_char, font_index, char_index);
     }
 
 };
