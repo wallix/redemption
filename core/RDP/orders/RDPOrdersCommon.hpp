@@ -229,38 +229,6 @@ namespace RDP {
         TEXT2      = 27,
     };
 
-    static const char * ordernames[28] = {
-        "DESTBLT",
-        "PATBLT",
-        "SCREENBLT",
-        "ORDER3",
-        "ORDER4",
-        "ORDER5",
-        "ORDER6",
-        "ORDER7",
-        "ORDER8",
-        "LINE",
-        "RECT",
-        "DESKSAVE",
-        "ORDER12",
-        "MEMBLT",
-        "TRIBLT",
-        "ORDER15",
-        "ORDER16",
-        "ORDER17",
-        "ORDER18",
-        "ORDER19",
-        "ORDER20",
-        "ORDER21",
-        "POLYLINE",
-        "ORDER23",
-        "ORDER24",
-        "ORDER25",
-        "ORDER26",
-        "GLYPHINDEX"
-    };
-
-
     enum {
      // TS_CACHE_BITMAP_UNCOMPRESSED - Cache Bitmap - Revision 1
      // (MS-RDPEGDI section 2.2.2.2.1.2.2)

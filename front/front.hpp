@@ -380,17 +380,17 @@ public:
         }
     }
 
-    void send_palette(const RGBPalette & palette)
+    void color_cache(const RGBPalette & palette)
     {
-//        LOG(LOG_INFO, "front::send_palette\n");
+//        LOG(LOG_INFO, "front::color_cache\n");
         if (this->rdp_layer.client_info.bpp <= 8) {
-            this->rdp_layer.server_send_palette(palette);
+            this->rdp_layer.send_global_palette(palette);
             this->orders.init();
             this->reserve_order(2000);
-            this->orders.send_palette(palette, 0);
+            this->orders.color_cache(palette, 0);
             this->send();
         }
-//        LOG(LOG_INFO, "front::send_palette done\n");
+//        LOG(LOG_INFO, "front::color_cache done\n");
     }
 
     void send_brush(const int index)

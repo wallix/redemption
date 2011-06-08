@@ -340,7 +340,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
             }
         }
 
-        this->front->send_palette(palette);
+        this->front->color_cache(palette);
 
         struct pointer_item pointer_item;
 

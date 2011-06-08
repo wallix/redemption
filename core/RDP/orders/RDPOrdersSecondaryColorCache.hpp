@@ -24,8 +24,6 @@
 #if !defined(__RDPORDERSSECONDARYCOLORCACHE_HPP__)
 #define __RDPORDERSSECONDARYCOLORCACHE_HPP__
 
-
-class RDPColCache {
     /*****************************************************************************/
     // [MS-RDPGDI] 2.2.2.2.1.2.4 Cache Color Table (CACHE_COLOR_TABLE_ORDER)
 
@@ -51,8 +49,8 @@ class RDPColCache {
     // Color Table where the color table MUST be stored. This value MUST be in
     // the range 0 to 5 (inclusive).
 
-    // numberColors (2 bytes): A 16-bit, unsigned integer. The number of Color
-    // Quad (section 2.2.2.2.1.2.4.1) structures in the colorTable field. This
+    // numberColors (2 bytes): A 16-bit, unsigned integer. The number of Color 
+    // Quad (section 2.2.2.2.1.2.4.1) structures in the colorTable field. This 
     // field MUST be set to 256 entries.
 
     // colorTable (variable): A Color Table composed of an array of Color Quad
@@ -71,6 +69,8 @@ class RDPColCache {
 
     // pad1Octet (1 byte): An 8-bit, unsigned integer. Padding. Values in this
     // field are arbitrary and MUST be ignored.
+
+class RDPColCache {
 
     public:
     uint32_t palette[6][256];

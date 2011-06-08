@@ -510,10 +510,10 @@ struct client_mod : public Callback {
         LOG(LOG_INFO, "client_mod::invalidate");
     }
 
-    void server_palette(const uint32_t (& palette)[256])
+    void color_cache(const uint32_t (& palette)[256])
     {
-        LOG(LOG_INFO, "client_mod::server_palette");
-        this->front->send_palette(palette);
+        LOG(LOG_INFO, "client_mod::color_cache");
+        this->front->color_cache(palette);
     }
 
     int server_is_term()
