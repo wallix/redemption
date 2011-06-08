@@ -252,7 +252,7 @@ namespace RDP {
         TS_CACHE_BITMAP_COMPRESSED_REV2    = 5,
      // TS_CACHE_BRUSH : Cache Brush
      // (MS-RDPEGDI section 2.2.2.2.1.2.7)
-        BRUSHCACHE    = 7,
+        TS_CACHE_BRUSH    = 7,
      // TS_CACHE_BITMAP_COMPRESSED_REV3 : Cache Bitmap - Revision 3
      // (MS-RDPEGDI section 2.2.2.2.1.2.8)
         TS_CACHE_BITMAP_COMPRESSED_REV3     = 8
