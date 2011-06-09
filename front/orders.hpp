@@ -54,7 +54,7 @@ struct Orders
     RDPOpaqueRect opaquerect;
     RDPMemBlt memblt;
     RDPLineTo lineto;
-    RDPGlyphIndex text;
+    RDPGlyphIndex glyph_index;
 
     Stream out_stream;
 
@@ -70,7 +70,7 @@ struct Orders
         opaquerect(Rect(), 0),
         memblt(0, Rect(), 0, 0, 0, 0),
         lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
-        text(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
+        glyph_index(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
         out_stream(16384)
     {
         this->order_count = 0;
@@ -90,7 +90,7 @@ struct Orders
         destblt = RDPDestBlt(Rect(), 0);
         patblt = RDPPatBlt(Rect(), 0, 0, 0, RDPBrush());
         lineto = RDPLineTo(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0));
-        text = RDPGlyphIndex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"");
+        this->glyph_index = RDPGlyphIndex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"");
         common.order = PATBLT;
 
         this->order_count = 0;
@@ -143,11 +143,6 @@ struct Orders
     {
         RDPOrderCommon newcommon(MEMBLT, clip);
         cmd.emit(this->out_stream, newcommon, this->common, this->memblt);
-
-        char buffer[1024];
-        cmd.str(buffer, 1024, this->common);
-        LOG(LOG_INFO, "%s", buffer);
-
         this->common = newcommon;
         this->memblt = cmd;
     }
@@ -158,29 +153,6 @@ struct Orders
         cmd.emit(this->out_stream, newcommon, this->common, this->lineto);
         this->common = newcommon;
         this->lineto = cmd;
-    }
-
-
-
-    /*****************************************************************************/
-    void glyph_index(const RDPGlyphIndex & glyph_index, const Rect & clip)
-    {
-
-        RDPOrderCommon newcommon(GLYPHINDEX, clip);
-        glyph_index.emit(this->out_stream, newcommon, this->common, this->text);
-        this->common = newcommon;
-        this->text = glyph_index;
-    }
-
-
-    void color_cache(const uint32_t (& palette)[256], int cache_id)
-    {
-//        LOG(LOG_INFO, "color_cache[%d](cache_id=%d)\n", this->order_count, cache_id);
-
-        RDPColCache newcmd;
-        #warning why is it always palette 0 ? use cache_id
-        memcpy(newcmd.palette[0], palette, 256);
-        newcmd.emit(this->out_stream, 0);
     }
 
 };
