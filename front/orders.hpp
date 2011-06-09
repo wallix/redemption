@@ -115,14 +115,6 @@ struct Orders
         this->opaquerect = cmd;
     }
 
-    void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
-    {
-        RDPOrderCommon newcommon(SCREENBLT, clip);
-        cmd.emit(this->out_stream, newcommon, this->common, this->scrblt);
-        this->common = newcommon;
-        this->scrblt = cmd;
-    }
-
 };
 } /* namespaces */
 
