@@ -490,6 +490,11 @@ struct client_mod : public Callback {
         this->current_pointer = cache_idx;
     }
 
+    void send_global_palette(const RGBPalette & palette)
+    {
+        this->front->send_global_palette(palette);
+    }
+
     void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
     {
         LOG(LOG_INFO, "client_mod::server_set_pointer");
