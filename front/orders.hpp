@@ -130,15 +130,6 @@ struct Orders
         this->common = newcommon;
         this->destblt = cmd;
     }
-
-    void pat_blt(const RDPPatBlt & cmd, const Rect &clip)
-    {
-        RDPOrderCommon newcommon(PATBLT, clip);
-        cmd.emit(this->out_stream, newcommon, this->common, this->patblt);
-        this->common = newcommon;
-        this->patblt = cmd;
-    }
-
 };
 } /* namespaces */
 
