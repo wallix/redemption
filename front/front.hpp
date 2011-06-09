@@ -341,14 +341,18 @@ public:
     }
 
 
-    void mem_blt(const RDPMemBlt & memblt, const Rect & clip)
+    void mem_blt(const RDPMemBlt & cmd, const Rect & clip)
     {
-        this->reserve_order(30);
+        using namespace RDP;
+        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
+            this->reserve_order(30);
+            RDPOrderCommon newcommon(MEMBLT, clip);
+            cmd.emit(this->orders.out_stream, newcommon, this->orders.common, this->orders.memblt);
+            this->orders.common = newcommon;
+            this->orders.memblt = cmd;
 
-        if (!clip.isempty() && !clip.intersect(memblt.rect).isempty()){
-            this->orders.mem_blt(memblt, clip);
             if (this->capture){
-                this->capture->mem_blt(memblt, *this->bmp_cache, clip);
+                this->capture->mem_blt(cmd, *this->bmp_cache, clip);
             }
         }
     }

@@ -139,14 +139,6 @@ struct Orders
         this->patblt = cmd;
     }
 
-    void mem_blt(const RDPMemBlt & cmd, const Rect & clip)
-    {
-        RDPOrderCommon newcommon(MEMBLT, clip);
-        cmd.emit(this->out_stream, newcommon, this->common, this->memblt);
-        this->common = newcommon;
-        this->memblt = cmd;
-    }
-
 };
 } /* namespaces */
 
