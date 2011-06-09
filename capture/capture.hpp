@@ -29,7 +29,21 @@
 #include "rect.hpp"
 #include "constants.hpp"
 #include <time.h>
-#include "NewRDPOrders.hpp"
+
+#include "RDP/orders/RDPOrdersCommon.hpp"
+#include "RDP/orders/RDPOrdersSecondaryHeader.hpp"
+#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+
+#include "RDP/orders/RDPOrdersPrimaryHeader.hpp"
+#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+
 #include "error.hpp"
 #include "config.hpp"
 #include "bitmap_cache.hpp"

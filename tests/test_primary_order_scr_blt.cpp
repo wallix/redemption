@@ -27,7 +27,9 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <algorithm>
 
-#include "NewRDPOrders.hpp"
+#include "RDP/orders/RDPOrdersCommon.hpp"
+#include "RDP/orders/RDPOrdersPrimaryHeader.hpp"
+#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 
 #include "./test_orders.hpp"
 
