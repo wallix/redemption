@@ -319,7 +319,12 @@ public:
     {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->reserve_order(21);
-            this->orders.dest_blt(cmd, clip);
+
+            RDPOrderCommon newcommon(RDP::DESTBLT, clip);
+            cmd.emit(this->orders.out_stream, newcommon, this->orders.common, this->orders.destblt);
+            this->orders.common = newcommon;
+            this->orders.destblt = cmd;
+
             if (this->capture){
                 #warning missing code in capture, apply some logical operator inplace
                 this->capture->opaque_rect(RDPOpaqueRect(cmd.rect, WHITE), clip);
