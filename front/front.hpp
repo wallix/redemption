@@ -378,8 +378,13 @@ public:
             return;
         }
 
+        using namespace RDP;
+
         this->reserve_order(297);
-        this->orders.glyph_index(glyph_index, clip);
+        RDPOrderCommon newcommon(GLYPHINDEX, clip);
+        glyph_index.emit(this->orders.out_stream, newcommon, this->orders.common, this->orders.glyph_index);
+        this->orders.common = newcommon;
+        this->orders.glyph_index = glyph_index;
         if (this->capture){
             this->capture->glyph_index(glyph_index, clip);
         }
