@@ -303,14 +303,18 @@ public:
         }
     }
 
-    void scr_blt(const RDPScrBlt & scrblt, const Rect &clip)
+    void scr_blt(const RDPScrBlt & cmd, const Rect &clip)
     {
-        if (!clip.isempty() && !clip.intersect(scrblt.rect).isempty()){
+        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             // this one is used when dragging a visible window on screen
             this->reserve_order(25);
-            this->orders.scr_blt(scrblt, clip);
+            RDPOrderCommon newcommon(RDP::SCREENBLT, clip);
+            cmd.emit(this->orders.out_stream, newcommon, this->orders.common, this->orders.scrblt);
+            this->orders.common = newcommon;
+            this->orders.scrblt = cmd;
+
             if (this->capture){
-                this->capture->scr_blt(scrblt, clip);
+                this->capture->scr_blt(cmd, clip);
             }
         }
     }
