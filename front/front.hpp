@@ -353,22 +353,27 @@ public:
         }
     }
 
-    void line_to(const RDPLineTo& lineto, const Rect & clip)
+    void line_to(const RDPLineTo& cmd, const Rect & clip)
     {
-        const Rect rect(
-            (lineto.startx <= lineto.endx)?lineto.startx:lineto.endx,
-            (lineto.starty <= lineto.endy)?lineto.starty:lineto.endy,
-            (lineto.startx <= lineto.endx)?(lineto.endx-lineto.startx+1):(lineto.startx-lineto.endx+1),
-            (lineto.starty <= lineto.endy)?(lineto.endy-lineto.starty+1):(lineto.starty-lineto.endy+1));
+        using namespace RDP;
+
+        const uint16_t minx = std::min(cmd.startx, cmd.endx);
+        const uint16_t miny = std::min(cmd.starty, cmd.endy);
+        const Rect rect(minx, miny,
+                        std::max(cmd.startx, cmd.endx)-minx+1,
+                        std::max(cmd.starty, cmd.endy)-miny+1);
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()){
             this->reserve_order(32);
-            this->orders.line_to(lineto, clip);
+            RDPOrderCommon newcommon(LINE, clip);
+            cmd.emit(this->orders.out_stream, newcommon, this->orders.common, this->orders.lineto);
+
+            this->orders.common = newcommon;
+            this->orders.lineto = cmd;
             if (this->capture){
-                this->capture->line_to(lineto, clip);
+                this->capture->line_to(cmd, clip);
             }
         }
-
     }
 
     void glyph_index(const RDPGlyphIndex & glyph_index, const Rect & clip)

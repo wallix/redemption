@@ -147,14 +147,6 @@ struct Orders
         this->memblt = cmd;
     }
 
-    void line_to(const RDPLineTo & cmd, const Rect & clip)
-    {
-        RDPOrderCommon newcommon(LINE, clip);
-        cmd.emit(this->out_stream, newcommon, this->common, this->lineto);
-        this->common = newcommon;
-        this->lineto = cmd;
-    }
-
 };
 } /* namespaces */
 
