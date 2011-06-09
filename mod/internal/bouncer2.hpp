@@ -22,11 +22,23 @@
 
 */
 
-#ifndef __BOUNCER2_HPP__ 
+#ifndef __BOUNCER2_HPP__
 #define __BOUNCER2_HPP__
 
 #include "client_mod.hpp"
-#include "NewRDPOrders.hpp"
+#include "RDP/orders/RDPOrdersCommon.hpp"
+#include "RDP/orders/RDPOrdersSecondaryHeader.hpp"
+#include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
+#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+
+#include "RDP/orders/RDPOrdersPrimaryHeader.hpp"
+#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include <unistd.h>
 
 struct bouncer2_mod : public internal_mod {
@@ -44,7 +56,7 @@ struct bouncer2_mod : public internal_mod {
         this->server_begin_update();
         this->opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00));
         this->server_end_update();
-        
+
         this->dancing_rect = new Rect(0,0,100,100);
 
         // Using µsec set
@@ -117,7 +129,7 @@ struct bouncer2_mod : public internal_mod {
         this->server_begin_update();
         this->wipe(oldrect, *this->dancing_rect, 0x00FF00);
         this->server_end_update();
-        
+
         // Final with setting next idle time
         this->event->set(33333); // 0.3s is 30fps
         return 0;

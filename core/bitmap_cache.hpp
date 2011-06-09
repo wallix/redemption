@@ -42,7 +42,6 @@
 #include "colors.hpp"
 #include <inttypes.h>
 #include "rect.hpp"
-//#include "NewRDPOrders.hpp"
 
 enum {
     BITMAP_FOUND_IN_CACHE,
