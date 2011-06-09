@@ -123,13 +123,6 @@ struct Orders
         this->scrblt = cmd;
     }
 
-    void dest_blt(const RDPDestBlt & cmd, const Rect &clip)
-    {
-        RDPOrderCommon newcommon(DESTBLT, clip);
-        cmd.emit(this->out_stream, newcommon, this->common, this->destblt);
-        this->common = newcommon;
-        this->destblt = cmd;
-    }
 };
 } /* namespaces */
 
