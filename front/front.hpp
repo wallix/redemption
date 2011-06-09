@@ -277,6 +277,11 @@ public:
     }
 
 
+    void send_global_palette(const RGBPalette & palette)
+    {
+        this->rdp_layer.send_global_palette(palette);
+    }
+
     int get_channel_id(char* name)
     {
 //        LOG(LOG_INFO, "front::get_channel_id\n");
@@ -382,15 +387,11 @@ public:
 
     void color_cache(const RGBPalette & palette)
     {
-//        LOG(LOG_INFO, "front::color_cache\n");
-        if (this->rdp_layer.client_info.bpp <= 8) {
-            this->rdp_layer.send_global_palette(palette);
-            this->orders.init();
-            this->reserve_order(2000);
-            this->orders.color_cache(palette, 0);
-            this->send();
-        }
-//        LOG(LOG_INFO, "front::color_cache done\n");
+        this->reserve_order(2000);
+        RDPColCache newcmd;
+        #warning why is it always palette 0
+        memcpy(newcmd.palette[0], palette, 256);
+        newcmd.emit(this->orders.out_stream, 0);
     }
 
     void brush_cache(const int index)
