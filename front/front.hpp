@@ -332,7 +332,13 @@ public:
     {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->reserve_order(29);
-            this->orders.pat_blt(cmd, clip);
+
+            using namespace RDP;
+            RDPOrderCommon newcommon(PATBLT, clip);
+            cmd.emit(this->orders.out_stream, newcommon, this->orders.common, this->orders.patblt);
+            this->orders.common = newcommon;
+            this->orders.patblt = cmd;
+
             if (this->capture){
                 #warning missing code in capture, apply full pat_blt
                 this->capture->opaque_rect(RDPOpaqueRect(cmd.rect, cmd.fore_color), clip);
