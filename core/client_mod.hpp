@@ -274,8 +274,19 @@ struct client_mod : public Callback {
             /* this should do the resizing */
             this->front->rdp_layer.server_rdp_send_demand_active();
 
+            this->front->common = RDPOrderCommon(0,  Rect(0, 0, 1, 1));
+            this->front->memblt = RDPMemBlt(0, Rect(), 0, 0, 0, 0);
+            this->front->opaquerect = RDPOpaqueRect(Rect(), 0);
+            this->front->scrblt = RDPScrBlt(Rect(), 0, 0, 0);
+            this->front->destblt = RDPDestBlt(Rect(), 0);
+            this->front->patblt = RDPPatBlt(Rect(), 0, 0, 0, RDPBrush());
+            this->front->lineto = RDPLineTo(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0));
+            this->front->glyphindex = RDPGlyphIndex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"");
+            this->front->common.order = RDP::PATBLT;
 
-            this->front->orders.reset_xx();
+            this->front->order_count = 0;
+            this->front->order_level = 0;
+
             this->front->cache.reset(client_info);
 
             if (this->front->bmp_cache){

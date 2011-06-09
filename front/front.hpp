@@ -28,31 +28,38 @@
 #include "log.hpp"
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
+#include <sys/time.h>
+#include <deque>
+#include <algorithm>
+
 #include "stream.hpp"
 #include "constants.hpp"
 #include "ssl_calls.hpp"
 #include "file_loc.hpp"
-#include <string.h>
-#include <sys/time.h>
-#include "orders.hpp"
 #include "altoco.hpp"
-
-#include "font.hpp"
-#include "cache.hpp"
-#include "font.hpp"
+#include "rect.hpp"
 #include "region.hpp"
 #include "capture.hpp"
+#include "font.hpp"
 #include "bitmap.hpp"
 #include "bitmap_cache.hpp"
-#include <deque>
+#include "cache.hpp"
+
 #include "server_rdp.hpp"
 #include "NewRDPOrders.hpp"
-#include "orders.hpp"
+#include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
+#include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "transport.hpp"
 #include "config.hpp"
+#include "error.hpp"
+
+
 
 class Front {
 public:
+    Stream out_stream;
+    Cache cache;
     struct BitmapCache *bmp_cache;
     struct Capture * capture;
     struct Font font;
@@ -63,21 +70,47 @@ public:
     bool notimestamp;
     int timezone;
     struct server_rdp rdp_layer;
-    struct RDP::Orders orders;
-    Cache cache;
-
-#warning mouse_x, mouse_y, start not initialized
+    // Internal state of orders
+    RDPOrderCommon common;
+    RDPDestBlt destblt;
+    RDPPatBlt patblt;
+    RDPScrBlt scrblt;
+    RDPOpaqueRect opaquerect;
+    RDPMemBlt memblt;
+    RDPLineTo lineto;
+    RDPGlyphIndex glyphindex;
+    // state variables for gathering batch of orders
+    uint8_t* order_count_ptr;
+    int order_count;
+    int order_level;
 
     Front(SocketTransport * trans, Inifile * ini)
     :
+    out_stream(16384),
+    cache(),
     bmp_cache(0),
     capture(0),
     font(SHARE_PATH "/" DEFAULT_FONT_NAME),
+    mouse_x(0),
+    mouse_y(0),
     nomouse(ini->globals.nomouse),
     notimestamp(ini->globals.notimestamp),
     timezone(0),
     rdp_layer(trans, ini),
-    cache() {}
+    // Internal state of orders
+    common(0, Rect(0, 0, 1, 1)),
+    destblt(Rect(), 0),
+    patblt(Rect(), 0, 0, 0, RDPBrush()),
+    scrblt(Rect(), 0, 0, 0),
+    opaquerect(Rect(), 0),
+    memblt(0, Rect(), 0, 0, 0, 0),
+    lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
+    glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
+    // state variables for a batch of orders
+    order_count_ptr(0),
+    order_count(0),
+    order_level(0)
+    {}
 
     ~Front(){
         if (this->capture){
@@ -91,10 +124,21 @@ public:
     void reset(){
         this->cache = cache;
         #warning is it necessary (or even usefull) to send remaining drawing orders before resetting ?
-        if (this->orders.order_count > 0){
+        if (this->order_count > 0){
             this->force_send();
         }
-        this->orders.reset_xx();
+        this->common = RDPOrderCommon(0,  Rect(0, 0, 1, 1));
+        this->memblt = RDPMemBlt(0, Rect(), 0, 0, 0, 0);
+        this->opaquerect = RDPOpaqueRect(Rect(), 0);
+        this->scrblt = RDPScrBlt(Rect(), 0, 0, 0);
+        this->destblt = RDPDestBlt(Rect(), 0);
+        this->patblt = RDPPatBlt(Rect(), 0, 0, 0, RDPBrush());
+        this->lineto = RDPLineTo(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0));
+        this->glyphindex = RDPGlyphIndex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"");
+        this->common.order = RDP::PATBLT;
+
+        this->order_count = 0;
+        this->order_level = 0;
 
         if (this->bmp_cache){
             delete this->bmp_cache;
@@ -115,10 +159,10 @@ public:
 
     void send()
     {
-        if (this->orders.order_level > 0) {
-            this->orders.order_level--;
-            if (this->orders.order_level == 0){
-                if (this->orders.order_count > 0){
+        if (this->order_level > 0) {
+            this->order_level--;
+            if (this->order_level == 0){
+                if (this->order_count > 0){
                     this->force_send();
                 }
             }
@@ -130,64 +174,64 @@ public:
     // if not send previous orders we got and init a new packet
     void reserve_order(size_t asked_size)
     {
-        if (this->orders.order_count > 0) {
-            size_t max_packet_size = std::min(this->orders.out_stream.capacity, (size_t)16384);
-            size_t used_size = (size_t)(this->orders.out_stream.p - this->orders.order_count_ptr);
+        if (this->order_count > 0) {
+            size_t max_packet_size = std::min(this->out_stream.capacity, (size_t)16384);
+            size_t used_size = (size_t)(this->out_stream.p - this->order_count_ptr);
 
             if ((used_size + asked_size + 100) > max_packet_size) {
                 this->force_send();
             }
         }
-        if (0 == this->orders.order_count){
+        if (0 == this->order_count){
             // we initialize only when **sure** there will be orders to send,
             // (ie: when reserve_order(xx) is called),
             // RDP does not support empty orders batch
             // at this point we know at least one order will be emited
             this->force_init();
         }
-        this->orders.order_count++;
+        this->order_count++;
     }
 
     void force_init()
     {
 //        LOG(LOG_INFO, "Orders::force_init()");
         #warning see with order limit : is this big enough ?
-        this->orders.out_stream.init(16384);
+        this->out_stream.init(16384);
 
-        this->rdp_layer.sec_layer.server_sec_init(this->orders.out_stream);
-        this->orders.out_stream.rdp_hdr = this->orders.out_stream.p;
-        this->orders.out_stream.p += 18;
+        this->rdp_layer.sec_layer.server_sec_init(this->out_stream);
+        this->out_stream.rdp_hdr = this->out_stream.p;
+        this->out_stream.p += 18;
 
-        this->orders.out_stream.out_uint16_le(RDP_UPDATE_ORDERS);
-        this->orders.out_stream.out_clear_bytes(2); /* pad */
-        this->orders.order_count_ptr = this->orders.out_stream.p;
-        this->orders.out_stream.out_clear_bytes(2); /* number of orders, set later */
-        this->orders.out_stream.out_clear_bytes(2); /* pad */
+        this->out_stream.out_uint16_le(RDP_UPDATE_ORDERS);
+        this->out_stream.out_clear_bytes(2); /* pad */
+        this->order_count_ptr = this->out_stream.p;
+        this->out_stream.out_clear_bytes(2); /* number of orders, set later */
+        this->out_stream.out_clear_bytes(2); /* pad */
     }
 
     void force_send()
     {
-//        LOG(LOG_ERR, "force_send: level=%d order_count=%d", this->orders.order_level, this->orders.order_count);
-        this->orders.out_stream.mark_end();
-        this->orders.out_stream.p = this->orders.order_count_ptr;
-        this->orders.out_stream.out_uint16_le(this->orders.order_count);
+//        LOG(LOG_ERR, "force_send: level=%d order_count=%d", this->order_level, this->order_count);
+        this->out_stream.mark_end();
+        this->out_stream.p = this->order_count_ptr;
+        this->out_stream.out_uint16_le(this->order_count);
 
-        this->orders.out_stream.p = this->orders.out_stream.rdp_hdr;
-        int len = this->orders.out_stream.end - this->orders.out_stream.p;
-        this->orders.out_stream.out_uint16_le(len);
-        this->orders.out_stream.out_uint16_le(0x10 | RDP_PDU_DATA);
-        this->orders.out_stream.out_uint16_le(this->rdp_layer.mcs_channel);
-        this->orders.out_stream.out_uint32_le(this->rdp_layer.share_id);
-        this->orders.out_stream.out_uint8(0);
-        this->orders.out_stream.out_uint8(1);
-        this->orders.out_stream.out_uint16_le(len - 14);
-        this->orders.out_stream.out_uint8(RDP_DATA_PDU_UPDATE);
-        this->orders.out_stream.out_uint8(0);
-        this->orders.out_stream.out_uint16_le(0);
+        this->out_stream.p = this->out_stream.rdp_hdr;
+        int len = this->out_stream.end - this->out_stream.p;
+        this->out_stream.out_uint16_le(len);
+        this->out_stream.out_uint16_le(0x10 | RDP_PDU_DATA);
+        this->out_stream.out_uint16_le(this->rdp_layer.mcs_channel);
+        this->out_stream.out_uint32_le(this->rdp_layer.share_id);
+        this->out_stream.out_uint8(0);
+        this->out_stream.out_uint8(1);
+        this->out_stream.out_uint16_le(len - 14);
+        this->out_stream.out_uint8(RDP_DATA_PDU_UPDATE);
+        this->out_stream.out_uint8(0);
+        this->out_stream.out_uint16_le(0);
 
-        this->rdp_layer.sec_layer.server_sec_send(this->orders.out_stream, MCS_GLOBAL_CHANNEL);
+        this->rdp_layer.sec_layer.server_sec_send(this->out_stream, MCS_GLOBAL_CHANNEL);
 
-        this->orders.order_count = 0;
+        this->order_count = 0;
     }
 
 
@@ -235,7 +279,10 @@ public:
 
     void begin_update()
     {
-        this->orders.init();
+        this->order_level++;
+        if (this->order_level == 1) {
+            this->order_count = 0;
+        }
     }
 
     void end_update()
@@ -298,9 +345,9 @@ public:
             this->reserve_order(23);
 
             RDPOrderCommon newcommon(RDP::RECT, clip);
-            cmd.emit(this->orders.out_stream, newcommon, this->orders.common, this->orders.opaquerect);
-            this->orders.common = newcommon;
-            this->orders.opaquerect = cmd;
+            cmd.emit(this->out_stream, newcommon, this->common, this->opaquerect);
+            this->common = newcommon;
+            this->opaquerect = cmd;
 
             if (this->capture){
                 this->capture->opaque_rect(cmd, clip);
@@ -314,9 +361,9 @@ public:
             // this one is used when dragging a visible window on screen
             this->reserve_order(25);
             RDPOrderCommon newcommon(RDP::SCREENBLT, clip);
-            cmd.emit(this->orders.out_stream, newcommon, this->orders.common, this->orders.scrblt);
-            this->orders.common = newcommon;
-            this->orders.scrblt = cmd;
+            cmd.emit(this->out_stream, newcommon, this->common, this->scrblt);
+            this->common = newcommon;
+            this->scrblt = cmd;
 
             if (this->capture){
                 this->capture->scr_blt(cmd, clip);
@@ -330,9 +377,9 @@ public:
             this->reserve_order(21);
 
             RDPOrderCommon newcommon(RDP::DESTBLT, clip);
-            cmd.emit(this->orders.out_stream, newcommon, this->orders.common, this->orders.destblt);
-            this->orders.common = newcommon;
-            this->orders.destblt = cmd;
+            cmd.emit(this->out_stream, newcommon, this->common, this->destblt);
+            this->common = newcommon;
+            this->destblt = cmd;
 
             if (this->capture){
                 #warning missing code in capture, apply some logical operator inplace
@@ -349,9 +396,9 @@ public:
 
             using namespace RDP;
             RDPOrderCommon newcommon(PATBLT, clip);
-            cmd.emit(this->orders.out_stream, newcommon, this->orders.common, this->orders.patblt);
-            this->orders.common = newcommon;
-            this->orders.patblt = cmd;
+            cmd.emit(this->out_stream, newcommon, this->common, this->patblt);
+            this->common = newcommon;
+            this->patblt = cmd;
 
             if (this->capture){
                 #warning missing code in capture, apply full pat_blt
@@ -367,9 +414,9 @@ public:
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->reserve_order(30);
             RDPOrderCommon newcommon(MEMBLT, clip);
-            cmd.emit(this->orders.out_stream, newcommon, this->orders.common, this->orders.memblt);
-            this->orders.common = newcommon;
-            this->orders.memblt = cmd;
+            cmd.emit(this->out_stream, newcommon, this->common, this->memblt);
+            this->common = newcommon;
+            this->memblt = cmd;
 
             if (this->capture){
                 this->capture->mem_blt(cmd, *this->bmp_cache, clip);
@@ -390,32 +437,28 @@ public:
         if (!clip.isempty() && !clip.intersect(rect).isempty()){
             this->reserve_order(32);
             RDPOrderCommon newcommon(LINE, clip);
-            cmd.emit(this->orders.out_stream, newcommon, this->orders.common, this->orders.lineto);
-
-            this->orders.common = newcommon;
-            this->orders.lineto = cmd;
+            cmd.emit(this->out_stream, newcommon, this->common, this->lineto);
+            this->common = newcommon;
+            this->lineto = cmd;
             if (this->capture){
                 this->capture->line_to(cmd, clip);
             }
         }
     }
 
-    void glyph_index(const RDPGlyphIndex & glyph_index, const Rect & clip)
+    void glyph_index(const RDPGlyphIndex & cmd, const Rect & clip)
     {
-//        LOG(LOG_INFO, "front::glyph_index\n");
-        if (glyph_index.bk.intersect(clip).isempty()){
+        if (cmd.bk.intersect(clip).isempty()){
             return;
         }
 
-        using namespace RDP;
-
         this->reserve_order(297);
-        RDPOrderCommon newcommon(GLYPHINDEX, clip);
-        glyph_index.emit(this->orders.out_stream, newcommon, this->orders.common, this->orders.glyph_index);
-        this->orders.common = newcommon;
-        this->orders.glyph_index = glyph_index;
+        RDPOrderCommon newcommon(RDP::GLYPHINDEX, clip);
+        cmd.emit(this->out_stream, newcommon, this->common, this->glyphindex);
+        this->common = newcommon;
+        this->glyphindex = cmd;
         if (this->capture){
-            this->capture->glyph_index(glyph_index, clip);
+            this->capture->glyph_index(cmd, clip);
         }
     }
 
@@ -425,7 +468,7 @@ public:
         RDPColCache newcmd;
         #warning why is it always palette 0
         memcpy(newcmd.palette[0], palette, 256);
-        newcmd.emit(this->orders.out_stream, 0);
+        newcmd.emit(this->out_stream, 0);
     }
 
     void brush_cache(const int index)
@@ -443,7 +486,7 @@ public:
         newcmd.type = 0x81;
         newcmd.size = size;
         newcmd.data = this->cache.brush_items[index].pattern;
-        newcmd.emit(this->orders.out_stream, index);
+        newcmd.emit(this->out_stream, index);
         newcmd.data = 0;
     }
 
@@ -458,7 +501,7 @@ public:
         using namespace RDP;
 
         RDPBmpCache bmp_order(entry->pbmp, cache_id, cache_idx, &this->rdp_layer.client_info);
-        bmp_order.emit(this->orders.out_stream);
+        bmp_order.emit(this->out_stream);
     }
 
     // draw bitmap from src_data (image rect contained in src_r) to x, y
@@ -519,7 +562,7 @@ public:
         newcmd.glyphData_cx = font_char.width;
         newcmd.glyphData_cy = font_char.height;
         newcmd.glyphData_aj = font_char.data;
-        newcmd.emit(this->orders.out_stream);
+        newcmd.emit(this->out_stream);
         newcmd.glyphData_aj = 0;
     }
 
