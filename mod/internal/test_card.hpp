@@ -26,7 +26,6 @@
 #define __TEST_CARD_HPP__
 
 struct test_card_mod : public internal_mod {
-    #warning only works with 24 bits color mode, fix that
     test_card_mod(
         wait_obj * event,
         int (& keys)[256], int & key_flags, Keymap * &keymap,
@@ -34,6 +33,7 @@ struct test_card_mod : public internal_mod {
             internal_mod(keys, key_flags, keymap, front)
     {
         this->event = event;
+	this->mod_bpp = this->get_front_bpp();
 
         this->server_begin_update();
         this->server_set_clip(this->screen.rect);

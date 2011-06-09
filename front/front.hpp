@@ -161,7 +161,7 @@ public:
         this->bmp_cache = new BitmapCache(&(this->rdp_layer.client_info));
         this->cache.reset(this->rdp_layer.client_info);
 
-        LOG(LOG_INFO, "width=%d height=%d bpp=%d "
+        LOG(LOG_INFO, "// width=%d height=%d bpp=%d "
                   "cache1_entries=%d cache1_size=%d "
                   "cache2_entries=%d cache2_size=%d "
                   "cache2_entries=%d cache2_size=%d ",
@@ -525,7 +525,7 @@ public:
                      int palette_id,
                      const Rect & clip)
     {
-        LOG(LOG_INFO, "front::send_bitmap_front bpp=%d\n", this->rdp_layer.client_info.bpp);
+        LOG(LOG_INFO, "// front::send_bitmap_front bpp=%d\n", this->rdp_layer.client_info.bpp);
         for (int y = 0; y < dst.cy ; y += 64) {
             int cy = std::min(64, dst.cy - y);
             for (int x = 0; x < dst.cx ; x += 64) {
