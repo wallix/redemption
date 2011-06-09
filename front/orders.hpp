@@ -107,13 +107,6 @@ struct Orders
     }
 
 
-    void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
-    {
-        RDPOrderCommon newcommon(RECT, clip);
-        cmd.emit(this->out_stream, newcommon, this->common, this->opaquerect);
-        this->common = newcommon;
-        this->opaquerect = cmd;
-    }
 
 };
 } /* namespaces */

@@ -296,7 +296,12 @@ public:
 
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->reserve_order(23);
-            this->orders.opaque_rect(cmd, clip);
+
+            RDPOrderCommon newcommon(RDP::RECT, clip);
+            cmd.emit(this->orders.out_stream, newcommon, this->orders.common, this->orders.opaquerect);
+            this->orders.common = newcommon;
+            this->orders.opaquerect = cmd;
+
             if (this->capture){
                 this->capture->opaque_rect(cmd, clip);
             }
