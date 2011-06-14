@@ -59,7 +59,7 @@ class Authentifier(object):
             'target_device' : '10.10.14.111',
             'target_password' : 'S3cur3!1nux',
             'proto_dest': 'RDP',
-            'target_port':'3389'
+            'target_port':'3389',
         },
         'bouncer' : {
             'proxy_type': 'RDP',
@@ -74,7 +74,11 @@ class Authentifier(object):
         'card' : {
             'proxy_type': 'RDP',
             'target_device' : 'test_card',
-            'proto_dest': 'INTERNAL'
+            'proto_dest': 'INTERNAL',
+            'is_rec':'True',
+            'rec_path':'/tmp/test_card.flv',
+            'codec_id':'flv',
+            'video_quality':'high'
         },
         'n' : {
             'proxy_type': 'RDP',

@@ -24,6 +24,7 @@
 #if !defined(__RDPORDERSPRIMARYGLYPHINDEX_HPP__)
 #define __RDPORDERSPRIMARYGLYPHINDEX_HPP__
 
+#include <malloc.h>
 
 class RDPGlyphIndex {
 // GLYPHINDEX_ORDER fields bytes
@@ -66,13 +67,13 @@ class RDPGlyphIndex {
     int16_t glyph_x;
     int16_t glyph_y;
     uint8_t data_len;
-    uint8_t data[256];
+    uint8_t * data;
 
     RDPGlyphIndex(uint8_t cache_id, uint8_t fl_accel, uint8_t ui_charinc,
         uint8_t f_op_redundant, uint32_t back_color, uint32_t fore_color,
         const Rect & bk, const Rect & op, const RDPBrush & brush,
         int16_t glyph_x, int16_t glyph_y,
-        uint8_t data_len, uint8_t * data) :
+        uint8_t data_len, const uint8_t * data) :
             cache_id(cache_id),
             fl_accel(fl_accel),
             ui_charinc(ui_charinc),
@@ -84,11 +85,22 @@ class RDPGlyphIndex {
             brush(brush),
             glyph_x(glyph_x),
             glyph_y(glyph_y),
-            data_len(data_len)
+            data_len(data_len),
+            data(0)
         {
-            memcpy(this->data, data, data_len);
+            if (data_len > 0){
+                this->data = (uint8_t *)malloc(data_len);
+                memcpy(this->data, data, data_len);
+            }
         }
 
+
+    ~RDPGlyphIndex()
+    {
+        if (this->data){
+//            free(this->data);
+        }
+    }
     bool operator==(const RDPGlyphIndex &other) const {
         return  (this->cache_id == other.cache_id)
              && (this->fl_accel == other.fl_accel)
@@ -273,6 +285,10 @@ class RDPGlyphIndex {
 
         if (header.fields & 0x200000){
             this->data_len = stream.in_uint8();
+            if (this->data){
+                free(this->data);
+            }
+            this->data = (uint8_t *)malloc(this->data_len);
             memcpy(this->data, stream.in_uint8p(this->data_len), this->data_len);
         }
     }
