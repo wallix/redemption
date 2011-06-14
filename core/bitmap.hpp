@@ -47,7 +47,7 @@
 #include <inttypes.h>
 #include "rect.hpp"
 
-struct Bitmap{
+struct Bitmap {
     private:
     // data_co is allocated on demand
     uint8_t *data_co24;
@@ -85,7 +85,7 @@ struct Bitmap{
         memcpy(this->data_co(bpp), data, size);
     }
 
-    Bitmap(int bpp, const Rect & r, int src_cx, int src_cy, const uint8_t * src_data)
+    Bitmap(int bpp, const Rect & r, int src_cx, int src_cy, const uint8_t * src_data, bool compressed=false)
     {
         int cx = std::min(r.cx, src_cx - r.x);
         #warning there is both cx and this->cx and both can't be interchanged. this is intended to always store bitmaps that are multiple of 4 pixels to override a compatibility problem with rdesktop. This is not necessary for Microsoft clients. See MSRDP-CGR MS-RDPBCGR: 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)
@@ -107,6 +107,11 @@ struct Bitmap{
         unsigned int width = cx * nbbytes(bpp);
 
         assert(src_cy > r.y);
+
+        // If it is compressed, time to unpack the present
+        if (compressed) {
+            this->decompress(bpp, src_data, sizeof(src_data));
+        }
 
         const uint8_t *s8 = src_data + src_row_size * (src_cy - r.y - this->cy) + r.x * nbbytes(bpp);
 
