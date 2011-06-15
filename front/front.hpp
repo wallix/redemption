@@ -529,7 +529,7 @@ public:
     }
 
 
-    void send_bitmap_common(const uint8_t cache_id, const uint16_t cache_idx)
+    void bitmap_cache(const uint8_t cache_id, const uint16_t cache_idx)
     {
         BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
 
@@ -540,6 +540,11 @@ public:
 
         RDPBmpCache bmp_order(entry->pbmp, cache_id, cache_idx, &this->rdp_layer.client_info);
         bmp_order.emit(this->out_stream);
+
+        if (this->capture){
+            this->nativecapture->bitmap_cache(cache_id, cache_idx, entry);
+        }
+
     }
 
     // draw bitmap from src_data (image rect contained in src_r) to x, y
@@ -548,7 +553,6 @@ public:
                      int palette_id,
                      const Rect & clip)
     {
-        LOG(LOG_INFO, "// front::send_bitmap_front bpp=%d\n", this->rdp_layer.client_info.bpp);
         for (int y = 0; y < dst.cy ; y += 64) {
             int cy = std::min(64, dst.cy - y);
             for (int x = 0; x < dst.cx ; x += 64) {
@@ -566,7 +570,7 @@ public:
                     uint16_t cache_idx = (cache_ref & 0xFFFF);
 
                     if (send_type == BITMAP_ADDED_TO_CACHE){
-                        this->send_bitmap_common(cache_id, cache_idx);
+                        this->bitmap_cache(cache_id, cache_idx);
                     };
 
                     const RDPMemBlt cmd(cache_id + palette_id * 256, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
@@ -591,7 +595,7 @@ public:
 
         using namespace RDP;
 
-        #warning define a construcot with emit parameters
+        #warning define a constructor with emit parameters
 
         RDPGlyphCache newcmd;
         newcmd.size = font_char.datasize();

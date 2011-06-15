@@ -90,10 +90,9 @@ class NativeCapture
         fprintf(this->f, "}\n");
     }
 
-    void mem_blt(const RDPMemBlt & cmd, const BitmapCache & bmp_cache, const Rect & clip)
+    void bitmap_cache(const uint8_t cache_id, const uint16_t cache_idx, BitmapCacheItem * entry)
     {
-        #warning we always resend cache for now, it should be replaced by a true cache management in capture layer
-        const Bitmap & bmp = *bmp_cache.get_item(cmd.cache_id, cmd.cache_idx)->pbmp;
+        const Bitmap & bmp = *entry->pbmp;
         fprintf(this->f, "{\n");
 
         fprintf(this->f, "    // ------- Dumping bitmap RAW data [%p]---------\n", &bmp);
@@ -110,29 +109,36 @@ class NativeCapture
             for (size_t i = 0; i < bmp.line_size; i++){
                 line += snprintf(line, 1024, "0x%.2x, ", bmp.data_co[j*bmp.line_size+i]);
                 if (i % 16 == 15){
-                    fprintf(this->f, buffer);
+                    fprintf(this->f, "%s", buffer);
                     fprintf(this->f, "\n");
                     line = buffer;
                     buffer[0] = 0;
                 }
             }
             if (line != buffer){
-                fprintf(this->f, buffer);
+                fprintf(this->f, "%s", buffer);
                 fprintf(this->f, "\n");
-
             }
         }
-        fprintf(this->f, "    }; /* %p */", &bmp);
-        fprintf(this->f, "    Bitmap bmp%p(%d, %d, %d, raw%p, sizeof(raw%p));",
+        fprintf(this->f, "    }; /* %p */\n", &bmp);
+        fprintf(this->f, "    Bitmap bmp%p(%d, %d, %d, raw%p, sizeof(raw%p));\n",
             &bmp, bmp.bpp, bmp.cx, bmp.cy, &bmp, &bmp);
+        fprintf(this->f, "    RDPBmpCache cmd(&bmp%p, %u, %u, &this->front->rdp_layer.client_info);\n",
+            &bmp, cache_id, cache_idx);
+        fprintf(this->f, "    this->front->reserve_order(bmp%p.bmp_size + 16);\n", &bmp);
 
+        fprintf(this->f, "    cmd.emit(this->front->out_stream);\n");
+        fprintf(this->f, "}\n");
+
+    }
+    void mem_blt(const RDPMemBlt & cmd, const BitmapCache & bmp_cache, const Rect & clip)
+    {
+        fprintf(this->f, "{\n");
         #warning create a repr method in mem_blt
         fprintf(this->f, "    RDPMemBlt cmd(%u, Rect(%u, %u, %u, %u), %u, %u, %u, %u);\n",
             cmd.cache_id, cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
             cmd.rop, cmd.srcx, cmd.srcy, cmd.cache_idx);
-        fprintf(this->f, "    this->server_set_clip(Rect(%u, %u, %u, %u));\n",
-                clip.x, clip.y, clip.cx, clip.cy);
-        fprintf(this->f, "    this->front->mem_blt(cmd, bmp%p, this->clip);\n", &bmp);
+        fprintf(this->f, "    this->front->mem_blt(cmd, this->clip);\n");
         fprintf(this->f, "}\n");
     }
 
