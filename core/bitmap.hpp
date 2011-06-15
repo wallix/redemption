@@ -14,13 +14,16 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Copyright (C) Wallix 2011
+   Author(s): Christophe Grosjean, Javier Caverni, Martin Potier
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    This file implement the bitmap items data structure
    including RDP RLE compression and decompression algorithms
 
+   It also features storage and color versionning of the bitmap
+   returning a pointer on a table, corresponding to the required
+   color model.
 */
 
 
@@ -44,62 +47,48 @@
 #include <inttypes.h>
 #include "rect.hpp"
 
-struct Bitmap{
-    uint8_t *data_co;
-    int bpp;
+struct Bitmap {
     private:
-        uint8_t Bpp;
+    // data_co is allocated on demand
+    uint8_t *data_co24;
+    uint8_t *data_co16;
+    uint8_t *data_co15;
+    uint8_t *data_co8;
+
     public:
+    int original_bpp;
     unsigned cx;
     unsigned cy;
-    unsigned line_size;
-    unsigned bmp_size;
     uint8_t * pmax;
     char dummy[50];
 
-    public:
-    Bitmap() {
-        this->bpp = 0;
-        this->cx = 0;
-        this->cy = 0;
-        this->line_size = 0;
-        this->bmp_size = 0;
-        this->data_co = 0;
-        this->pmax = 0;
-    };
+    Bitmap(int bpp, int cx, int cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
+        : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(bpp)
+    {
+        // Important and only once
+        this->set_data_co(bpp);
 
-    Bitmap(int bpp, int cx, int cy) {
-        this->bpp = bpp;
-        this->Bpp = nbbytes(bpp);
         this->cx = cx;
         this->cy = cy;
 
-        this->line_size = row_size(cx, bpp);
-        this->bmp_size = this->line_size * cy;
-        this->data_co = (uint8_t*)malloc(this->bmp_size);
-        assert(this->data_co);
-        this->pmax = this->data_co + this->bmp_size;
+        if (compressed) {
+            this->decompress(bpp, data, size);
+        } else if (upsidedown) {
+            this->copy_upsidedown(bpp, data, cx);
+        } else {
+            // First call to data_co, dynamically allocated !
+            this->pmax = this->data_co(bpp) + this->bmp_size(bpp);
+            memcpy(this->data_co(bpp), data, size);
+        }
     }
 
-    Bitmap(int bpp, int cx, int cy, const uint8_t * data, const size_t size)
-    {
-        this->bpp = bpp;
-        this->Bpp = nbbytes(bpp);
-        this->cx = cx;
-        this->cy = cy;
 
-        this->line_size = row_size(cx, bpp);
-        this->bmp_size = this->line_size * cy;
-        this->data_co = (uint8_t*)malloc(this->bmp_size);
-        assert(this->data_co);
-        this->pmax = this->data_co + this->bmp_size;
-        memcpy(this->data_co, data, size);
-    }
-
-    Bitmap(int bpp, const Rect & r, int src_cx, int src_cy, const uint8_t * src_data)
+    Bitmap(int bpp, const Rect & r, int src_cx, int src_cy, const uint8_t * src_data, bool compressed=false)
+        : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(bpp)
     {
-        this->bpp = bpp;
-        this->Bpp = nbbytes(bpp);
+        // Important and only once
+        this->set_data_co(bpp);
+
         int cx = std::min(r.cx, src_cx - r.x);
         #warning there is both cx and this->cx and both can't be interchanged. this is intended to always store bitmaps that are multiple of 4 pixels to override a compatibility problem with rdesktop. This is not necessary for Microsoft clients. See MSRDP-CGR MS-RDPBCGR: 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)
         // bitmapDataStream (variable): A variable-sized array of bytes.
@@ -110,42 +99,42 @@ struct Bitmap{
 
         this->cx = align4(cx);
         this->cy = std::min(r.cy, src_cy - r.y);
-        this->line_size = row_size(this->cx, bpp);
-        this->bmp_size = this->line_size * r.cy;
 
         #warning We could reserve statical space for caches thus avoiding many memory allocation. RDP sets maximum size for cache items anyway and we MUST check this size is never larger than allowed.
+        this->pmax = this->data_co(bpp) + this->bmp_size(bpp);
 
-        this->data_co = (uint8_t*)malloc(this->bmp_size);
-        assert(this->data_co);
-        this->pmax = this->data_co + this->bmp_size;
-
-        #warning case 32 bits is certainly not working
-
-        uint8_t *d8 = this->data_co;
+        #warning case 32 bits is (certainly) not working
+        uint8_t *d8 = this->data_co(bpp);
         unsigned src_row_size = row_size(src_cx, bpp);
-        unsigned int width = cx * this->Bpp;
+        unsigned int width = cx * nbbytes(bpp);
 
         assert(src_cy > r.y);
 
-        const uint8_t *s8 = src_data + src_row_size * (src_cy - r.y - this->cy) + r.x * this->Bpp;
+        // If it is compressed, time to unpack the present
+        if (compressed) {
+            this->decompress(bpp, src_data, sizeof(src_data));
+        }
+
+        const uint8_t *s8 = src_data + src_row_size * (src_cy - r.y - this->cy) + r.x * nbbytes(bpp);
 
         for (unsigned i = 0; i < this->cy; i++) {
             memcpy(d8, s8, width);
-            if (this->line_size > width){
-                memset(d8+width, 0, this->line_size - width);
+            if (this->line_size(bpp) > width){
+                memset(d8+width, 0, this->line_size(bpp) - width);
             }
             s8 += src_row_size;
-            d8 += this->line_size;
+            d8 += this->line_size(bpp);
         }
     }
 
 
-    Bitmap(const char* filename, uint8_t bpp)
+    Bitmap(uint8_t bpp, const char* filename)
+        : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(bpp)
     {
-        this->bpp = bpp;
-        this->Bpp = nbbytes(bpp);
-        this->data_co = 0;
         this->pmax = 0;
+
+        // Important and only once
+        this->set_data_co(bpp);
 
         int size;
         RGBPalette palette1;
@@ -274,11 +263,7 @@ struct Bitmap{
         // compute target image size and allocate memory
         this->cx = header.image_width;
         this->cy = header.image_height;
-        this->line_size = row_size(this->cx, bpp);
-        this->bmp_size = this->line_size * this->cy;
-        this->data_co = (uint8_t*)malloc(this->bmp_size);
-        assert(this->data_co);
-        this->pmax = this->data_co + this->bmp_size;
+        this->pmax = this->data_co(bpp) + this->bmp_size(bpp);
 
 
         // read bitmap data
@@ -323,37 +308,37 @@ struct Bitmap{
                     pixel = palette1[pixel];
                 break;
                 }
-                uint32_t px = color_encodeBGR24(pixel, this->bpp, palette1);
-                ::out_bytes_le(this->data_co+y*this->line_size + x*nbbytes(this->bpp), nbbytes(this->bpp), px);
+                uint32_t px = color_encodeBGR24(pixel, bpp, palette1);
+                ::out_bytes_le(this->data_co(bpp)+y*this->line_size(bpp) + x*nbbytes(bpp), nbbytes(bpp), px);
 
             }
         }
         return;
     }
 
-    void dump(){
+    void dump(int bpp){
         LOG(LOG_INFO, "------- Dumping bitmap RAW data [%p]---------\n", this);
         LOG(LOG_INFO, "cx=%d cy=%d bpp=%d BPP=%d line_size=%d bmp_size=%d data=%p pmax=%p\n",
-            this->cx, this->cy, this->bpp, this->Bpp, this->line_size, this->bmp_size, this->data_co, this->pmax);
-        assert(this->bpp);
-        assert(this->Bpp);
-        assert(this->line_size);
+            this->cx, this->cy, bpp, nbbytes(bpp), this->line_size(bpp), this->bmp_size(bpp), this->data_co(bpp), this->pmax);
+        assert(bpp);
+        assert(this->line_size(bpp));
         assert(this->cx);
         assert(this->cy);
-        assert(this->data_co);
+        assert(this->data_co(bpp));
         assert(this->pmax);
-        assert(this->bmp_size);
-        assert(this->data_co + this->bmp_size == this->pmax);
+        assert(this->bmp_size(bpp));
+        assert(this->data_co(bpp) + this->bmp_size(bpp) == this->pmax);
 
         LOG(LOG_INFO, "uint8_t raw%p[] = {", this);
+        uint8_t * data = this->data_co(bpp);
 
         for (int j = 0 ; j < this->cy ; j++){
             LOG(LOG_INFO, "/* line %d */", (this->cy - j - 1));
             char buffer[2048];
             char * line = buffer;
             buffer[0] = 0;
-            for (int i = 0; i < this->line_size; i++){
-                line += snprintf(line, 1024, "0x%.2x, ", this->data_co[j*this->line_size+i]);
+            for (int i = 0; i < this->line_size(bpp); i++){
+                line += snprintf(line, 1024, "0x%.2x, ", data[j*this->line_size(bpp)+i]);
                 if (i % 16 == 15){
                     LOG(LOG_INFO, buffer);
                     line = buffer;
@@ -365,41 +350,53 @@ struct Bitmap{
             }
         }
         LOG(LOG_INFO, "}; /* %p */", this);
-        LOG(LOG_INFO, "Bitmap bmp%p(%d, %d, %d, raw%p, sizeof(raw%p));", this, this->bpp, this->cx, this->cy, this, this);
+        LOG(LOG_INFO, "Bitmap bmp%p(%d, %d, %d, raw%p, sizeof(raw%p));", this, bpp, this->cx, this->cy, this, this);
 
 //        LOG(LOG_INFO, "\n-----End of dump [%p] -----------------------\n", this);
     }
 
-    void copy(const uint8_t* input){
-        memcpy(this->data_co, input, this->bmp_size);
-        this->pmax = this->data_co + this->bmp_size;
-    }
-
-    void zero(){
-        memset(this->data_co, 0, this->bmp_size);
-    }
-
-    void copy_upsidedown(const uint8_t* input, uint16_t cx)
-    {
-        uint8_t * d8 = this->data_co + (this->cy-1) * this->line_size;
-        const uint8_t * s8 = input;
-        uint32_t src_width = cx * this->Bpp;
-
-        for (unsigned i = 0; i < this->cy; i++) {
-            memcpy(d8, s8, src_width);
-            if (this->line_size > src_width){
-                memset(d8+src_width, 0, this->line_size - src_width);
-            }
-            s8 += src_width;
-            d8 -= this->line_size;
+    bool isset_bpp(int bpp) {
+        switch(bpp) {
+            case 24:
+                return this->data_co24 != 0;
+            case 16:
+                return this->data_co16 != 0;
+            case 15:
+                return this->data_co15 != 0;
+            case 8:
+                return this->data_co8  != 0;
+            default:
+                return false;
         }
     }
 
-    void decompress(const uint8_t* input, size_t size)
+    void copy(int bpp, const uint8_t* input){
+        this->pmax = this->data_co(bpp) + this->bmp_size(bpp);
+        memcpy(this->data_co(bpp), input, this->bmp_size(bpp));
+    }
+
+    void copy_upsidedown(int bpp, const uint8_t* input, uint16_t cx)
     {
-        this->pmax = this->data_co + this->bmp_size;
+        uint8_t * d8 = this->data_co(bpp) + (this->cy-1) * this->line_size(bpp);
+        const uint8_t * s8 = input;
+        uint32_t src_width = cx * nbbytes(bpp);
+
+        for (unsigned i = 0; i < this->cy; i++) {
+            memcpy(d8, s8, src_width);
+            if (this->line_size(bpp) > src_width){
+                memset(d8+src_width, 0, this->line_size(bpp) - src_width);
+            }
+            s8 += src_width;
+            d8 -= this->line_size(bpp);
+        }
+    }
+
+    void decompress(int bpp, const uint8_t* input, size_t size)
+    {
+        uint8_t* data_co = this->data_co(bpp);
+        this->pmax = data_co + this->bmp_size(bpp);
         unsigned yprev = 0;
-        uint8_t* out = this->data_co;
+        uint8_t* out = data_co;
         const uint8_t* end = input + size;
         unsigned color1;
         unsigned color2;
@@ -410,7 +407,7 @@ struct Bitmap{
         unsigned count = 0;
         int bicolor = 0;
 
-        assert(this->Bpp <= 3);
+        assert(nbbytes(bpp) <= 3);
 
         color1 = 0;
         color2 = 0;
@@ -537,22 +534,22 @@ struct Bitmap{
             break;
             case BICOLOR:
                 bicolor = 0;
-                color1 = in_bytes_le(this->Bpp, input);
-                input += this->Bpp;
-                color2 = in_bytes_le(this->Bpp, input);
-                input += this->Bpp;
+                color1 = in_bytes_le(nbbytes(bpp), input);
+                input += nbbytes(bpp);
+                color2 = in_bytes_le(nbbytes(bpp), input);
+                input += nbbytes(bpp);
                 break;
             case COLOR:
-                color2 = in_bytes_le(this->Bpp, input);
-                input += this->Bpp;
+                color2 = in_bytes_le(nbbytes(bpp), input);
+                input += nbbytes(bpp);
                 break;
             case MIX_SET:
-                mix = in_bytes_le(this->Bpp, input);
-                input += this->Bpp;
+                mix = in_bytes_le(nbbytes(bpp), input);
+                input += nbbytes(bpp);
             break;
             case FOM_SET:
-                mix = in_bytes_le(this->Bpp, input);
-                input += this->Bpp;
+                mix = in_bytes_le(nbbytes(bpp), input);
+                input += nbbytes(bpp);
                 mask = 1;
                 fom_mask = input[0]; input++;
                 break;
@@ -564,35 +561,35 @@ struct Bitmap{
             if ((count > 0)
             && (opcode == FILL)
             && (opcode == lastopcode)
-            && (out != this->data_co + this->line_size)){
-                if (out < &(this->data_co[this->cx * this->Bpp])){
+            && (out != data_co + this->line_size(bpp))){
+                if (out < &(data_co[this->cx * nbbytes(bpp)])){
                     yprev = 0;
                 }
                 else {
-                     yprev = in_bytes_le(this->Bpp, out - this->cx * this->Bpp);
+                     yprev = in_bytes_le(nbbytes(bpp), out - this->cx * nbbytes(bpp));
                 }
-                out_bytes_le(out, this->Bpp, yprev ^ mix);
+                out_bytes_le(out, nbbytes(bpp), yprev ^ mix);
                 count--;
-                out+= this->Bpp;
+                out+= nbbytes(bpp);
             }
             lastopcode = opcode;
 
             /* Output body */
             while (count > 0) {
                 assert(out <= this->pmax);
-                if ((out - this->cx * this->Bpp) < this->data_co){
+                if ((out - this->cx * nbbytes(bpp)) < data_co){
                     yprev = 0;
                 }
                 else {
-                     yprev = in_bytes_le(this->Bpp, out - this->cx * this->Bpp);
+                     yprev = in_bytes_le(nbbytes(bpp), out - this->cx * nbbytes(bpp));
                 }
                 switch (opcode) {
                 case FILL:
-                    out_bytes_le(out, this->Bpp, yprev);
+                    out_bytes_le(out, nbbytes(bpp), yprev);
                     break;
                 case MIX_SET:
                 case MIX:
-                    out_bytes_le(out, this->Bpp, yprev ^ mix);
+                    out_bytes_le(out, nbbytes(bpp), yprev ^ mix);
                     break;
                 case FOM_SET:
                 case FOM:
@@ -603,42 +600,42 @@ struct Bitmap{
                 case SPECIAL_FGBG_1:
                 case SPECIAL_FGBG_2:
                     if (mask & fom_mask){
-                        out_bytes_le(out, this->Bpp, yprev ^ mix);
+                        out_bytes_le(out, nbbytes(bpp), yprev ^ mix);
                     }
                     else {
-                        out_bytes_le(out, this->Bpp, yprev);
+                        out_bytes_le(out, nbbytes(bpp), yprev);
                     }
                     mask <<= 1;
                     break;
                 case COLOR:
-                    out_bytes_le(out, this->Bpp, color2);
+                    out_bytes_le(out, nbbytes(bpp), color2);
                     break;
                 case COPY:
-                    out_bytes_le(out, this->Bpp, in_bytes_le(Bpp, input));
-                    input += this->Bpp;
+                    out_bytes_le(out, nbbytes(bpp), in_bytes_le(nbbytes(bpp), input));
+                    input += nbbytes(bpp);
                     break;
                 case BICOLOR:
                     if (bicolor) {
-                        out_bytes_le(out, this->Bpp, color2);
+                        out_bytes_le(out, nbbytes(bpp), color2);
                         bicolor = 0;
                     }
                     else {
-                        out_bytes_le(out, this->Bpp, color1);
+                        out_bytes_le(out, nbbytes(bpp), color1);
                         bicolor = 1;
                     }
                 break;
                 case WHITE:
-                    out_bytes_le(out, this->Bpp, 0xFFFFFFFF);
+                    out_bytes_le(out, nbbytes(bpp), 0xFFFFFFFF);
                 break;
                 case BLACK:
-                    out_bytes_le(out, this->Bpp, 0);
+                    out_bytes_le(out, nbbytes(bpp), 0);
                 break;
                 default:
                     assert(false);
                     break;
                 }
                 count--;
-                out += this->Bpp;
+                out += nbbytes(bpp);
             }
         }
         return;
@@ -646,101 +643,101 @@ struct Bitmap{
 
 
 
-    unsigned get_pixel(const uint8_t * const p) const
+    unsigned get_pixel(int bpp, const uint8_t * const p) const
     {
-        return in_bytes_le(this->Bpp, p);
+        return in_bytes_le(nbbytes(bpp), p);
     }
 
-    unsigned get_pixel_above(const uint8_t * const p) const
+    unsigned get_pixel_above(int bpp, const uint8_t * const p)
     {
-        return ((p-this->line_size) < this->data_co)
+        return ((p-this->line_size(bpp)) < this->data_co(bpp))
         ? 0
-        : this->get_pixel(p-this->line_size);
+        : this->get_pixel(bpp, p - this->line_size(bpp));
     }
 
-    unsigned get_color_count(const uint8_t * p, unsigned color) const
+    unsigned get_color_count(int bpp, const uint8_t * p, unsigned color)
     {
-        if (p >= this->pmax || get_pixel(p) != color){
+        if (p >= this->pmax || get_pixel(bpp, p) != color){
             return 0;
         }
-        return 1 + get_color_count(p+this->Bpp, color);
+        return 1 + get_color_count(bpp, p + nbbytes(bpp), color);
     }
 
     #warning derecursive it
-    unsigned get_bicolor_count(const uint8_t * p, unsigned color1, unsigned color2) const
+    unsigned get_bicolor_count(int bpp, const uint8_t * p, unsigned color1, unsigned color2)
     {
         if  (p >= this->pmax) {
             return 0;
         }
-        if (color1 != get_pixel(p)) {
+        if (color1 != get_pixel(bpp, p)) {
             return 0;
         }
-        if (p+this->Bpp >= this->pmax) {
+        if (p+nbbytes(bpp) >= this->pmax) {
             return 0;
         }
-        if (color2 != get_pixel(p+this->Bpp)) {
+        if (color2 != get_pixel(bpp, p+nbbytes(bpp))) {
             return 0;
         }
-        return 2 + get_bicolor_count(p+2*this->Bpp, color1, color2);
+        return 2 + get_bicolor_count(bpp, p+2*nbbytes(bpp), color1, color2);
     }
 
-    unsigned get_fill_count(const uint8_t * p) const
+    unsigned get_fill_count(int bpp, const uint8_t * p)
     {
         unsigned acc = 0;
-        while  (p + this->Bpp <= this->pmax) {
-            unsigned pixel = this->get_pixel(p);
-            unsigned ypixel = this->get_pixel_above(p);
+        while  (p + nbbytes(bpp) <= this->pmax) {
+            unsigned pixel = this->get_pixel(bpp, p);
+            unsigned ypixel = this->get_pixel_above(bpp, p);
             if (ypixel != pixel){
                 break;
             }
-            p = p+this->Bpp;
+            p = p+nbbytes(bpp);
             acc = acc + 1;
         }
         return acc;
     }
 
     #warning derecursive it
-    unsigned get_mix_count(const uint8_t * p, unsigned foreground) const
+    unsigned get_mix_count(int bpp, const uint8_t * p, unsigned foreground)
     {
         if  (p >= this->pmax) {
             return 0;
         }
-        if (this->get_pixel_above(p) ^ foreground ^ this->get_pixel(p)){
+        if (this->get_pixel_above(bpp, p) ^ foreground ^ this->get_pixel(bpp, p)){
             return 0;
         }
-        return 1 + get_mix_count(p+this->Bpp, foreground);
+        return 1 + get_mix_count(bpp, p+nbbytes(bpp), foreground);
     }
 
     #warning derecursive it
     // get mix_count and set the foreground
     // (the foreground matching for the first pixel)
-    unsigned get_mix_count_set(const uint8_t * p, unsigned & foreground) const
+    unsigned get_mix_count_set(int bpp, const uint8_t * p, unsigned & foreground)
     {
         if  (p >= this->pmax) {
             return 0;
         }
-        unsigned new_foreground = this->get_pixel_above(p) ^ this->get_pixel(p);
+        unsigned new_foreground = this->get_pixel_above(bpp, p) ^ this->get_pixel(bpp, p);
         if (new_foreground != foreground){
-            unsigned mix_count = get_mix_count(p+this->Bpp, new_foreground);
+            unsigned mix_count = get_mix_count(bpp, p+nbbytes(bpp), new_foreground);
             foreground = new_foreground;
             return 1 + mix_count;
         }
         else {
-            return 1 + get_mix_count(p+this->Bpp, foreground);
+            return 1 + get_mix_count(bpp, p+nbbytes(bpp), foreground);
         }
 
     }
 
-    void get_fom_masks(const uint8_t * p, uint8_t * mask, const unsigned count) const
+    void get_fom_masks(int bpp, const uint8_t * p, uint8_t * mask, const unsigned count)
     {
         unsigned i = 0;
         for (i = 0; i < count; i+=8)
         {
             mask[i>>3] = 0;
         }
-        for (i = 0 ; i < count; i++, p += this->Bpp)
+        for (i = 0 ; i < count; i++, p += nbbytes(bpp))
         {
-            if (get_pixel(p) != get_pixel_above(p)){
+            if (get_pixel(bpp, p) != get_pixel_above(bpp, p)){
                 mask[i>>3] |= (0x01 << (i & 7));
             }
         }
@@ -748,11 +745,11 @@ struct Bitmap{
 
 
     #warning derecursive it
-    unsigned get_fom_count_set(const uint8_t * p, unsigned & foreground, unsigned & flags) const
+    unsigned get_fom_count_set(int bpp, const uint8_t * p, unsigned & foreground, unsigned & flags)
     {
         // flags : 1 = fill, 2 = MIX, 3 = (1+2) = FOM
         {
-            unsigned fill_count = this->get_fill_count(p);
+            unsigned fill_count = this->get_fill_count(bpp, p);
 
             if (fill_count >= 8) {
                 flags = 1;
@@ -760,7 +757,7 @@ struct Bitmap{
             }
 
             if (fill_count) {
-                unsigned fom_count = this->get_fom_count_mix(p + fill_count * this->Bpp, foreground);
+                unsigned fom_count = this->get_fom_count_mix(bpp, p + fill_count * nbbytes(bpp), foreground);
                 if (fom_count){
                     flags = 3;
                     return fill_count + fom_count;
@@ -776,7 +773,7 @@ struct Bitmap{
         // it to black, as it's useless because fill_count allready does that.
         // Hence it's ok to check them independently.
         {
-            unsigned mix_count = this->get_mix_count_set(p, foreground);
+            unsigned mix_count = this->get_mix_count_set(bpp, p, foreground);
 
             if (mix_count >= 8) {
                 flags = 2;
@@ -784,7 +781,7 @@ struct Bitmap{
             }
 
             if (mix_count){
-                unsigned fom_count = this->get_fom_count_fill(p + mix_count * this->Bpp, foreground);
+                unsigned fom_count = this->get_fom_count_fill(bpp, p + mix_count * nbbytes(bpp), foreground);
                 if (fom_count){
                     flags = 3;
                     return mix_count + fom_count;
@@ -802,16 +799,16 @@ struct Bitmap{
 
 
     #warning derecursive it
-    unsigned get_fom_count(const uint8_t * p, unsigned foreground) const
+    unsigned get_fom_count(int bpp, const uint8_t * p, unsigned foreground)
     {
-        unsigned fill_count = this->get_fill_count(p);
+        unsigned fill_count = this->get_fill_count(bpp, p);
 
         if (fill_count >= 8) {
             return 0;
         }
 
         if (fill_count) {
-            unsigned fom_count = this->get_fom_count_mix(p + fill_count * this->Bpp, foreground);
+            unsigned fom_count = this->get_fom_count_mix(bpp, p + fill_count * nbbytes(bpp), foreground);
             return fom_count ? fill_count + fom_count : 0;
 
         }
@@ -821,14 +818,14 @@ struct Bitmap{
         // it to black, as it's useless because fill_count allready does that.
         // Hence it's ok to check them independently.
 
-        unsigned mix_count = this->get_mix_count(p, foreground);
+        unsigned mix_count = this->get_mix_count(bpp, p, foreground);
 
         if (mix_count >= 8) {
             return 0;
         }
 
         if (mix_count){
-            unsigned fom_count = this->get_fom_count_fill(p + mix_count * this->Bpp, foreground);
+            unsigned fom_count = this->get_fom_count_fill(bpp, p + mix_count * nbbytes(bpp), foreground);
             return fom_count ? mix_count + fom_count : 0;
         }
 
@@ -837,14 +834,14 @@ struct Bitmap{
     }
 
     #warning derecursive it
-    unsigned get_fom_count_fill(const uint8_t * p, unsigned foreground) const
+    unsigned get_fom_count_fill(int bpp, const uint8_t * p, unsigned foreground)
     {
 
-        if  (p < this->data_co || p >= this->pmax) {
+        if  (p < this->data_co(bpp) || p >= this->pmax) {
             return 0;
         }
 
-        unsigned fill_count = get_fill_count(p);
+        unsigned fill_count = get_fill_count(bpp, p);
 
         if (fill_count >= 9) {
             return 0;
@@ -854,14 +851,14 @@ struct Bitmap{
             return 0;
         }
 
-        return fill_count + this->get_fom_count_mix(p + fill_count * this->Bpp, foreground);
+        return fill_count + this->get_fom_count_mix(bpp, p + fill_count * nbbytes(bpp), foreground);
     }
 
 
     #warning derecursive it
-    unsigned get_fom_count_mix(const uint8_t * p, unsigned foreground) const
+    unsigned get_fom_count_mix(int bpp, const uint8_t * p, unsigned foreground)
     {
-        unsigned mix_count = get_mix_count(p, foreground);
+        unsigned mix_count = get_mix_count(bpp, p, foreground);
 
         if (mix_count >= 9) {
             return 0;
@@ -871,19 +868,19 @@ struct Bitmap{
             return 0;
         }
 
-        return mix_count + this->get_fom_count_fill(p + mix_count * this->Bpp, foreground);
+        return mix_count + this->get_fom_count_fill(bpp, p + mix_count * nbbytes(bpp), foreground);
     }
 
     #warning simplify and enhance compression using 1 pixel orders BLACK or WHITE.
     #warning get allready compressed bitmaps in cache to avoid useless computations
-    void compress(Stream & out)
+    void compress(int bpp, Stream & out)
     {
-        const uint8_t Bpp = nbbytes(this->bpp);
+        const uint8_t Bpp = nbbytes(bpp);
         uint8_t * oldp = 0;
-        uint8_t * p = this->data_co;
+        uint8_t * p = this->data_co(bpp);
 
         // white with the right length : either 0xFF or 0xFFFF or 0xFFFFFF
-        unsigned foreground = ~(-1 << (this->Bpp*8));
+        unsigned foreground = ~(-1 << (nbbytes(bpp)*8));
         unsigned new_foreground = foreground;
         unsigned flags = 0;
         uint8_t masks[512];
@@ -893,7 +890,7 @@ struct Bitmap{
         uint32_t color2 = 0;
 
         #warning we should also check out_size and truncate if it overflow buffer or find another to ensure out buffer is large enough
-        this->pmax = this->data_co;
+        this->pmax = this->data_co(bpp);
         for (int part = 0 ; part < 2 ; part++){
             // As far as I can see the specs of bitmap RLE compressor is crap here
             // Fill orders between first scanline and all others must be splitted
@@ -902,12 +899,12 @@ struct Bitmap{
             // but if the first scanline contains two successive FILL or
             // if all the remaining scanlines contains two consecutive fill
             // orders, a magic MIX pixel is inserted between fills.
-            // This explains the surprising loop above and the test below.
+            // This explains the surprising loop above and the test below.pp
             if (part){
-                this->pmax = this->data_co + this->bmp_size;
+                this->pmax = this->data_co(bpp) + this->bmp_size(bpp);
             }
             else {
-                this->pmax = this->data_co + this->line_size;
+                this->pmax = this->data_co(bpp) + this->line_size(bpp);
             }
             while (p < this->pmax)
             {
@@ -917,36 +914,36 @@ struct Bitmap{
                 }
                 oldp = p;
 
-                uint32_t fom_count = this->get_fom_count_set(p, new_foreground, flags);
+                uint32_t fom_count = this->get_fom_count_set(bpp, p, new_foreground, flags);
                 uint32_t color_count = 0;
                 uint32_t bicolor_count = 0;
 
-                if (p + this->Bpp < this->pmax){
-                    color = get_pixel(p);
-                    color2 = get_pixel(p+this->Bpp);
+                if (p + nbbytes(bpp) < this->pmax){
+                    color = get_pixel(bpp, p);
+                    color2 = get_pixel(bpp, p+nbbytes(bpp));
 
                     if (color == color2){
-                        color_count = get_color_count(p, color);
+                        color_count = get_color_count(bpp, p, color);
                     }
                     else {
-                        bicolor_count = get_bicolor_count(p, color, color2);
+                        bicolor_count = get_bicolor_count(bpp, p, color, color2);
                     }
                 }
 
                 const unsigned fom_cost = 1                      // header
-                    + (foreground != new_foreground) * this->Bpp // set
+                    + (foreground != new_foreground) * nbbytes(bpp) // set
                     + (flags == 3) * nbbytes(fom_count);         // mask
                 const unsigned copy_fom_cost = 1 * (copy_count == 0) // start copy
-                    + fom_count * this->Bpp;                         // pixels
-                const unsigned color_cost = 1 + this->Bpp;
-                const unsigned bicolor_cost = 1 + 2*this->Bpp;
+                    + fom_count * nbbytes(bpp);                         // pixels
+                const unsigned color_cost = 1 + nbbytes(bpp);
+                const unsigned bicolor_cost = 1 + 2*nbbytes(bpp);
 
                 if ((fom_count >= color_count || (color_count == 0))
                 && ((fom_count >= bicolor_count) || (bicolor_count == 0) || (bicolor_count < 4))
                 && fom_cost < copy_fom_cost) {
                     switch (flags){
                         case 3:
-                            get_fom_masks(p, masks, fom_count);
+                            get_fom_masks(bpp, p, masks, fom_count);
                             if (new_foreground != foreground){
                                 flags += 4;
                             }
@@ -962,9 +959,9 @@ struct Bitmap{
                 }
                 else {
                     unsigned copy_color_cost = (copy_count == 0) // start copy
-                        + color_count * this->Bpp;               // pixels
+                        + color_count * nbbytes(bpp);               // pixels
                     unsigned copy_bicolor_cost = (copy_count == 0) // start copy
-                        + bicolor_count * this->Bpp;               // pixels
+                        + bicolor_count * nbbytes(bpp);               // pixels
 
                     if ((color_cost < copy_color_cost)
                     && (color_count > 0)){
@@ -981,7 +978,7 @@ struct Bitmap{
                 }
 
                 if (flags && copy_count > 0){
-                    out.out_copy_sequence(Bpp, copy_count, p - copy_count * this->Bpp);
+                    out.out_copy_sequence(Bpp, copy_count, p - copy_count * nbbytes(bpp));
                     copy_count = 0;
                 }
 
@@ -989,57 +986,57 @@ struct Bitmap{
                 switch (flags){
                     case 9:
                         out.out_bicolor_sequence(Bpp, bicolor_count, color, color2);
-                        p+= bicolor_count * this->Bpp;
+                        p+= bicolor_count * nbbytes(bpp);
                     break;
 
                     case 8:
                         out.out_color_sequence(Bpp, color_count, color);
-                        p+= color_count * this->Bpp;
+                        p+= color_count * nbbytes(bpp);
                     break;
 
                     case 7:
-                        out.out_fom_sequence_set(this->Bpp, fom_count, new_foreground, masks);
+                        out.out_fom_sequence_set(nbbytes(bpp), fom_count, new_foreground, masks);
                         foreground = new_foreground;
-                        p+= fom_count * this->Bpp;
+                        p+= fom_count * nbbytes(bpp);
                     break;
 
                     case 6:
                         out.out_mix_count_set(fom_count);
-                        out.out_bytes_le(this->Bpp, new_foreground);
+                        out.out_bytes_le(nbbytes(bpp), new_foreground);
                         foreground = new_foreground;
-                        p+= fom_count * this->Bpp;
+                        p+= fom_count * nbbytes(bpp);
                     break;
 
                     case 3:
                         out.out_fom_sequence(fom_count, masks);
-                        p+= fom_count * this->Bpp;
+                        p+= fom_count * nbbytes(bpp);
                     break;
 
                     case 2:
                         out.out_mix_count(fom_count);
-                        p+= fom_count * this->Bpp;
+                        p+= fom_count * nbbytes(bpp);
                     break;
 
                     case 1:
                         out.out_fill_count(fom_count);
-                        p+= fom_count * this->Bpp;
+                        p+= fom_count * nbbytes(bpp);
                     break;
 
                     default:
-                        p += this->Bpp;
+                        p += nbbytes(bpp);
                     break;
                 }
             }
 
             if (copy_count > 0){
-                out.out_copy_sequence(Bpp, copy_count, p - copy_count * this->Bpp);
+                out.out_copy_sequence(Bpp, copy_count, p - copy_count * nbbytes(bpp));
                 copy_count = 0;
             }
         }
     }
 
 
-    uint32_t get_crc()
+    uint32_t get_crc(int bpp)
     {
         #warning is this memory table really necessary for crc computing ? I undersatnd some dispersion of values is a good thing, but other simpler signing scheme should be more efficient with less memory access (maybe even md5 or aes).
 
@@ -1090,23 +1087,142 @@ struct Bitmap{
             0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
         };
 
-        uint8_t Bpp = nbbytes(this->bpp);
+        uint8_t Bpp = nbbytes(bpp);
         unsigned crc = crc_seed;
         unsigned width = this->cx * Bpp;
-        const uint8_t *s8 = this->data_co;
+        const uint8_t *s8 = this->data_co(bpp);
         for (unsigned i = 0; i < this->cy; i++) {
             for (unsigned j = 0; j < width ; j++) {
                 crc = crc_table[(crc ^ *s8++) & 0xff] ^ (crc >> 8);
             }
-            s8 += this->line_size - width;
+            s8 += this->line_size(bpp) - width;
         }
         return crc ^ crc_seed;
     }
 
     ~Bitmap(){
-        if (this->data_co){
-            free(this->data_co);
+        if (this->data_co24){
+            free(this->data_co24);
         }
+        if (this->data_co16){
+            free(this->data_co16);
+        }
+        if (this->data_co15){
+            free(this->data_co15);
+        }
+        if (this->data_co8){
+            free(this->data_co8);
+        }
+    }
+
+    uint8_t * data_co(const int bpp) {
+        switch (bpp) {
+            case 24:
+                if (!data_co24) {
+                    convert_data_co(bpp);
+                }
+                return data_co24;
+            case 16:
+                if (!data_co16) {
+                    convert_data_co(bpp);
+                }
+                return data_co16;
+            case 15:
+                if (!data_co15) {
+                    convert_data_co(bpp);
+                }
+                return data_co15;
+            case 8:
+                if (!data_co8) {
+                    convert_data_co(bpp);
+                }
+                return data_co8;
+            default:
+                #warning: change assertion to a proper exception!
+                assert(0);
+        }
+    }
+
+    void convert_data_co(int out_bpp) {
+        uint8_t * dest;
+        #warning: PCC -> Pretty Confusing Code, NOT a recursive call to set_data_co()
+        uint8_t * src = data_co(this->original_bpp);
+        switch (out_bpp) {
+            case 24:
+                dest = data_co24;
+                break;
+            case 16:
+                dest = data_co16;
+                break;
+            case 15:
+                dest = data_co15;
+                break;
+            case 8:
+                dest = data_co8;
+                break;
+            default:
+                #warning: change assertion to a proper exception!
+                assert(0);
+        }
+        #warning: HORRIBLE hack to avoid 60(0) minutes work, BAD palette management, FIX IT!
+        RGBPalette palette332;
+        /* rgb332 palette */
+        for (int bindex = 0; bindex < 4; bindex++) {
+            for (int gindex = 0; gindex < 8; gindex++) {
+                for (int rindex = 0; rindex < 8; rindex++) {
+                    palette332[(rindex << 5) | (gindex << 2) | bindex] =
+                    (RGBcolor)(
+                    // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
+                    // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
+                       | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
+                    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
+                       | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
+                }
+            }
+        }
+
+        // Color decode/encode
+        for (int i = 0; i < this->cx * this->cy; i++) {
+            uint32_t pixel = color_decode(in_bytes_le(nbbytes(this->original_bpp), src),
+                                          this->original_bpp,
+                                          palette332);
+            uint32_t target_pixel = color_encode(pixel, out_bpp, palette332);
+            target_pixel = 0xFFFFFF & target_pixel;
+            out_bytes_le(dest, nbbytes(out_bpp), target_pixel);
+            src += nbbytes(this->original_bpp);
+            dest += nbbytes(out_bpp);
+        }
+    }
+
+    // Initialize room for data_coXX.
+    void set_data_co(int bpp)
+    {
+        switch (bpp) {
+            case 24:
+                data_co24 = (uint8_t*)malloc(this->bmp_size(bpp));
+                break;
+            case 16:
+                data_co16 = (uint8_t*)malloc(this->bmp_size(bpp));
+                break;
+            case 15:
+                data_co15 = (uint8_t*)malloc(this->bmp_size(bpp));
+                break;
+            case 8:
+                data_co8  = (uint8_t*)malloc(this->bmp_size(bpp));
+                break;
+            default:
+                #warning: change assertion to a proper exception!
+                assert(0);
+        }
+    }
+
+    size_t line_size(const int bpp) const {
+        return row_size(this->cx, bpp);
+    }
+
+    size_t bmp_size(const int bpp) const {
+        return row_size(this->cx, bpp) * cy;
     }
 };
 

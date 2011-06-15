@@ -1108,14 +1108,15 @@ struct rdp_rdp {
             // that the bitmapComprHdr field is present if the
             // NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not set.
 
-            Bitmap bitmap(bpp, width, height);
+
+            LOG(LOG_INFO, "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */", i, bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
 
             LOG(LOG_INFO, "/* Rect [%d] bpp=%d (%d) width=%d height=%d b(%d, %d, %d, %d) */", i, bpp, bitmap.bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
 
             if (flags & 0x0001){
                 uint16_t size = bufsize;
-                uint16_t final_size = bitmap.bmp_size;
-                uint16_t line_size = bitmap.line_size;
+                uint16_t line_size = row_size(width, bpp);
+                uint16_t final_size = line_size * height;
                 if (!(flags & 0x400)) {
                 // bitmapComprHdr (8 bytes): Optional Compressed Data Header
                 // structure (see Compressed Data Header (TS_CD_HEADER)
@@ -1131,19 +1132,24 @@ struct rdp_rdp {
                     final_size = stream.in_uint16_le();
                 }
 
-                assert(line_size == bitmap.line_size);
-                assert(final_size == bitmap.bmp_size);
-
                 const uint8_t * data = stream.in_uint8p(size);
-                bitmap.decompress(data, size);
+                Bitmap bitmap(bpp, width, height, data, size, true);
+
+                assert(line_size == bitmap.line_size(bpp));
+                assert(final_size == bitmap.bmp_size(bpp));
+
+                mod->clip = boundary;
+                mod->server_paint_rect(bitmap, boundary, 0, 0, this->orders.cache_colormap.palette[0]);
             }
             else {
                 const uint8_t * data = stream.in_uint8p(bufsize);
-                assert(bufsize == bitmap.bmp_size);
-                bitmap.copy(data);
+                Bitmap bitmap(bpp, width, height, data, bufsize);
+
+                assert(bufsize == bitmap.bmp_size(bpp));
+
+                mod->clip = boundary;
+                mod->server_paint_rect(bitmap, boundary, 0, 0, this->orders.cache_colormap.palette[0]);
             }
-            mod->clip = boundary;
-            mod->server_paint_rect(bitmap, boundary, 0, 0, this->orders.cache_colormap.palette[0]);
         }
     }
 
@@ -1166,7 +1172,7 @@ struct rdp_rdp {
                 stream.skip_uint8(2); /* pad */
                 int count = stream.in_uint16_le();
                 stream.skip_uint8(2); /* pad */
-                this->orders.rdp_orders_process_orders(stream, count, mod);
+                this->orders.rdp_orders_process_orders(this->bpp, stream, count, mod);
             }
             break;
         case RDP_UPDATE_BITMAP:
