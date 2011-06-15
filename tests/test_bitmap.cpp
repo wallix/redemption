@@ -41,6 +41,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 
     // test COLOR COUNT EMPTY
     {
+        BOOST_CHECK(1);
         int bpp = 8;
         uint8_t data[0] = {};
         Bitmap bmp(bpp, 0, 4, data, 0);

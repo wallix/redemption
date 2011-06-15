@@ -56,28 +56,18 @@ struct Bitmap {
     uint8_t *data_co8;
     
     public:
+    int original_bpp;
     unsigned cx;
     unsigned cy;
     uint8_t * pmax;
     char dummy[50];
 
-//    Bitmap() {
-//        this->cx = 0;
-//        this->cy = 0;
-//        this->pmax = 0;
-//    };
-//
-//    Bitmap(int bpp, int cx, int cy) {
-//        this->cx = cx;
-//        this->cy = cy;
-//
-//        // First call to data_co, dynamically allocated !
-//        this->pmax = this->data_co(bpp) + this->bmp_size(bpp);
-//    }
-
     Bitmap(int bpp, int cx, int cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
-        : data_co24(0), data_co16(0), data_co15(0), data_co8(0)
+        : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(bpp)
     {
+        // Important and only once
+        this->set_data_co(bpp);
+
         this->cx = cx;
         this->cy = cy;
 
@@ -94,8 +84,11 @@ struct Bitmap {
 
 
     Bitmap(int bpp, const Rect & r, int src_cx, int src_cy, const uint8_t * src_data, bool compressed=false)
-        : data_co24(0), data_co16(0), data_co15(0), data_co8(0)
+        : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(bpp)
     {
+        // Important and only once
+        this->set_data_co(bpp);
+
         int cx = std::min(r.cx, src_cx - r.x);
         #warning there is both cx and this->cx and both can't be interchanged. this is intended to always store bitmaps that are multiple of 4 pixels to override a compatibility problem with rdesktop. This is not necessary for Microsoft clients. See MSRDP-CGR MS-RDPBCGR: 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)
         // bitmapDataStream (variable): A variable-sized array of bytes.
@@ -136,9 +129,12 @@ struct Bitmap {
 
 
     Bitmap(uint8_t bpp, const char* filename)
-        : data_co24(0), data_co16(0), data_co15(0), data_co8(0)
+        : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(bpp)
     {
         this->pmax = 0;
+
+        // Important and only once
+        this->set_data_co(bpp);
 
         int size;
         RGBPalette palette1;
@@ -1123,22 +1119,22 @@ struct Bitmap {
         switch (bpp) {
             case 24:
                 if (!data_co24) {
-                    set_data_co(bpp);
+                    convert_data_co(bpp);
                 }
                 return data_co24;
             case 16:
                 if (!data_co16) {
-                    set_data_co(bpp);
+                    convert_data_co(bpp);
                 }
                 return data_co16;
             case 15:
                 if (!data_co15) {
-                    set_data_co(bpp);
+                    convert_data_co(bpp);
                 }
                 return data_co15;
             case 8:
                 if (!data_co8) {
-                    set_data_co(bpp);
+                    convert_data_co(bpp);
                 }
                 return data_co8;
             default:
@@ -1147,7 +1143,61 @@ struct Bitmap {
         }
     }
 
-    void set_data_co(int bpp) {
+    void convert_data_co(int out_bpp) {
+        uint8_t * dest;
+        #warning: PCC -> Pretty Confusing Code, NOT a recursive call to set_data_co()
+        uint8_t * src = data_co(this->original_bpp);
+        switch (out_bpp) {
+            case 24:
+                dest = data_co24;
+                break;
+            case 16:
+                dest = data_co16;
+                break;
+            case 15:
+                dest = data_co15;
+                break;
+            case 8:
+                dest = data_co8;
+                break;
+            default:
+                #warning: change assertion to a proper exception!
+                assert(0);
+        }
+        #warning: HORRIBLE hack to avoid 60(0) minutes work, BAD palette management, FIX IT!
+        RGBPalette palette332;
+        /* rgb332 palette */
+        for (int bindex = 0; bindex < 4; bindex++) {
+            for (int gindex = 0; gindex < 8; gindex++) {
+                for (int rindex = 0; rindex < 8; rindex++) {
+                    palette332[(rindex << 5) | (gindex << 2) | bindex] =
+                    (RGBcolor)(
+                    // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
+                    // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
+                       | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
+                    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
+                       | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
+                }
+            }
+        }
+        
+        // Color decode/encode
+        for (int i = 0; i < this->cx * this->cy; i++) {
+            uint32_t pixel = color_decode(in_bytes_le(nbbytes(this->original_bpp), src),
+                                          this->original_bpp,
+                                          palette332);
+            uint32_t target_pixel = color_encode(pixel, out_bpp, palette332);
+            target_pixel = 0xFFFFFF & target_pixel;
+            out_bytes_le(dest, nbbytes(out_bpp), target_pixel);
+            src += nbbytes(this->original_bpp);
+            dest += nbbytes(out_bpp);
+        }
+    }
+
+    // Initialize room for data_coXX.
+    void set_data_co(int bpp)
+    {
         switch (bpp) {
             case 24:
                 data_co24 = (uint8_t*)malloc(this->bmp_size(bpp));

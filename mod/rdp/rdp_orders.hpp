@@ -220,7 +220,7 @@ struct rdp_orders {
 
                 #warning valgrind say there is a memory leak here
                 bitmap = new Bitmap(bpp, width, height, data, size, true);
-                assert(row_size == bitmap->line_size(bmp));
+                assert(row_size == bitmap->line_size(bpp));
 
             }
         break;

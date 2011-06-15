@@ -1130,18 +1130,21 @@ struct rdp_rdp {
                     final_size = stream.in_uint16_le();
                 }
 
-                assert(line_size == bitmap.line_size);
-                assert(final_size == bitmap.bmp_size);
-
                 const uint8_t * data = stream.in_uint8p(size);
                 Bitmap bitmap(bpp, width, height, data, size, true);
+
+                assert(line_size == bitmap.line_size(bpp));
+                assert(final_size == bitmap.bmp_size(bpp));
+
                 mod->clip = boundary;
                 mod->server_paint_rect(bitmap, boundary, 0, 0, this->orders.cache_colormap.palette[0]);
             }
             else {
                 const uint8_t * data = stream.in_uint8p(bufsize);
-                assert(bufsize == bitmap.bmp_size);
                 Bitmap bitmap(bpp, width, height, data, bufsize);
+
+                assert(bufsize == bitmap.bmp_size(bpp));
+                
                 mod->clip = boundary;
                 mod->server_paint_rect(bitmap, boundary, 0, 0, this->orders.cache_colormap.palette[0]);
             }
