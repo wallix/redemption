@@ -511,11 +511,11 @@ public:
         BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
 
         #warning really when using compression we'll use less space
-        this->reserve_order(entry->pbmp->bmp_size + 16);
+        this->reserve_order(entry->pbmp->bmp_size(this->rdp_layer.client_info.bpp) + 16);
 
         using namespace RDP;
 
-        RDPBmpCache bmp_order(entry->pbmp, cache_id, cache_idx, &this->rdp_layer.client_info);
+        RDPBmpCache bmp_order(this->rdp_layer.client_info.bpp, entry->pbmp, cache_id, cache_idx, &this->rdp_layer.client_info);
         bmp_order.emit(this->out_stream);
     }
 

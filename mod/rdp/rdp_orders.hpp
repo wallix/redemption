@@ -173,7 +173,7 @@ struct rdp_orders {
     }
 
 
-    void rdp_orders_process_bmpcache(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
+    void rdp_orders_process_bmpcache(int bpp, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
 //        LOG(LOG_INFO, "rdp_orders_process_bmpcache");
         struct Bitmap* bitmap = NULL;
@@ -183,7 +183,7 @@ struct rdp_orders {
         case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
             {
                 #warning RDPBmpCache is used to create bitmap
-                RDPBmpCache bmp;
+                RDPBmpCache bmp(bpp);
                 bmp.receive(stream, control, header);
                 cache_id = bmp.cache_id;
                 cache_idx = bmp.cache_idx;
@@ -219,11 +219,9 @@ struct rdp_orders {
                 const uint8_t* data = stream.in_uint8p(size);
 
                 #warning valgrind say there is a memory leak here
-                bitmap = new Bitmap(bpp, width, height);
+                bitmap = new Bitmap(bpp, width, height, data, size, true);
+                assert(row_size == bitmap->line_size(bmp));
 
-                assert(row_size == bitmap->line_size);
-
-                bitmap->decompress(data, size);
             }
         break;
         default:
@@ -376,7 +374,7 @@ struct rdp_orders {
     }
 
     /*****************************************************************************/
-    int rdp_orders_process_orders(Stream & stream, int num_orders, client_mod * mod)
+    int rdp_orders_process_orders(int bpp, Stream & stream, int num_orders, client_mod * mod)
     {
         using namespace RDP;
         int processed = 0;
@@ -397,7 +395,7 @@ struct rdp_orders {
                 switch (header.type) {
                 case TS_CACHE_BITMAP_COMPRESSED:
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
-                    this->rdp_orders_process_bmpcache(stream, control, header);
+                    this->rdp_orders_process_bmpcache(bpp, stream, control, header);
                     break;
                 case TS_CACHE_COLOR_TABLE:
                     this->cache_colormap.receive(stream, control, header);

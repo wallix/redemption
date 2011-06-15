@@ -60,9 +60,9 @@ struct BitmapCacheItem {
         this->crc = 0;
     };
 
-    BitmapCacheItem(Bitmap * pbmp) : pbmp(pbmp) {
+    BitmapCacheItem(int bpp, Bitmap * pbmp) : pbmp(pbmp) {
         this->stamp = 0;
-        this->crc = pbmp->get_crc();
+        this->crc = pbmp->get_crc(bpp);
     };
 
     ~BitmapCacheItem(){
@@ -154,27 +154,27 @@ struct BitmapCache {
     {
         int cache_idx = 0;
         Bitmap * pbitmap = new Bitmap(src_bpp, tile, src_cx, src_cy, src_data);
-        BitmapCacheItem cache_item(pbitmap);
+        BitmapCacheItem cache_item(src_bpp, pbitmap);
         this->bitmap_stamp++;
         int entries = 0;
         BitmapCacheItem * array = 0;
         int cache_id = 0;
 
-        if (cache_item.pbmp->bmp_size <= this->small_size) {
+        if (cache_item.pbmp->bmp_size(src_bpp) <= this->small_size) {
             array = this->small_bitmaps;
             entries = this->small_entries;
             cache_id = 0;
-        } else if (cache_item.pbmp->bmp_size <= this->medium_size) {
+        } else if (cache_item.pbmp->bmp_size(src_bpp) <= this->medium_size) {
             array = this->medium_bitmaps;
             entries = this->medium_entries;
             cache_id = 1;
-        } else if (cache_item.pbmp->bmp_size <= this->big_size) {
+        } else if (cache_item.pbmp->bmp_size(src_bpp) <= this->big_size) {
             array = this->big_bitmaps;
             entries = this->big_entries;
             cache_id = 2;
         }
         else {
-            LOG(LOG_ERR, "bitmap size too big %d", cache_item.pbmp->bmp_size);
+            LOG(LOG_ERR, "bitmap size too big %d", cache_item.pbmp->bmp_size(src_bpp));
             assert(false);
         }
 
@@ -191,7 +191,6 @@ struct BitmapCache {
 
                 #warning create a comparizon function in bitmap_cache_item
                 if (array[j].pbmp
-                && array[j].pbmp->bpp == cache_item.pbmp->bpp
                 && array[j].pbmp->cx == cache_item.pbmp->cx
                 && array[j].pbmp->cy == cache_item.pbmp->cy
                 && array[j].crc == cache_item.crc)
@@ -212,7 +211,7 @@ struct BitmapCache {
         }
         else {
             #warning bitmap should not be sent through cache if it is too big, should allready have been splitted by sender ?
-            LOG(LOG_ERR, "bitmap not added to cache, too big(%d = %d x %d x %d) [%d, %d, %d]\n", cache_item.pbmp->bmp_size, tile.cx, tile.cy, cache_item.pbmp->bpp, this->small_size, this->medium_size, this->big_size);
+            LOG(LOG_ERR, "bitmap not added to cache, too big(%d = %d x %d x %d) [%d, %d, %d]\n", cache_item.pbmp->bmp_size(src_bpp), tile.cx, tile.cy, src_bpp, this->small_size, this->medium_size, this->big_size);
         }
         throw Error(ERR_BITMAP_CACHE_TOO_BIG);
     }

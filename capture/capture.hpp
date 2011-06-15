@@ -560,9 +560,7 @@ class Capture
         const uint16_t srcy = memblt.srcy;
         const uint16_t cache_idx = memblt.cache_idx;
         const BitmapCacheItem * entry =  bmp_cache.get_item(cache_id & 0xFF, cache_idx);
-        const uint8_t * const bmp_data = entry->pbmp->data_co;
-        const uint8_t bpp = entry->pbmp->bpp;
-        assert(bpp == this->bpp);
+        const uint8_t * const bmp_data = entry->pbmp->data_co(this->bpp);
 
         // Where we draw -> target
         uint32_t px = 0;
@@ -577,8 +575,8 @@ class Capture
                   continue;
                 }
                 #warning this should not be done here, implement bitmap color conversion and use it here
-                uint32_t src_px_offset = ((rect.cy - j - srcy - 1) * align4(rect.cx) + i + srcx) * nbbytes(bpp);
-                switch (bpp){
+                uint32_t src_px_offset = ((rect.cy - j - srcy - 1) * align4(rect.cx) + i + srcx) * nbbytes(this->bpp);
+                switch (this->bpp){
                     default:
                     case 32:
                         assert(false);

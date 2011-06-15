@@ -494,18 +494,20 @@ class RDPBmpCache {
     public:
     int cache_id;
     Bitmap * bmp;
+    int bpp;
     int cache_idx;
     const ClientInfo * client_info;
 
-    RDPBmpCache(Bitmap * bmp, int cache_id, int cache_idx, ClientInfo * client_info) :
+    RDPBmpCache(int bpp, Bitmap * bmp, int cache_id, int cache_idx, ClientInfo * client_info) :
                     cache_id(cache_id),
                     bmp(bmp),
+                    bpp(bpp),
                     cache_idx(cache_idx),
                     client_info(client_info)
     {
     }
 
-    RDPBmpCache()
+    RDPBmpCache(int bpp) : bpp(bpp)
     {
     }
 
@@ -546,7 +548,7 @@ class RDPBmpCache {
 
         bool small_headers = this->client_info->op2;
         Stream tmp(16384);
-        this->bmp->compress(tmp);
+        this->bmp->compress(bpp, tmp);
         size_t bufsize = tmp.p - tmp.data;
 
 //        LOG(LOG_INFO, "emit_v1_compressed(cache_id=%d, cache_idx=%d, sh=%d)\n",
@@ -564,15 +566,15 @@ class RDPBmpCache {
 
         stream.out_uint8(align4(this->bmp->cx));
         stream.out_uint8(this->bmp->cy);
-        stream.out_uint8(this->bmp->bpp);
+        stream.out_uint8(this->bpp);
         stream.out_uint16_le(bufsize/* + 8*/);
         stream.out_uint16_le(this->cache_idx);
 
         if (!small_headers){
             stream.out_clear_bytes(2); /* pad */
             stream.out_uint16_le(bufsize);
-            stream.out_uint16_le(this->bmp->line_size);
-            stream.out_uint16_le(this->bmp->bmp_size); /* final size */
+            stream.out_uint16_le(this->bmp->line_size(bpp));
+            stream.out_uint16_le(this->bmp->bmp_size(bpp)); /* final size */
         }
 
         stream.out_copy_bytes(tmp.data, bufsize);
@@ -584,10 +586,10 @@ class RDPBmpCache {
         using namespace RDP;
 
         Stream tmp(16384);
-        this->bmp->compress(tmp);
+        this->bmp->compress(bpp, tmp);
         size_t bufsize = tmp.p - tmp.data;
 
-        int Bpp = nbbytes(this->bmp->bpp);
+        int Bpp = nbbytes(this->bpp);
 
         stream.out_uint8(STANDARD | SECONDARY);
 
@@ -608,7 +610,7 @@ class RDPBmpCache {
 //                this->cache_id, this->cache_idx);
 
         using namespace RDP;
-        unsigned int row_size = align4(this->bmp->cx * nbbytes(this->bmp->bpp));
+        unsigned int row_size = align4(this->bmp->cx * nbbytes(this->bpp));
 
         #warning this should become some kind of emit header
         uint8_t control = STANDARD | SECONDARY;
@@ -658,7 +660,7 @@ class RDPBmpCache {
         //  0x18 24-bit color depth.
         //  0x20 32-bit color depth.
 
-        stream.out_uint8(this->bmp->bpp);
+        stream.out_uint8(this->bpp);
 //        LOG(LOG_INFO, "out_uint8::bpp=%d\n", bpp);
 
         // bitmapLength (2 bytes): A 16-bit, unsigned integer. The size in
@@ -687,7 +689,7 @@ class RDPBmpCache {
         // (including up to three bytes of padding, as necessary).
 
         for (size_t y = 0 ; y < this->bmp->cy; y++) {
-            stream.out_copy_bytes(this->bmp->data_co + y * row_size, row_size);
+            stream.out_copy_bytes(this->bmp->data_co(this->bpp) + y * row_size, row_size);
         }
     }
 
@@ -820,7 +822,7 @@ class RDPBmpCache {
     void emit_raw_v2(Stream & stream)
     {
         using namespace RDP;
-        unsigned int row_size = align4(this->bmp->cx * nbbytes(this->bmp->bpp));
+        unsigned int row_size = align4(this->bmp->cx * nbbytes(this->bpp));
 
         #warning this should become some kind of emit header
         uint8_t control = STANDARD | SECONDARY;
@@ -830,7 +832,7 @@ class RDPBmpCache {
         uint8_t * length_ptr = stream.p;
         stream.skip_uint8(2);
 
-        int bitsPerPixelId = nbbytes(this->bmp->bpp)+2;
+        int bitsPerPixelId = nbbytes(this->bpp)+2;
 
         #warning some optimisations are possible here if we manage flags, but what will we do with persistant bitmaps ? We definitely do not want to save them on disk from here. There must be some kind of persistant structure where to save them and check if they exist.
         uint16_t flags = 0;
@@ -898,7 +900,7 @@ class RDPBmpCache {
         //                              2.2.9.1.1.3.1.2.2).
 
         // for uncompressed bitmaps the format is quite simple
-        stream.out_copy_bytes(this->bmp->data_co, this->bmp->cy * row_size);
+        stream.out_copy_bytes(this->bmp->data_co(this->bpp), this->bmp->cy * row_size);
         stream.set_length(-12, length_ptr);
     }
 
@@ -973,9 +975,8 @@ class RDPBmpCache {
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
-        this->bmp = new Bitmap(bpp, width, height);
-        assert(bufsize == this->bmp->bmp_size);
-        memcpy(this->bmp->data_co, stream.in_uint8p(bufsize), bufsize);
+        this->bmp = new Bitmap(bpp, width, height, stream.in_uint8p(bufsize), bufsize);
+        assert(bufsize == this->bmp->bmp_size(bpp));
     }
 
     bool operator==(const RDPBmpCache & other) const {
