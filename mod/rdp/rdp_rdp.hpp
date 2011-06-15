@@ -1111,8 +1111,6 @@ struct rdp_rdp {
 
             LOG(LOG_INFO, "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */", i, bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
 
-            LOG(LOG_INFO, "/* Rect [%d] bpp=%d (%d) width=%d height=%d b(%d, %d, %d, %d) */", i, bpp, bitmap.bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
-
             if (flags & 0x0001){
                 uint16_t size = bufsize;
                 uint16_t line_size = row_size(width, bpp);
