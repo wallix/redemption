@@ -52,18 +52,16 @@ struct test_internal_mod : public internal_mod {
     // non 0 if it wants to stop (to run another module)
     virtual int mod_signal()
     {
-        uint16_t cache_id;
-        uint8_t cache_idx;
-
         this->event->reset();
-        this->server_begin_update();
-        this->server_set_clip(Rect(0, 0, 1024, 768));
-        this->opaque_rect(RDPOpaqueRect(Rect(0, 0, 1024, 768), BLUE));
-        this->server_end_update();
-        RGBPalette palette;
-
-	// #include "bogus.cpp"
+        this->draw();
         return 0;
+    }
+
+    void draw()
+    {
+        this->server_begin_update();
+        //#include "/tmp/test_card.cpp"
+        this->server_end_update();
     }
 
 };

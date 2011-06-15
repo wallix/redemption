@@ -60,6 +60,8 @@ class Authentifier(object):
             'target_password' : 'S3cur3!1nux',
             'proto_dest': 'RDP',
             'target_port':'3389',
+            'is_rec':'False',
+            'rec_path':'/tmp/tracexp.cpp',
         },
         'bouncer' : {
             'proxy_type': 'RDP',
@@ -76,9 +78,7 @@ class Authentifier(object):
             'target_device' : 'test_card',
             'proto_dest': 'INTERNAL',
             'is_rec':'True',
-            'rec_path':'/tmp/test_card.flv',
-            'codec_id':'flv',
-            'video_quality':'high'
+            'rec_path':'/tmp/test_card.cpp',
         },
         'n' : {
             'proxy_type': 'RDP',

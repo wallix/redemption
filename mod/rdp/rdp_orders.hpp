@@ -32,7 +32,7 @@
 
 #include "stream.hpp"
 #include "client_mod.hpp"
-#include "RDP/orders/RDPOrdersNames.hpp"
+//#include "RDP/orders/RDPOrdersNames.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersSecondaryHeader.hpp"
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
@@ -426,7 +426,7 @@ struct rdp_orders {
                 else {
                     mod->server_reset_clip();
                 }
-                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
+//                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
                 case TEXT2:
                     this->glyph_index.receive(stream, header);

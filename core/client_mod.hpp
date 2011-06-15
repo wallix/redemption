@@ -404,6 +404,11 @@ struct client_mod : public Callback {
         this->front->line_to(new_cmd, this->clip);
     }
 
+    void glyph_index(const RDPGlyphIndex & cmd)
+    {
+        RDPGlyphIndex new_cmd = cmd;
+        this->front->glyph_index(new_cmd, this->clip);
+    }
 
     #warning this should become BITMAP UPDATE, we should be able to send bitmaps either through orders and cache or through BITMAP UPDATE
     void server_paint_rect(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const RGBPalette & palette)

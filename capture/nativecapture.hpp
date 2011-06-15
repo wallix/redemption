@@ -79,11 +79,15 @@ class NativeCapture
 
     void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
     {
+        fprintf(this->f, "{\n");
         #warning create a repr method in scr_blt
-        fprintf(this->f, "RDPScrBlt cmd(Rect(%u, %u, %u, %u), %u, %u, %u);\n",
+        fprintf(this->f, "    RDPScrBlt cmd(Rect(%u, %u, %u, %u), %u, %u, %u);\n",
             cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
             cmd.rop, cmd.srcx, cmd.srcy);
-        fprintf(this->f, "this->scr_blt(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->server_set_clip(Rect(%u, %u, %u, %u));\n",
+                clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->front->scr_blt(cmd, this->clip);\n");
+        fprintf(this->f, "}\n");
     }
 
     void mem_blt(const RDPMemBlt & cmd, const BitmapCache & bmp_cache, const Rect & clip)
@@ -98,12 +102,12 @@ class NativeCapture
 
         fprintf(this->f, "    uint8_t raw%p[] = {", &bmp);
 
-        for (int j = 0 ; j < bmp.cy ; j++){
-            fprintf(this->f, "    /* line %d */\n", (bmp.cy - j - 1));
+        for (size_t j = 0 ; j < bmp.cy ; j++){
+            fprintf(this->f, "    /* line %u */\n", (unsigned)(bmp.cy - j - 1));
             char buffer[2048];
             char * line = buffer;
             buffer[0] = 0;
-            for (int i = 0; i < bmp.line_size; i++){
+            for (size_t i = 0; i < bmp.line_size; i++){
                 line += snprintf(line, 1024, "0x%.2x, ", bmp.data_co[j*bmp.line_size+i]);
                 if (i % 16 == 15){
                     fprintf(this->f, buffer);
@@ -126,56 +130,75 @@ class NativeCapture
         fprintf(this->f, "    RDPMemBlt cmd(%u, Rect(%u, %u, %u, %u), %u, %u, %u, %u);\n",
             cmd.cache_id, cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
             cmd.rop, cmd.srcx, cmd.srcy, cmd.cache_idx);
-        fprintf(this->f, "    this->mem_blt(cmd, bmp%p, Rect(%u, %u, %u, %u));\n", &bmp, clip.x, clip.y, clip.cx, clip.cy);
-        fprintf(this->f, "}");
+        fprintf(this->f, "    this->server_set_clip(Rect(%u, %u, %u, %u));\n",
+                clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->front->mem_blt(cmd, bmp%p, this->clip);\n", &bmp);
+        fprintf(this->f, "}\n");
     }
 
     void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
     {
+        fprintf(this->f, "{\n");
         #warning create a repr method in opaque_rect
-        fprintf(this->f, "RDPOpaqueRect cmd(Rect(%u, %u, %u, %u), 0x%.6x);\n",
+        fprintf(this->f, "    RDPOpaqueRect cmd(Rect(%u, %u, %u, %u), 0x%.6x);\n",
             cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
             cmd.color);
-        fprintf(this->f, "this->opaque_rect(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->server_set_clip(Rect(%u, %u, %u, %u));\n",
+                clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->front->opaque_rect(cmd, this->clip);\n");
+        fprintf(this->f, "}\n");
     }
 
     void dest_blt(const RDPDestBlt & cmd, const Rect & clip)
     {
+        fprintf(this->f, "{\n");
         #warning create a repr method in dest_blt
-        fprintf(this->f, "RDPDestBlt cmd(Rect(%u, %u, %u, %u), %u);\n",
+        fprintf(this->f, "    RDPDestBlt cmd(Rect(%u, %u, %u, %u), %u);\n",
             cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
             cmd.rop);
-        fprintf(this->f, "this->dest_blt(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->server_set_clip(Rect(%u, %u, %u, %u));\n",
+                clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->front->dest_blt(cmd, this->clip);\n");
+        fprintf(this->f, "}\n");
     }
 
     void pat_blt(const RDPPatBlt & cmd, const Rect & clip)
     {
+        fprintf(this->f, "{\n");
         #warning create a repr method in pat_blt
-        fprintf(this->f, "RDPPatBlt cmd(Rect(%u, %u, %u, %u), %u, 0x%.6x, 0x%.6x,\n "
-            "RDPBrush(%u, %u, %u, %u,"
-            " (const uint8_t *)\"\\x%x\\x%x\\x%x\\x%x\\x%x\\x%x\\x%x\"));\n",
+        fprintf(this->f, "    RDPPatBlt cmd(Rect(%u, %u, %u, %u), %u, 0x%.6x, 0x%.6x,\n "
+            "        RDPBrush(%u, %u, %u, %u,"
+            "            (const uint8_t *)\"\\x%x\\x%x\\x%x\\x%x\\x%x\\x%x\\x%x\"));\n",
             cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
             cmd.rop, cmd.back_color, cmd.fore_color,
             cmd.brush.org_x, cmd.brush.org_y, cmd.brush.style, cmd.brush.hatch,
             cmd.brush.extra[0], cmd.brush.extra[1], cmd.brush.extra[2],
             cmd.brush.extra[3], cmd.brush.extra[4], cmd.brush.extra[5],
             cmd.brush.extra[6]);
-        fprintf(this->f, "this->pat_blt(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->server_set_clip(Rect(%u, %u, %u, %u));\n",
+                clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->front->pat_blt(cmd, this->clip);\n");
+        fprintf(this->f, "}\n");
     }
 
     void line_to(const RDPLineTo & cmd, const Rect & clip)
     {
+        fprintf(this->f, "{\n");
         #warning create a repr method in line_to
-        fprintf(this->f, "RDPLineTo cmd(%d, %d, %d, %d, 0x%.6x, %u, "
-            "RDPPen(%u, %u, 0x%.6x));\n",
+        fprintf(this->f, "    RDPLineTo cmd(%d, %d, %d, %d, 0x%.6x, %u, "
+            "        RDPPen(%u, %u, 0x%.6x));\n",
             cmd.startx, cmd.starty, cmd.endx, cmd.endy,
             cmd.back_color, cmd.rop2,
             cmd.pen.style, cmd.pen.width, cmd.pen.color);
-        fprintf(this->f, "this->line_to(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->server_set_clip(Rect(%u, %u, %u, %u));\n",
+                clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->front->line_to(cmd, this->clip);\n");
+        fprintf(this->f, "}\n");
     }
 
     void glyph_index(const RDPGlyphIndex & cmd, const Rect & clip)
     {
+        fprintf(this->f, "{\n");
         char * buffer = 0;
         if (cmd.data_len > 0){
             buffer = (char*)malloc(cmd.data_len);
@@ -187,23 +210,26 @@ class NativeCapture
             tmp[0] = '"';
             tmp[1] = 0;
         }
-        fprintf(this->f, "RDPGlyphIndex cmd(%u, %u, %u, %u, 0x%.6x, 0x%.6x,\n "
-            "RDPBrush(%u, %u, %u, %u,"
-            " (const uint8_t *)\"\\x%x\\x%x\\x%x\\x%x\\x%x\\x%x\\x%x\"),\n"
-            " Rect(%u, %u, %u, %u), Rect(%u, %u, %u, %u),\n"
-            " %u, %u, %s);",
+        fprintf(this->f, "    RDPGlyphIndex cmd(%u, %u, %u, %u, 0x%.6x, 0x%.6x,\n "
+            "        Rect(%u, %u, %u, %u), Rect(%u, %u, %u, %u),\n"
+            "        RDPBrush(%u, %u, %u, %u,"
+            "            (const uint8_t *)\"\\x%x\\x%x\\x%x\\x%x\\x%x\\x%x\\x%x\"),\n"
+            "        %u, %u, %u, (const uint8_t*)%s);",
             cmd.cache_id, cmd.fl_accel, cmd.ui_charinc, cmd.f_op_redundant,
             cmd.back_color, cmd.fore_color,
+            cmd.bk.x, cmd.bk.y, cmd.bk.cx, cmd.bk.cy,
+            cmd.op.x, cmd.op.y, cmd.op.cx, cmd.op.cy,
             cmd.brush.org_x, cmd.brush.org_y, cmd.brush.style, cmd.brush.hatch,
             cmd.brush.extra[0], cmd.brush.extra[1], cmd.brush.extra[2],
             cmd.brush.extra[3], cmd.brush.extra[4], cmd.brush.extra[5],
             cmd.brush.extra[6],
-            cmd.bk.x, cmd.bk.y, cmd.bk.cx, cmd.bk.cy,
-            cmd.op.x, cmd.op.y, cmd.op.cx, cmd.op.cy,
             cmd.glyph_x, cmd.glyph_y,
             cmd.data_len, buffer);
         #warning create a repr method in glyph_index
-        fprintf(this->f, "this->glyph_index(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->server_set_clip(Rect(%u, %u, %u, %u));\n",
+                clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->front->glyph_index(cmd, this->clip);\n");
+        fprintf(this->f, "}\n");
     }
 
 };

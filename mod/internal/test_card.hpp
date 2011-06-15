@@ -33,7 +33,33 @@ struct test_card_mod : public internal_mod {
             internal_mod(keys, key_flags, keymap, front)
     {
         this->event = event;
-	this->mod_bpp = this->get_front_bpp();
+        this->event->set();
+    }
+
+    virtual ~test_card_mod()
+    {
+    }
+
+    // event from front (keyboard or mouse event)
+    virtual int mod_event(int msg, long x, long y, long param4, long param5)
+    {
+        return 0;
+    }
+
+    // event from back end (draw event from remote or internal server)
+    // returns module continuation status, 0 if module want to continue
+    // non 0 if it wants to stop (to run another module)
+    virtual int mod_signal()
+    {
+        this->draw();
+        this->event->reset();
+        return 0;
+    }
+
+
+    void draw()
+    {
+        this->mod_bpp = this->get_front_bpp();
 
         this->server_begin_update();
         this->server_set_clip(this->screen.rect);
@@ -211,24 +237,6 @@ struct test_card_mod : public internal_mod {
 //        front.begin_update();
 //        front.screen_blt(0xcc, Rect(690, 540, 50, 50), 190, 190, Rect(690, 540, 50, 50));
 //        front.end_update();
-    }
-
-    virtual ~test_card_mod()
-    {
-    }
-
-    // event from front (keyboard or mouse event)
-    virtual int mod_event(int msg, long x, long y, long param4, long param5)
-    {
-        return 0;
-    }
-
-    // event from back en (draw event from remote or internal server)
-    // returns module continuation status, 0 if module want to continue
-    // non 0 if it wants to stop (to run another module)
-    virtual int mod_signal()
-    {
-        return 0;
     }
 
 };

@@ -94,6 +94,26 @@ class RDPGlyphIndex {
             }
         }
 
+    RDPGlyphIndex(const RDPGlyphIndex & gi) :
+            cache_id(gi.cache_id),
+            fl_accel(gi.fl_accel),
+            ui_charinc(gi.ui_charinc),
+            f_op_redundant(gi.f_op_redundant),
+            back_color(gi.back_color),
+            fore_color(gi.fore_color),
+            bk(gi.bk),
+            op(gi.op),
+            brush(gi.brush),
+            glyph_x(gi.glyph_x),
+            glyph_y(gi.glyph_y),
+            data_len(gi.data_len),
+            data(0)
+        {
+            if (gi.data_len > 0){
+                this->data = (uint8_t *)malloc(gi.data_len);
+                memcpy(this->data, gi.data, gi.data_len);
+            }
+        }
 
     ~RDPGlyphIndex()
     {
