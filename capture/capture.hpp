@@ -74,6 +74,7 @@ class Capture
     RGBPalette palette;
 
     Capture(int width, int height, int bpp, char * path, const char * codec_id, const char * video_quality) {
+        this->framenb = 0;
         this->bpp = bpp;
         this->pix_len = 0;
         this->count = 0;
@@ -96,6 +97,8 @@ class Capture
         }
 
 
+        this->width = width;
+        this->height = height;
         this->pix_len = width * height * 3;
         if (!this->pix_len) {
             throw Error(ERR_RECORDER_EMPTY_IMAGE);
@@ -103,17 +106,14 @@ class Capture
 
         this->draw_11x7_digits(this->timestamp_data, ts_width, 19,
         "                   ", "XXXXXXXXXXXXXXXXXXX");
-        strncpy(this->previous_timestamp, "                   ", 19);
+        memcpy(this->previous_timestamp, "                   ", 20);
 
-        this->data = (uint8_t *)malloc(this->pix_len);
-        memset(this->data, 0, height*width);
+        this->data = (uint8_t *)calloc(sizeof(char), this->pix_len);
         if (this->data == 0){
             throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
         }
 
         LOG(LOG_INFO, "video_path is :%s\n", path);
-        this->width = width;
-        this->height = height;
     }
 
     ~Capture(){
@@ -433,7 +433,7 @@ class Capture
             fclose(fd);
             fd = fopen(rawImagePath, "w");
             if (fd) {
-                fwrite(this->data, 3, this->width*this->height, fd);
+                fwrite(this->data, 3, this->width * this->height, fd);
             }
             fclose(fd);
 

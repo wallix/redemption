@@ -74,7 +74,7 @@ struct mod_rdp : public client_mod {
     {
         const char * password = context.get(STRAUTHID_TARGET_PASSWORD);
 
-        LOG(LOG_INFO, "mod_rdp connect\n");
+//        LOG(LOG_INFO, "mod_rdp connect\n");
         this->t = 0;
         try {
             this->t = t;
@@ -146,7 +146,7 @@ struct mod_rdp : public client_mod {
     #warning most of code below should move to rdp_rdp
     virtual int mod_event(int msg, long param1, long param2, long param3, long param4)
     {
-        LOG(LOG_INFO, "rdp::mod_event");
+//        LOG(LOG_INFO, "rdp::mod_event");
 
         try{
             if (!this->up_and_running) {
@@ -201,7 +201,7 @@ struct mod_rdp : public client_mod {
                 this->rdp_layer.send_invalidate(stream, (param1 >> 16) & 0xffff, param1 & 0xffff,(param2 >> 16) & 0xffff, param2 & 0xffff);
                 break;
             case WM_CHANNELDATA:
-                LOG(LOG_INFO, "rdp::mod_event::WM_CHANNEL_DATA");
+//                LOG(LOG_INFO, "rdp::mod_event::WM_CHANNEL_DATA");
                 this->rdp_layer.send_redirect_pdu(param1, param2, param3, param4, this->front_channel_list);
                 break;
             default:
