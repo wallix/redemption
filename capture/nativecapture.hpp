@@ -92,12 +92,11 @@ class NativeCapture
 
     void bitmap_cache(const uint8_t cache_id, const uint16_t cache_idx, BitmapCacheItem * entry)
     {
-        const Bitmap & bmp = *entry->pbmp;
+        Bitmap & bmp = *entry->pbmp;
         fprintf(this->f, "{\n");
 
         fprintf(this->f, "    // ------- Dumping bitmap RAW data [%p]---------\n", &bmp);
-        fprintf(this->f, "    // cx=%d cy=%d bpp=%d line_size=%d bmp_size=%d data=%p pmax=%p\n",
-            bmp.cx, bmp.cy, bmp.bpp, bmp.line_size, bmp.bmp_size, bmp.data_co, bmp.pmax);
+        fprintf(this->f, "    // cx=%d cy=%d\n", bmp.cx, bmp.cy);
 
         fprintf(this->f, "    uint8_t raw%p[] = {", &bmp);
 
@@ -106,8 +105,8 @@ class NativeCapture
             char buffer[2048];
             char * line = buffer;
             buffer[0] = 0;
-            for (size_t i = 0; i < bmp.line_size; i++){
-                line += snprintf(line, 1024, "0x%.2x, ", bmp.data_co[j*bmp.line_size+i]);
+            for (size_t i = 0; i < bmp.line_size(this->bpp); i++){
+                line += snprintf(line, 1024, "0x%.2x, ", bmp.data_co(this->bpp)[j*bmp.line_size(this->bpp)+i]);
                 if (i % 16 == 15){
                     fprintf(this->f, "%s", buffer);
                     fprintf(this->f, "\n");
@@ -122,10 +121,10 @@ class NativeCapture
         }
         fprintf(this->f, "    }; /* %p */\n", &bmp);
         fprintf(this->f, "    Bitmap bmp%p(%d, %d, %d, raw%p, sizeof(raw%p));\n",
-            &bmp, bmp.bpp, bmp.cx, bmp.cy, &bmp, &bmp);
+            &bmp, this->bpp, bmp.cx, bmp.cy, &bmp, &bmp);
         fprintf(this->f, "    RDPBmpCache cmd(&bmp%p, %u, %u, &this->front->rdp_layer.client_info);\n",
             &bmp, cache_id, cache_idx);
-        fprintf(this->f, "    this->front->reserve_order(bmp%p.bmp_size + 16);\n", &bmp);
+        fprintf(this->f, "    this->front->reserve_order(bmp%p.bmp_size(this->rdp_layer.client_info.bpp) + 16);\n", &bmp);
 
         fprintf(this->f, "    cmd.emit(this->front->out_stream);\n");
         fprintf(this->f, "}\n");

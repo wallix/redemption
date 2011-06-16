@@ -1130,11 +1130,12 @@ struct Bitmap {
             default:
                 #warning: change assertion to a proper exception!
                 assert(0);
+                return 0;
         }
     }
 
     void convert_data_co(int out_bpp) {
-        uint8_t * dest;
+        uint8_t * dest = 0;
         uint8_t * src = data_co(this->original_bpp);
         switch (out_bpp) {
             case 24:
