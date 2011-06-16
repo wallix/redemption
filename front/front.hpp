@@ -370,7 +370,7 @@ public:
     /* fill in an area of the screen with one color */
     void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-//      LOG(LOG_INFO, "this->front.orders->opaque_rect(Rect(%d, %d, %d, %d), 0x%.6x, Rect(%d, %d, %d, %d));", r.x, r.y, r.cx, r.cy, fgcolor, clip.x, clip.y, clip.cx, clip.cy);
+        LOG(LOG_INFO, "opaque_rect()");
 
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->reserve_order(23);
@@ -389,6 +389,8 @@ public:
 
     void scr_blt(const RDPScrBlt & cmd, const Rect &clip)
     {
+        LOG(LOG_INFO, "scr_blt()");
+
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             // this one is used when dragging a visible window on screen
             this->reserve_order(25);
@@ -406,6 +408,8 @@ public:
 
     void dest_blt(const RDPDestBlt & cmd, const Rect &clip)
     {
+        LOG(LOG_INFO, "dest_blt()");
+
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->reserve_order(21);
 
@@ -425,6 +429,7 @@ public:
 
     void pat_blt(const RDPPatBlt & cmd, const Rect &clip)
     {
+        LOG(LOG_INFO, "pat_blt()");
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->reserve_order(29);
 
@@ -445,6 +450,7 @@ public:
 
     void mem_blt(const RDPMemBlt & cmd, const Rect & clip)
     {
+        LOG(LOG_INFO, "mem_blt()");
         using namespace RDP;
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->reserve_order(30);
@@ -462,6 +468,7 @@ public:
 
     void line_to(const RDPLineTo& cmd, const Rect & clip)
     {
+        LOG(LOG_INFO, "line_to()");
         using namespace RDP;
 
         const uint16_t minx = std::min(cmd.startx, cmd.endx);
@@ -485,6 +492,7 @@ public:
 
     void glyph_index(const RDPGlyphIndex & cmd, const Rect & clip)
     {
+        LOG(LOG_INFO, "glyph_index()");
         if (cmd.bk.intersect(clip).isempty()){
             return;
         }
@@ -502,6 +510,7 @@ public:
 
     void color_cache(const RGBPalette & palette)
     {
+        LOG(LOG_INFO, "color_cache()");
         this->reserve_order(2000);
         RDPColCache newcmd;
         #warning why is it always palette 0 ?
@@ -511,6 +520,8 @@ public:
 
     void brush_cache(const int index)
     {
+        LOG(LOG_INFO, "brush_cache()");
+
         const int size = 8;
         this->reserve_order(size + 12);
 
@@ -570,6 +581,7 @@ public:
                      int palette_id,
                      const Rect & clip)
     {
+        return;
         for (int y = 0; y < dst.cy ; y += 64) {
             int cy = std::min(64, dst.cy - y);
             for (int x = 0; x < dst.cx ; x += 64) {
@@ -595,15 +607,6 @@ public:
                 }
             }
         }
-    }
-
-    #warning create add_bitmap in front API (instead of send_bitmap_common ?)
-
-    void send_bitmap_front2(const Rect & dst, const Rect & src_r, const uint8_t rop, const uint8_t * src_data,
-                     int palette_id,
-                     const Rect & clip)
-    {
-        this->send_bitmap_front(dst, src_r, rop, src_data, palette_id, clip);
     }
 
     void glyph_cache(const FontChar & font_char, int font_index, int char_index)

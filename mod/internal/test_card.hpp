@@ -63,26 +63,28 @@ struct test_card_mod : public internal_mod {
 
         this->server_begin_update();
         this->server_set_clip(this->screen.rect);
-        this->opaque_rect(RDPOpaqueRect(this->screen.rect, WHITE));
+        this->opaque_rect(RDPOpaqueRect(this->screen.rect, color_encode(WHITE, this->mod_bpp, this->palette332)));
         const Rect inner_red = Rect(this->screen.rect.x+5, this->screen.rect.y+5,
                               this->screen.rect.cx-10, this->screen.rect.cy-10);
-        this->opaque_rect(RDPOpaqueRect(inner_red, RED));
+        this->opaque_rect(RDPOpaqueRect(inner_red, color_encode(RED, this->mod_bpp, this->palette332)));
         const Rect inner_green = Rect(this->screen.rect.x+10, this->screen.rect.y+10,
                               this->screen.rect.cx-20, this->screen.rect.cy-20);
-        this->opaque_rect(RDPOpaqueRect(inner_green, GREEN));
+        this->opaque_rect(RDPOpaqueRect(inner_green, color_encode(GREEN, this->mod_bpp, this->palette332)));
         const Rect inner_blue = Rect(this->screen.rect.x+15, this->screen.rect.y+15,
                               this->screen.rect.cx-30, this->screen.rect.cy-30);
-        this->opaque_rect(RDPOpaqueRect(inner_blue, BLUE));
+        this->opaque_rect(RDPOpaqueRect(inner_blue, color_encode(BLUE, this->mod_bpp, this->palette332)));
         const Rect inner_black = Rect(this->screen.rect.x+20, this->screen.rect.y+20,
                               this->screen.rect.cx-40, this->screen.rect.cy-40);
-        this->opaque_rect(RDPOpaqueRect(inner_black, BLACK));
+        this->opaque_rect(RDPOpaqueRect(inner_black, color_encode(BLACK, this->mod_bpp, this->palette332)));
 
 //        this->server_set_clip(Rect(50, 50, 150, 150));
 //        this->opaque_rect(RDPOpaqueRect(Rect(50, 50, 150, 150), PINK));
 //        this->server_set_clip(Rect(520, 360, 60, 25));
 //        this->opaque_rect(RDPOpaqueRect(Rect(520, 360, 60, 25), DARK_GREY));
 
-        this->server_draw_text(535, 363, "Hello", BLACK, YELLOW);
+//        this->server_draw_text(535, 363, "Hello",
+//            color_encode(BLACK, this->mod_bpp, this->palette332),
+//            color_encode(YELLOW, this->mod_bpp, this->palette332));
 
         //front.orders.screen_blt(Rect(190, 190, 50, 50), 50, 50, 0xCC, Rect(190, 190, 50, 50));
 

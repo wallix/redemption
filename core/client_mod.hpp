@@ -375,15 +375,6 @@ struct client_mod : public Callback {
     void opaque_rect(const RDPOpaqueRect & cmd)
     {
         RDPOpaqueRect new_cmd = cmd;
-
-        #warning dirty hack to fix color problems with opaque_rect
-        uint32_t color24 = color_decode(cmd.color, this->mod_bpp, this->mod_palette);
-
-        if (this->get_front_bpp() == 24){
-            color24 = ((color24 << 16) & 0xFF0000)|(color24 & 0x00FF00)|((color24 >> 16) & 0x0000FF);
-        }
-
-        new_cmd.color = color_encode(color24, this->get_front_bpp(), this->palette332);
         this->front->opaque_rect(new_cmd, this->clip);
     }
 
@@ -412,32 +403,12 @@ struct client_mod : public Callback {
     #warning this should become BITMAP UPDATE, we should be able to send bitmaps either through orders and cache or through BITMAP UPDATE
     void server_paint_rect(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const RGBPalette & palette)
     {
-//        bitmap.dump();
-
-        #warning color conversion should probably go into bitmap. Something like a copy constructor that change color on the fly ? We may even choose to keep several versions of the same bitmap with different bpp ?
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
-        const uint8_t in_bpp = this->mod_bpp;
-        const uint8_t * src = bitmap.data_co(in_bpp);
-        const uint8_t out_bpp = this->get_front_bpp();
-        uint8_t * bmpdata = (uint8_t*)malloc(width * height * nbbytes(out_bpp));
-        uint8_t * dest = bmpdata;
-        for (int i = 0; i < width * height; i++) {
-            uint32_t pixel = color_decode(in_bytes_le(nbbytes(in_bpp), src),
-                                          in_bpp,
-                                          palette);
-            uint32_t target_pixel = color_encode(pixel, out_bpp, this->palette332);
-            target_pixel = 0xFFFFFF & target_pixel;
-            out_bytes_le(dest, nbbytes(out_bpp), target_pixel);
-            src += nbbytes(in_bpp);
-            dest += nbbytes(out_bpp);
-        }
         const Rect src_r(srcx, srcy, width, height);
         front->begin_update();
-        this->front->send_bitmap_front(dst, src_r, 0xCC, bmpdata, 0, this->clip);
+        this->front->send_bitmap_front(dst, src_r, 0xCC, bitmap.data_co(this->get_front_bpp()), 0, this->clip);
         front->end_update();
-
-        free(bmpdata);
     }
 
     void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const RGBPalette & palette)
@@ -445,30 +416,12 @@ struct client_mod : public Callback {
         const Rect & dst = memblt.rect;
         const int srcx = memblt.srcx;
         const int srcy = memblt.srcy;
-        #warning color conversion should probably go into bitmap. Something like a copy constructor that change color on the fly ? We may even choose to keep several versions of the same bitmap with different bpp ?
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
-        const uint8_t in_bpp = this->mod_bpp;
-        const uint8_t * src = bitmap.data_co(in_bpp);
-        const uint8_t out_bpp = this->get_front_bpp();
-        uint8_t * bmpdata = (uint8_t*)malloc(width * height * nbbytes(out_bpp));
-        uint8_t * dest = bmpdata;
-        for (int i = 0; i < width * height; i++) {
-            uint32_t pixel = color_decode(in_bytes_le(nbbytes(in_bpp), src),
-                                          in_bpp,
-                                          palette);
-            uint32_t target_pixel = color_encode(pixel, out_bpp, this->palette332);
-            target_pixel = 0xFFFFFF & target_pixel;
-            out_bytes_le(dest, nbbytes(out_bpp), target_pixel);
-            src += nbbytes(in_bpp);
-            dest += nbbytes(out_bpp);
-        }
         const Rect src_r(srcx, srcy, width, height);
         front->begin_update();
-        this->front->send_bitmap_front2(dst, src_r, memblt.rop, bmpdata, 0, this->clip);
+        this->front->send_bitmap_front(dst, src_r, memblt.rop, bitmap.data_co(this->get_front_bpp()), 0, this->clip);
         front->end_update();
-
-        free(bmpdata);
     }
 
     void set_pointer(int cache_idx)
