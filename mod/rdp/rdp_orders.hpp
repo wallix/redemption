@@ -183,7 +183,7 @@ struct rdp_orders {
         case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
             {
                 #warning RDPBmpCache is used to create bitmap
-                RDPBmpCache bmp(bpp);
+                RDPBmpCache bmp(bpp, &this->cache_colormap.palette[0]);
                 bmp.receive(stream, control, header);
                 cache_id = bmp.cache_id;
                 cache_idx = bmp.cache_idx;
@@ -219,7 +219,7 @@ struct rdp_orders {
                 const uint8_t* data = stream.in_uint8p(size);
 
                 #warning valgrind say there is a memory leak here
-                bitmap = new Bitmap(bpp, width, height, data, size, true);
+                bitmap = new Bitmap(bpp, &this->cache_colormap.palette[0], width, height, data, size, true);
                 assert(row_size == bitmap->line_size(bpp));
 
             }

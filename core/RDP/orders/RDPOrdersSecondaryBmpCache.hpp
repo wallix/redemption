@@ -497,8 +497,9 @@ class RDPBmpCache {
     int bpp;
     int cache_idx;
     const ClientInfo * client_info;
+    RGBPalette * palette;
 
-    RDPBmpCache(int bpp, Bitmap * bmp, int cache_id, int cache_idx, ClientInfo * client_info) :
+    RDPBmpCache(int bpp, RGBPalette * palette, Bitmap * bmp, int cache_id, int cache_idx, ClientInfo * client_info) :
                     cache_id(cache_id),
                     bmp(bmp),
                     bpp(bpp),
@@ -507,7 +508,7 @@ class RDPBmpCache {
     {
     }
 
-    RDPBmpCache(int bpp) : bpp(bpp)
+    RDPBmpCache(int bpp, RGBPalette * palette) : bpp(bpp), palette(palette)
     {
     }
 
@@ -975,7 +976,7 @@ class RDPBmpCache {
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
-        this->bmp = new Bitmap(bpp, width, height, stream.in_uint8p(bufsize), bufsize);
+        this->bmp = new Bitmap(bpp, this->palette, width, height, stream.in_uint8p(bufsize), bufsize);
         assert(bufsize == this->bmp->bmp_size(bpp));
     }
 

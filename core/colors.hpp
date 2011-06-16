@@ -120,14 +120,6 @@ static inline RGBcolor color_encode(const RGBcolor c, const uint8_t out_bpp, con
     return 0;
 }
 
-// reference color is BGR 24, not usual RGB
-static inline RGBcolor color_encodeBGR24(const RGBcolor pix, const uint8_t out_bpp, const uint32_t (& palette)[256])
-{
-    return color_encode(((pix & 0xFF) << 16) | (pix & 0x00FF00) | ((pix >> 16) & 0xFF), out_bpp, palette);
-}
-
-
-
 enum {
     BLACK      = 0x000000,
     GREY       = 0xc0c0c0,

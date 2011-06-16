@@ -169,7 +169,7 @@ struct xup_mod : public client_mod {
                         int height = stream.in_uint16_le();
                         int srcx = stream.in_sint16_le();
                         int srcy = stream.in_sint16_le();
-                        Bitmap bmp(bpp, width, height, bmpdata, sizeof(bmpdata));
+                        Bitmap bmp(bpp, &this->palette332, width, height, bmpdata, sizeof(bmpdata));
                         this->server_paint_rect(bmp, r, srcx, srcy, this->palette332);
                     }
                     break;

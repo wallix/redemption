@@ -538,7 +538,24 @@ public:
 
         using namespace RDP;
 
-        RDPBmpCache bmp_order(this->rdp_layer.client_info.bpp, entry->pbmp, cache_id, cache_idx, &this->rdp_layer.client_info);
+        RGBPalette palette332;
+        /* rgb332 palette */
+        for (int bindex = 0; bindex < 4; bindex++) {
+            for (int gindex = 0; gindex < 8; gindex++) {
+                for (int rindex = 0; rindex < 8; rindex++) {
+                    palette332[(rindex << 5) | (gindex << 2) | bindex] =
+                    (RGBcolor)(
+                    // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
+                    // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
+                       | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
+                    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
+                       | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
+                }
+            }
+        }
+
+        RDPBmpCache bmp_order(this->rdp_layer.client_info.bpp, &palette332, entry->pbmp, cache_id, cache_idx, &this->rdp_layer.client_info);
         bmp_order.emit(this->out_stream);
 
         if (this->capture){
