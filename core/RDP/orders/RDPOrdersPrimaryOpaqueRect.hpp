@@ -63,6 +63,15 @@ class RDPOpaqueRect {
         // 0x20: green color byte
         // 0x40: blue color byte
 
+        // Note by CGR:
+        // ------------
+        // As far as we can see the OPAQUERECT fields called "red" "green" and
+        // "blue" don't care much for actual color components. Really they
+        // should be called "first color byte", "second color byte" and "third
+        // color byte". They are red green and blue only in 24 bits. In 15 or 16
+        // the red byte is always empty and changing the red component will
+        // change the second byte. This still require some testing to be sure.
+
         DeltaRect dr(this->rect, oldcmd.rect);
 
         // RDP specs says that we can have DELTA only if we
@@ -73,7 +82,7 @@ class RDPOpaqueRect {
 
         uint32_t diff_color = this->color ^ oldcmd.color;
 
-        LOG(LOG_INFO, "emit opaque rect old_color = %.6x new_color = %.6x\n", oldcmd.color, this->color);
+//        LOG(LOG_INFO, "emit opaque rect old_color = %.6x new_color = %.6x\n", oldcmd.color, this->color);
 
         header.fields =   (dr.dleft                != 0) * 0x01
                         | (dr.dtop                 != 0) * 0x02
