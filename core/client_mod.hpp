@@ -61,19 +61,21 @@ struct client_mod : public Callback {
     int bitmap_cache_persist_enable;
     RGBPalette palette332;
     RGBPalette mod_palette;
-    uint8_t default_bpp;
     uint8_t mod_bpp;
+    uint8_t socket;
+
 
     wait_obj * event;
     int signal;
+    bool palette_sent;
 
     client_mod(int (& keys)[256], int & key_flags, Keymap * &keymap, Front & front)
         : keys(keys),
           key_flags(key_flags),
           keymap(keymap),
-          default_bpp(24),
           mod_bpp(24),
-          signal(0)
+          signal(0),
+          palette_sent(false)
     {
         this->current_pointer = 0;
         this->front = &front;
@@ -244,6 +246,7 @@ struct client_mod : public Callback {
                 LOG(LOG_ERR, "Resizing is not available on older RDP clients");
                 throw 0;
             }
+            this->palette_sent = false;
             LOG(LOG_INFO, "// Resizing client to : %d x %d x %d\n", width, height, bpp);
 
             client_info.width = width;
@@ -374,7 +377,15 @@ struct client_mod : public Callback {
 
     void opaque_rect(const RDPOpaqueRect & cmd)
     {
+        if ((this->get_front_bpp() == 8)
+        && !this->palette_sent) {
+//            this->front->color_cache(this->palette332);
+            this->front->rdp_layer.send_global_palette(this->palette332);
+            this->palette_sent = true;
+        }
+
         RDPOpaqueRect new_cmd = cmd;
+        new_cmd.color = this->convert(cmd.color);
         this->front->opaque_rect(new_cmd, this->clip);
     }
 
