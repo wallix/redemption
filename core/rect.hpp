@@ -101,6 +101,11 @@ struct Rect {
         return Rect(this->x + dx, this->y + dy, this->cx, this->cy);
     }
 
+    const Rect shrink(int margin) const {
+        return Rect(this->x + margin, this->y + margin,
+                    this->cx - margin * 2, this->cy - margin * 2);
+    }
+
     const Rect upper_side(){
         return Rect(this->x, this->y, this->cx, 1);
     }
@@ -138,7 +143,7 @@ struct Rect {
     void difference(const Rect & a, RectIterator & it)
     {
         const Rect & intersect = this->intersect(a);
-        
+
         if (!intersect.isempty()) {
             if ( (intersect.y - this->y > 0) ) {
                 it.callback(Rect(this->x, this->y, this->cx, intersect.y - this->y));
