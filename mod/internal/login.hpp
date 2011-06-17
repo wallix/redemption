@@ -402,6 +402,8 @@ struct login_mod : public internal_mod {
         this->screen.child_list.push_back(this->login_window);
         assert(this->login_window->mod == this);
 
+        LOG(LOG_INFO, "loading image...");
+
         if (regular) {
             /* image */
             widget_image * but = new widget_image(this, 4, 4,
@@ -415,7 +417,11 @@ struct login_mod : public internal_mod {
             this->screen.child_list.push_back(but);
         }
 
+        LOG(LOG_INFO, "focus on login_window");
+
         this->login_window->focus(this->login_window->rect);
+
+        LOG(LOG_INFO, "focus ok");
 
         #warning create some set_brush primitive in internal_mod
         #warning we probably need some begin_update, end_update to send brush
@@ -431,6 +437,8 @@ struct login_mod : public internal_mod {
         this->brush.org_y = 0;
         this->brush.style = 3;
 
+        LOG(LOG_INFO, "Sending brush");
+
         // brush style 3 is not supported by windows 7, we **MUST** use cache
         if (this->front->rdp_layer.client_info.brush_cache_code == 1) {
             uint8_t pattern[8];
@@ -444,7 +452,10 @@ struct login_mod : public internal_mod {
             this->brush.style = 0x81;
         }
 
+        LOG(LOG_INFO, "brush sent");
         this->screen.Widget_invalidate(this->screen.rect.wh());
+        LOG(LOG_INFO, "invalidate screen done");
+
     }
 
     virtual ~login_mod()

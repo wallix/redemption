@@ -245,6 +245,7 @@ const Region Widget::get_visible_region(Widget * window, Widget * widget, const 
 void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text, const uint32_t fgcolor, const Rect & clip){
     setlocale(LC_CTYPE, "fr_FR.UTF-8");
     assert(wdg->type != WND_TYPE_BITMAP);
+
     int len = mbstowcs(0, text, 0);
     if (len < 1) {
         return;
@@ -330,6 +331,7 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
 
 void window::draw(const Rect & clip)
 {
+    LOG(LOG_INFO, "window::draw");
     /* draw color_encode(GREY, this->mod->mod_bpp, this->mod->palette332) background */
 
     this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), this->bg_color, clip);
@@ -362,6 +364,8 @@ void window::draw(const Rect & clip)
 
 void widget_edit::draw(const Rect & clip)
 {
+    LOG(LOG_INFO, "widget_edit::draw");
+
     // LOG(LOG_INFO, "widget_edit::draw\n");
     /* draw gray box */
     this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), color_encode(GREY, this->mod->mod_bpp, this->mod->palette332), clip);
@@ -459,6 +463,8 @@ void Widget::basic_fill_rect(int rop, const Rect & r, int fg_color, const Rect &
 
 void widget_combo::draw(const Rect & clip)
 {
+    LOG(LOG_INFO, "widget_combo::draw");
+
     /* draw gray box */
     this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), color_encode(GREY, this->mod->mod_bpp, this->mod->palette332), clip);
     /* color_encode(WHITE, this->mod->mod_bpp, this->mod->palette332) background */
@@ -635,6 +641,8 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
 
 void widget_button::draw(const Rect & clip)
 {
+    LOG(LOG_INFO, "widget_button::draw");
+
     int bevel = (this->state == BUTTON_STATE_DOWN)?1:0;
 
     int w = this->text_width(this->caption1);
@@ -689,6 +697,8 @@ void widget_button::draw(const Rect & clip)
 
 void widget_popup::draw(const Rect & clip)
 {
+    LOG(LOG_INFO, "widget_popup::draw");
+
     this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), color_encode(WHITE, this->mod->mod_bpp, this->mod->palette332), clip);
 
     /* draw the list items */
@@ -710,10 +720,13 @@ void widget_popup::draw(const Rect & clip)
 
 void Widget::draw(const Rect & clip)
 {
+    LOG(LOG_INFO, "Widget::draw");
+
 }
 
 void widget_label::draw(const Rect & clip)
 {
+    LOG(LOG_INFO, "widget_label::draw");
     this->server_draw_text(this, 0, 0, this->caption1, color_encode(BLACK, this->mod->mod_bpp, this->mod->palette332), clip);
 }
 
@@ -739,14 +752,21 @@ Rect const Widget::to_screen_rect()
 
 void widget_image::draw(const Rect & clip)
 {
+    LOG(LOG_INFO, "widget_image::draw");
+
     Rect image_screen_rect = this->to_screen_rect();
     Rect intersection = image_screen_rect.intersect(this->to_screen_rect(clip));
     const Region region = this->get_visible_region(this, &this->parent, intersection);
 
     for (size_t ir = 0; ir < region.rects.size(); ir++){
         this->mod->server_set_clip(region.rects[ir]);
-        this->mod->server_paint_rect(bmp, image_screen_rect, 0, 0, this->mod->palette332);
+        LOG(LOG_INFO, "server_paint_rect");
+
+        this->mod->server_paint_rect(this->bmp, image_screen_rect, 0, 0);
+        LOG(LOG_INFO, "server_paint_rect done");
     }
+    LOG(LOG_INFO, "widget_image::draw done");
+
 }
 
 int Widget::Widget_invalidate_clip(const Rect & clip)
@@ -780,12 +800,15 @@ int Widget::Widget_invalidate(const Rect & clip)
     struct Rect r1;
     struct Rect r2;
 
+    LOG(LOG_INFO, "server_begin_update");
     this->mod->server_begin_update();
 
+    LOG(LOG_INFO, "Widget::draw");
     this->draw(clip);
 
     this->notify(this, WM_PAINT, 0, 0); /* 3 */
 
+    LOG(LOG_INFO, "invalidate childs");
     /* draw any child windows in the area */
     int count = this->child_list.size();
     for (int i = 0; i < count; i++) {

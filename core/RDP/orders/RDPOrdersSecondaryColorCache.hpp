@@ -49,8 +49,8 @@
     // Color Table where the color table MUST be stored. This value MUST be in
     // the range 0 to 5 (inclusive).
 
-    // numberColors (2 bytes): A 16-bit, unsigned integer. The number of Color 
-    // Quad (section 2.2.2.2.1.2.4.1) structures in the colorTable field. This 
+    // numberColors (2 bytes): A 16-bit, unsigned integer. The number of Color
+    // Quad (section 2.2.2.2.1.2.4.1) structures in the colorTable field. This
     // field MUST be set to 256 entries.
 
     // colorTable (variable): A Color Table composed of an array of Color Quad
@@ -73,15 +73,16 @@
 class RDPColCache {
 
     public:
-    uint32_t palette[6][256];
+    uint32_t palette[8][256]; // only 0..5 and 7 (global palette) are used
+    uint8_t cacheIndex;
 
-    RDPColCache()
+    RDPColCache(uint8_t cacheIndex)
     {
         memset(this->palette, 0, sizeof(palette));
     }
 
     #warning cacheIndex should be inside instance and array of color cache (patterns) outside color_cache
-    void emit(Stream & stream, uint8_t cacheIndex)
+    void emit(Stream & stream)
     {
         using namespace RDP;
 
@@ -92,10 +93,10 @@ class RDPColCache {
         stream.out_uint16_le(0);    // flags
         stream.out_uint8(TS_CACHE_COLOR_TABLE); // type
 
-        stream.out_uint8(cacheIndex);
+        stream.out_uint8(this->cacheIndex);
         stream.out_uint16_le(256); /* num colors */
         for (int i = 0; i < 256; i++) {
-            stream.out_uint32_le(this->palette[cacheIndex][i]);
+            stream.out_uint32_le(this->palette[this->cacheIndex][i]);
         }
     }
 
@@ -103,24 +104,24 @@ class RDPColCache {
     {
         using namespace RDP;
 
-        uint8_t cacheIndex = stream.in_uint8();
-        assert(cacheIndex >= 0 && cacheIndex < 6);
+        this->cacheIndex = stream.in_uint8();
+        assert(this->cacheIndex >= 0 && this->cacheIndex < 6);
 
         uint16_t numberColors = stream.in_uint16_le();
         assert(numberColors == 256);
 
         for (size_t i = 0; i < 256; i++) {
-            this->palette[cacheIndex][i] = stream.in_uint32_le();
+            this->palette[this->cacheIndex][i] = stream.in_uint32_le();
         }
     }
 
     #define warning remove printf in operator== and show palette differences in test code
     bool operator==(const RDPColCache & other) const {
-        for (uint8_t cacheIndex = 0; cacheIndex < 6 ; ++cacheIndex){
+        for (uint8_t index = 0; index < 6 ; ++index){
             for (size_t i = 0; i < 256 ; ++i){
-                if (this->palette[cacheIndex][i] != other.palette[cacheIndex][i]){
+                if (this->palette[index][i] != other.palette[index][i]){
                     printf("palette differs at index %d: %x != %x\n",
-                        (int)i, this->palette[cacheIndex][i], other.palette[cacheIndex][i]);
+                        (int)i, this->palette[index][i], other.palette[index][i]);
                     return false;
                 }
             }

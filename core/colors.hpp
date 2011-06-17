@@ -28,8 +28,8 @@
 #include <assert.h>
 #include "log.hpp"
 
-typedef uint32_t RGBcolor;
-typedef RGBcolor RGBPalette[256];
+typedef uint32_t RGBColor;
+typedef RGBColor RGBPalette[256];
 
 // colorN (variable): an index into the current palette or an RGB triplet
 //                    value; the actual interpretation depends on the color
@@ -50,7 +50,7 @@ typedef RGBcolor RGBPalette[256];
 // |    24 bpp   |    3 bytes |     RGB color triplet (1 byte per component).  |
 // +-------------+------------+------------------------------------------------+
 
-static inline RGBcolor color_decode(const RGBcolor c, const uint8_t in_bpp, const uint32_t (& palette)[256]){
+static inline RGBColor color_decode(const RGBColor c, const uint8_t in_bpp, const uint32_t (& palette)[256]){
     switch (in_bpp){
     case 8:
       return palette[(uint8_t)c] & 0xFFFFFF;
@@ -82,7 +82,7 @@ static inline RGBcolor color_decode(const RGBcolor c, const uint8_t in_bpp, cons
     return 0;
 }
 
-static inline RGBcolor color_encode(const RGBcolor c, const uint8_t out_bpp, const uint32_t (& palette)[256]){
+static inline RGBColor color_encode(const RGBColor c, const uint8_t out_bpp, const uint32_t (& palette)[256]){
     switch (out_bpp){
     case 8:
     // rrrgggbb
@@ -92,24 +92,24 @@ static inline RGBcolor color_encode(const RGBcolor c, const uint8_t out_bpp, con
        |(((c        & 0xFF) >> 6) & 0x03);
     break;
     case 15:
-    // --> 0 r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 b1 b2 b3 b4 b5
+    // --> 0 b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
         return
-        // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 r1 r2 r3 r4 r5 0 0 0 0 0 0 0 0 0 0
-        ((((c >> 16) & 0xFF) << 7) & 0x7C00)
+        // b1 b2 b3 b4 b5 b6 b7 b8 --> 0 b1 b2 b3 b4 b5 0 0 0 0 0 0 0 0 0 0
+        (((c         & 0xFF) << 7) & 0x7C00)
         // g1 g2 g3 g4 g5 g6 g7 g8 --> 0 0 0 0 0 0 g1 g2 g3 g4 g5 0 0 0 0 0
        |((((c >>  8) & 0xFF) << 2) & 0x03E0)
-        // b1 b2 b3 b4 b5 b6 b7 b8 --> 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b3 b4 b5
-       | ((c         & 0xFF) >> 3);
+        // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
+       | (((c >> 16) & 0xFF) >> 3);
     break;
     case 16:
-    // --> r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 g6 b1 b2 b3 b4 b5
+    // --> b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
         return
-        // r1 r2 r3 r4 r5 r6 r7 r8 --> r1 r2 r3 r4 r5 0 0 0 0 0 0 0 0 0 0 0
-        ((((c >> 16) & 0xFF) << 8) & 0xF800)
+        // b1 b2 b3 b4 b5 b6 b7 b8 --> b1 b2 b3 b4 b5 0 0 0 0 0 0 0 0 0 0 0
+        (((c         & 0xFF) << 8) & 0xF800)
         // g1 g2 g3 g4 g5 g6 g7 g8 --> 0 0 0 0 0 g1 g2 g3 g4 g5 g6 0 0 0 0 0
        |((((c >>  8) & 0xFF) << 3) & 0x07E0)
-        // b1 b2 b3 b4 b5 b6 b7 b8 --> 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b3 b4 b5
-       | ((c         & 0xFF) >> 3);
+        // r1 r2 r3 r4 r5 r6 r7 r8 --> 0 0 0 0 0 0 0 0 0 0 0 r1 r2 r3 r4 r5
+       | (((c >> 16) & 0xFF) >> 3);
     case 32:
     case 24:
         return c;
@@ -125,15 +125,15 @@ enum {
     GREY       = 0xc0c0c0,
     DARK_GREY  = 0x808080,
     ANTHRACITE = 0x808080,
-    BLUE       = 0x0000ff,
-    DARK_BLUE  = 0x00007f,
+    BLUE       = 0xff0000,
+    DARK_BLUE  = 0x7f0000,
     WHITE      = 0xffffff,
-    RED        = 0xff0000,
+    RED        = 0x0000ff,
     PINK       = 0xff00ff,
     GREEN      = 0x00ff00,
-    YELLOW     = 0x00ffff,
-    WABGREEN   = 0x91BE2B,
-    DARK_WABGREEN = 0x91BE2B,
+    YELLOW     = 0xffff00,
+    WABGREEN   = 0x2BBE91,
+    DARK_WABGREEN = 0x2BBE91,
 };
 
 #endif

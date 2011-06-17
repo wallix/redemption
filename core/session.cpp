@@ -328,7 +328,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
             for (int gindex = 0; gindex < 8; gindex++) {
                 for (int bindex = 0; bindex < 4; bindex++) {
                     palette[(rindex << 5) | (gindex << 2) | bindex] =
-                    (RGBcolor)(
+                    (RGBColor)(
                     // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
                         (((rindex<<5)|(rindex<<2)|(rindex>>1))<<0)
                     // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
@@ -339,7 +339,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
             }
         }
 
-        this->front->color_cache(palette);
+        this->front->color_cache(palette, 0);
 
         struct pointer_item pointer_item;
 

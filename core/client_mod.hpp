@@ -60,6 +60,7 @@ struct client_mod : public Callback {
     int rdp_compression;
     int bitmap_cache_persist_enable;
     RGBPalette palette332;
+    RGBPalette palette332RGB;
     RGBPalette mod_palette;
     uint8_t mod_bpp;
     uint8_t socket;
@@ -68,6 +69,7 @@ struct client_mod : public Callback {
     wait_obj * event;
     int signal;
     bool palette_sent;
+    bool palette_memblt_sent;
 
     client_mod(int (& keys)[256], int & key_flags, Keymap * &keymap, Front & front)
         : keys(keys),
@@ -75,7 +77,8 @@ struct client_mod : public Callback {
           keymap(keymap),
           mod_bpp(24),
           signal(0),
-          palette_sent(false)
+          palette_sent(false),
+          palette_memblt_sent(false)
     {
         this->current_pointer = 0;
         this->front = &front;
@@ -87,13 +90,29 @@ struct client_mod : public Callback {
             for (int gindex = 0; gindex < 8; gindex++) {
                 for (int rindex = 0; rindex < 8; rindex++) {
                     this->palette332[(rindex << 5) | (gindex << 2) | bindex] =
-                    (RGBcolor)(
+                    (RGBColor)(
                     // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
                         (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
                     // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
                        | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
                     // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
                        | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
+                }
+            }
+        }
+
+        /* rgb332 palette */
+        for (int bindex = 0; bindex < 4; bindex++) {
+            for (int gindex = 0; gindex < 8; gindex++) {
+                for (int rindex = 0; rindex < 8; rindex++) {
+                    this->palette332RGB[(rindex << 5) | (gindex << 2) | bindex] =
+                    (RGBColor)(
+                    // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+                        (((rindex<<5)|(rindex<<2)|(rindex>>1)))
+                    // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
+                       | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
+                    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
+                       | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex))<<16);
                 }
             }
         }
@@ -142,9 +161,9 @@ struct client_mod : public Callback {
         this->mod_bpp = 8;
     }
 
-    uint32_t convert(uint32_t color)
+    const RGBColor convert(const RGBColor color) const
     {
-        uint32_t color24 = color_decode(color, this->mod_bpp, this->mod_palette);
+        const RGBColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
         return color_encode(color24, this->get_front_bpp(), this->palette332);
     }
 
@@ -247,6 +266,7 @@ struct client_mod : public Callback {
                 throw 0;
             }
             this->palette_sent = false;
+            this->palette_memblt_sent = false;
             LOG(LOG_INFO, "// Resizing client to : %d x %d x %d\n", width, height, bpp);
 
             client_info.width = width;
@@ -290,13 +310,13 @@ struct client_mod : public Callback {
     #warning also merge with the similar code in widget.
     #warning implementation of the server_draw_text function below is totally broken, especially data. MS-RDPEGDI See 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
 
-    void server_draw_text(uint16_t x, uint16_t y, const char * utf8text, uint32_t fgcolor, uint32_t bgcolor)
+    void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor)
     {
         // add text to glyph cache
         #warning use mbsrtowcs instead
-        int len = mbstowcs(0, utf8text, 0);
+        int len = mbstowcs(0, text, 0);
         wchar_t* wstr = new wchar_t[len + 2];
-        mbstowcs(wstr, utf8text, len + 1);
+        mbstowcs(wstr, text, len + 1);
         int total_width = 0;
         int total_height = 0;
         uint8_t *data = new uint8_t[len * 4];
@@ -325,7 +345,7 @@ struct client_mod : public Callback {
         #warning there seems to be some strange behavior with bk rect (and op ?). Same problem as usual, we have a rectangle but we don't know if boundaries (right, bottom) are included or not. Check actual behavior with rdesktop and with mstsc client. Nevertheless we shouldn't have to add 1 here.
         const Rect bk(x, y, total_width, total_height);
 
-        RDPGlyphIndex text(
+        RDPGlyphIndex glyphindex(
             f, // cache_id
             0x03, // fl_accel
             0x0, // ui_charinc
@@ -340,7 +360,7 @@ struct client_mod : public Callback {
             len * 2, // data_len in bytes
             data // data
         );
-        this->server_glyph_index(text);
+        this->server_glyph_index(glyphindex);
 
         delete [] wstr;
         delete [] data;
@@ -379,13 +399,13 @@ struct client_mod : public Callback {
     {
         if ((this->get_front_bpp() == 8)
         && !this->palette_sent) {
-//            this->front->color_cache(this->palette332);
             this->front->rdp_layer.send_global_palette(this->palette332);
             this->palette_sent = true;
         }
 
         RDPOpaqueRect new_cmd = cmd;
         new_cmd.color = this->convert(cmd.color);
+        LOG(LOG_INFO, "opaque rect old cmd color = %.6x new_cmd color = %.6x", cmd.color, new_cmd.color);
         this->front->opaque_rect(new_cmd, this->clip);
     }
 
@@ -412,18 +432,34 @@ struct client_mod : public Callback {
     }
 
     #warning this should become BITMAP UPDATE, we should be able to send bitmaps either through orders and cache or through BITMAP UPDATE
-    void server_paint_rect(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const RGBPalette & palette)
+    void server_paint_rect(Bitmap & bitmap, const Rect & dst, int srcx, int srcy)
     {
+        if ((this->get_front_bpp() == 8)
+        && !this->palette_memblt_sent) {
+            this->front->color_cache(this->palette332RGB, 0);
+            this->palette_memblt_sent = true;
+        }
+
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
         const Rect src_r(srcx, srcy, width, height);
-        front->begin_update();
+        LOG(LOG_INFO, "front begin update");
+        this->front->begin_update();
+        LOG(LOG_INFO, "front send bitmap front dst(%d, %d, %d, %d), src_r(%d, %d, %d, %d) cx=%d cy=%d original_bpp:%u 8:%p 15:%p 16:%p 24:%p", dst.x, dst.y, dst.cx, dst.cy, src_r.x, src_r.y, src_r.cx, src_r.cy, bitmap.cx, bitmap.cy, bitmap.original_bpp, bitmap.data_co8, bitmap.data_co15, bitmap.data_co16, bitmap.data_co24);
         this->front->send_bitmap_front(dst, src_r, 0xCC, bitmap.data_co(this->get_front_bpp()), 0, this->clip);
-        front->end_update();
+        LOG(LOG_INFO, "front end update");
+        this->front->end_update();
+        LOG(LOG_INFO, "front end update done");
     }
 
     void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const RGBPalette & palette)
     {
+        if ((this->get_front_bpp() == 8)
+        && !this->palette_memblt_sent) {
+            this->front->color_cache(this->palette332RGB, 0);
+            this->palette_memblt_sent = true;
+        }
+
         const Rect & dst = memblt.rect;
         const int srcx = memblt.srcx;
         const int srcy = memblt.srcy;
@@ -464,9 +500,9 @@ struct client_mod : public Callback {
     {
     }
 
-    void color_cache(const uint32_t (& palette)[256])
+    void color_cache(const uint32_t (& palette)[256], uint8_t cacheIndex)
     {
-        this->front->color_cache(palette);
+        this->front->color_cache(palette, cacheIndex);
     }
 
     int server_is_term()

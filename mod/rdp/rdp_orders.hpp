@@ -120,14 +120,16 @@ struct rdp_orders {
     struct rdp_orders_state state;
 
     #warning look again details for cache_colormap, see comment.
-    // currently when use palette 0 of cache_colormap to store the global palette
+    // currently when use palette 7 of cache_colormap to store the global palette
     // used for 8 bits colors in rdp drawing orders other than memblt and mem3blt
-    // like OpaqueRect, or PATBlt it is not clear we should do that or use a
-    // separate palette as was done before. RDP Documentation is not clear on
-    // this subject (or probably I haven't found the relevant part).
-    // If necessary this is easy to change, just track down accesses to
-    // cache_colormap.palette[0]
-    // also cache_colormap currently stores bpp, it may not be such a good idea.
+    // like OpaqueRect, or PATBlt we do that because we must use a
+    // separate palette for global palette and memblt.
+
+    // It may be a good idea to really separate palette array for memblt
+    // and global palette to do that just track down accesses to
+    // cache_colormap.palette[7]
+
+    // Also cache_colormap currently stores bpp, it may not be such a good idea.
     // the only real relationship is that palette is relevant only in 8bpp mode
     // mode it's probably not enough to store both in the same structure.
     struct RDPColCache cache_colormap;
@@ -144,7 +146,7 @@ struct rdp_orders {
         patblt(Rect(), 0, 0, 0, RDPBrush()),
         lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
         glyph_index(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
-        cache_colormap()
+        cache_colormap(0)
     {
         memset(this->cache_bitmap, 0, sizeof(this->cache_bitmap));
     }
@@ -183,7 +185,7 @@ struct rdp_orders {
         case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
             {
                 #warning RDPBmpCache is used to create bitmap
-                RDPBmpCache bmp(bpp, &this->cache_colormap.palette[0]);
+                RDPBmpCache bmp(bpp, &this->cache_colormap.palette[7]);
                 bmp.receive(stream, control, header);
                 cache_id = bmp.cache_id;
                 cache_idx = bmp.cache_idx;
@@ -219,7 +221,7 @@ struct rdp_orders {
                 const uint8_t* data = stream.in_uint8p(size);
 
                 #warning valgrind say there is a memory leak here
-                bitmap = new Bitmap(bpp, &this->cache_colormap.palette[0], width, height, data, size, true);
+                bitmap = new Bitmap(bpp, &this->cache_colormap.palette[7], width, height, data, size, true);
                 assert(row_size == bitmap->line_size(bpp));
 
             }

@@ -85,7 +85,7 @@ class Capture
             for (int gindex = 0; gindex < 8; gindex++) {
                 for (int rindex = 0; rindex < 8; rindex++) {
                     this->palette[(rindex << 5) | (gindex << 2) | bindex] =
-                    (RGBcolor)(
+                    (RGBColor)(
                     // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
                         (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
                     // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0

@@ -88,8 +88,8 @@ class RDPOpaqueRect {
                         | (dr.dtop                 != 0) * 0x02
                         | (dr.dwidth               != 0) * 0x04
                         | (dr.dheight              != 0) * 0x08
-                        | ((diff_color & 0xFF)     != 0) * 0x10
-                        | ((diff_color & 0xFF00)   != 0) * 0x20
+                        | ((diff_color & 0x0000FF) != 0) * 0x10
+                        | ((diff_color & 0x00FF00) != 0) * 0x20
                         | ((diff_color & 0xFF0000) != 0) * 0x40
                         ;
 
@@ -113,22 +113,26 @@ class RDPOpaqueRect {
 
         header.receive_rect(stream, 0x01, this->rect);
 
+        #warning sompe code optimization is possible by separating reads from stream and assignment to this->color
         uint32_t old_color = this->color;
 
+        uint8_t r = this->color;
+        uint8_t g = this->color >> 8;
+        uint8_t b = this->color >> 16;
+
         if (header.fields & 0x10) {
-            unsigned i = stream.in_uint8();
-            this->color = (this->color & 0xffff00) | i;
+            r = stream.in_uint8();
         }
         if (header.fields & 0x20) {
-            unsigned i = stream.in_uint8();
-            this->color = (this->color & 0xff00ff) | (i << 8);
+            g = stream.in_uint8();
         }
         if (header.fields & 0x40) {
-            unsigned i = stream.in_uint8();
-            this->color = (this->color & 0x00ffff) | (i << 16);
+            b = stream.in_uint8();
         }
+        this->color = r|(g << 8)|(b<<16);
 
-//        LOG(LOG_INFO, "receive opaque rect old_color = %.6x new_color = %.6x\n", old_color, this->color);
+        RGBPalette palette;
+        LOG(LOG_INFO, "receive opaque rect old_color = %.6x [%.6x] new_color = %.6x [%.6x] \n", old_color, color_decode(old_color, 16, palette), this->color, color_decode(this->color, 16, palette));
 
     }
 

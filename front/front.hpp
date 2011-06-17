@@ -508,14 +508,13 @@ public:
         }
     }
 
-    void color_cache(const RGBPalette & palette)
+    void color_cache(const RGBPalette & palette, uint8_t cacheIndex)
     {
         LOG(LOG_INFO, "color_cache()");
         this->reserve_order(2000);
-        RDPColCache newcmd;
-        #warning why is it always palette 0 ?
-        memcpy(newcmd.palette[0], palette, 256);
-        newcmd.emit(this->out_stream, 0);
+        RDPColCache newcmd(cacheIndex);
+        memcpy(newcmd.palette[cacheIndex], palette, 256);
+        newcmd.emit(this->out_stream);
     }
 
     void brush_cache(const int index)
@@ -542,6 +541,7 @@ public:
 
     void bitmap_cache(const uint8_t cache_id, const uint16_t cache_idx)
     {
+        LOG(LOG_INFO, "bitmap cache\n");
         BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
 
         #warning really when using compression we'll use less space
@@ -555,7 +555,7 @@ public:
             for (int gindex = 0; gindex < 8; gindex++) {
                 for (int rindex = 0; rindex < 8; rindex++) {
                     palette332[(rindex << 5) | (gindex << 2) | bindex] =
-                    (RGBcolor)(
+                    (RGBColor)(
                     // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
                         (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
                     // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
@@ -581,7 +581,8 @@ public:
                      int palette_id,
                      const Rect & clip)
     {
-        return;
+        LOG(LOG_INFO, "send bitmap front\n");
+
         for (int y = 0; y < dst.cy ; y += 64) {
             int cy = std::min(64, dst.cy - y);
             for (int x = 0; x < dst.cx ; x += 64) {

@@ -40,12 +40,12 @@ BOOST_AUTO_TEST_CASE(TestColCache)
     {
         Stream stream(1000);
 
-        RDPColCache newcmd;
+        RDPColCache newcmd(0);
         for (int i = 0; i < 256; ++i){
             newcmd.palette[0][i] = (((i >> 6) & 3) << 16) + (((i>>3) & 7) << 8) + (i & 7);
         }
 
-        newcmd.emit(stream, 0);
+        newcmd.emit(stream);
 
         uint8_t datas[] = {
             STANDARD | SECONDARY,       // control = 0x03
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(TestColCache)
         uint8_t control = stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
         RDPSecondaryOrderHeader header(stream);
-        RDPColCache cmd;
+        RDPColCache cmd(0);
         cmd.receive(stream, control, header);
 
         check<RDPColCache>(cmd, newcmd, "Color Cache 1");

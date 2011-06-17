@@ -50,6 +50,7 @@
 struct Bitmap {
     private:
     // data_co is allocated on demand
+    public:
     uint8_t *data_co24;
     uint8_t *data_co16;
     uint8_t *data_co15;
@@ -126,6 +127,7 @@ struct Bitmap {
     Bitmap(const char* filename)
         : data_co24(0), data_co16(0), data_co15(0), data_co8(0)
     {
+        LOG(LOG_INFO, "loading bitmap %s", filename);
         int size;
         RGBPalette palette1;
         char type1[4];
@@ -218,6 +220,7 @@ struct Bitmap {
 
         // skip header (including more fields that we do not read if any)
         lseek(fd, 14 + header.size, SEEK_SET);
+
         // compute pixel size (in Quartet) and read palette if needed
         int file_Qpp = 1;
         #warning add support for 16 bits bmp
@@ -229,7 +232,6 @@ struct Bitmap {
         case 8:
             file_Qpp = 2;
         case 4:
-            #warning 4 bits mode is unsupported, add full management code or remove it
             stream.init(8192);
             if (read(fd, stream.data, header.clr_used * 4) < header.clr_used * 4){
                 close(fd);
@@ -251,18 +253,18 @@ struct Bitmap {
             throw Error(ERR_BITMAP_LOAD_FAILED);
         }
 
-        this->original_bpp = file_Qpp * 4;
-        // compute target image size and allocate memory
+        LOG(LOG_INFO, "loading file %d x %d x %d", header.image_width, header.image_height, header.bit_count);
+
+        // bitmap loaded from files are always converted to 24 bits
+        // this avoid palette problems for 8 bits,
+        // and 4 bits is not supported in other parts of code anyway
+
         this->cx = header.image_width;
         this->cy = header.image_height;
-        this->set_data_co(this->original_bpp);
-
-        uint8_t * dest = this->data_co(this->original_bpp);
 
         // read bitmap data
         size = (header.image_width * header.image_height * file_Qpp) / 2;
         stream.init(size);
-        uint8_t nbbytes_dest = nbbytes(this->original_bpp);
         int row_size = (this->cx * file_Qpp) / 2;
         int padding = align4(row_size) - row_size;
         for (unsigned y = 0; y < this->cy; y++) {
@@ -274,6 +276,13 @@ struct Bitmap {
             }
         }
         close(fd); // from now on all is in memory
+
+
+        this->original_bpp = 24;
+        this->set_data_co(this->original_bpp);
+        uint8_t * dest = this->data_co(this->original_bpp);
+        const uint8_t nbbytes_dest = ::nbbytes(this->original_bpp);
+        row_size = this->line_size(this->original_bpp);
 
         int k = 0;
         for (unsigned y = 0; y < this->cy ; y++) {
@@ -289,7 +298,7 @@ struct Bitmap {
                 }
                 break;
                 case 8:
-                    pixel = palette1[stream.in_uint8()];
+                    pixel = stream.in_uint8();
                 break;
                 case 4:
                     if ((x & 1) == 0) {
@@ -302,10 +311,9 @@ struct Bitmap {
                     pixel = palette1[pixel];
                 break;
                 }
-                uint32_t px = color_encode(pixel, this->original_bpp, palette1);
+                uint32_t px = color_decode(pixel, header.bit_count, palette1);
                 #warning extract constants from loop
-                ::out_bytes_le(dest+y*(row_size+padding) + x*nbbytes_dest, nbbytes_dest, px);
-
+                ::out_bytes_le(dest + y * row_size + x * nbbytes_dest, nbbytes_dest, px);
             }
         }
         return;
@@ -1152,22 +1160,21 @@ struct Bitmap {
 
         #warning target palette is always 332, it should be computed depending on target colors (but we don't know what target colors will be... so the only case we can actually manage smartly is 8 bits to 8 bits. This must be done or we always will have problems when going from 8 bits to 8 bits.
         RGBPalette palette332;
+
         /* rgb332 palette */
         for (int bindex = 0; bindex < 4; bindex++) {
             for (int gindex = 0; gindex < 8; gindex++) {
                 for (int rindex = 0; rindex < 8; rindex++) {
                     palette332[(rindex << 5) | (gindex << 2) | bindex] =
-                    (RGBcolor)(
-                    // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
-                    // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
+                    (RGBColor)(
+                        (((rindex<<5)|(rindex<<2)|(rindex>>1)))
                        | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
-                    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
-                       | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
+                       | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex))<<16);
                 }
             }
         }
 
+        #warning code below looks time consuming (applies to every pixels) and should probably be optimized
         // Color decode/encode
         #warning heavy optimization is possible here
         const uint8_t src_nbbytes = nbbytes(this->original_bpp);
@@ -1176,6 +1183,12 @@ struct Bitmap {
             uint32_t pixel = color_decode(in_bytes_le(src_nbbytes, src),
                                           this->original_bpp,
                                           *this->original_palette);
+            if ((this->original_bpp == 8) || (this->original_bpp == 24)){
+                uint8_t blue = pixel >> 16;
+                pixel = (((pixel << 16) & 0xFF0000))
+                      |  (pixel & 0x00FF00)
+                      |  ((blue>10?0xFF:0) & 0xFF);
+            }
             uint32_t target_pixel = color_encode(pixel, out_bpp, palette332);
             target_pixel = 0xFFFFFF & target_pixel;
             out_bytes_le(dest, dest_nbbytes, target_pixel);

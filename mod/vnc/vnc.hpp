@@ -695,7 +695,7 @@ struct mod_vnc : public client_mod {
                 Bitmap bmp(this->bpp, &this->palette332, cx, cy, raw, need_size, false, true);
                 free(raw);
                 #warning see server_paint_rect and Bitmap below, suspicious code, does it works ?
-                this->server_paint_rect(bmp, Rect(x, y, cx, cy), 0, 0, this->palette332);
+                this->server_paint_rect(bmp, Rect(x, y, cx, cy), 0, 0);
             }
             break;
             case 1: /* copy rect */
@@ -863,7 +863,7 @@ struct mod_vnc : public client_mod {
         }
         this->send_global_palette(this->palette);
         this->server_begin_update();
-        this->color_cache(this->palette);
+        this->color_cache(this->palette, 0);
         this->server_end_update();
     }
 

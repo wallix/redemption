@@ -60,16 +60,40 @@ struct test_card_mod : public internal_mod {
     void draw()
     {
         this->server_begin_update();
+
         this->server_set_clip(this->screen.rect);
+
         this->opaque_rect(RDPOpaqueRect(this->screen.rect, WHITE));
         this->opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(5), RED));
         this->opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(10), GREEN));
         this->opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(15), BLUE));
         this->opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(20), BLACK));
 
-//        this->server_draw_text(535, 363, "Hello",
-//            color_encode(BLACK, this->mod_bpp, this->palette332),
-//            color_encode(YELLOW, this->mod_bpp, this->palette332));
+        this->opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(150), 0x9C4D00));
+
+        this->server_draw_text(30, 30, "White", BLACK, WHITE);
+        this->server_draw_text(30, 50, "Red  ", BLACK, RED);
+        this->server_draw_text(30, 70, "Green", BLACK, GREEN);
+        this->server_draw_text(30, 90, "Blue ", BLACK, BLUE);
+        this->server_draw_text(30, 110, "Black", WHITE, BLACK);
+
+        Bitmap bitmap(SHARE_PATH "/" REDEMPTION_LOGO24);
+        this->server_paint_rect(bitmap,
+            Rect(this->screen.rect.cx - bitmap.cx - 30,
+                 this->screen.rect.cy - bitmap.cy - 30, bitmap.cx, bitmap.cy),
+             0, 0);
+
+        Bitmap card(SHARE_PATH "/" "Philips_PM5544_192.bmp");
+        this->server_paint_rect(card,
+            Rect(30, this->screen.rect.cy - card.cy - 30, card.cx, card.cy),
+             0, 0);
+
+
+//        this->front->send_bitmap_front(
+//            Rect(this->screen.rect.x - bitmap.cx - 30,
+//                this->screen.rect.y - bitmap.cy - 30,
+//                bitmap.cx, bitmap.cy), Rect(0, 0, bitmap.cx, bitmap.cy), 0xCC, bitmap.data_co(this->get_front_bpp()), 0, this->clip);
+
 
         //front.orders.screen_blt(Rect(190, 190, 50, 50), 50, 50, 0xCC, Rect(190, 190, 50, 50));
 

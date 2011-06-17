@@ -363,15 +363,15 @@ struct rdp_rdp {
             assert(numberColors == 256);
             stream.skip_uint8(2); /* pad */
             for (int i = 0; i < 256; i++) {
-                uint8_t r = stream.in_uint8();
-                uint8_t g = stream.in_uint8();
                 uint8_t b = stream.in_uint8();
+                uint8_t g = stream.in_uint8();
+                uint8_t r = stream.in_uint8();
 //                uint32_t color = stream.in_bytes_le(3);
-                this->orders.cache_colormap.palette[0][i] = (r << 16)
+                this->orders.cache_colormap.palette[7][i] = (r << 16)
                                                           | (g << 8)
                                                           |  b;
             }
-            mod->set_mod_palette(this->orders.cache_colormap.palette[0]);
+            mod->set_mod_palette(this->orders.cache_colormap.palette[7]);
         }
 
 
@@ -1131,22 +1131,22 @@ struct rdp_rdp {
                 }
 
                 const uint8_t * data = stream.in_uint8p(size);
-                Bitmap bitmap(bpp, &this->orders.cache_colormap.palette[0], width, height, data, size, true);
+                Bitmap bitmap(bpp, &this->orders.cache_colormap.palette[7], width, height, data, size, true);
 
                 assert(line_size == bitmap.line_size(bpp));
                 assert(final_size == bitmap.bmp_size(bpp));
 
                 mod->clip = boundary;
-                mod->server_paint_rect(bitmap, boundary, 0, 0, this->orders.cache_colormap.palette[0]);
+                mod->server_paint_rect(bitmap, boundary, 0, 0);
             }
             else {
                 const uint8_t * data = stream.in_uint8p(bufsize);
-                Bitmap bitmap(bpp, &this->orders.cache_colormap.palette[0], width, height, data, bufsize);
+                Bitmap bitmap(bpp, &this->orders.cache_colormap.palette[7], width, height, data, bufsize);
 
                 assert(bufsize == bitmap.bmp_size(bpp));
 
                 mod->clip = boundary;
-                mod->server_paint_rect(bitmap, boundary, 0, 0, this->orders.cache_colormap.palette[0]);
+                mod->server_paint_rect(bitmap, boundary, 0, 0);
             }
         }
     }

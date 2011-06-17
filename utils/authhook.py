@@ -25,6 +25,7 @@ class Authentifier(object):
         'bouncer' : 'bouncer',
         'test' : 'test',
         'card' : 'card',
+        'loop' : 'loop',
         'error_invalid' : 'error_invalid'
     }
     targets = {
@@ -103,6 +104,14 @@ class Authentifier(object):
             'target_password' : 'secure',
             'target_port':'5901',
             'proto_dest': 'VNC'
+        },
+        'loop' : {
+            'proxy_type': 'RDP',
+            'target_login' : r'card',
+            'target_device' : '127.0.0.1',
+            'target_password' : 'card',
+            'target_port':'3389',
+            'proto_dest': 'RDP'
         },
         'error_invalid' : {
             'target_device': "10.10.3.54" ,
