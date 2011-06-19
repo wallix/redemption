@@ -90,7 +90,7 @@ struct client_mod : public Callback {
             for (int gindex = 0; gindex < 8; gindex++) {
                 for (int rindex = 0; rindex < 8; rindex++) {
                     this->palette332[(rindex << 5) | (gindex << 2) | bindex] =
-                    (RGBColor)(
+                    (BGRColor)(
                     // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
                         (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
                     // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
@@ -106,7 +106,7 @@ struct client_mod : public Callback {
             for (int gindex = 0; gindex < 8; gindex++) {
                 for (int rindex = 0; rindex < 8; rindex++) {
                     this->palette332RGB[(rindex << 5) | (gindex << 2) | bindex] =
-                    (RGBColor)(
+                    (BGRColor)(
                     // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
                         (((rindex<<5)|(rindex<<2)|(rindex>>1)))
                     // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
@@ -161,9 +161,9 @@ struct client_mod : public Callback {
         this->mod_bpp = 8;
     }
 
-    const RGBColor convert(const RGBColor color) const
+    const BGRColor convert(const BGRColor color) const
     {
-        const RGBColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
+        const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
         return color_encode(color24, this->get_front_bpp(), this->palette332);
     }
 

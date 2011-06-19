@@ -28,8 +28,8 @@
 #include <assert.h>
 #include "log.hpp"
 
-typedef uint32_t RGBColor;
-typedef RGBColor RGBPalette[256];
+typedef uint32_t BGRColor;
+typedef BGRColor RGBPalette[256];
 
 // colorN (variable): an index into the current palette or an RGB triplet
 //                    value; the actual interpretation depends on the color
@@ -50,7 +50,7 @@ typedef RGBColor RGBPalette[256];
 // |    24 bpp   |    3 bytes |     RGB color triplet (1 byte per component).  |
 // +-------------+------------+------------------------------------------------+
 
-static inline RGBColor color_decode(const RGBColor c, const uint8_t in_bpp, const uint32_t (& palette)[256]){
+static inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, const uint32_t (& palette)[256]){
     switch (in_bpp){
     case 8:
       return palette[(uint8_t)c] & 0xFFFFFF;
@@ -82,7 +82,7 @@ static inline RGBColor color_decode(const RGBColor c, const uint8_t in_bpp, cons
     return 0;
 }
 
-static inline RGBColor color_encode(const RGBColor c, const uint8_t out_bpp, const uint32_t (& palette)[256]){
+static inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp, const uint32_t (& palette)[256]){
     switch (out_bpp){
     case 8:
     // rrrgggbb

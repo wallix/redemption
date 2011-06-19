@@ -1166,7 +1166,7 @@ struct Bitmap {
             for (int gindex = 0; gindex < 8; gindex++) {
                 for (int rindex = 0; rindex < 8; rindex++) {
                     palette332[(rindex << 5) | (gindex << 2) | bindex] =
-                    (RGBColor)(
+                    (BGRColor)(
                         (((rindex<<5)|(rindex<<2)|(rindex>>1)))
                        | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
                        | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex))<<16);
