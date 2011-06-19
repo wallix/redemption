@@ -24,6 +24,70 @@
 #if !defined(__RDPORDERSPRIMARYMEMBLT_HPP__)
 #define __RDPORDERSPRIMARYMEMBLT_HPP__
 
+//  MS-RDPEGDI 2.2.2.2.1.1.2.9 MemBlt (MEMBLT_ORDER)
+// -------------------------------------------------
+//  The MemBlt Primary Drawing Order is used to render a bitmap stored in the
+//  bitmap cache or offscreen bitmap cache to the screen.
+
+//  Encoding order number: 13 (0x0D)
+//  Negotiation order number: 3 (0x03)
+//  Number of fields: 9
+//  Number of field encoding bytes: 2
+//  Maximum encoded field length: 17 bytes
+
+// cacheId (2 bytes): A 16-bit, unsigned integer. The cacheId field contains the
+//   encoded bitmap cache ID and Color Table Cache entry.
+
+//   The high byte contains the index of the color table entry to use (cached
+//   previously with a Cache Color Table (section 2.2.2.2.1.2.4) Secondary
+//   Drawing Order), and the low byte contains the ID of the bitmap cache in
+//   which the source bitmap is stored (cached previously with a Cache Bitmap
+//   - Revision 1 (section 2.2.2.2.1.2.2) or Cache Bitmap - Revision 2 (section
+//   2.2.2.2.1.2.3) Secondary Drawing Order).
+
+//   The color table entry MUST be in the range 0 to 5 (inclusive), while the
+//   bitmap cache ID MUST  be in the range negotiated by the Revision 1 or 2
+//   Bitmap Cache Capability Set (see [MS-RDPBCGR] section 2.2.7.1.4). However,
+//   if the bitmap cache ID is set to TS_BITMAPCACHE_SCREEN_ID (0xFF), the
+//   cacheIndex field MUST contain the index of an entry in the Offscreen Bitmap
+//   Cache that contains the source bitmap.
+
+// nLeftRect (variable): Left coordinate of the blit rectangle specified using
+//   a Coord Field (section 2.2.2.2.1.1.1.1).
+
+// nTopRect (variable): Top coordinate of the blit rectangle specified using a
+//   Coord Field (section 2.2.2.2.1.1.1.1).
+
+// nWidth (variable): Width of the blit rectangle specified using a Coord Field
+//   (section 2.2.2.2.1.1.1.1).
+
+// nHeight (variable): Height of the blit rectangle specified using a Coord
+//   Field (section 2.2.2.2.1.1.1.1).
+
+// bRop (1 byte): Index of the ternary raster operation to perform (see section
+//   2.2.2.2.1.1.1.7). The resultant ROP3 operation MUST only depend on the
+//   destination and source bits (there MUST NOT be any dependence on pattern
+//   bits).
+
+// nXSrc (variable): The x-coordinate of the source rectangle within the source
+//   bitmap specified by using a Coord Field (section 2.2.2.2.1.1.1.1).
+
+// nYSrc (variable): The inverted y-coordinate of the source rectangle within
+//   the source bitmap specified by using a Coord Field (section
+//   2.2.2.2.1.1.1.1). The actual value of the y-coordinate MUST be computed
+//   using the following formula.
+//      ActualYSrc = (SourceBitmapHeight - nHeight) - nYSrc
+
+// cacheIndex (2 bytes): A 16-bit, unsigned integer. The index of the source
+//   bitmap within the bitmap cache specified by the cacheId field. This value
+//   MUST be in the range negotiated by the Revision 1 or 2 Bitmap Cache
+//   Capability Set (see [MS-RDPBCGR] section 2.2.7.1.4). If this field is set
+//   to BITMAPCACHE_WAITING_LIST_INDEX (32767), the last bitmap cache entry MUST
+//   contain the bitmap. If the bitmap cache ID (specified in the cacheId field)
+//   is set to TS_BITMAPCACHE_SCREEN_ID (0xFF), this field MUST contain the
+//   index of an entry in the Offscreen Bitmap Cache that contains the source
+//   bitmap.
+
 class RDPMemBlt {
     public:
     uint16_t cache_id;

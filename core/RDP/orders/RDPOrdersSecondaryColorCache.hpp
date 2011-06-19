@@ -24,60 +24,63 @@
 #if !defined(__RDPORDERSSECONDARYCOLORCACHE_HPP__)
 #define __RDPORDERSSECONDARYCOLORCACHE_HPP__
 
-    /*****************************************************************************/
-    // [MS-RDPGDI] 2.2.2.2.1.2.4 Cache Color Table (CACHE_COLOR_TABLE_ORDER)
+/*****************************************************************************/
+// [MS-RDPGDI] 2.2.2.2.1.2.4 Cache Color Table (CACHE_COLOR_TABLE_ORDER)
+// ---------------------------------------------------------------------
 
-    // The Cache Color Table Secondary Drawing Order is used by the server
-    // to instruct the client to store a color table in a particular Color Table
-    // Cache entry. Color tables are used in the MemBlt (section 2.2.2.2.1.1.2.9)
-    // and Mem3Blt (section 2.2.2.2.1.1.2.10) Primary Drawing Orders.
+// The Cache Color Table Secondary Drawing Order is used by the server
+// to instruct the client to store a color table in a particular Color Table
+// Cache entry. Color tables are used in the MemBlt (section 2.2.2.2.1.1.2.9)
+// and Mem3Blt (section 2.2.2.2.1.1.2.10) Primary Drawing Orders.
 
-    // Support for color table caching is not negotiated in the Color Table Cache
-    // Capability Set (section 2.2.1.1), but is instead implied by support for
-    // the MemBlt (section 2.2.2.2.1.1.2.9) and Mem3Blt (section 2.2.2.2.1.1.2.10)
-    // Primary Drawing Orders. If support for these orders is advertised in the
-    // Order Capability Set (see [MS-RDPBCGR] section 2.2.7.1.3), the existence
-    // of a color table cache with entries for six palettes is assumed when
-    // palettized color is being used, and the Cache Color Table is used to
-    // update these palettes.
+// Support for color table caching is not negotiated in the Color Table Cache
+// Capability Set (section 2.2.1.1), but is instead implied by support for
+// the MemBlt (section 2.2.2.2.1.1.2.9) and Mem3Blt (section 2.2.2.2.1.1.2.10)
+// Primary Drawing Orders. If support for these orders is advertised in the
+// Order Capability Set (see [MS-RDPBCGR] section 2.2.7.1.3), the existence
+// of a color table cache with entries for six palettes is assumed when
+// palettized color is being used, and the Cache Color Table is used to
+// update these palettes.
 
-    // header (6 bytes): A Secondary Order Header, as defined in section
-    // 2.2.2.2.1.2.1.1. The embedded orderType field MUST be set to
-    // TS_CACHE_COLOR_TABLE (0x01).
+// header (6 bytes): A Secondary Order Header, as defined in section
+// 2.2.2.2.1.2.1.1. The embedded orderType field MUST be set to
+// TS_CACHE_COLOR_TABLE (0x01).
 
-    // cacheIndex (1 byte): An 8-bit, unsigned integer. An entry in the Cache
-    // Color Table where the color table MUST be stored. This value MUST be in
-    // the range 0 to 5 (inclusive).
+// cacheIndex (1 byte): An 8-bit, unsigned integer. An entry in the Cache
+// Color Table where the color table MUST be stored. This value MUST be in
+// the range 0 to 5 (inclusive).
 
-    // numberColors (2 bytes): A 16-bit, unsigned integer. The number of Color
-    // Quad (section 2.2.2.2.1.2.4.1) structures in the colorTable field. This
-    // field MUST be set to 256 entries.
+// numberColors (2 bytes): A 16-bit, unsigned integer. The number of Color
+// Quad (section 2.2.2.2.1.2.4.1) structures in the colorTable field. This
+// field MUST be set to 256 entries.
 
-    // colorTable (variable): A Color Table composed of an array of Color Quad
-    // (section 2.2.2.2.1.2.4.1) structures. The number of entries in the array
-    // is given by the numberColors field.
+// colorTable (variable): A Color Table composed of an array of Color Quad
+// (section 2.2.2.2.1.2.4.1) structures. The number of entries in the array
+// is given by the numberColors field.
 
-    // 2.2.2.2.1.2.4.1 Color Quad (TS_COLOR_QUAD)
-    // The TS_COLOR_QUAD structure is used to express the red, green, and blue
-    // components necessary to reproduce a color in the additive RGB space.
+// 2.2.2.2.1.2.4.1 Color Quad (TS_COLOR_QUAD)
+// ------------------------------------------
+// The TS_COLOR_QUAD structure is used to express the red, green, and blue
+// components necessary to reproduce a color in the additive RGB space.
 
-    // blue (1 byte): An 8-bit, unsigned integer. The blue RGB color component.
+// blue (1 byte): An 8-bit, unsigned integer. The blue RGB color component.
 
-    // green (1 byte): An 8-bit, unsigned integer. The green RGB color component.
+// green (1 byte): An 8-bit, unsigned integer. The green RGB color component.
 
-    // red (1 byte): An 8-bit, unsigned integer. The red RGB color component.
+// red (1 byte): An 8-bit, unsigned integer. The red RGB color component.
 
-    // pad1Octet (1 byte): An 8-bit, unsigned integer. Padding. Values in this
-    // field are arbitrary and MUST be ignored.
+// pad1Octet (1 byte): An 8-bit, unsigned integer. Padding. Values in this
+// field are arbitrary and MUST be ignored.
 
 class RDPColCache {
 
     public:
-    uint32_t palette[8][256]; // only 0..5 and 7 (global palette) are used
+    RGBPalette palette[8]; // only 0..5 and 7 (global palette) are used
     uint8_t cacheIndex;
 
     RDPColCache(uint8_t cacheIndex)
     {
+        this->cacheIndex = cacheIndex;
         memset(this->palette, 0, sizeof(palette));
     }
 
@@ -96,7 +99,14 @@ class RDPColCache {
         stream.out_uint8(this->cacheIndex);
         stream.out_uint16_le(256); /* num colors */
         for (int i = 0; i < 256; i++) {
-            stream.out_uint32_le(this->palette[this->cacheIndex][i]);
+            uint32_t color = this->palette[this->cacheIndex][i];
+            uint8_t r = color;
+            uint8_t g = color >> 8;
+            uint8_t b = color >> 16;
+            stream.out_uint8(r);
+            stream.out_uint8(g);
+            stream.out_uint8(b);
+            stream.out_uint8(0);
         }
     }
 
@@ -111,12 +121,19 @@ class RDPColCache {
         assert(numberColors == 256);
 
         for (size_t i = 0; i < 256; i++) {
-            this->palette[this->cacheIndex][i] = stream.in_uint32_le();
+            uint8_t r = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t b = stream.in_uint8();
+            stream.skip_uint8(1);
+            this->palette[this->cacheIndex][i] = r|(g << 8)|(b << 16);
         }
     }
 
     #define warning remove printf in operator== and show palette differences in test code
     bool operator==(const RDPColCache & other) const {
+        if (this->cacheIndex != other.cacheIndex) {
+            return false;
+        }
         for (uint8_t index = 0; index < 6 ; ++index){
             for (size_t i = 0; i < 256 ; ++i){
                 if (this->palette[index][i] != other.palette[index][i]){
@@ -134,13 +151,14 @@ class RDPColCache {
         size_t lg  = snprintf(
             buffer,
             sz,
-            "RDPColCache("
+            "RDPColCache(%u,"
             "[%d, %d, %d,...]"
             "[%d, %d, %d,...]"
             "[%d, %d, %d,...]"
             "[%d, %d, %d,...]"
             "[%d, %d, %d,...]"
             "[%d, %d, %d,...])\n",
+            this->cacheIndex,
             this->palette[0][0], this->palette[0][1], this->palette[0][2],
             this->palette[1][0], this->palette[1][1], this->palette[1][2],
             this->palette[2][0], this->palette[2][1], this->palette[2][2],
