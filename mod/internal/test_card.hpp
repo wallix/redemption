@@ -69,7 +69,7 @@ struct test_card_mod : public internal_mod {
         this->opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(15), BLUE));
         this->opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(20), BLACK));
 
-        this->opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(150), 0x9C4D00));
+        this->opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(150), WINBLUE));
 
         this->server_draw_text(30, 30, "White", BLACK, WHITE);
         this->server_draw_text(30, 50, "Red  ", BLACK, RED);

@@ -134,6 +134,7 @@ enum {
     YELLOW     = 0xffff00,
     WABGREEN   = 0x2BBE91,
     DARK_WABGREEN = 0x2BBE91,
+    WINBLUE = 0x9C4D00,
 };
 
 #endif
