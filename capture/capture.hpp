@@ -71,7 +71,7 @@ class Capture
     int width;
     int height;
     int bpp;
-    RGBPalette palette;
+    BGRPalette palette;
 
     Capture(int width, int height, int bpp, char * path, const char * codec_id, const char * video_quality) {
         this->framenb = 0;

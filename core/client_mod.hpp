@@ -59,9 +59,9 @@ struct client_mod : public Callback {
     char ip_source[256];
     int rdp_compression;
     int bitmap_cache_persist_enable;
-    RGBPalette palette332;
-    RGBPalette palette332RGB;
-    RGBPalette mod_palette;
+    BGRPalette palette332;
+    BGRPalette palette332RGB;
+    BGRPalette mod_palette;
     uint8_t mod_bpp;
     uint8_t socket;
 
@@ -153,7 +153,7 @@ struct client_mod : public Callback {
     }
 
 
-    void set_mod_palette(RGBPalette palette)
+    void set_mod_palette(BGRPalette palette)
     {
         for (unsigned i = 0; i < 256 ; i++){
             this->mod_palette[i] = palette[i];
@@ -452,7 +452,7 @@ struct client_mod : public Callback {
         LOG(LOG_INFO, "front end update done");
     }
 
-    void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const RGBPalette & palette)
+    void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const BGRPalette & palette)
     {
         if ((this->get_front_bpp() == 8)
         && !this->palette_memblt_sent) {
@@ -477,7 +477,7 @@ struct client_mod : public Callback {
         this->current_pointer = cache_idx;
     }
 
-    void send_global_palette(const RGBPalette & palette)
+    void send_global_palette(const BGRPalette & palette)
     {
         this->front->send_global_palette(palette);
     }

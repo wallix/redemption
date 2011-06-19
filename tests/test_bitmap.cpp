@@ -38,7 +38,7 @@
 BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 {
     const unsigned white = 0xFF;
-    RGBPalette palette332;
+    BGRPalette palette332;
     /* rgb332 palette */
     for (int bindex = 0; bindex < 4; bindex++) {
         for (int gindex = 0; gindex < 8; gindex++) {
@@ -337,7 +337,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 
 BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 {
-    RGBPalette palette332;
+    BGRPalette palette332;
     /* rgb332 palette */
     for (int bindex = 0; bindex < 4; bindex++) {
         for (int gindex = 0; gindex < 8; gindex++) {

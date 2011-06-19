@@ -29,7 +29,7 @@
 #include "log.hpp"
 
 typedef uint32_t BGRColor;
-typedef BGRColor RGBPalette[256];
+typedef BGRColor BGRPalette[256];
 
 // colorN (variable): an index into the current palette or an RGB triplet
 //                    value; the actual interpretation depends on the color

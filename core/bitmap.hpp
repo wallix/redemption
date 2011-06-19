@@ -58,11 +58,11 @@ struct Bitmap {
 
     public:
     int original_bpp;
-    RGBPalette * original_palette;
+    BGRPalette * original_palette;
     unsigned cx;
     unsigned cy;
 
-    Bitmap(int bpp, RGBPalette * palette, int cx, int cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
+    Bitmap(int bpp, BGRPalette * palette, int cx, int cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
         : data_co24(0), data_co16(0), data_co15(0), data_co8(0),
           original_bpp(bpp), original_palette(palette), cx(cx), cy(cy)
     {
@@ -129,7 +129,7 @@ struct Bitmap {
     {
         LOG(LOG_INFO, "loading bitmap %s", filename);
         int size;
-        RGBPalette palette1;
+        BGRPalette palette1;
         char type1[4];
 
         /* header for bmp file */
@@ -1159,7 +1159,7 @@ struct Bitmap {
         uint8_t * src = data_co(this->original_bpp);
 
         #warning target palette is always 332, it should be computed depending on target colors (but we don't know what target colors will be... so the only case we can actually manage smartly is 8 bits to 8 bits. This must be done or we always will have problems when going from 8 bits to 8 bits.
-        RGBPalette palette332;
+        BGRPalette palette332;
 
         /* rgb332 palette */
         for (int bindex = 0; bindex < 4; bindex++) {

@@ -44,7 +44,7 @@ struct mod_vnc : public client_mod {
     /* mod data */
     char mod_name[256];
     int mod_mouse_state;
-    RGBPalette palette;
+    BGRPalette palette;
     int vnc_desktop;
     char username[256];
     char password[256];
@@ -80,7 +80,7 @@ struct mod_vnc : public client_mod {
         try {
             memset(this->mod_name, 0, 256);
             this->mod_mouse_state = 0;
-            memset(this->palette, 0, sizeof(RGBPalette));
+            memset(this->palette, 0, sizeof(BGRPalette));
             this->vnc_desktop = 0;
             memset(this->username, 0, 256);
             memset(this->password, 0, 256);

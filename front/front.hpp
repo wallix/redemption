@@ -355,7 +355,7 @@ public:
     }
 
 
-    void send_global_palette(const RGBPalette & palette)
+    void send_global_palette(const BGRPalette & palette)
     {
         this->rdp_layer.send_global_palette(palette);
     }
@@ -508,7 +508,7 @@ public:
         }
     }
 
-    void color_cache(const RGBPalette & palette, uint8_t cacheIndex)
+    void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
     {
         LOG(LOG_INFO, "color_cache()");
         this->reserve_order(2000);
@@ -549,7 +549,7 @@ public:
 
         using namespace RDP;
 
-        RGBPalette palette332;
+        BGRPalette palette332;
         /* rgb332 palette */
         for (int bindex = 0; bindex < 4; bindex++) {
             for (int gindex = 0; gindex < 8; gindex++) {

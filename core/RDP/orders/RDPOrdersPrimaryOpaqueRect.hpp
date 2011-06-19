@@ -131,7 +131,7 @@ class RDPOpaqueRect {
         }
         this->color = r|(g << 8)|(b<<16);
 
-        RGBPalette palette;
+        BGRPalette palette;
         LOG(LOG_INFO, "receive opaque rect old_color = %.6x [%.6x] new_color = %.6x [%.6x] \n", old_color, color_decode(old_color, 16, palette), this->color, color_decode(this->color, 16, palette));
 
     }

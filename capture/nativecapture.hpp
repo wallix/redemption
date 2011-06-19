@@ -56,7 +56,7 @@ class NativeCapture
     int width;
     int height;
     int bpp;
-    RGBPalette palette;
+    BGRPalette palette;
     FILE * f;
 
     NativeCapture(int width, int height, int bpp, char * path) :

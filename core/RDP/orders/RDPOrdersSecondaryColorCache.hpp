@@ -75,7 +75,7 @@
 class RDPColCache {
 
     public:
-    RGBPalette palette[8]; // only 0..5 and 7 (global palette) are used
+    BGRPalette palette[8]; // only 0..5 and 7 (global palette) are used
     uint8_t cacheIndex;
 
     RDPColCache(uint8_t cacheIndex)

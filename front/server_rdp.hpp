@@ -109,7 +109,7 @@ struct server_rdp {
     // The number of RGB triplets in the paletteData field.
     // This field MUST be set to NUM_8BPP_PAL_ENTRIES (256).
 
-    void send_global_palette(const RGBPalette & palette) throw (Error)
+    void send_global_palette(const BGRPalette & palette) throw (Error)
     {
         #warning we should create some RDPData object created on init and sent before destruction
         Stream stream(8192);

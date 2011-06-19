@@ -239,7 +239,7 @@ static int load_pointer(const char* file_name, uint8_t* data, uint8_t* mask, int
         int bpp = stream.in_uint8();
         stream.skip_uint8(25);
 
-        RGBPalette palette;
+        BGRPalette palette;
         if (w == 32 && h == 32) {
             if (bpp == 1) {
                 memcpy(palette, stream.in_uint8p(8), 8);
@@ -322,7 +322,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
         LOG(LOG_DEBUG, "loading keymap %s\n", filename);
         this->keymap = new Keymap(filename);
 
-        RGBPalette palette;
+        BGRPalette palette;
         /* rgb332 palette */
         for (int rindex = 0; rindex < 8; rindex++) {
             for (int gindex = 0; gindex < 8; gindex++) {

@@ -497,9 +497,9 @@ class RDPBmpCache {
     int bpp;
     int cache_idx;
     const ClientInfo * client_info;
-    RGBPalette * palette;
+    BGRPalette * palette;
 
-    RDPBmpCache(int bpp, RGBPalette * palette, Bitmap * bmp, int cache_id, int cache_idx, ClientInfo * client_info) :
+    RDPBmpCache(int bpp, BGRPalette * palette, Bitmap * bmp, int cache_id, int cache_idx, ClientInfo * client_info) :
                     cache_id(cache_id),
                     bmp(bmp),
                     bpp(bpp),
@@ -508,7 +508,7 @@ class RDPBmpCache {
     {
     }
 
-    RDPBmpCache(int bpp, RGBPalette * palette) : bpp(bpp), palette(palette)
+    RDPBmpCache(int bpp, BGRPalette * palette) : bpp(bpp), palette(palette)
     {
     }
 
