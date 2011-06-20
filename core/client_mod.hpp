@@ -375,7 +375,13 @@ struct client_mod : public Callback {
         }
 
         RDPOpaqueRect new_cmd = cmd;
-        new_cmd.color = this->convert(cmd.color);
+        if (this->mod_bpp == 16){
+            const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
+            new_cmd.color =  color_encode(color24, this->get_front_bpp(), this->palette332);
+        }
+        else {
+            new_cmd.color = this->convert(cmd.color);
+        }
         LOG(LOG_INFO, "opaque rect old cmd color = %.6x new_cmd color = %.6x", cmd.color, new_cmd.color);
         this->front->opaque_rect(new_cmd, this->clip);
     }
