@@ -1160,19 +1160,7 @@ struct Bitmap {
 
         #warning target palette is always 332, it should be computed depending on target colors (but we don't know what target colors will be... so the only case we can actually manage smartly is 8 bits to 8 bits. This must be done or we always will have problems when going from 8 bits to 8 bits.
         BGRPalette palette332;
-
-        /* rgb332 palette */
-        for (int bindex = 0; bindex < 4; bindex++) {
-            for (int gindex = 0; gindex < 8; gindex++) {
-                for (int rindex = 0; rindex < 8; rindex++) {
-                    palette332[(rindex << 5) | (gindex << 2) | bindex] =
-                    (BGRColor)(
-                        (((rindex<<5)|(rindex<<2)|(rindex>>1)))
-                       | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
-                       | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex))<<16);
-                }
-            }
-        }
+        init_palette332BGR(palette332);
 
         #warning code below looks time consuming (applies to every pixels) and should probably be optimized
         // Color decode/encode
@@ -1183,12 +1171,12 @@ struct Bitmap {
             uint32_t pixel = color_decode(in_bytes_le(src_nbbytes, src),
                                           this->original_bpp,
                                           *this->original_palette);
-            if ((this->original_bpp == 8) || (this->original_bpp == 24)){
+//            if ((this->original_bpp == 8) || (this->original_bpp == 24)){
                 uint8_t blue = pixel >> 16;
-                pixel = (((pixel << 16) & 0xFF0000))
-                      |  (pixel & 0x00FF00)
-                      |  ((blue>10?0xFF:0) & 0xFF);
-            }
+                pixel = (((pixel << 16) & 0xFF0000)
+                        |(pixel         & 0x00FF00)
+                        |((pixel >> 16) & 0x0000FF)) ;
+//            }
             uint32_t target_pixel = color_encode(pixel, out_bpp, palette332);
             target_pixel = 0xFFFFFF & target_pixel;
             out_bytes_le(dest, dest_nbbytes, target_pixel);

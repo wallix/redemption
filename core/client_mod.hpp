@@ -60,7 +60,7 @@ struct client_mod : public Callback {
     int rdp_compression;
     int bitmap_cache_persist_enable;
     BGRPalette palette332;
-    BGRPalette palette332RGB;
+    BGRPalette palette332BGR;
     BGRPalette mod_palette;
     uint8_t mod_bpp;
     uint8_t socket;
@@ -85,37 +85,8 @@ struct client_mod : public Callback {
         this->clip = Rect(0,0,4096,2048);
         this->pointer_displayed = false;
 
-        /* rgb332 palette */
-        for (int bindex = 0; bindex < 4; bindex++) {
-            for (int gindex = 0; gindex < 8; gindex++) {
-                for (int rindex = 0; rindex < 8; rindex++) {
-                    this->palette332[(rindex << 5) | (gindex << 2) | bindex] =
-                    (BGRColor)(
-                    // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
-                    // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
-                       | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
-                    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
-                       | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)));
-                }
-            }
-        }
-
-        /* rgb332 palette */
-        for (int bindex = 0; bindex < 4; bindex++) {
-            for (int gindex = 0; gindex < 8; gindex++) {
-                for (int rindex = 0; rindex < 8; rindex++) {
-                    this->palette332RGB[(rindex << 5) | (gindex << 2) | bindex] =
-                    (BGRColor)(
-                    // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-                        (((rindex<<5)|(rindex<<2)|(rindex>>1)))
-                    // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
-                       | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
-                    // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
-                       | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex))<<16);
-                }
-            }
-        }
+        init_palette332(this->palette332);
+        init_palette332BGR(this->palette332BGR);
 
     }
 
@@ -436,7 +407,7 @@ struct client_mod : public Callback {
     {
         if ((this->get_front_bpp() == 8)
         && !this->palette_memblt_sent) {
-            this->front->color_cache(this->palette332RGB, 0);
+            this->front->color_cache(this->palette332BGR, 0);
             this->palette_memblt_sent = true;
         }
 
@@ -456,7 +427,7 @@ struct client_mod : public Callback {
     {
         if ((this->get_front_bpp() == 8)
         && !this->palette_memblt_sent) {
-            this->front->color_cache(this->palette332RGB, 0);
+            this->front->color_cache(this->palette332BGR, 0);
             this->palette_memblt_sent = true;
         }
 
