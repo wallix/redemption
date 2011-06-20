@@ -345,11 +345,11 @@ struct client_mod : public Callback {
         new_cmd.back_color = this->convert(cmd.back_color);
         new_cmd.fore_color = this->convert(cmd.fore_color);
 
-        if (this->mod_bpp == 16){
+        if (this->mod_bpp == 16 || this->mod_bpp == 15){
             const BGRColor color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
             new_cmd.fore_color =  color_encode(color24, this->get_front_bpp(), this->palette332);
         }
-        if (this->mod_bpp == 16){
+        if (this->mod_bpp == 16 || this->mod_bpp == 15){
             const BGRColor color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
             new_cmd.back_color =  color_encode(color24, this->get_front_bpp(), this->palette332);
         }
@@ -385,7 +385,7 @@ struct client_mod : public Callback {
         }
 
         RDPOpaqueRect new_cmd = cmd;
-        if (this->mod_bpp == 16){
+        if (this->mod_bpp == 16 || this->mod_bpp == 15){
             const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
             new_cmd.color =  color_encode(color24, this->get_front_bpp(), this->palette332);
         }
