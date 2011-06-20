@@ -513,7 +513,7 @@ public:
         LOG(LOG_INFO, "color_cache()");
         this->reserve_order(2000);
         RDPColCache newcmd(cacheIndex);
-        memcpy(newcmd.palette[cacheIndex], palette, 256);
+        memcpy(newcmd.palette[cacheIndex], palette, sizeof(BGRPalette));
         newcmd.emit(this->out_stream);
     }
 

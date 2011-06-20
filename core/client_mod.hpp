@@ -316,7 +316,7 @@ struct client_mod : public Callback {
         #warning there seems to be some strange behavior with bk rect (and op ?). Same problem as usual, we have a rectangle but we don't know if boundaries (right, bottom) are included or not. Check actual behavior with rdesktop and with mstsc client. Nevertheless we shouldn't have to add 1 here.
         const Rect bk(x, y, total_width, total_height);
 
-        RDPGlyphIndex glyphindex(
+         RDPGlyphIndex glyphindex(
             f, // cache_id
             0x03, // fl_accel
             0x0, // ui_charinc
@@ -331,6 +331,7 @@ struct client_mod : public Callback {
             len * 2, // data_len in bytes
             data // data
         );
+
         this->server_glyph_index(glyphindex);
 
         delete [] wstr;
@@ -343,6 +344,15 @@ struct client_mod : public Callback {
         RDPGlyphIndex new_cmd = cmd;
         new_cmd.back_color = this->convert(cmd.back_color);
         new_cmd.fore_color = this->convert(cmd.fore_color);
+
+        if (this->mod_bpp == 16){
+            const BGRColor color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+            new_cmd.fore_color =  color_encode(color24, this->get_front_bpp(), this->palette332);
+        }
+        if (this->mod_bpp == 16){
+            const BGRColor color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+            new_cmd.back_color =  color_encode(color24, this->get_front_bpp(), this->palette332);
+        }
 
         this->front->glyph_index(new_cmd, this->clip);
     }
