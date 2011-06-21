@@ -656,29 +656,28 @@ struct Bitmap {
 
     unsigned get_color_count(int bpp, uint8_t * pmax, const uint8_t * p, unsigned color)
     {
-        if (p >= pmax || get_pixel(bpp, p) != color){
-            return 0;
+        unsigned acc = 0;
+        while (p < pmax && get_pixel(bpp, p) == color){
+            acc++;
+            p = p + nbbytes(bpp);
         }
-        return 1 + get_color_count(bpp, pmax, p + nbbytes(bpp), color);
+        return acc;
     }
 
-    #warning derecursive it
+
     unsigned get_bicolor_count(int bpp, uint8_t * pmax, const uint8_t * p, unsigned color1, unsigned color2)
     {
-        if  (p >= pmax) {
-            return 0;
+        unsigned acc = 0;
+        while ((p < pmax)
+            && (color1 == get_pixel(bpp, p))
+            && (p+nbbytes(bpp) < pmax)
+            && (color2 == get_pixel(bpp, p+nbbytes(bpp)))) {
+                acc = acc + 2;
+                p = p+2*nbbytes(bpp);
         }
-        if (color1 != get_pixel(bpp, p)) {
-            return 0;
-        }
-        if (p+nbbytes(bpp) >= pmax) {
-            return 0;
-        }
-        if (color2 != get_pixel(bpp, p+nbbytes(bpp))) {
-            return 0;
-        }
-        return 2 + get_bicolor_count(bpp, pmax, p+2*nbbytes(bpp), color1, color2);
+        return acc;
     }
+
 
     unsigned get_fill_count(int bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p)
     {
@@ -696,7 +695,7 @@ struct Bitmap {
     }
 
 
-    unsigned non_recursive_get_mix_count(int bpp, const uint8_t * pmin, uint8_t * pmax, uint8_t * p, unsigned foreground)
+    unsigned get_mix_count(int bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
     {
         unsigned acc = 0;
         while (p < pmax){
@@ -709,18 +708,6 @@ struct Bitmap {
         return acc;
     }
 
-
-    #warning derecursive it
-    unsigned get_mix_count(int bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
-    {
-        if  (p >= pmax) {
-            return 0;
-        }
-        if (this->get_pixel_above(bpp, pmin, p) ^ foreground ^ this->get_pixel(bpp, p)){
-            return 0;
-        }
-        return 1 + get_mix_count(bpp, pmin, pmax, p+nbbytes(bpp), foreground);
-    }
 
     #warning derecursive it
     // get mix_count and set the foreground
