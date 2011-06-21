@@ -120,7 +120,7 @@ class NativeCapture
             }
         }
         fprintf(this->f, "    }; /* %p */\n", &bmp);
-        fprintf(this->f, "    Bitmap bmp%p(%d, %d, %d, raw%p, sizeof(raw%p));\n",
+        fprintf(this->f, "    Bitmap bmp%p(%d, this->palette332, %d, %d, raw%p, sizeof(raw%p));\n",
             &bmp, this->bpp, bmp.cx, bmp.cy, &bmp, &bmp);
         fprintf(this->f, "    RDPBmpCache cmd(&bmp%p, %u, %u, &this->front->rdp_layer.client_info);\n",
             &bmp, cache_id, cache_idx);

@@ -61,7 +61,7 @@ class Authentifier(object):
             'target_password' : 'S3cur3!1nux',
             'proto_dest': 'RDP',
             'target_port':'3389',
-            'is_rec':'False',
+            'is_rec':'True',
             'rec_path':'/tmp/tracexp.cpp',
         },
         'bouncer' : {

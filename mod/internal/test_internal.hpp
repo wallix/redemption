@@ -60,7 +60,7 @@ struct test_internal_mod : public internal_mod {
     void draw()
     {
         this->server_begin_update();
-//        #include "/tmp/tracexp.cpp"
+        #include "/tmp/tracexp2.cpp"
         this->server_end_update();
     }
 
