@@ -41,7 +41,6 @@
 #include "rect.hpp"
 #include "region.hpp"
 #include "capture.hpp"
-#include "nativecapture.hpp"
 #include "font.hpp"
 #include "bitmap.hpp"
 #include "bitmap_cache.hpp"
@@ -78,11 +77,9 @@ public:
     Cache cache;
     struct BitmapCache *bmp_cache;
     struct Capture * capture;
-    struct NativeCapture * nativecapture;
     struct Font font;
     int mouse_x;
     int mouse_y;
-    struct timeval start;
     bool nomouse;
     bool notimestamp;
     int timezone;
@@ -107,7 +104,6 @@ public:
     cache(),
     bmp_cache(0),
     capture(0),
-    nativecapture(0),
     font(SHARE_PATH "/" DEFAULT_FONT_NAME),
     mouse_x(0),
     mouse_y(0),
@@ -133,7 +129,6 @@ public:
     ~Front(){
         if (this->capture){
             delete this->capture;
-            delete this->nativecapture;
         }
         if (this->bmp_cache){
             delete this->bmp_cache;
@@ -264,9 +259,6 @@ public:
         this->timezone = timezone;
         if (flag){
             this->stop_capture();
-            gettimeofday(&this->start, NULL);
-
-            this->nativecapture = new NativeCapture(width, height, this->rdp_layer.client_info.bpp, path);
             this->capture = new Capture(width, height, this->rdp_layer.client_info.bpp, path, codec_id, quality);
         }
     }
@@ -275,36 +267,15 @@ public:
     {
         if (this->capture){
             delete this->capture;
-            delete this->nativecapture;
             this->capture = 0;
-            this->nativecapture = 0;
         }
-    }
-
-    uint64_t difftimeval(const struct timeval endtime, const struct timeval starttime)
-    {
-      uint64_t sec = (endtime.tv_sec  - starttime.tv_sec ) * 1000000
-                   + (endtime.tv_usec - starttime.tv_usec);
-      return sec;
     }
 
     void periodic_snapshot(bool pointer_is_displayed)
     {
         if (this->capture){
-            #warning interframe interval management should be moved to capture (because it could be different between several capture objects)
-            const uint64_t inter_frame_interval = this->capture->inter_frame_interval;
-            struct timeval now;
-            gettimeofday(&now, NULL);
-            if (difftimeval(now, this->start) > inter_frame_interval)
-            {
-                LOG(LOG_INFO, "------------ periodic snapshot -------------");
-                this->start = now;
-                this->capture->snapshot(
-                    this->mouse_x, this->mouse_y,
-                    pointer_is_displayed|this->nomouse,
-                    this->notimestamp, this->timezone);
-                this->nativecapture->snapshot();
-            }
+            this->capture->snapshot(this->mouse_x, this->mouse_y,
+                    pointer_is_displayed|this->nomouse, this->notimestamp, this->timezone);
         }
     }
 
@@ -320,25 +291,6 @@ public:
     {
         this->send();
     }
-
-
-// rop values:
-// 0x0 : 0
-// 0x1 : ~(src | dst)
-// 0x2 : (~src) & dst
-// 0x3 : ~src
-// 0x4 : src & (~dst)
-// 0x5 : ~(dst)
-// 0x6 : src ^ dst
-// 0x7 : ~(src & dst)
-// 0x8 : src & dst
-// 0x9 : ~(src) ^ dst
-// 0xA : dst
-// 0xB : (~src) | dst
-// 0xC : src
-// 0xD : src | (~dst)
-// 0xE : src | dst
-// 0xF : ~0
 
     void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
     {
@@ -382,7 +334,6 @@ public:
 
             if (this->capture){
                 this->capture->opaque_rect(cmd, clip);
-                this->nativecapture->opaque_rect(cmd, clip);
             }
         }
     }
@@ -401,7 +352,6 @@ public:
 
             if (this->capture){
                 this->capture->scr_blt(cmd, clip);
-                this->nativecapture->scr_blt(cmd, clip);
             }
         }
     }
@@ -419,9 +369,7 @@ public:
             this->destblt = cmd;
 
             if (this->capture){
-                #warning missing code in capture, apply some logical operator inplace
-                this->capture->opaque_rect(RDPOpaqueRect(cmd.rect, WHITE), clip);
-                this->nativecapture->dest_blt(cmd, clip);
+                this->capture->dest_blt(cmd, clip);
             }
         }
     }
@@ -440,9 +388,7 @@ public:
             this->patblt = cmd;
 
             if (this->capture){
-                #warning missing code in capture, apply full pat_blt
-                this->capture->opaque_rect(RDPOpaqueRect(cmd.rect, cmd.fore_color), clip);
-                this->nativecapture->pat_blt(cmd, clip);
+                this->capture->pat_blt(cmd, clip);
             }
         }
     }
@@ -461,7 +407,6 @@ public:
 
             if (this->capture){
                 this->capture->mem_blt(cmd, *this->bmp_cache, clip);
-                this->nativecapture->mem_blt(cmd, *this->bmp_cache, clip);
             }
         }
     }
@@ -485,7 +430,6 @@ public:
             this->lineto = cmd;
             if (this->capture){
                 this->capture->line_to(cmd, clip);
-                this->nativecapture->line_to(cmd, clip);
             }
         }
     }
@@ -504,7 +448,6 @@ public:
         this->glyphindex = cmd;
         if (this->capture){
             this->capture->glyph_index(cmd, clip);
-            this->nativecapture->glyph_index(cmd, clip);
         }
     }
 
@@ -556,7 +499,7 @@ public:
         bmp_order.emit(this->out_stream);
 
         if (this->capture){
-            this->nativecapture->bitmap_cache(cache_id, cache_idx, entry);
+            this->capture->bitmap_cache(cache_id, cache_idx, entry);
         }
 
     }

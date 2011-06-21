@@ -71,7 +71,7 @@ class NativeCapture
         fclose(this->f);
     }
 
-    void snapshot()
+    void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp, int timezone)
     {
         fprintf(this->f, "/* snapshot */\n");
         fflush(this->f);
