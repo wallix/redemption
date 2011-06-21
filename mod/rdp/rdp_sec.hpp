@@ -940,7 +940,6 @@ struct rdp_sec {
         #warning check for the true size
         memset(server_random, 0, SEC_RANDOM_SIZE);
         if (!this->rdp_sec_parse_crypt_info(stream, &rc4_key_size, server_random, modulus, exponent)){
-            LOG(LOG_INFO, "exit from rdp_sec_process_crypt_info");
             return;
         }
         /* Generate a client random, and determine encryption keys */
@@ -982,7 +981,6 @@ struct rdp_sec {
     /* Process connect response data blob */
     void rdp_sec_process_mcs_data(Stream & stream, vector<mcs_channel_item*> channel_list)
     {
-        LOG(LOG_DEBUG, "stream_length = %d\n", (int)(stream.end-stream.p));
         stream.skip_uint8(21); /* header (T.124 ConferenceCreateResponse) */
         uint8_t len = stream.in_uint8();
 
@@ -998,15 +996,12 @@ struct rdp_sec {
             uint8_t *next_tag = (stream.p + length) - 4;
             switch (tag) {
             case SEC_TAG_SRV_INFO:
-                LOG(LOG_DEBUG, "SEC_TAG_SRV_INFO\n");
                 this->rdp_sec_process_srv_info(stream);
                 break;
             case SEC_TAG_SRV_CRYPT:
-                LOG(LOG_DEBUG, "SEC_TAG_SRV_CRYPT\n");
                 this->rdp_sec_process_crypt_info(stream);
                 break;
             case SEC_TAG_SRV_CHANNELS:
-                LOG(LOG_DEBUG, "SEC_TAG_SRV_CHANNELS\n");
             /*  This is what rdesktop says in comment:
                 FIXME: We should parse this information and
                 use it to map RDP5 channels to MCS
@@ -1265,12 +1260,9 @@ struct rdp_sec {
         }
 
         LOG(LOG_INFO, "Iso Layer : setting encryption\n");
-
 //        if (this->encryption){
             this->rdp_sec_establish_key();
 //        }
-        LOG(LOG_INFO, "Iso Layer : rdp sec connect\n");
-
     }
 
 
@@ -1292,8 +1284,6 @@ struct rdp_sec {
       /* We assume that the channel_id array is confirmed in the same order
       that it has been sent. If there are any channels not confirmed, they're
       going to be the last channels on the array sent in MCS Connect Initial */
-
-      LOG(LOG_DEBUG, "rdp_sec_process_srv_channels (from stream (size=%d)): base_channel=%d num_channels=%d\n", (int)(stream.end-stream.p), base_channel, (int)num_channels);
       for (size_t index = 0; index < num_channels; index++)
       {
         mcs_channel_item *channel_item_cli = channel_list[index];
@@ -1669,7 +1659,6 @@ struct rdp_sec {
             }
         }
         client_mcs_data.mark_end();
-        LOG(LOG_DEBUG, "rdp_sec_out_mcs_data done\n");
     }
 
     /* Process SRV_INFO, find RDP version supported by server */

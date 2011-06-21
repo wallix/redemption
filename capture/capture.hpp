@@ -95,7 +95,6 @@ class Capture
     {
         this->sc.glyph_index(cmd, clip);
         this->nc.glyph_index(cmd, clip);
-
     }
 
 };

@@ -392,7 +392,6 @@ struct client_mod : public Callback {
         else {
             new_cmd.color = this->convert(cmd.color);
         }
-        LOG(LOG_INFO, "opaque rect old cmd color = %.6x new_cmd color = %.6x", cmd.color, new_cmd.color);
         this->front->opaque_rect(new_cmd, this->clip);
     }
 
@@ -430,13 +429,7 @@ struct client_mod : public Callback {
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
         const Rect src_r(srcx, srcy, width, height);
-        LOG(LOG_INFO, "front begin update");
-        this->front->begin_update();
-        LOG(LOG_INFO, "front send bitmap front dst(%d, %d, %d, %d), src_r(%d, %d, %d, %d) cx=%d cy=%d original_bpp:%u 8:%p 15:%p 16:%p 24:%p", dst.x, dst.y, dst.cx, dst.cy, src_r.x, src_r.y, src_r.cx, src_r.cy, bitmap.cx, bitmap.cy, bitmap.original_bpp, bitmap.data_co8, bitmap.data_co15, bitmap.data_co16, bitmap.data_co24);
         this->front->send_bitmap_front(dst, src_r, 0xCC, bitmap.data_co(this->get_front_bpp()), 0, this->clip);
-        LOG(LOG_INFO, "front end update");
-        this->front->end_update();
-        LOG(LOG_INFO, "front end update done");
     }
 
     void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const BGRPalette & palette)

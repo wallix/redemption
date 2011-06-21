@@ -69,8 +69,8 @@ class RDPOpaqueRect {
         // "blue" don't care much for actual color components. Really they
         // should be called "first color byte", "second color byte" and "third
         // color byte". They are red green and blue only in 24 bits. In 15 or 16
-        // the red byte is always empty and changing the red component will
-        // change the second byte. This still require some testing to be sure.
+        // one byte is always empty and changing green component will
+        // change both used bytes.
 
         DeltaRect dr(this->rect, oldcmd.rect);
 
@@ -113,9 +113,6 @@ class RDPOpaqueRect {
 
         header.receive_rect(stream, 0x01, this->rect);
 
-        #warning sompe code optimization is possible by separating reads from stream and assignment to this->color
-        uint32_t old_color = this->color;
-
         uint8_t r = this->color;
         uint8_t g = this->color >> 8;
         uint8_t b = this->color >> 16;
@@ -130,10 +127,6 @@ class RDPOpaqueRect {
             b = stream.in_uint8();
         }
         this->color = r|(g << 8)|(b<<16);
-
-        BGRPalette palette;
-        LOG(LOG_INFO, "receive opaque rect old_color = %.6x [%.6x] new_color = %.6x [%.6x] \n", old_color, color_decode(old_color, 16, palette), this->color, color_decode(this->color, 16, palette));
-
     }
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
@@ -142,15 +135,13 @@ class RDPOpaqueRect {
         lg += snprintf(
             buffer+lg,
             sz-lg,
-            "opaquerect(rect(%d,%d,%d,%d) color=%x)\n",
+            "opaquerect(rect(%d,%d,%d,%d) color=0x%.6x)\n",
             this->rect.x, this->rect.y, this->rect.cx, this->rect.cy, this->color);
         if (lg >= sz){
             return sz;
         }
         return lg;
     }
-
-
 };
 
 

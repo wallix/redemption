@@ -108,8 +108,7 @@ struct mod_vnc : public client_mod {
                 stream.init(8192);
                 this->t->recv((char**)&stream.end, 4);
                 int security_level = stream.in_uint32_be();
-                LOG(LOG_INFO, "security level is %d "
-                              "(1 = none, 2 = standard)\n",
+                LOG(LOG_INFO, "security level is %d (1 = none, 2 = standard)\n",
                               security_level);
 
                 switch (security_level){

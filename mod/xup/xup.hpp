@@ -72,7 +72,6 @@ struct xup_mod : public client_mod {
             stream.out_uint32_le(len);
             this->t->send((char*)stream.data, len);
 
-            LOG(LOG_INFO, "connected ok\n");
         }
         catch(...){
             delete this->t;

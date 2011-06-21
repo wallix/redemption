@@ -68,7 +68,7 @@ struct Bitmap {
     {
         assert((bpp != 8) || palette);
         if (bpp == 8 && palette == 0){
-            LOG(LOG_INFO, "Tried to create 8 bits color bitmap without providing any palette. Dying.");
+            LOG(LOG_WARNING, "Tried to create 8 bits color bitmap without providing any palette. Dying.");
             throw Error(ERR_BITMAP_8BIT_COLOR_DEPTH_MISSING_PALETTE);
         }
 
@@ -573,7 +573,7 @@ struct Bitmap {
             /* Output body */
             while (count > 0) {
                 if(out >= pmax) {
-                    LOG(LOG_INFO, "Decompressed bitmap too large. Dying.");
+                    LOG(LOG_WARNING, "Decompressed bitmap too large. Dying.");
                     throw Error(ERR_BITMAP_DECOMPRESSED_DATA_TOO_LARGE);
                 }
                 if ((out - this->cx * nbbytes(bpp)) < dest){
