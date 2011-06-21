@@ -283,12 +283,13 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         uint8_t * pmin = bmp.data_co(bpp);
         uint8_t * pmax = pmin + bmp.bmp_size(bpp);
 
-        unsigned foreground = white;
         unsigned flags = 0;
-        BOOST_CHECK_EQUAL(4, bmp.get_mix_count_set(bpp, pmin, pmax, bmp.data_co(bpp)+3, foreground));
+        uint8_t * p = bmp.data_co(bpp)+3;
+        unsigned foreground = bmp.get_pixel_above(bpp, pmin, p) ^ bmp.get_pixel(bpp, p);
         BOOST_CHECK_EQUAL(0x04, foreground);
+        BOOST_CHECK_EQUAL(3, bmp.get_mix_count(bpp, pmin, pmax, p+nbbytes(bpp), foreground));
         foreground = white;
-        BOOST_CHECK_EQUAL(4, bmp.get_fom_count_set(bpp, pmin, pmax, bmp.data_co(bpp)+3, foreground, flags));
+        BOOST_CHECK_EQUAL(4, bmp.get_fom_count_set(bpp, pmin, pmax, p, foreground, flags));
         BOOST_CHECK_EQUAL(0x04, foreground);
     }
 
@@ -305,13 +306,14 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         Bitmap bmp(bpp, &palette332, 4, 4, multicolor, sizeof(multicolor));
         uint8_t * pmin = bmp.data_co(bpp);
         uint8_t * pmax = pmin + bmp.bmp_size(bpp);
+        uint8_t * p = bmp.data_co(bpp)+3;
 
-        unsigned foreground = white;
-        BOOST_CHECK_EQUAL(1, bmp.get_mix_count_set(bpp, pmin, pmax, bmp.data_co(bpp)+3, foreground));
+        unsigned foreground = bmp.get_pixel_above(bpp, pmin, p) ^ bmp.get_pixel(bpp, p);
         BOOST_CHECK_EQUAL(4, foreground);
+        BOOST_CHECK_EQUAL(0, bmp.get_mix_count(bpp, pmin, pmax, p+nbbytes(bpp), foreground));
         foreground = white;
         unsigned flags = 0;
-        BOOST_CHECK_EQUAL(2, bmp.get_fom_count_set(bpp, pmin, pmax, bmp.data_co(bpp)+3, foreground, flags));
+        BOOST_CHECK_EQUAL(2, bmp.get_fom_count_set(bpp, pmin, pmax, p, foreground, flags));
         BOOST_CHECK_EQUAL(4, foreground);
         BOOST_CHECK_EQUAL(3, flags); // MIX then FILL
 

@@ -709,26 +709,6 @@ struct Bitmap {
     }
 
 
-    #warning derecursive it
-    // get mix_count and set the foreground
-    // (the foreground matching for the first pixel)
-    unsigned get_mix_count_set(int bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned & foreground)
-    {
-        if  (p >= pmax) {
-            return 0;
-        }
-        unsigned new_foreground = this->get_pixel_above(bpp, pmin, p) ^ this->get_pixel(bpp, p);
-        if (new_foreground != foreground){
-            unsigned mix_count = get_mix_count(bpp, pmin, pmax, p+nbbytes(bpp), new_foreground);
-            foreground = new_foreground;
-            return 1 + mix_count;
-        }
-        else {
-            return 1 + get_mix_count(bpp, pmin, pmax, p+nbbytes(bpp), foreground);
-        }
-
-    }
-
     void get_fom_masks(int bpp, const uint8_t * pmin, const uint8_t * p, uint8_t * mask, const unsigned count)
     {
         unsigned i = 0;
@@ -744,8 +724,6 @@ struct Bitmap {
         }
     }
 
-
-    #warning derecursive it
     unsigned get_fom_count_set(int bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned & foreground, unsigned & flags)
     {
         // flags : 1 = fill, 2 = MIX, 3 = (1+2) = FOM
@@ -774,14 +752,14 @@ struct Bitmap {
         // it to black, as it's useless because fill_count allready does that.
         // Hence it's ok to check them independently.
         {
-            unsigned mix_count = this->get_mix_count_set(bpp, pmin, pmax, p, foreground);
-
-            if (mix_count >= 8) {
-                flags = 2;
-                return mix_count;
-            }
-
-            if (mix_count){
+            unsigned mix_count = 0;
+            foreground = this->get_pixel_above(bpp, pmin, p) ^ this->get_pixel(bpp, p);
+            if  (p < pmax) {
+                mix_count = 1 + get_mix_count(bpp, pmin, pmax, p+nbbytes(bpp), foreground);
+                if (mix_count >= 8) {
+                    flags = 2;
+                    return mix_count;
+                }
                 unsigned fom_count = this->get_fom_count_fill(bpp, pmin, pmax, p + mix_count * nbbytes(bpp), foreground);
                 if (fom_count){
                     flags = 3;
@@ -795,11 +773,8 @@ struct Bitmap {
         }
         flags = 0;
         return 0;
-
     }
 
-
-    #warning derecursive it
     unsigned get_fom_count(int bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
     {
         unsigned fill_count = this->get_fill_count(bpp, pmin, pmax, p);
