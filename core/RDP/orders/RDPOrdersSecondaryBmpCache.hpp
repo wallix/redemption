@@ -522,22 +522,21 @@ class RDPBmpCache {
         if (0 == this->client_info->bitmap_cache_version){
 //            LOG(LOG_INFO, "/* BMP Cache emit V1 */");
             if (this->client_info->use_bitmap_comp){
-//                LOG(LOG_INFO, "/* BMP Cache compressed V1 */");
+                LOG(LOG_INFO, "/* BMP Cache compressed V1 */");
                 this->emit_v1_compressed(stream);
             }
             else {
-//                LOG(LOG_INFO, "/* BMP Cache raw V1 */");
+                LOG(LOG_INFO, "/* BMP Cache raw V1 */");
                 this->emit_raw_v1(stream);
             }
         }
         else {
-//            LOG(LOG_INFO, "/* BMP Cache emit V2 */");
             if (this->client_info->use_bitmap_comp){
-//                LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
+                LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
                 this->emit_v2_compressed(stream);
             }
             else {
-//                LOG(LOG_INFO, "/* BMP Cache raw V2 */");
+                LOG(LOG_INFO, "/* BMP Cache raw V2 */");
                 this->emit_raw_v2(stream);
             }
         }
@@ -549,11 +548,11 @@ class RDPBmpCache {
 
         bool small_headers = this->client_info->op2;
         Stream tmp(16384);
+        this->bmp->dump(bpp);
         this->bmp->compress(bpp, tmp);
         size_t bufsize = tmp.p - tmp.data;
 
-//        LOG(LOG_INFO, "emit_v1_compressed(cache_id=%d, cache_idx=%d, sh=%d)\n",
-//                this->cache_id, this->cache_idx, small_headers);
+        LOG(LOG_INFO, "bufsize=%u [%u]", bufsize, tmp.data[0]);
 
         int order_flags = STANDARD | SECONDARY;
         stream.out_uint8(order_flags);

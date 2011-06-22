@@ -73,7 +73,7 @@ struct test_card_mod : public internal_mod {
         this->opaque_rect(RDPOpaqueRect(winrect, WINBLUE));
 
         Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.bmp");
-        this->server_paint_rect(bitmap,
+        this->bitmap_update(bitmap,
             Rect(winrect.x + (winrect.cx - bitmap.cx)/2,
                  winrect.y + (winrect.cy - bitmap.cy)/2,
                  bitmap.cx, bitmap.cy),
@@ -88,7 +88,7 @@ struct test_card_mod : public internal_mod {
 
 
         Bitmap card(SHARE_PATH "/" REDEMPTION_LOGO24);
-        this->server_paint_rect(card,
+        this->bitmap_update(card,
             Rect(this->screen.rect.cx - card.cx - 30,
                  this->screen.rect.cy - card.cy - 30, card.cx, card.cy),
              0, 0);

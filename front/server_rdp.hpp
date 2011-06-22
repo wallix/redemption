@@ -530,6 +530,8 @@ struct server_rdp {
                 switch (pdu_code & 0xf) {
                 case 0:
                     break;
+                case RDP_PDU_DEMAND_ACTIVE: /* 1 */
+                    break;
                 case RDP_PDU_CONFIRM_ACTIVE: /* 3 */
                     this->server_rdp_process_confirm_active(stream);
                     break;

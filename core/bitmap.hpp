@@ -389,10 +389,18 @@ struct Bitmap {
 
     void decompress(int bpp, const uint8_t* input, size_t size)
     {
-        uint8_t* dest = this->data_co(bpp);
-        uint8_t* pmax = dest + this->bmp_size(bpp);
+//        printf("============================================\n");
+//        printf("Compressed bitmap data\n");
+//        for (size_t xxx = 0 ; xxx < size ; xxx++){
+//            printf("0x%.2x,", input[xxx]);
+//        }
+//        printf("Decompressing bitmap done\n");
+//        printf("============================================\n");
+
+        uint8_t* pmin = this->data_co(bpp);
+        uint8_t* pmax = pmin + this->bmp_size(bpp);
         unsigned yprev = 0;
-        uint8_t* out = dest;
+        uint8_t* out = pmin;
         const uint8_t* end = input + size;
         unsigned color1;
         unsigned color2;
@@ -554,11 +562,10 @@ struct Bitmap {
             }
 
             // MAGIC MIX of one pixel to comply with crap in Bitmap RLE compression
-            if ((count > 0)
-            && (opcode == FILL)
+            if ((opcode == FILL)
             && (opcode == lastopcode)
-            && (out != dest + this->line_size(bpp))){
-                if (out < &(dest[this->cx * nbbytes(bpp)])){
+            && (out != pmin + this->line_size(bpp))){
+                if (out - this->cx * nbbytes(bpp) < pmin){
                     yprev = 0;
                 }
                 else {
@@ -576,11 +583,11 @@ struct Bitmap {
                     LOG(LOG_WARNING, "Decompressed bitmap too large. Dying.");
                     throw Error(ERR_BITMAP_DECOMPRESSED_DATA_TOO_LARGE);
                 }
-                if ((out - this->cx * nbbytes(bpp)) < dest){
+                if (out - this->cx * nbbytes(bpp) < pmin){
                     yprev = 0;
                 }
                 else {
-                     yprev = in_bytes_le(nbbytes(bpp), out - this->cx * nbbytes(bpp));
+                    yprev = in_bytes_le(nbbytes(bpp), out - this->cx * nbbytes(bpp));
                 }
                 switch (opcode) {
                 case FILL:
@@ -639,7 +646,6 @@ struct Bitmap {
         }
         return;
     }
-
 
 
     unsigned get_pixel(int bpp, const uint8_t * const p) const

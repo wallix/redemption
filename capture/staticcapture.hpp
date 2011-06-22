@@ -68,7 +68,7 @@ class StaticCapture
     struct timeval start;
 
     public:
-    long inter_frame_interval;
+    uint64_t inter_frame_interval;
     int width;
     int height;
     int bpp;

@@ -120,11 +120,11 @@ class NativeCapture
             }
         }
         fprintf(this->f, "    }; /* %p */\n", &bmp);
-        fprintf(this->f, "    Bitmap bmp%p(%d, this->palette332, %d, %d, raw%p, sizeof(raw%p));\n",
+        fprintf(this->f, "    Bitmap bmp%p(%d, &this->palette332, %d, %d, raw%p, sizeof(raw%p));\n",
             &bmp, this->bpp, bmp.cx, bmp.cy, &bmp, &bmp);
-        fprintf(this->f, "    RDPBmpCache cmd(&bmp%p, %u, %u, &this->front->rdp_layer.client_info);\n",
-            &bmp, cache_id, cache_idx);
-        fprintf(this->f, "    this->front->reserve_order(bmp%p.bmp_size(this->rdp_layer.client_info.bpp) + 16);\n", &bmp);
+        fprintf(this->f, "    RDPBmpCache cmd(%d, &this->palette332, &bmp%p, %u, %u, &this->front->rdp_layer.client_info);\n",
+            this->bpp, &bmp, cache_id, cache_idx);
+        fprintf(this->f, "    this->front->reserve_order(bmp%p.bmp_size(this->front->rdp_layer.client_info.bpp) + 16);\n", &bmp);
 
         fprintf(this->f, "    cmd.emit(this->front->out_stream);\n");
         fprintf(this->f, "}\n");

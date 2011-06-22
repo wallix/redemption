@@ -744,7 +744,7 @@ void widget_image::draw(const Rect & clip)
 
     for (size_t ir = 0; ir < region.rects.size(); ir++){
         this->mod->server_set_clip(region.rects[ir]);
-        this->mod->server_paint_rect(this->bmp, image_screen_rect, 0, 0);
+        this->mod->bitmap_update(this->bmp, image_screen_rect, 0, 0);
     }
     mod->server_end_update();
 

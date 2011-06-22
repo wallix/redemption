@@ -87,7 +87,6 @@ struct client_mod : public Callback {
 
         init_palette332(this->palette332);
         init_palette332BGR(this->palette332BGR);
-
     }
 
     virtual ~client_mod()
@@ -245,32 +244,7 @@ struct client_mod : public Callback {
             client_info.bpp = bpp;
 
             this->front_resize();
-
-            /* shut down the rdp client */
-            this->front->rdp_layer.server_rdp_send_deactive();
-
-            /* this should do the resizing */
-            this->front->rdp_layer.server_rdp_send_demand_active();
-            this->front->common = RDPOrderCommon(0,  Rect(0, 0, 1, 1));
-            this->front->memblt = RDPMemBlt(0, Rect(), 0, 0, 0, 0);
-            this->front->opaquerect = RDPOpaqueRect(Rect(), 0);
-            this->front->scrblt = RDPScrBlt(Rect(), 0, 0, 0);
-            this->front->destblt = RDPDestBlt(Rect(), 0);
-            this->front->patblt = RDPPatBlt(Rect(), 0, 0, 0, RDPBrush());
-            this->front->lineto = RDPLineTo(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0));
-            this->front->glyphindex = RDPGlyphIndex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"");
-            this->front->common.order = RDP::PATBLT;
-
-            this->front->order_count = 0;
-            this->front->order_level = 0;
-
-            this->front->cache.reset(client_info);
-
-            if (this->front->bmp_cache){
-                delete this->front->bmp_cache;
-            }
-            this->front->bmp_cache = new BitmapCache(&client_info);
-//          this->front->reset(this->front->orders, this->front->cache, this->front->font);
+            this->front->reset();
         }
 
         this->server_reset_clip();
@@ -283,6 +257,12 @@ struct client_mod : public Callback {
 
     void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor)
     {
+        if ((this->get_front_bpp() == 8)
+        && !this->palette_sent) {
+            this->front->rdp_layer.send_global_palette(this->palette332);
+            this->palette_sent = true;
+        }
+
         // add text to glyph cache
         #warning use mbsrtowcs instead
         int len = mbstowcs(0, text, 0);
@@ -341,17 +321,23 @@ struct client_mod : public Callback {
 
     void server_glyph_index(const RDPGlyphIndex & cmd)
     {
+        if ((this->get_front_bpp() == 8)
+        && !this->palette_sent) {
+            this->front->rdp_layer.send_global_palette(this->palette332);
+            this->palette_sent = true;
+        }
+
         RDPGlyphIndex new_cmd = cmd;
         new_cmd.back_color = this->convert(cmd.back_color);
         new_cmd.fore_color = this->convert(cmd.fore_color);
 
         if (this->mod_bpp == 16 || this->mod_bpp == 15){
-            const BGRColor color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-            new_cmd.fore_color =  color_encode(color24, this->get_front_bpp(), this->palette332);
-        }
-        if (this->mod_bpp == 16 || this->mod_bpp == 15){
-            const BGRColor color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
-            new_cmd.back_color =  color_encode(color24, this->get_front_bpp(), this->palette332);
+            new_cmd.fore_color =  color_encode(
+                color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette),
+                this->get_front_bpp(), this->palette332);
+            new_cmd.back_color =  color_encode(
+                color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette),
+                this->get_front_bpp(), this->palette332);
         }
 
         this->front->glyph_index(new_cmd, this->clip);
@@ -369,6 +355,12 @@ struct client_mod : public Callback {
 
     void pat_blt(const RDPPatBlt & cmd)
     {
+        if ((this->get_front_bpp() == 8)
+        && !this->palette_sent) {
+            this->front->rdp_layer.send_global_palette(this->palette332);
+            this->palette_sent = true;
+        }
+
         RDPPatBlt new_cmd = cmd;
         new_cmd.back_color = this->convert(cmd.back_color);
         new_cmd.fore_color = this->convert(cmd.fore_color);
@@ -418,12 +410,18 @@ struct client_mod : public Callback {
     }
 
     #warning this should become BITMAP UPDATE, we should be able to send bitmaps either through orders and cache or through BITMAP UPDATE
-    void server_paint_rect(Bitmap & bitmap, const Rect & dst, int srcx, int srcy)
+    void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy)
     {
         if ((this->get_front_bpp() == 8)
         && !this->palette_memblt_sent) {
             this->front->color_cache(this->palette332BGR, 0);
             this->palette_memblt_sent = true;
+        }
+
+        if ((this->get_front_bpp() == 8)
+        && !this->palette_sent) {
+            this->front->rdp_layer.send_global_palette(this->palette332);
+            this->palette_sent = true;
         }
 
         const uint16_t width = bitmap.cx;
@@ -438,6 +436,12 @@ struct client_mod : public Callback {
         && !this->palette_memblt_sent) {
             this->front->color_cache(this->palette332BGR, 0);
             this->palette_memblt_sent = true;
+        }
+
+        if ((this->get_front_bpp() == 8)
+        && !this->palette_sent) {
+            this->front->rdp_layer.send_global_palette(this->palette332);
+            this->palette_sent = true;
         }
 
         const Rect & dst = memblt.rect;
@@ -476,8 +480,14 @@ struct client_mod : public Callback {
         }
     }
 
-    virtual void invalidate(const Rect & rect)
+    virtual void invalidate(const Rect & r)
     {
+        if (!r.isempty()) {
+            this->mod_event(WM_INVALIDATE,
+                ((r.x & 0xffff) << 16) | (r.y & 0xffff),
+                ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
+                0, 0);
+        }
     }
 
     void color_cache(const uint32_t (& palette)[256], uint8_t cacheIndex)

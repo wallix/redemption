@@ -136,12 +136,17 @@ public:
     }
 
     void reset(){
-        this->cache = cache;
         #warning is it necessary (or even usefull) to send remaining drawing orders before resetting ?
         if (this->order_count > 0){
             this->force_send();
         }
-        #warning some duplication of front instanciation code, it probably means that current front is part of rdp layer, not the other way around, as rdp_layer has a longer lifetime than front. On the other hand caches seems to be on the same timeline that front (means caches are parts of front) and should not be instnaciated elsewhere.
+
+        /* shut down the rdp client */
+        this->rdp_layer.server_rdp_send_deactive();
+
+        /* this should do the resizing */
+        this->rdp_layer.server_rdp_send_demand_active();
+
         this->common = RDPOrderCommon(0,  Rect(0, 0, 1, 1));
         this->memblt = RDPMemBlt(0, Rect(), 0, 0, 0, 0);
         this->opaquerect = RDPOpaqueRect(Rect(), 0);
@@ -155,6 +160,7 @@ public:
         this->order_count = 0;
         this->order_level = 0;
 
+        #warning some duplication of front instanciation code, it probably means that current front is part of rdp layer, not the other way around, as rdp_layer has a longer lifetime than front. On the other hand caches seems to be on the same timeline that front (means caches are parts of front) and should not be instnaciated elsewhere.
         if (this->bmp_cache){
             delete this->bmp_cache;
         }

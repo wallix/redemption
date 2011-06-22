@@ -693,8 +693,8 @@ struct mod_vnc : public client_mod {
                 #warning we should manage *two* color depth, front color depth and back color depth. Code below only works because we forced front color depth to the same depth as VNC server.
                 Bitmap bmp(this->bpp, &this->palette332, cx, cy, raw, need_size, false, true);
                 free(raw);
-                #warning see server_paint_rect and Bitmap below, suspicious code, does it works ?
-                this->server_paint_rect(bmp, Rect(x, y, cx, cy), 0, 0);
+                #warning see bitmap_update and Bitmap below, suspicious code, does it works ?
+                this->bitmap_update(bmp, Rect(x, y, cx, cy), 0, 0);
             }
             break;
             case 1: /* copy rect */

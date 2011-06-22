@@ -1106,7 +1106,7 @@ struct rdp_rdp {
             // NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not set.
 
 
-            LOG(LOG_INFO, "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */", i, bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
+//            LOG(LOG_INFO, "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */", i, bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
 
             if (flags & 0x0001){
                 uint16_t size = bufsize;
@@ -1134,7 +1134,7 @@ struct rdp_rdp {
                 assert(final_size == bitmap.bmp_size(bpp));
 
                 mod->clip = boundary;
-                mod->server_paint_rect(bitmap, boundary, 0, 0);
+                mod->bitmap_update(bitmap, boundary, 0, 0);
             }
             else {
                 const uint8_t * data = stream.in_uint8p(bufsize);
@@ -1143,7 +1143,7 @@ struct rdp_rdp {
                 assert(bufsize == bitmap.bmp_size(bpp));
 
                 mod->clip = boundary;
-                mod->server_paint_rect(bitmap, boundary, 0, 0);
+                mod->bitmap_update(bitmap, boundary, 0, 0);
             }
         }
         mod->server_end_update();
