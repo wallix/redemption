@@ -387,6 +387,351 @@ struct Bitmap {
         }
     }
 
+
+    void dump_decompress(int bpp, const uint8_t* input, size_t size)
+    {
+        unsigned yprev = 0;
+        const uint8_t* end = input + size;
+        unsigned color1;
+        unsigned color2;
+        unsigned mix;
+        uint8_t code;
+        unsigned mask = 0;
+        unsigned fom_mask = 0;
+        unsigned count = 0;
+        int bicolor = 0;
+
+        struct PixelDumper
+        {
+            uint8_t bpp;
+            uint8_t * buffer;
+            uint32_t offset;
+            uint32_t line_width;
+            uint32_t height;
+            PixelDumper(uint8_t bpp, uint32_t height, uint32_t line_width, size_t size)
+                : bpp(bpp), buffer(0), offset(0), height(height), line_width(line_width)
+            {
+                this->buffer = (uint8_t*)malloc(size + 10);
+                memset(this->buffer, 0, size);
+            }
+            ~PixelDumper()
+            {
+                free(this->buffer);
+            }
+            void out_dump_pixel(uint32_t pix)
+            {
+                ::out_bytes_le(&this->buffer[offset], this->bpp, pix);
+                offset += nbbytes(this->bpp);
+            }
+            void dump(uint32_t start_offset)
+            {
+                if (start_offset % this->line_width == 0){
+                    printf("// LINE %u\n", this->height - 1 - (offset / this->line_width));
+                }
+
+                if (start_offset % 16 != 0){
+                    printf("// NEW %*c", 6 * (start_offset % 16), ' ');
+                }
+                else {
+                    printf("// NEW ");
+                }
+
+                for (size_t offset = start_offset ; offset < this->offset ; offset++){
+                    if ((offset % this->line_width == 0) && (offset > start_offset)){
+                        printf("\n// LINE %u\n", this->height - 1 - (offset / this->line_width));
+                    }
+
+                    if ((offset % 16 == 0) && (offset > start_offset)){
+                        printf("\n// NEW ");
+                    }
+                    printf("0x%.2x, ", this->buffer[offset]);
+                }
+                printf("\n");
+            }
+        #warning use this->line_width
+        } buffer(bpp, this->cy, this->line_size(bpp), this->bmp_size(bpp));
+
+        printf("// DUMP OUPUT: cx=%u cy=%u line_width=%u bmp_size=%u\n", this->cx, this->cy, this->line_size(bpp), this->bmp_size(bpp));
+
+        assert(nbbytes(bpp) <= 3);
+
+        color1 = 0;
+        color2 = 0;
+        mix = 0xFFFFFFFF;
+
+        enum {
+            FILL    = 0,
+            MIX     = 1,
+            FOM     = 2,
+            COLOR   = 3,
+            COPY    = 4,
+            MIX_SET = 6,
+            FOM_SET = 7,
+            BICOLOR = 8,
+            SPECIAL_FGBG_1 = 9,
+            SPECIAL_FGBG_2 = 10,
+            WHITE = 13,
+            BLACK = 14
+        };
+
+        uint8_t opcode;
+        uint8_t lastopcode = 0xFF;
+
+        while (input < end) {
+            const uint8_t * last_input = input;
+            uint32_t last_offset = buffer.offset;
+
+            // Read RLE operators, handle short and long forms
+            code = input[0]; input++;
+
+            switch (code >> 4) {
+            case 0xf:
+                switch (code){
+                    case 0xFD:
+                        opcode = WHITE;
+                        count = 1;
+                    break;
+                    case 0xFE:
+                        opcode = BLACK;
+                        count = 1;
+                    break;
+                    case 0xFA:
+                        opcode = SPECIAL_FGBG_1;
+                        count = 8;
+                    break;
+                    case 0xF9:
+                        opcode = SPECIAL_FGBG_2;
+                        count = 8;
+                    break;
+                    case 0xF8:
+                        opcode = code & 0xf;
+                        assert(opcode != 11 && opcode != 12 && opcode != 15);
+                        count = input[0]|(input[1] << 8);
+                        count += count;
+                        input += 2;
+                    break;
+                    default:
+                        opcode = code & 0xf;
+                        assert(opcode != 11 && opcode != 12 && opcode != 15);
+                        count = input[0]|(input[1] << 8);
+                        input += 2;
+                        // Opcodes 0xFB, 0xFC, 0xFF are some unknown orders of length 1 ?
+                    break;
+                }
+            break;
+            case 0x0e: // Bicolor, short form (1 or 2 bytes)
+                opcode = BICOLOR;
+                count = code & 0xf;
+                if (!count){
+                    count = input[0] + 16; input++;
+                }
+                count += count;
+                break;
+            case 0x0d:  // FOM SET, short form  (1 or 2 bytes)
+                opcode = FOM_SET;
+                count = code & 0x0F;
+                if (count){
+                    count <<= 3;
+                }
+                else {
+                    count = input[0] + 1; input++;
+                }
+            break;
+            case 0x05:
+            case 0x04:  // FOM, short form  (1 or 2 bytes)
+                opcode = FOM;
+                count = code & 0x1F;
+                if (count){
+                    count <<= 3;
+                }
+                else {
+                    count = input[0] + 1; input++;
+                }
+            break;
+            case 0x0c: // MIX SET, short form (1 or 2 bytes)
+                opcode = MIX_SET;
+                count = code & 0x0f;
+                if (!count){
+                    count = input[0] + 16; input++;
+                }
+            break;
+            default:
+                opcode = code >> 5; // FILL, MIX, FOM, COLOR, COPY
+                count = code & 0x1f;
+                if (!count){
+                    count = input[0] + 32; input++;
+                }
+
+                assert(opcode < 5);
+                break;
+            }
+
+            /* Read preliminary data */
+            switch (opcode) {
+            case FOM:
+                mask = 1;
+                fom_mask = input[0]; input++;
+                printf("// FOM %u [%.2x] ", count, fom_mask);
+            break;
+            case SPECIAL_FGBG_1:
+                mask = 1;
+                fom_mask = 3;
+                printf("// SPECIAL_FGBG_1 %u [%.2x] ", count, fom_mask);
+            break;
+            case SPECIAL_FGBG_2:
+                mask = 1;
+                fom_mask = 5;
+                printf("// SPECIAL_FGBG_2 %u [%.2x] ", count, fom_mask);
+            break;
+            case BICOLOR:
+
+                bicolor = 0;
+                color1 = in_bytes_le(nbbytes(bpp), input);
+                input += nbbytes(bpp);
+                color2 = in_bytes_le(nbbytes(bpp), input);
+                input += nbbytes(bpp);
+                printf("// BICOLOR %u %.6u %.6u", count, color1, color2);
+                break;
+            case COLOR:
+                color2 = in_bytes_le(nbbytes(bpp), input);
+                printf("// COLOR %u %.6u", count, color2);
+                input += nbbytes(bpp);
+                break;
+            case MIX_SET:
+                mix = in_bytes_le(nbbytes(bpp), input);
+                input += nbbytes(bpp);
+                printf("// MIX SET %u %.6u", count, mix);
+            break;
+            case FOM_SET:
+                mix = in_bytes_le(nbbytes(bpp), input);
+                input += nbbytes(bpp);
+                mask = 1;
+                fom_mask = input[0]; input++;
+                printf("// FOM SET %u %.6u [%.2x] ", count, mix, fom_mask);
+                break;
+            case MIX:
+                printf("// MIX %u", count);
+                break;
+            case FILL:
+                printf("// FILL %u", count);
+                break;
+            case COPY:
+                printf("// COPY %u", count);
+                break;
+            case WHITE:
+                printf("// WHITE %u", count);
+                break;
+            case BLACK:
+                printf("// BLACK %u", count);
+                break;
+            default: // for FILL, MIX or COPY nothing to do here
+                break;
+            }
+
+            // MAGIC MIX of one pixel to comply with crap in Bitmap RLE compression
+            if ((opcode == FILL)
+            && (opcode == lastopcode)
+            && (buffer.offset != this->line_size(bpp))){
+                printf(" MAGIC MIX");
+                if (buffer.offset < this->cx * nbbytes(bpp)){
+                    yprev = 0;
+                }
+                else {
+                    yprev = in_bytes_le(nbbytes(bpp), buffer.buffer+buffer.offset - this->cx * nbbytes(bpp));
+                }
+                buffer.out_dump_pixel(yprev ^ mix);
+                count--;
+            }
+            lastopcode = opcode;
+
+            /* Output body */
+            while (count > 0) {
+                if(buffer.offset >= this->bmp_size(bpp)) {
+                    LOG(LOG_WARNING, "Decompressed bitmap too large. Dying.");
+                    throw Error(ERR_BITMAP_DECOMPRESSED_DATA_TOO_LARGE);
+                }
+                if (buffer.offset < this->cx * nbbytes(bpp)){
+                    yprev = 0;
+                }
+                else {
+                    yprev = in_bytes_le(nbbytes(bpp), buffer.buffer+buffer.offset - this->cx * nbbytes(bpp));
+                }
+                switch (opcode) {
+                case FILL:
+                    printf("offset = %u\n", buffer.offset);
+                    buffer.out_dump_pixel(yprev);
+                    break;
+                case MIX_SET:
+                case MIX:
+                    buffer.out_dump_pixel(yprev ^ mix);
+                    break;
+                case FOM_SET:
+                case FOM:
+                    if (mask == 0x100){
+                        mask = 1;
+                        fom_mask = input[0]; input++;
+                        printf(" [%.2x] ", fom_mask);
+                    }
+                case SPECIAL_FGBG_1:
+                case SPECIAL_FGBG_2:
+                    if (mask & fom_mask){
+                        printf("1");
+                        buffer.out_dump_pixel(yprev ^ mix);
+                    }
+                    else {
+                        printf("0");
+                        buffer.out_dump_pixel(yprev);
+                    }
+                    mask <<= 1;
+                    if (mask == 0x10){
+                        printf(" ");
+                    }
+                    break;
+                case COLOR:
+                    buffer.out_dump_pixel(color2);
+                    break;
+                case COPY:
+                    buffer.out_dump_pixel(in_bytes_le(nbbytes(bpp), input));
+                    input += nbbytes(bpp);
+                    break;
+                case BICOLOR:
+                    if (bicolor) {
+                        buffer.out_dump_pixel(color2);
+                        bicolor = 0;
+                    }
+                    else {
+                        buffer.out_dump_pixel(color1);
+                        bicolor = 1;
+                    }
+                break;
+                case WHITE:
+                    buffer.out_dump_pixel(0xFFFFFFFF);
+                break;
+                case BLACK:
+                    buffer.out_dump_pixel(0);
+                break;
+                default:
+                    assert(false);
+                    break;
+                }
+                count--;
+            }
+            printf("\n");
+            for (const uint8_t * p = last_input ; p < input ; p++){
+                printf("0x%.2x, ",*p);
+            }
+            printf("\n");
+            buffer.dump(last_offset);
+            printf("\n");
+
+        }
+        return;
+    }
+
+
+
+
+
     void decompress(int bpp, const uint8_t* input, size_t size)
     {
 //        printf("============================================\n");
@@ -1140,7 +1485,6 @@ struct Bitmap {
                                           this->original_bpp,
                                           *this->original_palette);
             if ((this->original_bpp == 8) || (this->original_bpp == 24)){
-                uint8_t blue = pixel >> 16;
                 pixel = (((pixel << 16) & 0xFF0000)
                         |(pixel         & 0x00FF00)
                         |((pixel >> 16) & 0x0000FF)) ;
