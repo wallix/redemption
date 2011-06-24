@@ -211,7 +211,8 @@ struct rdp_orders {
                 cache_idx = stream.in_uint16_le();
                 if (flags & 0x400) {
                     size = bufsize;
-                } else {
+                }
+                else {
                     pad2 = stream.in_uint16_le();
                     size = stream.in_uint16_le();
                     row_size = stream.in_uint16_le();
@@ -430,7 +431,7 @@ struct rdp_orders {
                 switch (this->common.order) {
                 case TEXT2:
                     this->glyph_index.receive(stream, header);
-                    mod->server_glyph_index(this->glyph_index);
+                    mod->glyph_index(this->glyph_index);
                     break;
                 case DESTBLT:
                     this->destblt.receive(stream, header);

@@ -521,21 +521,21 @@ class RDPBmpCache {
         using namespace RDP;
         if (0 == this->client_info->bitmap_cache_version){
             if (this->client_info->use_bitmap_comp){
-//                LOG(LOG_INFO, "/* BMP Cache compressed V1 */");
+                LOG(LOG_INFO, "/* BMP Cache compressed V1 */");
                 this->emit_v1_compressed(stream);
             }
             else {
-//                LOG(LOG_INFO, "/* BMP Cache raw V1 */");
+                LOG(LOG_INFO, "/* BMP Cache raw V1 */");
                 this->emit_raw_v1(stream);
             }
         }
         else {
             if (this->client_info->use_bitmap_comp){
-//                LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
+                LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
                 this->emit_v2_compressed(stream);
             }
             else {
-//                LOG(LOG_INFO, "/* BMP Cache raw V2 */");
+                LOG(LOG_INFO, "/* BMP Cache raw V2 */");
                 this->emit_raw_v2(stream);
             }
         }
@@ -915,6 +915,7 @@ class RDPBmpCache {
 
     void receive_raw_v1(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
+        LOG(LOG_INFO, "receive raw v1");
         using namespace RDP;
 
         // cacheId (1 byte): An 8-bit, unsigned integer. The bitmap cache into

@@ -2413,7 +2413,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
         Bitmap bmp2(bpp, &palette332, 192, 18, compressed, sizeof(compressed), true);
 //        bmp2.dump_decompress(bpp, compressed, sizeof(compressed));
 
-        BOOST_CHECK_EQUAL(1688359122, bmp2.get_crc(bpp));
+        BOOST_CHECK_EQUAL(1688359122, bmp2.get_crc());
 //        printf("------- Decompressed ---------\n");
 //        for (size_t i = 0; i < bmp2.bmp_size(bpp) ; i++){
 //            if (i % 192 == 0) printf("\n");

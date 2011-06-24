@@ -1128,6 +1128,7 @@ struct rdp_rdp {
                 }
 
                 const uint8_t * data = stream.in_uint8p(size);
+                LOG(LOG_INFO, "receiving compressed bitmap");
                 Bitmap bitmap(bpp, &this->orders.cache_colormap.palette[7], width, height, data, size, true);
 
                 assert(line_size == bitmap.line_size(bpp));

@@ -86,7 +86,7 @@ struct Bitmap {
 
 
     Bitmap(int bpp, const Rect & r, int src_cx, int src_cy, const uint8_t * src_data)
-        : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(bpp)
+        : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(bpp), cx(0), cy(0)
     {
         int cx = std::min(r.cx, src_cx - r.x);
         #warning there is both cx and this->cx and both can't be interchanged. this is intended to always store bitmaps that are multiple of 4 pixels to override a compatibility problem with rdesktop. This is not necessary for Microsoft clients. See MSRDP-CGR MS-RDPBCGR: 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)
@@ -125,7 +125,7 @@ struct Bitmap {
 
 
     Bitmap(const char* filename)
-        : data_co24(0), data_co16(0), data_co15(0), data_co8(0)
+        : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(0), cx(0), cy(0)
     {
         LOG(LOG_INFO, "loading bitmap %s", filename);
         int size;
@@ -725,10 +725,6 @@ struct Bitmap {
         }
         return;
     }
-
-
-
-
 
     void decompress(int bpp, const uint8_t* input, size_t size)
     {
@@ -1362,7 +1358,7 @@ struct Bitmap {
     }
 
 
-    uint32_t get_crc(int bpp)
+    uint32_t get_crc()
     {
         #warning is this memory table really necessary for crc computing ? I undersatnd some dispersion of values is a good thing, but other simpler signing scheme should be more efficient with less memory access (maybe even md5 or aes).
 
@@ -1413,32 +1409,40 @@ struct Bitmap {
             0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
         };
 
-        uint8_t Bpp = nbbytes(bpp);
+        uint8_t Bpp = nbbytes(this->original_bpp);
         unsigned crc = crc_seed;
         unsigned width = this->cx * Bpp;
-        const uint8_t *s8 = this->data_co(bpp);
+        const uint8_t *s8 = this->data_co(this->original_bpp);
         for (unsigned i = 0; i < this->cy; i++) {
             for (unsigned j = 0; j < width ; j++) {
                 crc = crc_table[(crc ^ *s8++) & 0xff] ^ (crc >> 8);
             }
-            s8 += this->line_size(bpp) - width;
+            s8 += this->line_size(this->original_bpp) - width;
         }
         return crc ^ crc_seed;
     }
 
     ~Bitmap(){
         if (this->data_co24){
+            memset(this->data_co24, -1, this->bmp_size(24));
             free(this->data_co24);
         }
         if (this->data_co16){
+            memset(this->data_co16, -1, this->bmp_size(16));
             free(this->data_co16);
         }
         if (this->data_co15){
+            memset(this->data_co15, -1, this->bmp_size(15));
             free(this->data_co15);
         }
         if (this->data_co8){
+            memset(this->data_co8, -1, this->bmp_size(8));
             free(this->data_co8);
         }
+        this->data_co8 = this->data_co24 = this->data_co15 = this->data_co16 = 0;
+        this->cx = 0;
+        this->cy = 0;
+        this->original_bpp = 0;
     }
 
     uint8_t * data_co(const int bpp) {

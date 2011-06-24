@@ -55,15 +55,13 @@ struct BitmapCacheItem {
     unsigned crc;
     Bitmap * pbmp;
 
-    BitmapCacheItem() : pbmp(0) {
-        this->stamp = 0;
-        this->crc = 0;
-    };
+    BitmapCacheItem() : stamp(0), crc(0), pbmp(0) {
+        LOG(LOG_INFO, "New empty Bitmap cache Item");
+    }
 
-    BitmapCacheItem(int bpp, Bitmap * pbmp) : pbmp(pbmp) {
-        this->stamp = 0;
-        this->crc = pbmp->get_crc(bpp);
-    };
+    BitmapCacheItem(Bitmap * pbmp) : stamp(0), crc(pbmp->get_crc()), pbmp(pbmp) {
+        LOG(LOG_INFO, "New Bitmap cache Item from bitmap");
+    }
 
     ~BitmapCacheItem(){
     }
@@ -91,6 +89,8 @@ struct BitmapCache {
         this->medium_size = client_info->cache2_size;
         this->big_entries = client_info->cache3_entries;
         this->big_size = client_info->cache3_size;
+
+        LOG(LOG_INFO, "Allocation of bitmap caches");
 
         this->small_bitmaps = new BitmapCacheItem[client_info->cache1_entries];
         this->medium_bitmaps = new BitmapCacheItem[client_info->cache2_entries];
@@ -154,7 +154,8 @@ struct BitmapCache {
     {
         int cache_idx = 0;
         Bitmap * pbitmap = new Bitmap(src_bpp, tile, src_cx, src_cy, src_data);
-        BitmapCacheItem cache_item(src_bpp, pbitmap);
+        LOG(LOG_INFO, "new bitmap size = %u original_bpp=%u src_bpp=%u", pbitmap->bmp_size(src_bpp), pbitmap->original_bpp, src_bpp);
+        BitmapCacheItem cache_item(pbitmap);
         this->bitmap_stamp++;
         int entries = 0;
         BitmapCacheItem * array = 0;
@@ -189,6 +190,9 @@ struct BitmapCache {
                     cache_idx = j;
                 }
 
+                if (array[j].stamp){
+                    LOG(LOG_INFO, "[%d][%d].crc=%u bmp.crc=%u", cache_id, j, array[j].crc, cache_item.crc);
+                }
                 #warning create a comparizon function in bitmap_cache_item
                 if (array[j].pbmp
                 && array[j].pbmp->cx == cache_item.pbmp->cx
@@ -205,7 +209,6 @@ struct BitmapCache {
             if (array[cache_idx].pbmp){
                 delete array[cache_idx].pbmp;
             }
-
             array[cache_idx] = cache_item;
             return (BITMAP_ADDED_TO_CACHE<<24)|(cache_id << 16)|cache_idx;
         }

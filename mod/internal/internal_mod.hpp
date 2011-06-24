@@ -38,9 +38,9 @@ struct internal_mod : public client_mod {
     internal_mod(int (& keys)[256], int & key_flags, Keymap * &keymap, Front & front)
             : client_mod(keys, key_flags, keymap, front),
                 screen(this,
-                 front.rdp_layer.client_info.width,
-                 front.rdp_layer.client_info.height,
-                 front.rdp_layer.client_info.bpp)
+                 this->get_client_info().width,
+                 this->get_client_info().height,
+                 this->get_client_info().bpp)
     {
         /* dragging info */
         this->dragging = 0;
@@ -53,7 +53,7 @@ struct internal_mod : public client_mod {
 
     void server_draw_dragging_rect(const Rect & r, const Rect & clip)
     {
-        this->front->begin_update();
+        this->front.begin_update();
 
         #warning create some set_brush primitive in internal_mod
         this->brush.hatch = 0xaa;
@@ -69,13 +69,13 @@ struct internal_mod : public client_mod {
         this->brush.style = 3;
 
         // brush style 3 is not supported by windows 7, we **MUST** use cache
-        if (this->front->rdp_layer.client_info.brush_cache_code == 1) {
+        if (this->get_client_info().brush_cache_code == 1) {
             uint8_t pattern[8];
             pattern[0] = this->brush.hatch;
             memcpy(pattern+1, this->brush.extra, 7);
             int cache_idx = 0;
-            if (BRUSH_TO_SEND == this->front->cache.add_brush(pattern, cache_idx)){
-                this->front->brush_cache(cache_idx);
+            if (BRUSH_TO_SEND == this->front.cache.add_brush(pattern, cache_idx)){
+                this->front.brush_cache(cache_idx);
             }
             this->brush.hatch = cache_idx;
             this->brush.style = 0x81;
@@ -96,7 +96,7 @@ struct internal_mod : public client_mod {
             RDPPatBlt(Rect(r.x, r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush));
         this->pat_blt(
             RDPPatBlt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush));
-        this->front->end_update();
+        this->front.end_update();
     }
 
 
@@ -112,9 +112,9 @@ struct internal_mod : public client_mod {
 
 
     virtual void front_resize() {
-        this->screen.rect.cx = this->front->rdp_layer.client_info.width;
-        this->screen.rect.cy = this->front->rdp_layer.client_info.height;
-        this->screen.bpp = this->front->rdp_layer.client_info.bpp;
+        this->screen.rect.cx = this->get_client_info().width;
+        this->screen.rect.cy = this->get_client_info().height;
+        this->screen.bpp     = this->get_client_info().bpp;
     }
 
     Widget * window(int i)

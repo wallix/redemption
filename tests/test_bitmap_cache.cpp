@@ -217,10 +217,10 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     uint16_t cache_idx = (cache_ref & 0xFFFF);
 
     BitmapCacheItem * entry =  cache.get_item(cache_id, cache_idx);
-    BOOST_CHECK_EQUAL(cache.big_bitmaps[0].crc, cache.big_bitmaps[0].pbmp->get_crc(24));
+    BOOST_CHECK_EQUAL(cache.big_bitmaps[0].crc, cache.big_bitmaps[0].pbmp->get_crc());
 
     BOOST_CHECK_EQUAL(2521917587U, cache.big_bitmaps[0].crc);
-    BOOST_CHECK_EQUAL(2521917587U, cache.big_bitmaps[0].pbmp->get_crc(24));
+    BOOST_CHECK_EQUAL(2521917587U, cache.big_bitmaps[0].pbmp->get_crc());
 
     // RrrRrrRrrRrrRrrGggGggGggGggGgg..
     // RrrRrrRrrRrrRrrGggGggGggGggGgg..

@@ -49,13 +49,12 @@ struct mod_rdp : public client_mod {
     Stream in_stream;
     Transport *t;
     struct vector<mcs_channel_item*> front_channel_list;
-    struct ClientInfo *client_info;
     bool dev_redirection_enable;
 
     mod_rdp(Transport * t,
             int (& keys)[256], int & key_flags, Keymap * &keymap,
             struct ModContext & context, struct Front & front,
-            ClientInfo *client_info, vector<mcs_channel_item*> channel_list,
+            vector<mcs_channel_item*> channel_list,
             const char * hostname, int keylayout,
             bool clipboard_enable, bool dev_redirection_enable)
             : client_mod(keys, key_flags, keymap, front),
@@ -63,12 +62,12 @@ struct mod_rdp : public client_mod {
                 context.get(STRAUTHID_TARGET_USER),
                 context.get(STRAUTHID_TARGET_PASSWORD),
                 hostname, channel_list,
-                client_info->rdp5_performanceflags,
+                this->get_client_info().rdp5_performanceflags,
                 this->get_front_width(),
                 this->get_front_height(),
                 this->get_front_bpp(),
                 keylayout,
-                client_info->console_session),
+                this->get_client_info().console_session),
                 in_stream(8192)
 
     {
@@ -78,7 +77,6 @@ struct mod_rdp : public client_mod {
         this->t = 0;
         try {
             this->t = t;
-            this->client_info = client_info;
             // copy channel list from client.
             // It will be changed after negotiation with server
             // to hold only channels actually supported.
@@ -97,7 +95,7 @@ struct mod_rdp : public client_mod {
                 flags |= RDP_LOGON_AUTO;
             }
 
-            this->rdp_layer.send_login_info(flags, this->client_info->rdp5_performanceflags);
+            this->rdp_layer.send_login_info(flags, this->get_client_info().rdp5_performanceflags);
         } catch (...) {
         #warning this->t is not allocated here, it shouldn't be desallocated here
             if (this->t){

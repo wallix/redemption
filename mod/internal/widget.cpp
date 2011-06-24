@@ -202,7 +202,7 @@ int Widget::text_width(char* text){
         wchar_t wstr[len + 2];
         mbstowcs(wstr, text, len + 1);
         for (size_t index = 0; index < len; index++) {
-            FontChar *font_item = this->mod->front->font.font_items[wstr[index]];
+            FontChar *font_item = this->mod->front.font.font_items[wstr[index]];
             rv = rv + font_item->incby;
         }
     }
@@ -216,7 +216,7 @@ int Widget::text_height(char* text){
         wchar_t *wstr = new wchar_t[len + 2];
         mbstowcs(wstr, text, len + 1);
         for (int index = 0; index < len; index++) {
-            FontChar *font_item = this->mod->front->font.font_items[wstr[index]];
+            FontChar *font_item = this->mod->front.font.font_items[wstr[index]];
             rv = std::max(rv, font_item->height);
         }
         delete [] wstr;
@@ -263,12 +263,12 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
     int c = 0;
     int distance_from_previous_fragment = 0;
     for (int index = 0; index < len; index++) {
-        FontChar* font_item = this->mod->front->font.font_items[wstr[index]];
+        FontChar* font_item = this->mod->front.font.font_items[wstr[index]];
         #warning avoid passing parameters by reference to get results
-        switch (this->mod->front->cache.add_glyph(font_item, f, c))
+        switch (this->mod->front.cache.add_glyph(font_item, f, c))
         {
             case Cache::GLYPH_ADDED_TO_CACHE:
-                this->mod->front->glyph_cache(*font_item, f, c);
+                this->mod->front.glyph_cache(*font_item, f, c);
             break;
             default:
             break;
@@ -317,7 +317,7 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
                 len * 2, // data_len in bytes
                 data // data (utf16)
             );
-            this->mod->server_glyph_index(text);
+            this->mod->glyph_index(text);
         }
     }
     delete [] data;
@@ -538,13 +538,13 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
     this->mod->brush.style = 3;
 
     // brush style 3 is not supported by windows 7, we **MUST** use cache
-    if (this->mod->front->rdp_layer.client_info.brush_cache_code == 1) {
+    if (this->mod->get_client_info().brush_cache_code == 1) {
         uint8_t pattern[8];
         pattern[0] = this->mod->brush.hatch;
         memcpy(pattern+1, this->mod->brush.extra, 7);
         int cache_idx = 0;
-        if (BRUSH_TO_SEND == this->mod->front->cache.add_brush(pattern, cache_idx)){
-            this->mod->front->brush_cache(cache_idx);
+        if (BRUSH_TO_SEND == this->mod->front.cache.add_brush(pattern, cache_idx)){
+            this->mod->front.brush_cache(cache_idx);
         }
         this->mod->brush.hatch = cache_idx;
         this->mod->brush.style = 0x81;
