@@ -387,7 +387,7 @@ struct Bitmap {
         }
     }
 
-
+    #warning unifying with decompress, the decompress function should be able to do both. Need probably some decompressor object, that would be a factory that creates bitmap or dump decompression data. Compression should also probably go in the same object (from principale that opening and closing parenthesis should be kept together).
     void dump_decompress(int bpp, const uint8_t* input, size_t size)
     {
         unsigned yprev = 0;
@@ -409,7 +409,7 @@ struct Bitmap {
             uint32_t line_width;
             uint32_t height;
             PixelDumper(uint8_t bpp, uint32_t height, uint32_t line_width, size_t size)
-                : bpp(bpp), buffer(0), offset(0), height(height), line_width(line_width)
+                : bpp(bpp), buffer(0), offset(0), line_width(line_width), height(height)
             {
                 this->buffer = (uint8_t*)malloc(size + 10);
                 memset(this->buffer, 0, size);
@@ -426,7 +426,7 @@ struct Bitmap {
             void dump(uint32_t start_offset)
             {
                 if (start_offset % this->line_width == 0){
-                    printf("// LINE %u\n", this->height - 1 - (offset / this->line_width));
+                    printf("// LINE %u\n", (unsigned)(this->height - 1 - (offset / this->line_width)));
                 }
 
                 if (start_offset % 16 != 0){
@@ -438,7 +438,7 @@ struct Bitmap {
 
                 for (size_t offset = start_offset ; offset < this->offset ; offset++){
                     if ((offset % this->line_width == 0) && (offset > start_offset)){
-                        printf("\n// LINE %u\n", this->height - 1 - (offset / this->line_width));
+                        printf("\n// LINE %u\n", (unsigned)(this->height - 1 - (offset / this->line_width)));
                     }
 
                     if ((offset % 16 == 0) && (offset > start_offset)){
@@ -448,10 +448,9 @@ struct Bitmap {
                 }
                 printf("\n");
             }
-        #warning use this->line_width
         } buffer(bpp, this->cy, this->line_size(bpp), this->bmp_size(bpp));
 
-        printf("// DUMP OUPUT: cx=%u cy=%u line_width=%u bmp_size=%u\n", this->cx, this->cy, this->line_size(bpp), this->bmp_size(bpp));
+        printf("// DUMP OUPUT: cx=%u cy=%u line_width=%u bmp_size=%u\n", this->cx, this->cy, (unsigned)this->line_size(bpp), (unsigned)this->bmp_size(bpp));
 
         assert(nbbytes(bpp) <= 3);
 
@@ -575,12 +574,12 @@ struct Bitmap {
             break;
             case SPECIAL_FGBG_1:
                 mask = 1;
-                fom_mask = 3;
+                fom_mask = 7;
                 printf("// SPECIAL_FGBG_1 %u [%.2x] ", count, fom_mask);
             break;
             case SPECIAL_FGBG_2:
                 mask = 1;
-                fom_mask = 5;
+                fom_mask = 3;
                 printf("// SPECIAL_FGBG_2 %u [%.2x] ", count, fom_mask);
             break;
             case BICOLOR:
@@ -658,7 +657,6 @@ struct Bitmap {
                 }
                 switch (opcode) {
                 case FILL:
-                    printf("offset = %u\n", buffer.offset);
                     buffer.out_dump_pixel(yprev);
                     break;
                 case MIX_SET:
@@ -875,11 +873,11 @@ struct Bitmap {
             break;
             case SPECIAL_FGBG_1:
                 mask = 1;
-                fom_mask = 3;
+                fom_mask = 7;
             break;
             case SPECIAL_FGBG_2:
                 mask = 1;
-                fom_mask = 5;
+                fom_mask = 3;
             break;
             case BICOLOR:
                 bicolor = 0;
