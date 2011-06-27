@@ -51,15 +51,13 @@ enum {
 
 struct BitmapCacheItem {
     int stamp;
-    #warning crc is a bitmap property, should not be here
-    unsigned crc;
     Bitmap * pbmp;
 
-    BitmapCacheItem() : stamp(0), crc(0), pbmp(0) {
+    BitmapCacheItem() : stamp(0), pbmp(0) {
         LOG(LOG_INFO, "New empty Bitmap cache Item");
     }
 
-    BitmapCacheItem(Bitmap * pbmp) : stamp(0), crc(pbmp->get_crc()), pbmp(pbmp) {
+    BitmapCacheItem(Bitmap * pbmp) : stamp(0), pbmp(pbmp) {
         LOG(LOG_INFO, "New Bitmap cache Item from bitmap");
     }
 
@@ -190,14 +188,11 @@ struct BitmapCache {
                     cache_idx = j;
                 }
 
-                if (array[j].stamp){
-                    LOG(LOG_INFO, "[%d][%d].crc=%u bmp.crc=%u", cache_id, j, array[j].crc, cache_item.crc);
-                }
                 #warning create a comparizon function in bitmap_cache_item
                 if (array[j].pbmp
                 && array[j].pbmp->cx == cache_item.pbmp->cx
                 && array[j].pbmp->cy == cache_item.pbmp->cy
-                && array[j].crc == cache_item.crc)
+                && array[j].pbmp->get_crc() == cache_item.pbmp->get_crc())
                 {
                     delete pbitmap;
                     array[j].stamp = this->bitmap_stamp;

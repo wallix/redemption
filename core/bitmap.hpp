@@ -48,23 +48,27 @@
 #include "rect.hpp"
 
 struct Bitmap {
-    private:
-    // data_co is allocated on demand
     public:
+    // data_co is allocated on demand
     uint8_t *data_co24;
     uint8_t *data_co16;
     uint8_t *data_co15;
     uint8_t *data_co8;
 
-    public:
     int original_bpp;
     BGRPalette * original_palette;
     unsigned cx;
     unsigned cy;
 
+    private:
+    uint32_t crc;
+    bool crc_computed;
+
+    public:
     Bitmap(int bpp, BGRPalette * palette, int cx, int cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
         : data_co24(0), data_co16(0), data_co15(0), data_co8(0),
-          original_bpp(bpp), original_palette(palette), cx(cx), cy(cy)
+          original_bpp(bpp), original_palette(palette), cx(cx), cy(cy),
+          crc(0), crc_computed(false)
     {
         assert((bpp != 8) || palette);
         if (bpp == 8 && palette == 0){
@@ -86,7 +90,8 @@ struct Bitmap {
 
 
     Bitmap(int bpp, const Rect & r, int src_cx, int src_cy, const uint8_t * src_data)
-        : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(bpp), cx(0), cy(0)
+        : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(bpp),
+        cx(0), cy(0), crc(0), crc_computed(false)
     {
         int cx = std::min(r.cx, src_cx - r.x);
         #warning there is both cx and this->cx and both can't be interchanged. this is intended to always store bitmaps that are multiple of 4 pixels to override a compatibility problem with rdesktop. This is not necessary for Microsoft clients. See MSRDP-CGR MS-RDPBCGR: 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)
@@ -125,7 +130,8 @@ struct Bitmap {
 
 
     Bitmap(const char* filename)
-        : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(0), cx(0), cy(0)
+        : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(0),
+        cx(0), cy(0), crc(0), crc_computed(false)
     {
         LOG(LOG_INFO, "loading bitmap %s", filename);
         int size;
@@ -1360,6 +1366,9 @@ struct Bitmap {
 
     uint32_t get_crc()
     {
+        if (this->crc_computed){
+            return this->crc;
+        }
         #warning is this memory table really necessary for crc computing ? I undersatnd some dispersion of values is a good thing, but other simpler signing scheme should be more efficient with less memory access (maybe even md5 or aes).
 
         const static int crc_seed = 0xffffffff;
@@ -1419,7 +1428,9 @@ struct Bitmap {
             }
             s8 += this->line_size(this->original_bpp) - width;
         }
-        return crc ^ crc_seed;
+        this->crc = crc ^ crc_seed;
+        crc_computed = true;
+        return this->crc;
     }
 
     ~Bitmap(){
