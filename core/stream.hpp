@@ -192,6 +192,10 @@ class Stream {
         *(this->p++) = v;
     }
 
+    void set_out_uint8(unsigned char v, size_t offset) {
+        this->data[offset] = v;
+    }
+
     // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding
     // =======================================================
     // (TWO_BYTE_UNSIGNED_ENCODING)
@@ -221,9 +225,22 @@ class Stream {
         }
     }
 
+    void set_out_2BUE(uint16_t v, size_t offset){
+        if (v <= 127){
+            this->set_out_uint8(v, offset);
+        }
+        else {
+            this->set_out_uint16_be(v|0x8000, offset);
+        }
+    }
+
 
     void out_sint8(char v) {
         *(this->p++) = v;
+    }
+
+    void set_out_sint8(char v, size_t offset) {
+        this->data[offset] = v;
     }
 
     void out_uint16_le(unsigned int v) {
@@ -232,12 +249,21 @@ class Stream {
         this->p+=2;
     }
 
+    void set_out_uint16_le(unsigned int v, size_t offset) {
+        this->data[offset] = v & 0xFF;
+        this->data[offset+1] = (v >> 8) & 0xFF;
+    }
+
     void out_uint16_be(unsigned int v) {
         this->p[1] = v & 0xFF;
         this->p[0] = (v >> 8) & 0xFF;
         this->p+=2;
     }
 
+    void set_out_uint16_be(unsigned int v, size_t offset) {
+        this->data[offset+1] = v & 0xFF;
+        this->data[offset] = (v >> 8) & 0xFF;
+    }
 
     void out_uint32_le(unsigned int v) {
         this->p[0] = v & 0xFF;
@@ -245,6 +271,13 @@ class Stream {
         this->p[2] = (v >> 16) & 0xFF;
         this->p[3] = (v >> 24) & 0xFF;
         this->p+=4;
+    }
+
+    void set_out_uint32_le(unsigned int v, size_t offset) {
+        this->data[offset+0] = v & 0xFF;
+        this->data[offset+1] = (v >> 8) & 0xFF;
+        this->data[offset+2] = (v >> 16) & 0xFF;
+        this->data[offset+3] = (v >> 24) & 0xFF;
     }
 
     void out_uint32_be(unsigned int v) {
@@ -255,6 +288,13 @@ class Stream {
         this->p+=4;
     }
 
+    void set_out_uint32_be(unsigned int v, size_t offset) {
+        this->data[offset+0] = (v >> 24) & 0xFF;
+        this->data[offset+1] = (v >> 16) & 0xFF;
+        this->data[offset+2] = (v >> 8) & 0xFF;
+        this->data[offset+3] = v & 0xFF;
+    }
+
     void out_unistr(const char* text)
     {
         for (int i=0; text[i]; i++) {
@@ -263,6 +303,17 @@ class Stream {
         }
         this->out_uint8(0);
         this->out_uint8(0);
+    }
+
+    void set_out_unistr(const char* text, size_t offset)
+    {
+        int i=0;
+        for (; text[i]; i++) {
+            this->set_out_uint8(text[i], offset+i*2);
+            this->set_out_uint8(0, offset+i*2+1);
+        }
+        this->set_out_uint8(0, offset+i*2);
+        this->set_out_uint8(0, offset+i*2+1);
     }
 
     // sz utf16 bytes are translated to ascci, 00 terminated
@@ -291,8 +342,16 @@ class Stream {
         this->p += n;
     }
 
+    void set_out_copy_bytes(const uint8_t * v, size_t n, size_t offset) {
+        memcpy(this->data+offset, v, n);
+    }
+
     void out_copy_bytes(const char * v, size_t n) {
         out_copy_bytes((uint8_t*)v, n);
+    }
+
+    void set_out_copy_bytes(const char * v, size_t n, size_t offset) {
+        set_out_copy_bytes((uint8_t*)v, n, offset);
     }
 
     void out_clear_bytes(size_t n) {
@@ -300,9 +359,17 @@ class Stream {
         this->p += n;
     }
 
+    void set_out_clear_bytes(size_t n, size_t offset) {
+        memset(this->data+offset, 0, n);
+    }
+
     void out_bytes_le(const uint8_t nb, const unsigned value){
         ::out_bytes_le(this->p, nb, value);
         this->p += nb;
+    }
+
+    void set_out_bytes_le(const uint8_t nb, const unsigned value, size_t offset){
+        ::out_bytes_le(this->data+offset, nb, value);
     }
 
     // functions below are used in bitmap compress, it should be some kind of specialized stream instead of main stream
@@ -320,7 +387,6 @@ class Stream {
             this->out_uint16_le(in_count);
         }
     }
-
 
     // Background Run Orders
     // ~~~~~~~~~~~~~~~~~~~~~
