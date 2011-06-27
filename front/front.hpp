@@ -85,6 +85,7 @@ public:
     int timezone;
 private:
     struct server_rdp rdp_layer;
+    uint8_t dummy[1024];
 
 public:
     // Internal state of orders
@@ -97,9 +98,10 @@ public:
     RDPLineTo lineto;
     RDPGlyphIndex glyphindex;
     // state variables for gathering batch of orders
-    uint8_t* order_count_ptr;
     int order_count;
     int order_level;
+    uint32_t offset_header;
+    uint32_t offset_order_count;
 
     Front(SocketTransport * trans, Inifile * ini)
     :
@@ -124,9 +126,10 @@ public:
     lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
     glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
     // state variables for a batch of orders
-    order_count_ptr(0),
     order_count(0),
-    order_level(0)
+    order_level(0),
+    offset_header(0),
+    offset_order_count(0)
     {}
 
     ~Front(){
@@ -193,26 +196,159 @@ public:
         this->rdp_layer.client_info.cache3_entries, this->rdp_layer.client_info.cache3_size);
     }
 
+// [MS-RDPBCGR] 2.2.8.1.1.1.2 Share Data Header (TS_SHAREDATAHEADER)
+// =================================================================
+// The TS_SHAREDATAHEADER header is a T.128 legacy mode header (see [T128]
+// section 8.3) present in slow-path I/O packets.
+
+// shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1)
+//   containing information about the packet.
+
+// shareId (4 bytes): A 32-bit, unsigned integer. Share identifier for the
+//   packet (see [T128] section 8.4.2 for more information about share IDs).
+
+// pad1 (1 byte): An 8-bit, unsigned integer. Padding. Values in this field are
+//   ignored.
+
+// streamId (1 byte): An 8-bit, unsigned integer. The stream identifier for the
+//   packet.
+// +------------------------+--------------------------------------------------+
+// | 0x00 STREAM_UNDEFINED  | Undefined stream priority. This value might be   |
+// |                        | used in the Server Synchronize PDU (see section  |
+// |                        | 2.2.1.19) due to a server-side RDP bug. It MUST  |
+// |                        | not be used in conjunction with any other PDUs.  |
+// |                        |                                                  |
+// +------------------------+--------------------------------------------------+
+// | 0x01 STREAM_LOW        | Low-priority stream.                             |
+// +------------------------+--------------------------------------------------+
+// | 0x02 STREAM_MED        | Medium-priority stream.                          |
+// +------------------------+--------------------------------------------------+
+// | 0x04 STREAM_HI         | High-priority stream.                            |
+// +------------------------+--------------------------------------------------+
+
+// uncompressedLength (2 bytes): A 16-bit, unsigned integer. The uncompressed
+//   length of the packet in bytes.
+
+// pduType2 (1 byte): An 8-bit, unsigned integer. The type of data PDU.
+
+// +------------------------------+--------------------------------------------+
+// | 2 PDUTYPE2_UPDATE            | Update PDU (section 2.2.9.1.1.3)           |
+// +------------------------------+--------------------------------------------+
+// | 20 PDUTYPE2_CONTROL          | Control PDU (section 2.2.1.15.1)           |
+// +------------------------------+--------------------------------------------+
+// | 27 PDUTYPE2_POINTER          | Pointer Update PDU (section 2.2.9.1.1.4)   |
+// +------------------------------+--------------------------------------------+
+// | 28 PDUTYPE2_INPUT            | Input PDU (section 2.2.8.1.1.3)            |
+// +------------------------------+--------------------------------------------+
+// | 31 PDUTYPE2_SYNCHRONIZE      | Synchronize PDU (section 2.2.1.14.1)       |
+// +------------------------------+--------------------------------------------+
+// | 33 PDUTYPE2_REFRESH_RECT     | Refresh Rect PDU (section 2.2.11.2.1)      |
+// +------------------------------+--------------------------------------------+
+// | 34 PDUTYPE2_PLAY_SOUND       | Play Sound PDU (section 2.2.9.1.1.5.1)     |
+// +------------------------------+--------------------------------------------+
+// | 35 PDUTYPE2_SUPPRESS_OUTPUT  | Suppress Output PDU (section 2.2.11.3.1)   |
+// +------------------------------+--------------------------------------------+
+// | 36 PDUTYPE2_SHUTDOWN_REQUEST | Shutdown Request PDU (section 2.2.2.2.1)   |
+// +------------------------------+------+-------------------------------------+
+// | 37 PDUTYPE2_SHUTDOWN_DENIED         | Shutdown Request Denied PDU         |
+// |                                     |         (section 2.2.2.3.1)         |
+// +-------------------------------------+-------------------------------------+
+// | 38 PDUTYPE2_SAVE_SESSION_INFO       | Save Session Info PDU               |
+// |                                     |         (section 2.2.10.1.1)        |
+// +-------------------------------------+-------------------------------------+
+// | 39 PDUTYPE2_FONTLIST                | Font List PDU (section 2.2.1.18.1)  |
+// +-------------------------------------+-------------------------------------+
+// | 40 PDUTYPE2_FONTMAP                 | Font Map PDU (section 2.2.1.22.1)   |
+// +-------------------------------------+-------------------------------------+
+// | 41 PDUTYPE2_SET_KEYBOARD_INDICATORS | Set Keyboard Indicators PDU         |
+// |                                     |       (section 2.2.8.2.1.1)         |
+// +-------------------------------------+---+---------------------------------+
+// | 43 PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST | Persistent Key List PDU         |
+// |                                         | (section 2.2.1.17.1)            |
+// +-------------------------------------+---+---------------------------------+
+// | 44 PDUTYPE2_BITMAPCACHE_ERROR_PDU   | Bitmap Cache Error PDU (see         |
+// |                                     |     [MS-RDPEGDI] section 2.2.2.3.1) |
+// +-------------------------------------+-------------------------------------+
+// | 45 PDUTYPE2_SET_KEYBOARD_IME_STATUS | Set Keyboard IME Status PDU         |
+// |                                     |       (section 2.2.8.2.2.1)         |
+// +-----------------------------------+-+-------------------------------------+
+// | 46 PDUTYPE2_OFFSCRCACHE_ERROR_PDU | Offscreen Bitmap Cache Error PDU      |
+// |                                   | (see [MS-RDPEGDI] section 2.2.2.3.2)  |
+// +-----------------------------------+---------------------------------------+
+// | 47 PDUTYPE2_SET_ERROR_INFO_PDU    | Set Error Info PDU (section 2.2.5.1.1)|
+// +-----------------------------------+---------------------------------------+
+// | 48 PDUTYPE2_DRAWNINEGRID_ERROR_PDU| DrawNineGrid Cache Error PDU          |
+// |                                   | (see [MS-RDPEGDI] section 2.2.2.3.3)  |
+// +-----------------------------------+---------------------------------------+
+// | 49 PDUTYPE2_DRAWGDIPLUS_ERROR_PDU | GDI+ Error PDU (see [MS-RDPEGDI]      |
+// |                                   |  section 2.2.2.3.4)                   |
+// +-----------------------------------+---------------------------------------+
+// | 50 PDUTYPE2_ARC_STATUS_PDU        | Auto-Reconnect Status PDU             |
+// |                                   |    (section 2.2.4.1.1)                |
+// +-----------------------------------+---------------------------------------+
+
+// compressedType (1 byte): An 8-bit, unsigned integer. The compression type
+//   and flags specifying the data following the Share Data Header (section
+//   2.2.8.1.1.1.2).
+
+// +--------------------------+------------------------------------------------+
+// | 0x0F CompressionTypeMask | Indicates the package which was used for       |
+// |                          | compression. See the table which follows for a |
+// |                          | list of compression packages.                  |
+// +--------------------------+------------------------------------------------+
+// | 0x20 PACKET_COMPRESSED   | The payload data is compressed. This value     |
+// |                          | corresponds to MPPC bit C (see [RFC2118]       |
+// |                          | section 3.1).                                  |
+// +--------------------------+------------------------------------------------+
+// | 0x40 PACKET_AT_FRONT     | The decompressed packet MUST be placed at the  |
+// |                          | beginning of the history buffer. This value    |
+// |                          | corresponds to MPPC bit B (see [RFC2118]       |
+// |                          | section 3.1).                                  |
+// +--------------------------+------------------------------------------------+
+// | 0x80 PACKET_FLUSHED      | The history buffer MUST be reinitialized. This |
+// |                          | value corresponds to MPPC bit A (see [RFC2118] |
+// |                          | section 3.1).                                  |
+// +--------------------------+------------------------------------------------+
+
+// Possible compression package values:
+
+// +---------------------------+-----------------------------------------------+
+// | 0 PACKET_COMPR_TYPE_8K    | MPPC-8K compression (see section 3.1.8.4.1)   |
+// +---------------------------+-----------------------------------------------+
+// | 1 PACKET_COMPR_TYPE_64K   | MPPC-64K compression (see section 3.1.8.4.2)  |
+// +---------------------------+-----------------------------------------------+
+// | 2 PACKET_COMPR_TYPE_RDP6  | RDP 6.0 bulk compression (see [MS-RDPEGDI]    |
+// |                           | section 3.1.8.1).                             |
+// +---------------------------+-----------------------------------------------+
+// | 2 PACKET_COMPR_TYPE_RDP61 | RDP 6.1 bulk compression (see [MS-RDPEGDI]    |
+// |                           | section 3.1.8.2).                             |
+// +---------------------------+-----------------------------------------------+
+
+// Instructions specifying how to compress a data stream are listed in section
+//   3.1.8.2, while decompression of a data stream is described in section
+//   3.1.8.3.
+
+// compressedLength (2 bytes): A 16-bit, unsigned integer. The compressed length
+//   of the packet in bytes.
+
     void force_send()
     {
         #warning we should define some kind of OrdersStream, to buffer in orders
         LOG(LOG_ERR, "force_send: level=%d order_count=%d", this->order_level, this->order_count);
         this->stream.mark_end();
-        this->stream.p = this->order_count_ptr;
-        this->stream.out_uint16_le(this->order_count);
+        this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
 
-        this->stream.p = this->stream.rdp_hdr;
-        int len = this->stream.end - this->stream.p;
-        this->stream.out_uint16_le(len);
-        this->stream.out_uint16_le(0x10 | RDP_PDU_DATA);
-        this->stream.out_uint16_le(this->rdp_layer.mcs_channel);
-        this->stream.out_uint32_le(this->rdp_layer.share_id);
-        this->stream.out_uint8(0);
-        this->stream.out_uint8(1);
-        this->stream.out_uint16_le(len - 14);
-        this->stream.out_uint8(RDP_DATA_PDU_UPDATE);
-        this->stream.out_uint8(0);
-        this->stream.out_uint16_le(0);
+        int len = this->stream.end - this->stream.data + offset_header;
+        this->stream.set_out_uint16_le(len,                         offset_header);
+        this->stream.set_out_uint16_le(0x10 | RDP_PDU_DATA,         offset_header+2);
+        this->stream.set_out_uint16_le(this->rdp_layer.mcs_channel, offset_header+4);
+        this->stream.set_out_uint32_le(this->rdp_layer.share_id,    offset_header+6);
+        this->stream.set_out_uint8(0,                               offset_header+10);
+        this->stream.set_out_uint8(1,                               offset_header+11);
+        this->stream.set_out_uint16_le(len - 14,                    offset_header+12);
+        this->stream.set_out_uint8(RDP_DATA_PDU_UPDATE,             offset_header+14);
+        this->stream.set_out_uint8(0,                               offset_header+15);
+        this->stream.set_out_uint16_le(0,                           offset_header+16);
 
         this->rdp_layer.sec_layer.server_sec_send(this->stream, MCS_GLOBAL_CHANNEL);
 
@@ -242,7 +378,7 @@ public:
         LOG(LOG_INFO, "reserve_order(%u)", asked_size);
         if (this->order_count > 0) {
             size_t max_packet_size = std::min(this->stream.capacity, (size_t)16384);
-            size_t used_size = (size_t)(this->stream.p - this->order_count_ptr);
+            size_t used_size = this->stream.get_offset(0);
 
             if ((used_size + asked_size + 100) > max_packet_size) {
                 this->force_send();
@@ -258,6 +394,68 @@ public:
         this->order_count++;
     }
 
+// MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
+// ================================================================
+// The TS_FP_UPDATE_ORDERS structure contains primary, secondary, and alternate
+// secondary drawing orders aligned on byte boundaries. This structure conforms
+// to the layout of a Fast-Path Update (see [MS-RDPBCGR] section 2.2.9.1.2.1)
+// and is encapsulated within a Fast-Path Update PDU (see [MS-RDPBCGR] section
+// 2.2.9.1.2.1.1).
+
+// updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field
+//   is the same as the updateHeader byte field described in the Fast-Path
+//   Update structure (see [MS-RDPBCGR] section 2.2.9.1.2.1). The updateCode
+//   bitfield (4 bits in size) MUST be set to FASTPATH_UPDATETYPE_ORDERS (0x0).
+
+// compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this
+//   optional field (as well as the possible values) is the same as the
+//   compressionFlags field described in the Fast-Path Update structure
+//   specified in [MS-RDPBCGR] section 2.2.9.1.2.1.
+
+// size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well
+//   as the possible values) is the same as the size field described in the
+//   Fast-Path Update structure specified in [MS-RDPBCGR] section 2.2.9.1.2.1.
+
+// numberOrders (2 bytes): A 16-bit, unsigned integer. The number of Drawing
+//   Order (section 2.2.2.1.1) structures contained in the orderData field.
+
+// orderData (variable): A variable-sized array of Drawing Order (section
+//   2.2.2.1.1) structures packed on byte boundaries. Each structure contains a
+//   primary, secondary, or alternate secondary drawing order. The controlFlags
+//   field of the Drawing Order identifies the type of drawing order.
+
+
+// MS-RDPECGI 2.2.2.1 Orders Update (TS_UPDATE_ORDERS_PDU_DATA)
+// ============================================================
+// The TS_UPDATE_ORDERS_PDU_DATA structure contains primary, secondary, and
+// alternate secondary drawing orders aligned on byte boundaries. This structure
+// conforms to the layout of a Slow Path Graphics Update (see [MS-RDPBCGR]
+// section 2.2.9.1.1.3.1) and is encapsulated within a Graphics Update PDU (see
+// [MS-RDPBCGR] section 2.2.9.1.1.3.1.1).
+
+// shareDataHeader (18 bytes): Share Data Header (see [MS-RDPBCGR], section
+//   2.2.8.1.1.1.2) containing information about the packet. The type subfield
+//   of the pduType field of the Share Control Header (section 2.2.8.1.1.1.1)
+//   MUST be set to PDUTYPE_DATAPDU (7). The pduType2 field of the Share Data
+//   Header MUST be set to PDUTYPE2_UPDATE (2).
+
+// updateType (2 bytes): A 16-bit, unsigned integer. The field contains the
+//   graphics update type. This field MUST be set to UPDATETYPE_ORDERS (0x0000).
+
+// pad2OctetsA (2 bytes): A 16-bit, unsigned integer used as a padding field.
+//   Values in this field are arbitrary and MUST be ignored.
+
+// numberOrders (2 bytes): A 16-bit, unsigned integer. The number of Drawing
+//   Order (section 2.2.2.1.1) structures contained in the orderData field.
+
+// pad2OctetsB (2 bytes): A 16-bit, unsigned integer used as a padding field.
+//   Values in this field are arbitrary and MUST be ignored.
+
+// orderData (variable): A variable-sized array of Drawing Order (section
+//   2.2.2.1.1) structures packed on byte boundaries. Each structure contains a
+//   primary, secondary, or alternate secondary drawing order. The controlFlags
+//   field of the Drawing Order identifies the type of drawing order.
+
     void force_init()
     {
         LOG(LOG_INFO, "Orders::force_init()");
@@ -266,12 +464,12 @@ public:
 
         this->rdp_layer.sec_layer.server_sec_init(this->stream);
         #warning we should define some kind of OrdersStream, to buffer in orders
-        this->stream.rdp_hdr = this->stream.p;
-        this->stream.p += 18;
+        this->offset_header = this->stream.get_offset(0);
 
+        this->stream.out_clear_bytes(18); // Share Header, we will fill it later
         this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
         this->stream.out_clear_bytes(2); /* pad */
-        this->order_count_ptr = this->stream.p;
+        this->offset_order_count = this->stream.get_offset(0);
         this->stream.out_clear_bytes(2); /* number of orders, set later */
         this->stream.out_clear_bytes(2); /* pad */
     }

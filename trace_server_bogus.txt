@@ -1,0 +1,2258 @@
+    cgrosjean@cgr:~/dev/redemption-pykoder$ sudo /usr/local/bin/rdpproxy -nf
+stopping rdpproxy
+looking if pid_file /var/run/rdpproxy.pid exists
+reading pid_file /var/run/rdpproxy.pid
+stopping process id 3039
+sending sigterm to 3039
+rdpproxy: NOTICE (3047/3047) -- ReDemPtion 0.4.4 starting
+rdpproxy: NOTICE (3049/3049) -- Setting new session socket to 5
+rdpproxy: WARNING (3049/3049) -- RSA Key Handshake
+rdpproxy: NOTICE (3049/3049) -- incoming
+rdpproxy: NOTICE (3049/3049) -- PARSE CS_CORE
+rdpproxy: NOTICE (3049/3049) -- core_data: rdp_version (1=RDP1, 4=RDP5) 4
+rdpproxy: NOTICE (3049/3049) -- core_data: ?? = 8
+rdpproxy: NOTICE (3049/3049) -- core_data: width = 800
+rdpproxy: NOTICE (3049/3049) -- core_data: height = 600
+rdpproxy: NOTICE (3049/3049) -- core_data: bpp_code = ca01
+rdpproxy: NOTICE (3049/3049) -- core_data: ?? = aa03
+rdpproxy: NOTICE (3049/3049) -- core_data: layout = 409
+rdpproxy: NOTICE (3049/3049) -- core_data: build = a28
+rdpproxy: NOTICE (3049/3049) -- core_data: hostname =
+rdpproxy: NOTICE (3049/3049) -- core_data: keyboard_type = 4
+rdpproxy: NOTICE (3049/3049) -- core_data: keyboard_subtype = 0
+rdpproxy: NOTICE (3049/3049) -- core_data: keyboard_functionkeys = c
+rdpproxy: NOTICE (3049/3049) -- core_data: bpp = 24
+rdpproxy: NOTICE (3049/3049) -- CS_CLUSTER
+rdpproxy: NOTICE (3049/3049) -- cluster_data: flags = 9
+rdpproxy: NOTICE (3049/3049) -- CS_SECURITY
+rdpproxy: NOTICE (3049/3049) -- CS_NET
+rdpproxy: WARNING (3049/3049) -- Initializing client session
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- capset_general
+rdpproxy: NOTICE (3049/3049) -- dest blt-0 1
+rdpproxy: NOTICE (3049/3049) -- pat blt-1 1
+rdpproxy: NOTICE (3049/3049) -- screen blt-2 1
+rdpproxy: NOTICE (3049/3049) -- memblt-3-13 1 1
+rdpproxy: NOTICE (3049/3049) -- triblt-4-14 0 1
+rdpproxy: NOTICE (3049/3049) -- line-8 1
+rdpproxy: NOTICE (3049/3049) -- line-9 1
+rdpproxy: NOTICE (3049/3049) -- rect-10 1
+rdpproxy: NOTICE (3049/3049) -- desksave-11 1
+rdpproxy: NOTICE (3049/3049) -- polygon-20 1
+rdpproxy: NOTICE (3049/3049) -- polygon2-21 1
+rdpproxy: NOTICE (3049/3049) -- polyline-22 1
+rdpproxy: NOTICE (3049/3049) -- ellipse-25 1
+rdpproxy: NOTICE (3049/3049) -- ellipse2-26 1
+rdpproxy: NOTICE (3049/3049) -- text2-27 1
+rdpproxy: NOTICE (3049/3049) -- order_caps dump
+rdpproxy: NOTICE (3049/3049) -- desktop cache size 230400
+rdpproxy: NOTICE (3049/3049) -- capset_bmpcache
+rdpproxy: NOTICE (3049/3049) -- cache1_entries=600 cache1_size=768 cache2_entries=300 cache2_size=3072 cache3_entries=262 cache3_size=12288
+rdpproxy: NOTICE (3049/3049) -- reset()
+rdpproxy: NOTICE (3049/3049) -- Allocation of bitmap caches
+rdpproxy: NOTICE (3049/3049) -- // width=800 height=600 bpp=24 cache1_entries=600 cache1_size=768 cache2_entries=300 cache2_size=3072 cache2_entries=262 cache2_size=12288
+rdpproxy: WARNING (3049/3049) -- loading keymap /etc/rdpproxy/km-0409.ini
+rdpproxy: NOTICE (3049/3049) -- color_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2000)
+rdpproxy: NOTICE (3049/3049) -- Orders::force_init()
+rdpproxy: NOTICE (3049/3049) -- send_pointer()
+rdpproxy: EMERG (3049/3049) -- force_send: level=0 order_count=1
+rdpproxy: NOTICE (3049/3049) -- send_pointer()
+rdpproxy: NOTICE (3049/3049) -- Creation of new mod 'CLI parse' suceeded
+rdpproxy: WARNING (3049/3049) -- Running
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- capset_general
+rdpproxy: NOTICE (3049/3049) -- dest blt-0 1
+rdpproxy: NOTICE (3049/3049) -- pat blt-1 1
+rdpproxy: NOTICE (3049/3049) -- screen blt-2 1
+rdpproxy: NOTICE (3049/3049) -- memblt-3-13 1 1
+rdpproxy: NOTICE (3049/3049) -- triblt-4-14 0 1
+rdpproxy: NOTICE (3049/3049) -- line-8 1
+rdpproxy: NOTICE (3049/3049) -- line-9 1
+rdpproxy: NOTICE (3049/3049) -- rect-10 1
+rdpproxy: NOTICE (3049/3049) -- desksave-11 1
+rdpproxy: NOTICE (3049/3049) -- polygon-20 1
+rdpproxy: NOTICE (3049/3049) -- polygon2-21 1
+rdpproxy: NOTICE (3049/3049) -- polyline-22 1
+rdpproxy: NOTICE (3049/3049) -- ellipse-25 1
+rdpproxy: NOTICE (3049/3049) -- ellipse2-26 1
+rdpproxy: NOTICE (3049/3049) -- text2-27 1
+rdpproxy: NOTICE (3049/3049) -- order_caps dump
+rdpproxy: NOTICE (3049/3049) -- desktop cache size 230400
+rdpproxy: NOTICE (3049/3049) -- capset_bmpcache
+rdpproxy: NOTICE (3049/3049) -- cache1_entries=600 cache1_size=768 cache2_entries=300 cache2_size=3072 cache3_entries=262 cache3_size=12288
+rdpproxy: NOTICE (3049/3049) -- signal in transitory mode
+rdpproxy: NOTICE (3049/3049) -- Default Mod Stae
+rdpproxy: NOTICE (3049/3049) -- connecting to 127.0.0.1:3450
+rdpproxy: NOTICE (3049/3049) -- connection to 127.0.0.1 succeeded : socket 4
+rdpproxy: NOTICE (3049/3049) -- sending proxy_type=RDP
+rdpproxy: NOTICE (3049/3049) -- sending ip_client=127.0.0.1
+rdpproxy: NOTICE (3049/3049) -- sending login=cgrosjean
+rdpproxy: NOTICE (3049/3049) -- sending target_password=ASK
+rdpproxy: NOTICE (3049/3049) -- sending width=800
+rdpproxy: NOTICE (3049/3049) -- sending height=600
+rdpproxy: NOTICE (3049/3049) -- sending bpp=24
+rdpproxy: NOTICE (3049/3049) -- sending trans_ok=OK
+rdpproxy: NOTICE (3049/3049) -- sending trans_cancel=Cancel
+rdpproxy: NOTICE (3049/3049) -- sending trans_help=Help
+rdpproxy: NOTICE (3049/3049) -- sending trans_close=Close
+rdpproxy: NOTICE (3049/3049) -- sending trans_refused=Refused
+rdpproxy: NOTICE (3049/3049) -- sending trans_login=login
+rdpproxy: NOTICE (3049/3049) -- sending trans_username=username
+rdpproxy: NOTICE (3049/3049) -- sending trans_password=password
+rdpproxy: NOTICE (3049/3049) -- sending trans_target=target
+rdpproxy: NOTICE (3049/3049) -- sending trans_diagnostic=diagnostic
+rdpproxy: NOTICE (3049/3049) -- sending trans_connection_closed=Connection closed
+rdpproxy: WARNING (3049/3049) -- Waiting for authentifier
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- receiving ASK 'login'
+rdpproxy: NOTICE (3049/3049) -- Creation of new mod 'TRANSITORY' suceeded
+rdpproxy: WARNING (3049/3049) -- Running
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- signal in transitory mode
+rdpproxy: NOTICE (3049/3049) -- Received Credentials
+rdpproxy: NOTICE (3049/3049) -- loading bitmap /usr/local/share/rdpproxy/ad24b.bmp
+rdpproxy: NOTICE (3049/3049) -- loading file 140 x 140 x 8
+rdpproxy: NOTICE (3049/3049) -- loading image...
+rdpproxy: NOTICE (3049/3049) -- loading bitmap /usr/local/share/rdpproxy/xrdp24b-redemption.bmp
+rdpproxy: NOTICE (3049/3049) -- loading file 256 x 125 x 24
+rdpproxy: NOTICE (3049/3049) -- focus on login_window
+rdpproxy: NOTICE (3049/3049) -- focus ok
+rdpproxy: NOTICE (3049/3049) -- Sending brush
+rdpproxy: NOTICE (3049/3049) -- brush sent
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- Orders::force_init()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_index()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(297)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- mod::bitmap_update mod_bpp=24 front_bpp=24 INITIAL BITMAP FILE 58800
+rdpproxy: NOTICE (3049/3049) -- send_bitmap_front()
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=2
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=3
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=4
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=5
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=6
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=7
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=8
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=9
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 432 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=0 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(448)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(66)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_index()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(297)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_index()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(297)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- pat_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(29)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(66)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_index()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(297)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- mod::bitmap_update mod_bpp=24 front_bpp=24 INITIAL BITMAP FILE 58800
+rdpproxy: NOTICE (3049/3049) -- send_bitmap_front()
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=2
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=3
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=4
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=5
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=6
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=7
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=8
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=9
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 432 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=0 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(448)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(66)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_index()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(297)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(66)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(50)
+rdpproxy: NOTICE (3049/3049) -- glyph_index()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(297)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- glyph_front()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(66)
+rdpproxy: NOTICE (3049/3049) -- glyph_index()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(297)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- mod::bitmap_update mod_bpp=24 front_bpp=24 INITIAL BITMAP FILE 96000
+rdpproxy: NOTICE (3049/3049) -- send_bitmap_front()
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=11
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=12
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=13
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=14
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=15
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=16
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=17
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=18
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=19
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=20
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=21
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=22
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=23
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=24
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=25
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=26
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=27
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=28
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=29
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=30
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=31
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: EMERG (3049/3049) -- force_send: level=3 order_count=236
+rdpproxy: NOTICE (3049/3049) -- Orders::force_init()
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=32
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=33
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=34
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=35
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=36
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=37
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=38
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=39
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=40
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=41
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=1 cache_ref=1 cache_idx=42
+rdpproxy: NOTICE (3049/3049) -- ADDED TO CACHE
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: EMERG (3049/3049) -- force_send: level=0 order_count=24
+rdpproxy: NOTICE (3049/3049) -- invalidate screen done
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- Orders::force_init()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- glyph_index()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(297)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- mod::bitmap_update mod_bpp=24 front_bpp=24 INITIAL BITMAP FILE 58800
+rdpproxy: NOTICE (3049/3049) -- send_bitmap_front()
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=2
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=3
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=4
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=5
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=6
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=7
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=8
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=9
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 432 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=0 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(448)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- glyph_index()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(297)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- glyph_index()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(297)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- pat_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(29)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- glyph_index()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(297)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- mod::bitmap_update mod_bpp=24 front_bpp=24 INITIAL BITMAP FILE 58800
+rdpproxy: NOTICE (3049/3049) -- send_bitmap_front()
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=2
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=3
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=4
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=5
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=6
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=7
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=8
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=9
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=1
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 1152 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=10
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(1168)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 432 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=0 cache_idx=0
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(448)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- glyph_index()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(297)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- glyph_index()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(297)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- opaque_rect()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(23)
+rdpproxy: NOTICE (3049/3049) -- glyph_index()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(297)
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+rdpproxy: NOTICE (3049/3049) -- mod::bitmap_update mod_bpp=24 front_bpp=24 INITIAL BITMAP FILE 96000
+rdpproxy: NOTICE (3049/3049) -- send_bitmap_front()
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=11
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=12
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=13
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=14
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=15
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=16
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=17
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=18
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=19
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=20
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=21
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=22
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=23
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=24
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=25
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=26
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=27
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=28
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=29
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=30
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=31
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=32
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=33
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 3072 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=34
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(3088)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=35
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=36
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=37
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: EMERG (3049/3049) -- force_send: level=3 order_count=225
+rdpproxy: NOTICE (3049/3049) -- Orders::force_init()
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=38
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=39
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=40
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=41
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- new bitmap size = 2688 original_bpp=24 src_bpp=24
+rdpproxy: NOTICE (3049/3049) -- send_type=0 cache_ref=1 cache_idx=42
+rdpproxy: NOTICE (3049/3049) -- bitmap_cache()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(2704)
+rdpproxy: NOTICE (3049/3049) -- /* BMP Cache compressed V1 */
+rdpproxy: NOTICE (3049/3049) -- NOT ADDED TO CACHE, but send it anyway
+rdpproxy: NOTICE (3049/3049) -- mem_blt()
+rdpproxy: NOTICE (3049/3049) -- really really mem_blt()
+rdpproxy: NOTICE (3049/3049) -- reserve_order(30)
+rdpproxy: NOTICE (3049/3049) -- well, I lied, maybe mem_blt() it still has to be sent
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: NOTICE (3049/3049) -- end_update()
+rdpproxy: NOTICE (3049/3049) -- send()
+rdpproxy: EMERG (3049/3049) -- force_send: level=0 order_count=12
+rdpproxy: NOTICE (3049/3049) -- Creation of new mod 'LOGIN DIALOG' (0,0,800,600) suceeded
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- set_pointer()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- set_pointer()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- activate_and_process_data()
+rdpproxy: NOTICE (3049/3049) -- code =128 not ISO_PDU_DT
+rdpproxy: NOTICE (3049/3049) -- disconnect()
+rdpproxy: NOTICE (3049/3049) -- Client Session Disconnected
+rdpproxy: NOTICE (3049/3049) -- Socket 5 : closing connection
+rdpproxy: NOTICE (3049/3049) -- begin_update()
+^Crdpproxy: NOTICE (3047/3047) -- shutting down : signal 2 pid=3047
+cgrosjean@cgr:~/dev/redemption-pykoder$

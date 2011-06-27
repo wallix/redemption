@@ -372,6 +372,10 @@ class Stream {
         ::out_bytes_le(this->data+offset, nb, value);
     }
 
+    size_t get_offset(size_t offset){
+        return this->p - this->data - offset;
+    }
+
     // functions below are used in bitmap compress, it should be some kind of specialized stream instead of main stream
     /*****************************************************************************/
     void out_count(const int in_count, const int mask){
