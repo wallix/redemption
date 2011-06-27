@@ -54,11 +54,9 @@ struct BitmapCacheItem {
     Bitmap * pbmp;
 
     BitmapCacheItem() : stamp(0), pbmp(0) {
-        LOG(LOG_INFO, "New empty Bitmap cache Item");
     }
 
     BitmapCacheItem(Bitmap * pbmp) : stamp(0), pbmp(pbmp) {
-        LOG(LOG_INFO, "New Bitmap cache Item from bitmap");
     }
 
     ~BitmapCacheItem(){

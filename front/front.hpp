@@ -73,7 +73,7 @@
 
 class Front {
 public:
-    Stream out_stream;
+    Stream stream;
     Cache cache;
     struct BitmapCache *bmp_cache;
     struct Capture * capture;
@@ -103,7 +103,7 @@ public:
 
     Front(SocketTransport * trans, Inifile * ini)
     :
-    out_stream(16384),
+    stream(16384),
     cache(),
     bmp_cache(0),
     capture(0),
@@ -191,32 +191,30 @@ public:
         this->rdp_layer.client_info.cache1_entries, this->rdp_layer.client_info.cache1_size,
         this->rdp_layer.client_info.cache2_entries, this->rdp_layer.client_info.cache2_size,
         this->rdp_layer.client_info.cache3_entries, this->rdp_layer.client_info.cache3_size);
-
     }
 
     void force_send()
     {
-        LOG(LOG_INFO, "force_send()");
         #warning we should define some kind of OrdersStream, to buffer in orders
-//        LOG(LOG_ERR, "force_send: level=%d order_count=%d", this->order_level, this->order_count);
-        this->out_stream.mark_end();
-        this->out_stream.p = this->order_count_ptr;
-        this->out_stream.out_uint16_le(this->order_count);
+        LOG(LOG_ERR, "force_send: level=%d order_count=%d", this->order_level, this->order_count);
+        this->stream.mark_end();
+        this->stream.p = this->order_count_ptr;
+        this->stream.out_uint16_le(this->order_count);
 
-        this->out_stream.p = this->out_stream.rdp_hdr;
-        int len = this->out_stream.end - this->out_stream.p;
-        this->out_stream.out_uint16_le(len);
-        this->out_stream.out_uint16_le(0x10 | RDP_PDU_DATA);
-        this->out_stream.out_uint16_le(this->rdp_layer.mcs_channel);
-        this->out_stream.out_uint32_le(this->rdp_layer.share_id);
-        this->out_stream.out_uint8(0);
-        this->out_stream.out_uint8(1);
-        this->out_stream.out_uint16_le(len - 14);
-        this->out_stream.out_uint8(RDP_DATA_PDU_UPDATE);
-        this->out_stream.out_uint8(0);
-        this->out_stream.out_uint16_le(0);
+        this->stream.p = this->stream.rdp_hdr;
+        int len = this->stream.end - this->stream.p;
+        this->stream.out_uint16_le(len);
+        this->stream.out_uint16_le(0x10 | RDP_PDU_DATA);
+        this->stream.out_uint16_le(this->rdp_layer.mcs_channel);
+        this->stream.out_uint32_le(this->rdp_layer.share_id);
+        this->stream.out_uint8(0);
+        this->stream.out_uint8(1);
+        this->stream.out_uint16_le(len - 14);
+        this->stream.out_uint8(RDP_DATA_PDU_UPDATE);
+        this->stream.out_uint8(0);
+        this->stream.out_uint16_le(0);
 
-        this->rdp_layer.sec_layer.server_sec_send(this->out_stream, MCS_GLOBAL_CHANNEL);
+        this->rdp_layer.sec_layer.server_sec_send(this->stream, MCS_GLOBAL_CHANNEL);
 
         this->order_count = 0;
     }
@@ -243,8 +241,8 @@ public:
     {
         LOG(LOG_INFO, "reserve_order(%u)", asked_size);
         if (this->order_count > 0) {
-            size_t max_packet_size = std::min(this->out_stream.capacity, (size_t)16384);
-            size_t used_size = (size_t)(this->out_stream.p - this->order_count_ptr);
+            size_t max_packet_size = std::min(this->stream.capacity, (size_t)16384);
+            size_t used_size = (size_t)(this->stream.p - this->order_count_ptr);
 
             if ((used_size + asked_size + 100) > max_packet_size) {
                 this->force_send();
@@ -264,18 +262,18 @@ public:
     {
         LOG(LOG_INFO, "Orders::force_init()");
         #warning see with order limit : is this big enough ?
-        this->out_stream.init(16384);
+        this->stream.init(16384);
 
-        this->rdp_layer.sec_layer.server_sec_init(this->out_stream);
+        this->rdp_layer.sec_layer.server_sec_init(this->stream);
         #warning we should define some kind of OrdersStream, to buffer in orders
-        this->out_stream.rdp_hdr = this->out_stream.p;
-        this->out_stream.p += 18;
+        this->stream.rdp_hdr = this->stream.p;
+        this->stream.p += 18;
 
-        this->out_stream.out_uint16_le(RDP_UPDATE_ORDERS);
-        this->out_stream.out_clear_bytes(2); /* pad */
-        this->order_count_ptr = this->out_stream.p;
-        this->out_stream.out_clear_bytes(2); /* number of orders, set later */
-        this->out_stream.out_clear_bytes(2); /* pad */
+        this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
+        this->stream.out_clear_bytes(2); /* pad */
+        this->order_count_ptr = this->stream.p;
+        this->stream.out_clear_bytes(2); /* number of orders, set later */
+        this->stream.out_clear_bytes(2); /* pad */
     }
 
     void start_capture(int width, int height, bool flag, char * path, const char * codec_id, const char * quality, int timezone)
@@ -410,7 +408,7 @@ public:
             this->reserve_order(23);
 
             RDPOrderCommon newcommon(RDP::RECT, clip);
-            cmd.emit(this->out_stream, newcommon, this->common, this->opaquerect);
+            cmd.emit(this->stream, newcommon, this->common, this->opaquerect);
             this->common = newcommon;
             this->opaquerect = cmd;
 
@@ -427,7 +425,7 @@ public:
             // this one is used when dragging a visible window on screen
             this->reserve_order(25);
             RDPOrderCommon newcommon(RDP::SCREENBLT, clip);
-            cmd.emit(this->out_stream, newcommon, this->common, this->scrblt);
+            cmd.emit(this->stream, newcommon, this->common, this->scrblt);
             this->common = newcommon;
             this->scrblt = cmd;
 
@@ -444,7 +442,7 @@ public:
             this->reserve_order(21);
 
             RDPOrderCommon newcommon(RDP::DESTBLT, clip);
-            cmd.emit(this->out_stream, newcommon, this->common, this->destblt);
+            cmd.emit(this->stream, newcommon, this->common, this->destblt);
             this->common = newcommon;
             this->destblt = cmd;
 
@@ -463,7 +461,7 @@ public:
 
             using namespace RDP;
             RDPOrderCommon newcommon(PATBLT, clip);
-            cmd.emit(this->out_stream, newcommon, this->common, this->patblt);
+            cmd.emit(this->stream, newcommon, this->common, this->patblt);
             this->common = newcommon;
             this->patblt = cmd;
 
@@ -482,7 +480,7 @@ public:
             LOG(LOG_INFO, "really really mem_blt()");
             this->reserve_order(30);
             RDPOrderCommon newcommon(MEMBLT, clip);
-            cmd.emit(this->out_stream, newcommon, this->common, this->memblt);
+            cmd.emit(this->stream, newcommon, this->common, this->memblt);
             this->common = newcommon;
             this->memblt = cmd;
             LOG(LOG_INFO, "well, I lied, maybe mem_blt() it still has to be sent");
@@ -507,7 +505,7 @@ public:
         if (!clip.isempty() && !clip.intersect(rect).isempty()){
             this->reserve_order(32);
             RDPOrderCommon newcommon(LINE, clip);
-            cmd.emit(this->out_stream, newcommon, this->common, this->lineto);
+            cmd.emit(this->stream, newcommon, this->common, this->lineto);
             this->common = newcommon;
             this->lineto = cmd;
             if (this->capture){
@@ -522,7 +520,7 @@ public:
         if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()){
             this->reserve_order(297);
             RDPOrderCommon newcommon(RDP::GLYPHINDEX, clip);
-            cmd.emit(this->out_stream, newcommon, this->common, this->glyphindex);
+            cmd.emit(this->stream, newcommon, this->common, this->glyphindex);
             this->common = newcommon;
             this->glyphindex = cmd;
             if (this->capture){
@@ -538,7 +536,7 @@ public:
         this->reserve_order(2000);
         RDPColCache newcmd(cacheIndex);
         memcpy(newcmd.palette[cacheIndex], palette, sizeof(BGRPalette));
-        newcmd.emit(this->out_stream);
+        newcmd.emit(this->stream);
     }
 
     #warning give a secondary order as input to brush_cache
@@ -558,7 +556,7 @@ public:
         newcmd.type = 0x81;
         newcmd.size = size;
         newcmd.data = this->cache.brush_items[index].pattern;
-        newcmd.emit(this->out_stream, index);
+        newcmd.emit(this->stream, index);
         newcmd.data = 0;
     }
 
@@ -578,7 +576,7 @@ public:
         init_palette332BGR(palette332);
 
         RDPBmpCache bmp_order(this->rdp_layer.client_info.bpp, &palette332, entry->pbmp, cache_id, cache_idx, &this->rdp_layer.client_info);
-        bmp_order.emit(this->out_stream);
+        bmp_order.emit(this->stream);
 
         if (this->capture){
             this->capture->bitmap_cache(cache_id, cache_idx, entry);
@@ -645,7 +643,7 @@ public:
         newcmd.glyphData_cx = font_char.width;
         newcmd.glyphData_cy = font_char.height;
         newcmd.glyphData_aj = font_char.data;
-        newcmd.emit(this->out_stream);
+        newcmd.emit(this->stream);
         newcmd.glyphData_aj = 0;
     }
 
