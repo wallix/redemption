@@ -158,11 +158,12 @@ LICENCE_TAG_HOST               = 0x0010,
 
 /* RDP PDU codes */
 enum {
-RDP_PDU_DEMAND_ACTIVE          = 1,
-RDP_PDU_CONFIRM_ACTIVE         = 3,
-RDP_PDU_REDIRECT               = 4,
-RDP_PDU_DEACTIVATE             = 6,
-RDP_PDU_DATA                   = 7,
+PDUTYPE_DEMANDACTIVEPDU        = 1,
+PDUTYPE_CONFIRMACTIVEPDU       = 3,
+RDP_PDU_REDIRECT               = 4, // This one is not documented...
+PDUTYPE_DEACTIVATEALLPDU       = 6,
+PDUTYPE_DATAPDU                = 7,
+PDUTYPE_SERVER_REDIR_PKT       = 10,
 };
 
 enum {

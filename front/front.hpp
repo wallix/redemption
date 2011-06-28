@@ -203,7 +203,7 @@ public:
         this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
         this->order_count = 0;
 
-        this->rdp_layer.send_rdp_packet(this->stream, RDP_DATA_PDU_UPDATE, offset_header);
+        this->rdp_layer.send_rdp_packet(this->stream, PDUTYPE_DATAPDU, RDP_DATA_PDU_UPDATE, offset_header);
     }
 
 

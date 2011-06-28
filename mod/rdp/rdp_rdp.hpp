@@ -267,15 +267,24 @@ struct rdp_rdp {
 
             int sec_flags = SEC_ENCRYPT;
             //sec_flags = RDP5_FLAG | SEC_ENCRYPT;
-            int caplen = RDP_CAPLEN_GENERAL + RDP_CAPLEN_BITMAP + RDP_CAPLEN_ORDER +
-                    RDP_CAPLEN_BMPCACHE + RDP_CAPLEN_COLCACHE +
-                    RDP_CAPLEN_ACTIVATE + RDP_CAPLEN_CONTROL +
-                    RDP_CAPLEN_POINTER_MONO + RDP_CAPLEN_SHARE +
-                    0x58 + 0x08 + 0x08 + 0x34 /* unknown caps */  +
-                    4 /* w2k fix, why? */ ;
+            int caplen = RDP_CAPLEN_GENERAL
+                       + RDP_CAPLEN_BITMAP
+                       + RDP_CAPLEN_ORDER
+                       + RDP_CAPLEN_BMPCACHE
+                       + RDP_CAPLEN_COLCACHE
+                       + RDP_CAPLEN_ACTIVATE
+                       + RDP_CAPLEN_CONTROL
+                       + RDP_CAPLEN_POINTER_MONO
+                       + RDP_CAPLEN_SHARE
+                        /* unknown caps */
+                       + 0x58
+                       + 0x08
+                       + 0x08
+                       + 0x34
+                       + 4 /* w2k fix, why? */ ;
             this->sec_layer.rdp_sec_init(stream, sec_flags);
             stream.out_uint16_le(2 + 14 + caplen + sizeof(RDP_SOURCE));
-            stream.out_uint16_le((RDP_PDU_CONFIRM_ACTIVE | 0x10)); /* Version 1 */
+            stream.out_uint16_le((PDUTYPE_CONFIRMACTIVEPDU | 0x10)); /* Version 1 */
             stream.out_uint16_le((this->sec_layer.mcs_layer.userid + 1001));
             stream.out_uint32_le(this->share_id);
             stream.out_uint16_le(0x3ea); /* userid */
@@ -681,7 +690,7 @@ struct rdp_rdp {
             /* Added in order to adapt to version 5 packet */
             if (this->use_rdp5)
             {
-                stream.out_uint16_le(RDP_PDU_DATA | 0x10);
+                stream.out_uint16_le(PDUTYPE_DATAPDU | 0x10);
                 stream.out_uint16_le(this->sec_layer.mcs_layer.userid);
                 stream.out_uint32_le(this->share_id);
                 stream.out_uint8(0);  /* pad */
@@ -714,7 +723,7 @@ struct rdp_rdp {
             stream.p = stream.rdp_hdr;
             int len = stream.end - stream.p;
             stream.out_uint16_le(len);
-            stream.out_uint16_le(RDP_PDU_DATA | 0x10);
+            stream.out_uint16_le(PDUTYPE_DATAPDU | 0x10);
             stream.out_uint16_le(this->sec_layer.mcs_layer.userid);
             stream.out_uint32_le(this->share_id);
             stream.out_uint8(0); /* pad */

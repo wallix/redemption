@@ -226,17 +226,18 @@ struct mod_rdp : public client_mod {
                 type = 0;
                 this->rdp_layer.recv(this->in_stream, &type, this);
                 switch (type) {
-                case RDP_PDU_DATA:
+                case PDUTYPE_DATAPDU:
                     this->rdp_layer.process_data_pdu(this->in_stream, this);
                     break;
-                case RDP_PDU_DEMAND_ACTIVE:
+                case PDUTYPE_DEMANDACTIVEPDU:
                     this->rdp_layer.process_demand_active(this->in_stream, this);
                     this->mod_bpp = this->rdp_layer.bpp;
                     this->up_and_running = 1;
                     break;
-                case RDP_PDU_DEACTIVATE:
+                case PDUTYPE_DEACTIVATEALLPDU:
                     this->up_and_running = 0;
                     break;
+                #warning this PDUTYPE is undocumented and seems to mean the same as type 10
                 case RDP_PDU_REDIRECT:
                     break;
                 case 0:
