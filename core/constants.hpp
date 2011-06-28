@@ -166,16 +166,45 @@ PDUTYPE_DATAPDU                = 7,
 PDUTYPE_SERVER_REDIR_PKT       = 10,
 };
 
+// [MS-RDPBCGR] 2.2.8.1.1.1.2 Share Data Header (TS_SHAREDATAHEADER)
+// +-----------------------------------+---------------------------------------+
+// | 48 PDUTYPE2_DRAWNINEGRID_ERROR_PDU| DrawNineGrid Cache Error PDU          |
+// |                                   | (see [MS-RDPEGDI] section 2.2.2.3.3)  |
+// +-----------------------------------+---------------------------------------+
+// | 49 PDUTYPE2_DRAWGDIPLUS_ERROR_PDU | GDI+ Error PDU (see [MS-RDPEGDI]      |
+// |                                   |  section 2.2.2.3.4)                   |
+// +-----------------------------------+---------------------------------------+
+// | 50 PDUTYPE2_ARC_STATUS_PDU        | Auto-Reconnect Status PDU             |
+// |                                   |    (section 2.2.4.1.1)                |
+// +-----------------------------------+---------------------------------------+
+
 enum {
-RDP_DATA_PDU_UPDATE            = 2,
-RDP_DATA_PDU_CONTROL           = 20,
-RDP_DATA_PDU_POINTER           = 27,
-RDP_DATA_PDU_INPUT             = 28,
-RDP_DATA_PDU_SYNCHRONISE       = 31,
-RDP_DATA_PDU_BELL              = 34,
-RDP_DATA_PDU_LOGON             = 38,
-RDP_DATA_PDU_FONT2             = 39,
-RDP_DATA_PDU_DISCONNECT        = 47,
+PDUTYPE2_UPDATE                = 2,  // Update PDU (section 2.2.9.1.1.3)
+PDUTYPE2_CONTROL               = 20, // Control PDU (section 2.2.1.15.1)
+PDUTYPE2_POINTER               = 27, // Pointer Update PDU (section 2.2.9.1.1.4)
+PDUTYPE2_INPUT                 = 28, // Input PDU (section 2.2.8.1.1.3)
+PDUTYPE2_SYNCHRONIZE           = 31, // Synchronize PDU (section 2.2.1.14.1)
+PDUTYPE2_REFRESH_RECT          = 33, // Refresh Rect PDU (section 2.2.11.2.1)
+PDUTYPE2_PLAY_SOUND            = 34, // Play Sound PDU (section 2.2.9.1.1.5.1)
+PDUTYPE2_SUPPRESS_OUTPUT       = 35, // Suppress Output PDU (section 2.2.11.3.1)
+PDUTYPE2_SHUTDOWN_REQUEST      = 36, // Shutdown Request PDU (section 2.2.2.2.1)
+PDUTYPE2_SHUTDOWN_DENIED       = 37, // Shutdown Request Denied PDU
+                                     // (section 2.2.2.3.1)
+PDUTYPE2_SAVE_SESSION_INFO     = 38, // Save Session Info PDU
+                                     // (section 2.2.10.1.1)
+PDUTYPE2_FONTLIST              = 39, // Font List PDU (section 2.2.1.18.1)
+PDUTYPE2_FONTMAP               = 40, // Font Map PDU (section 2.2.1.22.1)
+PDUTYPE2_SET_KEYBOARD_INDICATORS = 41,     // Set Keyboard Indicators PDU
+                                           //   (section 2.2.8.2.1.1)
+PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST = 43, // Persistent Key List PDU
+                                           // (section 2.2.1.17.1)
+PDUTYPE2_BITMAPCACHE_ERROR_PDU = 44,       // Bitmap Cache Error PDU (see
+                                           // [MS-RDPEGDI] section 2.2.2.3.1)
+PDUTYPE2_SET_KEYBOARD_IME_STATUS = 45,     // Set Keyboard IME Status PDU
+                                           // (section 2.2.8.2.2.1)
+PDUTYPE2_OFFSCRCACHE_ERROR_PDU = 46,       // Offscreen Bitmap Cache Error PDU
+                                           // (see [MS-RDPEGDI] section 2.2.2.3.2)  |
+PDUTYPE2_SET_ERROR_INFO_PDU        = 47,   // Set Error Info PDU (section 2.2.5.1.1)
 };
 
 enum {

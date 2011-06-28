@@ -516,7 +516,7 @@ struct rdp_rdp {
             stream.out_uint16_le(0); /* userid */
             stream.out_uint32_le(0); /* control id */
             stream.mark_end();
-            this->send_data(stream, RDP_DATA_PDU_CONTROL, MCS_GLOBAL_CHANNEL);
+            this->send_data(stream, PDUTYPE2_CONTROL, MCS_GLOBAL_CHANNEL);
         }
 
 
@@ -526,7 +526,7 @@ struct rdp_rdp {
             stream.out_uint16_le(1); /* type */
             stream.out_uint16_le(1002);
             stream.mark_end();
-            this->send_data(stream, RDP_DATA_PDU_SYNCHRONISE, MCS_GLOBAL_CHANNEL);
+            this->send_data(stream, PDUTYPE2_SYNCHRONIZE, MCS_GLOBAL_CHANNEL);
         }
 
         void send_fonts(Stream & stream, int seq) throw(Error)
@@ -537,7 +537,7 @@ struct rdp_rdp {
             stream.out_uint16_le(seq); /* unknown */
             stream.out_uint16_le(0x32); /* entry size */
             stream.mark_end();
-            this->send_data(stream, RDP_DATA_PDU_FONT2, MCS_GLOBAL_CHANNEL);
+            this->send_data(stream, PDUTYPE2_FONTLIST, MCS_GLOBAL_CHANNEL);
         }
 
     #define RDP5_FLAG 0x0030
@@ -753,7 +753,7 @@ struct rdp_rdp {
             stream.out_uint16_le(param1);
             stream.out_uint16_le(param2);
             stream.mark_end();
-            this->send_data(stream, RDP_DATA_PDU_INPUT, MCS_GLOBAL_CHANNEL);
+            this->send_data(stream, PDUTYPE2_INPUT, MCS_GLOBAL_CHANNEL);
         }
 
         void send_invalidate(Stream & stream,int left, int top, int width, int height) throw(Error)
@@ -834,22 +834,22 @@ struct rdp_rdp {
             clen = stream.in_uint16_le();
             clen -= 18;
             switch (data_pdu_type) {
-            case RDP_DATA_PDU_UPDATE:
+            case PDUTYPE2_UPDATE:
                 this->process_update_pdu(stream, mod);
                 break;
-            case RDP_DATA_PDU_CONTROL:
+            case PDUTYPE2_CONTROL:
                 break;
-            case RDP_DATA_PDU_SYNCHRONISE:
+            case PDUTYPE2_SYNCHRONIZE:
                 break;
-            case RDP_DATA_PDU_POINTER:
+            case PDUTYPE2_POINTER:
                 this->process_pointer_pdu(stream, mod);
                 break;
-            case RDP_DATA_PDU_BELL:
+            case PDUTYPE2_PLAY_SOUND:
                 break;
-            case RDP_DATA_PDU_LOGON:
+            case PDUTYPE2_SAVE_SESSION_INFO:
 //                LOG(LOG_INFO, "DATA PDU LOGON\n");
                 break;
-            case RDP_DATA_PDU_DISCONNECT:
+            case PDUTYPE2_SET_ERROR_INFO_PDU:
 //                LOG(LOG_INFO, "DATA PDU DISCONNECT\n");
                 this->process_disconnect_pdu(stream);
                 break;

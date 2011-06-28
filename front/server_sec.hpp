@@ -576,7 +576,7 @@ struct server_sec {
             this->server_sec_sign(stream.p, 8, stream.p + 8, datalen);
             this->server_sec_encrypt(stream.p + 8, datalen);
         } else {
-            stream.out_uint32_le( 0);
+            stream.out_uint32_le(0);
         }
         this->mcs_layer.server_mcs_send(stream, chan);
     }

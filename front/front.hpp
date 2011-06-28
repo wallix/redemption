@@ -85,7 +85,6 @@ public:
     int timezone;
 private:
     struct server_rdp rdp_layer;
-    uint8_t dummy[1024];
 
 public:
     // Internal state of orders
@@ -105,7 +104,7 @@ public:
 
     Front(SocketTransport * trans, Inifile * ini)
     :
-    stream(16384),
+    stream(4096),
     cache(),
     bmp_cache(0),
     capture(0),
@@ -203,7 +202,7 @@ public:
         this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
         this->order_count = 0;
 
-        this->rdp_layer.send_rdp_packet(this->stream, PDUTYPE_DATAPDU, RDP_DATA_PDU_UPDATE, offset_header);
+        this->rdp_layer.send_rdp_packet(this->stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->offset_header);
     }
 
 
@@ -226,12 +225,12 @@ public:
     #warning we should define some kind of OrdersStream, to buffer in orders
     void reserve_order(size_t asked_size)
     {
-        LOG(LOG_INFO, "reserve_order(%u)", asked_size);
+        LOG(LOG_INFO, "reserve_order[%u](%u) remains=%u", this->order_count, asked_size, std::min(this->stream.capacity, (size_t)4096) - this->stream.get_offset(0));
         if (this->order_count > 0) {
-            size_t max_packet_size = std::min(this->stream.capacity, (size_t)16384);
+            size_t max_packet_size = std::min(this->stream.capacity, (size_t)4096);
             size_t used_size = this->stream.get_offset(0);
 
-            if ((used_size + asked_size + 100) > max_packet_size) {
+            if (this->order_count > 3 || (used_size + asked_size + 100) > max_packet_size) {
                 this->force_send();
             }
         }
@@ -315,7 +314,7 @@ public:
 
         this->rdp_layer.sec_layer.server_sec_init(this->stream);
         #warning we should define some kind of OrdersStream, to buffer in orders
-        this->offset_header = this->stream.get_offset(0);
+        this->offset_header = this->stream.p - this->stream.data;
 
         this->stream.out_clear_bytes(18); // Share Header, we will fill it later
         this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
@@ -389,7 +388,6 @@ public:
 
     void activate_and_process_data(Callback & cb)
     {
-        LOG(LOG_INFO, "activate_and_process_data()");
         this->rdp_layer.activate_and_process_data(cb);
     }
 
@@ -658,12 +656,7 @@ public:
                     LOG(LOG_INFO, "send_type=%u cache_ref=%u cache_idx=%u", send_type, cache_id, cache_idx);
 
                     if (send_type == BITMAP_ADDED_TO_CACHE){
-                        LOG(LOG_INFO, "ADDED TO CACHE");
                         this->bitmap_cache(cache_id, cache_idx);
-                    }
-                    else {
-                        this->bitmap_cache(cache_id, cache_idx);
-                        LOG(LOG_INFO, "NOT ADDED TO CACHE, but send it anyway");
                     }
 
                     const RDPMemBlt cmd(cache_id + palette_id * 256, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
@@ -676,7 +669,7 @@ public:
     #warning give a secondary order as input to glyph_cache
     void glyph_cache(const FontChar & font_char, int font_index, int char_index)
     {
-        LOG(LOG_INFO, "glyph_front()");
+        LOG(LOG_INFO, "glyph_front(size=%u font_index=%u char_index=%u font_char.offset=%u font_char.baseline=%u )");
         this->reserve_order(font_char.datasize() + 18);
 
         using namespace RDP;

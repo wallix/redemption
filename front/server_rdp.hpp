@@ -135,7 +135,8 @@ struct server_rdp {
             stream.out_uint8(g);
             stream.out_uint8(r);
         }
-        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, RDP_DATA_PDU_UPDATE, stream.p - stream.rdp_hdr);
+        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, stream.rdp_hdr - stream.data);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
 // [MS-RDPBCGR] 2.2.8.1.1.1.1 Share Control Header (TS_SHARECONTROLHEADER)
@@ -331,7 +332,6 @@ struct server_rdp {
         stream.set_out_uint16_le(0,                   offset_hdr+16);
 
         LOG(LOG_INFO, "RDP Packet #%u (type=%u type2=%u)", this->packet_number++, PDUTYPE_DATAPDU, pdu_type2);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
 //    2.2.9.1.1.4     Server Pointer Update PDU (TS_POINTER_PDU)
@@ -527,7 +527,8 @@ struct server_rdp {
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
 
-        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, RDP_DATA_PDU_POINTER, stream.rdp_hdr - stream.data);
+        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, stream.rdp_hdr - stream.data);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
 
@@ -573,7 +574,8 @@ struct server_rdp {
         stream.out_uint16_le(0); /* pad */
         stream.out_uint16_le(cache_idx);
 
-        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, RDP_DATA_PDU_POINTER, stream.p - stream.rdp_hdr);
+        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, stream.rdp_hdr - stream.data);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
     void activate_and_process_data(Callback & cb)
@@ -713,7 +715,8 @@ struct server_rdp {
         stream.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
         stream.out_clear_bytes(2);
 
-        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, RDP_DATA_PDU_UPDATE, stream.p - stream.rdp_hdr);
+        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, stream.rdp_hdr - stream.data);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
     void server_rdp_incoming() throw (Error)
@@ -746,6 +749,7 @@ struct server_rdp {
         caps_size_ptr = stream.p;
         stream.out_clear_bytes(2);
         stream.out_copy_bytes("RDP", 4);
+
         /* 4 byte num caps, set later */
         caps_count_ptr = stream.p;
         stream.out_clear_bytes(4);
@@ -1064,10 +1068,104 @@ struct server_rdp {
         }
     }
 
-    /*****************************************************************************/
-    void server_rdp_send_control(int action) throw (Error)
+// 2.2.1.19 Server Synchronize PDU
+// ===============================
+
+// The Server Synchronize PDU is an RDP Connection Sequence PDU sent from server
+// to client during the Connection Finalization phase (see section 1.3.1.1). It
+// is sent after receiving the Confirm Active PDU (section 2.2.1.13.2).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224] section 13.7.
+
+// mcsSDin (variable): Variable-length PER-encoded MCS Domain PDU which
+//   encapsulates an MCS Send Data Indication structure, as specified in [T125]
+//   (the ASN.1 structure definitions are given in section 7, parts 7 and 10 of
+//   [T125]). The userData field of the MCS Send Data Indication contains a
+//   Security Header and the Synchronize PDU Data (section 2.2.1.14.1).
+
+// securityHeader (variable): Optional security header. If the Encryption Level
+//   (sections 5.3.2 and 2.2.1.4.3) selected by the server is greater than
+//   ENCRYPTION_LEVEL_NONE (0) and the Encryption Method (sections 5.3.2 and
+//   2.2.1.4.3) selected by the server is greater than ENCRYPTION_METHOD_NONE
+//   (0) then this field will contain one of the following headers:
+
+//   - Basic Security Header (section 2.2.8.1.1.2.1) if the Encryption Level
+//     selected by the server (see sections 5.3.2 and 2.2.1.4.3) is
+//     ENCRYPTION_LEVEL_LOW (1).
+
+//  - Non-FIPS Security Header (section 2.2.8.1.1.2.2) if the Encryption Level
+//    selected by the server (see sections 5.3.2 and 2.2.1.4.3) is
+//    ENCRYPTION_LEVEL_CLIENT_COMPATIBLE (2), or ENCRYPTION_LEVEL_HIGH (3).
+
+//  - FIPS Security Header (section 2.2.8.1.1.2.3) if the Encryption Level
+//    selected by the server (see sections 5.3.2 and 2.2.1.4.3) is
+//    ENCRYPTION_LEVEL_FIPS (4).
+
+// If the Encryption Level (sections 5.3.2 and 2.2.1.4.3) selected by the server
+// is ENCRYPTION_LEVEL_NONE (0) and the Encryption Method (sections 5.3.2 and
+// 2.2.1.4.3) selected by the server is ENCRYPTION_METHOD_NONE (0), then this
+// header is not included in the PDU.
+
+// synchronizePduData (22 bytes): The contents of the Synchronize PDU as
+// described in section 2.2.1.14.1.
+
+// 2.2.1.14.1 Synchronize PDU Data (TS_SYNCHRONIZE_PDU)
+// ====================================================
+// The TS_SYNCHRONIZE_PDU structure is a standard T.128 Synchronize PDU (see
+// [T128] section 8.6.1).
+
+// shareDataHeader (18 bytes): Share Control Header (section 2.2.8.1.1.1.1)
+//   containing information about the packet. The type subfield of the pduType
+//   field of the Share Control Header MUST be set to PDUTYPE_DATAPDU (7). The
+//   pduType2 field of the Share Data Header MUST be set to PDUTYPE2_SYNCHRONIZE
+//   (31).
+
+// messageType (2 bytes): A 16-bit, unsigned integer. The message type. This
+//   field MUST be set to SYNCMSGTYPE_SYNC (1).
+
+// targetUser (2 bytes): A 16-bit, unsigned integer. The MCS channel ID of the
+//   target user.
+
+    void server_rdp_send_synchronize()
     {
-        #warning we should create some RDPData object created on init and sent before destruction
+        Stream stream(8192);
+        this->sec_layer.server_sec_init(stream);
+        stream.rdp_hdr = stream.p;
+        stream.p += 18;
+
+        stream.out_uint16_le(1); /* messageType */
+        stream.out_uint16_le(1002); /* control id */
+
+        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, stream.rdp_hdr - stream.data);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+    }
+
+// 2.2.1.15.1 Control PDU Data (TS_CONTROL_PDU)
+// ============================================
+
+// The TS_CONTROL_PDU structure is a standard T.128 Synchronize PDU (see [T128]
+// section 8.12).
+
+// shareDataHeader (18 bytes): Share Data Header (section 2.2.8.1.1.1.2)
+//   containing information about the packet. The type subfield of the pduType
+//   field of the Share Control Header (section 2.2.8.1.1.1.1) MUST be set to
+//   PDUTYPE_DATAPDU (7). The pduType2 field of the Share Data Header MUST be set
+//   to PDUTYPE2_CONTROL (20).
+
+// action (2 bytes): A 16-bit, unsigned integer. The action code.
+// 0x0001 CTRLACTION_REQUEST_CONTROL Request control
+// 0x0002 CTRLACTION_GRANTED_CONTROL Granted control
+// 0x0003 CTRLACTION_DETACH Detach
+// 0x0004 CTRLACTION_COOPERATE Cooperate
+
+// grantId (2 bytes): A 16-bit, unsigned integer. The grant identifier.
+
+// controlId (4 bytes): A 32-bit, unsigned integer. The control identifier.
+
+    void server_rdp_send_control(int action)
+    {
         Stream stream(8192);
         this->sec_layer.server_sec_init(stream);
         stream.rdp_hdr = stream.p;
@@ -1077,15 +1175,16 @@ struct server_rdp {
         stream.out_uint16_le(0); /* userid */
         stream.out_uint32_le(1002); /* control id */
 
-        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, RDP_DATA_PDU_CONTROL, stream.p - stream.rdp_hdr);
+        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, stream.rdp_hdr - stream.data);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
 
 
     /*****************************************************************************/
-    void server_rdp_send_unknown1() throw (Error)
+    void server_rdp_send_fontmap() throw (Error)
     {
-    static uint8_t g_unknown1[172] = { 0xff, 0x02, 0xb6, 0x00, 0x28, 0x00, 0x00, 0x00,
+    static uint8_t g_fontmap[172] = { 0xff, 0x02, 0xb6, 0x00, 0x28, 0x00, 0x00, 0x00,
                                 0x27, 0x00, 0x27, 0x00, 0x03, 0x00, 0x04, 0x00,
                                 0x00, 0x00, 0x26, 0x00, 0x01, 0x00, 0x1e, 0x00,
                                 0x02, 0x00, 0x1f, 0x00, 0x03, 0x00, 0x1d, 0x00,
@@ -1114,9 +1213,10 @@ struct server_rdp {
         this->sec_layer.server_sec_init(stream);
         stream.rdp_hdr = stream.p;
         stream.p += 18;
-        stream.out_copy_bytes((char*)g_unknown1, 172);
+        stream.out_copy_bytes((char*)g_fontmap, 172);
 
-        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, 0x28, stream.p - stream.rdp_hdr);
+        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTMAP, stream.rdp_hdr - stream.data);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
     /* PDUTYPE_DATAPDU */
@@ -1128,9 +1228,9 @@ struct server_rdp {
         stream.in_uint8(); // ctype
         stream.in_uint16_le(); // clen
         switch (data_type) {
-        case RDP_DATA_PDU_POINTER: /* 27(0x1b) */
+        case PDUTYPE2_POINTER: /* 27(0x1b) */
             break;
-        case RDP_DATA_PDU_INPUT: /* 28(0x1c) */
+        case PDUTYPE2_INPUT: /* 28(0x1c) */
             {
                 int num_events = stream.in_uint16_le();
                 stream.skip_uint8(2); /* pad */
@@ -1151,24 +1251,15 @@ struct server_rdp {
                 }
             }
             break;
-        case RDP_DATA_PDU_CONTROL: /* 20(0x14) */
+        case PDUTYPE2_CONTROL: /* 20(0x14) */
             {
                 int action = stream.in_uint16_le();
                 stream.skip_uint8(2); /* user id */
                 stream.skip_uint8(4); /* control id */
                 if (action == RDP_CTL_REQUEST_CONTROL) {
-                    #warning we should create some RDPData object created on init and sent before destruction
-                    Stream stream(8192);
-                    this->sec_layer.server_sec_init(stream);
-                    stream.rdp_hdr = stream.p;
-                    stream.p += 18;
-                    stream.out_uint16_le(1);
-                    stream.out_uint16_le(1002);
-
-                    this->send_rdp_packet(stream, PDUTYPE_DATAPDU, RDP_DATA_PDU_SYNCHRONISE, stream.p - stream.rdp_hdr);
+//                    this->server_rdp_send_synchronize();
                     this->server_rdp_send_control(RDP_CTL_COOPERATE);
                     this->server_rdp_send_control(RDP_CTL_GRANT_CONTROL);
-
                 }
                 else {
                     #warning we sometimes get action 4. Add support for it
@@ -1178,9 +1269,9 @@ struct server_rdp {
                 }
             }
             break;
-        case RDP_DATA_PDU_SYNCHRONISE: /* 31(0x1f) */
+        case PDUTYPE2_SYNCHRONIZE:
             break;
-        case 33: /* 33(0x21) ?? Invalidate an area I think */
+        case PDUTYPE2_REFRESH_RECT:
             {
                 /* int op = */ stream.in_uint32_le();
                 int left = stream.in_uint16_le();
@@ -1192,26 +1283,26 @@ struct server_rdp {
                 cb.callback(0x4444, left, top, cx, cy);
             }
             break;
-        case 35: /* 35(0x23) */
-            /* 35 ?? this comes when minimuzing a full screen mstsc.exe 2600 */
-            /* I think this is saying the client no longer wants screen */
-            /* updates and it will issue a 33 above to catch up */
-            /* so minimized apps don't take bandwidth */
+        case PDUTYPE2_SUPPRESS_OUTPUT:
+            // PDUTYPE2_SUPPRESS_OUTPUT comes when minimizing a full screen
+            // mstsc.exe 2600. I think this is saying the client no longer wants
+            // screen updates and it will issue a PDUTYPE2_REFRESH_RECT above
+            // to catch up so minimized apps don't take bandwidth
             break;
-        case 36: /* 36(0x24) ?? disconnect query? */
+        case PDUTYPE2_SHUTDOWN_REQUEST:
             {
-                /* when this message comes, send a 37 back so the client */
-                /* is sure the connection is alive and it can ask if user */
-                /* really wants to disconnect */
+                // when this message comes, send a PDUTYPE2_SHUTDOWN_DENIED back
+                // so the client is sure the connection is alive and it can ask
+                // if user really wants to disconnect */
                 Stream stream(8192);
                 this->sec_layer.server_sec_init(stream);
                 stream.rdp_hdr = stream.p;
                 stream.p += 18;
-                #warning check PDU
-                this->send_rdp_packet(stream, PDUTYPE_DATAPDU, 37, stream.p - stream.rdp_hdr);
+                this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_SHUTDOWN_DENIED, stream.rdp_hdr - stream.data);
+                this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
             }
             break;
-        case RDP_DATA_PDU_FONT2: /* 39(0x27) */
+        case PDUTYPE2_FONTLIST: /* 39(0x27) */
             stream.skip_uint8(2); /* num of fonts */
             stream.skip_uint8(2); /* unknown */
             {
@@ -1221,7 +1312,7 @@ struct server_rdp {
                 /* after second font message, we are up and running */
                 if (seq == 2 || seq == 3)
                 {
-                    this->server_rdp_send_unknown1();
+                    this->server_rdp_send_fontmap();
                     this->up_and_running = 1;
                     this->server_rdp_send_data_update_sync();
                 }
