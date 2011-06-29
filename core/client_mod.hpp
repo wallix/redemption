@@ -391,8 +391,8 @@ struct client_mod : public Callback {
     #warning this should become BITMAP UPDATE, we should be able to send bitmaps either through orders and cache or through BITMAP UPDATE
     void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy)
     {
-        LOG(LOG_INFO, "mod::bitmap_update mod_bpp=%d front_bpp=%d INITIAL BITMAP FILE %u",
-            this->mod_bpp, this->get_front_bpp(), bitmap.bmp_size(this->mod_bpp));
+//        LOG(LOG_INFO, "mod::bitmap_update mod_bpp=%d front_bpp=%d INITIAL BITMAP FILE %u",
+//            this->mod_bpp, this->get_front_bpp(), bitmap.bmp_size(this->mod_bpp));
         if ((this->get_front_bpp() == 8)
         && !this->palette_memblt_sent) {
             this->front.color_cache(this->palette332BGR, 0);

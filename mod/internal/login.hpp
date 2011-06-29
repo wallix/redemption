@@ -406,7 +406,7 @@ struct login_mod : public internal_mod {
         this->screen.child_list.push_back(this->login_window);
         assert(this->login_window->mod == this);
 
-        LOG(LOG_INFO, "loading image...");
+//        LOG(LOG_INFO, "loading image...");
 
         if (regular) {
             /* image */
@@ -421,11 +421,11 @@ struct login_mod : public internal_mod {
             this->screen.child_list.push_back(but);
         }
 
-        LOG(LOG_INFO, "focus on login_window");
+//        LOG(LOG_INFO, "focus on login_window");
 
         this->login_window->focus(this->login_window->rect);
 
-        LOG(LOG_INFO, "focus ok");
+//        LOG(LOG_INFO, "focus ok");
 
         #warning create some set_brush primitive in internal_mod
         #warning we probably need some begin_update, end_update to send brush
@@ -451,14 +451,11 @@ struct login_mod : public internal_mod {
             this->brush.hatch = cache_idx;
             this->brush.style = 0x81;
             if (BRUSH_TO_SEND == this->front.cache.add_brush(pattern, cache_idx)){
-                LOG(LOG_INFO, "Sending brush");
                 this->brush_cache(cache_idx);
-                LOG(LOG_INFO, "brush sent");
             }
         }
         this->screen.Widget_invalidate(this->screen.rect.wh());
-        LOG(LOG_INFO, "invalidate screen done");
-
+//        LOG(LOG_INFO, "invalidate screen done");
     }
 
     virtual ~login_mod()

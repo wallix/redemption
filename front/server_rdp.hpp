@@ -95,7 +95,7 @@ struct server_rdp {
         stream.out_uint32_le(flags);
         assert(channel->chanid == channel_id);
 
-        LOG(LOG_INFO, "RDP Packet #%u (type=?? send to channel)", this->packet_number++);
+//        LOG(LOG_INFO, "RDP Packet #%u (type=?? send to channel)", this->packet_number++);
         this->sec_layer.server_sec_send(stream, channel_id);
     }
 
@@ -331,7 +331,7 @@ struct server_rdp {
         stream.set_out_uint8(0,                       offset_hdr+15);
         stream.set_out_uint16_le(0,                   offset_hdr+16);
 
-        LOG(LOG_INFO, "RDP Packet #%u (type=%u type2=%u)", this->packet_number++, PDUTYPE_DATAPDU, pdu_type2);
+//        LOG(LOG_INFO, "RDP Packet #%u (type=%u type2=%u)", this->packet_number++, PDUTYPE_DATAPDU, pdu_type2);
     }
 
 //    2.2.9.1.1.4     Server Pointer Update PDU (TS_POINTER_PDU)
@@ -892,7 +892,7 @@ struct server_rdp {
         stream.out_uint16_le(0x10 | PDUTYPE_DEMANDACTIVEPDU);
         stream.out_uint16_le(this->mcs_channel);
 
-        LOG(LOG_INFO, "RDP Packet #%u (type=%u)", this->packet_number++, PDUTYPE_DEMANDACTIVEPDU);
+//        LOG(LOG_INFO, "RDP Packet #%u (type=%u)", this->packet_number++, PDUTYPE_DEMANDACTIVEPDU);
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
 
     }
@@ -900,7 +900,7 @@ struct server_rdp {
     /*****************************************************************************/
     void capset_general(Stream & stream, int len)
     {
-        LOG(LOG_INFO, "capset_general");
+//        LOG(LOG_INFO, "capset_general");
         stream.skip_uint8(10);
         /* use_compact_packets is pretty much 'use rdp5' */
         this->client_info.use_compact_packets = stream.in_uint16_le();
@@ -1229,10 +1229,10 @@ struct server_rdp {
         stream.in_uint16_le(); // clen
         switch (data_type) {
         case PDUTYPE2_POINTER: /* 27(0x1b) */
-            LOG(LOG_INFO, "PDUTYPE2_POINTER");
+//            LOG(LOG_INFO, "PDUTYPE2_POINTER");
             break;
         case PDUTYPE2_INPUT: /* 28(0x1c) */
-            LOG(LOG_INFO, "PDUTYPE2_INPUT");
+//            LOG(LOG_INFO, "PDUTYPE2_INPUT");
             {
                 int num_events = stream.in_uint16_le();
                 stream.skip_uint8(2); /* pad */
@@ -1254,7 +1254,7 @@ struct server_rdp {
             }
             break;
         case PDUTYPE2_CONTROL: /* 20(0x14) */
-            LOG(LOG_INFO, "PDUTYPE2_CONTROL");
+//            LOG(LOG_INFO, "PDUTYPE2_CONTROL");
             {
                 int action = stream.in_uint16_le();
                 stream.skip_uint8(2); /* user id */
@@ -1272,11 +1272,11 @@ struct server_rdp {
             }
             break;
         case PDUTYPE2_SYNCHRONIZE:
-            LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");
+//            LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");
             this->server_rdp_send_synchronize();
             break;
         case PDUTYPE2_REFRESH_RECT:
-            LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT");
+//            LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT");
             {
                 /* int op = */ stream.in_uint32_le();
                 int left = stream.in_uint16_le();
@@ -1289,14 +1289,14 @@ struct server_rdp {
             }
             break;
         case PDUTYPE2_SUPPRESS_OUTPUT:
-            LOG(LOG_INFO, "PDUTYPE2_SUPPRESS_OUTPUT");
+//            LOG(LOG_INFO, "PDUTYPE2_SUPPRESS_OUTPUT");
             // PDUTYPE2_SUPPRESS_OUTPUT comes when minimizing a full screen
             // mstsc.exe 2600. I think this is saying the client no longer wants
             // screen updates and it will issue a PDUTYPE2_REFRESH_RECT above
             // to catch up so minimized apps don't take bandwidth
             break;
         case PDUTYPE2_SHUTDOWN_REQUEST:
-            LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_REQUEST");
+//            LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_REQUEST");
             {
                 // when this message comes, send a PDUTYPE2_SHUTDOWN_DENIED back
                 // so the client is sure the connection is alive and it can ask
@@ -1310,7 +1310,7 @@ struct server_rdp {
             }
             break;
         case PDUTYPE2_FONTLIST: /* 39(0x27) */
-            LOG(LOG_INFO, "PDUTYPE2_FONTLIST");
+//            LOG(LOG_INFO, "PDUTYPE2_FONTLIST");
             stream.skip_uint8(2); /* num of fonts */
             stream.skip_uint8(2); /* unknown */
             {
@@ -1352,7 +1352,7 @@ struct server_rdp {
         stream.out_uint16_le(0x10 | PDUTYPE_DEACTIVATEALLPDU);
         stream.out_uint16_le(this->mcs_channel);
 
-        LOG(LOG_INFO, "RDP Packet #%u (type=%u (PDUTYPE_DEACTIVATEALLPDU))", this->packet_number++, PDUTYPE_DEACTIVATEALLPDU);
+//        LOG(LOG_INFO, "RDP Packet #%u (type=%u (PDUTYPE_DEACTIVATEALLPDU))", this->packet_number++, PDUTYPE_DEACTIVATEALLPDU);
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 };

@@ -86,7 +86,7 @@ struct BitmapCache {
         this->big_entries = client_info->cache3_entries;
         this->big_size = client_info->cache3_size;
 
-        LOG(LOG_INFO, "Allocation of bitmap caches");
+//        LOG(LOG_INFO, "Allocation of bitmap caches");
 
         this->small_bitmaps = new BitmapCacheItem[client_info->cache1_entries];
         this->medium_bitmaps = new BitmapCacheItem[client_info->cache2_entries];
@@ -150,7 +150,7 @@ struct BitmapCache {
     {
         int cache_idx = 0;
         Bitmap * pbitmap = new Bitmap(src_bpp, tile, src_cx, src_cy, src_data);
-        LOG(LOG_INFO, "new bitmap size = %u original_bpp=%u src_bpp=%u", pbitmap->bmp_size(src_bpp), pbitmap->original_bpp, src_bpp);
+//        LOG(LOG_INFO, "new bitmap size = %u original_bpp=%u src_bpp=%u", pbitmap->bmp_size(src_bpp), pbitmap->original_bpp, src_bpp);
         BitmapCacheItem cache_item(pbitmap);
         this->bitmap_stamp++;
         int entries = 0;
