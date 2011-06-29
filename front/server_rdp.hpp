@@ -1229,8 +1229,10 @@ struct server_rdp {
         stream.in_uint16_le(); // clen
         switch (data_type) {
         case PDUTYPE2_POINTER: /* 27(0x1b) */
+            LOG(LOG_INFO, "PDUTYPE2_POINTER");
             break;
         case PDUTYPE2_INPUT: /* 28(0x1c) */
+            LOG(LOG_INFO, "PDUTYPE2_INPUT");
             {
                 int num_events = stream.in_uint16_le();
                 stream.skip_uint8(2); /* pad */
@@ -1252,26 +1254,29 @@ struct server_rdp {
             }
             break;
         case PDUTYPE2_CONTROL: /* 20(0x14) */
+            LOG(LOG_INFO, "PDUTYPE2_CONTROL");
             {
                 int action = stream.in_uint16_le();
                 stream.skip_uint8(2); /* user id */
                 stream.skip_uint8(4); /* control id */
-                if (action == RDP_CTL_REQUEST_CONTROL) {
-//                    this->server_rdp_send_synchronize();
-                    this->server_rdp_send_control(RDP_CTL_COOPERATE);
-                    this->server_rdp_send_control(RDP_CTL_GRANT_CONTROL);
-                }
-                else {
-                    #warning we sometimes get action 4. Add support for it
-                    if (action != 4){
+                switch (action){
+                    case RDP_CTL_REQUEST_CONTROL:
+                        this->server_rdp_send_control(RDP_CTL_GRANT_CONTROL);
+                    break;
+                    case RDP_CTL_COOPERATE:
+                        this->server_rdp_send_control(RDP_CTL_COOPERATE);
+                    break;
+                    default:
                         LOG(LOG_WARNING, "process DATA_PDU_CONTROL unknown action (%d)\n", action);
-                    }
                 }
             }
             break;
         case PDUTYPE2_SYNCHRONIZE:
+            LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");
+            this->server_rdp_send_synchronize();
             break;
         case PDUTYPE2_REFRESH_RECT:
+            LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT");
             {
                 /* int op = */ stream.in_uint32_le();
                 int left = stream.in_uint16_le();
@@ -1284,12 +1289,14 @@ struct server_rdp {
             }
             break;
         case PDUTYPE2_SUPPRESS_OUTPUT:
+            LOG(LOG_INFO, "PDUTYPE2_SUPPRESS_OUTPUT");
             // PDUTYPE2_SUPPRESS_OUTPUT comes when minimizing a full screen
             // mstsc.exe 2600. I think this is saying the client no longer wants
             // screen updates and it will issue a PDUTYPE2_REFRESH_RECT above
             // to catch up so minimized apps don't take bandwidth
             break;
         case PDUTYPE2_SHUTDOWN_REQUEST:
+            LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_REQUEST");
             {
                 // when this message comes, send a PDUTYPE2_SHUTDOWN_DENIED back
                 // so the client is sure the connection is alive and it can ask
@@ -1303,6 +1310,7 @@ struct server_rdp {
             }
             break;
         case PDUTYPE2_FONTLIST: /* 39(0x27) */
+            LOG(LOG_INFO, "PDUTYPE2_FONTLIST");
             stream.skip_uint8(2); /* num of fonts */
             stream.skip_uint8(2); /* unknown */
             {

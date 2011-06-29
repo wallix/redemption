@@ -107,7 +107,7 @@ class RDPGlyphCache {
 
     RDPGlyphCache() : cGlyphs(1)
     {
-        
+
     }
 
     ~RDPGlyphCache()

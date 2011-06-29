@@ -202,7 +202,9 @@ public:
         this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
         this->order_count = 0;
 
+        #warning move this to rdp_layer
         this->rdp_layer.send_rdp_packet(this->stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->offset_header);
+        this->rdp_layer.sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
 
@@ -230,7 +232,7 @@ public:
             size_t max_packet_size = std::min(this->stream.capacity, (size_t)4096);
             size_t used_size = this->stream.get_offset(0);
 
-            if (this->order_count > 3 || (used_size + asked_size + 100) > max_packet_size) {
+            if (this->order_count > 4096 || (used_size + asked_size + 100) > max_packet_size) {
                 this->force_send();
             }
         }
@@ -308,10 +310,8 @@ public:
 
     void force_init()
     {
-        LOG(LOG_INFO, "Orders::force_init()");
-        #warning see with order limit : is this big enough ?
-        this->stream.init(16384);
-
+        LOG(LOG_INFO, "----------------------- Orders::force_init() ---------------------------------");
+        this->stream.init(4096);
         this->rdp_layer.sec_layer.server_sec_init(this->stream);
         #warning we should define some kind of OrdersStream, to buffer in orders
         this->offset_header = this->stream.p - this->stream.data;
@@ -322,6 +322,8 @@ public:
         this->offset_order_count = this->stream.get_offset(0);
         this->stream.out_clear_bytes(2); /* number of orders, set later */
         this->stream.out_clear_bytes(2); /* pad */
+        LOG(LOG_INFO, "----------------------- Orders::force_init() done ----------------------------");
+
     }
 
     void start_capture(int width, int height, bool flag, char * path, const char * codec_id, const char * quality, int timezone)
@@ -366,28 +368,21 @@ public:
 
     void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
     {
-        LOG(LOG_INFO, "send_pointer()");
-        if (this->order_count > 0){
-            this->force_send();
-        }
-//        LOG(LOG_INFO, "front::send_pointer\n");
+        LOG(LOG_INFO, "front::send_pointer\n");
         this->rdp_layer.server_rdp_send_pointer(cache_idx, data, mask, x, y);
-//        LOG(LOG_INFO, "front::send_pointer done\n");
+        LOG(LOG_INFO, "front::send_pointer done\n");
     }
 
     void set_pointer(int cache_idx) throw (Error)
     {
-        LOG(LOG_INFO, "set_pointer()");
-        if (this->order_count > 0){
-            this->force_send();
-        }
-//        LOG(LOG_INFO, "front::set_pointer\n");
+        LOG(LOG_INFO, "front::set_pointer\n");
         this->rdp_layer.server_rdp_set_pointer(cache_idx);
-//        LOG(LOG_INFO, "front::set_pointer done\n");
+        LOG(LOG_INFO, "front::set_pointer done\n");
     }
 
     void activate_and_process_data(Callback & cb)
     {
+        LOG(LOG_INFO, "activate_and_process_data\n");
         this->rdp_layer.activate_and_process_data(cb);
     }
 
@@ -418,19 +413,12 @@ public:
     void send_global_palette(const BGRPalette & palette)
     {
         LOG(LOG_INFO, "send_global_palette()");
-        if (this->order_count > 0){
-            this->force_send();
-        }
         this->rdp_layer.send_global_palette(palette);
     }
 
     int get_channel_id(char* name)
     {
-        LOG(LOG_INFO, "get_channel_id()");
-        if (this->order_count > 0){
-            this->force_send();
-        }
-//        LOG(LOG_INFO, "front::get_channel_id\n");
+        LOG(LOG_INFO, "front::get_channel_id\n");
         return this->rdp_layer.sec_layer.mcs_layer.server_mcs_get_channel_id(name);
     }
 
@@ -439,9 +427,6 @@ public:
                        int total_data_len, int flags)
     {
         LOG(LOG_INFO, "send_to_channel()");
-        if (this->order_count > 0){
-            this->force_send();
-        }
         this->rdp_layer.server_send_to_channel(channel_id, data, data_len, total_data_len, flags);
     }
 
@@ -450,14 +435,15 @@ public:
     /* fill in an area of the screen with one color */
     void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        LOG(LOG_INFO, "opaque_rect()");
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->reserve_order(23);
 
+            LOG(LOG_INFO, "----> opaque_rect()");
             RDPOrderCommon newcommon(RDP::RECT, clip);
             cmd.emit(this->stream, newcommon, this->common, this->opaquerect);
             this->common = newcommon;
             this->opaquerect = cmd;
+            LOG(LOG_INFO, "opaque_rect() done");
 
             if (this->capture){
                 this->capture->opaque_rect(cmd, clip);
@@ -467,14 +453,16 @@ public:
 
     void scr_blt(const RDPScrBlt & cmd, const Rect &clip)
     {
-        LOG(LOG_INFO, "scr_blt()");
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             // this one is used when dragging a visible window on screen
             this->reserve_order(25);
+
+            LOG(LOG_INFO, "----> scr_blt()");
             RDPOrderCommon newcommon(RDP::SCREENBLT, clip);
             cmd.emit(this->stream, newcommon, this->common, this->scrblt);
             this->common = newcommon;
             this->scrblt = cmd;
+            LOG(LOG_INFO, "scr_blt() done");
 
             if (this->capture){
                 this->capture->scr_blt(cmd, clip);
@@ -484,14 +472,15 @@ public:
 
     void dest_blt(const RDPDestBlt & cmd, const Rect &clip)
     {
-        LOG(LOG_INFO, "dest_blt()");
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->reserve_order(21);
 
+            LOG(LOG_INFO, "----> dest_blt()");
             RDPOrderCommon newcommon(RDP::DESTBLT, clip);
             cmd.emit(this->stream, newcommon, this->common, this->destblt);
             this->common = newcommon;
             this->destblt = cmd;
+            LOG(LOG_INFO, "dest_blt() done");
 
             if (this->capture){
                 this->capture->dest_blt(cmd, clip);
@@ -502,15 +491,16 @@ public:
 
     void pat_blt(const RDPPatBlt & cmd, const Rect &clip)
     {
-        LOG(LOG_INFO, "pat_blt()");
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->reserve_order(29);
 
+            LOG(LOG_INFO, "----> pat_blt()");
             using namespace RDP;
             RDPOrderCommon newcommon(PATBLT, clip);
             cmd.emit(this->stream, newcommon, this->common, this->patblt);
             this->common = newcommon;
             this->patblt = cmd;
+            LOG(LOG_INFO, "pat_blt() done");
 
             if (this->capture){
                 this->capture->pat_blt(cmd, clip);
@@ -521,16 +511,16 @@ public:
 
     void mem_blt(const RDPMemBlt & cmd, const Rect & clip)
     {
-        LOG(LOG_INFO, "mem_blt()");
         using namespace RDP;
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
-            LOG(LOG_INFO, "really really mem_blt()");
             this->reserve_order(30);
+
+            LOG(LOG_INFO, "----> mem_blt()");
             RDPOrderCommon newcommon(MEMBLT, clip);
             cmd.emit(this->stream, newcommon, this->common, this->memblt);
             this->common = newcommon;
             this->memblt = cmd;
-            LOG(LOG_INFO, "well, I lied, maybe mem_blt() it still has to be sent");
+            LOG(LOG_INFO, "mem_blt() done");
 
             if (this->capture){
                 this->capture->mem_blt(cmd, *this->bmp_cache, clip);
@@ -540,7 +530,6 @@ public:
 
     void line_to(const RDPLineTo& cmd, const Rect & clip)
     {
-        LOG(LOG_INFO, "line_to()");
         using namespace RDP;
 
         const uint16_t minx = std::min(cmd.startx, cmd.endx);
@@ -551,10 +540,14 @@ public:
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()){
             this->reserve_order(32);
+
+            LOG(LOG_INFO, "----> line_to()");
             RDPOrderCommon newcommon(LINE, clip);
             cmd.emit(this->stream, newcommon, this->common, this->lineto);
             this->common = newcommon;
             this->lineto = cmd;
+            LOG(LOG_INFO, "line_to() done");
+
             if (this->capture){
                 this->capture->line_to(cmd, clip);
             }
@@ -563,13 +556,16 @@ public:
 
     void glyph_index(const RDPGlyphIndex & cmd, const Rect & clip)
     {
-        LOG(LOG_INFO, "glyph_index()");
         if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()){
             this->reserve_order(297);
+
+            LOG(LOG_INFO, "----> glyph_index()");
             RDPOrderCommon newcommon(RDP::GLYPHINDEX, clip);
             cmd.emit(this->stream, newcommon, this->common, this->glyphindex);
             this->common = newcommon;
             this->glyphindex = cmd;
+            LOG(LOG_INFO, "glyph_index() done");
+
             if (this->capture){
                 this->capture->glyph_index(cmd, clip);
             }
@@ -579,22 +575,24 @@ public:
     #warning give a secondary order as input to color_cache
     void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
     {
-        LOG(LOG_INFO, "color_cache()");
         this->reserve_order(2000);
+
+        LOG(LOG_INFO, "----> color_cache()");
         RDPColCache newcmd(cacheIndex);
         memcpy(newcmd.palette[cacheIndex], palette, sizeof(BGRPalette));
         newcmd.emit(this->stream);
+        LOG(LOG_INFO, "color_cache() done");
     }
 
     #warning give a secondary order as input to brush_cache
     void brush_cache(const int index)
     {
-        LOG(LOG_INFO, "brush_cache()");
         const int size = 8;
         this->reserve_order(size + 12);
 
         using namespace RDP;
 
+        LOG(LOG_INFO, "----> brush_cache()");
         RDPBrushCache newcmd;
         #warning define a constructor with emit parameters
         newcmd.bpp = 1;
@@ -605,13 +603,14 @@ public:
         newcmd.data = this->cache.brush_items[index].pattern;
         newcmd.emit(this->stream, index);
         newcmd.data = 0;
+        LOG(LOG_INFO, "brush_cache() done");
     }
 
 
     #warning give a secondary order as input to bitmap_cache
     void bitmap_cache(const uint8_t cache_id, const uint16_t cache_idx)
     {
-        LOG(LOG_INFO, "bitmap_cache()");
+        LOG(LOG_INFO, "---> bitmap_cache()");
         BitmapCacheItem * entry =  this->bmp_cache->get_item(cache_id, cache_idx);
 
         #warning really when using compression we'll use less space
@@ -624,6 +623,7 @@ public:
 
         RDPBmpCache bmp_order(this->rdp_layer.client_info.bpp, &palette332, entry->pbmp, cache_id, cache_idx, &this->rdp_layer.client_info);
         bmp_order.emit(this->stream);
+        LOG(LOG_INFO, "bitmap_cache() done");
 
         if (this->capture){
             this->capture->bitmap_cache(cache_id, cache_idx, entry);
@@ -669,12 +669,16 @@ public:
     #warning give a secondary order as input to glyph_cache
     void glyph_cache(const FontChar & font_char, int font_index, int char_index)
     {
-        LOG(LOG_INFO, "glyph_front(size=%u font_index=%u char_index=%u font_char.offset=%u font_char.baseline=%u )");
+        LOG(LOG_INFO, "glyph_cache(size=%u font_index=%u char_index=%u font_char.offset=%u font_char.baseline=%u font_char.width=%u font_char.height=%u, font_char.data=%p )",
+            font_char.datasize(), font_index, char_index, font_char.offset, font_char.baseline, font_char.width, font_char.height, font_char.data);
+
         this->reserve_order(font_char.datasize() + 18);
 
         using namespace RDP;
 
         #warning define a constructor with emit parameters
+
+        LOG(LOG_INFO, "---> glyph_cache()");
 
         RDPGlyphCache newcmd;
         newcmd.size = font_char.datasize();
@@ -687,6 +691,7 @@ public:
         newcmd.glyphData_aj = font_char.data;
         newcmd.emit(this->stream);
         newcmd.glyphData_aj = 0;
+        LOG(LOG_INFO, "glyph_cache() done");
     }
 
 };

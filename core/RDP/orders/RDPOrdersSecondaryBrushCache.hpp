@@ -28,19 +28,19 @@
 // ========================================================
 
 // The Cache Brush Secondary Drawing Order is used by the server to instruct the
-// client to store a brush in a particular Brush Cache entry. Support for brush 
-// caching is negotiated in the Brush Cache Capability Set (see [MS-RDPBCGR] 
+// client to store a brush in a particular Brush Cache entry. Support for brush
+// caching is negotiated in the Brush Cache Capability Set (see [MS-RDPBCGR]
 // section 2.2.7.1.7).
 
 // header (6 bytes): Secondary Order Header, as defined in sec. 2.2.2.2.1.2.1.1.
 // The embedded orderType field MUST be set to TS_CACHE_BRUSH (0x07).
 
-// cacheEntry (1 byte): An 8-bit, unsigned integer. The entry in a specified 
-// Brush Cache where the brush data MUST be stored. This value MUST be in the 
+// cacheEntry (1 byte): An 8-bit, unsigned integer. The entry in a specified
+// Brush Cache where the brush data MUST be stored. This value MUST be in the
 // range 0 to 63 (inclusive).
 
-// iBitmapFormat (1 byte): An 8-bit, unsigned integer. The color depth of the 
-// brush bitmap data. 
+// iBitmapFormat (1 byte): An 8-bit, unsigned integer. The color depth of the
+// brush bitmap data.
 // This field MUST be one of the following values.
 
 // +----------------+-------------------------+
@@ -57,40 +57,40 @@
 
 // cy (1 byte): An 8-bit, unsigned integer. The height of the brush bitmap.
 
-// Style (1 byte): An 8-bit, unsigned integer. This field is not used, and 
+// Style (1 byte): An 8-bit, unsigned integer. This field is not used, and
 // SHOULD be set to 0x00 (the Windows Implementation set this field to 0).
 
 // iBytes (1 byte): An 8-bit, unsigned integer. The size of the brushData field
 // in bytes.
 
-// brushData (variable): A variable-sized byte array containing binary brush 
+// brushData (variable): A variable-sized byte array containing binary brush
 // data that represents an 8-by-8-pixel bitmap image. There are 64 pixels in a
 // brush bitmap, and the space used to represent each pixel depends on the color
-// depth of the brush bitmap and the number of colors used. The size of the 
+// depth of the brush bitmap and the number of colors used. The size of the
 // brushData field in bytes is given by the iBytes field.
 
 // In general, most brushes only use two colors (mono format), and the majority
 // of the remaining ones use four colors or fewer.
 
-// For mono format brushes (iBitmapFormat is BMF_1BPP), brushData contains 
-// 8 bytes of 1-bit-per-pixel data, each byte corresponding to a row of pixels 
+// For mono format brushes (iBitmapFormat is BMF_1BPP), brushData contains
+// 8 bytes of 1-bit-per-pixel data, each byte corresponding to a row of pixels
 // in the brush. The rows are encoded in reverse order; that is, the pixels in
-// the bottom row of the brush are encoded in the first byte of the brushData 
+// the bottom row of the brush are encoded in the first byte of the brushData
 // field, and the pixels in the top row are encoded in the eighth byte.
 
-// For four-color brushes, a compression algorithm is used. If the data is 
+// For four-color brushes, a compression algorithm is used. If the data is
 // compressed, the iBytes field is 20 for 256 color (iBitmapFormat is BMF_8BPP),
-// 24 for 16-bit color (iBitmapFormat is BMF_16BPP), and 28 for 24-bit color 
+// 24 for 16-bit color (iBitmapFormat is BMF_16BPP), and 28 for 24-bit color
 // (iBitmapFormat is BMF_24BPP).
 
 // The compression algorithm reduces brush data size by storing each brush pixel
-// as a 2-bit index (four possible values) into a translation table containing 
-// four entries. This equates to 2 bytes per brush bitmap line (16 bytes in 
+// as a 2-bit index (four possible values) into a translation table containing
+// four entries. This equates to 2 bytes per brush bitmap line (16 bytes in
 // total) followed by the translation table contents. This layout for four-color
-// brushes conforms to the Compressed Color Brush (section 2.2.2.2.1.2.7.1) 
+// brushes conforms to the Compressed Color Brush (section 2.2.2.2.1.2.7.1)
 // structure.
 
-// For brushes using more than four colors, the data is simply copied 
+// For brushes using more than four colors, the data is simply copied
 // uncompressed into the brushData at the appropriate color depth.
 
 // 2.2.2.2.1.2.7.1 Compressed Color Brush (COMPRESSED_COLOR_BRUSH)
@@ -112,7 +112,7 @@
 // + pN |                                                      colorN       +
 // +----+-------------------------------------------------------------------+
 
-// pN (2 bits): A 2-bit, unsigned integer field. The 2-bit value indicating the 
+// pN (2 bits): A 2-bit, unsigned integer field. The 2-bit value indicating the
 // translation table entry to use for pixel N.
 
 // 0 Use the first value in the translation table (color1).
@@ -125,9 +125,9 @@
 // the color depth of the bitmap data.
 
 //  8 bpp : 1 byte Index into the current color palette.
-// 15 bpp : 2 bytes RGB color triplet expressed in 5-5-5 format 
+// 15 bpp : 2 bytes RGB color triplet expressed in 5-5-5 format
 //         (5 bits for red, 5 bits for green, and 5 bits for blue).
-// 16 bpp : 2 bytes RGB color triplet expressed in 5-6-5 format 
+// 16 bpp : 2 bytes RGB color triplet expressed in 5-6-5 format
 //         (5 bits for red, 6 bits for green, and 5 bits for blue).
 // 24 bpp : 3 bytes RGB color triplet (1 byte per component).
 

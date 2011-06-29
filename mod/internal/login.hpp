@@ -441,7 +441,6 @@ struct login_mod : public internal_mod {
         this->brush.org_y = 0;
         this->brush.style = 3;
 
-        LOG(LOG_INFO, "Sending brush");
 
         // brush style 3 is not supported by windows 7, we **MUST** use cache
         if (this->get_client_info().brush_cache_code == 1) {
@@ -449,14 +448,14 @@ struct login_mod : public internal_mod {
             pattern[0] = this->brush.hatch;
             memcpy(pattern+1, this->brush.extra, 7);
             int cache_idx = 0;
-            if (BRUSH_TO_SEND == this->front.cache.add_brush(pattern, cache_idx)){
-                this->brush_cache(cache_idx);
-            }
             this->brush.hatch = cache_idx;
             this->brush.style = 0x81;
+            if (BRUSH_TO_SEND == this->front.cache.add_brush(pattern, cache_idx)){
+                LOG(LOG_INFO, "Sending brush");
+                this->brush_cache(cache_idx);
+                LOG(LOG_INFO, "brush sent");
+            }
         }
-
-        LOG(LOG_INFO, "brush sent");
         this->screen.Widget_invalidate(this->screen.rect.wh());
         LOG(LOG_INFO, "invalidate screen done");
 
