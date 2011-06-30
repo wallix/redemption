@@ -47,6 +47,7 @@
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "log.hpp"
+#include "colors.hpp"
 
 struct rdp_cursor {
     int x;
@@ -127,14 +128,11 @@ struct rdp_orders {
 
     // It may be a good idea to really separate palette array for memblt
     // and global palette to do that just track down accesses to
-    // cache_colormap.palette[7]
+    // cache_colormap[7]
 
-    // Also cache_colormap currently stores bpp, it may not be such a good idea.
-    // the only real relationship is that palette is relevant only in 8bpp mode
-    // mode it's probably not enough to store both in the same structure.
-    struct RDPColCache cache_colormap;
+    BGRPalette cache_colormap[8];
     #warning this cache_bitmap here looks strange. At least it's size should ne negotiated. And why is it not managed by the other cache management code ? This probably hide some kind of problem. See when working on cache secondary order primitives.
-    struct Bitmap * cache_bitmap[3][10000];
+    Bitmap * cache_bitmap[3][10000];
 
     #warning it looks strange that rdp_orders object should be depending on bpp parameter, it looks more like a cache implementation detail that should be abstracted here.
     rdp_orders() :
@@ -145,10 +143,10 @@ struct rdp_orders {
         destblt(Rect(), 0),
         patblt(Rect(), 0, 0, 0, RDPBrush()),
         lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
-        glyph_index(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
-        cache_colormap(0)
+        glyph_index(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"")
     {
         memset(this->cache_bitmap, 0, sizeof(this->cache_bitmap));
+        memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
     }
 
 
@@ -185,7 +183,7 @@ struct rdp_orders {
         case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
             {
                 #warning RDPBmpCache is used to create bitmap
-                RDPBmpCache bmp(bpp, &this->cache_colormap.palette[7]);
+                RDPBmpCache bmp(bpp, &this->cache_colormap[7]);
                 bmp.receive(stream, control, header);
                 cache_id = bmp.cache_id;
                 cache_idx = bmp.cache_idx;
@@ -222,7 +220,7 @@ struct rdp_orders {
                 const uint8_t* data = stream.in_uint8p(size);
 
                 #warning valgrind say there is a memory leak here
-                bitmap = new Bitmap(bpp, &this->cache_colormap.palette[7], width, height, data, size, true);
+                bitmap = new Bitmap(bpp, &this->cache_colormap[7], width, height, data, size, true);
                 assert(row_size == bitmap->line_size(bpp));
 
             }
@@ -257,23 +255,13 @@ struct rdp_orders {
         }
     }
 
-    static void rdp_orders_parse_brush(Stream & stream, struct RDPBrush* brush, int present)
-    {
-//        LOG(LOG_INFO, "rdp_orders_parse_brush");
-        if (present & 1) {
-            brush->org_x = stream.in_uint8();
-        }
-        if (present & 2) {
-            brush->org_y = stream.in_uint8();
-        }
-        if (present & 4) {
-            brush->style = stream.in_uint8();
-        }
-        if ((brush->style == 3) && (present & 8)) {
-            memcpy(brush->extra, stream.in_uint8p( 7),  7);
-        }
-    }
 
+    void process_colormap(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
+    {
+        RDPColCache colormap;
+        colormap.receive(stream, control, header);
+        memcpy(this->cache_colormap[colormap.cacheIndex], &colormap.palette, sizeof(BGRPalette));
+    }
 
     void rdp_orders_process_desksave(Stream & stream, int present, int delta, client_mod * mod)
     {
@@ -377,7 +365,7 @@ struct rdp_orders {
     }
 
     /*****************************************************************************/
-    int rdp_orders_process_orders(int bpp, Stream & stream, int num_orders, client_mod * mod)
+    int process_orders(int bpp, Stream & stream, int num_orders, client_mod * mod)
     {
         using namespace RDP;
         int processed = 0;
@@ -401,7 +389,7 @@ struct rdp_orders {
                     this->rdp_orders_process_bmpcache(bpp, stream, control, header);
                     break;
                 case TS_CACHE_COLOR_TABLE:
-                    this->cache_colormap.receive(stream, control, header);
+                    this->process_colormap(stream, control, header);
                     break;
                 case TS_CACHE_GLYPH:
                     this->rdp_orders_process_fontcache(stream, header.flags, mod);
@@ -464,7 +452,7 @@ struct rdp_orders {
                             mod->mem_blt(
                                 this->memblt,
                                 *bitmap,
-                                this->cache_colormap.palette[this->memblt.cache_id >> 8]);
+                                this->cache_colormap[this->memblt.cache_id >> 8]);
                         }
                     }
                     break;

@@ -105,18 +105,39 @@ class RDPGlyphCache {
     size_t size;
     uint8_t * glyphData_aj;
 
-    RDPGlyphCache() : cGlyphs(1)
+    RDPGlyphCache() : cGlyphs(1), glyphData_aj(NULL)
     {
 
     }
+
+    RDPGlyphCache(uint8_t cacheId, uint8_t cGlyphs,
+                  uint16_t glyphData_cacheIndex,
+                  uint16_t glyphData_x, uint16_t glyphData_y,
+                  uint16_t glyphData_cx, uint16_t glyphData_cy,
+                  const uint8_t * glyphData_aj)
+        :   cacheId(cacheId),
+            cGlyphs(1),
+            glyphData_cacheIndex(glyphData_cacheIndex),
+            glyphData_x(glyphData_x), glyphData_y(glyphData_y),
+            glyphData_cx(glyphData_cx), glyphData_cy(glyphData_cy)
+    {
+        size_t size = align4(nbbytes(glyphData_cx) * glyphData_cy);
+        this->glyphData_aj = (uint8_t*)malloc(size);
+        memcpy(this->glyphData_aj, glyphData_aj, size);
+    }
+
 
     ~RDPGlyphCache()
     {
+        if (this->glyphData_aj){
+            free(this->glyphData_aj);
+        }
     }
 
-    void emit(Stream & stream)
+    void emit(Stream & stream) const
     {
         using namespace RDP;
+        size_t size = align4(nbbytes(this->glyphData_cx) * this->glyphData_cy);
 
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);
@@ -124,15 +145,15 @@ class RDPGlyphCache {
         stream.out_uint16_le(len);
         stream.out_uint16_le(8);    // flags
         stream.out_uint8(TS_CACHE_GLYPH); // type
-        stream.out_uint8(cacheId);
 
+        stream.out_uint8(cacheId);
         stream.out_uint8(this->cGlyphs);
         stream.out_uint16_le(this->glyphData_cacheIndex);
         stream.out_uint16_le(this->glyphData_x);
         stream.out_uint16_le(this->glyphData_y);
         stream.out_uint16_le(this->glyphData_cx);
         stream.out_uint16_le(this->glyphData_cy);
-        stream.out_copy_bytes(this->glyphData_aj, this->size);
+        stream.out_copy_bytes(this->glyphData_aj, size);
     }
 
     void receive(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)

@@ -325,7 +325,7 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
         BGRPalette palette;
         init_palette332(palette);
 
-        this->front->color_cache(palette, 0);
+        this->mod->color_cache(palette, 0);
 
         struct pointer_item pointer_item;
 

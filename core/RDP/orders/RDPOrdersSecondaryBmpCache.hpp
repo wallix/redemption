@@ -497,9 +497,10 @@ class RDPBmpCache {
     int bpp;
     int cache_idx;
     const ClientInfo * client_info;
-    BGRPalette * palette;
+    #warning we should not have a palette here, we alreadyhave one inside bitmap
+    const BGRPalette * palette;
 
-    RDPBmpCache(int bpp, BGRPalette * palette, Bitmap * bmp, int cache_id, int cache_idx, ClientInfo * client_info) :
+    RDPBmpCache(int bpp, const BGRPalette * palette, Bitmap * bmp, int cache_id, int cache_idx, const ClientInfo * client_info) :
                     cache_id(cache_id),
                     bmp(bmp),
                     bpp(bpp),
@@ -516,7 +517,7 @@ class RDPBmpCache {
     {
     }
 
-    void emit(Stream & stream)
+    void emit(Stream & stream) const
     {
         using namespace RDP;
         if (0 == this->client_info->bitmap_cache_version){
@@ -541,7 +542,7 @@ class RDPBmpCache {
         }
     }
 
-    void emit_v1_compressed(Stream & stream)
+    void emit_v1_compressed(Stream & stream) const
     {
         using namespace RDP;
 
@@ -579,7 +580,7 @@ class RDPBmpCache {
 
     }
 
-    void emit_v2_compressed(Stream & stream)
+    void emit_v2_compressed(Stream & stream) const
     {
         using namespace RDP;
 
@@ -602,7 +603,7 @@ class RDPBmpCache {
         stream.out_copy_bytes(tmp.data, bufsize);
     }
 
-    void emit_raw_v1(Stream & stream)
+    void emit_raw_v1(Stream & stream) const
     {
 //        LOG(LOG_INFO, "emit_raw_v1(cache_id=%d, cache_idx=%d)\n",
 //                this->cache_id, this->cache_idx);
@@ -817,7 +818,7 @@ class RDPBmpCache {
     //                              defined in [MS-RDPBCGR] section
     //                              2.2.9.1.1.3.1.2.2).
 
-    void emit_raw_v2(Stream & stream)
+    void emit_raw_v2(Stream & stream) const
     {
         using namespace RDP;
         unsigned int row_size = align4(this->bmp->cx * nbbytes(this->bpp));
@@ -974,6 +975,7 @@ class RDPBmpCache {
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
+        #warning maybe palette should be provided in receive
         this->bmp = new Bitmap(bpp, this->palette, width, height, stream.in_uint8p(bufsize), bufsize);
         assert(bufsize == this->bmp->bmp_size(bpp));
     }

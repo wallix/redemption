@@ -273,7 +273,7 @@ struct client_mod : public Callback {
             switch (this->front.cache.add_glyph(font_item, f, c))
             {
                 case Cache::GLYPH_ADDED_TO_CACHE:
-                    this->front.glyph_cache(*font_item, f, c);
+                    this->glyph_cache(*font_item, f, c);
                 break;
                 default:
                 break;
@@ -310,31 +310,6 @@ struct client_mod : public Callback {
         delete [] data;
     }
 
-
-    void glyph_index(const RDPGlyphIndex & cmd)
-    {
-        this->send_global_palette(this->palette332);
-
-        RDPGlyphIndex new_cmd = cmd;
-        new_cmd.back_color = this->convert(cmd.back_color);
-        new_cmd.fore_color = this->convert(cmd.fore_color);
-
-        if (this->mod_bpp == 16 || this->mod_bpp == 15){
-            new_cmd.fore_color =  color_encode(
-                color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette),
-                this->get_front_bpp(), this->palette332);
-            new_cmd.back_color =  color_encode(
-                color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette),
-                this->get_front_bpp(), this->palette332);
-        }
-
-        this->front.glyph_index(new_cmd, this->clip);
-    }
-
-    void brush_cache(const int index)
-    {
-        this->front.brush_cache(index);
-    }
 
     void scr_blt(const RDPScrBlt & scrblt)
     {
@@ -388,6 +363,61 @@ struct client_mod : public Callback {
         this->front.line_to(new_cmd, this->clip);
     }
 
+    void glyph_index(const RDPGlyphIndex & cmd)
+    {
+        this->send_global_palette(this->palette332);
+
+        RDPGlyphIndex new_cmd = cmd;
+        new_cmd.back_color = this->convert(cmd.back_color);
+        new_cmd.fore_color = this->convert(cmd.fore_color);
+
+        if (this->mod_bpp == 16 || this->mod_bpp == 15){
+            new_cmd.fore_color =  color_encode(
+                color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette),
+                this->get_front_bpp(), this->palette332);
+            new_cmd.back_color =  color_encode(
+                color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette),
+                this->get_front_bpp(), this->palette332);
+        }
+
+        this->front.glyph_index(new_cmd, this->clip);
+    }
+
+
+    void brush_cache(const int index)
+    {
+        RDPBrushCache cmd(index, 1, 8, 8, 0x81,
+            sizeof(this->front.cache.brush_items[index].pattern),
+            this->front.cache.brush_items[index].pattern);
+        this->front.brush_cache(cmd);
+    }
+
+
+    void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
+    {
+        RDPColCache cmd(cacheIndex, palette);
+        this->front.color_cache(cmd);
+    }
+
+    void bitmap_cache(const uint8_t cache_id, const uint16_t cache_idx)
+    {
+        BitmapCacheItem * entry =  this->front.bmp_cache->get_item(cache_id, cache_idx);
+
+        #warning if original bitmap is 8 bits, transmit it, do not create a new palette
+        BGRPalette palette332;
+        init_palette332BGR(palette332);
+
+        RDPBmpCache cmd(this->get_front_bpp(),
+                        (entry->pbmp->original_bpp==8)?(entry->pbmp->original_palette):&palette332, entry->pbmp, cache_id, cache_idx, &(this->get_client_info()));
+        this->front.bitmap_cache(cmd);
+    }
+
+    void glyph_cache(const FontChar & font_char, int font_index, int char_index)
+    {
+        RDPGlyphCache cmd(font_index, 1, char_index, font_char.offset, font_char.baseline, font_char.width, font_char.height, font_char.data);
+        this->front.glyph_cache(cmd);
+    }
+
     #warning this should become BITMAP UPDATE, we should be able to send bitmaps either through orders and cache or through BITMAP UPDATE
     void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy)
     {
@@ -395,7 +425,7 @@ struct client_mod : public Callback {
 //            this->mod_bpp, this->get_front_bpp(), bitmap.bmp_size(this->mod_bpp));
         if ((this->get_front_bpp() == 8)
         && !this->palette_memblt_sent) {
-            this->front.color_cache(this->palette332BGR, 0);
+            this->color_cache(this->palette332BGR, 0);
             this->palette_memblt_sent = true;
         }
 
@@ -404,15 +434,45 @@ struct client_mod : public Callback {
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
         const Rect src_r(srcx, srcy, width, height);
-        #warning the bitmap_data_co below calls the color conversion
-        this->front.send_bitmap_front(dst, src_r, 0xCC, bitmap.data_co(this->get_front_bpp()), 0, this->clip);
+        const int palette_id = 0;
+        const uint8_t * src_data = bitmap.data_co(this->get_front_bpp());
+        const uint8_t rop = 0xCC;
+
+        for (int y = 0; y < dst.cy ; y += 32) {
+            int cy = std::min(32, dst.cy - y);
+            for (int x = 0; x < dst.cx ; x += 32) {
+                int cx = std::min(32, dst.cx - x);
+                const Rect tile(x, y, cx, cy);
+                if (!this->clip.intersect(tile.offset(dst.x, dst.y)).isempty()){
+                     uint32_t cache_ref = this->front.bmp_cache->add_bitmap(
+                                                src_r.cx, src_r.cy,
+                                                src_data,
+                                                tile.offset(src_r.x, src_r.y),
+                                                this->front.get_client_info().bpp);
+
+                    uint8_t send_type = (cache_ref >> 24);
+                    uint8_t cache_id  = (cache_ref >> 16);
+                    uint16_t cache_idx = (cache_ref & 0xFFFF);
+
+                    if (send_type == BITMAP_ADDED_TO_CACHE){
+                        this->bitmap_cache(cache_id, cache_idx);
+                    }
+
+                    const RDPMemBlt cmd(cache_id + palette_id * 256, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
+                    this->front.mem_blt(cmd, this->clip);
+                }
+            }
+        }
     }
+
+
+
 
     void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const BGRPalette & palette)
     {
         if ((this->get_front_bpp() == 8)
         && !this->palette_memblt_sent) {
-            this->front.color_cache(this->palette332BGR, 0);
+            this->color_cache(this->palette332BGR, 0);
             this->palette_memblt_sent = true;
         }
 
@@ -424,9 +484,35 @@ struct client_mod : public Callback {
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
         const Rect src_r(srcx, srcy, width, height);
-        front.begin_update();
-        this->front.send_bitmap_front(dst, src_r, memblt.rop, bitmap.data_co(this->get_front_bpp()), 0, this->clip);
-        front.end_update();
+        const int palette_id = 0;
+        const uint8_t * src_data = bitmap.data_co(this->get_front_bpp());
+        const uint8_t rop = memblt.rop;
+
+        for (int y = 0; y < dst.cy ; y += 32) {
+            int cy = std::min(32, dst.cy - y);
+            for (int x = 0; x < dst.cx ; x += 32) {
+                int cx = std::min(32, dst.cx - x);
+                const Rect tile(x, y, cx, cy);
+                if (!this->clip.intersect(tile.offset(dst.x, dst.y)).isempty()){
+                     uint32_t cache_ref = this->front.bmp_cache->add_bitmap(
+                                                src_r.cx, src_r.cy,
+                                                src_data,
+                                                tile.offset(src_r.x, src_r.y),
+                                                this->front.get_client_info().bpp);
+
+                    uint8_t send_type = (cache_ref >> 24);
+                    uint8_t cache_id  = (cache_ref >> 16);
+                    uint16_t cache_idx = (cache_ref & 0xFFFF);
+
+                    if (send_type == BITMAP_ADDED_TO_CACHE){
+                        this->bitmap_cache(cache_id, cache_idx);
+                    }
+
+                    const RDPMemBlt cmd(cache_id + palette_id * 256, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
+                    this->front.mem_blt(cmd, this->clip);
+                }
+            }
+        }
     }
 
     void set_pointer(int cache_idx)
@@ -468,11 +554,6 @@ struct client_mod : public Callback {
         }
     }
 
-    void color_cache(const uint32_t (& palette)[256], uint8_t cacheIndex)
-    {
-        this->front.color_cache(palette, cacheIndex);
-    }
-
     int server_is_term()
     {
         return g_is_term();
@@ -499,7 +580,7 @@ struct client_mod : public Callback {
                 memcpy(pattern+1, this->brush.extra, 7);
                 int cache_idx = 0;
                 if (BRUSH_TO_SEND == this->front.cache.add_brush(pattern, cache_idx)){
-                    this->front.brush_cache(cache_idx);
+                    this->brush_cache(cache_idx);
                 }
                 this->brush.hatch = cache_idx;
                 this->brush.style = 0x81;
@@ -513,7 +594,7 @@ struct client_mod : public Callback {
     {
         struct FontChar fi(offset, baseline, width, height, 0);
         memcpy(fi.data, data, fi.datasize());
-        this->front.glyph_cache(fi, font, character);
+        this->glyph_cache(fi, font, character);
     }
 
     int server_get_channel_id(char* name)

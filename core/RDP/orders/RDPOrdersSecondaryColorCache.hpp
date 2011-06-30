@@ -75,17 +75,20 @@
 class RDPColCache {
 
     public:
-    BGRPalette palette[8]; // only 0..5 and 7 (global palette) are used
+    BGRPalette palette;
     uint8_t cacheIndex;
 
-    RDPColCache(uint8_t cacheIndex)
+    RDPColCache()
     {
-        this->cacheIndex = cacheIndex;
-        memset(this->palette, 0, sizeof(palette));
     }
 
-    #warning cacheIndex should be inside instance and array of color cache (patterns) outside color_cache
-    void emit(Stream & stream)
+    RDPColCache(uint8_t cacheIndex, const BGRPalette & palette)
+        : cacheIndex(cacheIndex)
+    {
+        memcpy(this->palette, palette, sizeof(palette));
+    }
+
+    void emit(Stream & stream) const
     {
         using namespace RDP;
 
@@ -99,7 +102,7 @@ class RDPColCache {
         stream.out_uint8(this->cacheIndex);
         stream.out_uint16_le(256); /* num colors */
         for (int i = 0; i < 256; i++) {
-            uint32_t color = this->palette[this->cacheIndex][i];
+            uint32_t color = this->palette[i];
             uint8_t r = color;
             uint8_t g = color >> 8;
             uint8_t b = color >> 16;
@@ -118,14 +121,13 @@ class RDPColCache {
         assert(this->cacheIndex >= 0 && this->cacheIndex < 6);
 
         uint16_t numberColors = stream.in_uint16_le();
-        assert(numberColors == 256);
 
-        for (size_t i = 0; i < 256; i++) {
+        for (size_t i = 0; i < numberColors; i++) {
             uint8_t r = stream.in_uint8();
             uint8_t g = stream.in_uint8();
             uint8_t b = stream.in_uint8();
             stream.skip_uint8(1);
-            this->palette[this->cacheIndex][i] = r|(g << 8)|(b << 16);
+            this->palette[i] = r|(g << 8)|(b << 16);
         }
     }
 
@@ -134,13 +136,11 @@ class RDPColCache {
         if (this->cacheIndex != other.cacheIndex) {
             return false;
         }
-        for (uint8_t index = 0; index < 6 ; ++index){
-            for (size_t i = 0; i < 256 ; ++i){
-                if (this->palette[index][i] != other.palette[index][i]){
-                    printf("palette differs at index %d: %x != %x\n",
-                        (int)i, this->palette[index][i], other.palette[index][i]);
-                    return false;
-                }
+        for (size_t i = 0; i < 256 ; ++i){
+            if (this->palette[i] != other.palette[i]){
+                printf("palette differs at index %d: %x != %x\n",
+                    (int)i, this->palette[i], other.palette[i]);
+                return false;
             }
         }
         return true;
@@ -152,19 +152,10 @@ class RDPColCache {
             buffer,
             sz,
             "RDPColCache(%u,"
-            "[%d, %d, %d,...]"
-            "[%d, %d, %d,...]"
-            "[%d, %d, %d,...]"
-            "[%d, %d, %d,...]"
-            "[%d, %d, %d,...]"
-            "[%d, %d, %d,...])\n",
+            "[0x%.6x, 0x%.6x, 0x%.6x, 0x%.6x, 0x%.6x, 0x%.6x, ...]\n",
             this->cacheIndex,
-            this->palette[0][0], this->palette[0][1], this->palette[0][2],
-            this->palette[1][0], this->palette[1][1], this->palette[1][2],
-            this->palette[2][0], this->palette[2][1], this->palette[2][2],
-            this->palette[3][0], this->palette[3][1], this->palette[3][2],
-            this->palette[4][0], this->palette[4][1], this->palette[4][2],
-            this->palette[5][0], this->palette[5][1], this->palette[5][2]);
+            this->palette[0], this->palette[1], this->palette[2],
+            this->palette[3], this->palette[4], this->palette[5]);
         if (lg >= sz){
             return sz;
         }

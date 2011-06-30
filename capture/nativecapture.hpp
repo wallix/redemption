@@ -90,9 +90,11 @@ class NativeCapture
         fprintf(this->f, "}\n");
     }
 
-    void bitmap_cache(const uint8_t cache_id, const uint16_t cache_idx, BitmapCacheItem * entry)
+    void bitmap_cache(const RDPBmpCache & cmd)
     {
-        Bitmap & bmp = *entry->pbmp;
+        const uint8_t cache_id = cmd.cache_id;
+        const uint16_t cache_idx = cmd.cache_idx;
+        Bitmap & bmp = *cmd.bmp;
         fprintf(this->f, "{\n");
 
         fprintf(this->f, "    // ------- Dumping bitmap RAW data [%p]---------\n", &bmp);

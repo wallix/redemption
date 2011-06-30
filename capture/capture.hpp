@@ -48,9 +48,9 @@ class Capture
         this->nc.snapshot(x, y, pointer_already_displayed, no_timestamp, timezone);
     }
 
-    void bitmap_cache(const uint8_t cache_id, const uint16_t cache_idx, BitmapCacheItem * entry)
+    void bitmap_cache(const RDPBmpCache & cmd)
     {
-        this->nc.bitmap_cache(cache_id, cache_idx, entry);
+        this->nc.bitmap_cache(cmd);
     }
 
     void scr_blt(const RDPScrBlt & cmd, const Rect & clip)

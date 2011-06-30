@@ -56,7 +56,7 @@ struct Bitmap {
     uint8_t *data_co8;
 
     int original_bpp;
-    BGRPalette * original_palette;
+    const BGRPalette * original_palette;
     unsigned cx;
     unsigned cy;
 
@@ -65,7 +65,7 @@ struct Bitmap {
     bool crc_computed;
 
     public:
-    Bitmap(int bpp, BGRPalette * palette, int cx, int cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
+    Bitmap(int bpp, const BGRPalette * palette, int cx, int cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
         : data_co24(0), data_co16(0), data_co15(0), data_co8(0),
           original_bpp(bpp), original_palette(palette), cx(cx), cy(cy),
           crc(0), crc_computed(false)
@@ -229,7 +229,7 @@ struct Bitmap {
 
         // compute pixel size (in Quartet) and read palette if needed
         int file_Qpp = 1;
-        #warning add support for 16 bits bmp
+        #warning add support for loading of 16 bits bmp from file
         switch (header.bit_count){
         // Qpp = groups of 4 bytes per pixel
         case 24:

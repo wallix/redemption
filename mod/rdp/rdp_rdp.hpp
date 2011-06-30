@@ -338,8 +338,9 @@ struct rdp_rdp {
             switch (message_type) {
             case RDP_POINTER_MOVE:
             {
-                int x = stream.in_uint16_le();
-                int y = stream.in_uint16_le();
+                #warning implement RDP_POINTER_MOVE
+                /* int x = */ stream.in_uint16_le();
+                /* int y = */ stream.in_uint16_le();
             }
             break;
             case RDP_POINTER_COLOR:
@@ -376,11 +377,9 @@ struct rdp_rdp {
                 uint8_t g = stream.in_uint8();
                 uint8_t r = stream.in_uint8();
 //                uint32_t color = stream.in_bytes_le(3);
-                this->orders.cache_colormap.palette[7][i] = (r << 16)
-                                                          | (g << 8)
-                                                          |  b;
+                this->orders.cache_colormap[7][i] = (r << 16)|(g << 8)|b;
             }
-            mod->set_mod_palette(this->orders.cache_colormap.palette[7]);
+            mod->set_mod_palette(this->orders.cache_colormap[7]);
         }
 
 
@@ -1137,7 +1136,7 @@ struct rdp_rdp {
                 }
 
                 const uint8_t * data = stream.in_uint8p(size);
-                Bitmap bitmap(bpp, &this->orders.cache_colormap.palette[7], width, height, data, size, true);
+                Bitmap bitmap(bpp, &this->orders.cache_colormap[7], width, height, data, size, true);
 
                 assert(line_size == bitmap.line_size(bpp));
                 assert(final_size == bitmap.bmp_size(bpp));
@@ -1147,7 +1146,7 @@ struct rdp_rdp {
             }
             else {
                 const uint8_t * data = stream.in_uint8p(bufsize);
-                Bitmap bitmap(bpp, &this->orders.cache_colormap.palette[7], width, height, data, bufsize);
+                Bitmap bitmap(bpp, &this->orders.cache_colormap[7], width, height, data, bufsize);
 
                 assert(bufsize == bitmap.bmp_size(bpp));
 
@@ -1177,7 +1176,7 @@ struct rdp_rdp {
                 stream.skip_uint8(2); /* pad */
                 int count = stream.in_uint16_le();
                 stream.skip_uint8(2); /* pad */
-                this->orders.rdp_orders_process_orders(this->bpp, stream, count, mod);
+                this->orders.process_orders(this->bpp, stream, count, mod);
             }
             break;
         case RDP_UPDATE_BITMAP:

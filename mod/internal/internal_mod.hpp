@@ -75,7 +75,7 @@ struct internal_mod : public client_mod {
             memcpy(pattern+1, this->brush.extra, 7);
             int cache_idx = 0;
             if (BRUSH_TO_SEND == this->front.cache.add_brush(pattern, cache_idx)){
-                this->front.brush_cache(cache_idx);
+                this->brush_cache(cache_idx);
             }
             this->brush.hatch = cache_idx;
             this->brush.style = 0x81;

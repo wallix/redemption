@@ -580,18 +580,18 @@ struct server_rdp {
 
     void activate_and_process_data(Callback & cb)
     {
-        Stream & stream = this->front_stream;
+        Stream & input_stream = this->front_stream;
         do {
-            this->sec_layer.mcs_layer.iso_layer.iso_recv(stream);
-            int appid = stream.in_uint8() >> 2;
+            this->sec_layer.mcs_layer.iso_layer.iso_recv(input_stream);
+            int appid = input_stream.in_uint8() >> 2;
             /* Channel Join ReQuest datagram */
             while(appid == MCS_CJRQ) {
                 /* this is channels getting added from the client */
-                int userid = stream.in_uint16_be();
-                int chanid = stream.in_uint16_be();
+                int userid = input_stream.in_uint16_be();
+                int chanid = input_stream.in_uint16_be();
                 this->sec_layer.mcs_layer.server_mcs_send_channel_join_confirm_PDU(userid, chanid);
-                this->sec_layer.mcs_layer.iso_layer.iso_recv(stream);
-                appid = stream.in_uint8() >> 2;
+                this->sec_layer.mcs_layer.iso_layer.iso_recv(input_stream);
+                appid = input_stream.in_uint8() >> 2;
             }
             /* Disconnect Provider Ultimatum datagram */
             if (appid == MCS_DPUM) {
@@ -601,30 +601,30 @@ struct server_rdp {
             if (appid != MCS_SDRQ) {
                 throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
-            stream.skip_uint8(2);
+            input_stream.skip_uint8(2);
 
-            int chan = stream.in_uint16_be();
-            stream.skip_uint8(1);
-            int len = stream.in_uint8();
+            int chan = input_stream.in_uint16_be();
+            input_stream.skip_uint8(1);
+            int len = input_stream.in_uint8();
             if (len & 0x80) {
-                stream.skip_uint8(1);
+                input_stream.skip_uint8(1);
             }
 
-            const uint32_t flags = stream.in_uint32_le();
+            const uint32_t flags = input_stream.in_uint32_le();
             if (flags & SEC_ENCRYPT) { /* 0x08 */
-                stream.skip_uint8(8); /* signature */
-                this->sec_layer.server_sec_decrypt(stream.p, (int)(stream.end - stream.p));
+                input_stream.skip_uint8(8); /* signature */
+                this->sec_layer.server_sec_decrypt(input_stream.p, (int)(input_stream.end - input_stream.p));
             }
 
             if (flags & SEC_CLIENT_RANDOM) { /* 0x01 */
-                stream.in_uint32_le(); // len
-                this->sec_layer.server_sec_init_client_crypt_random(stream);
+                input_stream.in_uint32_le(); // len
+                this->sec_layer.server_sec_init_client_crypt_random(input_stream);
                 this->sec_layer.server_sec_rsa_op();
                 this->sec_layer.server_sec_establish_keys();
                 if (!this->up_and_running){ continue; }
             }
             else if (flags & SEC_LOGON_INFO) { /* 0x40 */
-                this->sec_layer.server_sec_process_logon_info(stream);
+                this->sec_layer.server_sec_process_logon_info(input_stream);
                 if (this->sec_layer.client_info->is_mce) {
                     this->sec_layer.server_sec_send_media_lic_response();
                     this->server_rdp_send_demand_active();
@@ -659,48 +659,55 @@ struct server_rdp {
                 if (channel == 0) {
                     throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                 }
-                int length = stream.in_uint32_le();
-                int flags = stream.in_uint32_le();
+                int length = input_stream.in_uint32_le();
+                int flags = input_stream.in_uint32_le();
 
-                int size = (int)(stream.end - stream.p);
+                int size = (int)(input_stream.end - input_stream.p);
                 #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
                 cb.callback(WM_CHANNELDATA,
                                   ((flags & 0xffff) << 16) | (channel_id & 0xffff),
-                                  size, (long)(stream.p), length);
+                                  size, (long)(input_stream.p), length);
                 if (!this->up_and_running){ continue; }
             }
 
-            stream.next_packet = stream.p;
+            input_stream.next_packet = input_stream.p;
 
-            int length = stream.in_uint16_le();
+            int length = input_stream.in_uint16_le();
             if (length == 0x8000) {
-                stream.next_packet += 8;
+                input_stream.next_packet += 8;
             }
             else {
-                int pdu_code = stream.in_uint16_le();
-                stream.skip_uint8(2); /* mcs user id */
-                stream.next_packet += length;
+                int pdu_code = input_stream.in_uint16_le();
+                input_stream.skip_uint8(2); /* mcs user id */
+                input_stream.next_packet += length;
                 switch (pdu_code & 0xf) {
+
                 case 0:
                     break;
                 case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
                     break;
-                case PDUTYPE_CONFIRMACTIVEPDU: /* 3 */
-                    this->server_rdp_process_confirm_active(stream);
+                case PDUTYPE_CONFIRMACTIVEPDU:
+                    this->process_confirm_active(input_stream);
                     break;
                 case PDUTYPE_DATAPDU: /* 7 */
                     // this is rdp_process_data that will set up_and_running to 1
                     // when fonts have been received
                     // we will not exit this loop until we are in this state.
                     #warning see what happen if we never receive up_and_running due to some error in client code ?
-                    this->server_rdp_process_data(stream, cb);
+                    this->process_data(input_stream, cb);
+                    break;
+                case PDUTYPE_DEACTIVATEALLPDU:
+                    LOG(LOG_WARNING, "unsupported PDU DEACTIVATEALLPDU in session_data (%d)\n", pdu_code & 0xf);
+                    break;
+                case PDUTYPE_SERVER_REDIR_PKT:
+                    LOG(LOG_WARNING, "unsupported PDU SERVER_REDIR_PKT in session_data (%d)\n", pdu_code & 0xf);
                     break;
                 default:
-                    LOG(LOG_WARNING, "unknown in session_data (%d)\n", pdu_code & 0xf);
+                    LOG(LOG_WARNING, "unknown PDU type in session_data (%d)\n", pdu_code & 0xf);
                     break;
                 }
             }
-        } while ((stream.next_packet < stream.end) || !this->up_and_running);
+        } while ((input_stream.next_packet < input_stream.end) || !this->up_and_running);
 
         #warning the postcondition could be changed to signify we want to get hand back immediately, because we still have data to process.
     }
@@ -994,7 +1001,7 @@ struct server_rdp {
     }
 
 
-    void server_rdp_process_confirm_active(Stream & stream)
+    void process_confirm_active(Stream & stream)
     {
         stream.skip_uint8(4); /* rdp_shareid */
         stream.skip_uint8(2); /* userid */
@@ -1220,7 +1227,7 @@ struct server_rdp {
     }
 
     /* PDUTYPE_DATAPDU */
-    void server_rdp_process_data(Stream & stream, Callback & cb) throw (Error)
+    void process_data(Stream & stream, Callback & cb) throw (Error)
     {
         stream.skip_uint8(6);
         stream.in_uint16_le(); // len
@@ -1327,7 +1334,7 @@ struct server_rdp {
             }
             break;
         default:
-            LOG(LOG_WARNING, "unknown in server_rdp_process_data %d\n", data_type);
+            LOG(LOG_WARNING, "unknown in process_data %d\n", data_type);
             break;
         }
     }

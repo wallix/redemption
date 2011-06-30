@@ -62,12 +62,12 @@ struct test_internal_mod : public internal_mod {
         this->front.send_global_palette(this->palette332BGR);
 
         this->server_begin_update();
-        this->front.color_cache(this->palette332BGR, 0);
-        this->front.color_cache(this->palette332BGR, 1);
-        this->front.color_cache(this->palette332BGR, 2);
-        this->front.color_cache(this->palette332BGR, 3);
-        this->front.color_cache(this->palette332BGR, 4);
-        this->front.color_cache(this->palette332BGR, 5);
+        this->color_cache(this->palette332BGR, 0);
+        this->color_cache(this->palette332BGR, 1);
+        this->color_cache(this->palette332BGR, 2);
+        this->color_cache(this->palette332BGR, 3);
+        this->color_cache(this->palette332BGR, 4);
+        this->color_cache(this->palette332BGR, 5);
 
 //        #include "tracexp2.cpp"
         this->server_end_update();
