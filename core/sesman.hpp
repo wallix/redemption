@@ -31,12 +31,13 @@
 class SessionManager {
 
     ModContext & context;
+    int tick_count;
     public:
 
     struct SocketTransport * auth_trans_t;
     wait_obj * auth_event;
 
-    SessionManager(ModContext & context) : context(context) {
+    SessionManager(ModContext & context) : context(context), tick_count(0) {
         this->auth_trans_t = NULL;
         this->auth_event = 0;
     }
@@ -59,6 +60,7 @@ class SessionManager {
 
     void start_keep_alive(long & keepalive_time)
     {
+        this->tick_count = 1;
         if (this->auth_trans_t){
             Stream stream(8192);
 
@@ -159,7 +161,6 @@ class SessionManager {
         if (this->auth_trans_t){
             if (this->auth_event?this->auth_event->is_set():false) {
 
-
                 try {
                     Stream stream(8192);
 
@@ -180,12 +181,19 @@ class SessionManager {
                 return false;
             }
             else if (keepalive_time && (now > keepalive_time)){
-                LOG(LOG_INFO, "%llu bytes sent to client in last activity period,"
-                              " total = %llu",
-                              trans->last_quantum_sent, trans->total_sent);
+                LOG(LOG_INFO, "%llu bytes sent in last quantum,"
+                              " total: %llu tick:%d",
+                              trans->last_quantum_sent, trans->total_sent,
+                              this->tick_count);
                 if (trans->last_quantum_sent == 0){
-                    this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed on inactivity");
-                    return false;
+                    this->tick_count++;
+                    if (this->tick_count > 10){ // 10 minutes before closing on inactivity
+                        this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed on inactivity");
+                        return false;
+                    }
+                }
+                else {
+                    this->tick_count = 0;
                 }
                 trans->tick();
 

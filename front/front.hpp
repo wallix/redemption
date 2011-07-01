@@ -189,7 +189,7 @@ struct GraphicsUpdatePDU
     void flush()
     {
         if (this->order_count > 0){
-            LOG(LOG_ERR, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
+//            LOG(LOG_ERR, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
             this->order_count = 0;
 
@@ -364,7 +364,7 @@ public:
     }
 
     void reset(){
-        LOG(LOG_INFO, "reset()");
+//        LOG(LOG_INFO, "reset()");
         #warning is it necessary (or even useful) to send remaining drawing orders before resetting ?
         this->orders->flush();
 
@@ -384,17 +384,6 @@ public:
         this->bmp_cache = new BitmapCache(&(this->rdp_layer.client_info));
         this->cache.reset(this->rdp_layer.client_info);
     }
-
-    void send()
-    {
-        if (this->order_level > 0) {
-            this->order_level--;
-            if (this->order_level == 0){
-                this->orders->flush();
-            }
-        }
-    }
-
 
     void start_capture(int width, int height, bool flag, char * path, const char * codec_id, const char * quality, int timezone)
     {
@@ -426,69 +415,72 @@ public:
 
     void begin_update()
     {
-        LOG(LOG_INFO, "begin_update()");
+//        LOG(LOG_INFO, "begin_update()");
         this->order_level++;
     }
 
     void end_update()
     {
-        LOG(LOG_INFO, "end_update()");
-        this->send();
+//        LOG(LOG_INFO, "end_update()");
+        this->order_level--;
+        if (this->order_level == 0){
+            this->orders->flush();
+        }
     }
 
     void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
     {
-        LOG(LOG_INFO, "front::send_pointer\n");
+//        LOG(LOG_INFO, "front::send_pointer\n");
         this->rdp_layer.server_rdp_send_pointer(cache_idx, data, mask, x, y);
-        LOG(LOG_INFO, "front::send_pointer done\n");
+//        LOG(LOG_INFO, "front::send_pointer done\n");
     }
 
     void set_pointer(int cache_idx) throw (Error)
     {
-        LOG(LOG_INFO, "front::set_pointer\n");
+//        LOG(LOG_INFO, "front::set_pointer\n");
         this->rdp_layer.server_rdp_set_pointer(cache_idx);
-        LOG(LOG_INFO, "front::set_pointer done\n");
+//        LOG(LOG_INFO, "front::set_pointer done\n");
     }
 
     void activate_and_process_data(Callback & cb)
     {
-        LOG(LOG_INFO, "activate_and_process_data\n");
+//        LOG(LOG_INFO, "activate_and_process_data\n");
         this->rdp_layer.activate_and_process_data(cb);
     }
 
     void disconnect() throw (Error)
     {
-        LOG(LOG_INFO, "disconnect()");
+//        LOG(LOG_INFO, "disconnect()");
         this->rdp_layer.server_rdp_disconnect();
     }
 
     void set_console_session(bool b)
     {
-        LOG(LOG_INFO, "set_console_session");
+//        LOG(LOG_INFO, "set_console_session");
         this->rdp_layer.client_info.console_session = b;
     }
 
     const vector<struct mcs_channel_item *> & get_channel_list(void) const
     {
-        LOG(LOG_INFO, "get_channel_list()");
+//        LOG(LOG_INFO, "get_channel_list()");
         return rdp_layer.sec_layer.mcs_layer.channel_list;
     }
 
     void incoming(void)
     {
-        LOG(LOG_INFO, "incoming");
+//        LOG(LOG_INFO, "incoming");
         this->rdp_layer.server_rdp_incoming();
     }
 
     void send_global_palette(const BGRPalette & palette)
     {
-        LOG(LOG_INFO, "send_global_palette()");
+//        LOG(LOG_INFO, "send_global_palette()");
         this->rdp_layer.send_global_palette(palette);
     }
 
     int get_channel_id(char* name)
     {
-        LOG(LOG_INFO, "front::get_channel_id\n");
+//        LOG(LOG_INFO, "front::get_channel_id\n");
         return this->rdp_layer.sec_layer.mcs_layer.server_mcs_get_channel_id(name);
     }
 
@@ -496,14 +488,14 @@ public:
                        uint8_t* data, int data_len,
                        int total_data_len, int flags)
     {
-        LOG(LOG_INFO, "send_to_channel()");
+//        LOG(LOG_INFO, "send_to_channel()");
         this->rdp_layer.server_send_to_channel(channel_id, data, data_len, total_data_len, flags);
     }
 
     /* fill in an area of the screen with one color */
     void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        LOG(LOG_INFO, "front::opaque_rect()");
+//        LOG(LOG_INFO, "front::opaque_rect()");
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->orders->send(cmd, clip);
 
@@ -515,7 +507,7 @@ public:
 
     void scr_blt(const RDPScrBlt & cmd, const Rect &clip)
     {
-        LOG(LOG_INFO, "front::scr_blt()");
+//        LOG(LOG_INFO, "front::scr_blt()");
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->orders->send(cmd, clip);
 
@@ -527,7 +519,7 @@ public:
 
     void dest_blt(const RDPDestBlt & cmd, const Rect &clip)
     {
-        LOG(LOG_INFO, "front::dest_blt()");
+//        LOG(LOG_INFO, "front::dest_blt()");
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->orders->send(cmd, clip);
 
@@ -540,7 +532,7 @@ public:
 
     void pat_blt(const RDPPatBlt & cmd, const Rect &clip)
     {
-        LOG(LOG_INFO, "front::pat_blt()");
+//        LOG(LOG_INFO, "front::pat_blt()");
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->orders->send(cmd, clip);
 
@@ -553,7 +545,7 @@ public:
 
     void mem_blt(const RDPMemBlt & cmd, const Rect & clip)
     {
-        LOG(LOG_INFO, "front::mem_blt()");
+//        LOG(LOG_INFO, "front::mem_blt()");
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->orders->send(cmd, clip);
             if (this->capture){
@@ -564,7 +556,7 @@ public:
 
     void line_to(const RDPLineTo& cmd, const Rect & clip)
     {
-        LOG(LOG_INFO, "front::line_to()");
+//        LOG(LOG_INFO, "front::line_to()");
         const uint16_t minx = std::min(cmd.startx, cmd.endx);
         const uint16_t miny = std::min(cmd.starty, cmd.endy);
         const Rect rect(minx, miny,
@@ -581,7 +573,7 @@ public:
 
     void glyph_index(const RDPGlyphIndex & cmd, const Rect & clip)
     {
-        LOG(LOG_INFO, "front::glyph_index()");
+//        LOG(LOG_INFO, "front::glyph_index()");
         if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()){
             this->orders->send(cmd, clip);
             if (this->capture){
@@ -592,19 +584,19 @@ public:
 
     void color_cache(const RDPColCache & cmd)
     {
-        LOG(LOG_INFO, "front::color_cache()");
+//        LOG(LOG_INFO, "front::color_cache()");
         this->orders->send(cmd);
     }
 
     void brush_cache(RDPBrushCache & cmd)
     {
-        LOG(LOG_INFO, "front::brush_cache()");
+//        LOG(LOG_INFO, "front::brush_cache()");
         this->orders->send(cmd);
     }
 
     void bitmap_cache(const RDPBmpCache & cmd)
     {
-        LOG(LOG_INFO, "front::bitmap_cache()");
+//        LOG(LOG_INFO, "front::bitmap_cache()");
         this->orders->send(cmd);
 
         if (this->capture){
@@ -614,7 +606,7 @@ public:
 
     void glyph_cache(const RDPGlyphCache & cmd)
     {
-        LOG(LOG_INFO, "front::glyph_cache()");
+//        LOG(LOG_INFO, "front::glyph_cache()");
         this->orders->send(cmd);
     }
 

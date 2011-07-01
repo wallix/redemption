@@ -282,14 +282,14 @@ static int load_pointer(const char* file_name, uint8_t* data, uint8_t* mask, int
 }
 
 
-int Session::step_STATE_KEY_HANDSHAKE(struct timeval & time_mark)
+int Session::step_STATE_KEY_HANDSHAKE(const struct timeval & time_mark)
 {
     this->front->incoming();
     return SESSION_STATE_ENTRY;
 }
 
 
-int Session::step_STATE_ENTRY(struct timeval & time_mark)
+int Session::step_STATE_ENTRY(const struct timeval & time_mark)
 {
     unsigned max = 0;
     fd_set rfds;
@@ -297,10 +297,10 @@ int Session::step_STATE_ENTRY(struct timeval & time_mark)
 
     FD_ZERO(&rfds);
     FD_ZERO(&wfds);
-
+    struct timeval timeout = time_mark;
 
     this->front_event->add_to_fd_set(rfds, max);
-    select(max + 1, &rfds, &wfds, 0, &time_mark);
+    select(max + 1, &rfds, &wfds, 0, &timeout);
     if (this->front_event->is_set()) {
         try {
             this->front->activate_and_process_data(*this->mod);
@@ -399,7 +399,7 @@ int Session::step_STATE_CLOSE_CONNECTION()
 }
 
 
-int Session::step_STATE_WAITING_FOR_NEXT_MODULE(struct timeval & time_mark)
+int Session::step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time_mark)
 {
     unsigned max = 0;
     fd_set rfds;
@@ -408,9 +408,11 @@ int Session::step_STATE_WAITING_FOR_NEXT_MODULE(struct timeval & time_mark)
     FD_ZERO(&rfds);
     FD_ZERO(&wfds);
 
+    struct timeval timeout = time_mark;
+
     this->front_event->add_to_fd_set(rfds, max);
     this->sesman->add_to_fd_set(rfds, max);
-    select(max + 1, &rfds, &wfds, 0, &time_mark);
+    select(max + 1, &rfds, &wfds, 0, &timeout);
     if (this->front_event->is_set()) { /* incoming client data */
         try {
             this->front->activate_and_process_data(*this->mod);
@@ -431,7 +433,7 @@ int Session::step_STATE_WAITING_FOR_NEXT_MODULE(struct timeval & time_mark)
 }
 
 
-int Session::step_STATE_RUNNING(struct timeval & time_mark)
+int Session::step_STATE_RUNNING(const struct timeval & time_mark)
 {
     unsigned max = 0;
     fd_set rfds;
@@ -440,10 +442,12 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
     FD_ZERO(&rfds);
     FD_ZERO(&wfds);
 
+    struct timeval timeout = time_mark;
+
     this->front_event->add_to_fd_set(rfds, max);
     this->back_event->add_to_fd_set(rfds, max);
     this->sesman->add_to_fd_set(rfds, max);
-    select(max + 1, &rfds, &wfds, 0, &time_mark);
+    int ready = select(max + 1, &rfds, &wfds, 0, &timeout);
 
     time_t timestamp = time(NULL);
     this->front->periodic_snapshot(this->mod->get_pointer_displayed());

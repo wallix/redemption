@@ -108,10 +108,10 @@ struct Session {
 
     int session_main_loop();
 
-    int step_STATE_KEY_HANDSHAKE(struct timeval & time);
-    int step_STATE_ENTRY(struct timeval & time);
-    int step_STATE_WAITING_FOR_NEXT_MODULE(struct timeval & time);
-    int step_STATE_RUNNING(struct timeval & time);
+    int step_STATE_KEY_HANDSHAKE(const struct timeval & time);
+    int step_STATE_ENTRY(const struct timeval & time);
+    int step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time);
+    int step_STATE_RUNNING(const struct timeval & time);
     int step_STATE_CLOSE_CONNECTION();
 
     bool session_setup_mod(int next_state, const ModContext * context);
