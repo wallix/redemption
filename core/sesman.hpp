@@ -153,11 +153,13 @@ class SessionManager {
         return false;
     }
 
-    bool keep_alive(long & keepalive_time, long & now)
+    bool keep_alive_or_inactivity(long & keepalive_time, long & now, Transport * trans)
     {
         // Keepalive Data exchange with sesman
         if (this->auth_trans_t){
             if (this->auth_event?this->auth_event->is_set():false) {
+
+
                 try {
                     Stream stream(8192);
 
@@ -178,6 +180,15 @@ class SessionManager {
                 return false;
             }
             else if (keepalive_time && (now > keepalive_time)){
+                LOG(LOG_INFO, "%llu bytes sent to client in last activity period,"
+                              " total = %llu",
+                              trans->last_quantum_sent, trans->total_sent);
+                if (trans->last_quantum_sent == 0){
+                    this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed on inactivity");
+                    return false;
+                }
+                trans->tick();
+
                 keepalive_time = now + 30;
                 Stream stream(8192);
 

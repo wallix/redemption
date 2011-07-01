@@ -458,8 +458,8 @@ int Session::step_STATE_RUNNING(struct timeval & time_mark)
         };
     }
 
-    if (this->sesman->close_on_timestamp(timestamp) ||
-       !this->sesman->keep_alive(this->keep_alive_time, timestamp)){
+    if (this->sesman->close_on_timestamp(timestamp)
+    || !this->sesman->keep_alive_or_inactivity(this->keep_alive_time, timestamp, this->trans)){
         this->internal_state = SESSION_STATE_STOP;
         if (this->session_setup_mod(MCTX_STATUS_CLOSE, this->context)){
             this->keep_alive_time = 0;

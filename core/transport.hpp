@@ -38,8 +38,27 @@
 #include "error.hpp"
 
 class Transport {
-
 public:
+    uint64_t total_received;
+    uint64_t last_quantum_received;
+    uint64_t total_sent;
+    uint64_t last_quantum_sent;
+    uint64_t quantum_count;
+
+    Transport() :
+        total_received(0),
+        last_quantum_received(0),
+        total_sent(0),
+        last_quantum_sent(0),
+        quantum_count(0)
+    {}
+
+    void tick() {
+        quantum_count++;
+        last_quantum_received = 0;
+        last_quantum_sent = 0;
+    }
+
     virtual void recv(char ** pbuffer, int len) throw (Error) = 0;
     virtual void send(const char * buffer, int len) throw (Error) = 0;
     virtual void disconnect() = 0;
@@ -50,6 +69,7 @@ public:
 class GeneratorTransport : public Transport {
 
     GeneratorTransport()
+        : Transport()
     {
     }
 
@@ -77,7 +97,7 @@ class SocketTransport : public Transport {
         int sck;
         int sck_closed;
 
-    SocketTransport(int sck)
+    SocketTransport(int sck) : Transport()
     {
         this->sck = sck;
         this->sck_closed = 0;
@@ -85,6 +105,7 @@ class SocketTransport : public Transport {
 
 
     SocketTransport(const char* ip, int port, int nbretry = 0, int retry_delai_ms = 1000000)
+        : Transport()
     {
         this->sck = 0;
         this->sck_closed = 0;
@@ -192,7 +213,8 @@ class SocketTransport : public Transport {
             }
         }
         *input_buffer = pbuffer;
-
+        total_received += total_len;
+        last_quantum_received += total_len;
     }
 
     virtual void send(const char * buffer, int len) throw (Error)
@@ -220,6 +242,8 @@ class SocketTransport : public Transport {
                 total = total + sent;
             }
         }
+        total_sent += len;
+        last_quantum_sent += len;
     }
 
     private:
