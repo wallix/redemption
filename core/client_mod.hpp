@@ -68,7 +68,7 @@ struct client_mod : public Callback {
     wait_obj * event;
     int signal;
     bool palette_sent;
-    bool palette_memblt_sent;
+    bool palette_memblt_sent[6];
 
     client_mod(int (& keys)[256], int & key_flags, Keymap * &keymap, Front & front)
         : keys(keys),
@@ -77,9 +77,11 @@ struct client_mod : public Callback {
           front(front),
           mod_bpp(24),
           signal(0),
-          palette_sent(false),
-          palette_memblt_sent(false)
+          palette_sent(false)
     {
+        for (size_t i = 0; i < 6 ; i++){
+            this->palette_memblt_sent[i] = false;
+        }
         this->current_pointer = 0;
         this->clip = Rect(0,0,4096,2048);
         this->pointer_displayed = false;
@@ -235,7 +237,9 @@ struct client_mod : public Callback {
                 throw 0;
             }
             this->palette_sent = false;
-            this->palette_memblt_sent = false;
+            for (size_t i = 0; i < 6 ; i++){
+                this->palette_memblt_sent[i] = false;
+            }
             LOG(LOG_INFO, "// Resizing client to : %d x %d x %d\n", width, height, bpp);
 
             this->front.set_client_info(width, height, bpp);
@@ -253,7 +257,9 @@ struct client_mod : public Callback {
 
     void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor)
     {
-        this->send_global_palette(this->palette332);
+        if (!this->palette_sent){
+            this->send_global_palette(this->palette332);
+        }
 
         // add text to glyph cache
         #warning use mbsrtowcs instead
@@ -323,7 +329,9 @@ struct client_mod : public Callback {
 
     void pat_blt(const RDPPatBlt & cmd)
     {
-        this->send_global_palette(this->palette332);
+        if (!this->palette_sent){
+            this->send_global_palette(this->palette332);
+        }
 
         RDPPatBlt new_cmd = cmd;
         new_cmd.back_color = this->convert(cmd.back_color);
@@ -334,7 +342,9 @@ struct client_mod : public Callback {
 
     void opaque_rect(const RDPOpaqueRect & cmd)
     {
-        this->send_global_palette(this->palette332);
+        if (!this->palette_sent){
+            this->send_global_palette(this->palette332);
+        }
 
         RDPOpaqueRect new_cmd = cmd;
         if (this->mod_bpp == 16 || this->mod_bpp == 15){
@@ -365,7 +375,9 @@ struct client_mod : public Callback {
 
     void glyph_index(const RDPGlyphIndex & cmd)
     {
-        this->send_global_palette(this->palette332);
+        if (!this->palette_sent){
+            this->send_global_palette(this->palette332);
+        }
 
         RDPGlyphIndex new_cmd = cmd;
         new_cmd.back_color = this->convert(cmd.back_color);
@@ -423,14 +435,6 @@ struct client_mod : public Callback {
     {
 //        LOG(LOG_INFO, "mod::bitmap_update mod_bpp=%d front_bpp=%d INITIAL BITMAP FILE %u",
 //            this->mod_bpp, this->get_front_bpp(), bitmap.bmp_size(this->mod_bpp));
-        if ((this->get_front_bpp() == 8)
-        && !this->palette_memblt_sent) {
-            this->color_cache(this->palette332BGR, 0);
-            this->palette_memblt_sent = true;
-        }
-
-        this->send_global_palette(this->palette332);
-
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
         const Rect src_r(srcx, srcy, width, height);
@@ -471,12 +475,14 @@ struct client_mod : public Callback {
     void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const BGRPalette & palette)
     {
         if ((this->get_front_bpp() == 8)
-        && !this->palette_memblt_sent) {
+        && !this->palette_memblt_sent[0]) {
             this->color_cache(this->palette332BGR, 0);
-            this->palette_memblt_sent = true;
+            this->palette_memblt_sent[0] = true;
         }
 
-        this->send_global_palette(this->palette332);
+        if (!this->palette_sent){
+            this->send_global_palette(this->palette332);
+        }
 
         const Rect & dst = memblt.rect;
         const int srcx = memblt.srcx;
@@ -650,8 +656,6 @@ struct client_mod : public Callback {
         }
         return 0;
     }
-
-
 
 };
 
