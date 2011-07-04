@@ -898,7 +898,7 @@ struct rdp_rdp {
         void send_redirect_pdu(long param1, long param2, long param3, int param4,
                                       vector<mcs_channel_item*> channel_list) throw(Error)
         {
-//            LOG(LOG_INFO, "send_redirect_pdu\n");
+            LOG(LOG_INFO, "send_redirect_pdu\n");
             char* name = 0;
             struct mcs_channel_item* channel_item;
             /* We need to verify this in order to right process the stream passed */
@@ -919,7 +919,7 @@ struct rdp_rdp {
                     name = channel_item->name;
                 }
             }
-//            LOG(LOG_INFO, "send_redirect_pdu channel=%s\n", name);
+            LOG(LOG_INFO, "send_redirect_pdu channel=%s\n", name);
             /* Here, we're going to search the correct channel in order to send
             information throughout this channel to RDP server */
             int channel_id = 0;
@@ -952,6 +952,7 @@ struct rdp_rdp {
             /* We need to call send_data but with another code because we need to build an
             virtual_channel packet and not an MCS_GLOBAL_CHANNEL packet */
             this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, channel_id);
+            LOG(LOG_INFO, "send_redirect_pdu done\n");
         }
 
     void process_color_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)

@@ -148,6 +148,8 @@ class RDPMemBlt {
         // have bounds. Can't see the rationale and rdesktop don't do it
         // by the book. Behavior should be checked with server and clients
         // from Microsoft. Looks like an error in RDP specs.
+        LOG(LOG_INFO, "fully_relative=%u this->srcx = %u oldcmd.srcx=%u this->srcy = %u oldcmd.srcy = %u",
+            dr.fully_relative(), this->srcx, oldcmd.srcx, this->srcy, oldcmd.srcy);
         header.control |= ((dr.fully_relative()
                    && is_1_byte(this->srcx - oldcmd.srcx)
                    && is_1_byte(this->srcy - oldcmd.srcy))
@@ -222,6 +224,11 @@ class RDPMemBlt {
         return lg;
     }
 
+    void log(int level, const Rect & clip) const {
+        char buffer[1024];
+        this->str(buffer, 1024, RDPOrderCommon(RDP::MEMBLT, clip));
+        LOG(level, buffer);
+    }
 
 };
 

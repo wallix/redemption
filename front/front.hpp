@@ -189,7 +189,7 @@ struct GraphicsUpdatePDU
     void flush()
     {
         if (this->order_count > 0){
-//            LOG(LOG_ERR, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
+            LOG(LOG_ERR, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
             this->order_count = 0;
 
@@ -209,7 +209,7 @@ struct GraphicsUpdatePDU
         size_t max_packet_size = std::min(this->stream.capacity, (size_t)4096);
         size_t used_size = this->stream.get_offset(0);
 
-        if ((used_size + asked_size + 100) > max_packet_size) {
+        if ((this->order_count >= 1) || (used_size + asked_size + 100) > max_packet_size) {
             this->flush();
         }
         this->order_count++;
@@ -430,57 +430,63 @@ public:
 
     void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
     {
-//        LOG(LOG_INFO, "front::send_pointer\n");
+        LOG(LOG_INFO, "front::send_pointer\n");
         this->rdp_layer.server_rdp_send_pointer(cache_idx, data, mask, x, y);
-//        LOG(LOG_INFO, "front::send_pointer done\n");
+        LOG(LOG_INFO, "front::send_pointer done\n");
     }
 
     void set_pointer(int cache_idx) throw (Error)
     {
-//        LOG(LOG_INFO, "front::set_pointer\n");
+        LOG(LOG_INFO, "front::set_pointer\n");
         this->rdp_layer.server_rdp_set_pointer(cache_idx);
-//        LOG(LOG_INFO, "front::set_pointer done\n");
+        LOG(LOG_INFO, "front::set_pointer done\n");
     }
 
     void activate_and_process_data(Callback & cb)
     {
-//        LOG(LOG_INFO, "activate_and_process_data\n");
+        LOG(LOG_INFO, "activate_and_process_data\n");
         this->rdp_layer.activate_and_process_data(cb);
+        LOG(LOG_INFO, "activate_and_process_data done\n");
     }
 
     void disconnect() throw (Error)
     {
-//        LOG(LOG_INFO, "disconnect()");
+        LOG(LOG_INFO, "disconnect()");
         this->rdp_layer.server_rdp_disconnect();
+        LOG(LOG_INFO, "disconnect() done");
     }
 
     void set_console_session(bool b)
     {
-//        LOG(LOG_INFO, "set_console_session");
+        LOG(LOG_INFO, "set_console_session");
         this->rdp_layer.client_info.console_session = b;
+        LOG(LOG_INFO, "set_console_session done");
     }
 
     const vector<struct mcs_channel_item *> & get_channel_list(void) const
     {
-//        LOG(LOG_INFO, "get_channel_list()");
+        LOG(LOG_INFO, "get_channel_list()");
         return rdp_layer.sec_layer.mcs_layer.channel_list;
+        LOG(LOG_INFO, "get_channel_list() done");
     }
 
     void incoming(void)
     {
-//        LOG(LOG_INFO, "incoming");
+        LOG(LOG_INFO, "incoming");
         this->rdp_layer.server_rdp_incoming();
+        LOG(LOG_INFO, "incoming done");
     }
 
     void send_global_palette(const BGRPalette & palette)
     {
-//        LOG(LOG_INFO, "send_global_palette()");
+        LOG(LOG_INFO, "send_global_palette()");
         this->rdp_layer.send_global_palette(palette);
+        LOG(LOG_INFO, "send_global_palette() done");
     }
 
     int get_channel_id(char* name)
     {
-//        LOG(LOG_INFO, "front::get_channel_id\n");
+        LOG(LOG_INFO, "front::get_channel_id\n");
         return this->rdp_layer.sec_layer.mcs_layer.server_mcs_get_channel_id(name);
     }
 
@@ -488,14 +494,15 @@ public:
                        uint8_t* data, int data_len,
                        int total_data_len, int flags)
     {
-//        LOG(LOG_INFO, "send_to_channel()");
+        LOG(LOG_INFO, "send_to_channel()");
         this->rdp_layer.server_send_to_channel(channel_id, data, data_len, total_data_len, flags);
+        LOG(LOG_INFO, "send_to_channel() done");
     }
 
     /* fill in an area of the screen with one color */
     void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-//        LOG(LOG_INFO, "front::opaque_rect()");
+        LOG(LOG_INFO, "front::opaque_rect()");
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->orders->send(cmd, clip);
 
@@ -503,11 +510,12 @@ public:
                 this->capture->opaque_rect(cmd, clip);
             }
         }
+        LOG(LOG_INFO, "front::opaque_rect() done");
     }
 
     void scr_blt(const RDPScrBlt & cmd, const Rect &clip)
     {
-//        LOG(LOG_INFO, "front::scr_blt()");
+        LOG(LOG_INFO, "front::scr_blt()");
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->orders->send(cmd, clip);
 
@@ -515,11 +523,12 @@ public:
                 this->capture->scr_blt(cmd, clip);
             }
         }
+        LOG(LOG_INFO, "front::scr_blt() done");
     }
 
     void dest_blt(const RDPDestBlt & cmd, const Rect &clip)
     {
-//        LOG(LOG_INFO, "front::dest_blt()");
+        LOG(LOG_INFO, "front::dest_blt()");
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->orders->send(cmd, clip);
 
@@ -527,12 +536,13 @@ public:
                 this->capture->dest_blt(cmd, clip);
             }
         }
+        LOG(LOG_INFO, "front::dest_blt() done");
     }
 
 
     void pat_blt(const RDPPatBlt & cmd, const Rect &clip)
     {
-//        LOG(LOG_INFO, "front::pat_blt()");
+        LOG(LOG_INFO, "front::pat_blt()");
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->orders->send(cmd, clip);
 
@@ -540,23 +550,26 @@ public:
                 this->capture->pat_blt(cmd, clip);
             }
         }
+        LOG(LOG_INFO, "front::pat_blt() done");
     }
 
 
     void mem_blt(const RDPMemBlt & cmd, const Rect & clip)
     {
-//        LOG(LOG_INFO, "front::mem_blt()");
+        LOG(LOG_INFO, "front::mem_blt()");
+        cmd.log(LOG_INFO, clip);
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->orders->send(cmd, clip);
             if (this->capture){
                 this->capture->mem_blt(cmd, *this->bmp_cache, clip);
             }
         }
+        LOG(LOG_INFO, "front::mem_blt() done");
     }
 
     void line_to(const RDPLineTo& cmd, const Rect & clip)
     {
-//        LOG(LOG_INFO, "front::line_to()");
+        LOG(LOG_INFO, "front::line_to()");
         const uint16_t minx = std::min(cmd.startx, cmd.endx);
         const uint16_t miny = std::min(cmd.starty, cmd.endy);
         const Rect rect(minx, miny,
@@ -569,45 +582,52 @@ public:
                 this->capture->line_to(cmd, clip);
             }
         }
+        LOG(LOG_INFO, "front::line_to() done");
     }
 
     void glyph_index(const RDPGlyphIndex & cmd, const Rect & clip)
     {
-//        LOG(LOG_INFO, "front::glyph_index()");
+        LOG(LOG_INFO, "front::glyph_index()");
         if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()){
             this->orders->send(cmd, clip);
             if (this->capture){
                 this->capture->glyph_index(cmd, clip);
             }
         }
+        LOG(LOG_INFO, "front::glyph_index() done");
     }
 
     void color_cache(const RDPColCache & cmd)
     {
-//        LOG(LOG_INFO, "front::color_cache()");
+        LOG(LOG_INFO, "front::color_cache()");
         this->orders->send(cmd);
+        LOG(LOG_INFO, "front::color_cache() done");
     }
 
     void brush_cache(RDPBrushCache & cmd)
     {
-//        LOG(LOG_INFO, "front::brush_cache()");
+        LOG(LOG_INFO, "front::brush_cache()");
         this->orders->send(cmd);
+        LOG(LOG_INFO, "front::brush_cache() done");
     }
 
     void bitmap_cache(const RDPBmpCache & cmd)
     {
-//        LOG(LOG_INFO, "front::bitmap_cache()");
+        LOG(LOG_INFO, "front::bitmap_cache()");
+        cmd.log(LOG_INFO);
         this->orders->send(cmd);
 
         if (this->capture){
             this->capture->bitmap_cache(cmd);
         }
+        LOG(LOG_INFO, "front::bitmap_cache() done");
     }
 
     void glyph_cache(const RDPGlyphCache & cmd)
     {
-//        LOG(LOG_INFO, "front::glyph_cache()");
+        LOG(LOG_INFO, "front::glyph_cache()");
         this->orders->send(cmd);
+        LOG(LOG_INFO, "front::glyph_cache() done");
     }
 
 };

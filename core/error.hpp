@@ -173,6 +173,7 @@ class Error {
     {
         this->id = id;
         this->errnum = errnum;
+        LOG(LOG_INFO, "ERROR: id=%u %u", this->id, this->errnum);
     }
 
 };

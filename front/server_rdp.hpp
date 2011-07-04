@@ -580,6 +580,8 @@ struct server_rdp {
 
     void activate_and_process_data(Callback & cb)
     {
+        LOG(LOG_INFO, "activate and process data : data=%p < next_packet=%p p=%p < end=%p",
+            this->front_stream.data, this->front_stream.next_packet, this->front_stream.p, this->front_stream.end);
         Stream & input_stream = this->front_stream;
         do {
             this->sec_layer.mcs_layer.iso_layer.iso_recv(input_stream);
@@ -667,10 +669,21 @@ struct server_rdp {
                 cb.callback(WM_CHANNELDATA,
                                   ((flags & 0xffff) << 16) | (channel_id & 0xffff),
                                   size, (long)(input_stream.p), length);
+                LOG(LOG_INFO, "callback done (up_and_running=%u)", this->up_and_running);
                 if (!this->up_and_running){ continue; }
+                LOG(LOG_INFO, "CHANNEL_DATA : data=%p < p=%p < end=%p", this->front_stream.data, this->front_stream.p, this->front_stream.end);
+//                if (input_stream.p >= input_stream.end) {
+//                    input_stream.next_packet = input_stream.p;
+//                    break;
+//                }
             }
 
             input_stream.next_packet = input_stream.p;
+
+            LOG(LOG_INFO, "-> data=%p < p=%p  next_packet=%p < end=%p",
+                this->front_stream.data, this->front_stream.p,
+                input_stream.next_packet, this->front_stream.end);
+
 
             int length = input_stream.in_uint16_le();
             if (length == 0x8000) {

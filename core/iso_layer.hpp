@@ -195,6 +195,7 @@ struct IsoLayer {
 
     int iso_recv_msg(Stream & stream) throw (Error)
     {
+        LOG(LOG_INFO, "iso_recv_msg: reading 4 bytes header");
         stream.init(4);
         this->t->recv((char**)(&(stream.end)), 4);
 
@@ -205,6 +206,9 @@ struct IsoLayer {
         stream.skip_uint8(1);
 
         int len = stream.in_uint16_be();
+
+        LOG(LOG_INFO, "iso_recv_msg: reading %u bytes payload", len - 4);
+
         stream.init(len - 4);
         this->t->recv((char**)(&(stream.end)), len - 4);
 
@@ -224,7 +228,11 @@ struct IsoLayer {
 
         stream.skip_uint8(1);
         int code = stream.in_uint8();
+        LOG(LOG_INFO, "iso_recv_msg: skip %u bytes", (code == ISO_PDU_DT)?1:5);
+
         stream.skip_uint8((code == ISO_PDU_DT)?1:5);
+
+        LOG(LOG_INFO, "iso_recv_msg: done");
         return code;
     }
 

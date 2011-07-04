@@ -521,7 +521,7 @@ class RDPBmpCache {
     {
         using namespace RDP;
         if (0 == this->client_info->bitmap_cache_version){
-            if (this->client_info->use_bitmap_comp){
+            if (0 && this->client_info->use_bitmap_comp){
 //                LOG(LOG_INFO, "/* BMP Cache compressed V1 */");
                 this->emit_v1_compressed(stream);
             }
@@ -986,11 +986,20 @@ class RDPBmpCache {
 
     size_t str(char * buffer, size_t sz) const
     {
-        size_t lg  = snprintf(buffer, sz, "RDPBmpCache()");
+        size_t lg  = snprintf(buffer, sz, "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u palette=%p cache_version=%u compression=%u)",
+            this->cache_id, this->cache_idx, this->bpp, this->palette,
+            this->client_info->bitmap_cache_version, this->client_info->use_bitmap_comp);
         if (lg >= sz){
             return sz;
         }
         return lg;
+    }
+
+    void log(int level) const
+    {
+        char buffer[1024];
+        this->str(buffer, 1024);
+        LOG(level, buffer);
     }
 
 };
