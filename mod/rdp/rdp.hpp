@@ -223,8 +223,7 @@ struct mod_rdp : public client_mod {
         try{
             cont = 1;
             while (cont) {
-                type = 0;
-                this->rdp_layer.recv(this->in_stream, &type, this);
+                type = this->rdp_layer.recv(this->in_stream, this);
                 switch (type) {
                 case PDUTYPE_DATAPDU:
                     this->rdp_layer.process_data_pdu(this->in_stream, this);

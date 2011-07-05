@@ -771,7 +771,7 @@ struct rdp_rdp {
         }
 
 
-        void recv(Stream & stream, int* type, client_mod * mod) throw(Error)
+        int recv(Stream & stream, client_mod * mod) throw(Error)
         {
 //            LOG(LOG_INFO, "recv\n");
             int len;
@@ -785,8 +785,7 @@ struct rdp_rdp {
                 this->sec_layer.rdp_sec_recv(stream, chan, version, mod);
                 if (version == 0xff){
                     stream.next_packet = stream.end;
-                    *type = 0;
-                    return;
+                    return 0;
                 }
                 else if (version != 3){
                     /* We must verify this condition because I'm not pretty sure that
@@ -796,8 +795,7 @@ struct rdp_rdp {
                     //rdp5_process_data(self, stream, pdu_data_type);
                     // packet setup Added by kriss
                     stream.next_packet = stream.p;
-                    *type = 0;
-                    return;
+                    return 0;
                 }
                 stream.next_packet = stream.p;
             }
@@ -807,14 +805,13 @@ struct rdp_rdp {
             len = stream.in_uint16_le();
             if (len == 0x8000) {
                 stream.next_packet += 8;
-                *type = 0;
-                return;
+                return 0;
             }
             pdu_type = stream.in_uint16_le();
             stream.skip_uint8(2);
-            *type = pdu_type & 0xf;
             stream.next_packet += len;
             this->chan_id = chan;
+            return pdu_type & 0xf;
         }
 
 
@@ -875,9 +872,9 @@ struct rdp_rdp {
             this->send_synchronise(stream);
             this->send_control(stream, RDP_CTL_COOPERATE);
             this->send_control(stream, RDP_CTL_REQUEST_CONTROL);
-            this->recv(stream, &type, mod); /* RDP_PDU_SYNCHRONIZE */
-            this->recv(stream, &type, mod); /* RDP_CTL_COOPERATE */
-            this->recv(stream, &type, mod); /* RDP_CTL_GRANT_CONTROL */
+            type = this->recv(stream, mod); /* RDP_PDU_SYNCHRONIZE */
+            type = this->recv(stream, mod); /* RDP_CTL_COOPERATE */
+            type = this->recv(stream, mod); /* RDP_CTL_GRANT_CONTROL */
             this->send_input(stream, 0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
             /* Including RDP 5.0 capabilities */
             if (this->use_rdp5 != 0){
@@ -888,7 +885,7 @@ struct rdp_rdp {
                 this->send_fonts(stream, 1);
                 this->send_fonts(stream, 2);
             }
-            this->recv(stream, &type, mod); /* RDP_PDU_UNKNOWN 0x28 (Fonts?) */
+            type = this->recv(stream, mod); /* RDP_PDU_UNKNOWN 0x28 (Fonts?) */
             this->orders.rdp_orders_reset_state();
             LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->bpp);
         }

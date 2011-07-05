@@ -178,31 +178,42 @@ struct server_sec {
         stream.p = stream.data;
         stream.skip_uint8(23);
 
-        // 2.2.1.3.1 User Data Header (TS_UD_HEADER)
-        // ------------------
-        // Below relevant quotes from MS-RDPBCGR v20100601 (2.2.1.3.1)
+// 2.2.1.3.1 User Data Header (TS_UD_HEADER)
+// =========================================
 
-        // type (2 bytes): A 16-bit, unsigned integer. The type of the data
-        //                 block that this header precedes.
-        // CS_CORE 0xC001 : The data block that follows contains Client Core
-        //                 Data (section 2.2.1.3.2).
-        // CS_SECURITY 0xC002 : The data block that follows contains Client
-        //                  Security Data (section 2.2.1.3.3).
-        // CS_NET 0xC003 : The data block that follows contains Client Network
-        //                 Data (section 2.2.1.3.4).
-        // CS_CLUSTER 0xC004 : The data block that follows contains Client
-        //                 Cluster Data (section 2.2.1.3.5).
-        // CS_MONITOR 0xC005 : The data block that follows contains Client
-        //                 Monitor Data (section 2.2.1.3.6).
-        // SC_CORE 0x0C01 : The data block that follows contains Server Core
-        //                 Data (section 2.2.1.4.2)
-        // SC_SECURITY 0x0C02 : The data block that follows contains Server
-        //                 Security Data (section 2.2.1.4.3).
-        // SC_NET 0x0C03 : The data block that follows contains Server Network
-        //                 Data (section 2.2.1.4.4)
+// type (2 bytes): A 16-bit, unsigned integer. The type of the data
+//                 block that this header precedes.
 
-        // length (2 bytes): A 16-bit, unsigned integer. The size in bytes of
-        // the data block, including this header.
+// +-------------------+-------------------------------------------------------+
+// | CS_CORE 0xC001 : The data block that follows contains Client Core
+//                 Data (section 2.2.1.3.2).
+// +-------------------+-------------------------------------------------------+
+// | CS_SECURITY 0xC002 : The data block that follows contains Client
+//                  Security Data (section 2.2.1.3.3).
+// +-------------------+-------------------------------------------------------+
+// | CS_NET 0xC003 : The data block that follows contains Client Network
+//                 Data (section 2.2.1.3.4).
+// +-------------------+-------------------------------------------------------+
+// | CS_CLUSTER 0xC004 | The data block that follows contains Client Cluster   |
+// |                   | Data (section 2.2.1.3.5).                             |
+// +-------------------+-------------------------------------------------------+
+// | CS_MONITOR 0xC005 | The data block that follows contains Client
+//                 Monitor Data (section 2.2.1.3.6).
+// +-------------------+-------------------------------------------------------+
+// | SC_CORE 0x0C01 : The data block that follows contains Server Core
+//                 Data (section 2.2.1.4.2)
+// +-------------------+-------------------------------------------------------+
+// | SC_SECURITY 0x0C02 : The data block that follows contains Server
+//                 Security Data (section 2.2.1.4.3).
+// +-------------------+-------------------------------------------------------+
+// | SC_NET 0x0C03 : The data block that follows contains Server Network
+//                 Data (section 2.2.1.4.4)
+// +-------------------+-------------------------------------------------------+
+
+// length (2 bytes): A 16-bit, unsigned integer. The size in bytes of the data
+//   block, including this header.
+
+
 
         while (stream.check_rem(4)) {
             uint8_t * current_header = stream.p;
@@ -1211,10 +1222,66 @@ struct server_sec {
         memcpy(this->pub_sig, rsa_keys.pub_sig, 64);
         memcpy(this->pri_exp, rsa_keys.pri_exp, 64);
 
+// 2.2.1.3 Client MCS Connect Initial PDU with GCC Conference Create Request
+// =========================================================================
+
+// The MCS Connect Initial PDU is an RDP Connection Sequence PDU sent from
+// client to server during the Basic Settings Exchange phase (see section
+// 1.3.1.1). It is sent after receiving the X.224 Connection Confirm PDU
+// (section 2.2.1.2). The MCS Connect Initial PDU encapsulates a GCC Conference
+// Create Request, which encapsulates concatenated blocks of settings data. A
+// basic high-level overview of the nested structure for the Client MCS Connect
+// Initial PDU is illustrated in section 1.3.1.1, in the figure specifying MCS
+// Connect Initial PDU. Note that the order of the settings data blocks is
+// allowed to vary from that shown in the previously mentioned figure and the
+// message syntax layout that follows. This is possible because each data block
+// is identified by a User Data Header structure (section 2.2.1.3.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+//   section 13.7.
+
         this->mcs_layer.iso_layer.iso_incoming();
 
-        // MCS Receive Connect Initial
-        // ---------------------------
+
+// mcsCi (variable): Variable-length BER-encoded MCS Connect Initial structure
+//   (using definite-length encoding) as described in [T125] (the ASN.1
+//   structure definition is detailed in [T125] section 7, part 2). The userData
+//   field of the MCS Connect Initial encapsulates the GCC Conference Create
+//   Request data (contained in the gccCCrq and subsequent fields). The maximum
+//   allowed size of this user data is 1024 bytes, which implies that the
+//   combined size of the gccCCrq and subsequent fields MUST be less than 1024
+//   bytes.
+
+// gccCCrq (variable): Variable-length Packed Encoding Rule encoded
+//   (PER-encoded) GCC Connect Data structure, which encapsulates a Connect GCC
+//   PDU that contains a GCC Conference Create Request structure as described in
+//   [T124] (the ASN.1 structure definitions are detailed in [T124] section 8.7)
+//   appended as user data to the MCS Connect Initial (using the format
+//   described in [T124] sections 9.5 and 9.6). The userData field of the GCC
+//   Conference Create Request contains one user data set consisting of
+//   concatenated client data blocks.
+
+// clientCoreData (216 bytes): Client Core Data structure (section 2.2.1.3.2).
+
+// clientSecurityData (12 bytes): Client Security Data structure (section
+//   2.2.1.3.3).
+
+// clientNetworkData (variable): Optional and variable-length Client Network
+//   Data structure (section 2.2.1.3.4).
+
+// clientClusterData (12 bytes): Optional Client Cluster Data structure (section
+//   2.2.1.3.5).
+
+// clientMonitorData (variable): Optional Client Monitor Data structure (section
+//   2.2.1.3.6). This field MUST NOT be included if the server does not
+//   advertise support for extended client data blocks by using the
+//   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
+//   2.2.1.2.1.
+
+
+
         {
             Stream stream(8192);
             this->mcs_layer.iso_layer.iso_recv(stream);

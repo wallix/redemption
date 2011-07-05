@@ -85,6 +85,7 @@ struct server_mcs {
         stream.out_uint16_be(userid);
         stream.out_uint16_be(chanid);
         stream.out_uint16_be(chanid);
+
         stream.mark_end();
         this->iso_layer.iso_send(stream);
     }

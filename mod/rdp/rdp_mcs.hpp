@@ -45,6 +45,160 @@ struct rdp_mcs {
     {
     }
 
+//2.2.1.1    Client X.224 Connection Request PDU
+//==============================================
+
+// The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
+// client to server during the Connection Initiation phase (see section
+// 1.3.1.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
+//   data unit (TPDU), as specified in [X224] section 13.3.
+
+// routingToken (variable): Optional and variable-length routing token bytes
+//   used for load balancing terminated by a carriage-return (CR) and line-feed
+//   (LF) ANSI sequence. For more information, see [MSFT-SDLBTS]. The length of
+//   the routing token and CR+LF sequence is included in the X.224 Connection
+//   Request Length Indicator field.
+
+// rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
+//   structure. The length of this negotiation structure is included in the
+//   X.224 Connection Request Length Indicator field.
+
+// 2.2.1.1.1   RDP Negotiation Request (RDP_NEG_REQ)
+// =================================================
+//  The RDP Negotiation Request structure is used by a client to advertise the
+//  security protocols which it supports.
+
+// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
+//   field MUST be set to 0x01 (TYPE_RDP_NEG_REQ) to indicate that the packet
+//   is a Negotiation Request.
+
+// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags. There
+//   are currently no defined flags so the field MUST be set to 0x00.
+
+// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size.
+//   This field MUST be set to 0x0008 (8 bytes).
+
+// requestedProtocols (4 bytes): A 32-bit, unsigned integer. Flags indicating
+//   the supported security protocols.
+
+// +---------------------------------+-----------------------------------------+
+// | 0x00000000 PROTOCOL_RDP_FLAG    |  Legacy RDP encryption.                 |
+// +---------------------------------+-----------------------------------------+
+// | 0x00000001 PROTOCOL_SSL_FLAG    | TLS 1.0 (section 5.4.5.1).              |
+// +---------------------------------+-----------------------------------------+
+// | 0x00000002 PROTOCOL_HYBRID_FLAG | Credential Security Support Provider    |
+// |                                 | protocol (CredSSP) (section 5.4.5.2).   |
+// |                                 | If this flag is set, then the           |
+// |                                 | PROTOCOL_SSL_FLAG (0x00000001) SHOULD   |
+// |                                 | also be set because Transport Layer     |
+// |                                 | Security (TLS) is a subset of CredSSP.  |
+// +---------------------------------+-----------------------------------------+
+
+// 2.2.1.2   Server X.224 Connection Confirm PDU
+// =============================================
+
+//  The X.224 Connection Confirm PDU is an RDP Connection Sequence PDU sent from
+//  server to client during the Connection Initiation phase (see section
+//  1.3.1.1). It is sent as a response to the X.224 Connection Request PDU
+//  (section 2.2.1.1).
+
+//tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+//x224Ccf (7 bytes): An X.224 Class 0 Connection Confirm TPDU, as specified in [X224] section
+//   13.4.
+
+//rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1) structure or an
+//   optional RDP Negotiation Failure (section 2.2.1.2.2) structure. The length of the negotiation
+//   structure is included in the X.224 Connection Confirm Length Indicator field.
+
+// 2.2.1.2.1   RDP Negotiation Response (RDP_NEG_RSP)
+// ==================================================
+
+//  The RDP Negotiation Response structure is used by a server to inform the
+//  client of the security protocol which it has selected to use for the
+//  connection.
+
+// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This field MUST be set to
+//   0x02 (TYPE_RDP_NEG_RSP) to indicate that the packet is a Negotiation Response.
+
+// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags.
+
+// +--------------------------------+------------------------------------------+
+// | EXTENDED_CLIENT_DATA_SUPPORTED | The server supports extended client data |
+// | 0x00000001                     | blocks in the GCC Conference Create      |
+// |                                | Request user data (section 2.2.1.3).     |
+// +--------------------------------+------------------------------------------+
+
+// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This
+//   field MUST be set to 0x0008 (8 bytes)
+
+// selectedProtocol (4 bytes): A 32-bit, unsigned integer. Field indicating the
+//   selected security protocol.
+
+// +---------------------------------------------------------------------------+
+// | 0x00000000 PROTOCOL_RDP    | Legacy RDP encryption                        |
+// +---------------------------------------------------------------------------+
+// | 0x00000001 PROTOCOL_SSL    | TLS 1.0 (section 5.4.5.1)                    |
+// +---------------------------------------------------------------------------+
+// | 0x00000002 PROTOCOL_HYBRID | CredSSP (section 5.4.5.2)                    |
+// +---------------------------------------------------------------------------+
+
+// 2.2.1.2.2   RDP Negotiation Failure (RDP_NEG_FAILURE)
+// =====================================================
+
+//  The RDP Negotiation Failure structure is used by a server to inform the
+//  client of a failure that has occurred while preparing security for the
+//  connection.
+
+// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
+//   field MUST be set to 0x03 (TYPE_RDP_NEG_FAILURE) to indicate that the
+//   packet is a Negotiation Failure.
+
+// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags. There
+//   are currently no defined flags so the field MUST be set to 0x00.
+
+// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This
+//   field MUST be set to 0x0008 (8 bytes).
+
+// failureCode (4 bytes): A 32-bit, unsigned integer. Field containing the
+//   failure code.
+
+// +---------------------------+-----------------------------------------------+
+// | SSL_REQUIRED_BY_SERVER    | The server requires that the client support   |
+// | 0x00000001                | Enhanced RDP Security (section 5.4) with      |
+// |                           | either TLS 1.0 (section 5.4.5.1) or CredSSP   |
+// |                           | (section 5.4.5.2). If only CredSSP was        |
+// |                           | requested then the server only supports TLS.  |
+// +---------------------------+-----------------------------------------------+
+// | SSL_NOT_ALLOWED_BY_SERVER | The server is configured to only use Standard |
+// | 0x00000002                | RDP Security mechanisms (section 5.3) and     |
+// |                           | does not support any External                 |
+// |                           | Security Protocols (section 5.4.5).           |
+// +---------------------------+-----------------------------------------------+
+// | SSL_CERT_NOT_ON_SERVER    | The server does not possess a valid server    |
+// | 0x00000003                | authentication certificate and cannot         |
+// |                           | initialize the External Security Protocol     |
+// |                           | Provider (section 5.4.5).                     |
+// +---------------------------+-----------------------------------------------+
+// | INCONSISTENT_FLAGS        | The list of requested security protocols is   |
+// | 0x00000004                | not consistent with the current security      |
+// |                           | protocol in effect. This error is only        |
+// |                           | possible when the Direct Approach (see        |
+// |                           | sections 5.4.2.2 and 1.3.1.2) is used and an  |
+// |                           | External Security Protocol (section 5.4.5) is |
+// |                           | already being used.                           |
+// +---------------------------+-----------------------------------------------+
+// | HYBRID_REQUIRED_BY_SERVER | The server requires that the client support   |
+// | 0x00000005                | Enhanced RDP Security (section 5.4) with      |
+// |                           | CredSSP (section 5.4.5.2).                    |
+// +---------------------------+-----------------------------------------------+
+
+
+
     /*****************************************************************************/
     /* returns error */
     void rdp_mcs_recv(Stream & stream, int& chan) throw(Error)
@@ -138,7 +292,7 @@ struct rdp_mcs {
         int tag = 0;
         if (tag_val > 0xff) {
             tag = stream.in_uint16_be();
-        } 
+        }
         else {
             tag = stream.in_uint8();
         }
@@ -216,6 +370,7 @@ struct rdp_mcs {
         stream.out_uint8((MCS_CJRQ << 2));
         stream.out_uint16_be(this->userid);
         stream.out_uint16_be(chanid);
+
         stream.mark_end();
         this->iso_layer.iso_send(stream);
     }

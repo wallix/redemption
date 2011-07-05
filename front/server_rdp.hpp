@@ -583,17 +583,28 @@ struct server_rdp {
         LOG(LOG_INFO, "activate and process data : data=%p < next_packet=%p p=%p < end=%p",
             this->front_stream.data, this->front_stream.next_packet, this->front_stream.p, this->front_stream.end);
         Stream & input_stream = this->front_stream;
+
         do {
-            this->sec_layer.mcs_layer.iso_layer.iso_recv(input_stream);
-            int appid = input_stream.in_uint8() >> 2;
+            LOG(LOG_INFO, "iso_recv");
+            if (input_stream.next_packet && input_stream.next_packet < input_stream.end){
+                input_stream.p = input_stream.next_packet;
+            }
+            else {
+                this->sec_layer.mcs_layer.iso_layer.iso_recv(input_stream);
+            }
+            int opcode = input_stream.in_uint8();
+            int appid = opcode >> 2;
+
             /* Channel Join ReQuest datagram */
             while(appid == MCS_CJRQ) {
                 /* this is channels getting added from the client */
                 int userid = input_stream.in_uint16_be();
                 int chanid = input_stream.in_uint16_be();
                 this->sec_layer.mcs_layer.server_mcs_send_channel_join_confirm_PDU(userid, chanid);
+
                 this->sec_layer.mcs_layer.iso_layer.iso_recv(input_stream);
                 appid = input_stream.in_uint8() >> 2;
+
             }
             /* Disconnect Provider Ultimatum datagram */
             if (appid == MCS_DPUM) {
@@ -603,8 +614,8 @@ struct server_rdp {
             if (appid != MCS_SDRQ) {
                 throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
-            input_stream.skip_uint8(2);
 
+            input_stream.skip_uint8(2);
             int chan = input_stream.in_uint16_be();
             input_stream.skip_uint8(1);
             int len = input_stream.in_uint8();
@@ -672,6 +683,8 @@ struct server_rdp {
                 LOG(LOG_INFO, "callback done (up_and_running=%u)", this->up_and_running);
                 if (!this->up_and_running){ continue; }
                 LOG(LOG_INFO, "CHANNEL_DATA : data=%p < p=%p < end=%p", this->front_stream.data, this->front_stream.p, this->front_stream.end);
+                // We consume all the data of the packet
+                input_stream.p = input_stream.end;
 //                if (input_stream.p >= input_stream.end) {
 //                    input_stream.next_packet = input_stream.p;
 //                    break;
@@ -696,13 +709,17 @@ struct server_rdp {
                 switch (pdu_code & 0xf) {
 
                 case 0:
+                    LOG(LOG_INFO, "PDUTYPE_ZERO");
                     break;
                 case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
+                    LOG(LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU");
                     break;
                 case PDUTYPE_CONFIRMACTIVEPDU:
+                    LOG(LOG_INFO, "PDUTYPE_CONFIRMACTIVEPDU");
                     this->process_confirm_active(input_stream);
                     break;
                 case PDUTYPE_DATAPDU: /* 7 */
+                    LOG(LOG_INFO, "PDUTYPE_DATAPDU");
                     // this is rdp_process_data that will set up_and_running to 1
                     // when fonts have been received
                     // we will not exit this loop until we are in this state.

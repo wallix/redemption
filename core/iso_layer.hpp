@@ -36,6 +36,9 @@ struct IsoLayer {
     ~IsoLayer(){
     }
 
+
+
+
     private:
 
     // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
@@ -80,6 +83,26 @@ struct IsoLayer {
     // Octets 3 and 4 are the unsigned 16-bit binary encoding of the TPKT
     //   length. This is the length of the entire packet in octets, including
     //   both the packet header and the TPDU.
+
+    int recv_tpktHeader(Stream & stream) throw (Error)
+    {
+        stream.init(4);
+        this->t->recv((char**)(&(stream.end)), 4);
+        int version = stream.in_uint8();
+        if (3 != version) {
+            throw Error(ERR_ISO_RECV_MSG_VER_NOT_3);
+        }
+        stream.skip_uint8(1);
+        int len = stream.in_uint16_be();
+        return len;
+    }
+
+    void write_tpktHeader(Stream & stream, const uint16_t len) throw (Error)
+    {
+        stream.out_uint8(3);  /* version */
+        stream.out_uint8(0);  /* reserved */
+        stream.out_uint16_be(len); /* length */
+    }
 
     // Since an X.224 TPDU occupies at least 3 octets, the minimum value of TPKT
     // length is 7. The maximum value is 65535. This permits a maximum TPDU size
@@ -193,24 +216,20 @@ struct IsoLayer {
     // format) in the other classes. The variable part, if present, may further
     // reduce the size of the user data field.
 
-    int iso_recv_msg(Stream & stream) throw (Error)
+    void recv_x224TPDU(Stream & stream, const uint16_t len) throw (Error)
     {
-        LOG(LOG_INFO, "iso_recv_msg: reading 4 bytes header");
-        stream.init(4);
-        this->t->recv((char**)(&(stream.end)), 4);
-
-        int version = stream.in_uint8();
-        if (3 != version) {
-            throw Error(ERR_ISO_RECV_MSG_VER_NOT_3);
-        }
-        stream.skip_uint8(1);
-
-        int len = stream.in_uint16_be();
-
-        LOG(LOG_INFO, "iso_recv_msg: reading %u bytes payload", len - 4);
+        LOG(LOG_INFO, "recv_x224TPDU: reading %u bytes payload", len - 4);
 
         stream.init(len - 4);
         this->t->recv((char**)(&(stream.end)), len - 4);
+    }
+
+
+    int iso_recv_msg(Stream & stream) throw (Error)
+    {
+        const uint16_t len = recv_tpktHeader(stream);
+
+        recv_x224TPDU(stream, len);
 
         #warning check receive len is what is expected and remove check_end test in server_mcs layer
 
@@ -239,13 +258,11 @@ struct IsoLayer {
     void iso_send_msg(int code) throw (Error)
     {
         Stream stream(8192);
-        // tpktHeader
-        stream.out_uint8(3); /* version */
-        stream.out_uint8(0); /* reserved */
-        stream.out_uint16_be(11); /* length */
+
+        write_tpktHeader(stream, 11);
 
         // x224 ?
-        stream.out_uint8(6); /* hdrlen */
+        stream.out_uint8(6); /* 11 - hdrlen */
         stream.out_uint8(code);
         stream.out_uint16_le(0); /* dest ref*/
         stream.out_uint16_le(0); /* src ref*/
@@ -254,32 +271,6 @@ struct IsoLayer {
         stream.mark_end();
         this->t->send((char*)stream.data, stream.end - stream.data);
     }
-
-    // used only by client layer
-    void iso_send_PDU_CR(const char* username)
-    {
-        Stream stream(8192);
-
-        int length = 30 + strlen(username);
-        stream.out_uint8(3);  /* version */
-        stream.out_uint8(0);  /* reserved */
-        stream.out_uint16_be(length); /* length */
-
-        stream.out_uint8(length - 5);  /* hdrlen */
-        stream.out_uint8(ISO_PDU_CR);
-        stream.out_uint16_le(0); /* dest ref*/
-        stream.out_uint16_le(0); /* src ref*/
-
-        stream.out_uint8(0); /* class */
-        stream.out_copy_bytes("Cookie: mstshash=", strlen("Cookie: mstshash="));
-        stream.out_copy_bytes(username, length - 30);
-        stream.out_uint8(0x0d);	/* Unknown */
-        stream.out_uint8(0x0a);	/* Unknown */
-
-        stream.mark_end();
-        this->t->send((char*)stream.data, stream.end - stream.data);
-    }
-
 
     public:
     void iso_recv(Stream & stream) throw (Error)
@@ -304,9 +295,7 @@ struct IsoLayer {
         int len = stream.end - stream.p;
 
         // tpktHeader
-        stream.out_uint8(3);
-        stream.out_uint8(0);
-        stream.out_uint16_be(len);
+        write_tpktHeader(stream, len);
 
         // x224 ? 2 F0 EOT
         stream.out_uint8(2);
@@ -316,15 +305,55 @@ struct IsoLayer {
 
     }
 
+
+    uint8_t iso_recv_PDU_CR(Stream & stream)
+    {
+        const uint16_t len = recv_tpktHeader(stream);
+        recv_x224TPDU(stream, len);
+        uint8_t hdrlen = stream.in_uint8();
+        if (!hdrlen == len - 5) {
+            throw Error(ERR_ISO_INCOMING_BAD_PDU_CR_LENGTH);
+        }
+        uint8_t code = stream.in_uint8();
+        stream.skip_uint8(5);
+        return code;
+    }
+
+
     // used only front side
     void iso_incoming() throw (Error)
     {
         Stream stream(8192);
-        int code = this->iso_recv_msg(stream);
+        int code = this->iso_recv_PDU_CR(stream);
         if (code != ISO_PDU_CR) {
             throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
         }
         this->iso_send_msg(ISO_PDU_CC);
+    }
+
+
+    // used only by client layer
+    void iso_send_PDU_CR(const char* username)
+    {
+        Stream stream(8192);
+
+        int length = 30 + strlen(username);
+
+        write_tpktHeader(stream, length);
+
+        stream.out_uint8(length - 5);  /*len - hdrlen */
+        stream.out_uint8(ISO_PDU_CR);
+        stream.out_uint16_le(0); /* dest ref*/
+        stream.out_uint16_le(0); /* src ref*/
+
+        stream.out_uint8(0); /* class */
+        stream.out_copy_bytes("Cookie: mstshash=", strlen("Cookie: mstshash="));
+        stream.out_copy_bytes(username, length - 30);
+        stream.out_uint8(0x0d);	/* Unknown */
+        stream.out_uint8(0x0a);	/* Unknown */
+
+        stream.mark_end();
+        this->t->send((char*)stream.data, stream.end - stream.data);
     }
 
     // used only client side
