@@ -73,7 +73,6 @@ class NativeCapture
 
     void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp, int timezone)
     {
-        fprintf(this->f, "/* snapshot */\n");
         fflush(this->f);
     }
 
@@ -84,9 +83,7 @@ class NativeCapture
         fprintf(this->f, "    RDPScrBlt cmd(Rect(%u, %u, %u, %u), %u, %u, %u);\n",
             cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
             cmd.rop, cmd.srcx, cmd.srcy);
-        fprintf(this->f, "    this->server_set_clip(Rect(%u, %u, %u, %u));\n",
-                clip.x, clip.y, clip.cx, clip.cy);
-        fprintf(this->f, "    this->front->scr_blt(cmd, this->clip);\n");
+        fprintf(this->f, "    this->front.scr_blt(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
         fprintf(this->f, "}\n");
     }
 
@@ -126,11 +123,8 @@ class NativeCapture
             &bmp, this->bpp, bmp.cx, bmp.cy, &bmp, &bmp);
         fprintf(this->f, "    RDPBmpCache cmd(%d, &this->palette332, &bmp%p, %u, %u, &this->get_client_info());\n",
             this->bpp, &bmp, cache_id, cache_idx);
-        fprintf(this->f, "    this->front->reserve_order(bmp%p.bmp_size(this->get_client_info().bpp) + 16);\n", &bmp);
-
-        fprintf(this->f, "    cmd.emit(this->front->out_stream);\n");
+        fprintf(this->f, "    this->front.bitmap_cache(cmd);\n");
         fprintf(this->f, "}\n");
-
     }
     void mem_blt(const RDPMemBlt & cmd, const BitmapCache & bmp_cache, const Rect & clip)
     {
@@ -139,7 +133,7 @@ class NativeCapture
         fprintf(this->f, "    RDPMemBlt cmd(%u, Rect(%u, %u, %u, %u), %u, %u, %u, %u);\n",
             cmd.cache_id, cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
             cmd.rop, cmd.srcx, cmd.srcy, cmd.cache_idx);
-        fprintf(this->f, "    this->front->mem_blt(cmd, this->clip);\n");
+        fprintf(this->f, "    this->front.mem_blt(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
         fprintf(this->f, "}\n");
     }
 
@@ -150,9 +144,7 @@ class NativeCapture
         fprintf(this->f, "    RDPOpaqueRect cmd(Rect(%u, %u, %u, %u), 0x%.6x);\n",
             cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
             cmd.color);
-        fprintf(this->f, "    this->server_set_clip(Rect(%u, %u, %u, %u));\n",
-                clip.x, clip.y, clip.cx, clip.cy);
-        fprintf(this->f, "    this->front->opaque_rect(cmd, this->clip);\n");
+        fprintf(this->f, "    this->front.opaque_rect(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
         fprintf(this->f, "}\n");
     }
 
@@ -163,9 +155,7 @@ class NativeCapture
         fprintf(this->f, "    RDPDestBlt cmd(Rect(%u, %u, %u, %u), %u);\n",
             cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
             cmd.rop);
-        fprintf(this->f, "    this->server_set_clip(Rect(%u, %u, %u, %u));\n",
-                clip.x, clip.y, clip.cx, clip.cy);
-        fprintf(this->f, "    this->front->dest_blt(cmd, this->clip);\n");
+        fprintf(this->f, "    this->front.dest_blt(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
         fprintf(this->f, "}\n");
     }
 
@@ -182,9 +172,7 @@ class NativeCapture
             cmd.brush.extra[0], cmd.brush.extra[1], cmd.brush.extra[2],
             cmd.brush.extra[3], cmd.brush.extra[4], cmd.brush.extra[5],
             cmd.brush.extra[6]);
-        fprintf(this->f, "    this->server_set_clip(Rect(%u, %u, %u, %u));\n",
-                clip.x, clip.y, clip.cx, clip.cy);
-        fprintf(this->f, "    this->front->pat_blt(cmd, this->clip);\n");
+        fprintf(this->f, "    this->front.pat_blt(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
         fprintf(this->f, "}\n");
     }
 
@@ -192,14 +180,13 @@ class NativeCapture
     {
         fprintf(this->f, "{\n");
         #warning create a repr method in line_to
-        fprintf(this->f, "    RDPLineTo cmd(%d, %d, %d, %d, 0x%.6x, %u, "
+        fprintf(this->f, "    RDPLineTo cmd(%d, %d, %d, %d, %d, 0x%.6x, %u, "
             "        RDPPen(%u, %u, 0x%.6x));\n",
+            cmd.back_mode,
             cmd.startx, cmd.starty, cmd.endx, cmd.endy,
             cmd.back_color, cmd.rop2,
             cmd.pen.style, cmd.pen.width, cmd.pen.color);
-        fprintf(this->f, "    this->server_set_clip(Rect(%u, %u, %u, %u));\n",
-                clip.x, clip.y, clip.cx, clip.cy);
-        fprintf(this->f, "    this->front->line_to(cmd, this->clip);\n");
+        fprintf(this->f, "    this->front.line_to(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
         fprintf(this->f, "}\n");
     }
 
@@ -232,10 +219,7 @@ class NativeCapture
             cmd.brush.extra[6],
             cmd.glyph_x, cmd.glyph_y,
             cmd.data_len, buffer);
-        #warning create a repr method in glyph_index
-        fprintf(this->f, "    this->server_set_clip(Rect(%u, %u, %u, %u));\n",
-                clip.x, clip.y, clip.cx, clip.cy);
-        fprintf(this->f, "    this->front->glyph_index(cmd, this->clip);\n");
+        fprintf(this->f, "    this->front.glyph_index(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
         fprintf(this->f, "}\n");
     }
 

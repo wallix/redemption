@@ -143,7 +143,7 @@ class RDPBrushCache {
     uint8_t size;
     uint8_t * data;
 
-    RDPBrushCache(uint8_t cacheIndex, uint8_t bpp, uint8_t width, uint8_t height, uint8_t type, uint8_t size, uint8_t * pattern)
+    RDPBrushCache(uint8_t cacheIndex, uint8_t bpp, uint8_t width, uint8_t height, uint8_t type, uint8_t size, const uint8_t * pattern)
         : cacheIndex(cacheIndex), bpp(bpp), width(width), height(height), type(type), size(size)
     {
         this->data = (uint8_t*)malloc(this->size);

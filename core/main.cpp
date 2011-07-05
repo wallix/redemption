@@ -173,7 +173,7 @@ int main(int argc, char** argv)
 
     ("check,c", "check installation files")
 
-    ("force,f", "remove all application logs")
+    ("force,f", "remove application lock file")
 
     // -inetd, --inetd, -i
     ("inetd,i", "launch redemption with inetd like launcher")

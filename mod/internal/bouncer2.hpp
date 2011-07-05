@@ -74,8 +74,7 @@ struct bouncer2_mod : public internal_mod {
         int scarey = this->screen.rect.cx / 5;
         Rect scareZone(this->dancing_rect->getCenteredX() - (scarex / 2),this->dancing_rect->getCenteredY() - (scarey / 2),scarex,scarey);
 
-        // Calculating new speedx and speedy, if cube encounters a mouse pointer, it flees
-        // The closer the faster
+        // Calculating new speedx and speedy, if cube encounters a moving mouse pointer, it flees
         if (scareZone.rect_contains_pt(x,y)) {
             if (((this->dancing_rect->getCenteredX() - x) < scarex) && this->dancing_rect->getCenteredX() > x) {
                 this->speedx = 2;
@@ -94,9 +93,9 @@ struct bouncer2_mod : public internal_mod {
     // This should come from BACK!
     virtual int mod_signal()
     {
-        this->server_begin_update();
-        this->opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00));
-        this->server_end_update();
+//        this->server_begin_update();
+//        this->opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00));
+//        this->server_end_update();
         // Creating a new RDP Order: OpaqueRect
         //RDPOpaqueRect white_rect(Rect(0, 0, 10, 10), 0xFFFFFF);
         //RDPOpaqueRect black_rect(Rect(0, 0, 10, 10), 0x000000);

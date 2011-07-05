@@ -218,7 +218,7 @@ struct IsoLayer {
 
     void recv_x224TPDU(Stream & stream, const uint16_t len) throw (Error)
     {
-        LOG(LOG_INFO, "recv_x224TPDU: reading %u bytes payload", len - 4);
+//        LOG(LOG_INFO, "recv_x224TPDU: reading %u bytes payload", len - 4);
 
         stream.init(len - 4);
         this->t->recv((char**)(&(stream.end)), len - 4);
@@ -247,11 +247,11 @@ struct IsoLayer {
 
         stream.skip_uint8(1);
         int code = stream.in_uint8();
-        LOG(LOG_INFO, "iso_recv_msg: skip %u bytes", (code == ISO_PDU_DT)?1:5);
+//        LOG(LOG_INFO, "iso_recv_msg: skip %u bytes", (code == ISO_PDU_DT)?1:5);
 
         stream.skip_uint8((code == ISO_PDU_DT)?1:5);
 
-        LOG(LOG_INFO, "iso_recv_msg: done");
+//        LOG(LOG_INFO, "iso_recv_msg: done");
         return code;
     }
 
@@ -277,7 +277,7 @@ struct IsoLayer {
     {
         int code = this->iso_recv_msg(stream);
         if (code != ISO_PDU_DT) {
-            LOG(LOG_INFO, "code =%d not ISO_PDU_DT", code);
+            LOG(LOG_ERR, "code =%d not ISO_PDU_DT", code);
             throw Error(ERR_ISO_RECV_CODE_NOT_PDU_DT);
         }
     }
@@ -312,6 +312,7 @@ struct IsoLayer {
         recv_x224TPDU(stream, len);
         uint8_t hdrlen = stream.in_uint8();
         if (!hdrlen == len - 5) {
+            LOG(LOG_ERR, "BAD PDU LENGTH");
             throw Error(ERR_ISO_INCOMING_BAD_PDU_CR_LENGTH);
         }
         uint8_t code = stream.in_uint8();

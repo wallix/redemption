@@ -35,7 +35,9 @@ class Authentifier(object):
             'target_device' : '10.10.14.78',
             'target_password' : 'S3cur3!1nux',
             'proto_dest': 'RDP',
-            'target_port':'3389'
+            'target_port':'3389',
+            'is_rec' : 'true',
+            'rec_path':'/tmp/trace2008.cpp',
         },
         'w7' : {
             'proxy_type': 'RDP',
@@ -44,7 +46,8 @@ class Authentifier(object):
             'target_password' : 'S3cur3!1nux',
             'proto_dest': 'RDP',
             'target_port':'3389',
-            'is_rec' : 'true'
+            'is_rec' : 'true',
+            'rec_path':'/tmp/tracew7.cpp',
         },
         'w2000' : {
             'proxy_type': 'RDP',

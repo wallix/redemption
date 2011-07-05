@@ -82,6 +82,7 @@ struct Widget {
     int item_height;
     /* crc */
     int crc;
+
     public:
 
 

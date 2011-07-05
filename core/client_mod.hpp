@@ -50,7 +50,6 @@ struct client_mod : public Callback {
     Rect clip;
     int current_pointer;
     RDPPen pen;
-    RDPBrush brush;
     bool clipboard_enable;
     bool pointer_displayed;
     Front & front;
@@ -307,7 +306,9 @@ struct client_mod : public Callback {
             fgcolor, // fgcolor
             bk, // bk
             Rect(), // op
-            this->brush, // brush
+            // brush
+            RDPBrush(0, 0, 3, 0xaa,
+                (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
             x,  // glyph_x
             y + total_height, // glyph_y
             len * 2, // data_len in bytes
@@ -340,6 +341,20 @@ struct client_mod : public Callback {
         RDPPatBlt new_cmd = cmd;
         new_cmd.back_color = this->convert(cmd.back_color);
         new_cmd.fore_color = this->convert(cmd.fore_color);
+
+        if (new_cmd.brush.style == 3){
+            if (this->get_client_info().brush_cache_code == 1) {
+                uint8_t pattern[8];
+                pattern[0] = new_cmd.brush.hatch;
+                memcpy(pattern+1, new_cmd.brush.extra, 7);
+                int cache_idx = 0;
+                if (BRUSH_TO_SEND == this->front.cache.add_brush(pattern, cache_idx)){
+                    this->brush_cache(cache_idx);
+                }
+                new_cmd.brush.hatch = cache_idx;
+                new_cmd.brush.style = 0x81;
+            }
+        }
 
         this->front.pat_blt(new_cmd, this->clip);
     }
@@ -386,6 +401,20 @@ struct client_mod : public Callback {
         RDPGlyphIndex new_cmd = cmd;
         new_cmd.back_color = this->convert(cmd.back_color);
         new_cmd.fore_color = this->convert(cmd.fore_color);
+
+        if (new_cmd.brush.style == 3){
+            if (this->get_client_info().brush_cache_code == 1) {
+                uint8_t pattern[8];
+                pattern[0] = new_cmd.brush.hatch;
+                memcpy(pattern+1, new_cmd.brush.extra, 7);
+                int cache_idx = 0;
+                if (BRUSH_TO_SEND == this->front.cache.add_brush(pattern, cache_idx)){
+                    this->brush_cache(cache_idx);
+                }
+                new_cmd.brush.hatch = cache_idx;
+                new_cmd.brush.style = 0x81;
+            }
+        }
 
         if (this->mod_bpp == 16 || this->mod_bpp == 15){
             new_cmd.fore_color =  color_encode(
@@ -577,25 +606,6 @@ struct client_mod : public Callback {
     void server_reset_clip()
     {
         this->clip = this->get_front_rect();
-    }
-
-    void server_set_brush(const RDPBrush & brush)
-    {
-        this->brush = brush;
-
-        if (brush.style == 3){
-            if (this->get_client_info().brush_cache_code == 1) {
-                uint8_t pattern[8];
-                pattern[0] = this->brush.hatch;
-                memcpy(pattern+1, this->brush.extra, 7);
-                int cache_idx = 0;
-                if (BRUSH_TO_SEND == this->front.cache.add_brush(pattern, cache_idx)){
-                    this->brush_cache(cache_idx);
-                }
-                this->brush.hatch = cache_idx;
-                this->brush.style = 0x81;
-            }
-        }
     }
 
     void server_add_char(int font, int character,

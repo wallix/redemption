@@ -36,7 +36,6 @@ class Capture
         sc(width, height, bpp, path, codec_id, video_quality),
         nc(width, height, bpp, path)
     {
-        LOG(LOG_INFO, "capture enabled");
     }
 
     ~Capture(){
@@ -51,7 +50,6 @@ class Capture
 
     void bitmap_cache(const RDPBmpCache & cmd)
     {
-        LOG(LOG_INFO, "capture::bitmap_cache");
         this->nc.bitmap_cache(cmd);
     }
 
@@ -75,7 +73,6 @@ class Capture
 
     void mem_blt(const RDPMemBlt & cmd, const BitmapCache & bmp_cache, const Rect & clip)
     {
-        LOG(LOG_INFO, "capture::mem_blt");
         this->sc.mem_blt(cmd, bmp_cache, clip);
         this->nc.mem_blt(cmd, bmp_cache, clip);
     }

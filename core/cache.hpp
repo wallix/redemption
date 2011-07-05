@@ -38,6 +38,7 @@ struct brush_item {
     int stamp;
     /* expand this to a structure to handle more complicated brushes
        for now its 8x8 1bpp brushes only */
+    #warning use RDPBrush
     uint8_t pattern[8];
     brush_item() {
         this->stamp = 0;

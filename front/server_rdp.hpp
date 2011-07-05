@@ -42,7 +42,6 @@ struct server_rdp {
     struct ClientInfo client_info;
     struct server_sec sec_layer;
     uint32_t packet_number;
-    Stream front_stream;
 
     server_rdp(Transport * trans, Inifile * ini)
         :
@@ -51,8 +50,7 @@ struct server_rdp {
         mcs_channel(0),
         client_info(ini),
         sec_layer(&client_info, trans),
-        packet_number(1),
-        front_stream(16384)
+        packet_number(1)
     {
     }
 
@@ -580,12 +578,11 @@ struct server_rdp {
 
     void activate_and_process_data(Callback & cb)
     {
-        LOG(LOG_INFO, "activate and process data : data=%p < next_packet=%p p=%p < end=%p",
-            this->front_stream.data, this->front_stream.next_packet, this->front_stream.p, this->front_stream.end);
-        Stream & input_stream = this->front_stream;
+        #warning this code needs (yet and again) much clarification
+
+        Stream input_stream(65535);
 
         do {
-            LOG(LOG_INFO, "iso_recv");
             if (input_stream.next_packet && input_stream.next_packet < input_stream.end){
                 input_stream.p = input_stream.next_packet;
             }
@@ -680,9 +677,7 @@ struct server_rdp {
                 cb.callback(WM_CHANNELDATA,
                                   ((flags & 0xffff) << 16) | (channel_id & 0xffff),
                                   size, (long)(input_stream.p), length);
-                LOG(LOG_INFO, "callback done (up_and_running=%u)", this->up_and_running);
                 if (!this->up_and_running){ continue; }
-                LOG(LOG_INFO, "CHANNEL_DATA : data=%p < p=%p < end=%p", this->front_stream.data, this->front_stream.p, this->front_stream.end);
                 // We consume all the data of the packet
                 input_stream.p = input_stream.end;
 //                if (input_stream.p >= input_stream.end) {
@@ -693,48 +688,45 @@ struct server_rdp {
 
             input_stream.next_packet = input_stream.p;
 
-            LOG(LOG_INFO, "-> data=%p < p=%p  next_packet=%p < end=%p",
-                this->front_stream.data, this->front_stream.p,
-                input_stream.next_packet, this->front_stream.end);
+            if (input_stream.next_packet < input_stream.end){
+                int length = input_stream.in_uint16_le();
+                if (length == 0x8000) {
+                    input_stream.next_packet += 8;
+                }
+                else {
+                    int pdu_code = input_stream.in_uint16_le();
+                    input_stream.skip_uint8(2); /* mcs user id */
+                    input_stream.next_packet += length;
+                    switch (pdu_code & 0xf) {
 
-
-            int length = input_stream.in_uint16_le();
-            if (length == 0x8000) {
-                input_stream.next_packet += 8;
-            }
-            else {
-                int pdu_code = input_stream.in_uint16_le();
-                input_stream.skip_uint8(2); /* mcs user id */
-                input_stream.next_packet += length;
-                switch (pdu_code & 0xf) {
-
-                case 0:
-                    LOG(LOG_INFO, "PDUTYPE_ZERO");
-                    break;
-                case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
-                    LOG(LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU");
-                    break;
-                case PDUTYPE_CONFIRMACTIVEPDU:
-                    LOG(LOG_INFO, "PDUTYPE_CONFIRMACTIVEPDU");
-                    this->process_confirm_active(input_stream);
-                    break;
-                case PDUTYPE_DATAPDU: /* 7 */
-                    LOG(LOG_INFO, "PDUTYPE_DATAPDU");
-                    // this is rdp_process_data that will set up_and_running to 1
-                    // when fonts have been received
-                    // we will not exit this loop until we are in this state.
-                    #warning see what happen if we never receive up_and_running due to some error in client code ?
-                    this->process_data(input_stream, cb);
-                    break;
-                case PDUTYPE_DEACTIVATEALLPDU:
-                    LOG(LOG_WARNING, "unsupported PDU DEACTIVATEALLPDU in session_data (%d)\n", pdu_code & 0xf);
-                    break;
-                case PDUTYPE_SERVER_REDIR_PKT:
-                    LOG(LOG_WARNING, "unsupported PDU SERVER_REDIR_PKT in session_data (%d)\n", pdu_code & 0xf);
-                    break;
-                default:
-                    LOG(LOG_WARNING, "unknown PDU type in session_data (%d)\n", pdu_code & 0xf);
-                    break;
+                    case 0:
+//                        LOG(LOG_INFO, "PDUTYPE_ZERO");
+                        break;
+                    case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
+//                        LOG(LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU");
+                        break;
+                    case PDUTYPE_CONFIRMACTIVEPDU:
+//                        LOG(LOG_INFO, "PDUTYPE_CONFIRMACTIVEPDU");
+                        this->process_confirm_active(input_stream);
+                        break;
+                    case PDUTYPE_DATAPDU: /* 7 */
+//                        LOG(LOG_INFO, "PDUTYPE_DATAPDU");
+                        // this is rdp_process_data that will set up_and_running to 1
+                        // when fonts have been received
+                        // we will not exit this loop until we are in this state.
+                        #warning see what happen if we never receive up_and_running due to some error in client code ?
+                        this->process_data(input_stream, cb);
+                        break;
+                    case PDUTYPE_DEACTIVATEALLPDU:
+                        LOG(LOG_WARNING, "unsupported PDU DEACTIVATEALLPDU in session_data (%d)\n", pdu_code & 0xf);
+                        break;
+                    case PDUTYPE_SERVER_REDIR_PKT:
+                        LOG(LOG_WARNING, "unsupported PDU SERVER_REDIR_PKT in session_data (%d)\n", pdu_code & 0xf);
+                        break;
+                    default:
+                        LOG(LOG_WARNING, "unknown PDU type in session_data (%d)\n", pdu_code & 0xf);
+                        break;
+                    }
                 }
             }
         } while ((input_stream.next_packet < input_stream.end) || !this->up_and_running);

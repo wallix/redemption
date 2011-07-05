@@ -69,7 +69,20 @@ struct test_internal_mod : public internal_mod {
         this->color_cache(this->palette332BGR, 4);
         this->color_cache(this->palette332BGR, 5);
 
-//        #include "tracexp2.cpp"
+//        #include "trace2008.cpp"
+
+// {
+//     RDPPatBlt cmd(Rect(381, 702, 10, 16), 240, 0xffffff, 0xd6d3ce,
+//          RDPBrush(5, 7, 3, 170,            (const uint8_t *)"\x55\xaa\x55\xaa\x55\xaa\x55"));
+//     this->front.pat_blt(cmd, Rect(0, 0, 1280, 800));
+// }
+     {
+         RDPBrushCache cmd1(9, 1, 8, 8, 0, 8,(const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55");
+         this->front.brush_cache(cmd1);
+         RDPBrush brush(5, 7, 0x81, 9);
+         RDPPatBlt cmd(Rect(381, 702, 10, 16), 240, 0xffffff, 0xd6d3ce, brush );
+         this->front.pat_blt(cmd, Rect(0, 0, 1280, 800));
+     }
         this->server_end_update();
     }
 

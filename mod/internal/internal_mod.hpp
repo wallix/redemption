@@ -34,6 +34,7 @@ struct internal_mod : public client_mod {
     int draggingdx; // distance between mouse and top angle of dragged window
     int draggingdy; // distance between mouse and top angle of dragged window
     struct Widget* dragging_window;
+    RDPBrush brush;
 
     internal_mod(int (& keys)[256], int & key_flags, Keymap * &keymap, Front & front)
             : client_mod(keys, key_flags, keymap, front),
@@ -55,31 +56,7 @@ struct internal_mod : public client_mod {
     {
         this->front.begin_update();
 
-        #warning create some set_brush primitive in internal_mod
-        this->brush.hatch = 0xaa;
-        this->brush.extra[0] = 0x55;
-        this->brush.extra[1] = 0xaa;
-        this->brush.extra[2] = 0x55;
-        this->brush.extra[3] = 0xaa;
-        this->brush.extra[4] = 0x55;
-        this->brush.extra[5] = 0xaa;
-        this->brush.extra[6] = 0x55;
-        this->brush.org_x = 0;
-        this->brush.org_y = 0;
-        this->brush.style = 3;
-
-        // brush style 3 is not supported by windows 7, we **MUST** use cache
-        if (this->get_client_info().brush_cache_code == 1) {
-            uint8_t pattern[8];
-            pattern[0] = this->brush.hatch;
-            memcpy(pattern+1, this->brush.extra, 7);
-            int cache_idx = 0;
-            if (BRUSH_TO_SEND == this->front.cache.add_brush(pattern, cache_idx)){
-                this->brush_cache(cache_idx);
-            }
-            this->brush.hatch = cache_idx;
-            this->brush.style = 0x81;
-        }
+        RDPBrush brush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55");
 
         // draw rectangles by drawing each edge top/bottom/left/right
         // 0x66 = xor -> pat_blt( ... 0x5A ...
