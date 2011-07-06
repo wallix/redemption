@@ -1576,29 +1576,24 @@ struct rdp_sec {
 
         /* Client information */
         client_mcs_data.out_uint16_le(CS_CORE);
-        LOG(LOG_INFO, "mcs_data: CS_CORE\n");
+        LOG(LOG_INFO, "Sending Client Core Data to remote server\n");
         client_mcs_data.out_uint16_le(212); /* length */
-        LOG(LOG_INFO, "mcs_data: length = %u\n", 212);
-    //    client_mcs_data.out_uint16_le(this->use_rdp5 ? 4 : 1); // RDP version. 1 == RDP4, 4 == RDP5
-        client_mcs_data.out_uint16_le(4); // RDP version. 1 == RDP4, 4 == RDP5.
-        LOG(LOG_INFO, "mcs_data: rdp_version (1=RDP1, 4=RDP5) %u\n", 4);
-        client_mcs_data.out_uint16_le(8);
-        LOG(LOG_INFO, "mcs_data: ?? = %u\n", 8);
+        LOG(LOG_INFO, "core::header::length = %u\n", 212);
+        client_mcs_data.out_uint32_le(0x00080004); // RDP version. 1 == RDP4, 4 == RDP5.
+        LOG(LOG_INFO, "core::header::version (0x00080004 = RDP 5.0, 5.1, 5.2, and 6.0 clients)");
         client_mcs_data.out_uint16_le(width);
-        LOG(LOG_INFO, "mcs_data: width = %u\n", width);
+        LOG(LOG_INFO, "core::desktopWidth = %u\n", width);
         client_mcs_data.out_uint16_le(height);
-        LOG(LOG_INFO, "mcs_data: height = %u\n", height);
+        LOG(LOG_INFO, "core::desktopHeight = %u\n", height);
         client_mcs_data.out_uint16_le(0xca01);
-        LOG(LOG_INFO, "mcs_data: bpp_code = %x\n", 0xca01);
+        LOG(LOG_INFO, "core::colorDepth = RNS_UD_COLOR_8BPP (superseded by postBeta2ColorDepth)");
         client_mcs_data.out_uint16_le(0xaa03);
-        LOG(LOG_INFO, "mcs_data: ?? = %x\n", 0xaa03);
+        LOG(LOG_INFO, "core::SASSequence = RNS_UD_SAS_DEL");
         client_mcs_data.out_uint32_le(keylayout);
-        LOG(LOG_INFO, "mcs_data: keylayout = %x\n", keylayout);
+        LOG(LOG_INFO, "core::keyboardLayout = %x", keylayout);
         client_mcs_data.out_uint32_le(2600); /* Client build. We are now 2600 compatible :-) */
-        LOG(LOG_INFO, "mcs_data: windows build = %d\n", 2600);
-
-
-        LOG(LOG_INFO, "mcs_data: sending hostname=%s\n", this->hostname);
+        LOG(LOG_INFO, "core::clientBuild = 2600");
+        LOG(LOG_INFO, "core::clientName=%s\n", this->hostname);
 
         /* Added in order to limit hostlen and hostname size */
         int hostlen = 2 * strlen(this->hostname);
@@ -1613,18 +1608,32 @@ struct rdp_sec {
     http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wceddk40/html/cxtsksupportingremotedesktopprotocol.asp */
     #warning code should be updated to take care of keyboard type
         client_mcs_data.out_uint32_le(4); // g_keyboard_type
+        LOG(LOG_INFO, "core::keyboardType = IBM enhanced (101- or 102-key) keyboard");
         client_mcs_data.out_uint32_le(0); // g_keyboard_subtype
+        LOG(LOG_INFO, "core::keyboardSubType = 0");
         client_mcs_data.out_uint32_le(12); // g_keyboard_functionkeys
-        client_mcs_data.out_clear_bytes(64); /* reserved? 4 + 12 doublewords */
+        LOG(LOG_INFO, "core::keyboardFunctionKey = 12 function keys");
+        client_mcs_data.out_clear_bytes(64); /* imeFileName */
+        LOG(LOG_INFO, "core::imeFileName = \"\"");
         client_mcs_data.out_uint16_le(0xca01); /* color depth 8bpp */
+        LOG(LOG_INFO, "core::postBeta2ColorDepth = RNS_UD_COLOR_8BPP (superseded by highColorDepth)");
         client_mcs_data.out_uint16_le(1);
-
+        LOG(LOG_INFO, "core::clientProductId = 1");
         client_mcs_data.out_uint32_le(0);
-        client_mcs_data.out_uint8(rdp_bpp);
-        client_mcs_data.out_uint16_le(0x0700);
-        client_mcs_data.out_uint8(0);
-        client_mcs_data.out_uint32_le(1);
-        client_mcs_data.out_clear_bytes(64); /* End of client info */
+        LOG(LOG_INFO, "core::serialNumber = 0");
+        client_mcs_data.out_uint16_le(rdp_bpp);
+        LOG(LOG_INFO, "core::highColorDepth = %u", rdp_bpp);
+        client_mcs_data.out_uint16_le(0x0007);
+        LOG(LOG_INFO, "core::supportedColorDepths = 24/16/15");
+        client_mcs_data.out_uint16_le(1);
+        LOG(LOG_INFO, "core::earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU");
+        client_mcs_data.out_clear_bytes(64);
+        LOG(LOG_INFO, "core::clientDigProductId = \"\"");
+        client_mcs_data.out_clear_bytes(2);
+        LOG(LOG_INFO, "core::pad2octets");
+//        client_mcs_data.out_uint32_le(0); // optional
+//        LOG(LOG_INFO, "core::serverSelectedProtocol = 0");
+        /* End of client info */
 
         client_mcs_data.out_uint16_le(CS_CLUSTER);
         client_mcs_data.out_uint16_le(12);
