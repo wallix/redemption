@@ -1499,12 +1499,12 @@ struct Bitmap {
                                           *this->original_palette);
 
             if (this->original_bpp == 24
-            || ((this->original_bpp == 8) && (out_bpp == 24))){
+            || ((this->original_bpp == 8) && (out_bpp == 24))) {
                 pixel = (((pixel << 16) & 0xFF0000)
                         |(pixel         & 0x00FF00)
                         |((pixel >> 16) & 0x0000FF)) ;
             }
-            uint32_t target_pixel = color_encode(pixel, out_bpp, palette332);
+            uint32_t target_pixel = color_encode(pixel, out_bpp);
             target_pixel = 0xFFFFFF & target_pixel;
             out_bytes_le(dest, dest_nbbytes, target_pixel);
             src += src_nbbytes;

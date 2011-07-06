@@ -63,10 +63,10 @@ BOOST_AUTO_TEST_CASE(TestColors)
     BOOST_CHECK_EQUAL(0x00FF00, color_decode(0x07E0, 16, palette));
     BOOST_CHECK_EQUAL(0x0000FF, color_decode(0x001F, 16, palette));
 
-    BOOST_CHECK_EQUAL(0xFFFF, color_encode(0xFFFFFF, 16, palette));
-    BOOST_CHECK_EQUAL(0x001F, color_encode(0xFF0000, 16, palette)); // -> 1F ?!
-    BOOST_CHECK_EQUAL(0x07E0, color_encode(0x00FF00, 16, palette));
-    BOOST_CHECK_EQUAL(0xF800, color_encode(0x0000FF, 16, palette)); // -> 0xF800 ?!
+    BOOST_CHECK_EQUAL(0xFFFF, color_encode(0xFFFFFF, 16));
+    BOOST_CHECK_EQUAL(0x001F, color_encode(0xFF0000, 16)); // -> 1F ?!
+    BOOST_CHECK_EQUAL(0x07E0, color_encode(0x00FF00, 16));
+    BOOST_CHECK_EQUAL(0xF800, color_encode(0x0000FF, 16)); // -> 0xF800 ?!
 
 
     BOOST_CHECK_EQUAL(0, color_decode(0, 24, palette));

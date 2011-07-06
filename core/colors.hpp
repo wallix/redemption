@@ -157,7 +157,7 @@ static inline BGRColor RGBtoBGR(const BGRColor & c){
     return ((c << 16) & 0xFF0000)|(c & 0x00FF00)|((c>>16) & 0x0000FF);
 }
 
-static inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp, const uint32_t (& palette)[256]){
+static inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp){
     switch (out_bpp){
     case 8:
     // rrrgggbb

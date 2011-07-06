@@ -138,7 +138,7 @@ struct client_mod : public Callback {
     const BGRColor convert(const BGRColor color) const
     {
         const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
-        return color_encode(color24, this->get_front_bpp(), this->palette332);
+        return color_encode(color24, this->get_front_bpp());
     }
 
     uint32_t convert_to_black(uint32_t color)
@@ -368,7 +368,7 @@ struct client_mod : public Callback {
         RDPOpaqueRect new_cmd = cmd;
         if (this->mod_bpp == 16 || this->mod_bpp == 15){
             const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
-            new_cmd.color =  color_encode(color24, this->get_front_bpp(), this->palette332);
+            new_cmd.color =  color_encode(color24, this->get_front_bpp());
         }
         else {
             new_cmd.color = this->convert(cmd.color);
@@ -419,10 +419,10 @@ struct client_mod : public Callback {
         if (this->mod_bpp == 16 || this->mod_bpp == 15){
             new_cmd.fore_color =  color_encode(
                 color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette),
-                this->get_front_bpp(), this->palette332);
+                this->get_front_bpp());
             new_cmd.back_color =  color_encode(
                 color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette),
-                this->get_front_bpp(), this->palette332);
+                this->get_front_bpp());
         }
 
         this->front.glyph_index(new_cmd, this->clip);
@@ -507,10 +507,12 @@ struct client_mod : public Callback {
 
     void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const BGRPalette & palette)
     {
+        uint8_t color_index = ((memblt.cache_id >> 8) >= 6)?0:(memblt.cache_id >> 8 & 0xFF);
         if ((this->get_front_bpp() == 8)
-        && !this->palette_memblt_sent[0]) {
-            this->color_cache(this->palette332BGR, 0);
-            this->palette_memblt_sent[0] = true;
+        && !this->palette_memblt_sent[color_index]) {
+            LOG(LOG_INFO, "sending palette to %u", color_index);
+            this->color_cache(this->palette332BGR, color_index);
+            this->palette_memblt_sent[color_index] = true;
         }
 
         if (!this->palette_sent){
