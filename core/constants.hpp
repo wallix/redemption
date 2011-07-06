@@ -310,6 +310,75 @@ PDU_FLAG_LAST                  = 0x02,
 
 /* Maps to generalCapabilitySet in T.128 page 138 */
 
+// 2.2.1.13.1.1.1 Capability Set (TS_CAPS_SET)
+// ===========================================
+
+// The TS_CAPS_SET structure is used to describe the type and size of a
+// capability set exchanged between clients and servers. All capability sets
+// conform to this basic structure (see section 2.2.7).
+
+
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type identifier
+// of the capability set.
+
+// 1 CAPSTYPE_GENERAL General Capability Set (section 2.2.7.1.1)
+//
+// 2 CAPSTYPE_BITMAP Bitmap Capability Set (section 2.2.7.1.2)
+//
+// 3 CAPSTYPE_ORDER Order Capability Set (section 2.2.7.1.3)
+//
+// 4 CAPSTYPE_BITMAPCACHE Revision 1 Bitmap Cache Capability Set (section 2.2.7.1.4.1)
+
+// 5 CAPSTYPE_CONTROL Control Capability Set (section 2.2.7.2.2)
+
+// 7 CAPSTYPE_ACTIVATION Window Activation Capability Set (section 2.2.7.2.3)
+
+// 8 CAPSTYPE_POINTER Pointer Capability Set (section 2.2.7.1.5)
+
+// 9 CAPSTYPE_SHARE Share Capability Set (section 2.2.7.2.4)
+
+// 10 CAPSTYPE_COLORCACHE Color Table Cache Capability Set (see [MS-RDPEGDI] section 2.2.1.1)
+
+// 12 CAPSTYPE_SOUND Sound Capability Set (section 2.2.7.1.11)
+
+// 13 CAPSTYPE_INPUT Input Capability Set (section 2.2.7.1.6)
+
+// 14 CAPSTYPE_FONT Font Capability Set (section 2.2.7.2.5)
+
+// 15 CAPSTYPE_BRUSH Brush Capability Set (section 2.2.7.1.7)
+
+// 16 CAPSTYPE_GLYPHCACHE Glyph Cache Capability Set (section 2.2.7.1.8)
+
+// 17 CAPSTYPE_OFFSCREENCACHE Offscreen Bitmap Cache Capability Set (section 2.2.7.1.9)
+
+// 18 CAPSTYPE_BITMAPCACHE_HOSTSUPPORT Bitmap Cache Host Support Capability Set (section 2.2.7.2.1)
+
+// 19 CAPSTYPE_BITMAPCACHE_REV2 Revision 2 Bitmap Cache Capability Set (section 2.2.7.1.4.2)
+
+// 20 CAPSTYPE_VIRTUALCHANNEL Virtual Channel Capability Set (section 2.2.7.1.10)
+
+// 21 CAPSTYPE_DRAWNINEGRIDCACHE DrawNineGrid Cache Capability Set ([MS-RDPEGDI] section 2.2.1.2)
+
+// 22 CAPSTYPE_DRAWGDIPLUS Draw GDI+ Cache Capability Set ([MS-RDPEGDI] section 2.2.1.3)
+
+// 23 CAPSTYPE_RAIL Remote Programs Capability Set ([MS-RDPERP] section 2.2.1.1.1)
+
+// 24 CAPSTYPE_WINDOW Window List Capability Set ([MS-RDPERP] section 2.2.1.1.2)
+
+// 25 CAPSETTYPE_COMPDESK Desktop Composition Extension Capability Set (section 2.2.7.2.8)
+
+// 26 CAPSETTYPE_MULTIFRAGMENTUPDATE Multifragment Update Capability Set (section 2.2.7.2.6)
+
+// 27 CAPSETTYPE_LARGE_POINTER Large Pointer Capability Set (section 2.2.7.2.7)
+
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
+//   of the capability data, including the size of the capabilitySetType and
+//   lengthCapability fields.
+
+// capabilityData (variable): Capability set data which conforms to the
+//   structure of the type given by the capabilitySetType field.
+
+
 /* RDP capabilities */
 enum {
 RDP_CAPSET_GENERAL             = 1,

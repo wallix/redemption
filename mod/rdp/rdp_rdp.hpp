@@ -84,7 +84,6 @@ struct rdp_rdp {
     private:
         void out_general_caps(Stream & stream)
         {
-            LOG(LOG_INFO, "Sending general caps to server\n");
             stream.out_uint16_le(RDP_CAPSET_GENERAL);
             stream.out_uint16_le(RDP_CAPLEN_GENERAL);
             stream.out_uint16_le(1); /* OS major type */
@@ -322,7 +321,7 @@ struct rdp_rdp {
 
         void out_unknown_caps(Stream & stream, int id, int length, char* caps)
         {
-            LOG(LOG_INFO, "Sending unknown caps to server\n");
+//            LOG(LOG_INFO, "Sending unknown caps to server\n");
             stream.out_uint16_le(id);
             stream.out_uint16_le(length);
             stream.out_copy_bytes(caps, length - 4);
@@ -400,65 +399,75 @@ struct rdp_rdp {
         }
 
 // 2.2.7.1.2    Bitmap Capability Set (TS_BITMAP_CAPABILITYSET)
-//  The TS_BITMAP_CAPABILITYSET structure is used to advertise bitmap-orientated characteristics and
-//  is based on the capability set specified in [T128] section 8.2.4. This capability is sent by both client
-//  and server.
+// ============================================================
 
-// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the capability set. This
-//   field MUST be set to CAPSTYPE_BITMAP (2).
+//  The TS_BITMAP_CAPABILITYSET structure is used to advertise bitmap-oriented
+//    characteristics and is based on the capability set specified in [T128]
+// section 8.2.4. This capability is sent by both client and server.
 
-// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes of the capability
-//   data, including the size of the capabilitySetType and lengthCapability fields.
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
+//   capability set. This field MUST be set to CAPSTYPE_BITMAP (2).
 
-// preferredBitsPerPixel (2 bytes): A 16-bit, unsigned integer. Color depth of the remote
-//   session. In RDP 4.0 and 5.0, this field MUST be set to 8 (even for a 16-color session).
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
+//   of the capability data, including the size of the capabilitySetType and
+//   lengthCapability fields.
 
-// receive1BitPerPixel (2 bytes): A 16-bit, unsigned integer. Indicates whether the client can
-//   receive 1 bpp. This field is ignored and SHOULD be set to TRUE (0x0001).
+// preferredBitsPerPixel (2 bytes): A 16-bit, unsigned integer. Color depth of
+//   the remote session. In RDP 4.0 and 5.0, this field MUST be set to 8 (even
+//   for a 16-color session).
 
-// receive4BitsPerPixel (2 bytes): A 16-bit, unsigned integer. Indicates whether the client can
-//   receive 4 bpp. This field is ignored and SHOULD be set to TRUE (0x0001).
+// receive1BitPerPixel (2 bytes): A 16-bit, unsigned integer. Indicates whether
+//   the client can receive 1 bpp. This field is ignored and SHOULD be set to
+//   TRUE (0x0001).
 
-// receive8BitsPerPixel (2 bytes): A 16-bit, unsigned integer. Indicates whether the client can
-//   receive 8 bpp. This field is ignored and SHOULD be set to TRUE (0x0001).
+// receive4BitsPerPixel (2 bytes): A 16-bit, unsigned integer. Indicates whether
+//   the client can receive 4 bpp. This field is ignored and SHOULD be set to
+//   TRUE (0x0001).
 
-// desktopWidth (2 bytes): A 16-bit, unsigned integer. The width of the desktop in the remote
-//   session.
+// receive8BitsPerPixel (2 bytes): A 16-bit, unsigned integer. Indicates whether
+//    the client can receive 8 bpp. This field is ignored and SHOULD be set to
+//    TRUE (0x0001).
 
-// desktopHeight (2 bytes): A 16-bit, unsigned integer. The height of the desktop in the remote
-//   session.
+// desktopWidth (2 bytes): A 16-bit, unsigned integer. The width of the desktop
+//   in the remote session.
 
-// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field are ignored.
+// desktopHeight (2 bytes): A 16-bit, unsigned integer. The height of the
+//   desktop in the remote session.
 
-// desktopResizeFlag (2 bytes): A 16-bit, unsigned integer. Indicates whether desktop resizing
-//   is supported.
+// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
+//   field are ignored.
+
+// desktopResizeFlag (2 bytes): A 16-bit, unsigned integer. Indicates whether
+//   desktop resizing is supported.
 //   0x0000 FALSE  Desktop resizing is not supported.
 //   0x0001 TRUE   Desktop resizing is supported.
-//   If a desktop resize occurs, the server will deactivate the session (see section 1.3.1.3), and on
-//   session reactivation will specify the new desktop size in the desktopWidth and
-//   desktopHeight fields in the Bitmap Capability Set, along with a value of TRUE for the
-//   desktopResizeFlag field. The client should check these sizes and, if different from the
-//   previous desktop size, resize any windows to support this size.
+//   If a desktop resize occurs, the server will deactivate the session (see
+//   section 1.3.1.3), and on session reactivation will specify the new desktop
+//   size in the desktopWidth and desktopHeight fields in the Bitmap Capability
+//   Set, along with a value of TRUE for the desktopResizeFlag field. The client
+//   should check these sizes and, if different from the previous desktop size,
+//   resize any windows to support this size.
 
-// bitmapCompressionFlag (2 bytes): A 16-bit, unsigned integer. Indicates whether the client
-//   supports bitmap compression. RDP requires bitmap compression and hence this field MUST be
-//   set to TRUE (0x0001). If it is not set to TRUE, the server MUST NOT continue with the
-//   connection.
+// bitmapCompressionFlag (2 bytes): A 16-bit, unsigned integer. Indicates
+//   whether the client supports bitmap compression. RDP requires bitmap
+//   compression and hence this field MUST be set to TRUE (0x0001). If it is not
+//   set to TRUE, the server MUST NOT continue with the connection.
 
-// highColorFlags (1 byte): An 8-bit, unsigned integer. Client support for 16 bpp color modes.
-//   This field is ignored and SHOULD be set to 0.
+// highColorFlags (1 byte): An 8-bit, unsigned integer. Client support for
+//   16 bpp color modes. This field is ignored and SHOULD be set to 0.
 
-// drawingFlags (1 byte): An 8-bit, unsigned integer. Flags describing support for 32 bpp
-//   bitmaps.
+// drawingFlags (1 byte): An 8-bit, unsigned integer. Flags describing support
+//   for 32 bpp bitmaps.
 // 0x02 DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY Indicates support for lossy compression of 32 bpp bitmaps by reducing color-fidelity on a per-pixel basis.
 // 0x04 DRAW_ALLOW_COLOR_SUBSAMPLING      Indicates support for chroma subsampling when compressing 32 bpp bitmaps.
 // 0x08 DRAW_ALLOW_SKIP_ALPHA             Indicates that the client supports the removal of the alpha-channel when compressing 32 bpp bitmaps. In this case the alpha is assumed to be 0xFF, meaning the bitmap is opaque.
 // Compression of 32 bpp bitmaps is specified in [MS-RDPEGDI] section 3.1.9.
 
-// multipleRectangleSupport (2 bytes): A 16-bit, unsigned integer. Indicates whether the client
-//  supports the use of multiple bitmap rectangles. RDP requires the use of multiple bitmap
-//  rectangles and hence this field MUST be set to TRUE (0x0001). If it is not set to TRUE, the
-//  server MUST NOT continue with the connection.
+// multipleRectangleSupport (2 bytes): A 16-bit, unsigned integer. Indicates
+//   whether the client supports the use of multiple bitmap rectangles. RDP
+//   requires the use of multiple bitmap rectangles and hence this field MUST be
+//   set to TRUE (0x0001). If it is not set to TRUE, the server MUST NOT
+//   continue with the connection.
 
 // pad2octetsB (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field are ignored.
 
@@ -470,7 +479,7 @@ struct rdp_rdp {
             int width = stream.in_uint16_le();
             int height = stream.in_uint16_le();
             /* todo, call reset if needed and use width and height */
-            LOG(LOG_INFO, "process bitmap caps (%dx%dx%d) [bpp=%d] ok\n", width, height, bpp, this->bpp);
+            LOG(LOG_INFO, "Server bitmap caps (%dx%dx%d) [bpp=%d] ok\n", width, height, bpp, this->bpp);
         }
 
 
