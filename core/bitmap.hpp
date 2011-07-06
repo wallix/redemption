@@ -1497,7 +1497,9 @@ struct Bitmap {
             uint32_t pixel = color_decode(in_bytes_le(src_nbbytes, src),
                                           this->original_bpp,
                                           *this->original_palette);
-            if (this->original_bpp == 24 || this->original_bpp == 8){
+
+            if (this->original_bpp == 24
+            || ((this->original_bpp == 8) && (out_bpp == 24))){
                 pixel = (((pixel << 16) & 0xFF0000)
                         |(pixel         & 0x00FF00)
                         |((pixel >> 16) & 0x0000FF)) ;
