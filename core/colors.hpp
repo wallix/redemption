@@ -147,7 +147,7 @@ static inline void init_palette332BGR(BGRPalette & palette)
                 // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
                    | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
                 // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
-                   | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex))<<16);
+                   | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)) << 16);
             }
         }
     }
