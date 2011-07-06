@@ -99,7 +99,7 @@ struct client_mod : public Callback {
         int rv = 0;
         switch (msg) {
         case 0: /* RDP_INPUT_SYNCHRONIZE */
-            LOG(LOG_INFO, "callback RDP_INPUT_SYNCHRONIZE");
+//            LOG(LOG_INFO, "callback RDP_INPUT_SYNCHRONIZE");
             /* happens when client gets focus and sends key modifier info */
             this->key_flags = param1;
             // why do we not keep device flags ?
@@ -112,11 +112,11 @@ struct client_mod : public Callback {
             rv = this->input_mouse(param3, param1, param2);
             break;
         case WM_SCREENUPDATE:
-            LOG(LOG_INFO, "callback SCREENUPDATE");
+//            LOG(LOG_INFO, "callback SCREENUPDATE");
             this->invalidate(Rect(param1, param2, param3, param4));
             break;
         case WM_CHANNELDATA:
-            LOG(LOG_INFO, "callback CHANNELDATA");
+//            LOG(LOG_INFO, "callback CHANNELDATA");
             rv = this->mod_event(WM_CHANNELDATA, param1, param2, param3, param4);
             break;
         default:
