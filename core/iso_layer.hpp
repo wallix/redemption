@@ -27,6 +27,38 @@
 
 #include "transport.hpp"
 
+
+struct IsoStream
+{
+    uint8_t version;
+    uint16_t len;
+    Stream stream;
+
+    IsoStream() : stream(65536) {
+    }
+
+    void read_tpktHeader(Transport * t)
+    {
+        this->version = this->stream.in_uint8();
+        this->stream.skip_uint8(1);
+        this->len = this->stream.in_uint16_be();
+    }
+
+    void write_tpktHeader(Stream & stream)
+    {
+        this->stream.set_out_uint8(this->version, 0);   /* version */
+        this->stream.set_out_uint8(0,             1); /* reserved */
+        this->stream.out_uint16_be(this->len,     2); /* length */
+    }
+
+    void read_x224TPDU()
+    {
+        this->stream.skip_uint8(1);
+        this->code = this->stream.in_uint8();
+    }
+
+}
+
 /* iso */
 struct IsoLayer {
     Transport* t;
@@ -35,9 +67,6 @@ struct IsoLayer {
 
     ~IsoLayer(){
     }
-
-
-
 
     private:
 
@@ -222,8 +251,84 @@ struct IsoLayer {
 
         stream.init(len - 4);
         this->t->recv((char**)(&(stream.end)), len - 4);
+//      uint8_t LI = stream.in_uint8();
+//      uint8_t code = stream.in_uint8() & 0xF0;
+//        switch (code){
+//            case CR_TPDU:
+//            break;
+//            case CC_TPDU:
+//            break;
+//            case DR_TPDU:
+//            break;
+//            case DT_TPDU:
+//            break;
+//            case ER_TPDU:
+//            break;
+//        }
+        stream.skip_uint8(LI-1);
     }
 
+// Valid Class 0 x224 TPDU
+// -----------------------
+
+// CR_TPDU : Connection Request 1110 xxxx
+// CC_TPDU : Connection Confirm 1101 xxxx
+// DR_TPDU : Disconnect Request 1000 0000
+// DT_TPDU : Data               1111 0000 (no ROA = No Acknoledgement)
+// ER_TPDU : TPDU Error         0111 0000
+
+// TPDU shall contain in the following order:
+// a) The Header, comprising:
+// - The Length Indicator (LI) field
+// - the fixed part
+// - the variable part, if present
+// b) The Data field if present
+
+// Length Indicator field
+// ----------------------
+
+// The field is contained in first octet of the TPDUs. The length is indicated
+// by a binary number, with a maximum value of 254. The length indicated shall
+// be the header length in octets including parameters, but excluding the length
+// indicator field and user data if any. The vaue of 255 is reserved for future
+// extensions.
+
+// If the length indicated exceed or is equal to the size of user data which is
+// present, this is a protocol error.
+
+// Fixed Part
+// ----------
+
+// The fixed part contains frequently occuring parameters includint the code of
+// the TPDU. The length and the structure of the fixd part are defined by the
+// TPDU code and in certain cases by the protocol class and the format in use
+// (normal or extended). If any of the parameters of the fixed part have and
+// invalid value, or if the fixed part cannot be contained withing the header
+// (as defined by LI), this is a protocol error.
+
+// TPDU code
+// ---------
+
+// This field contains the TPDU code and is contained in octet 2 of the header.
+// It is used to define the structure of the remaining header. In the cases we
+// care about (class 0) this field is a full octet except for CR_TPDU and
+// CC_TPDU. In these two cases the low nibble is used to signal the CDT (initial
+// credit allocation).
+
+// Variable Part
+// -------------
+
+// The size of the variable part, used to define the less frequently used
+// paameters, is LI minus the size of the fixed part.
+
+// Each parameter in the variable part is of the form :
+// - parameter code on 1 byte (allowed parameter codes are from 64 and above).
+// - parameter length indication
+// - parameter value (of the size given by parameter length indication, may be
+// empty in which case parameter length indication is zero).
+
+// A parameter code not defined in x244 are protocol errors, except for CR_TPDU
+// in which they should be ignored.
 
     int iso_recv_msg(Stream & stream) throw (Error)
     {
@@ -245,32 +350,53 @@ struct IsoLayer {
         // a case different from the one I'm currently checking (call from
         // mcs_recv_channel_join_request_PDU).
 
-        stream.skip_uint8(1);
+        uint8_t LI = stream.in_uint8();
         int code = stream.in_uint8();
 //        LOG(LOG_INFO, "iso_recv_msg: skip %u bytes", (code == ISO_PDU_DT)?1:5);
 
+        assert( LI == ((code == ISO_PDU_DT)?2:6) ) ;
         stream.skip_uint8((code == ISO_PDU_DT)?1:5);
 
 //        LOG(LOG_INFO, "iso_recv_msg: done");
         return code;
     }
 
-    void iso_send_msg(int code) throw (Error)
+    void iso_send_TPDU_CR(int code) throw (Error)
     {
         Stream stream(8192);
 
         write_tpktHeader(stream, 11);
 
         // x224 ?
-        stream.out_uint8(6); /* 11 - hdrlen */
+        stream.out_uint8(6); /* LI */
         stream.out_uint8(code);
-        stream.out_uint16_le(0); /* dest ref*/
-        stream.out_uint16_le(0); /* src ref*/
-        stream.out_uint8(0); /* src ref*/
+        stream.out_uint16_le(0); /* dest ref */
+        stream.out_uint16_le(0); /* src ref */
+        stream.out_uint8(0);     /* class option */
 
         stream.mark_end();
         this->t->send((char*)stream.data, stream.end - stream.data);
     }
+
+
+    void iso_send_msg(int code) throw (Error)
+//    void iso_send_TPDU_CC(int code) throw (Error)
+    {
+        Stream stream(8192);
+
+        write_tpktHeader(stream, 11);
+
+        // x224 ?
+        stream.out_uint8(6); /* LI */
+        stream.out_uint8(code);
+        stream.out_uint16_le(0); /* dest ref */
+        stream.out_uint16_le(0); /* src ref */
+        stream.out_uint8(0);     /* class option */
+
+        stream.mark_end();
+        this->t->send((char*)stream.data, stream.end - stream.data);
+    }
+
 
     public:
     void iso_recv(Stream & stream) throw (Error)
@@ -282,6 +408,7 @@ struct IsoLayer {
         }
     }
 
+    // iso_TPDU_DT_init
     void iso_init(Stream & stream) throw (Error)
     {
 //        stream.init(16384);
@@ -289,6 +416,7 @@ struct IsoLayer {
         stream.p += 7;
     }
 
+    // iso_TPDU_DT_send
     void iso_send(Stream & stream) throw (Error)
     {
         stream.p = stream.iso_hdr;
