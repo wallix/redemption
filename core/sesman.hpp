@@ -114,14 +114,7 @@ class SessionManager {
                             LOG(LOG_INFO, "receiving %s '%s'\n", value, keyword);
                         }
                         else {
-                            if ((0==strcasecmp((char*)keyword, STRAUTHID_ACCEPT_MESSAGE))
-                            || (0==strcasecmp((char*)keyword, STRAUTHID_DISPLAY_MESSAGE))
-                            || (0==strcasecmp((char*)keyword, STRAUTHID_TRANS_HELP_MESSAGE))) {
-                                this->context.cpy_long((char*)keyword, (char*)(!(0[value]=='!')?0:1)[value]);
-                            }
-                            else {
-                                this->context.cpy((char*)keyword, (char*)value+(value[0]=='!'?1:0));
-                            }
+                            this->context.cpy((char*)keyword, (char*)value+(value[0]=='!'?1:0));
                             if ((strncasecmp((char*)value, "ask", 3) != 0)
                             && ((strncasecmp("password", (char*)keyword, 8) == 0)
                             || (strncasecmp("target_password", (char*)keyword, 15) == 0))){
@@ -165,7 +158,7 @@ class SessionManager {
                     Stream stream(8192);
 
                     this->auth_trans_t->recv((char**)&(stream.end), 4);
-    #warning check if size is < 8192
+                    #warning check if size is < 8192
                     int size = stream.in_uint32_be();
                     this->auth_trans_t->recv((char**)&(stream.end), size-4);
                     this->in_items(stream);

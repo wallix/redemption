@@ -58,12 +58,12 @@ static inline void LOG(int priority, const char *format, ...)
         { "WARNING", LOG_WARNING },
         { NULL, -1 }
     };
-    char message[256];
-    char formated_message[512];
+    char message[8192];
+    char formated_message[8192];
     va_list vl;
     va_start (vl, format);
-    vsnprintf(message, 255, format, vl);
-    snprintf(formated_message, 511, "%s (%d/%d) -- %s", prioritynames[priority].c_name, getpid(), getpid(), message);
+    vsnprintf(message, 8191, format, vl);
+    snprintf(formated_message, 8191, "%s (%d/%d) -- %s", prioritynames[priority].c_name, getpid(), getpid(), message);
     va_end(vl);
     syslog(priority, "%s", formated_message);
 };

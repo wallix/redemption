@@ -107,7 +107,7 @@ class Dico {
             return false; // if key not found we say value if greater
         }
         const char * found = it->second->value+1;
-        return 0 == strncmp(found, value, 254);
+        return 0 == strncmp(found, value, 1023);
     }
 
     void cpy(const char * key, int value) {
@@ -123,17 +123,6 @@ class Dico {
     }
 
     void cpy(const char * key, const char * value) {
-        #warning may be raising an exception would be better
-        const t_kmap::iterator & it = this->map.find(key);
-        if (it == this->map.end()){
-            return;
-        }
-        char * found = it->second->value+1;
-        strncpy(found, value, 254);
-    }
-
-    #warning find a way for the keywords to manage their own buffer size by themselves
-    void cpy_long(const char * key, const char * value) {
         #warning may be raising an exception would be better
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
@@ -159,7 +148,7 @@ class Dico {
         for (unsigned i = 0; i < nbkeywords; i++){
                 KeywordValue * item = new KeywordValue();
                 item->ask = V_DEFAULT;
-                strncpy(item->value, KeywordsDefinitions[i].default_value, 255);
+                strncpy(item->value, KeywordsDefinitions[i].default_value, 1023);
                 this->map[KeywordsDefinitions[i].keyword] = item;
 //                LOG(LOG_INFO, "adding keyword to context: %s at %p\n", KeywordsDefinitions[i].keyword, item);
         }
