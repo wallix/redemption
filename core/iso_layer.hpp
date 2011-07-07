@@ -360,7 +360,7 @@ struct IsoLayer {
                 LI, ((code == ISO_PDU_DT)?2:6));
         }
         assert( LI == ((code == ISO_PDU_DT)?2:6) ) ;
-        stream.skip_uint8((code == ISO_PDU_DT)?1:5);
+        stream.skip_uint8(LI-1);
 
 //        LOG(LOG_INFO, "iso_recv_msg: done");
         return code;

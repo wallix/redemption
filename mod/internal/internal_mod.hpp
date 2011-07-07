@@ -79,7 +79,7 @@ struct internal_mod : public client_mod {
 
     virtual ~internal_mod()
     {
-        this->screen.delete_all_childs();
+//        this->screen.delete_all_childs();
     }
 
     size_t nb_windows()

@@ -174,6 +174,8 @@ class Error {
     {
         this->id = id;
         this->errnum = errnum;
+//        LOG(LOG_ERR, "error=%u", this->id);
+//        exit(0);
     }
 
 };

@@ -136,7 +136,7 @@ struct rdp_orders {
 
     #warning it looks strange that rdp_orders object should be depending on bpp parameter, it looks more like a cache implementation detail that should be abstracted here.
     rdp_orders() :
-        common(0, Rect()),
+        common(RDP::PATBLT, Rect(0, 0, 1, 1)),
         memblt(0, Rect(), 0, 0, 0, 0),
         opaquerect(Rect(), 0),
         scrblt(Rect(), 0, 0, 0),

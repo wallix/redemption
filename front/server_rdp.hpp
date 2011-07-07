@@ -583,15 +583,16 @@ struct server_rdp {
         Stream input_stream(65535);
 
         do {
-            if (input_stream.next_packet && input_stream.next_packet < input_stream.end){
-                input_stream.p = input_stream.next_packet;
-            }
-            else {
+//            if (input_stream.next_packet && input_stream.next_packet < input_stream.end){
+//                input_stream.p = input_stream.next_packet;
+//            }
+//            else {
                 this->sec_layer.mcs_layer.iso_layer.iso_recv(input_stream);
-            }
+//            }
             int opcode = input_stream.in_uint8();
             int appid = opcode >> 2;
 
+//            LOG(LOG_INFO, "appid = %u", appid);
             /* Channel Join ReQuest datagram */
             while(appid == MCS_CJRQ) {
                 /* this is channels getting added from the client */
