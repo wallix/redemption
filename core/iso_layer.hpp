@@ -33,6 +33,7 @@ struct IsoStream
     uint8_t version;
     uint16_t len;
     Stream stream;
+    uint8_t code;
 
     IsoStream() : stream(65536) {
     }
@@ -48,7 +49,7 @@ struct IsoStream
     {
         this->stream.set_out_uint8(this->version, 0);   /* version */
         this->stream.set_out_uint8(0,             1); /* reserved */
-        this->stream.out_uint16_be(this->len,     2); /* length */
+        this->stream.set_out_uint16_be(this->len, 2); /* length */
     }
 
     void read_x224TPDU()
@@ -57,7 +58,7 @@ struct IsoStream
         this->code = this->stream.in_uint8();
     }
 
-}
+};
 
 /* iso */
 struct IsoLayer {
@@ -265,7 +266,7 @@ struct IsoLayer {
 //            case ER_TPDU:
 //            break;
 //        }
-        stream.skip_uint8(LI-1);
+//        stream.skip_uint8(LI-1);
     }
 
 // Valid Class 0 x224 TPDU
@@ -354,6 +355,10 @@ struct IsoLayer {
         int code = stream.in_uint8();
 //        LOG(LOG_INFO, "iso_recv_msg: skip %u bytes", (code == ISO_PDU_DT)?1:5);
 
+        if (LI != ((code == ISO_PDU_DT)?2:6)){
+            LOG(LOG_ERR, "Bad TPDU header header length=%u expected length=%u",
+                LI, ((code == ISO_PDU_DT)?2:6));
+        }
         assert( LI == ((code == ISO_PDU_DT)?2:6) ) ;
         stream.skip_uint8((code == ISO_PDU_DT)?1:5);
 
