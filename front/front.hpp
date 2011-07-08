@@ -145,7 +145,7 @@ struct GraphicsUpdatePDU
     RDPLineTo lineto;
     RDPGlyphIndex glyphindex;
     // state variables for gathering batch of orders
-    int order_count;
+    size_t order_count;
     uint32_t offset_header;
     uint32_t offset_order_count;
     struct server_rdp & rdp_layer;
@@ -309,19 +309,18 @@ struct GraphicsUpdatePDU
 
 };
 
-
+#warning front is becoming an empty shell and should disappear soon
 class Front {
 public:
     Cache cache;
     struct BitmapCache *bmp_cache;
-    struct Capture * capture;
     struct Font font;
     int mouse_x;
     int mouse_y;
     bool nomouse;
     bool notimestamp;
     int timezone;
-private:
+
     struct server_rdp rdp_layer;
     int order_level;
     GraphicsUpdatePDU * orders;
@@ -331,7 +330,6 @@ public:
     Front(SocketTransport * trans, Inifile * ini) :
     cache(),
     bmp_cache(0),
-    capture(0),
     font(SHARE_PATH "/" DEFAULT_FONT_NAME),
     mouse_x(0),
     mouse_y(0),
@@ -345,9 +343,6 @@ public:
     }
 
     ~Front(){
-        if (this->capture){
-            delete this->capture;
-        }
         if (this->bmp_cache){
             delete this->bmp_cache;
         }
@@ -384,31 +379,6 @@ public:
         }
         this->bmp_cache = new BitmapCache(&(this->rdp_layer.client_info));
         this->cache.reset(this->rdp_layer.client_info);
-    }
-
-    void start_capture(int width, int height, bool flag, char * path, const char * codec_id, const char * quality, int timezone)
-    {
-        this->timezone = timezone;
-        if (flag){
-            this->stop_capture();
-            this->capture = new Capture(width, height, this->rdp_layer.client_info.bpp, path, codec_id, quality);
-        }
-    }
-
-    void stop_capture()
-    {
-        if (this->capture){
-            delete this->capture;
-            this->capture = 0;
-        }
-    }
-
-    void periodic_snapshot(bool pointer_is_displayed)
-    {
-        if (this->capture){
-            this->capture->snapshot(this->mouse_x, this->mouse_y,
-                    pointer_is_displayed|this->nomouse, this->notimestamp, this->timezone);
-        }
     }
 
     void begin_update()
@@ -495,137 +465,6 @@ public:
 //        LOG(LOG_INFO, "send_to_channel()");
         this->rdp_layer.server_send_to_channel(channel_id, data, data_len, total_data_len, flags);
 //        LOG(LOG_INFO, "send_to_channel() done");
-    }
-
-    /* fill in an area of the screen with one color */
-    void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
-    {
-//        LOG(LOG_INFO, "front::opaque_rect()");
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
-            this->orders->send(cmd, clip);
-
-            if (this->capture){
-                this->capture->opaque_rect(cmd, clip);
-            }
-        }
-//        LOG(LOG_INFO, "front::opaque_rect() done");
-    }
-
-    void scr_blt(const RDPScrBlt & cmd, const Rect &clip)
-    {
-//        LOG(LOG_INFO, "front::scr_blt()");
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
-            this->orders->send(cmd, clip);
-
-            if (this->capture){
-                this->capture->scr_blt(cmd, clip);
-            }
-        }
-//        LOG(LOG_INFO, "front::scr_blt() done");
-    }
-
-    void dest_blt(const RDPDestBlt & cmd, const Rect &clip)
-    {
-//        LOG(LOG_INFO, "front::dest_blt()");
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
-            this->orders->send(cmd, clip);
-
-            if (this->capture){
-                this->capture->dest_blt(cmd, clip);
-            }
-        }
-//        LOG(LOG_INFO, "front::dest_blt() done");
-    }
-
-
-    void pat_blt(const RDPPatBlt & cmd, const Rect &clip)
-    {
-//        LOG(LOG_INFO, "front::pat_blt()");
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
-            this->orders->send(cmd, clip);
-
-            if (this->capture){
-                this->capture->pat_blt(cmd, clip);
-            }
-        }
-//        LOG(LOG_INFO, "front::pat_blt() done");
-    }
-
-
-    void mem_blt(const RDPMemBlt & cmd, const Rect & clip)
-    {
-//        LOG(LOG_INFO, "front::mem_blt()");
-//        cmd.log(LOG_INFO, clip);
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
-            this->orders->send(cmd, clip);
-            if (this->capture){
-                this->capture->mem_blt(cmd, *this->bmp_cache, clip);
-            }
-        }
-//        LOG(LOG_INFO, "front::mem_blt() done");
-    }
-
-    void line_to(const RDPLineTo& cmd, const Rect & clip)
-    {
-//        LOG(LOG_INFO, "front::line_to()");
-        const uint16_t minx = std::min(cmd.startx, cmd.endx);
-        const uint16_t miny = std::min(cmd.starty, cmd.endy);
-        const Rect rect(minx, miny,
-                        std::max(cmd.startx, cmd.endx)-minx+1,
-                        std::max(cmd.starty, cmd.endy)-miny+1);
-
-        if (!clip.isempty() && !clip.intersect(rect).isempty()){
-            this->orders->send(cmd, clip);
-            if (this->capture){
-                this->capture->line_to(cmd, clip);
-            }
-        }
-//        LOG(LOG_INFO, "front::line_to() done");
-    }
-
-    void glyph_index(const RDPGlyphIndex & cmd, const Rect & clip)
-    {
-//        LOG(LOG_INFO, "front::glyph_index()");
-        if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()){
-            this->orders->send(cmd, clip);
-            if (this->capture){
-                this->capture->glyph_index(cmd, clip);
-            }
-        }
-//        LOG(LOG_INFO, "front::glyph_index() done");
-    }
-
-    void color_cache(const RDPColCache & cmd)
-    {
-//        LOG(LOG_INFO, "front::color_cache()");
-        this->orders->send(cmd);
-//        LOG(LOG_INFO, "front::color_cache() done");
-    }
-
-    void brush_cache(RDPBrushCache & cmd)
-    {
-//        LOG(LOG_INFO, "front::brush_cache()");
-        this->orders->send(cmd);
-//        LOG(LOG_INFO, "front::brush_cache() done");
-    }
-
-    void bitmap_cache(const RDPBmpCache & cmd)
-    {
-//        LOG(LOG_INFO, "front::bitmap_cache()");
-//        cmd.log(LOG_INFO);
-        this->orders->send(cmd);
-
-        if (this->capture){
-            this->capture->bitmap_cache(cmd);
-        }
-//        LOG(LOG_INFO, "front::bitmap_cache() done");
-    }
-
-    void glyph_cache(const RDPGlyphCache & cmd)
-    {
-//        LOG(LOG_INFO, "front::glyph_cache()");
-        this->orders->send(cmd);
-//        LOG(LOG_INFO, "front::glyph_cache() done");
     }
 
 };

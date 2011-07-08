@@ -237,7 +237,7 @@ class SessionManager {
         int next_state = MCTX_STATUS_EXIT;
         switch (this->context.mod_state){
         default:
-            LOG(LOG_INFO, "Default Mod Stae\n");
+            LOG(LOG_INFO, "Default Mod State\n");
             next_state = this->ask_next_module_remote(auth_host, auth_port);
             if (next_state == MCTX_STATUS_CLOSE){
                 next_state = MCTX_STATUS_TRANSITORY;

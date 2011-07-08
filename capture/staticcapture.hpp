@@ -702,7 +702,7 @@ class StaticCapture
     void line_to(const RDPLineTo & lineto, const Rect & clip)
     {
 
-        if (lineto.startx >= lineto.starty){
+        if (lineto.startx >= lineto.endx){
             line(lineto.back_mode,
                  lineto.startx, lineto.starty, lineto.endx, lineto.endy,
                  lineto.rop2, lineto.back_color, lineto.pen, clip);

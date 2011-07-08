@@ -78,10 +78,10 @@ struct test_internal_mod : public internal_mod {
 // }
      {
          RDPBrushCache cmd1(9, 1, 8, 8, 0, 8,(const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55");
-         this->front.brush_cache(cmd1);
+         this->front.orders->send(cmd1);
          RDPBrush brush(5, 7, 0x81, 9);
          RDPPatBlt cmd(Rect(381, 702, 10, 16), 240, 0xffffff, 0xd6d3ce, brush );
-         this->front.pat_blt(cmd, Rect(0, 0, 1280, 800));
+         this->front.orders->send(cmd, Rect(0, 0, 1280, 800));
      }
         this->server_end_update();
     }
