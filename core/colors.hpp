@@ -31,6 +31,10 @@
 typedef uint32_t BGRColor;
 typedef BGRColor BGRPalette[256];
 
+static inline BGRColor RGBtoBGR(const BGRColor & c){
+    return ((c << 16) & 0xFF0000)|(c & 0x00FF00)|((c>>16) & 0x0000FF);
+}
+
 // colorN (variable): an index into the current palette or an RGB triplet
 //                    value; the actual interpretation depends on the color
 //                    depth of the bitmap data.
@@ -82,10 +86,11 @@ static inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, cons
     return 0;
 }
 
+
 static inline BGRColor color_decode_opaquerect(const BGRColor c, const uint8_t in_bpp, const uint32_t (& palette)[256]){
     switch (in_bpp){
     case 8:
-      return palette[(uint8_t)c] & 0xFFFFFF;
+      return RGBtoBGR(palette[(uint8_t)c]);
     case 15:
     {
         //  b1 b2 b3 b4 b5 g1 g2 g3 g4 g5r1 r2 r3 r4 r5
@@ -132,10 +137,6 @@ static inline void init_palette332(BGRPalette & palette)
             }
         }
     }
-}
-
-static inline BGRColor RGBtoBGR(const BGRColor & c){
-    return ((c << 16) & 0xFF0000)|(c & 0x00FF00)|((c>>16) & 0x0000FF);
 }
 
 static inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp){

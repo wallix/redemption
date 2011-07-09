@@ -59,6 +59,9 @@ struct client_mod : public Callback {
     int bitmap_cache_persist_enable;
     BGRPalette palette332;
     BGRPalette mod_palette;
+    BGRPalette memblt_mod_palette;
+    bool mod_palette_setted;
+
     uint8_t mod_bpp;
     uint8_t socket;
 
@@ -73,6 +76,7 @@ struct client_mod : public Callback {
           key_flags(key_flags),
           keymap(keymap),
           front(front),
+          mod_palette_setted(0),
           mod_bpp(24),
           signal(0),
           palette_sent(false),
@@ -129,22 +133,38 @@ struct client_mod : public Callback {
     }
 
 
-    void set_mod_palette(BGRPalette palette)
+    void set_mod_palette(const BGRPalette & palette)
     {
+        this->mod_palette_setted = true;
         for (unsigned i = 0; i < 256 ; i++){
             this->mod_palette[i] = palette[i];
+            this->memblt_mod_palette[i] = RGBtoBGR(palette[i]);
         }
     }
 
     const BGRColor convert(const BGRColor color) const
     {
-        const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
-        return color_encode(color24, this->get_front_bpp());
+        if (this->get_front_bpp() == 8 && this->mod_bpp == 8){
+//            return ((color >> 5) & 7) |((color << 1) & 0x31)|((color<<6)&0xc0);
+//            this->mod_palette[color]
+            return color;
+        }
+        else{
+            const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
+            return color_encode(color24, this->get_front_bpp());
+        }
     }
 
     const BGRColor convert_opaque(const BGRColor color) const
     {
-        if (this->mod_bpp == 16 || this->mod_bpp == 15){
+        if (this->get_front_bpp() == 8 && this->mod_bpp == 8){
+//            LOG(LOG_INFO, "convert_opaque: front=%u back=%u setted=%u color=%u palette=%.06x", this->get_front_bpp(), this->mod_bpp, this->mod_palette_setted, color, this->mod_palette[color]);
+//            return ((color >> 5) & 7) |((color << 1) & 0x31)|((color<<6)&0xc0);
+//            this->mod_palette[color]
+            return color;
+        }
+        else
+        if (this->mod_bpp == 16 || this->mod_bpp == 15 || this->mod_bpp == 8){
             const BGRColor color24 = color_decode_opaquerect(
                         color, this->mod_bpp, this->mod_palette);
             return  color_encode(color24, this->get_front_bpp());
@@ -319,7 +339,7 @@ struct client_mod : public Callback {
 
     void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor)
     {
-        this->send_global_palette(this->palette332);
+        this->send_global_palette();
 
         // add text to glyph cache
         #warning use mbsrtowcs instead
@@ -382,7 +402,7 @@ struct client_mod : public Callback {
     {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
 
-            this->send_global_palette(this->palette332);
+            this->send_global_palette();
 
             RDPOpaqueRect new_cmd = cmd;
             new_cmd.color = this->convert_opaque(cmd.color);
@@ -423,7 +443,7 @@ struct client_mod : public Callback {
     {
         if (!this->clip.isempty() && !this->clip.intersect(cmd.rect).isempty()){
 
-            this->send_global_palette(this->palette332);
+            this->send_global_palette();
 
             RDPPatBlt new_cmd = cmd;
             new_cmd.back_color = this->convert(cmd.back_color);
@@ -456,23 +476,24 @@ struct client_mod : public Callback {
 
     void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const BGRPalette & palette)
     {
-
         uint8_t palette_id = ((memblt.cache_id >> 4) >= 6)?0:(memblt.cache_id >> 4);
 
         if (this->get_front_bpp() == 8){
-
+            this->palette_sent = false;
+            this->send_global_palette();
             if (!this->palette_memblt_sent[palette_id]) {
 //                LOG(LOG_INFO, "sending palette to %u", color_index);
                 if (bitmap.original_bpp == 8){
-                    this->color_cache(bitmap.original_palette, palette_id);
+                    LOG(LOG_INFO, "sending original palette to %u", palette_id);
+                    this->color_cache(this->mod_palette, palette_id);
                 }
                 else {
+                    LOG(LOG_INFO, "sending 332 palette to %u", palette_id);
                     this->color_cache(this->palette332, palette_id);
                 }
                 this->palette_memblt_sent[palette_id] = true;
             }
-
-            this->send_global_palette(this->palette332);
+            this->palette_sent = false;
         }
         const Rect & dst = memblt.rect;
         const int srcx = memblt.srcx;
@@ -557,7 +578,7 @@ struct client_mod : public Callback {
     void glyph_index(const RDPGlyphIndex & cmd)
     {
         if (!this->clip.isempty() && !this->clip.intersect(cmd.bk).isempty()){
-            this->send_global_palette(this->palette332);
+            this->send_global_palette();
 
             RDPGlyphIndex new_cmd = cmd;
             new_cmd.back_color = this->convert_opaque(cmd.back_color);
@@ -660,7 +681,7 @@ struct client_mod : public Callback {
                         if (this->get_front_bpp() == 8){
                             if (!this->palette_memblt_sent[palette_id]) {
                                 if (bitmap.original_bpp == 8){
-                                    this->color_cache(bitmap.original_palette, palette_id);
+                                    this->color_cache(this->mod_palette, palette_id);
                                 }
                                 else {
                                     this->color_cache(this->palette332, palette_id);
@@ -668,7 +689,7 @@ struct client_mod : public Callback {
                                 this->palette_memblt_sent[palette_id] = true;
                             }
 
-                            this->send_global_palette(this->palette332);
+                            this->send_global_palette();
                         }
                         this->front.orders->send(cmd, this->clip);
                         #warning capture should have it's own reference to bmp_cache
@@ -687,10 +708,17 @@ struct client_mod : public Callback {
         this->current_pointer = cache_idx;
     }
 
-    void send_global_palette(const BGRPalette & palette)
+    void send_global_palette()
     {
         if (!this->palette_sent && (this->get_front_bpp() == 8)){
-            this->front.send_global_palette(this->palette332);
+            if (this->mod_bpp == 8){
+                LOG(LOG_INFO, "sending original palette to global");
+                this->front.send_global_palette(this->memblt_mod_palette);
+            }
+            else {
+                LOG(LOG_INFO, "sending 332 palette to global");
+                this->front.send_global_palette(this->palette332);
+            }
             this->palette_sent = true;
         }
     }

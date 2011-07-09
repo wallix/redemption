@@ -122,6 +122,7 @@ struct rdp_orders {
 
     BGRPalette cache_colormap[6];
     BGRPalette global_palette;
+    BGRPalette memblt_palette;
 
     #warning this cache_bitmap here looks strange. At least it's size should ne negotiated. And why is it not managed by the other cache management code ? This probably hide some kind of problem. See when working on cache secondary order primitives.
     Bitmap * cache_bitmap[3][10000];
@@ -139,6 +140,7 @@ struct rdp_orders {
         memset(this->cache_bitmap, 0, sizeof(this->cache_bitmap));
         memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
         memset(this->global_palette, 0, sizeof(this->global_palette));
+        memset(this->memblt_palette, 0, sizeof(this->memblt_palette));
     }
 
 

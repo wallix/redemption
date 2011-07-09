@@ -365,18 +365,18 @@ struct rdp_rdp {
 
         void process_palette(Stream & stream, client_mod * mod)
         {
-            LOG(LOG_INFO, "Process palette\n");
+//            LOG(LOG_INFO, "Process palette\n");
 
             stream.skip_uint8(2); /* pad */
-            uint16_t numberColors = stream.in_uint16_le();
+            uint16_t numberColors = stream.in_uint32_le();
             assert(numberColors == 256);
-            stream.skip_uint8(2); /* pad */
             for (int i = 0; i < 256; i++) {
                 uint8_t r = stream.in_uint8();
                 uint8_t g = stream.in_uint8();
                 uint8_t b = stream.in_uint8();
 //                uint32_t color = stream.in_bytes_le(3);
                 this->orders.global_palette[i] = (r << 16)|(g << 8)|b;
+                this->orders.memblt_palette[i] = (b << 16)|(g << 8)|r;
             }
             mod->set_mod_palette(this->orders.global_palette);
         }

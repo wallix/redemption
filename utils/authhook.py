@@ -26,6 +26,7 @@ class Authentifier(object):
         'test' : 'test',
         'card' : 'card',
         'loop' : 'loop',
+        'looop' : 'looop',
         'error_invalid' : 'error_invalid'
     }
     targets = {
@@ -113,6 +114,14 @@ class Authentifier(object):
             'target_login' : r'card',
             'target_device' : '127.0.0.1',
             'target_password' : 'card',
+            'target_port':'3389',
+            'proto_dest': 'RDP'
+        },
+        'looop' : {
+            'proxy_type': 'RDP',
+            'target_login' : r'loop',
+            'target_device' : '127.0.0.1',
+            'target_password' : 'loop',
             'target_port':'3389',
             'proto_dest': 'RDP'
         },

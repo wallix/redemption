@@ -125,12 +125,12 @@ struct server_rdp {
 
         for (int i = 0; i < 256; i++) {
             int color = palette[i];
-            uint8_t b = color >> 16;
+            uint8_t r = color >> 16;
             uint8_t g = color >> 8;
-            uint8_t r = color;
-            stream.out_uint8(r);
-            stream.out_uint8(g);
+            uint8_t b = color;
             stream.out_uint8(b);
+            stream.out_uint8(g);
+            stream.out_uint8(r);
         }
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, stream.rdp_hdr - stream.data);
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
