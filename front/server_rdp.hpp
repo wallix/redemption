@@ -121,17 +121,16 @@ struct server_rdp {
 
         stream.out_uint16_le(0);
 
-        stream.out_uint16_le(256); /* # of colors */
-        stream.out_uint16_le(0);
+        stream.out_uint32_le(256); /* # of colors */
 
         for (int i = 0; i < 256; i++) {
             int color = palette[i];
-            uint8_t r = color >> 16;
+            uint8_t b = color >> 16;
             uint8_t g = color >> 8;
-            uint8_t b = color;
-            stream.out_uint8(b);
-            stream.out_uint8(g);
+            uint8_t r = color;
             stream.out_uint8(r);
+            stream.out_uint8(g);
+            stream.out_uint8(b);
         }
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, stream.rdp_hdr - stream.data);
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
@@ -583,7 +582,7 @@ struct server_rdp {
         Stream input_stream(65535);
 
         do {
-//            if (input_stream.next_packet && input_stream.next_packet < input_stream.end){
+//            if (input_stream.next_packet && (input_stream.next_packet < input_stream.end)){
 //                input_stream.p = input_stream.next_packet;
 //            }
 //            else {
@@ -632,24 +631,36 @@ struct server_rdp {
                 this->sec_layer.server_sec_init_client_crypt_random(input_stream);
                 this->sec_layer.server_sec_rsa_op();
                 this->sec_layer.server_sec_establish_keys();
-                if (!this->up_and_running){ continue; }
+                if (!this->up_and_running){
+//                    input_stream.next_packet = input_stream.end;
+                    continue;
+                }
             }
             else if (flags & SEC_LOGON_INFO) { /* 0x40 */
                 this->sec_layer.server_sec_process_logon_info(input_stream);
                 if (this->sec_layer.client_info->is_mce) {
                     this->sec_layer.server_sec_send_media_lic_response();
                     this->server_rdp_send_demand_active();
-                    if (!this->up_and_running){ continue; }
+                    if (!this->up_and_running){
+//                        input_stream.next_packet = input_stream.end;
+                        continue;
+                    }
                 }
                 else {
                     this->sec_layer.server_sec_send_lic_initial();
-                    if (!this->up_and_running){ continue; }
+                    if (!this->up_and_running){
+//                        input_stream.next_packet = input_stream.end;
+                        continue;
+                    }
                 }
             }
             else if (flags & SEC_LICENCE_NEG) { /* 0x80 */
                 this->sec_layer.server_sec_send_lic_response();
                 this->server_rdp_send_demand_active();
-                if (!this->up_and_running){ continue; }
+                if (!this->up_and_running){
+//                    input_stream.next_packet = input_stream.end;
+                    continue;
+                }
             }
             else if (chan > MCS_GLOBAL_CHANNEL) {
             #warning is it possible to get channel data when we are not up and running ?
@@ -678,14 +689,11 @@ struct server_rdp {
                 cb.callback(WM_CHANNELDATA,
                                   ((flags & 0xffff) << 16) | (channel_id & 0xffff),
                                   size, (long)(input_stream.p), length);
-                if (!this->up_and_running){ continue; }
+//                if (!this->up_and_running){ continue; }
                 // We consume all the data of the packet
                 input_stream.p = input_stream.end;
-//                if (input_stream.p >= input_stream.end) {
-//                    input_stream.next_packet = input_stream.p;
-//                    break;
-//                }
             }
+//            LOG(LOG_INFO, "PDUTYPE DATA");
 
             input_stream.next_packet = input_stream.p;
 
@@ -1357,7 +1365,7 @@ struct server_rdp {
             }
             break;
         default:
-            LOG(LOG_WARNING, "unknown in process_data %d\n", data_type);
+            LOG(LOG_WARNING, "unsupported PDUTYPE in process_data %d\n", data_type);
             break;
         }
     }

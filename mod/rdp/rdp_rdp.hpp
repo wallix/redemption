@@ -372,13 +372,13 @@ struct rdp_rdp {
             assert(numberColors == 256);
             stream.skip_uint8(2); /* pad */
             for (int i = 0; i < 256; i++) {
-                uint8_t b = stream.in_uint8();
-                uint8_t g = stream.in_uint8();
                 uint8_t r = stream.in_uint8();
+                uint8_t g = stream.in_uint8();
+                uint8_t b = stream.in_uint8();
 //                uint32_t color = stream.in_bytes_le(3);
-                this->orders.cache_colormap[7][i] = (r << 16)|(g << 8)|b;
+                this->orders.global_palette[i] = (r << 16)|(g << 8)|b;
             }
-            mod->set_mod_palette(this->orders.cache_colormap[7]);
+            mod->set_mod_palette(this->orders.global_palette);
         }
 
 
@@ -750,9 +750,7 @@ struct rdp_rdp {
         {
 //            LOG(LOG_INFO, "send_input\n");
 
-            if (this->init_data(stream) != 0) {
-                throw Error(ERR_RDP_SEND_INPUT_INIT_DATA_NOK);
-            }
+            this->init_data(stream);
             stream.out_uint16_le(1); /* number of events */
             stream.out_uint16_le(0);
             stream.out_uint32_le(time);
@@ -766,17 +764,15 @@ struct rdp_rdp {
 
         void send_invalidate(Stream & stream,int left, int top, int width, int height) throw(Error)
         {
-//            LOG(LOG_INFO, "send_invalidate\n");
-            if (this->init_data(stream) != 0) {
-                throw Error(ERR_RDP_SEND_INVALIDATE_INIT_DATA_NOK);
-            }
+            LOG(LOG_INFO, "send_invalidate\n");
+            this->init_data(stream);
             stream.out_uint32_le(1);
             stream.out_uint16_le(left);
             stream.out_uint16_le(top);
             stream.out_uint16_le((left + width) - 1);
             stream.out_uint16_le((top + height) - 1);
             stream.mark_end();
-            this->send_data(stream, 33, MCS_GLOBAL_CHANNEL);
+            this->send_data(stream, PDUTYPE2_REFRESH_RECT, MCS_GLOBAL_CHANNEL);
         }
 
 
@@ -1143,7 +1139,7 @@ struct rdp_rdp {
                 }
 
                 const uint8_t * data = stream.in_uint8p(size);
-                Bitmap bitmap(bpp, &this->orders.cache_colormap[7], width, height, data, size, true);
+                Bitmap bitmap(bpp, &this->orders.cache_colormap[0], width, height, data, size, true);
 
                 assert(line_size == bitmap.line_size(bpp));
                 assert(final_size == bitmap.bmp_size(bpp));
@@ -1153,7 +1149,7 @@ struct rdp_rdp {
             }
             else {
                 const uint8_t * data = stream.in_uint8p(bufsize);
-                Bitmap bitmap(bpp, &this->orders.cache_colormap[7], width, height, data, bufsize);
+                Bitmap bitmap(bpp, &this->orders.cache_colormap[0], width, height, data, bufsize);
 
                 assert(bufsize == bitmap.bmp_size(bpp));
 

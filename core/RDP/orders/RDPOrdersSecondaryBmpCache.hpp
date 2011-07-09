@@ -497,10 +497,8 @@ class RDPBmpCache {
     int bpp;
     int cache_idx;
     const ClientInfo * client_info;
-    #warning we should not have a palette here, we alreadyhave one inside bitmap
-    const BGRPalette * palette;
 
-    RDPBmpCache(int bpp, const BGRPalette * palette, Bitmap * bmp, int cache_id, int cache_idx, const ClientInfo * client_info) :
+    RDPBmpCache(int bpp, Bitmap * bmp, int cache_id, int cache_idx, const ClientInfo * client_info) :
                     cache_id(cache_id),
                     bmp(bmp),
                     bpp(bpp),
@@ -509,7 +507,7 @@ class RDPBmpCache {
     {
     }
 
-    RDPBmpCache(int bpp, BGRPalette * palette) : bpp(bpp), palette(palette)
+    RDPBmpCache(int bpp) : bpp(bpp)
     {
     }
 
@@ -521,7 +519,7 @@ class RDPBmpCache {
     {
         using namespace RDP;
         if (0 == this->client_info->bitmap_cache_version){
-            if (0 && this->client_info->use_bitmap_comp){
+            if (this->client_info->use_bitmap_comp){
 //                LOG(LOG_INFO, "/* BMP Cache compressed V1 */");
                 this->emit_v1_compressed(stream);
             }
@@ -548,7 +546,7 @@ class RDPBmpCache {
 
         bool small_headers = this->client_info->op2;
         Stream tmp(16384);
-        this->bmp->compress(bpp, tmp);
+        this->bmp->compress(this->bpp, tmp);
         size_t bufsize = tmp.p - tmp.data;
 
 //        LOG(LOG_INFO, "bufsize=%u [%u]", bufsize, tmp.data[0]);
@@ -975,8 +973,7 @@ class RDPBmpCache {
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
-        #warning maybe palette should be provided in receive
-        this->bmp = new Bitmap(bpp, this->palette, width, height, stream.in_uint8p(bufsize), bufsize);
+        this->bmp = new Bitmap(bpp, NULL, width, height, stream.in_uint8p(bufsize), bufsize);
         assert(bufsize == this->bmp->bmp_size(bpp));
     }
 
@@ -986,9 +983,10 @@ class RDPBmpCache {
 
     size_t str(char * buffer, size_t sz) const
     {
-        size_t lg  = snprintf(buffer, sz, "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u palette=%p cache_version=%u compression=%u)",
-            this->cache_id, this->cache_idx, this->bpp, this->palette,
-            this->client_info->bitmap_cache_version, this->client_info->use_bitmap_comp);
+        size_t lg  = snprintf(buffer, sz, "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u cache_version=%u compression=%u)",
+            this->cache_id, this->cache_idx, this->bpp,
+            this->client_info->bitmap_cache_version,
+            this->client_info->use_bitmap_comp);
         if (lg >= sz){
             return sz;
         }

@@ -205,7 +205,6 @@ struct mod_rdp : public client_mod {
             }
         }
         catch(Error){
-//            LOG(LOG_WARNING, "rdp::mod_event(...), catched Error exception\n");
             return 0;
         }
         return 0;
@@ -250,7 +249,6 @@ struct mod_rdp : public client_mod {
         }
         catch(...){
             #warning this exception happen, check why (it shouldnt, some error not of Error type is generated)
-            LOG(LOG_WARNING, "Catched regular exception %s\n", strerror(errno));
             return 1;
         }
         return 0;

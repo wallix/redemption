@@ -702,7 +702,7 @@ class StaticCapture
     void line_to(const RDPLineTo & lineto, const Rect & clip)
     {
 
-        if (lineto.startx >= lineto.endx){
+        if (lineto.startx <= lineto.endx){
             line(lineto.back_mode,
                  lineto.startx, lineto.starty, lineto.endx, lineto.endy,
                  lineto.rop2, lineto.back_color, lineto.pen, clip);
@@ -748,14 +748,14 @@ class StaticCapture
             p[1] = color >> 8;  // g
             p[2] = color;       // b
 
-            if ((x0 == x1) && (y0 == y1)) { break; }
+            if ((x0 >= x1) && (y0 == y1)) { break; }
             // Calculating pixel position
             int e2 = err * 2; //prevents use of floating point
             if (e2 > -dy) {
                 err -= dy;
                 x0++;
             }
-            if (e2 <  dx) {
+            if (e2 < dx) {
                 err += dx;
                 y0 += sy;
             }

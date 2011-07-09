@@ -134,25 +134,6 @@ static inline void init_palette332(BGRPalette & palette)
     }
 }
 
-static inline void init_palette332BGR(BGRPalette & palette)
-{
-    /* rgb332 palette */
-    for (int bindex = 0; bindex < 4; bindex++) {
-        for (int gindex = 0; gindex < 8; gindex++) {
-            for (int rindex = 0; rindex < 8; rindex++) {
-                palette[(rindex << 5) | (gindex << 2) | bindex] =
-                (BGRColor)(
-                // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-                    (((rindex<<5)|(rindex<<2)|(rindex>>1)))
-                // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
-                   | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
-                // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
-                   | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex)) << 16);
-            }
-        }
-    }
-}
-
 static inline BGRColor RGBtoBGR(const BGRColor & c){
     return ((c << 16) & 0xFF0000)|(c & 0x00FF00)|((c>>16) & 0x0000FF);
 }

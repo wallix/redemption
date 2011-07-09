@@ -56,7 +56,7 @@ struct Bitmap {
     uint8_t *data_co8;
 
     int original_bpp;
-    const BGRPalette * original_palette;
+    BGRPalette original_palette;
     unsigned cx;
     unsigned cy;
 
@@ -67,15 +67,17 @@ struct Bitmap {
     public:
     Bitmap(int bpp, const BGRPalette * palette, int cx, int cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
         : data_co24(0), data_co16(0), data_co15(0), data_co8(0),
-          original_bpp(bpp), original_palette(palette), cx(cx), cy(cy),
+          original_bpp(bpp), cx(cx), cy(cy),
           crc(0), crc_computed(false)
     {
-        assert((bpp != 8) || palette);
-        if (bpp == 8 && palette == 0){
-            LOG(LOG_WARNING, "Tried to create 8 bits color bitmap without providing any palette. Dying.");
-            throw Error(ERR_BITMAP_8BIT_COLOR_DEPTH_MISSING_PALETTE);
+        if (bpp == 8){
+            if (palette){
+                memcpy(&this->original_palette, palette, sizeof(BGRPalette));
+            }
+            else {
+                init_palette332(this->original_palette);
+            }
         }
-
         this->set_data_co(bpp);
 
         if (compressed) {
@@ -89,10 +91,18 @@ struct Bitmap {
     }
 
 
-    Bitmap(int bpp, const Rect & r, int src_cx, int src_cy, const uint8_t * src_data)
+    Bitmap(int bpp, BGRPalette * palette, const Rect & r, int src_cx, int src_cy, const uint8_t * src_data)
         : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(bpp),
         cx(0), cy(0), crc(0), crc_computed(false)
     {
+        if (bpp == 8){
+            if (palette){
+                memcpy(&this->original_palette, palette, sizeof(BGRPalette));
+            }
+            else {
+                init_palette332(this->original_palette);
+            }
+        }
         int cx = std::min(r.cx, src_cx - r.x);
         #warning there is both cx and this->cx and both can't be interchanged. this is intended to always store bitmaps that are multiple of 4 pixels to override a compatibility problem with rdesktop. This is not necessary for Microsoft clients. See MSRDP-CGR MS-RDPBCGR: 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)
         // bitmapDataStream (variable): A variable-sized array of bytes.
@@ -282,7 +292,6 @@ struct Bitmap {
             }
         }
         close(fd); // from now on all is in memory
-
 
         this->original_bpp = 24;
         this->set_data_co(this->original_bpp);
@@ -1204,7 +1213,8 @@ struct Bitmap {
     {
         const uint8_t Bpp = nbbytes(bpp);
         uint8_t * oldp = 0;
-        uint8_t * pmin = this->data_co(bpp);;
+//        LOG(LOG_INFO, "compressing bitmap from %u to %u", this->original_bpp, bpp);
+        uint8_t * pmin = this->data_co(bpp);
         uint8_t * p = pmin;
 
         // white with the right length : either 0xFF or 0xFFFF or 0xFFFFFF
@@ -1482,11 +1492,8 @@ struct Bitmap {
     }
 
     void convert_data_co(int out_bpp, uint8_t * dest) {
-        uint8_t * src = data_co(this->original_bpp);
 
-        #warning target palette is always 332, it should be computed depending on target colors (but we don't know what target colors will be... so the only case we can actually manage smartly is 8 bits to 8 bits. This must be done or we always will have problems when going from 8 bits to 8 bits.
-        BGRPalette palette332;
-        init_palette332BGR(palette332);
+        uint8_t * src = data_co(this->original_bpp);
 
         #warning code below looks time consuming (applies to every pixels) and should probably be optimized
         // Color decode/encode
@@ -1494,19 +1501,16 @@ struct Bitmap {
         const uint8_t src_nbbytes = nbbytes(this->original_bpp);
         const uint8_t dest_nbbytes = nbbytes(out_bpp);
         for (size_t i = 0; i < this->cx * this->cy; i++) {
-            uint32_t pixel = color_decode(in_bytes_le(src_nbbytes, src),
-                                          this->original_bpp,
-                                          *this->original_palette);
-
-            if (this->original_bpp == 24
-            || ((this->original_bpp == 8) && (out_bpp == 24))) {
-                pixel = (((pixel << 16) & 0xFF0000)
-                        |(pixel         & 0x00FF00)
-                        |((pixel >> 16) & 0x0000FF)) ;
+            uint32_t pixel = in_bytes_le(src_nbbytes, src);
+            if (this->original_bpp != out_bpp){
+                pixel = color_decode(pixel, this->original_bpp, this->original_palette);
+                if (this->original_bpp == 24
+                 || ((this->original_bpp == 8) && (out_bpp == 24))) {
+                    pixel = RGBtoBGR(pixel) ;
+                }
+                pixel = 0xFFFFFF & color_encode(pixel, out_bpp);
             }
-            uint32_t target_pixel = color_encode(pixel, out_bpp);
-            target_pixel = 0xFFFFFF & target_pixel;
-            out_bytes_le(dest, dest_nbbytes, target_pixel);
+            out_bytes_le(dest, dest_nbbytes, pixel);
             src += src_nbbytes;
             dest += dest_nbbytes;
         }

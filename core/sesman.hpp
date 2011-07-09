@@ -180,7 +180,7 @@ class SessionManager {
                               this->tick_count);
                 if (trans->last_quantum_sent == 0){
                     this->tick_count++;
-                    if (this->tick_count > 10){ // 10 minutes before closing on inactivity
+                    if (this->tick_count > 30){ // 10 minutes before closing on inactivity
                         this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed on inactivity");
                         return false;
                     }

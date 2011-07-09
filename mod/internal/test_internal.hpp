@@ -59,15 +59,15 @@ struct test_internal_mod : public internal_mod {
 
     void draw()
     {
-        this->front.send_global_palette(this->palette332BGR);
+        this->front.send_global_palette(this->palette332);
 
         this->server_begin_update();
-        this->color_cache(this->palette332BGR, 0);
-        this->color_cache(this->palette332BGR, 1);
-        this->color_cache(this->palette332BGR, 2);
-        this->color_cache(this->palette332BGR, 3);
-        this->color_cache(this->palette332BGR, 4);
-        this->color_cache(this->palette332BGR, 5);
+        this->color_cache(this->palette332, 0);
+        this->color_cache(this->palette332, 1);
+        this->color_cache(this->palette332, 2);
+        this->color_cache(this->palette332, 3);
+        this->color_cache(this->palette332, 4);
+        this->color_cache(this->palette332, 5);
 
 //        #include "trace2008.cpp"
 

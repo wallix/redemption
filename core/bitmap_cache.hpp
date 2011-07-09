@@ -146,10 +146,10 @@ struct BitmapCache {
     /* returns cache id, cx, cy, bpp, data_co */
     #warning we should pass in src as a bitmap
     uint32_t add_bitmap(int src_cx, int src_cy, const uint8_t * src_data,
-                    const Rect & tile, int src_bpp)
+                    const Rect & tile, int src_bpp, BGRPalette & src_palette)
     {
         int cache_idx = 0;
-        Bitmap * pbitmap = new Bitmap(src_bpp, tile, src_cx, src_cy, src_data);
+        Bitmap * pbitmap = new Bitmap(src_bpp, &src_palette, tile, src_cx, src_cy, src_data);
 //        LOG(LOG_INFO, "new bitmap size = %u original_bpp=%u src_bpp=%u", pbitmap->bmp_size(src_bpp), pbitmap->original_bpp, src_bpp);
         BitmapCacheItem cache_item(pbitmap);
         this->bitmap_stamp++;

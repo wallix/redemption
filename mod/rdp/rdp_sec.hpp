@@ -1271,30 +1271,28 @@ struct rdp_sec {
        creating the server mcs data */
     void rdp_sec_process_srv_channels(Stream & stream, vector<mcs_channel_item*> channel_list)
     {
-      /* this is an option set in xrdp.ini, use 1 by default, static virtual
-      channels accepted */
-      if (1 != this->channel_code) /* are channels on? */
-      {
-        return;
-      }
+        /* this is an option set in xrdp.ini, use 1 by default, static virtual
+        channels accepted */
+        if (1 != this->channel_code) /* are channels on? */{
+            return;
+        }
 
-      int base_channel = stream.in_uint16_le();
-      size_t num_channels = stream.in_uint16_le();
+        int base_channel = stream.in_uint16_le();
+        size_t num_channels = stream.in_uint16_le();
 
-      /* We assume that the channel_id array is confirmed in the same order
-      that it has been sent. If there are any channels not confirmed, they're
-      going to be the last channels on the array sent in MCS Connect Initial */
-      for (size_t index = 0; index < num_channels; index++)
-      {
-        mcs_channel_item *channel_item_cli = channel_list[index];
-        #warning check matching delete, valgrind say memory leak
-        mcs_channel_item *channel_item_srv = new mcs_channel_item;
-        int chanid = stream.in_uint16_le();
-        channel_item_srv->chanid = chanid;
-        strcpy(channel_item_srv->name, channel_item_cli->name);
-        channel_item_srv->flags = channel_item_cli->flags;
-        this->mcs_layer.channel_list.push_back(channel_item_srv);
-      }
+        /* We assume that the channel_id array is confirmed in the same order
+        that it has been sent. If there are any channels not confirmed, they're
+        going to be the last channels on the array sent in MCS Connect Initial */
+        for (size_t index = 0; index < num_channels; index++){
+            mcs_channel_item *channel_item_cli = channel_list[index];
+            #warning check matching delete, valgrind say memory leak
+            mcs_channel_item *channel_item_srv = new mcs_channel_item;
+            int chanid = stream.in_uint16_le();
+            channel_item_srv->chanid = chanid;
+            strcpy(channel_item_srv->name, channel_item_cli->name);
+            channel_item_srv->flags = channel_item_cli->flags;
+            this->mcs_layer.channel_list.push_back(channel_item_srv);
+        }
     }
 
     /******************************************************************************/

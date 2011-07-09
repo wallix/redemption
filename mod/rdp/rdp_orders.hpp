@@ -120,21 +120,12 @@ struct rdp_orders {
     /* order state */
     struct rdp_orders_state state;
 
-    #warning look again details for cache_colormap, see comment.
-    // currently when use palette 7 of cache_colormap to store the global palette
-    // used for 8 bits colors in rdp drawing orders other than memblt and mem3blt
-    // like OpaqueRect, or PATBlt we do that because we must use a
-    // separate palette for global palette and memblt.
+    BGRPalette cache_colormap[6];
+    BGRPalette global_palette;
 
-    // It may be a good idea to really separate palette array for memblt
-    // and global palette to do that just track down accesses to
-    // cache_colormap[7]
-
-    BGRPalette cache_colormap[8];
     #warning this cache_bitmap here looks strange. At least it's size should ne negotiated. And why is it not managed by the other cache management code ? This probably hide some kind of problem. See when working on cache secondary order primitives.
     Bitmap * cache_bitmap[3][10000];
 
-    #warning it looks strange that rdp_orders object should be depending on bpp parameter, it looks more like a cache implementation detail that should be abstracted here.
     rdp_orders() :
         common(RDP::PATBLT, Rect(0, 0, 1, 1)),
         memblt(0, Rect(), 0, 0, 0, 0),
@@ -147,6 +138,7 @@ struct rdp_orders {
     {
         memset(this->cache_bitmap, 0, sizeof(this->cache_bitmap));
         memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
+        memset(this->global_palette, 0, sizeof(this->global_palette));
     }
 
 
@@ -160,7 +152,7 @@ struct rdp_orders {
         using namespace RDP;
 
         memset(&this->state, 0, sizeof(this->state));
-        common = RDPOrderCommon(0, Rect());
+        common = RDPOrderCommon(RDP::PATBLT, Rect(0, 0, 1, 1));
         memblt = RDPMemBlt(0, Rect(), 0, 0, 0, 0);
         opaquerect = RDPOpaqueRect(Rect(), 0);
         scrblt = RDPScrBlt(Rect(), 0, 0, 0);
@@ -172,7 +164,6 @@ struct rdp_orders {
         common.order = PATBLT;
     }
 
-
     void rdp_orders_process_bmpcache(int bpp, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
 //        LOG(LOG_INFO, "rdp_orders_process_bmpcache");
@@ -183,7 +174,7 @@ struct rdp_orders {
         case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
             {
                 #warning RDPBmpCache is used to create bitmap
-                RDPBmpCache bmp(bpp, &this->cache_colormap[7]);
+                RDPBmpCache bmp(bpp);
                 bmp.receive(stream, control, header);
                 cache_id = bmp.cache_id;
                 cache_idx = bmp.cache_idx;
@@ -219,8 +210,7 @@ struct rdp_orders {
 
                 const uint8_t* data = stream.in_uint8p(size);
 
-                #warning valgrind say there is a memory leak here
-                bitmap = new Bitmap(bpp, &this->cache_colormap[7], width, height, data, size, true);
+                bitmap = new Bitmap(bpp, NULL, width, height, data, size, true);
                 assert(row_size == bitmap->line_size(bpp));
 
             }
@@ -395,10 +385,13 @@ struct rdp_orders {
                     this->rdp_orders_process_fontcache(stream, header.flags, mod);
                     break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV2:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)", header.type);
                   break;
                 case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_UNCOMPRESSED_REV2 (%d)", header.type);
                   break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV3:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%d)", header.type);
                   break;
                 default:
                     LOG(LOG_ERR, "unsupported SECONDARY ORDER (%d)", header.type);
@@ -447,7 +440,9 @@ struct rdp_orders {
                 case MEMBLT:
                     this->memblt.receive(stream, header);
                     {
+                        assert((this->memblt.cache_id >> 8) < 6);
                         struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xFF][this->memblt.cache_idx];
+                        assert(bitmap);
                         if (bitmap) {
                             mod->mem_blt(
                                 this->memblt,

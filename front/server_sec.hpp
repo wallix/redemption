@@ -862,16 +862,22 @@ struct server_sec {
         LOG(LOG_INFO, "core_data: keyboard_functionkeys = %x\n", keyboard_functionkeys);
         stream.skip_uint8(64);
 
-        #warning : this field is optional, at least we should check in wich case we are. Also 4bpp is not supported (obsolete anyway, but anyway). Also why do we read highColorDepth only when client is requesting 8bpp ?
         this->client_info->bpp = 8;
         int i = stream.in_uint16_le();
         switch (i) {
         case 0xca01:
-            stream.skip_uint8(6);
-            i = stream.in_uint8();
-            if (i > 8) {
-                this->client_info->bpp = i;
+        {
+            uint16_t clientProductId = stream.in_uint16_le();
+            uint32_t serialNumber = stream.in_uint32_le();
+            uint16_t rdp_bpp = stream.in_uint16_le();
+            uint16_t supportedColorDepths = stream.in_uint16_le();
+            if (rdp_bpp <= 24){
+                this->client_info->bpp = rdp_bpp;
             }
+            else {
+                this->client_info->bpp = 24;
+            }
+        }
             break;
         case 0xca02:
             this->client_info->bpp = 15;

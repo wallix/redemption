@@ -40,10 +40,11 @@ BOOST_AUTO_TEST_CASE(TestColCache)
     {
         Stream stream(1000);
 
-        RDPColCache newcmd;
+        BGRPalette palette;
         for (int i = 0; i < 256; ++i){
-            newcmd.palette[i] = (((i >> 6) & 3) << 16) + (((i>>3) & 7) << 8) + (i & 7);
+            palette[i] = (((i >> 6) & 3) << 16) + (((i>>3) & 7) << 8) + (i & 7);
         }
+        RDPColCache newcmd(0, palette);
 
         newcmd.emit(stream);
 

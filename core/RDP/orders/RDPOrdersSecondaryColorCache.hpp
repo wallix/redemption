@@ -78,7 +78,7 @@ class RDPColCache {
     BGRPalette palette;
     uint8_t cacheIndex;
 
-    RDPColCache()
+    RDPColCache() : cacheIndex(0)
     {
     }
 
@@ -103,9 +103,9 @@ class RDPColCache {
         stream.out_uint16_le(256); /* num colors */
         for (int i = 0; i < 256; i++) {
             uint32_t color = this->palette[i];
-            uint8_t r = color;
-            uint8_t g = color >> 8;
             uint8_t b = color >> 16;
+            uint8_t g = color >> 8;
+            uint8_t r = color;
             stream.out_uint8(r);
             stream.out_uint8(g);
             stream.out_uint8(b);
@@ -127,7 +127,7 @@ class RDPColCache {
             uint8_t g = stream.in_uint8();
             uint8_t b = stream.in_uint8();
             stream.skip_uint8(1);
-            this->palette[i] = r|(g << 8)|(b << 16);
+            this->palette[i] = r|(g << 8)| (b << 16);
         }
     }
 
