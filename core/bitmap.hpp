@@ -1504,27 +1504,19 @@ struct Bitmap {
             uint32_t pixel = in_bytes_le(src_nbbytes, src);
 
             if (!(this->original_bpp == 8 && out_bpp == 8)){
-                pixel = color_decode(pixel, this->original_bpp, this->original_palette);
                 #warning is it the same on actual 24 bits server ? It may be a color inversion in widget layer
+                pixel = color_decode(pixel, this->original_bpp, this->original_palette);
                 if ((this->original_bpp == 24)
                 && (out_bpp == 16 || out_bpp == 15 || out_bpp == 8)){
                     pixel = RGBtoBGR(pixel);
                 }
                 if ((this->original_bpp == 8)
-                && (out_bpp == 16 || out_bpp == 15 || out_bpp == 8)){
+                && (out_bpp == 16 || out_bpp == 15)){
                     pixel = RGBtoBGR(pixel);
                 }
                 pixel = color_encode(pixel, out_bpp);
             }
 
-//            if (this->original_bpp != out_bpp){
-//                pixel = color_decode(pixel, this->original_bpp, this->original_palette);
-//                #warning we should try with a real 24 bits server, colors maye b inverted in widgets
-//                if (this->original_bpp == 24) {
-//                    pixel = RGBtoBGR(pixel) ;
-//                }
-//                pixel = 0xFFFFFF & color_encode(pixel, out_bpp);
-//            }
             out_bytes_le(dest, dest_nbbytes, pixel);
             src += src_nbbytes;
             dest += dest_nbbytes;

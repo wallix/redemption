@@ -481,20 +481,13 @@ struct client_mod : public Callback {
         if (this->get_front_bpp() == 8){
             this->palette_sent = false;
             this->send_global_palette();
-            if (!this->palette_memblt_sent[palette_id]) {
-//                LOG(LOG_INFO, "sending palette to %u", color_index);
-                if (bitmap.original_bpp == 8){
-                    LOG(LOG_INFO, "sending original palette to %u", palette_id);
-                    this->color_cache(this->mod_palette, palette_id);
-                }
-                else {
-                    LOG(LOG_INFO, "sending 332 palette to %u", palette_id);
-                    this->color_cache(this->palette332, palette_id);
-                }
-                this->palette_memblt_sent[palette_id] = true;
-            }
+//            if (!this->palette_memblt_sent[palette_id]) {
+                this->color_cache(palette, palette_id);
+//                this->palette_memblt_sent[palette_id] = true;
+//            }
             this->palette_sent = false;
         }
+
         const Rect & dst = memblt.rect;
         const int srcx = memblt.srcx;
         const int srcy = memblt.srcy;
@@ -527,6 +520,7 @@ struct client_mod : public Callback {
                     }
 
                     const RDPMemBlt cmd(cache_id + palette_id*16, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
+//                    cmd.log(LOG_INFO, this->clip);
 
                     if (!this->clip.isempty()
                     && !this->clip.intersect(cmd.rect).isempty()){
@@ -688,8 +682,7 @@ struct client_mod : public Callback {
                                 }
                                 this->palette_memblt_sent[palette_id] = true;
                             }
-
-                            this->send_global_palette();
+                            this->palette_sent = false;
                         }
                         this->front.orders->send(cmd, this->clip);
                         #warning capture should have it's own reference to bmp_cache

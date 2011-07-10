@@ -103,12 +103,12 @@ class RDPColCache {
         stream.out_uint16_le(256); /* num colors */
         for (int i = 0; i < 256; i++) {
             uint32_t color = this->palette[i];
-            uint8_t b = color >> 16;
+            uint8_t r = color >> 16;
             uint8_t g = color >> 8;
-            uint8_t r = color;
-            stream.out_uint8(r);
-            stream.out_uint8(g);
+            uint8_t b = color;
             stream.out_uint8(b);
+            stream.out_uint8(g);
+            stream.out_uint8(r);
             stream.out_uint8(0);
         }
     }
@@ -118,16 +118,17 @@ class RDPColCache {
         using namespace RDP;
 
         this->cacheIndex = stream.in_uint8();
+        LOG(LOG_INFO, "receiving colormap %u", this->cacheIndex);
         assert(this->cacheIndex >= 0 && this->cacheIndex < 6);
 
         uint16_t numberColors = stream.in_uint16_le();
 
         for (size_t i = 0; i < numberColors; i++) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
             uint8_t b = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t r = stream.in_uint8();
             stream.skip_uint8(1);
-            this->palette[i] = r|(g << 8)| (b << 16);
+            this->palette[i] = b|(g << 8)| (r << 16);
         }
     }
 

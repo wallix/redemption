@@ -1139,7 +1139,8 @@ struct rdp_rdp {
                 }
 
                 const uint8_t * data = stream.in_uint8p(size);
-                Bitmap bitmap(bpp, &this->orders.cache_colormap[0], width, height, data, size, true);
+//                Bitmap bitmap(bpp, &this->orders.cache_colormap[0], width, height, data, size, true);
+                Bitmap bitmap(bpp, &this->orders.global_palette, width, height, data, size, true);
 
                 assert(line_size == bitmap.line_size(bpp));
                 assert(final_size == bitmap.bmp_size(bpp));
@@ -1149,7 +1150,8 @@ struct rdp_rdp {
             }
             else {
                 const uint8_t * data = stream.in_uint8p(bufsize);
-                Bitmap bitmap(bpp, &this->orders.cache_colormap[0], width, height, data, bufsize);
+//                Bitmap bitmap(bpp, &this->orders.cache_colormap[0], width, height, data, bufsize);
+                Bitmap bitmap(bpp, &this->orders.global_palette, width, height, data, bufsize);
 
                 assert(bufsize == bitmap.bmp_size(bpp));
 

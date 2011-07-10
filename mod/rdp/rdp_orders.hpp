@@ -248,11 +248,12 @@ struct rdp_orders {
     }
 
 
-    void process_colormap(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
+    void process_colormap(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header, client_mod * mod)
     {
         RDPColCache colormap;
         colormap.receive(stream, control, header);
         memcpy(this->cache_colormap[colormap.cacheIndex], &colormap.palette, sizeof(BGRPalette));
+        mod->color_cache(colormap.palette, colormap.cacheIndex);
     }
 
     void rdp_orders_process_desksave(Stream & stream, int present, int delta, client_mod * mod)
@@ -381,7 +382,7 @@ struct rdp_orders {
                     this->rdp_orders_process_bmpcache(bpp, stream, control, header);
                     break;
                 case TS_CACHE_COLOR_TABLE:
-                    this->process_colormap(stream, control, header);
+                    this->process_colormap(stream, control, header, mod);
                     break;
                 case TS_CACHE_GLYPH:
                     this->rdp_orders_process_fontcache(stream, header.flags, mod);
@@ -442,14 +443,17 @@ struct rdp_orders {
                 case MEMBLT:
                     this->memblt.receive(stream, header);
                     {
-                        assert((this->memblt.cache_id >> 8) < 6);
-                        struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xFF][this->memblt.cache_idx];
+                        assert((this->memblt.cache_id >> 4) < 6);
+                        struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xF][this->memblt.cache_idx];
                         assert(bitmap);
                         if (bitmap) {
+//                            memcpy(bitmap->original_palette,
+//                                   this->cache_colormap[this->memblt.cache_id >> 4],
+//                                   sizeof(BGRPalette));
                             mod->mem_blt(
                                 this->memblt,
                                 *bitmap,
-                                this->cache_colormap[this->memblt.cache_id >> 8]);
+                                this->cache_colormap[this->memblt.cache_id >> 4]);
                         }
                     }
                     break;
