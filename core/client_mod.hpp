@@ -479,12 +479,13 @@ struct client_mod : public Callback {
         uint8_t palette_id = ((memblt.cache_id >> 4) >= 6)?0:(memblt.cache_id >> 4);
 
         if (this->get_front_bpp() == 8){
+            #warning there may be some performance issue when client is 8 bits, palette is sent way too often
             this->palette_sent = false;
             this->send_global_palette();
-//            if (!this->palette_memblt_sent[palette_id]) {
+            if (!this->palette_memblt_sent[palette_id]) {
                 this->color_cache(palette, palette_id);
-//                this->palette_memblt_sent[palette_id] = true;
-//            }
+                this->palette_memblt_sent[palette_id] = true;
+            }
             this->palette_sent = false;
         }
 
@@ -705,11 +706,9 @@ struct client_mod : public Callback {
     {
         if (!this->palette_sent && (this->get_front_bpp() == 8)){
             if (this->mod_bpp == 8){
-                LOG(LOG_INFO, "sending original palette to global");
                 this->front.send_global_palette(this->memblt_mod_palette);
             }
             else {
-                LOG(LOG_INFO, "sending 332 palette to global");
                 this->front.send_global_palette(this->palette332);
             }
             this->palette_sent = true;

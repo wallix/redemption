@@ -212,7 +212,7 @@ struct rdp_orders {
 
                 const uint8_t* data = stream.in_uint8p(size);
 
-                bitmap = new Bitmap(bpp, NULL, width, height, data, size, true);
+                bitmap = new Bitmap(bpp, &this->global_palette, width, height, data, size, true);
                 assert(row_size == bitmap->line_size(bpp));
 
             }

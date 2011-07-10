@@ -147,6 +147,12 @@ static inline BGRColor color_encode(const BGRColor c, const uint8_t out_bpp){
         (((c >> 16) & 0xFF)       & 0xE0)
        |((((c >> 8) & 0xFF) >> 3) & 0x1C)
        |(((c        & 0xFF) >> 6) & 0x03);
+//    // bbgggrrr
+//        return
+//        (((c      ) & 0xFF)       & 0xC0)
+//       |((((c >> 8) & 0xFF) >> 2) & 0x38)
+//       |(((c >> 16  & 0xFF) >> 5) & 0x03);
+
     break;
     case 15:
     // --> 0 b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 r1 r2 r3 r4 r5
