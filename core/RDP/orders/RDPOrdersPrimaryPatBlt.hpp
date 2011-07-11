@@ -328,6 +328,12 @@ class RDPPatBlt {
         }
         return lg;
     }
+
+    void log(int level, const Rect & clip) const {
+        char buffer[1024];
+        this->str(buffer, 1024, RDPOrderCommon(RDP::PATBLT, clip));
+        LOG(level, buffer);
+    }
 };
 
 

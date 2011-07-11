@@ -182,6 +182,10 @@ struct client_mod : public Callback {
                         color, this->mod_bpp, this->mod_palette);
             return  color_encode(color24, 24);
         }
+        else if (this->mod_bpp == 8) {
+            const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
+            return RGBtoBGR(color_encode(color24, 24));
+        }
         else {
             const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
             return color_encode(color24, 24);
