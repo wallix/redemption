@@ -27,43 +27,9 @@
 
 #include "transport.hpp"
 
-
-struct IsoStream
-{
-    uint8_t version;
-    uint16_t len;
-    Stream stream;
-    uint8_t code;
-
-    IsoStream() : stream(65536) {
-    }
-
-    void read_tpktHeader(Transport * t)
-    {
-        this->version = this->stream.in_uint8();
-        this->stream.skip_uint8(1);
-        this->len = this->stream.in_uint16_be();
-    }
-
-    void write_tpktHeader(Stream & stream)
-    {
-        this->stream.set_out_uint8(this->version, 0);   /* version */
-        this->stream.set_out_uint8(0,             1); /* reserved */
-        this->stream.set_out_uint16_be(this->len, 2); /* length */
-    }
-
-    void read_x224TPDU()
-    {
-        this->stream.skip_uint8(1);
-        this->code = this->stream.in_uint8();
-    }
-
-};
-
 /* iso */
 struct IsoLayer {
-    Transport* t;
-    IsoLayer(Transport * trans) : t(trans){
+    IsoLayer() {
     }
 
     ~IsoLayer(){
@@ -114,10 +80,10 @@ struct IsoLayer {
     //   length. This is the length of the entire packet in octets, including
     //   both the packet header and the TPDU.
 
-    int recv_tpktHeader(Stream & stream) throw (Error)
+    int recv_tpktHeader(Transport * t, Stream & stream) throw (Error)
     {
         stream.init(4);
-        this->t->recv((char**)(&(stream.end)), 4);
+        t->recv((char**)(&(stream.end)), 4);
         int version = stream.in_uint8();
         if (3 != version) {
             throw Error(ERR_ISO_RECV_MSG_VER_NOT_3);
@@ -246,12 +212,12 @@ struct IsoLayer {
     // format) in the other classes. The variable part, if present, may further
     // reduce the size of the user data field.
 
-    void recv_x224TPDU(Stream & stream, const uint16_t len) throw (Error)
+    void recv_x224TPDU(Transport * t, Stream & stream, const uint16_t len) throw (Error)
     {
 //        LOG(LOG_INFO, "recv_x224TPDU: reading %u bytes payload", len - 4);
 
         stream.init(len - 4);
-        this->t->recv((char**)(&(stream.end)), len - 4);
+        t->recv((char**)(&(stream.end)), len - 4);
 //      uint8_t LI = stream.in_uint8();
 //      uint8_t code = stream.in_uint8() & 0xF0;
 //        switch (code){
@@ -331,11 +297,11 @@ struct IsoLayer {
 // A parameter code not defined in x244 are protocol errors, except for CR_TPDU
 // in which they should be ignored.
 
-    int iso_recv_msg(Stream & stream) throw (Error)
+    int iso_recv_msg(Transport * t, Stream & stream) throw (Error)
     {
-        const uint16_t len = recv_tpktHeader(stream);
+        const uint16_t len = recv_tpktHeader(t, stream);
 
-        recv_x224TPDU(stream, len);
+        this->recv_x224TPDU(t, stream, len);
 
         #warning check receive len is what is expected and remove check_end test in server_mcs layer
 
@@ -366,7 +332,7 @@ struct IsoLayer {
         return code;
     }
 
-    void iso_send_TPDU_CR(int code) throw (Error)
+    void iso_send_TPDU_CR(Transport * t, int code) throw (Error)
     {
         Stream stream(8192);
 
@@ -380,11 +346,11 @@ struct IsoLayer {
         stream.out_uint8(0);     /* class option */
 
         stream.mark_end();
-        this->t->send((char*)stream.data, stream.end - stream.data);
+        t->send((char*)stream.data, stream.end - stream.data);
     }
 
 
-    void iso_send_msg(int code) throw (Error)
+    void iso_send_msg(Transport * t, int code) throw (Error)
 //    void iso_send_TPDU_CC(int code) throw (Error)
     {
         Stream stream(8192);
@@ -399,14 +365,14 @@ struct IsoLayer {
         stream.out_uint8(0);     /* class option */
 
         stream.mark_end();
-        this->t->send((char*)stream.data, stream.end - stream.data);
+        t->send((char*)stream.data, stream.end - stream.data);
     }
 
 
     public:
-    void iso_recv(Stream & stream) throw (Error)
+    void iso_recv(Transport * t, Stream & stream) throw (Error)
     {
-        int code = this->iso_recv_msg(stream);
+        int code = this->iso_recv_msg(t, stream);
         if (code != ISO_PDU_DT) {
             LOG(LOG_ERR, "code =%d not ISO_PDU_DT", code);
             throw Error(ERR_ISO_RECV_CODE_NOT_PDU_DT);
@@ -422,7 +388,7 @@ struct IsoLayer {
     }
 
     // iso_TPDU_DT_send
-    void iso_send(Stream & stream) throw (Error)
+    void iso_send(Transport * t, Stream & stream) throw (Error)
     {
         stream.p = stream.iso_hdr;
         int len = stream.end - stream.p;
@@ -434,15 +400,15 @@ struct IsoLayer {
         stream.out_uint8(2);
         stream.out_uint8(ISO_PDU_DT);
         stream.out_uint8(0x80); // EOT ?
-        this->t->send((char*)stream.data, stream.end - stream.data);
+        t->send((char*)stream.data, stream.end - stream.data);
 
     }
 
 
-    uint8_t iso_recv_PDU_CR(Stream & stream)
+    uint8_t iso_recv_PDU_CR(Transport * t, Stream & stream)
     {
-        const uint16_t len = recv_tpktHeader(stream);
-        recv_x224TPDU(stream, len);
+        const uint16_t len = recv_tpktHeader(t, stream);
+        this->recv_x224TPDU(t, stream, len);
         uint8_t hdrlen = stream.in_uint8();
         if (!hdrlen == len - 5) {
             LOG(LOG_ERR, "BAD PDU LENGTH");
@@ -455,19 +421,19 @@ struct IsoLayer {
 
 
     // used only front side
-    void iso_incoming() throw (Error)
+    void iso_incoming(Transport * t) throw (Error)
     {
         Stream stream(8192);
-        int code = this->iso_recv_PDU_CR(stream);
+        int code = this->iso_recv_PDU_CR(t, stream);
         if (code != ISO_PDU_CR) {
             throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
         }
-        this->iso_send_msg(ISO_PDU_CC);
+        this->iso_send_msg(t, ISO_PDU_CC);
     }
 
 
     // used only by client layer
-    void iso_send_PDU_CR(const char* username)
+    void iso_send_PDU_CR(Transport * t, const char* username)
     {
         Stream stream(8192);
 
@@ -487,25 +453,25 @@ struct IsoLayer {
         stream.out_uint8(0x0a);	/* Unknown */
 
         stream.mark_end();
-        this->t->send((char*)stream.data, stream.end - stream.data);
+        t->send((char*)stream.data, stream.end - stream.data);
     }
 
     // used only client side
-    void iso_connect(char* username)
+    void iso_connect(Transport * t, char* username)
     {
-        this->iso_send_PDU_CR(username);
+        this->iso_send_PDU_CR(t, username);
         Stream stream(8192);
-        int code = this->iso_recv_msg(stream);
+        int code = this->iso_recv_msg(t, stream);
         if (code != ISO_PDU_CC) {
             throw Error(ERR_ISO_CONNECT_CODE_NOT_PDU_CC);
         }
     }
 
     // used only client side
-    void iso_disconnect()
+    void iso_disconnect(Transport * t)
     {
-        this->iso_send_msg(ISO_PDU_DR);
-        this->t->disconnect();
+        this->iso_send_msg(t, ISO_PDU_DR);
+        t->disconnect();
     }
 
 

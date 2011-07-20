@@ -1248,7 +1248,7 @@ struct server_sec {
 // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
 //   section 13.7.
 
-        this->mcs_layer.iso_layer.iso_incoming();
+        this->mcs_layer.iso_layer.iso_incoming(this->mcs_layer.trans);
 
 
 // mcsCi (variable): Variable-length BER-encoded MCS Connect Initial structure
@@ -1290,7 +1290,7 @@ struct server_sec {
 
         {
             Stream stream(8192);
-            this->mcs_layer.iso_layer.iso_recv(stream);
+            this->mcs_layer.iso_layer.iso_recv(this->mcs_layer.trans, stream);
 
             #warning ber_parse should probably be some kind of stream primitive
             int len = this->mcs_layer.ber_parse_header(stream, MCS_CONNECT_INITIAL);
@@ -1346,7 +1346,7 @@ struct server_sec {
         //      structure definitions are given in [T125] section 7, parts 3 and 10).
         {
             Stream stream(8192);
-            this->mcs_layer.iso_layer.iso_recv(stream);
+            this->mcs_layer.iso_layer.iso_recv(this->mcs_layer.trans, stream);
             uint8_t opcode = stream.in_uint8();
             if ((opcode >> 2) != MCS_EDRQ) {
                 throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
@@ -1379,7 +1379,7 @@ struct server_sec {
 
         {
             Stream stream(8192);
-            this->mcs_layer.iso_layer.iso_recv(stream);
+            this->mcs_layer.iso_layer.iso_recv(this->mcs_layer.trans, stream);
             uint8_t opcode = stream.in_uint8();
             if ((opcode >> 2) != MCS_AURQ) {
                 throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);

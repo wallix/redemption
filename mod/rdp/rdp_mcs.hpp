@@ -33,11 +33,12 @@ using namespace std;
 
 /* mcs */
 struct rdp_mcs {
+    Transport * trans;
     struct IsoLayer iso_layer;
     int userid;
     vector<struct mcs_channel_item *> channel_list;
 
-    rdp_mcs(Transport * t) : iso_layer(t), userid(1)
+    rdp_mcs(Transport * trans) : trans(trans), userid(1)
     {
     }
 
@@ -203,7 +204,7 @@ struct rdp_mcs {
     /* returns error */
     void rdp_mcs_recv(Stream & stream, int& chan) throw(Error)
     {
-        this->iso_layer.iso_recv(stream);
+        this->iso_layer.iso_recv(this->trans, stream);
         int opcode = stream.in_uint8();
         int appid = opcode >> 2;
         if (appid != MCS_SDIN) {
@@ -282,7 +283,7 @@ struct rdp_mcs {
         this->rdp_mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, data_len);
         stream.out_copy_bytes(client_mcs_data.data, data_len);
         stream.mark_end();
-        this->iso_layer.iso_send(stream);
+        this->iso_layer.iso_send(this->trans, stream);
     }
 
     int ber_parse_header(Stream & stream, int tag_val) throw(Error)
@@ -321,10 +322,10 @@ struct rdp_mcs {
 
         this->iso_layer.iso_init(stream);
         stream.out_uint8( (MCS_EDRQ << 2));
-        stream.out_uint16_be( 0x100); /* height */
-        stream.out_uint16_be( 0x100); /* interval */
+        stream.out_uint16_be(0x100); /* height */
+        stream.out_uint16_be(0x100); /* interval */
         stream.mark_end();
-        this->iso_layer.iso_send(stream);
+        this->iso_layer.iso_send(this->trans, stream);
     }
 
 
@@ -335,14 +336,14 @@ struct rdp_mcs {
         this->iso_layer.iso_init(stream);
         stream.out_uint8((MCS_AURQ << 2));
         stream.mark_end();
-        this->iso_layer.iso_send(stream);
+        this->iso_layer.iso_send(this->trans, stream);
     }
 
     void rdp_mcs_recv_aucf() throw(Error)
     {
         Stream stream(8192);
 
-        this->iso_layer.iso_recv(stream);
+        this->iso_layer.iso_recv(this->trans, stream);
         int opcode = stream.in_uint8();
         if ((opcode >> 2) != MCS_AUCF) {
             throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
@@ -372,7 +373,7 @@ struct rdp_mcs {
         stream.out_uint16_be(chanid);
 
         stream.mark_end();
-        this->iso_layer.iso_send(stream);
+        this->iso_layer.iso_send(this->trans, stream);
     }
 
 
@@ -383,7 +384,7 @@ struct rdp_mcs {
         int opcode;
         Stream stream(8192);
 
-        this->iso_layer.iso_recv(stream);
+        this->iso_layer.iso_recv(this->trans, stream);
         opcode = stream.in_uint8();
         if ((opcode >> 2) != MCS_CJCF) {
             throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
@@ -418,7 +419,7 @@ struct rdp_mcs {
         stream.out_uint16_be(chan_id);
         stream.out_uint8(0x70);
         stream.out_uint16_be(len);
-        this->iso_layer.iso_send(stream);
+        this->iso_layer.iso_send(this->trans, stream);
     }
 
     /* Send an MCS transport data packet to the global channel */

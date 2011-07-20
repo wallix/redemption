@@ -1201,10 +1201,10 @@ struct rdp_sec {
 
         LOG(LOG_INFO, "Iso Layer : connect %s\n", this->username);
         try {
-            this->mcs_layer.iso_layer.iso_connect(this->username);
+            this->mcs_layer.iso_layer.iso_connect(this->mcs_layer.trans, this->username);
         } catch (Error) {
             try {
-                this->mcs_layer.iso_layer.t->disconnect();
+                this->mcs_layer.trans->disconnect();
             } catch (Error){
                 // rethrow the first error, not the error we could get disconnecting
             }
@@ -1217,7 +1217,7 @@ struct rdp_sec {
             int len = 0;
             Stream stream(8192);
 
-            this->mcs_layer.iso_layer.iso_recv(stream);
+            this->mcs_layer.iso_layer.iso_recv(this->mcs_layer.trans, stream);
             len = this->mcs_layer.ber_parse_header(stream, MCS_CONNECT_RESPONSE);
             len = this->mcs_layer.ber_parse_header(stream, BER_TAG_RESULT);
 
@@ -1255,7 +1255,7 @@ struct rdp_sec {
             }
         }
         catch(...){
-            this->mcs_layer.iso_layer.iso_disconnect();
+            this->mcs_layer.iso_layer.iso_disconnect(this->mcs_layer.trans);
             throw;
         }
 

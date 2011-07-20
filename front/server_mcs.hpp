@@ -54,13 +54,14 @@ struct mcs_channel_item {
 
 /* mcs */
 struct server_mcs {
+    struct Transport *trans;
     struct IsoLayer iso_layer;
     int userid;
     int chanid;
     Stream data;
     vector<struct mcs_channel_item *> channel_list;
     server_mcs(struct Transport *trans)
-        : iso_layer(trans), userid(1), chanid(1001)
+        : trans(trans), userid(1), chanid(1001)
     {
     }
 
@@ -87,7 +88,7 @@ struct server_mcs {
         stream.out_uint16_be(chanid);
 
         stream.mark_end();
-        this->iso_layer.iso_send(stream);
+        this->iso_layer.iso_send(this->trans, stream);
     }
 
     void server_mcs_send_attach_user_confirm_PDU(int userid) throw(Error)
@@ -98,7 +99,7 @@ struct server_mcs {
         stream.out_uint8(0);
         stream.out_uint16_be(userid);
         stream.mark_end();
-        this->iso_layer.iso_send(stream);
+        this->iso_layer.iso_send(this->trans, stream);
     }
 
     void server_mcs_send_connect_response() throw(Error)
@@ -117,7 +118,7 @@ struct server_mcs {
         /* mcs data */
         stream.out_copy_bytes(this->data.data, data_len);
         stream.mark_end();
-        this->iso_layer.iso_send(stream);
+        this->iso_layer.iso_send(this->trans, stream);
     }
 
     void server_mcs_send(Stream & stream, int chan) throw (Error)
@@ -147,7 +148,7 @@ struct server_mcs {
             }
             stream.end--;
         }
-        this->iso_layer.iso_send(stream);
+        this->iso_layer.iso_send(this->trans, stream);
     }
 
     void server_mcs_disconnect() throw (Error)
@@ -157,7 +158,7 @@ struct server_mcs {
         stream.out_uint8((MCS_DPUM << 2) | 1);
         stream.out_uint8(0x80);
         stream.mark_end();
-        this->iso_layer.iso_send(stream);
+        this->iso_layer.iso_send(this->trans, stream);
     }
 
     void server_mcs_init(Stream & stream)
@@ -279,7 +280,7 @@ public:
         Stream stream(8192);
         // read tpktHeader (4 bytes = 3 0 len)
         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-        this->iso_layer.iso_recv(stream);
+        this->iso_layer.iso_recv(this->trans, stream);
 
         int opcode = stream.in_uint8();
         if ((opcode >> 2) != MCS_CJRQ) {

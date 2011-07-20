@@ -586,7 +586,7 @@ struct server_rdp {
 //                input_stream.p = input_stream.next_packet;
 //            }
 //            else {
-                this->sec_layer.mcs_layer.iso_layer.iso_recv(input_stream);
+                this->sec_layer.mcs_layer.iso_layer.iso_recv(this->sec_layer.mcs_layer.trans, input_stream);
 //            }
             int opcode = input_stream.in_uint8();
             int appid = opcode >> 2;
@@ -599,7 +599,7 @@ struct server_rdp {
                 int chanid = input_stream.in_uint16_be();
                 this->sec_layer.mcs_layer.server_mcs_send_channel_join_confirm_PDU(userid, chanid);
 
-                this->sec_layer.mcs_layer.iso_layer.iso_recv(input_stream);
+                this->sec_layer.mcs_layer.iso_layer.iso_recv(this->sec_layer.mcs_layer.trans, input_stream);
                 appid = input_stream.in_uint8() >> 2;
 
             }
