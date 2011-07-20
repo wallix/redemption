@@ -80,7 +80,7 @@ struct server_mcs {
     void server_mcs_send_channel_join_confirm_PDU(int userid, int chanid) throw(Error)
     {
         Stream stream(8192);
-        this->iso_layer.iso_init(stream);
+        IsoLayer iso(stream);
         stream.out_uint8((MCS_CJCF << 2) | 2);
         stream.out_uint8(0);
         stream.out_uint16_be(userid);
@@ -88,18 +88,18 @@ struct server_mcs {
         stream.out_uint16_be(chanid);
 
         stream.mark_end();
-        this->iso_layer.iso_send(this->trans, stream);
+        iso.iso_send(this->trans, stream);
     }
 
     void server_mcs_send_attach_user_confirm_PDU(int userid) throw(Error)
     {
         Stream stream(8192);
-        this->iso_layer.iso_init(stream);
+        IsoLayer iso(stream);
         stream.out_uint8(((MCS_AUCF << 2) | 2));
         stream.out_uint8(0);
         stream.out_uint16_be(userid);
         stream.mark_end();
-        this->iso_layer.iso_send(this->trans, stream);
+        iso.iso_send(this->trans, stream);
     }
 
     void server_mcs_send_connect_response() throw(Error)
@@ -107,7 +107,7 @@ struct server_mcs {
         #warning why don't we build directly in final data buffer ? Instead of building in data and copying in stream ?
         Stream stream(8192);
         int data_len = this->data.end - this->data.data;
-        this->iso_layer.iso_init(stream);
+        IsoLayer iso(stream);
         this->server_mcs_ber_out_header(stream, MCS_CONNECT_RESPONSE, data_len + 38);
         this->server_mcs_ber_out_header(stream, BER_TAG_RESULT, 1);
         stream.out_uint8(0);
@@ -118,7 +118,7 @@ struct server_mcs {
         /* mcs data */
         stream.out_copy_bytes(this->data.data, data_len);
         stream.mark_end();
-        this->iso_layer.iso_send(this->trans, stream);
+        iso.iso_send(this->trans, stream);
     }
 
     void server_mcs_send(Stream & stream, int chan) throw (Error)
@@ -154,15 +154,16 @@ struct server_mcs {
     void server_mcs_disconnect() throw (Error)
     {
         Stream stream(8192);
-        this->iso_layer.iso_init(stream);
+        IsoLayer iso(stream);
         stream.out_uint8((MCS_DPUM << 2) | 1);
         stream.out_uint8(0x80);
         stream.mark_end();
-        this->iso_layer.iso_send(this->trans, stream);
+        iso.iso_send(this->trans, stream);
     }
 
     void server_mcs_init(Stream & stream)
     {
+        #warning this one should move to constructor, but it means also moving server_mcs_init to constructor
         this->iso_layer.iso_init(stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;

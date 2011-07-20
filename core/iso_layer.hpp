@@ -29,7 +29,14 @@
 
 /* iso */
 struct IsoLayer {
-    IsoLayer() {
+
+    uint8_t * iso_hdr;
+
+    IsoLayer(){}
+
+    IsoLayer(Stream & stream) {
+        this->iso_hdr = stream.p;
+        stream.p += 7;
     }
 
     ~IsoLayer(){
@@ -382,15 +389,14 @@ struct IsoLayer {
     // iso_TPDU_DT_init
     void iso_init(Stream & stream) throw (Error)
     {
-//        stream.init(16384);
-        stream.iso_hdr = stream.p;
+        this->iso_hdr = stream.p;
         stream.p += 7;
     }
 
     // iso_TPDU_DT_send
     void iso_send(Transport * t, Stream & stream) throw (Error)
     {
-        stream.p = stream.iso_hdr;
+        stream.p = this->iso_hdr;
         int len = stream.end - stream.p;
 
         // tpktHeader

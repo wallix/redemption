@@ -54,7 +54,7 @@ struct xup_mod : public client_mod {
         try {
             this->t = t;
             Stream stream(8192);
-            stream.iso_hdr = stream.p;
+            uint8_t * hdr = stream.p;
             stream.p += 4;
             stream.out_uint16_le(103);
             stream.out_uint32_le(200);
@@ -68,7 +68,7 @@ struct xup_mod : public client_mod {
             stream.out_uint32_le(0);
             stream.mark_end();
             int len = (int)(stream.end - stream.data);
-            stream.p = stream.iso_hdr;
+            stream.p = hdr;
             stream.out_uint32_le(len);
             this->t->send((char*)stream.data, len);
 
@@ -88,7 +88,7 @@ struct xup_mod : public client_mod {
     {
         int rv = 0;
         Stream stream(8192);
-        stream.iso_hdr = stream.p;
+        uint8_t * hdr = stream.p;
         stream.p += 4;
         stream.out_uint16_le(103);
         stream.out_uint32_le(msg);
@@ -98,7 +98,7 @@ struct xup_mod : public client_mod {
         stream.out_uint32_le(param4);
         stream.mark_end();
         int len = (int)(stream.end - stream.data);
-        stream.p = stream.iso_hdr;
+        stream.p = hdr;
         stream.out_uint32_le(len);
         try{
             this->t->send((char*)stream.data, 8);

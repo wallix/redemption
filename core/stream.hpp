@@ -52,7 +52,6 @@ class Stream {
     size_t capacity;
 
     /* offsets of various headers */
-    uint8_t* iso_hdr;
     uint8_t* mcs_hdr;
     uint8_t* sec_hdr;
     uint8_t* rdp_hdr;

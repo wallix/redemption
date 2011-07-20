@@ -271,7 +271,7 @@ struct rdp_mcs {
 
         data_len = client_mcs_data.end - client_mcs_data.data;
         len = 7 + 3 * 34 + 4 + data_len;
-        this->iso_layer.iso_init(stream);
+        IsoLayer iso(stream);
         this->rdp_mcs_ber_out_header(stream, MCS_CONNECT_INITIAL, len);
         this->rdp_mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, 0); /* calling domain */
         this->rdp_mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, 0); /* called domain */
@@ -283,7 +283,7 @@ struct rdp_mcs {
         this->rdp_mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, data_len);
         stream.out_copy_bytes(client_mcs_data.data, data_len);
         stream.mark_end();
-        this->iso_layer.iso_send(this->trans, stream);
+        iso.iso_send(this->trans, stream);
     }
 
     int ber_parse_header(Stream & stream, int tag_val) throw(Error)
@@ -320,23 +320,22 @@ struct rdp_mcs {
     {
         Stream stream(8192);
 
-        this->iso_layer.iso_init(stream);
+        IsoLayer iso(stream);
         stream.out_uint8( (MCS_EDRQ << 2));
         stream.out_uint16_be(0x100); /* height */
         stream.out_uint16_be(0x100); /* interval */
         stream.mark_end();
-        this->iso_layer.iso_send(this->trans, stream);
+        iso.iso_send(this->trans, stream);
     }
 
 
     void rdp_mcs_send_aurq() throw (Error)
     {
         Stream stream(8192);
-
-        this->iso_layer.iso_init(stream);
+        IsoLayer iso(stream);
         stream.out_uint8((MCS_AURQ << 2));
         stream.mark_end();
-        this->iso_layer.iso_send(this->trans, stream);
+        iso.iso_send(this->trans, stream);
     }
 
     void rdp_mcs_recv_aucf() throw(Error)
@@ -366,14 +365,13 @@ struct rdp_mcs {
     void rdp_mcs_send_cjrq(int chanid) throw(Error)
     {
         Stream stream(8192);
-
-        this->iso_layer.iso_init(stream);
+        IsoLayer iso(stream);
         stream.out_uint8((MCS_CJRQ << 2));
         stream.out_uint16_be(this->userid);
         stream.out_uint16_be(chanid);
 
         stream.mark_end();
-        this->iso_layer.iso_send(this->trans, stream);
+        iso.iso_send(this->trans, stream);
     }
 
 
