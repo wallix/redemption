@@ -173,6 +173,7 @@ struct GraphicsUpdatePDU
 
     void init(){
         this->stream.init(4096);
+//        LOG(LOG_INFO, "server_sec_init data=%p p=%p end=%p", this->stream.data, this->stream.p, this->stream.end);
         this->rdp_layer.sec_layer.server_sec_init(this->stream);
         #warning we should define some kind of OrdersStream, to buffer in orders
         this->offset_header = this->stream.p - this->stream.data;
@@ -194,6 +195,8 @@ struct GraphicsUpdatePDU
             this->order_count = 0;
 
             this->rdp_layer.send_rdp_packet(this->stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->offset_header);
+//            LOG(LOG_INFO, "server_sec_send front");
+            stream.mark_end();
             this->rdp_layer.sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
 
             this->init();

@@ -355,6 +355,8 @@ struct server_sec {
         Stream stream(8192);
         this->mcs_layer.server_mcs_init(stream);
         stream.out_copy_bytes((char*)lic1, 322);
+
+//        LOG(LOG_INFO, "server_mcs_send 1");
         stream.mark_end();
         this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
     }
@@ -369,6 +371,8 @@ struct server_sec {
         Stream stream(8192);
         this->mcs_layer.server_mcs_init(stream);
         stream.out_copy_bytes((char*)lic2, 20);
+
+//        LOG(LOG_INFO, "server_mcs_send 2");
         stream.mark_end();
         this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
     }
@@ -385,6 +389,8 @@ struct server_sec {
         Stream stream(8192);
         this->mcs_layer.server_mcs_init(stream);
         stream.out_copy_bytes((char*)lic3, sizeof(lic3));
+
+//        LOG(LOG_INFO, "server_mcs_send 3");
         stream.mark_end();
         this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
     }
@@ -589,6 +595,8 @@ struct server_sec {
         } else {
             stream.out_uint32_le(0);
         }
+
+//        LOG(LOG_INFO, "server_mcs_send 4");
         this->mcs_layer.server_mcs_send(stream, chan);
     }
 
@@ -1324,7 +1332,7 @@ struct server_sec {
         this->server_sec_process_mcs_data(this->client_mcs_data);
 
         this->server_sec_out_mcs_data(this->mcs_layer.data);
-
+//        LOG(LOG_INFO, "server_mcs_send_connect_response");
         this->mcs_layer.server_mcs_send_connect_response();
 
         //   2.2.1.5 Client MCS Erect Domain Request PDU
@@ -1409,6 +1417,7 @@ struct server_sec {
             //   (the ASN.1 structure definitions are given in [T125] section 7,
             // parts 5 and 10).
 
+//            LOG(LOG_INFO, "server_mcs_send_attach_user_confirm_PDU");
             this->mcs_layer.server_mcs_send_attach_user_confirm_PDU(this->mcs_layer.userid);
         }
 

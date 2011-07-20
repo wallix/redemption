@@ -94,6 +94,7 @@ struct server_rdp {
         assert(channel->chanid == channel_id);
 
 //        LOG(LOG_INFO, "RDP Packet #%u (type=?? send to channel)", this->packet_number++);
+//        LOG(LOG_INFO, "server_sec_send 8");
         this->sec_layer.server_sec_send(stream, channel_id);
     }
 
@@ -133,6 +134,8 @@ struct server_rdp {
             stream.out_uint8(r);
         }
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, stream.rdp_hdr - stream.data);
+//        LOG(LOG_INFO, "server_sec_send 9");
+        stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
@@ -312,8 +315,6 @@ struct server_rdp {
 
     void send_rdp_packet(Stream & stream, uint8_t pdu_type1, uint8_t pdu_type2, size_t offset_hdr)
     {
-        stream.mark_end();
-
         int len = stream.end - &(stream.data[offset_hdr]);
         // ShareControlHeader
         stream.set_out_uint16_le(len,                 offset_hdr);
@@ -525,6 +526,8 @@ struct server_rdp {
 //      The contents of this byte should be ignored.
 
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, stream.rdp_hdr - stream.data);
+//        LOG(LOG_INFO, "server_sec_send 10");
+        stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
@@ -572,6 +575,8 @@ struct server_rdp {
         stream.out_uint16_le(cache_idx);
 
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, stream.rdp_hdr - stream.data);
+//        LOG(LOG_INFO, "server_sec_send 11");
+        stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
@@ -639,6 +644,7 @@ struct server_rdp {
             else if (flags & SEC_LOGON_INFO) { /* 0x40 */
                 this->sec_layer.server_sec_process_logon_info(input_stream);
                 if (this->sec_layer.client_info->is_mce) {
+//                    LOG(LOG_INFO, "server_sec_send media_lic_response");
                     this->sec_layer.server_sec_send_media_lic_response();
                     this->server_rdp_send_demand_active();
                     if (!this->up_and_running){
@@ -647,6 +653,7 @@ struct server_rdp {
                     }
                 }
                 else {
+//                    LOG(LOG_INFO, "server_sec_send lic_initial");
                     this->sec_layer.server_sec_send_lic_initial();
                     if (!this->up_and_running){
 //                        input_stream.next_packet = input_stream.end;
@@ -655,6 +662,7 @@ struct server_rdp {
                 }
             }
             else if (flags & SEC_LICENCE_NEG) { /* 0x80 */
+//                LOG(LOG_INFO, "server_sec_send lic_response");
                 this->sec_layer.server_sec_send_lic_response();
                 this->server_rdp_send_demand_active();
                 if (!this->up_and_running){
@@ -725,6 +733,7 @@ struct server_rdp {
                         // we will not exit this loop until we are in this state.
                         #warning see what happen if we never receive up_and_running due to some error in client code ?
                         this->process_data(input_stream, cb);
+//                        LOG(LOG_INFO, "PROCESS_DATA_DONE");
                         break;
                     case PDUTYPE_DEACTIVATEALLPDU:
                         LOG(LOG_WARNING, "unsupported PDU DEACTIVATEALLPDU in session_data (%d)\n", pdu_code & 0xf);
@@ -738,9 +747,11 @@ struct server_rdp {
                     }
                 }
             }
+//            LOG(LOG_INFO, "READY TO LOOP IN activate and process data");
         } while ((input_stream.next_packet < input_stream.end) || !this->up_and_running);
 
         #warning the postcondition could be changed to signify we want to get hand back immediately, because we still have data to process.
+//        LOG(LOG_INFO, "out of activate and process data");
     }
 
     /*****************************************************************************/
@@ -754,6 +765,8 @@ struct server_rdp {
         stream.out_clear_bytes(2);
 
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, stream.rdp_hdr - stream.data);
+//        LOG(LOG_INFO, "server_sec_send 1");
+        stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
@@ -931,6 +944,7 @@ struct server_rdp {
         stream.out_uint16_le(this->mcs_channel);
 
 //        LOG(LOG_INFO, "RDP Packet #%u (type=%u)", this->packet_number++, PDUTYPE_DEMANDACTIVEPDU);
+//        LOG(LOG_INFO, "server_sec_send 2");
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
 
     }
@@ -1177,6 +1191,8 @@ struct server_rdp {
         stream.out_uint16_le(1002); /* control id */
 
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, stream.rdp_hdr - stream.data);
+//        LOG(LOG_INFO, "server_sec_send 3");
+        stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
@@ -1214,6 +1230,8 @@ struct server_rdp {
         stream.out_uint32_le(1002); /* control id */
 
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, stream.rdp_hdr - stream.data);
+//        LOG(LOG_INFO, "server_sec_send 4");
+        stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
@@ -1254,6 +1272,8 @@ struct server_rdp {
         stream.out_copy_bytes((char*)g_fontmap, 172);
 
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTMAP, stream.rdp_hdr - stream.data);
+//        LOG(LOG_INFO, "server_sec_send 5");
+        stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 
@@ -1344,6 +1364,8 @@ struct server_rdp {
                 stream.rdp_hdr = stream.p;
                 stream.p += 18;
                 this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_SHUTDOWN_DENIED, stream.rdp_hdr - stream.data);
+//                LOG(LOG_INFO, "server_sec_send 6");
+                stream.mark_end();
                 this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
             }
             break;
@@ -1391,6 +1413,7 @@ struct server_rdp {
         stream.out_uint16_le(this->mcs_channel);
 
 //        LOG(LOG_INFO, "RDP Packet #%u (type=%u (PDUTYPE_DEACTIVATEALLPDU))", this->packet_number++, PDUTYPE_DEACTIVATEALLPDU);
+//        LOG(LOG_INFO, "server_sec_send 7");
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
     }
 };

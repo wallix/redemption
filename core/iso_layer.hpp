@@ -100,7 +100,7 @@ struct IsoLayer {
         return len;
     }
 
-    void write_tpktHeader(Stream & stream, const uint16_t len) throw (Error)
+    void pack_tpktHeader(Stream & stream, const uint16_t len) throw (Error)
     {
         stream.out_uint8(3);  /* version */
         stream.out_uint8(0);  /* reserved */
@@ -343,7 +343,7 @@ struct IsoLayer {
     {
         Stream stream(8192);
 
-        write_tpktHeader(stream, 11);
+        pack_tpktHeader(stream, 11);
 
         // x224 ?
         stream.out_uint8(6); /* LI */
@@ -362,7 +362,7 @@ struct IsoLayer {
     {
         Stream stream(8192);
 
-        write_tpktHeader(stream, 11);
+        pack_tpktHeader(stream, 11);
 
         // x224 ?
         stream.out_uint8(6); /* LI */
@@ -389,23 +389,24 @@ struct IsoLayer {
     // iso_TPDU_DT_init
     void iso_init(Stream & stream) throw (Error)
     {
-        this->iso_hdr = stream.p;
         stream.p += 7;
+//        LOG(LOG_INFO, "iso_init data=%p iso_hdr=%p p=%p end=%p", stream.data, this->iso_hdr, stream.p, stream.end);
     }
 
     // iso_TPDU_DT_send
     void iso_send(Transport * t, Stream & stream) throw (Error)
     {
-        stream.p = this->iso_hdr;
+        stream.p = stream.data;
         int len = stream.end - stream.p;
 
         // tpktHeader
-        write_tpktHeader(stream, len);
+        pack_tpktHeader(stream, len);
 
         // x224 ? 2 F0 EOT
         stream.out_uint8(2);
         stream.out_uint8(ISO_PDU_DT);
         stream.out_uint8(0x80); // EOT ?
+//        LOG(LOG_INFO, "iso_send data=%p iso_hdr=%p p=%p end=%p", stream.data, this->iso_hdr, stream.p, stream.end);
         t->send((char*)stream.data, stream.end - stream.data);
 
     }
@@ -445,7 +446,7 @@ struct IsoLayer {
 
         int length = 30 + strlen(username);
 
-        write_tpktHeader(stream, length);
+        pack_tpktHeader(stream, length);
 
         stream.out_uint8(length - 5);  /*len - hdrlen */
         stream.out_uint8(ISO_PDU_CR);

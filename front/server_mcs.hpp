@@ -79,6 +79,8 @@ struct server_mcs {
 
     void server_mcs_send_channel_join_confirm_PDU(int userid, int chanid) throw(Error)
     {
+//        LOG(LOG_INFO, "server_mcs_send_channel_join_confirm_PDU");
+
         Stream stream(8192);
         IsoLayer iso(stream);
         stream.out_uint8((MCS_CJCF << 2) | 2);
@@ -93,6 +95,7 @@ struct server_mcs {
 
     void server_mcs_send_attach_user_confirm_PDU(int userid) throw(Error)
     {
+//        LOG(LOG_INFO, "server_mcs_send_attach_user_confirm_PDU");
         Stream stream(8192);
         IsoLayer iso(stream);
         stream.out_uint8(((MCS_AUCF << 2) | 2));
@@ -104,6 +107,7 @@ struct server_mcs {
 
     void server_mcs_send_connect_response() throw(Error)
     {
+//        LOG(LOG_INFO, "server_mcs_send_connect_response");
         #warning why don't we build directly in final data buffer ? Instead of building in data and copying in stream ?
         Stream stream(8192);
         int data_len = this->data.end - this->data.data;
@@ -123,6 +127,7 @@ struct server_mcs {
 
     void server_mcs_send(Stream & stream, int chan) throw (Error)
     {
+//        LOG(LOG_INFO, "server_mcs_send data=%p p=%p end=%p", stream.data, stream.p, stream.end);
         stream.p = stream.mcs_hdr;
         int len = (stream.end - stream.p) - 8;
         if (len > 8192 * 2) {
@@ -140,6 +145,7 @@ struct server_mcs {
         }
         else {
             stream.out_uint8(len);
+            #warning this is ugly isn't there a way to avoid moving the whole buffer
             /* move everything up one byte */
             uint8_t *lp = stream.p;
             while (lp < stream.end) {
@@ -153,6 +159,7 @@ struct server_mcs {
 
     void server_mcs_disconnect() throw (Error)
     {
+//        LOG(LOG_INFO, "server_mcs_disconnect");
         Stream stream(8192);
         IsoLayer iso(stream);
         stream.out_uint8((MCS_DPUM << 2) | 1);
@@ -163,6 +170,7 @@ struct server_mcs {
 
     void server_mcs_init(Stream & stream)
     {
+//        LOG(LOG_INFO, "server_mcs_init");
         #warning this one should move to constructor, but it means also moving server_mcs_init to constructor
         this->iso_layer.iso_init(stream);
         stream.mcs_hdr = stream.p;
@@ -173,6 +181,8 @@ struct server_mcs {
       -1 if error or if it dosen't exist */
     int server_mcs_get_channel_id(const char * name)
     {
+//        LOG(LOG_INFO, "server_mcs_get_channel_id");
+
         int rv = -1;
 
         int count = (int) this->channel_list.size();
@@ -191,6 +201,7 @@ struct server_mcs {
 
     int ber_parse_header(Stream & stream, int tag_val) throw (Error)
     {
+//        LOG(LOG_INFO, "ber_parse_header");
         #warning this should be some kind of check val stream primitive
         int tag = 0;
         if (tag_val > 0xff) {
