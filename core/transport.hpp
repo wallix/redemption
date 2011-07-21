@@ -36,6 +36,7 @@
 #include <unistd.h>
 
 #include "error.hpp"
+#include "log.hpp"
 
 class Transport {
 public:
@@ -62,23 +63,43 @@ public:
     virtual void recv(char ** pbuffer, int len) throw (Error) = 0;
     virtual void send(const char * buffer, int len) throw (Error) = 0;
     virtual void disconnect() = 0;
+    #warning connect should not be inside transport, transport should be instanciated only after a successfull connection
     virtual void connect(const char* ip, int port, int nbretry = 0, int retry_delai_ms = 1000000) throw (Error) = 0;
 
 };
 
 class GeneratorTransport : public Transport {
 
-    GeneratorTransport()
-        : Transport()
+    size_t current;
+    char * data;
+    size_t len;
+
+    public:
+
+    GeneratorTransport(const char * data, size_t len)
+        : Transport(), current(0), data(0), len(len)
     {
+        this->data = (char *)malloc(len);
+        memcpy(this->data, data, len);
     }
 
     virtual void recv(char ** pbuffer, int len) throw (Error) {
+        if (current+len > sizeof(data)){
+            throw Error(ERR_SOCKET_ERROR, 0);
+        }
+        memcpy(*pbuffer, (const char *)(&this->data[current]), len);
+        *pbuffer += len;
     }
     virtual void send(const char * buffer, int len) throw (Error) {
+        // send perform like a /dev/null and does nothing in generator transport
     }
+
     virtual void disconnect() {
     }
+
+    #warning connect should not be inside transport, transport should be instanciated only after a successfull connection
+    virtual void connect(const char* ip, int port, int nbretry = 0, int retry_delai_ms = 1000000) throw (Error) {}
+
 };
 
 
