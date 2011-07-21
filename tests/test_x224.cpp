@@ -30,7 +30,7 @@
 #include "x224.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestSimplePacket)
+BOOST_AUTO_TEST_CASE(TestReceiveSimplePacket)
 {
     Stream stream;
     GeneratorTransport gt("\x03\x00\x00\x05\xFF", 5);
@@ -39,5 +39,16 @@ BOOST_AUTO_TEST_CASE(TestSimplePacket)
     BOOST_CHECK_EQUAL(3, tpdu.tpkt.version);
     BOOST_CHECK_EQUAL(5, tpdu.tpkt.len);
     BOOST_CHECK_EQUAL(stream.end, stream.data+tpdu.tpkt.len);
-    BOOST_CHECK_EQUAL(stream.p, stream.data+X224In::TPKT_HEADER_LEN);
+    BOOST_CHECK_EQUAL(stream.p, stream.data+X224Packet::TPKT_HEADER_LEN);
+}
+
+BOOST_AUTO_TEST_CASE(TestSendSimplePacket)
+{
+    Stream stream;
+    GeneratorTransport gt("\x03\x00\x00\x05\xFF", 5);
+    Transport * t = &gt;
+    X224Out tpdu(X224Packet::CR_TPDU, stream);
+    //------------
+    tpdu.end();
+    tpdu.send(t);
 }
