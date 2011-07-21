@@ -99,6 +99,11 @@ class Stream {
         this->next_packet = (uint8_t*)0;
     }
 
+    bool has_room(unsigned n) {
+        return (this->end - this->data + n) <= this->capacity;
+    }
+
+
 //    /* Buffer underflow, false if read after the end of the buffer
 //       (a previous read accessed after buffer end)
 //    */
