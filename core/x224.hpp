@@ -191,6 +191,81 @@ struct X224Packet
     // format) in the other classes. The variable part, if present, may further
     // reduce the size of the user data field.
 
+// Valid Class 0 x224 TPDU
+// -----------------------
+
+// CR_TPDU : Connection Request 1110 xxxx
+// CC_TPDU : Connection Confirm 1101 xxxx
+// DR_TPDU : Disconnect Request 1000 0000
+// DT_TPDU : Data               1111 0000 (no ROA = No Acknoledgement)
+// ER_TPDU : TPDU Error         0111 0000
+
+    enum {
+        CR_TPDU = 0xE0,
+        CC_TPDU = 0xD0,
+        DR_TPDU = 0x80,
+        DT_TPDU = 0xF0,
+        ER_TPDU = 0x70
+    };
+
+
+// TPDU shall contain in the following order:
+// a) The Header, comprising:
+// - The Length Indicator (LI) field
+// - the fixed part
+// - the variable part, if present
+// b) The Data field if present
+
+// Length Indicator field
+// ----------------------
+
+// The field is contained in first octet of the TPDUs. The length is indicated
+// by a binary number, with a maximum value of 254. The length indicated shall
+// be the header length in octets including parameters, but excluding the length
+// indicator field and user data if any. The vaue of 255 is reserved for future
+// extensions.
+
+// If the length indicated exceed or is equal to the size of user data which is
+// present, this is a protocol error.
+
+// Fixed Part
+// ----------
+
+// The fixed part contains frequently occuring parameters includint the code of
+// the TPDU. The length and the structure of the fixd part are defined by the
+// TPDU code and in certain cases by the protocol class and the format in use
+// (normal or extended). If any of the parameters of the fixed part have and
+// invalid value, or if the fixed part cannot be contained withing the header
+// (as defined by LI), this is a protocol error.
+
+// TPDU code
+// ---------
+
+// This field contains the TPDU code and is contained in octet 2 of the header.
+// It is used to define the structure of the remaining header. In the cases we
+// care about (class 0) this field is a full octet except for CR_TPDU and
+// CC_TPDU. In these two cases the low nibble is used to signal the CDT (initial
+// credit allocation).
+
+// Variable Part
+// -------------
+
+// The size of the variable part, used to define the less frequently used
+// paameters, is LI minus the size of the fixed part.
+
+// Each parameter in the variable part is of the form :
+// - parameter code on 1 byte (allowed parameter codes are from 64 and above).
+// - parameter length indication
+// - parameter value (of the size given by parameter length indication, may be
+// empty in which case parameter length indication is zero).
+
+// A parameter code not defined in x244 are protocol errors, except for CR_TPDU
+// in which they should be ignored.
+
+    enum {
+        TPKT_HEADER_LEN = 4
+    };
+
 };
 
 
@@ -205,11 +280,9 @@ struct X224In : public X224Packet
 
     Stream & stream;
 
-    enum {
-        TPKT_HEADER_LEN = 4
-    };
 
     X224In(Transport * t, Stream & stream) : tpkt(0,0), stream(stream)
+    // Receive a X224 TPDU from the wires
     {
         if (!stream.has_room(TPKT_HEADER_LEN)){
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
@@ -231,9 +304,24 @@ struct X224In : public X224Packet
     }
 };
 
-//struct X224Out : public X224Packet
-//{
-//};
+struct X224Out : public X224Packet
+{
+
+    X224Out(uint8_t pdutype, Stream & stream)
+    // Prepare a X224 TPDU in buffer for writing
+    {
+    }
+
+    void end()
+    // This function update header informations of TPDU before it is sent
+    // on the wires.
+    {
+    }
+
+    void send(Transport * t)
+    {
+    }
+};
 
 
 //struct REFACTORING_IN_PROGRESS {
@@ -270,67 +358,6 @@ struct X224In : public X224Packet
 ////        stream.skip_uint8(LI-1);
 //    }
 
-//// Valid Class 0 x224 TPDU
-//// -----------------------
-
-//// CR_TPDU : Connection Request 1110 xxxx
-//// CC_TPDU : Connection Confirm 1101 xxxx
-//// DR_TPDU : Disconnect Request 1000 0000
-//// DT_TPDU : Data               1111 0000 (no ROA = No Acknoledgement)
-//// ER_TPDU : TPDU Error         0111 0000
-
-//// TPDU shall contain in the following order:
-//// a) The Header, comprising:
-//// - The Length Indicator (LI) field
-//// - the fixed part
-//// - the variable part, if present
-//// b) The Data field if present
-
-//// Length Indicator field
-//// ----------------------
-
-//// The field is contained in first octet of the TPDUs. The length is indicated
-//// by a binary number, with a maximum value of 254. The length indicated shall
-//// be the header length in octets including parameters, but excluding the length
-//// indicator field and user data if any. The vaue of 255 is reserved for future
-//// extensions.
-
-//// If the length indicated exceed or is equal to the size of user data which is
-//// present, this is a protocol error.
-
-//// Fixed Part
-//// ----------
-
-//// The fixed part contains frequently occuring parameters includint the code of
-//// the TPDU. The length and the structure of the fixd part are defined by the
-//// TPDU code and in certain cases by the protocol class and the format in use
-//// (normal or extended). If any of the parameters of the fixed part have and
-//// invalid value, or if the fixed part cannot be contained withing the header
-//// (as defined by LI), this is a protocol error.
-
-//// TPDU code
-//// ---------
-
-//// This field contains the TPDU code and is contained in octet 2 of the header.
-//// It is used to define the structure of the remaining header. In the cases we
-//// care about (class 0) this field is a full octet except for CR_TPDU and
-//// CC_TPDU. In these two cases the low nibble is used to signal the CDT (initial
-//// credit allocation).
-
-//// Variable Part
-//// -------------
-
-//// The size of the variable part, used to define the less frequently used
-//// paameters, is LI minus the size of the fixed part.
-
-//// Each parameter in the variable part is of the form :
-//// - parameter code on 1 byte (allowed parameter codes are from 64 and above).
-//// - parameter length indication
-//// - parameter value (of the size given by parameter length indication, may be
-//// empty in which case parameter length indication is zero).
-
-//// A parameter code not defined in x244 are protocol errors, except for CR_TPDU
-//// in which they should be ignored.
 
 //    int iso_recv_msg(Transport * t, Stream & stream) throw (Error)
 //    {
