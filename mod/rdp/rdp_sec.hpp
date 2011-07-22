@@ -1203,27 +1203,27 @@ struct rdp_sec {
         LOG(LOG_INFO, "Iso Layer : connect %s\n", this->username);
 
         try {
-//            Stream out;
-//            X224Out crtpdu(X224Packet::CR_TPDU, out);
+            Stream out;
+            X224Out crtpdu(X224Packet::CR_TPDU, out);
 
-//            // USER DATA
-//            out.out_copy_bytes("Cookie: mstshash=", strlen("Cookie: mstshash="));
-//            #warning create a new function concat in stream ? computing the length of username here looks useless
-//            out.out_copy_bytes(this->username, strlen(this->username));
-//            out.out_uint8(0x0d);
-//            out.out_uint8(0x0a);
-//            crtpdu.end();
-//            crtpdu.send(this->mcs_layer.trans);
+            #warning looks like this strange cookie thing is in fact useless...
+            // USER DATA
+//            out.out_concat("Cookie: mstshash=");
+//            out.out_concat(this->username);
+//            out.out_concat("\r\n");
+//            crtpdu.extend_tpdu_hdr();
+            crtpdu.end();
 
-//            Stream in;
-//            X224In cctpdu(this->mcs_layer.trans, in);
-//            if (cctpdu.tpkt.version != 3){
-//                throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
-//            }
-//            if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
-//                throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
-//            }
-            this->mcs_layer.iso_layer.iso_connect(this->mcs_layer.trans, this->username);
+            crtpdu.send(this->mcs_layer.trans);
+
+            Stream in;
+            X224In cctpdu(this->mcs_layer.trans, in);
+            if (cctpdu.tpkt.version != 3){
+                throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+            }
+            if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
+                throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
+            }
         } catch (Error) {
             try {
                 this->mcs_layer.trans->disconnect();

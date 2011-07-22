@@ -358,6 +358,15 @@ class Stream {
         set_out_copy_bytes((uint8_t*)v, n, offset);
     }
 
+    void out_concat(const char * v) {
+        out_copy_bytes(v, strlen(v));
+    }
+
+    void set_out_concat(const char * v, size_t offset) {
+        set_out_copy_bytes((uint8_t*)v, strlen(v), offset);
+    }
+
+
     void out_clear_bytes(size_t n) {
         memset(this->p, 0, n);
         this->p += n;
