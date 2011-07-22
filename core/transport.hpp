@@ -60,7 +60,7 @@ public:
         last_quantum_sent = 0;
     }
 
-    virtual void recv(char ** pbuffer, int len) throw (Error) = 0;
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) = 0;
     virtual void send(const char * buffer, int len) throw (Error) = 0;
     virtual void disconnect() = 0;
     #warning connect should not be inside transport, transport should be instanciated only after a successfull connection
@@ -83,13 +83,15 @@ class GeneratorTransport : public Transport {
         memcpy(this->data, data, len);
     }
 
-    virtual void recv(char ** pbuffer, int len) throw (Error) {
-        if (current+len > sizeof(data)){
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+        if (current > len){
             throw Error(ERR_SOCKET_ERROR, 0);
         }
         memcpy(*pbuffer, (const char *)(&this->data[current]), len);
         *pbuffer += len;
+        current += len;
     }
+
     virtual void send(const char * buffer, int len) throw (Error) {
         // send perform like a /dev/null and does nothing in generator transport
     }
@@ -105,7 +107,7 @@ class GeneratorTransport : public Transport {
 
 class LoopTransport : public Transport {
 
-    virtual void recv(char ** pbuffer, int len) throw (Error) {
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
     }
     virtual void send(const char * buffer, int len) throw (Error) {
     }
@@ -204,7 +206,7 @@ class SocketTransport : public Transport {
         }
     }
 
-    virtual void recv(char ** input_buffer, int total_len) throw (Error)
+    virtual void recv(char ** input_buffer, size_t total_len) throw (Error)
     {
         int len = total_len;
         char * pbuffer = *input_buffer;

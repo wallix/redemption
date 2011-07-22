@@ -1,0 +1,74 @@
+TPKT Header, as specified in [T123] section 8
+---------------------------------------------
+
+         +---------+----------+-----------------------+------------------------+
+         | VERSION | Reserved | Most Significant Byte | Least significant Byte |
+         |         |          | of TPKT length        | of TPKT Length         |
++--------+---------+----------+-----------------------+------------------------+
+| OFFSET |    0    |    1     |          2            |           3            |
++--------+----+-----+---------+-----------------------+------------------------+
+
+Octet 1 is a version number, with binary value 0000 0011.
+Octet 2 is reserved for further study.
+Octets 3 and 4 are the unsigned 16-bit binary encoding of the TPKT
+   length. This is the length of the entire packet in octets, including
+   both the packet header and the TPDU.
+
+Since an X.224 TPDU occupies at least 3 octets, the minimum value of TPKT
+length is 7. The maximum value is 65535. This permits a maximum TPDU size
+of 65531 octets.
+
+The allowed TPDU of class 0 are defined below, offset relatives to beginning of
+TPKT, as each TPDU is wrapped in one TPKT.
+
+As I understand it we should never have any "MORE DATA" in field EOT of data TPDU.
+Hence we won't even try to implement the breaking and the cons of packets.
+
+Class 0 x224 TPDU
+-----------------
+                                                   +--------+
+                    +----+-----+---------+---------+ CLASS  |
+                    | LI |     | DST-REF | SRC-REF | OPTION |
+           +--------+----+-----+---------+---------+--------+
+           | OFFSET | 4  |  5  |  6   7  |  8   9  |   10   |
++----------+--------+----+-----+---------+---------+--------+
+| Connection Request|    |     |         |         |        |
+| CR_TPDU 1110 xxxx | 06 |  E0 |  00  00 |  00  00 |   00   |
++-------------------+----+-----+---------+---------+--------+
+| Connection Confirm|    |     |         |         |        |
+| CC_TPDU 1101 xxxx | 06 |  D0 |  00  00 |  00  00 |   00   |
++-------------------+----+-----+---------+---------+--------+
+
+                    +----+-----+---------+---------+---------------------------+
+                    | LI |     | DST-REF | SRC-REF | REASON                    |
+           +--------+----+-----+---------+---------+---------------------------+
+           | OFFSET | 4  |  5  |  6   7  |  8   9  |    10                     |
++-------------------+----+-----+---------+---------+---------------------------+
+| Disconnect Request|    |     |         |         | 00 = NOT SPECIFIED        |
+| DR_TPDU 1000 0000 | 06 |  80 |  00  00 |  00  00 | 01 = CONGESTION           |
+|                   |    |     |         |         | 02 = SESSION NOT ATTACHED |
+|                   |    |     |         |         | 03 = ADDRESS UNKNOWN      |
++-------------------+----+-----+---------+---------+---------------------------+
+
+                    +----+-----+----------------+
+                    | LI |     | EOT            |
+           +--------+----+-----+----------------+
+           | OFFSET | 4  |  5  |  6             |
++----------+--------+----+-----+----------------+
+| Data              |    |     | 80 = EOT       |
+| DT_TPDU 1111 0000 | 02 |  F0 | 00 = MORE DATA |
++-------------------+----+-----+----------------+
+                                                                         +----------------------------------------------------+
+                                                                         |           Variable Part                            |
+                    +----+-----+---------+-------------------------------+-----------+-----+----------------------------------+
+                    |    |     |         |                               | Invalid   |     | Rejected TPDU Header up to octet |
+                    | LI |     | DST-REF |         REJECT CAUSE          |  TPDU     | VL  | which caused rejection           |
+                    |    |     |         |                               |           |     | (mandatory in class 0)           |
+           +--------+----+-----+---------+-------------------------------+-----------+-----+----------------------------------+
+           | OFFSET | 4  |  5  |  6   7  |                8              |    9      |  10 | 11 ...                           |
++-------------------+----+-----+---------+---------+---------------------+-----------+-----+----------------------------------+
+| TPDU Error        |    |     |         |  00 = Reason not specified    |           |     |                                  |
+| ER_TPDU 0111 0000 | 04 |  70 |  00  00 |  01 = Invalid parameter code  |    C1     |  v  | ?? ?? ?? ?? ??                   |
+|                   |+2+v|     |         |  02 = Invalid TPDU type       | 1100 0001 |     | ~~~~~~~~~~~~~~                   |
+|                   |    |     |         |  03 = Invalid Parameter Value |           |     |    v bytes                       |
++-------------------+----+-----+---------+-------------------------------+-----------+-----+----------------------------------+
