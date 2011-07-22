@@ -191,23 +191,13 @@ struct X224Packet
     // format) in the other classes. The variable part, if present, may further
     // reduce the size of the user data field.
 
-// Valid Class 0 x224 TPDU
-// -----------------------
-
-// CR_TPDU : Connection Request 1110 xxxx
-// CC_TPDU : Connection Confirm 1101 xxxx
-// DR_TPDU : Disconnect Request 1000 0000
-// DT_TPDU : Data               1111 0000 (no ROA = No Acknoledgement)
-// ER_TPDU : TPDU Error         0111 0000
-
     enum {
-        CR_TPDU = 0xE0,
-        CC_TPDU = 0xD0,
-        DR_TPDU = 0x80,
-        DT_TPDU = 0xF0,
-        ER_TPDU = 0x70
+        CR_TPDU = 0xE0, // Connection Request 1110 xxxx
+        CC_TPDU = 0xD0, // Connection Confirm 1101 xxxx
+        DR_TPDU = 0x80, // Disconnect Request 1000 0000
+        DT_TPDU = 0xF0, // Data               1111 0000 (no ROA = No Ack)
+        ER_TPDU = 0x70  // TPDU Error         0111 0000
     };
-
 
 // TPDU shall contain in the following order:
 // a) The Header, comprising:
@@ -225,8 +215,8 @@ struct X224Packet
 // indicator field and user data if any. The vaue of 255 is reserved for future
 // extensions.
 
-// If the length indicated exceed or is equal to the size of user data which is
-// present, this is a protocol error.
+// If the length indicated exceed or is equal to the size of data which is
+// actually present, this is a protocol error.
 
 // Fixed Part
 // ----------
@@ -262,13 +252,13 @@ struct X224Packet
 // Parameter codes not defined in x224 are protocol errors, except for CR_TPDU
 // in which they should be ignored.
 
+// See docs/X224_class0_cheat_sheet.txt for supported packets format details
+
     enum {
         TPKT_HEADER_LEN = 4
     };
 
 };
-
-
 
 struct X224In : public X224Packet
 {
@@ -279,9 +269,13 @@ struct X224In : public X224Packet
     } tpkt;
 
     struct TPDUHeader {
-        TPDUHeader(uint8_t LI, uint8_t code) : LI(LI), code(code) {}
+        TPDUHeader(uint8_t LI, uint8_t code)
+            : LI(LI), code(code), reason(0), eot(0), reject_cause(0) {}
         uint8_t LI;
         uint8_t code;
+        uint8_t reason;
+        uint8_t eot;
+        uint8_t reject_cause;
     } tpdu_hdr;
 
     Stream & stream;
@@ -309,47 +303,125 @@ struct X224In : public X224Packet
         t->recv((char**)(&(stream.end)), payload_len);
         this->tpdu_hdr.LI = stream.in_uint8();
         this->tpdu_hdr.code = stream.in_uint8() & 0xF0;
-        // just skip TPDU parameters
-        stream.skip_uint8(this->tpdu_hdr.LI-1);
-
         switch (this->tpdu_hdr.code){
-            case CR_TPDU:
-                assert(this->tpdu_hdr.LI == 2);
-            break;
-            case CC_TPDU:
-                assert(this->tpdu_hdr.LI == 2);
+            case DT_TPDU:
+                this->tpdu_hdr.eot = stream.in_uint8();
             break;
             case DR_TPDU:
-                assert(this->tpdu_hdr.LI == 2);
-            break;
-            case DT_TPDU:
-                assert(this->tpdu_hdr.LI == 2);
+                stream.skip_uint8(4);
+                this->tpdu_hdr.reason = stream.in_uint8();
             break;
             case ER_TPDU:
-                assert(this->tpdu_hdr.LI == 2);
-            default:
-            LOG(LOG_INFO, "Unexpected Class 0 TPDU : code %0.2x, LI %u",
-                this->tpdu_hdr.code,
-                this->tpdu_hdr.LI);
+                stream.skip_uint8(2);
+                this->tpdu_hdr.reject_cause = stream.in_uint8();
+                stream.skip_uint8(this->tpdu_hdr.LI-6);
             break;
+            default:
+                // just skip remaining TPDU header content
+                stream.skip_uint8(this->tpdu_hdr.LI-3);
         }
-
-
     }
 };
 
 struct X224Out : public X224Packet
 {
+    Stream & stream;
 
-    X224Out(uint8_t pdutype, Stream & stream)
+    X224Out(uint8_t pdutype, Stream & stream) : stream(stream)
     // Prepare a X224 TPDU in buffer for writing
     {
+        switch (pdutype){
+            case CR_TPDU: // Connection Request 1110 xxxx
+                // we can write the header, there must not be any data afterward
+                // tpkt
+                stream.out_uint8(0x03); // version 3
+                stream.out_uint8(0x00);
+                stream.out_uint8(0x00); // 11 bytes
+                stream.out_uint8(0x0B); //
+                // CR_TPDU
+                stream.out_uint8(0x06); // LI
+                stream.out_uint8(CR_TPDU); // CR_TPDU code
+                stream.out_uint8(0x00); // DST-REF
+                stream.out_uint8(0x00); //
+                stream.out_uint8(0x00); // SRC-REF
+                stream.out_uint8(0x00); //
+                stream.out_uint8(0x00); // CLASS OPTION
+            break;
+            case CC_TPDU: // Connection Confirm 1101 xxxx
+                // we can write the header, there must not be any data
+                // tpkt
+                stream.out_uint8(0x03); // version 3
+                stream.out_uint8(0x00);
+                stream.out_uint8(0x00); // 11 bytes
+                stream.out_uint8(0x0B); //
+                // CR_TPDU
+                stream.out_uint8(0x06); // LI
+                stream.out_uint8(CC_TPDU); // CC_TPDU code
+                stream.out_uint8(0x00); // DST-REF
+                stream.out_uint8(0x00); //
+                stream.out_uint8(0x00); // SRC-REF
+                stream.out_uint8(0x00); //
+                stream.out_uint8(0x00); // CLASS OPTION
+            break;
+            case DR_TPDU: // Disconnect Request 1000 0000
+                // we can write the header, there must not be any data
+                // tpkt
+                stream.out_uint8(0x03); // version 3
+                stream.out_uint8(0x00);
+                stream.out_uint8(0x00); // 11 bytes
+                stream.out_uint8(0x0B); //
+                // CR_TPDU
+                stream.out_uint8(0x06); // LI
+                stream.out_uint8(DR_TPDU); // DR_TPDU code
+                stream.out_uint8(0x00); // DST-REF
+                stream.out_uint8(0x00); //
+                stream.out_uint8(0x00); // SRC-REF
+                stream.out_uint8(0x00); //
+                stream.out_uint8(0x00); // CLASS OPTION
+            break;
+            case DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
+                // we can't write the full header yet,
+                // we will know the length later
+                // tpkt
+                stream.out_uint8(0x03); // version 3
+                stream.out_uint8(0x00);
+                stream.out_uint8(0x00); // length still unknown
+                stream.out_uint8(0x00); //
+                // DT_TPDU
+                stream.out_uint8(0x02); // LI
+                stream.out_uint8(DT_TPDU); // DT_TPDU code
+                stream.out_uint8(0x80); // EOT
+            break;
+            case ER_TPDU:  // TPDU Error         0111 0000
+                // we can write the header, there must not be any data
+                // tpkt
+                stream.out_uint8(0x03); // version 3
+                stream.out_uint8(0x00);
+                stream.out_uint8(0x00); // 11 bytes
+                stream.out_uint8(0x0B); //
+                // ER_TPDU
+                stream.out_uint8(0x06); // LI
+                stream.out_uint8(ER_TPDU); // ER_TPDU code
+                stream.out_uint8(0x00); // DST-REF
+                stream.out_uint8(0x00); //
+                stream.out_uint8(0x00); // Reject Cause : Unspecified
+                stream.out_uint8(0xC1); // Invalid TPDU Code
+                stream.out_uint8(0x00); // Parameter Length 0
+            break;
+            default:
+                LOG(LOG_ERR, "Trying to send unknown PDU Type %u", pdutype);
+                throw Error(ERR_X224_SENDING_UNKNOWN_PDU_TYPE, pdutype);
+        }
     }
 
     void end()
     // This function update header informations of TPDU before it is sent
     // on the wires.
     {
+        stream.mark_end();
+        size_t len = stream.end - stream.data;
+        stream.set_out_uint8(len >> 8, 2);
+        stream.set_out_uint8(len & 0xFF, 3);
     }
 
     void send(Transport * t)
@@ -361,213 +433,7 @@ struct X224Out : public X224Packet
 //struct REFACTORING_IN_PROGRESS {
 //    private:
 
-//    void pack_tpktHeader(Stream & stream, const uint16_t len) throw (Error)
-//    {
-//        stream.out_uint8(3);  /* version */
-//        stream.out_uint8(0);  /* reserved */
-//        stream.out_uint16_be(len); /* length */
-//    }
-
-
 //    int iso_recv_msg(Transport * t, Stream & stream) throw (Error)
-//    {
-//        const uint16_t len = recv_tpktHeader(t, stream);
-
-//        this->recv_x224TPDU(t, stream, len);
-
-//        #warning check receive len is what is expected and remove check_end test in server_mcs layer
-
-//        // class 0 x 224 TPDU (3 bytes)
-//        // ----------------------------
-//        // I do not understand in what case we could have code != ISO_PDU_DT
-//        // it is defined in protocol that we are working with class 0, and
-//        // class 0 is 3 bytes long. Hence why bother with droping 5 bytes more ?
-//        // (on the other hand we could check LI in the first field instead of
-//        // skipping it. It contains the length !
-//        // And we should throw some kind of error if any unexpected case occurs.
-//        // But I should check every code path as it could be usefull only for
-//        // a case different from the one I'm currently checking (call from
-//        // mcs_recv_channel_join_request_PDU).
-
-//        uint8_t LI = stream.in_uint8();
-//        int code = stream.in_uint8();
-////        LOG(LOG_INFO, "iso_recv_msg: skip %u bytes", (code == ISO_PDU_DT)?1:5);
-
-//        if (LI != ((code == ISO_PDU_DT)?2:6)){
-//            LOG(LOG_ERR, "Bad TPDU header header length=%u expected length=%u",
-//                LI, ((code == ISO_PDU_DT)?2:6));
-//        }
-//        assert( LI == ((code == ISO_PDU_DT)?2:6) ) ;
-//        stream.skip_uint8(LI-1);
-
-////        LOG(LOG_INFO, "iso_recv_msg: done");
-//        return code;
-//    }
-
-//    void iso_send_TPDU_CR(Transport * t, int code) throw (Error)
-//    {
-//        Stream stream(8192);
-
-//        pack_tpktHeader(stream, 11);
-
-//        // x224 ?
-//        stream.out_uint8(6); /* LI */
-//        stream.out_uint8(code);
-//        stream.out_uint16_le(0); /* dest ref */
-//        stream.out_uint16_le(0); /* src ref */
-//        stream.out_uint8(0);     /* class option */
-
-//        stream.mark_end();
-//        t->send((char*)stream.data, stream.end - stream.data);
-//    }
-
-
-//    void iso_send_msg(Transport * t, int code) throw (Error)
-////    void iso_send_TPDU_CC(int code) throw (Error)
-//    {
-//        Stream stream(8192);
-
-//        pack_tpktHeader(stream, 11);
-
-//        // x224 ?
-//        stream.out_uint8(6); /* LI */
-//        stream.out_uint8(code);
-//        stream.out_uint16_le(0); /* dest ref */
-//        stream.out_uint16_le(0); /* src ref */
-//        stream.out_uint8(0);     /* class option */
-
-//        stream.mark_end();
-//        t->send((char*)stream.data, stream.end - stream.data);
-//    }
-
-
-//    public:
-//    void iso_recv(Transport * t, Stream & stream) throw (Error)
-//    {
-//        int code = this->iso_recv_msg(t, stream);
-//        if (code != ISO_PDU_DT) {
-//            LOG(LOG_ERR, "code =%d not ISO_PDU_DT", code);
-//            throw Error(ERR_ISO_RECV_CODE_NOT_PDU_DT);
-//        }
-//    }
-
-//    // iso_TPDU_DT_init
-//    void iso_init(Stream & stream) throw (Error)
-//    {
-//        stream.p += 7;
-////        LOG(LOG_INFO, "iso_init data=%p iso_hdr=%p p=%p end=%p", stream.data, this->iso_hdr, stream.p, stream.end);
-//    }
-
-//    // iso_TPDU_DT_send
-//    void iso_send(Transport * t, Stream & stream) throw (Error)
-//    {
-//        stream.p = stream.data;
-//        int len = stream.end - stream.p;
-
-//        // tpktHeader
-//        pack_tpktHeader(stream, len);
-
-//        // x224 ? 2 F0 EOT
-//        stream.out_uint8(2);
-//        stream.out_uint8(ISO_PDU_DT);
-//        stream.out_uint8(0x80); // EOT ?
-////        LOG(LOG_INFO, "iso_send data=%p iso_hdr=%p p=%p end=%p", stream.data, this->iso_hdr, stream.p, stream.end);
-//        t->send((char*)stream.data, stream.end - stream.data);
-
-//    }
-
-
-//    uint8_t iso_recv_PDU_CR(Transport * t, Stream & stream)
-//    {
-//        const uint16_t len = recv_tpktHeader(t, stream);
-//        this->recv_x224TPDU(t, stream, len);
-//        uint8_t hdrlen = stream.in_uint8();
-//        if (!hdrlen == len - 5) {
-//            LOG(LOG_ERR, "BAD PDU LENGTH");
-//            throw Error(ERR_ISO_INCOMING_BAD_PDU_CR_LENGTH);
-//        }
-//        uint8_t code = stream.in_uint8();
-//        stream.skip_uint8(5);
-//        return code;
-//    }
-
-
-//    // used only front side
-//    void iso_incoming(Transport * t) throw (Error)
-//    {
-//        Stream stream(8192);
-//        int code = this->iso_recv_PDU_CR(t, stream);
-//        if (code != ISO_PDU_CR) {
-//            throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
-//        }
-//        this->iso_send_msg(t, ISO_PDU_CC);
-//    }
-
-
-//    // used only by client layer
-//    void iso_send_PDU_CR(Transport * t, const char* username)
-//    {
-//        Stream stream(8192);
-
-//        int length = 30 + strlen(username);
-
-//        pack_tpktHeader(stream, length);
-
-//        stream.out_uint8(length - 5);  /*len - hdrlen */
-//        stream.out_uint8(ISO_PDU_CR);
-//        stream.out_uint16_le(0); /* dest ref*/
-//        stream.out_uint16_le(0); /* src ref*/
-
-//        stream.out_uint8(0); /* class */
-//        stream.out_copy_bytes("Cookie: mstshash=", strlen("Cookie: mstshash="));
-//        stream.out_copy_bytes(username, length - 30);
-//        stream.out_uint8(0x0d);	/* Unknown */
-//        stream.out_uint8(0x0a);	/* Unknown */
-
-//        stream.mark_end();
-//        t->send((char*)stream.data, stream.end - stream.data);
-//    }
-
-//    // used only client side
-//    void iso_connect(Transport * t, char* username)
-//    {
-//        this->iso_send_PDU_CR(t, username);
-//        Stream stream(8192);
-//        int code = this->iso_recv_msg(t, stream);
-//        if (code != ISO_PDU_CC) {
-//            throw Error(ERR_ISO_CONNECT_CODE_NOT_PDU_CC);
-//        }
-//    }
-
-//    // used only client side
-//    void iso_disconnect(Transport * t)
-//    {
-//        this->iso_send_msg(t, ISO_PDU_DR);
-//        t->disconnect();
-//    }
-
-
-//};
-
-
-///* iso */
-//struct IsoLayer {
-
-//    uint8_t * iso_hdr;
-
-//    IsoLayer(){}
-
-//    IsoLayer(Stream & stream) {
-//        this->iso_hdr = stream.p;
-//        stream.p += 7;
-//    }
-
-//    ~IsoLayer(){
-//    }
-
-//    private:
-
-//    int recv_tpktHeader(Transport * t, Stream & stream) throw (Error)
 //    {
 //        stream.init(4);
 //        t->recv((char**)(&(stream.end)), 4);
@@ -576,45 +442,7 @@ struct X224Out : public X224Packet
 //            throw Error(ERR_ISO_RECV_MSG_VER_NOT_3);
 //        }
 //        stream.skip_uint8(1);
-//        int len = stream.in_uint16_be();
-//        return len;
-//    }
-
-//    void pack_tpktHeader(Stream & stream, const uint16_t len) throw (Error)
-//    {
-//        stream.out_uint8(3);  /* version */
-//        stream.out_uint8(0);  /* reserved */
-//        stream.out_uint16_be(len); /* length */
-//    }
-
-
-//    void recv_x224TPDU(Transport * t, Stream & stream, const uint16_t len) throw (Error)
-//    {
-////        LOG(LOG_INFO, "recv_x224TPDU: reading %u bytes payload", len - 4);
-
-//        stream.init(len - 4);
-//        t->recv((char**)(&(stream.end)), len - 4);
-////      uint8_t LI = stream.in_uint8();
-////      uint8_t code = stream.in_uint8() & 0xF0;
-////        switch (code){
-////            case CR_TPDU:
-////            break;
-////            case CC_TPDU:
-////            break;
-////            case DR_TPDU:
-////            break;
-////            case DT_TPDU:
-////            break;
-////            case ER_TPDU:
-////            break;
-////        }
-////        stream.skip_uint8(LI-1);
-//    }
-
-
-//    int iso_recv_msg(Transport * t, Stream & stream) throw (Error)
-//    {
-//        const uint16_t len = recv_tpktHeader(t, stream);
+//        const uint16_t len = stream.in_uint16_be();
 
 //        this->recv_x224TPDU(t, stream, len);
 
@@ -639,7 +467,9 @@ struct X224Out : public X224Packet
 //    {
 //        Stream stream(8192);
 
-//        pack_tpktHeader(stream, 11);
+//        stream.out_uint8(3);  /* version */
+//        stream.out_uint8(0);  /* reserved */
+//        stream.out_uint16_be(11); /* length */
 
 //        // x224 ?
 //        stream.out_uint8(6); /* LI */
@@ -658,7 +488,9 @@ struct X224Out : public X224Packet
 //    {
 //        Stream stream(8192);
 
-//        pack_tpktHeader(stream, 11);
+//        stream.out_uint8(3);  /* version */
+//        stream.out_uint8(0);  /* reserved */
+//        stream.out_uint16_be(11); /* length */
 
 //        // x224 ?
 //        stream.out_uint8(6); /* LI */
@@ -695,8 +527,9 @@ struct X224Out : public X224Packet
 //        stream.p = stream.data;
 //        int len = stream.end - stream.p;
 
-//        // tpktHeader
-//        pack_tpktHeader(stream, len);
+//        stream.out_uint8(3);  /* version */
+//        stream.out_uint8(0);  /* reserved */
+//        stream.out_uint16_be(len); /* length */
 
 //        // x224 ? 2 F0 EOT
 //        stream.out_uint8(2);
@@ -710,7 +543,14 @@ struct X224Out : public X224Packet
 
 //    uint8_t iso_recv_PDU_CR(Transport * t, Stream & stream)
 //    {
-//        const uint16_t len = recv_tpktHeader(t, stream);
+//        stream.init(4);
+//        t->recv((char**)(&(stream.end)), 4);
+//        int version = stream.in_uint8();
+//        if (3 != version) {
+//            throw Error(ERR_ISO_RECV_MSG_VER_NOT_3);
+//        }
+//        stream.skip_uint8(1);
+//        const uint16_t len = stream.in_uint16_be();
 //        this->recv_x224TPDU(t, stream, len);
 //        uint8_t hdrlen = stream.in_uint8();
 //        if (!hdrlen == len - 5) {
@@ -764,7 +604,7 @@ struct X224Out : public X224Packet
 //    {
 //        this->iso_send_PDU_CR(t, username);
 //        Stream stream(8192);
-//        int code = this->iso_recv_msg(t, stream);
+//        int code = this->iso_recv_PDU_CC(t, stream);
 //        if (code != ISO_PDU_CC) {
 //            throw Error(ERR_ISO_CONNECT_CODE_NOT_PDU_CC);
 //        }
@@ -779,5 +619,6 @@ struct X224Out : public X224Packet
 
 
 //};
+
 
 #endif
