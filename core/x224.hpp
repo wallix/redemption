@@ -414,6 +414,14 @@ struct X224Out : public X224Packet
         }
     }
 
+    void extend_tpdu_hdr()
+    // include user data from end of tpdu header to stream.p inside tpdu header.
+    // Not at all part of x224, but RDP uses it to transmit username!!!
+    // appending a string "Cookie: mstshash=username\r\n" to tpdu header.
+    {
+        this->stream.set_out_uint8(this->stream.p-this->stream.data-5, 4); // LI
+    }
+
     void end()
     // This function update header informations of TPDU before it is sent
     // on the wires.
@@ -426,6 +434,7 @@ struct X224Out : public X224Packet
 
     void send(Transport * t)
     {
+        t->send((char*)stream.data, stream.end - stream.data);
     }
 };
 

@@ -434,44 +434,8 @@ struct IsoLayer {
         int code = this->iso_recv_PDU_CR(t, stream);
         if (code != ISO_PDU_CR) {
             throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
-        }
+         }
         this->iso_send_msg(t, ISO_PDU_CC);
-    }
-
-
-    // used only by client layer
-    void iso_send_PDU_CR(Transport * t, const char* username)
-    {
-        Stream stream(8192);
-
-        int length = 30 + strlen(username);
-
-        pack_tpktHeader(stream, length);
-
-        stream.out_uint8(length - 5);  /*len - hdrlen */
-        stream.out_uint8(ISO_PDU_CR);
-        stream.out_uint16_le(0); /* dest ref*/
-        stream.out_uint16_le(0); /* src ref*/
-
-        stream.out_uint8(0); /* class */
-        stream.out_copy_bytes("Cookie: mstshash=", strlen("Cookie: mstshash="));
-        stream.out_copy_bytes(username, length - 30);
-        stream.out_uint8(0x0d);	/* Unknown */
-        stream.out_uint8(0x0a);	/* Unknown */
-
-        stream.mark_end();
-        t->send((char*)stream.data, stream.end - stream.data);
-    }
-
-    // used only client side
-    void iso_connect(Transport * t, char* username)
-    {
-        this->iso_send_PDU_CR(t, username);
-        Stream stream(8192);
-        int code = this->iso_recv_msg(t, stream);
-        if (code != ISO_PDU_CC) {
-            throw Error(ERR_ISO_CONNECT_CODE_NOT_PDU_CC);
-        }
     }
 
     // used only client side
