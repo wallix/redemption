@@ -285,7 +285,8 @@ struct rdp_rdp {
                        + 4 /* w2k fix, why? */ ;
 
             stream.init(8192);
-            this->sec_layer.iso_layer.iso_init(stream);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+
             stream.mcs_hdr = stream.p;
             stream.p += 8;
 
@@ -327,9 +328,11 @@ struct rdp_rdp {
             this->out_unknown_caps(stream, 0x0c, 0x08, caps_0x0c);
             this->out_unknown_caps(stream, 0x0e, 0x08, caps_0x0e);
             this->out_unknown_caps(stream, 0x10, 0x34, caps_0x10); /* glyph cache? */
-            stream.mark_end();
+
+            tpdu.end();
             this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
-            this->sec_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+
+            tpdu.send(this->sec_layer.mcs_layer.trans);
 
             LOG(LOG_INFO, "Waiting for answer to confirm active\n");
         }
@@ -571,7 +574,7 @@ struct rdp_rdp {
         void init(Stream & stream) throw(Error)
         {
             stream.init(8192);
-            this->sec_layer.iso_layer.iso_init(stream);
+            this->iso_layer.iso_init(stream);
             stream.mcs_hdr = stream.p;
             stream.p += 8;
 
@@ -587,7 +590,7 @@ struct rdp_rdp {
         void rdp_channel_init(Stream & stream)
         {
             stream.init(8192);
-            this->sec_layer.iso_layer.iso_init(stream);
+            this->iso_layer.iso_init(stream);
             stream.mcs_hdr = stream.p;
             stream.p += 8;
 
@@ -622,17 +625,16 @@ struct rdp_rdp {
 
             rdp5_performanceflags = RDP5_NO_WALLPAPER;
 
-            Stream stream(8192);
             // The WAB does not send it's IP to server. Is it what we want ?
             const char * ip_source = "\0\0\0\0";
 
             int sec_flags = SEC_LOGON_INFO | SEC_ENCRYPT;
 
-            stream.init(8192);
-            this->sec_layer.iso_layer.iso_init(stream);
+            Stream stream(8192);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+
             stream.mcs_hdr = stream.p;
             stream.p += 8;
-
             int hdrlen = 12 ; // SEC_ENCRYPT
 
             stream.sec_hdr = stream.p;
@@ -728,9 +730,11 @@ struct rdp_rdp {
                 stream.out_uint16_le(0);
                 this->use_rdp5 = 0;
             }
-            stream.mark_end();
+
+            tpdu.end();
             this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
-            this->sec_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+
+            tpdu.send(this->sec_layer.mcs_layer.trans);
 
             LOG(LOG_INFO, "send login info ok\n");
         }
@@ -761,29 +765,25 @@ struct rdp_rdp {
             }
 
             stream.init(8192);
-            this->sec_layer.iso_layer.iso_init(stream);
+            this->iso_layer.iso_init(stream);
             stream.mcs_hdr = stream.p;
             stream.p += 8;
 
-            int hdrlen = 12 ; // SEC_ENCRYPT
-
             stream.sec_hdr = stream.p;
-            stream.p += hdrlen;
+            stream.p += 12 ; // SEC_ENCRYPT
         }
 
         /* Initialise an RDP data packet */
         int init_data(Stream & stream)
         {
             stream.init(8192);
-            this->sec_layer.iso_layer.iso_init(stream);
+            this->iso_layer.iso_init(stream);
+
             stream.mcs_hdr = stream.p;
             stream.p += 8;
 
-            int hdrlen = 12 ; // SEC_ENCRYPT
-
             stream.sec_hdr = stream.p;
-            stream.p += hdrlen;
-
+            stream.p += 12 ; // SEC_ENCRYPT
 
             stream.rdp_hdr = stream.p;
             stream.p += 18;
@@ -807,7 +807,7 @@ struct rdp_rdp {
             stream.out_uint16_le(0); /* compress len */
             int sec_flags = SEC_ENCRYPT;
             this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, chan_id);
-            this->sec_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+            this->iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
 
         }
 
@@ -1022,7 +1022,7 @@ struct rdp_rdp {
             virtual_channel packet and not an MCS_GLOBAL_CHANNEL packet */
             this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, channel_id);
 //            LOG(LOG_INFO, "send_redirect_pdu done\n");
-            this->sec_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+            this->iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
         }
 
     void process_color_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
