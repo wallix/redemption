@@ -30,6 +30,7 @@
 #include "file_loc.hpp"
 #include "log.hpp"
 #include "iso_layer.hpp"
+#include "x224.hpp"
 
 #include <string.h>
 #include <unistd.h>
@@ -298,7 +299,7 @@ public:
         Stream stream(8192);
         // read tpktHeader (4 bytes = 3 0 len)
         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-        this->iso_layer.iso_recv(this->trans, stream);
+        X224In tpdu(this->trans, stream);
 
         int opcode = stream.in_uint8();
         if ((opcode >> 2) != MCS_CJRQ) {

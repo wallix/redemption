@@ -45,36 +45,6 @@ struct IsoLayer {
 public:
 
     public:
-    void iso_recv(Transport * t, Stream & stream) throw (Error)
-    {
-        stream.init(4);
-        t->recv((char**)(&(stream.end)), 4);
-        int version = stream.in_uint8();
-        if (3 != version) {
-            throw Error(ERR_ISO_RECV_MSG_VER_NOT_3);
-        }
-        stream.skip_uint8(1);
-        const uint16_t len = stream.in_uint16_be();
-
-        stream.init(len - 4);
-        t->recv((char**)(&(stream.end)), len - 4);
-
-        uint8_t LI = stream.in_uint8();
-        int code = stream.in_uint8();
-
-        if (LI != ((code == ISO_PDU_DT)?2:6)){
-            LOG(LOG_ERR, "Bad TPDU header header length=%u expected length=%u",
-                LI, ((code == ISO_PDU_DT)?2:6));
-        }
-        assert( LI == ((code == ISO_PDU_DT)?2:6) ) ;
-        stream.skip_uint8(LI-1);
-
-        if (code != ISO_PDU_DT) {
-            LOG(LOG_ERR, "code =%d not ISO_PDU_DT", code);
-            throw Error(ERR_ISO_RECV_CODE_NOT_PDU_DT);
-        }
-    }
-
     // iso_TPDU_DT_init
     void iso_init(Stream & stream) throw (Error)
     {

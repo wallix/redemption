@@ -306,19 +306,21 @@ struct X224In : public X224Packet
         switch (this->tpdu_hdr.code){
             case DT_TPDU:
                 this->tpdu_hdr.eot = stream.in_uint8();
+                stream.skip_uint8(this->tpdu_hdr.LI-2);
             break;
             case DR_TPDU:
                 stream.skip_uint8(4);
                 this->tpdu_hdr.reason = stream.in_uint8();
+                stream.skip_uint8(this->tpdu_hdr.LI-6);
             break;
             case ER_TPDU:
                 stream.skip_uint8(2);
                 this->tpdu_hdr.reject_cause = stream.in_uint8();
-                stream.skip_uint8(this->tpdu_hdr.LI-6);
+                stream.skip_uint8(this->tpdu_hdr.LI-4);
             break;
             default:
                 // just skip remaining TPDU header content
-                stream.skip_uint8(this->tpdu_hdr.LI-3);
+                stream.skip_uint8(this->tpdu_hdr.LI-1);
         }
     }
 };

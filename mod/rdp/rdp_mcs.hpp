@@ -25,6 +25,7 @@
 #define __RDP_MCS_HPP__
 
 #include "iso_layer.hpp"
+#include "x224.hpp"
 
 #include <iostream>
 #include <vector>
@@ -203,7 +204,8 @@ struct rdp_mcs {
     /* returns error */
     void rdp_mcs_recv(Stream & stream, int& chan) throw(Error)
     {
-        this->iso_layer.iso_recv(this->trans, stream);
+        stream.init(65535);
+        X224In(this->trans, stream);
         int opcode = stream.in_uint8();
         int appid = opcode >> 2;
         if (appid != MCS_SDIN) {
@@ -343,8 +345,7 @@ struct rdp_mcs {
     void rdp_mcs_recv_aucf() throw(Error)
     {
         Stream stream(8192);
-
-        this->iso_layer.iso_recv(this->trans, stream);
+        X224In(this->trans, stream);
         int opcode = stream.in_uint8();
         if ((opcode >> 2) != MCS_AUCF) {
             throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
@@ -384,8 +385,7 @@ struct rdp_mcs {
     {
         int opcode;
         Stream stream(8192);
-
-        this->iso_layer.iso_recv(this->trans, stream);
+        X224In(this->trans, stream);
         opcode = stream.in_uint8();
         if ((opcode >> 2) != MCS_CJCF) {
             throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
