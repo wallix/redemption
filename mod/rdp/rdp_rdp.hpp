@@ -281,7 +281,19 @@ struct rdp_rdp {
                        + 0x08
                        + 0x34
                        + 4 /* w2k fix, why? */ ;
-            this->sec_layer.rdp_sec_init(stream, sec_flags);
+
+            stream.init(8192);
+            this->sec_layer.iso_layer.iso_init(stream);
+            stream.mcs_hdr = stream.p;
+            stream.p += 8;
+
+            int hdrlen = (sec_flags & SEC_ENCRYPT)          ? 12
+                       : this->sec_layer.lic_layer.licence_issued ? 0
+                       : 4 ;
+
+            stream.sec_hdr = stream.p;
+            stream.p += hdrlen;
+
             stream.out_uint16_le(2 + 14 + caplen + sizeof(RDP_SOURCE));
             stream.out_uint16_le((PDUTYPE_CONFIRMACTIVEPDU | 0x10)); /* Version 1 */
             stream.out_uint16_le((this->sec_layer.mcs_layer.userid + 1001));
@@ -554,14 +566,33 @@ struct rdp_rdp {
 
         void init(Stream & stream) throw(Error)
         {
-            this->sec_layer.rdp_sec_init(stream, SEC_ENCRYPT);
+            stream.init(8192);
+            this->sec_layer.iso_layer.iso_init(stream);
+            stream.mcs_hdr = stream.p;
+            stream.p += 8;
+
+            int hdrlen = 12 ; // SEC_ENCRYPT
+
+            stream.sec_hdr = stream.p;
+            stream.p += hdrlen;
+
             stream.rdp_hdr = stream.p;
             stream.p += 6;
         }
 
         void rdp_channel_init(Stream & stream)
         {
-            this->sec_layer.rdp_sec_init(stream, SEC_ENCRYPT);
+            stream.init(8192);
+            this->sec_layer.iso_layer.iso_init(stream);
+            stream.mcs_hdr = stream.p;
+            stream.p += 8;
+
+            int hdrlen = 12 ; // SEC_ENCRYPT
+
+            stream.sec_hdr = stream.p;
+            stream.p += hdrlen;
+
+
             stream.channel_hdr = stream.p;
             stream.p += 8;
         }
@@ -592,7 +623,17 @@ struct rdp_rdp {
             const char * ip_source = "\0\0\0\0";
 
             int sec_flags = SEC_LOGON_INFO | SEC_ENCRYPT;
-            this->sec_layer.rdp_sec_init(stream, sec_flags);
+
+            stream.init(8192);
+            this->sec_layer.iso_layer.iso_init(stream);
+            stream.mcs_hdr = stream.p;
+            stream.p += 8;
+
+            int hdrlen = 12 ; // SEC_ENCRYPT
+
+            stream.sec_hdr = stream.p;
+            stream.p += hdrlen;
+
             if(!this->use_rdp5){
                 LOG(LOG_INFO, "send login info (RDP4-style) %s:%s\n",this->domain, this->sec_layer.username);
 
@@ -712,14 +753,32 @@ struct rdp_rdp {
                 stream. out_uint16_le(pdu_type | 0x10);
                 stream.out_uint16_le(this->sec_layer.mcs_layer.userid);
             }
-            int sec_flags = SEC_ENCRYPT;
-            this->sec_layer.rdp_sec_send(stream, sec_flags);
+
+            stream.init(8192);
+            this->sec_layer.iso_layer.iso_init(stream);
+            stream.mcs_hdr = stream.p;
+            stream.p += 8;
+
+            int hdrlen = 12 ; // SEC_ENCRYPT
+
+            stream.sec_hdr = stream.p;
+            stream.p += hdrlen;
         }
 
         /* Initialise an RDP data packet */
         int init_data(Stream & stream)
         {
-            this->sec_layer.rdp_sec_init(stream, SEC_ENCRYPT);
+            stream.init(8192);
+            this->sec_layer.iso_layer.iso_init(stream);
+            stream.mcs_hdr = stream.p;
+            stream.p += 8;
+
+            int hdrlen = 12 ; // SEC_ENCRYPT
+
+            stream.sec_hdr = stream.p;
+            stream.p += hdrlen;
+
+
             stream.rdp_hdr = stream.p;
             stream.p += 18;
             return 0;
