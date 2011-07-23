@@ -1277,7 +1277,10 @@ struct rdp_sec {
             }
         }
         catch(...){
-            this->mcs_layer.iso_layer.iso_disconnect(this->mcs_layer.trans);
+            Stream stream(11);
+            X224Out tpdu(X224Packet::DR_TPDU, stream);
+            tpdu.end();
+            tpdu.send(this->mcs_layer.trans);
             throw;
         }
 
