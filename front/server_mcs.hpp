@@ -83,27 +83,30 @@ struct server_mcs {
 //        LOG(LOG_INFO, "server_mcs_send_channel_join_confirm_PDU");
 
         Stream stream(8192);
-        IsoLayer iso(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
         stream.out_uint8((MCS_CJCF << 2) | 2);
         stream.out_uint8(0);
         stream.out_uint16_be(userid);
         stream.out_uint16_be(chanid);
         stream.out_uint16_be(chanid);
 
-        stream.mark_end();
-        iso.iso_send(this->trans, stream);
+        tpdu.end();
+        tpdu.send(this->trans);
     }
 
     void server_mcs_send_attach_user_confirm_PDU(int userid) throw(Error)
     {
 //        LOG(LOG_INFO, "server_mcs_send_attach_user_confirm_PDU");
         Stream stream(8192);
-        IsoLayer iso(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
         stream.out_uint8(((MCS_AUCF << 2) | 2));
         stream.out_uint8(0);
         stream.out_uint16_be(userid);
-        stream.mark_end();
-        iso.iso_send(this->trans, stream);
+
+        tpdu.end();
+        tpdu.send(this->trans);
     }
 
     void server_mcs_send_connect_response() throw(Error)
@@ -111,8 +114,9 @@ struct server_mcs {
 //        LOG(LOG_INFO, "server_mcs_send_connect_response");
         #warning why don't we build directly in final data buffer ? Instead of building in data and copying in stream ?
         Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
         int data_len = this->data.end - this->data.data;
-        IsoLayer iso(stream);
         this->server_mcs_ber_out_header(stream, MCS_CONNECT_RESPONSE, data_len + 38);
         this->server_mcs_ber_out_header(stream, BER_TAG_RESULT, 1);
         stream.out_uint8(0);
@@ -122,8 +126,9 @@ struct server_mcs {
         this->server_mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, data_len);
         /* mcs data */
         stream.out_copy_bytes(this->data.data, data_len);
-        stream.mark_end();
-        iso.iso_send(this->trans, stream);
+
+        tpdu.end();
+        tpdu.send(this->trans);
     }
 
     void server_mcs_send(Stream & stream, int chan) throw (Error)
@@ -162,11 +167,13 @@ struct server_mcs {
     {
 //        LOG(LOG_INFO, "server_mcs_disconnect");
         Stream stream(8192);
-        IsoLayer iso(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
         stream.out_uint8((MCS_DPUM << 2) | 1);
         stream.out_uint8(0x80);
-        stream.mark_end();
-        iso.iso_send(this->trans, stream);
+
+        tpdu.end();
+        tpdu.send(this->trans);
     }
 
     void server_mcs_init(Stream & stream)
