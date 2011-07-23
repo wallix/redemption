@@ -28,9 +28,11 @@
 #include "rdp_sec.hpp"
 #include "rdp_orders.hpp"
 #include "client_mod.hpp"
+#include "iso_layer.hpp"
 
 /* rdp */
 struct rdp_rdp {
+    struct IsoLayer iso_layer;
     rdp_sec sec_layer;
     rdp_orders orders;
     int share_id;
