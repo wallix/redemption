@@ -34,7 +34,6 @@ using namespace std;
 /* mcs */
 struct rdp_mcs {
     Transport * trans;
-    struct IsoLayer iso_layer;
     int userid;
     vector<struct mcs_channel_item *> channel_list;
 
@@ -403,14 +402,6 @@ struct rdp_mcs {
         }
     }
 
-    void rdp_mcs_init(Stream & stream)
-    {
-        stream.init(8192);
-        this->iso_layer.iso_init(stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
-    }
-
     /* Send an MCS transport data packet to a specific channel */
     void rdp_mcs_send_to_channel(Stream & stream, int chan_id)
     {
@@ -421,13 +412,6 @@ struct rdp_mcs {
         stream.out_uint16_be(chan_id);
         stream.out_uint8(0x70);
         stream.out_uint16_be(len);
-        this->iso_layer.iso_send(this->trans, stream);
-    }
-
-    /* Send an MCS transport data packet to the global channel */
-    void rdp_mcs_send(Stream & stream)
-    {
-        this->rdp_mcs_send_to_channel(stream, MCS_GLOBAL_CHANNEL);
     }
 };
 

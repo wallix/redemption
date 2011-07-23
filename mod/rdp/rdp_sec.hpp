@@ -36,6 +36,9 @@
 
 /* sec */
 struct rdp_sec {
+
+    struct IsoLayer iso_layer;
+
     struct rdp_lic {
         uint8_t licence_key[16];
         uint8_t licence_sign_key[16];
@@ -642,14 +645,17 @@ struct rdp_sec {
     /* Initialise secure transport packet */
     void rdp_sec_init(Stream & stream, uint32_t flags)
     {
-      this->mcs_layer.rdp_mcs_init(stream);
+        stream.init(8192);
+        this->iso_layer.iso_init(stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
 
-      int hdrlen = (flags & SEC_ENCRYPT)           ? 12
-                 : this->lic_layer.licence_issued ? 0
-                 : 4 ;
+        int hdrlen = (flags & SEC_ENCRYPT)          ? 12
+                   : this->lic_layer.licence_issued ? 0
+                   : 4 ;
 
-      stream.sec_hdr = stream.p;
-      stream.p += hdrlen;
+        stream.sec_hdr = stream.p;
+        stream.p += hdrlen;
     }
 
     /* Transmit secure transport packet over specified channel */
@@ -669,6 +675,7 @@ struct rdp_sec {
         }
 
         this->mcs_layer.rdp_mcs_send_to_channel(stream, channel);
+        this->iso_layer.iso_send(this->mcs_layer.trans, stream);
     }
 
     /* Transmit secure transport packet */
