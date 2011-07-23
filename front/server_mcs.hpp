@@ -160,7 +160,6 @@ struct server_mcs {
             }
             stream.end--;
         }
-        this->iso_layer.iso_send(this->trans, stream);
     }
 
     void server_mcs_disconnect() throw (Error)

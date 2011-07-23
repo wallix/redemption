@@ -361,6 +361,7 @@ struct server_sec {
 //        LOG(LOG_INFO, "server_mcs_send 1");
         stream.mark_end();
         this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
+        this->mcs_layer.iso_layer.iso_send(this->mcs_layer.trans, stream);
     }
 
     void server_sec_send_lic_response() throw (Error)
@@ -377,6 +378,7 @@ struct server_sec {
 //        LOG(LOG_INFO, "server_mcs_send 2");
         stream.mark_end();
         this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
+        this->mcs_layer.iso_layer.iso_send(this->mcs_layer.trans, stream);
     }
 
     void server_sec_send_media_lic_response() throw (Error)
@@ -395,6 +397,7 @@ struct server_sec {
 //        LOG(LOG_INFO, "server_mcs_send 3");
         stream.mark_end();
         this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
+        this->mcs_layer.iso_layer.iso_send(this->mcs_layer.trans, stream);
     }
 
     void server_sec_rsa_op()
@@ -600,6 +603,7 @@ struct server_sec {
 
 //        LOG(LOG_INFO, "server_mcs_send 4");
         this->mcs_layer.server_mcs_send(stream, chan);
+        this->mcs_layer.iso_layer.iso_send(this->mcs_layer.trans, stream);
     }
 
     // 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
