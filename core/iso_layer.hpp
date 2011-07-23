@@ -42,9 +42,10 @@ struct IsoLayer {
     ~IsoLayer(){
     }
 
-    private:
+public:
 
-    int recv_tpktHeader(Transport * t, Stream & stream) throw (Error)
+    public:
+    void iso_recv(Transport * t, Stream & stream) throw (Error)
     {
         stream.init(4);
         t->recv((char**)(&(stream.end)), 4);
@@ -53,28 +54,13 @@ struct IsoLayer {
             throw Error(ERR_ISO_RECV_MSG_VER_NOT_3);
         }
         stream.skip_uint8(1);
-        int len = stream.in_uint16_be();
-        return len;
-    }
-
-    void pack_tpktHeader(Stream & stream, const uint16_t len) throw (Error)
-    {
-        stream.out_uint8(3);  /* version */
-        stream.out_uint8(0);  /* reserved */
-        stream.out_uint16_be(len); /* length */
-    }
-
-
-    int iso_recv_msg(Transport * t, Stream & stream) throw (Error)
-    {
-        const uint16_t len = recv_tpktHeader(t, stream);
+        const uint16_t len = stream.in_uint16_be();
 
         stream.init(len - 4);
         t->recv((char**)(&(stream.end)), len - 4);
 
         uint8_t LI = stream.in_uint8();
         int code = stream.in_uint8();
-//        LOG(LOG_INFO, "iso_recv_msg: skip %u bytes", (code == ISO_PDU_DT)?1:5);
 
         if (LI != ((code == ISO_PDU_DT)?2:6)){
             LOG(LOG_ERR, "Bad TPDU header header length=%u expected length=%u",
@@ -83,16 +69,6 @@ struct IsoLayer {
         assert( LI == ((code == ISO_PDU_DT)?2:6) ) ;
         stream.skip_uint8(LI-1);
 
-//        LOG(LOG_INFO, "iso_recv_msg: done");
-        return code;
-    }
-
-public:
-
-    public:
-    void iso_recv(Transport * t, Stream & stream) throw (Error)
-    {
-        int code = this->iso_recv_msg(t, stream);
         if (code != ISO_PDU_DT) {
             LOG(LOG_ERR, "code =%d not ISO_PDU_DT", code);
             throw Error(ERR_ISO_RECV_CODE_NOT_PDU_DT);
@@ -113,7 +89,9 @@ public:
         int len = stream.end - stream.p;
 
         // tpktHeader
-        pack_tpktHeader(stream, len);
+        stream.out_uint8(3);  /* version */
+        stream.out_uint8(0);  /* reserved */
+        stream.out_uint16_be(len); /* length */
 
         // x224 ? 2 F0 EOT
         stream.out_uint8(2);
@@ -121,7 +99,6 @@ public:
         stream.out_uint8(0x80); // EOT ?
 //        LOG(LOG_INFO, "iso_send data=%p iso_hdr=%p p=%p end=%p", stream.data, this->iso_hdr, stream.p, stream.end);
         t->send((char*)stream.data, stream.end - stream.data);
-
     }
 
 };
