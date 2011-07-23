@@ -160,10 +160,22 @@ struct rdp_sec {
 
     void rdp_lic_send_authresp(uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature)
     {
+        Stream stream(8192);
+        this->iso_layer.iso_init(stream);
+
         int sec_flags = SEC_LICENCE_NEG;
         int length = 58;
-        Stream stream(8192);
-        this->rdp_sec_init(stream, sec_flags);
+
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        int hdrlen = (sec_flags & SEC_ENCRYPT)          ? 12
+                   : this->lic_layer.licence_issued ? 0
+                   : 4 ;
+
+        stream.sec_hdr = stream.p;
+        stream.p += hdrlen;
+
         stream.out_uint8(LICENCE_TAG_AUTHRESP);
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
@@ -233,12 +245,24 @@ struct rdp_sec {
 
     void rdp_lic_send_request(uint8_t* client_random, uint8_t* rsa_data)
     {
+        Stream stream(8192);
+        this->iso_layer.iso_init(stream);
+
         int sec_flags = SEC_LICENCE_NEG;
         int userlen = strlen(this->username) + 1;
         int hostlen = strlen(this->hostname) + 1;
         int length = 128 + userlen + hostlen;
-        Stream stream(8192);
-        this->rdp_sec_init(stream, sec_flags);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        int hdrlen = (sec_flags & SEC_ENCRYPT)          ? 12
+                   : this->lic_layer.licence_issued ? 0
+                   : 4 ;
+
+        stream.sec_hdr = stream.p;
+        stream.p += hdrlen;
+
+
         stream.out_uint8(LICENCE_TAG_REQUEST);
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
@@ -264,11 +288,23 @@ struct rdp_sec {
                 uint8_t* licence_data, int licence_size, uint8_t* hwid,
                 uint8_t* signature)
     {
+        Stream stream(8192);
+        this->iso_layer.iso_init(stream);
+
         int sec_flags = SEC_LICENCE_NEG;
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
-        Stream stream(8192);
-        this->rdp_sec_init(stream, sec_flags);
+
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        int hdrlen = (sec_flags & SEC_ENCRYPT)          ? 12
+                   : this->lic_layer.licence_issued ? 0
+                   : 4 ;
+
+        stream.sec_hdr = stream.p;
+        stream.p += hdrlen;
+
         stream.out_uint8(LICENCE_TAG_PRESENT);
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
@@ -642,22 +678,6 @@ struct rdp_sec {
         ssl.rsa_encrypt(out, in, len, modulus_size, modulus, exponent);
     }
 
-    /* Initialise secure transport packet */
-    void rdp_sec_init(Stream & stream, uint32_t flags)
-    {
-        stream.init(8192);
-        this->iso_layer.iso_init(stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
-
-        int hdrlen = (flags & SEC_ENCRYPT)          ? 12
-                   : this->lic_layer.licence_issued ? 0
-                   : 4 ;
-
-        stream.sec_hdr = stream.p;
-        stream.p += hdrlen;
-    }
-
     /* Transmit secure transport packet over specified channel */
     void rdp_sec_send_to_channel(Stream & stream, uint32_t flags, uint16_t channel)
     {
@@ -689,11 +709,20 @@ struct rdp_sec {
     void rdp_sec_establish_key()
     {
         Stream stream(8192);
+        this->iso_layer.iso_init(stream);
 
         int length = this->server_public_key_len + SEC_PADDING_SIZE;
         int flags = SEC_CLIENT_RANDOM;
 
-        this->rdp_sec_init(stream, flags);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        int hdrlen = (flags & SEC_ENCRYPT)          ? 12
+                   : this->lic_layer.licence_issued ? 0
+                   : 4 ;
+
+        stream.sec_hdr = stream.p;
+        stream.p += hdrlen;
 
         stream.out_uint32_le(length);
         LOG(LOG_INFO, "Server public key is %d bytes long", this->server_public_key_len);
