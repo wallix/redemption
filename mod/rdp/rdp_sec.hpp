@@ -154,15 +154,15 @@ struct rdp_sec {
         ssl_rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
         memcpy(crypt_hwid, hwid, LICENCE_HWID_SIZE);
         ssl_rc4_crypt(crypt_key, crypt_hwid, LICENCE_HWID_SIZE);
-        this->rdp_lic_send_authresp(out_token, crypt_hwid, out_sig);
+
+        Stream stream2(8192);
+        this->iso_layer.iso_init(stream2);
+        this->rdp_lic_send_authresp(stream2, out_token, crypt_hwid, out_sig);
         ssl_rc4_info_delete(crypt_key);
     }
 
-    void rdp_lic_send_authresp(uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature)
+    void rdp_lic_send_authresp(Stream & stream, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature)
     {
-        Stream stream(8192);
-        this->iso_layer.iso_init(stream);
-
         int sec_flags = SEC_LICENCE_NEG;
         int length = 58;
 
@@ -235,19 +235,21 @@ struct rdp_sec {
             ssl_rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
             ssl_rc4_crypt(crypt_key, hwid, sizeof(hwid));
             ssl_rc4_info_delete(crypt_key);
-            this->rdp_lic_present(null_data, null_data, licence_data,
+
+            Stream stream(8192);
+            this->iso_layer.iso_init(stream);
+            this->rdp_lic_present(stream, null_data, null_data, licence_data,
                             licence_size, hwid, signature);
             delete(licence_data);
             return;
         }
-        this->rdp_lic_send_request(null_data, null_data);
+        Stream stream2(8192);
+        this->iso_layer.iso_init(stream2);
+        this->rdp_lic_send_request(stream2, null_data, null_data);
     }
 
-    void rdp_lic_send_request(uint8_t* client_random, uint8_t* rsa_data)
+    void rdp_lic_send_request(Stream & stream, uint8_t* client_random, uint8_t* rsa_data)
     {
-        Stream stream(8192);
-        this->iso_layer.iso_init(stream);
-
         int sec_flags = SEC_LICENCE_NEG;
         int userlen = strlen(this->username) + 1;
         int hostlen = strlen(this->hostname) + 1;
@@ -284,13 +286,10 @@ struct rdp_sec {
         this->rdp_sec_send(stream, sec_flags);
     }
 
-    void rdp_lic_present(uint8_t* client_random, uint8_t* rsa_data,
+    void rdp_lic_present(Stream & stream, uint8_t* client_random, uint8_t* rsa_data,
                 uint8_t* licence_data, int licence_size, uint8_t* hwid,
                 uint8_t* signature)
     {
-        Stream stream(8192);
-        this->iso_layer.iso_init(stream);
-
         int sec_flags = SEC_LICENCE_NEG;
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
@@ -706,11 +705,8 @@ struct rdp_sec {
 
 
     /* Transfer the client random to the server */
-    void rdp_sec_establish_key()
+    void rdp_sec_establish_key(Stream & stream)
     {
-        Stream stream(8192);
-        this->iso_layer.iso_init(stream);
-
         int length = this->server_public_key_len + SEC_PADDING_SIZE;
         int flags = SEC_CLIENT_RANDOM;
 
@@ -1322,7 +1318,9 @@ struct rdp_sec {
 
         LOG(LOG_INFO, "Iso Layer : setting encryption\n");
 //        if (this->encryption){
-            this->rdp_sec_establish_key();
+            Stream stream(8192);
+            this->iso_layer.iso_init(stream);
+            this->rdp_sec_establish_key(stream);
 //        }
     }
 
