@@ -187,7 +187,9 @@ struct rdp_sec {
         stream.out_copy_bytes(crypt_hwid, LICENCE_HWID_SIZE);
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
         stream.mark_end();
-        this->rdp_sec_send(stream, sec_flags);
+        this->rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
+        this->iso_layer.iso_send(this->mcs_layer.trans, stream);
+
     }
 
     void rdp_lic_process_demand(Stream & stream)
@@ -236,9 +238,7 @@ struct rdp_sec {
             ssl_rc4_crypt(crypt_key, hwid, sizeof(hwid));
             ssl_rc4_info_delete(crypt_key);
 
-            Stream stream(8192);
-            this->iso_layer.iso_init(stream);
-            this->rdp_lic_present(stream, null_data, null_data, licence_data,
+            this->rdp_lic_present(null_data, null_data, licence_data,
                             licence_size, hwid, signature);
             delete(licence_data);
             return;
@@ -283,13 +283,17 @@ struct rdp_sec {
         stream.out_uint16_le(hostlen);
         stream.out_copy_bytes(this->hostname, hostlen);
         stream.mark_end();
-        this->rdp_sec_send(stream, sec_flags);
+        this->rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
+        this->iso_layer.iso_send(this->mcs_layer.trans, stream);
     }
 
-    void rdp_lic_present(Stream & stream, uint8_t* client_random, uint8_t* rsa_data,
+    void rdp_lic_present(uint8_t* client_random, uint8_t* rsa_data,
                 uint8_t* licence_data, int licence_size, uint8_t* hwid,
                 uint8_t* signature)
     {
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
         int sec_flags = SEC_LICENCE_NEG;
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
@@ -323,7 +327,11 @@ struct rdp_sec {
         stream.out_copy_bytes(hwid, LICENCE_HWID_SIZE);
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
         stream.mark_end();
-        this->rdp_sec_send(stream, sec_flags);
+
+        this->rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
+
+        tpdu.end();
+        tpdu.send(this->mcs_layer.trans);
     }
 
     #warning see string management for load_licence and save_licence
@@ -694,15 +702,7 @@ struct rdp_sec {
         }
 
         this->mcs_layer.rdp_mcs_send_to_channel(stream, channel);
-        this->iso_layer.iso_send(this->mcs_layer.trans, stream);
     }
-
-    /* Transmit secure transport packet */
-    void rdp_sec_send(Stream & stream, uint32_t flags)
-    {
-        this->rdp_sec_send_to_channel(stream, flags, MCS_GLOBAL_CHANNEL);
-    }
-
 
     /* Transfer the client random to the server */
     void rdp_sec_establish_key(Stream & stream)
@@ -726,7 +726,9 @@ struct rdp_sec {
         stream.out_clear_bytes(SEC_PADDING_SIZE);
 
         stream.mark_end();
-        this->rdp_sec_send(stream, flags);
+        this->rdp_sec_send_to_channel(stream, flags, MCS_GLOBAL_CHANNEL);
+        this->iso_layer.iso_send(this->mcs_layer.trans, stream);
+
     }
 
     /* Parse a public key structure */
