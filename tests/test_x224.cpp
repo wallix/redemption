@@ -40,6 +40,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU)
     BOOST_CHECK_EQUAL(X224Packet::CR_TPDU, tpdu.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(6, tpdu.tpdu_hdr.LI);
 
+    BOOST_CHECK_EQUAL(11, stream.p - stream.data);
     BOOST_CHECK_EQUAL(stream.end, stream.data+tpdu.tpkt.len);
 }
 
@@ -53,6 +54,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU)
     BOOST_CHECK_EQUAL(X224Packet::CC_TPDU, tpdu.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(6, tpdu.tpdu_hdr.LI);
 
+    BOOST_CHECK_EQUAL(stream.p, stream.data+11);
     BOOST_CHECK_EQUAL(stream.end, stream.data+tpdu.tpkt.len);
 }
 
@@ -67,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU)
     BOOST_CHECK_EQUAL(X224Packet::DR_TPDU, tpdu.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(6, tpdu.tpdu_hdr.LI);
     BOOST_CHECK_EQUAL(1, tpdu.tpdu_hdr.reason);
-
+    BOOST_CHECK_EQUAL(stream.p, stream.data+11);
     BOOST_CHECK_EQUAL(stream.end, stream.data+tpdu.tpkt.len);
 }
 
@@ -91,6 +93,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU)
     BOOST_CHECK_EQUAL(0x34, stream.p[1]);
     BOOST_CHECK_EQUAL(0x56, stream.p[2]);
     BOOST_CHECK_EQUAL(0x78, stream.p[3]);
+    BOOST_CHECK_EQUAL(stream.p, stream.data+7);
     BOOST_CHECK_EQUAL(stream.end, stream.data+tpdu.tpkt.len);
 }
 
@@ -108,6 +111,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU)
     BOOST_CHECK_EQUAL(8, tpdu.tpdu_hdr.LI);
     BOOST_CHECK_EQUAL(2, tpdu.tpdu_hdr.reject_cause);
 
+    BOOST_CHECK_EQUAL(13, stream.p - stream.data);
     BOOST_CHECK_EQUAL(stream.end, stream.data+tpdu.tpkt.len);
 }
 

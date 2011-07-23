@@ -1238,8 +1238,7 @@ struct rdp_sec {
 
             int len = 0;
             Stream stream(8192);
-
-            this->mcs_layer.iso_layer.iso_recv(this->mcs_layer.trans, stream);
+            X224In(this->mcs_layer.trans, stream);
             len = this->mcs_layer.ber_parse_header(stream, MCS_CONNECT_RESPONSE);
             len = this->mcs_layer.ber_parse_header(stream, BER_TAG_RESULT);
 
