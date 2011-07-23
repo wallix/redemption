@@ -32,6 +32,8 @@
 #include "rsa_keys.hpp"
 #include "constants.hpp"
 
+#include "x224.hpp"
+
 #include <assert.h>
 #include <stdint.h>
 
@@ -1256,8 +1258,17 @@ struct server_sec {
 // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
 //   section 13.7.
 
-        this->mcs_layer.iso_layer.iso_incoming(this->mcs_layer.trans);
-
+        #warning using a template for default size would make sense
+        Stream in(8192);
+        X224In crtpdu(this->mcs_layer.trans, in);
+        if (crtpdu.tpdu_hdr.code != ISO_PDU_CR) {
+            throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
+        }
+        #warning using a template for default size would make sense
+        Stream out(11);
+        X224Out cctpdu(X224Packet::CC_TPDU, out);
+        cctpdu.end();
+        cctpdu.send(this->mcs_layer.trans);
 
 // mcsCi (variable): Variable-length BER-encoded MCS Connect Initial structure
 //   (using definite-length encoding) as described in [T125] (the ASN.1
