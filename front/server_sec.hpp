@@ -588,6 +588,7 @@ struct server_sec {
 
     void server_sec_send(Stream & stream, int chan)
     {
+        uint8_t * oldp = stream.p;
         stream.p = stream.sec_hdr;
         if (this->client_info->crypt_level > 1) {
             stream.out_uint32_le(SEC_ENCRYPT);
@@ -600,7 +601,7 @@ struct server_sec {
 
 //        LOG(LOG_INFO, "server_mcs_send 4");
         this->mcs_layer.server_mcs_send(stream, chan);
-        this->mcs_layer.iso_layer.iso_send(this->mcs_layer.trans, stream);
+        stream.p = oldp;
     }
 
     // 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)

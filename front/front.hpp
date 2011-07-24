@@ -210,6 +210,8 @@ struct GraphicsUpdatePDU
 //            LOG(LOG_INFO, "server_sec_send front");
             stream.mark_end();
             this->rdp_layer.sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+            this->rdp_layer.sec_layer.mcs_layer.iso_layer.iso_send(this->rdp_layer.sec_layer.mcs_layer.trans, stream);
+
 
             this->init();
         }

@@ -110,6 +110,7 @@ struct server_rdp {
 //        LOG(LOG_INFO, "RDP Packet #%u (type=?? send to channel)", this->packet_number++);
 //        LOG(LOG_INFO, "server_sec_send 8");
         this->sec_layer.server_sec_send(stream, channel_id);
+        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
     }
 
     // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
@@ -164,6 +165,7 @@ struct server_rdp {
 //        LOG(LOG_INFO, "server_sec_send 9");
         stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
     }
 
 // [MS-RDPBCGR] 2.2.8.1.1.1.1 Share Control Header (TS_SHARECONTROLHEADER)
@@ -569,6 +571,7 @@ struct server_rdp {
 //        LOG(LOG_INFO, "server_sec_send 10");
         stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
     }
 
 
@@ -631,6 +634,7 @@ struct server_rdp {
 //        LOG(LOG_INFO, "server_sec_send 11");
         stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
     }
 
     void activate_and_process_data(Callback & cb)
@@ -836,6 +840,7 @@ struct server_rdp {
 //        LOG(LOG_INFO, "server_sec_send 1");
         stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
     }
 
     void server_rdp_incoming() throw (Error)
@@ -1026,6 +1031,7 @@ struct server_rdp {
 //        LOG(LOG_INFO, "RDP Packet #%u (type=%u)", this->packet_number++, PDUTYPE_DEMANDACTIVEPDU);
 //        LOG(LOG_INFO, "server_sec_send 2");
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
 
     }
 
@@ -1287,6 +1293,7 @@ struct server_rdp {
 //        LOG(LOG_INFO, "server_sec_send 3");
         stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
     }
 
 // 2.2.1.15.1 Control PDU Data (TS_CONTROL_PDU)
@@ -1339,6 +1346,7 @@ struct server_rdp {
 //        LOG(LOG_INFO, "server_sec_send 4");
         stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
     }
 
 
@@ -1394,6 +1402,7 @@ struct server_rdp {
 //        LOG(LOG_INFO, "server_sec_send 5");
         stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
     }
 
     /* PDUTYPE_DATAPDU */
@@ -1499,6 +1508,7 @@ struct server_rdp {
 //                LOG(LOG_INFO, "server_sec_send 6");
                 stream.mark_end();
                 this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+                this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
             }
             break;
         case PDUTYPE2_FONTLIST: /* 39(0x27) */
@@ -1560,6 +1570,7 @@ struct server_rdp {
 //        LOG(LOG_INFO, "RDP Packet #%u (type=%u (PDUTYPE_DEACTIVATEALLPDU))", this->packet_number++, PDUTYPE_DEACTIVATEALLPDU);
 //        LOG(LOG_INFO, "server_sec_send 7");
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
     }
 };
 
