@@ -32,7 +32,7 @@
 #include "rsa_keys.hpp"
 #include "constants.hpp"
 
-#include "x224.hpp"
+#include "RDP/x224.hpp"
 
 #include <assert.h>
 #include <stdint.h>
@@ -1361,7 +1361,7 @@ struct server_sec {
         //   x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
         //      section 13.7.
 
-        // See iso_layer.hpp for description of tpktHeader and x224Data
+        // See description of tpktHeader and x224 Data TPDU in cheat sheet
 
         //   mcsEDrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an MCS
         //      Erect Domain Request structure, as specified in [T125] (the ASN.1

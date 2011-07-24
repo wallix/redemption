@@ -24,7 +24,7 @@
 #if !defined(__RDP_MCS_HPP__)
 #define __RDP_MCS_HPP__
 
-#include "x224.hpp"
+#include "RDP/x224.hpp"
 
 #include <iostream>
 #include <vector>

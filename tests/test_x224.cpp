@@ -27,7 +27,7 @@
 
 #include "stream.hpp"
 #include "transport.hpp"
-#include "x224.hpp"
+#include "RDP/x224.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU)

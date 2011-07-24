@@ -28,11 +28,10 @@
 #include "rdp_sec.hpp"
 #include "rdp_orders.hpp"
 #include "client_mod.hpp"
-#include "iso_layer.hpp"
+#include "RDP/x224.hpp"
 
 /* rdp */
 struct rdp_rdp {
-    struct IsoLayer iso_layer;
     rdp_sec sec_layer;
     rdp_orders orders;
     int share_id;
@@ -538,73 +537,80 @@ struct rdp_rdp {
 
         void send_control(Stream & stream, int action) throw (Error)
         {
-            this->init_data(stream);
+            stream.init(8192);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+            stream.mcs_hdr = stream.p;
+            stream.p += 8;
+
+            stream.sec_hdr = stream.p;
+            stream.p += 12 ; // SEC_ENCRYPT
+
+            stream.rdp_hdr = stream.p;
+            stream.p += 18;
+
             stream.out_uint16_le(action);
             stream.out_uint16_le(0); /* userid */
             stream.out_uint32_le(0); /* control id */
             stream.mark_end();
             this->send_data(stream, PDUTYPE2_CONTROL, MCS_GLOBAL_CHANNEL);
+
+            tpdu.end();
+            tpdu.send(this->sec_layer.mcs_layer.trans);
         }
 
 
         void send_synchronise(Stream & stream) throw (Error)
         {
-            this->init_data(stream);
+            stream.init(8192);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+            stream.mcs_hdr = stream.p;
+            stream.p += 8;
+
+            stream.sec_hdr = stream.p;
+            stream.p += 12 ; // SEC_ENCRYPT
+
+            stream.rdp_hdr = stream.p;
+            stream.p += 18;
+
             stream.out_uint16_le(1); /* type */
             stream.out_uint16_le(1002);
             stream.mark_end();
             this->send_data(stream, PDUTYPE2_SYNCHRONIZE, MCS_GLOBAL_CHANNEL);
+
+            tpdu.end();
+            tpdu.send(this->sec_layer.mcs_layer.trans);
         }
 
         void send_fonts(Stream & stream, int seq) throw(Error)
         {
-            this->init_data(stream);
+            stream.init(8192);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+            stream.mcs_hdr = stream.p;
+            stream.p += 8;
+
+            stream.sec_hdr = stream.p;
+            stream.p += 12 ; // SEC_ENCRYPT
+
+            stream.rdp_hdr = stream.p;
+            stream.p += 18;
+
             stream.out_uint16_le(0); /* number of fonts */
             stream.out_uint16_le(0); /* pad? */
             stream.out_uint16_le(seq); /* unknown */
             stream.out_uint16_le(0x32); /* entry size */
             stream.mark_end();
             this->send_data(stream, PDUTYPE2_FONTLIST, MCS_GLOBAL_CHANNEL);
+
+            tpdu.end();
+            tpdu.send(this->sec_layer.mcs_layer.trans);
         }
 
     #define RDP5_FLAG 0x0030
 
     public:
-
-        void init(Stream & stream) throw(Error)
-        {
-            stream.init(8192);
-            this->iso_layer.iso_init(stream);
-            stream.mcs_hdr = stream.p;
-            stream.p += 8;
-
-            int hdrlen = 12 ; // SEC_ENCRYPT
-
-            stream.sec_hdr = stream.p;
-            stream.p += hdrlen;
-
-            stream.rdp_hdr = stream.p;
-            stream.p += 6;
-        }
-
-        void rdp_channel_init(Stream & stream)
-        {
-            stream.init(8192);
-            this->iso_layer.iso_init(stream);
-            stream.mcs_hdr = stream.p;
-            stream.p += 8;
-
-            int hdrlen = 12 ; // SEC_ENCRYPT
-
-            stream.sec_hdr = stream.p;
-            stream.p += hdrlen;
-
-
-            stream.channel_hdr = stream.p;
-            stream.p += 8;
-        }
-
-        /******************************************************************************/
 
         /* Send persistent bitmap cache enumeration PDU's
         Not implemented yet because it should be implemented
@@ -739,60 +745,10 @@ struct rdp_rdp {
             LOG(LOG_INFO, "send login info ok\n");
         }
 
-
-        void send(Stream & stream, int pdu_type) throw(Error)
-        {
-            stream.p = stream.rdp_hdr;
-            int len = stream.end - stream.p;
-            stream.out_uint16_le(len);
-
-            /* Added in order to adapt to version 5 packet */
-            if (this->use_rdp5)
-            {
-                stream.out_uint16_le(PDUTYPE_DATAPDU | 0x10);
-                stream.out_uint16_le(this->sec_layer.mcs_layer.userid);
-                stream.out_uint32_le(this->share_id);
-                stream.out_uint8(0);  /* pad */
-                stream.out_uint8(1);  /* stream id*/
-                stream.out_uint16_le(len - 14);
-                stream.out_uint8(pdu_type);
-                stream.out_uint8(0);  /* compress type */
-                stream.out_uint16_le(0);  /* compress length */
-            }
-            else {
-                stream. out_uint16_le(pdu_type | 0x10);
-                stream.out_uint16_le(this->sec_layer.mcs_layer.userid);
-            }
-
-            stream.init(8192);
-            this->iso_layer.iso_init(stream);
-            stream.mcs_hdr = stream.p;
-            stream.p += 8;
-
-            stream.sec_hdr = stream.p;
-            stream.p += 12 ; // SEC_ENCRYPT
-        }
-
-        /* Initialise an RDP data packet */
-        int init_data(Stream & stream)
-        {
-            stream.init(8192);
-            this->iso_layer.iso_init(stream);
-
-            stream.mcs_hdr = stream.p;
-            stream.p += 8;
-
-            stream.sec_hdr = stream.p;
-            stream.p += 12 ; // SEC_ENCRYPT
-
-            stream.rdp_hdr = stream.p;
-            stream.p += 18;
-            return 0;
-        }
-
         /* Send an RDP data packet */
         void send_data(Stream & stream, int pdu_data_type, int chan_id) throw(Error)
         {
+            uint8_t * oldp = stream.p;
             stream.p = stream.rdp_hdr;
             int len = stream.end - stream.p;
             stream.out_uint16_le(len);
@@ -807,8 +763,7 @@ struct rdp_rdp {
             stream.out_uint16_le(0); /* compress len */
             int sec_flags = SEC_ENCRYPT;
             this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, chan_id);
-            this->iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
-
+            stream.p = oldp;
         }
 
 
@@ -817,7 +772,18 @@ struct rdp_rdp {
         {
 //            LOG(LOG_INFO, "send_input\n");
 
-            this->init_data(stream);
+            stream.init(8192);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+            stream.mcs_hdr = stream.p;
+            stream.p += 8;
+
+            stream.sec_hdr = stream.p;
+            stream.p += 12 ; // SEC_ENCRYPT
+
+            stream.rdp_hdr = stream.p;
+            stream.p += 18;
+
             stream.out_uint16_le(1); /* number of events */
             stream.out_uint16_le(0);
             stream.out_uint32_le(time);
@@ -827,12 +793,26 @@ struct rdp_rdp {
             stream.out_uint16_le(param2);
             stream.mark_end();
             this->send_data(stream, PDUTYPE2_INPUT, MCS_GLOBAL_CHANNEL);
+
+            tpdu.end();
+            tpdu.send(this->sec_layer.mcs_layer.trans);
         }
 
         void send_invalidate(Stream & stream,int left, int top, int width, int height) throw(Error)
         {
             LOG(LOG_INFO, "send_invalidate\n");
-            this->init_data(stream);
+            stream.init(8192);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+            stream.mcs_hdr = stream.p;
+            stream.p += 8;
+
+            stream.sec_hdr = stream.p;
+            stream.p += 12 ; // SEC_ENCRYPT
+
+            stream.rdp_hdr = stream.p;
+            stream.p += 18;
+
             stream.out_uint32_le(1);
             stream.out_uint16_le(left);
             stream.out_uint16_le(top);
@@ -840,6 +820,9 @@ struct rdp_rdp {
             stream.out_uint16_le((top + height) - 1);
             stream.mark_end();
             this->send_data(stream, PDUTYPE2_REFRESH_RECT, MCS_GLOBAL_CHANNEL);
+
+            tpdu.end();
+            tpdu.send(this->sec_layer.mcs_layer.trans);
         }
 
 
@@ -1006,7 +989,21 @@ struct rdp_rdp {
             send_data also in order to be able to redirect data in the correct
             way*/
             Stream stream(8192);
-            this->rdp_channel_init(stream);
+
+            stream.init(8192);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+            stream.mcs_hdr = stream.p;
+            stream.p += 8;
+
+            int hdrlen = 12 ; // SEC_ENCRYPT
+
+            stream.sec_hdr = stream.p;
+            stream.p += hdrlen;
+
+            stream.channel_hdr = stream.p;
+            stream.p += 8;
+
             stream.p = stream.channel_hdr;
 
             stream.out_uint32_le(total_data_length);
@@ -1022,7 +1019,9 @@ struct rdp_rdp {
             virtual_channel packet and not an MCS_GLOBAL_CHANNEL packet */
             this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, channel_id);
 //            LOG(LOG_INFO, "send_redirect_pdu done\n");
-            this->iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+
+            tpdu.end();
+            tpdu.send(this->sec_layer.mcs_layer.trans);
         }
 
     void process_color_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
