@@ -29,7 +29,6 @@
 #include "constants.hpp"
 #include "file_loc.hpp"
 #include "log.hpp"
-#include "iso_layer.hpp"
 #include "x224.hpp"
 
 #include <string.h>
@@ -56,7 +55,6 @@ struct mcs_channel_item {
 /* mcs */
 struct server_mcs {
     struct Transport *trans;
-    struct IsoLayer iso_layer;
     int userid;
     int chanid;
     Stream data;
@@ -175,15 +173,6 @@ struct server_mcs {
 
         tpdu.end();
         tpdu.send(this->trans);
-    }
-
-    void server_mcs_init(Stream & stream)
-    {
-//        LOG(LOG_INFO, "server_mcs_init");
-        #warning this one should move to constructor, but it means also moving server_mcs_init to constructor
-        this->iso_layer.iso_init(stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
     }
 
     /* returns a zero based index of the channel,
