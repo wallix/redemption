@@ -134,6 +134,7 @@ struct server_mcs {
     void server_mcs_send(Stream & stream, int chan) throw (Error)
     {
 //        LOG(LOG_INFO, "server_mcs_send data=%p p=%p end=%p", stream.data, stream.p, stream.end);
+        uint8_t * oldp = stream.p;
         stream.p = stream.mcs_hdr;
         int len = (stream.end - stream.p) - 8;
         if (len > 8192 * 2) {
@@ -160,6 +161,7 @@ struct server_mcs {
             }
             stream.end--;
         }
+        stream.p = oldp;
     }
 
     void server_mcs_disconnect() throw (Error)

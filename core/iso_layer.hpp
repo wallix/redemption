@@ -67,7 +67,7 @@ public:
         stream.out_uint8(2);
         stream.out_uint8(ISO_PDU_DT);
         stream.out_uint8(0x80); // EOT ?
-//        LOG(LOG_INFO, "iso_send data=%p iso_hdr=%p p=%p end=%p", stream.data, this->iso_hdr, stream.p, stream.end);
+//        LOG(LOG_INFO, "iso_send data=%p p=%p end=%p", stream.data, stream.p, stream.end);
         t->send((char*)stream.data, stream.end - stream.data);
     }
 

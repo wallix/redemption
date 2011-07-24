@@ -432,10 +432,13 @@ struct X224Out : public X224Packet
         size_t len = stream.end - stream.data;
         stream.set_out_uint8(len >> 8, 2);
         stream.set_out_uint8(len & 0xFF, 3);
+//        LOG(LOG_INFO, "2) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", stream.data[0], stream.data[1], stream.data[2], stream.data[3], stream.data[4], stream.data[5], stream.data[6], stream.data[7]);
     }
 
     void send(Transport * t)
     {
+//        LOG(LOG_INFO, "3) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", stream.data[0], stream.data[1], stream.data[2], stream.data[3], stream.data[4], stream.data[5], stream.data[6], stream.data[7]);
+
         t->send((char*)stream.data, stream.end - stream.data);
     }
 };
