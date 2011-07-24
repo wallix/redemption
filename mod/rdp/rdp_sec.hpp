@@ -25,7 +25,7 @@
 #if !defined(__RDP_SEC_HPP__)
 #define __RDP_SEC_HPP__
 
-#include "x224.hpp"
+#include "RDP/x224.hpp"
 #include "rdp_mcs.hpp"
 #include "client_mod.hpp"
 
@@ -680,6 +680,7 @@ struct rdp_sec {
     /* Transmit secure transport packet over specified channel */
     void rdp_sec_send_to_channel(Stream & stream, uint32_t flags, uint16_t channel)
     {
+        uint8_t * oldp = stream.p;
         stream.p = stream.sec_hdr;
         if (!this->lic_layer.licence_issued || (flags & SEC_ENCRYPT)){
                 stream.out_uint32_le(flags);
@@ -694,6 +695,7 @@ struct rdp_sec {
         }
 
         this->mcs_layer.rdp_mcs_send_to_channel(stream, channel);
+        stream.p = oldp;
     }
 
     /* Transfer the client random to the server */

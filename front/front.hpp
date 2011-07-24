@@ -46,7 +46,7 @@
 #include "bitmap_cache.hpp"
 #include "cache.hpp"
 
-#include "x224.hpp"
+#include "RDP/x224.hpp"
 #include "server_rdp.hpp"
 
 #include "RDP/orders/RDPOrdersCommon.hpp"

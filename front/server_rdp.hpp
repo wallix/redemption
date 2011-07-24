@@ -32,7 +32,7 @@
 #include "callback.hpp"
 #include "colors.hpp"
 #include "altoco.hpp"
-#include "x224.hpp"
+#include "RDP/x224.hpp"
 
 /* rdp */
 struct server_rdp {
