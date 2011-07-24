@@ -173,8 +173,20 @@ struct GraphicsUpdatePDU
 
     void init(){
         this->stream.init(4096);
-//        LOG(LOG_INFO, "server_sec_init data=%p p=%p end=%p", this->stream.data, this->stream.p, this->stream.end);
-        this->rdp_layer.sec_layer.server_sec_init(this->stream);
+
+        this->rdp_layer.sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        if (this->rdp_layer.sec_layer.client_info->crypt_level > 1) {
+            stream.sec_hdr = stream.p;
+            stream.p += 4 + 8;
+        }
+        else {
+            stream.sec_hdr = stream.p;
+            stream.p += 4;
+        }
+
         #warning we should define some kind of OrdersStream, to buffer in orders
         this->offset_header = this->stream.p - this->stream.data;
 

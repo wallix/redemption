@@ -72,7 +72,20 @@ struct server_rdp {
                                int total_data_len, int flags) throw (Error)
     {
         Stream stream(data_len + 1024); /* this should be big enough */
-        this->sec_layer.server_sec_init(stream);
+
+        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        if (this->sec_layer.client_info->crypt_level > 1) {
+            stream.sec_hdr = stream.p;
+            stream.p += 4 + 8;
+        }
+        else {
+            stream.sec_hdr = stream.p;
+            stream.p += 4;
+        }
+
         stream.channel_hdr = stream.p;
         stream.p += 8;
 
@@ -117,7 +130,20 @@ struct server_rdp {
     {
         #warning we should create some RDPData object created on init and sent before destruction
         Stream stream(8192);
-        this->sec_layer.server_sec_init(stream);
+
+        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        if (this->sec_layer.client_info->crypt_level > 1) {
+            stream.sec_hdr = stream.p;
+            stream.p += 4 + 8;
+        }
+        else {
+            stream.sec_hdr = stream.p;
+            stream.p += 4;
+        }
+
         stream.rdp_hdr = stream.p;
         stream.p += 18;
         stream.out_uint16_le(RDP_UPDATE_PALETTE);
@@ -447,7 +473,20 @@ struct server_rdp {
     void server_rdp_send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
     {
         Stream stream(8192);
-        this->sec_layer.server_sec_init(stream);
+
+        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        if (this->sec_layer.client_info->crypt_level > 1) {
+            stream.sec_hdr = stream.p;
+            stream.p += 4 + 8;
+        }
+        else {
+            stream.sec_hdr = stream.p;
+            stream.p += 4;
+        }
+
         stream.rdp_hdr = stream.p;
         stream.p += 18;
 
@@ -570,7 +609,20 @@ struct server_rdp {
     void server_rdp_set_pointer(int cache_idx) throw (Error)
     {
         Stream stream(8192);
-        this->sec_layer.server_sec_init(stream);
+
+        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        if (this->sec_layer.client_info->crypt_level > 1) {
+            stream.sec_hdr = stream.p;
+            stream.p += 4 + 8;
+        }
+        else {
+            stream.sec_hdr = stream.p;
+            stream.p += 4;
+        }
+
         stream.rdp_hdr = stream.p;
         stream.p += 18;
 
@@ -765,7 +817,20 @@ struct server_rdp {
     void server_rdp_send_data_update_sync() throw (Error)
     {
         Stream stream(8192);
-        this->sec_layer.server_sec_init(stream);
+
+        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        if (this->sec_layer.client_info->crypt_level > 1) {
+            stream.sec_hdr = stream.p;
+            stream.p += 4 + 8;
+        }
+        else {
+            stream.sec_hdr = stream.p;
+            stream.p += 4;
+        }
+
         stream.rdp_hdr = stream.p;
         stream.p += 18;
         stream.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
@@ -795,7 +860,19 @@ struct server_rdp {
 
         Stream stream(8192);
 
-        this->sec_layer.server_sec_init(stream);
+        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        if (this->sec_layer.client_info->crypt_level > 1) {
+            stream.sec_hdr = stream.p;
+            stream.p += 4 + 8;
+        }
+        else {
+            stream.sec_hdr = stream.p;
+            stream.p += 4;
+        }
+
         stream.rdp_hdr = stream.p;
         stream.p += 6;
 
@@ -1192,7 +1269,20 @@ struct server_rdp {
     void server_rdp_send_synchronize()
     {
         Stream stream(8192);
-        this->sec_layer.server_sec_init(stream);
+
+        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        if (this->sec_layer.client_info->crypt_level > 1) {
+            stream.sec_hdr = stream.p;
+            stream.p += 4 + 8;
+        }
+        else {
+            stream.sec_hdr = stream.p;
+            stream.p += 4;
+        }
+
         stream.rdp_hdr = stream.p;
         stream.p += 18;
 
@@ -1231,7 +1321,20 @@ struct server_rdp {
     void server_rdp_send_control(int action)
     {
         Stream stream(8192);
-        this->sec_layer.server_sec_init(stream);
+
+        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        if (this->sec_layer.client_info->crypt_level > 1) {
+            stream.sec_hdr = stream.p;
+            stream.p += 4 + 8;
+        }
+        else {
+            stream.sec_hdr = stream.p;
+            stream.p += 4;
+        }
+
         stream.rdp_hdr = stream.p;
         stream.p += 18;
 
@@ -1277,7 +1380,20 @@ struct server_rdp {
 
         #warning we should create some RDPStream object created on init and sent before destruction
         Stream stream(8192);
-        this->sec_layer.server_sec_init(stream);
+
+        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        if (this->sec_layer.client_info->crypt_level > 1) {
+            stream.sec_hdr = stream.p;
+            stream.p += 4 + 8;
+        }
+        else {
+            stream.sec_hdr = stream.p;
+            stream.p += 4;
+        }
+
         stream.rdp_hdr = stream.p;
         stream.p += 18;
         stream.out_copy_bytes((char*)g_fontmap, 172);
@@ -1372,7 +1488,20 @@ struct server_rdp {
                 // so the client is sure the connection is alive and it can ask
                 // if user really wants to disconnect */
                 Stream stream(8192);
-                this->sec_layer.server_sec_init(stream);
+
+                this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+                stream.mcs_hdr = stream.p;
+                stream.p += 8;
+
+                if (this->sec_layer.client_info->crypt_level > 1) {
+                    stream.sec_hdr = stream.p;
+                    stream.p += 4 + 8;
+                }
+                else {
+                    stream.sec_hdr = stream.p;
+                    stream.p += 4;
+                }
+
                 stream.rdp_hdr = stream.p;
                 stream.p += 18;
                 this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_SHUTDOWN_DENIED, stream.rdp_hdr - stream.data);
@@ -1414,7 +1543,20 @@ struct server_rdp {
     {
         #warning we should create some RDPStream object created on init and sent before destruction
         Stream stream(8192);
-        this->sec_layer.server_sec_init(stream);
+
+        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        if (this->sec_layer.client_info->crypt_level > 1) {
+            stream.sec_hdr = stream.p;
+            stream.p += 4 + 8;
+        }
+        else {
+            stream.sec_hdr = stream.p;
+            stream.p += 4;
+        }
+
         stream.rdp_hdr = stream.p;
         stream.p += 6;
         stream.mark_end();
