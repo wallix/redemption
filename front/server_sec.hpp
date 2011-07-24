@@ -262,21 +262,6 @@ struct server_sec {
         }
     }
 
-    void server_sec_init(Stream & stream) throw (Error)
-    {
-        this->mcs_layer.server_mcs_init(stream);
-        if (this->client_info->crypt_level > 1) {
-            stream.sec_hdr = stream.p;
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.sec_hdr = stream.p;
-            stream.p += 4;
-        }
-    }
-
-
-
     void server_sec_encrypt(uint8_t* data, int len) throw (Error)
     {
         if (this->encrypt_use_count == 4096) {
@@ -355,7 +340,6 @@ struct server_sec {
        };
 
         Stream stream(8192);
-//        this->mcs_layer.server_mcs_init(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
@@ -364,8 +348,8 @@ struct server_sec {
 
         stream.mark_end();
         this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
+
         tpdu.end();
-//        this->mcs_layer.iso_layer.iso_send(this->mcs_layer.trans, stream);
         tpdu.send(this->mcs_layer.trans);
     }
 
@@ -377,10 +361,7 @@ struct server_sec {
                                  0x28, 0x14, 0x00, 0x00
                                };
         Stream stream(8192);
-//        this->mcs_layer.server_mcs_init(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-//        LOG(LOG_INFO, "before: iso_send data=%p p=%p end=%p", stream.data, stream.p, stream.end);
-//        LOG(LOG_INFO, "1) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", stream.data[0], stream.data[1], stream.data[2], stream.data[3], stream.data[4], stream.data[5], stream.data[6], stream.data[7]);
 
         stream.mcs_hdr = stream.p;
         stream.p += 8;
@@ -388,9 +369,8 @@ struct server_sec {
         stream.out_copy_bytes((char*)lic2, 20);
         stream.mark_end();
         this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
+
         tpdu.end();
-//        this->mcs_layer.iso_layer.iso_send(this->mcs_layer.trans, stream);
-//        LOG(LOG_INFO, "after : iso_send data=%p p=%p end=%p", stream.data, stream.p, stream.end);
         tpdu.send(this->mcs_layer.trans);
     }
 
@@ -1285,6 +1265,7 @@ struct server_sec {
         if (crtpdu.tpdu_hdr.code != ISO_PDU_CR) {
             throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
         }
+
         #warning using a template for default size would make sense
         Stream out(11);
         X224Out cctpdu(X224Packet::CC_TPDU, out);
