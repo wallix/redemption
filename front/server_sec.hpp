@@ -355,13 +355,18 @@ struct server_sec {
        };
 
         Stream stream(8192);
-        this->mcs_layer.server_mcs_init(stream);
+//        this->mcs_layer.server_mcs_init(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
         stream.out_copy_bytes((char*)lic1, 322);
 
-//        LOG(LOG_INFO, "server_mcs_send 1");
         stream.mark_end();
         this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
-        this->mcs_layer.iso_layer.iso_send(this->mcs_layer.trans, stream);
+        tpdu.end();
+//        this->mcs_layer.iso_layer.iso_send(this->mcs_layer.trans, stream);
+        tpdu.send(this->mcs_layer.trans);
     }
 
     void server_sec_send_lic_response() throw (Error)
@@ -372,13 +377,21 @@ struct server_sec {
                                  0x28, 0x14, 0x00, 0x00
                                };
         Stream stream(8192);
-        this->mcs_layer.server_mcs_init(stream);
-        stream.out_copy_bytes((char*)lic2, 20);
+//        this->mcs_layer.server_mcs_init(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+//        LOG(LOG_INFO, "before: iso_send data=%p p=%p end=%p", stream.data, stream.p, stream.end);
+//        LOG(LOG_INFO, "1) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", stream.data[0], stream.data[1], stream.data[2], stream.data[3], stream.data[4], stream.data[5], stream.data[6], stream.data[7]);
 
-//        LOG(LOG_INFO, "server_mcs_send 2");
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        stream.out_copy_bytes((char*)lic2, 20);
         stream.mark_end();
         this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
-        this->mcs_layer.iso_layer.iso_send(this->mcs_layer.trans, stream);
+        tpdu.end();
+//        this->mcs_layer.iso_layer.iso_send(this->mcs_layer.trans, stream);
+//        LOG(LOG_INFO, "after : iso_send data=%p p=%p end=%p", stream.data, stream.p, stream.end);
+        tpdu.send(this->mcs_layer.trans);
     }
 
     void server_sec_send_media_lic_response() throw (Error)
@@ -391,13 +404,17 @@ struct server_sec {
                                  };
 
         Stream stream(8192);
-        this->mcs_layer.server_mcs_init(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
         stream.out_copy_bytes((char*)lic3, sizeof(lic3));
 
-//        LOG(LOG_INFO, "server_mcs_send 3");
-        stream.mark_end();
         this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
-        this->mcs_layer.iso_layer.iso_send(this->mcs_layer.trans, stream);
+
+        tpdu.end();
+        tpdu.send(this->mcs_layer.trans);
     }
 
     void server_sec_rsa_op()

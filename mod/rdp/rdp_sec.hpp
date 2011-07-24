@@ -270,6 +270,7 @@ struct rdp_sec {
         int userlen = strlen(this->username) + 1;
         int hostlen = strlen(this->hostname) + 1;
         int length = 128 + userlen + hostlen;
+
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 
@@ -301,6 +302,7 @@ struct rdp_sec {
 
         tpdu.end();
         this->rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
+
         tpdu.send(this->mcs_layer.trans);
     }
 
