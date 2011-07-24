@@ -73,7 +73,8 @@ struct server_rdp {
     {
         Stream stream(data_len + 1024); /* this should be big enough */
 
-        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 
@@ -108,9 +109,10 @@ struct server_rdp {
         assert(channel->chanid == channel_id);
 
 //        LOG(LOG_INFO, "RDP Packet #%u (type=?? send to channel)", this->packet_number++);
-//        LOG(LOG_INFO, "server_sec_send 8");
         this->sec_layer.server_sec_send(stream, channel_id);
-        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+        tpdu.end();
+        tpdu.send(this->sec_layer.mcs_layer.trans);
+
     }
 
     // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
@@ -128,10 +130,10 @@ struct server_rdp {
 
     void send_global_palette(const BGRPalette & palette) throw (Error)
     {
-        #warning we should create some RDPData object created on init and sent before destruction
         Stream stream(8192);
 
-        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 
@@ -162,10 +164,11 @@ struct server_rdp {
             stream.out_uint8(r);
         }
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, stream.rdp_hdr - stream.data);
-//        LOG(LOG_INFO, "server_sec_send 9");
         stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
-        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+        tpdu.end();
+        tpdu.send(this->sec_layer.mcs_layer.trans);
+
     }
 
 // [MS-RDPBCGR] 2.2.8.1.1.1.1 Share Control Header (TS_SHARECONTROLHEADER)
@@ -474,7 +477,8 @@ struct server_rdp {
     {
         Stream stream(8192);
 
-        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 
@@ -544,7 +548,6 @@ struct server_rdp {
 //      scan-line multiplied by 3 bpp, rounded up to the next even number of
 //      bytes).
 
-
         #warning a memcopy (or equivalent build in stream) would be much more efficient
         for (int i = 0; i < 32; i++) {
             for (int j = 0; j < 32; j++) {
@@ -568,10 +571,11 @@ struct server_rdp {
 //      The contents of this byte should be ignored.
 
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, stream.rdp_hdr - stream.data);
-//        LOG(LOG_INFO, "server_sec_send 10");
         stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
-        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+        tpdu.end();
+        tpdu.send(this->sec_layer.mcs_layer.trans);
+
     }
 
 
@@ -610,7 +614,8 @@ struct server_rdp {
     {
         Stream stream(8192);
 
-        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 
@@ -631,10 +636,11 @@ struct server_rdp {
         stream.out_uint16_le(cache_idx);
 
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, stream.rdp_hdr - stream.data);
-//        LOG(LOG_INFO, "server_sec_send 11");
         stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
-        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+        tpdu.end();
+        tpdu.send(this->sec_layer.mcs_layer.trans);
+
     }
 
     void activate_and_process_data(Callback & cb)
@@ -644,13 +650,8 @@ struct server_rdp {
         Stream input_stream(65535);
 
         do {
-//            if (input_stream.next_packet && (input_stream.next_packet < input_stream.end)){
-//                input_stream.p = input_stream.next_packet;
-//            }
-//            else {
-                input_stream.init(65535);
-                X224In tpdu(this->sec_layer.mcs_layer.trans, input_stream);
-//            }
+            input_stream.init(65535);
+            X224In tpdu(this->sec_layer.mcs_layer.trans, input_stream);
             int opcode = input_stream.in_uint8();
             int appid = opcode >> 2;
 
@@ -818,7 +819,8 @@ struct server_rdp {
     {
         Stream stream(8192);
 
-        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 
@@ -840,7 +842,9 @@ struct server_rdp {
 //        LOG(LOG_INFO, "server_sec_send 1");
         stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
-        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+        tpdu.end();
+        tpdu.send(this->sec_layer.mcs_layer.trans);
+
     }
 
     void server_rdp_incoming() throw (Error)
@@ -860,7 +864,8 @@ struct server_rdp {
 
         Stream stream(8192);
 
-        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 
@@ -1029,9 +1034,10 @@ struct server_rdp {
         stream.out_uint16_le(this->mcs_channel);
 
 //        LOG(LOG_INFO, "RDP Packet #%u (type=%u)", this->packet_number++, PDUTYPE_DEMANDACTIVEPDU);
-//        LOG(LOG_INFO, "server_sec_send 2");
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
-        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+        tpdu.end();
+        tpdu.send(this->sec_layer.mcs_layer.trans);
+
 
     }
 
@@ -1270,7 +1276,8 @@ struct server_rdp {
     {
         Stream stream(8192);
 
-        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 
@@ -1293,7 +1300,9 @@ struct server_rdp {
 //        LOG(LOG_INFO, "server_sec_send 3");
         stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
-        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+        tpdu.end();
+        tpdu.send(this->sec_layer.mcs_layer.trans);
+
     }
 
 // 2.2.1.15.1 Control PDU Data (TS_CONTROL_PDU)
@@ -1322,7 +1331,8 @@ struct server_rdp {
     {
         Stream stream(8192);
 
-        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 
@@ -1343,10 +1353,11 @@ struct server_rdp {
         stream.out_uint32_le(1002); /* control id */
 
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, stream.rdp_hdr - stream.data);
-//        LOG(LOG_INFO, "server_sec_send 4");
         stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
-        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+        tpdu.end();
+        tpdu.send(this->sec_layer.mcs_layer.trans);
+
     }
 
 
@@ -1381,7 +1392,8 @@ struct server_rdp {
         #warning we should create some RDPStream object created on init and sent before destruction
         Stream stream(8192);
 
-        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 
@@ -1399,10 +1411,11 @@ struct server_rdp {
         stream.out_copy_bytes((char*)g_fontmap, 172);
 
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTMAP, stream.rdp_hdr - stream.data);
-//        LOG(LOG_INFO, "server_sec_send 5");
         stream.mark_end();
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
-        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+        tpdu.end();
+        tpdu.send(this->sec_layer.mcs_layer.trans);
+
     }
 
     /* PDUTYPE_DATAPDU */
@@ -1489,7 +1502,8 @@ struct server_rdp {
                 // if user really wants to disconnect */
                 Stream stream(8192);
 
-                this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+
                 stream.mcs_hdr = stream.p;
                 stream.p += 8;
 
@@ -1505,10 +1519,11 @@ struct server_rdp {
                 stream.rdp_hdr = stream.p;
                 stream.p += 18;
                 this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_SHUTDOWN_DENIED, stream.rdp_hdr - stream.data);
-//                LOG(LOG_INFO, "server_sec_send 6");
                 stream.mark_end();
                 this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
-                this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+        tpdu.end();
+        tpdu.send(this->sec_layer.mcs_layer.trans);
+
             }
             break;
         case PDUTYPE2_FONTLIST: /* 39(0x27) */
@@ -1544,7 +1559,7 @@ struct server_rdp {
         #warning we should create some RDPStream object created on init and sent before destruction
         Stream stream(8192);
 
-        this->sec_layer.mcs_layer.iso_layer.iso_init(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 
@@ -1568,9 +1583,9 @@ struct server_rdp {
         stream.out_uint16_le(this->mcs_channel);
 
 //        LOG(LOG_INFO, "RDP Packet #%u (type=%u (PDUTYPE_DEACTIVATEALLPDU))", this->packet_number++, PDUTYPE_DEACTIVATEALLPDU);
-//        LOG(LOG_INFO, "server_sec_send 7");
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
-        this->sec_layer.mcs_layer.iso_layer.iso_send(this->sec_layer.mcs_layer.trans, stream);
+        tpdu.end();
+        tpdu.send(this->sec_layer.mcs_layer.trans);
     }
 };
 
