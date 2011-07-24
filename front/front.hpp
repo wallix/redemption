@@ -46,6 +46,7 @@
 #include "bitmap_cache.hpp"
 #include "cache.hpp"
 
+#include "x224.hpp"
 #include "server_rdp.hpp"
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
@@ -148,6 +149,7 @@ struct GraphicsUpdatePDU
     size_t order_count;
     uint32_t offset_header;
     uint32_t offset_order_count;
+    X224Out * tpdu;
     struct server_rdp & rdp_layer;
 
     GraphicsUpdatePDU(struct server_rdp & rdp_layer)
@@ -173,8 +175,8 @@ struct GraphicsUpdatePDU
 
     void init(){
         this->stream.init(4096);
+        this->tpdu = new X224Out(X224Packet::DT_TPDU, this->stream);
 
-        this->rdp_layer.sec_layer.mcs_layer.iso_layer.iso_init(stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 
@@ -210,9 +212,8 @@ struct GraphicsUpdatePDU
 //            LOG(LOG_INFO, "server_sec_send front");
             stream.mark_end();
             this->rdp_layer.sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
-            this->rdp_layer.sec_layer.mcs_layer.iso_layer.iso_send(this->rdp_layer.sec_layer.mcs_layer.trans, stream);
-
-
+            tpdu->end();
+            tpdu->send(this->rdp_layer.sec_layer.mcs_layer.trans);
             this->init();
         }
     }
