@@ -63,7 +63,7 @@ struct server_sec {
     uint8_t pub_mod[64];
     uint8_t pub_sig[64];
     uint8_t pri_exp[64];
-
+    Stream data;
 
     /*****************************************************************************/
 
@@ -1308,46 +1308,14 @@ struct server_sec {
 //   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
 //   2.2.1.2.1.
 
-
-
-        {
-            Stream stream(8192);
-            X224In(this->mcs_layer.trans, stream);
-
-            #warning ber_parse should probably be some kind of stream primitive
-            int len = this->mcs_layer.ber_parse_header(stream, MCS_CONNECT_INITIAL);
-            len = this->mcs_layer.ber_parse_header(stream, BER_TAG_OCTET_STRING);
-            stream.skip_uint8(len);
-            len = this->mcs_layer.ber_parse_header(stream, BER_TAG_OCTET_STRING);
-            stream.skip_uint8(len);
-            len = this->mcs_layer.ber_parse_header(stream, BER_TAG_BOOLEAN);
-            stream.skip_uint8(len);
-            len = this->mcs_layer.ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
-            stream.skip_uint8(len);
-            len = this->mcs_layer.ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
-            stream.skip_uint8(len);
-            len = this->mcs_layer.ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
-            stream.skip_uint8(len);
-            len = this->mcs_layer.ber_parse_header(stream, BER_TAG_OCTET_STRING);
-
-            /* make a copy of client mcs data */
-            this->client_mcs_data.init(len);
-            this->client_mcs_data.out_copy_bytes(stream.p, len);
-            this->client_mcs_data.mark_end();
-
-            stream.skip_uint8(len);
-            if (!stream.check_end()) {
-                throw Error(ERR_MCS_RECV_CONNECT_INITIAL_TRUNCATED);
-            }
-        }
+        this->mcs_layer.mcs_recv_connection_initial(this->client_mcs_data);
 
         #warning probably move that to mcs_data layer, but decrypted buffer should also move there
         #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
         this->server_sec_process_mcs_data(this->client_mcs_data);
 
-        this->server_sec_out_mcs_data(this->mcs_layer.data);
-//        LOG(LOG_INFO, "server_mcs_send_connect_response");
-        this->mcs_layer.server_mcs_send_connect_response();
+        this->server_sec_out_mcs_data(this->data);
+        this->mcs_layer.mcs_send_connect_response(this->data);
 
         //   2.2.1.5 Client MCS Erect Domain Request PDU
         //   -------------------------------------------
