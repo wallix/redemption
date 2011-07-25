@@ -45,27 +45,195 @@ struct rdp_mcs {
     {
     }
 
-//2.2.1.1    Client X.224 Connection Request PDU
-//==============================================
+    private:
 
-// The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
-// client to server during the Connection Initiation phase (see section
-// 1.3.1.1).
+    static void mcs_ber_out_header(Stream & stream, int tag_val, int len)
+    {
+        if (tag_val > 0xff) {
+            stream.out_uint16_be(tag_val);
+        } else {
+            stream.out_uint8(tag_val);
+        }
+        if (len >= 0x80) {
+            stream.out_uint8(0x82);
+            stream.out_uint16_be(len);
+        } else {
+            stream.out_uint8(len);
+        }
+    }
 
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+    void mcs_ber_out_int8(Stream & stream, int value)
+    {
+        this->mcs_ber_out_header(stream, BER_TAG_INTEGER, 1);
+        stream.out_uint8(value);
+    }
 
-// x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
-//   data unit (TPDU), as specified in [X224] section 13.3.
+    void mcs_ber_out_int16(Stream & stream, int value)
+    {
+        this->mcs_ber_out_header(stream, BER_TAG_INTEGER, 2);
+        stream.out_uint8((value >> 8));
+        stream.out_uint8(value);
+    }
 
-// routingToken (variable): Optional and variable-length routing token bytes
-//   used for load balancing terminated by a carriage-return (CR) and line-feed
-//   (LF) ANSI sequence. For more information, see [MSFT-SDLBTS]. The length of
-//   the routing token and CR+LF sequence is included in the X.224 Connection
-//   Request Length Indicator field.
+    void mcs_ber_out_int24(Stream & stream, int value)
+    {
+        this->mcs_ber_out_header(stream, BER_TAG_INTEGER, 3);
+        stream.out_uint8(value >> 16);
+        stream.out_uint8(value >> 8);
+        stream.out_uint8(value);
+    }
 
-// rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
-//   structure. The length of this negotiation structure is included in the
-//   X.224 Connection Request Length Indicator field.
+    int ber_parse_header(Stream & stream, int tag_val) throw(Error)
+    {
+
+        #warning this should be some kind of check val stream primitive
+        int tag = 0;
+        if (tag_val > 0xff) {
+            tag = stream.in_uint16_be();
+        }
+        else {
+            tag = stream.in_uint8();
+        }
+        if (tag != tag_val) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        #warning seems to be some kind of multi bytes read. Use explicit primitive in stream.
+        int l = stream.in_uint8();
+        int len = l;
+        if (l & 0x80) {
+            len = 0;
+            for (l = l & ~0x80; l > 0 ; l--) {
+                len = (len << 8) | stream.in_uint8();
+            }
+        }
+        #warning we should change check behavior here and check before accessing data, not after, use check_rem
+        if (!stream.check()) {
+            throw Error(ERR_MCS_BER_HEADER_TRUNCATED);
+        }
+        return len;
+    }
+
+    void mcs_out_domain_params(Stream & stream, int max_channels,
+                               int max_users, int max_tokens, int max_pdu_size)
+    {
+        this->mcs_ber_out_header(stream, MCS_TAG_DOMAIN_PARAMS, 26);
+        this->mcs_ber_out_int8(stream, max_channels);
+        this->mcs_ber_out_int8(stream, max_users);
+        this->mcs_ber_out_int8(stream, max_tokens);
+        this->mcs_ber_out_int8(stream, 1);
+        this->mcs_ber_out_int8(stream, 0);
+        this->mcs_ber_out_int8(stream, 1);
+        this->mcs_ber_out_int24(stream, max_pdu_size);
+        this->mcs_ber_out_int8(stream, 2);
+    }
+
+//    void mcs_out_domain_params(Stream & stream, int max_channels,
+//                          int max_users, int max_tokens, int max_pdu_size)
+//    {
+//        this->mcs_ber_out_header(stream, MCS_TAG_DOMAIN_PARAMS, 32);
+//        this->mcs_ber_out_int16(stream, max_channels);
+//        this->mcs_ber_out_int16(stream, max_users);
+//        this->mcs_ber_out_int16(stream, max_tokens);
+//        this->mcs_ber_out_int16(stream, 1);
+//        this->mcs_ber_out_int16(stream, 0);
+//        this->mcs_ber_out_int16(stream, 1);
+//        this->mcs_ber_out_int16(stream, max_pdu_size);
+//        this->mcs_ber_out_int16(stream, 2);
+//    }
+
+    public:
+
+    void mcs_send_connection_initial(Stream & client_mcs_data) throw(Error)
+    {
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+        int data_len = client_mcs_data.end - client_mcs_data.data;
+        int len = 7 + 3 * 34 + 4 + data_len;
+        this->mcs_ber_out_header(stream, MCS_CONNECT_INITIAL, len);
+        this->mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, 0); /* calling domain */
+        this->mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, 0); /* called domain */
+        this->mcs_ber_out_header(stream, BER_TAG_BOOLEAN, 1);
+        stream.out_uint8(0xff); /* upward flag */
+        this->mcs_out_domain_params(stream, 34, 2, 0, 0xffff); /* target params */
+        this->mcs_out_domain_params(stream, 1, 1, 1, 0x420); /* min params */
+        this->mcs_out_domain_params(stream, 0xffff, 0xfc17, 0xffff, 0xffff); /* max params */
+        this->mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, data_len);
+        stream.out_copy_bytes(client_mcs_data.data, data_len);
+
+        tpdu.end();
+        tpdu.send(this->trans);
+    }
+
+    void mcs_recv_connection_initial(Stream & data)
+    {
+        Stream stream(8192);
+        X224In(this->trans, stream);
+
+        int len = this->ber_parse_header(stream, MCS_CONNECT_INITIAL);
+        len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
+        stream.skip_uint8(len);
+        len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
+        stream.skip_uint8(len);
+        len = this->ber_parse_header(stream, BER_TAG_BOOLEAN);
+        stream.skip_uint8(len);
+        len = this->ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
+        stream.skip_uint8(len);
+        len = this->ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
+        stream.skip_uint8(len);
+        len = this->ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
+        stream.skip_uint8(len);
+        len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
+
+        /* make a copy of client mcs data */
+        data.init(len);
+        data.out_copy_bytes(stream.p, len);
+        data.mark_end();
+        stream.skip_uint8(len);
+    }
+
+    void mcs_send_connect_response(Stream & data) throw(Error)
+    {
+//        LOG(LOG_INFO, "server_mcs_send_connect_response");
+        #warning why don't we build directly in final data buffer ? Instead of building in data and copying in stream ?
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+        int data_len = data.end - data.data;
+        this->mcs_ber_out_header(stream, MCS_CONNECT_RESPONSE, data_len + 38);
+        this->mcs_ber_out_header(stream, BER_TAG_RESULT, 1);
+        stream.out_uint8(0);
+        this->mcs_ber_out_header(stream, BER_TAG_INTEGER, 1);
+        stream.out_uint8(0);
+        this->mcs_out_domain_params(stream, 22, 3, 0, 0xfff8);
+        this->mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, data_len);
+        /* mcs data */
+        stream.out_copy_bytes(data.data, data_len);
+
+        tpdu.end();
+        tpdu.send(this->trans);
+    }
+
+    void mcs_recv_connect_response(Stream & stream) throw(Error)
+    {
+        int len = 0;
+        X224In(this->trans, stream);
+        len = this->ber_parse_header(stream, MCS_CONNECT_RESPONSE);
+        len = this->ber_parse_header(stream, BER_TAG_RESULT);
+
+        int res = stream.in_uint8();
+
+        if (res != 0) {
+            throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
+        }
+        len = this->ber_parse_header(stream, BER_TAG_INTEGER);
+        stream.skip_uint8(len); /* connect id */
+
+        len = this->ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
+        stream.skip_uint8(len);
+
+        len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
+    }
 
 // 2.2.1.1.1   RDP Negotiation Request (RDP_NEG_REQ)
 // =================================================
@@ -97,23 +265,6 @@ struct rdp_mcs {
 // |                                 | also be set because Transport Layer     |
 // |                                 | Security (TLS) is a subset of CredSSP.  |
 // +---------------------------------+-----------------------------------------+
-
-// 2.2.1.2   Server X.224 Connection Confirm PDU
-// =============================================
-
-//  The X.224 Connection Confirm PDU is an RDP Connection Sequence PDU sent from
-//  server to client during the Connection Initiation phase (see section
-//  1.3.1.1). It is sent as a response to the X.224 Connection Request PDU
-//  (section 2.2.1.1).
-
-//tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-//x224Ccf (7 bytes): An X.224 Class 0 Connection Confirm TPDU, as specified in [X224] section
-//   13.4.
-
-//rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1) structure or an
-//   optional RDP Negotiation Failure (section 2.2.1.2.2) structure. The length of the negotiation
-//   structure is included in the X.224 Connection Confirm Length Indicator field.
 
 // 2.2.1.2.1   RDP Negotiation Response (RDP_NEG_RSP)
 // ==================================================
@@ -197,17 +348,15 @@ struct rdp_mcs {
 // |                           | CredSSP (section 5.4.5.2).                    |
 // +---------------------------+-----------------------------------------------+
 
-
-
-    /*****************************************************************************/
-    /* returns error */
     void rdp_mcs_recv(Stream & stream, int& chan) throw(Error)
     {
         stream.init(65535);
+        // read tpktHeader (4 bytes = 3 0 len)
+        // TPDU class 0    (3 bytes = LI F0 PDU_DT)
         X224In(this->trans, stream);
+
         int opcode = stream.in_uint8();
-        int appid = opcode >> 2;
-        if (appid != MCS_SDIN) {
+        if ((opcode >> 2) != MCS_SDIN) {
             throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
         }
         stream.skip_uint8(2);
@@ -217,102 +366,6 @@ struct rdp_mcs {
         if (len & 0x80) {
             stream.skip_uint8(1);
         }
-    }
-
-    /*****************************************************************************/
-    /* returns error */
-    void rdp_mcs_ber_out_header(Stream & stream, int tag_val, int len)
-    {
-        if (tag_val > 0xff) {
-            stream.out_uint16_be( tag_val);
-        } else {
-            stream.out_uint8( tag_val);
-        }
-        if (len >= 0x80) {
-            stream.out_uint8( 0x82);
-            stream.out_uint16_be( len);
-        } else {
-            stream.out_uint8( len);
-        }
-    }
-
-    /*****************************************************************************/
-    /* returns error */
-    void rdp_mcs_ber_out_int16(Stream & stream, int value)
-    {
-        this->rdp_mcs_ber_out_header(stream, BER_TAG_INTEGER, 2);
-        stream.out_uint8( (value >> 8));
-        stream.out_uint8( value);
-    }
-
-    /*****************************************************************************/
-    /* returns error */
-    void rdp_mcs_out_domain_params(Stream & stream, int max_channels,
-                          int max_users, int max_tokens, int max_pdu_size)
-    {
-        this->rdp_mcs_ber_out_header(stream, MCS_TAG_DOMAIN_PARAMS, 32);
-        this->rdp_mcs_ber_out_int16(stream, max_channels);
-        this->rdp_mcs_ber_out_int16(stream, max_users);
-        this->rdp_mcs_ber_out_int16(stream, max_tokens);
-        this->rdp_mcs_ber_out_int16(stream, 1);
-        this->rdp_mcs_ber_out_int16(stream, 0);
-        this->rdp_mcs_ber_out_int16(stream, 1);
-        this->rdp_mcs_ber_out_int16(stream, max_pdu_size);
-        this->rdp_mcs_ber_out_int16(stream, 2);
-    }
-
-    /*****************************************************************************/
-    /* returns error */
-    void rdp_mcs_send_connection_initial(Stream & client_mcs_data) throw(Error)
-    {
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        int data_len = client_mcs_data.end - client_mcs_data.data;
-        int len = 7 + 3 * 34 + 4 + data_len;
-        this->rdp_mcs_ber_out_header(stream, MCS_CONNECT_INITIAL, len);
-        this->rdp_mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, 0); /* calling domain */
-        this->rdp_mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, 0); /* called domain */
-        this->rdp_mcs_ber_out_header(stream, BER_TAG_BOOLEAN, 1);
-        stream.out_uint8(0xff); /* upward flag */
-        this->rdp_mcs_out_domain_params(stream, 34, 2, 0, 0xffff); /* target params */
-        this->rdp_mcs_out_domain_params(stream, 1, 1, 1, 0x420); /* min params */
-        this->rdp_mcs_out_domain_params(stream, 0xffff, 0xfc17, 0xffff, 0xffff); /* max params */
-        this->rdp_mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, data_len);
-        stream.out_copy_bytes(client_mcs_data.data, data_len);
-
-        tpdu.end();
-        tpdu.send(this->trans);
-    }
-
-    int ber_parse_header(Stream & stream, int tag_val) throw(Error)
-    {
-
-        #warning this should be some kind of check val stream primitive
-        int tag = 0;
-        if (tag_val > 0xff) {
-            tag = stream.in_uint16_be();
-        }
-        else {
-            tag = stream.in_uint8();
-        }
-        if (tag != tag_val) {
-            throw Error(ERR_MCS_BER_PARSE_HEADER_VAL_NOT_MATCH);
-        }
-        #warning seems to be some kind of multi bytes read. Use explicit primitive in stream.
-        int l = stream.in_uint8();
-        int len = l;
-        if (l & 0x80) {
-            len = 0;
-            for (l = l & ~0x80; l > 0 ; l--) {
-                len = (len << 8) | stream.in_uint8();
-            }
-        }
-        #warning we should change check behavior here and check before accessing data, not after, use check_rem
-        if (!stream.check()) {
-            throw Error(ERR_MCS_BER_PARSE_HEADER_ERROR_CHECKING_STREAM);
-        }
-        return len;
     }
 
     void rdp_mcs_send_edrq() throw (Error)

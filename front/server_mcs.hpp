@@ -56,11 +56,9 @@ struct mcs_channel_item {
 struct server_mcs {
     struct Transport *trans;
     int userid;
-    int chanid;
-    Stream data;
     vector<struct mcs_channel_item *> channel_list;
     server_mcs(struct Transport *trans)
-        : trans(trans), userid(1), chanid(1001)
+        : trans(trans), userid(1)
     {
     }
 
@@ -74,7 +72,195 @@ struct server_mcs {
         }
     }
 
+    private:
+
+    static void mcs_ber_out_header(Stream & stream, int tag_val, int len)
+    {
+        if (tag_val > 0xff) {
+            stream.out_uint16_be(tag_val);
+        } else {
+            stream.out_uint8(tag_val);
+        }
+        if (len >= 0x80) {
+            stream.out_uint8(0x82);
+            stream.out_uint16_be(len);
+        } else {
+            stream.out_uint8(len);
+        }
+    }
+
+    void mcs_ber_out_int8(Stream & stream, int value)
+    {
+        this->mcs_ber_out_header(stream, BER_TAG_INTEGER, 1);
+        stream.out_uint8(value);
+    }
+
+    void mcs_ber_out_int16(Stream & stream, int value)
+    {
+        this->mcs_ber_out_header(stream, BER_TAG_INTEGER, 2);
+        stream.out_uint8((value >> 8));
+        stream.out_uint8(value);
+    }
+
+    void mcs_ber_out_int24(Stream & stream, int value)
+    {
+        this->mcs_ber_out_header(stream, BER_TAG_INTEGER, 3);
+        stream.out_uint8(value >> 16);
+        stream.out_uint8(value >> 8);
+        stream.out_uint8(value);
+    }
+
+    int ber_parse_header(Stream & stream, int tag_val) throw (Error)
+    {
+        #warning this should be some kind of check val stream primitive
+        int tag = 0;
+        if (tag_val > 0xff) {
+            tag = stream.in_uint16_be();
+        }
+        else {
+            tag = stream.in_uint8();
+        }
+        if (tag != tag_val) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        #warning seems to be some kind of multi bytes read. Use explicit primitive in stream.
+        int l = stream.in_uint8();
+        int len = l;
+        if (l & 0x80) {
+            len = 0;
+            for (l = l & ~0x80; l > 0 ; l--) {
+                len = (len << 8) | stream.in_uint8();
+            }
+        }
+        #warning we should change check behavior here and check before accessing data, not after, use check_rem
+        if (!stream.check()) {
+            throw Error(ERR_MCS_BER_HEADER_TRUNCATED);
+        }
+        return len;
+    }
+
+    void mcs_out_domain_params(Stream & stream, int max_channels,
+                               int max_users, int max_tokens, int max_pdu_size)
+    {
+        this->mcs_ber_out_header(stream, MCS_TAG_DOMAIN_PARAMS, 26);
+        this->mcs_ber_out_int8(stream, max_channels);
+        this->mcs_ber_out_int8(stream, max_users);
+        this->mcs_ber_out_int8(stream, max_tokens);
+        this->mcs_ber_out_int8(stream, 1);
+        this->mcs_ber_out_int8(stream, 0);
+        this->mcs_ber_out_int8(stream, 1);
+        this->mcs_ber_out_int24(stream, max_pdu_size);
+        this->mcs_ber_out_int8(stream, 2);
+    }
+
+//    void mcs_out_domain_params(Stream & stream, int max_channels,
+//                          int max_users, int max_tokens, int max_pdu_size)
+//    {
+//        this->mcs_ber_out_header(stream, MCS_TAG_DOMAIN_PARAMS, 32);
+//        this->mcs_ber_out_int16(stream, max_channels);
+//        this->mcs_ber_out_int16(stream, max_users);
+//        this->mcs_ber_out_int16(stream, max_tokens);
+//        this->mcs_ber_out_int16(stream, 1);
+//        this->mcs_ber_out_int16(stream, 0);
+//        this->mcs_ber_out_int16(stream, 1);
+//        this->mcs_ber_out_int16(stream, max_pdu_size);
+//        this->mcs_ber_out_int16(stream, 2);
+//    }
+
     public:
+
+    void mcs_send_connection_initial(Stream & client_mcs_data) throw(Error)
+    {
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+        int data_len = client_mcs_data.end - client_mcs_data.data;
+        int len = 7 + 3 * 34 + 4 + data_len;
+        this->mcs_ber_out_header(stream, MCS_CONNECT_INITIAL, len);
+        this->mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, 0); /* calling domain */
+        this->mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, 0); /* called domain */
+        this->mcs_ber_out_header(stream, BER_TAG_BOOLEAN, 1);
+        stream.out_uint8(0xff); /* upward flag */
+        this->mcs_out_domain_params(stream, 34, 2, 0, 0xffff); /* target params */
+        this->mcs_out_domain_params(stream, 1, 1, 1, 0x420); /* min params */
+        this->mcs_out_domain_params(stream, 0xffff, 0xfc17, 0xffff, 0xffff); /* max params */
+        this->mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, data_len);
+        stream.out_copy_bytes(client_mcs_data.data, data_len);
+
+        tpdu.end();
+        tpdu.send(this->trans);
+    }
+
+    void mcs_recv_connection_initial(Stream & data)
+    {
+            Stream stream(8192);
+            X224In(this->trans, stream);
+
+            int len = this->ber_parse_header(stream, MCS_CONNECT_INITIAL);
+            len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
+            stream.skip_uint8(len);
+            len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
+            stream.skip_uint8(len);
+            len = this->ber_parse_header(stream, BER_TAG_BOOLEAN);
+            stream.skip_uint8(len);
+            len = this->ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
+            stream.skip_uint8(len);
+            len = this->ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
+            stream.skip_uint8(len);
+            len = this->ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
+            stream.skip_uint8(len);
+            len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
+
+            /* make a copy of client mcs data */
+            data.init(len);
+            data.out_copy_bytes(stream.p, len);
+            data.mark_end();
+            stream.skip_uint8(len);
+
+    }
+
+    void mcs_send_connect_response(Stream & data) throw(Error)
+    {
+//        LOG(LOG_INFO, "server_mcs_send_connect_response");
+        #warning why don't we build directly in final data buffer ? Instead of building in data and copying in stream ?
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+        int data_len = data.end - data.data;
+        this->mcs_ber_out_header(stream, MCS_CONNECT_RESPONSE, data_len + 38);
+        this->mcs_ber_out_header(stream, BER_TAG_RESULT, 1);
+        stream.out_uint8(0);
+        this->mcs_ber_out_header(stream, BER_TAG_INTEGER, 1);
+        stream.out_uint8(0);
+        this->mcs_out_domain_params(stream, 22, 3, 0, 0xfff8);
+        this->mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, data_len);
+        /* mcs data */
+        stream.out_copy_bytes(data.data, data_len);
+
+        tpdu.end();
+        tpdu.send(this->trans);
+    }
+
+    void mcs_recv_connect_response(Stream & stream) throw(Error)
+    {
+        int len = 0;
+        X224In(this->trans, stream);
+        len = this->ber_parse_header(stream, MCS_CONNECT_RESPONSE);
+        len = this->ber_parse_header(stream, BER_TAG_RESULT);
+
+        int res = stream.in_uint8();
+
+        if (res != 0) {
+            throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
+        }
+        len = this->ber_parse_header(stream, BER_TAG_INTEGER);
+        stream.skip_uint8(len); /* connect id */
+
+        len = this->ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
+        stream.skip_uint8(len);
+
+        len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
+    }
 
     void server_mcs_send_channel_join_confirm_PDU(int userid, int chanid) throw(Error)
     {
@@ -102,28 +288,6 @@ struct server_mcs {
         stream.out_uint8(((MCS_AUCF << 2) | 2));
         stream.out_uint8(0);
         stream.out_uint16_be(userid);
-
-        tpdu.end();
-        tpdu.send(this->trans);
-    }
-
-    void server_mcs_send_connect_response() throw(Error)
-    {
-//        LOG(LOG_INFO, "server_mcs_send_connect_response");
-        #warning why don't we build directly in final data buffer ? Instead of building in data and copying in stream ?
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        int data_len = this->data.end - this->data.data;
-        this->server_mcs_ber_out_header(stream, MCS_CONNECT_RESPONSE, data_len + 38);
-        this->server_mcs_ber_out_header(stream, BER_TAG_RESULT, 1);
-        stream.out_uint8(0);
-        this->server_mcs_ber_out_header(stream, BER_TAG_INTEGER, 1);
-        stream.out_uint8(0);
-        this->server_mcs_out_domain_params(stream, 22, 3, 0, 0xfff8);
-        this->server_mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, data_len);
-        /* mcs data */
-        stream.out_copy_bytes(this->data.data, data_len);
 
         tpdu.end();
         tpdu.send(this->trans);
@@ -197,36 +361,6 @@ struct server_mcs {
         return rv;
     }
 
-    int ber_parse_header(Stream & stream, int tag_val) throw (Error)
-    {
-//        LOG(LOG_INFO, "ber_parse_header");
-        #warning this should be some kind of check val stream primitive
-        int tag = 0;
-        if (tag_val > 0xff) {
-            tag = stream.in_uint16_be();
-        }
-        else {
-            tag = stream.in_uint8();
-        }
-        if (tag != tag_val) {
-            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-        }
-        #warning seems to be some kind of multi bytes read. Use explicit primitive in stream.
-        int l = stream.in_uint8();
-        int len = l;
-        if (l & 0x80) {
-            len = 0;
-            for (l = l & ~0x80; l > 0 ; l--) {
-                len = (len << 8) | stream.in_uint8();
-            }
-        }
-        #warning we should change check behavior here and check before accessing data, not after, use check_rem
-        if (!stream.check()) {
-            throw Error(ERR_MCS_BER_HEADER_TRUNCATED);
-        }
-        return len;
-    }
-
     void server_mcs_parse_domain_params(Stream & stream)
     {
         int len = this->ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
@@ -239,50 +373,6 @@ struct server_mcs {
 
     private:
 
-    static void server_mcs_ber_out_header(Stream & stream, int tag_val, int len)
-    {
-        if (tag_val > 0xff) {
-            stream.out_uint16_be(tag_val);
-        } else {
-            stream.out_uint8(tag_val);
-        }
-        if (len >= 0x80) {
-            stream.out_uint8(0x82);
-            stream.out_uint16_be(len);
-        } else {
-            stream.out_uint8(len);
-        }
-    }
-
-    void server_mcs_ber_out_int8(Stream & stream, int value)
-    {
-        this->server_mcs_ber_out_header(stream, BER_TAG_INTEGER, 1);
-        stream.out_uint8(value);
-    }
-
-    void server_mcs_ber_out_int24(Stream & stream, int value)
-    {
-        this->server_mcs_ber_out_header(stream, BER_TAG_INTEGER, 3);
-        stream.out_uint8(value >> 16);
-        stream.out_uint8(value >> 8);
-        stream.out_uint8(value);
-    }
-
-    void server_mcs_out_domain_params(Stream & stream,
-                               int max_channels,
-                               int max_users, int max_tokens,
-                               int max_pdu_size)
-    {
-        this->server_mcs_ber_out_header(stream, MCS_TAG_DOMAIN_PARAMS, 26);
-        this->server_mcs_ber_out_int8(stream, max_channels);
-        this->server_mcs_ber_out_int8(stream, max_users);
-        this->server_mcs_ber_out_int8(stream, max_tokens);
-        this->server_mcs_ber_out_int8(stream, 1);
-        this->server_mcs_ber_out_int8(stream, 0);
-        this->server_mcs_ber_out_int8(stream, 1);
-        this->server_mcs_ber_out_int24(stream, max_pdu_size);
-        this->server_mcs_ber_out_int8(stream, 2);
-    }
 
 public:
     void join_channel(uint16_t channel_id)
@@ -290,7 +380,7 @@ public:
         Stream stream(8192);
         // read tpktHeader (4 bytes = 3 0 len)
         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-        X224In tpdu(this->trans, stream);
+        X224In(this->trans, stream);
 
         int opcode = stream.in_uint8();
         if ((opcode >> 2) != MCS_CJRQ) {
@@ -326,10 +416,6 @@ public:
         stream.skip_uint8(4);
         if (opcode & 2) {
             stream.skip_uint8(2);
-        }
-        // test if we went further than the end, this should be changed...
-        if (!stream.check_end()) {
-            throw Error(ERR_MCS_RECV_CJRQ_TRUNCATED);
         }
 
         // 2.2.1.9 Server MCS Channel Join Confirm PDU

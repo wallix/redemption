@@ -1232,10 +1232,34 @@ struct rdp_sec {
         LOG(LOG_INFO, "Iso Layer : connect %s\n", this->username);
 
         try {
+
+//2.2.1.1    Client X.224 Connection Request PDU
+//==============================================
+
+// The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
+// client to server during the Connection Initiation phase (see section
+// 1.3.1.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
+//   data unit (TPDU), as specified in [X224] section 13.3.
+
+// routingToken (variable): Optional and variable-length routing token bytes
+//   used for load balancing terminated by a carriage-return (CR) and line-feed
+//   (LF) ANSI sequence. For more information, see [MSFT-SDLBTS]. The length of
+//   the routing token and CR+LF sequence is included in the X.224 Connection
+//   Request Length Indicator field.
+
+// rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
+//   structure. The length of this negotiation structure is included in the
+//   X.224 Connection Request Length Indicator field.
+
+
             Stream out;
             X224Out crtpdu(X224Packet::CR_TPDU, out);
 
-            #warning looks like this strange cookie thing is in fact useless...
+            #warning looks like this strange cookie thing is in fact useless, see MSFT-SDLBTS
             // USER DATA
 //            out.out_concat("Cookie: mstshash=");
 //            out.out_concat(this->username);
@@ -1263,30 +1287,13 @@ struct rdp_sec {
         }
 
         try{
-            this->mcs_layer.rdp_mcs_send_connection_initial(client_mcs_data);
-
-            int len = 0;
+            LOG(LOG_INFO, "mcs_send_connection_initial\n");
+            this->mcs_layer.mcs_send_connection_initial(client_mcs_data);
             Stream stream(8192);
-            X224In(this->mcs_layer.trans, stream);
-            len = this->mcs_layer.ber_parse_header(stream, MCS_CONNECT_RESPONSE);
-            len = this->mcs_layer.ber_parse_header(stream, BER_TAG_RESULT);
+            LOG(LOG_INFO, "mcs_recv_connect_response\n");
+            this->mcs_layer.mcs_recv_connect_response(stream);
 
-            int res = stream.in_uint8();
-
-            if (res != 0) {
-                throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
-            }
-            len = this->mcs_layer.ber_parse_header(stream, BER_TAG_INTEGER);
-            stream.skip_uint8(len); /* connect id */
-
-            len = this->mcs_layer.ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
-            if (!stream.check_rem(len)) {
-                throw Error(ERR_MCS_PARSE_DOMAIN_PARAMS_ERROR_CHECKING_STREAM);
-            }
-            stream.skip_uint8(len);
-
-            len = this->mcs_layer.ber_parse_header(stream, BER_TAG_OCTET_STRING);
-
+            LOG(LOG_INFO, "rdp_sec_process_mcs_data\n");
             this->rdp_sec_process_mcs_data(stream, channel_list);
 
             this->mcs_layer.rdp_mcs_send_edrq();
