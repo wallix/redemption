@@ -271,30 +271,6 @@ struct X224Packet
 //   optional RDP Negotiation Failure (section 2.2.1.2.2) structure. The length of the negotiation
 //   structure is included in the X.224 Connection Confirm Length Indicator field.
 
-//2.2.1.1    Client X.224 Connection Request PDU
-//==============================================
-
-// The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
-// client to server during the Connection Initiation phase (see section
-// 1.3.1.1).
-
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-// x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
-//   data unit (TPDU), as specified in [X224] section 13.3.
-
-// routingToken (variable): Optional and variable-length routing token bytes
-//   used for load balancing terminated by a carriage-return (CR) and line-feed
-//   (LF) ANSI sequence. For more information, see [MSFT-SDLBTS]. The length of
-//   the routing token and CR+LF sequence is included in the X.224 Connection
-//   Request Length Indicator field.
-
-// rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
-//   structure. The length of this negotiation structure is included in the
-//   X.224 Connection Request Length Indicator field.
-
-
-
 
     enum {
         TPKT_HEADER_LEN = 4
