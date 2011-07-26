@@ -599,9 +599,9 @@ struct server_sec {
             stream.out_uint32_le(0);
         }
 
-//        LOG(LOG_INFO, "server_mcs_send 4");
-        this->mcs_layer.server_mcs_send(stream, chan);
         stream.p = oldp;
+
+        this->mcs_layer.server_mcs_send(stream, chan);
     }
 
     // 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)

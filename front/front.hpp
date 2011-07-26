@@ -208,9 +208,9 @@ struct GraphicsUpdatePDU
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
             this->order_count = 0;
 
+            stream.mark_end();
             this->rdp_layer.send_rdp_packet(this->stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->offset_header);
 //            LOG(LOG_INFO, "server_sec_send front");
-            stream.mark_end();
             this->rdp_layer.sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
             tpdu->end();
             tpdu->send(this->rdp_layer.sec_layer.mcs_layer.trans);
