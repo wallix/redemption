@@ -22,14 +22,15 @@
 
 */
 
-#if !defined(__MCS_HPP__)
-#define __MCS_HPP__
+#if !defined(__SERVER_MCS_HPP__)
+#define __SERVER_MCS_HPP__
 
 #include "stream.hpp"
 #include "constants.hpp"
 #include "file_loc.hpp"
 #include "log.hpp"
 #include "RDP/x224.hpp"
+#include "RDP/mcs.hpp"
 
 #include <string.h>
 #include <unistd.h>
@@ -40,20 +41,9 @@
 using namespace std;
 
 
-/* used in mcs */
-struct mcs_channel_item {
-    char name[16];
-    int flags;
-    int chanid;
-    mcs_channel_item(){
-        this->name[0] = 0;
-        this->flags = 0;
-        this->chanid = 0;
-    }
-};
 
-/* mcs */
-struct server_mcs {
+
+struct server_mcs : public Mcs {
     struct Transport *trans;
     int userid;
     vector<struct mcs_channel_item *> channel_list;
