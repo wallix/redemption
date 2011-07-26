@@ -299,6 +299,47 @@ class Stream {
         this->data[offset+3] = v & 0xFF;
     }
 
+    void out_ber_int8(unsigned int v){
+        this->out_uint8(BER_TAG_INTEGER);
+        this->out_ber_len(1);
+        this->out_uint8(v);
+    }
+
+    void set_out_ber_int8(unsigned int v, size_t offset){
+        this->set_out_uint8(BER_TAG_INTEGER, offset);
+        if (v >= 0x80) {
+            this->set_out_uint8(0x82, offset+1);
+            this->set_out_uint16_be(v, offset+2);
+            this->set_out_uint8(v, offset+4);
+        }
+        else {
+            this->set_out_uint8(v, offset+1);
+            this->set_out_uint8(v, offset+2);
+        }
+    }
+
+
+    void out_ber_int16(int value)
+    {
+        this->out_uint8(BER_TAG_INTEGER);
+        this->out_ber_len(2);
+        this->out_uint8((value >> 8));
+        this->out_uint8(value);
+    }
+
+    void set_out_ber_int16(unsigned int v, size_t offset){
+        this->set_out_uint8(BER_TAG_INTEGER, offset);
+        if (v >= 0x80) {
+            this->set_out_uint8(0x82, offset+1);
+            this->set_out_uint16_be(v, offset+2);
+            this->set_out_uint8(v, offset+4);
+        }
+        else {
+            this->set_out_uint8(v, offset+1);
+            this->set_out_uint8(v, offset+2);
+        }
+    }
+
 
     void out_ber_len(unsigned int v){
         if (v >= 0x80) {
