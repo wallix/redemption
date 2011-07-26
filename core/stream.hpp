@@ -320,6 +320,20 @@ class Stream {
         }
     }
 
+    unsigned int in_ber_len(void) {
+        uint8_t l = this->in_uint8();
+        if (l & 0x80) {
+            const uint8_t nbbytes = l & ~0x80;
+            unsigned int len = 0;
+            for (uint8_t i = 0 ; i < nbbytes ; i++) {
+                len = (len << 8) | this->in_uint8();
+            }
+            return len;
+        }
+        return l;
+    }
+
+
     void out_unistr(const char* text)
     {
         for (int i=0; text[i]; i++) {
