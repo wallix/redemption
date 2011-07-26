@@ -299,6 +299,27 @@ class Stream {
         this->data[offset+3] = v & 0xFF;
     }
 
+
+    void out_ber_len(unsigned int v){
+        if (v >= 0x80) {
+            this->out_uint8(0x82);
+            this->out_uint16_be(v);
+        }
+        else {
+            this->out_uint8(v);
+        }
+    }
+
+    void set_out_ber_len(unsigned int v, size_t offset){
+        if (v>= 0x80){
+            this->data[offset+0] = 0x82;
+            this->set_out_uint16_be(v, offset+1);
+        }
+        else {
+            this->data[offset+0] = v;
+        }
+    }
+
     void out_unistr(const char* text)
     {
         for (int i=0; text[i]; i++) {
@@ -332,6 +353,7 @@ class Stream {
         text[i] = 0;
         this->skip_uint8(2);
     }
+
 
     void mark_end() {
         this->end = this->p;

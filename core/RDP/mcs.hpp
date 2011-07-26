@@ -52,14 +52,14 @@ struct Mcs {
     void mcs_ber_out_int8(Stream & stream, int value)
     {
         stream.out_uint8(BER_TAG_INTEGER);
-        this->mcs_ber_out_header(stream, 1);
+        stream.out_ber_len(1);
         stream.out_uint8(value);
     }
 
     void mcs_ber_out_int16(Stream & stream, int value)
     {
         stream.out_uint8(BER_TAG_INTEGER);
-        this->mcs_ber_out_header(stream, 2);
+        stream.out_ber_len(2);
         stream.out_uint8((value >> 8));
         stream.out_uint8(value);
     }
@@ -67,7 +67,7 @@ struct Mcs {
     void mcs_ber_out_int24(Stream & stream, int value)
     {
         stream.out_uint8(BER_TAG_INTEGER);
-        this->mcs_ber_out_header(stream, 3);
+        stream.out_ber_len(3);
         stream.out_uint8(value >> 16);
         stream.out_uint8(value >> 8);
         stream.out_uint8(value);

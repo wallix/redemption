@@ -50,7 +50,7 @@ struct rdp_mcs : public Mcs {
                           int max_users, int max_tokens, int max_pdu_size)
     {
         stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-        this->mcs_ber_out_header(stream, 32);
+        stream.out_ber_len(32);
         this->mcs_ber_out_int16(stream, max_channels);
         this->mcs_ber_out_int16(stream, max_users);
         this->mcs_ber_out_int16(stream, max_tokens);
@@ -73,19 +73,19 @@ struct rdp_mcs : public Mcs {
         int data_len = client_mcs_data.end - client_mcs_data.data;
         int len = 7 + 3 * 34 + 4 + data_len;
         stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
-        this->mcs_ber_out_header(stream, len);
+        stream.out_ber_len(len);
         stream.out_uint8(BER_TAG_OCTET_STRING);
-        this->mcs_ber_out_header(stream, 0); /* calling domain */
+        stream.out_ber_len(0); /* calling domain */
         stream.out_uint8(BER_TAG_OCTET_STRING);
-        this->mcs_ber_out_header(stream, 0); /* called domain */
+        stream.out_ber_len(0); /* called domain */
         stream.out_uint8(BER_TAG_BOOLEAN);
-        this->mcs_ber_out_header(stream, 1);
+        stream.out_ber_len(1);
         stream.out_uint8(0xff); /* upward flag */
         this->mcs_out_domain_params(stream, 34, 2, 0, 0xffff); /* target params */
         this->mcs_out_domain_params(stream, 1, 1, 1, 0x420); /* min params */
         this->mcs_out_domain_params(stream, 0xffff, 0xfc17, 0xffff, 0xffff); /* max params */
         stream.out_uint8(BER_TAG_OCTET_STRING);
-        this->mcs_ber_out_header(stream, data_len);
+        stream.out_ber_len(data_len);
         stream.out_copy_bytes(client_mcs_data.data, data_len);
 
         tpdu.end();
@@ -128,16 +128,16 @@ struct rdp_mcs : public Mcs {
 
         int data_len = data.end - data.data;
         stream.out_uint16_be(BER_TAG_MCS_CONNECT_RESPONSE);
-        this->mcs_ber_out_header(stream, data_len + 38);
+        stream.out_ber_len(data_len + 38);
         stream.out_uint8(BER_TAG_RESULT);
-        this->mcs_ber_out_header(stream, 1);
+        stream.out_ber_len(1);
         stream.out_uint8(0);
         stream.out_uint8(BER_TAG_INTEGER);
-        this->mcs_ber_out_header(stream, 1);
+        stream.out_ber_len(1);
         stream.out_uint8(0);
         this->mcs_out_domain_params(stream, 22, 3, 0, 0xfff8);
         stream.out_uint8(BER_TAG_OCTET_STRING);
-        this->mcs_ber_out_header(stream, data_len);
+        stream.out_ber_len(data_len);
         /* mcs data */
         stream.out_copy_bytes(data.data, data_len);
 
