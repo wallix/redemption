@@ -47,8 +47,9 @@ struct rdp_mcs {
 
     private:
 
-    static void mcs_ber_out_header(Stream & stream, int tag_val, int len)
+    static void mcs_ber_out_header(Stream & stream, uint32_t tag_val, size_t len)
     {
+        LOG(LOG_INFO, "ber_out_header %u %u", tag_val, len);
         if (tag_val > 0xff) {
             stream.out_uint16_be(tag_val);
         } else {
@@ -113,33 +114,33 @@ struct rdp_mcs {
         return len;
     }
 
-    void mcs_out_domain_params(Stream & stream, int max_channels,
-                               int max_users, int max_tokens, int max_pdu_size)
-    {
-        this->mcs_ber_out_header(stream, MCS_TAG_DOMAIN_PARAMS, 26);
-        this->mcs_ber_out_int8(stream, max_channels);
-        this->mcs_ber_out_int8(stream, max_users);
-        this->mcs_ber_out_int8(stream, max_tokens);
-        this->mcs_ber_out_int8(stream, 1);
-        this->mcs_ber_out_int8(stream, 0);
-        this->mcs_ber_out_int8(stream, 1);
-        this->mcs_ber_out_int24(stream, max_pdu_size);
-        this->mcs_ber_out_int8(stream, 2);
-    }
-
 //    void mcs_out_domain_params(Stream & stream, int max_channels,
-//                          int max_users, int max_tokens, int max_pdu_size)
+//                               int max_users, int max_tokens, int max_pdu_size)
 //    {
-//        this->mcs_ber_out_header(stream, MCS_TAG_DOMAIN_PARAMS, 32);
-//        this->mcs_ber_out_int16(stream, max_channels);
-//        this->mcs_ber_out_int16(stream, max_users);
-//        this->mcs_ber_out_int16(stream, max_tokens);
-//        this->mcs_ber_out_int16(stream, 1);
-//        this->mcs_ber_out_int16(stream, 0);
-//        this->mcs_ber_out_int16(stream, 1);
-//        this->mcs_ber_out_int16(stream, max_pdu_size);
-//        this->mcs_ber_out_int16(stream, 2);
+//        this->mcs_ber_out_header(stream, MCS_TAG_DOMAIN_PARAMS, 26);
+//        this->mcs_ber_out_int8(stream, max_channels);
+//        this->mcs_ber_out_int8(stream, max_users);
+//        this->mcs_ber_out_int8(stream, max_tokens);
+//        this->mcs_ber_out_int8(stream, 1);
+//        this->mcs_ber_out_int8(stream, 0);
+//        this->mcs_ber_out_int8(stream, 1);
+//        this->mcs_ber_out_int24(stream, max_pdu_size);
+//        this->mcs_ber_out_int8(stream, 2);
 //    }
+
+    void mcs_out_domain_params(Stream & stream, int max_channels,
+                          int max_users, int max_tokens, int max_pdu_size)
+    {
+        this->mcs_ber_out_header(stream, MCS_TAG_DOMAIN_PARAMS, 32);
+        this->mcs_ber_out_int16(stream, max_channels);
+        this->mcs_ber_out_int16(stream, max_users);
+        this->mcs_ber_out_int16(stream, max_tokens);
+        this->mcs_ber_out_int16(stream, 1);
+        this->mcs_ber_out_int16(stream, 0);
+        this->mcs_ber_out_int16(stream, 1);
+        this->mcs_ber_out_int16(stream, max_pdu_size);
+        this->mcs_ber_out_int16(stream, 2);
+    }
 
     public:
 

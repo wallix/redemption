@@ -200,14 +200,18 @@ class SocketTransport : public Transport {
             unsigned int opt_len = sizeof(opt);
             getsockopt(this->sck, SOL_SOCKET, SO_ERROR, (char*)(&opt), &opt_len);
             // Test if we got a socket error
+
             if (opt) {
+                LOG(LOG_INFO, "Socket error detected");
                 throw Error(ERR_SESSION_TERMINATED);
             }
+
         }
     }
 
     virtual void recv(char ** input_buffer, size_t total_len) throw (Error)
     {
+        uint8_t * start = (uint8_t*)(*input_buffer);
         int len = total_len;
         char * pbuffer = *input_buffer;
 
@@ -215,6 +219,7 @@ class SocketTransport : public Transport {
             LOG(LOG_INFO, "socket allready closed\n");
             throw Error(ERR_SOCKET_ALLREADY_CLOSED);
         }
+
         while (len > 0) {
             int rcvd = ::recv(this->sck, pbuffer, len, 0);
             switch (rcvd) {
@@ -238,10 +243,30 @@ class SocketTransport : public Transport {
         *input_buffer = pbuffer;
         total_received += total_len;
         last_quantum_received += total_len;
+
+        uint8_t * bb = start;
+        LOG(LOG_INFO, "recv on socket %u : len=%u buffer=%p"
+            " [%0.2X %0.2X %0.2X %0.2X]"
+            " [%0.2X %0.2X %0.2X]"
+            " [%0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X ...]",
+            this->sck, total_len, *input_buffer,
+            bb[0], bb[1], bb[2], bb[3],
+            bb[4], bb[5], bb[6],
+            bb[7], bb[8], bb[9], bb[10], bb[11],
+            bb[12], bb[13], bb[14], bb[15], bb[16]);
     }
 
     virtual void send(const char * buffer, int len) throw (Error)
     {
+        LOG(LOG_INFO, "send on socket %u : len=%u buffer=%p"
+            " [%0.2X %0.2X %0.2X %0.2X]"
+            " [%0.2X %0.2X %0.2X]"
+            " [%0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X ...]",
+            this->sck, len, buffer,
+            (uint8_t)buffer[0], (uint8_t)buffer[1], (uint8_t)buffer[2], (uint8_t)buffer[3],
+            (uint8_t)buffer[4], (uint8_t)buffer[5], (uint8_t)buffer[6],
+            (uint8_t)buffer[7], (uint8_t)buffer[8], (uint8_t)buffer[9], (uint8_t)buffer[10], (uint8_t)buffer[11],
+            (uint8_t)buffer[12], (uint8_t)buffer[13], (uint8_t)buffer[14], (uint8_t)buffer[15], (uint8_t)buffer[16]);
         if (this->sck_closed) {
             throw Error(ERR_SOCKET_ALLREADY_CLOSED);
         }
