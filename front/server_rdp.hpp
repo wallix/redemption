@@ -110,6 +110,8 @@ struct server_rdp {
 
         LOG(LOG_INFO, "1) RDP Packet #%u", this->packet_number);
         this->sec_layer.server_sec_send(stream, channel_id);
+
+        stream.p = stream.end;
         tpdu.end();
         tpdu.send(this->sec_layer.mcs_layer.trans);
 
@@ -861,6 +863,8 @@ struct server_rdp {
     /*****************************************************************************/
     void server_rdp_send_demand_active() throw (Error)
     {
+
+        LOG(LOG_INFO, "server_rdp_send_demand_active()");
         int caps_count;
         int caps_size;
         uint8_t* caps_count_ptr;
@@ -1040,6 +1044,8 @@ struct server_rdp {
 
         LOG(LOG_INFO, "XX RDP Packet #%u (type=%u)", this->packet_number, PDUTYPE_DEMANDACTIVEPDU);
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+
+        stream.p = stream.end;
         tpdu.end();
         tpdu.send(this->sec_layer.mcs_layer.trans);
 
