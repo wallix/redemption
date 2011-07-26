@@ -49,7 +49,7 @@ struct rdp_mcs : public Mcs {
     void mcs_out_domain_params(Stream & stream, int max_channels,
                           int max_users, int max_tokens, int max_pdu_size)
     {
-        this->mcs_ber_out_header(stream, MCS_TAG_DOMAIN_PARAMS, 32);
+        this->mcs_ber_out_header(stream, BER_TAG_MCS_DOMAIN_PARAMS, 32);
         this->mcs_ber_out_int16(stream, max_channels);
         this->mcs_ber_out_int16(stream, max_users);
         this->mcs_ber_out_int16(stream, max_tokens);
@@ -71,7 +71,7 @@ struct rdp_mcs : public Mcs {
 
         int data_len = client_mcs_data.end - client_mcs_data.data;
         int len = 7 + 3 * 34 + 4 + data_len;
-        this->mcs_ber_out_header(stream, MCS_CONNECT_INITIAL, len);
+        this->mcs_ber_out_header(stream, BER_TAG_MCS_CONNECT_INITIAL, len);
         this->mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, 0); /* calling domain */
         this->mcs_ber_out_header(stream, BER_TAG_OCTET_STRING, 0); /* called domain */
         this->mcs_ber_out_header(stream, BER_TAG_BOOLEAN, 1);
@@ -91,18 +91,18 @@ struct rdp_mcs : public Mcs {
         Stream stream(8192);
         X224In(this->trans, stream);
 
-        int len = this->ber_parse_header(stream, MCS_CONNECT_INITIAL);
+        int len = this->ber_parse_header(stream, BER_TAG_MCS_CONNECT_INITIAL);
         len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
         stream.skip_uint8(len);
         len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
         stream.skip_uint8(len);
         len = this->ber_parse_header(stream, BER_TAG_BOOLEAN);
         stream.skip_uint8(len);
-        len = this->ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
+        len = this->ber_parse_header(stream, BER_TAG_MCS_DOMAIN_PARAMS);
         stream.skip_uint8(len);
-        len = this->ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
+        len = this->ber_parse_header(stream, BER_TAG_MCS_DOMAIN_PARAMS);
         stream.skip_uint8(len);
-        len = this->ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
+        len = this->ber_parse_header(stream, BER_TAG_MCS_DOMAIN_PARAMS);
         stream.skip_uint8(len);
         len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
 
@@ -121,7 +121,7 @@ struct rdp_mcs : public Mcs {
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
         int data_len = data.end - data.data;
-        this->mcs_ber_out_header(stream, MCS_CONNECT_RESPONSE, data_len + 38);
+        this->mcs_ber_out_header(stream, BER_TAG_MCS_CONNECT_RESPONSE, data_len + 38);
         this->mcs_ber_out_header(stream, BER_TAG_RESULT, 1);
         stream.out_uint8(0);
         this->mcs_ber_out_header(stream, BER_TAG_INTEGER, 1);
@@ -139,7 +139,7 @@ struct rdp_mcs : public Mcs {
     {
         int len = 0;
         X224In(this->trans, stream);
-        len = this->ber_parse_header(stream, MCS_CONNECT_RESPONSE);
+        len = this->ber_parse_header(stream, BER_TAG_MCS_CONNECT_RESPONSE);
         len = this->ber_parse_header(stream, BER_TAG_RESULT);
 
         int res = stream.in_uint8();
@@ -150,7 +150,7 @@ struct rdp_mcs : public Mcs {
         len = this->ber_parse_header(stream, BER_TAG_INTEGER);
         stream.skip_uint8(len); /* connect id */
 
-        len = this->ber_parse_header(stream, MCS_TAG_DOMAIN_PARAMS);
+        len = this->ber_parse_header(stream, BER_TAG_MCS_DOMAIN_PARAMS);
         stream.skip_uint8(len);
 
         len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
