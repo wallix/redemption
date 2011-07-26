@@ -65,8 +65,8 @@ enum {
 };
 
 enum {
-    MCS_CONNECT_INITIAL  = 0x7f65,
-    MCS_CONNECT_RESPONSE = 0x7f66,
+    BER_TAG_MCS_CONNECT_INITIAL  = 0x7f65,
+    BER_TAG_MCS_CONNECT_RESPONSE = 0x7f66,
 };
 
 enum {
@@ -77,7 +77,7 @@ enum {
 };
 
 enum {
-    MCS_TAG_DOMAIN_PARAMS = 0x30
+    BER_TAG_MCS_DOMAIN_PARAMS = 0x30
 };
 
 enum {

@@ -1291,7 +1291,7 @@ struct rdp_sec {
             this->mcs_layer.mcs_send_connection_initial(client_mcs_data);
             Stream stream(8192);
             LOG(LOG_INFO, "mcs_recv_connect_response\n");
-            this->mcs_layer.mcs_recv_connect_response(stream);
+            this->mcs_layer.mcs_recv_connect_response(stream, this->mcs_layer.trans);
 
             LOG(LOG_INFO, "rdp_sec_process_mcs_data\n");
             this->rdp_sec_process_mcs_data(stream, channel_list);
