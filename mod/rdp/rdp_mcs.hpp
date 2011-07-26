@@ -25,6 +25,7 @@
 #define __RDP_MCS_HPP__
 
 #include "RDP/x224.hpp"
+#include "RDP/mcs.hpp"
 
 #include <iostream>
 #include <vector>
@@ -32,7 +33,7 @@ using namespace std;
 
 
 /* mcs */
-struct rdp_mcs {
+struct rdp_mcs : public Mcs {
     Transport * trans;
     int userid;
     vector<struct mcs_channel_item *> channel_list;
