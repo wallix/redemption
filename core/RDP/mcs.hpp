@@ -73,19 +73,8 @@ struct Mcs {
         stream.out_uint8(value);
     }
 
-    int ber_parse_header(Stream & stream, int tag_val) throw (Error)
+    int ber_parse_header(Stream & stream) throw (Error)
     {
-        #warning this should be some kind of check val stream primitive
-        int tag = 0;
-        if (tag_val > 0xff) {
-            tag = stream.in_uint16_be();
-        }
-        else {
-            tag = stream.in_uint8();
-        }
-        if (tag != tag_val) {
-            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-        }
         #warning seems to be some kind of multi bytes read. Use explicit primitive in stream.
         int l = stream.in_uint8();
         int len = l;
@@ -102,6 +91,97 @@ struct Mcs {
         return len;
     }
 
+    void mcs_recv_connection_initial(Stream & data, Transport * trans)
+    {
+        Stream stream(8192);
+        X224In(trans, stream);
+
+        if (stream.in_uint16_be() != BER_TAG_MCS_CONNECT_INITIAL) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        int len = this->ber_parse_header(stream);
+        if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = this->ber_parse_header(stream);
+        stream.skip_uint8(len);
+
+        if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = this->ber_parse_header(stream);
+        stream.skip_uint8(len);
+        if (stream.in_uint8() != BER_TAG_BOOLEAN) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = this->ber_parse_header(stream);
+        stream.skip_uint8(len);
+
+        if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = this->ber_parse_header(stream);
+        stream.skip_uint8(len);
+
+        if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = this->ber_parse_header(stream);
+        stream.skip_uint8(len);
+
+        if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = this->ber_parse_header(stream);
+        stream.skip_uint8(len);
+
+        if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = this->ber_parse_header(stream);
+
+        /* make a copy of client mcs data */
+        data.init(len);
+        data.out_copy_bytes(stream.p, len);
+        data.mark_end();
+        stream.skip_uint8(len);
+    }
+
+    void mcs_recv_connect_response(Stream & stream, Transport * trans) throw(Error)
+    {
+        X224In(trans, stream);
+        if (stream.in_uint16_be() != BER_TAG_MCS_CONNECT_RESPONSE) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        int len = this->ber_parse_header(stream);
+
+        if (stream.in_uint8() != BER_TAG_RESULT) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = this->ber_parse_header(stream);
+
+        int res = stream.in_uint8();
+
+        if (res != 0) {
+            throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
+        }
+        if (stream.in_uint8() != BER_TAG_INTEGER) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = this->ber_parse_header(stream);
+        stream.skip_uint8(len); /* connect id */
+
+        if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = this->ber_parse_header(stream);
+        stream.skip_uint8(len);
+
+        if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = this->ber_parse_header(stream);
+    }
 
 };
 

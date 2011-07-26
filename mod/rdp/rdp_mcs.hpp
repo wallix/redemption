@@ -92,32 +92,6 @@ struct rdp_mcs : public Mcs {
         tpdu.send(this->trans);
     }
 
-    void mcs_recv_connection_initial(Stream & data)
-    {
-        Stream stream(8192);
-        X224In(this->trans, stream);
-
-        int len = this->ber_parse_header(stream, BER_TAG_MCS_CONNECT_INITIAL);
-        len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
-        stream.skip_uint8(len);
-        len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
-        stream.skip_uint8(len);
-        len = this->ber_parse_header(stream, BER_TAG_BOOLEAN);
-        stream.skip_uint8(len);
-        len = this->ber_parse_header(stream, BER_TAG_MCS_DOMAIN_PARAMS);
-        stream.skip_uint8(len);
-        len = this->ber_parse_header(stream, BER_TAG_MCS_DOMAIN_PARAMS);
-        stream.skip_uint8(len);
-        len = this->ber_parse_header(stream, BER_TAG_MCS_DOMAIN_PARAMS);
-        stream.skip_uint8(len);
-        len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
-
-        /* make a copy of client mcs data */
-        data.init(len);
-        data.out_copy_bytes(stream.p, len);
-        data.mark_end();
-        stream.skip_uint8(len);
-    }
 
     void mcs_send_connect_response(Stream & data) throw(Error)
     {
@@ -145,26 +119,6 @@ struct rdp_mcs : public Mcs {
         tpdu.send(this->trans);
     }
 
-    void mcs_recv_connect_response(Stream & stream) throw(Error)
-    {
-        int len = 0;
-        X224In(this->trans, stream);
-        len = this->ber_parse_header(stream, BER_TAG_MCS_CONNECT_RESPONSE);
-        len = this->ber_parse_header(stream, BER_TAG_RESULT);
-
-        int res = stream.in_uint8();
-
-        if (res != 0) {
-            throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
-        }
-        len = this->ber_parse_header(stream, BER_TAG_INTEGER);
-        stream.skip_uint8(len); /* connect id */
-
-        len = this->ber_parse_header(stream, BER_TAG_MCS_DOMAIN_PARAMS);
-        stream.skip_uint8(len);
-
-        len = this->ber_parse_header(stream, BER_TAG_OCTET_STRING);
-    }
 
 // 2.2.1.1.1   RDP Negotiation Request (RDP_NEG_REQ)
 // =================================================
