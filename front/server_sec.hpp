@@ -1315,7 +1315,7 @@ struct server_sec {
         this->server_sec_process_mcs_data(this->client_mcs_data);
 
         this->server_sec_out_mcs_data(this->data);
-        this->mcs_layer.mcs_send_connect_response(this->data);
+        this->mcs_layer.mcs_send_connect_response(this->data, this->mcs_layer.trans);
 
         //   2.2.1.5 Client MCS Erect Domain Request PDU
         //   -------------------------------------------
