@@ -1308,7 +1308,7 @@ struct server_sec {
 //   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
 //   2.2.1.2.1.
 
-        this->mcs_layer.mcs_recv_connection_initial(this->client_mcs_data);
+        this->mcs_layer.mcs_recv_connection_initial(this->client_mcs_data, this->mcs_layer.trans);
 
         #warning probably move that to mcs_data layer, but decrypted buffer should also move there
         #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
