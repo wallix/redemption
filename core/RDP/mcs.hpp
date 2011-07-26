@@ -39,13 +39,8 @@ struct mcs_channel_item {
 
 struct Mcs {
 
-    static void mcs_ber_out_header(Stream & stream, int tag_val, int len)
+    static void mcs_ber_out_header(Stream & stream, int len)
     {
-        if (tag_val > 0xff) {
-            stream.out_uint16_be(tag_val);
-        } else {
-            stream.out_uint8(tag_val);
-        }
         if (len >= 0x80) {
             stream.out_uint8(0x82);
             stream.out_uint16_be(len);
@@ -56,20 +51,23 @@ struct Mcs {
 
     void mcs_ber_out_int8(Stream & stream, int value)
     {
-        this->mcs_ber_out_header(stream, BER_TAG_INTEGER, 1);
+        stream.out_uint8(BER_TAG_INTEGER);
+        this->mcs_ber_out_header(stream, 1);
         stream.out_uint8(value);
     }
 
     void mcs_ber_out_int16(Stream & stream, int value)
     {
-        this->mcs_ber_out_header(stream, BER_TAG_INTEGER, 2);
+        stream.out_uint8(BER_TAG_INTEGER);
+        this->mcs_ber_out_header(stream, 2);
         stream.out_uint8((value >> 8));
         stream.out_uint8(value);
     }
 
     void mcs_ber_out_int24(Stream & stream, int value)
     {
-        this->mcs_ber_out_header(stream, BER_TAG_INTEGER, 3);
+        stream.out_uint8(BER_TAG_INTEGER);
+        this->mcs_ber_out_header(stream, 3);
         stream.out_uint8(value >> 16);
         stream.out_uint8(value >> 8);
         stream.out_uint8(value);
