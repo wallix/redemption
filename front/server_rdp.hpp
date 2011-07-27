@@ -667,7 +667,7 @@ struct server_rdp {
                 /* this is channels getting added from the client */
                 int userid = input_stream.in_uint16_be();
                 int chanid = input_stream.in_uint16_be();
-                this->sec_layer.mcs_layer.server_mcs_send_channel_join_confirm_PDU(this->sec_layer.trans, userid, chanid);
+                this->sec_layer.mcs_layer.server_mcs_send_cjcf(this->sec_layer.trans, userid, chanid);
 
                 input_stream.init(65535);
                 X224In tpdu(this->sec_layer.trans, input_stream);
