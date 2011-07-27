@@ -362,18 +362,29 @@ struct server_sec {
                                  0x07, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
                                  0x28, 0x14, 0x00, 0x00
                                };
+
         Stream stream(8192);
+// -------------------------
+//        McsOut pdu(stream);
+
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
         stream.mcs_hdr = stream.p;
         stream.p += 8;
+//-------------------------
 
         stream.out_copy_bytes((char*)lic2, 20);
+
+// -------------------------
+//        pdu.end()
+//        pdu.send(this->trans);
+
         stream.mark_end();
         this->mcs_layer.mcs_send(stream, MCS_GLOBAL_CHANNEL);
 
         tpdu.end();
         tpdu.send(this->trans);
+// ----------------------------
     }
 
     void server_sec_send_media_lic_response() throw (Error)
@@ -386,17 +397,26 @@ struct server_sec {
                                  };
 
         Stream stream(8192);
+// -------------------------
+//        McsOut pdu(stream);
+
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
         stream.mcs_hdr = stream.p;
         stream.p += 8;
+//-------------------------
 
         stream.out_copy_bytes((char*)lic3, sizeof(lic3));
 
+// -------------------------
+//        pdu.end()
+//        pdu.send(this->trans);
+        stream.mark_end();
         this->mcs_layer.mcs_send(stream, MCS_GLOBAL_CHANNEL);
 
         tpdu.end();
         tpdu.send(this->trans);
+// ----------------------------
     }
 
     void server_sec_rsa_op()
@@ -1242,168 +1262,25 @@ struct server_sec {
         memcpy(this->pub_sig, rsa_keys.pub_sig, 64);
         memcpy(this->pri_exp, rsa_keys.pri_exp, 64);
 
-// 2.2.1.3 Client MCS Connect Initial PDU with GCC Conference Create Request
-// =========================================================================
-
-// The MCS Connect Initial PDU is an RDP Connection Sequence PDU sent from
-// client to server during the Basic Settings Exchange phase (see section
-// 1.3.1.1). It is sent after receiving the X.224 Connection Confirm PDU
-// (section 2.2.1.2). The MCS Connect Initial PDU encapsulates a GCC Conference
-// Create Request, which encapsulates concatenated blocks of settings data. A
-// basic high-level overview of the nested structure for the Client MCS Connect
-// Initial PDU is illustrated in section 1.3.1.1, in the figure specifying MCS
-// Connect Initial PDU. Note that the order of the settings data blocks is
-// allowed to vary from that shown in the previously mentioned figure and the
-// message syntax layout that follows. This is possible because each data block
-// is identified by a User Data Header structure (section 2.2.1.3.1).
-
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
-//   section 13.7.
-
-        #warning using a template for default size would make sense
         Stream in(8192);
         X224In crtpdu(this->trans, in);
         if (crtpdu.tpdu_hdr.code != ISO_PDU_CR) {
             throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
         }
 
-        #warning using a template for default size would make sense
         Stream out(11);
         X224Out cctpdu(X224Packet::CC_TPDU, out);
         cctpdu.end();
         cctpdu.send(this->trans);
 
-// mcsCi (variable): Variable-length BER-encoded MCS Connect Initial structure
-//   (using definite-length encoding) as described in [T125] (the ASN.1
-//   structure definition is detailed in [T125] section 7, part 2). The userData
-//   field of the MCS Connect Initial encapsulates the GCC Conference Create
-//   Request data (contained in the gccCCrq and subsequent fields). The maximum
-//   allowed size of this user data is 1024 bytes, which implies that the
-//   combined size of the gccCCrq and subsequent fields MUST be less than 1024
-//   bytes.
-
-// gccCCrq (variable): Variable-length Packed Encoding Rule encoded
-//   (PER-encoded) GCC Connect Data structure, which encapsulates a Connect GCC
-//   PDU that contains a GCC Conference Create Request structure as described in
-//   [T124] (the ASN.1 structure definitions are detailed in [T124] section 8.7)
-//   appended as user data to the MCS Connect Initial (using the format
-//   described in [T124] sections 9.5 and 9.6). The userData field of the GCC
-//   Conference Create Request contains one user data set consisting of
-//   concatenated client data blocks.
-
-// clientCoreData (216 bytes): Client Core Data structure (section 2.2.1.3.2).
-
-// clientSecurityData (12 bytes): Client Security Data structure (section
-//   2.2.1.3.3).
-
-// clientNetworkData (variable): Optional and variable-length Client Network
-//   Data structure (section 2.2.1.3.4).
-
-// clientClusterData (12 bytes): Optional Client Cluster Data structure (section
-//   2.2.1.3.5).
-
-// clientMonitorData (variable): Optional Client Monitor Data structure (section
-//   2.2.1.3.6). This field MUST NOT be included if the server does not
-//   advertise support for extended client data blocks by using the
-//   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
-//   2.2.1.2.1.
-
         this->mcs_layer.mcs_recv_connection_initial(this->client_mcs_data, this->trans);
-
-        #warning probably move that to mcs_data layer, but decrypted buffer should also move there
         #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
         this->server_sec_process_mcs_data(this->client_mcs_data);
-
         this->server_sec_out_mcs_data(this->data);
         this->mcs_layer.mcs_send_connect_response(this->data, this->trans);
-
-        //   2.2.1.5 Client MCS Erect Domain Request PDU
-        //   -------------------------------------------
-        //   The MCS Erect Domain Request PDU is an RDP Connection Sequence PDU sent
-        //   from client to server during the Channel Connection phase (see section
-        //   1.3.1.1). It is sent after receiving the MCS Connect Response PDU (section
-        //   2.2.1.4).
-
-        //   tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-        //   x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
-        //      section 13.7.
-
-        // See description of tpktHeader and x224 Data TPDU in cheat sheet
-
-        //   mcsEDrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an MCS
-        //      Erect Domain Request structure, as specified in [T125] (the ASN.1
-        //      structure definitions are given in [T125] section 7, parts 3 and 10).
-        {
-            Stream stream(8192);
-            X224In(this->trans, stream);
-            uint8_t opcode = stream.in_uint8();
-            if ((opcode >> 2) != MCS_EDRQ) {
-                throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
-            }
-            stream.skip_uint8(2);
-            stream.skip_uint8(2);
-            if (opcode & 2) {
-                this->mcs_layer.userid = stream.in_uint16_be();
-            }
-            if (!stream.check_end()) {
-                throw Error(ERR_MCS_RECV_EDQR_TRUNCATED);
-            }
-        }
-
-        // 2.2.1.6 Client MCS Attach User Request PDU
-        // ------------------------------------------
-        // The MCS Attach User Request PDU is an RDP Connection Sequence PDU
-        // sent from client to server during the Channel Connection phase (see
-        // section 1.3.1.1) to request a user channel ID. It is sent after
-        // transmitting the MCS Erect Domain Request PDU (section 2.2.1.5).
-
-        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-        // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
-        //   [X224] section 13.7.
-
-        // mcsAUrq (1 byte): PER-encoded MCS Domain PDU which encapsulates an
-        //  MCS Attach User Request structure, as specified in [T125] (the ASN.1
-        //  structure definitions are given in [T125] section 7, parts 5 and 10).
-
-        {
-            Stream stream(8192);
-            X224In(this->trans, stream);
-            uint8_t opcode = stream.in_uint8();
-            if ((opcode >> 2) != MCS_AURQ) {
-                throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
-            }
-            if (opcode & 2) {
-                this->mcs_layer.userid = stream.in_uint16_be();
-            }
-            if (!stream.check_end()) {
-                throw Error(ERR_MCS_RECV_AURQ_TRUNCATED);
-            }
-
-            // 2.2.1.7 Server MCS Attach User Confirm PDU
-            // ------------------------------------------
-            // The MCS Attach User Confirm PDU is an RDP Connection Sequence
-            // PDU sent from server to client during the Channel Connection
-            // phase (see section 1.3.1.1). It is sent as a response to the MCS
-            // Attach User Request PDU (section 2.2.1.6).
-
-            // tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
-            //   section 8.
-
-            // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
-            //   section [X224] 13.7.
-
-            // mcsAUcf (4 bytes): PER-encoded MCS Domain PDU which encapsulates
-            //   an MCS Attach User Confirm structure, as specified in [T125]
-            //   (the ASN.1 structure definitions are given in [T125] section 7,
-            // parts 5 and 10).
-
-//            LOG(LOG_INFO, .mcs_send_attach_user_confirm_PDU");
-            this->mcs_layer.mcs_send_aucf(this->trans, this->mcs_layer.userid);
-        }
+        this->mcs_layer.mcs_recv_edrq(this->trans);
+        this->mcs_layer.mcs_recv_aurq(this->trans);
+        this->mcs_layer.mcs_send_aucf(this->trans, this->mcs_layer.userid);
 
         this->mcs_layer.join_channel(this->trans, this->mcs_layer.userid + MCS_USERCHANNEL_BASE);
         this->mcs_layer.join_channel(this->trans, MCS_GLOBAL_CHANNEL);
