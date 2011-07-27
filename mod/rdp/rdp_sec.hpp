@@ -74,11 +74,12 @@ struct rdp_sec {
     char hostname[16];
     char username[128];
     int & use_rdp5;
+    Transport * trans;
 
     rdp_sec(Transport * t, int & use_rdp5, const char * hostname, const char * username)
         : licence_data(0),
           licence_size(0),
-          mcs_layer(t),
+          mcs_layer(),
           decrypt_use_count(0),
           encrypt_use_count(0),
           rc4_key_size(0), /* 1 = 40-bit, 2 = 128-bit */
@@ -87,7 +88,8 @@ struct rdp_sec {
           channel_code(1),
           server_public_key_len(0),  /* static virtual channels accepted bu default*/
           server_rdp_version(0),
-          use_rdp5(use_rdp5) {
+          use_rdp5(use_rdp5),
+          trans(t) {
         #warning and if hostname is really larger, what happens ? We should at least emit a warning log
         strncpy(this->hostname, hostname, 15);
         this->hostname[15] = 0;
@@ -206,7 +208,7 @@ struct rdp_sec {
         tpdu.end();
         this->rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
 
-        tpdu.send(this->mcs_layer.trans);
+        tpdu.send(this->trans);
     }
 
     void rdp_lic_process_demand(Stream & stream)
@@ -303,7 +305,7 @@ struct rdp_sec {
         tpdu.end();
         this->rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
 
-        tpdu.send(this->mcs_layer.trans);
+        tpdu.send(this->trans);
     }
 
     void rdp_lic_present(uint8_t* client_random, uint8_t* rsa_data,
@@ -349,7 +351,7 @@ struct rdp_sec {
         tpdu.end();
         this->rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
 
-        tpdu.send(this->mcs_layer.trans);
+        tpdu.send(this->trans);
     }
 
     #warning this is not supported yet, but using rdp_save_licence we would keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Anyway the use of files to stoe licences should be abstracted.
@@ -694,7 +696,14 @@ struct rdp_sec {
             this->rdp_sec_encrypt(stream.p + 8, datalen);
         }
 
-        this->mcs_layer.rdp_mcs_send_to_channel(stream, channel);
+        stream.p = stream.mcs_hdr;
+        int len = ((stream.end - stream.p) - 8) | 0x8000;
+        stream.out_uint8(MCS_SDRQ << 2);
+        stream.out_uint16_be(this->mcs_layer.userid);
+        stream.out_uint16_be(channel);
+        stream.out_uint8(0x70);
+        stream.out_uint16_be(len);
+
         stream.p = oldp;
     }
 
@@ -722,7 +731,7 @@ struct rdp_sec {
 
         tpdu.end();
         this->rdp_sec_send_to_channel(stream, flags, MCS_GLOBAL_CHANNEL);
-        tpdu.send(this->mcs_layer.trans);
+        tpdu.send(this->trans);
 
     }
 
@@ -1117,7 +1126,7 @@ struct rdp_sec {
         #warning this loop is ugly, the only true reason is we are waiting for the licence
         while (1){
             rdpver = 3;
-            this->mcs_layer.rdp_mcs_recv(stream, channel);
+            this->mcs_layer.rdp_mcs_recv(this->trans, stream, channel);
 
             uint32_t sec_flags = stream.in_uint32_le();
             if (sec_flags & SEC_ENCRYPT) { /* 0x08 */
@@ -1267,10 +1276,10 @@ struct rdp_sec {
 //            crtpdu.extend_tpdu_hdr();
             crtpdu.end();
 
-            crtpdu.send(this->mcs_layer.trans);
+            crtpdu.send(this->trans);
 
             Stream in;
-            X224In cctpdu(this->mcs_layer.trans, in);
+            X224In cctpdu(this->trans, in);
             if (cctpdu.tpkt.version != 3){
                 throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
             }
@@ -1279,7 +1288,7 @@ struct rdp_sec {
             }
         } catch (Error) {
             try {
-                this->mcs_layer.trans->disconnect();
+                this->trans->disconnect();
             } catch (Error){
                 // rethrow the first error, not the error we could get disconnecting
             }
@@ -1288,34 +1297,34 @@ struct rdp_sec {
 
         try{
             LOG(LOG_INFO, "mcs_send_connection_initial\n");
-            this->mcs_layer.mcs_send_connection_initial(client_mcs_data, this->mcs_layer.trans);
+            this->mcs_layer.mcs_send_connection_initial(client_mcs_data, this->trans);
             Stream stream(8192);
             LOG(LOG_INFO, "mcs_recv_connect_response\n");
-            this->mcs_layer.mcs_recv_connect_response(stream, this->mcs_layer.trans);
+            this->mcs_layer.mcs_recv_connect_response(stream, this->trans);
 
             LOG(LOG_INFO, "rdp_sec_process_mcs_data\n");
             this->rdp_sec_process_mcs_data(stream, channel_list);
 
-            this->mcs_layer.rdp_mcs_send_edrq();
-            this->mcs_layer.rdp_mcs_send_aurq();
-            this->mcs_layer.rdp_mcs_recv_aucf();
-            this->mcs_layer.rdp_mcs_send_cjrq(this->mcs_layer.userid + 1001);
-            this->mcs_layer.rdp_mcs_recv_cjcf();
-            this->mcs_layer.rdp_mcs_send_cjrq(MCS_GLOBAL_CHANNEL);
-            this->mcs_layer.rdp_mcs_recv_cjcf();
+            this->mcs_layer.rdp_mcs_send_edrq(this->trans);
+            this->mcs_layer.rdp_mcs_send_aurq(this->trans);
+            this->mcs_layer.rdp_mcs_recv_aucf(this->trans);
+            this->mcs_layer.rdp_mcs_send_cjrq(this->trans, this->mcs_layer.userid + 1001);
+            this->mcs_layer.rdp_mcs_recv_cjcf(this->trans);
+            this->mcs_layer.rdp_mcs_send_cjrq(this->trans, MCS_GLOBAL_CHANNEL);
+            this->mcs_layer.rdp_mcs_recv_cjcf(this->trans);
 
             int num_channels = (int)this->mcs_layer.channel_list.size();
             for (int index = 0; index < num_channels; index++){
                 const mcs_channel_item* channel_item = this->mcs_layer.channel_list[index];
-                this->mcs_layer.rdp_mcs_send_cjrq(channel_item->chanid);
-                this->mcs_layer.rdp_mcs_recv_cjcf();
+                this->mcs_layer.rdp_mcs_send_cjrq(this->trans, channel_item->chanid);
+                this->mcs_layer.rdp_mcs_recv_cjcf(this->trans);
             }
         }
         catch(...){
             Stream stream(11);
             X224Out tpdu(X224Packet::DR_TPDU, stream);
             tpdu.end();
-            tpdu.send(this->mcs_layer.trans);
+            tpdu.send(this->trans);
             throw;
         }
 

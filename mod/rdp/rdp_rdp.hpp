@@ -331,7 +331,7 @@ struct rdp_rdp {
             tpdu.end();
             this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
 
-            tpdu.send(this->sec_layer.mcs_layer.trans);
+            tpdu.send(this->sec_layer.trans);
 
             LOG(LOG_INFO, "Waiting for answer to confirm active\n");
         }
@@ -556,7 +556,7 @@ struct rdp_rdp {
             this->send_data(stream, PDUTYPE2_CONTROL, MCS_GLOBAL_CHANNEL);
 
             tpdu.end();
-            tpdu.send(this->sec_layer.mcs_layer.trans);
+            tpdu.send(this->sec_layer.trans);
         }
 
 
@@ -580,7 +580,7 @@ struct rdp_rdp {
             this->send_data(stream, PDUTYPE2_SYNCHRONIZE, MCS_GLOBAL_CHANNEL);
 
             tpdu.end();
-            tpdu.send(this->sec_layer.mcs_layer.trans);
+            tpdu.send(this->sec_layer.trans);
         }
 
         void send_fonts(Stream & stream, int seq) throw(Error)
@@ -605,7 +605,7 @@ struct rdp_rdp {
             this->send_data(stream, PDUTYPE2_FONTLIST, MCS_GLOBAL_CHANNEL);
 
             tpdu.end();
-            tpdu.send(this->sec_layer.mcs_layer.trans);
+            tpdu.send(this->sec_layer.trans);
         }
 
     #define RDP5_FLAG 0x0030
@@ -740,7 +740,7 @@ struct rdp_rdp {
             tpdu.end();
             this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
 
-            tpdu.send(this->sec_layer.mcs_layer.trans);
+            tpdu.send(this->sec_layer.trans);
 
             LOG(LOG_INFO, "send login info ok\n");
         }
@@ -795,7 +795,7 @@ struct rdp_rdp {
             this->send_data(stream, PDUTYPE2_INPUT, MCS_GLOBAL_CHANNEL);
 
             tpdu.end();
-            tpdu.send(this->sec_layer.mcs_layer.trans);
+            tpdu.send(this->sec_layer.trans);
         }
 
         void send_invalidate(Stream & stream,int left, int top, int width, int height) throw(Error)
@@ -822,7 +822,7 @@ struct rdp_rdp {
             this->send_data(stream, PDUTYPE2_REFRESH_RECT, MCS_GLOBAL_CHANNEL);
 
             tpdu.end();
-            tpdu.send(this->sec_layer.mcs_layer.trans);
+            tpdu.send(this->sec_layer.trans);
         }
 
 
@@ -1021,7 +1021,7 @@ struct rdp_rdp {
 //            LOG(LOG_INFO, "send_redirect_pdu done\n");
 
             tpdu.end();
-            tpdu.send(this->sec_layer.mcs_layer.trans);
+            tpdu.send(this->sec_layer.trans);
         }
 
     void process_color_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)

@@ -64,12 +64,14 @@ struct server_sec {
     uint8_t pub_sig[64];
     uint8_t pri_exp[64];
     Stream data;
+    Transport * trans;
 
     /*****************************************************************************/
 
     server_sec(ClientInfo * client_info, Transport * trans) :
         client_info(client_info),
-        mcs_layer(trans)
+        mcs_layer(),
+        trans(trans)
     {
         // CGR: see if init has influence for the 3 following fields
         memset(this->server_random, 0, 32);
@@ -350,7 +352,7 @@ struct server_sec {
         this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
 
         tpdu.end();
-        tpdu.send(this->mcs_layer.trans);
+        tpdu.send(this->trans);
     }
 
     void server_sec_send_lic_response() throw (Error)
@@ -371,7 +373,7 @@ struct server_sec {
         this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
 
         tpdu.end();
-        tpdu.send(this->mcs_layer.trans);
+        tpdu.send(this->trans);
     }
 
     void server_sec_send_media_lic_response() throw (Error)
@@ -394,7 +396,7 @@ struct server_sec {
         this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
 
         tpdu.end();
-        tpdu.send(this->mcs_layer.trans);
+        tpdu.send(this->trans);
     }
 
     void server_sec_rsa_op()
@@ -1206,7 +1208,7 @@ struct server_sec {
     /*****************************************************************************/
     void server_sec_disconnect()
     {
-        this->mcs_layer.server_mcs_disconnect();
+        this->mcs_layer.server_mcs_disconnect(this->trans);
     }
 
     void server_sec_init_client_crypt_random(Stream & stream)
@@ -1262,7 +1264,7 @@ struct server_sec {
 
         #warning using a template for default size would make sense
         Stream in(8192);
-        X224In crtpdu(this->mcs_layer.trans, in);
+        X224In crtpdu(this->trans, in);
         if (crtpdu.tpdu_hdr.code != ISO_PDU_CR) {
             throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
         }
@@ -1271,7 +1273,7 @@ struct server_sec {
         Stream out(11);
         X224Out cctpdu(X224Packet::CC_TPDU, out);
         cctpdu.end();
-        cctpdu.send(this->mcs_layer.trans);
+        cctpdu.send(this->trans);
 
 // mcsCi (variable): Variable-length BER-encoded MCS Connect Initial structure
 //   (using definite-length encoding) as described in [T125] (the ASN.1
@@ -1308,14 +1310,14 @@ struct server_sec {
 //   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
 //   2.2.1.2.1.
 
-        this->mcs_layer.mcs_recv_connection_initial(this->client_mcs_data, this->mcs_layer.trans);
+        this->mcs_layer.mcs_recv_connection_initial(this->client_mcs_data, this->trans);
 
         #warning probably move that to mcs_data layer, but decrypted buffer should also move there
         #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
         this->server_sec_process_mcs_data(this->client_mcs_data);
 
         this->server_sec_out_mcs_data(this->data);
-        this->mcs_layer.mcs_send_connect_response(this->data, this->mcs_layer.trans);
+        this->mcs_layer.mcs_send_connect_response(this->data, this->trans);
 
         //   2.2.1.5 Client MCS Erect Domain Request PDU
         //   -------------------------------------------
@@ -1336,7 +1338,7 @@ struct server_sec {
         //      structure definitions are given in [T125] section 7, parts 3 and 10).
         {
             Stream stream(8192);
-            X224In(this->mcs_layer.trans, stream);
+            X224In(this->trans, stream);
             uint8_t opcode = stream.in_uint8();
             if ((opcode >> 2) != MCS_EDRQ) {
                 throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
@@ -1369,7 +1371,7 @@ struct server_sec {
 
         {
             Stream stream(8192);
-            X224In(this->mcs_layer.trans, stream);
+            X224In(this->trans, stream);
             uint8_t opcode = stream.in_uint8();
             if ((opcode >> 2) != MCS_AURQ) {
                 throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
@@ -1400,11 +1402,11 @@ struct server_sec {
             // parts 5 and 10).
 
 //            LOG(LOG_INFO, "server_mcs_send_attach_user_confirm_PDU");
-            this->mcs_layer.server_mcs_send_attach_user_confirm_PDU(this->mcs_layer.userid);
+            this->mcs_layer.server_mcs_send_attach_user_confirm_PDU(this->trans, this->mcs_layer.userid);
         }
 
-        this->mcs_layer.join_channel(this->mcs_layer.userid + MCS_USERCHANNEL_BASE);
-        this->mcs_layer.join_channel(MCS_GLOBAL_CHANNEL);
+        this->mcs_layer.join_channel(this->trans, this->mcs_layer.userid + MCS_USERCHANNEL_BASE);
+        this->mcs_layer.join_channel(this->trans, MCS_GLOBAL_CHANNEL);
     }
 
 
