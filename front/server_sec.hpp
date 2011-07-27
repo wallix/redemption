@@ -1402,7 +1402,7 @@ struct server_sec {
             // parts 5 and 10).
 
 //            LOG(LOG_INFO, "server_mcs_send_attach_user_confirm_PDU");
-            this->mcs_layer.server_mcs_send_attach_user_confirm_PDU(this->trans, this->mcs_layer.userid);
+            this->mcs_layer.server_mcs_send_aucf(this->trans, this->mcs_layer.userid);
         }
 
         this->mcs_layer.join_channel(this->trans, this->mcs_layer.userid + MCS_USERCHANNEL_BASE);
