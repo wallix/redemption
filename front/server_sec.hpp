@@ -349,7 +349,7 @@ struct server_sec {
         stream.out_copy_bytes((char*)lic1, 322);
 
         stream.mark_end();
-        this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
+        this->mcs_layer.mcs_send(stream, MCS_GLOBAL_CHANNEL);
 
         tpdu.end();
         tpdu.send(this->trans);
@@ -370,7 +370,7 @@ struct server_sec {
 
         stream.out_copy_bytes((char*)lic2, 20);
         stream.mark_end();
-        this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
+        this->mcs_layer.mcs_send(stream, MCS_GLOBAL_CHANNEL);
 
         tpdu.end();
         tpdu.send(this->trans);
@@ -393,7 +393,7 @@ struct server_sec {
 
         stream.out_copy_bytes((char*)lic3, sizeof(lic3));
 
-        this->mcs_layer.server_mcs_send(stream, MCS_GLOBAL_CHANNEL);
+        this->mcs_layer.mcs_send(stream, MCS_GLOBAL_CHANNEL);
 
         tpdu.end();
         tpdu.send(this->trans);
@@ -603,7 +603,7 @@ struct server_sec {
 
         stream.p = oldp;
 
-        this->mcs_layer.server_mcs_send(stream, chan);
+        this->mcs_layer.mcs_send(stream, chan);
     }
 
     // 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
@@ -1208,7 +1208,7 @@ struct server_sec {
     /*****************************************************************************/
     void server_sec_disconnect()
     {
-        this->mcs_layer.server_mcs_disconnect(this->trans);
+        this->mcs_layer.mcs_disconnect(this->trans);
     }
 
     void server_sec_init_client_crypt_random(Stream & stream)
@@ -1401,8 +1401,8 @@ struct server_sec {
             //   (the ASN.1 structure definitions are given in [T125] section 7,
             // parts 5 and 10).
 
-//            LOG(LOG_INFO, "server_mcs_send_attach_user_confirm_PDU");
-            this->mcs_layer.server_mcs_send_aucf(this->trans, this->mcs_layer.userid);
+//            LOG(LOG_INFO, .mcs_send_attach_user_confirm_PDU");
+            this->mcs_layer.mcs_send_aucf(this->trans, this->mcs_layer.userid);
         }
 
         this->mcs_layer.join_channel(this->trans, this->mcs_layer.userid + MCS_USERCHANNEL_BASE);

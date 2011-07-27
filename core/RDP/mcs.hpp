@@ -212,7 +212,7 @@ struct Mcs {
 
     void mcs_send_connect_response(Stream & data, Transport * trans) throw(Error)
     {
-//        LOG(LOG_INFO, "server_mcs_send_connect_response");
+//        LOG(LOG_INFO, .mcs_send_connect_response");
         #warning why don't we build directly in final data buffer ? Instead of building in data and copying in stream ?
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -363,7 +363,7 @@ struct Mcs {
 // |                           | CredSSP (section 5.4.5.2).                    |
 // +---------------------------+-----------------------------------------------+
 
-    void rdp_mcs_recv(Transport * trans, Stream & stream, int& chan) throw(Error)
+    void mcs_recv(Transport * trans, Stream & stream, int& chan) throw(Error)
     {
         stream.init(65535);
         // read tpktHeader (4 bytes = 3 0 len)
@@ -383,7 +383,7 @@ struct Mcs {
         }
     }
 
-    void rdp_mcs_send_edrq(Transport * trans) throw (Error)
+    void mcs_send_edrq(Transport * trans) throw (Error)
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -397,7 +397,7 @@ struct Mcs {
     }
 
 
-    void rdp_mcs_send_aurq(Transport * trans) throw (Error)
+    void mcs_send_aurq(Transport * trans) throw (Error)
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -409,7 +409,7 @@ struct Mcs {
         tpdu.send(trans);
     }
 
-    void rdp_mcs_recv_aucf(Transport * trans) throw(Error)
+    void mcs_recv_aucf(Transport * trans) throw(Error)
     {
         Stream stream(8192);
         X224In(trans, stream);
@@ -432,7 +432,7 @@ struct Mcs {
 
     /*****************************************************************************/
     /* returns error */
-    void rdp_mcs_send_cjrq(Transport * trans, int chanid) throw(Error)
+    void mcs_send_cjrq(Transport * trans, int chanid) throw(Error)
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -446,7 +446,7 @@ struct Mcs {
     }
 
     /* returns error : channel join confirm */
-    void rdp_mcs_recv_cjcf(Transport * trans) throw(Error)
+    void mcs_recv_cjcf(Transport * trans) throw(Error)
     {
         Stream stream(8192);
         X224In(trans, stream);
@@ -467,9 +467,9 @@ struct Mcs {
     }
 
 
-    void server_mcs_send_cjcf(Transport * trans, int userid, int chanid) throw(Error)
+    void mcs_send_cjcf(Transport * trans, int userid, int chanid) throw(Error)
     {
-//        LOG(LOG_INFO, "server_mcs_send_cjcf");
+//        LOG(LOG_INFO, .mcs_send_cjcf");
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -484,9 +484,9 @@ struct Mcs {
         tpdu.send(trans);
     }
 
-    void server_mcs_send_aucf(Transport * trans, int userid) throw(Error)
+    void mcs_send_aucf(Transport * trans, int userid) throw(Error)
     {
-//        LOG(LOG_INFO, "server_mcs_send_aucf");
+//        LOG(LOG_INFO, .mcs_send_aucf");
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
@@ -498,15 +498,15 @@ struct Mcs {
         tpdu.send(trans);
     }
 
-    void server_mcs_send(Stream & stream, int chan) throw (Error)
+    void mcs_send(Stream & stream, int chan) throw (Error)
     {
-        LOG(LOG_INFO, "server_mcs_send data=%p p=%p end=%p", stream.data, stream.p, stream.end);
+        LOG(LOG_INFO, "mcs_send data=%p p=%p end=%p", stream.data, stream.p, stream.end);
         uint8_t * oldp = stream.p;
         stream.p = stream.mcs_hdr;
         int len = (stream.end - stream.p) - 8;
         if (len > 8192 * 2) {
             LOG(LOG_ERR,
-                "error in server_mcs_send, size too long, its %d (buffer=%d)\n",
+                "error in.mcs_send, size too long, its %d (buffer=%d)\n",
                 len, stream.capacity);
         }
         stream.out_uint8(MCS_SDIN << 2);
@@ -532,9 +532,9 @@ struct Mcs {
         }
     }
 
-    void server_mcs_disconnect(Transport * trans) throw (Error)
+    void mcs_disconnect(Transport * trans) throw (Error)
     {
-//        LOG(LOG_INFO, "server_mcs_disconnect");
+//        LOG(LOG_INFO, "mcs_disconnect");
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
@@ -547,9 +547,9 @@ struct Mcs {
 
     /* returns a zero based index of the channel,
       -1 if error or if it dosen't exist */
-    int server_mcs_get_channel_id(const char * name)
+    int mcs_get_channel_id(const char * name)
     {
-//        LOG(LOG_INFO, "server_mcs_get_channel_id");
+//        LOG(LOG_INFO, "mcs_get_channel_id");
 
         int rv = -1;
 
@@ -632,7 +632,7 @@ public:
         //  [T125] (the ASN.1 structure definitions are given in [T125]
         //  section 7, parts 6 and 10).
 
-        this->server_mcs_send_cjcf(trans, this->userid, channel_id);
+        this->mcs_send_cjcf(trans, this->userid, channel_id);
     }
 
 };

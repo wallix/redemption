@@ -1126,7 +1126,7 @@ struct rdp_sec {
         #warning this loop is ugly, the only true reason is we are waiting for the licence
         while (1){
             rdpver = 3;
-            this->mcs_layer.rdp_mcs_recv(this->trans, stream, channel);
+            this->mcs_layer.mcs_recv(this->trans, stream, channel);
 
             uint32_t sec_flags = stream.in_uint32_le();
             if (sec_flags & SEC_ENCRYPT) { /* 0x08 */
@@ -1305,19 +1305,19 @@ struct rdp_sec {
             LOG(LOG_INFO, "rdp_sec_process_mcs_data\n");
             this->rdp_sec_process_mcs_data(stream, channel_list);
 
-            this->mcs_layer.rdp_mcs_send_edrq(this->trans);
-            this->mcs_layer.rdp_mcs_send_aurq(this->trans);
-            this->mcs_layer.rdp_mcs_recv_aucf(this->trans);
-            this->mcs_layer.rdp_mcs_send_cjrq(this->trans, this->mcs_layer.userid + 1001);
-            this->mcs_layer.rdp_mcs_recv_cjcf(this->trans);
-            this->mcs_layer.rdp_mcs_send_cjrq(this->trans, MCS_GLOBAL_CHANNEL);
-            this->mcs_layer.rdp_mcs_recv_cjcf(this->trans);
+            this->mcs_layer.mcs_send_edrq(this->trans);
+            this->mcs_layer.mcs_send_aurq(this->trans);
+            this->mcs_layer.mcs_recv_aucf(this->trans);
+            this->mcs_layer.mcs_send_cjrq(this->trans, this->mcs_layer.userid + 1001);
+            this->mcs_layer.mcs_recv_cjcf(this->trans);
+            this->mcs_layer.mcs_send_cjrq(this->trans, MCS_GLOBAL_CHANNEL);
+            this->mcs_layer.mcs_recv_cjcf(this->trans);
 
             int num_channels = (int)this->mcs_layer.channel_list.size();
             for (int index = 0; index < num_channels; index++){
                 const mcs_channel_item* channel_item = this->mcs_layer.channel_list[index];
-                this->mcs_layer.rdp_mcs_send_cjrq(this->trans, channel_item->chanid);
-                this->mcs_layer.rdp_mcs_recv_cjcf(this->trans);
+                this->mcs_layer.mcs_send_cjrq(this->trans, channel_item->chanid);
+                this->mcs_layer.mcs_recv_cjcf(this->trans);
             }
         }
         catch(...){
