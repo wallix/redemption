@@ -541,7 +541,7 @@ struct Mcs {
 
     void mcs_send(Stream & stream, int chan) throw (Error)
     {
-        LOG(LOG_INFO, "mcs_send data=%p p=%p end=%p", stream.data, stream.p, stream.end);
+//        LOG(LOG_INFO, "mcs_send data=%p p=%p end=%p", stream.data, stream.p, stream.end);
         uint8_t * oldp = stream.p;
         stream.p = stream.mcs_hdr;
         int len = (stream.end - stream.p) - 8;

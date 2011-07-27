@@ -178,14 +178,16 @@ struct rdp_sec {
 
     void rdp_lic_send_authresp(uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature)
     {
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-
         int sec_flags = SEC_LICENCE_NEG;
         int length = 58;
 
+        Stream stream(8192);
+// -------------------------
+//        McsOut pdu(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
+// -------------------------
 
         int hdrlen = (sec_flags & SEC_ENCRYPT)          ? 12
                    : this->lic_layer.licence_issued ? 0
@@ -265,16 +267,18 @@ struct rdp_sec {
 
     void rdp_lic_send_request(uint8_t* client_random, uint8_t* rsa_data)
     {
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-
         int sec_flags = SEC_LICENCE_NEG;
         int userlen = strlen(this->username) + 1;
         int hostlen = strlen(this->hostname) + 1;
         int length = 128 + userlen + hostlen;
 
+        Stream stream(8192);
+// -------------------------
+//        McsOut pdu(stream);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
+// -------------------------
 
         int hdrlen = (sec_flags & SEC_ENCRYPT)          ? 12
                    : this->lic_layer.licence_issued ? 0
@@ -313,14 +317,16 @@ struct rdp_sec {
                 uint8_t* signature)
     {
         Stream stream(8192);
+// -------------------------
+//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+// -------------------------
 
         int sec_flags = SEC_LICENCE_NEG;
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
-
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
 
         int hdrlen = (sec_flags & SEC_ENCRYPT)          ? 12
                    : this->lic_layer.licence_issued ? 0
@@ -711,13 +717,15 @@ struct rdp_sec {
     void rdp_sec_establish_key()
     {
         Stream stream(8192);
+// -------------------------
+//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+// -------------------------
 
         int length = this->server_public_key_len + SEC_PADDING_SIZE;
         int flags = SEC_CLIENT_RANDOM;
-
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
 
         int hdrlen = this->lic_layer.licence_issued ? 0 : 4 ;
 

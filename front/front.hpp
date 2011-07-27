@@ -175,10 +175,13 @@ struct GraphicsUpdatePDU
 
     void init(){
         this->stream.init(4096);
+// -------------------------
+//        McsOut pdu(stream);
         this->tpdu = new X224Out(X224Packet::DT_TPDU, this->stream);
 
         stream.mcs_hdr = stream.p;
         stream.p += 8;
+// -------------------------
 
         if (this->rdp_layer.sec_layer.client_info->crypt_level > 1) {
             stream.sec_hdr = stream.p;
