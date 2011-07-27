@@ -284,10 +284,12 @@ struct rdp_rdp {
                        + 4 /* w2k fix, why? */ ;
 
             stream.init(8192);
+// -------------------------
+//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-
             stream.mcs_hdr = stream.p;
             stream.p += 8;
+// -------------------------
 
             int hdrlen = (sec_flags & SEC_ENCRYPT)          ? 12
                        : this->sec_layer.lic_layer.licence_issued ? 0
@@ -538,10 +540,12 @@ struct rdp_rdp {
         void send_control(Stream & stream, int action) throw (Error)
         {
             stream.init(8192);
+// -------------------------
+//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-
             stream.mcs_hdr = stream.p;
             stream.p += 8;
+// -------------------------
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -563,10 +567,12 @@ struct rdp_rdp {
         void send_synchronise(Stream & stream) throw (Error)
         {
             stream.init(8192);
+// -------------------------
+//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-
             stream.mcs_hdr = stream.p;
             stream.p += 8;
+// -------------------------
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -586,10 +592,12 @@ struct rdp_rdp {
         void send_fonts(Stream & stream, int seq) throw(Error)
         {
             stream.init(8192);
+// -------------------------
+//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-
             stream.mcs_hdr = stream.p;
             stream.p += 8;
+// -------------------------
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -637,10 +645,13 @@ struct rdp_rdp {
             int sec_flags = SEC_LOGON_INFO | SEC_ENCRYPT;
 
             Stream stream(8192);
+// -------------------------
+//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-
             stream.mcs_hdr = stream.p;
             stream.p += 8;
+// -------------------------
+
             int hdrlen = 12 ; // SEC_ENCRYPT
 
             stream.sec_hdr = stream.p;
@@ -773,10 +784,12 @@ struct rdp_rdp {
 //            LOG(LOG_INFO, "send_input\n");
 
             stream.init(8192);
+// -------------------------
+//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-
             stream.mcs_hdr = stream.p;
             stream.p += 8;
+// -------------------------
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -802,10 +815,12 @@ struct rdp_rdp {
         {
             LOG(LOG_INFO, "send_invalidate\n");
             stream.init(8192);
+// -------------------------
+//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-
             stream.mcs_hdr = stream.p;
             stream.p += 8;
+// -------------------------
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -989,12 +1004,12 @@ struct rdp_rdp {
             send_data also in order to be able to redirect data in the correct
             way*/
             Stream stream(8192);
-
-            stream.init(8192);
+// -------------------------
+//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-
             stream.mcs_hdr = stream.p;
             stream.p += 8;
+// -------------------------
 
             int hdrlen = 12 ; // SEC_ENCRYPT
 

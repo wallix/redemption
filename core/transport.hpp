@@ -244,29 +244,29 @@ class SocketTransport : public Transport {
         total_received += total_len;
         last_quantum_received += total_len;
 
-        uint8_t * bb = start;
-        LOG(LOG_INFO, "recv on socket %u : len=%u buffer=%p"
-            " [%0.2X %0.2X %0.2X %0.2X]"
-            " [%0.2X %0.2X %0.2X]"
-            " [%0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X ...]",
-            this->sck, total_len, *input_buffer,
-            bb[0], bb[1], bb[2], bb[3],
-            bb[4], bb[5], bb[6],
-            bb[7], bb[8], bb[9], bb[10], bb[11],
-            bb[12], bb[13], bb[14], bb[15], bb[16]);
+//        uint8_t * bb = start;
+//        LOG(LOG_INFO, "recv on socket %u : len=%u buffer=%p"
+//            " [%0.2X %0.2X %0.2X %0.2X]"
+//            " [%0.2X %0.2X %0.2X]"
+//            " [%0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X ...]",
+//            this->sck, total_len, *input_buffer,
+//            bb[0], bb[1], bb[2], bb[3],
+//            bb[4], bb[5], bb[6],
+//            bb[7], bb[8], bb[9], bb[10], bb[11],
+//            bb[12], bb[13], bb[14], bb[15], bb[16]);
     }
 
     virtual void send(const char * buffer, int len) throw (Error)
     {
-        LOG(LOG_INFO, "send on socket %u : len=%u buffer=%p"
-            " [%0.2X %0.2X %0.2X %0.2X]"
-            " [%0.2X %0.2X %0.2X]"
-            " [%0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X ...]",
-            this->sck, len, buffer,
-            (uint8_t)buffer[0], (uint8_t)buffer[1], (uint8_t)buffer[2], (uint8_t)buffer[3],
-            (uint8_t)buffer[4], (uint8_t)buffer[5], (uint8_t)buffer[6],
-            (uint8_t)buffer[7], (uint8_t)buffer[8], (uint8_t)buffer[9], (uint8_t)buffer[10], (uint8_t)buffer[11],
-            (uint8_t)buffer[12], (uint8_t)buffer[13], (uint8_t)buffer[14], (uint8_t)buffer[15], (uint8_t)buffer[16]);
+//        LOG(LOG_INFO, "send on socket %u : len=%u buffer=%p"
+//            " [%0.2X %0.2X %0.2X %0.2X]"
+//            " [%0.2X %0.2X %0.2X]"
+//            " [%0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X ...]",
+//            this->sck, len, buffer,
+//            (uint8_t)buffer[0], (uint8_t)buffer[1], (uint8_t)buffer[2], (uint8_t)buffer[3],
+//            (uint8_t)buffer[4], (uint8_t)buffer[5], (uint8_t)buffer[6],
+//            (uint8_t)buffer[7], (uint8_t)buffer[8], (uint8_t)buffer[9], (uint8_t)buffer[10], (uint8_t)buffer[11],
+//            (uint8_t)buffer[12], (uint8_t)buffer[13], (uint8_t)buffer[14], (uint8_t)buffer[15], (uint8_t)buffer[16]);
         if (this->sck_closed) {
             throw Error(ERR_SOCKET_ALLREADY_CLOSED);
         }

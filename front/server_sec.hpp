@@ -342,9 +342,12 @@ struct server_sec {
        };
 
         Stream stream(8192);
+// -------------------------
+//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
+// -------------------------
 
         stream.out_copy_bytes((char*)lic1, 322);
 
@@ -366,9 +369,7 @@ struct server_sec {
         Stream stream(8192);
 // -------------------------
 //        McsOut pdu(stream);
-
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 //-------------------------
@@ -399,9 +400,7 @@ struct server_sec {
         Stream stream(8192);
 // -------------------------
 //        McsOut pdu(stream);
-
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 //-------------------------
