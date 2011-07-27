@@ -26,7 +26,7 @@
 #define __RDP_SEC_HPP__
 
 #include "RDP/x224.hpp"
-#include "rdp_mcs.hpp"
+#include "RDP/mcs.hpp"
 #include "client_mod.hpp"
 
 #include "constants.hpp"
@@ -55,7 +55,7 @@ struct rdp_sec {
     #warning windows 2008 does not write trailer because of overflow of buffer below, checked actual size: 64 bytes on xp, 256 bytes on windows 2008
     uint8_t client_crypt_random[512];
     Stream client_mcs_data;
-    struct rdp_mcs mcs_layer;
+    struct Mcs mcs_layer;
     int decrypt_use_count;
     int encrypt_use_count;
     uint8_t decrypt_key[16];

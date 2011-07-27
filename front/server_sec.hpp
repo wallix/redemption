@@ -26,13 +26,13 @@
 #if !defined(__SEC_HPP__)
 #define __SEC_HPP__
 
-#include "server_mcs.hpp"
+#include "RDP/x224.hpp"
+#include "RDP/mcs.hpp"
 #include "ssl_calls.hpp"
 #include "client_info.hpp"
 #include "rsa_keys.hpp"
 #include "constants.hpp"
 
-#include "RDP/x224.hpp"
 
 #include <assert.h>
 #include <stdint.h>
@@ -43,7 +43,7 @@ using namespace std;
 /* sec */
 struct server_sec {
     struct ClientInfo * client_info;
-    struct server_mcs mcs_layer;
+    struct Mcs mcs_layer;
     uint8_t server_random[32];
     uint8_t client_random[64];
     uint8_t client_crypt_random[72];
