@@ -467,9 +467,9 @@ struct Mcs {
     }
 
 
-    void server_mcs_send_channel_join_confirm_PDU(Transport * trans, int userid, int chanid) throw(Error)
+    void server_mcs_send_cjcf(Transport * trans, int userid, int chanid) throw(Error)
     {
-//        LOG(LOG_INFO, "server_mcs_send_channel_join_confirm_PDU");
+//        LOG(LOG_INFO, "server_mcs_send_cjcf");
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -632,7 +632,7 @@ public:
         //  [T125] (the ASN.1 structure definitions are given in [T125]
         //  section 7, parts 6 and 10).
 
-        this->server_mcs_send_channel_join_confirm_PDU(trans, this->userid, channel_id);
+        this->server_mcs_send_cjcf(trans, this->userid, channel_id);
     }
 
 };
