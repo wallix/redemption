@@ -1336,8 +1336,7 @@ struct rdp_sec {
 
 
 
-    /* this adds the mcs channels in the list of channels to be used when
-       creating the server mcs data */
+    /* this adds the mcs channels in the list of channels to be used when creating the server mcs data */
     void rdp_sec_process_srv_channels(Stream & stream, vector<mcs_channel_item*> channel_list)
     {
         /* this is an option set in xrdp.ini, use 1 by default, static virtual

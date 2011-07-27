@@ -41,24 +41,6 @@
 using namespace std;
 
 struct server_mcs : public Mcs {
-    int userid;
-    vector<struct mcs_channel_item *> channel_list;
-    server_mcs() : userid(1)
-    {
-    }
-
-    ~server_mcs(){
-        int count = (int) this->channel_list.size();
-        for (int index = 0; index < count; index++) {
-            mcs_channel_item* channel_item = this->channel_list[index];
-            if (0 != channel_item) {
-                delete channel_item;
-            }
-        }
-    }
-
-    public:
-
 
     void server_mcs_send_channel_join_confirm_PDU(Transport * trans, int userid, int chanid) throw(Error)
     {
