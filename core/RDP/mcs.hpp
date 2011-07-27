@@ -484,9 +484,9 @@ struct Mcs {
         tpdu.send(trans);
     }
 
-    void server_mcs_send_attach_user_confirm_PDU(Transport * trans, int userid) throw(Error)
+    void server_mcs_send_aucf(Transport * trans, int userid) throw(Error)
     {
-//        LOG(LOG_INFO, "server_mcs_send_attach_user_confirm_PDU");
+//        LOG(LOG_INFO, "server_mcs_send_aucf");
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
