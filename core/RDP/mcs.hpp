@@ -39,27 +39,6 @@ struct mcs_channel_item {
 
 struct Mcs {
 
-    void mcs_ber_out_int8(Stream & stream, int value)
-    {
-    }
-
-    void mcs_ber_out_int16(Stream & stream, int value)
-    {
-        stream.out_uint8(BER_TAG_INTEGER);
-        stream.out_ber_len(2);
-        stream.out_uint8((value >> 8));
-        stream.out_uint8(value);
-    }
-
-    void mcs_ber_out_int24(Stream & stream, int value)
-    {
-        stream.out_uint8(BER_TAG_INTEGER);
-        stream.out_ber_len(3);
-        stream.out_uint8(value >> 16);
-        stream.out_uint8(value >> 8);
-        stream.out_uint8(value);
-    }
-
     void mcs_recv_connection_initial(Stream & data, Transport * trans)
     {
         Stream stream(8192);
@@ -223,22 +202,24 @@ struct Mcs {
         int data_len = data.end - data.data;
         stream.out_uint16_be(BER_TAG_MCS_CONNECT_RESPONSE);
         stream.out_ber_len(data_len + 38);
+
         stream.out_uint8(BER_TAG_RESULT);
-        stream.out_ber_len(1);
+        stream.out_uint8(1);
         stream.out_uint8(0);
+
         stream.out_uint8(BER_TAG_INTEGER);
-        stream.out_ber_len(1);
+        stream.out_uint8(1);
         stream.out_uint8(0);
 
         stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-        stream.out_ber_len(26);
+        stream.out_uint8(26);
         stream.out_ber_int8(22); // max_channels
         stream.out_ber_int8(3); // max_users
         stream.out_ber_int8(0); // max_tokens
         stream.out_ber_int8(1);
         stream.out_ber_int8(0);
         stream.out_ber_int8(1);
-        this->mcs_ber_out_int24(stream, 0xfff8); // max_pdu_size
+        stream.out_ber_int24(0xfff8); // max_pdu_size
         stream.out_ber_int8(2);
 
         stream.out_uint8(BER_TAG_OCTET_STRING);
