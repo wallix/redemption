@@ -34,19 +34,6 @@ using namespace std;
 
 /* mcs */
 struct rdp_mcs : public Mcs {
-    int userid;
-    vector<struct mcs_channel_item *> channel_list;
-
-    rdp_mcs() : userid(1)
-    {
-    }
-
-    ~rdp_mcs()
-    {
-    }
-
-    public:
-
 
 // 2.2.1.1.1   RDP Negotiation Request (RDP_NEG_REQ)
 // =================================================

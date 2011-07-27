@@ -39,6 +39,24 @@ struct mcs_channel_item {
 
 struct Mcs {
 
+    int userid;
+    vector<struct mcs_channel_item *> channel_list;
+
+    Mcs() : userid(1)
+    {
+    }
+
+    ~Mcs()
+    {
+        int count = (int) this->channel_list.size();
+        for (int index = 0; index < count; index++) {
+            mcs_channel_item* channel_item = this->channel_list[index];
+            if (0 != channel_item) {
+                delete channel_item;
+            }
+        }
+    }
+
     void mcs_recv_connection_initial(Stream & data, Transport * trans)
     {
         Stream stream(8192);
