@@ -473,7 +473,7 @@ public:
     int get_channel_id(char* name)
     {
 //        LOG(LOG_INFO, "front::get_channel_id\n");
-        return this->rdp_layer.sec_layer.mcs_layer.server_mcs_get_channel_id(name);
+        return this->rdp_layer.sec_layer.mcs_layer.mcs_get_channel_id(name);
     }
 
     void send_to_channel(int channel_id,
