@@ -113,7 +113,7 @@ struct server_rdp {
 
         stream.p = stream.end;
         tpdu.end();
-        tpdu.send(this->sec_layer.mcs_layer.trans);
+        tpdu.send(this->sec_layer.trans);
 
     }
 
@@ -171,7 +171,7 @@ struct server_rdp {
         LOG(LOG_INFO, "2) RDP Packet #%u", this->packet_number);
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
         tpdu.end();
-        tpdu.send(this->sec_layer.mcs_layer.trans);
+        tpdu.send(this->sec_layer.trans);
 
     }
 
@@ -579,7 +579,7 @@ struct server_rdp {
         LOG(LOG_INFO, "3) RDP Packet #%u", this->packet_number);
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
         tpdu.end();
-        tpdu.send(this->sec_layer.mcs_layer.trans);
+        tpdu.send(this->sec_layer.trans);
 
     }
 
@@ -645,7 +645,7 @@ struct server_rdp {
         LOG(LOG_INFO, "4) RDP Packet #%u", this->packet_number);
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
         tpdu.end();
-        tpdu.send(this->sec_layer.mcs_layer.trans);
+        tpdu.send(this->sec_layer.trans);
 
     }
 
@@ -657,7 +657,7 @@ struct server_rdp {
 
         do {
             input_stream.init(65535);
-            X224In tpdu(this->sec_layer.mcs_layer.trans, input_stream);
+            X224In tpdu(this->sec_layer.trans, input_stream);
             int opcode = input_stream.in_uint8();
             int appid = opcode >> 2;
 
@@ -667,10 +667,10 @@ struct server_rdp {
                 /* this is channels getting added from the client */
                 int userid = input_stream.in_uint16_be();
                 int chanid = input_stream.in_uint16_be();
-                this->sec_layer.mcs_layer.server_mcs_send_channel_join_confirm_PDU(userid, chanid);
+                this->sec_layer.mcs_layer.server_mcs_send_channel_join_confirm_PDU(this->sec_layer.trans, userid, chanid);
 
                 input_stream.init(65535);
-                X224In tpdu(this->sec_layer.mcs_layer.trans, input_stream);
+                X224In tpdu(this->sec_layer.trans, input_stream);
                 appid = input_stream.in_uint8() >> 2;
 
             }
@@ -850,7 +850,7 @@ struct server_rdp {
         LOG(LOG_INFO, "5) RDP Packet #%u", this->packet_number);
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
         tpdu.end();
-        tpdu.send(this->sec_layer.mcs_layer.trans);
+        tpdu.send(this->sec_layer.trans);
 
     }
 
@@ -1047,7 +1047,7 @@ struct server_rdp {
 
         stream.p = stream.end;
         tpdu.end();
-        tpdu.send(this->sec_layer.mcs_layer.trans);
+        tpdu.send(this->sec_layer.trans);
 
 
     }
@@ -1312,7 +1312,7 @@ struct server_rdp {
         LOG(LOG_INFO, "6) RDP Packet #%u", this->packet_number);
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
         tpdu.end();
-        tpdu.send(this->sec_layer.mcs_layer.trans);
+        tpdu.send(this->sec_layer.trans);
 
     }
 
@@ -1368,7 +1368,7 @@ struct server_rdp {
         LOG(LOG_INFO, "7) RDP Packet #%u", this->packet_number);
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
         tpdu.end();
-        tpdu.send(this->sec_layer.mcs_layer.trans);
+        tpdu.send(this->sec_layer.trans);
 
     }
 
@@ -1429,7 +1429,7 @@ struct server_rdp {
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
 
         tpdu.end();
-        tpdu.send(this->sec_layer.mcs_layer.trans);
+        tpdu.send(this->sec_layer.trans);
 
     }
 
@@ -1539,7 +1539,7 @@ struct server_rdp {
                 LOG(LOG_INFO, "9) RDP Packet #%u", this->packet_number);
                 this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
                 tpdu.end();
-                tpdu.send(this->sec_layer.mcs_layer.trans);
+                tpdu.send(this->sec_layer.trans);
 
             }
             break;
@@ -1602,7 +1602,7 @@ struct server_rdp {
         LOG(LOG_INFO, "RDP Packet #%u (type=%u (PDUTYPE_DEACTIVATEALLPDU))", this->packet_number++, PDUTYPE_DEACTIVATEALLPDU);
         this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
         tpdu.end();
-        tpdu.send(this->sec_layer.mcs_layer.trans);
+        tpdu.send(this->sec_layer.trans);
     }
 };
 

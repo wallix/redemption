@@ -41,11 +41,9 @@
 using namespace std;
 
 struct server_mcs : public Mcs {
-    struct Transport *trans;
     int userid;
     vector<struct mcs_channel_item *> channel_list;
-    server_mcs(struct Transport *trans)
-        : trans(trans), userid(1)
+    server_mcs() : userid(1)
     {
     }
 
@@ -62,7 +60,7 @@ struct server_mcs : public Mcs {
     public:
 
 
-    void server_mcs_send_channel_join_confirm_PDU(int userid, int chanid) throw(Error)
+    void server_mcs_send_channel_join_confirm_PDU(Transport * trans, int userid, int chanid) throw(Error)
     {
 //        LOG(LOG_INFO, "server_mcs_send_channel_join_confirm_PDU");
 
@@ -76,10 +74,10 @@ struct server_mcs : public Mcs {
         stream.out_uint16_be(chanid);
 
         tpdu.end();
-        tpdu.send(this->trans);
+        tpdu.send(trans);
     }
 
-    void server_mcs_send_attach_user_confirm_PDU(int userid) throw(Error)
+    void server_mcs_send_attach_user_confirm_PDU(Transport * trans, int userid) throw(Error)
     {
 //        LOG(LOG_INFO, "server_mcs_send_attach_user_confirm_PDU");
         Stream stream(8192);
@@ -90,7 +88,7 @@ struct server_mcs : public Mcs {
         stream.out_uint16_be(userid);
 
         tpdu.end();
-        tpdu.send(this->trans);
+        tpdu.send(trans);
     }
 
     void server_mcs_send(Stream & stream, int chan) throw (Error)
@@ -127,7 +125,7 @@ struct server_mcs : public Mcs {
         }
     }
 
-    void server_mcs_disconnect() throw (Error)
+    void server_mcs_disconnect(Transport * trans) throw (Error)
     {
 //        LOG(LOG_INFO, "server_mcs_disconnect");
         Stream stream(8192);
@@ -137,7 +135,7 @@ struct server_mcs : public Mcs {
         stream.out_uint8(0x80);
 
         tpdu.end();
-        tpdu.send(this->trans);
+        tpdu.send(trans);
     }
 
     /* returns a zero based index of the channel,
@@ -166,12 +164,12 @@ struct server_mcs : public Mcs {
 
 
 public:
-    void join_channel(uint16_t channel_id)
+    void join_channel(Transport * trans, uint16_t channel_id)
     {
         Stream stream(8192);
         // read tpktHeader (4 bytes = 3 0 len)
         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-        X224In(this->trans, stream);
+        X224In(trans, stream);
 
         int opcode = stream.in_uint8();
         if ((opcode >> 2) != MCS_CJRQ) {
@@ -227,7 +225,7 @@ public:
         //  [T125] (the ASN.1 structure definitions are given in [T125]
         //  section 7, parts 6 and 10).
 
-        this->server_mcs_send_channel_join_confirm_PDU(this->userid, channel_id);
+        this->server_mcs_send_channel_join_confirm_PDU(trans, this->userid, channel_id);
     }
 
 

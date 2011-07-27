@@ -34,11 +34,10 @@ using namespace std;
 
 /* mcs */
 struct rdp_mcs : public Mcs {
-    Transport * trans;
     int userid;
     vector<struct mcs_channel_item *> channel_list;
 
-    rdp_mcs(Transport * trans) : trans(trans), userid(1)
+    rdp_mcs() : userid(1)
     {
     }
 
@@ -162,12 +161,12 @@ struct rdp_mcs : public Mcs {
 // |                           | CredSSP (section 5.4.5.2).                    |
 // +---------------------------+-----------------------------------------------+
 
-    void rdp_mcs_recv(Stream & stream, int& chan) throw(Error)
+    void rdp_mcs_recv(Transport * trans, Stream & stream, int& chan) throw(Error)
     {
         stream.init(65535);
         // read tpktHeader (4 bytes = 3 0 len)
         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-        X224In(this->trans, stream);
+        X224In(trans, stream);
 
         int opcode = stream.in_uint8();
         if ((opcode >> 2) != MCS_SDIN) {
@@ -182,7 +181,7 @@ struct rdp_mcs : public Mcs {
         }
     }
 
-    void rdp_mcs_send_edrq() throw (Error)
+    void rdp_mcs_send_edrq(Transport * trans) throw (Error)
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -192,11 +191,11 @@ struct rdp_mcs : public Mcs {
         stream.out_uint16_be(0x100); /* interval */
 
         tpdu.end();
-        tpdu.send(this->trans);
+        tpdu.send(trans);
     }
 
 
-    void rdp_mcs_send_aurq() throw (Error)
+    void rdp_mcs_send_aurq(Transport * trans) throw (Error)
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -205,13 +204,13 @@ struct rdp_mcs : public Mcs {
         stream.mark_end();
 
         tpdu.end();
-        tpdu.send(this->trans);
+        tpdu.send(trans);
     }
 
-    void rdp_mcs_recv_aucf() throw(Error)
+    void rdp_mcs_recv_aucf(Transport * trans) throw(Error)
     {
         Stream stream(8192);
-        X224In(this->trans, stream);
+        X224In(trans, stream);
         int opcode = stream.in_uint8();
         if ((opcode >> 2) != MCS_AUCF) {
             throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
@@ -231,7 +230,7 @@ struct rdp_mcs : public Mcs {
 
     /*****************************************************************************/
     /* returns error */
-    void rdp_mcs_send_cjrq(int chanid) throw(Error)
+    void rdp_mcs_send_cjrq(Transport * trans, int chanid) throw(Error)
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -241,18 +240,15 @@ struct rdp_mcs : public Mcs {
         stream.out_uint16_be(chanid);
 
         tpdu.end();
-        tpdu.send(this->trans);
+        tpdu.send(trans);
     }
 
-
-    /*****************************************************************************/
     /* returns error : channel join confirm */
-    void rdp_mcs_recv_cjcf() throw(Error)
+    void rdp_mcs_recv_cjcf(Transport * trans) throw(Error)
     {
-        int opcode;
         Stream stream(8192);
-        X224In(this->trans, stream);
-        opcode = stream.in_uint8();
+        X224In(trans, stream);
+        int opcode = stream.in_uint8();
         if ((opcode >> 2) != MCS_CJCF) {
             throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
         }
@@ -266,18 +262,6 @@ struct rdp_mcs : public Mcs {
         if (!stream.check_end()) {
             throw Error(ERR_MCS_RECV_CJCF_ERROR_CHECKING_STREAM);
         }
-    }
-
-    /* Send an MCS transport data packet to a specific channel */
-    void rdp_mcs_send_to_channel(Stream & stream, int chan_id)
-    {
-        stream.p = stream.mcs_hdr;
-        int len = ((stream.end - stream.p) - 8) | 0x8000;
-        stream.out_uint8(MCS_SDRQ << 2);
-        stream.out_uint16_be(this->userid);
-        stream.out_uint16_be(chan_id);
-        stream.out_uint8(0x70);
-        stream.out_uint16_be(len);
     }
 };
 
