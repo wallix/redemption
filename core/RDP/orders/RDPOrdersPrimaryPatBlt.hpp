@@ -334,6 +334,13 @@ class RDPPatBlt {
         this->str(buffer, 1024, RDPOrderCommon(RDP::PATBLT, clip));
         LOG(level, buffer);
     }
+
+    void print(const Rect & clip) const {
+        char buffer[1024];
+        this->str(buffer, 1024, RDPOrderCommon(RDP::PATBLT, clip));
+        printf("%s", buffer);
+    }
+
 };
 
 
