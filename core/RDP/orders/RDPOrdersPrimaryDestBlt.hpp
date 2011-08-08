@@ -935,6 +935,12 @@ class RDPDestBlt {
         return lg;
     }
 
+    void print(const Rect & clip) const {
+        char buffer[1024];
+        this->str(buffer, 1024, RDPOrderCommon(RDP::DESTBLT, clip));
+        printf("%s", buffer);
+    }
+
 };
 
 

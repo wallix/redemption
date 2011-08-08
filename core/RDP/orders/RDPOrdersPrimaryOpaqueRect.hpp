@@ -142,6 +142,19 @@ class RDPOpaqueRect {
         }
         return lg;
     }
+
+    void log(int level, const Rect & clip) const {
+        char buffer[1024];
+        this->str(buffer, 1024, RDPOrderCommon(RDP::RECT, clip));
+        LOG(level, buffer);
+    }
+
+    void print(const Rect & clip) const {
+        char buffer[1024];
+        this->str(buffer, 1024, RDPOrderCommon(RDP::RECT, clip));
+        printf("%s", buffer);
+    }
+
 };
 
 

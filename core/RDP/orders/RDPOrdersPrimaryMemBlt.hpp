@@ -228,6 +228,12 @@ class RDPMemBlt {
         LOG(level, buffer);
     }
 
+    void print(const Rect & clip) const {
+        char buffer[1024];
+        this->str(buffer, 1024, RDPOrderCommon(RDP::MEMBLT, clip));
+        printf("%s", buffer);
+    }
+
 };
 
 
