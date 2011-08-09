@@ -29,6 +29,7 @@
 #include "rect.hpp"
 #include "constants.hpp"
 #include <time.h>
+#include <png.h>
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersSecondaryHeader.hpp"
@@ -423,7 +424,7 @@ class StaticCapture
             // HERE WE CAN CAPTURE RAW FRAMES
             char rawImagePath[256]     = {0};
             char rawImageMetaPath[256] = {0};
-            snprintf(rawImagePath,     254, "/dev/shm/%d-%d", getpid(), this->framenb++);
+            snprintf(rawImagePath,     254, "/dev/shm/%d-%d.png", getpid(), this->framenb++);
             snprintf(rawImageMetaPath, 254, "%s.meta", rawImagePath);
             FILE * fd = fopen(rawImageMetaPath, "w");
             if (fd) {
@@ -432,7 +433,27 @@ class StaticCapture
             fclose(fd);
             fd = fopen(rawImagePath, "w");
             if (fd) {
-                fwrite(this->data, 3, this->width * this->height, fd);
+                const uint8_t Bpp = 3;
+                png_struct * ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+                png_info * pinfo = png_create_info_struct(ppng);
+
+                // prepare png header
+                png_init_io(ppng, fd);
+                png_set_IHDR(ppng, pinfo, this->width, this->height, 8,
+                             PNG_COLOR_TYPE_RGB,
+                             PNG_INTERLACE_NONE,
+                             PNG_COMPRESSION_TYPE_BASE,
+                             PNG_FILTER_TYPE_BASE);
+                png_write_info(ppng, pinfo);
+
+                // send image buffer to file, one pixel row at once
+                for (uint32_t k = 0; k < (uint32_t)this->height; ++k ) {
+                    png_write_row(ppng, this->data + k*width*Bpp);
+                }
+                png_write_end(ppng, pinfo);
+                png_destroy_write_struct(&ppng, &pinfo);
+                // commented line below it to create row capture
+                // fwrite(this->data, 3, this->width * this->height, fd);
             }
             fclose(fd);
 

@@ -93,6 +93,8 @@ lib freetype : : <name>freetype <link>static ;
 lib jpeg : : <name>jpeg <link>static ;
 lib Xext : : <name>Xext <link>static ;
 
+lib png : : <name>png <link>static ;
+
 
 obj widget : mod/internal/widget.cpp ;
 obj mainloop : core/mainloop.cpp ;
@@ -125,6 +127,7 @@ exe rdpproxy
         crypto
         z
         dl
+        png
 
         libboost_program_options
 
@@ -164,7 +167,7 @@ exe xrdp-keygen
 
 import testing ;
 
-unit-test test_widget : tests/test_widget.cpp libboost_unit_test ini_config keymap rsa_keys widget mainloop session ssl_calls d3des libboost_program_options openssl crypto z dl ;
+unit-test test_widget : tests/test_widget.cpp libboost_unit_test ini_config keymap rsa_keys widget mainloop session ssl_calls d3des libboost_program_options openssl crypto png z dl ;
 unit-test test_bitmap : tests/test_bitmap.cpp libboost_unit_test ini_config libboost_program_options ;
 unit-test test_bitmap_cache : tests/test_bitmap_cache.cpp libboost_unit_test ini_config libboost_program_options ;
 unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp libboost_unit_test ini_config libboost_program_options ;
@@ -195,3 +198,4 @@ unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test : 
 unit-test test_dico : tests/test_dico.cpp libboost_unit_test : ;
 unit-test test_colors : tests/test_colors.cpp libboost_unit_test : ;
 unit-test test_write_over_file : tests/test_write_over_file.cpp libboost_unit_test : ;
+unit-test test_libpng : tests/test_libpng.cpp libboost_unit_test png z : ;
