@@ -1,5 +1,35 @@
 #!/usr/bin/python
 
+# ------------ This is what should be but in xinetd configuration file -----
+#service wab-rdp
+#{
+#    disable     = yes
+#    port        = 3333
+#    protocol    = tcp
+#    redirect    = 127.0.0.1 3389
+##    server      = /usr/local/bin/rdpproxy
+##    server_args = -i
+#    socket_type = stream
+#    type        = UNLISTED
+#    user        = root
+#    wait        = no
+#}
+
+#service wab-rdp
+#{
+#    disable     = no
+#    port        = 3450
+#    protocol    = tcp
+##    redirect    = 127.0.0.1 3389
+#    server      = <path>/utils/authhook-xinetd.py
+##    server_args = -i
+#    socket_type = stream
+#    type        = UNLISTED
+#    user        = root
+#    wait        = no
+#}
+# --------------------------------------------------------------------------
+
 import syslog
 
 import select
