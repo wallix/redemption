@@ -781,4 +781,14 @@ public:
 
 };
 
+
+struct McsOut
+{
+    Stream & stream;
+
+    McsOut(Stream & stream) : stream(stream)
+    {
+    }
+};
+
 #endif

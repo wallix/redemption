@@ -38,6 +38,83 @@
 #include "error.hpp"
 #include "log.hpp"
 
+
+static inline int connect(const char* ip, int port,
+             int nbretry = 2, int retry_delai_ms = 1000) throw (Error)
+{
+    int sck = 0;
+    LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
+    // we will try connection several time
+    // the trial process include socket opening, hostname resolution, etc
+    // because some problems can come from the local endpoint,
+    // not necessarily from the remote endpoint.
+    for (int trial = 0; ; trial++){
+        try {
+            sck = socket(PF_INET, SOCK_STREAM, 0);
+
+            /* set snd buffer to at least 32 Kbytes */
+            int snd_buffer_size;
+            unsigned int option_len = sizeof(snd_buffer_size);
+            if (0 == getsockopt(sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, &option_len)) {
+                if (snd_buffer_size < 32768) {
+                    snd_buffer_size = 32768;
+                    if (-1 == setsockopt(sck,
+                            SOL_SOCKET,
+                            SO_SNDBUF,
+                            &snd_buffer_size, sizeof(snd_buffer_size))){
+                        LOG(LOG_WARNING, "setsockopt failed with errno=%d", errno);
+                        throw Error(ERR_SOCKET_CONNECT_FAILED);
+                    }
+                }
+            }
+            else {
+                LOG(LOG_WARNING, "getsockopt failed with errno=%d", errno);
+                throw Error(ERR_SOCKET_CONNECT_FAILED);
+            }
+
+            struct sockaddr_in s;
+            memset(&s, 0, sizeof(struct sockaddr_in));
+            s.sin_family = AF_INET;
+            s.sin_port = htons(port);
+            s.sin_addr.s_addr = inet_addr(ip);
+            if (s.sin_addr.s_addr == INADDR_NONE) {
+            #warning gethostbyname is obsolete use new function getnameinfo
+                LOG(LOG_INFO, "Asking ip to DNS for %s\n", ip);
+                struct hostent *h = gethostbyname(ip);
+                if (!h) {
+                    LOG(LOG_ERR, "DNS resolution failed for %s"
+                        " with errno =%d (%s)\n",
+                        ip,
+                        errno, strerror(errno));
+                    throw Error(ERR_SOCKET_GETHOSTBYNAME_FAILED);
+                }
+                s.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
+            }
+            #warning we should control and detect timeout instead of relying on default connect behavior. Maybe set O_NONBLOCK and use poll to manage timeouts ?
+            if (-1 == ::connect(sck, (struct sockaddr*)&s, sizeof(s))){
+                LOG(LOG_INFO, "connection to %s failed"
+                    " with errno = %d (%s)\n",
+                    ip,
+                    errno, strerror(errno));
+                throw Error(ERR_SOCKET_CONNECT_FAILED);
+            }
+            fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
+            break;
+        }
+        catch (Error){
+            if (trial >= nbretry){
+                LOG(LOG_INFO, "All trials done connecting to %s\n", ip);
+                throw;
+            }
+        }
+        LOG(LOG_INFO, "Will retry connecting to %s in %d ms (trial %d on %d)\n",
+            ip, retry_delai_ms, trial, nbretry);
+        usleep(retry_delai_ms);
+    }
+    LOG(LOG_INFO, "connection to %s succeeded : socket %d\n", ip, sck);
+    return sck;
+}
+
 class Transport {
 public:
     uint64_t total_received;
@@ -63,9 +140,6 @@ public:
     virtual void recv(char ** pbuffer, size_t len) throw (Error) = 0;
     virtual void send(const char * buffer, int len) throw (Error) = 0;
     virtual void disconnect() = 0;
-    #warning connect should not be inside transport, transport should be instanciated only after a successfull connection
-    virtual void connect(const char* ip, int port, int nbretry = 0, int retry_delai_ms = 1000000) throw (Error) = 0;
-
 };
 
 class GeneratorTransport : public Transport {
@@ -98,10 +172,6 @@ class GeneratorTransport : public Transport {
 
     virtual void disconnect() {
     }
-
-    #warning connect should not be inside transport, transport should be instanciated only after a successfull connection
-    virtual void connect(const char* ip, int port, int nbretry = 0, int retry_delai_ms = 1000000) throw (Error) {}
-
 };
 
 
@@ -124,15 +194,6 @@ class SocketTransport : public Transport {
     {
         this->sck = sck;
         this->sck_closed = 0;
-    }
-
-
-    SocketTransport(const char* ip, int port, int nbretry = 0, int retry_delai_ms = 1000000)
-        : Transport()
-    {
-        this->sck = 0;
-        this->sck_closed = 0;
-        this->connect(ip, port, nbretry, retry_delai_ms);
     }
 
     ~SocketTransport(){
@@ -211,7 +272,7 @@ class SocketTransport : public Transport {
 
     virtual void recv(char ** input_buffer, size_t total_len) throw (Error)
     {
-        uint8_t * start = (uint8_t*)(*input_buffer);
+//        uint8_t * start = (uint8_t*)(*input_buffer);
         int len = total_len;
         char * pbuffer = *input_buffer;
 
@@ -295,81 +356,7 @@ class SocketTransport : public Transport {
     }
 
     private:
-    void connect(const char* ip, int port,
-                 int nbretry = 2, int retry_delai_ms = 1000) throw (Error)
-    {
-        LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
-        // we will try connection several time
-        // the trial process include socket opening, hostname resolution, etc
-        // because some problems can come from the local endpoint,
-        // not necessarily from the remote endpoint.
-        for (int trial = 0; ; trial++){
-            try {
-                this->sck = socket(PF_INET, SOCK_STREAM, 0);
 
-                unsigned int option_len;
-
-                /* set snd buffer to at least 32 Kbytes */
-                int snd_buffer_size;
-                option_len = sizeof(snd_buffer_size);
-                if (0 == getsockopt(this->sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, &option_len)) {
-                    if (snd_buffer_size < 32768) {
-                        snd_buffer_size = 32768;
-                        if (-1 == setsockopt(this->sck,
-                                SOL_SOCKET,
-                                SO_SNDBUF,
-                                &snd_buffer_size, sizeof(snd_buffer_size))){
-                            LOG(LOG_WARNING, "setsockopt failed with errno=%d", errno);
-                            throw Error(ERR_SOCKET_CONNECT_FAILED);
-                        }
-                    }
-                }
-                else {
-                    LOG(LOG_WARNING, "getsockopt failed with errno=%d", errno);
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-
-                struct sockaddr_in s;
-                memset(&s, 0, sizeof(struct sockaddr_in));
-                s.sin_family = AF_INET;
-                s.sin_port = htons(port);
-                s.sin_addr.s_addr = inet_addr(ip);
-                if (s.sin_addr.s_addr == INADDR_NONE) {
-                #warning gethostbyname is obsolete use new function getnameinfo
-                    LOG(LOG_INFO, "Asking ip to DNS for %s\n", ip);
-                    struct hostent *h = gethostbyname(ip);
-                    if (!h) {
-                        LOG(LOG_ERR, "DNS resolution failed for %s"
-                            " with errno =%d (%s)\n",
-                            ip,
-                            errno, strerror(errno));
-                        throw Error(ERR_SOCKET_GETHOSTBYNAME_FAILED);
-                    }
-                    s.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
-                }
-                #warning we should control and detect timeout instead of relying on default connect behavior. Maybe set O_NONBLOCK and use poll to manage timeouts ?
-                if (-1 == ::connect(this->sck, (struct sockaddr*)&s, sizeof(s))){
-                    LOG(LOG_INFO, "connection to %s failed"
-                        " with errno = %d (%s)\n",
-                        ip,
-                        errno, strerror(errno));
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-                fcntl(this->sck, F_SETFL, fcntl(this->sck, F_GETFL) | O_NONBLOCK);
-                break;
-            }
-            catch (Error){
-                if (trial >= nbretry){
-                    LOG(LOG_INFO, "All trials done connecting to %s\n", ip);
-                    throw;
-                }
-            }
-            LOG(LOG_INFO, "Will retry connecting to %s in %d ms (trial %d on %d)\n",
-                ip, retry_delai_ms, trial, nbretry);
-            usleep(retry_delai_ms);
-        }
-        LOG(LOG_INFO, "connection to %s succeeded : socket %d\n", ip, this->sck);
-    }
 };
 
 #endif

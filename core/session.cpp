@@ -775,9 +775,9 @@ bool Session::session_setup_mod(int status, const ModContext * context)
             {
                 #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of mod_event.
                 SocketTransport * t = new SocketTransport(
-                                            this->context->get(STRAUTHID_TARGET_DEVICE),
+                                            connect(this->context->get(STRAUTHID_TARGET_DEVICE),
                                             atoi(this->context->get(STRAUTHID_TARGET_PORT)),
-                                            4, 2500000);
+                                            4, 2500000));
                 this->back_event = new wait_obj(t->sck);
                 this->mod = new xup_mod(t, this->keys, this->key_flags, this->keymap, *this->context, *(this->front));
                 LOG(LOG_INFO, "Creation of new mod 'XUP' suceeded\n");
@@ -796,8 +796,8 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 }
                 #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of mod_event.
                 SocketTransport * t = new SocketTransport(
-                                        this->context->get(STRAUTHID_TARGET_DEVICE),
-                                        atoi(this->context->get(STRAUTHID_TARGET_PORT)));
+                                        connect(this->context->get(STRAUTHID_TARGET_DEVICE),
+                                            atoi(this->context->get(STRAUTHID_TARGET_PORT))));
                 this->back_event = new wait_obj(t->sck);
                 this->mod = new mod_rdp(t,
                                     this->keys,
@@ -818,8 +818,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
             {
                 #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of mod_event.
                 SocketTransport *t = new SocketTransport(
-                                        this->context->get(STRAUTHID_TARGET_DEVICE),
-                                        atoi(this->context->get(STRAUTHID_TARGET_PORT)));
+                    connect(this->context->get(STRAUTHID_TARGET_DEVICE), atoi(this->context->get(STRAUTHID_TARGET_PORT))));
                 this->back_event = new wait_obj(t->sck);
                 this->mod = new mod_vnc(t, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this->front->get_client_info().keylayout);
                 LOG(LOG_INFO, "Creation of new mod 'VNC' suceeded\n");

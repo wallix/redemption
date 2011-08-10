@@ -50,7 +50,7 @@
 
 // Write batch of orders to file
 // Reads batch of orders from file
-#warning merge with GraphicsUpdatePDU
+#warning merge with GraphicsUpdatePDU, needs defining some kind of Transport object for common parts
 struct GraphicsFile
 {
     Stream stream;
@@ -112,12 +112,10 @@ struct GraphicsFile
     }
 
     ~GraphicsFile() {
-        printf("Closing file... \n");
         close (this->pFile);
     }
 
     void init_write(){
-        printf("Init write\n");
         this->stream.init(1024);
         /* size (2 bytes)
          * nb of orders (1 byte)
@@ -130,7 +128,6 @@ struct GraphicsFile
     }
 
     void init_read(){
-        printf("Init read\n");
     }
 
     void rdp_orders_process_bmpcache(int bpp, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
@@ -169,7 +166,6 @@ struct GraphicsFile
     }
 
     void receive(const Rect &clip) {
-        printf("Starting receive\n");
         while (true) {
             /* size (2 bytes)
              * nb of orders (1 byte)
@@ -181,24 +177,35 @@ struct GraphicsFile
             this->stream.init(4);
             // Start reading simple header 
             if (read ( this->pFile, this->stream.data, 4 ) == 0) {
-                printf("EOF !? \n");
                 return;
             }
 
             uint16_t length = stream.in_uint16_le(); // How long ?
             uint8_t  num_orders = stream.in_uint8(); // How many orders ?
             uint8_t  type = stream.in_uint8();       // What type ?
-            printf("HEADER: length=%d, num_orders=%d, type=%d\n", length, num_orders, type);
 
             // How long is my init ?
-            this->stream.init(length - 4); // Already read the header
-            int read = 0;
-            while ( read < length - 4 ) {
-                int r = ::read ( this->pFile, this->stream.data + read, length - 4 - read);
-                if (r == 0) {
-                    throw 1;
-                } else {
-                    read += r;
+            this->stream.init(length - 4); // The header have already been read
+            #warning use transport object to hide this, define some kind of FileTransport ? Very similar to socketTRansport
+            int readlen = 0;
+            while ( readlen < length - 4 ) {
+                int rcvd = ::read ( this->pFile, this->stream.data + readlen, length - 4 - readlen);
+                switch (rcvd) {
+                    case -1: /* error, maybe EAGAIN */
+                        switch (errno){
+                            case EAGAIN: case EINPROGRESS: case EALREADY:
+                            case EBUSY: case EINTR:
+                                break;
+                            default:
+                                #warning define some error code
+                                throw Error(ERR_SOCKET_ERROR);
+                        }
+                        break;
+                    case 0: // no data received EOF, but that should not happen here
+                        #warning define some error code
+                        throw Error(ERR_SOCKET_CLOSED);
+                    default: /* some data received */
+                        readlen += rcvd;
                 }
             }
 
@@ -325,7 +332,6 @@ struct GraphicsFile
             this->stream.set_out_uint8    (this->order_count, 2);                  // amout of orders on 1 byte
             this->stream.set_out_uint8    (1, 3);                                  // type of packet of order (1 is drawing)
             
-            printf("Flushing to file...\n");
             #warning this var is directly linked to the init size of stream
             uint16_t written = 0;
             while ( written < this->stream.p - this->stream.data ) {
@@ -337,10 +343,8 @@ struct GraphicsFile
                     throw 1;
                     break;
                 default:
-                    printf("w=%d ",w);
                     written += w;
                 }
-                printf("Writing %d of %d...\n", written, this->stream.p - this->stream.data);
             }
 
             this->order_count = 0;
