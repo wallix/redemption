@@ -1325,15 +1325,39 @@ struct rdp_sec {
             this->mcs_layer.mcs_recv_aucf(this->trans);
 
 
-            this->mcs_layer.mcs_send_cjrq(this->trans, this->mcs_layer.userid + 1001);
+            {
+                Stream stream(8192);
+                McsOut pdu(MCS_CJRQ, stream);
+                stream.out_uint16_be(this->mcs_layer.userid);
+                stream.out_uint16_be(this->mcs_layer.userid + 1001);
+                pdu.end(); 
+                pdu.send(this->trans);
+            }
+
             this->mcs_layer.mcs_recv_cjcf(this->trans);
-            this->mcs_layer.mcs_send_cjrq(this->trans, MCS_GLOBAL_CHANNEL);
+
+            {
+                Stream stream(8192);
+                McsOut pdu(MCS_CJRQ, stream);
+                stream.out_uint16_be(this->mcs_layer.userid);
+                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+                pdu.end(); 
+                pdu.send(this->trans);
+            }
+
             this->mcs_layer.mcs_recv_cjcf(this->trans);
 
             int num_channels = (int)this->mcs_layer.channel_list.size();
             for (int index = 0; index < num_channels; index++){
                 const mcs_channel_item* channel_item = this->mcs_layer.channel_list[index];
-                this->mcs_layer.mcs_send_cjrq(this->trans, channel_item->chanid);
+
+                Stream stream(8192);
+                McsOut pdu(MCS_CJRQ, stream);
+                stream.out_uint16_be(this->mcs_layer.userid);
+                stream.out_uint16_be(channel_item->chanid);
+                pdu.end(); 
+                pdu.send(this->trans);
+
                 this->mcs_layer.mcs_recv_cjcf(this->trans);
             }
         }

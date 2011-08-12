@@ -559,21 +559,6 @@ struct Mcs {
     }
 
 
-    /*****************************************************************************/
-    /* returns error */
-    void mcs_send_cjrq(Transport * trans, int chanid) throw(Error)
-    {
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        stream.out_uint8((MCS_CJRQ << 2));
-        stream.out_uint16_be(this->userid);
-        stream.out_uint16_be(chanid);
-
-        tpdu.end();
-        tpdu.send(trans);
-    }
-
     /* returns error : channel join confirm */
     void mcs_recv_cjcf(Transport * trans) throw(Error)
     {
@@ -737,7 +722,10 @@ struct McsOut
 
         case MCS_AURQ:
             stream.out_uint8((MCS_AURQ << 2));
-            stream.mark_end();
+        break;
+
+        case MCS_CJRQ:
+            stream.out_uint8((MCS_CJRQ << 2));
         break;
 
         default:
