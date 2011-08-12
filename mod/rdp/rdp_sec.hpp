@@ -1481,15 +1481,33 @@ struct rdp_sec {
             // }
 
             for (size_t index = 0; index < num_channels+2; index++){
-                Stream stream(8192);
-                X224Out tpdu(X224Packet::DT_TPDU, stream);
-                stream.out_uint8((MCS_CJRQ << 2));
-                stream.out_uint16_be(this->mcs_layer.userid);
-                stream.out_uint16_be(channels[index]);
-                tpdu.end();
-                tpdu.send(this->trans);
-
-                this->mcs_layer.mcs_recv_cjcf(this->trans);
+                {
+                    Stream stream(8192);
+                    X224Out tpdu(X224Packet::DT_TPDU, stream);
+                    stream.out_uint8((MCS_CJRQ << 2));
+                    stream.out_uint16_be(this->mcs_layer.userid);
+                    stream.out_uint16_be(channels[index]);
+                    tpdu.end();
+                    tpdu.send(this->trans);
+                }
+                {
+                    Stream stream(8192);
+                    X224In(this->trans, stream);
+                    int opcode = stream.in_uint8();
+                    if ((opcode >> 2) != MCS_CJCF) {
+                        throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
+                    }
+                    if (0 != stream.in_uint8()) {
+                        throw Error(ERR_MCS_RECV_CJCF_EMPTY);
+                    }
+                    stream.skip_uint8(4); /* mcs_userid, req_chanid */
+                    if (opcode & 2) {
+                        stream.skip_uint8(2); /* join_chanid */
+                    }
+                    if (!stream.check_end()) {
+                        throw Error(ERR_MCS_RECV_CJCF_ERROR_CHECKING_STREAM);
+                    }
+                }
             }
         }
         catch(...){

@@ -1246,7 +1246,14 @@ struct server_sec {
     /*****************************************************************************/
     void server_sec_disconnect()
     {
-        this->mcs_layer.mcs_disconnect(this->trans);
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+        stream.out_uint8((MCS_DPUM << 2) | 1);
+        stream.out_uint8(0x80);
+
+        tpdu.end();
+        tpdu.send(this->trans);
     }
 
     void server_sec_init_client_crypt_random(Stream & stream)
@@ -1369,7 +1376,21 @@ struct server_sec {
         }
 
         {
-            this->mcs_layer.mcs_recv_cjrq(this->trans);
+            {
+                Stream stream(8192);
+                // read tpktHeader (4 bytes = 3 0 len)
+                // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+                X224In(this->trans, stream);
+
+                int opcode = stream.in_uint8();
+                if ((opcode >> 2) != MCS_CJRQ) {
+                    throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
+                }
+                stream.skip_uint8(4);
+                if (opcode & 2) {
+                    stream.skip_uint8(2);
+                }
+            }
 
             // 2.2.1.9 Server MCS Channel Join Confirm PDU
             // -------------------------------------------
@@ -1403,7 +1424,21 @@ struct server_sec {
         }
 
         {
-            this->mcs_layer.mcs_recv_cjrq(this->trans);
+            {
+                Stream stream(8192);
+                // read tpktHeader (4 bytes = 3 0 len)
+                // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+                X224In(this->trans, stream);
+
+                int opcode = stream.in_uint8();
+                if ((opcode >> 2) != MCS_CJRQ) {
+                    throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
+                }
+                stream.skip_uint8(4);
+                if (opcode & 2) {
+                    stream.skip_uint8(2);
+                }
+            }
 
             {
                 Stream stream(8192);
