@@ -26,7 +26,7 @@
 #define __RDP_SEC_HPP__
 
 #include "RDP/x224.hpp"
-#include "RDP/mcs.hpp"
+#include "RDP/sec.hpp"
 #include "client_mod.hpp"
 
 #include "constants.hpp"
@@ -55,7 +55,10 @@ struct rdp_sec {
     #warning windows 2008 does not write trailer because of overflow of buffer below, checked actual size: 64 bytes on xp, 256 bytes on windows 2008
     uint8_t client_crypt_random[512];
     Stream client_mcs_data;
-    struct Mcs mcs_layer;
+
+    int userid;
+    vector<struct mcs_channel_item *> channel_list;
+
     int decrypt_use_count;
     int encrypt_use_count;
     uint8_t decrypt_key[16];
@@ -79,7 +82,6 @@ struct rdp_sec {
     rdp_sec(Transport * t, int & use_rdp5, const char * hostname, const char * username)
         : licence_data(0),
           licence_size(0),
-          mcs_layer(),
           decrypt_use_count(0),
           encrypt_use_count(0),
           rc4_key_size(0), /* 1 = 40-bit, 2 = 128-bit */
@@ -118,6 +120,14 @@ struct rdp_sec {
 
     ~rdp_sec()
     {
+        // clear channel_list
+        int count = (int) this->channel_list.size();
+        for (int index = 0; index < count; index++) {
+            mcs_channel_item* channel_item = this->channel_list[index];
+            if (0 != channel_item) {
+                delete channel_item;
+            }
+        }
     }
 
     void rdp_lic_generate_hwid(uint8_t* hwid)
@@ -705,7 +715,7 @@ struct rdp_sec {
         stream.p = stream.mcs_hdr;
         int len = ((stream.end - stream.p) - 8) | 0x8000;
         stream.out_uint8(MCS_SDRQ << 2);
-        stream.out_uint16_be(this->mcs_layer.userid);
+        stream.out_uint16_be(this->userid);
         stream.out_uint16_be(channel);
         stream.out_uint8(0x70);
         stream.out_uint16_be(len);
@@ -1075,10 +1085,10 @@ struct rdp_sec {
 
     //    LOG(LOG_DEBUG, "rdp_process_redirect_pdu()\n");
 
-        int num_channels_src = (int) this->mcs_layer.channel_list.size();
+        int num_channels_src = (int) this->channel_list.size();
         mcs_channel_item *channel_item = NULL;
         for (int index = 0; index < num_channels_src; index++){
-            channel_item = this->mcs_layer.channel_list[index];
+            channel_item = this->channel_list[index];
             if (chanid == channel_item->chanid){
                 break;
             }
@@ -1563,7 +1573,7 @@ struct rdp_sec {
                     throw Error(ERR_MCS_RECV_AUCF_RES_NOT_0);
                 }
                 if (opcode & 2) {
-                    this->mcs_layer.userid = stream.in_uint16_be();
+                    this->userid = stream.in_uint16_be();
                 }
                 if (!(stream.check_end())) {
                     throw Error(ERR_MCS_RECV_AUCF_ERROR_CHECKING_STREAM);
@@ -1573,11 +1583,11 @@ struct rdp_sec {
             #warning the array size below is arbitrary, it should be checked to avoid buffer overflow
             uint16_t channels[100];
 
-            channels[0] = this->mcs_layer.userid + 1001;
+            channels[0] = this->userid + 1001;
             channels[1] = MCS_GLOBAL_CHANNEL;
-            size_t num_channels = this->mcs_layer.channel_list.size();
+            size_t num_channels = this->channel_list.size();
             for (size_t index = 0; index < num_channels; index++){
-                const mcs_channel_item* channel_item = this->mcs_layer.channel_list[index];
+                const mcs_channel_item* channel_item = this->channel_list[index];
                 channels[2+index] = channel_item->chanid;
             }
 
@@ -1614,7 +1624,7 @@ struct rdp_sec {
                     Stream stream(8192);
                     X224Out tpdu(X224Packet::DT_TPDU, stream);
                     stream.out_uint8((MCS_CJRQ << 2));
-                    stream.out_uint16_be(this->mcs_layer.userid);
+                    stream.out_uint16_be(this->userid);
                     stream.out_uint16_be(channels[index]);
                     tpdu.end();
                     tpdu.send(this->trans);
@@ -1678,7 +1688,7 @@ struct rdp_sec {
             channel_item_srv->chanid = chanid;
             strcpy(channel_item_srv->name, channel_item_cli->name);
             channel_item_srv->flags = channel_item_cli->flags;
-            this->mcs_layer.channel_list.push_back(channel_item_srv);
+            this->channel_list.push_back(channel_item_srv);
         }
     }
 
