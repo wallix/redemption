@@ -538,18 +538,6 @@ struct Mcs {
         }
     }
 
-    void mcs_send_aurq(Transport * trans) throw (Error)
-    {
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        stream.out_uint8((MCS_AURQ << 2));
-        stream.mark_end();
-
-        tpdu.end();
-        tpdu.send(trans);
-    }
-
     void mcs_recv_aucf(Transport * trans) throw(Error)
     {
         Stream stream(8192);
@@ -746,8 +734,12 @@ struct McsOut
             stream.out_uint16_be(0x100); /* height */
             stream.out_uint16_be(0x100); /* interval */
         break;
-//        case xxx:
-//        break;
+
+        case MCS_AURQ:
+            stream.out_uint8((MCS_AURQ << 2));
+            stream.mark_end();
+        break;
+
         default:
         break;
         }

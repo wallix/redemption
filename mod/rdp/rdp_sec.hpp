@@ -1315,14 +1315,16 @@ struct rdp_sec {
 
             {
                 Stream stream(8192);
-                McsOut pdu(MCS_EDRQ, stream); 
-                pdu.end(); 
-                pdu.send(this->trans);
+                McsOut pdu(MCS_EDRQ, stream); pdu.end(); pdu.send(this->trans);
+            }
+            {
+                Stream stream(8192);
+                McsOut pdu(MCS_AURQ, stream); pdu.end(); pdu.send(this->trans);
             }
 
-
-            this->mcs_layer.mcs_send_aurq(this->trans);
             this->mcs_layer.mcs_recv_aucf(this->trans);
+
+
             this->mcs_layer.mcs_send_cjrq(this->trans, this->mcs_layer.userid + 1001);
             this->mcs_layer.mcs_recv_cjcf(this->trans);
             this->mcs_layer.mcs_send_cjrq(this->trans, MCS_GLOBAL_CHANNEL);
