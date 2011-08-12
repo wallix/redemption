@@ -498,6 +498,7 @@ class RDPBmpCache {
     int cache_idx;
     const ClientInfo * client_info;
 
+    #warning we should not provide client_info, but only what is necessary (compression_type, cache type 1 or type 1)
     RDPBmpCache(int bpp, Bitmap * bmp, int cache_id, int cache_idx, const ClientInfo * client_info) :
                     cache_id(cache_id),
                     bmp(bmp),
@@ -507,7 +508,9 @@ class RDPBmpCache {
     {
     }
 
-    RDPBmpCache(int bpp) : bpp(bpp)
+    RDPBmpCache(int bpp) :
+                    bpp(bpp),
+                    client_info(NULL)
     {
     }
 
@@ -989,10 +992,17 @@ class RDPBmpCache {
 
     size_t str(char * buffer, size_t sz) const
     {
-        size_t lg  = snprintf(buffer, sz, "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u cache_version=%u compression=%u)",
-            this->cache_id, this->cache_idx, this->bpp,
-            this->client_info->bitmap_cache_version,
-            this->client_info->use_bitmap_comp);
+        size_t lg;
+        if (client_info){
+              lg = snprintf(buffer, sz, "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u cache_version=%u compression=%u)",
+                this->cache_id, this->cache_idx, this->bpp,
+                this->client_info->bitmap_cache_version,
+                this->client_info->use_bitmap_comp);
+        }
+        else {
+              lg = snprintf(buffer, sz, "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u cache_version=? compression=?)",
+                this->cache_id, this->cache_idx, this->bpp);
+        }
         if (lg >= sz){
             return sz;
         }
