@@ -1187,6 +1187,42 @@ struct rdp_sec {
     }
 
 
+    void recv_connect_response(Stream & stream, Transport * trans) throw(Error)
+    {
+        X224In(trans, stream);
+        if (stream.in_uint16_be() != BER_TAG_MCS_CONNECT_RESPONSE) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        int len = stream.in_ber_len();
+
+        if (stream.in_uint8() != BER_TAG_RESULT) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = stream.in_ber_len();
+
+        int res = stream.in_uint8();
+
+        if (res != 0) {
+            throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
+        }
+        if (stream.in_uint8() != BER_TAG_INTEGER) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = stream.in_ber_len();
+        stream.skip_uint8(len); /* connect id */
+
+        if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = stream.in_ber_len();
+        stream.skip_uint8(len);
+
+        if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = stream.in_ber_len();
+    }
+
 // 2.2.1.4  Server MCS Connect Response PDU with GCC Conference Create Response
 // ----------------------------------------------------------------------------
 // The MCS Connect Response PDU is an RDP Connection Sequence PDU sent from
@@ -1365,27 +1401,45 @@ struct rdp_sec {
                 tpdu.send(this->trans);
             }
             Stream stream(8192);
-            LOG(LOG_INFO, "mcs_recv_connect_response\n");
-            this->mcs_layer.mcs_recv_connect_response(stream, this->trans);
+            this->recv_connect_response(stream, this->trans);
 
             LOG(LOG_INFO, "rdp_sec_process_mcs_data\n");
             this->rdp_sec_process_mcs_data(stream, channel_list);
 
             {
                 Stream stream(8192);
-                McsOut pdu(MCS_EDRQ, stream); 
-                pdu.end();
-                pdu.send(this->trans);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+                stream.out_uint8((MCS_EDRQ << 2));
+                stream.out_uint16_be(0x100); /* height */
+                stream.out_uint16_be(0x100); /* interval */
+                tpdu.end();
+                tpdu.send(this->trans);
             }
             {
                 Stream stream(8192);
-                McsOut pdu(MCS_AURQ, stream);
-                pdu.end();
-                pdu.send(this->trans);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+                stream.out_uint8((MCS_AURQ << 2));
+                tpdu.end();
+                tpdu.send(this->trans);
             }
-
-            this->mcs_layer.mcs_recv_aucf(this->trans);
-
+            {
+                Stream stream(8192);
+                X224In(this->trans, stream);
+                int opcode = stream.in_uint8();
+                if ((opcode >> 2) != MCS_AUCF) {
+                    throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
+                }
+                int res = stream.in_uint8();
+                if (res != 0) {
+                    throw Error(ERR_MCS_RECV_AUCF_RES_NOT_0);
+                }
+                if (opcode & 2) {
+                    this->mcs_layer.userid = stream.in_uint16_be();
+                }
+                if (!(stream.check_end())) {
+                    throw Error(ERR_MCS_RECV_AUCF_ERROR_CHECKING_STREAM);
+                }
+            }
 
             #warning the array size below is arbitrary, it should be checked to avoid buffer overflow
             uint16_t channels[100];
@@ -1398,13 +1452,42 @@ struct rdp_sec {
                 channels[2+index] = channel_item->chanid;
             }
 
+            // 2.2.1.8 Client MCS Channel Join Request PDU
+            // -------------------------------------------
+            // The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
+            // from client to server during the Channel Connection phase (see section
+            // 1.3.1.1). It is sent after receiving the MCS Attach User Confirm PDU
+            // (section 2.2.1.7). The client uses the MCS Channel Join Request PDU to
+            // join the user channel obtained from the Attach User Confirm PDU, the
+            // I/O channel and all of the static virtual channels obtained from the
+            // Server Network Data structure (section 2.2.1.4.4).
+
+            // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+            // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+            //                     section 13.7.
+
+            // mcsCJrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an
+            //                    MCS Channel Join Request structure as specified in
+            //                    [T125] sections 10.19 and I.3 (the ASN.1 structure
+            //                    definitions are given in [T125] section 7, parts 6
+            //                    and 10).
+
+            // ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+            // {
+            //     initiator UserId
+            //     channelId ChannelId
+            //               -- may be zero
+            // }
+
             for (size_t index = 0; index < num_channels+2; index++){
                 Stream stream(8192);
-                McsOut pdu(MCS_CJRQ, stream);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+                stream.out_uint8((MCS_CJRQ << 2));
                 stream.out_uint16_be(this->mcs_layer.userid);
                 stream.out_uint16_be(channels[index]);
-                pdu.end(); 
-                pdu.send(this->trans);
+                tpdu.end();
+                tpdu.send(this->trans);
 
                 this->mcs_layer.mcs_recv_cjcf(this->trans);
             }
