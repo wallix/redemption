@@ -57,30 +57,6 @@ struct Mcs {
         }
     }
 
-
-
-    /* returns a zero based index of the channel,
-      -1 if error or if it dosen't exist */
-    int mcs_get_channel_id(const char * name)
-    {
-//        LOG(LOG_INFO, "mcs_get_channel_id");
-
-        int rv = -1;
-
-        int count = (int) this->channel_list.size();
-
-        for (int index = 0; index < count; index++) {
-            mcs_channel_item* channel_item = this->channel_list[index];
-            if (0 != channel_item) {
-                if (0 == strcasecmp(name, channel_item->name)) {
-                    rv = index;
-                    break;
-                }
-            }
-        }
-        return rv;
-    }
-
 };
 
 #endif
