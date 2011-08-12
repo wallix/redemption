@@ -667,14 +667,26 @@ struct server_rdp {
 
 //            LOG(LOG_INFO, "appid = %u", appid);
             /* Channel Join ReQuest datagram */
+            #warning this loop should move to sec layer
             while(appid == MCS_CJRQ) {
                 /* this is channels getting added from the client */
                 int userid = input_stream.in_uint16_be();
                 int chanid = input_stream.in_uint16_be();
-                this->sec_layer.mcs_layer.mcs_send_cjcf(this->sec_layer.trans, userid, chanid);
+
+                Stream stream(8192);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+                stream.out_uint8((MCS_CJCF << 2) | 2);
+                stream.out_uint8(0);
+                stream.out_uint16_be(userid);
+                stream.out_uint16_be(chanid);
+                stream.out_uint16_be(chanid);
+
+                tpdu.end();
+                tpdu.send(this->sec_layer.trans);
 
                 input_stream.init(65535);
-                X224In tpdu(this->sec_layer.trans, input_stream);
+                X224In(this->sec_layer.trans, input_stream);
                 appid = input_stream.in_uint8() >> 2;
 
             }
