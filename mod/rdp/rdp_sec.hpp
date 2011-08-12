@@ -1315,46 +1315,36 @@ struct rdp_sec {
 
             {
                 Stream stream(8192);
-                McsOut pdu(MCS_EDRQ, stream); pdu.end(); pdu.send(this->trans);
+                McsOut pdu(MCS_EDRQ, stream); 
+                pdu.end();
+                pdu.send(this->trans);
             }
             {
                 Stream stream(8192);
-                McsOut pdu(MCS_AURQ, stream); pdu.end(); pdu.send(this->trans);
+                McsOut pdu(MCS_AURQ, stream);
+                pdu.end();
+                pdu.send(this->trans);
             }
 
             this->mcs_layer.mcs_recv_aucf(this->trans);
 
 
-            {
-                Stream stream(8192);
-                McsOut pdu(MCS_CJRQ, stream);
-                stream.out_uint16_be(this->mcs_layer.userid);
-                stream.out_uint16_be(this->mcs_layer.userid + 1001);
-                pdu.end(); 
-                pdu.send(this->trans);
-            }
+            #warning the array size below is arbitrary, it should be checked to avoid buffer overflow
+            uint16_t channels[100];
 
-            this->mcs_layer.mcs_recv_cjcf(this->trans);
-
-            {
-                Stream stream(8192);
-                McsOut pdu(MCS_CJRQ, stream);
-                stream.out_uint16_be(this->mcs_layer.userid);
-                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-                pdu.end(); 
-                pdu.send(this->trans);
-            }
-
-            this->mcs_layer.mcs_recv_cjcf(this->trans);
-
-            int num_channels = (int)this->mcs_layer.channel_list.size();
-            for (int index = 0; index < num_channels; index++){
+            channels[0] = this->mcs_layer.userid + 1001;
+            channels[1] = MCS_GLOBAL_CHANNEL;
+            size_t num_channels = this->mcs_layer.channel_list.size();
+            for (size_t index = 0; index < num_channels; index++){
                 const mcs_channel_item* channel_item = this->mcs_layer.channel_list[index];
+                channels[2+index] = channel_item->chanid;
+            }
 
+            for (size_t index = 0; index < num_channels+2; index++){
                 Stream stream(8192);
                 McsOut pdu(MCS_CJRQ, stream);
                 stream.out_uint16_be(this->mcs_layer.userid);
-                stream.out_uint16_be(channel_item->chanid);
+                stream.out_uint16_be(channels[index]);
                 pdu.end(); 
                 pdu.send(this->trans);
 

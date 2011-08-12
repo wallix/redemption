@@ -374,37 +374,6 @@ struct Mcs {
         }
     }
 
-    // 2.2.1.7 Server MCS Attach User Confirm PDU
-    // ------------------------------------------
-    // The MCS Attach User Confirm PDU is an RDP Connection Sequence
-    // PDU sent from server to client during the Channel Connection
-    // phase (see section 1.3.1.1). It is sent as a response to the MCS
-    // Attach User Request PDU (section 2.2.1.6).
-
-    // tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
-    //   section 8.
-
-    // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
-    //   section [X224] 13.7.
-
-    // mcsAUcf (4 bytes): PER-encoded MCS Domain PDU which encapsulates
-    //   an MCS Attach User Confirm structure, as specified in [T125]
-    //   (the ASN.1 structure definitions are given in [T125] section 7,
-    // parts 5 and 10).
-    void mcs_send_aucf(Transport * trans, int userid) throw(Error)
-    {
-//        LOG(LOG_INFO, .mcs_send_aucf");
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        stream.out_uint8(((MCS_AUCF << 2) | 2));
-        stream.out_uint8(0);
-        stream.out_uint16_be(userid);
-
-        tpdu.end();
-        tpdu.send(trans);
-    }
-
 // 2.2.1.1.1   RDP Negotiation Request (RDP_NEG_REQ)
 // =================================================
 //  The RDP Negotiation Request structure is used by a client to advertise the
@@ -580,6 +549,22 @@ struct Mcs {
         }
     }
 
+    void mcs_recv_cjrq(Transport * trans) throw(Error)
+    {
+        Stream stream(8192);
+        // read tpktHeader (4 bytes = 3 0 len)
+        // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+        X224In(trans, stream);
+
+        int opcode = stream.in_uint8();
+        if ((opcode >> 2) != MCS_CJRQ) {
+            throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
+        }
+        stream.skip_uint8(4);
+        if (opcode & 2) {
+            stream.skip_uint8(2);
+        }
+    }
 
     void mcs_send_cjcf(Transport * trans, int userid, int chanid) throw(Error)
     {
@@ -634,21 +619,50 @@ struct Mcs {
         return rv;
     }
 
-    private:
+};
 
 
-public:
-    void join_channel(Transport * trans, uint16_t channel_id)
+struct McsOut
+{
+    Stream & stream;
+    X224Out tpdu;
+
+    McsOut(uint8_t pdutype, Stream & stream) 
+        : stream(stream), tpdu(X224Packet::DT_TPDU, stream)
     {
-        Stream stream(8192);
-        // read tpktHeader (4 bytes = 3 0 len)
-        // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-        X224In(trans, stream);
+        switch(pdutype){
+        case MCS_EDRQ:
+            stream.out_uint8((MCS_EDRQ << 2));
+            stream.out_uint16_be(0x100); /* height */
+            stream.out_uint16_be(0x100); /* interval */
+        break;
 
-        int opcode = stream.in_uint8();
-        if ((opcode >> 2) != MCS_CJRQ) {
-            throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
-        }
+        // 2.2.1.7 Server MCS Attach User Confirm PDU
+        // ------------------------------------------
+        // The MCS Attach User Confirm PDU is an RDP Connection Sequence
+        // PDU sent from server to client during the Channel Connection
+        // phase (see section 1.3.1.1). It is sent as a response to the MCS
+        // Attach User Request PDU (section 2.2.1.6).
+
+        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+        //   section 8.
+
+        // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+        //   section [X224] 13.7.
+
+        // mcsAUcf (4 bytes): PER-encoded MCS Domain PDU which encapsulates
+        //   an MCS Attach User Confirm structure, as specified in [T125]
+        //   (the ASN.1 structure definitions are given in [T125] section 7,
+        // parts 5 and 10).
+        case MCS_AUCF:
+            stream.out_uint8(((MCS_AUCF << 2) | 2));
+        break;
+
+
+        case MCS_AURQ:
+            stream.out_uint8((MCS_AURQ << 2));
+        break;
+
         // 2.2.1.8 Client MCS Channel Join Request PDU
         // -------------------------------------------
         // The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
@@ -676,10 +690,9 @@ public:
         //     channelId ChannelId
         //               -- may be zero
         // }
-        stream.skip_uint8(4);
-        if (opcode & 2) {
-            stream.skip_uint8(2);
-        }
+        case MCS_CJRQ:
+            stream.out_uint8((MCS_CJRQ << 2));
+        break;
 
         // 2.2.1.9 Server MCS Channel Join Confirm PDU
         // -------------------------------------------
@@ -698,34 +711,8 @@ public:
         //  an MCS Channel Join Confirm PDU structure, as specified in
         //  [T125] (the ASN.1 structure definitions are given in [T125]
         //  section 7, parts 6 and 10).
-
-        this->mcs_send_cjcf(trans, this->userid, channel_id);
-    }
-
-};
-
-
-struct McsOut
-{
-    Stream & stream;
-    X224Out tpdu;
-
-    McsOut(uint8_t pdutype, Stream & stream) 
-        : stream(stream), tpdu(X224Packet::DT_TPDU, stream)
-    {
-        switch(pdutype){
-        case MCS_EDRQ:
-            stream.out_uint8((MCS_EDRQ << 2));
-            stream.out_uint16_be(0x100); /* height */
-            stream.out_uint16_be(0x100); /* interval */
-        break;
-
-        case MCS_AURQ:
-            stream.out_uint8((MCS_AURQ << 2));
-        break;
-
-        case MCS_CJRQ:
-            stream.out_uint8((MCS_CJRQ << 2));
+        case MCS_CJCF:
+            stream.out_uint8((MCS_CJCF << 2) | 2);
         break;
 
         default:
