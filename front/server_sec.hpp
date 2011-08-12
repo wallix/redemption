@@ -23,11 +23,11 @@
 
 */
 
-#if !defined(__SEC_HPP__)
-#define __SEC_HPP__
+#if !defined(__SERVER_SEC_HPP__)
+#define __SERVER_SEC_HPP__
 
 #include "RDP/x224.hpp"
-#include "RDP/mcs.hpp"
+#include "RDP/sec.hpp"
 #include "ssl_calls.hpp"
 #include "client_info.hpp"
 #include "rsa_keys.hpp"
@@ -43,7 +43,10 @@ using namespace std;
 /* sec */
 struct server_sec {
     struct ClientInfo * client_info;
-    struct Mcs mcs_layer;
+
+    int userid;
+    vector<struct mcs_channel_item *> channel_list;
+
     uint8_t server_random[32];
     uint8_t client_random[64];
     uint8_t client_crypt_random[72];
@@ -70,7 +73,6 @@ struct server_sec {
 
     server_sec(ClientInfo * client_info, Transport * trans) :
         client_info(client_info),
-        mcs_layer(),
         trans(trans)
     {
         // CGR: see if init has influence for the 3 following fields
@@ -108,6 +110,15 @@ struct server_sec {
 
     ~server_sec()
     {
+        // clear channel_list
+        int count = (int) this->channel_list.size();
+        for (int index = 0; index < count; index++) {
+            mcs_channel_item* channel_item = this->channel_list[index];
+            if (0 != channel_item) {
+                delete channel_item;
+            }
+        }
+
         ssl_rc4_info_delete(this->decrypt_rc4_info);
         ssl_rc4_info_delete(this->encrypt_rc4_info);
     }
@@ -347,7 +358,7 @@ struct server_sec {
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
         stream.out_uint8(MCS_SDIN << 2);
-        stream.out_uint16_be(this->mcs_layer.userid);
+        stream.out_uint16_be(this->userid);
         stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
         stream.out_uint8(0x70);
         stream.out_uint16_be((8+322)|0x8000);
@@ -371,7 +382,7 @@ struct server_sec {
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
         stream.out_uint8(MCS_SDIN << 2);
-        stream.out_uint16_be(this->mcs_layer.userid);
+        stream.out_uint16_be(this->userid);
         stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
         stream.out_uint8(0x70);
         stream.out_uint8(8+20);
@@ -397,7 +408,7 @@ struct server_sec {
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
         stream.out_uint8(MCS_SDIN << 2);
-        stream.out_uint16_be(this->mcs_layer.userid);
+        stream.out_uint16_be(this->userid);
         stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
         stream.out_uint8(0x70);
         stream.out_uint8(8+20);
@@ -622,7 +633,7 @@ struct server_sec {
                 len, stream.capacity);
         }
         stream.out_uint8(MCS_SDIN << 2);
-        stream.out_uint16_be(this->mcs_layer.userid);
+        stream.out_uint16_be(this->userid);
         stream.out_uint16_be(chan);
         stream.out_uint8(0x70);
         if (len >= 128) {
@@ -1084,7 +1095,7 @@ struct server_sec {
             memcpy(channel_item->name, stream.in_uint8p(8), 8);
             channel_item->flags = stream.in_uint32_be();
             channel_item->chanid = MCS_GLOBAL_CHANNEL + (index + 1);
-            this->mcs_layer.channel_list.push_back(channel_item);
+            this->channel_list.push_back(channel_item);
         }
     }
 
@@ -1486,7 +1497,7 @@ struct server_sec {
             stream.skip_uint8(2);
             stream.skip_uint8(2);
             if (opcode & 2) {
-                this->mcs_layer.userid = stream.in_uint16_be();
+                this->userid = stream.in_uint16_be();
             }
             if (!stream.check_end()) {
                 throw Error(ERR_MCS_RECV_EDQR_TRUNCATED);
@@ -1520,7 +1531,7 @@ struct server_sec {
                 throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
             }
             if (opcode & 2) {
-                this->mcs_layer.userid = stream.in_uint16_be();
+                this->userid = stream.in_uint16_be();
             }
             if (!stream.check_end()) {
                 throw Error(ERR_MCS_RECV_AURQ_TRUNCATED);
@@ -1550,7 +1561,7 @@ struct server_sec {
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             stream.out_uint8(((MCS_AUCF << 2) | 2));
             stream.out_uint8(0);
-            stream.out_uint16_be(this->mcs_layer.userid);
+            stream.out_uint16_be(this->userid);
             tpdu.end();
             tpdu.send(this->trans);
         }
@@ -1595,9 +1606,9 @@ struct server_sec {
                 X224Out tpdu(X224Packet::DT_TPDU, stream);
                 stream.out_uint8((MCS_CJCF << 2) | 2);
                 stream.out_uint8(0);
-                stream.out_uint16_be(this->mcs_layer.userid);
-                stream.out_uint16_be(this->mcs_layer.userid + MCS_USERCHANNEL_BASE);
-                stream.out_uint16_be(this->mcs_layer.userid + MCS_USERCHANNEL_BASE);
+                stream.out_uint16_be(this->userid);
+                stream.out_uint16_be(this->userid + MCS_USERCHANNEL_BASE);
+                stream.out_uint16_be(this->userid + MCS_USERCHANNEL_BASE);
                 tpdu.end();
                 tpdu.send(this->trans);
             }
@@ -1625,7 +1636,7 @@ struct server_sec {
                 X224Out tpdu(X224Packet::DT_TPDU, stream);
                 stream.out_uint8((MCS_CJCF << 2) | 2);
                 stream.out_uint8(0);
-                stream.out_uint16_be(this->mcs_layer.userid);
+                stream.out_uint16_be(this->userid);
                 stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
                 stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
                 tpdu.end();
@@ -1641,7 +1652,7 @@ struct server_sec {
     void server_sec_out_mcs_data(Stream  & stream)
     {
         /* Same code above using list_test */
-        int num_channels = (int) this->mcs_layer.channel_list.size();
+        int num_channels = (int) this->channel_list.size();
         int num_channels_even = num_channels + (num_channels & 1);
 
         stream.init(512);

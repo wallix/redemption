@@ -95,11 +95,11 @@ struct server_rdp {
         stream.mark_end();
 
         int index = channel_id - MCS_GLOBAL_CHANNEL - 1;
-        int count = (int) this->sec_layer.mcs_layer.channel_list.size();
+        int count = (int) this->sec_layer.channel_list.size();
         if (index < 0 || index >= count) {
             throw Error(ERR_MCS_CHANNEL_NOT_FOUND);
         }
-        mcs_channel_item* channel = this->sec_layer.mcs_layer.channel_list[index];
+        mcs_channel_item* channel = this->sec_layer.channel_list[index];
 
         stream.p = stream.channel_hdr;
         stream.out_uint32_le(total_data_len);
@@ -766,7 +766,7 @@ struct server_rdp {
                    one should be MCS_GLOBAL_CHANNEL + 2, and so on */
                 int channel_id = (chan - MCS_GLOBAL_CHANNEL) - 1;
 
-                struct mcs_channel_item* channel = this->sec_layer.mcs_layer.channel_list[channel_id];
+                struct mcs_channel_item* channel = this->sec_layer.channel_list[channel_id];
 
                 if (channel == 0) {
                     throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
@@ -874,7 +874,7 @@ struct server_rdp {
     void server_rdp_incoming() throw (Error)
     {
         this->sec_layer.server_sec_incoming();
-        this->mcs_channel = this->sec_layer.mcs_layer.userid + MCS_USERCHANNEL_BASE;
+        this->mcs_channel = this->sec_layer.userid + MCS_USERCHANNEL_BASE;
     }
 
     /*****************************************************************************/

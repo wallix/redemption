@@ -300,7 +300,7 @@ struct rdp_rdp {
 
             stream.out_uint16_le(2 + 14 + caplen + sizeof(RDP_SOURCE));
             stream.out_uint16_le((PDUTYPE_CONFIRMACTIVEPDU | 0x10)); /* Version 1 */
-            stream.out_uint16_le((this->sec_layer.mcs_layer.userid + 1001));
+            stream.out_uint16_le((this->sec_layer.userid + 1001));
             stream.out_uint32_le(this->share_id);
             stream.out_uint16_le(0x3ea); /* userid */
             stream.out_uint16_le(sizeof(RDP_SOURCE));
@@ -764,7 +764,7 @@ struct rdp_rdp {
             int len = stream.end - stream.p;
             stream.out_uint16_le(len);
             stream.out_uint16_le(PDUTYPE_DATAPDU | 0x10);
-            stream.out_uint16_le(this->sec_layer.mcs_layer.userid);
+            stream.out_uint16_le(this->sec_layer.userid);
             stream.out_uint32_le(this->share_id);
             stream.out_uint8(0); /* pad */
             stream.out_uint8(1); /* stream id */
@@ -961,7 +961,7 @@ struct rdp_rdp {
         }
 
 
-        #warning this function connects front-end channels given in channel_list with back_end channels in this->sec_layer.mcs_layer.channel_list. This kind of things should be done through client_mod API (as it is done for color conversion). Change that by performing a call to some client_mod function.
+        #warning this function connects front-end channels given in channel_list with back_end channels in this->sec_layer.channel_list. This kind of things should be done through client_mod API (as it is done for color conversion). Change that by performing a call to some client_mod function.
         void send_redirect_pdu(long param1, long param2, long param3, int param4,
                                       vector<mcs_channel_item*> channel_list) throw(Error)
         {
@@ -990,9 +990,9 @@ struct rdp_rdp {
             /* Here, we're going to search the correct channel in order to send
             information throughout this channel to RDP server */
             int channel_id = 0;
-            int num_channels_dst = (int) this->sec_layer.mcs_layer.channel_list.size();
+            int num_channels_dst = (int) this->sec_layer.channel_list.size();
             for (int index = 0; index < num_channels_dst; index++){
-                channel_item = this->sec_layer.mcs_layer.channel_list[index];
+                channel_item = this->sec_layer.channel_list[index];
                 if (strcmp(name, channel_item->name) == 0){
                     channel_id = channel_item->chanid;
                 }

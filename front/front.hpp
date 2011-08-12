@@ -455,7 +455,7 @@ public:
     const vector<struct mcs_channel_item *> & get_channel_list(void) const
     {
 //        LOG(LOG_INFO, "get_channel_list()");
-        return rdp_layer.sec_layer.mcs_layer.channel_list;
+        return rdp_layer.sec_layer.channel_list;
 //        LOG(LOG_INFO, "get_channel_list() done");
     }
 
@@ -479,10 +479,10 @@ public:
 //        LOG(LOG_INFO, "front::get_channel_id\n");
         int rv = -1;
 
-        int count = (int) this->rdp_layer.sec_layer.mcs_layer.channel_list.size();
+        int count = (int) this->rdp_layer.sec_layer.channel_list.size();
 
         for (int index = 0; index < count; index++) {
-            mcs_channel_item* channel_item = this->rdp_layer.sec_layer.mcs_layer.channel_list[index];
+            mcs_channel_item* channel_item = this->rdp_layer.sec_layer.channel_list[index];
             if (0 != channel_item) {
                 if (0 == strcasecmp(name, channel_item->name)) {
                     rv = index;
