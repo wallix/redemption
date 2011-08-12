@@ -112,10 +112,10 @@ struct Mcs {
 //   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
 //   2.2.1.2.1.
 
-    void mcs_recv_connection_initial(Stream & data, Transport * trans)
+    void recv_connection_initial(Stream & data)
     {
         Stream stream(8192);
-        X224In(trans, stream);
+        X224In(this->trans, stream);
 
         if (stream.in_uint16_be() != BER_TAG_MCS_CONNECT_INITIAL) {
             throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
@@ -168,76 +168,6 @@ struct Mcs {
         stream.skip_uint8(len);
     }
 
-
-    //   2.2.1.5 Client MCS Erect Domain Request PDU
-    //   -------------------------------------------
-    //   The MCS Erect Domain Request PDU is an RDP Connection Sequence PDU sent
-    //   from client to server during the Channel Connection phase (see section
-    //   1.3.1.1). It is sent after receiving the MCS Connect Response PDU (section
-    //   2.2.1.4).
-
-    //   tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-    //   x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
-    //      section 13.7.
-
-    // See description of tpktHeader and x224 Data TPDU in cheat sheet
-
-    //   mcsEDrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an MCS
-    //      Erect Domain Request structure, as specified in [T125] (the ASN.1
-    //      structure definitions are given in [T125] section 7, parts 3 and 10).
-
-    void mcs_recv_edrq(Transport * trans)
-    {
-        Stream stream(8192);
-        X224In(trans, stream);
-        uint8_t opcode = stream.in_uint8();
-        if ((opcode >> 2) != MCS_EDRQ) {
-            throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
-        }
-        stream.skip_uint8(2);
-        stream.skip_uint8(2);
-        if (opcode & 2) {
-            this->userid = stream.in_uint16_be();
-        }
-        if (!stream.check_end()) {
-            throw Error(ERR_MCS_RECV_EDQR_TRUNCATED);
-        }
-    }
-
-    // 2.2.1.6 Client MCS Attach User Request PDU
-    // ------------------------------------------
-    // The MCS Attach User Request PDU is an RDP Connection Sequence PDU
-    // sent from client to server during the Channel Connection phase (see
-    // section 1.3.1.1) to request a user channel ID. It is sent after
-    // transmitting the MCS Erect Domain Request PDU (section 2.2.1.5).
-
-    // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-    // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
-    //   [X224] section 13.7.
-
-    // See description of tpktHeader and x224 Data TPDU in cheat sheet
-
-    // mcsAUrq (1 byte): PER-encoded MCS Domain PDU which encapsulates an
-    //  MCS Attach User Request structure, as specified in [T125] (the ASN.1
-    //  structure definitions are given in [T125] section 7, parts 5 and 10).
-
-    void mcs_recv_aurq(Transport * trans)
-    {
-        Stream stream(8192);
-        X224In(trans, stream);
-        uint8_t opcode = stream.in_uint8();
-        if ((opcode >> 2) != MCS_AURQ) {
-            throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
-        }
-        if (opcode & 2) {
-            this->userid = stream.in_uint16_be();
-        }
-        if (!stream.check_end()) {
-            throw Error(ERR_MCS_RECV_AURQ_TRUNCATED);
-        }
-    }
 
 // 2.2.1.1.1   RDP Negotiation Request (RDP_NEG_REQ)
 // =================================================
