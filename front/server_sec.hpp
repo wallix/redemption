@@ -1298,10 +1298,46 @@ struct server_sec {
         this->mcs_layer.mcs_send_connect_response(this->data, this->trans);
         this->mcs_layer.mcs_recv_edrq(this->trans);
         this->mcs_layer.mcs_recv_aurq(this->trans);
-        this->mcs_layer.mcs_send_aucf(this->trans, this->mcs_layer.userid);
 
-        this->mcs_layer.join_channel(this->trans, this->mcs_layer.userid + MCS_USERCHANNEL_BASE);
-        this->mcs_layer.join_channel(this->trans, MCS_GLOBAL_CHANNEL);
+        {
+            Stream stream(8192);
+            McsOut pdu(MCS_AUCF, stream);
+            stream.out_uint8(0);
+            stream.out_uint16_be(this->mcs_layer.userid);
+            pdu.end();
+            pdu.send(this->trans);
+        }
+
+        {
+            this->mcs_layer.mcs_recv_cjrq(this->trans);
+
+            {
+                Stream stream(8192);
+                McsOut pdu(MCS_CJCF, stream);
+                stream.out_uint8(0);
+                stream.out_uint16_be(this->mcs_layer.userid);
+                stream.out_uint16_be(this->mcs_layer.userid + MCS_USERCHANNEL_BASE);
+                stream.out_uint16_be(this->mcs_layer.userid + MCS_USERCHANNEL_BASE);
+                pdu.end();
+                pdu.send(this->trans);
+            }
+        }
+
+        {
+            this->mcs_layer.mcs_recv_cjrq(this->trans);
+
+            {
+                Stream stream(8192);
+                McsOut pdu(MCS_CJCF, stream);
+                stream.out_uint8(0);
+                stream.out_uint16_be(this->mcs_layer.userid);
+                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+                pdu.end();
+                pdu.send(this->trans);
+            }
+        }
+
     }
 
 
