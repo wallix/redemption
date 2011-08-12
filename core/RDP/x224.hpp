@@ -347,10 +347,10 @@ struct X224Out : public X224Packet
 {
     Stream & stream;
 
-    X224Out(uint8_t pdutype, Stream & stream) : stream(stream)
+    X224Out(uint8_t tpdutype, Stream & stream) : stream(stream)
     // Prepare a X224 TPDU in buffer for writing
     {
-        switch (pdutype){
+        switch (tpdutype){
             case CR_TPDU: // Connection Request 1110 xxxx
                 // we can write the header, there must not be any data afterward
                 // tpkt
@@ -429,8 +429,8 @@ struct X224Out : public X224Packet
                 stream.out_uint8(0x00); // Parameter Length 0
             break;
             default:
-                LOG(LOG_ERR, "Trying to send unknown PDU Type %u", pdutype);
-                throw Error(ERR_X224_SENDING_UNKNOWN_PDU_TYPE, pdutype);
+                LOG(LOG_ERR, "Trying to send unknown TPDU Type %u", tpdutype);
+                throw Error(ERR_X224_SENDING_UNKNOWN_PDU_TYPE, tpdutype);
         }
     }
 
