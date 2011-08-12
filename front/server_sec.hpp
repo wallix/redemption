@@ -1268,6 +1268,47 @@ struct server_sec {
         }
     }
 
+    void send_connect_response(Stream & data, Transport * trans) throw(Error)
+    {
+//        LOG(LOG_INFO, send_connect_response");
+        #warning why don't we build directly in final data buffer ? Instead of building in data and copying in stream ?
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+        int data_len = data.end - data.data;
+        stream.out_uint16_be(BER_TAG_MCS_CONNECT_RESPONSE);
+        stream.out_ber_len(data_len + 38);
+
+        stream.out_uint8(BER_TAG_RESULT);
+        stream.out_uint8(1);
+        stream.out_uint8(0);
+
+        stream.out_uint8(BER_TAG_INTEGER);
+        stream.out_uint8(1);
+        stream.out_uint8(0);
+
+        stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+        stream.out_uint8(26);
+        stream.out_ber_int8(22); // max_channels
+        stream.out_ber_int8(3); // max_users
+        stream.out_ber_int8(0); // max_tokens
+        stream.out_ber_int8(1);
+        stream.out_ber_int8(0);
+        stream.out_ber_int8(1);
+        stream.out_ber_int24(0xfff8); // max_pdu_size
+        stream.out_ber_int8(2);
+
+        stream.out_uint8(BER_TAG_OCTET_STRING);
+        stream.out_ber_len(data_len);
+        /* mcs data */
+        stream.out_copy_bytes(data.data, data_len);
+
+        tpdu.end();
+        tpdu.send(this->trans);
+    }
+
+
+
     void server_sec_incoming() throw (Error)
     {
 
@@ -1295,31 +1336,69 @@ struct server_sec {
         #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
         this->server_sec_process_mcs_data(this->client_mcs_data);
         this->server_sec_out_mcs_data(this->data);
-        this->mcs_layer.mcs_send_connect_response(this->data, this->trans);
+        this->send_connect_response(this->data, this->trans);
         this->mcs_layer.mcs_recv_edrq(this->trans);
         this->mcs_layer.mcs_recv_aurq(this->trans);
 
+        // 2.2.1.7 Server MCS Attach User Confirm PDU
+        // ------------------------------------------
+        // The MCS Attach User Confirm PDU is an RDP Connection Sequence
+        // PDU sent from server to client during the Channel Connection
+        // phase (see section 1.3.1.1). It is sent as a response to the MCS
+        // Attach User Request PDU (section 2.2.1.6).
+
+        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+        //   section 8.
+
+        // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+        //   section [X224] 13.7.
+
+        // mcsAUcf (4 bytes): PER-encoded MCS Domain PDU which encapsulates
+        //   an MCS Attach User Confirm structure, as specified in [T125]
+        //   (the ASN.1 structure definitions are given in [T125] section 7,
+        // parts 5 and 10).
+
         {
             Stream stream(8192);
-            McsOut pdu(MCS_AUCF, stream);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+            stream.out_uint8(((MCS_AUCF << 2) | 2));
             stream.out_uint8(0);
             stream.out_uint16_be(this->mcs_layer.userid);
-            pdu.end();
-            pdu.send(this->trans);
+            tpdu.end();
+            tpdu.send(this->trans);
         }
 
         {
             this->mcs_layer.mcs_recv_cjrq(this->trans);
 
+            // 2.2.1.9 Server MCS Channel Join Confirm PDU
+            // -------------------------------------------
+            // The MCS Channel Join Confirm PDU is an RDP Connection Sequence
+            // PDU sent from server to client during the Channel Connection
+            // phase (see section 1.3.1.1). It is sent as a response to the MCS
+            // Channel Join Request PDU (section 2.2.1.8).
+
+            // tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+            //   section 8.
+
+            // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+            //  [X224] section 13.7.
+
+            // mcsCJcf (8 bytes): PER-encoded MCS Domain PDU which encapsulates
+            //  an MCS Channel Join Confirm PDU structure, as specified in
+            //  [T125] (the ASN.1 structure definitions are given in [T125]
+            //  section 7, parts 6 and 10).
+
             {
                 Stream stream(8192);
-                McsOut pdu(MCS_CJCF, stream);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+                stream.out_uint8((MCS_CJCF << 2) | 2);
                 stream.out_uint8(0);
                 stream.out_uint16_be(this->mcs_layer.userid);
                 stream.out_uint16_be(this->mcs_layer.userid + MCS_USERCHANNEL_BASE);
                 stream.out_uint16_be(this->mcs_layer.userid + MCS_USERCHANNEL_BASE);
-                pdu.end();
-                pdu.send(this->trans);
+                tpdu.end();
+                tpdu.send(this->trans);
             }
         }
 
@@ -1328,13 +1407,14 @@ struct server_sec {
 
             {
                 Stream stream(8192);
-                McsOut pdu(MCS_CJCF, stream);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+                stream.out_uint8((MCS_CJCF << 2) | 2);
                 stream.out_uint8(0);
                 stream.out_uint16_be(this->mcs_layer.userid);
                 stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
                 stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-                pdu.end();
-                pdu.send(this->trans);
+                tpdu.end();
+                tpdu.send(this->trans);
             }
         }
 
