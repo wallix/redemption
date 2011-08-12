@@ -538,20 +538,6 @@ struct Mcs {
         }
     }
 
-    void mcs_send_edrq(Transport * trans) throw (Error)
-    {
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        stream.out_uint8( (MCS_EDRQ << 2));
-        stream.out_uint16_be(0x100); /* height */
-        stream.out_uint16_be(0x100); /* interval */
-
-        tpdu.end();
-        tpdu.send(trans);
-    }
-
-
     void mcs_send_aurq(Transport * trans) throw (Error)
     {
         Stream stream(8192);
@@ -749,18 +735,34 @@ public:
 struct McsOut
 {
     Stream & stream;
+    X224Out tpdu;
 
-    McsOut(uint8_t pdutype, Stream & stream) : stream(stream)
+    McsOut(uint8_t pdutype, Stream & stream) 
+        : stream(stream), tpdu(X224Packet::DT_TPDU, stream)
     {
         switch(pdutype){
+        case MCS_EDRQ:
+            stream.out_uint8((MCS_EDRQ << 2));
+            stream.out_uint16_be(0x100); /* height */
+            stream.out_uint16_be(0x100); /* interval */
+        break;
 //        case xxx:
 //        break;
-//        case xxx:
-//        break;
-//        default:
-//        break;
+        default:
+        break;
         }
     }
+
+    void end()
+    {
+        this->tpdu.end();
+    }
+
+    void send(Transport * trans)
+    {
+        this->tpdu.send(trans);
+    }
+
 };
 
 #endif

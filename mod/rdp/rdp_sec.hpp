@@ -1313,7 +1313,14 @@ struct rdp_sec {
             LOG(LOG_INFO, "rdp_sec_process_mcs_data\n");
             this->rdp_sec_process_mcs_data(stream, channel_list);
 
-            this->mcs_layer.mcs_send_edrq(this->trans);
+            {
+                Stream stream(8192);
+                McsOut pdu(MCS_EDRQ, stream); 
+                pdu.end(); 
+                pdu.send(this->trans);
+            }
+
+
             this->mcs_layer.mcs_send_aurq(this->trans);
             this->mcs_layer.mcs_recv_aucf(this->trans);
             this->mcs_layer.mcs_send_cjrq(this->trans, this->mcs_layer.userid + 1001);
