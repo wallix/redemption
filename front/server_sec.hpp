@@ -374,7 +374,7 @@ struct server_sec {
         stream.out_uint16_be(this->mcs_layer.userid);
         stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
         stream.out_uint8(0x70);
-        stream.out_uint16_be((8+20)|0x8000);
+        stream.out_uint8(8+20);
         stream.out_copy_bytes((char*)lic2, 20);
 
         tpdu.end();
@@ -400,7 +400,7 @@ struct server_sec {
         stream.out_uint16_be(this->mcs_layer.userid);
         stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
         stream.out_uint8(0x70);
-        stream.out_uint16_be((8+20)|0x8000);
+        stream.out_uint8(8+20);
         stream.out_copy_bytes((char*)lic3, 20);
 
         tpdu.end();
