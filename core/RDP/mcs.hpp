@@ -168,67 +168,6 @@ struct Mcs {
         stream.skip_uint8(len);
     }
 
-    void mcs_send_connection_initial(Stream & client_mcs_data, Transport * trans) throw(Error)
-    {
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        int data_len = client_mcs_data.end - client_mcs_data.data;
-        int len = 7 + 3 * 34 + 4 + data_len;
-        stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
-        stream.out_ber_len(len);
-        stream.out_uint8(BER_TAG_OCTET_STRING);
-        stream.out_ber_len(0); /* calling domain */
-        stream.out_uint8(BER_TAG_OCTET_STRING);
-        stream.out_ber_len(0); /* called domain */
-        stream.out_uint8(BER_TAG_BOOLEAN);
-        stream.out_ber_len(1);
-        stream.out_uint8(0xff); /* upward flag */
-
-        // target params
-        stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-        stream.out_ber_len(32);
-        stream.out_ber_int16(34);     // max_channels
-        stream.out_ber_int16(2);      // max_users
-        stream.out_ber_int16(0);      // max_tokens
-        stream.out_ber_int16(1);
-        stream.out_ber_int16(0);
-        stream.out_ber_int16(1);
-        stream.out_ber_int16(0xffff); // max_pdu_size
-        stream.out_ber_int16(2);
-
-        // min params
-        stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-        stream.out_ber_len(32);
-        stream.out_ber_int16(1);     // max_channels
-        stream.out_ber_int16(1);     // max_users
-        stream.out_ber_int16(1);     // max_tokens
-        stream.out_ber_int16(1);
-        stream.out_ber_int16(0);
-        stream.out_ber_int16(1);
-        stream.out_ber_int16(0x420); // max_pdu_size
-        stream.out_ber_int16(2);
-
-        // max params
-        stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-        stream.out_ber_len(32);
-        stream.out_ber_int16(0xffff); // max_channels
-        stream.out_ber_int16(0xfc17); // max_users
-        stream.out_ber_int16(0xffff); // max_tokens
-        stream.out_ber_int16(1);
-        stream.out_ber_int16(0);
-        stream.out_ber_int16(1);
-        stream.out_ber_int16(0xffff); // max_pdu_size
-        stream.out_ber_int16(2);
-
-        stream.out_uint8(BER_TAG_OCTET_STRING);
-        stream.out_ber_len(data_len);
-        stream.out_copy_bytes(client_mcs_data.data, data_len);
-
-        tpdu.end();
-        tpdu.send(trans);
-    }
-
     void mcs_recv_connect_response(Stream & stream, Transport * trans) throw(Error)
     {
         X224In(trans, stream);
