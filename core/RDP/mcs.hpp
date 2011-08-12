@@ -786,8 +786,16 @@ struct McsOut
 {
     Stream & stream;
 
-    McsOut(Stream & stream) : stream(stream)
+    McsOut(uint8_t pdutype, Stream & stream) : stream(stream)
     {
+        switch(pdutype){
+//        case xxx:
+//        break;
+//        case xxx:
+//        break;
+//        default:
+//        break;
+        }
     }
 };
 
