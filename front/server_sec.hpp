@@ -369,18 +369,13 @@ struct server_sec {
 // -------------------------
 //        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
-//-------------------------
 
+        stream.out_uint8(MCS_SDIN << 2);
+        stream.out_uint16_be(this->mcs_layer.userid);
+        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+        stream.out_uint8(0x70);
+        stream.out_uint16_be((8+20)|0x8000);
         stream.out_copy_bytes((char*)lic2, 20);
-
-// -------------------------
-//        pdu.end()
-//        pdu.send(this->trans);
-
-        stream.mark_end();
-        this->mcs_layer.mcs_send(stream, MCS_GLOBAL_CHANNEL);
 
         tpdu.end();
         tpdu.send(this->trans);
