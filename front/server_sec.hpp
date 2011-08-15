@@ -41,25 +41,12 @@
 using namespace std;
 
 /* sec */
-struct server_sec {
+struct server_sec : public Sec {
     struct ClientInfo * client_info;
-
-    int userid;
-    vector<struct mcs_channel_item *> channel_list;
 
     uint8_t server_random[32];
     uint8_t client_random[64];
-    uint8_t client_crypt_random[72];
-    Stream client_mcs_data;
-    int decrypt_use_count;
-    int encrypt_use_count;
-    uint8_t decrypt_key[16];
-    uint8_t encrypt_key[16];
-    uint8_t decrypt_update_key[16];
-    uint8_t encrypt_update_key[16];
-    int rc4_key_size; /* 1 = 40 bit, 2 = 128 bit */
-    int rc4_key_len; /* 8 = 40 bit, 16 = 128 bit */
-    uint8_t sign_key[16];
+
     uint8_t* decrypt_rc4_info;
     uint8_t* encrypt_rc4_info;
     uint8_t pub_exp[4];
@@ -72,6 +59,7 @@ struct server_sec {
     /*****************************************************************************/
 
     server_sec(ClientInfo * client_info, Transport * trans) :
+        Sec(client_info->crypt_level),
         client_info(client_info),
         trans(trans)
     {
@@ -79,30 +67,12 @@ struct server_sec {
         memset(this->server_random, 0, 32);
         memset(this->client_random, 0, 64);
         memset(this->client_crypt_random, 0, 72);
-        this->decrypt_use_count = 0;
-        this->encrypt_use_count = 0;
-        memset(this->decrypt_key, 0, 16);
-        memset(this->encrypt_key, 0, 16);
-        memset(this->decrypt_update_key, 0, 16);
-        memset(this->encrypt_update_key, 0, 16);
 
         memset(this->sign_key, 0, 16);
         memset(this->pub_exp, 0, 4);
         memset(this->pub_mod, 0, 64);
         memset(this->pub_sig, 0, 64);
         memset(this->pri_exp, 0, 64);
-        switch (client_info->crypt_level) {
-        case 1:
-        case 2:
-            this->rc4_key_size = 1; /* 40 bits */
-            this->rc4_key_len = 8; /* 8 = 40 bit */
-        break;
-        default:
-        case 3:
-            this->rc4_key_size = 2; /* 128 bits */
-            this->rc4_key_len = 16; /* 16 = 128 bit */
-        break;
-        }
         this->decrypt_rc4_info = ssl_rc4_info_create();
         this->encrypt_rc4_info = ssl_rc4_info_create();
     }
@@ -134,10 +104,12 @@ struct server_sec {
     void server_sec_decrypt(uint8_t* data, int len) throw (Error)
     {
         if (this->decrypt_use_count == 4096) {
-            this->server_sec_update(
-                this->decrypt_key, this->decrypt_update_key, this->rc4_key_len);
-            ssl_rc4_set_key(
-                this->decrypt_rc4_info, this->decrypt_key, this->rc4_key_len);
+            this->server_sec_update(this->decrypt_key, 
+                                    this->decrypt_update_key, 
+                                    this->rc4_key_len);
+            ssl_rc4_set_key(this->decrypt_rc4_info,
+                            this->decrypt_key,
+                            this->rc4_key_len);
             this->decrypt_use_count = 0;
         }
         ssl_rc4_crypt(this->decrypt_rc4_info, data, len);
@@ -1656,6 +1628,7 @@ struct server_sec {
         int num_channels_even = num_channels + (num_channels & 1);
 
         stream.init(512);
+
         stream.out_uint16_be(5);
         stream.out_uint16_be(0x14);
         stream.out_uint8(0x7c);
