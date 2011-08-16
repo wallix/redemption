@@ -93,14 +93,6 @@ struct server_sec : public Sec {
         ssl_rc4_info_delete(this->encrypt_rc4_info);
     }
 
-    /* Reduce key entropy from 64 to 40 bits */
-    void server_sec_make_40bit(uint8_t* key)
-    {
-        key[0] = 0xd1;
-        key[1] = 0x26;
-        key[2] = 0x9e;
-    }
-
     void server_sec_decrypt(uint8_t* data, int len) throw (Error)
     {
         if (this->decrypt_use_count == 4096) {
@@ -404,9 +396,9 @@ struct server_sec : public Sec {
         server_sec_hash_16(this->decrypt_key, session_key + 32, this->client_random,
                          this->server_random);
         if (this->rc4_key_size == 1) {
-            server_sec_make_40bit(this->sign_key);
-            server_sec_make_40bit(this->encrypt_key);
-            server_sec_make_40bit(this->decrypt_key);
+            this->sec_make_40bit(this->sign_key);
+            this->sec_make_40bit(this->encrypt_key);
+            this->sec_make_40bit(this->decrypt_key);
             this->rc4_key_len = 8;
         } else {
             this->rc4_key_len = 16;
