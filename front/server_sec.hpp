@@ -337,35 +337,6 @@ struct server_sec : public Sec {
                     this->pri_exp, 64);
     }
 
-    void server_sec_hash_48(uint8_t* out, uint8_t* in, uint8_t* salt1, uint8_t* salt2, uint8_t salt)
-    {
-        int i;
-        uint8_t* sha1_info;
-        uint8_t* md5_info;
-        uint8_t pad[4];
-        uint8_t sha1_sig[20];
-        uint8_t md5_sig[16];
-
-        sha1_info = ssl_sha1_info_create();
-        md5_info = ssl_md5_info_create();
-        for (i = 0; i < 3; i++) {
-            memset(pad, salt + i, 4);
-            ssl_sha1_clear(sha1_info);
-            ssl_sha1_transform(sha1_info, pad, i + 1);
-            ssl_sha1_transform(sha1_info, in, 48);
-            ssl_sha1_transform(sha1_info, salt1, 32);
-            ssl_sha1_transform(sha1_info, salt2, 32);
-            ssl_sha1_complete(sha1_info, sha1_sig);
-            ssl_md5_clear(md5_info);
-            ssl_md5_transform(md5_info, in, 48);
-            ssl_md5_transform(md5_info, sha1_sig, 20);
-            ssl_md5_complete(md5_info, md5_sig);
-            memcpy(out + i * 16, md5_sig, 16);
-        }
-        ssl_sha1_info_delete(sha1_info);
-        ssl_md5_info_delete(md5_info);
-    }
-
     /*****************************************************************************/
     void server_sec_establish_keys()
     {
@@ -375,9 +346,9 @@ struct server_sec : public Sec {
 
         memcpy(input, this->client_random, 24);
         memcpy(input + 24, this->server_random, 24);
-        server_sec_hash_48(temp_hash, input, this->client_random,
+        this->sec_hash_48(temp_hash, input, this->client_random,
                          this->server_random, 65);
-        server_sec_hash_48(session_key, temp_hash, this->client_random,
+        this->sec_hash_48(session_key, temp_hash, this->client_random,
                          this->server_random, 88);
         memcpy(this->sign_key, session_key, 16);
         this->sec_hash_16(this->encrypt_key, session_key + 16, this->client_random,

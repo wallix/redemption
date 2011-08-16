@@ -150,6 +150,33 @@ struct Sec
         ssl.md5_final(&md5, out);
     }
 
+    // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
+    // Both SHA1 and MD5 algorithms are used.
+    static void sec_hash_48(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2, const uint8_t salt)
+    {
+        uint8_t shasig[20];
+        uint8_t pad[4];
+        SSL_SHA1 sha1;
+        SSL_MD5 md5;
+
+        ssllib ssl;
+
+        for (int i = 0; i < 3; i++) {
+            memset(pad, salt + i, i + 1);
+
+            ssl.sha1_init(&sha1);
+            ssl.sha1_update(&sha1, pad, i + 1);
+            ssl.sha1_update(&sha1, in, 48);
+            ssl.sha1_update(&sha1, salt1, 32);
+            ssl.sha1_update(&sha1, salt2, 32);
+            ssl.sha1_final(&sha1, shasig);
+
+            ssl.md5_init(&md5);
+            ssl.md5_update(&md5, in, 48);
+            ssl.md5_update(&md5, shasig, 20);
+            ssl.md5_final(&md5, &out[i * 16]);
+        }
+    }
 
 // 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
 // ------------------------------------------
