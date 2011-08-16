@@ -297,12 +297,9 @@ struct rdp_rdp {
                        + 4 /* w2k fix, why? */ ;
 
             stream.init(8192);
-// -------------------------
-//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             stream.mcs_hdr = stream.p;
             stream.p += 8;
-// -------------------------
 
             int hdrlen = (sec_flags & SEC_ENCRYPT)          ? 12
                        : this->sec_layer.lic_layer.licence_issued ? 0
@@ -344,7 +341,30 @@ struct rdp_rdp {
             this->out_unknown_caps(stream, 0x10, 0x34, caps_0x10); /* glyph cache? */
 
             tpdu.end();
-            this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
+
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
+                    stream.out_uint32_le(sec_flags);
+            }
+
+            if (sec_flags & SEC_ENCRYPT){
+                sec_flags &= ~SEC_ENCRYPT;
+                int datalen = stream.end - stream.p - 8;
+
+                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            }
+
+            stream.p = stream.mcs_hdr;
+            int len = ((stream.end - stream.p) - 8) | 0x8000;
+            stream.out_uint8(MCS_SDRQ << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+            stream.out_uint8(0x70);
+            stream.out_uint16_be(len);
+
+            stream.p = oldp;
 
             tpdu.send(this->sec_layer.trans);
 
@@ -762,7 +782,30 @@ struct rdp_rdp {
             }
 
             tpdu.end();
-            this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
+
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
+                    stream.out_uint32_le(sec_flags);
+            }
+
+            if (sec_flags & SEC_ENCRYPT){
+                sec_flags &= ~SEC_ENCRYPT;
+                int datalen = stream.end - stream.p - 8;
+
+                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            }
+
+            stream.p = stream.mcs_hdr;
+            int len = ((stream.end - stream.p) - 8) | 0x8000;
+            stream.out_uint8(MCS_SDRQ << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+            stream.out_uint8(0x70);
+            stream.out_uint16_be(len);
+
+            stream.p = oldp;
 
             tpdu.send(this->sec_layer.trans);
 
@@ -773,6 +816,7 @@ struct rdp_rdp {
         void send_data(Stream & stream, int pdu_data_type, int chan_id) throw(Error)
         {
             uint8_t * oldp = stream.p;
+
             stream.p = stream.rdp_hdr;
             int len = stream.end - stream.p;
             stream.out_uint16_le(len);
@@ -786,7 +830,28 @@ struct rdp_rdp {
             stream.out_uint8(0); /* compress type */
             stream.out_uint16_le(0); /* compress len */
             int sec_flags = SEC_ENCRYPT;
-            this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, chan_id);
+
+            stream.p = stream.sec_hdr;
+            if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
+                    stream.out_uint32_le(sec_flags);
+            }
+
+            if (sec_flags & SEC_ENCRYPT){
+                sec_flags &= ~SEC_ENCRYPT;
+                int datalen = stream.end - stream.p - 8;
+
+                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            }
+
+            stream.p = stream.mcs_hdr;
+            int length = ((stream.end - stream.p) - 8) | 0x8000;
+            stream.out_uint8(MCS_SDRQ << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(chan_id);
+            stream.out_uint8(0x70);
+            stream.out_uint16_be(length);
+
             stream.p = oldp;
         }
 
@@ -1045,7 +1110,29 @@ struct rdp_rdp {
             int sec_flags = SEC_ENCRYPT;
             /* We need to call send_data but with another code because we need to build an
             virtual_channel packet and not an MCS_GLOBAL_CHANNEL packet */
-            this->sec_layer.rdp_sec_send_to_channel(stream, sec_flags, channel_id);
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
+                    stream.out_uint32_le(sec_flags);
+            }
+
+            if (sec_flags & SEC_ENCRYPT){
+                sec_flags &= ~SEC_ENCRYPT;
+                int datalen = stream.end - stream.p - 8;
+
+                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            }
+
+            stream.p = stream.mcs_hdr;
+            int len = ((stream.end - stream.p) - 8) | 0x8000;
+            stream.out_uint8(MCS_SDRQ << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(channel_id);
+            stream.out_uint8(0x70);
+            stream.out_uint16_be(len);
+
+            stream.p = oldp;
 //            LOG(LOG_INFO, "send_redirect_pdu done\n");
 
             tpdu.end();
