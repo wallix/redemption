@@ -52,14 +52,12 @@ struct server_sec : public Sec {
     uint8_t pub_sig[64];
     uint8_t pri_exp[64];
     Stream data;
-    Transport * trans;
 
     /*****************************************************************************/
 
     server_sec(ClientInfo * client_info, Transport * trans) :
-        Sec(client_info->crypt_level),
-        client_info(client_info),
-        trans(trans)
+        Sec(client_info->crypt_level, trans),
+        client_info(client_info)
     {
         // CGR: see if init has influence for the 3 following fields
         memset(this->server_random, 0, 32);
@@ -299,16 +297,6 @@ struct server_sec : public Sec {
 
 
     /*****************************************************************************/
-    /* Output a uint32 into a buffer (little-endian) */
-    void buf_out_uint32(uint8_t* buffer, int value)
-    {
-        buffer[0] = (value) & 0xff;
-        buffer[1] = (value >> 8) & 0xff;
-        buffer[2] = (value >> 16) & 0xff;
-        buffer[3] = (value >> 24) & 0xff;
-    }
-
-    /*****************************************************************************/
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
     void server_sec_sign(uint8_t* out, int out_len, uint8_t* data, int data_len)
     {
@@ -332,7 +320,7 @@ struct server_sec : public Sec {
         uint8_t* sha1_info;
         uint8_t* md5_info;
 
-        buf_out_uint32(lenhdr, data_len);
+        this->sec_buf_out_uint32(lenhdr, data_len);
         sha1_info = ssl_sha1_info_create();
         md5_info = ssl_md5_info_create();
         ssl_sha1_clear(sha1_info);
