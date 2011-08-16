@@ -47,8 +47,6 @@ struct server_sec : public Sec {
     uint8_t server_random[32];
     uint8_t client_random[64];
 
-    uint8_t* decrypt_rc4_info;
-    uint8_t* encrypt_rc4_info;
     uint8_t pub_exp[4];
     uint8_t pub_mod[64];
     uint8_t pub_sig[64];
@@ -73,8 +71,6 @@ struct server_sec : public Sec {
         memset(this->pub_mod, 0, 64);
         memset(this->pub_sig, 0, 64);
         memset(this->pri_exp, 0, 64);
-        this->decrypt_rc4_info = ssl_rc4_info_create();
-        this->encrypt_rc4_info = ssl_rc4_info_create();
     }
 
 
@@ -88,20 +84,6 @@ struct server_sec : public Sec {
                 delete channel_item;
             }
         }
-
-        ssl_rc4_info_delete(this->decrypt_rc4_info);
-        ssl_rc4_info_delete(this->encrypt_rc4_info);
-    }
-
-    void server_sec_decrypt(uint8_t* data, int len) throw (Error)
-    {
-        if (this->decrypt_use_count == 4096) {
-            this->sec_update(this->decrypt_key, this->decrypt_update_key, this->rc4_key_len);
-            ssl_rc4_set_key(this->decrypt_rc4_info, this->decrypt_key, this->rc4_key_len);
-            this->decrypt_use_count = 0;
-        }
-        ssl_rc4_crypt(this->decrypt_rc4_info, data, len);
-        this->decrypt_use_count++;
     }
 
     /* process the mcs client data we received from the mcs layer */
@@ -190,17 +172,6 @@ struct server_sec : public Sec {
             }
             stream.p = current_header + length;
         }
-    }
-
-    void server_sec_encrypt(uint8_t* data, int len) throw (Error)
-    {
-        if (this->encrypt_use_count == 4096) {
-            this->sec_update(this->encrypt_key, this->encrypt_update_key, this->rc4_key_len);
-            ssl_rc4_set_key(this->encrypt_rc4_info, this->encrypt_key, this->rc4_key_len);
-            this->encrypt_use_count = 0;
-        }
-        ssl_rc4_crypt(this->encrypt_rc4_info, data, len);
-        this->encrypt_use_count++;
     }
 
     void unicode_in(Stream & stream, int uni_len, uint8_t* dst, int dst_len) throw (Error)
@@ -337,37 +308,6 @@ struct server_sec : public Sec {
                     this->pri_exp, 64);
     }
 
-    /*****************************************************************************/
-    void server_sec_establish_keys()
-    {
-        uint8_t session_key[48];
-        uint8_t temp_hash[48];
-        uint8_t input[48];
-
-        memcpy(input, this->client_random, 24);
-        memcpy(input + 24, this->server_random, 24);
-        this->sec_hash_48(temp_hash, input, this->client_random,
-                         this->server_random, 65);
-        this->sec_hash_48(session_key, temp_hash, this->client_random,
-                         this->server_random, 88);
-        memcpy(this->sign_key, session_key, 16);
-        this->sec_hash_16(this->encrypt_key, session_key + 16, this->client_random,
-                         this->server_random);
-        this->sec_hash_16(this->decrypt_key, session_key + 32, this->client_random,
-                         this->server_random);
-        if (this->rc4_key_size == 1) {
-            this->sec_make_40bit(this->sign_key);
-            this->sec_make_40bit(this->encrypt_key);
-            this->sec_make_40bit(this->decrypt_key);
-            this->rc4_key_len = 8;
-        } else {
-            this->rc4_key_len = 16;
-        }
-        memcpy(this->decrypt_update_key, this->decrypt_key, 16);
-        memcpy(this->encrypt_update_key, this->encrypt_key, 16);
-        ssl_rc4_set_key(this->decrypt_rc4_info, this->decrypt_key, this->rc4_key_len);
-        ssl_rc4_set_key(this->encrypt_rc4_info, this->encrypt_key, this->rc4_key_len);
-    }
 
 
     /*****************************************************************************/
@@ -486,7 +426,7 @@ struct server_sec : public Sec {
             stream.out_uint32_le(SEC_ENCRYPT);
             int datalen = (int)((stream.end - stream.p) - 8);
             this->server_sec_sign(stream.p, 8, stream.p + 8, datalen);
-            this->server_sec_encrypt(stream.p + 8, datalen);
+            this->sec_encrypt(stream.p + 8, datalen);
         } else {
             stream.out_uint32_le(0);
         }
