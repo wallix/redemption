@@ -25,6 +25,9 @@
 #if !defined(__SEC_HPP__)
 #define __SEC_HPP__
 
+#warning ssl calls introduce some dependency on ssl system library, injecting it in the sec object would be better.
+#include "ssl_calls.hpp"
+
 /* used in sec */
 struct mcs_channel_item {
     char name[16];
@@ -85,6 +88,53 @@ struct Sec
 
     }
 
+    void sec_update(uint8_t* key, uint8_t* update_key, uint8_t rc4_key_len)
+    {
+        static uint8_t pad_54[40] = {
+            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+            54, 54, 54, 54, 54, 54, 54, 54
+        };
+
+        static uint8_t pad_92[48] = {
+            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
+        };
+
+        uint8_t shasig[20];
+        SSL_SHA1 sha1;
+        SSL_MD5 md5;
+        SSL_RC4 update;
+
+        ssllib ssl;
+
+        ssl.sha1_init(&sha1);
+        ssl.sha1_update(&sha1, update_key, this->rc4_key_len);
+        ssl.sha1_update(&sha1, pad_54, 40);
+        ssl.sha1_update(&sha1, key, rc4_key_len);
+        ssl.sha1_final(&sha1, shasig);
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, update_key, this->rc4_key_len);
+        ssl.md5_update(&md5, pad_92, 48);
+        ssl.md5_update(&md5, shasig, 20);
+        ssl.md5_final(&md5, key);
+
+        ssl.rc4_set_key(&update, key, rc4_key_len);
+        ssl.rc4_crypt(&update, key, key, rc4_key_len);
+
+        if (rc4_key_len == 8) {
+            this->sec_make_40bit(key);
+        }
+    }
+
+    void sec_make_40bit(uint8_t* key)
+    {
+        key[0] = 0xd1;
+        key[1] = 0x26;
+        key[2] = 0x9e;
+    }
 
 // 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
 // ------------------------------------------

@@ -104,59 +104,12 @@ struct server_sec : public Sec {
     void server_sec_decrypt(uint8_t* data, int len) throw (Error)
     {
         if (this->decrypt_use_count == 4096) {
-            this->server_sec_update(this->decrypt_key, 
-                                    this->decrypt_update_key, 
-                                    this->rc4_key_len);
-            ssl_rc4_set_key(this->decrypt_rc4_info,
-                            this->decrypt_key,
-                            this->rc4_key_len);
+            this->sec_update(this->decrypt_key, this->decrypt_update_key, this->rc4_key_len);
+            ssl_rc4_set_key(this->decrypt_rc4_info, this->decrypt_key, this->rc4_key_len);
             this->decrypt_use_count = 0;
         }
         ssl_rc4_crypt(this->decrypt_rc4_info, data, len);
         this->decrypt_use_count++;
-    }
-
-    /* update an encryption key */
-    void server_sec_update(uint8_t* key, uint8_t* update_key, int key_len) throw (Error)
-    {
-        static uint8_t pad_54[40] = {
-            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-            54, 54, 54, 54, 54, 54, 54, 54
-        };
-
-        static uint8_t pad_92[48] = {
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-        };
-
-        uint8_t shasig[20];
-        uint8_t* sha1_info;
-        uint8_t* md5_info;
-        uint8_t* rc4_info;
-
-        sha1_info = ssl_sha1_info_create();
-        md5_info = ssl_md5_info_create();
-        rc4_info = ssl_rc4_info_create();
-        ssl_sha1_clear(sha1_info);
-        ssl_sha1_transform(sha1_info, update_key, key_len);
-        ssl_sha1_transform(sha1_info, pad_54, 40);
-        ssl_sha1_transform(sha1_info, key, key_len);
-        ssl_sha1_complete(sha1_info, shasig);
-        ssl_md5_clear(md5_info);
-        ssl_md5_transform(md5_info, update_key, key_len);
-        ssl_md5_transform(md5_info, pad_92, 48);
-        ssl_md5_transform(md5_info, shasig, 20);
-        ssl_md5_complete(md5_info, key);
-        ssl_rc4_set_key(rc4_info, key, key_len);
-        ssl_rc4_crypt(rc4_info, key, key_len);
-        if (key_len == 8) {
-            this->server_sec_make_40bit(key);
-        }
-        ssl_sha1_info_delete(sha1_info);
-        ssl_md5_info_delete(md5_info);
-        ssl_rc4_info_delete(rc4_info);
     }
 
     /* process the mcs client data we received from the mcs layer */
@@ -250,10 +203,8 @@ struct server_sec : public Sec {
     void server_sec_encrypt(uint8_t* data, int len) throw (Error)
     {
         if (this->encrypt_use_count == 4096) {
-            this->server_sec_update(this->encrypt_key, this->encrypt_update_key,
-                            this->rc4_key_len);
-            ssl_rc4_set_key(this->encrypt_rc4_info, this->encrypt_key,
-                            this->rc4_key_len);
+            this->sec_update(this->encrypt_key, this->encrypt_update_key, this->rc4_key_len);
+            ssl_rc4_set_key(this->encrypt_rc4_info, this->encrypt_key, this->rc4_key_len);
             this->encrypt_use_count = 0;
         }
         ssl_rc4_crypt(this->encrypt_rc4_info, data, len);
@@ -325,8 +276,6 @@ struct server_sec : public Sec {
        };
 
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
         stream.out_uint8(MCS_SDIN << 2);
@@ -349,8 +298,6 @@ struct server_sec : public Sec {
                                };
 
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
         stream.out_uint8(MCS_SDIN << 2);
@@ -375,8 +322,6 @@ struct server_sec : public Sec {
                                  };
 
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
         stream.out_uint8(MCS_SDIN << 2);

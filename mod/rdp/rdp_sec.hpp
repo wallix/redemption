@@ -165,12 +165,9 @@ struct rdp_sec : public Sec {
         int length = 58;
 
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
         int hdrlen = (sec_flags & SEC_ENCRYPT)          ? 12
                    : this->lic_layer.licence_issued ? 0
@@ -256,12 +253,9 @@ struct rdp_sec : public Sec {
         int length = 128 + userlen + hostlen;
 
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
         int hdrlen = (sec_flags & SEC_ENCRYPT)          ? 12
                    : this->lic_layer.licence_issued ? 0
@@ -300,12 +294,9 @@ struct rdp_sec : public Sec {
                 uint8_t* signature)
     {
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
         int sec_flags = SEC_LICENCE_NEG;
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
@@ -590,47 +581,6 @@ struct rdp_sec : public Sec {
       memcpy(signature, md5sig, siglen);
     }
 
-    /* update an encryption key */
-    void rdp_sec_update(uint8_t* key, uint8_t* update_key)
-    {
-        static uint8_t pad_54[40] = {
-            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-            54, 54, 54, 54, 54, 54, 54, 54
-        };
-
-        static uint8_t pad_92[48] = {
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-        };
-
-        uint8_t shasig[20];
-        SSL_SHA1 sha1;
-        SSL_MD5 md5;
-        SSL_RC4 update;
-
-        ssllib ssl;
-
-        ssl.sha1_init(&sha1);
-        ssl.sha1_update(&sha1, update_key, this->rc4_key_len);
-        ssl.sha1_update(&sha1, pad_54, 40);
-        ssl.sha1_update(&sha1, key, this->rc4_key_len);
-        ssl.sha1_final(&sha1, shasig);
-
-        ssl.md5_init(&md5);
-        ssl.md5_update(&md5, update_key, this->rc4_key_len);
-        ssl.md5_update(&md5, pad_92, 48);
-        ssl.md5_update(&md5, shasig, 20);
-        ssl.md5_final(&md5, key);
-
-        ssl.rc4_set_key(&update, key, this->rc4_key_len);
-        ssl.rc4_crypt(&update, key, key, this->rc4_key_len);
-
-        if (this->rc4_key_len == 8) {
-            this->rdp_sec_make_40bit(key);
-        }
-    }
 
     /* Encrypt data using RC4 */
     void rdp_sec_encrypt(uint8_t* data, int length)
@@ -638,7 +588,7 @@ struct rdp_sec : public Sec {
         ssllib ssl;
 
         if (this->encrypt_use_count == 4096){
-            this->rdp_sec_update(this->encrypt_key, this->encrypt_update_key);
+            this->sec_update(this->encrypt_key, this->encrypt_update_key, this->rc4_key_len);
             ssl.rc4_set_key(&(this->rc4_encrypt_key), this->encrypt_key, this->rc4_key_len);
             this->encrypt_use_count = 0;
         }
@@ -652,7 +602,7 @@ struct rdp_sec : public Sec {
         ssllib ssl;
 
         if (this->decrypt_use_count == 4096) {
-            this->rdp_sec_update(this->decrypt_key, this->decrypt_update_key);
+            this->sec_update(this->decrypt_key, this->decrypt_update_key, this->rc4_key_len);
             ssl.rc4_set_key(&(this->rc4_decrypt_key), this->decrypt_key, this->rc4_key_len);
             this->decrypt_use_count = 0;
         }
@@ -700,12 +650,9 @@ struct rdp_sec : public Sec {
     void rdp_sec_establish_key()
     {
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
         int length = this->server_public_key_len + SEC_PADDING_SIZE;
         int flags = SEC_CLIENT_RANDOM;
