@@ -74,18 +74,6 @@ struct server_sec : public Sec {
     }
 
 
-    ~server_sec()
-    {
-        // clear channel_list
-        int count = (int) this->channel_list.size();
-        for (int index = 0; index < count; index++) {
-            mcs_channel_item* channel_item = this->channel_list[index];
-            if (0 != channel_item) {
-                delete channel_item;
-            }
-        }
-    }
-
     /* process the mcs client data we received from the mcs layer */
     void server_sec_process_mcs_data(Stream & stream) throw (Error)
     {
