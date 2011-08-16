@@ -39,8 +39,8 @@ struct rdp_sec : public Sec {
     int server_public_key_len;
     int & use_rdp5;
 
-    rdp_sec(Transport * trans, int & use_rdp5, const char * hostname, const char * username)
-        :   Sec(0, trans),
+    rdp_sec(int & use_rdp5, const char * hostname, const char * username)
+        :   Sec(0),
             server_public_key_len(0),
             use_rdp5(use_rdp5){
         #warning and if hostname is really larger, what happens ? We should at least emit a warning log
@@ -59,7 +59,7 @@ struct rdp_sec : public Sec {
         memcpy(hwid + 4, this->hostname, LICENCE_HWID_SIZE - 4);
     }
 
-    void rdp_lic_process_authreq(Stream & stream)
+    void rdp_lic_process_authreq(Transport * trans, Stream & stream)
     {
 
         ssllib ssl;
@@ -107,10 +107,10 @@ struct rdp_sec : public Sec {
         memcpy(crypt_hwid, hwid, LICENCE_HWID_SIZE);
         ssl.rc4_crypt(crypt_key, crypt_hwid, crypt_hwid, LICENCE_HWID_SIZE);
 
-        this->rdp_lic_send_authresp(out_token, crypt_hwid, out_sig);
+        this->rdp_lic_send_authresp(trans, out_token, crypt_hwid, out_sig);
     }
 
-    void rdp_lic_send_authresp(uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature)
+    void rdp_lic_send_authresp(Transport * trans, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature)
     {
         int sec_flags = SEC_LICENCE_NEG;
         int length = 58;
@@ -164,10 +164,10 @@ struct rdp_sec : public Sec {
 
         stream.p = oldp;
 
-        tpdu.send(this->trans);
+        tpdu.send(trans);
     }
 
-    void rdp_lic_process_demand(Stream & stream)
+    void rdp_lic_process_demand(Transport * trans, Stream & stream)
     {
         uint8_t null_data[SEC_MODULUS_SIZE];
         uint8_t signature[LICENCE_SIGNATURE_SIZE];
@@ -209,17 +209,17 @@ struct rdp_sec : public Sec {
             ssl.rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
             ssl.rc4_crypt(crypt_key, hwid, hwid, sizeof(hwid));
 
-            this->rdp_lic_present(null_data, null_data,
+            this->rdp_lic_present(trans, null_data, null_data,
                                   this->licence_data,
                                   this->licence_size,
                                   hwid, signature);
         }
         else {
-            this->rdp_lic_send_request(null_data, null_data);
+            this->rdp_lic_send_request(trans, null_data, null_data);
         }
     }
 
-    void rdp_lic_send_request(uint8_t* client_random, uint8_t* rsa_data)
+    void rdp_lic_send_request(Transport * trans, uint8_t* client_random, uint8_t* rsa_data)
     {
         int sec_flags = SEC_LICENCE_NEG;
         int userlen = strlen(this->username) + 1;
@@ -283,10 +283,10 @@ struct rdp_sec : public Sec {
 
         stream.p = oldp;
 
-        tpdu.send(this->trans);
+        tpdu.send(trans);
     }
 
-    void rdp_lic_present(uint8_t* client_random, uint8_t* rsa_data,
+    void rdp_lic_present(Transport * trans, uint8_t* client_random, uint8_t* rsa_data,
                 uint8_t* licence_data, int licence_size, uint8_t* hwid,
                 uint8_t* signature)
     {
@@ -351,7 +351,7 @@ struct rdp_sec : public Sec {
 
         stream.p = oldp;
 
-        tpdu.send(this->trans);
+        tpdu.send(trans);
     }
 
     #warning this is not supported yet, but using rdp_save_licence we would keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Anyway the use of files to stoe licences should be abstracted.
@@ -429,16 +429,16 @@ struct rdp_sec : public Sec {
         this->rdp_save_licence(stream.p, length);
     }
 
-    void rdp_lic_process(Stream & stream)
+    void rdp_lic_process(Transport * trans, Stream & stream)
     {
         uint8_t tag = stream.in_uint8();
         stream.skip_uint8(3); /* version, length */
         switch (tag) {
         case LICENCE_TAG_DEMAND:
-            this->rdp_lic_process_demand(stream);
+            this->rdp_lic_process_demand(trans, stream);
             break;
         case LICENCE_TAG_AUTHREQ:
-            this->rdp_lic_process_authreq(stream);
+            this->rdp_lic_process_authreq(trans, stream);
             break;
         case LICENCE_TAG_ISSUE:
             this->rdp_lic_process_issue(stream);
@@ -910,7 +910,7 @@ struct rdp_sec : public Sec {
 
     /*****************************************************************************/
     /* Establish a secure connection */
-    void rdp_sec_connect(vector<mcs_channel_item*> channel_list,
+    void rdp_sec_connect(Transport * trans, vector<mcs_channel_item*> channel_list,
                         int width, int height,
                         int rdp_bpp, int keylayout,
                         bool console_session) throw(Error)
@@ -961,10 +961,10 @@ struct rdp_sec : public Sec {
 //            crtpdu.extend_tpdu_hdr();
             crtpdu.end();
 
-            crtpdu.send(this->trans);
+            crtpdu.send(trans);
 
             Stream in;
-            X224In cctpdu(this->trans, in);
+            X224In cctpdu(trans, in);
             if (cctpdu.tpkt.version != 3){
                 throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
             }
@@ -973,7 +973,7 @@ struct rdp_sec : public Sec {
             }
         } catch (Error) {
             try {
-                this->trans->disconnect();
+                trans->disconnect();
             } catch (Error){
                 // rethrow the first error, not the error we could get disconnecting
             }
@@ -1039,10 +1039,10 @@ struct rdp_sec : public Sec {
                 stream.out_copy_bytes(out.data, data_len);
 
                 tpdu.end();
-                tpdu.send(this->trans);
+                tpdu.send(trans);
             }
             Stream stream(8192);
-            this->recv_connect_response(stream, this->trans);
+            this->recv_connect_response(stream, trans);
 
             LOG(LOG_INFO, "rdp_sec_process_mcs_data\n");
             this->rdp_sec_process_mcs_data(stream, channel_list);
@@ -1054,18 +1054,18 @@ struct rdp_sec : public Sec {
                 stream.out_uint16_be(0x100); /* height */
                 stream.out_uint16_be(0x100); /* interval */
                 tpdu.end();
-                tpdu.send(this->trans);
+                tpdu.send(trans);
             }
             {
                 Stream stream(8192);
                 X224Out tpdu(X224Packet::DT_TPDU, stream);
                 stream.out_uint8((MCS_AURQ << 2));
                 tpdu.end();
-                tpdu.send(this->trans);
+                tpdu.send(trans);
             }
             {
                 Stream stream(8192);
-                X224In(this->trans, stream);
+                X224In(trans, stream);
                 int opcode = stream.in_uint8();
                 if ((opcode >> 2) != MCS_AUCF) {
                     throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
@@ -1129,11 +1129,11 @@ struct rdp_sec : public Sec {
                     stream.out_uint16_be(this->userid);
                     stream.out_uint16_be(channels[index]);
                     tpdu.end();
-                    tpdu.send(this->trans);
+                    tpdu.send(trans);
                 }
                 {
                     Stream stream(8192);
-                    X224In(this->trans, stream);
+                    X224In(trans, stream);
                     int opcode = stream.in_uint8();
                     if ((opcode >> 2) != MCS_CJCF) {
                         throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
@@ -1155,7 +1155,7 @@ struct rdp_sec : public Sec {
             Stream stream(11);
             X224Out tpdu(X224Packet::DR_TPDU, stream);
             tpdu.end();
-            tpdu.send(this->trans);
+            tpdu.send(trans);
             throw;
         }
 
@@ -1207,7 +1207,7 @@ struct rdp_sec : public Sec {
 
             stream.p = oldp;
 
-            tpdu.send(this->trans);
+            tpdu.send(trans);
         }
     }
 

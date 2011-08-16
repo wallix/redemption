@@ -59,7 +59,6 @@ struct Sec
 
     int userid;
     vector<struct mcs_channel_item *> channel_list;
-    Transport * trans;
 
     #warning windows 2008 does not write trailer because of overflow of buffer below, checked actual size: 64 bytes on xp, 256 bytes on windows 2008
     uint8_t client_crypt_random[512];
@@ -82,10 +81,9 @@ struct Sec
     char hostname[16];
     char username[128];
 
-    Sec(uint8_t crypt_level, Transport * trans) :
+    Sec(uint8_t crypt_level) :
       licence_data(0),
       licence_size(0),
-      trans(trans),
       decrypt_use_count(0),
       encrypt_use_count(0),
       crypt_level(crypt_level)

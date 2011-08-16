@@ -55,8 +55,8 @@ struct server_sec : public Sec {
 
     /*****************************************************************************/
 
-    server_sec(ClientInfo * client_info, Transport * trans) :
-        Sec(client_info->crypt_level, trans),
+    server_sec(ClientInfo * client_info) :
+        Sec(client_info->crypt_level),
         client_info(client_info)
     {
         // CGR: see if init has influence for the 3 following fields
@@ -177,7 +177,7 @@ struct server_sec : public Sec {
     }
 
 
-    void server_sec_send_lic_initial() throw (Error)
+    void server_sec_send_lic_initial(Transport * trans) throw (Error)
     {
         /* some compilers need unsigned char to avoid warnings */
         static uint8_t lic1[322] = {
@@ -235,10 +235,10 @@ struct server_sec : public Sec {
         stream.out_copy_bytes((char*)lic1, 322);
 
         tpdu.end();
-        tpdu.send(this->trans);
+        tpdu.send(trans);
     }
 
-    void server_sec_send_lic_response() throw (Error)
+    void server_sec_send_lic_response(Transport * trans) throw (Error)
     {
         /* some compilers need unsigned char to avoid warnings */
         static uint8_t lic2[20] = { 0x80, 0x00, 0x10, 0x00, 0xff, 0x02, 0x10, 0x00,
@@ -257,11 +257,10 @@ struct server_sec : public Sec {
         stream.out_copy_bytes((char*)lic2, 20);
 
         tpdu.end();
-        tpdu.send(this->trans);
-// ----------------------------
+        tpdu.send(trans);
     }
 
-    void server_sec_send_media_lic_response() throw (Error)
+    void server_sec_send_media_lic_response(Transport * trans) throw (Error)
     {
         /* mce */
         /* some compilers need unsigned char to avoid warnings */
@@ -281,7 +280,7 @@ struct server_sec : public Sec {
         stream.out_copy_bytes((char*)lic3, 20);
 
         tpdu.end();
-        tpdu.send(this->trans);
+        tpdu.send(trans);
 // ----------------------------
 
     }
@@ -1040,7 +1039,7 @@ struct server_sec : public Sec {
     }
 
     /*****************************************************************************/
-    void server_sec_disconnect()
+    void server_sec_disconnect(Transport * trans)
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -1049,7 +1048,7 @@ struct server_sec : public Sec {
         stream.out_uint8(0x80);
 
         tpdu.end();
-        tpdu.send(this->trans);
+        tpdu.send(trans);
     }
 
 
@@ -1108,10 +1107,10 @@ struct server_sec : public Sec {
 //   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
 //   2.2.1.2.1.
 
-    void recv_connection_initial(Stream & data)
+    void recv_connection_initial(Transport * trans, Stream & data)
     {
         Stream stream(8192);
-        X224In(this->trans, stream);
+        X224In(trans, stream);
 
         if (stream.in_uint16_be() != BER_TAG_MCS_CONNECT_INITIAL) {
             throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
@@ -1200,7 +1199,7 @@ struct server_sec : public Sec {
         stream.out_copy_bytes(data.data, data_len);
 
         tpdu.end();
-        tpdu.send(this->trans);
+        tpdu.send(trans);
     }
 
 

@@ -50,11 +50,12 @@ struct rdp_rdp {
     int keylayout;
     bool console_session;
     int bpp;
+    Transport * trans;
 
     struct rdp_cursor cursors[32];
-    rdp_rdp(struct mod_rdp* owner, Transport *t, const char * username, const char * password, const char * hostname, vector<mcs_channel_item*> channel_list, int rdp_performance_flags, int width, int height, int bpp, int keylayout, bool console_session)
+    rdp_rdp(struct mod_rdp* owner, Transport *trans, const char * username, const char * password, const char * hostname, vector<mcs_channel_item*> channel_list, int rdp_performance_flags, int width, int height, int bpp, int keylayout, bool console_session)
         #warning initialize members through constructor
-        : sec_layer(t, this->use_rdp5, hostname, username), bpp(bpp)
+        : sec_layer(this->use_rdp5, hostname, username), bpp(bpp), trans(trans)
         {
 
             #warning licence loading should be done before creating protocol layers
@@ -89,7 +90,7 @@ struct rdp_rdp {
             LOG(LOG_INFO, "Server key layout is %x\n", this->keylayout);
 
             #warning I should change that to RAII by merging instanciation of sec_layer and connection, it should also remove some unecessary parameters from rdp_rdp object
-            this->sec_layer.rdp_sec_connect(channel_list, width, height, bpp, keylayout, console_session);
+            this->sec_layer.rdp_sec_connect(trans, channel_list, width, height, bpp, keylayout, console_session);
     }
     ~rdp_rdp(){
         LOG(LOG_INFO, "End of remote rdp connection\n");
@@ -366,7 +367,7 @@ struct rdp_rdp {
 
             stream.p = oldp;
 
-            tpdu.send(this->sec_layer.trans);
+            tpdu.send(this->trans);
 
             LOG(LOG_INFO, "Waiting for answer to confirm active\n");
         }
@@ -630,7 +631,7 @@ struct rdp_rdp {
             }
 
             tpdu.end();
-            tpdu.send(this->sec_layer.trans);
+            tpdu.send(this->trans);
         }
 
 
@@ -692,7 +693,7 @@ struct rdp_rdp {
             }
 
             tpdu.end();
-            tpdu.send(this->sec_layer.trans);
+            tpdu.send(this->trans);
         }
 
         void send_fonts(Stream & stream, int seq) throw(Error)
@@ -756,7 +757,7 @@ struct rdp_rdp {
             }
 
             tpdu.end();
-            tpdu.send(this->sec_layer.trans);
+            tpdu.send(this->trans);
         }
 
     #define RDP5_FLAG 0x0030
@@ -917,7 +918,7 @@ struct rdp_rdp {
 
             stream.p = oldp;
 
-            tpdu.send(this->sec_layer.trans);
+            tpdu.send(this->trans);
 
             LOG(LOG_INFO, "send login info ok\n");
         }
@@ -990,7 +991,7 @@ struct rdp_rdp {
             }
 
             tpdu.end();
-            tpdu.send(this->sec_layer.trans);
+            tpdu.send(this->trans);
         }
 
         void send_invalidate(Stream & stream,int left, int top, int width, int height) throw(Error)
@@ -1057,7 +1058,7 @@ struct rdp_rdp {
 
 
             tpdu.end();
-            tpdu.send(this->sec_layer.trans);
+            tpdu.send(this->trans);
         }
 
 // 2.2.1.1.1   RDP Negotiation Request (RDP_NEG_REQ)
@@ -1189,7 +1190,7 @@ struct rdp_rdp {
                     stream.init(65535);
                     // read tpktHeader (4 bytes = 3 0 len)
                     // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-                    X224In(this->sec_layer.trans, stream);
+                    X224In(this->trans, stream);
 
                     int opcode = stream.in_uint8();
                     if ((opcode >> 2) != MCS_SDIN) {
@@ -1210,7 +1211,7 @@ struct rdp_rdp {
                     }
 
                     if (sec_flags & SEC_LICENCE_NEG) { /* 0x80 */
-                        this->sec_layer.rdp_lic_process(stream);
+                        this->sec_layer.rdp_lic_process(this->trans, stream);
                         // read again until licence is processed
                         continue;
                     }
@@ -1509,7 +1510,7 @@ struct rdp_rdp {
 //            LOG(LOG_INFO, "send_redirect_pdu done\n");
 
             tpdu.end();
-            tpdu.send(this->sec_layer.trans);
+            tpdu.send(this->trans);
         }
 
     void process_color_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
