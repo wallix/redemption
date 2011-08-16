@@ -573,12 +573,9 @@ struct rdp_rdp {
         void send_control(Stream & stream, int action) throw (Error)
         {
             stream.init(8192);
-// -------------------------
-//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             stream.mcs_hdr = stream.p;
             stream.p += 8;
-// -------------------------
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -590,7 +587,47 @@ struct rdp_rdp {
             stream.out_uint16_le(0); /* userid */
             stream.out_uint32_le(0); /* control id */
             stream.mark_end();
-            this->send_data(stream, PDUTYPE2_CONTROL, MCS_GLOBAL_CHANNEL);
+
+            {
+                uint8_t * oldp = stream.p;
+
+                stream.p = stream.rdp_hdr;
+                int len = stream.end - stream.p;
+                stream.out_uint16_le(len);
+                stream.out_uint16_le(PDUTYPE_DATAPDU | 0x10);
+                stream.out_uint16_le(this->sec_layer.userid);
+                stream.out_uint32_le(this->share_id);
+                stream.out_uint8(0); /* pad */
+                stream.out_uint8(1); /* stream id */
+                stream.out_uint16_le( len - 14);
+                stream.out_uint8(PDUTYPE2_CONTROL);
+                stream.out_uint8(0); /* compress type */
+                stream.out_uint16_le(0); /* compress len */
+                int sec_flags = SEC_ENCRYPT;
+
+                stream.p = stream.sec_hdr;
+                if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
+                        stream.out_uint32_le(sec_flags);
+                }
+
+                if (sec_flags & SEC_ENCRYPT){
+                    sec_flags &= ~SEC_ENCRYPT;
+                    int datalen = stream.end - stream.p - 8;
+
+                    this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+                    this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+                }
+
+                stream.p = stream.mcs_hdr;
+                int length = ((stream.end - stream.p) - 8) | 0x8000;
+                stream.out_uint8(MCS_SDRQ << 2);
+                stream.out_uint16_be(this->sec_layer.userid);
+                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+                stream.out_uint8(0x70);
+                stream.out_uint16_be(length);
+
+                stream.p = oldp;
+            }
 
             tpdu.end();
             tpdu.send(this->sec_layer.trans);
@@ -600,12 +637,9 @@ struct rdp_rdp {
         void send_synchronise(Stream & stream) throw (Error)
         {
             stream.init(8192);
-// -------------------------
-//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             stream.mcs_hdr = stream.p;
             stream.p += 8;
-// -------------------------
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -616,7 +650,46 @@ struct rdp_rdp {
             stream.out_uint16_le(1); /* type */
             stream.out_uint16_le(1002);
             stream.mark_end();
-            this->send_data(stream, PDUTYPE2_SYNCHRONIZE, MCS_GLOBAL_CHANNEL);
+            {
+                uint8_t * oldp = stream.p;
+
+                stream.p = stream.rdp_hdr;
+                int len = stream.end - stream.p;
+                stream.out_uint16_le(len);
+                stream.out_uint16_le(PDUTYPE_DATAPDU | 0x10);
+                stream.out_uint16_le(this->sec_layer.userid);
+                stream.out_uint32_le(this->share_id);
+                stream.out_uint8(0); /* pad */
+                stream.out_uint8(1); /* stream id */
+                stream.out_uint16_le( len - 14);
+                stream.out_uint8(PDUTYPE2_SYNCHRONIZE);
+                stream.out_uint8(0); /* compress type */
+                stream.out_uint16_le(0); /* compress len */
+                int sec_flags = SEC_ENCRYPT;
+
+                stream.p = stream.sec_hdr;
+                if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
+                        stream.out_uint32_le(sec_flags);
+                }
+
+                if (sec_flags & SEC_ENCRYPT){
+                    sec_flags &= ~SEC_ENCRYPT;
+                    int datalen = stream.end - stream.p - 8;
+
+                    this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+                    this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+                }
+
+                stream.p = stream.mcs_hdr;
+                int length = ((stream.end - stream.p) - 8) | 0x8000;
+                stream.out_uint8(MCS_SDRQ << 2);
+                stream.out_uint16_be(this->sec_layer.userid);
+                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+                stream.out_uint8(0x70);
+                stream.out_uint16_be(length);
+
+                stream.p = oldp;
+            }
 
             tpdu.end();
             tpdu.send(this->sec_layer.trans);
@@ -625,12 +698,9 @@ struct rdp_rdp {
         void send_fonts(Stream & stream, int seq) throw(Error)
         {
             stream.init(8192);
-// -------------------------
-//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             stream.mcs_hdr = stream.p;
             stream.p += 8;
-// -------------------------
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -643,7 +713,47 @@ struct rdp_rdp {
             stream.out_uint16_le(seq); /* unknown */
             stream.out_uint16_le(0x32); /* entry size */
             stream.mark_end();
-            this->send_data(stream, PDUTYPE2_FONTLIST, MCS_GLOBAL_CHANNEL);
+
+            {
+                uint8_t * oldp = stream.p;
+
+                stream.p = stream.rdp_hdr;
+                int len = stream.end - stream.p;
+                stream.out_uint16_le(len);
+                stream.out_uint16_le(PDUTYPE_DATAPDU | 0x10);
+                stream.out_uint16_le(this->sec_layer.userid);
+                stream.out_uint32_le(this->share_id);
+                stream.out_uint8(0); /* pad */
+                stream.out_uint8(1); /* stream id */
+                stream.out_uint16_le( len - 14);
+                stream.out_uint8(PDUTYPE2_FONTLIST);
+                stream.out_uint8(0); /* compress type */
+                stream.out_uint16_le(0); /* compress len */
+                int sec_flags = SEC_ENCRYPT;
+
+                stream.p = stream.sec_hdr;
+                if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
+                        stream.out_uint32_le(sec_flags);
+                }
+
+                if (sec_flags & SEC_ENCRYPT){
+                    sec_flags &= ~SEC_ENCRYPT;
+                    int datalen = stream.end - stream.p - 8;
+
+                    this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+                    this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+                }
+
+                stream.p = stream.mcs_hdr;
+                int length = ((stream.end - stream.p) - 8) | 0x8000;
+                stream.out_uint8(MCS_SDRQ << 2);
+                stream.out_uint16_be(this->sec_layer.userid);
+                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+                stream.out_uint8(0x70);
+                stream.out_uint16_be(length);
+
+                stream.p = oldp;
+            }
 
             tpdu.end();
             tpdu.send(this->sec_layer.trans);
@@ -812,62 +922,15 @@ struct rdp_rdp {
             LOG(LOG_INFO, "send login info ok\n");
         }
 
-        /* Send an RDP data packet */
-        void send_data(Stream & stream, int pdu_data_type, int chan_id) throw(Error)
-        {
-            uint8_t * oldp = stream.p;
-
-            stream.p = stream.rdp_hdr;
-            int len = stream.end - stream.p;
-            stream.out_uint16_le(len);
-            stream.out_uint16_le(PDUTYPE_DATAPDU | 0x10);
-            stream.out_uint16_le(this->sec_layer.userid);
-            stream.out_uint32_le(this->share_id);
-            stream.out_uint8(0); /* pad */
-            stream.out_uint8(1); /* stream id */
-            stream.out_uint16_le( len - 14);
-            stream.out_uint8(pdu_data_type);
-            stream.out_uint8(0); /* compress type */
-            stream.out_uint16_le(0); /* compress len */
-            int sec_flags = SEC_ENCRYPT;
-
-            stream.p = stream.sec_hdr;
-            if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
-                    stream.out_uint32_le(sec_flags);
-            }
-
-            if (sec_flags & SEC_ENCRYPT){
-                sec_flags &= ~SEC_ENCRYPT;
-                int datalen = stream.end - stream.p - 8;
-
-                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            }
-
-            stream.p = stream.mcs_hdr;
-            int length = ((stream.end - stream.p) - 8) | 0x8000;
-            stream.out_uint8(MCS_SDRQ << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(chan_id);
-            stream.out_uint8(0x70);
-            stream.out_uint16_be(length);
-
-            stream.p = oldp;
-        }
-
-
         void send_input(Stream & stream, int time, int message_type,
                         int device_flags, int param1, int param2) throw(Error)
         {
 //            LOG(LOG_INFO, "send_input\n");
 
             stream.init(8192);
-// -------------------------
-//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             stream.mcs_hdr = stream.p;
             stream.p += 8;
-// -------------------------
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -882,8 +945,49 @@ struct rdp_rdp {
             stream.out_uint16_le(device_flags);
             stream.out_uint16_le(param1);
             stream.out_uint16_le(param2);
+
             stream.mark_end();
-            this->send_data(stream, PDUTYPE2_INPUT, MCS_GLOBAL_CHANNEL);
+
+            {
+                uint8_t * oldp = stream.p;
+
+                stream.p = stream.rdp_hdr;
+                int len = stream.end - stream.p;
+                stream.out_uint16_le(len);
+                stream.out_uint16_le(PDUTYPE_DATAPDU | 0x10);
+                stream.out_uint16_le(this->sec_layer.userid);
+                stream.out_uint32_le(this->share_id);
+                stream.out_uint8(0); /* pad */
+                stream.out_uint8(1); /* stream id */
+                stream.out_uint16_le( len - 14);
+                stream.out_uint8(PDUTYPE2_INPUT);
+                stream.out_uint8(0); /* compress type */
+                stream.out_uint16_le(0); /* compress len */
+                int sec_flags = SEC_ENCRYPT;
+
+                stream.p = stream.sec_hdr;
+                if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
+                        stream.out_uint32_le(sec_flags);
+                }
+
+                if (sec_flags & SEC_ENCRYPT){
+                    sec_flags &= ~SEC_ENCRYPT;
+                    int datalen = stream.end - stream.p - 8;
+
+                    this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+                    this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+                }
+
+                stream.p = stream.mcs_hdr;
+                int length = ((stream.end - stream.p) - 8) | 0x8000;
+                stream.out_uint8(MCS_SDRQ << 2);
+                stream.out_uint16_be(this->sec_layer.userid);
+                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+                stream.out_uint8(0x70);
+                stream.out_uint16_be(length);
+
+                stream.p = oldp;
+            }
 
             tpdu.end();
             tpdu.send(this->sec_layer.trans);
@@ -893,12 +997,9 @@ struct rdp_rdp {
         {
             LOG(LOG_INFO, "send_invalidate\n");
             stream.init(8192);
-// -------------------------
-//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             stream.mcs_hdr = stream.p;
             stream.p += 8;
-// -------------------------
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -912,7 +1013,48 @@ struct rdp_rdp {
             stream.out_uint16_le((left + width) - 1);
             stream.out_uint16_le((top + height) - 1);
             stream.mark_end();
-            this->send_data(stream, PDUTYPE2_REFRESH_RECT, MCS_GLOBAL_CHANNEL);
+
+            {
+                uint8_t * oldp = stream.p;
+
+                stream.p = stream.rdp_hdr;
+                int len = stream.end - stream.p;
+                stream.out_uint16_le(len);
+                stream.out_uint16_le(PDUTYPE_DATAPDU | 0x10);
+                stream.out_uint16_le(this->sec_layer.userid);
+                stream.out_uint32_le(this->share_id);
+                stream.out_uint8(0); /* pad */
+                stream.out_uint8(1); /* stream id */
+                stream.out_uint16_le( len - 14);
+                stream.out_uint8(PDUTYPE2_REFRESH_RECT);
+                stream.out_uint8(0); /* compress type */
+                stream.out_uint16_le(0); /* compress len */
+                int sec_flags = SEC_ENCRYPT;
+
+                stream.p = stream.sec_hdr;
+                if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
+                        stream.out_uint32_le(sec_flags);
+                }
+
+                if (sec_flags & SEC_ENCRYPT){
+                    sec_flags &= ~SEC_ENCRYPT;
+                    int datalen = stream.end - stream.p - 8;
+
+                    this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+                    this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+                }
+
+                stream.p = stream.mcs_hdr;
+                int length = ((stream.end - stream.p) - 8) | 0x8000;
+                stream.out_uint8(MCS_SDRQ << 2);
+                stream.out_uint16_be(this->sec_layer.userid);
+                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+                stream.out_uint8(0x70);
+                stream.out_uint16_be(length);
+
+                stream.p = oldp;
+            }
+
 
             tpdu.end();
             tpdu.send(this->sec_layer.trans);
@@ -1082,12 +1224,9 @@ struct rdp_rdp {
             send_data also in order to be able to redirect data in the correct
             way*/
             Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             stream.mcs_hdr = stream.p;
             stream.p += 8;
-// -------------------------
 
             int hdrlen = 12 ; // SEC_ENCRYPT
 
