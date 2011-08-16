@@ -511,35 +511,6 @@ struct rdp_sec : public Sec {
         ssl.rsa_encrypt(out, in, len, modulus_size, modulus, exponent);
     }
 
-    /* Transmit secure transport packet over specified channel */
-    void rdp_sec_send_to_channel(Stream & stream, uint32_t flags, uint16_t channel)
-    {
-        uint8_t * oldp = stream.p;
-        stream.p = stream.sec_hdr;
-        if (!this->lic_layer.licence_issued || (flags & SEC_ENCRYPT)){
-                stream.out_uint32_le(flags);
-        }
-
-        if (flags & SEC_ENCRYPT){
-            flags &= ~SEC_ENCRYPT;
-            int datalen = stream.end - stream.p - 8;
-
-            this->rdp_sec_sign(stream.p, 8, this->sign_key, this->rc4_key_len, stream.p + 8, datalen);
-            this->sec_encrypt(stream.p + 8, datalen);
-        }
-
-        stream.p = stream.mcs_hdr;
-        int len = ((stream.end - stream.p) - 8) | 0x8000;
-        stream.out_uint8(MCS_SDRQ << 2);
-        stream.out_uint16_be(this->userid);
-        stream.out_uint16_be(channel);
-        stream.out_uint8(0x70);
-        stream.out_uint16_be(len);
-
-        stream.p = oldp;
-    }
-
-
     /* Parse a public key structure */
     void rdp_sec_parse_public_key(Stream & stream, uint8_t* modulus, uint8_t* exponent)
     {
