@@ -366,17 +366,6 @@ struct server_sec : public Sec {
         ssl_md5_info_delete(md5_info);
     }
 
-    void server_sec_hash_16(uint8_t* out, uint8_t* in, uint8_t* salt1, uint8_t* salt2)
-    {
-        uint8_t* md5_info = ssl_md5_info_create();
-        ssl_md5_clear(md5_info);
-        ssl_md5_transform(md5_info, in, 16);
-        ssl_md5_transform(md5_info, salt1, 32);
-        ssl_md5_transform(md5_info, salt2, 32);
-        ssl_md5_complete(md5_info, out);
-        ssl_md5_info_delete(md5_info);
-    }
-
     /*****************************************************************************/
     void server_sec_establish_keys()
     {
@@ -391,9 +380,9 @@ struct server_sec : public Sec {
         server_sec_hash_48(session_key, temp_hash, this->client_random,
                          this->server_random, 88);
         memcpy(this->sign_key, session_key, 16);
-        server_sec_hash_16(this->encrypt_key, session_key + 16, this->client_random,
+        this->sec_hash_16(this->encrypt_key, session_key + 16, this->client_random,
                          this->server_random);
-        server_sec_hash_16(this->decrypt_key, session_key + 32, this->client_random,
+        this->sec_hash_16(this->decrypt_key, session_key + 32, this->client_random,
                          this->server_random);
         if (this->rc4_key_size == 1) {
             this->sec_make_40bit(this->sign_key);

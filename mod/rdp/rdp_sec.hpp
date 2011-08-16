@@ -221,7 +221,7 @@ struct rdp_sec : public Sec {
             /* Store first 16 bytes of session key as MAC secret */
             memcpy(this->lic_layer.licence_sign_key, key_block, 16);
             /* Generate RC4 key from next 16 bytes */
-            this->rdp_sec_hash_16(this->lic_layer.licence_key, key_block + 16, client_random, server_random);
+            this->sec_hash_16(this->lic_layer.licence_key, key_block + 16, client_random, server_random);
         }
 
         if (this->licence_size > 0) {
@@ -466,20 +466,6 @@ struct rdp_sec : public Sec {
     }
 
 
-    // 16-byte transformation used to generate export keys (6.2.2).
-    static void rdp_sec_hash_16(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2)
-    {
-        SSL_MD5 md5;
-
-        ssllib ssl;
-
-        ssl.md5_init(&md5);
-        ssl.md5_update(&md5, in, 16);
-        ssl.md5_update(&md5, salt1, 32);
-        ssl.md5_update(&md5, salt2, 32);
-        ssl.md5_final(&md5, out);
-    }
-
     /*****************************************************************************/
     void rdp_sec_generate_keys(uint8_t *client_random, uint8_t *server_random, uint32_t rc4_key_size)
     {
@@ -499,8 +485,8 @@ struct rdp_sec : public Sec {
         memcpy(this->sign_key, key_block, 16);
 
         /* Generate export keys from next two blocks of 16 bytes */
-        this->rdp_sec_hash_16(this->decrypt_key, &key_block[16], client_random, server_random);
-        this->rdp_sec_hash_16(this->encrypt_key, &key_block[32], client_random, server_random);
+        this->sec_hash_16(this->decrypt_key, &key_block[16], client_random, server_random);
+        this->sec_hash_16(this->encrypt_key, &key_block[32], client_random, server_random);
 
         if (rc4_key_size == 1) {
             // LOG(LOG_DEBUG, "40-bit encryption enabled\n");
