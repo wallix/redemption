@@ -136,6 +136,21 @@ struct Sec
         key[2] = 0x9e;
     }
 
+    // 16-byte transformation used to generate export keys (6.2.2).
+    static void sec_hash_16(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2)
+    {
+        SSL_MD5 md5;
+
+        ssllib ssl;
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, in, 16);
+        ssl.md5_update(&md5, salt1, 32);
+        ssl.md5_update(&md5, salt2, 32);
+        ssl.md5_final(&md5, out);
+    }
+
+
 // 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
 // ------------------------------------------
 
