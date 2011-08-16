@@ -42,9 +42,25 @@ struct mcs_channel_item {
 
 struct Sec
 {
+    struct rdp_lic {
+        uint8_t licence_key[16];
+        uint8_t licence_sign_key[16];
+        int licence_issued;
+
+        rdp_lic(void){
+            memset(this->licence_key, 0, 16);
+            memset(this->licence_sign_key, 0, 16);
+            this->licence_issued = 0;
+        }
+    } lic_layer;
+
+    uint8_t * licence_data;
+    size_t licence_size;
+
     int userid;
     vector<struct mcs_channel_item *> channel_list;
     Stream client_mcs_data;
+    Transport * trans;
 
     #warning windows 2008 does not write trailer because of overflow of buffer below, checked actual size: 64 bytes on xp, 256 bytes on windows 2008
     uint8_t client_crypt_random[512];
@@ -67,7 +83,10 @@ struct Sec
     char hostname[16];
     char username[128];
 
-    Sec(uint8_t crypt_level) :
+    Sec(uint8_t crypt_level, Transport * trans) :
+      licence_data(0),
+      licence_size(0),
+      trans(trans),
       decrypt_use_count(0),
       encrypt_use_count(0),
       crypt_level(crypt_level)
@@ -101,6 +120,54 @@ struct Sec
                 delete channel_item;
             }
         }
+    }
+
+    // Output a uint32 into a buffer (little-endian)
+    static void sec_buf_out_uint32(uint8_t* buffer, int value)
+    {
+      buffer[0] = value & 0xff;
+      buffer[1] = (value >> 8) & 0xff;
+      buffer[2] = (value >> 16) & 0xff;
+      buffer[3] = (value >> 24) & 0xff;
+    }
+
+    /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
+    static void rdp_sec_sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen,
+                 uint8_t* data, int datalen)
+    {
+        static uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                     54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                     54, 54, 54, 54, 54, 54, 54, 54
+                                   };
+        static uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
+                               };
+
+      uint8_t shasig[20];
+      uint8_t md5sig[16];
+      uint8_t lenhdr[4];
+      SSL_SHA1 sha1;
+      SSL_MD5 md5;
+
+      sec_buf_out_uint32(lenhdr, datalen);
+
+      ssllib ssl;
+
+      ssl.sha1_init(&sha1);
+      ssl.sha1_update(&sha1, session_key, keylen);
+      ssl.sha1_update(&sha1, pad_54, 40);
+      ssl.sha1_update(&sha1, lenhdr, 4);
+      ssl.sha1_update(&sha1, data, datalen);
+      ssl.sha1_final(&sha1, shasig);
+
+      ssl.md5_init(&md5);
+      ssl.md5_update(&md5, session_key, keylen);
+      ssl.md5_update(&md5, pad_92, 48);
+      ssl.md5_update(&md5, shasig, 20);
+      ssl.md5_final(&md5, md5sig);
+
+      memcpy(signature, md5sig, siglen);
     }
 
     void sec_update(uint8_t* key, uint8_t* update_key, uint8_t rc4_key_len)

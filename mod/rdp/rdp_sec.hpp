@@ -37,36 +37,17 @@
 /* sec */
 struct rdp_sec : public Sec {
 
-    struct rdp_lic {
-        uint8_t licence_key[16];
-        uint8_t licence_sign_key[16];
-        int licence_issued;
-
-        rdp_lic(void){
-            memset(this->licence_key, 0, 16);
-            memset(this->licence_sign_key, 0, 16);
-            this->licence_issued = 0;
-        }
-    } lic_layer;
-
-    uint8_t * licence_data;
-    size_t licence_size;
-
     int channel_code;
     int server_public_key_len;
     uint16_t server_rdp_version;
     int & use_rdp5;
-    Transport * trans;
 
-    rdp_sec(Transport * t, int & use_rdp5, const char * hostname, const char * username)
-        :   Sec(0),
-            licence_data(0),
-            licence_size(0),
+    rdp_sec(Transport * trans, int & use_rdp5, const char * hostname, const char * username)
+        :   Sec(0, trans),
             channel_code(1),
             server_public_key_len(0),  /* static virtual channels accepted bu default*/
             server_rdp_version(0),
-            use_rdp5(use_rdp5),
-            trans(t) {
+            use_rdp5(use_rdp5){
         #warning and if hostname is really larger, what happens ? We should at least emit a warning log
         strncpy(this->hostname, hostname, 15);
         this->hostname[15] = 0;
@@ -75,23 +56,11 @@ struct rdp_sec : public Sec {
         this->username[127] = 0;
         memset(this->client_crypt_random, 0, 512);
         memset(this->sign_key, 0, 16);
-
-        #warning licence loading should be done before creating protocol layers
-        struct stat st;
-        char path[256];
-        sprintf(path, "/etc/xrdp/.xrdp/licence.%s", this->hostname);
-        int fd = open(path, O_RDONLY);
-        if (fd != -1 && fstat(fd, &st) != 0){
-            this->licence_data = (uint8_t *)malloc(this->licence_size);
-            #warning check error code here
-            read(fd, this->licence_data, this->licence_size);
-            close(fd);
-        }
     }
 
     void rdp_lic_generate_hwid(uint8_t* hwid)
     {
-        this->rdp_sec_buf_out_uint32(hwid, 2);
+        this->sec_buf_out_uint32(hwid, 2);
         memcpy(hwid + 4, this->hostname, LICENCE_HWID_SIZE - 4);
     }
 
@@ -175,7 +144,30 @@ struct rdp_sec : public Sec {
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
         tpdu.end();
-        this->rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
+
+        uint8_t * oldp = stream.p;
+        stream.p = stream.sec_hdr;
+        if (!this->lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
+                stream.out_uint32_le(sec_flags);
+        }
+
+        if (sec_flags & SEC_ENCRYPT){
+            sec_flags &= ~SEC_ENCRYPT;
+            int datalen = stream.end - stream.p - 8;
+
+            this->rdp_sec_sign(stream.p, 8, this->sign_key, this->rc4_key_len, stream.p + 8, datalen);
+            this->sec_encrypt(stream.p + 8, datalen);
+        }
+
+        stream.p = stream.mcs_hdr;
+        int len = ((stream.end - stream.p) - 8) | 0x8000;
+        stream.out_uint8(MCS_SDRQ << 2);
+        stream.out_uint16_be(this->userid);
+        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+        stream.out_uint8(0x70);
+        stream.out_uint16_be(len);
+
+        stream.p = oldp;
 
         tpdu.send(this->trans);
     }
@@ -271,7 +263,30 @@ struct rdp_sec : public Sec {
         stream.out_copy_bytes(this->hostname, hostlen);
 
         tpdu.end();
-        this->rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
+
+        uint8_t * oldp = stream.p;
+        stream.p = stream.sec_hdr;
+        if (!this->lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
+                stream.out_uint32_le(sec_flags);
+        }
+
+        if (sec_flags & SEC_ENCRYPT){
+            sec_flags &= ~SEC_ENCRYPT;
+            int datalen = stream.end - stream.p - 8;
+
+            this->rdp_sec_sign(stream.p, 8, this->sign_key, this->rc4_key_len, stream.p + 8, datalen);
+            this->sec_encrypt(stream.p + 8, datalen);
+        }
+
+        stream.p = stream.mcs_hdr;
+        int len = ((stream.end - stream.p) - 8) | 0x8000;
+        stream.out_uint8(MCS_SDRQ << 2);
+        stream.out_uint16_be(this->userid);
+        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+        stream.out_uint8(0x70);
+        stream.out_uint16_be(len);
+
+        stream.p = oldp;
 
         tpdu.send(this->trans);
     }
@@ -316,7 +331,30 @@ struct rdp_sec : public Sec {
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
         tpdu.end();
-        this->rdp_sec_send_to_channel(stream, sec_flags, MCS_GLOBAL_CHANNEL);
+
+        uint8_t * oldp = stream.p;
+        stream.p = stream.sec_hdr;
+        if (!this->lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
+                stream.out_uint32_le(sec_flags);
+        }
+
+        if (sec_flags & SEC_ENCRYPT){
+            sec_flags &= ~SEC_ENCRYPT;
+            int datalen = stream.end - stream.p - 8;
+
+            this->rdp_sec_sign(stream.p, 8, this->sign_key, this->rc4_key_len, stream.p + 8, datalen);
+            this->sec_encrypt(stream.p + 8, datalen);
+        }
+
+        stream.p = stream.mcs_hdr;
+        int len = ((stream.end - stream.p) - 8) | 0x8000;
+        stream.out_uint8(MCS_SDRQ << 2);
+        stream.out_uint16_be(this->userid);
+        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+        stream.out_uint8(0x70);
+        stream.out_uint16_be(len);
+
+        stream.p = oldp;
 
         tpdu.send(this->trans);
     }
@@ -464,56 +502,6 @@ struct rdp_sec : public Sec {
         ssl.rc4_set_key(this->decrypt_rc4_info, this->decrypt_key, this->rc4_key_len);
         ssl.rc4_set_key(this->encrypt_rc4_info, this->encrypt_key, this->rc4_key_len);
     }
-
-    // Output a uint32 into a buffer (little-endian)
-    static void rdp_sec_buf_out_uint32(uint8_t* buffer, int value)
-    {
-      buffer[0] = value & 0xff;
-      buffer[1] = (value >> 8) & 0xff;
-      buffer[2] = (value >> 16) & 0xff;
-      buffer[3] = (value >> 24) & 0xff;
-    }
-
-    /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    static void rdp_sec_sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen,
-                 uint8_t* data, int datalen)
-    {
-        static uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                                     54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                                     54, 54, 54, 54, 54, 54, 54, 54
-                                   };
-        static uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-                               };
-
-      uint8_t shasig[20];
-      uint8_t md5sig[16];
-      uint8_t lenhdr[4];
-      SSL_SHA1 sha1;
-      SSL_MD5 md5;
-
-      rdp_sec_buf_out_uint32(lenhdr, datalen);
-
-      ssllib ssl;
-
-      ssl.sha1_init(&sha1);
-      ssl.sha1_update(&sha1, session_key, keylen);
-      ssl.sha1_update(&sha1, pad_54, 40);
-      ssl.sha1_update(&sha1, lenhdr, 4);
-      ssl.sha1_update(&sha1, data, datalen);
-      ssl.sha1_final(&sha1, shasig);
-
-      ssl.md5_init(&md5);
-      ssl.md5_update(&md5, session_key, keylen);
-      ssl.md5_update(&md5, pad_92, 48);
-      ssl.md5_update(&md5, shasig, 20);
-      ssl.md5_final(&md5, md5sig);
-
-      memcpy(signature, md5sig, siglen);
-    }
-
-
 
     /* Perform an RSA public key encryption operation */
     static void rdp_sec_rsa_encrypt(uint8_t * out, uint8_t * in, uint8_t len, uint32_t modulus_size, uint8_t * modulus, uint8_t * exponent)
@@ -1479,7 +1467,31 @@ struct rdp_sec : public Sec {
             stream.out_clear_bytes(SEC_PADDING_SIZE);
 
             tpdu.end();
-            this->rdp_sec_send_to_channel(stream, flags, MCS_GLOBAL_CHANNEL);
+
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (!this->lic_layer.licence_issued || (flags & SEC_ENCRYPT)){
+                    stream.out_uint32_le(flags);
+            }
+
+            if (flags & SEC_ENCRYPT){
+                flags &= ~SEC_ENCRYPT;
+                int datalen = stream.end - stream.p - 8;
+
+                this->rdp_sec_sign(stream.p, 8, this->sign_key, this->rc4_key_len, stream.p + 8, datalen);
+                this->sec_encrypt(stream.p + 8, datalen);
+            }
+
+            stream.p = stream.mcs_hdr;
+            int len = ((stream.end - stream.p) - 8) | 0x8000;
+            stream.out_uint8(MCS_SDRQ << 2);
+            stream.out_uint16_be(this->userid);
+            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+            stream.out_uint8(0x70);
+            stream.out_uint16_be(len);
+
+            stream.p = oldp;
+
             tpdu.send(this->trans);
         }
     }
