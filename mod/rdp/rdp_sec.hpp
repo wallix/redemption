@@ -36,14 +36,12 @@
 /* sec */
 struct rdp_sec : public Sec {
 
-    int channel_code;
     int server_public_key_len;
     uint16_t server_rdp_version;
     int & use_rdp5;
 
     rdp_sec(Transport * trans, int & use_rdp5, const char * hostname, const char * username)
         :   Sec(0, trans),
-            channel_code(1),
             server_public_key_len(0),  /* static virtual channels accepted bu default*/
             server_rdp_version(0),
             use_rdp5(use_rdp5){
@@ -1221,12 +1219,6 @@ struct rdp_sec : public Sec {
     /* this adds the mcs channels in the list of channels to be used when creating the server mcs data */
     void rdp_sec_process_srv_channels(Stream & stream, vector<mcs_channel_item*> channel_list)
     {
-        /* this is an option set in xrdp.ini, use 1 by default, static virtual
-        channels accepted */
-        if (1 != this->channel_code) /* are channels on? */{
-            return;
-        }
-
         int base_channel = stream.in_uint16_le();
         size_t num_channels = stream.in_uint16_le();
 
