@@ -216,8 +216,8 @@ struct rdp_sec : public Sec {
             uint8_t key_block[48];
 
             /* Generate master secret and then key material */
-            this->rdp_sec_hash_48(master_secret, pre_master_secret, client_random, server_random, 65);
-            this->rdp_sec_hash_48(key_block, master_secret, server_random, client_random, 65);
+            this->sec_hash_48(master_secret, pre_master_secret, client_random, server_random, 65);
+            this->sec_hash_48(key_block, master_secret, server_random, client_random, 65);
             /* Store first 16 bytes of session key as MAC secret */
             memcpy(this->lic_layer.licence_sign_key, key_block, 16);
             /* Generate RC4 key from next 16 bytes */
@@ -437,33 +437,6 @@ struct rdp_sec : public Sec {
         }
     }
 
-    // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
-    // Both SHA1 and MD5 algorithms are used.
-    static void rdp_sec_hash_48(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2, const uint8_t salt)
-    {
-        uint8_t shasig[20];
-        uint8_t pad[4];
-        SSL_SHA1 sha1;
-        SSL_MD5 md5;
-
-        ssllib ssl;
-
-        for (int i = 0; i < 3; i++) {
-            memset(pad, salt + i, i + 1);
-
-            ssl.sha1_init(&sha1);
-            ssl.sha1_update(&sha1, pad, i + 1);
-            ssl.sha1_update(&sha1, in, 48);
-            ssl.sha1_update(&sha1, salt1, 32);
-            ssl.sha1_update(&sha1, salt2, 32);
-            ssl.sha1_final(&sha1, shasig);
-
-            ssl.md5_init(&md5);
-            ssl.md5_update(&md5, in, 48);
-            ssl.md5_update(&md5, shasig, 20);
-            ssl.md5_final(&md5, &out[i * 16]);
-        }
-    }
 
 
     /*****************************************************************************/
@@ -478,8 +451,8 @@ struct rdp_sec : public Sec {
         memcpy(pre_master_secret + 24, server_random, 24);
 
         /* Generate master secret and then key material */
-        this->rdp_sec_hash_48(master_secret, pre_master_secret, client_random, server_random, 'A');
-        this->rdp_sec_hash_48(key_block, master_secret, client_random, server_random, 'X');
+        this->sec_hash_48(master_secret, pre_master_secret, client_random, server_random, 'A');
+        this->sec_hash_48(key_block, master_secret, client_random, server_random, 'X');
 
         /* First 16 bytes of key material is MAC secret */
         memcpy(this->sign_key, key_block, 16);
