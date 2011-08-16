@@ -715,22 +715,32 @@ struct server_rdp {
 
             if (flags & SEC_CLIENT_RANDOM) { /* 0x01 */
                 input_stream.in_uint32_le(); // len
-                this->sec_layer.server_sec_init_client_crypt_random(input_stream);
+
+                memcpy(this->sec_layer.client_crypt_random, input_stream.in_uint8p(64), 64);
+
                 this->sec_layer.server_sec_rsa_op();
                 {
                     ssllib ssl;
 
-                    uint8_t session_key[48];
-                    uint8_t temp_hash[48];
-                    uint8_t input[48];
+                    uint8_t pre_master_secret[48];
+                    uint8_t master_secret[48];
+                    uint8_t key_block[48];
 
-                    memcpy(input, this->sec_layer.client_random, 24);
-                    memcpy(input + 24, this->sec_layer.server_random, 24);
-                    this->sec_layer.sec_hash_48(temp_hash, input, this->sec_layer.client_random, this->sec_layer.server_random, 65);
-                    this->sec_layer.sec_hash_48(session_key, temp_hash, this->sec_layer.client_random, this->sec_layer.server_random, 88);
-                    memcpy(this->sec_layer.sign_key, session_key, 16);
-                    this->sec_layer.sec_hash_16(this->sec_layer.encrypt_key, session_key + 16, this->sec_layer.client_random, this->sec_layer.server_random);
-                    this->sec_layer.sec_hash_16(this->sec_layer.decrypt_key, session_key + 32, this->sec_layer.client_random, this->sec_layer.server_random);
+                    /* Construct pre-master secret (session key) */
+                    memcpy(key_block, this->sec_layer.client_random, 24);
+                    memcpy(key_block + 24, this->sec_layer.server_random, 24);
+
+                    /* Generate master secret and then key material */
+                    this->sec_layer.sec_hash_48(master_secret, key_block, this->sec_layer.client_random, this->sec_layer.server_random, 65);
+                    this->sec_layer.sec_hash_48(pre_master_secret, master_secret, this->sec_layer.client_random, this->sec_layer.server_random, 88);
+
+                    /* First 16 bytes of key material is MAC secret */
+                    memcpy(this->sec_layer.sign_key, pre_master_secret, 16);
+
+                    /* Generate export keys from next two blocks of 16 bytes */
+                    this->sec_layer.sec_hash_16(this->sec_layer.encrypt_key, &pre_master_secret[16], this->sec_layer.client_random, this->sec_layer.server_random);
+                    this->sec_layer.sec_hash_16(this->sec_layer.decrypt_key, &pre_master_secret[32], this->sec_layer.client_random, this->sec_layer.server_random);
+
                     if (this->sec_layer.rc4_key_size == 1) {
                         this->sec_layer.sec_make_40bit(this->sec_layer.sign_key);
                         this->sec_layer.sec_make_40bit(this->sec_layer.encrypt_key);
@@ -899,7 +909,216 @@ struct server_rdp {
 
     void server_rdp_incoming() throw (Error)
     {
-        this->sec_layer.server_sec_incoming();
+        Rsakeys rsa_keys(CFG_PATH "/" RSAKEYS_INI);
+
+        memset(this->sec_layer.server_random, 0x44, 32);
+        int fd = open("/dev/urandom", O_RDONLY);
+        if (fd == -1) {
+            fd = open("/dev/random", O_RDONLY);
+        }
+        if (fd != -1) {
+            if (read(fd, this->sec_layer.server_random, 32) != 32) {
+            }
+            close(fd);
+        }
+
+        memcpy(this->sec_layer.pub_exp, rsa_keys.pub_exp, 4);
+        memcpy(this->sec_layer.pub_mod, rsa_keys.pub_mod, 64);
+        memcpy(this->sec_layer.pub_sig, rsa_keys.pub_sig, 64);
+        memcpy(this->sec_layer.pri_exp, rsa_keys.pri_exp, 64);
+
+        Stream in(8192);
+        X224In crtpdu(this->sec_layer.trans, in);
+        if (crtpdu.tpdu_hdr.code != ISO_PDU_CR) {
+            throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
+        }
+
+        Stream out(11);
+        X224Out cctpdu(X224Packet::CC_TPDU, out);
+        cctpdu.end();
+        cctpdu.send(this->sec_layer.trans);
+
+        this->sec_layer.recv_connection_initial(this->sec_layer.client_mcs_data);
+        #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
+        this->sec_layer.server_sec_process_mcs_data(this->sec_layer.client_mcs_data);
+        this->sec_layer.server_sec_out_mcs_data(this->sec_layer.data);
+        this->sec_layer.send_connect_response(this->sec_layer.data, this->sec_layer.trans);
+
+        //   2.2.1.5 Client MCS Erect Domain Request PDU
+        //   -------------------------------------------
+        //   The MCS Erect Domain Request PDU is an RDP Connection Sequence PDU sent
+        //   from client to server during the Channel Connection phase (see section
+        //   1.3.1.1). It is sent after receiving the MCS Connect Response PDU (section
+        //   2.2.1.4).
+
+        //   tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+        //   x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+        //      section 13.7.
+
+        // See description of tpktHeader and x224 Data TPDU in cheat sheet
+
+        //   mcsEDrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an MCS
+        //      Erect Domain Request structure, as specified in [T125] (the ASN.1
+        //      structure definitions are given in [T125] section 7, parts 3 and 10).
+
+        {
+            Stream stream(8192);
+            X224In(this->sec_layer.trans, stream);
+            uint8_t opcode = stream.in_uint8();
+            if ((opcode >> 2) != MCS_EDRQ) {
+                throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
+            }
+            stream.skip_uint8(2);
+            stream.skip_uint8(2);
+            if (opcode & 2) {
+                this->sec_layer.userid = stream.in_uint16_be();
+            }
+            if (!stream.check_end()) {
+                throw Error(ERR_MCS_RECV_EDQR_TRUNCATED);
+            }
+        }
+
+
+        // 2.2.1.6 Client MCS Attach User Request PDU
+        // ------------------------------------------
+        // The MCS Attach User Request PDU is an RDP Connection Sequence PDU
+        // sent from client to server during the Channel Connection phase (see
+        // section 1.3.1.1) to request a user channel ID. It is sent after
+        // transmitting the MCS Erect Domain Request PDU (section 2.2.1.5).
+
+        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+        // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+        //   [X224] section 13.7.
+
+        // See description of tpktHeader and x224 Data TPDU in cheat sheet
+
+        // mcsAUrq (1 byte): PER-encoded MCS Domain PDU which encapsulates an
+        //  MCS Attach User Request structure, as specified in [T125] (the ASN.1
+        //  structure definitions are given in [T125] section 7, parts 5 and 10).
+
+        {
+            Stream stream(8192);
+            X224In(this->sec_layer.trans, stream);
+            uint8_t opcode = stream.in_uint8();
+            if ((opcode >> 2) != MCS_AURQ) {
+                throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
+            }
+            if (opcode & 2) {
+                this->sec_layer.userid = stream.in_uint16_be();
+            }
+            if (!stream.check_end()) {
+                throw Error(ERR_MCS_RECV_AURQ_TRUNCATED);
+            }
+        }
+
+        // 2.2.1.7 Server MCS Attach User Confirm PDU
+        // ------------------------------------------
+        // The MCS Attach User Confirm PDU is an RDP Connection Sequence
+        // PDU sent from server to client during the Channel Connection
+        // phase (see section 1.3.1.1). It is sent as a response to the MCS
+        // Attach User Request PDU (section 2.2.1.6).
+
+        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+        //   section 8.
+
+        // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+        //   section [X224] 13.7.
+
+        // mcsAUcf (4 bytes): PER-encoded MCS Domain PDU which encapsulates
+        //   an MCS Attach User Confirm structure, as specified in [T125]
+        //   (the ASN.1 structure definitions are given in [T125] section 7,
+        // parts 5 and 10).
+
+        {
+            Stream stream(8192);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+            stream.out_uint8(((MCS_AUCF << 2) | 2));
+            stream.out_uint8(0);
+            stream.out_uint16_be(this->sec_layer.userid);
+            tpdu.end();
+            tpdu.send(this->sec_layer.trans);
+        }
+
+        {
+            {
+                Stream stream(8192);
+                // read tpktHeader (4 bytes = 3 0 len)
+                // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+                X224In(this->sec_layer.trans, stream);
+
+                int opcode = stream.in_uint8();
+                if ((opcode >> 2) != MCS_CJRQ) {
+                    throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
+                }
+                stream.skip_uint8(4);
+                if (opcode & 2) {
+                    stream.skip_uint8(2);
+                }
+            }
+
+            // 2.2.1.9 Server MCS Channel Join Confirm PDU
+            // -------------------------------------------
+            // The MCS Channel Join Confirm PDU is an RDP Connection Sequence
+            // PDU sent from server to client during the Channel Connection
+            // phase (see section 1.3.1.1). It is sent as a response to the MCS
+            // Channel Join Request PDU (section 2.2.1.8).
+
+            // tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+            //   section 8.
+
+            // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+            //  [X224] section 13.7.
+
+            // mcsCJcf (8 bytes): PER-encoded MCS Domain PDU which encapsulates
+            //  an MCS Channel Join Confirm PDU structure, as specified in
+            //  [T125] (the ASN.1 structure definitions are given in [T125]
+            //  section 7, parts 6 and 10).
+
+            {
+                Stream stream(8192);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+                stream.out_uint8((MCS_CJCF << 2) | 2);
+                stream.out_uint8(0);
+                stream.out_uint16_be(this->sec_layer.userid);
+                stream.out_uint16_be(this->sec_layer.userid + MCS_USERCHANNEL_BASE);
+                stream.out_uint16_be(this->sec_layer.userid + MCS_USERCHANNEL_BASE);
+                tpdu.end();
+                tpdu.send(this->sec_layer.trans);
+            }
+        }
+
+        {
+            {
+                Stream stream(8192);
+                // read tpktHeader (4 bytes = 3 0 len)
+                // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+                X224In(this->sec_layer.trans, stream);
+
+                int opcode = stream.in_uint8();
+                if ((opcode >> 2) != MCS_CJRQ) {
+                    throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
+                }
+                stream.skip_uint8(4);
+                if (opcode & 2) {
+                    stream.skip_uint8(2);
+                }
+            }
+
+            {
+                Stream stream(8192);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+                stream.out_uint8((MCS_CJCF << 2) | 2);
+                stream.out_uint8(0);
+                stream.out_uint16_be(this->sec_layer.userid);
+                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+                tpdu.end();
+                tpdu.send(this->sec_layer.trans);
+            }
+        }
+
         this->mcs_channel = this->sec_layer.userid + MCS_USERCHANNEL_BASE;
     }
 

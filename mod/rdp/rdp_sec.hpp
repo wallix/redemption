@@ -453,7 +453,6 @@ struct rdp_sec : public Sec {
     }
 
 
-
     /*****************************************************************************/
     void rdp_sec_generate_keys(uint8_t *client_random, uint8_t *server_random, uint32_t rc4_key_size)
     {
@@ -461,7 +460,7 @@ struct rdp_sec : public Sec {
         uint8_t master_secret[48];
         uint8_t key_block[48];
 
-        /* Construct pre-master secret */
+        /* Construct pre-master secret (session key) */
         memcpy(pre_master_secret, client_random, 24);
         memcpy(pre_master_secret + 24, server_random, 24);
 
