@@ -37,13 +37,11 @@
 struct rdp_sec : public Sec {
 
     int server_public_key_len;
-    uint16_t server_rdp_version;
     int & use_rdp5;
 
     rdp_sec(Transport * trans, int & use_rdp5, const char * hostname, const char * username)
         :   Sec(0, trans),
-            server_public_key_len(0),  /* static virtual channels accepted bu default*/
-            server_rdp_version(0),
+            server_public_key_len(0),
             use_rdp5(use_rdp5){
         #warning and if hostname is really larger, what happens ? We should at least emit a warning log
         strncpy(this->hostname, hostname, 15);
@@ -1260,9 +1258,9 @@ struct rdp_sec : public Sec {
     /* Process SRV_INFO, find RDP version supported by server */
     void rdp_sec_process_srv_info(Stream & stream)
     {
-        this->server_rdp_version = stream.in_uint16_le();
-        LOG(LOG_DEBUG, "Server RDP version is %d\n", this->server_rdp_version);
-        if (1 == this->server_rdp_version){
+        uint16_t rdp_version = stream.in_uint16_le();
+        LOG(LOG_DEBUG, "Server RDP version is %d\n", rdp_version);
+        if (1 == rdp_version){ // can't use rdp5
             this->use_rdp5 = 0;
         #warning why caring of server_depth here ? Quite strange
         //        this->server_depth = 8;
