@@ -1397,8 +1397,6 @@ struct server_sec {
         stream.skip_uint8(len);
     }
 
-
-
     void send_connect_response(Stream & data, Transport * trans) throw(Error)
     {
 //        LOG(LOG_INFO, send_connect_response");
