@@ -1178,10 +1178,9 @@ struct rdp_rdp {
 //            LOG(LOG_INFO, "recv\n");
             int len;
             int pdu_type;
-            int chan;
             int version;
 
-            chan = 0;
+            int chan = 0;
             if (stream.next_packet >= stream.end || stream.next_packet == 0) {
 
                 #warning this loop is ugly, the only true reason is we are waiting for the licence
@@ -1290,7 +1289,6 @@ struct rdp_rdp {
                                         /* TODO: create new function in order to activate / deactivate copy-paste
                                         sequence from server to client */
 
-                                        #warning remove dependency to mod
                                         if(this->sec_layer.clipboard_check(name, mod->clipboard_enable) == 1){
                                             /* Clipboard deactivation required */
                                         }
@@ -1298,7 +1296,6 @@ struct rdp_rdp {
                                             LOG(LOG_ERR, "Error sending information, wrong channel id");
                                         }
                                         else {
-                                            #warning remove dependency to mod
                                             mod->server_send_to_channel_mod(channel_id, stream.p, size, length, channel_flags);
                                         }
                                     }

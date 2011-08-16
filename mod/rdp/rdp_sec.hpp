@@ -27,7 +27,6 @@
 
 #include "RDP/x224.hpp"
 #include "RDP/sec.hpp"
-#include "client_mod.hpp"
 
 #include "constants.hpp"
 #include "ssl_calls.hpp"
