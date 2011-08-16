@@ -300,7 +300,6 @@ class Stream {
         this->data[offset+3] = v & 0xFF;
     }
 
-<<<<<<< HEAD
     void out_ber_int8(unsigned int v){
         this->out_uint8(BER_TAG_INTEGER);
         this->out_uint8(1);
