@@ -56,6 +56,9 @@ struct Sec
     uint8_t decrypt_update_key[16];
     uint8_t encrypt_update_key[16];
 
+    SSL_RC4 decrypt_rc4_info;
+    SSL_RC4 encrypt_rc4_info;
+
     uint8_t crypt_level;
     int rc4_key_size; /* 1 = 40-bit, 2 = 128-bit */
     int rc4_key_len; /* 8 or 16 */
@@ -121,8 +124,8 @@ struct Sec
         ssl.md5_update(&md5, shasig, 20);
         ssl.md5_final(&md5, key);
 
-        ssl.rc4_set_key(&update, key, rc4_key_len);
-        ssl.rc4_crypt(&update, key, key, rc4_key_len);
+        ssl.rc4_set_key(update, key, rc4_key_len);
+        ssl.rc4_crypt(update, key, key, rc4_key_len);
 
         if (rc4_key_len == 8) {
             this->sec_make_40bit(key);
@@ -176,6 +179,34 @@ struct Sec
             ssl.md5_update(&md5, shasig, 20);
             ssl.md5_final(&md5, &out[i * 16]);
         }
+    }
+
+    /* Encrypt data using RC4 */
+    void sec_encrypt(uint8_t* data, int length)
+    {
+        ssllib ssl;
+
+        if (this->encrypt_use_count == 4096){
+            this->sec_update(this->encrypt_key, this->encrypt_update_key, this->rc4_key_len);
+            ssl.rc4_set_key(this->encrypt_rc4_info, this->encrypt_key, this->rc4_key_len);
+            this->encrypt_use_count = 0;
+        }
+        ssl.rc4_crypt(this->encrypt_rc4_info, data, data, length);
+        this->encrypt_use_count++;
+    }
+
+    /* Decrypt data using RC4 */
+    void sec_decrypt(uint8_t* data, int len)
+    {
+        ssllib ssl;
+
+        if (this->decrypt_use_count == 4096) {
+            this->sec_update(this->decrypt_key, this->decrypt_update_key, this->rc4_key_len);
+            ssl.rc4_set_key(this->decrypt_rc4_info, this->decrypt_key, this->rc4_key_len);
+            this->decrypt_use_count = 0;
+        }
+        ssl.rc4_crypt(this->decrypt_rc4_info, data, data, len);
+        this->decrypt_use_count++;
     }
 
 // 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)

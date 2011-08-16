@@ -91,14 +91,14 @@ class ssllib
         MD5_Final(out_data, md5);
     }
 
-    static void rc4_set_key(SSL_RC4 *rc4, uint8_t * key, int len)
+    static void rc4_set_key(SSL_RC4 & rc4, uint8_t * key, int len)
     {
-        RC4_set_key(rc4, len, key);
+        RC4_set_key(&rc4, len, key);
     }
 
-    static void rc4_crypt(SSL_RC4 *rc4, uint8_t * in_data, uint8_t * out_data, int len)
+    static void rc4_crypt(SSL_RC4 & rc4, uint8_t * in_data, uint8_t * out_data, int len)
     {
-        RC4(rc4, len, in_data, out_data);
+        RC4(&rc4, len, in_data, out_data);
     }
 
     static void rkey_free(SSL_RKEY * rkey)

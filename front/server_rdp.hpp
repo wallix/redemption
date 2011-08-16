@@ -710,14 +710,40 @@ struct server_rdp {
             const uint32_t flags = input_stream.in_uint32_le();
             if (flags & SEC_ENCRYPT) { /* 0x08 */
                 input_stream.skip_uint8(8); /* signature */
-                this->sec_layer.server_sec_decrypt(input_stream.p, (int)(input_stream.end - input_stream.p));
+                this->sec_layer.sec_decrypt(input_stream.p, (int)(input_stream.end - input_stream.p));
             }
 
             if (flags & SEC_CLIENT_RANDOM) { /* 0x01 */
                 input_stream.in_uint32_le(); // len
                 this->sec_layer.server_sec_init_client_crypt_random(input_stream);
                 this->sec_layer.server_sec_rsa_op();
-                this->sec_layer.server_sec_establish_keys();
+                {
+                    ssllib ssl;
+
+                    uint8_t session_key[48];
+                    uint8_t temp_hash[48];
+                    uint8_t input[48];
+
+                    memcpy(input, this->sec_layer.client_random, 24);
+                    memcpy(input + 24, this->sec_layer.server_random, 24);
+                    this->sec_layer.sec_hash_48(temp_hash, input, this->sec_layer.client_random, this->sec_layer.server_random, 65);
+                    this->sec_layer.sec_hash_48(session_key, temp_hash, this->sec_layer.client_random, this->sec_layer.server_random, 88);
+                    memcpy(this->sec_layer.sign_key, session_key, 16);
+                    this->sec_layer.sec_hash_16(this->sec_layer.encrypt_key, session_key + 16, this->sec_layer.client_random, this->sec_layer.server_random);
+                    this->sec_layer.sec_hash_16(this->sec_layer.decrypt_key, session_key + 32, this->sec_layer.client_random, this->sec_layer.server_random);
+                    if (this->sec_layer.rc4_key_size == 1) {
+                        this->sec_layer.sec_make_40bit(this->sec_layer.sign_key);
+                        this->sec_layer.sec_make_40bit(this->sec_layer.encrypt_key);
+                        this->sec_layer.sec_make_40bit(this->sec_layer.decrypt_key);
+                        this->sec_layer.rc4_key_len = 8;
+                    } else {
+                        this->sec_layer.rc4_key_len = 16;
+                    }
+                    memcpy(this->sec_layer.decrypt_update_key, this->sec_layer.decrypt_key, 16);
+                    memcpy(this->sec_layer.encrypt_update_key, this->sec_layer.encrypt_key, 16);
+                    ssl.rc4_set_key(this->sec_layer.decrypt_rc4_info, this->sec_layer.decrypt_key, this->sec_layer.rc4_key_len);
+                    ssl.rc4_set_key(this->sec_layer.encrypt_rc4_info, this->sec_layer.encrypt_key, this->sec_layer.rc4_key_len);
+                }
                 if (!this->up_and_running){
 //                    input_stream.next_packet = input_stream.end;
                     continue;
