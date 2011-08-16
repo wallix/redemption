@@ -915,10 +915,10 @@ struct rdp_sec : public Sec {
                         int rdp_bpp, int keylayout,
                         bool console_session) throw(Error)
     {
-        Stream client_mcs_data(512);
+        Stream out(512);
 
         this->rdp_sec_out_mcs_data(
-                            client_mcs_data,
+                            out,
                             channel_list,
                             width, height, rdp_bpp,
                             keylayout, console_session);
@@ -982,7 +982,7 @@ struct rdp_sec : public Sec {
 
         try{
             {
-                int data_len = client_mcs_data.end - client_mcs_data.data;
+                int data_len = out.end - out.data;
                 int len = 7 + 3 * 34 + 4 + data_len;
 
                 Stream stream(8192);
@@ -1036,7 +1036,7 @@ struct rdp_sec : public Sec {
 
                 stream.out_uint8(BER_TAG_OCTET_STRING);
                 stream.out_ber_len(data_len);
-                stream.out_copy_bytes(client_mcs_data.data, data_len);
+                stream.out_copy_bytes(out.data, data_len);
 
                 tpdu.end();
                 tpdu.send(this->trans);

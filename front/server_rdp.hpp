@@ -43,6 +43,7 @@ struct server_rdp {
     struct ClientInfo client_info;
     struct server_sec sec_layer;
     uint32_t packet_number;
+    Stream client_mcs_data;
 
     server_rdp(Transport * trans, Inifile * ini)
         :
@@ -938,9 +939,9 @@ struct server_rdp {
         cctpdu.end();
         cctpdu.send(this->sec_layer.trans);
 
-        this->sec_layer.recv_connection_initial(this->sec_layer.client_mcs_data);
+        this->sec_layer.recv_connection_initial(this->client_mcs_data);
         #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
-        this->sec_layer.server_sec_process_mcs_data(this->sec_layer.client_mcs_data);
+        this->sec_layer.server_sec_process_mcs_data(this->client_mcs_data);
         this->sec_layer.server_sec_out_mcs_data();
         this->sec_layer.send_connect_response(this->sec_layer.data, this->sec_layer.trans);
 
