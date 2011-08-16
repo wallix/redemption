@@ -91,6 +91,18 @@ struct Sec
 
     }
 
+    ~Sec()
+    {
+        // clear channel_list
+        int count = (int) this->channel_list.size();
+        for (int index = 0; index < count; index++) {
+            mcs_channel_item* channel_item = this->channel_list[index];
+            if (0 != channel_item) {
+                delete channel_item;
+            }
+        }
+    }
+
     void sec_update(uint8_t* key, uint8_t* update_key, uint8_t rc4_key_len)
     {
         static uint8_t pad_54[40] = {

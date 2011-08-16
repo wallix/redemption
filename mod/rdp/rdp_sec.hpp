@@ -89,18 +89,6 @@ struct rdp_sec : public Sec {
         }
     }
 
-    ~rdp_sec()
-    {
-        // clear channel_list
-        int count = (int) this->channel_list.size();
-        for (int index = 0; index < count; index++) {
-            mcs_channel_item* channel_item = this->channel_list[index];
-            if (0 != channel_item) {
-                delete channel_item;
-            }
-        }
-    }
-
     void rdp_lic_generate_hwid(uint8_t* hwid)
     {
         this->rdp_sec_buf_out_uint32(hwid, 2);
