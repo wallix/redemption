@@ -41,25 +41,12 @@
 using namespace std;
 
 /* sec */
-struct server_sec {
+struct server_sec : public Sec {
     struct ClientInfo * client_info;
-
-    int userid;
-    vector<struct mcs_channel_item *> channel_list;
 
     uint8_t server_random[32];
     uint8_t client_random[64];
-    uint8_t client_crypt_random[72];
-    Stream client_mcs_data;
-    int decrypt_use_count;
-    int encrypt_use_count;
-    uint8_t decrypt_key[16];
-    uint8_t encrypt_key[16];
-    uint8_t decrypt_update_key[16];
-    uint8_t encrypt_update_key[16];
-    int rc4_key_size; /* 1 = 40 bit, 2 = 128 bit */
-    int rc4_key_len; /* 8 = 40 bit, 16 = 128 bit */
-    uint8_t sign_key[16];
+
     uint8_t* decrypt_rc4_info;
     uint8_t* encrypt_rc4_info;
     uint8_t pub_exp[4];
@@ -72,6 +59,7 @@ struct server_sec {
     /*****************************************************************************/
 
     server_sec(ClientInfo * client_info, Transport * trans) :
+        Sec(client_info->crypt_level),
         client_info(client_info),
         trans(trans)
     {
@@ -79,30 +67,12 @@ struct server_sec {
         memset(this->server_random, 0, 32);
         memset(this->client_random, 0, 64);
         memset(this->client_crypt_random, 0, 72);
-        this->decrypt_use_count = 0;
-        this->encrypt_use_count = 0;
-        memset(this->decrypt_key, 0, 16);
-        memset(this->encrypt_key, 0, 16);
-        memset(this->decrypt_update_key, 0, 16);
-        memset(this->encrypt_update_key, 0, 16);
 
         memset(this->sign_key, 0, 16);
         memset(this->pub_exp, 0, 4);
         memset(this->pub_mod, 0, 64);
         memset(this->pub_sig, 0, 64);
         memset(this->pri_exp, 0, 64);
-        switch (client_info->crypt_level) {
-        case 1:
-        case 2:
-            this->rc4_key_size = 1; /* 40 bits */
-            this->rc4_key_len = 8; /* 8 = 40 bit */
-        break;
-        default:
-        case 3:
-            this->rc4_key_size = 2; /* 128 bits */
-            this->rc4_key_len = 16; /* 16 = 128 bit */
-        break;
-        }
         this->decrypt_rc4_info = ssl_rc4_info_create();
         this->encrypt_rc4_info = ssl_rc4_info_create();
     }
@@ -123,68 +93,15 @@ struct server_sec {
         ssl_rc4_info_delete(this->encrypt_rc4_info);
     }
 
-    /* Reduce key entropy from 64 to 40 bits */
-    void server_sec_make_40bit(uint8_t* key)
-    {
-        key[0] = 0xd1;
-        key[1] = 0x26;
-        key[2] = 0x9e;
-    }
-
     void server_sec_decrypt(uint8_t* data, int len) throw (Error)
     {
         if (this->decrypt_use_count == 4096) {
-            this->server_sec_update(
-                this->decrypt_key, this->decrypt_update_key, this->rc4_key_len);
-            ssl_rc4_set_key(
-                this->decrypt_rc4_info, this->decrypt_key, this->rc4_key_len);
+            this->sec_update(this->decrypt_key, this->decrypt_update_key, this->rc4_key_len);
+            ssl_rc4_set_key(this->decrypt_rc4_info, this->decrypt_key, this->rc4_key_len);
             this->decrypt_use_count = 0;
         }
         ssl_rc4_crypt(this->decrypt_rc4_info, data, len);
         this->decrypt_use_count++;
-    }
-
-    /* update an encryption key */
-    void server_sec_update(uint8_t* key, uint8_t* update_key, int key_len) throw (Error)
-    {
-        static uint8_t pad_54[40] = {
-            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-            54, 54, 54, 54, 54, 54, 54, 54
-        };
-
-        static uint8_t pad_92[48] = {
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-        };
-
-        uint8_t shasig[20];
-        uint8_t* sha1_info;
-        uint8_t* md5_info;
-        uint8_t* rc4_info;
-
-        sha1_info = ssl_sha1_info_create();
-        md5_info = ssl_md5_info_create();
-        rc4_info = ssl_rc4_info_create();
-        ssl_sha1_clear(sha1_info);
-        ssl_sha1_transform(sha1_info, update_key, key_len);
-        ssl_sha1_transform(sha1_info, pad_54, 40);
-        ssl_sha1_transform(sha1_info, key, key_len);
-        ssl_sha1_complete(sha1_info, shasig);
-        ssl_md5_clear(md5_info);
-        ssl_md5_transform(md5_info, update_key, key_len);
-        ssl_md5_transform(md5_info, pad_92, 48);
-        ssl_md5_transform(md5_info, shasig, 20);
-        ssl_md5_complete(md5_info, key);
-        ssl_rc4_set_key(rc4_info, key, key_len);
-        ssl_rc4_crypt(rc4_info, key, key_len);
-        if (key_len == 8) {
-            this->server_sec_make_40bit(key);
-        }
-        ssl_sha1_info_delete(sha1_info);
-        ssl_md5_info_delete(md5_info);
-        ssl_rc4_info_delete(rc4_info);
     }
 
     /* process the mcs client data we received from the mcs layer */
@@ -278,10 +195,8 @@ struct server_sec {
     void server_sec_encrypt(uint8_t* data, int len) throw (Error)
     {
         if (this->encrypt_use_count == 4096) {
-            this->server_sec_update(this->encrypt_key, this->encrypt_update_key,
-                            this->rc4_key_len);
-            ssl_rc4_set_key(this->encrypt_rc4_info, this->encrypt_key,
-                            this->rc4_key_len);
+            this->sec_update(this->encrypt_key, this->encrypt_update_key, this->rc4_key_len);
+            ssl_rc4_set_key(this->encrypt_rc4_info, this->encrypt_key, this->rc4_key_len);
             this->encrypt_use_count = 0;
         }
         ssl_rc4_crypt(this->encrypt_rc4_info, data, len);
@@ -353,8 +268,6 @@ struct server_sec {
        };
 
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
         stream.out_uint8(MCS_SDIN << 2);
@@ -377,8 +290,6 @@ struct server_sec {
                                };
 
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
         stream.out_uint8(MCS_SDIN << 2);
@@ -403,8 +314,6 @@ struct server_sec {
                                  };
 
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
         stream.out_uint8(MCS_SDIN << 2);
@@ -428,46 +337,6 @@ struct server_sec {
                     this->pri_exp, 64);
     }
 
-    void server_sec_hash_48(uint8_t* out, uint8_t* in, uint8_t* salt1, uint8_t* salt2, uint8_t salt)
-    {
-        int i;
-        uint8_t* sha1_info;
-        uint8_t* md5_info;
-        uint8_t pad[4];
-        uint8_t sha1_sig[20];
-        uint8_t md5_sig[16];
-
-        sha1_info = ssl_sha1_info_create();
-        md5_info = ssl_md5_info_create();
-        for (i = 0; i < 3; i++) {
-            memset(pad, salt + i, 4);
-            ssl_sha1_clear(sha1_info);
-            ssl_sha1_transform(sha1_info, pad, i + 1);
-            ssl_sha1_transform(sha1_info, in, 48);
-            ssl_sha1_transform(sha1_info, salt1, 32);
-            ssl_sha1_transform(sha1_info, salt2, 32);
-            ssl_sha1_complete(sha1_info, sha1_sig);
-            ssl_md5_clear(md5_info);
-            ssl_md5_transform(md5_info, in, 48);
-            ssl_md5_transform(md5_info, sha1_sig, 20);
-            ssl_md5_complete(md5_info, md5_sig);
-            memcpy(out + i * 16, md5_sig, 16);
-        }
-        ssl_sha1_info_delete(sha1_info);
-        ssl_md5_info_delete(md5_info);
-    }
-
-    void server_sec_hash_16(uint8_t* out, uint8_t* in, uint8_t* salt1, uint8_t* salt2)
-    {
-        uint8_t* md5_info = ssl_md5_info_create();
-        ssl_md5_clear(md5_info);
-        ssl_md5_transform(md5_info, in, 16);
-        ssl_md5_transform(md5_info, salt1, 32);
-        ssl_md5_transform(md5_info, salt2, 32);
-        ssl_md5_complete(md5_info, out);
-        ssl_md5_info_delete(md5_info);
-    }
-
     /*****************************************************************************/
     void server_sec_establish_keys()
     {
@@ -477,19 +346,19 @@ struct server_sec {
 
         memcpy(input, this->client_random, 24);
         memcpy(input + 24, this->server_random, 24);
-        server_sec_hash_48(temp_hash, input, this->client_random,
+        this->sec_hash_48(temp_hash, input, this->client_random,
                          this->server_random, 65);
-        server_sec_hash_48(session_key, temp_hash, this->client_random,
+        this->sec_hash_48(session_key, temp_hash, this->client_random,
                          this->server_random, 88);
         memcpy(this->sign_key, session_key, 16);
-        server_sec_hash_16(this->encrypt_key, session_key + 16, this->client_random,
+        this->sec_hash_16(this->encrypt_key, session_key + 16, this->client_random,
                          this->server_random);
-        server_sec_hash_16(this->decrypt_key, session_key + 32, this->client_random,
+        this->sec_hash_16(this->decrypt_key, session_key + 32, this->client_random,
                          this->server_random);
         if (this->rc4_key_size == 1) {
-            server_sec_make_40bit(this->sign_key);
-            server_sec_make_40bit(this->encrypt_key);
-            server_sec_make_40bit(this->decrypt_key);
+            this->sec_make_40bit(this->sign_key);
+            this->sec_make_40bit(this->encrypt_key);
+            this->sec_make_40bit(this->decrypt_key);
             this->rc4_key_len = 8;
         } else {
             this->rc4_key_len = 16;
@@ -1654,6 +1523,7 @@ struct server_sec {
         int num_channels_even = num_channels + (num_channels & 1);
 
         stream.init(512);
+
         stream.out_uint16_be(5);
         stream.out_uint16_be(0x14);
         stream.out_uint8(0x7c);
