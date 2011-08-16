@@ -480,15 +480,6 @@ struct rdp_sec : public Sec {
         ssl.md5_final(&md5, out);
     }
 
-
-    /* Reduce key entropy from 64 to 40 bits */
-    void rdp_sec_make_40bit(uint8_t* key)
-    {
-        key[0] = 0xd1;
-        key[1] = 0x26;
-        key[2] = 0x9e;
-    }
-
     /*****************************************************************************/
     void rdp_sec_generate_keys(uint8_t *client_random, uint8_t *server_random, uint32_t rc4_key_size)
     {
@@ -513,9 +504,9 @@ struct rdp_sec : public Sec {
 
         if (rc4_key_size == 1) {
             // LOG(LOG_DEBUG, "40-bit encryption enabled\n");
-            this->rdp_sec_make_40bit(this->sign_key);
-            this->rdp_sec_make_40bit(this->decrypt_key);
-            this->rdp_sec_make_40bit(this->encrypt_key);
+            this->sec_make_40bit(this->sign_key);
+            this->sec_make_40bit(this->decrypt_key);
+            this->sec_make_40bit(this->encrypt_key);
             this->rc4_key_len = 8;
         }
         else {
