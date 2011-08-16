@@ -941,7 +941,7 @@ struct server_rdp {
         this->sec_layer.recv_connection_initial(this->sec_layer.client_mcs_data);
         #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
         this->sec_layer.server_sec_process_mcs_data(this->sec_layer.client_mcs_data);
-        this->sec_layer.server_sec_out_mcs_data(this->sec_layer.data);
+        this->sec_layer.server_sec_out_mcs_data();
         this->sec_layer.send_connect_response(this->sec_layer.data, this->sec_layer.trans);
 
         //   2.2.1.5 Client MCS Erect Domain Request PDU

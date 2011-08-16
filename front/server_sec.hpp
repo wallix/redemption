@@ -1206,79 +1206,79 @@ struct server_sec : public Sec {
 
     /*****************************************************************************/
     /* prepare server mcs data to send in mcs layer */
-    void server_sec_out_mcs_data(Stream  & stream)
+    void server_sec_out_mcs_data()
     {
         /* Same code above using list_test */
         int num_channels = (int) this->channel_list.size();
         int num_channels_even = num_channels + (num_channels & 1);
 
-        stream.init(512);
+        this->data.init(512);
 
-        stream.out_uint16_be(5);
-        stream.out_uint16_be(0x14);
-        stream.out_uint8(0x7c);
-        stream.out_uint16_be(1);
-        stream.out_uint8(0x2a);
-        stream.out_uint8(0x14);
-        stream.out_uint8(0x76);
-        stream.out_uint8(0x0a);
-        stream.out_uint8(1);
-        stream.out_uint8(1);
-        stream.out_uint8(0);
-        stream.out_uint16_le(0xc001);
-        stream.out_uint8(0);
-        stream.out_uint8(0x4d); /* M */
-        stream.out_uint8(0x63); /* c */
-        stream.out_uint8(0x44); /* D */
-        stream.out_uint8(0x6e); /* n */
-        stream.out_uint16_be(0x80fc + (num_channels_even * 2));
-        stream.out_uint16_le(SEC_TAG_SRV_INFO);
-        stream.out_uint16_le(8); /* len */
-        stream.out_uint8(4); /* 4 = rdp5 1 = rdp4 */
-        stream.out_uint8(0);
-        stream.out_uint8(8);
-        stream.out_uint8(0);
-        stream.out_uint16_le(SEC_TAG_SRV_CHANNELS);
-        stream.out_uint16_le(8 + (num_channels_even * 2)); /* len */
-        stream.out_uint16_le(MCS_GLOBAL_CHANNEL); /* 1003, 0x03eb main channel */
-        stream.out_uint16_le(num_channels); /* number of other channels */
+        this->data.out_uint16_be(5);
+        this->data.out_uint16_be(0x14);
+        this->data.out_uint8(0x7c);
+        this->data.out_uint16_be(1);
+        this->data.out_uint8(0x2a);
+        this->data.out_uint8(0x14);
+        this->data.out_uint8(0x76);
+        this->data.out_uint8(0x0a);
+        this->data.out_uint8(1);
+        this->data.out_uint8(1);
+        this->data.out_uint8(0);
+        this->data.out_uint16_le(0xc001);
+        this->data.out_uint8(0);
+        this->data.out_uint8(0x4d); /* M */
+        this->data.out_uint8(0x63); /* c */
+        this->data.out_uint8(0x44); /* D */
+        this->data.out_uint8(0x6e); /* n */
+        this->data.out_uint16_be(0x80fc + (num_channels_even * 2));
+        this->data.out_uint16_le(SEC_TAG_SRV_INFO);
+        this->data.out_uint16_le(8); /* len */
+        this->data.out_uint8(4); /* 4 = rdp5 1 = rdp4 */
+        this->data.out_uint8(0);
+        this->data.out_uint8(8);
+        this->data.out_uint8(0);
+        this->data.out_uint16_le(SEC_TAG_SRV_CHANNELS);
+        this->data.out_uint16_le(8 + (num_channels_even * 2)); /* len */
+        this->data.out_uint16_le(MCS_GLOBAL_CHANNEL); /* 1003, 0x03eb main channel */
+        this->data.out_uint16_le(num_channels); /* number of other channels */
 
         for (int index = 0; index < num_channels_even; index++) {
             if (index < num_channels) {
-                stream.out_uint16_le(MCS_GLOBAL_CHANNEL + (index + 1));
+                this->data.out_uint16_le(MCS_GLOBAL_CHANNEL + (index + 1));
             } else {
-                stream.out_uint16_le( 0);
+                this->data.out_uint16_le( 0);
             }
         }
-        stream.out_uint16_le(SEC_TAG_SRV_CRYPT);
-        stream.out_uint16_le(0x00ec); /* len is 236 */
-        stream.out_uint32_le(this->rc4_key_size); /* key len 1 = 40 bit 2 = 128 bit */
-        stream.out_uint32_le(this->client_info->crypt_level); /* crypt level 1 = low 2 = medium */
+        this->data.out_uint16_le(SEC_TAG_SRV_CRYPT);
+        this->data.out_uint16_le(0x00ec); /* len is 236 */
+        this->data.out_uint32_le(this->rc4_key_size); /* key len 1 = 40 bit 2 = 128 bit */
+        this->data.out_uint32_le(this->client_info->crypt_level); /* crypt level 1 = low 2 = medium */
         /* 3 = high */
-        stream.out_uint32_le(32);     /* 32 bytes random len */
-        stream.out_uint32_le(0xb8);   /* 184 bytes rsa info(certificate) len */
-        stream.out_copy_bytes(this->server_random, 32);
+        this->data.out_uint32_le(32);     /* 32 bytes random len */
+        this->data.out_uint32_le(0xb8);   /* 184 bytes rsa info(certificate) len */
+        this->data.out_copy_bytes(this->server_random, 32);
         /* here to end is certificate */
         /* HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ */
         /* TermService\Parameters\Certificate */
-        stream.out_uint32_le(1);
-        stream.out_uint32_le(1);
-        stream.out_uint32_le(1);
-        stream.out_uint16_le(SEC_TAG_PUBKEY);
-        stream.out_uint16_le(0x005c); /* 92 bytes length of SEC_TAG_PUBKEY */
-        stream.out_uint32_le(SEC_RSA_MAGIC);
-        stream.out_uint32_le(0x48); /* 72 bytes modulus len */
-        stream.out_uint32_be(0x00020000);
-        stream.out_uint32_be(0x3f000000);
-        stream.out_copy_bytes(this->pub_exp, 4); /* pub exp */
-        stream.out_copy_bytes(this->pub_mod, 64); /* pub mod */
-        stream.out_clear_bytes(8); /* pad */
-        stream.out_uint16_le(SEC_TAG_KEYSIG);
-        stream.out_uint16_le(72); /* len */
-        stream.out_copy_bytes(this->pub_sig, 64); /* pub sig */
-        stream.out_clear_bytes(8); /* pad */
+        this->data.out_uint32_le(1);
+        this->data.out_uint32_le(1);
+        this->data.out_uint32_le(1);
+        this->data.out_uint16_le(SEC_TAG_PUBKEY);
+        this->data.out_uint16_le(0x005c); /* 92 bytes length of SEC_TAG_PUBKEY */
+        this->data.out_uint32_le(SEC_RSA_MAGIC);
+        this->data.out_uint32_le(0x48); /* 72 bytes modulus len */
+        this->data.out_uint32_be(0x00020000);
+        this->data.out_uint32_be(0x3f000000);
+        this->data.out_copy_bytes(this->pub_exp, 4); /* pub exp */
+        this->data.out_copy_bytes(this->pub_mod, 64); /* pub mod */
+        this->data.out_clear_bytes(8); /* pad */
+        this->data.out_uint16_le(SEC_TAG_KEYSIG);
+        this->data.out_uint16_le(72); /* len */
+        this->data.out_copy_bytes(this->pub_sig, 64); /* pub sig */
+        this->data.out_clear_bytes(8); /* pad */
         /* end certificate */
-        stream.mark_end();
+        this->data.mark_end();
     }
 
 };
