@@ -52,7 +52,7 @@ struct server_rdp {
         share_id(65538),
         mcs_channel(0),
         client_info(ini),
-        sec_layer(&client_info),
+        sec_layer(this->client_info.crypt_level),
         packet_number(1),
         trans(trans)
     {
@@ -75,14 +75,11 @@ struct server_rdp {
                                int total_data_len, int flags) throw (Error)
     {
         Stream stream(data_len + 1024); /* this should be big enough */
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
-        if (this->sec_layer.client_info->crypt_level > 1) {
+        if (this->client_info.crypt_level > 1) {
             stream.sec_hdr = stream.p;
             stream.p += 4 + 8;
         }
@@ -113,7 +110,7 @@ struct server_rdp {
         assert(channel->chanid == channel_id);
 
 //        LOG(LOG_INFO, "1) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, channel_id);
+        this->sec_layer.server_sec_send(stream, channel_id, &this->client_info);
 
         stream.p = stream.end;
         tpdu.end();
@@ -137,14 +134,11 @@ struct server_rdp {
     void send_global_palette(const BGRPalette & palette) throw (Error)
     {
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
-        if (this->sec_layer.client_info->crypt_level > 1) {
+        if (this->client_info.crypt_level > 1) {
             stream.sec_hdr = stream.p;
             stream.p += 4 + 8;
         }
@@ -174,7 +168,7 @@ struct server_rdp {
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, stream.rdp_hdr - stream.data);
 
 //        LOG(LOG_INFO, "2) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -485,14 +479,11 @@ struct server_rdp {
     void server_rdp_send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
     {
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
-        if (this->sec_layer.client_info->crypt_level > 1) {
+        if (this->client_info.crypt_level > 1) {
             stream.sec_hdr = stream.p;
             stream.p += 4 + 8;
         }
@@ -583,7 +574,7 @@ struct server_rdp {
         stream.mark_end();
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, stream.rdp_hdr - stream.data);
 //        LOG(LOG_INFO, "3) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -624,14 +615,11 @@ struct server_rdp {
     void server_rdp_set_pointer(int cache_idx) throw (Error)
     {
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
-        if (this->sec_layer.client_info->crypt_level > 1) {
+        if (this->client_info.crypt_level > 1) {
             stream.sec_hdr = stream.p;
             stream.p += 4 + 8;
         }
@@ -650,7 +638,7 @@ struct server_rdp {
         stream.mark_end();
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, stream.rdp_hdr - stream.data);
 //        LOG(LOG_INFO, "4) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -763,8 +751,8 @@ struct server_rdp {
                 }
             }
             else if (flags & SEC_LOGON_INFO) { /* 0x40 */
-                this->sec_layer.server_sec_process_logon_info(input_stream);
-                if (this->sec_layer.client_info->is_mce) {
+                this->sec_layer.server_sec_process_logon_info(input_stream, &this->client_info);
+                if (this->client_info.is_mce) {
 //                    LOG(LOG_INFO, "server_sec_send media_lic_response");
                     this->sec_layer.server_sec_send_media_lic_response(this->trans);
                     this->server_rdp_send_demand_active();
@@ -879,14 +867,11 @@ struct server_rdp {
     void server_rdp_send_data_update_sync() throw (Error)
     {
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
-        if (this->sec_layer.client_info->crypt_level > 1) {
+        if (this->client_info.crypt_level > 1) {
             stream.sec_hdr = stream.p;
             stream.p += 4 + 8;
         }
@@ -904,7 +889,7 @@ struct server_rdp {
         stream.mark_end();
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, stream.rdp_hdr - stream.data);
 //        LOG(LOG_INFO, "5) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &(this->client_info));
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -943,8 +928,8 @@ struct server_rdp {
 
         this->sec_layer.recv_connection_initial(this->trans, this->client_mcs_data);
         #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
-        this->sec_layer.server_sec_process_mcs_data(this->client_mcs_data);
-        this->sec_layer.server_sec_out_mcs_data();
+        this->sec_layer.server_sec_process_mcs_data(this->client_mcs_data, &this->client_info);
+        this->sec_layer.server_sec_out_mcs_data(&this->client_info);
         this->sec_layer.send_connect_response(this->sec_layer.data, this->trans);
 
         //   2.2.1.5 Client MCS Erect Domain Request PDU
@@ -1137,14 +1122,11 @@ struct server_rdp {
         uint8_t* caps_ptr;
 
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
-        if (this->sec_layer.client_info->crypt_level > 1) {
+        if (this->client_info.crypt_level > 1) {
             stream.sec_hdr = stream.p;
             stream.p += 4 + 8;
         }
@@ -1309,7 +1291,7 @@ struct server_rdp {
         stream.out_uint16_le(this->mcs_channel);
 
 //        LOG(LOG_INFO, "XX RDP Packet #%u (type=%u)", this->packet_number, PDUTYPE_DEMANDACTIVEPDU);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
 
         stream.p = stream.end;
         tpdu.end();
@@ -1552,14 +1534,11 @@ struct server_rdp {
     void server_rdp_send_synchronize()
     {
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
-        if (this->sec_layer.client_info->crypt_level > 1) {
+        if (this->client_info.crypt_level > 1) {
             stream.sec_hdr = stream.p;
             stream.p += 4 + 8;
         }
@@ -1577,7 +1556,7 @@ struct server_rdp {
         stream.mark_end();
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, stream.rdp_hdr - stream.data);
 //        LOG(LOG_INFO, "6) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -1608,14 +1587,11 @@ struct server_rdp {
     void server_rdp_send_control(int action)
     {
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
-        if (this->sec_layer.client_info->crypt_level > 1) {
+        if (this->client_info.crypt_level > 1) {
             stream.sec_hdr = stream.p;
             stream.p += 4 + 8;
         }
@@ -1634,7 +1610,7 @@ struct server_rdp {
         stream.mark_end();
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, stream.rdp_hdr - stream.data);
 //        LOG(LOG_INFO, "7) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -1671,14 +1647,11 @@ struct server_rdp {
 
         #warning we should create some RDPStream object created on init and sent before destruction
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
-        if (this->sec_layer.client_info->crypt_level > 1) {
+        if (this->client_info.crypt_level > 1) {
             stream.sec_hdr = stream.p;
             stream.p += 4 + 8;
         }
@@ -1695,7 +1668,7 @@ struct server_rdp {
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTMAP, stream.rdp_hdr - stream.data);
 
 //        LOG(LOG_INFO, "8) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
 
         tpdu.end();
         tpdu.send(this->trans);
@@ -1785,14 +1758,11 @@ struct server_rdp {
                 // so the client is sure the connection is alive and it can ask
                 // if user really wants to disconnect */
                 Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
                 X224Out tpdu(X224Packet::DT_TPDU, stream);
                 stream.mcs_hdr = stream.p;
                 stream.p += 8;
-// -------------------------
 
-                if (this->sec_layer.client_info->crypt_level > 1) {
+                if (this->client_info.crypt_level > 1) {
                     stream.sec_hdr = stream.p;
                     stream.p += 4 + 8;
                 }
@@ -1807,7 +1777,7 @@ struct server_rdp {
                 stream.mark_end();
                 this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_SHUTDOWN_DENIED, stream.rdp_hdr - stream.data);
 //                LOG(LOG_INFO, "9) RDP Packet #%u", this->packet_number);
-                this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+                this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
                 tpdu.end();
                 tpdu.send(this->trans);
 
@@ -1845,14 +1815,11 @@ struct server_rdp {
     {
         #warning we should create some RDPStream object created on init and sent before destruction
         Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
-        if (this->sec_layer.client_info->crypt_level > 1) {
+        if (this->client_info.crypt_level > 1) {
             stream.sec_hdr = stream.p;
             stream.p += 4 + 8;
         }
@@ -1872,7 +1839,7 @@ struct server_rdp {
         stream.out_uint16_le(this->mcs_channel);
 
 //        LOG(LOG_INFO, "RDP Packet #%u (type=%u (PDUTYPE_DEACTIVATEALLPDU))", this->packet_number++, PDUTYPE_DEACTIVATEALLPDU);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &(this->client_info));
         tpdu.end();
         tpdu.send(this->trans);
     }

@@ -55,7 +55,7 @@ struct rdp_rdp {
     struct rdp_cursor cursors[32];
     rdp_rdp(struct mod_rdp* owner, Transport *trans, const char * username, const char * password, const char * hostname, vector<mcs_channel_item*> channel_list, int rdp_performance_flags, int width, int height, int bpp, int keylayout, bool console_session)
         #warning initialize members through constructor
-        : sec_layer(this->use_rdp5, hostname, username), bpp(bpp), trans(trans)
+        : sec_layer(hostname, username), bpp(bpp), trans(trans)
         {
 
             #warning licence loading should be done before creating protocol layers
@@ -90,7 +90,7 @@ struct rdp_rdp {
             LOG(LOG_INFO, "Server key layout is %x\n", this->keylayout);
 
             #warning I should change that to RAII by merging instanciation of sec_layer and connection, it should also remove some unecessary parameters from rdp_rdp object
-            this->sec_layer.rdp_sec_connect(trans, channel_list, width, height, bpp, keylayout, console_session);
+            this->sec_layer.rdp_sec_connect(trans, channel_list, width, height, bpp, keylayout, console_session, this->use_rdp5);
     }
     ~rdp_rdp(){
         LOG(LOG_INFO, "End of remote rdp connection\n");

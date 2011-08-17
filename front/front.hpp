@@ -175,15 +175,12 @@ struct GraphicsUpdatePDU
 
     void init(){
         this->stream.init(4096);
-// -------------------------
-//        McsOut pdu(stream);
         this->tpdu = new X224Out(X224Packet::DT_TPDU, this->stream);
 
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
-        if (this->rdp_layer.sec_layer.client_info->crypt_level > 1) {
+        if (this->rdp_layer.client_info.crypt_level > 1) {
             stream.sec_hdr = stream.p;
             stream.p += 4 + 8;
         }
@@ -210,11 +207,11 @@ struct GraphicsUpdatePDU
 //            LOG(LOG_ERR, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
             this->order_count = 0;
-
             stream.mark_end();
+
             this->rdp_layer.send_rdp_packet(this->stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->offset_header);
 //            LOG(LOG_INFO, "server_sec_send front");
-            this->rdp_layer.sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+            this->rdp_layer.sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &(this->rdp_layer.client_info));
             tpdu->end();
             tpdu->send(this->rdp_layer.trans);
             this->init();
