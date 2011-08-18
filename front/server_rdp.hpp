@@ -126,11 +126,6 @@ struct server_rdp {
             uint8_t * oldp2 = stream.p;
             stream.p = stream.mcs_hdr;
             int len = (stream.end - stream.p) - 8;
-            if (len > 8192 * 2) {
-                LOG(LOG_ERR,
-                    "error in.mcs_send, size too long, its %d (buffer=%d)\n",
-                    len, stream.capacity);
-            }
             stream.out_uint8(MCS_SDIN << 2);
             stream.out_uint16_be(this->sec_layer.userid);
             stream.out_uint16_be(channel_id);
@@ -153,7 +148,6 @@ struct server_rdp {
                 stream.p = oldp2-1;
             }
         }
-
 
         stream.p = stream.end;
         tpdu.end();
@@ -227,32 +221,13 @@ struct server_rdp {
             uint8_t * oldp2 = stream.p;
             stream.p = stream.mcs_hdr;
             int len = (stream.end - stream.p) - 8;
-            if (len > 8192 * 2) {
-                LOG(LOG_ERR,
-                    "error in.mcs_send, size too long, its %d (buffer=%d)\n",
-                    len, stream.capacity);
-            }
             stream.out_uint8(MCS_SDIN << 2);
             stream.out_uint16_be(this->sec_layer.userid);
             stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
             stream.out_uint8(0x70);
-            if (len >= 128) {
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
-            }
-            else {
-                stream.out_uint8(len);
-                #warning this is ugly isn't there a way to avoid moving the whole buffer
-                /* move everything up one byte */
-                uint8_t *lp = stream.p;
-                while (lp < stream.end) {
-                    lp[0] = lp[1];
-                    lp++;
-                }
-                stream.end--;
-                stream.p = oldp2-1;
-            }
+            len = len | 0x8000;
+            stream.out_uint16_be(len);
+            stream.p = oldp2;
         }
 
         tpdu.end();
@@ -676,32 +651,13 @@ struct server_rdp {
             uint8_t * oldp2 = stream.p;
             stream.p = stream.mcs_hdr;
             int len = (stream.end - stream.p) - 8;
-            if (len > 8192 * 2) {
-                LOG(LOG_ERR,
-                    "error in.mcs_send, size too long, its %d (buffer=%d)\n",
-                    len, stream.capacity);
-            }
             stream.out_uint8(MCS_SDIN << 2);
             stream.out_uint16_be(this->sec_layer.userid);
             stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
             stream.out_uint8(0x70);
-            if (len >= 128) {
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
-            }
-            else {
-                stream.out_uint8(len);
-                #warning this is ugly isn't there a way to avoid moving the whole buffer
-                /* move everything up one byte */
-                uint8_t *lp = stream.p;
-                while (lp < stream.end) {
-                    lp[0] = lp[1];
-                    lp++;
-                }
-                stream.end--;
-                stream.p = oldp2-1;
-            }
+            len = len | 0x8000;
+            stream.out_uint16_be(len);
+            stream.p = oldp2;
         }
 
         tpdu.end();
