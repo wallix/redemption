@@ -55,7 +55,6 @@ class Stream {
     /* offsets of various headers */
     uint8_t* mcs_hdr;
     uint8_t* sec_hdr;
-    uint8_t* rdp_hdr;
     uint8_t* channel_hdr;
     uint8_t* next_packet;
     uint8_t autobuffer[AUTOSIZE];

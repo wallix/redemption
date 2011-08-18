@@ -152,7 +152,8 @@ struct GraphicsUpdatePDU
     uint32_t offset_order_count;
     X224Out * tpdu;
     struct server_rdp & rdp_layer;
-    ShareControlOut * out;
+    ShareControlOut * out_control;
+    ShareDataOut * out_data;
 
     GraphicsUpdatePDU(struct server_rdp & rdp_layer)
         :    stream(4096),
@@ -170,14 +171,18 @@ struct GraphicsUpdatePDU
         offset_header(0),
         offset_order_count(0),
         rdp_layer(rdp_layer),
-        out(NULL)
+        out_control(NULL),
+        out_data(NULL)
     {
         this->init();
     }
 
     ~GraphicsUpdatePDU(){
-        if (this->out){
-            delete this->out;
+        if (this->out_control){
+            delete this->out_control;
+        }
+        if (this->out_data){
+            delete this->out_data;
         }
     }
 
@@ -199,13 +204,10 @@ struct GraphicsUpdatePDU
         #warning we should define some kind of OrdersStream, to buffer in orders
         this->offset_header = this->stream.p - this->stream.data;
 
-        if (this->out){
-            delete this->out;
-        }
-        this->out = new ShareControlOut(this->stream,
-                               PDUTYPE_DATAPDU, PDUTYPE2_UPDATE,
-                               this->rdp_layer.mcs_channel,
-                               this->rdp_layer.share_id);
+        if (this->out_control){ delete this->out_control; }
+        if (this->out_data){ delete this->out_data; }
+        this->out_control = new ShareControlOut(this->stream, PDUTYPE_DATAPDU, this->rdp_layer.mcs_channel);
+        this->out_data = new ShareDataOut(this->stream, PDUTYPE2_UPDATE, this->rdp_layer.share_id);
 
         this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
         this->stream.out_clear_bytes(2); /* pad */
@@ -220,7 +222,8 @@ struct GraphicsUpdatePDU
 //            LOG(LOG_ERR, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
             this->order_count = 0;
-            this->out->end();
+            this->out_data->end();
+            this->out_control->end();
             stream.mark_end();
 
 //            LOG(LOG_INFO, "server_sec_send front");

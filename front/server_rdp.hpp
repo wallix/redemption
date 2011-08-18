@@ -185,7 +185,7 @@ struct server_rdp {
             stream.p += 4;
         }
 
-        ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->mcs_channel, this->share_id);
+        ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(RDP_UPDATE_PALETTE);
         stream.out_uint16_le(0);
@@ -364,7 +364,7 @@ struct server_rdp {
             stream.p += 4;
         }
 
-        ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, this->mcs_channel, this->share_id);
+        ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(RDP_POINTER_COLOR);
         stream.out_uint16_le(0); /* pad */
@@ -524,7 +524,7 @@ struct server_rdp {
             stream.p += 4;
         }
 
-        ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, this->mcs_channel, this->share_id);
+        ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(RDP_POINTER_CACHED);
         stream.out_uint16_le(0); /* pad */
@@ -813,7 +813,7 @@ struct server_rdp {
             stream.p += 4;
         }
 
-        ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->mcs_channel, this->share_id);
+        ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
         stream.out_clear_bytes(2);
@@ -1105,8 +1105,7 @@ struct server_rdp {
             stream.p += 4;
         }
 
-        stream.rdp_hdr = stream.p;
-        stream.p += 6;
+        ShareControlOut rdp_out(stream, PDUTYPE_DEMANDACTIVEPDU, this->mcs_channel);
 
         caps_count = 0;
         stream.out_uint32_le(this->share_id);
@@ -1243,7 +1242,6 @@ struct server_rdp {
 
         stream.out_clear_bytes(4); /* pad */
 
-        stream.mark_end();
 
         caps_size = (int)(stream.end - caps_ptr);
         caps_size_ptr[0] = caps_size;
@@ -1254,11 +1252,8 @@ struct server_rdp {
         caps_count_ptr[2] = caps_count >> 16;
         caps_count_ptr[3] = caps_count >> 24;
 
-        stream.p = stream.rdp_hdr;
-        int len = stream.end - stream.p;
-        stream.out_uint16_le(len);
-        stream.out_uint16_le(0x10 | PDUTYPE_DEMANDACTIVEPDU);
-        stream.out_uint16_le(this->mcs_channel);
+        stream.mark_end();
+        rdp_out.end();
 
 //        LOG(LOG_INFO, "XX RDP Packet #%u (type=%u)", this->packet_number, PDUTYPE_DEMANDACTIVEPDU);
         {
@@ -1540,7 +1535,7 @@ struct server_rdp {
             stream.p += 4;
         }
 
-        ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, this->mcs_channel, this->share_id);
+        ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(1); /* messageType */
         stream.out_uint16_le(1002); /* control id */
@@ -1630,7 +1625,7 @@ struct server_rdp {
             stream.p += 4;
         }
 
-        ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, this->mcs_channel, this->share_id);
+        ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(action);
         stream.out_uint16_le(0); /* userid */
@@ -1727,7 +1722,7 @@ struct server_rdp {
             stream.p += 4;
         }
 
-        ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTMAP, this->mcs_channel, this->share_id);
+        ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTMAP, this->mcs_channel, this->share_id);
 
         stream.out_copy_bytes((char*)g_fontmap, 172);
 
@@ -1876,7 +1871,7 @@ struct server_rdp {
                     stream.p += 4;
                 }
 
-                ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SHUTDOWN_DENIED, this->mcs_channel, this->share_id);
+                ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SHUTDOWN_DENIED, this->mcs_channel, this->share_id);
                 stream.mark_end();
                 rdp_out.end();
 //                LOG(LOG_INFO, "9) RDP Packet #%u", this->packet_number);
@@ -1969,17 +1964,9 @@ struct server_rdp {
             stream.p += 4;
         }
 
-        stream.rdp_hdr = stream.p;
-        stream.p += 6;
+        ShareControlOut(stream, PDUTYPE_DEACTIVATEALLPDU, this->mcs_channel).end();
         stream.mark_end();
 
-        int len = stream.p - stream.rdp_hdr;
-        stream.p = stream.rdp_hdr;
-        stream.out_uint16_le(len);
-        stream.out_uint16_le(0x10 | PDUTYPE_DEACTIVATEALLPDU);
-        stream.out_uint16_le(this->mcs_channel);
-
-//        LOG(LOG_INFO, "RDP Packet #%u (type=%u (PDUTYPE_DEACTIVATEALLPDU))", this->packet_number++, PDUTYPE_DEACTIVATEALLPDU);
         {
             uint8_t * oldp = stream.p;
             stream.p = stream.sec_hdr;

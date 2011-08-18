@@ -581,7 +581,7 @@ struct rdp_rdp {
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
 
-            ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, this->sec_layer.userid, this->share_id);
+            ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, this->sec_layer.userid, this->share_id);
 
             stream.out_uint16_le(action);
             stream.out_uint16_le(0); /* userid */
@@ -626,7 +626,7 @@ struct rdp_rdp {
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
 
-            ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, this->sec_layer.userid, this->share_id);
+            ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, this->sec_layer.userid, this->share_id);
 
             stream.out_uint16_le(1); /* type */
             stream.out_uint16_le(1002);
@@ -669,7 +669,7 @@ struct rdp_rdp {
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
 
-            ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTLIST, this->sec_layer.userid, this->share_id);
+            ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTLIST, this->sec_layer.userid, this->share_id);
 
             stream.out_uint16_le(0); /* number of fonts */
             stream.out_uint16_le(0); /* pad? */
@@ -873,7 +873,7 @@ struct rdp_rdp {
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
 
-            ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_INPUT, this->sec_layer.userid, this->share_id);
+            ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_INPUT, this->sec_layer.userid, this->share_id);
 
             stream.out_uint16_le(1); /* number of events */
             stream.out_uint16_le(0);
@@ -923,7 +923,7 @@ struct rdp_rdp {
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
 
-            ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_REFRESH_RECT, this->sec_layer.userid, this->share_id);
+            ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_REFRESH_RECT, this->sec_layer.userid, this->share_id);
 
             stream.out_uint32_le(1);
             stream.out_uint16_le(left);
