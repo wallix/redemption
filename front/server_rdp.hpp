@@ -110,7 +110,51 @@ struct server_rdp {
         assert(channel->chanid == channel_id);
 
 //        LOG(LOG_INFO, "1) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, channel_id, &this->client_info);
+        {
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (this->client_info.crypt_level > 1) {
+                stream.out_uint32_le(SEC_ENCRYPT);
+                int datalen = (int)((stream.end - stream.p) - 8);
+                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            } else {
+                stream.out_uint32_le(0);
+            }
+
+            stream.p = oldp;
+
+            uint8_t * oldp2 = stream.p;
+            stream.p = stream.mcs_hdr;
+            int len = (stream.end - stream.p) - 8;
+            if (len > 8192 * 2) {
+                LOG(LOG_ERR,
+                    "error in.mcs_send, size too long, its %d (buffer=%d)\n",
+                    len, stream.capacity);
+            }
+            stream.out_uint8(MCS_SDIN << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(channel_id);
+            stream.out_uint8(0x70);
+            if (len >= 128) {
+                len = len | 0x8000;
+                stream.out_uint16_be(len);
+                stream.p = oldp2;
+            }
+            else {
+                stream.out_uint8(len);
+                #warning this is ugly isn't there a way to avoid moving the whole buffer
+                /* move everything up one byte */
+                uint8_t *lp = stream.p;
+                while (lp < stream.end) {
+                    lp[0] = lp[1];
+                    lp++;
+                }
+                stream.end--;
+                stream.p = oldp2-1;
+            }
+        }
+
 
         stream.p = stream.end;
         tpdu.end();
@@ -168,7 +212,51 @@ struct server_rdp {
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, stream.rdp_hdr - stream.data);
 
 //        LOG(LOG_INFO, "2) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
+        {
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (this->client_info.crypt_level > 1) {
+                stream.out_uint32_le(SEC_ENCRYPT);
+                int datalen = (int)((stream.end - stream.p) - 8);
+                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            } else {
+                stream.out_uint32_le(0);
+            }
+
+            stream.p = oldp;
+
+            uint8_t * oldp2 = stream.p;
+            stream.p = stream.mcs_hdr;
+            int len = (stream.end - stream.p) - 8;
+            if (len > 8192 * 2) {
+                LOG(LOG_ERR,
+                    "error in.mcs_send, size too long, its %d (buffer=%d)\n",
+                    len, stream.capacity);
+            }
+            stream.out_uint8(MCS_SDIN << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+            stream.out_uint8(0x70);
+            if (len >= 128) {
+                len = len | 0x8000;
+                stream.out_uint16_be(len);
+                stream.p = oldp2;
+            }
+            else {
+                stream.out_uint8(len);
+                #warning this is ugly isn't there a way to avoid moving the whole buffer
+                /* move everything up one byte */
+                uint8_t *lp = stream.p;
+                while (lp < stream.end) {
+                    lp[0] = lp[1];
+                    lp++;
+                }
+                stream.end--;
+                stream.p = oldp2-1;
+            }
+        }
+
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -574,7 +662,51 @@ struct server_rdp {
         stream.mark_end();
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, stream.rdp_hdr - stream.data);
 //        LOG(LOG_INFO, "3) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
+        {
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (this->client_info.crypt_level > 1) {
+                stream.out_uint32_le(SEC_ENCRYPT);
+                int datalen = (int)((stream.end - stream.p) - 8);
+                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            } else {
+                stream.out_uint32_le(0);
+            }
+
+            stream.p = oldp;
+
+            uint8_t * oldp2 = stream.p;
+            stream.p = stream.mcs_hdr;
+            int len = (stream.end - stream.p) - 8;
+            if (len > 8192 * 2) {
+                LOG(LOG_ERR,
+                    "error in.mcs_send, size too long, its %d (buffer=%d)\n",
+                    len, stream.capacity);
+            }
+            stream.out_uint8(MCS_SDIN << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+            stream.out_uint8(0x70);
+            if (len >= 128) {
+                len = len | 0x8000;
+                stream.out_uint16_be(len);
+                stream.p = oldp2;
+            }
+            else {
+                stream.out_uint8(len);
+                #warning this is ugly isn't there a way to avoid moving the whole buffer
+                /* move everything up one byte */
+                uint8_t *lp = stream.p;
+                while (lp < stream.end) {
+                    lp[0] = lp[1];
+                    lp++;
+                }
+                stream.end--;
+                stream.p = oldp2-1;
+            }
+        }
+
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -638,7 +770,51 @@ struct server_rdp {
         stream.mark_end();
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, stream.rdp_hdr - stream.data);
 //        LOG(LOG_INFO, "4) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
+        {
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (this->client_info.crypt_level > 1) {
+                stream.out_uint32_le(SEC_ENCRYPT);
+                int datalen = (int)((stream.end - stream.p) - 8);
+                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            } else {
+                stream.out_uint32_le(0);
+            }
+
+            stream.p = oldp;
+
+            uint8_t * oldp2 = stream.p;
+            stream.p = stream.mcs_hdr;
+            int len = (stream.end - stream.p) - 8;
+            if (len > 8192 * 2) {
+                LOG(LOG_ERR,
+                    "error in.mcs_send, size too long, its %d (buffer=%d)\n",
+                    len, stream.capacity);
+            }
+            stream.out_uint8(MCS_SDIN << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+            stream.out_uint8(0x70);
+            if (len >= 128) {
+                len = len | 0x8000;
+                stream.out_uint16_be(len);
+                stream.p = oldp2;
+            }
+            else {
+                stream.out_uint8(len);
+                #warning this is ugly isn't there a way to avoid moving the whole buffer
+                /* move everything up one byte */
+                uint8_t *lp = stream.p;
+                while (lp < stream.end) {
+                    lp[0] = lp[1];
+                    lp++;
+                }
+                stream.end--;
+                stream.p = oldp2-1;
+            }
+        }
+
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -889,7 +1065,51 @@ struct server_rdp {
         stream.mark_end();
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, stream.rdp_hdr - stream.data);
 //        LOG(LOG_INFO, "5) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &(this->client_info));
+        {
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (this->client_info.crypt_level > 1) {
+                stream.out_uint32_le(SEC_ENCRYPT);
+                int datalen = (int)((stream.end - stream.p) - 8);
+                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            } else {
+                stream.out_uint32_le(0);
+            }
+
+            stream.p = oldp;
+
+            uint8_t * oldp2 = stream.p;
+            stream.p = stream.mcs_hdr;
+            int len = (stream.end - stream.p) - 8;
+            if (len > 8192 * 2) {
+                LOG(LOG_ERR,
+                    "error in.mcs_send, size too long, its %d (buffer=%d)\n",
+                    len, stream.capacity);
+            }
+            stream.out_uint8(MCS_SDIN << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+            stream.out_uint8(0x70);
+            if (len >= 128) {
+                len = len | 0x8000;
+                stream.out_uint16_be(len);
+                stream.p = oldp2;
+            }
+            else {
+                stream.out_uint8(len);
+                #warning this is ugly isn't there a way to avoid moving the whole buffer
+                /* move everything up one byte */
+                uint8_t *lp = stream.p;
+                while (lp < stream.end) {
+                    lp[0] = lp[1];
+                    lp++;
+                }
+                stream.end--;
+                stream.p = oldp2-1;
+            }
+        }
+
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -1291,7 +1511,51 @@ struct server_rdp {
         stream.out_uint16_le(this->mcs_channel);
 
 //        LOG(LOG_INFO, "XX RDP Packet #%u (type=%u)", this->packet_number, PDUTYPE_DEMANDACTIVEPDU);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
+        {
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (this->client_info.crypt_level > 1) {
+                stream.out_uint32_le(SEC_ENCRYPT);
+                int datalen = (int)((stream.end - stream.p) - 8);
+                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            } else {
+                stream.out_uint32_le(0);
+            }
+
+            stream.p = oldp;
+
+            uint8_t * oldp2 = stream.p;
+            stream.p = stream.mcs_hdr;
+            int len = (stream.end - stream.p) - 8;
+            if (len > 8192 * 2) {
+                LOG(LOG_ERR,
+                    "error in.mcs_send, size too long, its %d (buffer=%d)\n",
+                    len, stream.capacity);
+            }
+            stream.out_uint8(MCS_SDIN << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+            stream.out_uint8(0x70);
+            if (len >= 128) {
+                len = len | 0x8000;
+                stream.out_uint16_be(len);
+                stream.p = oldp2;
+            }
+            else {
+                stream.out_uint8(len);
+                #warning this is ugly isn't there a way to avoid moving the whole buffer
+                /* move everything up one byte */
+                uint8_t *lp = stream.p;
+                while (lp < stream.end) {
+                    lp[0] = lp[1];
+                    lp++;
+                }
+                stream.end--;
+                stream.p = oldp2-1;
+            }
+        }
+
 
         stream.p = stream.end;
         tpdu.end();
@@ -1556,7 +1820,51 @@ struct server_rdp {
         stream.mark_end();
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, stream.rdp_hdr - stream.data);
 //        LOG(LOG_INFO, "6) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
+        {
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (this->client_info.crypt_level > 1) {
+                stream.out_uint32_le(SEC_ENCRYPT);
+                int datalen = (int)((stream.end - stream.p) - 8);
+                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            } else {
+                stream.out_uint32_le(0);
+            }
+
+            stream.p = oldp;
+
+            uint8_t * oldp2 = stream.p;
+            stream.p = stream.mcs_hdr;
+            int len = (stream.end - stream.p) - 8;
+            if (len > 8192 * 2) {
+                LOG(LOG_ERR,
+                    "error in.mcs_send, size too long, its %d (buffer=%d)\n",
+                    len, stream.capacity);
+            }
+            stream.out_uint8(MCS_SDIN << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+            stream.out_uint8(0x70);
+            if (len >= 128) {
+                len = len | 0x8000;
+                stream.out_uint16_be(len);
+                stream.p = oldp2;
+            }
+            else {
+                stream.out_uint8(len);
+                #warning this is ugly isn't there a way to avoid moving the whole buffer
+                /* move everything up one byte */
+                uint8_t *lp = stream.p;
+                while (lp < stream.end) {
+                    lp[0] = lp[1];
+                    lp++;
+                }
+                stream.end--;
+                stream.p = oldp2-1;
+            }
+        }
+
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -1610,7 +1918,51 @@ struct server_rdp {
         stream.mark_end();
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, stream.rdp_hdr - stream.data);
 //        LOG(LOG_INFO, "7) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
+        {
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (this->client_info.crypt_level > 1) {
+                stream.out_uint32_le(SEC_ENCRYPT);
+                int datalen = (int)((stream.end - stream.p) - 8);
+                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            } else {
+                stream.out_uint32_le(0);
+            }
+
+            stream.p = oldp;
+
+            uint8_t * oldp2 = stream.p;
+            stream.p = stream.mcs_hdr;
+            int len = (stream.end - stream.p) - 8;
+            if (len > 8192 * 2) {
+                LOG(LOG_ERR,
+                    "error in.mcs_send, size too long, its %d (buffer=%d)\n",
+                    len, stream.capacity);
+            }
+            stream.out_uint8(MCS_SDIN << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+            stream.out_uint8(0x70);
+            if (len >= 128) {
+                len = len | 0x8000;
+                stream.out_uint16_be(len);
+                stream.p = oldp2;
+            }
+            else {
+                stream.out_uint8(len);
+                #warning this is ugly isn't there a way to avoid moving the whole buffer
+                /* move everything up one byte */
+                uint8_t *lp = stream.p;
+                while (lp < stream.end) {
+                    lp[0] = lp[1];
+                    lp++;
+                }
+                stream.end--;
+                stream.p = oldp2-1;
+            }
+        }
+
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -1668,7 +2020,51 @@ struct server_rdp {
         this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTMAP, stream.rdp_hdr - stream.data);
 
 //        LOG(LOG_INFO, "8) RDP Packet #%u", this->packet_number);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
+        {
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (this->client_info.crypt_level > 1) {
+                stream.out_uint32_le(SEC_ENCRYPT);
+                int datalen = (int)((stream.end - stream.p) - 8);
+                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            } else {
+                stream.out_uint32_le(0);
+            }
+
+            stream.p = oldp;
+
+            uint8_t * oldp2 = stream.p;
+            stream.p = stream.mcs_hdr;
+            int len = (stream.end - stream.p) - 8;
+            if (len > 8192 * 2) {
+                LOG(LOG_ERR,
+                    "error in.mcs_send, size too long, its %d (buffer=%d)\n",
+                    len, stream.capacity);
+            }
+            stream.out_uint8(MCS_SDIN << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+            stream.out_uint8(0x70);
+            if (len >= 128) {
+                len = len | 0x8000;
+                stream.out_uint16_be(len);
+                stream.p = oldp2;
+            }
+            else {
+                stream.out_uint8(len);
+                #warning this is ugly isn't there a way to avoid moving the whole buffer
+                /* move everything up one byte */
+                uint8_t *lp = stream.p;
+                while (lp < stream.end) {
+                    lp[0] = lp[1];
+                    lp++;
+                }
+                stream.end--;
+                stream.p = oldp2-1;
+            }
+        }
+
 
         tpdu.end();
         tpdu.send(this->trans);
@@ -1777,7 +2173,51 @@ struct server_rdp {
                 stream.mark_end();
                 this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_SHUTDOWN_DENIED, stream.rdp_hdr - stream.data);
 //                LOG(LOG_INFO, "9) RDP Packet #%u", this->packet_number);
-                this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &this->client_info);
+                {
+                    uint8_t * oldp = stream.p;
+                    stream.p = stream.sec_hdr;
+                    if (this->client_info.crypt_level > 1) {
+                        stream.out_uint32_le(SEC_ENCRYPT);
+                        int datalen = (int)((stream.end - stream.p) - 8);
+                        this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
+                        this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+                    } else {
+                        stream.out_uint32_le(0);
+                    }
+
+                    stream.p = oldp;
+
+                    uint8_t * oldp2 = stream.p;
+                    stream.p = stream.mcs_hdr;
+                    int len = (stream.end - stream.p) - 8;
+                    if (len > 8192 * 2) {
+                        LOG(LOG_ERR,
+                            "error in.mcs_send, size too long, its %d (buffer=%d)\n",
+                            len, stream.capacity);
+                    }
+                    stream.out_uint8(MCS_SDIN << 2);
+                    stream.out_uint16_be(this->sec_layer.userid);
+                    stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+                    stream.out_uint8(0x70);
+                    if (len >= 128) {
+                        len = len | 0x8000;
+                        stream.out_uint16_be(len);
+                        stream.p = oldp2;
+                    }
+                    else {
+                        stream.out_uint8(len);
+                        #warning this is ugly isn't there a way to avoid moving the whole buffer
+                        /* move everything up one byte */
+                        uint8_t *lp = stream.p;
+                        while (lp < stream.end) {
+                            lp[0] = lp[1];
+                            lp++;
+                        }
+                        stream.end--;
+                        stream.p = oldp2-1;
+                    }
+                }
+
                 tpdu.end();
                 tpdu.send(this->trans);
 
@@ -1839,7 +2279,51 @@ struct server_rdp {
         stream.out_uint16_le(this->mcs_channel);
 
 //        LOG(LOG_INFO, "RDP Packet #%u (type=%u (PDUTYPE_DEACTIVATEALLPDU))", this->packet_number++, PDUTYPE_DEACTIVATEALLPDU);
-        this->sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &(this->client_info));
+        {
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (this->client_info.crypt_level > 1) {
+                stream.out_uint32_le(SEC_ENCRYPT);
+                int datalen = (int)((stream.end - stream.p) - 8);
+                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            } else {
+                stream.out_uint32_le(0);
+            }
+
+            stream.p = oldp;
+
+            uint8_t * oldp2 = stream.p;
+            stream.p = stream.mcs_hdr;
+            int len = (stream.end - stream.p) - 8;
+            if (len > 8192 * 2) {
+                LOG(LOG_ERR,
+                    "error in.mcs_send, size too long, its %d (buffer=%d)\n",
+                    len, stream.capacity);
+            }
+            stream.out_uint8(MCS_SDIN << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+            stream.out_uint8(0x70);
+            if (len >= 128) {
+                len = len | 0x8000;
+                stream.out_uint16_be(len);
+                stream.p = oldp2;
+            }
+            else {
+                stream.out_uint8(len);
+                #warning this is ugly isn't there a way to avoid moving the whole buffer
+                /* move everything up one byte */
+                uint8_t *lp = stream.p;
+                while (lp < stream.end) {
+                    lp[0] = lp[1];
+                    lp++;
+                }
+                stream.end--;
+                stream.p = oldp2-1;
+            }
+        }
+
         tpdu.end();
         tpdu.send(this->trans);
     }

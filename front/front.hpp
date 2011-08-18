@@ -211,7 +211,50 @@ struct GraphicsUpdatePDU
 
             this->rdp_layer.send_rdp_packet(this->stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->offset_header);
 //            LOG(LOG_INFO, "server_sec_send front");
-            this->rdp_layer.sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL, &(this->rdp_layer.client_info));
+            {
+                uint8_t * oldp = stream.p;
+                stream.p = stream.sec_hdr;
+                if (this->rdp_layer.client_info.crypt_level > 1) {
+                    stream.out_uint32_le(SEC_ENCRYPT);
+                    int datalen = (int)((stream.end - stream.p) - 8);
+                    this->rdp_layer.sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
+                    this->rdp_layer.sec_layer.sec_encrypt(stream.p + 8, datalen);
+                } else {
+                    stream.out_uint32_le(0);
+                }
+
+                stream.p = oldp;
+
+                uint8_t * oldp2 = stream.p;
+                stream.p = stream.mcs_hdr;
+                int len = (stream.end - stream.p) - 8;
+                if (len > 8192 * 2) {
+                    LOG(LOG_ERR,
+                        "error in.mcs_send, size too long, its %d (buffer=%d)\n",
+                        len, stream.capacity);
+                }
+                stream.out_uint8(MCS_SDIN << 2);
+                stream.out_uint16_be(this->rdp_layer.sec_layer.userid);
+                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+                stream.out_uint8(0x70);
+                if (len >= 128) {
+                    len = len | 0x8000;
+                    stream.out_uint16_be(len);
+                    stream.p = oldp2;
+                }
+                else {
+                    stream.out_uint8(len);
+                    #warning this is ugly isn't there a way to avoid moving the whole buffer
+                    /* move everything up one byte */
+                    uint8_t *lp = stream.p;
+                    while (lp < stream.end) {
+                        lp[0] = lp[1];
+                        lp++;
+                    }
+                    stream.end--;
+                    stream.p = oldp2-1;
+                }
+            }
             tpdu->end();
             tpdu->send(this->rdp_layer.trans);
             this->init();
