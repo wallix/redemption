@@ -1551,7 +1551,6 @@ struct Sec
 
     void rdp_lic_send_authresp(Transport * trans, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature)
     {
-        int sec_flags = SEC_LICENCE_NEG;
         int length = 58;
 
         Stream stream(8192);
@@ -1559,9 +1558,7 @@ struct Sec
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 
-        int hdrlen = (sec_flags & SEC_ENCRYPT)          ? 12
-                   : this->lic_layer.licence_issued ? 0
-                   : 4 ;
+        int hdrlen = this->lic_layer.licence_issued ? 0 : 4 ;
 
         stream.sec_hdr = stream.p;
         stream.p += hdrlen;
@@ -1581,16 +1578,8 @@ struct Sec
 
         uint8_t * oldp = stream.p;
         stream.p = stream.sec_hdr;
-        if (!this->lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
-                stream.out_uint32_le(sec_flags);
-        }
-
-        if (sec_flags & SEC_ENCRYPT){
-            sec_flags &= ~SEC_ENCRYPT;
-            int datalen = stream.end - stream.p - 8;
-
-            this->rdp_sec_sign(stream.p, 8, this->sign_key, this->rc4_key_len, stream.p + 8, datalen);
-            this->sec_encrypt(stream.p + 8, datalen);
+        if (!this->lic_layer.licence_issued){
+                stream.out_uint32_le(SEC_LICENCE_NEG);
         }
 
         stream.p = stream.mcs_hdr;

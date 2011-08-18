@@ -287,8 +287,6 @@ struct rdp_rdp {
             0x00, 0x01, 0x00, 0x01, 0x02, 0x00, 0x00, 0x00
             };
 
-            int sec_flags = SEC_ENCRYPT;
-            //sec_flags = RDP5_FLAG | SEC_ENCRYPT;
             int caplen = RDP_CAPLEN_GENERAL
                        + RDP_CAPLEN_BITMAP
                        + RDP_CAPLEN_ORDER
@@ -310,9 +308,7 @@ struct rdp_rdp {
             stream.mcs_hdr = stream.p;
             stream.p += 8;
 
-            int hdrlen = (sec_flags & SEC_ENCRYPT)          ? 12
-                       : this->sec_layer.lic_layer.licence_issued ? 0
-                       : 4 ;
+            int hdrlen = 12;
 
             stream.sec_hdr = stream.p;
             stream.p += hdrlen;
@@ -353,17 +349,12 @@ struct rdp_rdp {
 
             uint8_t * oldp = stream.p;
             stream.p = stream.sec_hdr;
-            if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
-                    stream.out_uint32_le(sec_flags);
-            }
+            stream.out_uint32_le(SEC_ENCRYPT);
 
-            if (sec_flags & SEC_ENCRYPT){
-                sec_flags &= ~SEC_ENCRYPT;
-                int datalen = stream.end - stream.p - 8;
+            int datalen = stream.end - stream.p - 8;
 
-                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            }
+            this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+            this->sec_layer.sec_encrypt(stream.p + 8, datalen);
 
             stream.p = stream.mcs_hdr;
             int len = ((stream.end - stream.p) - 8) | 0x8000;
@@ -612,20 +603,14 @@ struct rdp_rdp {
                 stream.out_uint8(PDUTYPE2_CONTROL);
                 stream.out_uint8(0); /* compress type */
                 stream.out_uint16_le(0); /* compress len */
-                int sec_flags = SEC_ENCRYPT;
 
                 stream.p = stream.sec_hdr;
-                if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
-                        stream.out_uint32_le(sec_flags);
-                }
+                stream.out_uint32_le(SEC_ENCRYPT);
 
-                if (sec_flags & SEC_ENCRYPT){
-                    sec_flags &= ~SEC_ENCRYPT;
-                    int datalen = stream.end - stream.p - 8;
+                int datalen = stream.end - stream.p - 8;
 
-                    this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
-                    this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-                }
+                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
 
                 stream.p = stream.mcs_hdr;
                 int length = ((stream.end - stream.p) - 8) | 0x8000;
@@ -674,20 +659,14 @@ struct rdp_rdp {
                 stream.out_uint8(PDUTYPE2_SYNCHRONIZE);
                 stream.out_uint8(0); /* compress type */
                 stream.out_uint16_le(0); /* compress len */
-                int sec_flags = SEC_ENCRYPT;
 
                 stream.p = stream.sec_hdr;
-                if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
-                        stream.out_uint32_le(sec_flags);
-                }
+                stream.out_uint32_le(SEC_ENCRYPT);
 
-                if (sec_flags & SEC_ENCRYPT){
-                    sec_flags &= ~SEC_ENCRYPT;
-                    int datalen = stream.end - stream.p - 8;
+                int datalen = stream.end - stream.p - 8;
 
-                    this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
-                    this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-                }
+                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
 
                 stream.p = stream.mcs_hdr;
                 int length = ((stream.end - stream.p) - 8) | 0x8000;
@@ -738,20 +717,14 @@ struct rdp_rdp {
                 stream.out_uint8(PDUTYPE2_FONTLIST);
                 stream.out_uint8(0); /* compress type */
                 stream.out_uint16_le(0); /* compress len */
-                int sec_flags = SEC_ENCRYPT;
 
                 stream.p = stream.sec_hdr;
-                if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
-                        stream.out_uint32_le(sec_flags);
-                }
+                stream.out_uint32_le(SEC_ENCRYPT);
 
-                if (sec_flags & SEC_ENCRYPT){
-                    sec_flags &= ~SEC_ENCRYPT;
-                    int datalen = stream.end - stream.p - 8;
+                int datalen = stream.end - stream.p - 8;
 
-                    this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
-                    this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-                }
+                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
 
                 stream.p = stream.mcs_hdr;
                 int length = ((stream.end - stream.p) - 8) | 0x8000;
@@ -797,12 +770,9 @@ struct rdp_rdp {
             int sec_flags = SEC_LOGON_INFO | SEC_ENCRYPT;
 
             Stream stream(8192);
-// -------------------------
-//        McsOut pdu(stream);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             stream.mcs_hdr = stream.p;
             stream.p += 8;
-// -------------------------
 
             int hdrlen = 12 ; // SEC_ENCRYPT
 
@@ -904,17 +874,12 @@ struct rdp_rdp {
 
             uint8_t * oldp = stream.p;
             stream.p = stream.sec_hdr;
-            if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
-                    stream.out_uint32_le(sec_flags);
-            }
+            stream.out_uint32_le(SEC_LOGON_INFO | SEC_ENCRYPT);
 
-            if (sec_flags & SEC_ENCRYPT){
-                sec_flags &= ~SEC_ENCRYPT;
-                int datalen = stream.end - stream.p - 8;
+            int datalen = stream.end - stream.p - 8;
 
-                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            }
+            this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+            this->sec_layer.sec_encrypt(stream.p + 8, datalen);
 
             stream.p = stream.mcs_hdr;
             int len = ((stream.end - stream.p) - 8) | 0x8000;
@@ -972,20 +937,14 @@ struct rdp_rdp {
                 stream.out_uint8(PDUTYPE2_INPUT);
                 stream.out_uint8(0); /* compress type */
                 stream.out_uint16_le(0); /* compress len */
-                int sec_flags = SEC_ENCRYPT;
 
                 stream.p = stream.sec_hdr;
-                if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
-                        stream.out_uint32_le(sec_flags);
-                }
+                stream.out_uint32_le(SEC_ENCRYPT);
 
-                if (sec_flags & SEC_ENCRYPT){
-                    sec_flags &= ~SEC_ENCRYPT;
-                    int datalen = stream.end - stream.p - 8;
+                int datalen = stream.end - stream.p - 8;
 
-                    this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
-                    this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-                }
+                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
 
                 stream.p = stream.mcs_hdr;
                 int length = ((stream.end - stream.p) - 8) | 0x8000;
@@ -1038,20 +997,14 @@ struct rdp_rdp {
                 stream.out_uint8(PDUTYPE2_REFRESH_RECT);
                 stream.out_uint8(0); /* compress type */
                 stream.out_uint16_le(0); /* compress len */
-                int sec_flags = SEC_ENCRYPT;
 
                 stream.p = stream.sec_hdr;
-                if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
-                        stream.out_uint32_le(sec_flags);
-                }
+                stream.out_uint32_le(SEC_ENCRYPT);
 
-                if (sec_flags & SEC_ENCRYPT){
-                    sec_flags &= ~SEC_ENCRYPT;
-                    int datalen = stream.end - stream.p - 8;
+                int datalen = stream.end - stream.p - 8;
 
-                    this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
-                    this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-                }
+                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
 
                 stream.p = stream.mcs_hdr;
                 int length = ((stream.end - stream.p) - 8) | 0x8000;
@@ -1489,22 +1442,16 @@ struct rdp_rdp {
 
             /* in send_redirect_pdu, sending data from stream.p throughout channel channel_item->name */
             //g_hexdump(stream.p, size + 8);
-            int sec_flags = SEC_ENCRYPT;
             /* We need to call send_data but with another code because we need to build an
             virtual_channel packet and not an MCS_GLOBAL_CHANNEL packet */
             uint8_t * oldp = stream.p;
             stream.p = stream.sec_hdr;
-            if (!this->sec_layer.lic_layer.licence_issued || (sec_flags & SEC_ENCRYPT)){
-                    stream.out_uint32_le(sec_flags);
-            }
+            stream.out_uint32_le(SEC_ENCRYPT);
 
-            if (sec_flags & SEC_ENCRYPT){
-                sec_flags &= ~SEC_ENCRYPT;
-                int datalen = stream.end - stream.p - 8;
+            int datalen = stream.end - stream.p - 8;
 
-                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            }
+            this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
+            this->sec_layer.sec_encrypt(stream.p + 8, datalen);
 
             stream.p = stream.mcs_hdr;
             int len = ((stream.end - stream.p) - 8) | 0x8000;
