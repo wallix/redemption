@@ -25,6 +25,18 @@
 #if !defined(__SEC_HPP__)
 #define __SEC_HPP__
 
+#include "RDP/x224.hpp"
+#include "RDP/sec.hpp"
+#include "client_info.hpp"
+#include "rsa_keys.hpp"
+#include "constants.hpp"
+
+
+#include <assert.h>
+#include <stdint.h>
+
+#include <iostream>
+
 #warning ssl calls introduce some dependency on ssl system library, injecting it in the sec object would be better.
 #include "ssl_calls.hpp"
 
@@ -94,9 +106,6 @@ struct Sec
     int rc4_key_len; /* 8 or 16 */
     uint8_t sign_key[16];
 
-    char hostname[16];
-    char username[128];
-
     Sec(uint8_t crypt_level) :
       licence_data(0),
       licence_size(0),
@@ -104,6 +113,24 @@ struct Sec
       encrypt_use_count(0),
       crypt_level(crypt_level)
     {
+        // from server_sec
+        // CGR: see if init has influence for the 3 following fields
+        memset(this->server_random, 0, 32);
+        memset(this->client_random, 0, 64);
+        memset(this->client_crypt_random, 0, 72);
+
+        memset(this->sign_key, 0, 16);
+        memset(this->pub_exp, 0, 4);
+        memset(this->pub_mod, 0, 64);
+        memset(this->pub_sig, 0, 64);
+        memset(this->pri_exp, 0, 64);
+
+        // from rdp_sec
+        memset(this->client_crypt_random, 0, 512);
+        memset(this->sign_key, 0, 16);
+        this->server_public_key_len = 0;
+
+        // shared
         memset(this->decrypt_key, 0, 16);
         memset(this->encrypt_key, 0, 16);
         memset(this->decrypt_update_key, 0, 16);
@@ -1511,13 +1538,13 @@ struct Sec
     }
 
 
-    void rdp_lic_generate_hwid(uint8_t* hwid)
+    void rdp_lic_generate_hwid(uint8_t* hwid, const char * hostname)
     {
         this->sec_buf_out_uint32(hwid, 2);
-        memcpy(hwid + 4, this->hostname, LICENCE_HWID_SIZE - 4);
+        memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
     }
 
-    void rdp_lic_process_authreq(Transport * trans, Stream & stream)
+    void rdp_lic_process_authreq(Transport * trans, Stream & stream, const char * hostname)
     {
 
         ssllib ssl;
@@ -1553,7 +1580,7 @@ struct Sec
         memcpy(decrypt_token, in_token, LICENCE_TOKEN_SIZE);
         ssl.rc4_crypt(crypt_key, decrypt_token, decrypt_token, LICENCE_TOKEN_SIZE);
         /* Generate a signature for a buffer of token and HWID */
-        this->rdp_lic_generate_hwid(hwid);
+        this->rdp_lic_generate_hwid(hwid, hostname);
         memcpy(sealed_buffer, decrypt_token, LICENCE_TOKEN_SIZE);
         memcpy(sealed_buffer + LICENCE_TOKEN_SIZE, hwid, LICENCE_HWID_SIZE);
         this->rdp_sec_sign(out_sig, 16,
@@ -1625,7 +1652,7 @@ struct Sec
         tpdu.send(trans);
     }
 
-    void rdp_lic_process_demand(Transport * trans, Stream & stream)
+    void rdp_lic_process_demand(Transport * trans, Stream & stream, const char * hostname, const char * username)
     {
         uint8_t null_data[SEC_MODULUS_SIZE];
         uint8_t signature[LICENCE_SIGNATURE_SIZE];
@@ -1657,7 +1684,7 @@ struct Sec
 
         if (this->licence_size > 0) {
             /* Generate a signature for the HWID buffer */
-            this->rdp_lic_generate_hwid(hwid);
+            this->rdp_lic_generate_hwid(hwid, hostname);
             this->rdp_sec_sign(signature, 16, this->lic_layer.licence_sign_key, 16,
                          hwid, sizeof(hwid));
             /* Now encrypt the HWID */
@@ -1673,14 +1700,14 @@ struct Sec
                                   hwid, signature);
         }
         else {
-            this->rdp_lic_send_request(trans, null_data, null_data);
+            this->rdp_lic_send_request(trans, null_data, null_data, hostname, username);
         }
     }
 
-    void rdp_lic_send_request(Transport * trans, uint8_t* client_random, uint8_t* rsa_data)
+    void rdp_lic_send_request(Transport * trans, uint8_t* client_random, uint8_t* rsa_data, const char * hostname, const char * username)
     {
-        int userlen = strlen(this->username) + 1;
-        int hostlen = strlen(this->hostname) + 1;
+        int userlen = strlen(username) + 1;
+        int hostlen = strlen(hostname) + 1;
         int length = 128 + userlen + hostlen;
 
         Stream stream(8192);
@@ -1708,11 +1735,11 @@ struct Sec
 
         stream.out_uint16_le(LICENCE_TAG_USER);
         stream.out_uint16_le(userlen);
-        stream.out_copy_bytes(this->username, userlen);
+        stream.out_copy_bytes(username, userlen);
 
         stream.out_uint16_le(LICENCE_TAG_HOST);
         stream.out_uint16_le(hostlen);
-        stream.out_copy_bytes(this->hostname, hostlen);
+        stream.out_copy_bytes(hostname, hostlen);
 
         tpdu.end();
 
@@ -1794,7 +1821,7 @@ struct Sec
     }
 
     #warning this is not supported yet, but using rdp_save_licence we would keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Anyway the use of files to stoe licences should be abstracted.
-    void rdp_save_licence(uint8_t *data, int length)
+    void rdp_save_licence(uint8_t *data, int length, const char * hostname)
     {
       int fd;
       char* path = NULL;
@@ -1802,7 +1829,7 @@ struct Sec
 
       path = new char[256];
       /* TODO: verify if location that we've stablished is right or not */
-      sprintf(path, "/etc/xrdp./xrdp/licence.%s", this->hostname);
+      sprintf(path, "/etc/xrdp./xrdp/licence.%s", hostname);
 
       if ((mkdir(path, 0700) == -1))
       {
@@ -1814,7 +1841,7 @@ struct Sec
 
       /* write licence to licence.hostname.new and after rename to licence.hostname */
 
-      sprintf(path, "/etc/xrdp./xrdp/licence.%s", this->hostname);
+      sprintf(path, "/etc/xrdp./xrdp/licence.%s", hostname);
       tmppath = new char[256];
       strcpy(tmppath, path);
       strcat(tmppath, ".new");
@@ -1838,7 +1865,7 @@ struct Sec
       delete [] path;
     }
 
-    void rdp_lic_process_issue(Stream & stream)
+    void rdp_lic_process_issue(Stream & stream, const char * hostname)
     {
         stream.skip_uint8(2); /* 3d 45 - unknown */
         int length = stream.in_uint16_le();
@@ -1865,22 +1892,22 @@ struct Sec
             }
         }
         /* todo save_licence(stream.p, length); */
-        this->rdp_save_licence(stream.p, length);
+        this->rdp_save_licence(stream.p, length, hostname);
     }
 
-    void rdp_lic_process(Transport * trans, Stream & stream)
+    void rdp_lic_process(Transport * trans, Stream & stream, const char * hostname, const char * username)
     {
         uint8_t tag = stream.in_uint8();
         stream.skip_uint8(3); /* version, length */
         switch (tag) {
         case LICENCE_TAG_DEMAND:
-            this->rdp_lic_process_demand(trans, stream);
+            this->rdp_lic_process_demand(trans, stream, hostname, username);
             break;
         case LICENCE_TAG_AUTHREQ:
-            this->rdp_lic_process_authreq(trans, stream);
+            this->rdp_lic_process_authreq(trans, stream, hostname);
             break;
         case LICENCE_TAG_ISSUE:
-            this->rdp_lic_process_issue(stream);
+            this->rdp_lic_process_issue(stream, hostname);
             break;
         case LICENCE_TAG_REISSUE:
         case LICENCE_TAG_RESULT:
@@ -2580,7 +2607,7 @@ struct Sec
     void rdp_sec_connect(Transport * trans, vector<mcs_channel_item*> channel_list,
                         int width, int height,
                         int rdp_bpp, int keylayout,
-                        bool console_session, int & use_rdp5) throw(Error)
+                        bool console_session, int & use_rdp5, char * hostname) throw(Error)
     {
         Stream out(65536);
         X224Out crtpdu(X224Packet::CR_TPDU, out);
@@ -2588,7 +2615,7 @@ struct Sec
         #warning looks like this strange cookie thing is in fact useless, see MSFT-SDLBTS
         // USER DATA
         // out.out_concat("Cookie: mstshash=");
-        // out.out_concat(this->username);
+        // out.out_concat(username);
         // out.out_concat("\r\n");
         // crtpdu.extend_tpdu_hdr();
         crtpdu.end();
@@ -2646,15 +2673,15 @@ struct Sec
             LOG(LOG_INFO, "core::keyboardLayout = %x", keylayout);
             out.out_uint32_le(2600); /* Client build. We are now 2600 compatible :-) */
             LOG(LOG_INFO, "core::clientBuild = 2600");
-            LOG(LOG_INFO, "core::clientName=%s\n", this->hostname);
+            LOG(LOG_INFO, "core::clientName=%s\n", hostname);
 
             /* Added in order to limit hostlen and hostname size */
-            int hostlen = 2 * strlen(this->hostname);
+            int hostlen = 2 * strlen(hostname);
             if (hostlen > 30){
                 hostlen = 30;
             }
             /* Unicode name of client, padded to 30 bytes */
-            out.out_unistr(this->hostname);
+            out.out_unistr(hostname);
             out.out_clear_bytes(30 - hostlen);
 
         /* See

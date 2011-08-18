@@ -25,7 +25,7 @@
 #if !defined(__RDP_HPP__)
 #define __RDP_HPP__
 
-#include "server_sec.hpp"
+#include "RDP/sec.hpp"
 #include "client_info.hpp"
 #include "config.hpp"
 #include "error.hpp"
@@ -41,7 +41,7 @@ struct server_rdp {
     int share_id;
     int mcs_channel;
     struct ClientInfo client_info;
-    struct server_sec sec_layer;
+    struct Sec sec_layer;
     uint32_t packet_number;
     Stream client_mcs_data;
     Transport * trans;

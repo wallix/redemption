@@ -25,14 +25,14 @@
 #if !defined(__RDP_RDP_HPP__)
 #define __RDP_RDP_HPP__
 
-#include "rdp_sec.hpp"
+#include "RDP/sec.hpp"
 #include "rdp_orders.hpp"
 #include "client_mod.hpp"
 #include "RDP/x224.hpp"
 
 /* rdp */
 struct rdp_rdp {
-    rdp_sec sec_layer;
+    Sec sec_layer;
     rdp_orders orders;
     int share_id;
     int use_rdp5;
@@ -43,6 +43,8 @@ struct rdp_rdp {
     int chan_id;
     int version;
 
+    char hostname[16];
+    char username[128];
     char password[256];
     char domain[256];
     char program[256];
@@ -55,13 +57,19 @@ struct rdp_rdp {
     struct rdp_cursor cursors[32];
     rdp_rdp(struct mod_rdp* owner, Transport *trans, const char * username, const char * password, const char * hostname, vector<mcs_channel_item*> channel_list, int rdp_performance_flags, int width, int height, int bpp, int keylayout, bool console_session)
         #warning initialize members through constructor
-        : sec_layer(hostname, username), bpp(bpp), trans(trans)
+        : sec_layer(0), bpp(bpp), trans(trans)
         {
+            #warning and if hostname is really larger, what happens ? We should at least emit a warning log
+            strncpy(this->hostname, hostname, 15);
+            this->hostname[15] = 0;
+            #warning and if username is really larger, what happens ? We should at least emit a warning log
+            strncpy(this->username, username, 127);
+            this->username[127] = 0;
 
             #warning licence loading should be done before creating protocol layers
             struct stat st;
             char path[256];
-            sprintf(path, "/etc/xrdp/.xrdp/licence.%s", this->sec_layer.hostname);
+            sprintf(path, "/etc/xrdp/.xrdp/licence.%s", this->hostname);
             int fd = open(path, O_RDONLY);
             if (fd != -1 && fstat(fd, &st) != 0){
                 this->sec_layer.licence_data = (uint8_t *)malloc(this->sec_layer.licence_size);
@@ -90,7 +98,7 @@ struct rdp_rdp {
             LOG(LOG_INFO, "Server key layout is %x\n", this->keylayout);
 
             #warning I should change that to RAII by merging instanciation of sec_layer and connection, it should also remove some unecessary parameters from rdp_rdp object
-            this->sec_layer.rdp_sec_connect(trans, channel_list, width, height, bpp, keylayout, console_session, this->use_rdp5);
+            this->sec_layer.rdp_sec_connect(trans, channel_list, width, height, bpp, keylayout, console_session, this->use_rdp5, this->hostname);
     }
     ~rdp_rdp(){
         LOG(LOG_INFO, "End of remote rdp connection\n");
@@ -802,17 +810,17 @@ struct rdp_rdp {
             stream.p += hdrlen;
 
             if(!this->use_rdp5){
-                LOG(LOG_INFO, "send login info (RDP4-style) %s:%s\n",this->domain, this->sec_layer.username);
+                LOG(LOG_INFO, "send login info (RDP4-style) %s:%s\n",this->domain, this->username);
 
                 stream.out_uint32_le(0);
                 stream.out_uint32_le(flags);
                 stream.out_uint16_le(2 * strlen(this->domain));
-                stream.out_uint16_le(2 * strlen(this->sec_layer.username));
+                stream.out_uint16_le(2 * strlen(this->username));
                 stream.out_uint16_le(2 * strlen(this->password));
                 stream.out_uint16_le(2 * strlen(this->program));
                 stream.out_uint16_le(2 * strlen(this->directory));
                 stream.out_unistr(this->domain);
-                stream.out_unistr(this->sec_layer.username);
+                stream.out_unistr(this->username);
                 stream.out_unistr(this->password);
                 stream.out_unistr(this->program);
                 stream.out_unistr(this->directory);
@@ -820,13 +828,13 @@ struct rdp_rdp {
             else {
                 LOG(LOG_INFO, "send login info (RDP5-style) %x %s:%s\n",flags,
                     this->domain,
-                    this->sec_layer.username);
+                    this->username);
 
                 flags |= RDP_LOGON_BLOB;
                 stream.out_uint32_le(0);
                 stream.out_uint32_le(flags);
                 stream.out_uint16_le(2 * strlen(this->domain));
-                stream.out_uint16_le(2 * strlen(this->sec_layer.username));
+                stream.out_uint16_le(2 * strlen(this->username));
                 if (flags & RDP_LOGON_AUTO){
                     stream.out_uint16_le(2 * strlen(this->password));
                 }
@@ -841,7 +849,7 @@ struct rdp_rdp {
                 else {
                     stream.out_uint16_le(0);
                 }
-                stream.out_unistr(this->sec_layer.username);
+                stream.out_unistr(this->username);
                 if (flags & RDP_LOGON_AUTO){
                     stream.out_unistr(this->password);
                 }
@@ -1211,7 +1219,7 @@ struct rdp_rdp {
                     }
 
                     if (sec_flags & SEC_LICENCE_NEG) { /* 0x80 */
-                        this->sec_layer.rdp_lic_process(this->trans, stream);
+                        this->sec_layer.rdp_lic_process(this->trans, stream, this->hostname, this->username);
                         // read again until licence is processed
                         continue;
                     }
