@@ -152,7 +152,7 @@ struct GraphicsUpdatePDU
     uint32_t offset_order_count;
     X224Out * tpdu;
     struct server_rdp & rdp_layer;
-    RDPOut * out;
+    ShareControlOut * out;
 
     GraphicsUpdatePDU(struct server_rdp & rdp_layer)
         :    stream(4096),
@@ -202,7 +202,7 @@ struct GraphicsUpdatePDU
         if (this->out){
             delete this->out;
         }
-        this->out = new RDPOut(this->stream,
+        this->out = new ShareControlOut(this->stream,
                                PDUTYPE_DATAPDU, PDUTYPE2_UPDATE,
                                this->rdp_layer.mcs_channel,
                                this->rdp_layer.share_id);

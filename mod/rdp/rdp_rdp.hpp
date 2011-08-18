@@ -29,6 +29,7 @@
 #include "rdp_orders.hpp"
 #include "client_mod.hpp"
 #include "RDP/x224.hpp"
+#include "RDP/rdp.hpp"
 
 /* rdp */
 struct rdp_rdp {
@@ -580,30 +581,17 @@ struct rdp_rdp {
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
 
-            stream.rdp_hdr = stream.p;
-            stream.p += 18;
+            ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, this->sec_layer.userid, this->share_id);
 
             stream.out_uint16_le(action);
             stream.out_uint16_le(0); /* userid */
             stream.out_uint32_le(0); /* control id */
             stream.mark_end();
 
+            rdp_out.end();
+
             {
                 uint8_t * oldp = stream.p;
-
-                stream.p = stream.rdp_hdr;
-                int len = stream.end - stream.p;
-                stream.out_uint16_le(len);
-                stream.out_uint16_le(PDUTYPE_DATAPDU | 0x10);
-                stream.out_uint16_le(this->sec_layer.userid);
-                stream.out_uint32_le(this->share_id);
-                stream.out_uint8(0); /* pad */
-                stream.out_uint8(1); /* stream id */
-                stream.out_uint16_le( len - 14);
-                stream.out_uint8(PDUTYPE2_CONTROL);
-                stream.out_uint8(0); /* compress type */
-                stream.out_uint16_le(0); /* compress len */
-
                 stream.p = stream.sec_hdr;
                 stream.out_uint32_le(SEC_ENCRYPT);
 
@@ -638,27 +626,15 @@ struct rdp_rdp {
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
 
-            stream.rdp_hdr = stream.p;
-            stream.p += 18;
+            ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, this->sec_layer.userid, this->share_id);
 
             stream.out_uint16_le(1); /* type */
             stream.out_uint16_le(1002);
+
+            rdp_out.end();
             stream.mark_end();
             {
                 uint8_t * oldp = stream.p;
-
-                stream.p = stream.rdp_hdr;
-                int len = stream.end - stream.p;
-                stream.out_uint16_le(len);
-                stream.out_uint16_le(PDUTYPE_DATAPDU | 0x10);
-                stream.out_uint16_le(this->sec_layer.userid);
-                stream.out_uint32_le(this->share_id);
-                stream.out_uint8(0); /* pad */
-                stream.out_uint8(1); /* stream id */
-                stream.out_uint16_le( len - 14);
-                stream.out_uint8(PDUTYPE2_SYNCHRONIZE);
-                stream.out_uint8(0); /* compress type */
-                stream.out_uint16_le(0); /* compress len */
 
                 stream.p = stream.sec_hdr;
                 stream.out_uint32_le(SEC_ENCRYPT);
@@ -693,30 +669,18 @@ struct rdp_rdp {
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
 
-            stream.rdp_hdr = stream.p;
-            stream.p += 18;
+            ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTLIST, this->sec_layer.userid, this->share_id);
 
             stream.out_uint16_le(0); /* number of fonts */
             stream.out_uint16_le(0); /* pad? */
             stream.out_uint16_le(seq); /* unknown */
             stream.out_uint16_le(0x32); /* entry size */
+
+            rdp_out.end();
             stream.mark_end();
 
             {
                 uint8_t * oldp = stream.p;
-
-                stream.p = stream.rdp_hdr;
-                int len = stream.end - stream.p;
-                stream.out_uint16_le(len);
-                stream.out_uint16_le(PDUTYPE_DATAPDU | 0x10);
-                stream.out_uint16_le(this->sec_layer.userid);
-                stream.out_uint32_le(this->share_id);
-                stream.out_uint8(0); /* pad */
-                stream.out_uint8(1); /* stream id */
-                stream.out_uint16_le( len - 14);
-                stream.out_uint8(PDUTYPE2_FONTLIST);
-                stream.out_uint8(0); /* compress type */
-                stream.out_uint16_le(0); /* compress len */
 
                 stream.p = stream.sec_hdr;
                 stream.out_uint32_le(SEC_ENCRYPT);
@@ -909,8 +873,7 @@ struct rdp_rdp {
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
 
-            stream.rdp_hdr = stream.p;
-            stream.p += 18;
+            ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_INPUT, this->sec_layer.userid, this->share_id);
 
             stream.out_uint16_le(1); /* number of events */
             stream.out_uint16_le(0);
@@ -921,22 +884,10 @@ struct rdp_rdp {
             stream.out_uint16_le(param2);
 
             stream.mark_end();
+            rdp_out.end();
 
             {
                 uint8_t * oldp = stream.p;
-
-                stream.p = stream.rdp_hdr;
-                int len = stream.end - stream.p;
-                stream.out_uint16_le(len);
-                stream.out_uint16_le(PDUTYPE_DATAPDU | 0x10);
-                stream.out_uint16_le(this->sec_layer.userid);
-                stream.out_uint32_le(this->share_id);
-                stream.out_uint8(0); /* pad */
-                stream.out_uint8(1); /* stream id */
-                stream.out_uint16_le( len - 14);
-                stream.out_uint8(PDUTYPE2_INPUT);
-                stream.out_uint8(0); /* compress type */
-                stream.out_uint16_le(0); /* compress len */
 
                 stream.p = stream.sec_hdr;
                 stream.out_uint32_le(SEC_ENCRYPT);
@@ -972,8 +923,7 @@ struct rdp_rdp {
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
 
-            stream.rdp_hdr = stream.p;
-            stream.p += 18;
+            ShareControlOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_REFRESH_RECT, this->sec_layer.userid, this->share_id);
 
             stream.out_uint32_le(1);
             stream.out_uint16_le(left);
@@ -982,21 +932,10 @@ struct rdp_rdp {
             stream.out_uint16_le((top + height) - 1);
             stream.mark_end();
 
+            rdp_out.end();
+
             {
                 uint8_t * oldp = stream.p;
-
-                stream.p = stream.rdp_hdr;
-                int len = stream.end - stream.p;
-                stream.out_uint16_le(len);
-                stream.out_uint16_le(PDUTYPE_DATAPDU | 0x10);
-                stream.out_uint16_le(this->sec_layer.userid);
-                stream.out_uint32_le(this->share_id);
-                stream.out_uint8(0); /* pad */
-                stream.out_uint8(1); /* stream id */
-                stream.out_uint16_le( len - 14);
-                stream.out_uint8(PDUTYPE2_REFRESH_RECT);
-                stream.out_uint8(0); /* compress type */
-                stream.out_uint16_le(0); /* compress len */
 
                 stream.p = stream.sec_hdr;
                 stream.out_uint32_le(SEC_ENCRYPT);
