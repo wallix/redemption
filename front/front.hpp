@@ -180,12 +180,11 @@ struct GraphicsUpdatePDU
         stream.mcs_hdr = stream.p;
         stream.p += 8;
 
+        stream.sec_hdr = stream.p;
         if (this->rdp_layer.client_info.crypt_level > 1) {
-            stream.sec_hdr = stream.p;
             stream.p += 4 + 8;
         }
         else {
-            stream.sec_hdr = stream.p;
             stream.p += 4;
         }
 
