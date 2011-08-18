@@ -68,6 +68,7 @@
 
 #include "transport.hpp"
 #include "config.hpp"
+
 #include "error.hpp"
 
 
@@ -151,6 +152,7 @@ struct GraphicsUpdatePDU
     uint32_t offset_order_count;
     X224Out * tpdu;
     struct server_rdp & rdp_layer;
+    RDPOut * out;
 
     GraphicsUpdatePDU(struct server_rdp & rdp_layer)
         :    stream(4096),
@@ -167,11 +169,17 @@ struct GraphicsUpdatePDU
         order_count(0),
         offset_header(0),
         offset_order_count(0),
-        rdp_layer(rdp_layer)
+        rdp_layer(rdp_layer),
+        out(NULL)
     {
         this->init();
     }
 
+    ~GraphicsUpdatePDU(){
+        if (this->out){
+            delete this->out;
+        }
+    }
 
     void init(){
         this->stream.init(4096);
@@ -191,7 +199,13 @@ struct GraphicsUpdatePDU
         #warning we should define some kind of OrdersStream, to buffer in orders
         this->offset_header = this->stream.p - this->stream.data;
 
-        this->stream.out_clear_bytes(18); // Share Header, we will fill it later
+        if (this->out){
+            delete this->out;
+        }
+        this->out = new RDPOut(this->stream,
+                               PDUTYPE_DATAPDU, PDUTYPE2_UPDATE,
+                               this->rdp_layer.mcs_channel,
+                               this->rdp_layer.share_id);
 
         this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
         this->stream.out_clear_bytes(2); /* pad */
@@ -206,9 +220,9 @@ struct GraphicsUpdatePDU
 //            LOG(LOG_ERR, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
             this->order_count = 0;
+            this->out->end();
             stream.mark_end();
 
-            this->rdp_layer.send_rdp_packet(this->stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->offset_header);
 //            LOG(LOG_INFO, "server_sec_send front");
             {
                 uint8_t * oldp = stream.p;

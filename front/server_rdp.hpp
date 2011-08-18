@@ -34,207 +34,6 @@
 #include "altoco.hpp"
 #include "RDP/x224.hpp"
 
-/* rdp */
-struct server_rdp {
-    int up_and_running;
-
-    int share_id;
-    int mcs_channel;
-    struct ClientInfo client_info;
-    struct Sec sec_layer;
-    uint32_t packet_number;
-    Stream client_mcs_data;
-    Transport * trans;
-
-    server_rdp(Transport * trans, Inifile * ini)
-        :
-        up_and_running(0),
-        share_id(65538),
-        mcs_channel(0),
-        client_info(ini),
-        sec_layer(this->client_info.crypt_level),
-        packet_number(1),
-        trans(trans)
-    {
-    }
-
-    ~server_rdp()
-    {
-    }
-
-
-    enum {
-        CHANNEL_CHUNK_LENGTH = 8192,
-        CHANNEL_FLAG_FIRST = 0x01,
-        CHANNEL_FLAG_LAST = 0x02,
-        CHANNEL_FLAG_SHOW_PROTOCOL = 0x10,
-    };
-
-
-    void server_send_to_channel(int channel_id, uint8_t *data, int data_len,
-                               int total_data_len, int flags) throw (Error)
-    {
-        Stream stream(data_len + 1024); /* this should be big enough */
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
-
-        stream.channel_hdr = stream.p;
-        stream.p += 8;
-
-        stream.out_copy_bytes(data, data_len);
-        stream.mark_end();
-
-        int index = channel_id - MCS_GLOBAL_CHANNEL - 1;
-        int count = (int) this->sec_layer.channel_list.size();
-        if (index < 0 || index >= count) {
-            throw Error(ERR_MCS_CHANNEL_NOT_FOUND);
-        }
-        mcs_channel_item* channel = this->sec_layer.channel_list[index];
-
-        stream.p = stream.channel_hdr;
-        stream.out_uint32_le(total_data_len);
-        if (channel->flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
-            flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
-        }
-        stream.out_uint32_le(flags);
-        assert(channel->chanid == channel_id);
-
-//        LOG(LOG_INFO, "1) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(channel_id);
-            stream.out_uint8(0x70);
-            if (len >= 128) {
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
-            }
-            else {
-                stream.out_uint8(len);
-                #warning this is ugly isn't there a way to avoid moving the whole buffer
-                /* move everything up one byte */
-                uint8_t *lp = stream.p;
-                while (lp < stream.end) {
-                    lp[0] = lp[1];
-                    lp++;
-                }
-                stream.end--;
-                stream.p = oldp2-1;
-            }
-        }
-
-        stream.p = stream.end;
-        tpdu.end();
-        tpdu.send(this->trans);
-
-    }
-
-    // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
-    // -------------------------------------------------------------------
-
-    // updateType (2 bytes): A 16-bit, unsigned integer. The graphics update type.
-    // This field MUST be set to UPDATETYPE_PALETTE (0x0002).
-
-    // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding.
-    // Values in this field are ignored.
-
-    // numberColors (4 bytes): A 32-bit, unsigned integer.
-    // The number of RGB triplets in the paletteData field.
-    // This field MUST be set to NUM_8BPP_PAL_ENTRIES (256).
-
-    void send_global_palette(const BGRPalette & palette) throw (Error)
-    {
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
-
-        stream.rdp_hdr = stream.p;
-        stream.p += 18;
-        stream.out_uint16_le(RDP_UPDATE_PALETTE);
-
-        stream.out_uint16_le(0);
-
-        stream.out_uint32_le(256); /* # of colors */
-
-        for (int i = 0; i < 256; i++) {
-            int color = palette[i];
-            uint8_t r = color >> 16;
-            uint8_t g = color >> 8;
-            uint8_t b = color;
-            stream.out_uint8(b);
-            stream.out_uint8(g);
-            stream.out_uint8(r);
-        }
-        stream.mark_end();
-        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, stream.rdp_hdr - stream.data);
-
-//        LOG(LOG_INFO, "2) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            len = len | 0x8000;
-            stream.out_uint16_be(len);
-            stream.p = oldp2;
-        }
-
-        tpdu.end();
-        tpdu.send(this->trans);
-
-    }
-
 // [MS-RDPBCGR] 2.2.8.1.1.1.1 Share Control Header (TS_SHARECONTROLHEADER)
 // =======================================================================
 
@@ -408,25 +207,237 @@ struct server_rdp {
 // compressedLength (2 bytes): A 16-bit, unsigned integer. The compressed length
 //   of the packet in bytes.
 
-
-    void send_rdp_packet(Stream & stream, uint8_t pdu_type1, uint8_t pdu_type2, size_t offset_hdr)
+class RDPOut
+{
+    Stream & stream;
+    uint8_t offlen1;
+    uint8_t offlen2;
+    public:
+    RDPOut(Stream & stream, uint8_t pdu_type1, uint8_t pdu_type2, uint16_t mcs_channel, uint32_t share_id)
+        : stream(stream), offlen1(stream.p - stream.data), offlen2(this->offlen1+12)
     {
-        int len = stream.end - &(stream.data[offset_hdr]);
-        // ShareControlHeader
-        stream.set_out_uint16_le(len,                 offset_hdr);
-        stream.set_out_uint16_le(0x10 | pdu_type1,    offset_hdr+2);
-        stream.set_out_uint16_le(this->mcs_channel,   offset_hdr+4);
-
-        stream.set_out_uint32_le(this->share_id,      offset_hdr+6);
-        stream.set_out_uint8(0,                       offset_hdr+10);
-        stream.set_out_uint8(1,                       offset_hdr+11);
-        stream.set_out_uint16_le(len - 14,            offset_hdr+12);
-        stream.set_out_uint8(pdu_type2,               offset_hdr+14);
-        stream.set_out_uint8(0,                       offset_hdr+15);
-        stream.set_out_uint16_le(0,                   offset_hdr+16);
-
-//        LOG(LOG_INFO, "RDP Packet #%u (type=%u type2=%u)", this->packet_number++, PDUTYPE_DATAPDU, pdu_type2);
+        stream.skip_uint8(2); // len
+        stream.out_uint16_le(0x10 | pdu_type1);
+        stream.out_uint16_le(mcs_channel);
+        stream.out_uint32_le(share_id);
+        stream.out_uint8(0);
+        stream.out_uint8(1);
+        stream.skip_uint8(2); // len - 14
+        stream.out_uint8(pdu_type2);
+        stream.out_uint8(0);
+        stream.out_uint16_le(0);
     }
+
+    void end(){
+        int len = stream.p - stream.data + this->offlen1;
+        stream.set_out_uint16_le(len, this->offlen1);
+        stream.set_out_uint16_le(len - 14, this->offlen2);
+    }
+};
+
+/* rdp */
+struct server_rdp {
+    int up_and_running;
+
+    int share_id;
+    int mcs_channel;
+    struct ClientInfo client_info;
+    struct Sec sec_layer;
+    uint32_t packet_number;
+    Stream client_mcs_data;
+    Transport * trans;
+
+    server_rdp(Transport * trans, Inifile * ini)
+        :
+        up_and_running(0),
+        share_id(65538),
+        mcs_channel(0),
+        client_info(ini),
+        sec_layer(this->client_info.crypt_level),
+        packet_number(1),
+        trans(trans)
+    {
+    }
+
+    ~server_rdp()
+    {
+    }
+
+
+    enum {
+        CHANNEL_CHUNK_LENGTH = 8192,
+        CHANNEL_FLAG_FIRST = 0x01,
+        CHANNEL_FLAG_LAST = 0x02,
+        CHANNEL_FLAG_SHOW_PROTOCOL = 0x10,
+    };
+
+
+    void server_send_to_channel(int channel_id, uint8_t *data, int data_len,
+                               int total_data_len, int flags) throw (Error)
+    {
+        Stream stream(data_len + 1024); /* this should be big enough */
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        stream.sec_hdr = stream.p;
+        if (this->client_info.crypt_level > 1) {
+            stream.p += 4 + 8;
+        }
+        else {
+            stream.p += 4;
+        }
+
+        stream.channel_hdr = stream.p;
+        stream.p += 8;
+
+        stream.out_copy_bytes(data, data_len);
+        stream.mark_end();
+
+        int index = channel_id - MCS_GLOBAL_CHANNEL - 1;
+        int count = (int) this->sec_layer.channel_list.size();
+        if (index < 0 || index >= count) {
+            throw Error(ERR_MCS_CHANNEL_NOT_FOUND);
+        }
+        mcs_channel_item* channel = this->sec_layer.channel_list[index];
+
+        stream.p = stream.channel_hdr;
+        stream.out_uint32_le(total_data_len);
+        if (channel->flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
+            flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
+        }
+        stream.out_uint32_le(flags);
+        assert(channel->chanid == channel_id);
+
+//        LOG(LOG_INFO, "1) RDP Packet #%u", this->packet_number);
+        {
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (this->client_info.crypt_level > 1) {
+                stream.out_uint32_le(SEC_ENCRYPT);
+                int datalen = (int)((stream.end - stream.p) - 8);
+                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            } else {
+                stream.out_uint32_le(0);
+            }
+
+            stream.p = oldp;
+
+            uint8_t * oldp2 = stream.p;
+            stream.p = stream.mcs_hdr;
+            int len = (stream.end - stream.p) - 8;
+            stream.out_uint8(MCS_SDIN << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(channel_id);
+            stream.out_uint8(0x70);
+            if (len >= 128) {
+                len = len | 0x8000;
+                stream.out_uint16_be(len);
+                stream.p = oldp2;
+            }
+            else {
+                stream.out_uint8(len);
+                #warning this is ugly isn't there a way to avoid moving the whole buffer
+                /* move everything up one byte */
+                uint8_t *lp = stream.p;
+                while (lp < stream.end) {
+                    lp[0] = lp[1];
+                    lp++;
+                }
+                stream.end--;
+                stream.p = oldp2-1;
+            }
+        }
+
+        stream.p = stream.end;
+        tpdu.end();
+        tpdu.send(this->trans);
+
+    }
+
+    // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
+    // -------------------------------------------------------------------
+
+    // updateType (2 bytes): A 16-bit, unsigned integer. The graphics update type.
+    // This field MUST be set to UPDATETYPE_PALETTE (0x0002).
+
+    // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding.
+    // Values in this field are ignored.
+
+    // numberColors (4 bytes): A 32-bit, unsigned integer.
+    // The number of RGB triplets in the paletteData field.
+    // This field MUST be set to NUM_8BPP_PAL_ENTRIES (256).
+
+    void send_global_palette(const BGRPalette & palette) throw (Error)
+    {
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        stream.mcs_hdr = stream.p;
+        stream.p += 8;
+
+        stream.sec_hdr = stream.p;
+        if (this->client_info.crypt_level > 1) {
+            stream.p += 4 + 8;
+        }
+        else {
+            stream.p += 4;
+        }
+
+        RDPOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->mcs_channel, this->share_id);
+
+        stream.out_uint16_le(RDP_UPDATE_PALETTE);
+        stream.out_uint16_le(0);
+        stream.out_uint32_le(256); /* # of colors */
+
+        for (int i = 0; i < 256; i++) {
+            int color = palette[i];
+            uint8_t r = color >> 16;
+            uint8_t g = color >> 8;
+            uint8_t b = color;
+            stream.out_uint8(b);
+            stream.out_uint8(g);
+            stream.out_uint8(r);
+        }
+
+        rdp_out.end();
+
+        stream.mark_end();
+
+//        LOG(LOG_INFO, "2) RDP Packet #%u", this->packet_number);
+        {
+            uint8_t * oldp = stream.p;
+            stream.p = stream.sec_hdr;
+            if (this->client_info.crypt_level > 1) {
+                stream.out_uint32_le(SEC_ENCRYPT);
+                int datalen = (int)((stream.end - stream.p) - 8);
+                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
+                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
+            } else {
+                stream.out_uint32_le(0);
+            }
+
+            stream.p = oldp;
+
+            uint8_t * oldp2 = stream.p;
+            stream.p = stream.mcs_hdr;
+            int len = (stream.end - stream.p) - 8;
+            stream.out_uint8(MCS_SDIN << 2);
+            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+            stream.out_uint8(0x70);
+            len = len | 0x8000;
+            stream.out_uint16_be(len);
+            stream.p = oldp2;
+        }
+
+        tpdu.end();
+        tpdu.send(this->trans);
+
+    }
+
+
+
 
 //    2.2.9.1.1.4     Server Pointer Update PDU (TS_POINTER_PDU)
 //    ----------------------------------------------------------
@@ -552,8 +563,7 @@ struct server_rdp {
             stream.p += 4;
         }
 
-        stream.rdp_hdr = stream.p;
-        stream.p += 18;
+        RDPOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(RDP_POINTER_COLOR);
         stream.out_uint16_le(0); /* pad */
@@ -631,8 +641,9 @@ struct server_rdp {
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
 
+        rdp_out.end();
         stream.mark_end();
-        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, stream.rdp_hdr - stream.data);
+
 //        LOG(LOG_INFO, "3) RDP Packet #%u", this->packet_number);
         {
             uint8_t * oldp = stream.p;
@@ -712,15 +723,14 @@ struct server_rdp {
             stream.p += 4;
         }
 
-        stream.rdp_hdr = stream.p;
-        stream.p += 18;
+        RDPOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(RDP_POINTER_CACHED);
         stream.out_uint16_le(0); /* pad */
         stream.out_uint16_le(cache_idx);
 
         stream.mark_end();
-        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, stream.rdp_hdr - stream.data);
+        rdp_out.end();
 //        LOG(LOG_INFO, "4) RDP Packet #%u", this->packet_number);
         {
             uint8_t * oldp = stream.p;
@@ -1002,14 +1012,13 @@ struct server_rdp {
             stream.p += 4;
         }
 
-        stream.rdp_hdr = stream.p;
-        stream.p += 18;
+        RDPOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
         stream.out_clear_bytes(2);
 
         stream.mark_end();
-        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, stream.rdp_hdr - stream.data);
+        rdp_out.end();
 //        LOG(LOG_INFO, "5) RDP Packet #%u", this->packet_number);
         {
             uint8_t * oldp = stream.p;
@@ -1730,14 +1739,13 @@ struct server_rdp {
             stream.p += 4;
         }
 
-        stream.rdp_hdr = stream.p;
-        stream.p += 18;
+        RDPOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(1); /* messageType */
         stream.out_uint16_le(1002); /* control id */
 
         stream.mark_end();
-        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, stream.rdp_hdr - stream.data);
+        rdp_out.end();
 //        LOG(LOG_INFO, "6) RDP Packet #%u", this->packet_number);
         {
             uint8_t * oldp = stream.p;
@@ -1821,15 +1829,14 @@ struct server_rdp {
             stream.p += 4;
         }
 
-        stream.rdp_hdr = stream.p;
-        stream.p += 18;
+        RDPOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(action);
         stream.out_uint16_le(0); /* userid */
         stream.out_uint32_le(1002); /* control id */
 
         stream.mark_end();
-        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, stream.rdp_hdr - stream.data);
+        rdp_out.end();
 //        LOG(LOG_INFO, "7) RDP Packet #%u", this->packet_number);
         {
             uint8_t * oldp = stream.p;
@@ -1919,12 +1926,12 @@ struct server_rdp {
             stream.p += 4;
         }
 
-        stream.rdp_hdr = stream.p;
-        stream.p += 18;
+        RDPOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTMAP, this->mcs_channel, this->share_id);
+
         stream.out_copy_bytes((char*)g_fontmap, 172);
 
         stream.mark_end();
-        this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTMAP, stream.rdp_hdr - stream.data);
+        rdp_out.end();
 
 //        LOG(LOG_INFO, "8) RDP Packet #%u", this->packet_number);
         {
@@ -2068,11 +2075,9 @@ struct server_rdp {
                     stream.p += 4;
                 }
 
-                stream.rdp_hdr = stream.p;
-                stream.p += 18;
-
+                RDPOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SHUTDOWN_DENIED, this->mcs_channel, this->share_id);
                 stream.mark_end();
-                this->send_rdp_packet(stream, PDUTYPE_DATAPDU, PDUTYPE2_SHUTDOWN_DENIED, stream.rdp_hdr - stream.data);
+                rdp_out.end();
 //                LOG(LOG_INFO, "9) RDP Packet #%u", this->packet_number);
                 {
                     uint8_t * oldp = stream.p;
