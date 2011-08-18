@@ -573,26 +573,22 @@ struct Sec
         uint8_t shasig[20];
         uint8_t md5sig[16];
         uint8_t lenhdr[4];
-        uint8_t* sha1_info;
-        uint8_t* md5_info;
 
         this->sec_buf_out_uint32(lenhdr, data_len);
-        sha1_info = ssl_sha1_info_create();
-        md5_info = ssl_md5_info_create();
-        ssl_sha1_clear(sha1_info);
-        ssl_sha1_transform(sha1_info, this->sign_key, this->rc4_key_len);
-        ssl_sha1_transform(sha1_info, pad_54, 40);
-        ssl_sha1_transform(sha1_info, lenhdr, 4);
-        ssl_sha1_transform(sha1_info, data, data_len);
-        ssl_sha1_complete(sha1_info, shasig);
-        ssl_md5_clear(md5_info);
-        ssl_md5_transform(md5_info, this->sign_key, this->rc4_key_len);
-        ssl_md5_transform(md5_info, pad_92, 48);
-        ssl_md5_transform(md5_info, shasig, 20);
-        ssl_md5_complete(md5_info, md5sig);
+        SSL_SHA1 sha1_info;
+        SSL_MD5 md5_info;
+        ssl_sha1_clear(&sha1_info);
+        ssl_sha1_transform(&sha1_info, this->sign_key, this->rc4_key_len);
+        ssl_sha1_transform(&sha1_info, pad_54, 40);
+        ssl_sha1_transform(&sha1_info, lenhdr, 4);
+        ssl_sha1_transform(&sha1_info, data, data_len);
+        ssl_sha1_complete(&sha1_info, shasig);
+        ssl_md5_clear(&md5_info);
+        ssl_md5_transform(&md5_info, this->sign_key, this->rc4_key_len);
+        ssl_md5_transform(&md5_info, pad_92, 48);
+        ssl_md5_transform(&md5_info, shasig, 20);
+        ssl_md5_complete(&md5_info, md5sig);
         memcpy(out, md5sig, out_len);
-        ssl_sha1_info_delete(sha1_info);
-        ssl_md5_info_delete(md5_info);
     }
 
     void server_sec_process_logon_info(Stream & stream, ClientInfo * client_info) throw (Error)

@@ -154,20 +154,22 @@ class ssllib
 
 };
 
+void ssl_md5_transform(SSL_MD5 * md5_info, uint8_t* data, int len);
+void ssl_md5_complete(SSL_MD5* md5_info, uint8_t* data);
+void ssl_md5_clear(SSL_MD5* md5_info);
+
+void ssl_sha1_transform(SSL_SHA1* sha1_info, uint8_t* data, int len);
+void ssl_sha1_complete(SSL_SHA1* sha1_info, uint8_t* data);
+void ssl_sha1_clear(SSL_SHA1* sha1_info);
+
 uint8_t* ssl_rc4_info_create(void);
 void ssl_rc4_info_delete(uint8_t* rc4_info);
 void ssl_rc4_set_key(uint8_t* rc4_info, uint8_t* key, int len);
 void ssl_rc4_crypt(uint8_t* rc4_info, uint8_t* data, int len);
 uint8_t* ssl_sha1_info_create(void);
 void ssl_sha1_info_delete(uint8_t* sha1_info);
-void ssl_sha1_clear(uint8_t* sha1_info);
-void ssl_sha1_transform(uint8_t* sha1_info, uint8_t* data, int len);
-void ssl_sha1_complete(uint8_t* sha1_info, uint8_t* data);
 uint8_t* ssl_md5_info_create(void);
 void ssl_md5_info_delete(uint8_t* md5_info);
-void ssl_md5_clear(uint8_t* md5_info);
-void ssl_md5_transform(uint8_t* md5_info, uint8_t* data, int len);
-void ssl_md5_complete(uint8_t* md5_info, uint8_t* data);
 int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len,
             uint8_t* mod, int mod_len, uint8_t* exp, int exp_len);
 int ssl_gen_key_xrdp1(int key_size_in_bits, uint8_t* exp, int exp_len,
