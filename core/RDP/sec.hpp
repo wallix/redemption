@@ -550,11 +550,9 @@ struct Sec
                     this->pri_exp, 64);
     }
 
-
-
     /*****************************************************************************/
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    void server_sec_sign(uint8_t* out, int out_len, uint8_t* data, int data_len)
+    void server_sec_sign(uint8_t* out, int out_len, uint8_t* data, int data_len, uint8_t sign_key[], int rc4_key_len)
     {
         /* some compilers need unsigned char to avoid warnings */
         static uint8_t pad_54[40] = {
@@ -574,17 +572,21 @@ struct Sec
         uint8_t md5sig[16];
         uint8_t lenhdr[4];
 
-        this->sec_buf_out_uint32(lenhdr, data_len);
+        lenhdr[0] =  data_len & 0xff;
+        lenhdr[1] = (data_len >> 8) & 0xff;
+        lenhdr[2] = (data_len >> 16) & 0xff;
+        lenhdr[3] = (data_len >> 24) & 0xff;
+
         SSL_SHA1 sha1_info;
         SSL_MD5 md5_info;
         ssl_sha1_clear(&sha1_info);
-        ssl_sha1_transform(&sha1_info, this->sign_key, this->rc4_key_len);
+        ssl_sha1_transform(&sha1_info, sign_key, rc4_key_len);
         ssl_sha1_transform(&sha1_info, pad_54, 40);
         ssl_sha1_transform(&sha1_info, lenhdr, 4);
         ssl_sha1_transform(&sha1_info, data, data_len);
         ssl_sha1_complete(&sha1_info, shasig);
         ssl_md5_clear(&md5_info);
-        ssl_md5_transform(&md5_info, this->sign_key, this->rc4_key_len);
+        ssl_md5_transform(&md5_info, sign_key, rc4_key_len);
         ssl_md5_transform(&md5_info, pad_92, 48);
         ssl_md5_transform(&md5_info, shasig, 20);
         ssl_md5_complete(&md5_info, md5sig);
@@ -2901,7 +2903,6 @@ struct Sec
             stream.p += 8;
 
             int length = this->server_public_key_len + SEC_PADDING_SIZE;
-            int flags = SEC_CLIENT_RANDOM;
 
             int hdrlen = this->lic_layer.licence_issued ? 0 : 4 ;
 
@@ -2917,16 +2918,8 @@ struct Sec
 
             uint8_t * oldp = stream.p;
             stream.p = stream.sec_hdr;
-            if (!this->lic_layer.licence_issued || (flags & SEC_ENCRYPT)){
-                    stream.out_uint32_le(flags);
-            }
-
-            if (flags & SEC_ENCRYPT){
-                flags &= ~SEC_ENCRYPT;
-                int datalen = stream.end - stream.p - 8;
-
-                this->rdp_sec_sign(stream.p, 8, this->sign_key, this->rc4_key_len, stream.p + 8, datalen);
-                this->sec_encrypt(stream.p + 8, datalen);
+            if (!this->lic_layer.licence_issued){
+                    stream.out_uint32_le(SEC_CLIENT_RANDOM);
             }
 
             stream.p = stream.mcs_hdr;
