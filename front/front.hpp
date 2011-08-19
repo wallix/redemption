@@ -68,6 +68,7 @@
 
 #include "transport.hpp"
 #include "config.hpp"
+
 #include "error.hpp"
 
 
@@ -151,6 +152,8 @@ struct GraphicsUpdatePDU
     uint32_t offset_order_count;
     X224Out * tpdu;
     struct server_rdp & rdp_layer;
+    ShareControlOut * out_control;
+    ShareDataOut * out_data;
 
     GraphicsUpdatePDU(struct server_rdp & rdp_layer)
         :    stream(4096),
@@ -167,35 +170,44 @@ struct GraphicsUpdatePDU
         order_count(0),
         offset_header(0),
         offset_order_count(0),
-        rdp_layer(rdp_layer)
+        rdp_layer(rdp_layer),
+        out_control(NULL),
+        out_data(NULL)
     {
         this->init();
     }
 
+    ~GraphicsUpdatePDU(){
+        if (this->out_control){
+            delete this->out_control;
+        }
+        if (this->out_data){
+            delete this->out_data;
+        }
+    }
 
     void init(){
         this->stream.init(4096);
-// -------------------------
-//        McsOut pdu(stream);
         this->tpdu = new X224Out(X224Packet::DT_TPDU, this->stream);
 
         stream.mcs_hdr = stream.p;
         stream.p += 8;
-// -------------------------
 
-        if (this->rdp_layer.sec_layer.client_info->crypt_level > 1) {
-            stream.sec_hdr = stream.p;
+        stream.sec_hdr = stream.p;
+        if (this->rdp_layer.client_info.crypt_level > 1) {
             stream.p += 4 + 8;
         }
         else {
-            stream.sec_hdr = stream.p;
             stream.p += 4;
         }
 
         #warning we should define some kind of OrdersStream, to buffer in orders
         this->offset_header = this->stream.p - this->stream.data;
 
-        this->stream.out_clear_bytes(18); // Share Header, we will fill it later
+        if (this->out_control){ delete this->out_control; }
+        if (this->out_data){ delete this->out_data; }
+        this->out_control = new ShareControlOut(this->stream, PDUTYPE_DATAPDU, this->rdp_layer.mcs_channel);
+        this->out_data = new ShareDataOut(this->stream, PDUTYPE2_UPDATE, this->rdp_layer.share_id);
 
         this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
         this->stream.out_clear_bytes(2); /* pad */
@@ -210,13 +222,57 @@ struct GraphicsUpdatePDU
 //            LOG(LOG_ERR, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
             this->order_count = 0;
-
+            this->out_data->end();
+            this->out_control->end();
             stream.mark_end();
-            this->rdp_layer.send_rdp_packet(this->stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->offset_header);
+
 //            LOG(LOG_INFO, "server_sec_send front");
-            this->rdp_layer.sec_layer.server_sec_send(stream, MCS_GLOBAL_CHANNEL);
+            {
+                uint8_t * oldp = stream.p;
+                stream.p = stream.sec_hdr;
+                if (this->rdp_layer.client_info.crypt_level > 1) {
+                    stream.out_uint32_le(SEC_ENCRYPT);
+                    int datalen = (int)((stream.end - stream.p) - 8);
+                    this->rdp_layer.sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
+                    this->rdp_layer.sec_layer.sec_encrypt(stream.p + 8, datalen);
+                } else {
+                    stream.out_uint32_le(0);
+                }
+
+                stream.p = oldp;
+
+                uint8_t * oldp2 = stream.p;
+                stream.p = stream.mcs_hdr;
+                int len = (stream.end - stream.p) - 8;
+                if (len > 8192 * 2) {
+                    LOG(LOG_ERR,
+                        "error in.mcs_send, size too long, its %d (buffer=%d)\n",
+                        len, stream.capacity);
+                }
+                stream.out_uint8(MCS_SDIN << 2);
+                stream.out_uint16_be(this->rdp_layer.sec_layer.userid);
+                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+                stream.out_uint8(0x70);
+                if (len >= 128) {
+                    len = len | 0x8000;
+                    stream.out_uint16_be(len);
+                    stream.p = oldp2;
+                }
+                else {
+                    stream.out_uint8(len);
+                    #warning this is ugly isn't there a way to avoid moving the whole buffer
+                    /* move everything up one byte */
+                    uint8_t *lp = stream.p;
+                    while (lp < stream.end) {
+                        lp[0] = lp[1];
+                        lp++;
+                    }
+                    stream.end--;
+                    stream.p = oldp2-1;
+                }
+            }
             tpdu->end();
-            tpdu->send(this->rdp_layer.sec_layer.trans);
+            tpdu->send(this->rdp_layer.trans);
             this->init();
         }
     }
