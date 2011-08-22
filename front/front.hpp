@@ -47,6 +47,7 @@
 #include "cache.hpp"
 
 #include "RDP/x224.hpp"
+#include "RDP/rdp.hpp"
 #include "server_rdp.hpp"
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
@@ -148,10 +149,10 @@ struct GraphicsUpdatePDU
     RDPGlyphIndex glyphindex;
     // state variables for gathering batch of orders
     size_t order_count;
-    uint32_t offset_header;
     uint32_t offset_order_count;
-    X224Out * tpdu;
     struct server_rdp & rdp_layer;
+    X224Out * tpdu;
+    McsSDINOut * mcs_sdin;
     ShareControlOut * out_control;
     ShareDataOut * out_data;
 
@@ -168,9 +169,10 @@ struct GraphicsUpdatePDU
         glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
         // state variables for a batch of orders
         order_count(0),
-        offset_header(0),
         offset_order_count(0),
         rdp_layer(rdp_layer),
+        tpdu(NULL),
+        mcs_sdin(NULL),
         out_control(NULL),
         out_data(NULL)
     {
@@ -178,20 +180,21 @@ struct GraphicsUpdatePDU
     }
 
     ~GraphicsUpdatePDU(){
-        if (this->out_control){
-            delete this->out_control;
-        }
-        if (this->out_data){
-            delete this->out_data;
-        }
+        if (this->mcs_sdin){ delete this->mcs_sdin; }
+        if (this->tpdu){ delete this->tpdu; }
+        if (this->out_control){ delete this->out_control; }
+        if (this->out_data){ delete this->out_data; }
     }
 
     void init(){
+        if (this->mcs_sdin){ delete this->mcs_sdin; }
+        if (this->tpdu){ delete this->tpdu; }
+        if (this->out_control){ delete this->out_control; }
+        if (this->out_data){ delete this->out_data; }
+
         this->stream.init(4096);
         this->tpdu = new X224Out(X224Packet::DT_TPDU, this->stream);
-
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
+        this->mcs_sdin = new McsSDINOut(stream, this->rdp_layer.sec_layer.userid, MCS_GLOBAL_CHANNEL);
 
         stream.sec_hdr = stream.p;
         if (this->rdp_layer.client_info.crypt_level > 1) {
@@ -201,11 +204,6 @@ struct GraphicsUpdatePDU
             stream.p += 4;
         }
 
-        #warning we should define some kind of OrdersStream, to buffer in orders
-        this->offset_header = this->stream.p - this->stream.data;
-
-        if (this->out_control){ delete this->out_control; }
-        if (this->out_data){ delete this->out_data; }
         this->out_control = new ShareControlOut(this->stream, PDUTYPE_DATAPDU, this->rdp_layer.mcs_channel);
         this->out_data = new ShareDataOut(this->stream, PDUTYPE2_UPDATE, this->rdp_layer.share_id);
 
@@ -241,19 +239,10 @@ struct GraphicsUpdatePDU
 
                 stream.p = oldp;
 
-                uint8_t * oldp2 = stream.p;
-                stream.p = stream.mcs_hdr;
-                int len = (stream.end - stream.p) - 8;
-                stream.out_uint8(MCS_SDIN << 2);
-                stream.out_uint16_be(this->rdp_layer.sec_layer.userid);
-                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-                stream.out_uint8(0x70);
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
             }
-            tpdu->end();
-            tpdu->send(this->rdp_layer.trans);
+            this->mcs_sdin->end();
+            this->tpdu->end();
+            this->tpdu->send(this->rdp_layer.trans);
             this->init();
         }
     }
