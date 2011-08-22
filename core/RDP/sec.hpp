@@ -483,14 +483,9 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        stream.out_uint8(MCS_SDIN << 2);
-        stream.out_uint16_be(this->userid);
-        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-        stream.out_uint8(0x70);
-        stream.out_uint16_be((8+322)|0x8000);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         stream.out_copy_bytes((char*)lic1, 322);
-
+        sdin_out.end();
         tpdu.end();
         tpdu.send(trans);
     }
@@ -505,14 +500,9 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        stream.out_uint8(MCS_SDIN << 2);
-        stream.out_uint16_be(this->userid);
-        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-        stream.out_uint8(0x70);
-        stream.out_uint8(8+20);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         stream.out_copy_bytes((char*)lic2, 20);
-
+        sdin_out.end();
         tpdu.end();
         tpdu.send(trans);
     }
@@ -528,14 +518,9 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        stream.out_uint8(MCS_SDIN << 2);
-        stream.out_uint16_be(this->userid);
-        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-        stream.out_uint8(0x70);
-        stream.out_uint8(8+20);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         stream.out_copy_bytes((char*)lic3, 20);
-
+        sdin_out.end();
         tpdu.end();
         tpdu.send(trans);
 // ----------------------------
@@ -1553,7 +1538,7 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsSDRQOut sdrq_out(stream, this->userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
 
         int hdrlen = this->lic_layer.licence_issued ? 0 : 4 ;
 
@@ -1645,7 +1630,7 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsSDRQOut sdrq_out(stream, this->userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
 
         #warning if we are performing licence request that means licence has not been issued
         int hdrlen = this->lic_layer.licence_issued ? 0 : 4 ;
@@ -1693,7 +1678,7 @@ struct Sec
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsSDRQOut sdrq_out(stream, this->userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
 
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
@@ -2874,7 +2859,7 @@ struct Sec
         {
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsSDRQOut sdrq_out(stream, this->userid, MCS_GLOBAL_CHANNEL);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
 
             int length = this->server_public_key_len + SEC_PADDING_SIZE;
 

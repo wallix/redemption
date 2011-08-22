@@ -306,7 +306,7 @@ struct rdp_rdp {
 
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsSDRQOut sdrq_out(stream, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
 
             int hdrlen = 12;
 
@@ -567,7 +567,7 @@ struct rdp_rdp {
         {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsSDRQOut sdrq_out(stream, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -604,7 +604,7 @@ struct rdp_rdp {
         {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsSDRQOut sdrq_out(stream, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -639,7 +639,7 @@ struct rdp_rdp {
         {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsSDRQOut sdrq_out(stream, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -703,7 +703,7 @@ struct rdp_rdp {
 
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsSDRQOut sdrq_out(stream, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
 
             int hdrlen = 12 ; // SEC_ENCRYPT
 
@@ -827,7 +827,7 @@ struct rdp_rdp {
 
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsSDRQOut sdrq_out(stream, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -869,7 +869,7 @@ struct rdp_rdp {
             LOG(LOG_INFO, "send_invalidate\n");
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsSDRQOut sdrq_out(stream, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -1303,7 +1303,7 @@ struct rdp_rdp {
             way*/
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsSDRQOut sdrq_out(stream, this->sec_layer.userid, channel_id);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, channel_id);
 
             int hdrlen = 12 ; // SEC_ENCRYPT
 

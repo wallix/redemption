@@ -152,7 +152,7 @@ struct GraphicsUpdatePDU
     uint32_t offset_order_count;
     struct server_rdp & rdp_layer;
     X224Out * tpdu;
-    McsSDINOut * mcs_sdin;
+    McsOut * mcs_sdin;
     ShareControlOut * out_control;
     ShareDataOut * out_data;
 
@@ -194,7 +194,7 @@ struct GraphicsUpdatePDU
 
         this->stream.init(4096);
         this->tpdu = new X224Out(X224Packet::DT_TPDU, this->stream);
-        this->mcs_sdin = new McsSDINOut(stream, this->rdp_layer.sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        this->mcs_sdin = new McsOut(stream, MCS_SDIN, this->rdp_layer.sec_layer.userid, MCS_GLOBAL_CHANNEL);
 
         stream.sec_hdr = stream.p;
         if (this->rdp_layer.client_info.crypt_level > 1) {
