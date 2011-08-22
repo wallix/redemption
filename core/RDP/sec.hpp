@@ -26,7 +26,7 @@
 #define __SEC_HPP__
 
 #include "RDP/x224.hpp"
-#include "RDP/sec.hpp"
+#include "RDP/rdp.hpp"
 #include "client_info.hpp"
 #include "rsa_keys.hpp"
 #include "constants.hpp"
@@ -1553,8 +1553,7 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
+        McsSDRQOut sdrq_out(stream, this->userid, MCS_GLOBAL_CHANNEL);
 
         int hdrlen = this->lic_layer.licence_issued ? 0 : 4 ;
 
@@ -1572,6 +1571,7 @@ struct Sec
         stream.out_copy_bytes(crypt_hwid, LICENCE_HWID_SIZE);
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
+        sdrq_out.end();
         tpdu.end();
 
         uint8_t * oldp = stream.p;
@@ -1579,14 +1579,6 @@ struct Sec
         if (!this->lic_layer.licence_issued){
                 stream.out_uint32_le(SEC_LICENCE_NEG);
         }
-
-        stream.p = stream.mcs_hdr;
-        int len = ((stream.end - stream.p) - 8) | 0x8000;
-        stream.out_uint8(MCS_SDRQ << 2);
-        stream.out_uint16_be(this->userid);
-        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-        stream.out_uint8(0x70);
-        stream.out_uint16_be(len);
 
         stream.p = oldp;
 
@@ -1653,8 +1645,7 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
+        McsSDRQOut sdrq_out(stream, this->userid, MCS_GLOBAL_CHANNEL);
 
         #warning if we are performing licence request that means licence has not been issued
         int hdrlen = this->lic_layer.licence_issued ? 0 : 4 ;
@@ -1682,6 +1673,7 @@ struct Sec
         stream.out_uint16_le(hostlen);
         stream.out_copy_bytes(hostname, hostlen);
 
+        sdrq_out.end();
         tpdu.end();
 
         uint8_t * oldp = stream.p;
@@ -1689,15 +1681,6 @@ struct Sec
         if (!this->lic_layer.licence_issued){
                 stream.out_uint32_le(SEC_LICENCE_NEG);
         }
-
-        stream.p = stream.mcs_hdr;
-        #warning not need to write full header, we should just have to send length
-        int len = ((stream.end - stream.p) - 8) | 0x8000;
-        stream.out_uint8(MCS_SDRQ << 2);
-        stream.out_uint16_be(this->userid);
-        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-        stream.out_uint8(0x70);
-        stream.out_uint16_be(len);
 
         stream.p = oldp;
 
@@ -1710,8 +1693,7 @@ struct Sec
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
+        McsSDRQOut sdrq_out(stream, this->userid, MCS_GLOBAL_CHANNEL);
 
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
@@ -1740,6 +1722,7 @@ struct Sec
         stream.out_copy_bytes(hwid, LICENCE_HWID_SIZE);
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
+        sdrq_out.end();
         tpdu.end();
 
         uint8_t * oldp = stream.p;
@@ -1747,14 +1730,6 @@ struct Sec
         if (!this->lic_layer.licence_issued){
                 stream.out_uint32_le(SEC_LICENCE_NEG);
         }
-
-        stream.p = stream.mcs_hdr;
-        int len = ((stream.end - stream.p) - 8) | 0x8000;
-        stream.out_uint8(MCS_SDRQ << 2);
-        stream.out_uint16_be(this->userid);
-        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-        stream.out_uint8(0x70);
-        stream.out_uint16_be(len);
 
         stream.p = oldp;
 
@@ -2899,8 +2874,7 @@ struct Sec
         {
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-            stream.mcs_hdr = stream.p;
-            stream.p += 8;
+            McsSDRQOut sdrq_out(stream, this->userid, MCS_GLOBAL_CHANNEL);
 
             int length = this->server_public_key_len + SEC_PADDING_SIZE;
 
@@ -2914,6 +2888,7 @@ struct Sec
             stream.out_copy_bytes(this->client_crypt_random, this->server_public_key_len);
             stream.out_clear_bytes(SEC_PADDING_SIZE);
 
+            sdrq_out.end();
             tpdu.end();
 
             uint8_t * oldp = stream.p;
@@ -2921,14 +2896,6 @@ struct Sec
             if (!this->lic_layer.licence_issued){
                     stream.out_uint32_le(SEC_CLIENT_RANDOM);
             }
-
-            stream.p = stream.mcs_hdr;
-            int len = ((stream.end - stream.p) - 8) | 0x8000;
-            stream.out_uint8(MCS_SDRQ << 2);
-            stream.out_uint16_be(this->userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            stream.out_uint16_be(len);
 
             stream.p = oldp;
 
