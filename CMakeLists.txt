@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.6)
 
 # CONFIGURING PATHS
 set(CMAKE_INSTALL_PREFIX "/usr/local")
-set(CMAKE_VERBOSE_MAKEFILE true)
+#set(CMAKE_VERBOSE_MAKEFILE true)
 
 
 project (ReDemPtion)
@@ -28,6 +28,7 @@ find_library(SSL    ssl)
 find_library(CRYPTO crypto)
 find_library(DL     dl)
 find_library(X11    X11)
+find_library(PNG    png)
 
 if (SSL)
     message("-- Found openssl   (${SSL})")
@@ -39,8 +40,11 @@ if (DL)
     message("-- Found libdl     (${DL})")
 endif (DL) 
 if (X11)
-    message("-- Found libX11     (${X11})")
+    message("-- Found libX11    (${X11})")
 endif (X11) 
+if (PNG)
+    message("-- Found libpng    (${PNG})")
+endif (PNG) 
 
 
 # FIND boost
@@ -64,6 +68,7 @@ target_link_libraries (rdpproxy
     #libs
     localobjects
     ${SSL}
+    ${PNG}
     ${CRYPTO}
     ${DL}
     ${Boost_LIBRARIES}
@@ -102,6 +107,7 @@ install (DIRECTORY
 foreach(unitname IN ITEMS
     test_widget
     test_bitmap
+    test_libpng
     test_bitmap_cache
     test_bitmap_perf
     test_stream
@@ -128,7 +134,7 @@ foreach(unitname IN ITEMS
 
     message(" > adding unit test ${unitname}")
     add_executable(${unitname} tests/${unitname}.cpp)
-    target_link_libraries(${unitname} localobjects ${SSL} ${CRYPTO} ${DL} ${Boost_LIBRARIES})
+    target_link_libraries(${unitname} localobjects ${SSL} ${PNG} ${CRYPTO} ${DL} ${Boost_LIBRARIES})
     add_test(NAME ${unitname} COMMAND "./${unitname}")
 endforeach(unitname)
 
