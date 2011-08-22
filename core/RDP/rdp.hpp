@@ -278,14 +278,14 @@ class McsSDRQOut
     Stream & stream;
     uint8_t offlen;
     public:
-    McsSDRQOut(Stream & stream, uint8_t user_id)
+    McsSDRQOut(Stream & stream, uint8_t user_id, uint16_t chan_id)
         : stream(stream), offlen(stream.p - stream.data + 6)
     {
         stream.out_uint8(MCS_SDRQ << 2);
         stream.out_uint16_be(user_id);
-        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+        stream.out_uint16_be(chan_id);
         stream.out_uint8(0x70);
-        stream.skip_uint8(2); //len 
+        stream.skip_uint8(2); //len
     }
 
     void end(){
