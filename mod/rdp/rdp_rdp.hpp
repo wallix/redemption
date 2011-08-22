@@ -641,7 +641,6 @@ struct rdp_rdp {
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsSDRQOut sdrq_out(stream, this->sec_layer.userid);
 
-
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
 
@@ -704,8 +703,7 @@ struct rdp_rdp {
 
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-            stream.mcs_hdr = stream.p;
-            stream.p += 8;
+            McsSDRQOut sdrq_out(stream, this->sec_layer.userid);
 
             int hdrlen = 12 ; // SEC_ENCRYPT
 
@@ -803,6 +801,7 @@ struct rdp_rdp {
                 this->use_rdp5 = 0;
             }
 
+            sdrq_out.end();
             tpdu.end();
 
             uint8_t * oldp = stream.p;
@@ -813,14 +812,6 @@ struct rdp_rdp {
 
             this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
             this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-
-            stream.p = stream.mcs_hdr;
-            int len = ((stream.end - stream.p) - 8) | 0x8000;
-            stream.out_uint8(MCS_SDRQ << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            stream.out_uint16_be(len);
 
             stream.p = oldp;
 
@@ -836,8 +827,7 @@ struct rdp_rdp {
 
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-            stream.mcs_hdr = stream.p;
-            stream.p += 8;
+            McsSDRQOut sdrq_out(stream, this->sec_layer.userid);
 
             stream.sec_hdr = stream.p;
             stream.p += 12 ; // SEC_ENCRYPT
@@ -866,17 +856,10 @@ struct rdp_rdp {
                 this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.rc4_key_len, stream.p + 8, datalen);
                 this->sec_layer.sec_encrypt(stream.p + 8, datalen);
 
-                stream.p = stream.mcs_hdr;
-                int length = ((stream.end - stream.p) - 8) | 0x8000;
-                stream.out_uint8(MCS_SDRQ << 2);
-                stream.out_uint16_be(this->sec_layer.userid);
-                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-                stream.out_uint8(0x70);
-                stream.out_uint16_be(length);
-
                 stream.p = oldp;
             }
 
+            sdrq_out.end();
             tpdu.end();
             tpdu.send(this->trans);
         }
