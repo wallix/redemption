@@ -40,6 +40,15 @@
 #warning ssl calls introduce some dependency on ssl system library, injecting it in the sec object would be better.
 #include "ssl_calls.hpp"
 
+
+inline static void sec_make_40bit(uint8_t* key)
+{
+    key[0] = 0xd1;
+    key[1] = 0x26;
+    key[2] = 0x9e;
+}
+
+
 /* used in sec */
 struct mcs_channel_item {
     char name[16];
@@ -50,6 +59,71 @@ struct mcs_channel_item {
         this->flags = 0;
         this->chanid = 0;
     }
+};
+
+struct CryptContext
+{
+    int use_count;
+    uint8_t key[16];
+    uint8_t update_key[16];
+    int rc4_key_len;
+    SSL_RC4 rc4_info;
+    CryptContext() : use_count(0) {}
+
+    /* Encrypt data using RC4 */
+    void encrypt(uint8_t* data, int length)
+    {
+        ssllib ssl;
+
+        if (this->use_count == 4096){
+            this->update();
+            if (this->rc4_key_len == 8) {
+                sec_make_40bit(this->key);
+            }
+            ssl.rc4_set_key(this->rc4_info, this->key, this->rc4_key_len);
+            this->use_count = 0;
+        }
+        ssl.rc4_crypt(this->rc4_info, data, data, length);
+        this->use_count++;
+    }
+
+    void update()
+    {
+        static uint8_t pad_54[40] = {
+            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+            54, 54, 54, 54, 54, 54, 54, 54
+        };
+
+        static uint8_t pad_92[48] = {
+            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
+        };
+
+        uint8_t shasig[20];
+        SSL_SHA1 sha1;
+        SSL_MD5 md5;
+        SSL_RC4 update;
+
+        ssllib ssl;
+
+        ssl.sha1_init(&sha1);
+        ssl.sha1_update(&sha1, this->update_key, this->rc4_key_len);
+        ssl.sha1_update(&sha1, pad_54, 40);
+        ssl.sha1_update(&sha1, this->key, this->rc4_key_len);
+        ssl.sha1_final(&sha1, shasig);
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, this->update_key, this->rc4_key_len);
+        ssl.md5_update(&md5, pad_92, 48);
+        ssl.md5_update(&md5, shasig, 20);
+        ssl.md5_final(&md5, key);
+
+        ssl.rc4_set_key(update, this->key, this->rc4_key_len);
+        ssl.rc4_crypt(update, this->key, this->key, this->rc4_key_len);
+    }
+
 };
 
 struct Sec
@@ -92,15 +166,7 @@ struct Sec
     uint8_t client_crypt_random[512];
 
 
-    struct CryptContext
-    {
-        int use_count;
-        uint8_t key[16];
-        uint8_t update_key[16];
-        int rc4_key_len;
-        SSL_RC4 rc4_info;
-        CryptContext() : use_count(0) {}
-    } encrypt;
+    CryptContext encrypt;
 
 
     int decrypt_use_count;
@@ -256,13 +322,6 @@ struct Sec
         ssl.rc4_crypt(update, key, key, rc4_key_len);
     }
 
-    void sec_make_40bit(uint8_t* key)
-    {
-        key[0] = 0xd1;
-        key[1] = 0x26;
-        key[2] = 0x9e;
-    }
-
     // 16-byte transformation used to generate export keys (6.2.2).
     static void sec_hash_16(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2)
     {
@@ -305,22 +364,6 @@ struct Sec
         }
     }
 
-    /* Encrypt data using RC4 */
-    void sec_encrypt(uint8_t* data, int length, CryptContext & encrypt)
-    {
-        ssllib ssl;
-
-        if (this->encrypt.use_count == 4096){
-            this->sec_update(encrypt.key, encrypt.update_key, encrypt.rc4_key_len);
-            if (encrypt.rc4_key_len == 8) {
-                this->sec_make_40bit(encrypt.key);
-            }
-            ssl.rc4_set_key(encrypt.rc4_info, encrypt.key, encrypt.rc4_key_len);
-            encrypt.use_count = 0;
-        }
-        ssl.rc4_crypt(encrypt.rc4_info, data, data, length);
-        encrypt.use_count++;
-    }
 
     /* Decrypt data using RC4 */
     void sec_decrypt(uint8_t* data, int len)
@@ -330,7 +373,7 @@ struct Sec
         if (this->decrypt_use_count == 4096) {
             this->sec_update(this->decrypt_key, this->decrypt_update_key, this->rc4_key_len);
             if (this->rc4_key_len == 8) {
-                this->sec_make_40bit(this->decrypt_key);
+                sec_make_40bit(this->decrypt_key);
             }
             ssl.rc4_set_key(this->decrypt_rc4_info, this->decrypt_key, this->rc4_key_len);
             this->decrypt_use_count = 0;
@@ -1855,9 +1898,9 @@ struct Sec
 
         if (rc4_key_size == 1) {
             // LOG(LOG_DEBUG, "40-bit encryption enabled\n");
-            this->sec_make_40bit(this->sign_key);
-            this->sec_make_40bit(this->decrypt_key);
-            this->sec_make_40bit(this->encrypt.key);
+            sec_make_40bit(this->sign_key);
+            sec_make_40bit(this->decrypt_key);
+            sec_make_40bit(this->encrypt.key);
             this->rc4_key_len = 8;
             this->encrypt.rc4_key_len = 8;
         }
