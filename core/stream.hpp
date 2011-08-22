@@ -53,10 +53,10 @@ class Stream {
     size_t capacity;
 
     /* offsets of various headers */
-    uint8_t* mcs_hdr;
     uint8_t* sec_hdr;
     uint8_t* channel_hdr;
     uint8_t* next_packet;
+
     uint8_t autobuffer[AUTOSIZE];
 
     Stream(size_t size = AUTOSIZE) {

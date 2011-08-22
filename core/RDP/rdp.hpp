@@ -272,49 +272,6 @@ class ShareDataOut
     }
 };
 
-
-class McsSDRQOut
-{
-    Stream & stream;
-    uint8_t offlen;
-    public:
-    McsSDRQOut(Stream & stream, uint8_t user_id, uint16_t chan_id)
-        : stream(stream), offlen(stream.p - stream.data + 6)
-    {
-        stream.out_uint8(MCS_SDRQ << 2);
-        stream.out_uint16_be(user_id);
-        stream.out_uint16_be(chan_id);
-        stream.out_uint8(0x70);
-        stream.skip_uint8(2); //len
-    }
-
-    void end(){
-        int len = stream.p - stream.data - offlen - 2;
-        stream.set_out_uint16_be(0x8000|len, this->offlen);
-    }
-};
-
-class McsSDINOut
-{
-    Stream & stream;
-    uint8_t offlen;
-    public:
-    McsSDINOut(Stream & stream, uint8_t user_id, uint16_t chan_id)
-        : stream(stream), offlen(stream.p - stream.data + 6)
-    {
-        stream.out_uint8(MCS_SDIN << 2);
-        stream.out_uint16_be(user_id);
-        stream.out_uint16_be(chan_id);
-        stream.out_uint8(0x70);
-        stream.skip_uint8(2); //len
-    }
-
-    void end(){
-        int len = stream.p - stream.data - offlen - 2;
-        stream.set_out_uint16_be(0x8000|len, this->offlen);
-    }
-};
-
 class McsOut
 {
     Stream & stream;
