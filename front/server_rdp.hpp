@@ -78,8 +78,7 @@ struct server_rdp {
     {
         Stream stream(data_len + 1024); /* this should be big enough */
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, channel_id);
 
         stream.sec_hdr = stream.p;
         if (this->client_info.crypt_level > 1) {
@@ -124,34 +123,10 @@ struct server_rdp {
             }
 
             stream.p = oldp;
-
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(channel_id);
-            stream.out_uint8(0x70);
-            if (len >= 128) {
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
-            }
-            else {
-                stream.out_uint8(len);
-                #warning this is ugly isn't there a way to avoid moving the whole buffer
-                /* move everything up one byte */
-                uint8_t *lp = stream.p;
-                while (lp < stream.end) {
-                    lp[0] = lp[1];
-                    lp++;
-                }
-                stream.end--;
-                stream.p = oldp2-1;
-            }
         }
 
         stream.p = stream.end;
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -1070,8 +1045,7 @@ struct server_rdp {
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
 
         stream.sec_hdr = stream.p;
         if (this->client_info.crypt_level > 1) {
@@ -1245,20 +1219,10 @@ struct server_rdp {
             }
 
             stream.p = oldp;
-
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            len = len | 0x8000;
-            stream.out_uint16_be(len);
-            stream.p = oldp2;
         }
 
         stream.p = stream.end;
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -1500,8 +1464,7 @@ struct server_rdp {
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
 
         stream.sec_hdr = stream.p;
         if (this->client_info.crypt_level > 1) {
@@ -1533,32 +1496,10 @@ struct server_rdp {
 
             stream.p = oldp;
 
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            if (len >= 128) {
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
-            }
-            else {
-                stream.out_uint8(len);
-                #warning this is ugly isn't there a way to avoid moving the whole buffer
-                /* move everything up one byte */
-                uint8_t *lp = stream.p;
-                while (lp < stream.end) {
-                    lp[0] = lp[1];
-                    lp++;
-                }
-                stream.end--;
-                stream.p = oldp2-1;
-            }
         }
 
+        #warning here we could use short headers (size < 128)
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -1590,8 +1531,7 @@ struct server_rdp {
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
 
         stream.sec_hdr = stream.p;
         if (this->client_info.crypt_level > 1) {
@@ -1624,32 +1564,9 @@ struct server_rdp {
 
             stream.p = oldp;
 
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            if (len >= 128) {
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
-            }
-            else {
-                stream.out_uint8(len);
-                #warning this is ugly isn't there a way to avoid moving the whole buffer
-                /* move everything up one byte */
-                uint8_t *lp = stream.p;
-                while (lp < stream.end) {
-                    lp[0] = lp[1];
-                    lp++;
-                }
-                stream.end--;
-                stream.p = oldp2-1;
-            }
         }
 
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -1687,8 +1604,7 @@ struct server_rdp {
         #warning we should create some RDPStream object created on init and sent before destruction
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
 
         stream.sec_hdr = stream.p;
         if (this->client_info.crypt_level > 1) {
@@ -1719,34 +1635,9 @@ struct server_rdp {
             }
 
             stream.p = oldp;
-
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            if (len >= 128) {
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
-            }
-            else {
-                stream.out_uint8(len);
-                #warning this is ugly isn't there a way to avoid moving the whole buffer
-                /* move everything up one byte */
-                uint8_t *lp = stream.p;
-                while (lp < stream.end) {
-                    lp[0] = lp[1];
-                    lp++;
-                }
-                stream.end--;
-                stream.p = oldp2-1;
-            }
         }
 
-
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -1836,8 +1727,7 @@ struct server_rdp {
                 // if user really wants to disconnect */
                 Stream stream(8192);
                 X224Out tpdu(X224Packet::DT_TPDU, stream);
-                stream.mcs_hdr = stream.p;
-                stream.p += 8;
+                McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
 
                 stream.sec_hdr = stream.p;
                 if (this->client_info.crypt_level > 1) {
@@ -1864,33 +1754,9 @@ struct server_rdp {
                     }
 
                     stream.p = oldp;
-
-                    uint8_t * oldp2 = stream.p;
-                    stream.p = stream.mcs_hdr;
-                    int len = (stream.end - stream.p) - 8;
-                    stream.out_uint8(MCS_SDIN << 2);
-                    stream.out_uint16_be(this->sec_layer.userid);
-                    stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-                    stream.out_uint8(0x70);
-                    if (len >= 128) {
-                        len = len | 0x8000;
-                        stream.out_uint16_be(len);
-                        stream.p = oldp2;
-                    }
-                    else {
-                        stream.out_uint8(len);
-                        #warning this is ugly isn't there a way to avoid moving the whole buffer
-                        /* move everything up one byte */
-                        uint8_t *lp = stream.p;
-                        while (lp < stream.end) {
-                            lp[0] = lp[1];
-                            lp++;
-                        }
-                        stream.end--;
-                        stream.p = oldp2-1;
-                    }
                 }
 
+                sdin_out.end();
                 tpdu.end();
                 tpdu.send(this->trans);
 
@@ -1929,8 +1795,7 @@ struct server_rdp {
         #warning we should create some RDPStream object created on init and sent before destruction
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
 
         stream.sec_hdr = stream.p;
         if (this->client_info.crypt_level > 1) {
@@ -1957,32 +1822,9 @@ struct server_rdp {
 
             stream.p = oldp;
 
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            if (len >= 128) {
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
-            }
-            else {
-                stream.out_uint8(len);
-                #warning this is ugly isn't there a way to avoid moving the whole buffer
-                /* move everything up one byte */
-                uint8_t *lp = stream.p;
-                while (lp < stream.end) {
-                    lp[0] = lp[1];
-                    lp++;
-                }
-                stream.end--;
-                stream.p = oldp2-1;
-            }
         }
 
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
     }
