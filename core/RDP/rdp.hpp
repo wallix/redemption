@@ -223,7 +223,7 @@ class ShareControlAndDataOut
     }
 
     void end(){
-        int len = stream.p - stream.data + this->offlen1;
+        int len = stream.p - stream.data - this->offlen1;
         stream.set_out_uint16_le(len, this->offlen1);
         stream.set_out_uint16_le(len - 14, this->offlen2);
     }
@@ -244,7 +244,7 @@ class ShareControlOut
     }
 
     void end(){
-        int len = stream.p - stream.data + this->offlen;
+        int len = stream.p - stream.data - this->offlen;
         stream.set_out_uint16_le(len, this->offlen);
     }
 };
@@ -267,9 +267,32 @@ class ShareDataOut
     }
 
     void end(){
-        int len = stream.p - stream.data - 14;
+        int len = stream.p - stream.data - offlen - 2;
         stream.set_out_uint16_le(len, this->offlen);
     }
 };
+
+
+class McsSDRQOut
+{
+    Stream & stream;
+    uint8_t offlen;
+    public:
+    McsSDRQOut(Stream & stream, uint8_t user_id)
+        : stream(stream), offlen(stream.p - stream.data + 6)
+    {
+        stream.out_uint8(MCS_SDRQ << 2);
+        stream.out_uint16_be(user_id);
+        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+        stream.out_uint8(0x70);
+        stream.skip_uint8(2); //len 
+    }
+
+    void end(){
+        int len = stream.p - stream.data - offlen - 2;
+        stream.set_out_uint16_be(0x8000|len, this->offlen);
+    }
+};
+
 
 #endif
