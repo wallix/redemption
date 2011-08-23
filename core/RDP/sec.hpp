@@ -1627,7 +1627,7 @@ struct Sec
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
 
-        #warning if we are performing licence request that does'nt it mean that licence has not been issued ?
+        #warning if we are performing licence request doesn't it mean that licence has not been issued ?
         stream.out_uint8(this->lic_layer.licence_issued?LICENCE_TAG_REQUEST:SEC_LICENCE_NEG);
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
@@ -2926,6 +2926,22 @@ class SecOut
             int datalen = this->stream.p - data;
             this->crypt.sign(this->stream.data + this->offhdr + 4, 8, data, datalen);
             this->crypt.encrypt(data, datalen);
+        }
+    }
+};
+
+
+class SecIn
+{
+    public:
+    uint32_t flags;
+    SecIn(Stream & stream, uint8_t crypt_level, CryptContext & crypt)
+    {
+        this->flags = stream.in_uint32_le();
+        if (this->flags & SEC_ENCRYPT){
+            #warning shouldn't we check signature ?
+            stream.skip_uint8(8); /* signature */
+            crypt.decrypt(stream.p, stream.end - stream.p); // decrypting to the end of tpdu ?
         }
     }
 };

@@ -933,7 +933,8 @@ struct rdp_rdp {
                     }
 
                     uint32_t sec_flags = stream.in_uint32_le();
-                    if (sec_flags & SEC_ENCRYPT) { /* 0x08 */
+                    if ((sec_flags & SEC_ENCRYPT)
+                    || (sec_flags & 0x0400)) { /* SEC_REDIRECT_ENCRYPT */
                         stream.skip_uint8(8); /* signature */
                         this->sec_layer.decrypt.decrypt(stream.p, stream.end - stream.p);
                     }
@@ -945,9 +946,6 @@ struct rdp_rdp {
                     }
 
                     if (sec_flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
-                        stream.skip_uint8(8); /* signature */
-                        this->sec_layer.decrypt.decrypt(stream.p, stream.end - stream.p);
-
                         /* Check for a redirect packet, starts with 00 04 */
                         if (stream.p[0] == 0 && stream.p[1] == 4){
                         /* for some reason the PDU and the length seem to be swapped.
@@ -1038,16 +1036,6 @@ struct rdp_rdp {
 
                 if (version == 0xff){
                     stream.next_packet = stream.end;
-                    return 0;
-                }
-                else if (version != 3){
-                    /* We must verify this condition because I'm not pretty sure that
-                    it's good. I think we need to recover protocol version and not
-                    this one. By the moment, I put the same condition that appears
-                    in rdesktop */
-                    //rdp5_process_data(self, stream, pdu_data_type);
-                    // packet setup Added by kriss
-                    stream.next_packet = stream.p;
                     return 0;
                 }
                 stream.next_packet = stream.p;
