@@ -911,7 +911,7 @@ struct rdp_rdp {
 
             int chan = 0;
             if (stream.next_packet >= stream.end || stream.next_packet == 0) {
-
+                uint32_t sec_flags = 0;
                 #warning this loop is ugly, the only true reason is we are waiting for the licence
                 while (1)
                 {
@@ -920,20 +920,14 @@ struct rdp_rdp {
                     // read tpktHeader (4 bytes = 3 0 len)
                     // TPDU class 0    (3 bytes = LI F0 PDU_DT)
                     X224In(this->trans, stream);
-
-                    int opcode = stream.in_uint8();
-                    if ((opcode >> 2) != MCS_SDIN) {
+                    McsIn mcs_in(stream);
+                    if ((mcs_in.opcode >> 2) != MCS_SDIN) {
                         throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
                     }
-                    stream.skip_uint8(2);
-                    chan = stream.in_uint16_be();
-                    stream.skip_uint8(1);
-                    int len = stream.in_uint8();
-                    if (len & 0x80) {
-                        stream.skip_uint8(1);
-                    }
+                    chan = mcs_in.chan_id;
+                    int len = mcs_in.len;
 
-                    uint32_t sec_flags = stream.in_uint32_le();
+                    sec_flags = stream.in_uint32_le();
                     if ((sec_flags & SEC_ENCRYPT)
                     || (sec_flags & 0x0400)) { /* SEC_REDIRECT_ENCRYPT */
                         stream.skip_uint8(8); /* signature */
@@ -945,31 +939,31 @@ struct rdp_rdp {
                         // read again until licence is processed
                         continue;
                     }
-
-                    if (sec_flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
-                        /* Check for a redirect packet, starts with 00 04 */
-                        if (stream.p[0] == 0 && stream.p[1] == 4){
-                        /* for some reason the PDU and the length seem to be swapped.
-                           This isn't good, but we're going to do a byte for byte
-                           swap.  So the first four value appear as: 00 04 XX YY,
-                           where XX YY is the little endian length. We're going to
-                           use 04 00 as the PDU type, so after our swap this will look
-                           like: XX YY 04 00 */
-
-                            uint8_t swapbyte1 = stream.p[0];
-                            stream.p[0] = stream.p[2];
-                            stream.p[2] = swapbyte1;
-
-                            uint8_t swapbyte2 = stream.p[1];
-                            stream.p[1] = stream.p[3];
-                            stream.p[3] = swapbyte2;
-
-                            uint8_t swapbyte3 = stream.p[2];
-                            stream.p[2] = stream.p[3];
-                            stream.p[3] = swapbyte3;
-                        }
-                    }
                     break;
+                }
+
+                if (sec_flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
+                    /* Check for a redirect packet, starts with 00 04 */
+                    if (stream.p[0] == 0 && stream.p[1] == 4){
+                    /* for some reason the PDU and the length seem to be swapped.
+                       This isn't good, but we're going to do a byte for byte
+                       swap.  So the first four value appear as: 00 04 XX YY,
+                       where XX YY is the little endian length. We're going to
+                       use 04 00 as the PDU type, so after our swap this will look
+                       like: XX YY 04 00 */
+
+                        uint8_t swapbyte1 = stream.p[0];
+                        stream.p[0] = stream.p[2];
+                        stream.p[2] = swapbyte1;
+
+                        uint8_t swapbyte2 = stream.p[1];
+                        stream.p[1] = stream.p[3];
+                        stream.p[3] = swapbyte2;
+
+                        uint8_t swapbyte3 = stream.p[2];
+                        stream.p[2] = stream.p[3];
+                        stream.p[3] = swapbyte3;
+                    }
                 }
                 if (chan != MCS_GLOBAL_CHANNEL){
                   uint32_t length = stream.in_uint32_le();
