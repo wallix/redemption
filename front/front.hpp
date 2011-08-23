@@ -153,6 +153,7 @@ struct GraphicsUpdatePDU
     struct server_rdp & rdp_layer;
     X224Out * tpdu;
     McsOut * mcs_sdin;
+    SecOut * sec_out;
     ShareControlOut * out_control;
     ShareDataOut * out_data;
 
@@ -173,6 +174,7 @@ struct GraphicsUpdatePDU
         rdp_layer(rdp_layer),
         tpdu(NULL),
         mcs_sdin(NULL),
+        sec_out(0),
         out_control(NULL),
         out_data(NULL)
     {
@@ -180,30 +182,24 @@ struct GraphicsUpdatePDU
     }
 
     ~GraphicsUpdatePDU(){
-        if (this->mcs_sdin){ delete this->mcs_sdin; }
         if (this->tpdu){ delete this->tpdu; }
+        if (this->mcs_sdin){ delete this->mcs_sdin; }
+        if (this->sec_out){ delete this->sec_out; }
         if (this->out_control){ delete this->out_control; }
         if (this->out_data){ delete this->out_data; }
     }
 
     void init(){
-        if (this->mcs_sdin){ delete this->mcs_sdin; }
         if (this->tpdu){ delete this->tpdu; }
+        if (this->mcs_sdin){ delete this->mcs_sdin; }
+        if (this->sec_out){ delete this->sec_out; }
         if (this->out_control){ delete this->out_control; }
         if (this->out_data){ delete this->out_data; }
 
         this->stream.init(4096);
         this->tpdu = new X224Out(X224Packet::DT_TPDU, this->stream);
         this->mcs_sdin = new McsOut(stream, MCS_SDIN, this->rdp_layer.sec_layer.userid, MCS_GLOBAL_CHANNEL);
-
-        stream.sec_hdr = stream.p;
-        if (this->rdp_layer.client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
-
+        this->sec_out = new SecOut(stream, SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
         this->out_control = new ShareControlOut(this->stream, PDUTYPE_DATAPDU, this->rdp_layer.mcs_channel);
         this->out_data = new ShareDataOut(this->stream, PDUTYPE2_UPDATE, this->rdp_layer.share_id);
 
@@ -224,23 +220,7 @@ struct GraphicsUpdatePDU
             this->out_control->end();
             stream.mark_end();
 
-//            LOG(LOG_INFO, "server_sec_send front");
-            {
-                uint8_t * oldp = stream.p;
-                stream.p = stream.sec_hdr;
-                if (this->rdp_layer.client_info.crypt_level > 1) {
-                    stream.out_uint32_le(SEC_ENCRYPT);
-                    uint8_t * data = stream.p + 8;
-                    int datalen = stream.end - data;
-                    this->rdp_layer.sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-                    this->rdp_layer.sec_layer.encrypt.encrypt(data, datalen);
-                } else {
-                    stream.out_uint32_le(0);
-                }
-
-                stream.p = oldp;
-
-            }
+            this->sec_out->end();
             this->mcs_sdin->end();
             this->tpdu->end();
             this->tpdu->send(this->rdp_layer.trans);
