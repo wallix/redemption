@@ -79,14 +79,7 @@ struct server_rdp {
         Stream stream(data_len + 1024); /* this should be big enough */
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, channel_id);
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
 
         stream.channel_hdr = stream.p;
         stream.p += 8;
@@ -109,24 +102,7 @@ struct server_rdp {
         stream.out_uint32_le(flags);
         assert(channel->chanid == channel_id);
 
-//        LOG(LOG_INFO, "1) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                uint8_t * data = stream.p + 8;
-                int datalen = stream.end - data;
-                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-                this->sec_layer.encrypt.encrypt(data, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-        }
-
-        stream.p = stream.end;
+        sec_out.end();
         sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
@@ -151,14 +127,7 @@ struct server_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
 
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->mcs_channel, this->share_id);
 
@@ -180,23 +149,7 @@ struct server_rdp {
 
         stream.mark_end();
 
-//        LOG(LOG_INFO, "2) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                uint8_t * data = stream.p + 8;
-                int datalen = stream.end - data;
-                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-                this->sec_layer.encrypt.encrypt(data, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-        }
-
+        sec_out.end();
         sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
@@ -320,15 +273,7 @@ struct server_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
-
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(RDP_POINTER_COLOR);
@@ -410,30 +355,11 @@ struct server_rdp {
         rdp_out.end();
         stream.mark_end();
 
-//        LOG(LOG_INFO, "3) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                uint8_t * data = stream.p + 8;
-                int datalen = stream.end - data;
-                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-                this->sec_layer.encrypt.encrypt(data, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-
-        }
-
+        sec_out.end();
         sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
-
     }
-
 
 //    2.2.9.1.1.4.5    New Pointer Update (TS_POINTERATTRIBUTE)
 //    ---------------------------------------------------------
@@ -471,15 +397,7 @@ struct server_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
-
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(RDP_POINTER_CACHED);
@@ -488,23 +406,7 @@ struct server_rdp {
 
         stream.mark_end();
         rdp_out.end();
-//        LOG(LOG_INFO, "4) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                uint8_t * data = stream.p + 8;
-                int datalen = stream.end - data;
-                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-                this->sec_layer.encrypt.encrypt(data, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-        }
-
+        sec_out.end();
         sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
@@ -1465,39 +1367,14 @@ struct server_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
-
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTMAP, this->mcs_channel, this->share_id);
 
         stream.out_copy_bytes((char*)g_fontmap, 172);
 
         stream.mark_end();
         rdp_out.end();
-
-//        LOG(LOG_INFO, "8) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                uint8_t * data = stream.p + 8;
-                int datalen = stream.end - data;
-                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-                this->sec_layer.encrypt.encrypt(data, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-        }
-
+        sec_out.end();
         sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
@@ -1589,35 +1466,11 @@ struct server_rdp {
                 Stream stream(8192);
                 X224Out tpdu(X224Packet::DT_TPDU, stream);
                 McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-
-                stream.sec_hdr = stream.p;
-                if (this->client_info.crypt_level > 1) {
-                    stream.p += 4 + 8;
-                }
-                else {
-                    stream.p += 4;
-                }
-
+                SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
                 ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SHUTDOWN_DENIED, this->mcs_channel, this->share_id);
                 stream.mark_end();
                 rdp_out.end();
-//                LOG(LOG_INFO, "9) RDP Packet #%u", this->packet_number);
-                {
-                    uint8_t * oldp = stream.p;
-                    stream.p = stream.sec_hdr;
-                    if (this->client_info.crypt_level > 1) {
-                        stream.out_uint32_le(SEC_ENCRYPT);
-                        uint8_t * data = stream.p + 8;
-                        int datalen = stream.end - data;
-                        this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-                        this->sec_layer.encrypt.encrypt(data, datalen);
-                    } else {
-                        stream.out_uint32_le(0);
-                    }
-
-                    stream.p = oldp;
-                }
-
+                sec_out.end();
                 sdin_out.end();
                 tpdu.end();
                 tpdu.send(this->trans);
@@ -1658,35 +1511,12 @@ struct server_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
 
         ShareControlOut(stream, PDUTYPE_DEACTIVATEALLPDU, this->mcs_channel).end();
         stream.mark_end();
 
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                uint8_t * data = stream.p + 8;
-                int datalen = stream.end - data;
-                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-                this->sec_layer.encrypt.encrypt(data, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-
-        }
-
+        sec_out.end();
         sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
