@@ -1627,13 +1627,8 @@ struct Sec
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
 
-        #warning if we are performing licence request that means licence has not been issued
-        int hdrlen = this->lic_layer.licence_issued ? 0 : 4 ;
-
-        stream.sec_hdr = stream.p;
-        stream.p += hdrlen;
-
-        stream.out_uint8(LICENCE_TAG_REQUEST);
+        #warning if we are performing licence request that does'nt it mean that licence has not been issued ?
+        stream.out_uint8(this->lic_layer.licence_issued?LICENCE_TAG_REQUEST:SEC_LICENCE_NEG);
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
         stream.out_uint32_le(1);
@@ -1655,15 +1650,6 @@ struct Sec
 
         sdrq_out.end();
         tpdu.end();
-
-        uint8_t * oldp = stream.p;
-        stream.p = stream.sec_hdr;
-        if (!this->lic_layer.licence_issued){
-                stream.out_uint32_le(SEC_LICENCE_NEG);
-        }
-
-        stream.p = oldp;
-
         tpdu.send(trans);
     }
 
@@ -1678,12 +1664,7 @@ struct Sec
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
 
-        int hdrlen = this->lic_layer.licence_issued ? 0 : 4 ;
-
-        stream.sec_hdr = stream.p;
-        stream.p += hdrlen;
-
-        stream.out_uint8(LICENCE_TAG_PRESENT);
+        stream.out_uint8(this->lic_layer.licence_issued ?LICENCE_TAG_PRESENT:SEC_LICENCE_NEG);
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
         stream.out_uint32_le(1);
@@ -1704,15 +1685,6 @@ struct Sec
 
         sdrq_out.end();
         tpdu.end();
-
-        uint8_t * oldp = stream.p;
-        stream.p = stream.sec_hdr;
-        if (!this->lic_layer.licence_issued){
-                stream.out_uint32_le(SEC_LICENCE_NEG);
-        }
-
-        stream.p = oldp;
-
         tpdu.send(trans);
     }
 
@@ -2859,12 +2831,7 @@ struct Sec
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
 
             int length = this->server_public_key_len + SEC_PADDING_SIZE;
-
-            int hdrlen = this->lic_layer.licence_issued ? 0 : 4 ;
-
-            stream.sec_hdr = stream.p;
-            stream.p += hdrlen;
-
+            stream.out_uint32_le(SEC_CLIENT_RANDOM);
             stream.out_uint32_le(length);
             LOG(LOG_INFO, "Server public key is %d bytes long", this->server_public_key_len);
             stream.out_copy_bytes(this->client_crypt_random, this->server_public_key_len);
@@ -2872,15 +2839,6 @@ struct Sec
 
             sdrq_out.end();
             tpdu.end();
-
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (!this->lic_layer.licence_issued){
-                    stream.out_uint32_le(SEC_CLIENT_RANDOM);
-            }
-
-            stream.p = oldp;
-
             tpdu.send(trans);
         }
     }
