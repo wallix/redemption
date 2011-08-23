@@ -307,11 +307,7 @@ struct rdp_rdp {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-
-            int hdrlen = 12;
-
-            stream.sec_hdr = stream.p;
-            stream.p += hdrlen;
+            SecOut sec_out(stream, this->sec_layer.encrypt);
 
             stream.out_uint16_le(2 + 14 + caplen + sizeof(RDP_SOURCE));
             stream.out_uint16_le((PDUTYPE_CONFIRMACTIVEPDU | 0x10)); /* Version 1 */
@@ -345,20 +341,9 @@ struct rdp_rdp {
             this->out_unknown_caps(stream, 0x0e, 0x08, caps_0x0e);
             this->out_unknown_caps(stream, 0x10, 0x34, caps_0x10); /* glyph cache? */
 
+            sec_out.end();
             sdrq_out.end();
             tpdu.end();
-
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            stream.out_uint32_le(SEC_ENCRYPT);
-
-            uint8_t * data = stream.p + 8;
-            int datalen = stream.end - data;
-            this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-            this->sec_layer.encrypt.encrypt(data, datalen);
-
-            stream.p = oldp;
-
             tpdu.send(this->trans);
 
             LOG(LOG_INFO, "Waiting for answer to confirm active\n");
