@@ -765,7 +765,7 @@ struct server_rdp {
                 int datalen = stream.end - data;
                 this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
                 this->sec_layer.encrypt.encrypt(data, datalen);
-            } 
+            }
             else {
                 stream.out_uint32_le(0);
             }
@@ -1177,7 +1177,7 @@ struct server_rdp {
                 int datalen = stream.end - data;
                 this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
                 this->sec_layer.encrypt.encrypt(data, datalen);
-            } 
+            }
             else {
                 stream.out_uint32_le(0);
             }
@@ -1455,7 +1455,7 @@ struct server_rdp {
                 int datalen = stream.end - data;
                 this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
                 this->sec_layer.encrypt.encrypt(data, datalen);
-            } 
+            }
             else {
                 stream.out_uint32_le(0);
             }

@@ -2957,20 +2957,28 @@ class SecOut
 {
     Stream & stream;
     uint16_t offhdr;
+    uint8_t crypt_level;
     CryptContext & crypt;
     public:
-    SecOut(Stream & stream, uint32_t flags, CryptContext & crypt)
-        : stream(stream), offhdr(stream.p - stream.data), crypt(crypt)
+    SecOut(Stream & stream, uint8_t crypt_level, uint32_t flags, CryptContext & crypt)
+        : stream(stream), offhdr(stream.p - stream.data), crypt_level(crypt_level), crypt(crypt)
     {
-        this->stream.out_uint32_le(flags);
-        this->stream.skip_uint8(8);
+        if (crypt_level > 1){
+            this->stream.out_uint32_le(flags);
+            this->stream.skip_uint8(8);
+        }
+        else {
+            this->stream.out_uint32_le(0);
+        }
     }
 
     void end(){
-        uint8_t * data = this->stream.data + this->offhdr + 12;
-        int datalen = this->stream.p - data;
-        this->crypt.sign(this->stream.data + this->offhdr + 4, 8, data, datalen);
-        this->crypt.encrypt(data, datalen);
+        if (crypt_level > 1){
+            uint8_t * data = this->stream.data + this->offhdr + 12;
+            int datalen = this->stream.p - data;
+            this->crypt.sign(this->stream.data + this->offhdr + 4, 8, data, datalen);
+            this->crypt.encrypt(data, datalen);
+        }
     }
 };
 
