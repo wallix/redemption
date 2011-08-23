@@ -639,7 +639,7 @@ struct rdp_rdp {
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_LOGON_INFO | SEC_ENCRYPT, crypt);
+            SecOut sec_out(stream, SEC_LOGON_INFO | SEC_ENCRYPT, this->sec_layer.encrypt);
 
             if(!this->use_rdp5){
                 LOG(LOG_INFO, "send login info (RDP4-style) %s:%s\n",this->domain, this->username);
