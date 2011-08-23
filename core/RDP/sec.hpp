@@ -2959,10 +2959,10 @@ class SecOut
     uint16_t offhdr;
     CryptContext & crypt;
     public:
-    SecOut(Stream & stream, CryptContext & crypt)
+    SecOut(Stream & stream, uint32_t flags, CryptContext & crypt)
         : stream(stream), offhdr(stream.p - stream.data), crypt(crypt)
     {
-        this->stream.out_uint32_le(SEC_ENCRYPT);
+        this->stream.out_uint32_le(flags);
         this->stream.skip_uint8(8);
     }
 

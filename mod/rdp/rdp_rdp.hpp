@@ -307,7 +307,7 @@ struct rdp_rdp {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, this->sec_layer.encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->sec_layer.encrypt);
 
             stream.out_uint16_le(2 + 14 + caplen + sizeof(RDP_SOURCE));
             stream.out_uint16_le((PDUTYPE_CONFIRMACTIVEPDU | 0x10)); /* Version 1 */
@@ -553,7 +553,7 @@ struct rdp_rdp {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, this->sec_layer.encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->sec_layer.encrypt);
 
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, this->sec_layer.userid, this->share_id);
 
@@ -575,7 +575,7 @@ struct rdp_rdp {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, this->sec_layer.encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->sec_layer.encrypt);
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, this->sec_layer.userid, this->share_id);
 
             stream.out_uint16_le(1); /* type */
@@ -593,7 +593,7 @@ struct rdp_rdp {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, this->sec_layer.encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->sec_layer.encrypt);
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTLIST, this->sec_layer.userid, this->share_id);
 
             stream.out_uint16_le(0); /* number of fonts */
@@ -763,7 +763,7 @@ struct rdp_rdp {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, this->sec_layer.encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->sec_layer.encrypt);
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_INPUT, this->sec_layer.userid, this->share_id);
 
             stream.out_uint16_le(1); /* number of events */
@@ -788,7 +788,7 @@ struct rdp_rdp {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, this->sec_layer.encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->sec_layer.encrypt);
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_REFRESH_RECT, this->sec_layer.userid, this->share_id);
 
             stream.out_uint32_le(1);
@@ -1205,7 +1205,7 @@ struct rdp_rdp {
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, channel_id);
-            SecOut sec_out(stream, this->sec_layer.encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->sec_layer.encrypt);
             stream.channel_hdr = stream.p;
             stream.p += 8;
 
