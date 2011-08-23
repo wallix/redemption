@@ -1546,12 +1546,10 @@ struct Sec
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
 
-        int hdrlen = this->lic_layer.licence_issued ? 0 : 4 ;
+        stream.out_uint8(this->lic_layer.licence_issued
+                         ? LICENCE_TAG_AUTHRESP
+                         : SEC_LICENCE_NEG);
 
-        stream.sec_hdr = stream.p;
-        stream.p += hdrlen;
-
-        stream.out_uint8(LICENCE_TAG_AUTHRESP);
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
         stream.out_uint16_le(1);
@@ -1564,14 +1562,6 @@ struct Sec
 
         sdrq_out.end();
         tpdu.end();
-
-        uint8_t * oldp = stream.p;
-        stream.p = stream.sec_hdr;
-        if (!this->lic_layer.licence_issued){
-                stream.out_uint32_le(SEC_LICENCE_NEG);
-        }
-
-        stream.p = oldp;
 
         tpdu.send(trans);
     }
