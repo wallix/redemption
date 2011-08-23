@@ -352,10 +352,10 @@ struct rdp_rdp {
             stream.p = stream.sec_hdr;
             stream.out_uint32_le(SEC_ENCRYPT);
 
-            int datalen = stream.end - stream.p - 8;
-
-            this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len, stream.p + 8, datalen);
-            this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+            uint8_t * data = stream.p + 8;
+            int datalen = stream.end - data;
+            this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+            this->sec_layer.encrypt.encrypt(data, datalen);
 
             stream.p = oldp;
 
@@ -586,10 +586,10 @@ struct rdp_rdp {
                 stream.p = stream.sec_hdr;
                 stream.out_uint32_le(SEC_ENCRYPT);
 
-                int datalen = stream.end - stream.p - 8;
-
-                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len, stream.p + 8, datalen);
-                this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
 
                 stream.p = oldp;
             }
@@ -622,10 +622,10 @@ struct rdp_rdp {
                 stream.p = stream.sec_hdr;
                 stream.out_uint32_le(SEC_ENCRYPT);
 
-                int datalen = stream.end - stream.p - 8;
-
-                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len, stream.p + 8, datalen);
-                this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
 
                 stream.p = oldp;
             }
@@ -660,10 +660,10 @@ struct rdp_rdp {
                 stream.p = stream.sec_hdr;
                 stream.out_uint32_le(SEC_ENCRYPT);
 
-                int datalen = stream.end - stream.p - 8;
-
-                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len, stream.p + 8, datalen);
-                this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
 
                 stream.p = oldp;
             }
@@ -808,10 +808,10 @@ struct rdp_rdp {
             stream.p = stream.sec_hdr;
             stream.out_uint32_le(SEC_LOGON_INFO | SEC_ENCRYPT);
 
-            int datalen = stream.end - stream.p - 8;
-
-            this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len, stream.p + 8, datalen);
-            this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+            uint8_t * data = stream.p + 8;
+            int datalen = stream.end - data;
+            this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+            this->sec_layer.encrypt.encrypt(data, datalen);
 
             stream.p = oldp;
 
@@ -851,10 +851,10 @@ struct rdp_rdp {
                 stream.p = stream.sec_hdr;
                 stream.out_uint32_le(SEC_ENCRYPT);
 
-                int datalen = stream.end - stream.p - 8;
-
-                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len, stream.p + 8, datalen);
-                this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
 
                 stream.p = oldp;
             }
@@ -891,10 +891,10 @@ struct rdp_rdp {
                 stream.p = stream.sec_hdr;
                 stream.out_uint32_le(SEC_ENCRYPT);
 
-                int datalen = stream.end - stream.p - 8;
-
-                this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len, stream.p + 8, datalen);
-                this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
 
                 stream.p = oldp;
             }
@@ -1325,18 +1325,18 @@ struct rdp_rdp {
             //g_hexdump(stream.p, size + 8);
             /* We need to call send_data but with another code because we need to build an
             virtual_channel packet and not an MCS_GLOBAL_CHANNEL packet */
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            stream.out_uint32_le(SEC_ENCRYPT);
+            {
+                uint8_t * oldp = stream.p;
+                stream.p = stream.sec_hdr;
+                stream.out_uint32_le(SEC_ENCRYPT);
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
 
-            int datalen = stream.end - stream.p - 8;
-
-            this->sec_layer.rdp_sec_sign(stream.p, 8, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len, stream.p + 8, datalen);
-            this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
-
-            stream.p = oldp;
-//            LOG(LOG_INFO, "send_redirect_pdu done\n");
-
+                stream.p = oldp;
+    //            LOG(LOG_INFO, "send_redirect_pdu done\n");
+            }
             sdrq_out.end();
             tpdu.end();
             tpdu.send(this->trans);
