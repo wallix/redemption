@@ -575,31 +575,14 @@ struct rdp_rdp {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-
-            stream.sec_hdr = stream.p;
-            stream.p += 12 ; // SEC_ENCRYPT
-
+            SecOut sec_out(stream, this->sec_layer.encrypt);
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, this->sec_layer.userid, this->share_id);
 
             stream.out_uint16_le(1); /* type */
             stream.out_uint16_le(1002);
 
             rdp_out.end();
-            stream.mark_end();
-            {
-                uint8_t * oldp = stream.p;
-
-                stream.p = stream.sec_hdr;
-                stream.out_uint32_le(SEC_ENCRYPT);
-
-                uint8_t * data = stream.p + 8;
-                int datalen = stream.end - data;
-                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-                this->sec_layer.encrypt.encrypt(data, datalen);
-
-                stream.p = oldp;
-            }
-
+            sec_out.end();
             sdrq_out.end();
             tpdu.end();
             tpdu.send(this->trans);
@@ -610,10 +593,7 @@ struct rdp_rdp {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-
-            stream.sec_hdr = stream.p;
-            stream.p += 12 ; // SEC_ENCRYPT
-
+            SecOut sec_out(stream, this->sec_layer.encrypt);
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTLIST, this->sec_layer.userid, this->share_id);
 
             stream.out_uint16_le(0); /* number of fonts */
@@ -622,22 +602,7 @@ struct rdp_rdp {
             stream.out_uint16_le(0x32); /* entry size */
 
             rdp_out.end();
-            stream.mark_end();
-
-            {
-                uint8_t * oldp = stream.p;
-
-                stream.p = stream.sec_hdr;
-                stream.out_uint32_le(SEC_ENCRYPT);
-
-                uint8_t * data = stream.p + 8;
-                int datalen = stream.end - data;
-                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-                this->sec_layer.encrypt.encrypt(data, datalen);
-
-                stream.p = oldp;
-            }
-
+            sec_out.end();
             sdrq_out.end();
             tpdu.end();
             tpdu.send(this->trans);
