@@ -115,12 +115,6 @@ void ssl_md5_clear(MD5_CTX* md5_info)
 }
 
 /*****************************************************************************/
-void ssl_md5_transform(MD5_CTX* md5_info, uint8_t* data, int len)
-{
-    MD5_Update(md5_info, data, len);
-}
-
-/*****************************************************************************/
 void ssl_md5_complete(MD5_CTX* md5_info, uint8_t* data)
 {
     MD5_Final((uint8_t*)data, md5_info);
