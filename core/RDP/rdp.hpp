@@ -296,13 +296,13 @@ class McsOut
 
 class McsIn
 {
+    public:
     uint8_t opcode;
     uint16_t user_id;
     uint16_t chan_id;
     uint8_t magic_0x70; // some ber header ?
     uint16_t len;
 
-    public:
     McsIn(Stream & stream)
     {
         this->opcode = stream.in_uint8();
