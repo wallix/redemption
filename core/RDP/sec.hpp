@@ -87,6 +87,23 @@ struct CryptContext
         this->use_count++;
     }
 
+    /* Decrypt data using RC4 */
+    void decrypt(uint8_t* data, int len)
+    {
+        ssllib ssl;
+
+        if (this->use_count == 4096) {
+            this->update();
+            if (this->rc4_key_len == 8) {
+                sec_make_40bit(this->key);
+            }
+            ssl.rc4_set_key(this->rc4_info, this->key, this->rc4_key_len);
+            this->use_count = 0;
+        }
+        ssl.rc4_crypt(this->rc4_info, data, data, len);
+        this->use_count++;
+    }
+
     void update()
     {
         static uint8_t pad_54[40] = {
@@ -166,24 +183,16 @@ struct Sec
     uint8_t client_crypt_random[512];
 
 
-    CryptContext encrypt;
+    CryptContext encrypt, decrypt;
 
-
-    int decrypt_use_count;
-    uint8_t decrypt_key[16];
-    uint8_t decrypt_update_key[16];
-
-    SSL_RC4 decrypt_rc4_info;
 
     uint8_t crypt_level;
     int rc4_key_size; /* 1 = 40-bit, 2 = 128-bit */
-    int rc4_key_len; /* 8 or 16 */
     uint8_t sign_key[16];
 
     Sec(uint8_t crypt_level) :
       licence_data(0),
       licence_size(0),
-      decrypt_use_count(0),
       crypt_level(crypt_level)
     {
         // from server_sec
@@ -204,21 +213,21 @@ struct Sec
         this->server_public_key_len = 0;
 
         // shared
-        memset(this->decrypt_key, 0, 16);
+        memset(this->decrypt.key, 0, 16);
         memset(this->encrypt.key, 0, 16);
-        memset(this->decrypt_update_key, 0, 16);
+        memset(this->decrypt.update_key, 0, 16);
         memset(this->encrypt.update_key, 0, 16);
         switch (crypt_level) {
         case 1:
         case 2:
             this->rc4_key_size = 1; /* 40 bits */
-            this->rc4_key_len = 8; /* 8 = 40 bit */
+            this->decrypt.rc4_key_len = 8; /* 8 = 40 bit */
             this->encrypt.rc4_key_len = 8; /* 8 = 40 bit */
         break;
         default:
         case 3:
             this->rc4_key_size = 2; /* 128 bits */
-            this->rc4_key_len = 16; /* 16 = 128 bit */
+            this->decrypt.rc4_key_len = 16; /* 16 = 128 bit */
             this->encrypt.rc4_key_len = 16; /* 16 = 128 bit */
         break;
         }
@@ -285,43 +294,6 @@ struct Sec
       memcpy(signature, md5sig, siglen);
     }
 
-    void sec_update(uint8_t* key, uint8_t* update_key, uint8_t rc4_key_len)
-    {
-        static uint8_t pad_54[40] = {
-            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-            54, 54, 54, 54, 54, 54, 54, 54
-        };
-
-        static uint8_t pad_92[48] = {
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-        };
-
-        uint8_t shasig[20];
-        SSL_SHA1 sha1;
-        SSL_MD5 md5;
-        SSL_RC4 update;
-
-        ssllib ssl;
-
-        ssl.sha1_init(&sha1);
-        ssl.sha1_update(&sha1, update_key, rc4_key_len);
-        ssl.sha1_update(&sha1, pad_54, 40);
-        ssl.sha1_update(&sha1, key, rc4_key_len);
-        ssl.sha1_final(&sha1, shasig);
-
-        ssl.md5_init(&md5);
-        ssl.md5_update(&md5, update_key, rc4_key_len);
-        ssl.md5_update(&md5, pad_92, 48);
-        ssl.md5_update(&md5, shasig, 20);
-        ssl.md5_final(&md5, key);
-
-        ssl.rc4_set_key(update, key, rc4_key_len);
-        ssl.rc4_crypt(update, key, key, rc4_key_len);
-    }
-
     // 16-byte transformation used to generate export keys (6.2.2).
     static void sec_hash_16(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2)
     {
@@ -363,25 +335,6 @@ struct Sec
             ssl.md5_final(&md5, &out[i * 16]);
         }
     }
-
-
-    /* Decrypt data using RC4 */
-    void sec_decrypt(uint8_t* data, int len)
-    {
-        ssllib ssl;
-
-        if (this->decrypt_use_count == 4096) {
-            this->sec_update(this->decrypt_key, this->decrypt_update_key, this->rc4_key_len);
-            if (this->rc4_key_len == 8) {
-                sec_make_40bit(this->decrypt_key);
-            }
-            ssl.rc4_set_key(this->decrypt_rc4_info, this->decrypt_key, this->rc4_key_len);
-            this->decrypt_use_count = 0;
-        }
-        ssl.rc4_crypt(this->decrypt_rc4_info, data, data, len);
-        this->decrypt_use_count++;
-    }
-
 
     /* process the mcs client data we received from the mcs layer */
     void server_sec_process_mcs_data(Stream & stream, ClientInfo * client_info) throw (Error)
@@ -1893,30 +1846,30 @@ struct Sec
         memcpy(this->sign_key, key_block, 16);
 
         /* Generate export keys from next two blocks of 16 bytes */
-        this->sec_hash_16(this->decrypt_key, &key_block[16], client_random, server_random);
+        this->sec_hash_16(this->decrypt.key, &key_block[16], client_random, server_random);
         this->sec_hash_16(this->encrypt.key, &key_block[32], client_random, server_random);
 
         if (rc4_key_size == 1) {
             // LOG(LOG_DEBUG, "40-bit encryption enabled\n");
             sec_make_40bit(this->sign_key);
-            sec_make_40bit(this->decrypt_key);
+            sec_make_40bit(this->decrypt.key);
             sec_make_40bit(this->encrypt.key);
-            this->rc4_key_len = 8;
+            this->decrypt.rc4_key_len = 8;
             this->encrypt.rc4_key_len = 8;
         }
         else {
             //LOG(LOG_DEBUG, "rc_4_key_size == %d, 128-bit encryption enabled\n", rc4_key_size);
-            this->rc4_key_len = 16;
+            this->decrypt.rc4_key_len = 16;
             this->encrypt.rc4_key_len = 16;
         }
 
         /* Save initial RC4 keys as update keys */
-        memcpy(this->decrypt_update_key, this->decrypt_key, 16);
+        memcpy(this->decrypt.update_key, this->decrypt.key, 16);
         memcpy(this->encrypt.update_key, this->encrypt.key, 16);
 
         ssllib ssl;
 
-        ssl.rc4_set_key(this->decrypt_rc4_info, this->decrypt_key, this->rc4_key_len);
+        ssl.rc4_set_key(this->decrypt.rc4_info, this->decrypt.key, this->decrypt.rc4_key_len);
         ssl.rc4_set_key(this->encrypt.rc4_info, this->encrypt.key, this->encrypt.rc4_key_len);
     }
 
