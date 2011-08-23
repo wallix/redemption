@@ -31,7 +31,6 @@
 #include "rsa_keys.hpp"
 #include "constants.hpp"
 
-
 #include <assert.h>
 #include <stdint.h>
 
@@ -57,6 +56,49 @@ inline static void buf_out_uint32(uint8_t* buffer, int value)
   buffer[3] = (value >> 24) & 0xff;
 }
 
+
+#warning method used by licence, common with basic crypto support code should be made common. pad are also common to several functions.
+/* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
+inline static void sec_sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen,
+             uint8_t* data, int datalen)
+{
+    static uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                 54, 54, 54, 54, 54, 54, 54, 54
+                               };
+    static uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                             92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                             92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
+                           };
+
+    uint8_t shasig[20];
+    uint8_t md5sig[16];
+    uint8_t lenhdr[4];
+    SSL_SHA1 sha1;
+    SSL_MD5 md5;
+
+    buf_out_uint32(lenhdr, datalen);
+
+    ssllib ssl;
+
+    ssl.sha1_init(&sha1);
+    ssl.sha1_update(&sha1, session_key, keylen);
+    ssl.sha1_update(&sha1, pad_54, 40);
+    ssl.sha1_update(&sha1, lenhdr, 4);
+    ssl.sha1_update(&sha1, data, datalen);
+    ssl.sha1_final(&sha1, shasig);
+
+    ssl.md5_init(&md5);
+    ssl.md5_update(&md5, session_key, keylen);
+    ssl.md5_update(&md5, pad_92, 48);
+    ssl.md5_update(&md5, shasig, 20);
+    ssl.md5_final(&md5, md5sig);
+
+    memcpy(signature, md5sig, siglen);
+}
+
+
+
 /* used in sec */
 struct mcs_channel_item {
     char name[16];
@@ -68,6 +110,9 @@ struct mcs_channel_item {
         this->chanid = 0;
     }
 };
+
+
+
 
 struct CryptContext
 {
@@ -293,44 +338,6 @@ struct Sec
         }
     }
 
-    /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    static void rdp_sec_sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen,
-                 uint8_t* data, int datalen)
-    {
-        static uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                                     54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                                     54, 54, 54, 54, 54, 54, 54, 54
-                                   };
-        static uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-                               };
-
-      uint8_t shasig[20];
-      uint8_t md5sig[16];
-      uint8_t lenhdr[4];
-      SSL_SHA1 sha1;
-      SSL_MD5 md5;
-
-      buf_out_uint32(lenhdr, datalen);
-
-      ssllib ssl;
-
-      ssl.sha1_init(&sha1);
-      ssl.sha1_update(&sha1, session_key, keylen);
-      ssl.sha1_update(&sha1, pad_54, 40);
-      ssl.sha1_update(&sha1, lenhdr, 4);
-      ssl.sha1_update(&sha1, data, datalen);
-      ssl.sha1_final(&sha1, shasig);
-
-      ssl.md5_init(&md5);
-      ssl.md5_update(&md5, session_key, keylen);
-      ssl.md5_update(&md5, pad_92, 48);
-      ssl.md5_update(&md5, shasig, 20);
-      ssl.md5_final(&md5, md5sig);
-
-      memcpy(signature, md5sig, siglen);
-    }
 
     // 16-byte transformation used to generate export keys (6.2.2).
     static void sec_hash_16(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2)
@@ -1522,10 +1529,7 @@ struct Sec
         this->rdp_lic_generate_hwid(hwid, hostname);
         memcpy(sealed_buffer, decrypt_token, LICENCE_TOKEN_SIZE);
         memcpy(sealed_buffer + LICENCE_TOKEN_SIZE, hwid, LICENCE_HWID_SIZE);
-        this->rdp_sec_sign(out_sig, 16,
-                           this->lic_layer.licence_sign_key,
-                           16, sealed_buffer,
-                           sizeof(sealed_buffer));
+        sec_sign(out_sig, 16, this->lic_layer.licence_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
         /* Now encrypt the HWID */
         ssl.rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
         memcpy(crypt_hwid, hwid, LICENCE_HWID_SIZE);
@@ -1605,8 +1609,7 @@ struct Sec
         if (this->licence_size > 0) {
             /* Generate a signature for the HWID buffer */
             this->rdp_lic_generate_hwid(hwid, hostname);
-            this->rdp_sec_sign(signature, 16, this->lic_layer.licence_sign_key, 16,
-                         hwid, sizeof(hwid));
+            sec_sign(signature, 16, this->lic_layer.licence_sign_key, 16, hwid, sizeof(hwid));
             /* Now encrypt the HWID */
             ssllib ssl;
 
