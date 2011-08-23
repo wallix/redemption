@@ -230,9 +230,10 @@ struct GraphicsUpdatePDU
                 stream.p = stream.sec_hdr;
                 if (this->rdp_layer.client_info.crypt_level > 1) {
                     stream.out_uint32_le(SEC_ENCRYPT);
-                    int datalen = (int)((stream.end - stream.p) - 8);
-                    this->rdp_layer.sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen, this->rdp_layer.sec_layer.sign_key, this->rdp_layer.sec_layer.encrypt.rc4_key_len);
-                    this->rdp_layer.sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+                    uint8_t * data = stream.p + 8;
+                    int datalen = stream.end - data;
+                    this->rdp_layer.sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                    this->rdp_layer.sec_layer.encrypt.encrypt(data, datalen);
                 } else {
                     stream.out_uint32_le(0);
                 }

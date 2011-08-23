@@ -48,6 +48,14 @@ inline static void sec_make_40bit(uint8_t* key)
     key[2] = 0x9e;
 }
 
+// Output a uint32 into a buffer (little-endian)
+inline static void buf_out_uint32(uint8_t* buffer, int value)
+{
+  buffer[0] = value & 0xff;
+  buffer[1] = (value >> 8) & 0xff;
+  buffer[2] = (value >> 16) & 0xff;
+  buffer[3] = (value >> 24) & 0xff;
+}
 
 /* used in sec */
 struct mcs_channel_item {
@@ -64,11 +72,15 @@ struct mcs_channel_item {
 struct CryptContext
 {
     int use_count;
+    uint8_t sign_key[16]; // should I call it session_key ?
     uint8_t key[16];
     uint8_t update_key[16];
     int rc4_key_len;
     SSL_RC4 rc4_info;
-    CryptContext() : use_count(0) {}
+    CryptContext() : use_count(0) 
+    {
+        memset(this->sign_key, 0, 16);
+    }
 
     /* Encrypt data using RC4 */
     void encrypt(uint8_t* data, int length)
@@ -102,6 +114,44 @@ struct CryptContext
         }
         ssl.rc4_crypt(this->rc4_info, data, data, len);
         this->use_count++;
+    }
+
+    /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
+    void sign(uint8_t* signature, int siglen, uint8_t* data, int datalen)
+    {
+        static uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                     54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                     54, 54, 54, 54, 54, 54, 54, 54
+                                   };
+        static uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
+                               };
+
+        uint8_t shasig[20];
+        uint8_t md5sig[16];
+        uint8_t lenhdr[4];
+        SSL_SHA1 sha1;
+        SSL_MD5 md5;
+
+        buf_out_uint32(lenhdr, datalen);
+
+        ssllib ssl;
+
+        ssl.sha1_init(&sha1);
+        ssl.sha1_update(&sha1, this->sign_key, this->rc4_key_len);
+        ssl.sha1_update(&sha1, pad_54, 40);
+        ssl.sha1_update(&sha1, lenhdr, 4);
+        ssl.sha1_update(&sha1, data, datalen);
+        ssl.sha1_final(&sha1, shasig);
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, this->sign_key, this->rc4_key_len);
+        ssl.md5_update(&md5, pad_92, 48);
+        ssl.md5_update(&md5, shasig, 20);
+        ssl.md5_final(&md5, md5sig);
+
+        memcpy(signature, md5sig, siglen);
     }
 
     void update()
@@ -188,7 +238,6 @@ struct Sec
 
     uint8_t crypt_level;
     int rc4_key_size; /* 1 = 40-bit, 2 = 128-bit */
-    uint8_t sign_key[16];
 
     Sec(uint8_t crypt_level) :
       licence_data(0),
@@ -201,7 +250,6 @@ struct Sec
         memset(this->client_random, 0, 64);
         memset(this->client_crypt_random, 0, 72);
 
-        memset(this->sign_key, 0, 16);
         memset(this->pub_exp, 0, 4);
         memset(this->pub_mod, 0, 64);
         memset(this->pub_sig, 0, 64);
@@ -209,7 +257,6 @@ struct Sec
 
         // from rdp_sec
         memset(this->client_crypt_random, 0, 512);
-        memset(this->sign_key, 0, 16);
         this->server_public_key_len = 0;
 
         // shared
@@ -246,15 +293,6 @@ struct Sec
         }
     }
 
-    // Output a uint32 into a buffer (little-endian)
-    static void sec_buf_out_uint32(uint8_t* buffer, int value)
-    {
-      buffer[0] = value & 0xff;
-      buffer[1] = (value >> 8) & 0xff;
-      buffer[2] = (value >> 16) & 0xff;
-      buffer[3] = (value >> 24) & 0xff;
-    }
-
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
     static void rdp_sec_sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen,
                  uint8_t* data, int datalen)
@@ -274,7 +312,7 @@ struct Sec
       SSL_SHA1 sha1;
       SSL_MD5 md5;
 
-      sec_buf_out_uint32(lenhdr, datalen);
+      buf_out_uint32(lenhdr, datalen);
 
       ssllib ssl;
 
@@ -1484,7 +1522,7 @@ struct Sec
 
     void rdp_lic_generate_hwid(uint8_t* hwid, const char * hostname)
     {
-        this->sec_buf_out_uint32(hwid, 2);
+        buf_out_uint32(hwid, 2);
         memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
     }
 
@@ -1843,7 +1881,7 @@ struct Sec
         this->sec_hash_48(key_block, master_secret, client_random, server_random, 'X');
 
         /* First 16 bytes of key material is MAC secret */
-        memcpy(this->sign_key, key_block, 16);
+        memcpy(this->encrypt.sign_key, key_block, 16);
 
         /* Generate export keys from next two blocks of 16 bytes */
         this->sec_hash_16(this->decrypt.key, &key_block[16], client_random, server_random);
@@ -1851,7 +1889,7 @@ struct Sec
 
         if (rc4_key_size == 1) {
             // LOG(LOG_DEBUG, "40-bit encryption enabled\n");
-            sec_make_40bit(this->sign_key);
+            sec_make_40bit(this->encrypt.sign_key);
             sec_make_40bit(this->decrypt.key);
             sec_make_40bit(this->encrypt.key);
             this->decrypt.rc4_key_len = 8;

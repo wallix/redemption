@@ -115,9 +115,10 @@ struct server_rdp {
             stream.p = stream.sec_hdr;
             if (this->client_info.crypt_level > 1) {
                 stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len);
-                this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
             } else {
                 stream.out_uint32_le(0);
             }
@@ -185,9 +186,10 @@ struct server_rdp {
             stream.p = stream.sec_hdr;
             if (this->client_info.crypt_level > 1) {
                 stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len);
-                this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
             } else {
                 stream.out_uint32_le(0);
             }
@@ -414,9 +416,10 @@ struct server_rdp {
             stream.p = stream.sec_hdr;
             if (this->client_info.crypt_level > 1) {
                 stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len);
-                this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
             } else {
                 stream.out_uint32_le(0);
             }
@@ -491,9 +494,10 @@ struct server_rdp {
             stream.p = stream.sec_hdr;
             if (this->client_info.crypt_level > 1) {
                 stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len);
-                this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
             } else {
                 stream.out_uint32_le(0);
             }
@@ -589,14 +593,14 @@ struct server_rdp {
                     this->sec_layer.sec_hash_48(pre_master_secret, master_secret, this->sec_layer.client_random, this->sec_layer.server_random, 88);
 
                     /* First 16 bytes of key material is MAC secret */
-                    memcpy(this->sec_layer.sign_key, pre_master_secret, 16);
+                    memcpy(this->sec_layer.encrypt.sign_key, pre_master_secret, 16);
 
                     /* Generate export keys from next two blocks of 16 bytes */
                     this->sec_layer.sec_hash_16(this->sec_layer.encrypt.key, &pre_master_secret[16], this->sec_layer.client_random, this->sec_layer.server_random);
                     this->sec_layer.sec_hash_16(this->sec_layer.decrypt.key, &pre_master_secret[32], this->sec_layer.client_random, this->sec_layer.server_random);
 
                     if (this->sec_layer.rc4_key_size == 1) {
-                        sec_make_40bit(this->sec_layer.sign_key);
+                        sec_make_40bit(this->sec_layer.encrypt.sign_key);
                         sec_make_40bit(this->sec_layer.encrypt.key);
                         sec_make_40bit(this->sec_layer.decrypt.key);
                         this->sec_layer.decrypt.rc4_key_len = 8;
@@ -757,10 +761,12 @@ struct server_rdp {
             stream.p = stream.sec_hdr;
             if (this->client_info.crypt_level > 1) {
                 stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len);
-                this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
-            } else {
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
+            } 
+            else {
                 stream.out_uint32_le(0);
             }
 
@@ -1167,10 +1173,12 @@ struct server_rdp {
             stream.p = stream.sec_hdr;
             if (this->client_info.crypt_level > 1) {
                 stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len);
-                this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
-            } else {
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
+            } 
+            else {
                 stream.out_uint32_le(0);
             }
 
@@ -1443,10 +1451,12 @@ struct server_rdp {
             stream.p = stream.sec_hdr;
             if (this->client_info.crypt_level > 1) {
                 stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len);
-                this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
-            } else {
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
+            } 
+            else {
                 stream.out_uint32_le(0);
             }
 
@@ -1511,9 +1521,10 @@ struct server_rdp {
             stream.p = stream.sec_hdr;
             if (this->client_info.crypt_level > 1) {
                 stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len);
-                 this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
             } else {
                 stream.out_uint32_le(0);
             }
@@ -1583,9 +1594,10 @@ struct server_rdp {
             stream.p = stream.sec_hdr;
             if (this->client_info.crypt_level > 1) {
                 stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len);
-                this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
             } else {
                 stream.out_uint32_le(0);
             }
@@ -1702,9 +1714,10 @@ struct server_rdp {
                     stream.p = stream.sec_hdr;
                     if (this->client_info.crypt_level > 1) {
                         stream.out_uint32_le(SEC_ENCRYPT);
-                        int datalen = (int)((stream.end - stream.p) - 8);
-                        this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len);
-                        this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+                        uint8_t * data = stream.p + 8;
+                        int datalen = stream.end - data;
+                        this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                        this->sec_layer.encrypt.encrypt(data, datalen);
                     } else {
                         stream.out_uint32_le(0);
                     }
@@ -1769,9 +1782,10 @@ struct server_rdp {
             stream.p = stream.sec_hdr;
             if (this->client_info.crypt_level > 1) {
                 stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen, this->sec_layer.sign_key, this->sec_layer.encrypt.rc4_key_len);
-                this->sec_layer.encrypt.encrypt(stream.p + 8, datalen);
+                uint8_t * data = stream.p + 8;
+                int datalen = stream.end - data;
+                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
+                this->sec_layer.encrypt.encrypt(data, datalen);
             } else {
                 stream.out_uint32_le(0);
             }
