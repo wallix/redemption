@@ -639,11 +639,7 @@ struct rdp_rdp {
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-
-            int hdrlen = 12 ; // SEC_ENCRYPT
-
-            stream.sec_hdr = stream.p;
-            stream.p += hdrlen;
+            SecOut sec_out(stream, SEC_LOGON_INFO | SEC_ENCRYPT, crypt);
 
             if(!this->use_rdp5){
                 LOG(LOG_INFO, "send login info (RDP4-style) %s:%s\n",this->domain, this->username);
@@ -736,20 +732,9 @@ struct rdp_rdp {
                 this->use_rdp5 = 0;
             }
 
+            sec_out.end();
             sdrq_out.end();
             tpdu.end();
-
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            stream.out_uint32_le(SEC_LOGON_INFO | SEC_ENCRYPT);
-
-            uint8_t * data = stream.p + 8;
-            int datalen = stream.end - data;
-            this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-            this->sec_layer.encrypt.encrypt(data, datalen);
-
-            stream.p = oldp;
-
             tpdu.send(this->trans);
 
             LOG(LOG_INFO, "send login info ok\n");
