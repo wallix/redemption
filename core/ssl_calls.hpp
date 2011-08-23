@@ -154,14 +154,6 @@ class ssllib
 
 };
 
-void ssl_md5_transform(SSL_MD5 * md5_info, uint8_t* data, int len);
-void ssl_md5_complete(SSL_MD5* md5_info, uint8_t* data);
-void ssl_md5_clear(SSL_MD5* md5_info);
-
-void ssl_sha1_transform(SSL_SHA1* sha1_info, uint8_t* data, int len);
-void ssl_sha1_complete(SSL_SHA1* sha1_info, uint8_t* data);
-void ssl_sha1_clear(SSL_SHA1* sha1_info);
-
 uint8_t* ssl_rc4_info_create(void);
 void ssl_rc4_info_delete(uint8_t* rc4_info);
 void ssl_rc4_set_key(uint8_t* rc4_info, uint8_t* key, int len);

@@ -266,13 +266,13 @@ static int sign_key(uint8_t* e_data, int e_len, uint8_t* n_data, int n_len,
 
     ssllib ssl;
 
-    ssl_md5_clear(&md5);
+    ssl.md5_init(&md5);
     /* the first 108 bytes */
     ssl.md5_update(&md5, key, 108);
     /* set the whole thing with 0xff */
     memset(md5_final, 0xff, 64);
     /* digest 16 bytes */
-    ssl_md5_complete(&md5, md5_final);
+    ssl.md5_final(&md5, md5_final);
     /* set non 0xff array items */
     md5_final[16] = 0;
     md5_final[62] = 1;
@@ -460,10 +460,10 @@ static int key_test(void)
 
     ssllib ssl;
 
-    ssl_md5_clear(&md5);
+    ssl.md5_init(&md5);
     ssl.md5_update(&md5, g_testkey, 108);
     memset(md5_final, 0xff, 64);
-    ssl_md5_complete(&md5, md5_final);
+    ssl.md5_final(&md5, md5_final);
     printf("md5 hash of first 108 bytes of this key is:\n");
     hexdump(std::cout, (char*)md5_final, 16);
     md5_final[16] = 0;
