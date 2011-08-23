@@ -293,4 +293,27 @@ class McsOut
     }
 };
 
+
+class McsIn
+{
+    uint8_t opcode;
+    uint16_t user_id;
+    uint16_t chan_id;
+    uint8_t magic_0x70; // some ber header ?
+    uint16_t len;
+
+    public:
+    McsIn(Stream & stream)
+    {
+        this->opcode = stream.in_uint8();
+        this->user_id = stream.in_uint16_be();
+        this->chan_id = stream.in_uint16_be();
+        this->magic_0x70 = stream.in_uint8();
+        this->len = stream.in_uint8();
+        if (this->len & 0x80){
+            this->len = ((this->len & 0x7F) << 8) + stream.in_uint8();
+        }
+    }
+};
+
 #endif
