@@ -913,7 +913,8 @@ struct rdp_rdp {
             if (stream.next_packet >= stream.end || stream.next_packet == 0) {
 
                 #warning this loop is ugly, the only true reason is we are waiting for the licence
-                while (1){
+                while (1)
+                {
                     version = 3;
                     stream.init(65535);
                     // read tpktHeader (4 bytes = 3 0 len)
@@ -968,70 +969,66 @@ struct rdp_rdp {
                             stream.p[3] = swapbyte3;
                         }
                     }
-                    if (chan != MCS_GLOBAL_CHANNEL){
-                        if (chan > 0){
-                          uint32_t length = stream.in_uint32_le();
-                          int channel_flags = stream.in_uint32_le();
-                            {
-                                /* We need to recover the name of the channel linked with this
-                                 channel_id in order to match it with the same channel on the
-                                 first channel_list created by the RDP client at initialization
-                                 process*/
+                    break;
+                }
+                if (chan != MCS_GLOBAL_CHANNEL){
+                  uint32_t length = stream.in_uint32_le();
+                  int channel_flags = stream.in_uint32_le();
+                    /* We need to recover the name of the channel linked with this
+                     channel_id in order to match it with the same channel on the
+                     first channel_list created by the RDP client at initialization
+                     process*/
 
-                            //    LOG(LOG_DEBUG, "rdp_process_redirect_pdu()\n");
+                //    LOG(LOG_DEBUG, "rdp_process_redirect_pdu()\n");
 
-                                int num_channels_src = (int) this->sec_layer.channel_list.size();
-                                mcs_channel_item *channel_item = NULL;
-                                for (int index = 0; index < num_channels_src; index++){
-                                    channel_item = this->sec_layer.channel_list[index];
-                                    if (chan == channel_item->chanid){
-                                        break;
-                                    }
-                                }
+                    int num_channels_src = (int) this->sec_layer.channel_list.size();
+                    mcs_channel_item *channel_item = NULL;
+                    for (int index = 0; index < num_channels_src; index++){
+                        channel_item = this->sec_layer.channel_list[index];
+                        if (chan == channel_item->chanid){
+                            break;
+                        }
+                    }
 
-                                if (!channel_item || (chan != channel_item->chanid)){
-                                    LOG(LOG_ERR, "failed to recover name of linked channel\n");
-                                }
-                                else {
-                                    char * name = channel_item->name;
+                    if (!channel_item || (chan != channel_item->chanid)){
+                        LOG(LOG_ERR, "failed to recover name of linked channel\n");
+                    }
+                    else {
+                        char * name = channel_item->name;
 
-                                    /* Here, we're going to search the correct channel in order to send
-                                    information throughout this channel to RDP client*/
+                        /* Here, we're going to search the correct channel in order to send
+                        information throughout this channel to RDP client*/
 
-                                    #warning remove dependency to mod
-                                    int num_channels_dst = (int) mod->channel_list.size();
-                                    for (int index = 0; index < num_channels_dst; index++){
-                                        channel_item = mod->channel_list[index];
-                                        if (strcmp(name, channel_item->name) == 0){
-                                            break;
-                                        }
-                                    }
-                                    if (strcmp(name, channel_item->name) != 0){
-                                        LOG(LOG_ERR, "failed to recover channel id\n");
-                                    }
-                                    else {
-                                        int channel_id = channel_item->chanid;
-                                        int size = (int)(stream.end - stream.p);
-
-                                        /* TODO: create new function in order to activate / deactivate copy-paste
-                                        sequence from server to client */
-
-                                        if(this->sec_layer.clipboard_check(name, mod->clipboard_enable) == 1){
-                                            /* Clipboard deactivation required */
-                                        }
-                                        else if (channel_id < 0){
-                                            LOG(LOG_ERR, "Error sending information, wrong channel id");
-                                        }
-                                        else {
-                                            mod->server_send_to_channel_mod(channel_id, stream.p, size, length, channel_flags);
-                                        }
-                                    }
-                                }
+                        #warning remove dependency to mod
+                        int num_channels_dst = (int) mod->channel_list.size();
+                        for (int index = 0; index < num_channels_dst; index++){
+                            channel_item = mod->channel_list[index];
+                            if (strcmp(name, channel_item->name) == 0){
+                                break;
                             }
                         }
-                        version = 0xff;
+                        if (strcmp(name, channel_item->name) != 0){
+                            LOG(LOG_ERR, "failed to recover channel id\n");
+                        }
+                        else {
+                            int channel_id = channel_item->chanid;
+                            int size = (int)(stream.end - stream.p);
+
+                            /* TODO: create new function in order to activate / deactivate copy-paste
+                            sequence from server to client */
+
+                            if(this->sec_layer.clipboard_check(name, mod->clipboard_enable) == 1){
+                                /* Clipboard deactivation required */
+                            }
+                            else if (channel_id < 0){
+                                LOG(LOG_ERR, "Error sending information, wrong channel id");
+                            }
+                            else {
+                                mod->server_send_to_channel_mod(channel_id, stream.p, size, length, channel_flags);
+                            }
+                        }
                     }
-                    break;
+                    version = 0xff;
                 }
 
                 if (version == 0xff){
