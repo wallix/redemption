@@ -763,10 +763,7 @@ struct rdp_rdp {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-
-            stream.sec_hdr = stream.p;
-            stream.p += 12 ; // SEC_ENCRYPT
-
+            SecOut sec_out(stream, this->sec_layer.encrypt);
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_INPUT, this->sec_layer.userid, this->share_id);
 
             stream.out_uint16_le(1); /* number of events */
@@ -779,21 +776,7 @@ struct rdp_rdp {
 
             stream.mark_end();
             rdp_out.end();
-
-            {
-                uint8_t * oldp = stream.p;
-
-                stream.p = stream.sec_hdr;
-                stream.out_uint32_le(SEC_ENCRYPT);
-
-                uint8_t * data = stream.p + 8;
-                int datalen = stream.end - data;
-                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-                this->sec_layer.encrypt.encrypt(data, datalen);
-
-                stream.p = oldp;
-            }
-
+            sec_out.end();
             sdrq_out.end();
             tpdu.end();
             tpdu.send(this->trans);
@@ -805,10 +788,7 @@ struct rdp_rdp {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-
-            stream.sec_hdr = stream.p;
-            stream.p += 12 ; // SEC_ENCRYPT
-
+            SecOut sec_out(stream, this->sec_layer.encrypt);
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_REFRESH_RECT, this->sec_layer.userid, this->share_id);
 
             stream.out_uint32_le(1);
@@ -819,21 +799,7 @@ struct rdp_rdp {
             stream.mark_end();
 
             rdp_out.end();
-
-            {
-                uint8_t * oldp = stream.p;
-
-                stream.p = stream.sec_hdr;
-                stream.out_uint32_le(SEC_ENCRYPT);
-
-                uint8_t * data = stream.p + 8;
-                int datalen = stream.end - data;
-                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-                this->sec_layer.encrypt.encrypt(data, datalen);
-
-                stream.p = oldp;
-            }
-
+            sec_out.end();
             sdrq_out.end();
             tpdu.end();
             tpdu.send(this->trans);
@@ -1239,12 +1205,7 @@ struct rdp_rdp {
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, channel_id);
-
-            int hdrlen = 12 ; // SEC_ENCRYPT
-
-            stream.sec_hdr = stream.p;
-            stream.p += hdrlen;
-
+            SecOut sec_out(stream, this->sec_layer.encrypt);
             stream.channel_hdr = stream.p;
             stream.p += 8;
 
@@ -1254,24 +1215,12 @@ struct rdp_rdp {
             stream.out_uint32_le(flags);
             memcpy(stream.p, data, size);
             stream.p+= size;
-            stream.mark_end();
 
             /* in send_redirect_pdu, sending data from stream.p throughout channel channel_item->name */
             //g_hexdump(stream.p, size + 8);
             /* We need to call send_data but with another code because we need to build an
             virtual_channel packet and not an MCS_GLOBAL_CHANNEL packet */
-            {
-                uint8_t * oldp = stream.p;
-                stream.p = stream.sec_hdr;
-                stream.out_uint32_le(SEC_ENCRYPT);
-                uint8_t * data = stream.p + 8;
-                int datalen = stream.end - data;
-                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-                this->sec_layer.encrypt.encrypt(data, datalen);
-
-                stream.p = oldp;
-    //            LOG(LOG_INFO, "send_redirect_pdu done\n");
-            }
+            sec_out.end();
             sdrq_out.end();
             tpdu.end();
             tpdu.send(this->trans);
