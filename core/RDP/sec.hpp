@@ -122,7 +122,7 @@ struct CryptContext
     uint8_t update_key[16];
     int rc4_key_len;
     SSL_RC4 rc4_info;
-    CryptContext() : use_count(0) 
+    CryptContext() : use_count(0)
     {
         memset(this->sign_key, 0, 16);
     }
@@ -2950,6 +2950,28 @@ struct Sec
         }
     }
 
+};
+
+
+class SecOut
+{
+    Stream & stream;
+    uint16_t offhdr;
+    CryptContext & crypt;
+    public:
+    SecOut(Stream & stream, CryptContext & crypt)
+        : stream(stream), offhdr(stream.p - stream.data), crypt(crypt)
+    {
+        this->stream.out_uint32_le(SEC_ENCRYPT);
+        this->stream.skip_uint8(8);
+    }
+
+    void end(){
+        uint8_t * data = this->stream.data + this->offhdr + 12;
+        int datalen = this->stream.p - data;
+        this->crypt.sign(this->stream.data + this->offhdr + 4, 8, data, datalen);
+        this->crypt.encrypt(data, datalen);
+    }
 };
 
 #endif
