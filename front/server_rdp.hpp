@@ -1377,11 +1377,11 @@ struct server_rdp {
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
-
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(1); /* messageType */
         stream.out_uint16_le(1002); /* control id */
+
         rdp_out.end();
         sec_out.end();
         sdin_out.end();
@@ -1417,41 +1417,15 @@ struct server_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
-
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(action);
         stream.out_uint16_le(0); /* userid */
         stream.out_uint32_le(1002); /* control id */
 
-        stream.mark_end();
         rdp_out.end();
-//        LOG(LOG_INFO, "7) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                uint8_t * data = stream.p + 8;
-                int datalen = stream.end - data;
-                this->sec_layer.encrypt.sign(stream.p, 8, data, datalen);
-                this->sec_layer.encrypt.encrypt(data, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-
-        }
-
+        sec_out.end();
         sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
