@@ -199,7 +199,7 @@ struct GraphicsUpdatePDU
         this->stream.init(4096);
         this->tpdu = new X224Out(X224Packet::DT_TPDU, this->stream);
         this->mcs_sdin = new McsOut(stream, MCS_SDIN, this->rdp_layer.sec_layer.userid, MCS_GLOBAL_CHANNEL);
-        this->sec_out = new SecOut(stream, SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
+        this->sec_out = new SecOut(stream, this->rdp_layer.client_info.crypt_level, SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
         this->out_control = new ShareControlOut(this->stream, PDUTYPE_DATAPDU, this->rdp_layer.mcs_channel);
         this->out_data = new ShareDataOut(this->stream, PDUTYPE2_UPDATE, this->rdp_layer.share_id);
 
