@@ -198,13 +198,14 @@
 // compressedLength (2 bytes): A 16-bit, unsigned integer. The compressed length
 //   of the packet in bytes.
 
-class ShareControlOut
+
+class ShareControlAndDataOut
 {
     Stream & stream;
     uint8_t offlen1;
     uint8_t offlen2;
     public:
-    ShareControlOut(Stream & stream, uint8_t pdu_type1, uint8_t pdu_type2, uint16_t mcs_channel, uint32_t share_id)
+    ShareControlAndDataOut(Stream & stream, uint8_t pdu_type1, uint8_t pdu_type2, uint16_t mcs_channel, uint32_t share_id)
         : stream(stream), offlen1(stream.p - stream.data), offlen2(this->offlen1+12)
     {
         // share control
@@ -225,6 +226,49 @@ class ShareControlOut
         int len = stream.p - stream.data + this->offlen1;
         stream.set_out_uint16_le(len, this->offlen1);
         stream.set_out_uint16_le(len - 14, this->offlen2);
+    }
+};
+
+
+class ShareControlOut
+{
+    Stream & stream;
+    uint8_t offlen;
+    public:
+    ShareControlOut(Stream & stream, uint8_t pdu_type1, uint16_t mcs_channel)
+        : stream(stream), offlen(stream.p - stream.data)
+    {
+        stream.skip_uint8(2); // len
+        stream.out_uint16_le(0x10 | pdu_type1);
+        stream.out_uint16_le(mcs_channel);
+    }
+
+    void end(){
+        int len = stream.p - stream.data + this->offlen;
+        stream.set_out_uint16_le(len, this->offlen);
+    }
+};
+
+class ShareDataOut
+{
+    Stream & stream;
+    uint8_t offlen;
+    public:
+    ShareDataOut(Stream & stream, uint8_t pdu_type2, uint32_t share_id)
+        : stream(stream), offlen(stream.p - stream.data + 6)
+    {
+        stream.out_uint32_le(share_id);
+        stream.out_uint8(0);
+        stream.out_uint8(1);
+        stream.skip_uint8(2); // len - 14
+        stream.out_uint8(pdu_type2);
+        stream.out_uint8(0);
+        stream.out_uint16_le(0);
+    }
+
+    void end(){
+        int len = stream.p - stream.data - 14;
+        stream.set_out_uint16_le(len, this->offlen);
     }
 };
 

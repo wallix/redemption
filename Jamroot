@@ -192,6 +192,7 @@ unit-test test_primary_order_glyph_index : tests/test_primary_order_glyph_index.
 unit-test test_secondary_order_col_cache : tests/test_secondary_order_col_cache.cpp libboost_unit_test ;
 
 unit-test test_x224 : tests/test_x224.cpp libboost_unit_test ;
+unit-test test_rdp : tests/test_rdp.cpp libboost_unit_test ;
 
 
 unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test : ;

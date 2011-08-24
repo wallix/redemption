@@ -251,26 +251,25 @@ static int sign_key(uint8_t* e_data, int e_len, uint8_t* n_data, int n_len,
 {
     uint8_t* key;
     uint8_t* md5_final;
-    uint8_t* md5;
 
     if ((e_len != 4) || (n_len != 64) || (sign_len != 64)) {
         return 1;
     }
     key = new uint8_t[176];
     md5_final = new uint8_t[64];
-    md5 = ssl_md5_info_create();
+    SSL_MD5 md5;
     /* copy the test key */
     memcpy(key, g_testkey, 176);
     /* replace e and n */
     memcpy(key + 32, e_data, 4);
     memcpy(key + 36, n_data, 64);
-    ssl_md5_clear(md5);
+    ssl_md5_clear(&md5);
     /* the first 108 bytes */
-    ssl_md5_transform(md5, key, 108);
+    ssl_md5_transform(&md5, key, 108);
     /* set the whole thing with 0xff */
     memset(md5_final, 0xff, 64);
     /* digest 16 bytes */
-    ssl_md5_complete(md5, md5_final);
+    ssl_md5_complete(&md5, md5_final);
     /* set non 0xff array items */
     md5_final[16] = 0;
     md5_final[62] = 1;
@@ -278,7 +277,6 @@ static int sign_key(uint8_t* e_data, int e_len, uint8_t* n_data, int n_len,
     /* encrypt */
     ssl_mod_exp(sign_data, 64, md5_final, 64, g_ppk_n, 64, g_ppk_d, 64);
     /* cleanup */
-    ssl_md5_info_delete(md5);
     delete(key);
     delete(md5_final);
     return 0;
@@ -444,11 +442,10 @@ static int key_test(void)
 {
     uint8_t* md5_final;
     uint8_t* sig;
-    uint8_t* md5;
+    SSL_MD5 md5;
 
     md5_final = new uint8_t[64];
     sig = new uint8_t[64];
-    md5 = ssl_md5_info_create();
     printf("original key is:\n");
     hexdump(std::cout, (char*)g_testkey, 176);
     printf("original exponent is:\n");
@@ -457,10 +454,10 @@ static int key_test(void)
     hexdump(std::cout, (char*)g_testkey + 36, 64);
     printf("original signature is:\n");
     hexdump(std::cout, (char*)g_testkey + 112, 64);
-    ssl_md5_clear(md5);
-    ssl_md5_transform(md5, g_testkey, 108);
+    ssl_md5_clear(&md5);
+    ssl_md5_transform(&md5, g_testkey, 108);
     memset(md5_final, 0xff, 64);
-    ssl_md5_complete(md5, md5_final);
+    ssl_md5_complete(&md5, md5_final);
     printf("md5 hash of first 108 bytes of this key is:\n");
     hexdump(std::cout, (char*)md5_final, 16);
     md5_final[16] = 0;
@@ -473,7 +470,6 @@ static int key_test(void)
     ssl_mod_exp(md5_final, 64, g_testkey + 112, 64, g_ppk_n, 64, g_ppk_e, 4);
     printf("decrypted hash of first 108 bytes of this key is:\n");
     hexdump(std::cout, (char*)md5_final, 64);
-    ssl_md5_info_delete(md5);
     delete(md5_final);
     delete(sig);
     return 0;

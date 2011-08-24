@@ -76,21 +76,21 @@ void ssl_sha1_info_delete(uint8_t* sha1_info)
 }
 
 /*****************************************************************************/
-void ssl_sha1_clear(uint8_t* sha1_info)
+void ssl_sha1_clear(SHA_CTX* sha1_info)
 {
-    SHA1_Init((SHA_CTX*)sha1_info);
+    SHA1_Init(sha1_info);
 }
 
 /*****************************************************************************/
-void ssl_sha1_transform(uint8_t* sha1_info, uint8_t* data, int len)
+void ssl_sha1_transform(SHA_CTX* sha1_info, uint8_t* data, int len)
 {
-    SHA1_Update((SHA_CTX*)sha1_info, data, len);
+    SHA1_Update(sha1_info, data, len);
 }
 
 /*****************************************************************************/
-void ssl_sha1_complete(uint8_t* sha1_info, uint8_t* data)
+void ssl_sha1_complete(SHA_CTX* sha1_info, uint8_t* data)
 {
-    SHA1_Final((uint8_t*)data, (SHA_CTX*)sha1_info);
+    SHA1_Final((uint8_t*)data, sha1_info);
 }
 
 /* md5 stuff */
@@ -109,21 +109,21 @@ void ssl_md5_info_delete(uint8_t* md5_info)
 }
 
 /*****************************************************************************/
-void ssl_md5_clear(uint8_t* md5_info)
+void ssl_md5_clear(MD5_CTX* md5_info)
 {
-    MD5_Init((MD5_CTX*)md5_info);
+    MD5_Init(md5_info);
 }
 
 /*****************************************************************************/
-void ssl_md5_transform(uint8_t* md5_info, uint8_t* data, int len)
+void ssl_md5_transform(MD5_CTX* md5_info, uint8_t* data, int len)
 {
-    MD5_Update((MD5_CTX*)md5_info, data, len);
+    MD5_Update(md5_info, data, len);
 }
 
 /*****************************************************************************/
-void ssl_md5_complete(uint8_t* md5_info, uint8_t* data)
+void ssl_md5_complete(MD5_CTX* md5_info, uint8_t* data)
 {
-    MD5_Final((uint8_t*)data, (MD5_CTX*)md5_info);
+    MD5_Final((uint8_t*)data, md5_info);
 }
 
 /*****************************************************************************/
