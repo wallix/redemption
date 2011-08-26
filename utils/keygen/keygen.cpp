@@ -263,13 +263,16 @@ static int sign_key(uint8_t* e_data, int e_len, uint8_t* n_data, int n_len,
     /* replace e and n */
     memcpy(key + 32, e_data, 4);
     memcpy(key + 36, n_data, 64);
-    ssl_md5_clear(&md5);
+
+    ssllib ssl;
+
+    ssl.md5_init(&md5);
     /* the first 108 bytes */
-    ssl_md5_transform(&md5, key, 108);
+    ssl.md5_update(&md5, key, 108);
     /* set the whole thing with 0xff */
     memset(md5_final, 0xff, 64);
     /* digest 16 bytes */
-    ssl_md5_complete(&md5, md5_final);
+    ssl.md5_final(&md5, md5_final);
     /* set non 0xff array items */
     md5_final[16] = 0;
     md5_final[62] = 1;
@@ -454,10 +457,13 @@ static int key_test(void)
     hexdump(std::cout, (char*)g_testkey + 36, 64);
     printf("original signature is:\n");
     hexdump(std::cout, (char*)g_testkey + 112, 64);
-    ssl_md5_clear(&md5);
-    ssl_md5_transform(&md5, g_testkey, 108);
+
+    ssllib ssl;
+
+    ssl.md5_init(&md5);
+    ssl.md5_update(&md5, g_testkey, 108);
     memset(md5_final, 0xff, 64);
-    ssl_md5_complete(&md5, md5_final);
+    ssl.md5_final(&md5, md5_final);
     printf("md5 hash of first 108 bytes of this key is:\n");
     hexdump(std::cout, (char*)md5_final, 16);
     md5_final[16] = 0;

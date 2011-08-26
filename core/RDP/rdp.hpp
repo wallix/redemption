@@ -22,6 +22,9 @@
 
 */
 
+#include <stdlib.h>
+#include <stdio.h>
+
 #if !defined(CORE_RDP_RDP_HPP__)
 #define CORE_RDP_RDP_HPP__
 
@@ -202,11 +205,10 @@
 class ShareControlAndDataOut
 {
     Stream & stream;
-    uint8_t offlen1;
-    uint8_t offlen2;
+    uint8_t offlen;
     public:
     ShareControlAndDataOut(Stream & stream, uint8_t pdu_type1, uint8_t pdu_type2, uint16_t mcs_channel, uint32_t share_id)
-        : stream(stream), offlen1(stream.p - stream.data), offlen2(this->offlen1+12)
+        : stream(stream), offlen(stream.p - stream.data)
     {
         // share control
         stream.skip_uint8(2); // len
@@ -223,9 +225,9 @@ class ShareControlAndDataOut
     }
 
     void end(){
-        int len = stream.p - stream.data + this->offlen1;
-        stream.set_out_uint16_le(len, this->offlen1);
-        stream.set_out_uint16_le(len - 14, this->offlen2);
+        int len = stream.p - &(stream.data[this->offlen]);
+        stream.set_out_uint16_le(len, this->offlen);
+        stream.set_out_uint16_le(len - 14, this->offlen + 12);
     }
 };
 
@@ -244,7 +246,7 @@ class ShareControlOut
     }
 
     void end(){
-        int len = stream.p - stream.data + this->offlen;
+        int len = stream.p - stream.data - this->offlen;
         stream.set_out_uint16_le(len, this->offlen);
     }
 };
@@ -255,20 +257,64 @@ class ShareDataOut
     uint8_t offlen;
     public:
     ShareDataOut(Stream & stream, uint8_t pdu_type2, uint32_t share_id)
-        : stream(stream), offlen(stream.p - stream.data + 6)
+        : stream(stream), offlen(stream.p - stream.data)
     {
         stream.out_uint32_le(share_id);
         stream.out_uint8(0);
         stream.out_uint8(1);
-        stream.skip_uint8(2); // len - 14
+        stream.skip_uint8(2);
         stream.out_uint8(pdu_type2);
         stream.out_uint8(0);
         stream.out_uint16_le(0);
     }
 
     void end(){
-        int len = stream.p - stream.data - 14;
-        stream.set_out_uint16_le(len, this->offlen);
+        int len = stream.p - stream.data - this->offlen - 8;
+        stream.set_out_uint16_le(len, this->offlen + 6);
+    }
+};
+
+class McsOut
+{
+    Stream & stream;
+    uint8_t offlen;
+    public:
+    McsOut(Stream & stream, uint8_t command, uint8_t user_id, uint16_t chan_id)
+        : stream(stream), offlen(stream.p - stream.data + 6)
+    {
+        stream.out_uint8(command << 2);
+        stream.out_uint16_be(user_id);
+        stream.out_uint16_be(chan_id);
+        stream.out_uint8(0x70);
+        stream.skip_uint8(2); //len
+    }
+
+    void end(){
+        int len = stream.p - stream.data - offlen - 2;
+        stream.set_out_uint16_be(0x8000|len, this->offlen);
+    }
+};
+
+
+class McsIn
+{
+    public:
+    uint8_t opcode;
+    uint16_t user_id;
+    uint16_t chan_id;
+    uint8_t magic_0x70; // some ber header ?
+    uint16_t len;
+
+    McsIn(Stream & stream)
+    {
+        this->opcode = stream.in_uint8();
+        this->user_id = stream.in_uint16_be();
+        this->chan_id = stream.in_uint16_be();
+        this->magic_0x70 = stream.in_uint8();
+        this->len = stream.in_uint8();
+        if (this->len & 0x80){
+            this->len = ((this->len & 0x7F) << 8) + stream.in_uint8();
+        }
     }
 };
 

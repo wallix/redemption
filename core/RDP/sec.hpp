@@ -26,11 +26,10 @@
 #define __SEC_HPP__
 
 #include "RDP/x224.hpp"
-#include "RDP/sec.hpp"
+#include "RDP/rdp.hpp"
 #include "client_info.hpp"
 #include "rsa_keys.hpp"
 #include "constants.hpp"
-
 
 #include <assert.h>
 #include <stdint.h>
@@ -39,6 +38,66 @@
 
 #warning ssl calls introduce some dependency on ssl system library, injecting it in the sec object would be better.
 #include "ssl_calls.hpp"
+
+
+inline static void sec_make_40bit(uint8_t* key)
+{
+    key[0] = 0xd1;
+    key[1] = 0x26;
+    key[2] = 0x9e;
+}
+
+// Output a uint32 into a buffer (little-endian)
+inline static void buf_out_uint32(uint8_t* buffer, int value)
+{
+  buffer[0] = value & 0xff;
+  buffer[1] = (value >> 8) & 0xff;
+  buffer[2] = (value >> 16) & 0xff;
+  buffer[3] = (value >> 24) & 0xff;
+}
+
+
+#warning method used by licence, common with basic crypto support code should be made common. pad are also common to several functions.
+/* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
+inline static void sec_sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen,
+             uint8_t* data, int datalen)
+{
+    static uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                 54, 54, 54, 54, 54, 54, 54, 54
+                               };
+    static uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                             92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                             92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
+                           };
+
+    uint8_t shasig[20];
+    uint8_t md5sig[16];
+    uint8_t lenhdr[4];
+    SSL_SHA1 sha1;
+    SSL_MD5 md5;
+
+    buf_out_uint32(lenhdr, datalen);
+
+    ssllib ssl;
+
+    ssl.sha1_init(&sha1);
+    ssl.sha1_update(&sha1, session_key, keylen);
+    ssl.sha1_update(&sha1, pad_54, 40);
+    ssl.sha1_update(&sha1, lenhdr, 4);
+    ssl.sha1_update(&sha1, data, datalen);
+    ssl.sha1_final(&sha1, shasig);
+
+    ssl.md5_init(&md5);
+    ssl.md5_update(&md5, session_key, keylen);
+    ssl.md5_update(&md5, pad_92, 48);
+    ssl.md5_update(&md5, shasig, 20);
+    ssl.md5_final(&md5, md5sig);
+
+    memcpy(signature, md5sig, siglen);
+}
+
+
 
 /* used in sec */
 struct mcs_channel_item {
@@ -50,6 +109,133 @@ struct mcs_channel_item {
         this->flags = 0;
         this->chanid = 0;
     }
+};
+
+
+
+
+struct CryptContext
+{
+    int use_count;
+    uint8_t sign_key[16]; // should I call it session_key ?
+    uint8_t key[16];
+    uint8_t update_key[16];
+    int rc4_key_len;
+    SSL_RC4 rc4_info;
+    CryptContext() : use_count(0)
+    {
+        memset(this->sign_key, 0, 16);
+    }
+
+    /* Encrypt data using RC4 */
+    void encrypt(uint8_t* data, int length)
+    {
+        ssllib ssl;
+
+        if (this->use_count == 4096){
+            this->update();
+            if (this->rc4_key_len == 8) {
+                sec_make_40bit(this->key);
+            }
+            ssl.rc4_set_key(this->rc4_info, this->key, this->rc4_key_len);
+            this->use_count = 0;
+        }
+        ssl.rc4_crypt(this->rc4_info, data, data, length);
+        this->use_count++;
+    }
+
+    /* Decrypt data using RC4 */
+    void decrypt(uint8_t* data, int len)
+    {
+        ssllib ssl;
+
+        if (this->use_count == 4096) {
+            this->update();
+            if (this->rc4_key_len == 8) {
+                sec_make_40bit(this->key);
+            }
+            ssl.rc4_set_key(this->rc4_info, this->key, this->rc4_key_len);
+            this->use_count = 0;
+        }
+        ssl.rc4_crypt(this->rc4_info, data, data, len);
+        this->use_count++;
+    }
+
+    /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
+    void sign(uint8_t* signature, int siglen, uint8_t* data, int datalen)
+    {
+        static uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                     54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                     54, 54, 54, 54, 54, 54, 54, 54
+                                   };
+        static uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
+                               };
+
+        uint8_t shasig[20];
+        uint8_t md5sig[16];
+        uint8_t lenhdr[4];
+        SSL_SHA1 sha1;
+        SSL_MD5 md5;
+
+        buf_out_uint32(lenhdr, datalen);
+
+        ssllib ssl;
+
+        ssl.sha1_init(&sha1);
+        ssl.sha1_update(&sha1, this->sign_key, this->rc4_key_len);
+        ssl.sha1_update(&sha1, pad_54, 40);
+        ssl.sha1_update(&sha1, lenhdr, 4);
+        ssl.sha1_update(&sha1, data, datalen);
+        ssl.sha1_final(&sha1, shasig);
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, this->sign_key, this->rc4_key_len);
+        ssl.md5_update(&md5, pad_92, 48);
+        ssl.md5_update(&md5, shasig, 20);
+        ssl.md5_final(&md5, md5sig);
+
+        memcpy(signature, md5sig, siglen);
+    }
+
+    void update()
+    {
+        static uint8_t pad_54[40] = {
+            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+            54, 54, 54, 54, 54, 54, 54, 54
+        };
+
+        static uint8_t pad_92[48] = {
+            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
+        };
+
+        uint8_t shasig[20];
+        SSL_SHA1 sha1;
+        SSL_MD5 md5;
+        SSL_RC4 update;
+
+        ssllib ssl;
+
+        ssl.sha1_init(&sha1);
+        ssl.sha1_update(&sha1, this->update_key, this->rc4_key_len);
+        ssl.sha1_update(&sha1, pad_54, 40);
+        ssl.sha1_update(&sha1, this->key, this->rc4_key_len);
+        ssl.sha1_final(&sha1, shasig);
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, this->update_key, this->rc4_key_len);
+        ssl.md5_update(&md5, pad_92, 48);
+        ssl.md5_update(&md5, shasig, 20);
+        ssl.md5_final(&md5, key);
+
+        ssl.rc4_set_key(update, this->key, this->rc4_key_len);
+        ssl.rc4_crypt(update, this->key, this->key, this->rc4_key_len);
+    }
+
 };
 
 struct Sec
@@ -91,26 +277,16 @@ struct Sec
     #warning windows 2008 does not write trailer because of overflow of buffer below, checked actual size: 64 bytes on xp, 256 bytes on windows 2008
     uint8_t client_crypt_random[512];
 
-    int decrypt_use_count;
-    int encrypt_use_count;
-    uint8_t decrypt_key[16];
-    uint8_t encrypt_key[16];
-    uint8_t decrypt_update_key[16];
-    uint8_t encrypt_update_key[16];
 
-    SSL_RC4 decrypt_rc4_info;
-    SSL_RC4 encrypt_rc4_info;
+    CryptContext encrypt, decrypt;
+
 
     uint8_t crypt_level;
     int rc4_key_size; /* 1 = 40-bit, 2 = 128-bit */
-    int rc4_key_len; /* 8 or 16 */
-    uint8_t sign_key[16];
 
     Sec(uint8_t crypt_level) :
       licence_data(0),
       licence_size(0),
-      decrypt_use_count(0),
-      encrypt_use_count(0),
       crypt_level(crypt_level)
     {
         // from server_sec
@@ -119,7 +295,6 @@ struct Sec
         memset(this->client_random, 0, 64);
         memset(this->client_crypt_random, 0, 72);
 
-        memset(this->sign_key, 0, 16);
         memset(this->pub_exp, 0, 4);
         memset(this->pub_mod, 0, 64);
         memset(this->pub_sig, 0, 64);
@@ -127,24 +302,25 @@ struct Sec
 
         // from rdp_sec
         memset(this->client_crypt_random, 0, 512);
-        memset(this->sign_key, 0, 16);
         this->server_public_key_len = 0;
 
         // shared
-        memset(this->decrypt_key, 0, 16);
-        memset(this->encrypt_key, 0, 16);
-        memset(this->decrypt_update_key, 0, 16);
-        memset(this->encrypt_update_key, 0, 16);
+        memset(this->decrypt.key, 0, 16);
+        memset(this->encrypt.key, 0, 16);
+        memset(this->decrypt.update_key, 0, 16);
+        memset(this->encrypt.update_key, 0, 16);
         switch (crypt_level) {
         case 1:
         case 2:
             this->rc4_key_size = 1; /* 40 bits */
-            this->rc4_key_len = 8; /* 8 = 40 bit */
+            this->decrypt.rc4_key_len = 8; /* 8 = 40 bit */
+            this->encrypt.rc4_key_len = 8; /* 8 = 40 bit */
         break;
         default:
         case 3:
             this->rc4_key_size = 2; /* 128 bits */
-            this->rc4_key_len = 16; /* 16 = 128 bit */
+            this->decrypt.rc4_key_len = 16; /* 16 = 128 bit */
+            this->encrypt.rc4_key_len = 16; /* 16 = 128 bit */
         break;
         }
 
@@ -162,101 +338,6 @@ struct Sec
         }
     }
 
-    // Output a uint32 into a buffer (little-endian)
-    static void sec_buf_out_uint32(uint8_t* buffer, int value)
-    {
-      buffer[0] = value & 0xff;
-      buffer[1] = (value >> 8) & 0xff;
-      buffer[2] = (value >> 16) & 0xff;
-      buffer[3] = (value >> 24) & 0xff;
-    }
-
-    /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    static void rdp_sec_sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen,
-                 uint8_t* data, int datalen)
-    {
-        static uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                                     54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-                                     54, 54, 54, 54, 54, 54, 54, 54
-                                   };
-        static uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-                               };
-
-      uint8_t shasig[20];
-      uint8_t md5sig[16];
-      uint8_t lenhdr[4];
-      SSL_SHA1 sha1;
-      SSL_MD5 md5;
-
-      sec_buf_out_uint32(lenhdr, datalen);
-
-      ssllib ssl;
-
-      ssl.sha1_init(&sha1);
-      ssl.sha1_update(&sha1, session_key, keylen);
-      ssl.sha1_update(&sha1, pad_54, 40);
-      ssl.sha1_update(&sha1, lenhdr, 4);
-      ssl.sha1_update(&sha1, data, datalen);
-      ssl.sha1_final(&sha1, shasig);
-
-      ssl.md5_init(&md5);
-      ssl.md5_update(&md5, session_key, keylen);
-      ssl.md5_update(&md5, pad_92, 48);
-      ssl.md5_update(&md5, shasig, 20);
-      ssl.md5_final(&md5, md5sig);
-
-      memcpy(signature, md5sig, siglen);
-    }
-
-    void sec_update(uint8_t* key, uint8_t* update_key, uint8_t rc4_key_len)
-    {
-        static uint8_t pad_54[40] = {
-            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-            54, 54, 54, 54, 54, 54, 54, 54
-        };
-
-        static uint8_t pad_92[48] = {
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-        };
-
-        uint8_t shasig[20];
-        SSL_SHA1 sha1;
-        SSL_MD5 md5;
-        SSL_RC4 update;
-
-        ssllib ssl;
-
-        ssl.sha1_init(&sha1);
-        ssl.sha1_update(&sha1, update_key, this->rc4_key_len);
-        ssl.sha1_update(&sha1, pad_54, 40);
-        ssl.sha1_update(&sha1, key, rc4_key_len);
-        ssl.sha1_final(&sha1, shasig);
-
-        ssl.md5_init(&md5);
-        ssl.md5_update(&md5, update_key, this->rc4_key_len);
-        ssl.md5_update(&md5, pad_92, 48);
-        ssl.md5_update(&md5, shasig, 20);
-        ssl.md5_final(&md5, key);
-
-        ssl.rc4_set_key(update, key, rc4_key_len);
-        ssl.rc4_crypt(update, key, key, rc4_key_len);
-
-        if (rc4_key_len == 8) {
-            this->sec_make_40bit(key);
-        }
-    }
-
-    void sec_make_40bit(uint8_t* key)
-    {
-        key[0] = 0xd1;
-        key[1] = 0x26;
-        key[2] = 0x9e;
-    }
 
     // 16-byte transformation used to generate export keys (6.2.2).
     static void sec_hash_16(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2)
@@ -299,35 +380,6 @@ struct Sec
             ssl.md5_final(&md5, &out[i * 16]);
         }
     }
-
-    /* Encrypt data using RC4 */
-    void sec_encrypt(uint8_t* data, int length)
-    {
-        ssllib ssl;
-
-        if (this->encrypt_use_count == 4096){
-            this->sec_update(this->encrypt_key, this->encrypt_update_key, this->rc4_key_len);
-            ssl.rc4_set_key(this->encrypt_rc4_info, this->encrypt_key, this->rc4_key_len);
-            this->encrypt_use_count = 0;
-        }
-        ssl.rc4_crypt(this->encrypt_rc4_info, data, data, length);
-        this->encrypt_use_count++;
-    }
-
-    /* Decrypt data using RC4 */
-    void sec_decrypt(uint8_t* data, int len)
-    {
-        ssllib ssl;
-
-        if (this->decrypt_use_count == 4096) {
-            this->sec_update(this->decrypt_key, this->decrypt_update_key, this->rc4_key_len);
-            ssl.rc4_set_key(this->decrypt_rc4_info, this->decrypt_key, this->rc4_key_len);
-            this->decrypt_use_count = 0;
-        }
-        ssl.rc4_crypt(this->decrypt_rc4_info, data, data, len);
-        this->decrypt_use_count++;
-    }
-
 
     /* process the mcs client data we received from the mcs layer */
     void server_sec_process_mcs_data(Stream & stream, ClientInfo * client_info) throw (Error)
@@ -483,14 +535,9 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        stream.out_uint8(MCS_SDIN << 2);
-        stream.out_uint16_be(this->userid);
-        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-        stream.out_uint8(0x70);
-        stream.out_uint16_be((8+322)|0x8000);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         stream.out_copy_bytes((char*)lic1, 322);
-
+        sdin_out.end();
         tpdu.end();
         tpdu.send(trans);
     }
@@ -505,14 +552,9 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        stream.out_uint8(MCS_SDIN << 2);
-        stream.out_uint16_be(this->userid);
-        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-        stream.out_uint8(0x70);
-        stream.out_uint8(8+20);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         stream.out_copy_bytes((char*)lic2, 20);
-
+        sdin_out.end();
         tpdu.end();
         tpdu.send(trans);
     }
@@ -528,14 +570,9 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        stream.out_uint8(MCS_SDIN << 2);
-        stream.out_uint16_be(this->userid);
-        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-        stream.out_uint8(0x70);
-        stream.out_uint8(8+20);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         stream.out_copy_bytes((char*)lic3, 20);
-
+        sdin_out.end();
         tpdu.end();
         tpdu.send(trans);
 // ----------------------------
@@ -548,47 +585,6 @@ struct Sec
                     this->client_crypt_random, 64,
                     this->pub_mod, 64,
                     this->pri_exp, 64);
-    }
-
-
-
-    /*****************************************************************************/
-    /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    void server_sec_sign(uint8_t* out, int out_len, uint8_t* data, int data_len)
-    {
-        /* some compilers need unsigned char to avoid warnings */
-        static uint8_t pad_54[40] = {
-            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
-            54, 54, 54, 54, 54, 54, 54, 54
-        };
-
-        /* some compilers need unsigned char to avoid warnings */
-        static uint8_t pad_92[48] = {
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
-            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
-        };
-
-        uint8_t shasig[20];
-        uint8_t md5sig[16];
-        uint8_t lenhdr[4];
-
-        this->sec_buf_out_uint32(lenhdr, data_len);
-        SSL_SHA1 sha1_info;
-        SSL_MD5 md5_info;
-        ssl_sha1_clear(&sha1_info);
-        ssl_sha1_transform(&sha1_info, this->sign_key, this->rc4_key_len);
-        ssl_sha1_transform(&sha1_info, pad_54, 40);
-        ssl_sha1_transform(&sha1_info, lenhdr, 4);
-        ssl_sha1_transform(&sha1_info, data, data_len);
-        ssl_sha1_complete(&sha1_info, shasig);
-        ssl_md5_clear(&md5_info);
-        ssl_md5_transform(&md5_info, this->sign_key, this->rc4_key_len);
-        ssl_md5_transform(&md5_info, pad_92, 48);
-        ssl_md5_transform(&md5_info, shasig, 20);
-        ssl_md5_complete(&md5_info, md5sig);
-        memcpy(out, md5sig, out_len);
     }
 
     void server_sec_process_logon_info(Stream & stream, ClientInfo * client_info) throw (Error)
@@ -1412,7 +1408,7 @@ struct Sec
 
     /*****************************************************************************/
     /* prepare server mcs data to send in mcs layer */
-    void server_sec_out_mcs_data(ClientInfo * client_info)
+    void server_sec_out_mcs_data(Stream & stream, ClientInfo * client_info)
     {
         /* Same code above using list_test */
         int num_channels = (int) this->channel_list.size();
@@ -1490,7 +1486,7 @@ struct Sec
 
     void rdp_lic_generate_hwid(uint8_t* hwid, const char * hostname)
     {
-        this->sec_buf_out_uint32(hwid, 2);
+        buf_out_uint32(hwid, 2);
         memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
     }
 
@@ -1533,10 +1529,7 @@ struct Sec
         this->rdp_lic_generate_hwid(hwid, hostname);
         memcpy(sealed_buffer, decrypt_token, LICENCE_TOKEN_SIZE);
         memcpy(sealed_buffer + LICENCE_TOKEN_SIZE, hwid, LICENCE_HWID_SIZE);
-        this->rdp_sec_sign(out_sig, 16,
-                           this->lic_layer.licence_sign_key,
-                           16, sealed_buffer,
-                           sizeof(sealed_buffer));
+        sec_sign(out_sig, 16, this->lic_layer.licence_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
         /* Now encrypt the HWID */
         ssl.rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
         memcpy(crypt_hwid, hwid, LICENCE_HWID_SIZE);
@@ -1551,15 +1544,12 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
+        McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
 
-        int hdrlen = this->lic_layer.licence_issued ? 0 : 4 ;
+        stream.out_uint8(this->lic_layer.licence_issued
+                         ? LICENCE_TAG_AUTHRESP
+                         : SEC_LICENCE_NEG);
 
-        stream.sec_hdr = stream.p;
-        stream.p += hdrlen;
-
-        stream.out_uint8(LICENCE_TAG_AUTHRESP);
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
         stream.out_uint16_le(1);
@@ -1570,23 +1560,8 @@ struct Sec
         stream.out_copy_bytes(crypt_hwid, LICENCE_HWID_SIZE);
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
+        sdrq_out.end();
         tpdu.end();
-
-        uint8_t * oldp = stream.p;
-        stream.p = stream.sec_hdr;
-        if (!this->lic_layer.licence_issued){
-                stream.out_uint32_le(SEC_LICENCE_NEG);
-        }
-
-        stream.p = stream.mcs_hdr;
-        int len = ((stream.end - stream.p) - 8) | 0x8000;
-        stream.out_uint8(MCS_SDRQ << 2);
-        stream.out_uint16_be(this->userid);
-        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-        stream.out_uint8(0x70);
-        stream.out_uint16_be(len);
-
-        stream.p = oldp;
 
         tpdu.send(trans);
     }
@@ -1624,8 +1599,7 @@ struct Sec
         if (this->licence_size > 0) {
             /* Generate a signature for the HWID buffer */
             this->rdp_lic_generate_hwid(hwid, hostname);
-            this->rdp_sec_sign(signature, 16, this->lic_layer.licence_sign_key, 16,
-                         hwid, sizeof(hwid));
+            sec_sign(signature, 16, this->lic_layer.licence_sign_key, 16, hwid, sizeof(hwid));
             /* Now encrypt the HWID */
             ssllib ssl;
 
@@ -1651,16 +1625,10 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
+        McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
 
-        #warning if we are performing licence request that means licence has not been issued
-        int hdrlen = this->lic_layer.licence_issued ? 0 : 4 ;
-
-        stream.sec_hdr = stream.p;
-        stream.p += hdrlen;
-
-        stream.out_uint8(LICENCE_TAG_REQUEST);
+        #warning if we are performing licence request doesn't it mean that licence has not been issued ?
+        stream.out_uint8(this->lic_layer.licence_issued?LICENCE_TAG_REQUEST:SEC_LICENCE_NEG);
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
         stream.out_uint32_le(1);
@@ -1680,25 +1648,8 @@ struct Sec
         stream.out_uint16_le(hostlen);
         stream.out_copy_bytes(hostname, hostlen);
 
+        sdrq_out.end();
         tpdu.end();
-
-        uint8_t * oldp = stream.p;
-        stream.p = stream.sec_hdr;
-        if (!this->lic_layer.licence_issued){
-                stream.out_uint32_le(SEC_LICENCE_NEG);
-        }
-
-        stream.p = stream.mcs_hdr;
-        #warning not need to write full header, we should just have to send length
-        int len = ((stream.end - stream.p) - 8) | 0x8000;
-        stream.out_uint8(MCS_SDRQ << 2);
-        stream.out_uint16_be(this->userid);
-        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-        stream.out_uint8(0x70);
-        stream.out_uint16_be(len);
-
-        stream.p = oldp;
-
         tpdu.send(trans);
     }
 
@@ -1708,18 +1659,12 @@ struct Sec
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
+        McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
 
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
 
-        int hdrlen = this->lic_layer.licence_issued ? 0 : 4 ;
-
-        stream.sec_hdr = stream.p;
-        stream.p += hdrlen;
-
-        stream.out_uint8(LICENCE_TAG_PRESENT);
+        stream.out_uint8(this->lic_layer.licence_issued ?LICENCE_TAG_PRESENT:SEC_LICENCE_NEG);
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
         stream.out_uint32_le(1);
@@ -1738,24 +1683,8 @@ struct Sec
         stream.out_copy_bytes(hwid, LICENCE_HWID_SIZE);
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
+        sdrq_out.end();
         tpdu.end();
-
-        uint8_t * oldp = stream.p;
-        stream.p = stream.sec_hdr;
-        if (!this->lic_layer.licence_issued){
-                stream.out_uint32_le(SEC_LICENCE_NEG);
-        }
-
-        stream.p = stream.mcs_hdr;
-        int len = ((stream.end - stream.p) - 8) | 0x8000;
-        stream.out_uint8(MCS_SDRQ << 2);
-        stream.out_uint16_be(this->userid);
-        stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-        stream.out_uint8(0x70);
-        stream.out_uint16_be(len);
-
-        stream.p = oldp;
-
         tpdu.send(trans);
     }
 
@@ -1874,32 +1803,34 @@ struct Sec
         this->sec_hash_48(key_block, master_secret, client_random, server_random, 'X');
 
         /* First 16 bytes of key material is MAC secret */
-        memcpy(this->sign_key, key_block, 16);
+        memcpy(this->encrypt.sign_key, key_block, 16);
 
         /* Generate export keys from next two blocks of 16 bytes */
-        this->sec_hash_16(this->decrypt_key, &key_block[16], client_random, server_random);
-        this->sec_hash_16(this->encrypt_key, &key_block[32], client_random, server_random);
+        this->sec_hash_16(this->decrypt.key, &key_block[16], client_random, server_random);
+        this->sec_hash_16(this->encrypt.key, &key_block[32], client_random, server_random);
 
         if (rc4_key_size == 1) {
             // LOG(LOG_DEBUG, "40-bit encryption enabled\n");
-            this->sec_make_40bit(this->sign_key);
-            this->sec_make_40bit(this->decrypt_key);
-            this->sec_make_40bit(this->encrypt_key);
-            this->rc4_key_len = 8;
+            sec_make_40bit(this->encrypt.sign_key);
+            sec_make_40bit(this->decrypt.key);
+            sec_make_40bit(this->encrypt.key);
+            this->decrypt.rc4_key_len = 8;
+            this->encrypt.rc4_key_len = 8;
         }
         else {
             //LOG(LOG_DEBUG, "rc_4_key_size == %d, 128-bit encryption enabled\n", rc4_key_size);
-            this->rc4_key_len = 16;
+            this->decrypt.rc4_key_len = 16;
+            this->encrypt.rc4_key_len = 16;
         }
 
         /* Save initial RC4 keys as update keys */
-        memcpy(this->decrypt_update_key, this->decrypt_key, 16);
-        memcpy(this->encrypt_update_key, this->encrypt_key, 16);
+        memcpy(this->decrypt.update_key, this->decrypt.key, 16);
+        memcpy(this->encrypt.update_key, this->encrypt.key, 16);
 
         ssllib ssl;
 
-        ssl.rc4_set_key(this->decrypt_rc4_info, this->decrypt_key, this->rc4_key_len);
-        ssl.rc4_set_key(this->encrypt_rc4_info, this->encrypt_key, this->rc4_key_len);
+        ssl.rc4_set_key(this->decrypt.rc4_info, this->decrypt.key, this->decrypt.rc4_key_len);
+        ssl.rc4_set_key(this->encrypt.rc4_info, this->encrypt.key, this->encrypt.rc4_key_len);
     }
 
     /* Perform an RSA public key encryption operation */
@@ -2689,6 +2620,60 @@ struct Sec
             out.mark_end();
         }
 
+        try {
+
+//2.2.1.1    Client X.224 Connection Request PDU
+//==============================================
+
+// The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
+// client to server during the Connection Initiation phase (see section
+// 1.3.1.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
+//   data unit (TPDU), as specified in [X224] section 13.3.
+
+// routingToken (variable): Optional and variable-length routing token bytes
+//   used for load balancing terminated by a carriage-return (CR) and line-feed
+//   (LF) ANSI sequence. For more information, see [MSFT-SDLBTS]. The length of
+//   the routing token and CR+LF sequence is included in the X.224 Connection
+//   Request Length Indicator field.
+
+// rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
+//   structure. The length of this negotiation structure is included in the
+//   X.224 Connection Request Length Indicator field.
+
+
+            Stream out;
+            X224Out crtpdu(X224Packet::CR_TPDU, out);
+
+            #warning looks like this strange cookie thing is in fact useless, see MSFT-SDLBTS
+            // USER DATA
+//            out.out_concat("Cookie: mstshash=");
+//            out.out_concat(this->username);
+//            out.out_concat("\r\n");
+//            crtpdu.extend_tpdu_hdr();
+            crtpdu.end();
+
+            crtpdu.send(trans);
+
+            Stream in;
+            X224In cctpdu(trans, in);
+            if (cctpdu.tpkt.version != 3){
+                throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+            }
+            if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
+                throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
+            }
+        } catch (Error) {
+            try {
+                trans->disconnect();
+            } catch (Error){
+                // rethrow the first error, not the error we could get disconnecting
+            }
+            throw;
+        }
 //2.2.1.1    Client X.224 Connection Request PDU
 //==============================================
 
@@ -2897,48 +2882,17 @@ struct Sec
         {
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-            stream.mcs_hdr = stream.p;
-            stream.p += 8;
+            McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
 
             int length = this->server_public_key_len + SEC_PADDING_SIZE;
-            int flags = SEC_CLIENT_RANDOM;
-
-            int hdrlen = this->lic_layer.licence_issued ? 0 : 4 ;
-
-            stream.sec_hdr = stream.p;
-            stream.p += hdrlen;
-
+            stream.out_uint32_le(SEC_CLIENT_RANDOM);
             stream.out_uint32_le(length);
             LOG(LOG_INFO, "Server public key is %d bytes long", this->server_public_key_len);
             stream.out_copy_bytes(this->client_crypt_random, this->server_public_key_len);
             stream.out_clear_bytes(SEC_PADDING_SIZE);
 
+            sdrq_out.end();
             tpdu.end();
-
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (!this->lic_layer.licence_issued || (flags & SEC_ENCRYPT)){
-                    stream.out_uint32_le(flags);
-            }
-
-            if (flags & SEC_ENCRYPT){
-                flags &= ~SEC_ENCRYPT;
-                int datalen = stream.end - stream.p - 8;
-
-                this->rdp_sec_sign(stream.p, 8, this->sign_key, this->rc4_key_len, stream.p + 8, datalen);
-                this->sec_encrypt(stream.p + 8, datalen);
-            }
-
-            stream.p = stream.mcs_hdr;
-            int len = ((stream.end - stream.p) - 8) | 0x8000;
-            stream.out_uint8(MCS_SDRQ << 2);
-            stream.out_uint16_be(this->userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            stream.out_uint16_be(len);
-
-            stream.p = oldp;
-
             tpdu.send(trans);
         }
     }
@@ -2998,6 +2952,495 @@ struct Sec
         }
     }
 
+    /* Output connect initial data blob */
+    void rdp_sec_out_mcs_data(
+            Stream & client_mcs_data,
+            vector<mcs_channel_item*> channel_list,
+            int width, int height, int rdp_bpp, int keylayout, bool console_session, char * hostname)
+    {
+        int length = 158 + 76 + 12 + 4;
+
+        if (channel_list.size() > 0){
+            length += channel_list.size() * 12 + 8;
+        }
+
+        /* Generic Conference Control (T.124) ConferenceCreateRequest */
+        client_mcs_data.out_uint16_be(5);
+        client_mcs_data.out_uint16_be(0x14);
+        client_mcs_data.out_uint8(0x7c);
+        client_mcs_data.out_uint16_be(1);
+
+        client_mcs_data.out_uint16_be((length | 0x8000)); /* remaining length */
+
+        client_mcs_data.out_uint16_be(8); /* length? */
+        client_mcs_data.out_uint16_be(16);
+        client_mcs_data.out_uint8(0);
+        client_mcs_data.out_uint16_le(0xc001);
+        client_mcs_data.out_uint8(0);
+
+        client_mcs_data.out_uint32_le(0x61637544); /* OEM ID: "Duca", as in Ducati. */
+        client_mcs_data.out_uint16_be(((length - 14) | 0x8000)); /* remaining length */
+
+        /* Client information */
+        client_mcs_data.out_uint16_le(CS_CORE);
+        LOG(LOG_INFO, "Sending Client Core Data to remote server\n");
+        client_mcs_data.out_uint16_le(212); /* length */
+        LOG(LOG_INFO, "core::header::length = %u\n", 212);
+        client_mcs_data.out_uint32_le(0x00080004); // RDP version. 1 == RDP4, 4 == RDP5.
+        LOG(LOG_INFO, "core::header::version (0x00080004 = RDP 5.0, 5.1, 5.2, and 6.0 clients)");
+        client_mcs_data.out_uint16_le(width);
+        LOG(LOG_INFO, "core::desktopWidth = %u\n", width);
+        client_mcs_data.out_uint16_le(height);
+        LOG(LOG_INFO, "core::desktopHeight = %u\n", height);
+        client_mcs_data.out_uint16_le(0xca01);
+        LOG(LOG_INFO, "core::colorDepth = RNS_UD_COLOR_8BPP (superseded by postBeta2ColorDepth)");
+        client_mcs_data.out_uint16_le(0xaa03);
+        LOG(LOG_INFO, "core::SASSequence = RNS_UD_SAS_DEL");
+        client_mcs_data.out_uint32_le(keylayout);
+        LOG(LOG_INFO, "core::keyboardLayout = %x", keylayout);
+        client_mcs_data.out_uint32_le(2600); /* Client build. We are now 2600 compatible :-) */
+        LOG(LOG_INFO, "core::clientBuild = 2600");
+        LOG(LOG_INFO, "core::clientName=%s\n", hostname);
+
+        /* Added in order to limit hostlen and hostname size */
+        int hostlen = 2 * strlen(hostname);
+        if (hostlen > 30){
+            hostlen = 30;
+        }
+        /* Unicode name of client, padded to 30 bytes */
+        client_mcs_data.out_unistr(hostname);
+        client_mcs_data.out_clear_bytes(30 - hostlen);
+
+    /* See
+    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wceddk40/html/cxtsksupportingremotedesktopprotocol.asp */
+    #warning code should be updated to take care of keyboard type
+        client_mcs_data.out_uint32_le(4); // g_keyboard_type
+        LOG(LOG_INFO, "core::keyboardType = IBM enhanced (101- or 102-key) keyboard");
+        client_mcs_data.out_uint32_le(0); // g_keyboard_subtype
+        LOG(LOG_INFO, "core::keyboardSubType = 0");
+        client_mcs_data.out_uint32_le(12); // g_keyboard_functionkeys
+        LOG(LOG_INFO, "core::keyboardFunctionKey = 12 function keys");
+        client_mcs_data.out_clear_bytes(64); /* imeFileName */
+        LOG(LOG_INFO, "core::imeFileName = \"\"");
+        client_mcs_data.out_uint16_le(0xca01); /* color depth 8bpp */
+        LOG(LOG_INFO, "core::postBeta2ColorDepth = RNS_UD_COLOR_8BPP (superseded by highColorDepth)");
+        client_mcs_data.out_uint16_le(1);
+        LOG(LOG_INFO, "core::clientProductId = 1");
+        client_mcs_data.out_uint32_le(0);
+        LOG(LOG_INFO, "core::serialNumber = 0");
+        client_mcs_data.out_uint16_le(rdp_bpp);
+        LOG(LOG_INFO, "core::highColorDepth = %u", rdp_bpp);
+        client_mcs_data.out_uint16_le(0x0007);
+        LOG(LOG_INFO, "core::supportedColorDepths = 24/16/15");
+        client_mcs_data.out_uint16_le(1);
+        LOG(LOG_INFO, "core::earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU");
+        client_mcs_data.out_clear_bytes(64);
+        LOG(LOG_INFO, "core::clientDigProductId = \"\"");
+        client_mcs_data.out_clear_bytes(2);
+        LOG(LOG_INFO, "core::pad2octets");
+//        client_mcs_data.out_uint32_le(0); // optional
+//        LOG(LOG_INFO, "core::serverSelectedProtocol = 0");
+        /* End of client info */
+
+        client_mcs_data.out_uint16_le(CS_CLUSTER);
+        client_mcs_data.out_uint16_le(12);
+        #warning check that should depend on g_console_session
+        client_mcs_data.out_uint32_le(console_session ? 0xb : 9);
+        client_mcs_data.out_uint32_le(0);
+
+        /* Client encryption settings */
+        client_mcs_data.out_uint16_le(CS_SECURITY);
+        client_mcs_data.out_uint16_le(12); /* length */
+        #warning check that, should depend on g_encryption
+        /* encryption supported, 128-bit supported */
+        client_mcs_data.out_uint32_le(0x3);
+        client_mcs_data.out_uint32_le(0); /* Unknown */
+
+        /* Here we need to put channel information in order to redirect channel data
+        from client to server passing through the "proxy" */
+        size_t num_channels = channel_list.size();
+
+        if (num_channels > 0) {
+            client_mcs_data.out_uint16_le(CS_NET);
+            client_mcs_data.out_uint16_le(num_channels * 12 + 8); /* length */
+            client_mcs_data.out_uint32_le(num_channels); /* number of virtual channels */
+            for (size_t i = 0; i < num_channels; i++){
+                const mcs_channel_item* channel_item = channel_list[i];
+
+                LOG(LOG_DEBUG, "Requesting channel %s\n", channel_item->name);
+                memcpy(client_mcs_data.p, channel_item->name, 8);
+                client_mcs_data.p += 8;
+
+                client_mcs_data.out_uint32_be(channel_item->flags);
+         }
+        client_mcs_data.mark_end();
+     }
+    }
+
+// 2.2.1.4  Server MCS Connect Response PDU with GCC Conference Create Response
+// ----------------------------------------------------------------------------
+// The MCS Connect Response PDU is an RDP Connection Sequence PDU sent from
+// server to client during the Basic Settings Exchange phase (see section
+// 1.3.1.1). It is sent as a response to the MCS Connect Initial PDU (section
+// 2.2.1.3). The MCS Connect Response PDU encapsulates a GCC Conference Create
+// Response, which encapsulates concatenated blocks of settings data.
+
+// A basic high-level overview of the nested structure for the Server MCS
+// Connect Response PDU is illustrated in section 1.3.1.1, in the figure
+// specifying MCS Connect Response PDU. Note that the order of the settings
+// data blocks is allowed to vary from that shown in the previously mentioned
+// figure and the message syntax layout that follows. This is possible because
+// each data block is identified by a User Data Header structure (section
+// 2.2.1.4.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+// section 13.7.
+
+// mcsCrsp (variable): Variable-length BER-encoded MCS Connect Response
+//   structure (using definite-length encoding) as described in [T125]
+//   (the ASN.1 structure definition is detailed in [T125] section 7, part 2).
+//   The userData field of the MCS Connect Response encapsulates the GCC
+//   Conference Create Response data (contained in the gccCCrsp and subsequent
+//   fields).
+
+// gccCCrsp (variable): Variable-length PER-encoded GCC Connect Data structure
+//   which encapsulates a Connect GCC PDU that contains a GCC Conference Create
+//   Response structure as described in [T124] (the ASN.1 structure definitions
+//   are specified in [T124] section 8.7) appended as user data to the MCS
+//   Connect Response (using the format specified in [T124] sections 9.5 and
+//   9.6). The userData field of the GCC Conference Create Response contains
+//   one user data set consisting of concatenated server data blocks.
+
+// serverCoreData (12 bytes): Server Core Data structure (section 2.2.1.4.2).
+
+// serverSecurityData (variable): Variable-length Server Security Data structure
+//   (section 2.2.1.4.3).
+
+// serverNetworkData (variable): Variable-length Server Network Data structure
+//   (section 2.2.1.4.4).
+
+    /*****************************************************************************/
+    /* Establish a secure connection */
+    void rdp_sec_connect(Transport * trans, vector<mcs_channel_item*> channel_list,
+                        int width, int height,
+                        int rdp_bpp, int keylayout,
+                        bool console_session, int & use_rdp5, char * hostname, char * username) throw(Error)
+    {
+        Stream client_mcs_data(512);
+
+        this->rdp_sec_out_mcs_data(
+                            client_mcs_data,
+                            channel_list,
+                            width, height, rdp_bpp,
+                            keylayout, console_session, hostname);
+
+        LOG(LOG_INFO, "Iso Layer : connect %s\n", username);
+
+        try {
+
+//2.2.1.1    Client X.224 Connection Request PDU
+//==============================================
+
+// The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
+// client to server during the Connection Initiation phase (see section
+// 1.3.1.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
+//   data unit (TPDU), as specified in [X224] section 13.3.
+
+// routingToken (variable): Optional and variable-length routing token bytes
+//   used for load balancing terminated by a carriage-return (CR) and line-feed
+//   (LF) ANSI sequence. For more information, see [MSFT-SDLBTS]. The length of
+//   the routing token and CR+LF sequence is included in the X.224 Connection
+//   Request Length Indicator field.
+
+// rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
+//   structure. The length of this negotiation structure is included in the
+//   X.224 Connection Request Length Indicator field.
+
+
+            Stream out;
+            X224Out crtpdu(X224Packet::CR_TPDU, out);
+
+            #warning looks like this strange cookie thing is in fact useless, see MSFT-SDLBTS
+            // USER DATA
+//            out.out_concat("Cookie: mstshash=");
+//            out.out_concat(this->username);
+//            out.out_concat("\r\n");
+//            crtpdu.extend_tpdu_hdr();
+            crtpdu.end();
+
+            crtpdu.send(trans);
+
+            Stream in;
+            X224In cctpdu(trans, in);
+            if (cctpdu.tpkt.version != 3){
+                throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+            }
+            if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
+                throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
+            }
+        } catch (Error) {
+            try {
+                trans->disconnect();
+            } catch (Error){
+                // rethrow the first error, not the error we could get disconnecting
+            }
+            throw;
+        }
+
+        try{
+            {
+                int data_len = client_mcs_data.end - client_mcs_data.data;
+                int len = 7 + 3 * 34 + 4 + data_len;
+
+                Stream stream(8192);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+                stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
+                stream.out_ber_len(len);
+                stream.out_uint8(BER_TAG_OCTET_STRING);
+                stream.out_ber_len(0); /* calling domain */
+                stream.out_uint8(BER_TAG_OCTET_STRING);
+                stream.out_ber_len(0); /* called domain */
+                stream.out_uint8(BER_TAG_BOOLEAN);
+                stream.out_ber_len(1);
+                stream.out_uint8(0xff); /* upward flag */
+
+                // target params
+                stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+                stream.out_ber_len(32);
+                stream.out_ber_int16(34);     // max_channels
+                stream.out_ber_int16(2);      // max_users
+                stream.out_ber_int16(0);      // max_tokens
+                stream.out_ber_int16(1);
+                stream.out_ber_int16(0);
+                stream.out_ber_int16(1);
+                stream.out_ber_int16(0xffff); // max_pdu_size
+                stream.out_ber_int16(2);
+
+                // min params
+                stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+                stream.out_ber_len(32);
+                stream.out_ber_int16(1);     // max_channels
+                stream.out_ber_int16(1);     // max_users
+                stream.out_ber_int16(1);     // max_tokens
+                stream.out_ber_int16(1);
+                stream.out_ber_int16(0);
+                stream.out_ber_int16(1);
+                stream.out_ber_int16(0x420); // max_pdu_size
+                stream.out_ber_int16(2);
+
+                // max params
+                stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+                stream.out_ber_len(32);
+                stream.out_ber_int16(0xffff); // max_channels
+                stream.out_ber_int16(0xfc17); // max_users
+                stream.out_ber_int16(0xffff); // max_tokens
+                stream.out_ber_int16(1);
+                stream.out_ber_int16(0);
+                stream.out_ber_int16(1);
+                stream.out_ber_int16(0xffff); // max_pdu_size
+                stream.out_ber_int16(2);
+
+                stream.out_uint8(BER_TAG_OCTET_STRING);
+                stream.out_ber_len(data_len);
+                stream.out_copy_bytes(client_mcs_data.data, data_len);
+
+                tpdu.end();
+                tpdu.send(trans);
+            }
+            Stream stream(8192);
+            this->recv_connect_response(stream, trans);
+
+            LOG(LOG_INFO, "rdp_sec_process_mcs_data\n");
+            this->rdp_sec_process_mcs_data(stream, channel_list, use_rdp5);
+
+            {
+                Stream stream(8192);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+                stream.out_uint8((MCS_EDRQ << 2));
+                stream.out_uint16_be(0x100); /* height */
+                stream.out_uint16_be(0x100); /* interval */
+                tpdu.end();
+                tpdu.send(trans);
+            }
+            {
+                Stream stream(8192);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+                stream.out_uint8((MCS_AURQ << 2));
+                tpdu.end();
+                tpdu.send(trans);
+            }
+            {
+                Stream stream(8192);
+                X224In(trans, stream);
+                int opcode = stream.in_uint8();
+                if ((opcode >> 2) != MCS_AUCF) {
+                    throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
+                }
+                int res = stream.in_uint8();
+                if (res != 0) {
+                    throw Error(ERR_MCS_RECV_AUCF_RES_NOT_0);
+                }
+                if (opcode & 2) {
+                    this->userid = stream.in_uint16_be();
+                }
+                if (!(stream.check_end())) {
+                    throw Error(ERR_MCS_RECV_AUCF_ERROR_CHECKING_STREAM);
+                }
+            }
+
+            #warning the array size below is arbitrary, it should be checked to avoid buffer overflow
+            uint16_t channels[100];
+
+            channels[0] = this->userid + 1001;
+            channels[1] = MCS_GLOBAL_CHANNEL;
+            size_t num_channels = this->channel_list.size();
+            for (size_t index = 0; index < num_channels; index++){
+                const mcs_channel_item* channel_item = this->channel_list[index];
+                channels[2+index] = channel_item->chanid;
+            }
+
+            // 2.2.1.8 Client MCS Channel Join Request PDU
+            // -------------------------------------------
+            // The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
+            // from client to server during the Channel Connection phase (see section
+            // 1.3.1.1). It is sent after receiving the MCS Attach User Confirm PDU
+            // (section 2.2.1.7). The client uses the MCS Channel Join Request PDU to
+            // join the user channel obtained from the Attach User Confirm PDU, the
+            // I/O channel and all of the static virtual channels obtained from the
+            // Server Network Data structure (section 2.2.1.4.4).
+
+            // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+            // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+            //                     section 13.7.
+
+            // mcsCJrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an
+            //                    MCS Channel Join Request structure as specified in
+            //                    [T125] sections 10.19 and I.3 (the ASN.1 structure
+            //                    definitions are given in [T125] section 7, parts 6
+            //                    and 10).
+
+            // ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+            // {
+            //     initiator UserId
+            //     channelId ChannelId
+            //               -- may be zero
+            // }
+
+            for (size_t index = 0; index < num_channels+2; index++){
+                {
+                    Stream stream(8192);
+                    X224Out tpdu(X224Packet::DT_TPDU, stream);
+                    stream.out_uint8((MCS_CJRQ << 2));
+                    stream.out_uint16_be(this->userid);
+                    stream.out_uint16_be(channels[index]);
+                    tpdu.end();
+                    tpdu.send(trans);
+                }
+                {
+                    Stream stream(8192);
+                    X224In(trans, stream);
+                    int opcode = stream.in_uint8();
+                    if ((opcode >> 2) != MCS_CJCF) {
+                        throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
+                    }
+                    if (0 != stream.in_uint8()) {
+                        throw Error(ERR_MCS_RECV_CJCF_EMPTY);
+                    }
+                    stream.skip_uint8(4); /* mcs_userid, req_chanid */
+                    if (opcode & 2) {
+                        stream.skip_uint8(2); /* join_chanid */
+                    }
+                    if (!stream.check_end()) {
+                        throw Error(ERR_MCS_RECV_CJCF_ERROR_CHECKING_STREAM);
+                    }
+                }
+            }
+        }
+        catch(...){
+            Stream stream(11);
+            X224Out tpdu(X224Packet::DR_TPDU, stream);
+            tpdu.end();
+            tpdu.send(trans);
+            throw;
+        }
+
+        LOG(LOG_INFO, "Iso Layer : setting encryption\n");
+        /* Send the client random to the server */
+//      if (this->encryption)
+        {
+            Stream stream(8192);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
+
+            int length = this->server_public_key_len + SEC_PADDING_SIZE;
+
+            stream.out_uint32_le(SEC_CLIENT_RANDOM);
+
+            stream.out_uint32_le(length);
+            LOG(LOG_INFO, "Server public key is %d bytes long", this->server_public_key_len);
+            stream.out_copy_bytes(this->client_crypt_random, this->server_public_key_len);
+            stream.out_clear_bytes(SEC_PADDING_SIZE);
+
+            sdrq_out.end();
+            tpdu.end();
+            tpdu.send(trans);
+        }
+    }
+
+};
+
+
+class SecOut
+{
+    Stream & stream;
+    uint16_t offhdr;
+    uint8_t crypt_level;
+    CryptContext & crypt;
+    public:
+    SecOut(Stream & stream, uint8_t crypt_level, uint32_t flags, CryptContext & crypt)
+        : stream(stream), offhdr(stream.p - stream.data), crypt_level(crypt_level), crypt(crypt)
+    {
+        if (crypt_level > 1){
+            this->stream.out_uint32_le(flags);
+            this->stream.skip_uint8(8);
+        }
+        else {
+            this->stream.out_uint32_le(0);
+        }
+    }
+
+    void end(){
+        if (crypt_level > 1){
+            uint8_t * data = this->stream.data + this->offhdr + 12;
+            int datalen = this->stream.p - data;
+            this->crypt.sign(this->stream.data + this->offhdr + 4, 8, data, datalen);
+            this->crypt.encrypt(data, datalen);
+        }
+    }
+};
+
+
+class SecIn
+{
+    public:
+    uint32_t flags;
+    SecIn(Stream & stream, uint8_t crypt_level, CryptContext & crypt)
+    {
+        this->flags = stream.in_uint32_le();
+        if (this->flags & SEC_ENCRYPT){
+            #warning shouldn't we check signature ?
+            stream.skip_uint8(8); /* signature */
+            crypt.decrypt(stream.p, stream.end - stream.p); // decrypting to the end of tpdu ?
+        }
+    }
 };
 
 #endif

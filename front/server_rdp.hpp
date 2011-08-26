@@ -26,7 +26,6 @@
 #define FRONT_SERVER_RDP_HPP__
 
 #include "RDP/sec.hpp"
-#include "RDP/rdp.hpp"
 #include "client_info.hpp"
 #include "config.hpp"
 #include "error.hpp"
@@ -34,7 +33,6 @@
 #include "colors.hpp"
 #include "altoco.hpp"
 #include "RDP/x224.hpp"
-
 
 /* rdp */
 struct server_rdp {
@@ -47,6 +45,7 @@ struct server_rdp {
     uint32_t packet_number;
     Stream client_mcs_data;
     Transport * trans;
+
 
     server_rdp(Transport * trans, Inifile * ini)
         :
@@ -78,16 +77,8 @@ struct server_rdp {
     {
         Stream stream(data_len + 1024); /* this should be big enough */
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, channel_id);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
 
         stream.channel_hdr = stream.p;
         stream.p += 8;
@@ -110,48 +101,8 @@ struct server_rdp {
         stream.out_uint32_le(flags);
         assert(channel->chanid == channel_id);
 
-//        LOG(LOG_INFO, "1) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(channel_id);
-            stream.out_uint8(0x70);
-            if (len >= 128) {
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
-            }
-            else {
-                stream.out_uint8(len);
-                #warning this is ugly isn't there a way to avoid moving the whole buffer
-                /* move everything up one byte */
-                uint8_t *lp = stream.p;
-                while (lp < stream.end) {
-                    lp[0] = lp[1];
-                    lp++;
-                }
-                stream.end--;
-                stream.p = oldp2-1;
-            }
-        }
-
-        stream.p = stream.end;
+        sec_out.end();
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -174,16 +125,8 @@ struct server_rdp {
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
 
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->mcs_channel, this->share_id);
 
@@ -200,45 +143,15 @@ struct server_rdp {
             stream.out_uint8(g);
             stream.out_uint8(r);
         }
-
+        stream.mark_end();
         rdp_out.end();
 
-        stream.mark_end();
-
-//        LOG(LOG_INFO, "2) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            len = len | 0x8000;
-            stream.out_uint16_be(len);
-            stream.p = oldp2;
-        }
-
+        sec_out.end();
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
 
     }
-
-
-
 
 //    2.2.9.1.1.4     Server Pointer Update PDU (TS_POINTER_PDU)
 //    ----------------------------------------------------------
@@ -353,17 +266,8 @@ struct server_rdp {
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
-
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(RDP_POINTER_COLOR);
@@ -442,41 +346,13 @@ struct server_rdp {
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
 
-        rdp_out.end();
         stream.mark_end();
-
-//        LOG(LOG_INFO, "3) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            len = len | 0x8000;
-            stream.out_uint16_be(len);
-            stream.p = oldp2;
-        }
-
+        rdp_out.end();
+        sec_out.end();
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
-
     }
-
 
 //    2.2.9.1.1.4.5    New Pointer Update (TS_POINTERATTRIBUTE)
 //    ---------------------------------------------------------
@@ -513,17 +389,8 @@ struct server_rdp {
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
-
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(RDP_POINTER_CACHED);
@@ -532,47 +399,8 @@ struct server_rdp {
 
         stream.mark_end();
         rdp_out.end();
-//        LOG(LOG_INFO, "4) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            if (len >= 128) {
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
-            }
-            else {
-                stream.out_uint8(len);
-                #warning this is ugly isn't there a way to avoid moving the whole buffer
-                /* move everything up one byte */
-                uint8_t *lp = stream.p;
-                while (lp < stream.end) {
-                    lp[0] = lp[1];
-                    lp++;
-                }
-                stream.end--;
-                stream.p = oldp2-1;
-            }
-        }
-
+        sec_out.end();
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -635,7 +463,7 @@ struct server_rdp {
             const uint32_t flags = input_stream.in_uint32_le();
             if (flags & SEC_ENCRYPT) { /* 0x08 */
                 input_stream.skip_uint8(8); /* signature */
-                this->sec_layer.sec_decrypt(input_stream.p, (int)(input_stream.end - input_stream.p));
+                this->sec_layer.decrypt.decrypt(input_stream.p, (int)(input_stream.end - input_stream.p));
             }
 
             if (flags & SEC_CLIENT_RANDOM) { /* 0x01 */
@@ -660,24 +488,26 @@ struct server_rdp {
                     this->sec_layer.sec_hash_48(pre_master_secret, master_secret, this->sec_layer.client_random, this->sec_layer.server_random, 88);
 
                     /* First 16 bytes of key material is MAC secret */
-                    memcpy(this->sec_layer.sign_key, pre_master_secret, 16);
+                    memcpy(this->sec_layer.encrypt.sign_key, pre_master_secret, 16);
 
                     /* Generate export keys from next two blocks of 16 bytes */
-                    this->sec_layer.sec_hash_16(this->sec_layer.encrypt_key, &pre_master_secret[16], this->sec_layer.client_random, this->sec_layer.server_random);
-                    this->sec_layer.sec_hash_16(this->sec_layer.decrypt_key, &pre_master_secret[32], this->sec_layer.client_random, this->sec_layer.server_random);
+                    this->sec_layer.sec_hash_16(this->sec_layer.encrypt.key, &pre_master_secret[16], this->sec_layer.client_random, this->sec_layer.server_random);
+                    this->sec_layer.sec_hash_16(this->sec_layer.decrypt.key, &pre_master_secret[32], this->sec_layer.client_random, this->sec_layer.server_random);
 
                     if (this->sec_layer.rc4_key_size == 1) {
-                        this->sec_layer.sec_make_40bit(this->sec_layer.sign_key);
-                        this->sec_layer.sec_make_40bit(this->sec_layer.encrypt_key);
-                        this->sec_layer.sec_make_40bit(this->sec_layer.decrypt_key);
-                        this->sec_layer.rc4_key_len = 8;
+                        sec_make_40bit(this->sec_layer.encrypt.sign_key);
+                        sec_make_40bit(this->sec_layer.encrypt.key);
+                        sec_make_40bit(this->sec_layer.decrypt.key);
+                        this->sec_layer.decrypt.rc4_key_len = 8;
+                        this->sec_layer.encrypt.rc4_key_len = 8;
                     } else {
-                        this->sec_layer.rc4_key_len = 16;
+                        this->sec_layer.decrypt.rc4_key_len = 16;
+                        this->sec_layer.encrypt.rc4_key_len = 16;
                     }
-                    memcpy(this->sec_layer.decrypt_update_key, this->sec_layer.decrypt_key, 16);
-                    memcpy(this->sec_layer.encrypt_update_key, this->sec_layer.encrypt_key, 16);
-                    ssl.rc4_set_key(this->sec_layer.decrypt_rc4_info, this->sec_layer.decrypt_key, this->sec_layer.rc4_key_len);
-                    ssl.rc4_set_key(this->sec_layer.encrypt_rc4_info, this->sec_layer.encrypt_key, this->sec_layer.rc4_key_len);
+                    memcpy(this->sec_layer.decrypt.update_key, this->sec_layer.decrypt.key, 16);
+                    memcpy(this->sec_layer.encrypt.update_key, this->sec_layer.encrypt.key, 16);
+                    ssl.rc4_set_key(this->sec_layer.decrypt.rc4_info, this->sec_layer.decrypt.key, this->sec_layer.decrypt.rc4_key_len);
+                    ssl.rc4_set_key(this->sec_layer.encrypt.rc4_info, this->sec_layer.encrypt.key, this->sec_layer.encrypt.rc4_key_len);
                 }
                 if (!this->up_and_running){
 //                    input_stream.next_packet = input_stream.end;
@@ -802,16 +632,8 @@ struct server_rdp {
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
 
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->mcs_channel, this->share_id);
 
@@ -820,47 +642,8 @@ struct server_rdp {
 
         stream.mark_end();
         rdp_out.end();
-//        LOG(LOG_INFO, "5) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            if (len >= 128) {
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
-            }
-            else {
-                stream.out_uint8(len);
-                #warning this is ugly isn't there a way to avoid moving the whole buffer
-                /* move everything up one byte */
-                uint8_t *lp = stream.p;
-                while (lp < stream.end) {
-                    lp[0] = lp[1];
-                    lp++;
-                }
-                stream.end--;
-                stream.p = oldp2-1;
-            }
-        }
-
+        sec_out.end();
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -900,7 +683,7 @@ struct server_rdp {
         this->sec_layer.recv_connection_initial(this->trans, this->client_mcs_data);
         #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
         this->sec_layer.server_sec_process_mcs_data(this->client_mcs_data, &this->client_info);
-        this->sec_layer.server_sec_out_mcs_data(&this->client_info);
+        this->sec_layer.server_sec_out_mcs_data(this->sec_layer.data, &this->client_info);
         this->sec_layer.send_connect_response(this->sec_layer.data, this->trans);
 
         //   2.2.1.5 Client MCS Erect Domain Request PDU
@@ -1094,23 +877,13 @@ struct server_rdp {
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
-
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlOut rdp_out(stream, PDUTYPE_DEMANDACTIVEPDU, this->mcs_channel);
 
         caps_count = 0;
         stream.out_uint32_le(this->share_id);
         stream.out_uint16_le(4); /* 4 chars for RDP\0 */
-
 
         /* 2 bytes size after num caps, set later */
         caps_size_ptr = stream.p;
@@ -1120,6 +893,7 @@ struct server_rdp {
         /* 4 byte num caps, set later */
         caps_count_ptr = stream.p;
         stream.out_clear_bytes(4);
+
         caps_ptr = stream.p;
 
         /* Output share capability set */
@@ -1242,6 +1016,7 @@ struct server_rdp {
 
         stream.out_clear_bytes(4); /* pad */
 
+        stream.mark_end();
 
         caps_size = (int)(stream.end - caps_ptr);
         caps_size_ptr[0] = caps_size;
@@ -1252,37 +1027,9 @@ struct server_rdp {
         caps_count_ptr[2] = caps_count >> 16;
         caps_count_ptr[3] = caps_count >> 24;
 
-        stream.mark_end();
         rdp_out.end();
-
-//        LOG(LOG_INFO, "XX RDP Packet #%u (type=%u)", this->packet_number, PDUTYPE_DEMANDACTIVEPDU);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            len = len | 0x8000;
-            stream.out_uint16_be(len);
-            stream.p = oldp2;
-        }
-
-        stream.p = stream.end;
+        sec_out.end();
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -1524,65 +1271,16 @@ struct server_rdp {
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
-
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(1); /* messageType */
         stream.out_uint16_le(1002); /* control id */
 
-        stream.mark_end();
         rdp_out.end();
-//        LOG(LOG_INFO, "6) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            if (len >= 128) {
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
-            }
-            else {
-                stream.out_uint8(len);
-                #warning this is ugly isn't there a way to avoid moving the whole buffer
-                /* move everything up one byte */
-                uint8_t *lp = stream.p;
-                while (lp < stream.end) {
-                    lp[0] = lp[1];
-                    lp++;
-                }
-                stream.end--;
-                stream.p = oldp2-1;
-            }
-        }
-
+        sec_out.end();
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -1614,66 +1312,17 @@ struct server_rdp {
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
-
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, this->mcs_channel, this->share_id);
 
         stream.out_uint16_le(action);
         stream.out_uint16_le(0); /* userid */
         stream.out_uint32_le(1002); /* control id */
 
-        stream.mark_end();
         rdp_out.end();
-//        LOG(LOG_INFO, "7) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            if (len >= 128) {
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
-            }
-            else {
-                stream.out_uint8(len);
-                #warning this is ugly isn't there a way to avoid moving the whole buffer
-                /* move everything up one byte */
-                uint8_t *lp = stream.p;
-                while (lp < stream.end) {
-                    lp[0] = lp[1];
-                    lp++;
-                }
-                stream.end--;
-                stream.p = oldp2-1;
-            }
-        }
-
+        sec_out.end();
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -1711,66 +1360,15 @@ struct server_rdp {
         #warning we should create some RDPStream object created on init and sent before destruction
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
-
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTMAP, this->mcs_channel, this->share_id);
-
         stream.out_copy_bytes((char*)g_fontmap, 172);
-
         stream.mark_end();
+
         rdp_out.end();
-
-//        LOG(LOG_INFO, "8) RDP Packet #%u", this->packet_number);
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            if (len >= 128) {
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
-            }
-            else {
-                stream.out_uint8(len);
-                #warning this is ugly isn't there a way to avoid moving the whole buffer
-                /* move everything up one byte */
-                uint8_t *lp = stream.p;
-                while (lp < stream.end) {
-                    lp[0] = lp[1];
-                    lp++;
-                }
-                stream.end--;
-                stream.p = oldp2-1;
-            }
-        }
-
-
+        sec_out.end();
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
 
@@ -1860,61 +1458,13 @@ struct server_rdp {
                 // if user really wants to disconnect */
                 Stream stream(8192);
                 X224Out tpdu(X224Packet::DT_TPDU, stream);
-                stream.mcs_hdr = stream.p;
-                stream.p += 8;
-
-                stream.sec_hdr = stream.p;
-                if (this->client_info.crypt_level > 1) {
-                    stream.p += 4 + 8;
-                }
-                else {
-                    stream.p += 4;
-                }
-
+                McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+                SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
                 ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SHUTDOWN_DENIED, this->mcs_channel, this->share_id);
                 stream.mark_end();
                 rdp_out.end();
-//                LOG(LOG_INFO, "9) RDP Packet #%u", this->packet_number);
-                {
-                    uint8_t * oldp = stream.p;
-                    stream.p = stream.sec_hdr;
-                    if (this->client_info.crypt_level > 1) {
-                        stream.out_uint32_le(SEC_ENCRYPT);
-                        int datalen = (int)((stream.end - stream.p) - 8);
-                        this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
-                        this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-                    } else {
-                        stream.out_uint32_le(0);
-                    }
-
-                    stream.p = oldp;
-
-                    uint8_t * oldp2 = stream.p;
-                    stream.p = stream.mcs_hdr;
-                    int len = (stream.end - stream.p) - 8;
-                    stream.out_uint8(MCS_SDIN << 2);
-                    stream.out_uint16_be(this->sec_layer.userid);
-                    stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-                    stream.out_uint8(0x70);
-                    if (len >= 128) {
-                        len = len | 0x8000;
-                        stream.out_uint16_be(len);
-                        stream.p = oldp2;
-                    }
-                    else {
-                        stream.out_uint8(len);
-                        #warning this is ugly isn't there a way to avoid moving the whole buffer
-                        /* move everything up one byte */
-                        uint8_t *lp = stream.p;
-                        while (lp < stream.end) {
-                            lp[0] = lp[1];
-                            lp++;
-                        }
-                        stream.end--;
-                        stream.p = oldp2-1;
-                    }
-                }
-
+                sec_out.end();
+                sdin_out.end();
                 tpdu.end();
                 tpdu.send(this->trans);
 
@@ -1953,60 +1503,14 @@ struct server_rdp {
         #warning we should create some RDPStream object created on init and sent before destruction
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        stream.mcs_hdr = stream.p;
-        stream.p += 8;
-
-        stream.sec_hdr = stream.p;
-        if (this->client_info.crypt_level > 1) {
-            stream.p += 4 + 8;
-        }
-        else {
-            stream.p += 4;
-        }
+        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
 
         ShareControlOut(stream, PDUTYPE_DEACTIVATEALLPDU, this->mcs_channel).end();
         stream.mark_end();
 
-        {
-            uint8_t * oldp = stream.p;
-            stream.p = stream.sec_hdr;
-            if (this->client_info.crypt_level > 1) {
-                stream.out_uint32_le(SEC_ENCRYPT);
-                int datalen = (int)((stream.end - stream.p) - 8);
-                this->sec_layer.server_sec_sign(stream.p, 8, stream.p + 8, datalen);
-                this->sec_layer.sec_encrypt(stream.p + 8, datalen);
-            } else {
-                stream.out_uint32_le(0);
-            }
-
-            stream.p = oldp;
-
-            uint8_t * oldp2 = stream.p;
-            stream.p = stream.mcs_hdr;
-            int len = (stream.end - stream.p) - 8;
-            stream.out_uint8(MCS_SDIN << 2);
-            stream.out_uint16_be(this->sec_layer.userid);
-            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-            stream.out_uint8(0x70);
-            if (len >= 128) {
-                len = len | 0x8000;
-                stream.out_uint16_be(len);
-                stream.p = oldp2;
-            }
-            else {
-                stream.out_uint8(len);
-                #warning this is ugly isn't there a way to avoid moving the whole buffer
-                /* move everything up one byte */
-                uint8_t *lp = stream.p;
-                while (lp < stream.end) {
-                    lp[0] = lp[1];
-                    lp++;
-                }
-                stream.end--;
-                stream.p = oldp2-1;
-            }
-        }
-
+        sec_out.end();
+        sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
     }
