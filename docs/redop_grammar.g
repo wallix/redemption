@@ -7,7 +7,8 @@
 
 import unittest
 
-# Testing regexp, will be copied because of crappy conception of yapps2
+# Testing regexp which will just be copied because of crappy conception
+# of yapps2
 class TestTokenRe(object):
     def test_doc(self):
         #self.assertEqual()
@@ -19,18 +20,18 @@ parser redop_grammar:
     ignore:             r"\s"                               # Whitespaces and new lines
     ignore:             r"(?s)/\*.+?\*/"                    # C-style comments
     ignore:             r"#.+"                              # Any preprocessor directive
-    ignore:             r"(?s)(typedef)?\s*enum.+\{.+?\};"  # Any enum
+    ignore:             r"(typedef)?\s*enum[^}]+\};"        # Any enum
     ignore:             r"(public:|private:)"               # Hide public and private
 
     token BLURB:        r"[^{}]+"                           # Any brack-free string
-    token DOC:          r"(?://.+)+"
-    token CLASS:        r"class"
-    token STRUCT:       r"struct"
-    token NAMESPACE:    r"namespace"
-    token METHID:       r"((\w|[&*<>])+\s+)*((\w|==|~)+\s*\([^)]*?\)\s*(:?[^{]+)?)"
-    token ID:           r"\w+\b"
-    token STATEMENT:    r"[^{}'//']+?;"
-    token EOF:          r"$"
+    token DOC:          r"(?://.+)+"                        # Documentation-style string
+    token CLASS:        r"class"                            # CLASS keyword
+    token STRUCT:       r"struct"                           # STRUCT keyword
+    token NAMESPACE:    r"namespace"                        # NAMESPACE keyword
+    token METHID:       r"((\w|[&*<>])+\s+)*((\w|==|~)+\s*\([^)]*?\)\s*(:?[^{]+)?)" # Method ID (wide vision)
+    token ID:           r"\w+\b"                            # ID is a word
+    token STATEMENT:    r"[^{}'//']+?;"                     # Anything that ends with a semicolon
+    token EOF:          r"$"                                # End of file
 
     rule top                   : documentableCodeItems EOF
 

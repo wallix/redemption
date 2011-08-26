@@ -1408,7 +1408,7 @@ struct Sec
 
     /*****************************************************************************/
     /* prepare server mcs data to send in mcs layer */
-    void server_sec_out_mcs_data(ClientInfo * client_info)
+    void server_sec_out_mcs_data(Stream & stream, ClientInfo * client_info)
     {
         /* Same code above using list_test */
         int num_channels = (int) this->channel_list.size();
@@ -2620,6 +2620,60 @@ struct Sec
             out.mark_end();
         }
 
+        try {
+
+//2.2.1.1    Client X.224 Connection Request PDU
+//==============================================
+
+// The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
+// client to server during the Connection Initiation phase (see section
+// 1.3.1.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
+//   data unit (TPDU), as specified in [X224] section 13.3.
+
+// routingToken (variable): Optional and variable-length routing token bytes
+//   used for load balancing terminated by a carriage-return (CR) and line-feed
+//   (LF) ANSI sequence. For more information, see [MSFT-SDLBTS]. The length of
+//   the routing token and CR+LF sequence is included in the X.224 Connection
+//   Request Length Indicator field.
+
+// rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
+//   structure. The length of this negotiation structure is included in the
+//   X.224 Connection Request Length Indicator field.
+
+
+            Stream out;
+            X224Out crtpdu(X224Packet::CR_TPDU, out);
+
+            #warning looks like this strange cookie thing is in fact useless, see MSFT-SDLBTS
+            // USER DATA
+//            out.out_concat("Cookie: mstshash=");
+//            out.out_concat(this->username);
+//            out.out_concat("\r\n");
+//            crtpdu.extend_tpdu_hdr();
+            crtpdu.end();
+
+            crtpdu.send(trans);
+
+            Stream in;
+            X224In cctpdu(trans, in);
+            if (cctpdu.tpkt.version != 3){
+                throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+            }
+            if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
+                throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
+            }
+        } catch (Error) {
+            try {
+                trans->disconnect();
+            } catch (Error){
+                // rethrow the first error, not the error we could get disconnecting
+            }
+            throw;
+        }
 //2.2.1.1    Client X.224 Connection Request PDU
 //==============================================
 
@@ -2895,6 +2949,449 @@ struct Sec
             use_rdp5 = 0;
         #warning why caring of server_depth here ? Quite strange
         //        this->server_depth = 8;
+        }
+    }
+
+    /* Output connect initial data blob */
+    void rdp_sec_out_mcs_data(
+            Stream & client_mcs_data,
+            vector<mcs_channel_item*> channel_list,
+            int width, int height, int rdp_bpp, int keylayout, bool console_session, char * hostname)
+    {
+        int length = 158 + 76 + 12 + 4;
+
+        if (channel_list.size() > 0){
+            length += channel_list.size() * 12 + 8;
+        }
+
+        /* Generic Conference Control (T.124) ConferenceCreateRequest */
+        client_mcs_data.out_uint16_be(5);
+        client_mcs_data.out_uint16_be(0x14);
+        client_mcs_data.out_uint8(0x7c);
+        client_mcs_data.out_uint16_be(1);
+
+        client_mcs_data.out_uint16_be((length | 0x8000)); /* remaining length */
+
+        client_mcs_data.out_uint16_be(8); /* length? */
+        client_mcs_data.out_uint16_be(16);
+        client_mcs_data.out_uint8(0);
+        client_mcs_data.out_uint16_le(0xc001);
+        client_mcs_data.out_uint8(0);
+
+        client_mcs_data.out_uint32_le(0x61637544); /* OEM ID: "Duca", as in Ducati. */
+        client_mcs_data.out_uint16_be(((length - 14) | 0x8000)); /* remaining length */
+
+        /* Client information */
+        client_mcs_data.out_uint16_le(CS_CORE);
+        LOG(LOG_INFO, "Sending Client Core Data to remote server\n");
+        client_mcs_data.out_uint16_le(212); /* length */
+        LOG(LOG_INFO, "core::header::length = %u\n", 212);
+        client_mcs_data.out_uint32_le(0x00080004); // RDP version. 1 == RDP4, 4 == RDP5.
+        LOG(LOG_INFO, "core::header::version (0x00080004 = RDP 5.0, 5.1, 5.2, and 6.0 clients)");
+        client_mcs_data.out_uint16_le(width);
+        LOG(LOG_INFO, "core::desktopWidth = %u\n", width);
+        client_mcs_data.out_uint16_le(height);
+        LOG(LOG_INFO, "core::desktopHeight = %u\n", height);
+        client_mcs_data.out_uint16_le(0xca01);
+        LOG(LOG_INFO, "core::colorDepth = RNS_UD_COLOR_8BPP (superseded by postBeta2ColorDepth)");
+        client_mcs_data.out_uint16_le(0xaa03);
+        LOG(LOG_INFO, "core::SASSequence = RNS_UD_SAS_DEL");
+        client_mcs_data.out_uint32_le(keylayout);
+        LOG(LOG_INFO, "core::keyboardLayout = %x", keylayout);
+        client_mcs_data.out_uint32_le(2600); /* Client build. We are now 2600 compatible :-) */
+        LOG(LOG_INFO, "core::clientBuild = 2600");
+        LOG(LOG_INFO, "core::clientName=%s\n", hostname);
+
+        /* Added in order to limit hostlen and hostname size */
+        int hostlen = 2 * strlen(hostname);
+        if (hostlen > 30){
+            hostlen = 30;
+        }
+        /* Unicode name of client, padded to 30 bytes */
+        client_mcs_data.out_unistr(hostname);
+        client_mcs_data.out_clear_bytes(30 - hostlen);
+
+    /* See
+    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wceddk40/html/cxtsksupportingremotedesktopprotocol.asp */
+    #warning code should be updated to take care of keyboard type
+        client_mcs_data.out_uint32_le(4); // g_keyboard_type
+        LOG(LOG_INFO, "core::keyboardType = IBM enhanced (101- or 102-key) keyboard");
+        client_mcs_data.out_uint32_le(0); // g_keyboard_subtype
+        LOG(LOG_INFO, "core::keyboardSubType = 0");
+        client_mcs_data.out_uint32_le(12); // g_keyboard_functionkeys
+        LOG(LOG_INFO, "core::keyboardFunctionKey = 12 function keys");
+        client_mcs_data.out_clear_bytes(64); /* imeFileName */
+        LOG(LOG_INFO, "core::imeFileName = \"\"");
+        client_mcs_data.out_uint16_le(0xca01); /* color depth 8bpp */
+        LOG(LOG_INFO, "core::postBeta2ColorDepth = RNS_UD_COLOR_8BPP (superseded by highColorDepth)");
+        client_mcs_data.out_uint16_le(1);
+        LOG(LOG_INFO, "core::clientProductId = 1");
+        client_mcs_data.out_uint32_le(0);
+        LOG(LOG_INFO, "core::serialNumber = 0");
+        client_mcs_data.out_uint16_le(rdp_bpp);
+        LOG(LOG_INFO, "core::highColorDepth = %u", rdp_bpp);
+        client_mcs_data.out_uint16_le(0x0007);
+        LOG(LOG_INFO, "core::supportedColorDepths = 24/16/15");
+        client_mcs_data.out_uint16_le(1);
+        LOG(LOG_INFO, "core::earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU");
+        client_mcs_data.out_clear_bytes(64);
+        LOG(LOG_INFO, "core::clientDigProductId = \"\"");
+        client_mcs_data.out_clear_bytes(2);
+        LOG(LOG_INFO, "core::pad2octets");
+//        client_mcs_data.out_uint32_le(0); // optional
+//        LOG(LOG_INFO, "core::serverSelectedProtocol = 0");
+        /* End of client info */
+
+        client_mcs_data.out_uint16_le(CS_CLUSTER);
+        client_mcs_data.out_uint16_le(12);
+        #warning check that should depend on g_console_session
+        client_mcs_data.out_uint32_le(console_session ? 0xb : 9);
+        client_mcs_data.out_uint32_le(0);
+
+        /* Client encryption settings */
+        client_mcs_data.out_uint16_le(CS_SECURITY);
+        client_mcs_data.out_uint16_le(12); /* length */
+        #warning check that, should depend on g_encryption
+        /* encryption supported, 128-bit supported */
+        client_mcs_data.out_uint32_le(0x3);
+        client_mcs_data.out_uint32_le(0); /* Unknown */
+
+        /* Here we need to put channel information in order to redirect channel data
+        from client to server passing through the "proxy" */
+        size_t num_channels = channel_list.size();
+
+        if (num_channels > 0) {
+            client_mcs_data.out_uint16_le(CS_NET);
+            client_mcs_data.out_uint16_le(num_channels * 12 + 8); /* length */
+            client_mcs_data.out_uint32_le(num_channels); /* number of virtual channels */
+            for (size_t i = 0; i < num_channels; i++){
+                const mcs_channel_item* channel_item = channel_list[i];
+
+                LOG(LOG_DEBUG, "Requesting channel %s\n", channel_item->name);
+                memcpy(client_mcs_data.p, channel_item->name, 8);
+                client_mcs_data.p += 8;
+
+                client_mcs_data.out_uint32_be(channel_item->flags);
+         }
+        client_mcs_data.mark_end();
+     }
+    }
+
+// 2.2.1.4  Server MCS Connect Response PDU with GCC Conference Create Response
+// ----------------------------------------------------------------------------
+// The MCS Connect Response PDU is an RDP Connection Sequence PDU sent from
+// server to client during the Basic Settings Exchange phase (see section
+// 1.3.1.1). It is sent as a response to the MCS Connect Initial PDU (section
+// 2.2.1.3). The MCS Connect Response PDU encapsulates a GCC Conference Create
+// Response, which encapsulates concatenated blocks of settings data.
+
+// A basic high-level overview of the nested structure for the Server MCS
+// Connect Response PDU is illustrated in section 1.3.1.1, in the figure
+// specifying MCS Connect Response PDU. Note that the order of the settings
+// data blocks is allowed to vary from that shown in the previously mentioned
+// figure and the message syntax layout that follows. This is possible because
+// each data block is identified by a User Data Header structure (section
+// 2.2.1.4.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+// section 13.7.
+
+// mcsCrsp (variable): Variable-length BER-encoded MCS Connect Response
+//   structure (using definite-length encoding) as described in [T125]
+//   (the ASN.1 structure definition is detailed in [T125] section 7, part 2).
+//   The userData field of the MCS Connect Response encapsulates the GCC
+//   Conference Create Response data (contained in the gccCCrsp and subsequent
+//   fields).
+
+// gccCCrsp (variable): Variable-length PER-encoded GCC Connect Data structure
+//   which encapsulates a Connect GCC PDU that contains a GCC Conference Create
+//   Response structure as described in [T124] (the ASN.1 structure definitions
+//   are specified in [T124] section 8.7) appended as user data to the MCS
+//   Connect Response (using the format specified in [T124] sections 9.5 and
+//   9.6). The userData field of the GCC Conference Create Response contains
+//   one user data set consisting of concatenated server data blocks.
+
+// serverCoreData (12 bytes): Server Core Data structure (section 2.2.1.4.2).
+
+// serverSecurityData (variable): Variable-length Server Security Data structure
+//   (section 2.2.1.4.3).
+
+// serverNetworkData (variable): Variable-length Server Network Data structure
+//   (section 2.2.1.4.4).
+
+    /*****************************************************************************/
+    /* Establish a secure connection */
+    void rdp_sec_connect(Transport * trans, vector<mcs_channel_item*> channel_list,
+                        int width, int height,
+                        int rdp_bpp, int keylayout,
+                        bool console_session, int & use_rdp5, char * hostname, char * username) throw(Error)
+    {
+        Stream client_mcs_data(512);
+
+        this->rdp_sec_out_mcs_data(
+                            client_mcs_data,
+                            channel_list,
+                            width, height, rdp_bpp,
+                            keylayout, console_session, hostname);
+
+        LOG(LOG_INFO, "Iso Layer : connect %s\n", username);
+
+        try {
+
+//2.2.1.1    Client X.224 Connection Request PDU
+//==============================================
+
+// The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
+// client to server during the Connection Initiation phase (see section
+// 1.3.1.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
+//   data unit (TPDU), as specified in [X224] section 13.3.
+
+// routingToken (variable): Optional and variable-length routing token bytes
+//   used for load balancing terminated by a carriage-return (CR) and line-feed
+//   (LF) ANSI sequence. For more information, see [MSFT-SDLBTS]. The length of
+//   the routing token and CR+LF sequence is included in the X.224 Connection
+//   Request Length Indicator field.
+
+// rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
+//   structure. The length of this negotiation structure is included in the
+//   X.224 Connection Request Length Indicator field.
+
+
+            Stream out;
+            X224Out crtpdu(X224Packet::CR_TPDU, out);
+
+            #warning looks like this strange cookie thing is in fact useless, see MSFT-SDLBTS
+            // USER DATA
+//            out.out_concat("Cookie: mstshash=");
+//            out.out_concat(this->username);
+//            out.out_concat("\r\n");
+//            crtpdu.extend_tpdu_hdr();
+            crtpdu.end();
+
+            crtpdu.send(trans);
+
+            Stream in;
+            X224In cctpdu(trans, in);
+            if (cctpdu.tpkt.version != 3){
+                throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+            }
+            if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
+                throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
+            }
+        } catch (Error) {
+            try {
+                trans->disconnect();
+            } catch (Error){
+                // rethrow the first error, not the error we could get disconnecting
+            }
+            throw;
+        }
+
+        try{
+            {
+                int data_len = client_mcs_data.end - client_mcs_data.data;
+                int len = 7 + 3 * 34 + 4 + data_len;
+
+                Stream stream(8192);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+                stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
+                stream.out_ber_len(len);
+                stream.out_uint8(BER_TAG_OCTET_STRING);
+                stream.out_ber_len(0); /* calling domain */
+                stream.out_uint8(BER_TAG_OCTET_STRING);
+                stream.out_ber_len(0); /* called domain */
+                stream.out_uint8(BER_TAG_BOOLEAN);
+                stream.out_ber_len(1);
+                stream.out_uint8(0xff); /* upward flag */
+
+                // target params
+                stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+                stream.out_ber_len(32);
+                stream.out_ber_int16(34);     // max_channels
+                stream.out_ber_int16(2);      // max_users
+                stream.out_ber_int16(0);      // max_tokens
+                stream.out_ber_int16(1);
+                stream.out_ber_int16(0);
+                stream.out_ber_int16(1);
+                stream.out_ber_int16(0xffff); // max_pdu_size
+                stream.out_ber_int16(2);
+
+                // min params
+                stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+                stream.out_ber_len(32);
+                stream.out_ber_int16(1);     // max_channels
+                stream.out_ber_int16(1);     // max_users
+                stream.out_ber_int16(1);     // max_tokens
+                stream.out_ber_int16(1);
+                stream.out_ber_int16(0);
+                stream.out_ber_int16(1);
+                stream.out_ber_int16(0x420); // max_pdu_size
+                stream.out_ber_int16(2);
+
+                // max params
+                stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+                stream.out_ber_len(32);
+                stream.out_ber_int16(0xffff); // max_channels
+                stream.out_ber_int16(0xfc17); // max_users
+                stream.out_ber_int16(0xffff); // max_tokens
+                stream.out_ber_int16(1);
+                stream.out_ber_int16(0);
+                stream.out_ber_int16(1);
+                stream.out_ber_int16(0xffff); // max_pdu_size
+                stream.out_ber_int16(2);
+
+                stream.out_uint8(BER_TAG_OCTET_STRING);
+                stream.out_ber_len(data_len);
+                stream.out_copy_bytes(client_mcs_data.data, data_len);
+
+                tpdu.end();
+                tpdu.send(trans);
+            }
+            Stream stream(8192);
+            this->recv_connect_response(stream, trans);
+
+            LOG(LOG_INFO, "rdp_sec_process_mcs_data\n");
+            this->rdp_sec_process_mcs_data(stream, channel_list, use_rdp5);
+
+            {
+                Stream stream(8192);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+                stream.out_uint8((MCS_EDRQ << 2));
+                stream.out_uint16_be(0x100); /* height */
+                stream.out_uint16_be(0x100); /* interval */
+                tpdu.end();
+                tpdu.send(trans);
+            }
+            {
+                Stream stream(8192);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+                stream.out_uint8((MCS_AURQ << 2));
+                tpdu.end();
+                tpdu.send(trans);
+            }
+            {
+                Stream stream(8192);
+                X224In(trans, stream);
+                int opcode = stream.in_uint8();
+                if ((opcode >> 2) != MCS_AUCF) {
+                    throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
+                }
+                int res = stream.in_uint8();
+                if (res != 0) {
+                    throw Error(ERR_MCS_RECV_AUCF_RES_NOT_0);
+                }
+                if (opcode & 2) {
+                    this->userid = stream.in_uint16_be();
+                }
+                if (!(stream.check_end())) {
+                    throw Error(ERR_MCS_RECV_AUCF_ERROR_CHECKING_STREAM);
+                }
+            }
+
+            #warning the array size below is arbitrary, it should be checked to avoid buffer overflow
+            uint16_t channels[100];
+
+            channels[0] = this->userid + 1001;
+            channels[1] = MCS_GLOBAL_CHANNEL;
+            size_t num_channels = this->channel_list.size();
+            for (size_t index = 0; index < num_channels; index++){
+                const mcs_channel_item* channel_item = this->channel_list[index];
+                channels[2+index] = channel_item->chanid;
+            }
+
+            // 2.2.1.8 Client MCS Channel Join Request PDU
+            // -------------------------------------------
+            // The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
+            // from client to server during the Channel Connection phase (see section
+            // 1.3.1.1). It is sent after receiving the MCS Attach User Confirm PDU
+            // (section 2.2.1.7). The client uses the MCS Channel Join Request PDU to
+            // join the user channel obtained from the Attach User Confirm PDU, the
+            // I/O channel and all of the static virtual channels obtained from the
+            // Server Network Data structure (section 2.2.1.4.4).
+
+            // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+            // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+            //                     section 13.7.
+
+            // mcsCJrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an
+            //                    MCS Channel Join Request structure as specified in
+            //                    [T125] sections 10.19 and I.3 (the ASN.1 structure
+            //                    definitions are given in [T125] section 7, parts 6
+            //                    and 10).
+
+            // ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+            // {
+            //     initiator UserId
+            //     channelId ChannelId
+            //               -- may be zero
+            // }
+
+            for (size_t index = 0; index < num_channels+2; index++){
+                {
+                    Stream stream(8192);
+                    X224Out tpdu(X224Packet::DT_TPDU, stream);
+                    stream.out_uint8((MCS_CJRQ << 2));
+                    stream.out_uint16_be(this->userid);
+                    stream.out_uint16_be(channels[index]);
+                    tpdu.end();
+                    tpdu.send(trans);
+                }
+                {
+                    Stream stream(8192);
+                    X224In(trans, stream);
+                    int opcode = stream.in_uint8();
+                    if ((opcode >> 2) != MCS_CJCF) {
+                        throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
+                    }
+                    if (0 != stream.in_uint8()) {
+                        throw Error(ERR_MCS_RECV_CJCF_EMPTY);
+                    }
+                    stream.skip_uint8(4); /* mcs_userid, req_chanid */
+                    if (opcode & 2) {
+                        stream.skip_uint8(2); /* join_chanid */
+                    }
+                    if (!stream.check_end()) {
+                        throw Error(ERR_MCS_RECV_CJCF_ERROR_CHECKING_STREAM);
+                    }
+                }
+            }
+        }
+        catch(...){
+            Stream stream(11);
+            X224Out tpdu(X224Packet::DR_TPDU, stream);
+            tpdu.end();
+            tpdu.send(trans);
+            throw;
+        }
+
+        LOG(LOG_INFO, "Iso Layer : setting encryption\n");
+        /* Send the client random to the server */
+//      if (this->encryption)
+        {
+            Stream stream(8192);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
+
+            int length = this->server_public_key_len + SEC_PADDING_SIZE;
+
+            stream.out_uint32_le(SEC_CLIENT_RANDOM);
+
+            stream.out_uint32_le(length);
+            LOG(LOG_INFO, "Server public key is %d bytes long", this->server_public_key_len);
+            stream.out_copy_bytes(this->client_crypt_random, this->server_public_key_len);
+            stream.out_clear_bytes(SEC_PADDING_SIZE);
+
+            sdrq_out.end();
+            tpdu.end();
+            tpdu.send(trans);
         }
     }
 

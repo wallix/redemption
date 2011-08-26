@@ -26,7 +26,6 @@
 #define FRONT_SERVER_RDP_HPP__
 
 #include "RDP/sec.hpp"
-#include "RDP/rdp.hpp"
 #include "client_info.hpp"
 #include "config.hpp"
 #include "error.hpp"
@@ -34,7 +33,6 @@
 #include "colors.hpp"
 #include "altoco.hpp"
 #include "RDP/x224.hpp"
-
 
 /* rdp */
 struct server_rdp {
@@ -47,6 +45,7 @@ struct server_rdp {
     uint32_t packet_number;
     Stream client_mcs_data;
     Transport * trans;
+
 
     server_rdp(Transport * trans, Inifile * ini)
         :
@@ -144,10 +143,8 @@ struct server_rdp {
             stream.out_uint8(g);
             stream.out_uint8(r);
         }
-
-        rdp_out.end();
-
         stream.mark_end();
+        rdp_out.end();
 
         sec_out.end();
         sdin_out.end();
@@ -155,9 +152,6 @@ struct server_rdp {
         tpdu.send(this->trans);
 
     }
-
-
-
 
 //    2.2.9.1.1.4     Server Pointer Update PDU (TS_POINTER_PDU)
 //    ----------------------------------------------------------
@@ -352,9 +346,8 @@ struct server_rdp {
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
 
-        rdp_out.end();
         stream.mark_end();
-
+        rdp_out.end();
         sec_out.end();
         sdin_out.end();
         tpdu.end();
@@ -690,7 +683,7 @@ struct server_rdp {
         this->sec_layer.recv_connection_initial(this->trans, this->client_mcs_data);
         #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
         this->sec_layer.server_sec_process_mcs_data(this->client_mcs_data, &this->client_info);
-        this->sec_layer.server_sec_out_mcs_data(&this->client_info);
+        this->sec_layer.server_sec_out_mcs_data(this->sec_layer.data, &this->client_info);
         this->sec_layer.send_connect_response(this->sec_layer.data, this->trans);
 
         //   2.2.1.5 Client MCS Erect Domain Request PDU
@@ -892,7 +885,6 @@ struct server_rdp {
         stream.out_uint32_le(this->share_id);
         stream.out_uint16_le(4); /* 4 chars for RDP\0 */
 
-
         /* 2 bytes size after num caps, set later */
         caps_size_ptr = stream.p;
         stream.out_clear_bytes(2);
@@ -901,6 +893,7 @@ struct server_rdp {
         /* 4 byte num caps, set later */
         caps_count_ptr = stream.p;
         stream.out_clear_bytes(4);
+
         caps_ptr = stream.p;
 
         /* Output share capability set */
@@ -1023,6 +1016,7 @@ struct server_rdp {
 
         stream.out_clear_bytes(4); /* pad */
 
+        stream.mark_end();
 
         caps_size = (int)(stream.end - caps_ptr);
         caps_size_ptr[0] = caps_size;
@@ -1369,10 +1363,9 @@ struct server_rdp {
         McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTMAP, this->mcs_channel, this->share_id);
-
         stream.out_copy_bytes((char*)g_fontmap, 172);
-
         stream.mark_end();
+
         rdp_out.end();
         sec_out.end();
         sdin_out.end();

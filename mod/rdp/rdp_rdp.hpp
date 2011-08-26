@@ -25,11 +25,10 @@
 #if !defined(__RDP_RDP_HPP__)
 #define __RDP_RDP_HPP__
 
-#include "RDP/sec.hpp"
 #include "rdp_orders.hpp"
 #include "client_mod.hpp"
 #include "RDP/x224.hpp"
-#include "RDP/rdp.hpp"
+#include "RDP/sec.hpp"
 
 /* rdp */
 struct rdp_rdp {
@@ -99,7 +98,7 @@ struct rdp_rdp {
             LOG(LOG_INFO, "Server key layout is %x\n", this->keylayout);
 
             #warning I should change that to RAII by merging instanciation of sec_layer and connection, it should also remove some unecessary parameters from rdp_rdp object
-            this->sec_layer.rdp_sec_connect(trans, channel_list, width, height, bpp, keylayout, console_session, this->use_rdp5, this->hostname);
+            this->sec_layer.rdp_sec_connect(this->trans, channel_list, width, height, bpp, keylayout, console_session, this->use_rdp5, this->hostname, this->username);
     }
     ~rdp_rdp(){
         LOG(LOG_INFO, "End of remote rdp connection\n");
@@ -555,7 +554,6 @@ struct rdp_rdp {
             McsOut sdrq_out(stream, MCS_SDRQ, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->sec_layer.encrypt);
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, this->sec_layer.userid, this->share_id);
-
             stream.out_uint16_le(action);
             stream.out_uint16_le(0); /* userid */
             stream.out_uint32_le(0); /* control id */
@@ -579,7 +577,6 @@ struct rdp_rdp {
 
             stream.out_uint16_le(1); /* type */
             stream.out_uint16_le(1002);
-
             rdp_out.end();
             sec_out.end();
             sdrq_out.end();
@@ -599,7 +596,7 @@ struct rdp_rdp {
             stream.out_uint16_le(0); /* pad? */
             stream.out_uint16_le(seq); /* unknown */
             stream.out_uint16_le(0x32); /* entry size */
-
+            stream.mark_end();
             rdp_out.end();
             sec_out.end();
             sdrq_out.end();
