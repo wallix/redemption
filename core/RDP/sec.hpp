@@ -2730,11 +2730,88 @@ struct Sec
     //    |------------X224 Connection Request PDU----------------> |
     //    | <----------X224 Connection Confirm PDU----------------- |
 
+
+// 2.2.1.1 Client X.224 Connection Request PDU
+// ===========================================
+
+// The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
+// client to server during the Connection Initiation phase (see section 1.3.1.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
+// data unit (TPDU), as specified in [X224] section 13.3.
+
+// routingToken (variable): An optional and variable-length routing token
+// (used for load balancing) terminated by a carriage-return (CR) and line-feed
+// (LF) ANSI sequence. For more information about Terminal Server load balancing
+// and the routing token format, see [MSFT-SDLBTS]. The length of the routing
+// token and CR+LF sequence is included in the X.224 Connection Request Length
+// Indicator field. If this field is present, then the cookie field MUST NOT be
+//  present.
+
+//cookie (variable): An optional and variable-length ANSI text string terminated
+// by a carriage-return (CR) and line-feed (LF) ANSI sequence. This text string
+// MUST be "Cookie: mstshash=IDENTIFIER", where IDENTIFIER is an ANSI string
+//(an example cookie string is shown in section 4.1.1). The length of the entire
+// cookie string and CR+LF sequence is included in the X.224 Connection Request
+// Length Indicator field. This field MUST NOT be present if the routingToken
+// field is present.
+
+// rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
+// structure. The length of this negotiation structure is included in the X.224
+// Connection Request Length Indicator field.
+
         Stream out;
         X224Out crtpdu(X224Packet::CR_TPDU, out);
         crtpdu.end();
         crtpdu.send(trans);
 
+// 2.2.1.2 Server X.224 Connection Confirm PDU
+// ===========================================
+
+// The X.224 Connection Confirm PDU is an RDP Connection Sequence PDU sent from
+// server to client during the Connection Initiation phase (see section
+// 1.3.1.1). It is sent as a response to the X.224 Connection Request PDU
+// (section 2.2.1.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Ccf (7 bytes): An X.224 Class 0 Connection Confirm TPDU, as specified in
+// [X224] section 13.4.
+
+// rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1)
+// structure or an optional RDP Negotiation Failure (section 2.2.1.2.2)
+// structure. The length of the negotiation structure is included in the X.224
+// Connection Confirm Length Indicator field.
+
+        Stream in;
+        X224In cctpdu(trans, in);
+        if (cctpdu.tpkt.version != 3){
+            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+        }
+        if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
+            throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
+        }
+
+// Basic Settings Exchange
+// -----------------------
+
+// Basic Settings Exchange: Basic settings are exchanged between the client and
+// server by using the MCS Connect Initial and MCS Connect Response PDUs. The
+// Connect Initial PDU contains a GCC Conference Create Request, while the
+// Connect Response PDU contains a GCC Conference Create Response.
+
+// These two Generic Conference Control (GCC) packets contain concatenated
+// blocks of settings data (such as core data, security data and network data)
+// which are read by client and server
+
+
+// Client                                                     Server
+//    |--------------MCS Connect Initial PDU with-------------> |
+//                   GCC Conference Create Request
+//    | <------------MCS Connect Response PDU with------------- |
+//                   GCC conference Create Response
 
         Stream data(8192);
 
@@ -2857,38 +2934,6 @@ struct Sec
             }
         }
         data.mark_end();
-
-//2.2.1.1    Client X.224 Connection Request PDU
-//==============================================
-
-// The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
-// client to server during the Connection Initiation phase (see section
-// 1.3.1.1).
-
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-// x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
-//   data unit (TPDU), as specified in [X224] section 13.3.
-
-// routingToken (variable): Optional and variable-length routing token bytes
-//   used for load balancing terminated by a carriage-return (CR) and line-feed
-//   (LF) ANSI sequence. For more information, see [MSFT-SDLBTS]. The length of
-//   the routing token and CR+LF sequence is included in the X.224 Connection
-//   Request Length Indicator field.
-
-// rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
-//   structure. The length of this negotiation structure is included in the
-//   X.224 Connection Request Length Indicator field.
-
-
-        Stream in;
-        X224In cctpdu(trans, in);
-        if (cctpdu.tpkt.version != 3){
-            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
-        }
-        if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
-            throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
-        }
 
         try{
             {
