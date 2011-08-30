@@ -2794,6 +2794,8 @@ struct Sec
             throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
         }
 
+        try{
+
 // Basic Settings Exchange
 // -----------------------
 
@@ -2935,7 +2937,6 @@ struct Sec
         }
         data.mark_end();
 
-        try{
             {
                 int data_len = data.end - data.data;
                 int len = 7 + 3 * 34 + 4 + data_len;
@@ -3042,7 +3043,6 @@ struct Sec
 
             channels[0] = this->userid + 1001;
             channels[1] = MCS_GLOBAL_CHANNEL;
-            size_t num_channels = this->channel_list.size();
             for (size_t index = 0; index < num_channels; index++){
                 const mcs_channel_item* channel_item = this->channel_list[index];
                 channels[2+index] = channel_item->chanid;
@@ -3088,7 +3088,7 @@ struct Sec
                 }
                 {
                     Stream stream(8192);
-                    X224In(trans, stream);
+                    X224In cjcf_tpdu(trans, stream);
                     int opcode = stream.in_uint8();
                     if ((opcode >> 2) != MCS_CJCF) {
                         throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
@@ -3100,9 +3100,7 @@ struct Sec
                     if (opcode & 2) {
                         stream.skip_uint8(2); /* join_chanid */
                     }
-                    if (!stream.check_end()) {
-                        throw Error(ERR_MCS_RECV_CJCF_ERROR_CHECKING_STREAM);
-                    }
+                    cjcf_tpdu.end();
                 }
             }
         }
