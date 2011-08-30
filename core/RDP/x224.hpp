@@ -341,6 +341,12 @@ struct X224In : public X224Packet
                 stream.skip_uint8(this->tpdu_hdr.LI-1);
         }
     }
+
+    void end(){
+        if (!stream.check_end()) {
+            throw Error(ERR_MCS_RECV_CJCF_ERROR_CHECKING_STREAM);
+        }
+    }
 };
 
 
