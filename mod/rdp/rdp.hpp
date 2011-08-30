@@ -71,6 +71,8 @@ struct mod_rdp : public client_mod {
                 in_stream(8192)
 
     {
+        this->rdp_layer.sec_layer.rdp_sec_connect2(t, channel_list, this->get_front_width(), this->get_front_height(), this->get_front_bpp(), keylayout, this->get_client_info().console_session, this->rdp_layer.use_rdp5, this->rdp_layer.hostname);
+
         const char * password = context.get(STRAUTHID_TARGET_PASSWORD);
 
 //        LOG(LOG_INFO, "mod_rdp connect\n");
