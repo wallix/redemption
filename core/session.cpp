@@ -800,6 +800,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                             atoi(this->context->get(STRAUTHID_TARGET_PORT))));
                 this->back_event = new wait_obj(t->sck);
                 this->mod = new mod_rdp(t,
+                                    *this->back_event,
                                     this->keys,
                                     this->key_flags,
                                     this->keymap,
@@ -810,6 +811,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                     this->front->get_client_info().keylayout,
                                     this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
                                     this->context->get_bool(STRAUTHID_OPT_DEVICEREDIRECTION));
+                this->back_event->set();
                 LOG(LOG_INFO, "Creation of new mod 'RDP' suceeded\n");
             }
             break;

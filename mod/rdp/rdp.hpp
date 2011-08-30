@@ -51,7 +51,16 @@ struct mod_rdp : public client_mod {
     struct vector<mcs_channel_item*> front_channel_list;
     bool dev_redirection_enable;
 
-    mod_rdp(Transport * t,
+    wait_obj & event;
+
+    enum {
+        MOD_RDP_CONNECTING,
+        MOD_RDP_CONNECTED,
+    };
+
+    int state;
+
+    mod_rdp(Transport * t, wait_obj & event,
             int (& keys)[256], int & key_flags, Keymap * &keymap,
             struct ModContext & context, struct Front & front,
             vector<mcs_channel_item*> channel_list,
@@ -68,8 +77,9 @@ struct mod_rdp : public client_mod {
                 this->get_front_bpp(),
                 keylayout,
                 this->get_client_info().console_session),
-                in_stream(8192)
-
+                in_stream(8192),
+                event(event),
+                state(MOD_RDP_CONNECTING)
     {
         #warning if some error occurs while connecting we should manage disconnection from t
         this->t = t;
