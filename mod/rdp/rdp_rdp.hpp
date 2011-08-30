@@ -53,6 +53,7 @@ struct rdp_rdp {
     bool console_session;
     int bpp;
     Transport * trans;
+    Stream client_mcs_data;
 
     struct rdp_cursor cursors[32];
     rdp_rdp(struct mod_rdp* owner, Transport *trans, const char * username, const char * password, const char * hostname, vector<mcs_channel_item*> channel_list, int rdp_performance_flags, int width, int height, int bpp, int keylayout, bool console_session)
@@ -98,7 +99,7 @@ struct rdp_rdp {
             LOG(LOG_INFO, "Server key layout is %x\n", this->keylayout);
 
             #warning I should change that to RAII by merging instanciation of sec_layer and connection, it should also remove some unecessary parameters from rdp_rdp object
-            this->sec_layer.rdp_sec_connect(this->trans, channel_list, width, height, bpp, keylayout, console_session, this->use_rdp5, this->hostname, this->username);
+            this->sec_layer.rdp_sec_connect2(this->trans, channel_list, width, height, bpp, keylayout, console_session, this->use_rdp5, this->hostname);
     }
     ~rdp_rdp(){
         LOG(LOG_INFO, "End of remote rdp connection\n");
@@ -310,14 +311,16 @@ struct rdp_rdp {
 
             stream.out_uint16_le(2 + 14 + caplen + sizeof(RDP_SOURCE));
             stream.out_uint16_le((PDUTYPE_CONFIRMACTIVEPDU | 0x10)); /* Version 1 */
-            stream.out_uint16_le((this->sec_layer.userid + 1001));
+            stream.out_uint16_le((this->sec_layer.userid + 1001)); // channel
             stream.out_uint32_le(this->share_id);
             stream.out_uint16_le(0x3ea); /* userid */
             stream.out_uint16_le(sizeof(RDP_SOURCE));
             stream.out_uint16_le(caplen);
+
             stream.out_copy_bytes(RDP_SOURCE, sizeof(RDP_SOURCE));
-            stream.out_uint16_le( 0xd); /* num_caps */
-            stream.out_clear_bytes( 2); /* pad */
+            stream.out_uint16_le(0xd); /* num_caps */
+            stream.out_clear_bytes(2); /* pad */
+
             this->out_general_caps(stream);
             this->out_bitmap_caps(stream);
             this->out_order_caps(stream);

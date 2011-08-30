@@ -46,7 +46,6 @@ struct server_rdp {
     Stream client_mcs_data;
     Transport * trans;
 
-
     server_rdp(Transport * trans, Inifile * ini)
         :
         up_and_running(0),
@@ -72,8 +71,7 @@ struct server_rdp {
     };
 
 
-    void server_send_to_channel(int channel_id, uint8_t *data, int data_len,
-                               int total_data_len, int flags) throw (Error)
+    void server_send_to_channel(int channel_id, uint8_t *data, int data_len, int total_data_len, int flags) throw (Error)
     {
         Stream stream(data_len + 1024); /* this should be big enough */
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -683,8 +681,8 @@ struct server_rdp {
         this->sec_layer.recv_connection_initial(this->trans, this->client_mcs_data);
         #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
         this->sec_layer.server_sec_process_mcs_data(this->client_mcs_data, &this->client_info);
-        this->sec_layer.server_sec_out_mcs_data(this->sec_layer.data, &this->client_info);
-        this->sec_layer.send_connect_response(this->sec_layer.data, this->trans);
+        this->sec_layer.server_sec_out_mcs_data(this->client_mcs_data, &this->client_info);
+        this->sec_layer.send_connect_response(this->client_mcs_data, this->trans);
 
         //   2.2.1.5 Client MCS Erect Domain Request PDU
         //   -------------------------------------------
