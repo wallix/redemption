@@ -226,7 +226,40 @@ struct mod_rdp : public client_mod {
                     this->rdp_layer.process_data_pdu(this->in_stream, this);
                     break;
                 case PDUTYPE_DEMANDACTIVEPDU:
-                    this->rdp_layer.process_demand_active(this->in_stream, this);
+                    {
+                        client_mod * mod = this;
+                        LOG(LOG_INFO, "process demand active\n");
+
+                        int type;
+                        int len_src_descriptor;
+                        int len_combined_caps;
+
+                        this->rdp_layer.share_id = this->in_stream.in_uint32_le();
+                        len_src_descriptor = this->in_stream.in_uint16_le();
+                        len_combined_caps = this->in_stream.in_uint16_le();
+                        this->in_stream.skip_uint8(len_src_descriptor);
+                        this->rdp_layer.process_server_caps(this->in_stream, len_combined_caps);
+                        this->rdp_layer.send_confirm_active(this->in_stream, mod);
+                        this->rdp_layer.send_synchronise(this->in_stream);
+                        this->rdp_layer.send_control(this->in_stream, RDP_CTL_COOPERATE);
+                        this->rdp_layer.send_control(this->in_stream, RDP_CTL_REQUEST_CONTROL);
+                        type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_PDU_SYNCHRONIZE */
+                        type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_CTL_COOPERATE */
+                        type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_CTL_GRANT_CONTROL */
+                        this->rdp_layer.send_input(this->in_stream, 0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
+                        /* Including RDP 5.0 capabilities */
+                        if (this->rdp_layer.use_rdp5 != 0){
+                            this->rdp_layer.enum_bmpcache2();
+                            this->rdp_layer.send_fonts(this->in_stream, 3);
+                        }
+                        else{
+                            this->rdp_layer.send_fonts(this->in_stream, 1);
+                            this->rdp_layer.send_fonts(this->in_stream, 2);
+                        }
+                        type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_PDU_UNKNOWN 0x28 (Fonts?) */
+                        this->rdp_layer.orders.rdp_orders_reset_state();
+                        LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->rdp_layer.bpp);
+                    }
                     this->mod_bpp = this->rdp_layer.bpp;
                     this->up_and_running = 1;
                     break;

@@ -105,7 +105,6 @@ struct rdp_rdp {
         LOG(LOG_INFO, "End of remote rdp connection\n");
     }
 
-    private:
         void out_general_caps(Stream & stream)
         {
             stream.out_uint16_le(RDP_CAPSET_GENERAL);
@@ -1086,41 +1085,6 @@ struct rdp_rdp {
             }
         }
 
-
-        void process_demand_active(Stream & stream, client_mod * mod) throw(Error)
-        {
-            LOG(LOG_INFO, "process demand active\n");
-
-            int type;
-            int len_src_descriptor;
-            int len_combined_caps;
-
-            this->share_id = stream.in_uint32_le();
-            len_src_descriptor = stream.in_uint16_le();
-            len_combined_caps = stream.in_uint16_le();
-            stream.skip_uint8(len_src_descriptor);
-            this->process_server_caps(stream, len_combined_caps);
-            this->send_confirm_active(stream, mod);
-            this->send_synchronise(stream);
-            this->send_control(stream, RDP_CTL_COOPERATE);
-            this->send_control(stream, RDP_CTL_REQUEST_CONTROL);
-            type = this->recv(stream, mod); /* RDP_PDU_SYNCHRONIZE */
-            type = this->recv(stream, mod); /* RDP_CTL_COOPERATE */
-            type = this->recv(stream, mod); /* RDP_CTL_GRANT_CONTROL */
-            this->send_input(stream, 0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
-            /* Including RDP 5.0 capabilities */
-            if (this->use_rdp5 != 0){
-                this->enum_bmpcache2();
-                this->send_fonts(stream, 3);
-            }
-            else{
-                this->send_fonts(stream, 1);
-                this->send_fonts(stream, 2);
-            }
-            type = this->recv(stream, mod); /* RDP_PDU_UNKNOWN 0x28 (Fonts?) */
-            this->orders.rdp_orders_reset_state();
-            LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->bpp);
-        }
 
 
         #warning this function connects front-end channels given in channel_list with back_end channels in this->sec_layer.channel_list. This kind of things should be done through client_mod API (as it is done for color conversion). Change that by performing a call to some client_mod function.
