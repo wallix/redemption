@@ -2818,13 +2818,44 @@ struct Sec
         this->mcs_connect_initial_pdu_with_gcc_conference_create_request(
                 trans, channel_list, width, height, rdp_bpp, keylayout, console_session, hostname);
 
+        this->mcs_connect_response_pdu_with_gcc_conference_create_response(
+                trans, channel_list, use_rdp5);
 
-            Stream cr_stream(8192);
-            this->recv_connect_response(cr_stream, trans);
 
-            LOG(LOG_INFO, "rdp_sec_process_mcs_data\n");
-            this->rdp_sec_process_mcs_data(cr_stream, channel_list, use_rdp5);
+// Channel Connection
+// -------------------
 
+// Channel Connection: The client sends an MCS Erect Domain Request PDU,
+// followed by an MCS Attach User Request PDU to attach the primary user
+// identity to the MCS domain.
+
+// The server responds with an MCS Attach User Response PDU containing the user
+// channel ID.
+
+// The client then proceeds to join the :
+// - user channel,
+// - the input/output (I/O) channel
+// - and all of the static virtual channels
+
+// (the I/O and static virtual channel IDs are obtained from the data embedded
+//  in the GCC packets) by using multiple MCS Channel Join Request PDUs.
+
+// The server confirms each channel with an MCS Channel Join Confirm PDU.
+// (The client only sends a Channel Join Request after it has received the
+// Channel Join Confirm for the previously sent request.)
+
+// From this point, all subsequent data sent from the client to the server is
+// wrapped in an MCS Send Data Request PDU, while data sent from the server to
+//  the client is wrapped in an MCS Send Data Indication PDU. This is in
+// addition to the data being wrapped by an X.224 Data PDU.
+
+// Client                                                     Server
+//    |-------MCS Erect Domain Request PDU--------------------> |
+//    |-------MCS Attach User Request PDU---------------------> |
+//    | <-----MCS Attach User Confirm PDU---------------------- |
+
+//    |-------MCS Channel Join Request PDU--------------------> |
+//    | <-----MCS Channel Join Confirm PDU--------------------- |
 
             Stream edrq_stream(8192);
             X224Out edrq_tpdu(X224Packet::DT_TPDU, edrq_stream);
@@ -2921,6 +2952,54 @@ struct Sec
                 }
                 cjcf_tpdu.end();
             }
+
+// RDP Security Commencement
+// -------------------------
+
+// RDP Security Commencement: If standard RDP security methods are being
+// employed and encryption is in force (this is determined by examining the data
+// embedded in the GCC Conference Create Response packet) then the client sends
+// a Security Exchange PDU containing an encrypted 32-byte random number to the
+// server. This random number is encrypted with the public key of the server
+// (the server's public key, as well as a 32-byte server-generated random
+// number, are both obtained from the data embedded in the GCC Conference Create
+//  Response packet).
+
+// The client and server then utilize the two 32-byte random numbers to generate
+// session keys which are used to encrypt and validate the integrity of
+// subsequent RDP traffic.
+
+// From this point, all subsequent RDP traffic can be encrypted and a security
+// header is included with the data if encryption is in force (the Client Info
+// and licensing PDUs are an exception in that they always have a security
+// header). The Security Header follows the X.224 and MCS Headers and indicates
+// whether the attached data is encrypted.
+
+// Even if encryption is in force server-to-client traffic may not always be
+// encrypted, while client-to-server traffic will always be encrypted by
+// Microsoft RDP implementations (encryption of licensing PDUs is optional,
+// however).
+
+// Client                                                     Server
+//    |------Security Exchange PDU ---------------------------> |
+
+            LOG(LOG_INFO, "Iso Layer : setting encryption\n");
+            /* Send the client random to the server */
+    //      if (this->encryption)
+            Stream sdrq_stream(8192);
+            X224Out sdrq_tpdu(X224Packet::DT_TPDU, sdrq_stream);
+            McsOut sdrq_out(sdrq_stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
+
+            sdrq_stream.out_uint32_le(SEC_CLIENT_RANDOM);
+            sdrq_stream.out_uint32_le(this->server_public_key_len + SEC_PADDING_SIZE);
+            LOG(LOG_INFO, "Server public key is %d bytes long", this->server_public_key_len);
+            sdrq_stream.out_copy_bytes(this->client_crypt_random, this->server_public_key_len);
+            sdrq_stream.out_clear_bytes(SEC_PADDING_SIZE);
+
+            sdrq_out.end();
+            sdrq_tpdu.end();
+            sdrq_tpdu.send(trans);
+
         }
         catch(...){
             Stream stream(11);
@@ -2930,31 +3009,12 @@ struct Sec
             throw;
         }
 
-        LOG(LOG_INFO, "Iso Layer : setting encryption\n");
-        /* Send the client random to the server */
-//      if (this->encryption)
-        Stream sdrq_stream(8192);
-        X224Out sdrq_tpdu(X224Packet::DT_TPDU, sdrq_stream);
-        McsOut sdrq_out(sdrq_stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-
-        int length = this->server_public_key_len + SEC_PADDING_SIZE;
-
-        sdrq_stream.out_uint32_le(SEC_CLIENT_RANDOM);
-
-        sdrq_stream.out_uint32_le(length);
-        LOG(LOG_INFO, "Server public key is %d bytes long", this->server_public_key_len);
-        sdrq_stream.out_copy_bytes(this->client_crypt_random, this->server_public_key_len);
-        sdrq_stream.out_clear_bytes(SEC_PADDING_SIZE);
-
-        sdrq_out.end();
-        sdrq_tpdu.end();
-        sdrq_tpdu.send(trans);
     }
 
 
     void mcs_connect_initial_pdu_with_gcc_conference_create_request(
                     Transport * trans,
-                    vector<mcs_channel_item*> channel_list,
+                    const vector<mcs_channel_item*> & channel_list,
                     int width,
                     int height,
                     int rdp_bpp,
@@ -3145,6 +3205,17 @@ struct Sec
 
     }
 
+    void mcs_connect_response_pdu_with_gcc_conference_create_response(
+                                Transport * trans,
+                                const vector<mcs_channel_item*> & channel_list,
+                                int & use_rdp5)
+    {
+        Stream cr_stream(8192);
+        this->recv_connect_response(cr_stream, trans);
+
+        LOG(LOG_INFO, "rdp_sec_process_mcs_data\n");
+        this->rdp_sec_process_mcs_data(cr_stream, channel_list, use_rdp5);
+    }
 
 };
 
