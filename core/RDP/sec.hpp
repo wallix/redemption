@@ -2941,112 +2941,100 @@ struct Sec
                 int data_len = data.end - data.data;
                 int len = 7 + 3 * 34 + 4 + data_len;
 
-                Stream stream(8192);
-                X224Out tpdu(X224Packet::DT_TPDU, stream);
+                Stream ci_stream(8192);
+                X224Out ci_tpdu(X224Packet::DT_TPDU, ci_stream);
 
-                stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
-                stream.out_ber_len(len);
-                stream.out_uint8(BER_TAG_OCTET_STRING);
-                stream.out_ber_len(0); /* calling domain */
-                stream.out_uint8(BER_TAG_OCTET_STRING);
-                stream.out_ber_len(0); /* called domain */
-                stream.out_uint8(BER_TAG_BOOLEAN);
-                stream.out_ber_len(1);
-                stream.out_uint8(0xff); /* upward flag */
+                ci_stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
+                ci_stream.out_ber_len(len);
+                ci_stream.out_uint8(BER_TAG_OCTET_STRING);
+                ci_stream.out_ber_len(0); /* calling domain */
+                ci_stream.out_uint8(BER_TAG_OCTET_STRING);
+                ci_stream.out_ber_len(0); /* called domain */
+                ci_stream.out_uint8(BER_TAG_BOOLEAN);
+                ci_stream.out_ber_len(1);
+                ci_stream.out_uint8(0xff); /* upward flag */
 
                 // target params
-                stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-                stream.out_ber_len(32);
-                stream.out_ber_int16(34);     // max_channels
-                stream.out_ber_int16(2);      // max_users
-                stream.out_ber_int16(0);      // max_tokens
-                stream.out_ber_int16(1);
-                stream.out_ber_int16(0);
-                stream.out_ber_int16(1);
-                stream.out_ber_int16(0xffff); // max_pdu_size
-                stream.out_ber_int16(2);
+                ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+                ci_stream.out_ber_len(32);
+                ci_stream.out_ber_int16(34);     // max_channels
+                ci_stream.out_ber_int16(2);      // max_users
+                ci_stream.out_ber_int16(0);      // max_tokens
+                ci_stream.out_ber_int16(1);
+                ci_stream.out_ber_int16(0);
+                ci_stream.out_ber_int16(1);
+                ci_stream.out_ber_int16(0xffff); // max_pdu_size
+                ci_stream.out_ber_int16(2);
 
                 // min params
-                stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-                stream.out_ber_len(32);
-                stream.out_ber_int16(1);     // max_channels
-                stream.out_ber_int16(1);     // max_users
-                stream.out_ber_int16(1);     // max_tokens
-                stream.out_ber_int16(1);
-                stream.out_ber_int16(0);
-                stream.out_ber_int16(1);
-                stream.out_ber_int16(0x420); // max_pdu_size
-                stream.out_ber_int16(2);
+                ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+                ci_stream.out_ber_len(32);
+                ci_stream.out_ber_int16(1);     // max_channels
+                ci_stream.out_ber_int16(1);     // max_users
+                ci_stream.out_ber_int16(1);     // max_tokens
+                ci_stream.out_ber_int16(1);
+                ci_stream.out_ber_int16(0);
+                ci_stream.out_ber_int16(1);
+                ci_stream.out_ber_int16(0x420); // max_pdu_size
+                ci_stream.out_ber_int16(2);
 
                 // max params
-                stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-                stream.out_ber_len(32);
-                stream.out_ber_int16(0xffff); // max_channels
-                stream.out_ber_int16(0xfc17); // max_users
-                stream.out_ber_int16(0xffff); // max_tokens
-                stream.out_ber_int16(1);
-                stream.out_ber_int16(0);
-                stream.out_ber_int16(1);
-                stream.out_ber_int16(0xffff); // max_pdu_size
-                stream.out_ber_int16(2);
+                ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+                ci_stream.out_ber_len(32);
+                ci_stream.out_ber_int16(0xffff); // max_channels
+                ci_stream.out_ber_int16(0xfc17); // max_users
+                ci_stream.out_ber_int16(0xffff); // max_tokens
+                ci_stream.out_ber_int16(1);
+                ci_stream.out_ber_int16(0);
+                ci_stream.out_ber_int16(1);
+                ci_stream.out_ber_int16(0xffff); // max_pdu_size
+                ci_stream.out_ber_int16(2);
 
-                stream.out_uint8(BER_TAG_OCTET_STRING);
-                stream.out_ber_len(data_len);
-                stream.out_copy_bytes(data.data, data_len);
+                ci_stream.out_uint8(BER_TAG_OCTET_STRING);
+                ci_stream.out_ber_len(data_len);
+                ci_stream.out_copy_bytes(data.data, data_len);
 
-                tpdu.end();
-                tpdu.send(trans);
+                ci_tpdu.end();
+                ci_tpdu.send(trans);
             }
-            Stream stream(8192);
-            this->recv_connect_response(stream, trans);
+
+            Stream cr_stream(8192);
+            this->recv_connect_response(cr_stream, trans);
 
             LOG(LOG_INFO, "rdp_sec_process_mcs_data\n");
-            this->rdp_sec_process_mcs_data(stream, channel_list, use_rdp5);
+            this->rdp_sec_process_mcs_data(cr_stream, channel_list, use_rdp5);
 
-            {
-                Stream stream(8192);
-                X224Out tpdu(X224Packet::DT_TPDU, stream);
-                stream.out_uint8((MCS_EDRQ << 2));
-                stream.out_uint16_be(0x100); /* height */
-                stream.out_uint16_be(0x100); /* interval */
-                tpdu.end();
-                tpdu.send(trans);
-            }
-            {
-                Stream stream(8192);
-                X224Out tpdu(X224Packet::DT_TPDU, stream);
-                stream.out_uint8((MCS_AURQ << 2));
-                tpdu.end();
-                tpdu.send(trans);
-            }
-            {
-                Stream stream(8192);
-                X224In(trans, stream);
-                int opcode = stream.in_uint8();
-                if ((opcode >> 2) != MCS_AUCF) {
-                    throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
-                }
-                int res = stream.in_uint8();
-                if (res != 0) {
-                    throw Error(ERR_MCS_RECV_AUCF_RES_NOT_0);
-                }
-                if (opcode & 2) {
-                    this->userid = stream.in_uint16_be();
-                }
-                if (!(stream.check_end())) {
-                    throw Error(ERR_MCS_RECV_AUCF_ERROR_CHECKING_STREAM);
-                }
-            }
 
-            #warning the array size below is arbitrary, it should be checked to avoid buffer overflow
-            uint16_t channels[100];
+            Stream edrq_stream(8192);
+            X224Out edrq_tpdu(X224Packet::DT_TPDU, edrq_stream);
+            edrq_stream.out_uint8((MCS_EDRQ << 2));
+            edrq_stream.out_uint16_be(0x100); /* height */
+            edrq_stream.out_uint16_be(0x100); /* interval */
+            edrq_tpdu.end();
+            edrq_tpdu.send(trans);
 
-            channels[0] = this->userid + 1001;
-            channels[1] = MCS_GLOBAL_CHANNEL;
-            for (size_t index = 0; index < num_channels; index++){
-                const mcs_channel_item* channel_item = this->channel_list[index];
-                channels[2+index] = channel_item->chanid;
+            // -----------------------------------------------
+            Stream aurq_stream(8192);
+            X224Out aurq_tpdu(X224Packet::DT_TPDU, aurq_stream);
+            aurq_stream.out_uint8((MCS_AURQ << 2));
+            aurq_tpdu.end();
+            aurq_tpdu.send(trans);
+
+            // -----------------------------------------------
+            Stream aucf_stream(8192);
+            X224In aucf_tpdu(trans, aucf_stream);
+            int opcode = aucf_stream.in_uint8();
+            if ((opcode >> 2) != MCS_AUCF) {
+                throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
             }
+            int res = aucf_stream.in_uint8();
+            if (res != 0) {
+                throw Error(ERR_MCS_RECV_AUCF_RES_NOT_0);
+            }
+            if (opcode & 2) {
+                this->userid = aucf_stream.in_uint16_be();
+            }
+            aucf_tpdu.end();
 
             // 2.2.1.8 Client MCS Channel Join Request PDU
             // -------------------------------------------
@@ -3076,32 +3064,40 @@ struct Sec
             //               -- may be zero
             // }
 
+            #warning the array size below is arbitrary, it should be checked to avoid buffer overflow
+            uint16_t channels[100];
+
+            channels[0] = this->userid + 1001;
+            channels[1] = MCS_GLOBAL_CHANNEL;
+            for (size_t index = 2; index < num_channels+2; index++){
+                const mcs_channel_item* channel_item = this->channel_list[index-2];
+                channels[index] = channel_item->chanid;
+            }
+
             for (size_t index = 0; index < num_channels+2; index++){
-                {
-                    Stream stream(8192);
-                    X224Out tpdu(X224Packet::DT_TPDU, stream);
-                    stream.out_uint8((MCS_CJRQ << 2));
-                    stream.out_uint16_be(this->userid);
-                    stream.out_uint16_be(channels[index]);
-                    tpdu.end();
-                    tpdu.send(trans);
+                // -----------------------------------------------
+                Stream cjrq_stream(8192);
+                X224Out cjrq_tpdu(X224Packet::DT_TPDU, cjrq_stream);
+                cjrq_stream.out_uint8((MCS_CJRQ << 2));
+                cjrq_stream.out_uint16_be(this->userid);
+                cjrq_stream.out_uint16_be(channels[index]);
+                cjrq_tpdu.end();
+                cjrq_tpdu.send(trans);
+                // -----------------------------------------------
+                Stream cjcf_stream(8192);
+                X224In cjcf_tpdu(trans, cjcf_stream);
+                int opcode = cjcf_stream.in_uint8();
+                if ((opcode >> 2) != MCS_CJCF) {
+                    throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
                 }
-                {
-                    Stream stream(8192);
-                    X224In cjcf_tpdu(trans, stream);
-                    int opcode = stream.in_uint8();
-                    if ((opcode >> 2) != MCS_CJCF) {
-                        throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
-                    }
-                    if (0 != stream.in_uint8()) {
-                        throw Error(ERR_MCS_RECV_CJCF_EMPTY);
-                    }
-                    stream.skip_uint8(4); /* mcs_userid, req_chanid */
-                    if (opcode & 2) {
-                        stream.skip_uint8(2); /* join_chanid */
-                    }
-                    cjcf_tpdu.end();
+                if (0 != cjcf_stream.in_uint8()) {
+                    throw Error(ERR_MCS_RECV_CJCF_EMPTY);
                 }
+                cjcf_stream.skip_uint8(4); /* mcs_userid, req_chanid */
+                if (opcode & 2) {
+                    cjcf_stream.skip_uint8(2); /* join_chanid */
+                }
+                cjcf_tpdu.end();
             }
         }
         catch(...){
@@ -3115,24 +3111,22 @@ struct Sec
         LOG(LOG_INFO, "Iso Layer : setting encryption\n");
         /* Send the client random to the server */
 //      if (this->encryption)
-        {
-            Stream stream(8192);
-            X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
+        Stream sdrq_stream(8192);
+        X224Out sdrq_tpdu(X224Packet::DT_TPDU, sdrq_stream);
+        McsOut sdrq_out(sdrq_stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
 
-            int length = this->server_public_key_len + SEC_PADDING_SIZE;
+        int length = this->server_public_key_len + SEC_PADDING_SIZE;
 
-            stream.out_uint32_le(SEC_CLIENT_RANDOM);
+        sdrq_stream.out_uint32_le(SEC_CLIENT_RANDOM);
 
-            stream.out_uint32_le(length);
-            LOG(LOG_INFO, "Server public key is %d bytes long", this->server_public_key_len);
-            stream.out_copy_bytes(this->client_crypt_random, this->server_public_key_len);
-            stream.out_clear_bytes(SEC_PADDING_SIZE);
+        sdrq_stream.out_uint32_le(length);
+        LOG(LOG_INFO, "Server public key is %d bytes long", this->server_public_key_len);
+        sdrq_stream.out_copy_bytes(this->client_crypt_random, this->server_public_key_len);
+        sdrq_stream.out_clear_bytes(SEC_PADDING_SIZE);
 
-            sdrq_out.end();
-            tpdu.end();
-            tpdu.send(trans);
-        }
+        sdrq_out.end();
+        sdrq_tpdu.end();
+        sdrq_tpdu.send(trans);
     }
 
 };
