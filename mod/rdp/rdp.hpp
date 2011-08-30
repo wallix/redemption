@@ -71,40 +71,158 @@ struct mod_rdp : public client_mod {
                 in_stream(8192)
 
     {
-        this->rdp_layer.sec_layer.rdp_sec_connect2(t, channel_list, this->get_front_width(), this->get_front_height(), this->get_front_bpp(), keylayout, this->get_client_info().console_session, this->rdp_layer.use_rdp5, this->rdp_layer.hostname);
+        #warning if some error occurs while connecting we should manage disconnection from t
+        this->t = t;
+        // copy channel list from client.
+        // It will be changed after negotiation with server
+        // to hold only channels actually supported.
+        this->front_channel_list = channel_list;
+        this->up_and_running = 0;
+        /* clipboard allow us to deactivate copy/paste sequence from server
+        to client communication. This is allowed by default */
+        this->clipboard_enable = clipboard_enable;
+        this->dev_redirection_enable = dev_redirection_enable;
+
+        LOG(LOG_INFO, "keylayout sent to server is %x\n", keylayout);
 
         const char * password = context.get(STRAUTHID_TARGET_PASSWORD);
 
-//        LOG(LOG_INFO, "mod_rdp connect\n");
-        this->t = 0;
-        try {
-            this->t = t;
-            // copy channel list from client.
-            // It will be changed after negotiation with server
-            // to hold only channels actually supported.
-            this->front_channel_list = channel_list;
-            this->up_and_running = 0;
-            /* clipboard allow us to deactivate copy/paste sequence from server
-            to client communication. This is allowed by default */
-            this->clipboard_enable = clipboard_enable;
-            this->dev_redirection_enable = dev_redirection_enable;
+        {
 
-            LOG(LOG_INFO, "keylayout sent to server is %x\n", keylayout);
+        this->rdp_layer.sec_layer.rdp_sec_connect2(t, channel_list, this->get_front_width(), this->get_front_height(), this->get_front_bpp(), keylayout, this->get_client_info().console_session, this->rdp_layer.use_rdp5, this->rdp_layer.hostname);
 
-            int flags = RDP_LOGON_NORMAL;
+        int flags = RDP_LOGON_NORMAL;
 
-            if (strlen(password) > 0) {
-                flags |= RDP_LOGON_AUTO;
+        if (strlen(password) > 0) {
+            flags |= RDP_LOGON_AUTO;
+        }
+
+// Secure Settings Exchange
+// ------------------------
+
+// Secure Settings Exchange: Secure client data (such as the username,
+// password and auto-reconnect cookie) is sent to the server using the Client
+// Info PDU.
+
+// Client                                                     Server
+//    |------ Client Info PDU      ---------------------------> |
+
+            int rdp5_performanceflags = this->get_client_info().rdp5_performanceflags;
+
+//            LOG(LOG_INFO, "send login info to server\n");
+            time_t t = time(NULL);
+            time_t tzone;
+
+            rdp5_performanceflags = RDP5_NO_WALLPAPER;
+
+            // The WAB does not send it's IP to server. Is it what we want ?
+            const char * ip_source = "\0\0\0\0";
+
+            int sec_flags = SEC_LOGON_INFO | SEC_ENCRYPT;
+
+            Stream stream(8192);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->rdp_layer.sec_layer.userid, MCS_GLOBAL_CHANNEL);
+            SecOut sec_out(stream, 2, SEC_LOGON_INFO | SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
+
+            if(!this->rdp_layer.use_rdp5){
+                LOG(LOG_INFO, "send login info (RDP4-style) %s:%s\n",this->rdp_layer.domain, this->rdp_layer.username);
+
+                stream.out_uint32_le(0);
+                stream.out_uint32_le(flags);
+                stream.out_uint16_le(2 * strlen(this->rdp_layer.domain));
+                stream.out_uint16_le(2 * strlen(this->rdp_layer.username));
+                stream.out_uint16_le(2 * strlen(this->rdp_layer.password));
+                stream.out_uint16_le(2 * strlen(this->rdp_layer.program));
+                stream.out_uint16_le(2 * strlen(this->rdp_layer.directory));
+                stream.out_unistr(this->rdp_layer.domain);
+                stream.out_unistr(this->rdp_layer.username);
+                stream.out_unistr(this->rdp_layer.password);
+                stream.out_unistr(this->rdp_layer.program);
+                stream.out_unistr(this->rdp_layer.directory);
+            }
+            else {
+                LOG(LOG_INFO, "send login info (RDP5-style) %x %s:%s\n",flags,
+                    this->rdp_layer.domain,
+                    this->rdp_layer.username);
+
+                flags |= RDP_LOGON_BLOB;
+                stream.out_uint32_le(0);
+                stream.out_uint32_le(flags);
+                stream.out_uint16_le(2 * strlen(this->rdp_layer.domain));
+                stream.out_uint16_le(2 * strlen(this->rdp_layer.username));
+                if (flags & RDP_LOGON_AUTO){
+                    stream.out_uint16_le(2 * strlen(this->rdp_layer.password));
+                }
+                if (flags & RDP_LOGON_BLOB && ! (flags & RDP_LOGON_AUTO)){
+                    stream.out_uint16_le(0);
+                }
+                stream.out_uint16_le(2 * strlen(this->rdp_layer.program));
+                stream.out_uint16_le(2 * strlen(this->rdp_layer.directory));
+                if ( 0 < (2 * strlen(this->rdp_layer.domain))){
+                    stream.out_unistr(this->rdp_layer.domain);
+                }
+                else {
+                    stream.out_uint16_le(0);
+                }
+                stream.out_unistr(this->rdp_layer.username);
+                if (flags & RDP_LOGON_AUTO){
+                    stream.out_unistr(this->rdp_layer.password);
+                }
+                else{
+                    stream.out_uint16_le(0);
+                }
+                if (0 < 2 * strlen(this->rdp_layer.program)){
+                    stream.out_unistr(this->rdp_layer.program);
+                }
+                else {
+                    stream.out_uint16_le(0);
+                }
+                if (2 * strlen(this->rdp_layer.directory) < 0){
+                    stream.out_unistr(this->rdp_layer.directory);
+                }
+                else{
+                    stream.out_uint16_le(0);
+                }
+                stream.out_uint16_le(2);
+                stream.out_uint16_le(2 * strlen(ip_source) + 2);
+                stream.out_unistr(ip_source);
+                stream.out_uint16_le(2 * strlen("C:\\WINNT\\System32\\mstscax.dll") + 2);
+                stream.out_unistr("C:\\WINNT\\System32\\mstscax.dll");
+
+                tzone = (mktime(gmtime(&t)) - mktime(localtime(&t))) / 60;
+                stream.out_uint32_le(tzone);
+
+                stream.out_unistr("GTB, normaltid");
+                stream.out_clear_bytes(62 - 2 * strlen("GTB, normaltid"));
+
+                stream.out_uint32_le(0x0a0000);
+                stream.out_uint32_le(0x050000);
+                stream.out_uint32_le(3);
+                stream.out_uint32_le(0);
+                stream.out_uint32_le(0);
+
+                stream.out_unistr("GTB, sommartid");
+                stream.out_clear_bytes(62 - 2 * strlen("GTB, sommartid"));
+
+                stream.out_uint32_le(0x30000);
+                stream.out_uint32_le(0x050000);
+                stream.out_uint32_le(2);
+                stream.out_uint32_le(0);
+                stream.out_uint32_le(0xffffffc4);
+                stream.out_uint32_le(0xfffffffe);
+                stream.out_uint32_le(rdp5_performanceflags);
+                stream.out_uint16_le(0);
+                this->rdp_layer.use_rdp5 = 0;
             }
 
-            this->rdp_layer.send_login_info(flags, this->get_client_info().rdp5_performanceflags);
-        } catch (...) {
-        #warning this->t is not allocated here, it shouldn't be desallocated here
-            if (this->t){
-                delete this->t;
-            }
-            throw;
-        };
+            sec_out.end();
+            sdrq_out.end();
+            tpdu.end();
+            tpdu.send(this->rdp_layer.trans);
+
+            LOG(LOG_INFO, "send login info ok\n");
+        }
     }
 
     virtual ~mod_rdp() {
