@@ -97,9 +97,6 @@ struct rdp_rdp {
 
             this->keylayout = keylayout;
             LOG(LOG_INFO, "Server key layout is %x\n", this->keylayout);
-
-            #warning I should change that to RAII by merging instanciation of sec_layer and connection, it should also remove some unecessary parameters from rdp_rdp object
-            this->sec_layer.rdp_sec_connect2(this->trans, channel_list, width, height, bpp, keylayout, console_session, this->use_rdp5, this->hostname);
     }
     ~rdp_rdp(){
         LOG(LOG_INFO, "End of remote rdp connection\n");
