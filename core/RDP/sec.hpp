@@ -2647,10 +2647,8 @@ struct Sec
 
                 data.out_uint32_be(channel_item->flags);
             }
-            data.mark_end();
         }
-
-        try {
+        data.mark_end();
 
 //2.2.1.1    Client X.224 Connection Request PDU
 //==============================================
@@ -2675,34 +2673,26 @@ struct Sec
 //   X.224 Connection Request Length Indicator field.
 
 
-            Stream out;
-            X224Out crtpdu(X224Packet::CR_TPDU, out);
+        Stream out;
+        X224Out crtpdu(X224Packet::CR_TPDU, out);
 
-            #warning looks like this strange cookie thing is in fact useless, see MSFT-SDLBTS
-            // USER DATA
+        #warning looks like this strange cookie thing is in fact useless, see MSFT-SDLBTS
+        // USER DATA
 //            out.out_concat("Cookie: mstshash=");
 //            out.out_concat(this->username);
 //            out.out_concat("\r\n");
 //            crtpdu.extend_tpdu_hdr();
-            crtpdu.end();
+        crtpdu.end();
 
-            crtpdu.send(trans);
+        crtpdu.send(trans);
 
-            Stream in;
-            X224In cctpdu(trans, in);
-            if (cctpdu.tpkt.version != 3){
-                throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
-            }
-            if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
-                throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
-            }
-        } catch (Error) {
-            try {
-                trans->disconnect();
-            } catch (Error){
-                // rethrow the first error, not the error we could get disconnecting
-            }
-            throw;
+        Stream in;
+        X224In cctpdu(trans, in);
+        if (cctpdu.tpkt.version != 3){
+            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+        }
+        if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
+            throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
         }
 
         try{
