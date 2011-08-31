@@ -2120,84 +2120,6 @@ struct Sec
 //    }
 
 
-
-    /* Process connect response data blob */
-    void rdp_sec_process_mcs_data(Stream & stream, vector<mcs_channel_item*> channel_list, int & use_rdp5)
-    {
-        stream.skip_uint8(21); /* header (T.124 ConferenceCreateResponse) */
-        uint8_t len = stream.in_uint8();
-
-        if (len & 0x80) {
-            len = stream.in_uint8();
-        }
-        while (stream.p < stream.end) {
-            uint16_t tag = stream.in_uint16_le();
-            uint16_t length = stream.in_uint16_le();
-            if (length <= 4) {
-                return;
-            }
-            uint8_t *next_tag = (stream.p + length) - 4;
-            switch (tag) {
-            case SEC_TAG_SRV_INFO:
-                this->rdp_sec_process_srv_info(stream, use_rdp5);
-                break;
-            case SEC_TAG_SRV_CRYPT:
-                this->rdp_sec_process_crypt_info(stream);
-                break;
-            case SEC_TAG_SRV_CHANNELS:
-            /*  This is what rdesktop says in comment:
-                FIXME: We should parse this information and
-                use it to map RDP5 channels to MCS
-                channels
-                rdesktop does not call the function below
-            */
-                #warning rdesktop does not call the function below
-                 this->rdp_sec_process_srv_channels(stream, channel_list);
-                break;
-            default:
-                LOG(LOG_WARNING, "response tag 0x%x\n", tag);
-                break;
-            }
-            stream.p = next_tag;
-        }
-    }
-
-    void recv_connect_response(Stream & stream, Transport * trans) throw(Error)
-    {
-        X224In(trans, stream);
-        if (stream.in_uint16_be() != BER_TAG_MCS_CONNECT_RESPONSE) {
-            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-        }
-        int len = stream.in_ber_len();
-
-        if (stream.in_uint8() != BER_TAG_RESULT) {
-            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-        }
-        len = stream.in_ber_len();
-
-        int res = stream.in_uint8();
-
-        if (res != 0) {
-            throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
-        }
-        if (stream.in_uint8() != BER_TAG_INTEGER) {
-            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-        }
-        len = stream.in_ber_len();
-        stream.skip_uint8(len); /* connect id */
-
-        if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
-            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-        }
-        len = stream.in_ber_len();
-        stream.skip_uint8(len);
-
-        if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
-            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-        }
-        len = stream.in_ber_len();
-    }
-
     /* this adds the mcs channels in the list of channels to be used when creating the server mcs data */
     void rdp_sec_process_srv_channels(Stream & stream, vector<mcs_channel_item*> channel_list)
     {
@@ -3211,10 +3133,75 @@ struct Sec
                                 int & use_rdp5)
     {
         Stream cr_stream(8192);
-        this->recv_connect_response(cr_stream, trans);
+        X224In(trans, cr_stream);
+        if (cr_stream.in_uint16_be() != BER_TAG_MCS_CONNECT_RESPONSE) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        int len = cr_stream.in_ber_len();
 
-        LOG(LOG_INFO, "rdp_sec_process_mcs_data\n");
-        this->rdp_sec_process_mcs_data(cr_stream, channel_list, use_rdp5);
+        if (cr_stream.in_uint8() != BER_TAG_RESULT) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = cr_stream.in_ber_len();
+
+        int res = cr_stream.in_uint8();
+
+        if (res != 0) {
+            throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
+        }
+        if (cr_stream.in_uint8() != BER_TAG_INTEGER) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = cr_stream.in_ber_len();
+        cr_stream.skip_uint8(len); /* connect id */
+
+        if (cr_stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = cr_stream.in_ber_len();
+        cr_stream.skip_uint8(len);
+
+        if (cr_stream.in_uint8() != BER_TAG_OCTET_STRING) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = cr_stream.in_ber_len();
+
+        cr_stream.skip_uint8(21); /* header (T.124 ConferenceCreateResponse) */
+        len = cr_stream.in_uint8();
+
+        if (len & 0x80) {
+            len = cr_stream.in_uint8();
+        }
+        while (cr_stream.p < cr_stream.end) {
+            uint16_t tag = cr_stream.in_uint16_le();
+            uint16_t length = cr_stream.in_uint16_le();
+            if (length <= 4) {
+                return;
+            }
+            uint8_t *next_tag = (cr_stream.p + length) - 4;
+            switch (tag) {
+            case SEC_TAG_SRV_INFO:
+                this->rdp_sec_process_srv_info(cr_stream, use_rdp5);
+                break;
+            case SEC_TAG_SRV_CRYPT:
+                this->rdp_sec_process_crypt_info(cr_stream);
+                break;
+            case SEC_TAG_SRV_CHANNELS:
+            /*  This is what rdesktop says in comment:
+                FIXME: We should parse this information and
+                use it to map RDP5 channels to MCS
+                channels
+                rdesktop does not call the function below
+            */
+                #warning rdesktop does not call the function below
+                 this->rdp_sec_process_srv_channels(cr_stream, channel_list);
+                break;
+            default:
+                LOG(LOG_WARNING, "response tag 0x%x\n", tag);
+                break;
+            }
+            cr_stream.p = next_tag;
+        }
     }
 
 };
