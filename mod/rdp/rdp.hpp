@@ -59,6 +59,7 @@ struct mod_rdp : public client_mod {
         MOD_RDP_CONNECTING,
         MOD_RDP_CONNECTION_INITIATION,
         MOD_RDP_BASIC_SETTINGS_EXCHANGE,
+        MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER,
         MOD_RDP_CONNECTED,
     };
 
@@ -268,11 +269,8 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
-        {
             this->rdp_layer.sec_layer.mcs_connect_response_pdu_with_gcc_conference_create_response(
                     this->trans, this->channel_list, this->use_rdp5);
-
-            LOG(LOG_INFO, "keylayout sent to server is %x\n", keylayout);
 
             // Channel Connection
             // ------------------
@@ -304,41 +302,19 @@ struct mod_rdp : public client_mod {
             // Client                                                     Server
             //    |-------MCS Erect Domain Request PDU--------------------> |
             //    |-------MCS Attach User Request PDU---------------------> |
+
             //    | <-----MCS Attach User Confirm PDU---------------------- |
 
             //    |-------MCS Channel Join Request PDU--------------------> |
             //    | <-----MCS Channel Join Confirm PDU--------------------- |
 
-            Stream edrq_stream(8192);
-            X224Out edrq_tpdu(X224Packet::DT_TPDU, edrq_stream);
-            edrq_stream.out_uint8((MCS_EDRQ << 2));
-            edrq_stream.out_uint16_be(0x100); /* height */
-            edrq_stream.out_uint16_be(0x100); /* interval */
-            edrq_tpdu.end();
-            edrq_tpdu.send(this->trans);
+            this->mcs_erect_domain_and_attach_user_request_pdu(this->trans);
 
-            // -----------------------------------------------
-            Stream aurq_stream(8192);
-            X224Out aurq_tpdu(X224Packet::DT_TPDU, aurq_stream);
-            aurq_stream.out_uint8((MCS_AURQ << 2));
-            aurq_tpdu.end();
-            aurq_tpdu.send(this->trans);
-
-            // -----------------------------------------------
-            Stream aucf_stream(8192);
-            X224In aucf_tpdu(this->trans, aucf_stream);
-            int opcode = aucf_stream.in_uint8();
-            if ((opcode >> 2) != MCS_AUCF) {
-                throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
-            }
-            int res = aucf_stream.in_uint8();
-            if (res != 0) {
-                throw Error(ERR_MCS_RECV_AUCF_RES_NOT_0);
-            }
-            if (opcode & 2) {
-                userid = aucf_stream.in_uint16_be();
-            }
-            aucf_tpdu.end();
+            this->state = MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER;
+        break;
+        case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
+        {
+            this->mcs_attach_user_confirm_pdu(this->trans, this->rdp_layer.userid);
 
             // 2.2.1.8 Client MCS Channel Join Request PDU
             // -------------------------------------------
@@ -741,6 +717,44 @@ struct mod_rdp : public client_mod {
             throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
         }
     }
+
+
+    void mcs_erect_domain_and_attach_user_request_pdu(Transport * trans)
+    {
+        #warning there should be a way to merge both packets in the same stream to only perform one unique send
+        Stream edrq_stream(8192);
+        X224Out edrq_tpdu(X224Packet::DT_TPDU, edrq_stream);
+        edrq_stream.out_uint8((MCS_EDRQ << 2));
+        edrq_stream.out_uint16_be(0x100); /* height */
+        edrq_stream.out_uint16_be(0x100); /* interval */
+        edrq_tpdu.end();
+        edrq_tpdu.send(trans);
+
+        Stream aurq_stream(8192);
+        X224Out aurq_tpdu(X224Packet::DT_TPDU, aurq_stream);
+        aurq_stream.out_uint8((MCS_AURQ << 2));
+        aurq_tpdu.end();
+        aurq_tpdu.send(trans);
+    }
+
+    void mcs_attach_user_confirm_pdu(Transport * trans, int & userid)
+    {
+        Stream aucf_stream(8192);
+        X224In aucf_tpdu(trans, aucf_stream);
+        int opcode = aucf_stream.in_uint8();
+        if ((opcode >> 2) != MCS_AUCF) {
+            throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
+        }
+        int res = aucf_stream.in_uint8();
+        if (res != 0) {
+            throw Error(ERR_MCS_RECV_AUCF_RES_NOT_0);
+        }
+        if (opcode & 2) {
+            userid = aucf_stream.in_uint16_be();
+        }
+        aucf_tpdu.end();
+    }
+
 };
 
 #endif
