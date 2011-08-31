@@ -269,7 +269,6 @@ struct Sec
     uint8_t * licence_data;
     size_t licence_size;
 
-    int userid;
     vector<struct mcs_channel_item *> channel_list;
 
     #warning windows 2008 does not write trailer because of overflow of buffer below, checked actual size: 64 bytes on xp, 256 bytes on windows 2008
@@ -484,7 +483,7 @@ struct Sec
     }
 
 
-    void server_sec_send_lic_initial(Transport * trans) throw (Error)
+    void server_sec_send_lic_initial(Transport * trans, int userid) throw (Error)
     {
         /* some compilers need unsigned char to avoid warnings */
         static uint8_t lic1[322] = {
@@ -533,14 +532,14 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdin_out(stream, MCS_SDIN, userid, MCS_GLOBAL_CHANNEL);
         stream.out_copy_bytes((char*)lic1, 322);
         sdin_out.end();
         tpdu.end();
         tpdu.send(trans);
     }
 
-    void server_sec_send_lic_response(Transport * trans) throw (Error)
+    void server_sec_send_lic_response(Transport * trans, int userid) throw (Error)
     {
         /* some compilers need unsigned char to avoid warnings */
         static uint8_t lic2[20] = { 0x80, 0x00, 0x10, 0x00, 0xff, 0x02, 0x10, 0x00,
@@ -550,14 +549,14 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdin_out(stream, MCS_SDIN, userid, MCS_GLOBAL_CHANNEL);
         stream.out_copy_bytes((char*)lic2, 20);
         sdin_out.end();
         tpdu.end();
         tpdu.send(trans);
     }
 
-    void server_sec_send_media_lic_response(Transport * trans) throw (Error)
+    void server_sec_send_media_lic_response(Transport * trans, int userid) throw (Error)
     {
         /* mce */
         /* some compilers need unsigned char to avoid warnings */
@@ -568,7 +567,7 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdin_out(stream, MCS_SDIN, userid, MCS_GLOBAL_CHANNEL);
         stream.out_copy_bytes((char*)lic3, 20);
         sdin_out.end();
         tpdu.end();
@@ -1488,7 +1487,7 @@ struct Sec
         memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
     }
 
-    void rdp_lic_process_authreq(Transport * trans, Stream & stream, const char * hostname)
+    void rdp_lic_process_authreq(Transport * trans, Stream & stream, const char * hostname, int userid)
     {
 
         ssllib ssl;
@@ -1533,16 +1532,16 @@ struct Sec
         memcpy(crypt_hwid, hwid, LICENCE_HWID_SIZE);
         ssl.rc4_crypt(crypt_key, crypt_hwid, crypt_hwid, LICENCE_HWID_SIZE);
 
-        this->rdp_lic_send_authresp(trans, out_token, crypt_hwid, out_sig);
+        this->rdp_lic_send_authresp(trans, out_token, crypt_hwid, out_sig, userid);
     }
 
-    void rdp_lic_send_authresp(Transport * trans, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature)
+    void rdp_lic_send_authresp(Transport * trans, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature, int userid)
     {
         int length = 58;
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
 
         stream.out_uint8(this->lic_layer.licence_issued
                          ? LICENCE_TAG_AUTHRESP
@@ -1564,7 +1563,7 @@ struct Sec
         tpdu.send(trans);
     }
 
-    void rdp_lic_process_demand(Transport * trans, Stream & stream, const char * hostname, const char * username)
+    void rdp_lic_process_demand(Transport * trans, Stream & stream, const char * hostname, const char * username, int userid)
     {
         uint8_t null_data[SEC_MODULUS_SIZE];
         uint8_t signature[LICENCE_SIGNATURE_SIZE];
@@ -1608,14 +1607,14 @@ struct Sec
             this->rdp_lic_present(trans, null_data, null_data,
                                   this->licence_data,
                                   this->licence_size,
-                                  hwid, signature);
+                                  hwid, signature, userid);
         }
         else {
-            this->rdp_lic_send_request(trans, null_data, null_data, hostname, username);
+            this->rdp_lic_send_request(trans, null_data, null_data, hostname, username, userid);
         }
     }
 
-    void rdp_lic_send_request(Transport * trans, uint8_t* client_random, uint8_t* rsa_data, const char * hostname, const char * username)
+    void rdp_lic_send_request(Transport * trans, uint8_t* client_random, uint8_t* rsa_data, const char * hostname, const char * username, int userid)
     {
         int userlen = strlen(username) + 1;
         int hostlen = strlen(hostname) + 1;
@@ -1623,7 +1622,7 @@ struct Sec
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
 
         #warning if we are performing licence request doesn't it mean that licence has not been issued ?
         stream.out_uint8(this->lic_layer.licence_issued?LICENCE_TAG_REQUEST:SEC_LICENCE_NEG);
@@ -1653,11 +1652,11 @@ struct Sec
 
     void rdp_lic_present(Transport * trans, uint8_t* client_random, uint8_t* rsa_data,
                 uint8_t* licence_data, int licence_size, uint8_t* hwid,
-                uint8_t* signature)
+                uint8_t* signature, int userid)
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
 
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
@@ -1761,16 +1760,16 @@ struct Sec
         this->rdp_save_licence(stream.p, length, hostname);
     }
 
-    void rdp_lic_process(Transport * trans, Stream & stream, const char * hostname, const char * username)
+    void rdp_lic_process(Transport * trans, Stream & stream, const char * hostname, const char * username, int userid)
     {
         uint8_t tag = stream.in_uint8();
         stream.skip_uint8(3); /* version, length */
         switch (tag) {
         case LICENCE_TAG_DEMAND:
-            this->rdp_lic_process_demand(trans, stream, hostname, username);
+            this->rdp_lic_process_demand(trans, stream, hostname, username, userid);
             break;
         case LICENCE_TAG_AUTHREQ:
-            this->rdp_lic_process_authreq(trans, stream, hostname);
+            this->rdp_lic_process_authreq(trans, stream, hostname, userid);
             break;
         case LICENCE_TAG_ISSUE:
             this->rdp_lic_process_issue(stream, hostname);
@@ -2123,7 +2122,7 @@ struct Sec
     /* this adds the mcs channels in the list of channels to be used when creating the server mcs data */
     void rdp_sec_process_srv_channels(Stream & stream, vector<mcs_channel_item*> channel_list)
     {
-        int base_channel = stream.in_uint16_le();
+        stream.in_uint16_le(); /* base_channel */
         size_t num_channels = stream.in_uint16_le();
 
         /* We assume that the channel_id array is confirmed in the same order
@@ -2637,7 +2636,7 @@ struct Sec
     void rdp_sec_connect2(Transport * trans, vector<mcs_channel_item*> channel_list,
                         int width, int height,
                         int rdp_bpp, int keylayout,
-                        bool console_session, int & use_rdp5, char * hostname) throw(Error)
+                        bool console_session, int & use_rdp5, char * hostname, int & userid) throw(Error)
     {
 
     // Connection Initiation
@@ -2806,7 +2805,7 @@ struct Sec
                 throw Error(ERR_MCS_RECV_AUCF_RES_NOT_0);
             }
             if (opcode & 2) {
-                this->userid = aucf_stream.in_uint16_be();
+                userid = aucf_stream.in_uint16_be();
             }
             aucf_tpdu.end();
 
@@ -2842,7 +2841,7 @@ struct Sec
             uint16_t channels[100];
 
             size_t num_channels = this->channel_list.size();
-            channels[0] = this->userid + 1001;
+            channels[0] = userid + 1001;
             channels[1] = MCS_GLOBAL_CHANNEL;
             for (size_t index = 2; index < num_channels+2; index++){
                 const mcs_channel_item* channel_item = this->channel_list[index-2];
@@ -2854,7 +2853,7 @@ struct Sec
                 Stream cjrq_stream(8192);
                 X224Out cjrq_tpdu(X224Packet::DT_TPDU, cjrq_stream);
                 cjrq_stream.out_uint8((MCS_CJRQ << 2));
-                cjrq_stream.out_uint16_be(this->userid);
+                cjrq_stream.out_uint16_be(userid);
                 cjrq_stream.out_uint16_be(channels[index]);
                 cjrq_tpdu.end();
                 cjrq_tpdu.send(trans);
@@ -2910,7 +2909,7 @@ struct Sec
     //      if (this->encryption)
             Stream sdrq_stream(8192);
             X224Out sdrq_tpdu(X224Packet::DT_TPDU, sdrq_stream);
-            McsOut sdrq_out(sdrq_stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
+            McsOut sdrq_out(sdrq_stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
 
             sdrq_stream.out_uint32_le(SEC_CLIENT_RANDOM);
             sdrq_stream.out_uint32_le(this->server_public_key_len + SEC_PADDING_SIZE);

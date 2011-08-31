@@ -45,6 +45,7 @@ struct server_rdp {
     uint32_t packet_number;
     Stream client_mcs_data;
     Transport * trans;
+    int userid;
 
     server_rdp(Transport * trans, Inifile * ini)
         :
@@ -54,7 +55,8 @@ struct server_rdp {
         client_info(ini),
         sec_layer(this->client_info.crypt_level),
         packet_number(1),
-        trans(trans)
+        trans(trans),
+        userid(0)
     {
     }
 
@@ -75,7 +77,7 @@ struct server_rdp {
     {
         Stream stream(data_len + 1024); /* this should be big enough */
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, channel_id);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, channel_id);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
 
         stream.channel_hdr = stream.p;
@@ -123,7 +125,7 @@ struct server_rdp {
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
 
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->mcs_channel, this->share_id);
@@ -264,7 +266,7 @@ struct server_rdp {
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, this->mcs_channel, this->share_id);
 
@@ -387,7 +389,7 @@ struct server_rdp {
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, this->mcs_channel, this->share_id);
 
@@ -516,7 +518,7 @@ struct server_rdp {
                 this->sec_layer.server_sec_process_logon_info(input_stream, &this->client_info);
                 if (this->client_info.is_mce) {
 //                    LOG(LOG_INFO, "server_sec_send media_lic_response");
-                    this->sec_layer.server_sec_send_media_lic_response(this->trans);
+                    this->sec_layer.server_sec_send_media_lic_response(this->trans, this->userid);
                     this->server_rdp_send_demand_active();
                     if (!this->up_and_running){
 //                        input_stream.next_packet = input_stream.end;
@@ -525,7 +527,7 @@ struct server_rdp {
                 }
                 else {
 //                    LOG(LOG_INFO, "server_sec_send lic_initial");
-                    this->sec_layer.server_sec_send_lic_initial(this->trans);
+                    this->sec_layer.server_sec_send_lic_initial(this->trans, this->userid);
                     if (!this->up_and_running){
 //                        input_stream.next_packet = input_stream.end;
                         continue;
@@ -534,7 +536,7 @@ struct server_rdp {
             }
             else if (flags & SEC_LICENCE_NEG) { /* 0x80 */
 //                LOG(LOG_INFO, "server_sec_send lic_response");
-                this->sec_layer.server_sec_send_lic_response(this->trans);
+                this->sec_layer.server_sec_send_lic_response(this->trans, this->userid);
                 this->server_rdp_send_demand_active();
                 if (!this->up_and_running){
 //                    input_stream.next_packet = input_stream.end;
@@ -630,7 +632,7 @@ struct server_rdp {
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
 
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->mcs_channel, this->share_id);
@@ -712,7 +714,7 @@ struct server_rdp {
             stream.skip_uint8(2);
             stream.skip_uint8(2);
             if (opcode & 2) {
-                this->sec_layer.userid = stream.in_uint16_be();
+                this->userid = stream.in_uint16_be();
             }
             if (!stream.check_end()) {
                 throw Error(ERR_MCS_RECV_EDQR_TRUNCATED);
@@ -746,7 +748,7 @@ struct server_rdp {
                 throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
             }
             if (opcode & 2) {
-                this->sec_layer.userid = stream.in_uint16_be();
+                this->userid = stream.in_uint16_be();
             }
             if (!stream.check_end()) {
                 throw Error(ERR_MCS_RECV_AURQ_TRUNCATED);
@@ -776,7 +778,7 @@ struct server_rdp {
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             stream.out_uint8(((MCS_AUCF << 2) | 2));
             stream.out_uint8(0);
-            stream.out_uint16_be(this->sec_layer.userid);
+            stream.out_uint16_be(this->userid);
             tpdu.end();
             tpdu.send(this->trans);
         }
@@ -821,9 +823,9 @@ struct server_rdp {
                 X224Out tpdu(X224Packet::DT_TPDU, stream);
                 stream.out_uint8((MCS_CJCF << 2) | 2);
                 stream.out_uint8(0);
-                stream.out_uint16_be(this->sec_layer.userid);
-                stream.out_uint16_be(this->sec_layer.userid + MCS_USERCHANNEL_BASE);
-                stream.out_uint16_be(this->sec_layer.userid + MCS_USERCHANNEL_BASE);
+                stream.out_uint16_be(this->userid);
+                stream.out_uint16_be(this->userid + MCS_USERCHANNEL_BASE);
+                stream.out_uint16_be(this->userid + MCS_USERCHANNEL_BASE);
                 tpdu.end();
                 tpdu.send(this->trans);
             }
@@ -851,7 +853,7 @@ struct server_rdp {
                 X224Out tpdu(X224Packet::DT_TPDU, stream);
                 stream.out_uint8((MCS_CJCF << 2) | 2);
                 stream.out_uint8(0);
-                stream.out_uint16_be(this->sec_layer.userid);
+                stream.out_uint16_be(this->userid);
                 stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
                 stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
                 tpdu.end();
@@ -859,7 +861,7 @@ struct server_rdp {
             }
         }
 
-        this->mcs_channel = this->sec_layer.userid + MCS_USERCHANNEL_BASE;
+        this->mcs_channel = this->userid + MCS_USERCHANNEL_BASE;
     }
 
     /*****************************************************************************/
@@ -875,7 +877,7 @@ struct server_rdp {
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlOut rdp_out(stream, PDUTYPE_DEMANDACTIVEPDU, this->mcs_channel);
 
@@ -1269,7 +1271,7 @@ struct server_rdp {
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, this->mcs_channel, this->share_id);
 
@@ -1310,7 +1312,7 @@ struct server_rdp {
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, this->mcs_channel, this->share_id);
 
@@ -1358,7 +1360,7 @@ struct server_rdp {
         #warning we should create some RDPStream object created on init and sent before destruction
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTMAP, this->mcs_channel, this->share_id);
         stream.out_copy_bytes((char*)g_fontmap, 172);
@@ -1456,7 +1458,7 @@ struct server_rdp {
                 // if user really wants to disconnect */
                 Stream stream(8192);
                 X224Out tpdu(X224Packet::DT_TPDU, stream);
-                McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+                McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
                 SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
                 ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SHUTDOWN_DENIED, this->mcs_channel, this->share_id);
                 stream.mark_end();
@@ -1501,7 +1503,7 @@ struct server_rdp {
         #warning we should create some RDPStream object created on init and sent before destruction
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdin_out(stream, MCS_SDIN, this->sec_layer.userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
 
         ShareControlOut(stream, PDUTYPE_DEACTIVATEALLPDU, this->mcs_channel).end();

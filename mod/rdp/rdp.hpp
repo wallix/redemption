@@ -68,7 +68,7 @@ struct mod_rdp : public client_mod {
             vector<mcs_channel_item*> channel_list,
             const char * hostname, int keylayout,
             bool clipboard_enable, bool dev_redirection_enable)
-            : 
+            :
                 client_mod(keys, key_flags, keymap, front),
                   rdp_layer(this, t,
                     context.get(STRAUTHID_TARGET_USER),
@@ -216,7 +216,7 @@ struct mod_rdp : public client_mod {
 
         const char * password = context.get(STRAUTHID_TARGET_PASSWORD);
 
-        this->rdp_layer.sec_layer.rdp_sec_connect2(t, channel_list, this->get_front_width(), this->get_front_height(), this->get_front_bpp(), keylayout, this->get_client_info().console_session, this->rdp_layer.use_rdp5, this->rdp_layer.hostname);
+        this->rdp_layer.sec_layer.rdp_sec_connect2(t, channel_list, this->get_front_width(), this->get_front_height(), this->get_front_bpp(), keylayout, this->get_client_info().console_session, this->rdp_layer.use_rdp5, this->rdp_layer.hostname, this->rdp_layer.userid);
 
         int flags = RDP_LOGON_NORMAL;
 
@@ -245,11 +245,9 @@ struct mod_rdp : public client_mod {
             // The WAB does not send it's IP to server. Is it what we want ?
             const char * ip_source = "\0\0\0\0";
 
-            int sec_flags = SEC_LOGON_INFO | SEC_ENCRYPT;
-
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsOut sdrq_out(stream, MCS_SDRQ, this->rdp_layer.sec_layer.userid, MCS_GLOBAL_CHANNEL);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->rdp_layer.userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_LOGON_INFO | SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
 
             if(!this->rdp_layer.use_rdp5){
