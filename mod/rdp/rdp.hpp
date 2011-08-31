@@ -58,6 +58,7 @@ struct mod_rdp : public client_mod {
     enum {
         MOD_RDP_CONNECTING,
         MOD_RDP_CONNECTION_INITIATION,
+        MOD_RDP_BASIC_SETTINGS_EXCHANGE,
         MOD_RDP_CONNECTED,
     };
 
@@ -238,7 +239,6 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_CONNECTION_INITIATION:
-        {
 
             this->x224_connection_confirm_pdu(this->trans);
 
@@ -264,6 +264,11 @@ struct mod_rdp : public client_mod {
             this->rdp_layer.sec_layer.mcs_connect_initial_pdu_with_gcc_conference_create_request(
                     this->trans, this->channel_list, width, height, rdp_bpp, keylayout, console_session, hostname);
 
+            this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
+        break;
+
+        case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
+        {
             this->rdp_layer.sec_layer.mcs_connect_response_pdu_with_gcc_conference_create_response(
                     this->trans, this->channel_list, this->use_rdp5);
 
