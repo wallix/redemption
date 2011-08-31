@@ -2639,6 +2639,8 @@ struct Sec
                         bool console_session, int & use_rdp5, char * hostname, int & userid) throw(Error)
     {
 
+    LOG(LOG_INFO, "keylayout sent to server is %x\n", keylayout);
+
     // Connection Initiation
     // ---------------------
 
