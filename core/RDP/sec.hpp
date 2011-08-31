@@ -2161,7 +2161,7 @@ struct Sec
     }
 
     /* Process SRV_INFO, find RDP version supported by server */
-    void rdp_sec_process_srv_info(Stream & stream, int & use_rdp5)
+    void process_srv_info(Stream & stream, int & use_rdp5)
     {
         uint16_t rdp_version = stream.in_uint16_le();
         LOG(LOG_DEBUG, "Server RDP version is %d\n", rdp_version);
@@ -3180,7 +3180,7 @@ struct Sec
             uint8_t *next_tag = (cr_stream.p + length) - 4;
             switch (tag) {
             case SEC_TAG_SRV_INFO:
-                this->rdp_sec_process_srv_info(cr_stream, use_rdp5);
+                this->process_srv_info(cr_stream, use_rdp5);
                 break;
             case SEC_TAG_SRV_CRYPT:
                 this->rdp_sec_process_crypt_info(cr_stream);
