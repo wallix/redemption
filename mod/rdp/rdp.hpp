@@ -47,12 +47,12 @@ struct mod_rdp : public client_mod {
     struct rdp_rdp rdp_layer;
     int up_and_running;
     Stream in_stream;
-    Transport *t;
+    Transport *trans;
     struct vector<mcs_channel_item*> front_channel_list;
     bool dev_redirection_enable;
     struct ModContext & context;
     wait_obj & event;
-
+    int use_rdp5;
     int keylayout;
 
     enum {
@@ -62,7 +62,7 @@ struct mod_rdp : public client_mod {
 
     int state;
 
-    mod_rdp(Transport * t, wait_obj & event,
+    mod_rdp(Transport * trans, wait_obj & event,
             int (& keys)[256], int & key_flags, Keymap * &keymap,
             struct ModContext & context, struct Front & front,
             vector<mcs_channel_item*> channel_list,
@@ -70,7 +70,7 @@ struct mod_rdp : public client_mod {
             bool clipboard_enable, bool dev_redirection_enable)
             :
                 client_mod(keys, key_flags, keymap, front),
-                  rdp_layer(this, t,
+                  rdp_layer(this, trans,
                     context.get(STRAUTHID_TARGET_USER),
                     context.get(STRAUTHID_TARGET_PASSWORD),
                     hostname, channel_list,
@@ -81,13 +81,13 @@ struct mod_rdp : public client_mod {
                     keylayout,
                     this->get_client_info().console_session),
                     in_stream(8192),
+                    trans(trans),
                     context(context),
                     event(event),
+                    use_rdp5(0),
                     keylayout(keylayout),
                     state(MOD_RDP_CONNECTING)
         {
-        #warning if some error occurs while connecting we should manage disconnection from t
-        this->t = t;
         // copy channel list from client.
         // It will be changed after negotiation with server
         // to hold only channels actually supported.
@@ -101,7 +101,7 @@ struct mod_rdp : public client_mod {
     }
 
     virtual ~mod_rdp() {
-        delete this->t;
+        delete this->trans;
     }
 
     virtual void scancode(long param1, long param2, long device_flags, long time, int & key_flags, Keymap & keymap, int keys[]){
@@ -214,15 +214,10 @@ struct mod_rdp : public client_mod {
         {
         LOG(LOG_INFO, "keylayout sent to server is %x\n", keylayout);
 
-        const char * password = context.get(STRAUTHID_TARGET_PASSWORD);
-
-        Transport * trans = this->t;
-        vector<mcs_channel_item*> channel_list = this->channel_list;
         int width = this->get_front_width();
         int height = this->get_front_height();
         int rdp_bpp = this->get_front_bpp();
         bool console_session = this->get_client_info().console_session;
-        int & use_rdp5 = this->rdp_layer.use_rdp5;
         char * hostname = this->rdp_layer.hostname;
         int & userid = this->rdp_layer.userid;
 
@@ -238,69 +233,8 @@ struct mod_rdp : public client_mod {
         //    |------------X224 Connection Request PDU----------------> |
         //    | <----------X224 Connection Confirm PDU----------------- |
 
-
-        // 2.2.1.1 Client X.224 Connection Request PDU
-        // ===========================================
-
-        // The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
-        // client to server during the Connection Initiation phase (see section 1.3.1.1).
-
-        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-        // x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
-        // data unit (TPDU), as specified in [X224] section 13.3.
-
-        // routingToken (variable): An optional and variable-length routing token
-        // (used for load balancing) terminated by a carriage-return (CR) and line-feed
-        // (LF) ANSI sequence. For more information about Terminal Server load balancing
-        // and the routing token format, see [MSFT-SDLBTS]. The length of the routing
-        // token and CR+LF sequence is included in the X.224 Connection Request Length
-        // Indicator field. If this field is present, then the cookie field MUST NOT be
-        //  present.
-
-        //cookie (variable): An optional and variable-length ANSI text string terminated
-        // by a carriage-return (CR) and line-feed (LF) ANSI sequence. This text string
-        // MUST be "Cookie: mstshash=IDENTIFIER", where IDENTIFIER is an ANSI string
-        //(an example cookie string is shown in section 4.1.1). The length of the entire
-        // cookie string and CR+LF sequence is included in the X.224 Connection Request
-        // Length Indicator field. This field MUST NOT be present if the routingToken
-        // field is present.
-
-        // rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
-        // structure. The length of this negotiation structure is included in the X.224
-        // Connection Request Length Indicator field.
-
-        Stream out;
-        X224Out crtpdu(X224Packet::CR_TPDU, out);
-        crtpdu.end();
-        crtpdu.send(trans);
-
-        // 2.2.1.2 Server X.224 Connection Confirm PDU
-        // ===========================================
-
-        // The X.224 Connection Confirm PDU is an RDP Connection Sequence PDU sent from
-        // server to client during the Connection Initiation phase (see section
-        // 1.3.1.1). It is sent as a response to the X.224 Connection Request PDU
-        // (section 2.2.1.1).
-
-        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-        // x224Ccf (7 bytes): An X.224 Class 0 Connection Confirm TPDU, as specified in
-        // [X224] section 13.4.
-
-        // rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1)
-        // structure or an optional RDP Negotiation Failure (section 2.2.1.2.2)
-        // structure. The length of the negotiation structure is included in the X.224
-        // Connection Confirm Length Indicator field.
-
-        Stream in;
-        X224In cctpdu(trans, in);
-        if (cctpdu.tpkt.version != 3){
-            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
-        }
-        if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
-            throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
-        }
+        this->x224_connection_request_pdu(trans);
+        this->x224_connection_confirm_pdu(this->trans);
 
         try{
 
@@ -324,10 +258,10 @@ struct mod_rdp : public client_mod {
             //                   GCC conference Create Response
 
             this->rdp_layer.sec_layer.mcs_connect_initial_pdu_with_gcc_conference_create_request(
-                    trans, channel_list, width, height, rdp_bpp, keylayout, console_session, hostname);
+                    this->trans, this->channel_list, width, height, rdp_bpp, keylayout, console_session, hostname);
 
             this->rdp_layer.sec_layer.mcs_connect_response_pdu_with_gcc_conference_create_response(
-                    trans, channel_list, use_rdp5);
+                    this->trans, this->channel_list, this->use_rdp5);
 
 
             // Channel Connection
@@ -371,18 +305,18 @@ struct mod_rdp : public client_mod {
             edrq_stream.out_uint16_be(0x100); /* height */
             edrq_stream.out_uint16_be(0x100); /* interval */
             edrq_tpdu.end();
-            edrq_tpdu.send(trans);
+            edrq_tpdu.send(this->trans);
 
             // -----------------------------------------------
             Stream aurq_stream(8192);
             X224Out aurq_tpdu(X224Packet::DT_TPDU, aurq_stream);
             aurq_stream.out_uint8((MCS_AURQ << 2));
             aurq_tpdu.end();
-            aurq_tpdu.send(trans);
+            aurq_tpdu.send(this->trans);
 
             // -----------------------------------------------
             Stream aucf_stream(8192);
-            X224In aucf_tpdu(trans, aucf_stream);
+            X224In aucf_tpdu(this->trans, aucf_stream);
             int opcode = aucf_stream.in_uint8();
             if ((opcode >> 2) != MCS_AUCF) {
                 throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
@@ -443,10 +377,10 @@ struct mod_rdp : public client_mod {
                 cjrq_stream.out_uint16_be(userid);
                 cjrq_stream.out_uint16_be(channels[index]);
                 cjrq_tpdu.end();
-                cjrq_tpdu.send(trans);
+                cjrq_tpdu.send(this->trans);
                 // -----------------------------------------------
                 Stream cjcf_stream(8192);
-                X224In cjcf_tpdu(trans, cjcf_stream);
+                X224In cjcf_tpdu(this->trans, cjcf_stream);
                 int opcode = cjcf_stream.in_uint8();
                 if ((opcode >> 2) != MCS_CJCF) {
                     throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
@@ -506,18 +440,19 @@ struct mod_rdp : public client_mod {
 
             sdrq_out.end();
             sdrq_tpdu.end();
-            sdrq_tpdu.send(trans);
+            sdrq_tpdu.send(this->trans);
         }
         catch(...){
             Stream stream(11);
             X224Out tpdu(X224Packet::DR_TPDU, stream);
             tpdu.end();
-            tpdu.send(trans);
+            tpdu.send(this->trans);
             throw;
         }
 
         int flags = RDP_LOGON_NORMAL;
 
+        const char * password = context.get(STRAUTHID_TARGET_PASSWORD);
         if (strlen(password) > 0) {
             flags |= RDP_LOGON_AUTO;
         }
@@ -548,19 +483,19 @@ struct mod_rdp : public client_mod {
             McsOut sdrq_out(stream, MCS_SDRQ, this->rdp_layer.userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_LOGON_INFO | SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
 
-            if(!this->rdp_layer.use_rdp5){
+            if(!this->use_rdp5){
                 LOG(LOG_INFO, "send login info (RDP4-style) %s:%s\n",this->rdp_layer.domain, this->rdp_layer.username);
 
                 stream.out_uint32_le(0);
                 stream.out_uint32_le(flags);
                 stream.out_uint16_le(2 * strlen(this->rdp_layer.domain));
                 stream.out_uint16_le(2 * strlen(this->rdp_layer.username));
-                stream.out_uint16_le(2 * strlen(this->rdp_layer.password));
+                stream.out_uint16_le(2 * strlen(password));
                 stream.out_uint16_le(2 * strlen(this->rdp_layer.program));
                 stream.out_uint16_le(2 * strlen(this->rdp_layer.directory));
                 stream.out_unistr(this->rdp_layer.domain);
                 stream.out_unistr(this->rdp_layer.username);
-                stream.out_unistr(this->rdp_layer.password);
+                stream.out_unistr(password);
                 stream.out_unistr(this->rdp_layer.program);
                 stream.out_unistr(this->rdp_layer.directory);
             }
@@ -575,7 +510,7 @@ struct mod_rdp : public client_mod {
                 stream.out_uint16_le(2 * strlen(this->rdp_layer.domain));
                 stream.out_uint16_le(2 * strlen(this->rdp_layer.username));
                 if (flags & RDP_LOGON_AUTO){
-                    stream.out_uint16_le(2 * strlen(this->rdp_layer.password));
+                    stream.out_uint16_le(2 * strlen(password));
                 }
                 if (flags & RDP_LOGON_BLOB && ! (flags & RDP_LOGON_AUTO)){
                     stream.out_uint16_le(0);
@@ -590,7 +525,7 @@ struct mod_rdp : public client_mod {
                 }
                 stream.out_unistr(this->rdp_layer.username);
                 if (flags & RDP_LOGON_AUTO){
-                    stream.out_unistr(this->rdp_layer.password);
+                    stream.out_unistr(password);
                 }
                 else{
                     stream.out_uint16_le(0);
@@ -636,13 +571,13 @@ struct mod_rdp : public client_mod {
                 stream.out_uint32_le(0xfffffffe);
                 stream.out_uint32_le(rdp5_performanceflags);
                 stream.out_uint16_le(0);
-                this->rdp_layer.use_rdp5 = 0;
+                this->use_rdp5 = 0;
             }
 
             sec_out.end();
             sdrq_out.end();
             tpdu.end();
-            tpdu.send(this->rdp_layer.trans);
+            tpdu.send(this->trans);
 
             LOG(LOG_INFO, "send login info ok\n");
         }
@@ -676,8 +611,8 @@ struct mod_rdp : public client_mod {
                             len_src_descriptor = this->in_stream.in_uint16_le();
                             len_combined_caps = this->in_stream.in_uint16_le();
                             this->in_stream.skip_uint8(len_src_descriptor);
-                            this->rdp_layer.process_server_caps(this->in_stream, len_combined_caps);
-                            this->rdp_layer.send_confirm_active(this->in_stream, mod);
+                            this->rdp_layer.process_server_caps(this->in_stream, len_combined_caps, this->use_rdp5);
+                            this->rdp_layer.send_confirm_active(this->in_stream, mod, this->use_rdp5);
                             this->rdp_layer.send_synchronise(this->in_stream);
                             this->rdp_layer.send_control(this->in_stream, RDP_CTL_COOPERATE);
                             this->rdp_layer.send_control(this->in_stream, RDP_CTL_REQUEST_CONTROL);
@@ -686,7 +621,7 @@ struct mod_rdp : public client_mod {
                             type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_CTL_GRANT_CONTROL */
                             this->rdp_layer.send_input(this->in_stream, 0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
                             /* Including RDP 5.0 capabilities */
-                            if (this->rdp_layer.use_rdp5 != 0){
+                            if (this->use_rdp5 != 0){
                                 this->rdp_layer.enum_bmpcache2();
                                 this->rdp_layer.send_fonts(this->in_stream, 3);
                             }
@@ -727,6 +662,74 @@ struct mod_rdp : public client_mod {
         return 0;
     }
 
+    // 2.2.1.1 Client X.224 Connection Request PDU
+    // ===========================================
+
+    // The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
+    // client to server during the Connection Initiation phase (see section 1.3.1.1).
+
+    // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+    // x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
+    // data unit (TPDU), as specified in [X224] section 13.3.
+
+    // routingToken (variable): An optional and variable-length routing token
+    // (used for load balancing) terminated by a carriage-return (CR) and line-feed
+    // (LF) ANSI sequence. For more information about Terminal Server load balancing
+    // and the routing token format, see [MSFT-SDLBTS]. The length of the routing
+    // token and CR+LF sequence is included in the X.224 Connection Request Length
+    // Indicator field. If this field is present, then the cookie field MUST NOT be
+    //  present.
+
+    //cookie (variable): An optional and variable-length ANSI text string terminated
+    // by a carriage-return (CR) and line-feed (LF) ANSI sequence. This text string
+    // MUST be "Cookie: mstshash=IDENTIFIER", where IDENTIFIER is an ANSI string
+    //(an example cookie string is shown in section 4.1.1). The length of the entire
+    // cookie string and CR+LF sequence is included in the X.224 Connection Request
+    // Length Indicator field. This field MUST NOT be present if the routingToken
+    // field is present.
+
+    // rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
+    // structure. The length of this negotiation structure is included in the X.224
+    // Connection Request Length Indicator field.
+
+    void x224_connection_request_pdu(Transport * trans)
+    {
+        Stream out;
+        X224Out crtpdu(X224Packet::CR_TPDU, out);
+        crtpdu.end();
+        crtpdu.send(trans);
+    }
+
+    // 2.2.1.2 Server X.224 Connection Confirm PDU
+    // ===========================================
+
+    // The X.224 Connection Confirm PDU is an RDP Connection Sequence PDU sent from
+    // server to client during the Connection Initiation phase (see section
+    // 1.3.1.1). It is sent as a response to the X.224 Connection Request PDU
+    // (section 2.2.1.1).
+
+    // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+    // x224Ccf (7 bytes): An X.224 Class 0 Connection Confirm TPDU, as specified in
+    // [X224] section 13.4.
+
+    // rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1)
+    // structure or an optional RDP Negotiation Failure (section 2.2.1.2.2)
+    // structure. The length of the negotiation structure is included in the X.224
+    // Connection Confirm Length Indicator field.
+
+    void x224_connection_confirm_pdu(Transport * trans)
+    {
+        Stream in;
+        X224In cctpdu(trans, in);
+        if (cctpdu.tpkt.version != 3){
+            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+        }
+        if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
+            throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
+        }
+    }
 };
 
 #endif
