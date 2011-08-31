@@ -35,7 +35,6 @@ struct rdp_rdp {
     Sec sec_layer;
     rdp_orders orders;
     int share_id;
-    int use_rdp5;
     int bitmap_compression;
     int bitmap_cache;
     int desktop_save;
@@ -82,7 +81,6 @@ struct rdp_rdp {
 
             LOG(LOG_INFO, "Remote RDP Server login:%s host:%s\n", username, hostname);
             this->share_id = 0;
-            this->use_rdp5 = 0;
             this->bitmap_compression = 1;
             this->bitmap_cache = 1;
             this->desktop_save = 0;
@@ -103,7 +101,7 @@ struct rdp_rdp {
         LOG(LOG_INFO, "End of remote rdp connection\n");
     }
 
-        void out_general_caps(Stream & stream)
+        void out_general_caps(Stream & stream, int use_rdp5)
         {
             stream.out_uint16_le(RDP_CAPSET_GENERAL);
             stream.out_uint16_le(RDP_CAPLEN_GENERAL);
@@ -112,7 +110,7 @@ struct rdp_rdp {
             stream.out_uint16_le(0x200); /* Protocol version */
             stream.out_uint16_le(0); /* Pad */
             stream.out_uint16_le(0); /* Compression types */
-            stream.out_uint16_le(this->use_rdp5 ? 0x40d : 0);
+            stream.out_uint16_le(use_rdp5 ? 0x40d : 0);
             stream.out_uint16_le(0); /* Update capability */
             stream.out_uint16_le(0); /* Remote unshare capability */
             stream.out_uint16_le(0); /* Compression level */
@@ -254,7 +252,7 @@ struct rdp_rdp {
         }
 
 
-        void send_confirm_active(Stream & stream, client_mod * mod) throw(Error)
+        void send_confirm_active(Stream & stream, client_mod * mod, int use_rdp5) throw(Error)
         {
             LOG(LOG_INFO, "Sending confirm active to server\n");
 
@@ -318,13 +316,13 @@ struct rdp_rdp {
             stream.out_uint16_le(0xd); /* num_caps */
             stream.out_clear_bytes(2); /* pad */
 
-            this->out_general_caps(stream);
+            this->out_general_caps(stream, use_rdp5);
             this->out_bitmap_caps(stream);
             this->out_order_caps(stream);
 
             #warning two identical calls in a row, this is strange, check documentation
             this->out_bmpcache_caps(stream);
-            if(this->use_rdp5 == 0){
+            if(use_rdp5 == 0){
                 this->out_bmpcache_caps(stream);
             }
             else {
@@ -417,13 +415,14 @@ struct rdp_rdp {
             LOG(LOG_INFO, "process disconnect pdu\n");
         }
 
-        void process_general_caps(Stream & stream)
+        void process_general_caps(Stream & stream, int & use_rdp5)
         {
             stream.skip_uint8(10);
             /* Receiving rdp_5 extra flags supported for RDP 5.0 and later versions*/
             int extraflags = stream.in_uint16_le();
+            #warning strange: causality seems inverted
             if (extraflags == 0){
-                this->use_rdp5 = 0;
+                use_rdp5 = 0;
             }
             LOG(LOG_INFO, "process general caps %d", extraflags);
         }
@@ -513,7 +512,7 @@ struct rdp_rdp {
         }
 
 
-        void process_server_caps(Stream & stream, int len)
+        void process_server_caps(Stream & stream, int len, int use_rdp5)
         {
             int n;
             int ncapsets;
@@ -534,7 +533,7 @@ struct rdp_rdp {
                 next = (stream.p + capset_length) - 4;
                 switch (capset_type) {
                 case RDP_CAPSET_GENERAL:
-                    this->process_general_caps(stream);
+                    this->process_general_caps(stream, use_rdp5);
                     break;
                 case RDP_CAPSET_BITMAP:
                     this->process_bitmap_caps(stream);
