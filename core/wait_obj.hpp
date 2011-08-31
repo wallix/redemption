@@ -60,8 +60,7 @@ class wait_obj
 
     void reset()
     {
-        LOG(LOG_INFO, "reset");
-//        this->set_state = false;
+        this->set_state = false;
     }
 
     bool is_set()

@@ -216,7 +216,305 @@ struct mod_rdp : public client_mod {
 
         const char * password = context.get(STRAUTHID_TARGET_PASSWORD);
 
-        this->rdp_layer.sec_layer.rdp_sec_connect2(t, channel_list, this->get_front_width(), this->get_front_height(), this->get_front_bpp(), keylayout, this->get_client_info().console_session, this->rdp_layer.use_rdp5, this->rdp_layer.hostname, this->rdp_layer.userid);
+        Transport * trans = this->t;
+        vector<mcs_channel_item*> channel_list = this->channel_list;
+        int width = this->get_front_width();
+        int height = this->get_front_height();
+        int rdp_bpp = this->get_front_bpp();
+        bool console_session = this->get_client_info().console_session;
+        int & use_rdp5 = this->rdp_layer.use_rdp5;
+        char * hostname = this->rdp_layer.hostname;
+        int & userid = this->rdp_layer.userid;
+
+        // Connection Initiation
+        // ---------------------
+
+        // The client initiates the connection by sending the server an X.224 Connection
+        //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
+        // PDU (class 0). From this point, all subsequent data sent between client and
+        // server is wrapped in an X.224 Data Protocol Data Unit (PDU).
+
+        // Client                                                     Server
+        //    |------------X224 Connection Request PDU----------------> |
+        //    | <----------X224 Connection Confirm PDU----------------- |
+
+
+        // 2.2.1.1 Client X.224 Connection Request PDU
+        // ===========================================
+
+        // The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
+        // client to server during the Connection Initiation phase (see section 1.3.1.1).
+
+        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+        // x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
+        // data unit (TPDU), as specified in [X224] section 13.3.
+
+        // routingToken (variable): An optional and variable-length routing token
+        // (used for load balancing) terminated by a carriage-return (CR) and line-feed
+        // (LF) ANSI sequence. For more information about Terminal Server load balancing
+        // and the routing token format, see [MSFT-SDLBTS]. The length of the routing
+        // token and CR+LF sequence is included in the X.224 Connection Request Length
+        // Indicator field. If this field is present, then the cookie field MUST NOT be
+        //  present.
+
+        //cookie (variable): An optional and variable-length ANSI text string terminated
+        // by a carriage-return (CR) and line-feed (LF) ANSI sequence. This text string
+        // MUST be "Cookie: mstshash=IDENTIFIER", where IDENTIFIER is an ANSI string
+        //(an example cookie string is shown in section 4.1.1). The length of the entire
+        // cookie string and CR+LF sequence is included in the X.224 Connection Request
+        // Length Indicator field. This field MUST NOT be present if the routingToken
+        // field is present.
+
+        // rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
+        // structure. The length of this negotiation structure is included in the X.224
+        // Connection Request Length Indicator field.
+
+        Stream out;
+        X224Out crtpdu(X224Packet::CR_TPDU, out);
+        crtpdu.end();
+        crtpdu.send(trans);
+
+        // 2.2.1.2 Server X.224 Connection Confirm PDU
+        // ===========================================
+
+        // The X.224 Connection Confirm PDU is an RDP Connection Sequence PDU sent from
+        // server to client during the Connection Initiation phase (see section
+        // 1.3.1.1). It is sent as a response to the X.224 Connection Request PDU
+        // (section 2.2.1.1).
+
+        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+        // x224Ccf (7 bytes): An X.224 Class 0 Connection Confirm TPDU, as specified in
+        // [X224] section 13.4.
+
+        // rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1)
+        // structure or an optional RDP Negotiation Failure (section 2.2.1.2.2)
+        // structure. The length of the negotiation structure is included in the X.224
+        // Connection Confirm Length Indicator field.
+
+        Stream in;
+        X224In cctpdu(trans, in);
+        if (cctpdu.tpkt.version != 3){
+            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+        }
+        if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
+            throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
+        }
+
+        try{
+
+            // Basic Settings Exchange
+            // -----------------------
+
+            // Basic Settings Exchange: Basic settings are exchanged between the client and
+            // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
+            // Connect Initial PDU contains a GCC Conference Create Request, while the
+            // Connect Response PDU contains a GCC Conference Create Response.
+
+            // These two Generic Conference Control (GCC) packets contain concatenated
+            // blocks of settings data (such as core data, security data and network data)
+            // which are read by client and server
+
+
+            // Client                                                     Server
+            //    |--------------MCS Connect Initial PDU with-------------> |
+            //                   GCC Conference Create Request
+            //    | <------------MCS Connect Response PDU with------------- |
+            //                   GCC conference Create Response
+
+            this->rdp_layer.sec_layer.mcs_connect_initial_pdu_with_gcc_conference_create_request(
+                    trans, channel_list, width, height, rdp_bpp, keylayout, console_session, hostname);
+
+            this->rdp_layer.sec_layer.mcs_connect_response_pdu_with_gcc_conference_create_response(
+                    trans, channel_list, use_rdp5);
+
+
+            // Channel Connection
+            // ------------------
+
+            // Channel Connection: The client sends an MCS Erect Domain Request PDU,
+            // followed by an MCS Attach User Request PDU to attach the primary user
+            // identity to the MCS domain.
+
+            // The server responds with an MCS Attach User Response PDU containing the user
+            // channel ID.
+
+            // The client then proceeds to join the :
+            // - user channel,
+            // - the input/output (I/O) channel
+            // - and all of the static virtual channels
+
+            // (the I/O and static virtual channel IDs are obtained from the data embedded
+            //  in the GCC packets) by using multiple MCS Channel Join Request PDUs.
+
+            // The server confirms each channel with an MCS Channel Join Confirm PDU.
+            // (The client only sends a Channel Join Request after it has received the
+            // Channel Join Confirm for the previously sent request.)
+
+            // From this point, all subsequent data sent from the client to the server is
+            // wrapped in an MCS Send Data Request PDU, while data sent from the server to
+            //  the client is wrapped in an MCS Send Data Indication PDU. This is in
+            // addition to the data being wrapped by an X.224 Data PDU.
+
+            // Client                                                     Server
+            //    |-------MCS Erect Domain Request PDU--------------------> |
+            //    |-------MCS Attach User Request PDU---------------------> |
+            //    | <-----MCS Attach User Confirm PDU---------------------- |
+
+            //    |-------MCS Channel Join Request PDU--------------------> |
+            //    | <-----MCS Channel Join Confirm PDU--------------------- |
+
+            Stream edrq_stream(8192);
+            X224Out edrq_tpdu(X224Packet::DT_TPDU, edrq_stream);
+            edrq_stream.out_uint8((MCS_EDRQ << 2));
+            edrq_stream.out_uint16_be(0x100); /* height */
+            edrq_stream.out_uint16_be(0x100); /* interval */
+            edrq_tpdu.end();
+            edrq_tpdu.send(trans);
+
+            // -----------------------------------------------
+            Stream aurq_stream(8192);
+            X224Out aurq_tpdu(X224Packet::DT_TPDU, aurq_stream);
+            aurq_stream.out_uint8((MCS_AURQ << 2));
+            aurq_tpdu.end();
+            aurq_tpdu.send(trans);
+
+            // -----------------------------------------------
+            Stream aucf_stream(8192);
+            X224In aucf_tpdu(trans, aucf_stream);
+            int opcode = aucf_stream.in_uint8();
+            if ((opcode >> 2) != MCS_AUCF) {
+                throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
+            }
+            int res = aucf_stream.in_uint8();
+            if (res != 0) {
+                throw Error(ERR_MCS_RECV_AUCF_RES_NOT_0);
+            }
+            if (opcode & 2) {
+                userid = aucf_stream.in_uint16_be();
+            }
+            aucf_tpdu.end();
+
+            // 2.2.1.8 Client MCS Channel Join Request PDU
+            // -------------------------------------------
+            // The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
+            // from client to server during the Channel Connection phase (see section
+            // 1.3.1.1). It is sent after receiving the MCS Attach User Confirm PDU
+            // (section 2.2.1.7). The client uses the MCS Channel Join Request PDU to
+            // join the user channel obtained from the Attach User Confirm PDU, the
+            // I/O channel and all of the static virtual channels obtained from the
+            // Server Network Data structure (section 2.2.1.4.4).
+
+            // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+            // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+            //                     section 13.7.
+
+            // mcsCJrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an
+            //                    MCS Channel Join Request structure as specified in
+            //                    [T125] sections 10.19 and I.3 (the ASN.1 structure
+            //                    definitions are given in [T125] section 7, parts 6
+            //                    and 10).
+
+            // ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+            // {
+            //     initiator UserId
+            //     channelId ChannelId
+            //               -- may be zero
+            // }
+
+            #warning the array size below is arbitrary, it should be checked to avoid buffer overflow
+            uint16_t channels[100];
+
+            size_t num_channels = this->channel_list.size();
+            channels[0] = userid + 1001;
+            channels[1] = MCS_GLOBAL_CHANNEL;
+            for (size_t index = 2; index < num_channels+2; index++){
+                const mcs_channel_item* channel_item = this->channel_list[index-2];
+                channels[index] = channel_item->chanid;
+            }
+
+            for (size_t index = 0; index < num_channels+2; index++){
+                // -----------------------------------------------
+                Stream cjrq_stream(8192);
+                X224Out cjrq_tpdu(X224Packet::DT_TPDU, cjrq_stream);
+                cjrq_stream.out_uint8((MCS_CJRQ << 2));
+                cjrq_stream.out_uint16_be(userid);
+                cjrq_stream.out_uint16_be(channels[index]);
+                cjrq_tpdu.end();
+                cjrq_tpdu.send(trans);
+                // -----------------------------------------------
+                Stream cjcf_stream(8192);
+                X224In cjcf_tpdu(trans, cjcf_stream);
+                int opcode = cjcf_stream.in_uint8();
+                if ((opcode >> 2) != MCS_CJCF) {
+                    throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
+                }
+                if (0 != cjcf_stream.in_uint8()) {
+                    throw Error(ERR_MCS_RECV_CJCF_EMPTY);
+                }
+                cjcf_stream.skip_uint8(4); /* mcs_userid, req_chanid */
+                if (opcode & 2) {
+                    cjcf_stream.skip_uint8(2); /* join_chanid */
+                }
+                cjcf_tpdu.end();
+            }
+
+            // RDP Security Commencement
+            // -------------------------
+
+            // RDP Security Commencement: If standard RDP security methods are being
+            // employed and encryption is in force (this is determined by examining the data
+            // embedded in the GCC Conference Create Response packet) then the client sends
+            // a Security Exchange PDU containing an encrypted 32-byte random number to the
+            // server. This random number is encrypted with the public key of the server
+            // (the server's public key, as well as a 32-byte server-generated random
+            // number, are both obtained from the data embedded in the GCC Conference Create
+            //  Response packet).
+
+            // The client and server then utilize the two 32-byte random numbers to generate
+            // session keys which are used to encrypt and validate the integrity of
+            // subsequent RDP traffic.
+
+            // From this point, all subsequent RDP traffic can be encrypted and a security
+            // header is included with the data if encryption is in force (the Client Info
+            // and licensing PDUs are an exception in that they always have a security
+            // header). The Security Header follows the X.224 and MCS Headers and indicates
+            // whether the attached data is encrypted.
+
+            // Even if encryption is in force server-to-client traffic may not always be
+            // encrypted, while client-to-server traffic will always be encrypted by
+            // Microsoft RDP implementations (encryption of licensing PDUs is optional,
+            // however).
+
+            // Client                                                     Server
+            //    |------Security Exchange PDU ---------------------------> |
+
+            LOG(LOG_INFO, "Iso Layer : setting encryption\n");
+            /* Send the client random to the server */
+            //      if (this->encryption)
+            Stream sdrq_stream(8192);
+            X224Out sdrq_tpdu(X224Packet::DT_TPDU, sdrq_stream);
+            McsOut sdrq_out(sdrq_stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
+
+            sdrq_stream.out_uint32_le(SEC_CLIENT_RANDOM);
+            sdrq_stream.out_uint32_le(rdp_layer.sec_layer.server_public_key_len + SEC_PADDING_SIZE);
+            LOG(LOG_INFO, "Server public key is %d bytes long", rdp_layer.sec_layer.server_public_key_len);
+            sdrq_stream.out_copy_bytes(rdp_layer.sec_layer.client_crypt_random, rdp_layer.sec_layer.server_public_key_len);
+            sdrq_stream.out_clear_bytes(SEC_PADDING_SIZE);
+
+            sdrq_out.end();
+            sdrq_tpdu.end();
+            sdrq_tpdu.send(trans);
+        }
+        catch(...){
+            Stream stream(11);
+            X224Out tpdu(X224Packet::DR_TPDU, stream);
+            tpdu.end();
+            tpdu.send(trans);
+            throw;
+        }
 
         int flags = RDP_LOGON_NORMAL;
 
