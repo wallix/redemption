@@ -50,8 +50,10 @@ struct mod_rdp : public client_mod {
     Transport *t;
     struct vector<mcs_channel_item*> front_channel_list;
     bool dev_redirection_enable;
-
+    struct ModContext & context;
     wait_obj & event;
+
+    int keylayout;
 
     enum {
         MOD_RDP_CONNECTING,
@@ -66,21 +68,24 @@ struct mod_rdp : public client_mod {
             vector<mcs_channel_item*> channel_list,
             const char * hostname, int keylayout,
             bool clipboard_enable, bool dev_redirection_enable)
-            : client_mod(keys, key_flags, keymap, front),
-              rdp_layer(this, t,
-                context.get(STRAUTHID_TARGET_USER),
-                context.get(STRAUTHID_TARGET_PASSWORD),
-                hostname, channel_list,
-                this->get_client_info().rdp5_performanceflags,
-                this->get_front_width(),
-                this->get_front_height(),
-                this->get_front_bpp(),
-                keylayout,
-                this->get_client_info().console_session),
-                in_stream(8192),
-                event(event),
-                state(MOD_RDP_CONNECTING)
-    {
+            : 
+                client_mod(keys, key_flags, keymap, front),
+                  rdp_layer(this, t,
+                    context.get(STRAUTHID_TARGET_USER),
+                    context.get(STRAUTHID_TARGET_PASSWORD),
+                    hostname, channel_list,
+                    this->get_client_info().rdp5_performanceflags,
+                    this->get_front_width(),
+                    this->get_front_height(),
+                    this->get_front_bpp(),
+                    keylayout,
+                    this->get_client_info().console_session),
+                    in_stream(8192),
+                    context(context),
+                    event(event),
+                    keylayout(keylayout),
+                    state(MOD_RDP_CONNECTING)
+        {
         #warning if some error occurs while connecting we should manage disconnection from t
         this->t = t;
         // copy channel list from client.
@@ -92,12 +97,124 @@ struct mod_rdp : public client_mod {
         to client communication. This is allowed by default */
         this->clipboard_enable = clipboard_enable;
         this->dev_redirection_enable = dev_redirection_enable;
+        this->mod_signal();
+    }
 
+    virtual ~mod_rdp() {
+        delete this->t;
+    }
+
+    virtual void scancode(long param1, long param2, long device_flags, long time, int & key_flags, Keymap & keymap, int keys[]){
+        long p1 = param1 % 128;
+        int msg = WM_KEYUP;
+        keys[p1] = 1 | device_flags;
+        if ((device_flags & KBD_FLAG_UP) == 0) { /* 0x8000 */
+            /* key down */
+            msg = WM_KEYDOWN;
+            switch (p1) {
+            case 58:
+                key_flags ^= 4;
+                break; /* caps lock */
+            case 69:
+                key_flags ^= 2;
+                break; /* num lock */
+            case 70:
+                key_flags ^= 1;
+                break; /* scroll lock */
+            default:
+                ;
+            }
+        }
+        if (this->up_and_running) {
+//            LOG(LOG_INFO, "Direct parameter transmission \n");
+            Stream stream = Stream(8192 * 2);
+//            LOG(LOG_INFO, "resend input: time=%lu device_flags=%lu param1=%lu param2=%lu\n", time, device_flags, param1, param2);
+            this->rdp_layer.send_input(stream, time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
+        }
+        if (msg == WM_KEYUP){
+            keys[param1] = 0;
+        }
+    }
+
+    #warning most of code below should move to rdp_rdp
+    virtual int mod_event(int msg, long param1, long param2, long param3, long param4)
+    {
+        try{
+            if (!this->up_and_running) {
+                LOG(LOG_INFO, "Not up and running\n");
+                return 0;
+            }
+            Stream stream = Stream(8192 * 2);
+            switch (msg) {
+            case WM_KEYDOWN:
+            case WM_KEYUP:
+                #warning bypassed by call to scancode, need some code cleanup here, we would probably be better of with less key decoding.
+                assert(false);
+                // this->rdp_layer.send_input(&stream, 0, RDP_INPUT_SCANCODE, param4, param3, 0);
+                break;
+            #warning find out what is this message and define symbolic constant
+            case 17:
+                this->rdp_layer.send_input(stream, 0, RDP_INPUT_SYNCHRONIZE, param4, param3, 0);
+                break;
+            case WM_MOUSEMOVE:
+                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_MOVE, param1, param2);
+                break;
+            case WM_LBUTTONUP:
+                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON1, param1, param2);
+                break;
+            case WM_LBUTTONDOWN:
+                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, param1, param2);
+                break;
+            case WM_RBUTTONUP:
+                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON2, param1, param2);
+                break;
+            case WM_RBUTTONDOWN:
+                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON2 | MOUSE_FLAG_DOWN, param1, param2);
+                break;
+            case WM_BUTTON3UP:
+                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON3, param1, param2);
+                break;
+            case WM_BUTTON3DOWN:
+                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON3 | MOUSE_FLAG_DOWN, param1, param2);
+                break;
+            case WM_BUTTON4UP:
+                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4, param1, param2);
+                break;
+            case WM_BUTTON4DOWN:
+                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4 | MOUSE_FLAG_DOWN, param1, param2);
+                break;
+            case WM_BUTTON5UP:
+                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5, param1, param2);
+                break;
+            case WM_BUTTON5DOWN:
+                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5 | MOUSE_FLAG_DOWN, param1, param2);
+                break;
+            case WM_INVALIDATE:
+                this->rdp_layer.send_invalidate(stream, (param1 >> 16) & 0xffff, param1 & 0xffff,(param2 >> 16) & 0xffff, param2 & 0xffff);
+                break;
+            case WM_CHANNELDATA:
+//                LOG(LOG_INFO, "rdp::mod_event::WM_CHANNEL_DATA");
+                this->rdp_layer.send_redirect_pdu(param1, param2, param3, param4, this->front_channel_list);
+                break;
+            default:
+                break;
+            }
+        }
+        catch(Error){
+            return 0;
+        }
+        return 0;
+    }
+
+    #warning most of code below should move to rdp_rdp
+    virtual int mod_signal(void)
+    {
+        switch (this->state){
+        case MOD_RDP_CONNECTING:
+        {
         LOG(LOG_INFO, "keylayout sent to server is %x\n", keylayout);
 
         const char * password = context.get(STRAUTHID_TARGET_PASSWORD);
-
-        {
 
         this->rdp_layer.sec_layer.rdp_sec_connect2(t, channel_list, this->get_front_width(), this->get_front_height(), this->get_front_bpp(), keylayout, this->get_client_info().console_session, this->rdp_layer.use_rdp5, this->rdp_layer.hostname);
 
@@ -233,186 +350,83 @@ struct mod_rdp : public client_mod {
 
             LOG(LOG_INFO, "send login info ok\n");
         }
-    }
+        this->state = MOD_RDP_CONNECTED;
+        break;
 
-    virtual ~mod_rdp() {
-        delete this->t;
-    }
+        case MOD_RDP_CONNECTED:
+        {
+            int type;
+            int cont;
 
-    virtual void scancode(long param1, long param2, long device_flags, long time, int & key_flags, Keymap & keymap, int keys[]){
-        long p1 = param1 % 128;
-        int msg = WM_KEYUP;
-        keys[p1] = 1 | device_flags;
-        if ((device_flags & KBD_FLAG_UP) == 0) { /* 0x8000 */
-            /* key down */
-            msg = WM_KEYDOWN;
-            switch (p1) {
-            case 58:
-                key_flags ^= 4;
-                break; /* caps lock */
-            case 69:
-                key_flags ^= 2;
-                break; /* num lock */
-            case 70:
-                key_flags ^= 1;
-                break; /* scroll lock */
-            default:
-                ;
-            }
-        }
-        if (this->up_and_running) {
-//            LOG(LOG_INFO, "Direct parameter transmission \n");
-            Stream stream = Stream(8192 * 2);
-//            LOG(LOG_INFO, "resend input: time=%lu device_flags=%lu param1=%lu param2=%lu\n", time, device_flags, param1, param2);
-            this->rdp_layer.send_input(stream, time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
-        }
-        if (msg == WM_KEYUP){
-            keys[param1] = 0;
-        }
-    }
+            this->in_stream.init(8192 * 2);
+            try{
+                cont = 1;
+                while (cont) {
+                    type = this->rdp_layer.recv(this->in_stream, this);
+                    switch (type) {
+                    case PDUTYPE_DATAPDU:
+                        this->rdp_layer.process_data_pdu(this->in_stream, this);
+                        break;
+                    case PDUTYPE_DEMANDACTIVEPDU:
+                        {
+                            client_mod * mod = this;
+                            LOG(LOG_INFO, "process demand active\n");
 
-    #warning most of code below should move to rdp_rdp
-    virtual int mod_event(int msg, long param1, long param2, long param3, long param4)
-    {
-        try{
-            if (!this->up_and_running) {
-                return 0;
-            }
-            Stream stream = Stream(8192 * 2);
-            switch (msg) {
-            case WM_KEYDOWN:
-            case WM_KEYUP:
-                #warning bypassed by call to scancode, need some code cleanup here, we would probably be better of with less key decoding.
-                assert(false);
-                // this->rdp_layer.send_input(&stream, 0, RDP_INPUT_SCANCODE, param4, param3, 0);
-                break;
-            #warning find out what is this message and define symbolic constant
-            case 17:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_SYNCHRONIZE, param4, param3, 0);
-                break;
-            case WM_MOUSEMOVE:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_MOVE, param1, param2);
-                break;
-            case WM_LBUTTONUP:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON1, param1, param2);
-                break;
-            case WM_LBUTTONDOWN:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, param1, param2);
-                break;
-            case WM_RBUTTONUP:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON2, param1, param2);
-                break;
-            case WM_RBUTTONDOWN:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON2 | MOUSE_FLAG_DOWN, param1, param2);
-                break;
-            case WM_BUTTON3UP:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON3, param1, param2);
-                break;
-            case WM_BUTTON3DOWN:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON3 | MOUSE_FLAG_DOWN, param1, param2);
-                break;
-            case WM_BUTTON4UP:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4, param1, param2);
-                break;
-            case WM_BUTTON4DOWN:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4 | MOUSE_FLAG_DOWN, param1, param2);
-                break;
-            case WM_BUTTON5UP:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5, param1, param2);
-                break;
-            case WM_BUTTON5DOWN:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5 | MOUSE_FLAG_DOWN, param1, param2);
-                break;
-            case WM_INVALIDATE:
-                this->rdp_layer.send_invalidate(stream, (param1 >> 16) & 0xffff, param1 & 0xffff,(param2 >> 16) & 0xffff, param2 & 0xffff);
-                break;
-            case WM_CHANNELDATA:
-//                LOG(LOG_INFO, "rdp::mod_event::WM_CHANNEL_DATA");
-                this->rdp_layer.send_redirect_pdu(param1, param2, param3, param4, this->front_channel_list);
-                break;
-            default:
-                break;
-            }
-        }
-        catch(Error){
-            return 0;
-        }
-        return 0;
-    }
+                            int type;
+                            int len_src_descriptor;
+                            int len_combined_caps;
 
-    #warning most of code below should move to rdp_rdp
-    virtual int mod_signal(void)
-    {
-        int type;
-        int cont;
-
-        this->in_stream.init(8192 * 2);
-        try{
-            cont = 1;
-            while (cont) {
-                type = this->rdp_layer.recv(this->in_stream, this);
-                switch (type) {
-                case PDUTYPE_DATAPDU:
-                    this->rdp_layer.process_data_pdu(this->in_stream, this);
-                    break;
-                case PDUTYPE_DEMANDACTIVEPDU:
-                    {
-                        client_mod * mod = this;
-                        LOG(LOG_INFO, "process demand active\n");
-
-                        int type;
-                        int len_src_descriptor;
-                        int len_combined_caps;
-
-                        this->rdp_layer.share_id = this->in_stream.in_uint32_le();
-                        len_src_descriptor = this->in_stream.in_uint16_le();
-                        len_combined_caps = this->in_stream.in_uint16_le();
-                        this->in_stream.skip_uint8(len_src_descriptor);
-                        this->rdp_layer.process_server_caps(this->in_stream, len_combined_caps);
-                        this->rdp_layer.send_confirm_active(this->in_stream, mod);
-                        this->rdp_layer.send_synchronise(this->in_stream);
-                        this->rdp_layer.send_control(this->in_stream, RDP_CTL_COOPERATE);
-                        this->rdp_layer.send_control(this->in_stream, RDP_CTL_REQUEST_CONTROL);
-                        type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_PDU_SYNCHRONIZE */
-                        type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_CTL_COOPERATE */
-                        type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_CTL_GRANT_CONTROL */
-                        this->rdp_layer.send_input(this->in_stream, 0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
-                        /* Including RDP 5.0 capabilities */
-                        if (this->rdp_layer.use_rdp5 != 0){
-                            this->rdp_layer.enum_bmpcache2();
-                            this->rdp_layer.send_fonts(this->in_stream, 3);
+                            this->rdp_layer.share_id = this->in_stream.in_uint32_le();
+                            len_src_descriptor = this->in_stream.in_uint16_le();
+                            len_combined_caps = this->in_stream.in_uint16_le();
+                            this->in_stream.skip_uint8(len_src_descriptor);
+                            this->rdp_layer.process_server_caps(this->in_stream, len_combined_caps);
+                            this->rdp_layer.send_confirm_active(this->in_stream, mod);
+                            this->rdp_layer.send_synchronise(this->in_stream);
+                            this->rdp_layer.send_control(this->in_stream, RDP_CTL_COOPERATE);
+                            this->rdp_layer.send_control(this->in_stream, RDP_CTL_REQUEST_CONTROL);
+                            type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_PDU_SYNCHRONIZE */
+                            type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_CTL_COOPERATE */
+                            type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_CTL_GRANT_CONTROL */
+                            this->rdp_layer.send_input(this->in_stream, 0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
+                            /* Including RDP 5.0 capabilities */
+                            if (this->rdp_layer.use_rdp5 != 0){
+                                this->rdp_layer.enum_bmpcache2();
+                                this->rdp_layer.send_fonts(this->in_stream, 3);
+                            }
+                            else{
+                                this->rdp_layer.send_fonts(this->in_stream, 1);
+                                this->rdp_layer.send_fonts(this->in_stream, 2);
+                            }
+                            type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_PDU_UNKNOWN 0x28 (Fonts?) */
+                            this->rdp_layer.orders.rdp_orders_reset_state();
+                            LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->rdp_layer.bpp);
                         }
-                        else{
-                            this->rdp_layer.send_fonts(this->in_stream, 1);
-                            this->rdp_layer.send_fonts(this->in_stream, 2);
-                        }
-                        type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_PDU_UNKNOWN 0x28 (Fonts?) */
-                        this->rdp_layer.orders.rdp_orders_reset_state();
-                        LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->rdp_layer.bpp);
+                        this->mod_bpp = this->rdp_layer.bpp;
+                        this->up_and_running = 1;
+                        break;
+                    case PDUTYPE_DEACTIVATEALLPDU:
+                        this->up_and_running = 0;
+                        break;
+                    #warning this PDUTYPE is undocumented and seems to mean the same as type 10
+                    case RDP_PDU_REDIRECT:
+                        break;
+                    case 0:
+                        break;
+                    default:
+                        break;
                     }
-                    this->mod_bpp = this->rdp_layer.bpp;
-                    this->up_and_running = 1;
-                    break;
-                case PDUTYPE_DEACTIVATEALLPDU:
-                    this->up_and_running = 0;
-                    break;
-                #warning this PDUTYPE is undocumented and seems to mean the same as type 10
-                case RDP_PDU_REDIRECT:
-                    break;
-                case 0:
-                    break;
-                default:
-                    break;
+                    cont = this->in_stream.next_packet < this->in_stream.end;
                 }
-                cont = this->in_stream.next_packet < this->in_stream.end;
+            }
+            catch(Error e){
+                return (e.id == ERR_SOCKET_CLOSED)?2:1;
+            }
+            catch(...){
+                #warning this exception happen, check why (it shouldnt, some error not of Error type is generated)
+                return 1;
             }
         }
-        catch(Error e){
-            return (e.id == ERR_SOCKET_CLOSED)?2:1;
-        }
-        catch(...){
-            #warning this exception happen, check why (it shouldnt, some error not of Error type is generated)
-            return 1;
         }
         return 0;
     }

@@ -60,14 +60,8 @@ class wait_obj
 
     void reset()
     {
-        set_state = false;
-        if (this->obj > 0){
-            char buf[64];
-            while (this->can_recv()) {
-                #warning if I actually read data ? May I not lose data doint that ?
-                recvfrom(this->obj, &buf, 64, 0, 0, 0);
-            }
-        }
+        LOG(LOG_INFO, "reset");
+//        this->set_state = false;
     }
 
     bool is_set()
@@ -75,42 +69,21 @@ class wait_obj
         if (this->obj > 0){
             return this->can_recv();
         }
-        else {
-            URT now;
-            return (set_state) && ( now > this->trigger_time);
+        else{
+            if (this->set_state){
+                URT now;
+                if(now > this->trigger_time){
+                    return true;
+                }
+            }
         }
-    }
-
-    void set()
-    {
-        set_state = true;
-        if (this->obj) {
-            socklen_t sa_size;
-            int s;
-            struct sockaddr_un sa;
-
-            if (this->can_recv()) {
-                /* already signalled */
-                throw Error(ERR_SOCKET_ERROR);
-            }
-            sa_size = sizeof(sa);
-            if (getsockname(this->obj, (struct sockaddr*)&sa, &sa_size) < 0) {
-                return;
-            }
-            s = socket(PF_UNIX, SOCK_DGRAM, 0);
-            if (s < 0) {
-                throw Error(ERR_SOCKET_ERROR);
-            }
-            sendto(s, "sig", 4, 0, (struct sockaddr*)&sa, sa_size);
-            close(s);
-            return;
-        }
+        return false;
     }
 
     // Idle time in millisecond
-    void set(uint64_t idle_usec)
+    void set(uint64_t idle_usec = 0)
     {
-        set_state = true;
+        this->set_state = true;
         URT idle_time(idle_usec);
         URT now;
         this->trigger_time = now + idle_time;

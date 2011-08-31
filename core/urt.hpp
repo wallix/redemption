@@ -58,7 +58,7 @@ struct URT
     }
 
     bool operator>(const URT & other) const {
-        return (this->tv.tv_sec >  other.tv.tv_sec) ||
+        return (this->tv.tv_sec > other.tv.tv_sec) ||
               ((this->tv.tv_sec == other.tv.tv_sec) && (this->tv.tv_usec > other.tv.tv_usec));
     }
     bool operator<=(const URT & other) const {
