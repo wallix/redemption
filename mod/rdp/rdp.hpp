@@ -57,6 +57,7 @@ struct mod_rdp : public client_mod {
 
     enum {
         MOD_RDP_CONNECTING,
+        MOD_RDP_CONNECTION_INITIATION,
         MOD_RDP_CONNECTED,
     };
 
@@ -209,10 +210,7 @@ struct mod_rdp : public client_mod {
     #warning most of code below should move to rdp_rdp
     virtual int mod_signal(void)
     {
-        switch (this->state){
-        case MOD_RDP_CONNECTING:
-        {
-        LOG(LOG_INFO, "keylayout sent to server is %x\n", keylayout);
+        try{
 
         int width = this->get_front_width();
         int height = this->get_front_height();
@@ -221,22 +219,28 @@ struct mod_rdp : public client_mod {
         char * hostname = this->rdp_layer.hostname;
         int & userid = this->rdp_layer.userid;
 
-        // Connection Initiation
-        // ---------------------
+        switch (this->state){
+        case MOD_RDP_CONNECTING:
+            // Connection Initiation
+            // ---------------------
 
-        // The client initiates the connection by sending the server an X.224 Connection
-        //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
-        // PDU (class 0). From this point, all subsequent data sent between client and
-        // server is wrapped in an X.224 Data Protocol Data Unit (PDU).
+            // The client initiates the connection by sending the server an X.224 Connection
+            //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
+            // PDU (class 0). From this point, all subsequent data sent between client and
+            // server is wrapped in an X.224 Data Protocol Data Unit (PDU).
 
-        // Client                                                     Server
-        //    |------------X224 Connection Request PDU----------------> |
-        //    | <----------X224 Connection Confirm PDU----------------- |
+            // Client                                                     Server
+            //    |------------X224 Connection Request PDU----------------> |
+            //    | <----------X224 Connection Confirm PDU----------------- |
 
-        this->x224_connection_request_pdu(trans);
-        this->x224_connection_confirm_pdu(this->trans);
+            this->x224_connection_request_pdu(trans);
+            this->state = MOD_RDP_CONNECTION_INITIATION;
+        break;
 
-        try{
+        case MOD_RDP_CONNECTION_INITIATION:
+        {
+
+            this->x224_connection_confirm_pdu(this->trans);
 
             // Basic Settings Exchange
             // -----------------------
@@ -263,6 +267,7 @@ struct mod_rdp : public client_mod {
             this->rdp_layer.sec_layer.mcs_connect_response_pdu_with_gcc_conference_create_response(
                     this->trans, this->channel_list, this->use_rdp5);
 
+            LOG(LOG_INFO, "keylayout sent to server is %x\n", keylayout);
 
             // Channel Connection
             // ------------------
@@ -441,14 +446,7 @@ struct mod_rdp : public client_mod {
             sdrq_out.end();
             sdrq_tpdu.end();
             sdrq_tpdu.send(this->trans);
-        }
-        catch(...){
-            Stream stream(11);
-            X224Out tpdu(X224Packet::DR_TPDU, stream);
-            tpdu.end();
-            tpdu.send(this->trans);
-            throw;
-        }
+
 
         int flags = RDP_LOGON_NORMAL;
 
@@ -480,7 +478,7 @@ struct mod_rdp : public client_mod {
 
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsOut sdrq_out(stream, MCS_SDRQ, this->rdp_layer.userid, MCS_GLOBAL_CHANNEL);
+            McsOut sdrq_out2(stream, MCS_SDRQ, this->rdp_layer.userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_LOGON_INFO | SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
 
             if(!this->use_rdp5){
@@ -575,7 +573,7 @@ struct mod_rdp : public client_mod {
             }
 
             sec_out.end();
-            sdrq_out.end();
+            sdrq_out2.end();
             tpdu.end();
             tpdu.send(this->trans);
 
@@ -658,6 +656,14 @@ struct mod_rdp : public client_mod {
                 return 1;
             }
         }
+        }
+        }
+        catch(...){
+            Stream stream(11);
+            X224Out tpdu(X224Packet::DR_TPDU, stream);
+            tpdu.end();
+            tpdu.send(this->trans);
+            throw;
         }
         return 0;
     }
