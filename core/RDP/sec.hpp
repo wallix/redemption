@@ -2357,6 +2357,26 @@ struct Sec
 // Connection Finalization phases as described in section 1.3.1.1) but excluding
 // the Persistent Key List PDU.
 
+    void security_exchange_PDU(Transport * trans, int userid)
+    {
+            LOG(LOG_INFO, "Iso Layer : setting encryption\n");
+            /* Send the client random to the server */
+            //      if (this->encryption)
+            Stream sdrq_stream(8192);
+            X224Out sdrq_tpdu(X224Packet::DT_TPDU, sdrq_stream);
+            McsOut sdrq_out(sdrq_stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
+
+            sdrq_stream.out_uint32_le(SEC_CLIENT_RANDOM);
+            sdrq_stream.out_uint32_le(this->server_public_key_len + SEC_PADDING_SIZE);
+            LOG(LOG_INFO, "Server public key is %d bytes long", this->server_public_key_len);
+            sdrq_stream.out_copy_bytes(this->client_crypt_random, this->server_public_key_len);
+            sdrq_stream.out_clear_bytes(SEC_PADDING_SIZE);
+
+            sdrq_out.end();
+            sdrq_tpdu.end();
+            sdrq_tpdu.send(trans);
+    }
+
 };
 
 

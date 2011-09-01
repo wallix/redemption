@@ -348,154 +348,28 @@ struct mod_rdp : public client_mod {
             // Client                                                     Server
             //    |------Security Exchange PDU ---------------------------> |
 
-            LOG(LOG_INFO, "Iso Layer : setting encryption\n");
-            /* Send the client random to the server */
-            //      if (this->encryption)
-            Stream sdrq_stream(8192);
-            X224Out sdrq_tpdu(X224Packet::DT_TPDU, sdrq_stream);
-            McsOut sdrq_out(sdrq_stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
+            this->rdp_layer.sec_layer.security_exchange_PDU(trans, this->rdp_layer.userid);
 
-            sdrq_stream.out_uint32_le(SEC_CLIENT_RANDOM);
-            sdrq_stream.out_uint32_le(rdp_layer.sec_layer.server_public_key_len + SEC_PADDING_SIZE);
-            LOG(LOG_INFO, "Server public key is %d bytes long", rdp_layer.sec_layer.server_public_key_len);
-            sdrq_stream.out_copy_bytes(rdp_layer.sec_layer.client_crypt_random, rdp_layer.sec_layer.server_public_key_len);
-            sdrq_stream.out_clear_bytes(SEC_PADDING_SIZE);
+            // Secure Settings Exchange
+            // ------------------------
 
-            sdrq_out.end();
-            sdrq_tpdu.end();
-            sdrq_tpdu.send(this->trans);
+            // Secure Settings Exchange: Secure client data (such as the username,
+            // password and auto-reconnect cookie) is sent to the server using the Client
+            // Info PDU.
 
-
-        int flags = RDP_LOGON_NORMAL;
-
-        const char * password = context.get(STRAUTHID_TARGET_PASSWORD);
-        if (strlen(password) > 0) {
-            flags |= RDP_LOGON_AUTO;
-        }
-
-// Secure Settings Exchange
-// ------------------------
-
-// Secure Settings Exchange: Secure client data (such as the username,
-// password and auto-reconnect cookie) is sent to the server using the Client
-// Info PDU.
-
-// Client                                                     Server
-//    |------ Client Info PDU      ---------------------------> |
+            // Client                                                     Server
+            //    |------ Client Info PDU      ---------------------------> |
 
             int rdp5_performanceflags = this->get_client_info().rdp5_performanceflags;
-
-//            LOG(LOG_INFO, "send login info to server\n");
-            time_t t = time(NULL);
-            time_t tzone;
-
             rdp5_performanceflags = RDP5_NO_WALLPAPER;
 
-            // The WAB does not send it's IP to server. Is it what we want ?
-            const char * ip_source = "\0\0\0\0";
+            this->rdp_layer.client_info_pdu(
+                                this->trans,
+                                this->rdp_layer.userid,
+                                context.get(STRAUTHID_TARGET_PASSWORD),
+                                rdp5_performanceflags,
+                                this->use_rdp5);
 
-            Stream stream(8192);
-            X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsOut sdrq_out2(stream, MCS_SDRQ, this->rdp_layer.userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, 2, SEC_LOGON_INFO | SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
-
-            if(!this->use_rdp5){
-                LOG(LOG_INFO, "send login info (RDP4-style) %s:%s\n",this->rdp_layer.domain, this->rdp_layer.username);
-
-                stream.out_uint32_le(0);
-                stream.out_uint32_le(flags);
-                stream.out_uint16_le(2 * strlen(this->rdp_layer.domain));
-                stream.out_uint16_le(2 * strlen(this->rdp_layer.username));
-                stream.out_uint16_le(2 * strlen(password));
-                stream.out_uint16_le(2 * strlen(this->rdp_layer.program));
-                stream.out_uint16_le(2 * strlen(this->rdp_layer.directory));
-                stream.out_unistr(this->rdp_layer.domain);
-                stream.out_unistr(this->rdp_layer.username);
-                stream.out_unistr(password);
-                stream.out_unistr(this->rdp_layer.program);
-                stream.out_unistr(this->rdp_layer.directory);
-            }
-            else {
-                LOG(LOG_INFO, "send login info (RDP5-style) %x %s:%s\n",flags,
-                    this->rdp_layer.domain,
-                    this->rdp_layer.username);
-
-                flags |= RDP_LOGON_BLOB;
-                stream.out_uint32_le(0);
-                stream.out_uint32_le(flags);
-                stream.out_uint16_le(2 * strlen(this->rdp_layer.domain));
-                stream.out_uint16_le(2 * strlen(this->rdp_layer.username));
-                if (flags & RDP_LOGON_AUTO){
-                    stream.out_uint16_le(2 * strlen(password));
-                }
-                if (flags & RDP_LOGON_BLOB && ! (flags & RDP_LOGON_AUTO)){
-                    stream.out_uint16_le(0);
-                }
-                stream.out_uint16_le(2 * strlen(this->rdp_layer.program));
-                stream.out_uint16_le(2 * strlen(this->rdp_layer.directory));
-                if ( 0 < (2 * strlen(this->rdp_layer.domain))){
-                    stream.out_unistr(this->rdp_layer.domain);
-                }
-                else {
-                    stream.out_uint16_le(0);
-                }
-                stream.out_unistr(this->rdp_layer.username);
-                if (flags & RDP_LOGON_AUTO){
-                    stream.out_unistr(password);
-                }
-                else{
-                    stream.out_uint16_le(0);
-                }
-                if (0 < 2 * strlen(this->rdp_layer.program)){
-                    stream.out_unistr(this->rdp_layer.program);
-                }
-                else {
-                    stream.out_uint16_le(0);
-                }
-                if (2 * strlen(this->rdp_layer.directory) < 0){
-                    stream.out_unistr(this->rdp_layer.directory);
-                }
-                else{
-                    stream.out_uint16_le(0);
-                }
-                stream.out_uint16_le(2);
-                stream.out_uint16_le(2 * strlen(ip_source) + 2);
-                stream.out_unistr(ip_source);
-                stream.out_uint16_le(2 * strlen("C:\\WINNT\\System32\\mstscax.dll") + 2);
-                stream.out_unistr("C:\\WINNT\\System32\\mstscax.dll");
-
-                tzone = (mktime(gmtime(&t)) - mktime(localtime(&t))) / 60;
-                stream.out_uint32_le(tzone);
-
-                stream.out_unistr("GTB, normaltid");
-                stream.out_clear_bytes(62 - 2 * strlen("GTB, normaltid"));
-
-                stream.out_uint32_le(0x0a0000);
-                stream.out_uint32_le(0x050000);
-                stream.out_uint32_le(3);
-                stream.out_uint32_le(0);
-                stream.out_uint32_le(0);
-
-                stream.out_unistr("GTB, sommartid");
-                stream.out_clear_bytes(62 - 2 * strlen("GTB, sommartid"));
-
-                stream.out_uint32_le(0x30000);
-                stream.out_uint32_le(0x050000);
-                stream.out_uint32_le(2);
-                stream.out_uint32_le(0);
-                stream.out_uint32_le(0xffffffc4);
-                stream.out_uint32_le(0xfffffffe);
-                stream.out_uint32_le(rdp5_performanceflags);
-                stream.out_uint16_le(0);
-                this->use_rdp5 = 0;
-            }
-
-            sec_out.end();
-            sdrq_out2.end();
-            tpdu.end();
-            tpdu.send(this->trans);
-
-            LOG(LOG_INFO, "send login info ok\n");
         }
         this->state = MOD_RDP_CONNECTED;
         break;
@@ -1297,7 +1171,7 @@ struct mod_rdp : public client_mod {
         cjcf_tpdu.end();
     }
 
-    void mcs_channel_join_request_and_confirm_pdu(Transport * trans, 
+    void mcs_channel_join_request_and_confirm_pdu(Transport * trans,
                         int userid, vector<mcs_channel_item*> & channel_list)
     {
         #warning the array size below is arbitrary, it should be checked to avoid buffer overflow
