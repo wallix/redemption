@@ -61,6 +61,7 @@ struct mod_rdp : public client_mod {
         MOD_RDP_BASIC_SETTINGS_EXCHANGE,
         MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER,
         MOD_RDP_GET_LICENSE,
+        MOD_RDP_WAITING_DEMAND_ACTIVE_PDU,
         MOD_RDP_CONNECTED,
     };
 
@@ -396,9 +397,11 @@ struct mod_rdp : public client_mod {
             //    | <------ Licence Error PDU Valid Client ---------------- |
 
             if (this->rdp_layer.sec_layer.rdp_lic_process(this->trans, this->rdp_layer.hostname, this->rdp_layer.username, this->rdp_layer.userid)){
-                this->state = MOD_RDP_CONNECTED;
+                this->state = MOD_RDP_WAITING_DEMAND_ACTIVE_PDU;
             }
         break;
+
+        case MOD_RDP_WAITING_DEMAND_ACTIVE_PDU:
 
             // Capabilities Exchange
             // ---------------------
@@ -410,6 +413,75 @@ struct mod_rdp : public client_mod {
             // Client                                                     Server
             //    | <------- Demand Active PDU ---------------------------- |
             //    |--------- Confirm Active PDU --------------------------> |
+
+            {
+                int type;
+                int cont;
+
+                this->in_stream.init(8192 * 2);
+                cont = 1;
+                while (cont) {
+                    type = this->rdp_layer.recv(this->in_stream, this);
+                    switch (type) {
+                    case PDUTYPE_DATAPDU:
+                        this->rdp_layer.process_data_pdu(this->in_stream, this);
+                        break;
+                    case PDUTYPE_DEMANDACTIVEPDU:
+                        {
+                            client_mod * mod = this;
+                            LOG(LOG_INFO, "process demand active\n");
+
+                            int type;
+                            int len_src_descriptor;
+                            int len_combined_caps;
+
+                            this->rdp_layer.share_id = this->in_stream.in_uint32_le();
+                            len_src_descriptor = this->in_stream.in_uint16_le();
+                            len_combined_caps = this->in_stream.in_uint16_le();
+                            this->in_stream.skip_uint8(len_src_descriptor);
+                            this->rdp_layer.process_server_caps(this->in_stream, len_combined_caps, this->use_rdp5);
+                            this->rdp_layer.send_confirm_active(this->in_stream, mod, this->use_rdp5);
+                            this->rdp_layer.send_synchronise(this->in_stream);
+                            this->rdp_layer.send_control(this->in_stream, RDP_CTL_COOPERATE);
+                            this->rdp_layer.send_control(this->in_stream, RDP_CTL_REQUEST_CONTROL);
+                            type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_PDU_SYNCHRONIZE */
+                            type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_CTL_COOPERATE */
+                            type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_CTL_GRANT_CONTROL */
+                            this->rdp_layer.send_input(this->in_stream, 0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
+                            /* Including RDP 5.0 capabilities */
+                            if (this->use_rdp5 != 0){
+                                this->rdp_layer.enum_bmpcache2();
+                                this->rdp_layer.send_fonts(this->in_stream, 3);
+                            }
+                            else{
+                                this->rdp_layer.send_fonts(this->in_stream, 1);
+                                this->rdp_layer.send_fonts(this->in_stream, 2);
+                            }
+                            type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_PDU_UNKNOWN 0x28 (Fonts?) */
+                            this->rdp_layer.orders.rdp_orders_reset_state();
+                            LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->rdp_layer.bpp);
+                            this->mod_bpp = this->rdp_layer.bpp;
+                            this->up_and_running = 1;
+                        }
+                        break;
+                    case PDUTYPE_DEACTIVATEALLPDU:
+                        this->up_and_running = 0;
+                        break;
+                    #warning this PDUTYPE is undocumented and seems to mean the same as type 10
+                    case RDP_PDU_REDIRECT:
+                        break;
+                    case 0:
+                        break;
+                    default:
+                        break;
+                    }
+                    cont = this->in_stream.next_packet < this->in_stream.end;
+                }
+            }
+
+            this->state = MOD_RDP_CONNECTED;
+
+        break;
 
             // Connection Finalization
             // -----------------------
@@ -531,6 +603,22 @@ struct mod_rdp : public client_mod {
         }
         return 0;
     }
+
+// 1.3.1.3 Deactivation-Reactivation Sequence
+// ==========================================
+
+// After the connection sequence has run to completion, the server may determine
+// that the client needs to be connected to a waiting, disconnected session. To
+// accomplish this task the server signals the client with a Deactivate All PDU.
+// A Deactivate All PDU implies that the connection will be dropped or that a
+// capability renegotiation will occur. If a capability renegotiation needs to
+// be performed then the server will re-execute the connection sequence,
+// starting with the Demand Active PDU (the Capability Negotiation and
+// Connection Finalization phases as described in section 1.3.1.1) but excluding
+// the Persistent Key List PDU.
+
+
+
 
     // 2.2.1.1 Client X.224 Connection Request PDU
     // ===========================================
