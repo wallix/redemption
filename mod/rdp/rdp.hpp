@@ -376,52 +376,28 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_GET_LICENSE:
-        {
             // Licensing
             // ---------
 
-            // Licensing: The goal of the licensing exchange is to transfer a license from
-            // the server to the client.
+            // Licensing: The goal of the licensing exchange is to transfer a
+            // license from the server to the client.
 
-            // The client should store this license and on subsequent connections send the
-            // license to the server for validation. However, in some situations the client
-            // may not be issued a license to store. In effect, the packets exchanged
-            // during this phase of the protocol depend on the licensing mechanisms
-            // employed by the server. Within the context of this document we will assume
-            // that the client will not be issued a license to store. For details regarding
-            // more advanced licensing scenarios that take place during the Licensing Phase,
-            // see [MS-RDPELE].
+            // The client should store this license and on subsequent
+            // connections send the license to the server for validation.
+            // However, in some situations the client may not be issued a
+            // license to store. In effect, the packets exchanged during this
+            // phase of the protocol depend on the licensing mechanisms
+            // employed by the server. Within the context of this document
+            // we will assume that the client will not be issued a license to
+            // store. For details regarding more advanced licensing scenarios
+            // that take place during the Licensing Phase, see [MS-RDPELE].
 
             // Client                                                     Server
             //    | <------ Licence Error PDU Valid Client ---------------- |
 
-            Stream stream(65535);
-            // read tpktHeader (4 bytes = 3 0 len)
-            // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-            X224In(this->trans, stream);
-            McsIn mcs_in(stream);
-            if ((mcs_in.opcode >> 2) != MCS_SDIN) {
-                throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
+            if (this->rdp_layer.sec_layer.rdp_lic_process(this->trans, this->rdp_layer.hostname, this->rdp_layer.username, this->rdp_layer.userid)){
+                this->state = MOD_RDP_CONNECTED;
             }
-            int len = mcs_in.len;
-            int sec_flags = stream.in_uint32_le();
-            if ((sec_flags & SEC_ENCRYPT)
-            || (sec_flags & 0x0400)) { /* SEC_REDIRECT_ENCRYPT */
-                stream.skip_uint8(8); /* signature */
-                this->rdp_layer.sec_layer.decrypt.decrypt(stream.p, stream.end - stream.p);
-            }
-
-            if (sec_flags & SEC_LICENCE_NEG) { /* 0x80 */
-                LOG(LOG_INFO, "processing licence negotiation");
-                if (this->rdp_layer.sec_layer.rdp_lic_process(this->trans, stream, this->rdp_layer.hostname, this->rdp_layer.username, this->rdp_layer.userid)){
-                    this->state = MOD_RDP_CONNECTED;
-                }
-            }
-            else {
-                LOG(LOG_INFO, "not licence negotiation");
-                // we should throw error if we do not get a licence negotiation packet at this stage
-            }
-        }
         break;
 
             // Capabilities Exchange
