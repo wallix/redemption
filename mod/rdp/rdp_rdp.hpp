@@ -929,16 +929,12 @@ struct rdp_rdp {
         void process_data_pdu(Stream & stream, client_mod * mod)
         {
 //            LOG(LOG_INFO, "process_data_pdu\n");
-            int data_pdu_type;
-            int ctype;
-            int clen;
-            int len;
 
             stream.skip_uint8(6); /* shareid, pad, Streamid */
-            len = stream.in_uint16_le();
-            data_pdu_type = stream.in_uint8();
-            ctype = stream.in_uint8();
-            clen = stream.in_uint16_le();
+            int len = stream.in_uint16_le();
+            int data_pdu_type = stream.in_uint8();
+            int ctype = stream.in_uint8();
+            int clen = stream.in_uint16_le();
             clen -= 18;
             switch (data_pdu_type) {
             case PDUTYPE2_UPDATE:

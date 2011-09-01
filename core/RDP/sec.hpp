@@ -1730,12 +1730,13 @@ struct Sec
       delete [] path;
     }
 
-    void rdp_lic_process_issue(Stream & stream, const char * hostname)
+    int rdp_lic_process_issue(Stream & stream, const char * hostname)
     {
         stream.skip_uint8(2); /* 3d 45 - unknown */
         int length = stream.in_uint16_le();
         if (!stream.check_rem(length)) {
-            return;
+            #warning use exception
+            return 0;
         }
         ssllib ssl;
         SSL_RC4 crypt_key;
@@ -1743,7 +1744,8 @@ struct Sec
         ssl.rc4_crypt(crypt_key, stream.p, stream.p, length);
         int check = stream.in_uint16_le();
         if (check != 0) {
-            return;
+            #warning use exception
+            return 0;
         }
         this->lic_layer.licence_issued = 1;
         stream.skip_uint8(2); /* pad */
@@ -1753,34 +1755,101 @@ struct Sec
             stream.skip_uint8(length);
             length = stream.in_uint32_le();
             if (!stream.check_rem(length)) {
-                return;
+            #warning use exception
+                return 0;
             }
         }
         /* todo save_licence(stream.p, length); */
         this->rdp_save_licence(stream.p, length, hostname);
+        return 1;
     }
 
-    void rdp_lic_process(Transport * trans, Stream & stream, const char * hostname, const char * username, int userid)
+
+// 2.2.1.12 Server License Error PDU - Valid Client
+// ================================================
+
+// The License Error (Valid Client) PDU is an RDP Connection Sequence PDU sent
+// from server to client during the Licensing phase of the RDP Connection
+// Sequence (see section 1.3.1.1 for an overview of the RDP Connection Sequence
+// phases). This licensing PDU indicates that the server will not issue the
+// client a license to store and that the Licensing Phase has ended
+// successfully. This is one possible licensing PDU that may be sent during the
+// Licensing Phase (see [MS-RDPELE] section 2.2.2 for a list of all permissible
+// licensing PDUs).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224] section 13.7.
+
+// mcsSDin (variable): Variable-length PER-encoded MCS Domain PDU (DomainMCSPDU)
+// which encapsulates an MCS Send Data Indication structure (SDin, choice 26
+// from DomainMCSPDU), as specified in [T125] section 11.33 (the ASN.1 structure
+// definitions are given in [T125] section 7, parts 7 and 10). The userData
+// field of the MCS Send Data Indication contains a Security Header and a Valid
+// Client License Data (section 2.2.1.12.1) structure.
+
+// securityHeader (variable): Security header. The format of the security header
+// depends on the Encryption Level and Encryption Method selected by the server
+// (sections 5.3.2 and 2.2.1.4.3).
+
+// This field MUST contain one of the following headers:
+//  - Basic Security Header (section 2.2.8.1.1.2.1) if the Encryption Level
+// selected by the server is ENCRYPTION_LEVEL_NONE (0) or ENCRYPTION_LEVEL_LOW
+// (1) and the embedded flags field does not contain the SEC_ENCRYPT (0x0008)
+// flag.
+//  - Non-FIPS Security Header (section 2.2.8.1.1.2.2) if the Encryption Method
+// selected by the server is ENCRYPTION_METHOD_40BIT (0x00000001),
+// ENCRYPTION_METHOD_56BIT (0x00000008), or ENCRYPTION_METHOD_128BIT
+// (0x00000002) and the embedded flags field contains the SEC_ENCRYPT (0x0008)
+// flag.
+//  - FIPS Security Header (section 2.2.8.1.1.2.3) if the Encryption Method
+// selected by the server is ENCRYPTION_METHOD_FIPS (0x00000010) and the
+// embedded flags field contains the SEC_ENCRYPT (0x0008) flag.
+
+// If the Encryption Level is set to ENCRYPTION_LEVEL_CLIENT_COMPATIBLE (2),
+// ENCRYPTION_LEVEL_HIGH (3), or ENCRYPTION_LEVEL_FIPS (4) and the flags field
+// of the security header does not contain the SEC_ENCRYPT (0x0008) flag (the
+// licensing PDU is not encrypted), then the field MUST contain a Basic Security
+// Header. This MUST be the case if SEC_LICENSE_ENCRYPT_SC (0x0200) flag was not
+// set on the Security Exchange PDU (section 2.2.1.10).
+
+// The flags field of the security header MUST contain the SEC_LICENSE_PKT
+// (0x0080) flag (see Basic (TS_SECURITY_HEADER)).
+
+// validClientLicenseData (variable): The actual contents of the License Error
+// (Valid Client) PDU, as specified in section 2.2.1.12.1.
+
+    int rdp_lic_process(Transport * trans, Stream & stream, const char * hostname, const char * username, int userid)
     {
+        int res = 0;
         uint8_t tag = stream.in_uint8();
         stream.skip_uint8(3); /* version, length */
         switch (tag) {
         case LICENCE_TAG_DEMAND:
+            LOG(LOG_INFO, "licence process tag demand");
             this->rdp_lic_process_demand(trans, stream, hostname, username, userid);
             break;
         case LICENCE_TAG_AUTHREQ:
+            LOG(LOG_INFO, "licence process tag authreq");
             this->rdp_lic_process_authreq(trans, stream, hostname, userid);
             break;
         case LICENCE_TAG_ISSUE:
-            this->rdp_lic_process_issue(stream, hostname);
+            LOG(LOG_INFO, "rdp_lic process tag issue");
+            res = this->rdp_lic_process_issue(stream, hostname);
             break;
         case LICENCE_TAG_REISSUE:
+            LOG(LOG_INFO, "rdp_lic process tag reissue");
+            break;
         case LICENCE_TAG_RESULT:
+            LOG(LOG_INFO, "rdp_lic process tag result");
+            res = 1;
             break;
         default:
+            LOG(LOG_INFO, "rdp_lic process tag unknown");
             break;
             /* todo unimpl("licence tag 0x%x\n", tag); */
         }
+        return res;
     }
 
 

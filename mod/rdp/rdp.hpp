@@ -60,6 +60,7 @@ struct mod_rdp : public client_mod {
         MOD_RDP_CONNECTION_INITIATION,
         MOD_RDP_BASIC_SETTINGS_EXCHANGE,
         MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER,
+        MOD_RDP_GET_LICENSE,
         MOD_RDP_CONNECTED,
     };
 
@@ -312,10 +313,10 @@ struct mod_rdp : public client_mod {
 
             this->state = MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER;
         break;
+
         case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
         {
             this->mcs_attach_user_confirm_pdu(this->trans, this->rdp_layer.userid);
-
             this->mcs_channel_join_request_and_confirm_pdu(this->trans, this->rdp_layer.userid, this->channel_list);
 
             // RDP Security Commencement
@@ -370,9 +371,104 @@ struct mod_rdp : public client_mod {
                                 rdp5_performanceflags,
                                 this->use_rdp5);
 
+            this->state = MOD_RDP_GET_LICENSE;
         }
-        this->state = MOD_RDP_CONNECTED;
         break;
+
+        case MOD_RDP_GET_LICENSE:
+        {
+            // Licensing
+            // ---------
+
+            // Licensing: The goal of the licensing exchange is to transfer a license from
+            // the server to the client.
+
+            // The client should store this license and on subsequent connections send the
+            // license to the server for validation. However, in some situations the client
+            // may not be issued a license to store. In effect, the packets exchanged
+            // during this phase of the protocol depend on the licensing mechanisms
+            // employed by the server. Within the context of this document we will assume
+            // that the client will not be issued a license to store. For details regarding
+            // more advanced licensing scenarios that take place during the Licensing Phase,
+            // see [MS-RDPELE].
+
+            // Client                                                     Server
+            //    | <------ Licence Error PDU Valid Client ---------------- |
+
+            Stream stream(65535);
+            // read tpktHeader (4 bytes = 3 0 len)
+            // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+            X224In(this->trans, stream);
+            McsIn mcs_in(stream);
+            if ((mcs_in.opcode >> 2) != MCS_SDIN) {
+                throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
+            }
+            int len = mcs_in.len;
+            int sec_flags = stream.in_uint32_le();
+            if ((sec_flags & SEC_ENCRYPT)
+            || (sec_flags & 0x0400)) { /* SEC_REDIRECT_ENCRYPT */
+                stream.skip_uint8(8); /* signature */
+                this->rdp_layer.sec_layer.decrypt.decrypt(stream.p, stream.end - stream.p);
+            }
+
+            if (sec_flags & SEC_LICENCE_NEG) { /* 0x80 */
+                LOG(LOG_INFO, "processing licence negotiation");
+                if (this->rdp_layer.sec_layer.rdp_lic_process(this->trans, stream, this->rdp_layer.hostname, this->rdp_layer.username, this->rdp_layer.userid)){
+                    this->state = MOD_RDP_CONNECTED;
+                }
+            }
+            else {
+                LOG(LOG_INFO, "not licence negotiation");
+                // we should throw error if we do not get a licence negotiation packet at this stage
+            }
+        }
+        break;
+
+            // Capabilities Exchange
+            // ---------------------
+
+            // Capabilities Negotiation: The server sends the set of capabilities it
+            // supports to the client in a Demand Active PDU. The client responds with its
+            // capabilities by sending a Confirm Active PDU.
+
+            // Client                                                     Server
+            //    | <------- Demand Active PDU ---------------------------- |
+            //    |--------- Confirm Active PDU --------------------------> |
+
+            // Connection Finalization
+            // -----------------------
+
+            // Connection Finalization: The client and server send PDUs to finalize the
+            // connection details. The client-to-server and server-to-client PDUs exchanged
+            // during this phase may be sent concurrently as long as the sequencing in
+            // either direction is maintained (there are no cross-dependencies between any
+            // of the client-to-server and server-to-client PDUs). After the client receives
+            // the Font Map PDU it can start sending mouse and keyboard input to the server,
+            // and upon receipt of the Font List PDU the server can start sending graphics
+            // output to the client.
+
+            // Client                                                     Server
+            //    |----------Synchronize PDU------------------------------> |
+            //    |----------Control PDU Cooperate------------------------> |
+            //    |----------Control PDU Request Control------------------> |
+            //    |----------Persistent Key List PDU(s)-------------------> |
+            //    |----------Font List PDU--------------------------------> |
+            //    | <--------Synchronize PDU------------------------------- |
+            //    | <--------Control PDU Cooperate------------------------- |
+            //    | <--------Control PDU Granted Control------------------- |
+            //    | <--------Font Map PDU---------------------------------- |
+
+            // All PDU's in the client-to-server direction must be sent in the specified
+            // order and all PDU's in the server to client direction must be sent in the
+            // specified order. However, there is no requirement that client to server PDU's
+            // be sent before server-to-client PDU's. PDU's may be sent concurrently as long
+            // as the sequencing in either direction is maintained.
+
+
+            // Besides input and graphics data, other data that can be exchanged between
+            // client and server after the connection has been finalized includes
+            // connection management information and virtual channel messages (exchanged
+            // between client-side plug-ins and server-side applications).
 
         case MOD_RDP_CONNECTED:
         {
@@ -422,9 +518,9 @@ struct mod_rdp : public client_mod {
                             type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_PDU_UNKNOWN 0x28 (Fonts?) */
                             this->rdp_layer.orders.rdp_orders_reset_state();
                             LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->rdp_layer.bpp);
+                            this->mod_bpp = this->rdp_layer.bpp;
+                            this->up_and_running = 1;
                         }
-                        this->mod_bpp = this->rdp_layer.bpp;
-                        this->up_and_running = 1;
                         break;
                     case PDUTYPE_DEACTIVATEALLPDU:
                         this->up_and_running = 0;
