@@ -1291,6 +1291,124 @@ struct rdp_rdp {
 
         stream.out_clear_bytes(20);	/* other bitmap caches not used */
     }
+
+
+    void client_info_pdu(Transport * trans, int userid, const char * password, int rdp5_performanceflags, int & use_rdp5)
+    {
+
+        int flags = RDP_LOGON_NORMAL | ((strlen(password) > 0)?RDP_LOGON_AUTO:0);
+
+//            LOG(LOG_INFO, "send login info to server\n");
+        time_t t = time(NULL);
+        time_t tzone;
+
+        // The WAB does not send it's IP to server. Is it what we want ?
+        const char * ip_source = "\0\0\0\0";
+
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        McsOut sdrq_out2(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
+        SecOut sec_out(stream, 2, SEC_LOGON_INFO | SEC_ENCRYPT, this->sec_layer.encrypt);
+
+        if(!use_rdp5){
+            LOG(LOG_INFO, "send login info (RDP4-style) %s:%s\n",this->domain, this->username);
+
+            stream.out_uint32_le(0);
+            stream.out_uint32_le(flags);
+            stream.out_uint16_le(2 * strlen(this->domain));
+            stream.out_uint16_le(2 * strlen(this->username));
+            stream.out_uint16_le(2 * strlen(password));
+            stream.out_uint16_le(2 * strlen(this->program));
+            stream.out_uint16_le(2 * strlen(this->directory));
+            stream.out_unistr(this->domain);
+            stream.out_unistr(this->username);
+            stream.out_unistr(password);
+            stream.out_unistr(this->program);
+            stream.out_unistr(this->directory);
+        }
+        else {
+            LOG(LOG_INFO, "send login info (RDP5-style) %x %s:%s\n",flags,
+                this->domain,
+                this->username);
+
+            flags |= RDP_LOGON_BLOB;
+            stream.out_uint32_le(0);
+            stream.out_uint32_le(flags);
+            stream.out_uint16_le(2 * strlen(this->domain));
+            stream.out_uint16_le(2 * strlen(this->username));
+            if (flags & RDP_LOGON_AUTO){
+                stream.out_uint16_le(2 * strlen(password));
+            }
+            if (flags & RDP_LOGON_BLOB && ! (flags & RDP_LOGON_AUTO)){
+                stream.out_uint16_le(0);
+            }
+            stream.out_uint16_le(2 * strlen(this->program));
+            stream.out_uint16_le(2 * strlen(this->directory));
+            if ( 0 < (2 * strlen(this->domain))){
+                stream.out_unistr(this->domain);
+            }
+            else {
+                stream.out_uint16_le(0);
+            }
+            stream.out_unistr(this->username);
+            if (flags & RDP_LOGON_AUTO){
+                stream.out_unistr(password);
+            }
+            else{
+                stream.out_uint16_le(0);
+            }
+            if (0 < 2 * strlen(this->program)){
+                stream.out_unistr(this->program);
+            }
+            else {
+                stream.out_uint16_le(0);
+            }
+            if (2 * strlen(this->directory) < 0){
+                stream.out_unistr(this->directory);
+            }
+            else{
+                stream.out_uint16_le(0);
+            }
+            stream.out_uint16_le(2);
+            stream.out_uint16_le(2 * strlen(ip_source) + 2);
+            stream.out_unistr(ip_source);
+            stream.out_uint16_le(2 * strlen("C:\\WINNT\\System32\\mstscax.dll") + 2);
+            stream.out_unistr("C:\\WINNT\\System32\\mstscax.dll");
+
+            tzone = (mktime(gmtime(&t)) - mktime(localtime(&t))) / 60;
+            stream.out_uint32_le(tzone);
+
+            stream.out_unistr("GTB, normaltid");
+            stream.out_clear_bytes(62 - 2 * strlen("GTB, normaltid"));
+
+            stream.out_uint32_le(0x0a0000);
+            stream.out_uint32_le(0x050000);
+            stream.out_uint32_le(3);
+            stream.out_uint32_le(0);
+            stream.out_uint32_le(0);
+
+            stream.out_unistr("GTB, sommartid");
+            stream.out_clear_bytes(62 - 2 * strlen("GTB, sommartid"));
+
+            stream.out_uint32_le(0x30000);
+            stream.out_uint32_le(0x050000);
+            stream.out_uint32_le(2);
+            stream.out_uint32_le(0);
+            stream.out_uint32_le(0xffffffc4);
+            stream.out_uint32_le(0xfffffffe);
+            stream.out_uint32_le(rdp5_performanceflags);
+            stream.out_uint16_le(0);
+            use_rdp5 = 0;
+        }
+
+        sec_out.end();
+        sdrq_out2.end();
+        tpdu.end();
+        tpdu.send(trans);
+
+        LOG(LOG_INFO, "send login info ok\n");
+    }
+
 };
 
 #endif
