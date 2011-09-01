@@ -807,17 +807,17 @@ struct rdp_rdp {
                     int len = mcs_in.len;
 
                     sec_flags = stream.in_uint32_le();
+
+                    if (sec_flags & SEC_LICENCE_NEG) { /* 0x80 */
+                        throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
+                    }
+
                     if ((sec_flags & SEC_ENCRYPT)
                     || (sec_flags & 0x0400)) { /* SEC_REDIRECT_ENCRYPT */
                         stream.skip_uint8(8); /* signature */
                         this->sec_layer.decrypt.decrypt(stream.p, stream.end - stream.p);
                     }
 
-                    if (sec_flags & SEC_LICENCE_NEG) { /* 0x80 */
-                        this->sec_layer.rdp_lic_process(this->trans, stream, this->hostname, this->username, this->userid);
-                        // read again until licence is processed
-                        continue;
-                    }
                     break;
                 }
 

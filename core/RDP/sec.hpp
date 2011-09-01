@@ -1819,36 +1819,51 @@ struct Sec
 // validClientLicenseData (variable): The actual contents of the License Error
 // (Valid Client) PDU, as specified in section 2.2.1.12.1.
 
-    int rdp_lic_process(Transport * trans, Stream & stream, const char * hostname, const char * username, int userid)
+    int rdp_lic_process(Transport * trans, const char * hostname, const char * username, int userid)
     {
         int res = 0;
-        uint8_t tag = stream.in_uint8();
-        stream.skip_uint8(3); /* version, length */
-        switch (tag) {
-        case LICENCE_TAG_DEMAND:
-            LOG(LOG_INFO, "licence process tag demand");
-            this->rdp_lic_process_demand(trans, stream, hostname, username, userid);
-            break;
-        case LICENCE_TAG_AUTHREQ:
-            LOG(LOG_INFO, "licence process tag authreq");
-            this->rdp_lic_process_authreq(trans, stream, hostname, userid);
-            break;
-        case LICENCE_TAG_ISSUE:
-            LOG(LOG_INFO, "rdp_lic process tag issue");
-            res = this->rdp_lic_process_issue(stream, hostname);
-            break;
-        case LICENCE_TAG_REISSUE:
-            LOG(LOG_INFO, "rdp_lic process tag reissue");
-            break;
-        case LICENCE_TAG_RESULT:
-            LOG(LOG_INFO, "rdp_lic process tag result");
-            res = 1;
-            break;
-        default:
-            LOG(LOG_INFO, "rdp_lic process tag unknown");
-            break;
-            /* todo unimpl("licence tag 0x%x\n", tag); */
+        Stream stream(65535);
+        // read tpktHeader (4 bytes = 3 0 len)
+        // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+        X224In in_tpdu(trans, stream);
+        McsIn mcs_in(stream);
+        if ((mcs_in.opcode >> 2) != MCS_SDIN) {
+            throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
         }
+        int len = mcs_in.len;
+        int sec_flags = stream.in_uint32_le();
+        if ((sec_flags & SEC_ENCRYPT) || (sec_flags & 0x0400)) { /* SEC_REDIRECT_ENCRYPT */
+            stream.skip_uint8(8); /* signature */
+            this->decrypt.decrypt(stream.p, stream.end - stream.p);
+        }
+
+        if (sec_flags & SEC_LICENCE_NEG) { /* 0x80 */
+            uint8_t tag = stream.in_uint8();
+            stream.skip_uint8(3); /* version, length */
+            switch (tag) {
+            case LICENCE_TAG_DEMAND:
+                this->rdp_lic_process_demand(trans, stream, hostname, username, userid);
+                break;
+            case LICENCE_TAG_AUTHREQ:
+                this->rdp_lic_process_authreq(trans, stream, hostname, userid);
+                break;
+            case LICENCE_TAG_ISSUE:
+                res = this->rdp_lic_process_issue(stream, hostname);
+                break;
+            case LICENCE_TAG_REISSUE:
+                break;
+            case LICENCE_TAG_RESULT:
+                res = 1;
+                break;
+            default:
+                break;
+                /* todo unimpl("licence tag 0x%x\n", tag); */
+            }
+        }
+        else {
+            throw Error(ERR_SEC_EXPECTED_LICENCE_NEGOTIATION_PDU);
+        }
+        in_tpdu.end();
         return res;
     }
 
