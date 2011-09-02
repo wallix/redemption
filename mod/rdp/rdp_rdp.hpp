@@ -983,6 +983,7 @@ struct rdp_rdp {
         int recv(Stream & stream, client_mod * mod) throw(Error)
         {
 //            LOG(LOG_INFO, "recv\n");
+            int res = 0;
             int len;
             int pdu_type;
             int version;
@@ -1096,24 +1097,36 @@ struct rdp_rdp {
                         }
                     }
                     stream.next_packet = stream.end;
-                    return 0;
+                    res = 0;
                 }
-
-                stream.next_packet = stream.p;
+                else {
+                    stream.next_packet = stream.p;
+                    len = stream.in_uint16_le();
+                    if (len == 0x8000) {
+                        stream.next_packet += 8;
+                        return 0;
+                    }
+                    pdu_type = stream.in_uint16_le();
+                    stream.skip_uint8(2);
+                    stream.next_packet += len;
+                    this->chan_id = chan;
+                    res = pdu_type & 0xf;
+                }
             }
             else {
                 stream.p = stream.next_packet;
+                len = stream.in_uint16_le();
+                if (len == 0x8000) {
+                    stream.next_packet += 8;
+                    return 0;
+                }
+                pdu_type = stream.in_uint16_le();
+                stream.skip_uint8(2);
+                stream.next_packet += len;
+                this->chan_id = chan;
+                res = pdu_type & 0xf;
             }
-            len = stream.in_uint16_le();
-            if (len == 0x8000) {
-                stream.next_packet += 8;
-                return 0;
-            }
-            pdu_type = stream.in_uint16_le();
-            stream.skip_uint8(2);
-            stream.next_packet += len;
-            this->chan_id = chan;
-            return pdu_type & 0xf;
+            return res;
         }
 
 
