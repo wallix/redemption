@@ -252,7 +252,7 @@ struct rdp_rdp {
         }
 
 
-        void send_confirm_active(Stream & stream, client_mod * mod, int use_rdp5) throw(Error)
+        void send_confirm_active(client_mod * mod, int use_rdp5) throw(Error)
         {
             LOG(LOG_INFO, "Sending confirm active to server\n");
 
@@ -299,7 +299,7 @@ struct rdp_rdp {
                        + 0x34
                        + 4 /* w2k fix, why? */ ;
 
-            stream.init(8192);
+            Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->sec_layer.encrypt);
@@ -745,9 +745,9 @@ struct rdp_rdp {
         }
 
 
-        void send_control(Stream & stream, int action) throw (Error)
+        void send_control(int action) throw (Error)
         {
-            stream.init(8192);
+            Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->sec_layer.encrypt);
@@ -765,9 +765,9 @@ struct rdp_rdp {
         }
 
 
-        void send_synchronise(Stream & stream) throw (Error)
+        void send_synchronise() throw (Error)
         {
-            stream.init(8192);
+            Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->sec_layer.encrypt);
@@ -817,12 +817,12 @@ struct rdp_rdp {
 
         }
 
-        void send_input(Stream & stream, int time, int message_type,
+        void send_input(int time, int message_type,
                         int device_flags, int param1, int param2) throw(Error)
         {
 //            LOG(LOG_INFO, "send_input\n");
 
-            stream.init(8192);
+            Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->sec_layer.encrypt);
