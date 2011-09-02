@@ -397,12 +397,9 @@ struct mod_rdp : public client_mod {
             //    | <------ Licence Error PDU Valid Client ---------------- |
 
             if (this->rdp_layer.sec_layer.rdp_lic_process(this->trans, this->rdp_layer.hostname, this->rdp_layer.username, this->rdp_layer.userid)){
-                this->state = MOD_RDP_WAITING_DEMAND_ACTIVE_PDU;
-//                this->state = MOD_RDP_CONNECTED;
+                this->state = MOD_RDP_CONNECTED;
             }
         break;
-
-        case MOD_RDP_WAITING_DEMAND_ACTIVE_PDU:
 
             // Capabilities Exchange
             // ---------------------
@@ -414,77 +411,6 @@ struct mod_rdp : public client_mod {
             // Client                                                     Server
             //    | <------- Demand Active PDU ---------------------------- |
             //    |--------- Confirm Active PDU --------------------------> |
-
-            {
-                Stream & stream = this->in_stream;
-                stream.init(65535);
-                int type = this->rdp_layer.recv(stream, this);
-                switch (type) {
-                case PDUTYPE_DATAPDU:
-                    LOG(LOG_INFO, "ERR_RDP_EXPECTING_DEMANDACTIVEPDU 1");
-                    throw Error(ERR_RDP_EXPECTING_DEMANDACTIVEPDU);
-                    break;
-                case PDUTYPE_DEMANDACTIVEPDU:
-                    LOG(LOG_INFO, "PDUTYPE DEMANDACTIVEPDU");
-                    {
-                        client_mod * mod = this;
-
-                        this->rdp_layer.share_id = stream.in_uint32_le();
-                        int len_src_descriptor = stream.in_uint16_le();
-                        int len_combined_caps = stream.in_uint16_le();
-                        stream.skip_uint8(len_src_descriptor);
-                        this->rdp_layer.process_server_caps(stream, len_combined_caps, this->use_rdp5);
-                        this->rdp_layer.send_confirm_active(stream, mod, this->use_rdp5);
-
-                        this->rdp_layer.send_synchronise(stream);
-                        this->rdp_layer.send_control(stream, RDP_CTL_COOPERATE);
-                        this->rdp_layer.send_control(stream, RDP_CTL_REQUEST_CONTROL);
-
-//                        this->rdp_layer.send_input(stream, 0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
-
-                        /* Including RDP 5.0 capabilities */
-                        if (this->use_rdp5 != 0){
-                            this->rdp_layer.enum_bmpcache2();
-                            this->rdp_layer.send_fonts(stream, 3);
-                        }
-                        else{
-                            this->rdp_layer.send_fonts(stream, 1);
-                            this->rdp_layer.send_fonts(stream, 2);
-                        }
-
-
-                        type = this->rdp_layer.recv(stream, mod); /* RDP_PDU_SYNCHRONIZE */
-                        type = this->rdp_layer.recv(stream, mod); /* RDP_CTL_COOPERATE */
-                        type = this->rdp_layer.recv(stream, mod); /* RDP_CTL_GRANT_CONTROL */
-                        type = this->rdp_layer.recv(stream, mod); /* RDP_PDU_UNKNOWN 0x28 (Font Map PDU ?) */
-                        this->rdp_layer.orders.rdp_orders_reset_state();
-                        LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->rdp_layer.bpp);
-                        this->mod_bpp = this->rdp_layer.bpp;
-                        this->up_and_running = 1;
-                    }
-                    break;
-                case PDUTYPE_DEACTIVATEALLPDU:
-                    LOG(LOG_INFO, "ERR_RDP_EXPECTING_DEMANDACTIVEPDU 1");
-                    throw Error(ERR_RDP_EXPECTING_DEMANDACTIVEPDU);
-                    break;
-                #warning this PDUTYPE is undocumented and seems to mean the same as type 10
-                case RDP_PDU_REDIRECT:
-                    LOG(LOG_INFO, "ERR_RDP_EXPECTING_DEMANDACTIVEPDU 1");
-                    throw Error(ERR_RDP_EXPECTING_DEMANDACTIVEPDU);
-                    break;
-                case 0:
-                    LOG(LOG_INFO, "ERR_RDP_EXPECTING_DEMANDACTIVEPDU 1");
-                    throw Error(ERR_RDP_EXPECTING_DEMANDACTIVEPDU);
-                    break;
-                default:
-                    LOG(LOG_INFO, "ERR_RDP_EXPECTING_DEMANDACTIVEPDU 1");
-                    throw Error(ERR_RDP_EXPECTING_DEMANDACTIVEPDU);
-                    break;
-                }
-            }
-            this->state = MOD_RDP_CONNECTED;
-
-        break;
 
             // Connection Finalization
             // -----------------------
@@ -557,9 +483,9 @@ struct mod_rdp : public client_mod {
                             this->rdp_layer.send_synchronise(this->in_stream);
                             this->rdp_layer.send_control(this->in_stream, RDP_CTL_COOPERATE);
                             this->rdp_layer.send_control(this->in_stream, RDP_CTL_REQUEST_CONTROL);
-                            type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_PDU_SYNCHRONIZE */
-                            type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_CTL_COOPERATE */
-                            type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_CTL_GRANT_CONTROL */
+                            type = this->rdp_layer.global_channel_recv(this->in_stream, mod); /* RDP_PDU_SYNCHRONIZE */
+                            type = this->rdp_layer.global_channel_recv(this->in_stream, mod); /* RDP_CTL_COOPERATE */
+                            type = this->rdp_layer.global_channel_recv(this->in_stream, mod); /* RDP_CTL_GRANT_CONTROL */
                             this->rdp_layer.send_input(this->in_stream, 0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
                             /* Including RDP 5.0 capabilities */
                             if (this->use_rdp5 != 0){
@@ -570,7 +496,7 @@ struct mod_rdp : public client_mod {
                                 this->rdp_layer.send_fonts(this->in_stream, 1);
                                 this->rdp_layer.send_fonts(this->in_stream, 2);
                             }
-                            type = this->rdp_layer.recv(this->in_stream, mod); /* RDP_PDU_UNKNOWN 0x28 (Fonts?) */
+                            type = this->rdp_layer.global_channel_recv(this->in_stream, mod); /* RDP_PDU_UNKNOWN 0x28 (Fonts?) */
                             this->rdp_layer.orders.rdp_orders_reset_state();
                             LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->rdp_layer.bpp);
                             this->mod_bpp = this->rdp_layer.bpp;
