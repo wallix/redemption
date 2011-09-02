@@ -468,7 +468,154 @@ struct mod_rdp : public client_mod {
             try{
                 cont = 1;
                 while (cont) {
-                    type = this->rdp_layer.recv(in_stream, this);
+                    {
+                        Stream & stream = in_stream;
+                        int len;
+                        int pdu_type;
+                        int version;
+
+                        int chan = 0;
+                        if (stream.next_packet >= stream.end || stream.next_packet == 0) {
+                            uint32_t sec_flags = 0;
+                            #warning this loop is ugly, the only true reason is we are waiting for the licence
+                            version = 3;
+                            stream.init(65535);
+                            // read tpktHeader (4 bytes = 3 0 len)
+                            // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+                            X224In(this->trans, stream);
+                            McsIn mcs_in(stream);
+                            if ((mcs_in.opcode >> 2) != MCS_SDIN) {
+                                throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
+                            }
+                            chan = mcs_in.chan_id;
+                            int len = mcs_in.len;
+
+                            sec_flags = stream.in_uint32_le();
+
+                            if (sec_flags & SEC_LICENCE_NEG) { /* 0x80 */
+                                throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
+                            }
+
+                            if ((sec_flags & SEC_ENCRYPT)
+                            || (sec_flags & 0x0400)) { /* SEC_REDIRECT_ENCRYPT */
+                                stream.skip_uint8(8); /* signature */
+                                this->rdp_layer.sec_layer.decrypt.decrypt(stream.p, stream.end - stream.p);
+                            }
+
+                            if (sec_flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
+                                /* Check for a redirect packet, starts with 00 04 */
+                                if (stream.p[0] == 0 && stream.p[1] == 4){
+                                /* for some reason the PDU and the length seem to be swapped.
+                                   This isn't good, but we're going to do a byte for byte
+                                   swap.  So the first four value appear as: 00 04 XX YY,
+                                   where XX YY is the little endian length. We're going to
+                                   use 04 00 as the PDU type, so after our swap this will look
+                                   like: XX YY 04 00 */
+
+                                    uint8_t swapbyte1 = stream.p[0];
+                                    stream.p[0] = stream.p[2];
+                                    stream.p[2] = swapbyte1;
+
+                                    uint8_t swapbyte2 = stream.p[1];
+                                    stream.p[1] = stream.p[3];
+                                    stream.p[3] = swapbyte2;
+
+                                    uint8_t swapbyte3 = stream.p[2];
+                                    stream.p[2] = stream.p[3];
+                                    stream.p[3] = swapbyte3;
+                                }
+                            }
+                            if (chan != MCS_GLOBAL_CHANNEL){
+                              uint32_t length = stream.in_uint32_le();
+                              int channel_flags = stream.in_uint32_le();
+                                /* We need to recover the name of the channel linked with this
+                                 channel_id in order to match it with the same channel on the
+                                 first channel_list created by the RDP client at initialization
+                                 process*/
+
+                            //    LOG(LOG_DEBUG, "rdp_process_redirect_pdu()\n");
+
+                                int num_channels_src = (int) this->rdp_layer.sec_layer.channel_list.size();
+                                mcs_channel_item *channel_item = NULL;
+                                for (int index = 0; index < num_channels_src; index++){
+                                    channel_item = this->rdp_layer.sec_layer.channel_list[index];
+                                    if (chan == channel_item->chanid){
+                                        break;
+                                    }
+                                }
+
+                                if (!channel_item || (chan != channel_item->chanid)){
+                                    LOG(LOG_ERR, "failed to recover name of linked channel\n");
+                                }
+                                else {
+                                    char * name = channel_item->name;
+
+                                    /* Here, we're going to search the correct channel in order to send
+                                    information throughout this channel to RDP client*/
+
+                                    int num_channels_dst = (int) this->channel_list.size();
+                                    for (int index = 0; index < num_channels_dst; index++){
+                                        channel_item = this->channel_list[index];
+                                        if (strcmp(name, channel_item->name) == 0){
+                                            break;
+                                        }
+                                    }
+                                    if (strcmp(name, channel_item->name) != 0){
+                                        LOG(LOG_ERR, "failed to recover channel id\n");
+                                    }
+                                    else {
+                                        int channel_id = channel_item->chanid;
+                                        int size = (int)(stream.end - stream.p);
+
+                                        /* TODO: create new function in order to activate / deactivate copy-paste
+                                        sequence from server to client */
+
+                                        if(this->rdp_layer.sec_layer.clipboard_check(name, this->clipboard_enable) == 1){
+                                            /* Clipboard deactivation required */
+                                        }
+                                        else if (channel_id < 0){
+                                            LOG(LOG_ERR, "Error sending information, wrong channel id");
+                                        }
+                                        else {
+                                            this->server_send_to_channel_mod(channel_id, stream.p, size, length, channel_flags);
+                                        }
+                                    }
+                                }
+                                stream.next_packet = stream.end;
+                                type = 0;
+                            }
+                            else {
+                                stream.next_packet = stream.p;
+                                len = stream.in_uint16_le();
+                                if (len == 0x8000) {
+                                    stream.next_packet += 8;
+                                    type = 0;
+                                }
+                                else {
+                                    pdu_type = stream.in_uint16_le();
+                                    stream.skip_uint8(2);
+                                    stream.next_packet += len;
+                                    this->rdp_layer.chan_id = chan;
+                                    type = pdu_type & 0xf;
+                                }
+                            }
+                        }
+                        else {
+                            stream.p = stream.next_packet;
+                            len = stream.in_uint16_le();
+                            if (len == 0x8000) {
+                                stream.next_packet += 8;
+                                type = 0;
+                            }
+                            else {
+                                pdu_type = stream.in_uint16_le();
+                                stream.skip_uint8(2);
+                                stream.next_packet += len;
+                                this->rdp_layer.chan_id = chan;
+                                type = pdu_type & 0xf;
+                            }
+                        }
+                    }
 
                     switch (type) {
                     case PDUTYPE_DATAPDU:
@@ -508,7 +655,6 @@ struct mod_rdp : public client_mod {
                         LOG(LOG_INFO, "Received demand active PDU");
                         {
                             client_mod * mod = this;
-                            int type;
                             int len_src_descriptor;
                             int len_combined_caps;
 
