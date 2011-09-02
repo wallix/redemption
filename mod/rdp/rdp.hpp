@@ -142,9 +142,7 @@ struct mod_rdp : public client_mod {
         }
         if (this->up_and_running) {
 //            LOG(LOG_INFO, "Direct parameter transmission \n");
-            Stream stream = Stream(8192 * 2);
-//            LOG(LOG_INFO, "resend input: time=%lu device_flags=%lu param1=%lu param2=%lu\n", time, device_flags, param1, param2);
-            this->rdp_layer.send_input(stream, time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
+            this->rdp_layer.send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
         }
         if (msg == WM_KEYUP){
             keys[param1] = 0;
@@ -165,44 +163,44 @@ struct mod_rdp : public client_mod {
             case WM_KEYUP:
                 #warning bypassed by call to scancode, need some code cleanup here, we would probably be better of with less key decoding.
                 assert(false);
-                // this->rdp_layer.send_input(&stream, 0, RDP_INPUT_SCANCODE, param4, param3, 0);
+                // this->rdp_layer.send_input(0, RDP_INPUT_SCANCODE, param4, param3, 0);
                 break;
             #warning find out what is this message and define symbolic constant
             case 17:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_SYNCHRONIZE, param4, param3, 0);
+                this->rdp_layer.send_input(0, RDP_INPUT_SYNCHRONIZE, param4, param3, 0);
                 break;
             case WM_MOUSEMOVE:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_MOVE, param1, param2);
+                this->rdp_layer.send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_MOVE, param1, param2);
                 break;
             case WM_LBUTTONUP:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON1, param1, param2);
+                this->rdp_layer.send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON1, param1, param2);
                 break;
             case WM_LBUTTONDOWN:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, param1, param2);
+                this->rdp_layer.send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, param1, param2);
                 break;
             case WM_RBUTTONUP:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON2, param1, param2);
+                this->rdp_layer.send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON2, param1, param2);
                 break;
             case WM_RBUTTONDOWN:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON2 | MOUSE_FLAG_DOWN, param1, param2);
+                this->rdp_layer.send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON2 | MOUSE_FLAG_DOWN, param1, param2);
                 break;
             case WM_BUTTON3UP:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON3, param1, param2);
+                this->rdp_layer.send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON3, param1, param2);
                 break;
             case WM_BUTTON3DOWN:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON3 | MOUSE_FLAG_DOWN, param1, param2);
+                this->rdp_layer.send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON3 | MOUSE_FLAG_DOWN, param1, param2);
                 break;
             case WM_BUTTON4UP:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4, param1, param2);
+                this->rdp_layer.send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4, param1, param2);
                 break;
             case WM_BUTTON4DOWN:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4 | MOUSE_FLAG_DOWN, param1, param2);
+                this->rdp_layer.send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4 | MOUSE_FLAG_DOWN, param1, param2);
                 break;
             case WM_BUTTON5UP:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5, param1, param2);
+                this->rdp_layer.send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5, param1, param2);
                 break;
             case WM_BUTTON5DOWN:
-                this->rdp_layer.send_input(stream, 0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5 | MOUSE_FLAG_DOWN, param1, param2);
+                this->rdp_layer.send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5 | MOUSE_FLAG_DOWN, param1, param2);
                 break;
             case WM_INVALIDATE:
                 this->rdp_layer.send_invalidate(stream, (param1 >> 16) & 0xffff, param1 & 0xffff,(param2 >> 16) & 0xffff, param2 & 0xffff);
@@ -661,16 +659,17 @@ struct mod_rdp : public client_mod {
                             len_combined_caps = stream.in_uint16_le();
                             stream.skip_uint8(len_src_descriptor);
                             this->rdp_layer.process_server_caps(stream, len_combined_caps, this->use_rdp5);
+                            #warning we should be able to pack all the following sends to the same X224 TPDU, instead of creating a different one for each send
                             LOG(LOG_INFO, "Sending confirm active PDU");
-                            this->rdp_layer.send_confirm_active(stream, mod, this->use_rdp5);
+                            this->rdp_layer.send_confirm_active(mod, this->use_rdp5);
                             LOG(LOG_INFO, "Sending synchronize");
-                            this->rdp_layer.send_synchronise(stream);
+                            this->rdp_layer.send_synchronise();
                             LOG(LOG_INFO, "Sending control cooperate");
-                            this->rdp_layer.send_control(stream, RDP_CTL_COOPERATE);
+                            this->rdp_layer.send_control(RDP_CTL_COOPERATE);
                             LOG(LOG_INFO, "Sending request control");
-                            this->rdp_layer.send_control(stream, RDP_CTL_REQUEST_CONTROL);
+                            this->rdp_layer.send_control(RDP_CTL_REQUEST_CONTROL);
                             LOG(LOG_INFO, "Sending input synchronize");
-                            this->rdp_layer.send_input(stream, 0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
+                            this->rdp_layer.send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
                             LOG(LOG_INFO, "Sending font List");
                             /* Including RDP 5.0 capabilities */
                             if (this->use_rdp5 != 0){
