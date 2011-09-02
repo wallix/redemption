@@ -991,33 +991,28 @@ struct rdp_rdp {
             if (stream.next_packet >= stream.end || stream.next_packet == 0) {
                 uint32_t sec_flags = 0;
                 #warning this loop is ugly, the only true reason is we are waiting for the licence
-                while (1)
-                {
-                    version = 3;
-                    stream.init(65535);
-                    // read tpktHeader (4 bytes = 3 0 len)
-                    // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-                    X224In(this->trans, stream);
-                    McsIn mcs_in(stream);
-                    if ((mcs_in.opcode >> 2) != MCS_SDIN) {
-                        throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
-                    }
-                    chan = mcs_in.chan_id;
-                    int len = mcs_in.len;
+                version = 3;
+                stream.init(65535);
+                // read tpktHeader (4 bytes = 3 0 len)
+                // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+                X224In(this->trans, stream);
+                McsIn mcs_in(stream);
+                if ((mcs_in.opcode >> 2) != MCS_SDIN) {
+                    throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
+                }
+                chan = mcs_in.chan_id;
+                int len = mcs_in.len;
 
-                    sec_flags = stream.in_uint32_le();
+                sec_flags = stream.in_uint32_le();
 
-                    if (sec_flags & SEC_LICENCE_NEG) { /* 0x80 */
-                        throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
-                    }
+                if (sec_flags & SEC_LICENCE_NEG) { /* 0x80 */
+                    throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
+                }
 
-                    if ((sec_flags & SEC_ENCRYPT)
-                    || (sec_flags & 0x0400)) { /* SEC_REDIRECT_ENCRYPT */
-                        stream.skip_uint8(8); /* signature */
-                        this->sec_layer.decrypt.decrypt(stream.p, stream.end - stream.p);
-                    }
-
-                    break;
+                if ((sec_flags & SEC_ENCRYPT)
+                || (sec_flags & 0x0400)) { /* SEC_REDIRECT_ENCRYPT */
+                    stream.skip_uint8(8); /* signature */
+                    this->sec_layer.decrypt.decrypt(stream.p, stream.end - stream.p);
                 }
 
                 if (sec_flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
@@ -1100,13 +1095,10 @@ struct rdp_rdp {
                             }
                         }
                     }
-                    version = 0xff;
-                }
-
-                if (version == 0xff){
                     stream.next_packet = stream.end;
                     return 0;
                 }
+
                 stream.next_packet = stream.p;
             }
             else {
