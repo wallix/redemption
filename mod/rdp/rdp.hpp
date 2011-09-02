@@ -69,7 +69,7 @@ struct mod_rdp : public client_mod {
         EARLY,
         WAITING_SYNCHRONIZE,
         WAITING_CTL_COOPERATE,
-        WAITING_REQUEST_CONTROL_COOPERATE,
+        WAITING_GRANT_CONTROL_COOPERATE,
         WAITING_FONT_MAP,
         UP_AND_RUNNING
     } connection_finalization_state;
@@ -476,18 +476,22 @@ struct mod_rdp : public client_mod {
                         case EARLY:
                         break;
                         case WAITING_SYNCHRONIZE:
+                            LOG(LOG_INFO, "Receiving Synchronize");
 //                            type = this->rdp_layer.recv(in_stream, mod); /* RDP_PDU_SYNCHRONIZE */
                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
                         break;
                         case WAITING_CTL_COOPERATE:
+                            LOG(LOG_INFO, "Receiving Control Cooperate");
 //                            type = this->rdp_layer.recv(in_stream, mod); /* RDP_CTL_COOPERATE */
-                            this->connection_finalization_state = WAITING_REQUEST_CONTROL_COOPERATE;
+                            this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                         break;
-                        case WAITING_REQUEST_CONTROL_COOPERATE:
+                        case WAITING_GRANT_CONTROL_COOPERATE:
+                            LOG(LOG_INFO, "Receiving Granted Control");
 //                            type = this->rdp_layer.recv(in_stream, mod); /* RDP_CTL_GRANT_CONTROL */
                             this->connection_finalization_state = WAITING_FONT_MAP;
                         break;
                         case WAITING_FONT_MAP:
+                            LOG(LOG_INFO, "Receiving Font Map");
 //                            type = this->rdp_layer.recv(in_stream, mod); /* RDP_PDU_UNKNOWN 0x28 (Fonts?) */
                             this->rdp_layer.orders.rdp_orders_reset_state();
                             LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->rdp_layer.bpp);
@@ -501,7 +505,7 @@ struct mod_rdp : public client_mod {
                         }
                         break;
                     case PDUTYPE_DEMANDACTIVEPDU:
-                        LOG(LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU");
+                        LOG(LOG_INFO, "Received demand active PDU");
                         {
                             client_mod * mod = this;
                             int type;
@@ -513,11 +517,17 @@ struct mod_rdp : public client_mod {
                             len_combined_caps = in_stream.in_uint16_le();
                             in_stream.skip_uint8(len_src_descriptor);
                             this->rdp_layer.process_server_caps(in_stream, len_combined_caps, this->use_rdp5);
+                            LOG(LOG_INFO, "Sending confirm active PDU");
                             this->rdp_layer.send_confirm_active(in_stream, mod, this->use_rdp5);
+                            LOG(LOG_INFO, "Sending synchronize");
                             this->rdp_layer.send_synchronise(in_stream);
+                            LOG(LOG_INFO, "Sending control cooperate");
                             this->rdp_layer.send_control(in_stream, RDP_CTL_COOPERATE);
+                            LOG(LOG_INFO, "Sending request control");
                             this->rdp_layer.send_control(in_stream, RDP_CTL_REQUEST_CONTROL);
+                            LOG(LOG_INFO, "Sending input synchronize");
                             this->rdp_layer.send_input(in_stream, 0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
+                            LOG(LOG_INFO, "Sending font List");
                             /* Including RDP 5.0 capabilities */
                             if (this->use_rdp5 != 0){
                                 this->rdp_layer.enum_bmpcache2();
