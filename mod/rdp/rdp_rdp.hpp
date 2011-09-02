@@ -610,7 +610,8 @@ struct rdp_rdp {
 
         void process_disconnect_pdu(Stream & stream)
         {
-            LOG(LOG_INFO, "process disconnect pdu\n");
+            uint32_t errorInfo = stream.in_uint32_le();
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x\n", errorInfo);
         }
 
         void process_general_caps(Stream & stream, int & use_rdp5)
@@ -1128,13 +1129,14 @@ struct rdp_rdp {
         {
 //            LOG(LOG_INFO, "process_data_pdu\n");
 
-            stream.skip_uint8(6); /* shareid, pad, Streamid */
-            int len = stream.in_uint16_le();
-            int data_pdu_type = stream.in_uint8();
-            int ctype = stream.in_uint8();
-            int clen = stream.in_uint16_le();
-            clen -= 18;
-            switch (data_pdu_type) {
+            uint32_t shareid = stream.in_uint32_le();
+            uint8_t pad1 = stream.in_uint8();
+            uint8_t streamid = stream.in_uint8();
+            uint16_t len = stream.in_uint16_le();
+            uint8_t pdutype2 = stream.in_uint8();
+            uint8_t compressedType = stream.in_uint8();
+            uint8_t compressedLen = stream.in_uint16_le();
+            switch (pdutype2) {
             case PDUTYPE2_UPDATE:
                 this->process_update_pdu(stream, mod);
                 break;
@@ -1434,7 +1436,6 @@ struct rdp_rdp {
 
     void process_update_pdu(Stream & stream, client_mod * mod)
     {
-//        LOG(LOG_INFO, "process_update_pdu\n");
     // MS-RDPBCGR: 1.3.6
     // -----------------
     // The most fundamental output that a server can send to a connected client
