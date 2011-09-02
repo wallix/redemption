@@ -251,6 +251,24 @@ class ShareControlOut
     }
 };
 
+class ShareControlIn
+{
+    public:
+    uint16_t len;
+    uint8_t pdu_type1;
+    uint32_t mcs_channel;
+    ShareControlIn(Stream & stream)
+    {
+        this->len = stream.in_uint16_le();
+        this->mcs_channel = stream.in_uint32_le();
+        this->pdu_type1 = stream.in_uint8();
+    }
+
+    void end(){
+        #warning put some assertion here to ensure all data has been consumed
+    }
+};
+
 class ShareDataOut
 {
     Stream & stream;
@@ -273,6 +291,29 @@ class ShareDataOut
         stream.set_out_uint16_le(len, this->offlen + 6);
     }
 };
+
+class ShareDataIn
+{
+    public:
+    uint32_t share_id;
+    uint8_t pdu_type2;
+    uint16_t len;
+
+    ShareDataIn(Stream & stream)
+    {
+        this->share_id = stream.in_uint32_le();
+        stream.in_uint8();
+        stream.in_uint8();
+        this->pdu_type2 = stream.in_uint8();
+        stream.in_uint8();
+        this->len = stream.in_uint16_le();
+    }
+
+    void end(){
+        #warning put some assertion here to ensure all data has been consumed
+    }
+};
+
 
 class McsOut
 {
@@ -316,6 +357,13 @@ class McsIn
             this->len = ((this->len & 0x7F) << 8) + stream.in_uint8();
         }
     }
+
+    void end(){
+        #warning put some assertion here to ensure all data has been consumed
+    }
+
 };
+
+
 
 #endif

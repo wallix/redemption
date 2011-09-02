@@ -2325,7 +2325,7 @@ class SecIn
 {
     public:
     uint32_t flags;
-    SecIn(Stream & stream, uint8_t crypt_level, CryptContext & crypt)
+    SecIn(Stream & stream, CryptContext & crypt)
     {
         this->flags = stream.in_uint32_le();
         if (this->flags & SEC_ENCRYPT){
