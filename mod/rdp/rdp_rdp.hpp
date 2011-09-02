@@ -1104,13 +1104,15 @@ struct rdp_rdp {
                     len = stream.in_uint16_le();
                     if (len == 0x8000) {
                         stream.next_packet += 8;
-                        return 0;
+                        res = 0;
                     }
-                    pdu_type = stream.in_uint16_le();
-                    stream.skip_uint8(2);
-                    stream.next_packet += len;
-                    this->chan_id = chan;
-                    res = pdu_type & 0xf;
+                    else {
+                        pdu_type = stream.in_uint16_le();
+                        stream.skip_uint8(2);
+                        stream.next_packet += len;
+                        this->chan_id = chan;
+                        res = pdu_type & 0xf;
+                    }
                 }
             }
             else {
@@ -1118,13 +1120,15 @@ struct rdp_rdp {
                 len = stream.in_uint16_le();
                 if (len == 0x8000) {
                     stream.next_packet += 8;
-                    return 0;
+                    res = 0;
                 }
-                pdu_type = stream.in_uint16_le();
-                stream.skip_uint8(2);
-                stream.next_packet += len;
-                this->chan_id = chan;
-                res = pdu_type & 0xf;
+                else {
+                    pdu_type = stream.in_uint16_le();
+                    stream.skip_uint8(2);
+                    stream.next_packet += len;
+                    this->chan_id = chan;
+                    res = pdu_type & 0xf;
+                }
             }
             return res;
         }
