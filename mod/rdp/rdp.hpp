@@ -463,13 +463,11 @@ struct mod_rdp : public client_mod {
             int type;
             int cont;
 
-            Stream in_stream(65536);
-            Stream out_stream(65536);
+            Stream stream(65536);
             try{
                 cont = 1;
                 while (cont) {
                     {
-                        Stream & stream = in_stream;
                         int len;
                         int pdu_type;
                         int version;
@@ -624,22 +622,22 @@ struct mod_rdp : public client_mod {
                         break;
                         case WAITING_SYNCHRONIZE:
                             LOG(LOG_INFO, "Receiving Synchronize");
-//                            type = this->rdp_layer.recv(in_stream, mod); /* RDP_PDU_SYNCHRONIZE */
+//                            type = this->rdp_layer.recv(stream, mod); /* RDP_PDU_SYNCHRONIZE */
                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
                         break;
                         case WAITING_CTL_COOPERATE:
                             LOG(LOG_INFO, "Receiving Control Cooperate");
-//                            type = this->rdp_layer.recv(in_stream, mod); /* RDP_CTL_COOPERATE */
+//                            type = this->rdp_layer.recv(stream, mod); /* RDP_CTL_COOPERATE */
                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                         break;
                         case WAITING_GRANT_CONTROL_COOPERATE:
                             LOG(LOG_INFO, "Receiving Granted Control");
-//                            type = this->rdp_layer.recv(in_stream, mod); /* RDP_CTL_GRANT_CONTROL */
+//                            type = this->rdp_layer.recv(stream, mod); /* RDP_CTL_GRANT_CONTROL */
                             this->connection_finalization_state = WAITING_FONT_MAP;
                         break;
                         case WAITING_FONT_MAP:
                             LOG(LOG_INFO, "Receiving Font Map");
-//                            type = this->rdp_layer.recv(in_stream, mod); /* RDP_PDU_UNKNOWN 0x28 (Fonts?) */
+//                            type = this->rdp_layer.recv(stream, mod); /* RDP_PDU_UNKNOWN 0x28 (Fonts?) */
                             this->rdp_layer.orders.rdp_orders_reset_state();
                             LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->rdp_layer.bpp);
                             this->mod_bpp = this->rdp_layer.bpp;
@@ -647,7 +645,7 @@ struct mod_rdp : public client_mod {
                             this->connection_finalization_state = UP_AND_RUNNING;
                         break;
                         case UP_AND_RUNNING:
-                            this->rdp_layer.process_data_pdu(in_stream, this);
+                            this->rdp_layer.process_data_pdu(stream, this);
                         break;
                         }
                         break;
@@ -658,30 +656,30 @@ struct mod_rdp : public client_mod {
                             int len_src_descriptor;
                             int len_combined_caps;
 
-                            this->rdp_layer.share_id = in_stream.in_uint32_le();
-                            len_src_descriptor = in_stream.in_uint16_le();
-                            len_combined_caps = in_stream.in_uint16_le();
-                            in_stream.skip_uint8(len_src_descriptor);
-                            this->rdp_layer.process_server_caps(in_stream, len_combined_caps, this->use_rdp5);
+                            this->rdp_layer.share_id = stream.in_uint32_le();
+                            len_src_descriptor = stream.in_uint16_le();
+                            len_combined_caps = stream.in_uint16_le();
+                            stream.skip_uint8(len_src_descriptor);
+                            this->rdp_layer.process_server_caps(stream, len_combined_caps, this->use_rdp5);
                             LOG(LOG_INFO, "Sending confirm active PDU");
-                            this->rdp_layer.send_confirm_active(in_stream, mod, this->use_rdp5);
+                            this->rdp_layer.send_confirm_active(stream, mod, this->use_rdp5);
                             LOG(LOG_INFO, "Sending synchronize");
-                            this->rdp_layer.send_synchronise(in_stream);
+                            this->rdp_layer.send_synchronise(stream);
                             LOG(LOG_INFO, "Sending control cooperate");
-                            this->rdp_layer.send_control(in_stream, RDP_CTL_COOPERATE);
+                            this->rdp_layer.send_control(stream, RDP_CTL_COOPERATE);
                             LOG(LOG_INFO, "Sending request control");
-                            this->rdp_layer.send_control(in_stream, RDP_CTL_REQUEST_CONTROL);
+                            this->rdp_layer.send_control(stream, RDP_CTL_REQUEST_CONTROL);
                             LOG(LOG_INFO, "Sending input synchronize");
-                            this->rdp_layer.send_input(in_stream, 0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
+                            this->rdp_layer.send_input(stream, 0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
                             LOG(LOG_INFO, "Sending font List");
                             /* Including RDP 5.0 capabilities */
                             if (this->use_rdp5 != 0){
                                 this->rdp_layer.enum_bmpcache2();
-                                this->rdp_layer.send_fonts(in_stream, 3);
+                                this->rdp_layer.send_fonts(stream, 3);
                             }
                             else{
-                                this->rdp_layer.send_fonts(in_stream, 1);
-                                this->rdp_layer.send_fonts(in_stream, 2);
+                                this->rdp_layer.send_fonts(stream, 1);
+                                this->rdp_layer.send_fonts(stream, 2);
                             }
                             this->connection_finalization_state = WAITING_SYNCHRONIZE;
                         }
@@ -697,7 +695,7 @@ struct mod_rdp : public client_mod {
                     default:
                         break;
                     }
-                    cont = in_stream.next_packet < in_stream.end;
+                    cont = stream.next_packet < stream.end;
                 }
             }
             catch(Error e){
