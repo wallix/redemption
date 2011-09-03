@@ -506,6 +506,7 @@ struct mod_rdp : public client_mod {
                         stream.p[3] = swapbyte3;
                     }
                 }
+
                 next_packet = stream.p;
                 if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL){
                     this->recv_virtual_channel(stream, mcs_in.chan_id);
@@ -533,22 +534,22 @@ struct mod_rdp : public client_mod {
                         break;
                         case WAITING_SYNCHRONIZE:
                             LOG(LOG_INFO, "Receiving Synchronize");
-//                            type = this->rdp_layer.recv(stream, mod); /* RDP_PDU_SYNCHRONIZE */
+//                            this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
                             this->connection_finalization_state = WAITING_CTL_COOPERATE;
                         break;
                         case WAITING_CTL_COOPERATE:
+//                            this->check_data_pdu(PDUTYPE2_CONTROL);
                             LOG(LOG_INFO, "Receiving Control Cooperate");
-//                            type = this->rdp_layer.recv(stream, mod); /* RDP_CTL_COOPERATE */
                             this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                         break;
                         case WAITING_GRANT_CONTROL_COOPERATE:
+//                            this->check_data_pdu(PDUTYPE2_CONTROL);
                             LOG(LOG_INFO, "Receiving Granted Control");
-//                            type = this->rdp_layer.recv(stream, mod); /* RDP_CTL_GRANT_CONTROL */
                             this->connection_finalization_state = WAITING_FONT_MAP;
                         break;
                         case WAITING_FONT_MAP:
                             LOG(LOG_INFO, "Receiving Font Map");
-//                            type = this->rdp_layer.recv(stream, mod); /* RDP_PDU_UNKNOWN 0x28 (Fonts?) */
+//                            this->check_data_pdu(PDUTYPE2_FONTMAP);
                             this->rdp_layer.orders.rdp_orders_reset_state();
                             LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->rdp_layer.bpp);
                             this->mod_bpp = this->rdp_layer.bpp;
@@ -556,7 +557,38 @@ struct mod_rdp : public client_mod {
                             this->connection_finalization_state = UP_AND_RUNNING;
                         break;
                         case UP_AND_RUNNING:
-                            this->rdp_layer.process_data_pdu(stream, this);
+                        {
+                            uint32_t shareid = stream.in_uint32_le();
+                            uint8_t pad1 = stream.in_uint8();
+                            uint8_t streamid = stream.in_uint8();
+                            uint16_t len = stream.in_uint16_le();
+                            uint8_t pdutype2 = stream.in_uint8();
+                            uint8_t compressedType = stream.in_uint8();
+                            uint8_t compressedLen = stream.in_uint16_le();
+                            switch (pdutype2) {
+                            case PDUTYPE2_UPDATE:
+                                this->rdp_layer.process_update_pdu(stream, this);
+                                break;
+                            case PDUTYPE2_CONTROL:
+                                break;
+                            case PDUTYPE2_SYNCHRONIZE:
+                                break;
+                            case PDUTYPE2_POINTER:
+                                this->rdp_layer.process_pointer_pdu(stream, this);
+                                break;
+                            case PDUTYPE2_PLAY_SOUND:
+                                break;
+                            case PDUTYPE2_SAVE_SESSION_INFO:
+                //                LOG(LOG_INFO, "DATA PDU LOGON\n");
+                                break;
+                            case PDUTYPE2_SET_ERROR_INFO_PDU:
+                //                LOG(LOG_INFO, "DATA PDU DISCONNECT\n");
+                                this->rdp_layer.process_disconnect_pdu(stream);
+                                break;
+                            default:
+                                break;
+                            }
+                        }
                         break;
                         }
                         break;
