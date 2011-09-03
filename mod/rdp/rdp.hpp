@@ -459,8 +459,6 @@ struct mod_rdp : public client_mod {
         case MOD_RDP_CONNECTED:
         {
             int pdu_type;
-            int cont;
-            int chan = 0;
 
             Stream stream(65536);
             try{
@@ -474,9 +472,6 @@ struct mod_rdp : public client_mod {
                     LOG(LOG_INFO, "ERR_MCS_RECV_ID_NOT_MCS_SDIN");
                     throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
                 }
-                chan = mcs_in.chan_id;
-                int len = mcs_in.len;
-
                 sec_flags = stream.in_uint32_le();
 
                 if (sec_flags & SEC_LICENCE_NEG) { /* 0x80 */
@@ -529,7 +524,7 @@ struct mod_rdp : public client_mod {
                             pdu_type = stream.in_uint16_le();
                             stream.skip_uint8(2);
                             next_packet += len;
-                            this->rdp_layer.chan_id = chan;
+                            this->rdp_layer.chan_id = mcs_in.chan_id;
                         }
                     }
                     switch (pdu_type & 0xF) {
