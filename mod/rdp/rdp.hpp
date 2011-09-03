@@ -469,21 +469,16 @@ struct mod_rdp : public client_mod {
                 X224In(this->trans, stream);
                 McsIn mcs_in(stream);
                 if ((mcs_in.opcode >> 2) != MCS_SDIN) {
-                    LOG(LOG_INFO, "ERR_MCS_RECV_ID_NOT_MCS_SDIN");
+                    LOG(LOG_INFO, "Error: MCS_SDIN TPDU expected");
                     throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
                 }
-                sec_flags = stream.in_uint32_le();
-
-                if (sec_flags & SEC_LICENCE_NEG) { /* 0x80 */
+                SecIn sec(stream, this->rdp_layer.sec_layer.decrypt);
+                if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
+                    LOG(LOG_INFO, "Error: unexpected licence negotiation sec packet");
                     throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
                 }
 
-                if (sec_flags & SEC_ENCRYPT) {
-                    stream.skip_uint8(8); /* signature */
-                    this->rdp_layer.sec_layer.decrypt.decrypt(stream.p, stream.end - stream.p);
-                }
-
-                if (sec_flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
+                if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
                     /* Check for a redirect packet, starts with 00 04 */
                     if (stream.p[0] == 0 && stream.p[1] == 4){
                     /* for some reason the PDU and the length seem to be swapped.
