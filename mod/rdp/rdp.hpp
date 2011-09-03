@@ -460,6 +460,7 @@ struct mod_rdp : public client_mod {
         {
             int type;
             int cont;
+            int chan = 0;
 
             Stream stream(65536);
             try{
@@ -468,14 +469,9 @@ struct mod_rdp : public client_mod {
                     {
                         int len;
                         int pdu_type;
-                        int version;
 
-                        int chan = 0;
                         if (stream.next_packet >= stream.end || stream.next_packet == 0) {
                             uint32_t sec_flags = 0;
-                            #warning this loop is ugly, the only true reason is we are waiting for the licence
-                            version = 3;
-                            stream.init(65535);
                             // read tpktHeader (4 bytes = 3 0 len)
                             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
                             X224In(this->trans, stream);
@@ -521,8 +517,8 @@ struct mod_rdp : public client_mod {
                                     stream.p[3] = swapbyte3;
                                 }
                             }
-                            if (chan != MCS_GLOBAL_CHANNEL){
-                                this->recv_virtual_channel(stream, chan);
+                            if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL){
+                                this->recv_virtual_channel(stream, mcs_in.chan_id);
                                 stream.next_packet = stream.end;
                                 type = 0;
                             }
@@ -537,7 +533,7 @@ struct mod_rdp : public client_mod {
                                     pdu_type = stream.in_uint16_le();
                                     stream.skip_uint8(2);
                                     stream.next_packet += len;
-                                    this->rdp_layer.chan_id = chan;
+                                    this->rdp_layer.chan_id = mcs_in.chan_id;
                                     type = pdu_type & 0xf;
                                 }
                             }
