@@ -466,68 +466,67 @@ struct mod_rdp : public client_mod {
             try{
                 uint8_t * next_packet = 0;
                 while (next_packet < stream.end) {
+                    int pdu_type;
+
+                    if (next_packet == 0) {
+                        uint32_t sec_flags = 0;
+                        // read tpktHeader (4 bytes = 3 0 len)
+                        // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+                        X224In(this->trans, stream);
+                        McsIn mcs_in(stream);
+                        if ((mcs_in.opcode >> 2) != MCS_SDIN) {
+                            LOG(LOG_INFO, "ERR_MCS_RECV_ID_NOT_MCS_SDIN");
+                            throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
+                        }
+                        chan = mcs_in.chan_id;
+                        int len = mcs_in.len;
+
+                        sec_flags = stream.in_uint32_le();
+
+                        if (sec_flags & SEC_LICENCE_NEG) { /* 0x80 */
+                            throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
+                        }
+
+                        if (sec_flags & SEC_ENCRYPT) {
+                            stream.skip_uint8(8); /* signature */
+                            this->rdp_layer.sec_layer.decrypt.decrypt(stream.p, stream.end - stream.p);
+                        }
+
+                        if (sec_flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
+                            /* Check for a redirect packet, starts with 00 04 */
+                            if (stream.p[0] == 0 && stream.p[1] == 4){
+                            /* for some reason the PDU and the length seem to be swapped.
+                               This isn't good, but we're going to do a byte for byte
+                               swap.  So the first four value appear as: 00 04 XX YY,
+                               where XX YY is the little endian length. We're going to
+                               use 04 00 as the PDU type, so after our swap this will look
+                               like: XX YY 04 00 */
+
+                                uint8_t swapbyte1 = stream.p[0];
+                                stream.p[0] = stream.p[2];
+                                stream.p[2] = swapbyte1;
+
+                                uint8_t swapbyte2 = stream.p[1];
+                                stream.p[1] = stream.p[3];
+                                stream.p[3] = swapbyte2;
+
+                                uint8_t swapbyte3 = stream.p[2];
+                                stream.p[2] = stream.p[3];
+                                stream.p[3] = swapbyte3;
+                            }
+                        }
+                        if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL){
+                            this->recv_virtual_channel(stream, mcs_in.chan_id);
+                            break;
+                        }
+                        next_packet = stream.p;
+                    }
+                    else {
+                        stream.p = next_packet;
+                    }
+                    
                     {
-                        int len;
-                        int pdu_type;
-
-                        if (next_packet == 0) {
-                            uint32_t sec_flags = 0;
-                            // read tpktHeader (4 bytes = 3 0 len)
-                            // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-                            X224In(this->trans, stream);
-                            McsIn mcs_in(stream);
-                            if ((mcs_in.opcode >> 2) != MCS_SDIN) {
-                                LOG(LOG_INFO, "ERR_MCS_RECV_ID_NOT_MCS_SDIN");
-                                throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
-                            }
-                            chan = mcs_in.chan_id;
-                            int len = mcs_in.len;
-
-                            sec_flags = stream.in_uint32_le();
-
-                            if (sec_flags & SEC_LICENCE_NEG) { /* 0x80 */
-                                throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
-                            }
-
-                            if (sec_flags & SEC_ENCRYPT) {
-                                stream.skip_uint8(8); /* signature */
-                                this->rdp_layer.sec_layer.decrypt.decrypt(stream.p, stream.end - stream.p);
-                            }
-
-                            if (sec_flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
-                                /* Check for a redirect packet, starts with 00 04 */
-                                if (stream.p[0] == 0 && stream.p[1] == 4){
-                                /* for some reason the PDU and the length seem to be swapped.
-                                   This isn't good, but we're going to do a byte for byte
-                                   swap.  So the first four value appear as: 00 04 XX YY,
-                                   where XX YY is the little endian length. We're going to
-                                   use 04 00 as the PDU type, so after our swap this will look
-                                   like: XX YY 04 00 */
-
-                                    uint8_t swapbyte1 = stream.p[0];
-                                    stream.p[0] = stream.p[2];
-                                    stream.p[2] = swapbyte1;
-
-                                    uint8_t swapbyte2 = stream.p[1];
-                                    stream.p[1] = stream.p[3];
-                                    stream.p[3] = swapbyte2;
-
-                                    uint8_t swapbyte3 = stream.p[2];
-                                    stream.p[2] = stream.p[3];
-                                    stream.p[3] = swapbyte3;
-                                }
-                            }
-                            if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL){
-                                this->recv_virtual_channel(stream, mcs_in.chan_id);
-                                break;
-                            }
-                            next_packet = stream.p;
-                        }
-                        else {
-                            stream.p = next_packet;
-                        }
-
-                        len = stream.in_uint16_le();
+                        int len = stream.in_uint16_le();
                         if (len == 0x8000) {
                             next_packet += 8;
                             type = 0;
@@ -540,7 +539,6 @@ struct mod_rdp : public client_mod {
                             type = pdu_type & 0xf;
                         }
                     }
-
                     switch (type) {
                     case PDUTYPE_DATAPDU:
                         switch (this->connection_finalization_state){
