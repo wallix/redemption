@@ -519,39 +519,25 @@ struct mod_rdp : public client_mod {
                             }
                             if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL){
                                 this->recv_virtual_channel(stream, mcs_in.chan_id);
-                                next_packet = stream.end;
-                                type = 0;
+                                break;
                             }
-                            else {
-                                next_packet = stream.p;
-                                len = stream.in_uint16_le();
-                                if (len == 0x8000) {
-                                    next_packet += 8;
-                                    type = 0;
-                                }
-                                else {
-                                    pdu_type = stream.in_uint16_le();
-                                    stream.skip_uint8(2);
-                                    next_packet += len;
-                                    this->rdp_layer.chan_id = mcs_in.chan_id;
-                                    type = pdu_type & 0xf;
-                                }
-                            }
+                            next_packet = stream.p;
                         }
                         else {
                             stream.p = next_packet;
-                            len = stream.in_uint16_le();
-                            if (len == 0x8000) {
-                                next_packet += 8;
-                                type = 0;
-                            }
-                            else {
-                                pdu_type = stream.in_uint16_le();
-                                stream.skip_uint8(2);
-                                next_packet += len;
-                                this->rdp_layer.chan_id = chan;
-                                type = pdu_type & 0xf;
-                            }
+                        }
+
+                        len = stream.in_uint16_le();
+                        if (len == 0x8000) {
+                            next_packet += 8;
+                            type = 0;
+                        }
+                        else {
+                            pdu_type = stream.in_uint16_le();
+                            stream.skip_uint8(2);
+                            next_packet += len;
+                            this->rdp_layer.chan_id = chan;
+                            type = pdu_type & 0xf;
                         }
                     }
 
