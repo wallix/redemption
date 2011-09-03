@@ -460,13 +460,10 @@ struct server_rdp {
                 input_stream.skip_uint8(1);
             }
 
-            const uint32_t flags = input_stream.in_uint32_le();
-            if (flags & SEC_ENCRYPT) { /* 0x08 */
-                input_stream.skip_uint8(8); /* signature */
-                this->sec_layer.decrypt.decrypt(input_stream.p, (int)(input_stream.end - input_stream.p));
-            }
+            SecIn sec(input_stream, this->sec_layer.decrypt);
 
-            if (flags & SEC_CLIENT_RANDOM) { /* 0x01 */
+            #warning this should move to SecIn
+            if (sec.flags & SEC_CLIENT_RANDOM) { /* 0x01 */
                 input_stream.in_uint32_le(); // len
 
                 memcpy(this->sec_layer.client_crypt_random, input_stream.in_uint8p(64), 64);
@@ -514,7 +511,7 @@ struct server_rdp {
                     continue;
                 }
             }
-            else if (flags & SEC_LOGON_INFO) { /* 0x40 */
+            else if (sec.flags & SEC_LOGON_INFO) { /* 0x40 */
                 this->sec_layer.server_sec_process_logon_info(input_stream, &this->client_info);
                 if (this->client_info.is_mce) {
 //                    LOG(LOG_INFO, "server_sec_send media_lic_response");
@@ -534,7 +531,7 @@ struct server_rdp {
                     }
                 }
             }
-            else if (flags & SEC_LICENCE_NEG) { /* 0x80 */
+            else if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
 //                LOG(LOG_INFO, "server_sec_send lic_response");
                 this->sec_layer.server_sec_send_lic_response(this->trans, this->userid);
                 this->server_rdp_send_demand_active();
