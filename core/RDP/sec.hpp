@@ -2443,9 +2443,15 @@ class SecIn
         if (this->flags & SEC_ENCRYPT){
             #warning shouldn't we check signature ?
             stream.skip_uint8(8); /* signature */
-            crypt.decrypt(stream.p, stream.end - stream.p); // decrypting to the end of tpdu ?
+            // decrypting to the end of tpdu
+            crypt.decrypt(stream.p, stream.end - stream.p);
         }
     }
+
+    void end(){
+        #warning put some assertion here to ensure all data has been consumed
+    }
+
 };
 
 #endif
