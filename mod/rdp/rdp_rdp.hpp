@@ -39,7 +39,6 @@ struct rdp_rdp {
     int bitmap_cache;
     int desktop_save;
     int polygon_ellipse_orders;
-    int chan_id;
     int version;
     int userid;
 
