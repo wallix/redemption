@@ -524,7 +524,6 @@ struct mod_rdp : public client_mod {
                             pdu_type = stream.in_uint16_le();
                             stream.skip_uint8(2);
                             next_packet += len;
-                            this->rdp_layer.chan_id = mcs_in.chan_id;
                         }
                     }
                     switch (pdu_type & 0xF) {
