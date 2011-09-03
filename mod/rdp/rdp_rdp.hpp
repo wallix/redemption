@@ -866,46 +866,6 @@ struct rdp_rdp {
             tpdu.send(this->trans);
         }
 
-
-
-        void process_data_pdu(Stream & stream, client_mod * mod)
-        {
-//            LOG(LOG_INFO, "process_data_pdu\n");
-
-            uint32_t shareid = stream.in_uint32_le();
-            uint8_t pad1 = stream.in_uint8();
-            uint8_t streamid = stream.in_uint8();
-            uint16_t len = stream.in_uint16_le();
-            uint8_t pdutype2 = stream.in_uint8();
-            uint8_t compressedType = stream.in_uint8();
-            uint8_t compressedLen = stream.in_uint16_le();
-            switch (pdutype2) {
-            case PDUTYPE2_UPDATE:
-                this->process_update_pdu(stream, mod);
-                break;
-            case PDUTYPE2_CONTROL:
-                break;
-            case PDUTYPE2_SYNCHRONIZE:
-                break;
-            case PDUTYPE2_POINTER:
-                this->process_pointer_pdu(stream, mod);
-                break;
-            case PDUTYPE2_PLAY_SOUND:
-                break;
-            case PDUTYPE2_SAVE_SESSION_INFO:
-//                LOG(LOG_INFO, "DATA PDU LOGON\n");
-                break;
-            case PDUTYPE2_SET_ERROR_INFO_PDU:
-//                LOG(LOG_INFO, "DATA PDU DISCONNECT\n");
-                this->process_disconnect_pdu(stream);
-                break;
-            default:
-                break;
-            }
-        }
-
-
-
         #warning this function connects front-end channels given in channel_list with back_end channels in this->sec_layer.channel_list. This kind of things should be done through client_mod API (as it is done for color conversion). Change that by performing a call to some client_mod function.
         void send_redirect_pdu(long param1, long param2, long param3, int param4,
                                       vector<mcs_channel_item*> channel_list) throw(Error)
