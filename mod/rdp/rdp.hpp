@@ -245,13 +245,13 @@ struct mod_rdp : public client_mod {
             //    |------------X224 Connection Request PDU----------------> |
             //    | <----------X224 Connection Confirm PDU----------------- |
 
-            this->x224_connection_request_pdu(trans);
+            this->send_x224_connection_request_pdu(trans);
             this->state = MOD_RDP_CONNECTION_INITIATION;
         break;
 
         case MOD_RDP_CONNECTION_INITIATION:
 
-            this->x224_connection_confirm_pdu(this->trans);
+            this->recv_x224_connection_confirm_pdu(this->trans);
 
             // Basic Settings Exchange
             // -----------------------
@@ -764,7 +764,7 @@ struct mod_rdp : public client_mod {
     // structure. The length of this negotiation structure is included in the X.224
     // Connection Request Length Indicator field.
 
-    void x224_connection_request_pdu(Transport * trans)
+    void send_x224_connection_request_pdu(Transport * trans)
     {
         Stream out;
         X224Out crtpdu(X224Packet::CR_TPDU, out);
@@ -790,7 +790,7 @@ struct mod_rdp : public client_mod {
     // structure. The length of the negotiation structure is included in the X.224
     // Connection Confirm Length Indicator field.
 
-    void x224_connection_confirm_pdu(Transport * trans)
+    void recv_x224_connection_confirm_pdu(Transport * trans)
     {
         Stream in;
         X224In cctpdu(trans, in);
