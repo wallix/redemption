@@ -610,103 +610,14 @@ struct server_rdp {
         //    |-------MCS Channel Join Request PDU--------------------> |
         //    | <-----MCS Channel Join Confirm PDU--------------------- |
 
-
-        //   2.2.1.5 Client MCS Erect Domain Request PDU
-        //   -------------------------------------------
-        //   The MCS Erect Domain Request PDU is an RDP Connection Sequence PDU sent
-        //   from client to server during the Channel Connection phase (see section
-        //   1.3.1.1). It is sent after receiving the MCS Connect Response PDU (section
-        //   2.2.1.4).
-
-        //   tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-        //   x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
-        //      section 13.7.
-
-        // See description of tpktHeader and x224 Data TPDU in cheat sheet
-
-        //   mcsEDrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an MCS
-        //      Erect Domain Request structure, as specified in [T125] (the ASN.1
-        //      structure definitions are given in [T125] section 7, parts 3 and 10).
-
         {
-            Stream stream(8192);
-            X224In(this->trans, stream);
-            uint8_t opcode = stream.in_uint8();
-            if ((opcode >> 2) != MCS_EDRQ) {
-                throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
-            }
-            stream.skip_uint8(2);
-            stream.skip_uint8(2);
-            if (opcode & 2) {
-                this->userid = stream.in_uint16_be();
-            }
-            if (!stream.check_end()) {
-                throw Error(ERR_MCS_RECV_EDQR_TRUNCATED);
-            }
+            #warning change userid to uint16_t
+            uint16_t tmp_userid;
+            recv_mcs_erect_domain_and_attach_user_request_pdu(this->trans, tmp_userid);
+            this->userid = tmp_userid;
         }
 
-
-        // 2.2.1.6 Client MCS Attach User Request PDU
-        // ------------------------------------------
-        // The MCS Attach User Request PDU is an RDP Connection Sequence PDU
-        // sent from client to server during the Channel Connection phase (see
-        // section 1.3.1.1) to request a user channel ID. It is sent after
-        // transmitting the MCS Erect Domain Request PDU (section 2.2.1.5).
-
-        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-        // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
-        //   [X224] section 13.7.
-
-        // See description of tpktHeader and x224 Data TPDU in cheat sheet
-
-        // mcsAUrq (1 byte): PER-encoded MCS Domain PDU which encapsulates an
-        //  MCS Attach User Request structure, as specified in [T125] (the ASN.1
-        //  structure definitions are given in [T125] section 7, parts 5 and 10).
-
-        {
-            Stream stream(8192);
-            X224In(this->trans, stream);
-            uint8_t opcode = stream.in_uint8();
-            if ((opcode >> 2) != MCS_AURQ) {
-                throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
-            }
-            if (opcode & 2) {
-                this->userid = stream.in_uint16_be();
-            }
-            if (!stream.check_end()) {
-                throw Error(ERR_MCS_RECV_AURQ_TRUNCATED);
-            }
-        }
-
-        // 2.2.1.7 Server MCS Attach User Confirm PDU
-        // ------------------------------------------
-        // The MCS Attach User Confirm PDU is an RDP Connection Sequence
-        // PDU sent from server to client during the Channel Connection
-        // phase (see section 1.3.1.1). It is sent as a response to the MCS
-        // Attach User Request PDU (section 2.2.1.6).
-
-        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
-        //   section 8.
-
-        // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
-        //   section [X224] 13.7.
-
-        // mcsAUcf (4 bytes): PER-encoded MCS Domain PDU which encapsulates
-        //   an MCS Attach User Confirm structure, as specified in [T125]
-        //   (the ASN.1 structure definitions are given in [T125] section 7,
-        // parts 5 and 10).
-
-        {
-            Stream stream(8192);
-            X224Out tpdu(X224Packet::DT_TPDU, stream);
-            stream.out_uint8(((MCS_AUCF << 2) | 2));
-            stream.out_uint8(0);
-            stream.out_uint16_be(this->userid);
-            tpdu.end();
-            tpdu.send(this->trans);
-        }
+        send_mcs_attach_user_confirm_pdu(this->trans, this->userid);
 
         {
             uint16_t tmp_userid;
