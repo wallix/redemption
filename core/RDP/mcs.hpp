@@ -18,13 +18,12 @@
    Author(s): Christophe Grosjean, Javier Caverni
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
-   X224 class 0 packets management, complies with
-   RFC 1006, ISO transport services on top of the TCP
+   MCS Channel Management, complies with T.125
 
 */
 
-#if !defined(__MCS_HPP__)
-#define __MCS_HPP__
+#if !defined(__CORE_RDP_MCS_HPP__)
+#define __CORE_RDP_MCS_HPP__
 
 #include "RDP/x224.hpp"
 
@@ -144,6 +143,8 @@ class McsIn
 //   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
 //   2.2.1.2.1.
 
+#warning create McsConnectionInitialIn and McsConnectionInitialOut classes instead of recv_ and send_ functions below (it would also much simplify length management)
+
 inline static void recv_connection_initial(Transport * trans, Stream & data)
 {
     Stream stream(8192);
@@ -198,6 +199,68 @@ inline static void recv_connection_initial(Transport * trans, Stream & data)
     data.out_copy_bytes(stream.p, len);
     data.mark_end();
     stream.skip_uint8(len);
+}
+
+inline static void send_connection_initial(Transport * trans, Stream & data)
+{
+    int data_len = data.end - data.data;
+    int len = 7 + 3 * 34 + 4 + data_len;
+
+    Stream ci_stream(8192);
+    X224Out ci_tpdu(X224Packet::DT_TPDU, ci_stream);
+
+    ci_stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
+    ci_stream.out_ber_len(len);
+    ci_stream.out_uint8(BER_TAG_OCTET_STRING);
+    ci_stream.out_ber_len(0); /* calling domain */
+    ci_stream.out_uint8(BER_TAG_OCTET_STRING);
+    ci_stream.out_ber_len(0); /* called domain */
+    ci_stream.out_uint8(BER_TAG_BOOLEAN);
+    ci_stream.out_ber_len(1);
+    ci_stream.out_uint8(0xff); /* upward flag */
+
+    // target params
+    ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+    ci_stream.out_ber_len(32);
+    ci_stream.out_ber_int16(34);     // max_channels
+    ci_stream.out_ber_int16(2);      // max_users
+    ci_stream.out_ber_int16(0);      // max_tokens
+    ci_stream.out_ber_int16(1);
+    ci_stream.out_ber_int16(0);
+    ci_stream.out_ber_int16(1);
+    ci_stream.out_ber_int16(0xffff); // max_pdu_size
+    ci_stream.out_ber_int16(2);
+
+    // min params
+    ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+    ci_stream.out_ber_len(32);
+    ci_stream.out_ber_int16(1);     // max_channels
+    ci_stream.out_ber_int16(1);     // max_users
+    ci_stream.out_ber_int16(1);     // max_tokens
+    ci_stream.out_ber_int16(1);
+    ci_stream.out_ber_int16(0);
+    ci_stream.out_ber_int16(1);
+    ci_stream.out_ber_int16(0x420); // max_pdu_size
+    ci_stream.out_ber_int16(2);
+
+    // max params
+    ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+    ci_stream.out_ber_len(32);
+    ci_stream.out_ber_int16(0xffff); // max_channels
+    ci_stream.out_ber_int16(0xfc17); // max_users
+    ci_stream.out_ber_int16(0xffff); // max_tokens
+    ci_stream.out_ber_int16(1);
+    ci_stream.out_ber_int16(0);
+    ci_stream.out_ber_int16(1);
+    ci_stream.out_ber_int16(0xffff); // max_pdu_size
+    ci_stream.out_ber_int16(2);
+
+    ci_stream.out_uint8(BER_TAG_OCTET_STRING);
+    ci_stream.out_ber_len(data_len);
+    ci_stream.out_copy_bytes(data.data, data_len);
+
+    ci_tpdu.end();
+    ci_tpdu.send(trans);
 }
 
 // 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
