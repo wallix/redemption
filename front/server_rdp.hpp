@@ -42,7 +42,6 @@ struct server_rdp {
     struct ClientInfo client_info;
     struct Sec sec_layer;
     uint32_t packet_number;
-    Stream client_mcs_data;
     Transport * trans;
     int userid;
 

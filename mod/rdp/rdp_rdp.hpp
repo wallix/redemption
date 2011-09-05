@@ -52,7 +52,6 @@ struct rdp_rdp {
     bool console_session;
     int bpp;
     Transport * trans;
-    Stream client_mcs_data;
 
     struct rdp_cursor cursors[32];
     rdp_rdp(struct mod_rdp* owner, Transport *trans, const char * username, const char * password, const char * hostname, vector<mcs_channel_item*> channel_list, int rdp_performance_flags, int width, int height, int bpp, int keylayout, bool console_session)
