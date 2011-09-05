@@ -646,8 +646,206 @@ struct server_rdp {
 
     }
 
+
+    // Basic Settings Exchange
+    // -----------------------
+
+    // Basic Settings Exchange: Basic settings are exchanged between the client and
+    // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
+    // Connect Initial PDU contains a GCC Conference Create Request, while the
+    // Connect Response PDU contains a GCC Conference Create Response.
+
+    // These two Generic Conference Control (GCC) packets contain concatenated
+    // blocks of settings data (such as core data, security data and network data)
+    // which are read by client and server
+
+
+    // Client                                                     Server
+    //    |--------------MCS Connect Initial PDU with-------------> |
+    //                   GCC Conference Create Request
+    //    | <------------MCS Connect Response PDU with------------- |
+    //                   GCC conference Create Response
+
+    // Channel Connection
+    // ------------------
+
+    // Channel Connection: The client sends an MCS Erect Domain Request PDU,
+    // followed by an MCS Attach User Request PDU to attach the primary user
+    // identity to the MCS domain.
+
+    // The server responds with an MCS Attach User Response PDU containing the user
+    // channel ID.
+
+    // The client then proceeds to join the :
+    // - user channel,
+    // - the input/output (I/O) channel
+    // - and all of the static virtual channels
+
+    // (the I/O and static virtual channel IDs are obtained from the data embedded
+    //  in the GCC packets) by using multiple MCS Channel Join Request PDUs.
+
+    // The server confirms each channel with an MCS Channel Join Confirm PDU.
+    // (The client only sends a Channel Join Request after it has received the
+    // Channel Join Confirm for the previously sent request.)
+
+    // From this point, all subsequent data sent from the client to the server is
+    // wrapped in an MCS Send Data Request PDU, while data sent from the server to
+    //  the client is wrapped in an MCS Send Data Indication PDU. This is in
+    // addition to the data being wrapped by an X.224 Data PDU.
+
+    // Client                                                     Server
+    //    |-------MCS Erect Domain Request PDU--------------------> |
+    //    |-------MCS Attach User Request PDU---------------------> |
+
+    //    | <-----MCS Attach User Confirm PDU---------------------- |
+
+    //    |-------MCS Channel Join Request PDU--------------------> |
+    //    | <-----MCS Channel Join Confirm PDU--------------------- |
+
+
+    // RDP Security Commencement
+    // -------------------------
+
+    // RDP Security Commencement: If standard RDP security methods are being
+    // employed and encryption is in force (this is determined by examining the data
+    // embedded in the GCC Conference Create Response packet) then the client sends
+    // a Security Exchange PDU containing an encrypted 32-byte random number to the
+    // server. This random number is encrypted with the public key of the server
+    // (the server's public key, as well as a 32-byte server-generated random
+    // number, are both obtained from the data embedded in the GCC Conference Create
+    //  Response packet).
+
+    // The client and server then utilize the two 32-byte random numbers to generate
+    // session keys which are used to encrypt and validate the integrity of
+    // subsequent RDP traffic.
+
+    // From this point, all subsequent RDP traffic can be encrypted and a security
+    // header is included with the data if encryption is in force (the Client Info
+    // and licensing PDUs are an exception in that they always have a security
+    // header). The Security Header follows the X.224 and MCS Headers and indicates
+    // whether the attached data is encrypted.
+
+    // Even if encryption is in force server-to-client traffic may not always be
+    // encrypted, while client-to-server traffic will always be encrypted by
+    // Microsoft RDP implementations (encryption of licensing PDUs is optional,
+    // however).
+
+    // Client                                                     Server
+    //    |------Security Exchange PDU ---------------------------> |
+
+    // Secure Settings Exchange
+    // ------------------------
+
+    // Secure Settings Exchange: Secure client data (such as the username,
+    // password and auto-reconnect cookie) is sent to the server using the Client
+    // Info PDU.
+
+    // Client                                                     Server
+    //    |------ Client Info PDU      ---------------------------> |
+
+    // Licensing
+    // ---------
+
+    // Licensing: The goal of the licensing exchange is to transfer a
+    // license from the server to the client.
+
+    // The client should store this license and on subsequent
+    // connections send the license to the server for validation.
+    // However, in some situations the client may not be issued a
+    // license to store. In effect, the packets exchanged during this
+    // phase of the protocol depend on the licensing mechanisms
+    // employed by the server. Within the context of this document
+    // we will assume that the client will not be issued a license to
+    // store. For details regarding more advanced licensing scenarios
+    // that take place during the Licensing Phase, see [MS-RDPELE].
+
+    // Client                                                     Server
+    //    | <------ Licence Error PDU Valid Client ---------------- |
+
+    // Capabilities Exchange
+    // ---------------------
+
+    // Capabilities Negotiation: The server sends the set of capabilities it
+    // supports to the client in a Demand Active PDU. The client responds with its
+    // capabilities by sending a Confirm Active PDU.
+
+    // Client                                                     Server
+    //    | <------- Demand Active PDU ---------------------------- |
+    //    |--------- Confirm Active PDU --------------------------> |
+
+    // Connection Finalization
+    // -----------------------
+
+    // Connection Finalization: The client and server send PDUs to finalize the
+    // connection details. The client-to-server and server-to-client PDUs exchanged
+    // during this phase may be sent concurrently as long as the sequencing in
+    // either direction is maintained (there are no cross-dependencies between any
+    // of the client-to-server and server-to-client PDUs). After the client receives
+    // the Font Map PDU it can start sending mouse and keyboard input to the server,
+    // and upon receipt of the Font List PDU the server can start sending graphics
+    // output to the client.
+
+    // Client                                                     Server
+    //    |----------Synchronize PDU------------------------------> |
+    //    |----------Control PDU Cooperate------------------------> |
+    //    |----------Control PDU Request Control------------------> |
+    //    |----------Persistent Key List PDU(s)-------------------> |
+    //    |----------Font List PDU--------------------------------> |
+
+    //    | <--------Synchronize PDU------------------------------- |
+    //    | <--------Control PDU Cooperate------------------------- |
+    //    | <--------Control PDU Granted Control------------------- |
+    //    | <--------Font Map PDU---------------------------------- |
+
+    // All PDU's in the client-to-server direction must be sent in the specified
+    // order and all PDU's in the server to client direction must be sent in the
+    // specified order. However, there is no requirement that client to server PDU's
+    // be sent before server-to-client PDU's. PDU's may be sent concurrently as long
+    // as the sequencing in either direction is maintained.
+
+
+    // Besides input and graphics data, other data that can be exchanged between
+    // client and server after the connection has been finalized includes
+    // connection management information and virtual channel messages (exchanged
+    // between client-side plug-ins and server-side applications).
+
+
+    void recv_x224_connection_request_pdu(Transport * trans)
+    {
+        Stream in(8192);
+        X224In crtpdu(this->trans, in);
+        if (crtpdu.tpdu_hdr.code != ISO_PDU_CR) {
+            throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
+        }
+        crtpdu.end();
+    }
+
+
+    void send_x224_connection_confirm_pdu(Transport * trans)
+    {
+        Stream out(11);
+        X224Out cctpdu(X224Packet::CC_TPDU, out);
+        cctpdu.end();
+        cctpdu.send(this->trans);
+    }
+
     void server_rdp_incoming() throw (Error)
     {
+        // Connection Initiation
+        // ---------------------
+
+        // The client initiates the connection by sending the server an X.224 Connection
+        //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
+        // PDU (class 0). From this point, all subsequent data sent between client and
+        // server is wrapped in an X.224 Data Protocol Data Unit (PDU).
+
+        // Client                                                     Server
+        //    |------------X224 Connection Request PDU----------------> |
+        //    | <----------X224 Connection Confirm PDU----------------- |
+
+        this->recv_x224_connection_request_pdu(this->trans);
+        this->send_x224_connection_confirm_pdu(this->trans);
+
         Rsakeys rsa_keys(CFG_PATH "/" RSAKEYS_INI);
 
         memset(this->sec_layer.server_random, 0x44, 32);
@@ -665,17 +863,6 @@ struct server_rdp {
         memcpy(this->sec_layer.pub_mod, rsa_keys.pub_mod, 64);
         memcpy(this->sec_layer.pub_sig, rsa_keys.pub_sig, 64);
         memcpy(this->sec_layer.pri_exp, rsa_keys.pri_exp, 64);
-
-        Stream in(8192);
-        X224In crtpdu(this->trans, in);
-        if (crtpdu.tpdu_hdr.code != ISO_PDU_CR) {
-            throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
-        }
-
-        Stream out(11);
-        X224Out cctpdu(X224Packet::CC_TPDU, out);
-        cctpdu.end();
-        cctpdu.send(this->trans);
 
         this->sec_layer.recv_connection_initial(this->trans, this->client_mcs_data);
         #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
