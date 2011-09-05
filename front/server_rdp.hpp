@@ -567,9 +567,10 @@ struct server_rdp {
         //    | <------------MCS Connect Response PDU with------------- |
         //                   GCC conference Create Response
 
-        recv_connection_initial(this->trans, this->client_mcs_data);
-        #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
-        process_mcs_data(this->client_mcs_data, &this->client_info, this->sec_layer.channel_list);
+        recv_mcs_connect_initial_pdu_with_gcc_conference_create_request(
+                this->trans,
+                &this->client_info, 
+                this->sec_layer.channel_list);
 
         this->sec_layer.server_sec_out_mcs_data(this->client_mcs_data, &this->client_info);
         this->sec_layer.send_connect_response(this->client_mcs_data, this->trans);

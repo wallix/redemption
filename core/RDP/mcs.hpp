@@ -143,7 +143,7 @@ class McsIn
 //   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
 //   2.2.1.2.1.
 
-#warning create McsConnectionInitialIn and McsConnectionInitialOut classes instead of recv_ and send_ functions below (it would also much simplify length management)
+#warning create McsConnectionInitialIn and McsConnectionInitialOut classes instead of recv_ and send_ functions below (it would also much simplify length management) and allow inlining data part instead of preparint it in a separate buffer.
 
 inline static void recv_connection_initial(Transport * trans, Stream & data)
 {
@@ -262,6 +262,8 @@ inline static void send_connection_initial(Transport * trans, Stream & data)
     ci_tpdu.end();
     ci_tpdu.send(trans);
 }
+
+
 
 // 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
 // -------------------------------------
@@ -863,11 +865,58 @@ static inline void parse_mcs_data_sc_net(Stream & stream)
 }
 
 
-
-/* process the mcs client data we received from the mcs layer */
-static inline void process_mcs_data(Stream & stream, ClientInfo * client_info, vector<struct mcs_channel_item *> & channel_list) throw (Error)
+static inline void recv_mcs_connect_initial_pdu_with_gcc_conference_create_request(
+                Transport * trans, 
+                ClientInfo * client_info,
+                vector<mcs_channel_item*> & channel_list)
 {
-    stream.p = stream.data;
+    Stream stream(8192);
+    X224In(trans, stream);
+
+    if (stream.in_uint16_be() != BER_TAG_MCS_CONNECT_INITIAL) {
+        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+    }
+    int len = stream.in_ber_len();
+    if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+    }
+    len = stream.in_ber_len();
+    stream.skip_uint8(len);
+
+    if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+    }
+    len = stream.in_ber_len();
+    stream.skip_uint8(len);
+    if (stream.in_uint8() != BER_TAG_BOOLEAN) {
+        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+    }
+    len = stream.in_ber_len();
+    stream.skip_uint8(len);
+
+    if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+    }
+    len = stream.in_ber_len();
+    stream.skip_uint8(len);
+
+    if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+    }
+    len = stream.in_ber_len();
+    stream.skip_uint8(len);
+
+    if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+    }
+    len = stream.in_ber_len();
+    stream.skip_uint8(len);
+
+    if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+    }
+    len = stream.in_ber_len();
+
     stream.skip_uint8(23);
 
 // 2.2.1.3.1 User Data Header (TS_UD_HEADER)
@@ -904,8 +953,6 @@ static inline void process_mcs_data(Stream & stream, ClientInfo * client_info, v
 
 // length (2 bytes): A 16-bit, unsigned integer. The size in bytes of the data
 //   block, including this header.
-
-
 
     while (stream.check_rem(4)) {
         uint8_t * current_header = stream.p;
@@ -950,6 +997,147 @@ static inline void process_mcs_data(Stream & stream, ClientInfo * client_info, v
         }
         stream.p = current_header + length;
     }
+}
+
+static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_request(
+                Transport * trans,
+                const vector<mcs_channel_item*> & channel_list,
+                int width,
+                int height,
+                int rdp_bpp,
+                int keylayout,
+                bool console_session,
+                char * hostname){
+
+    Stream data(8192);
+
+    int length = 158 + 76 + 12 + 4;
+
+    if (channel_list.size() > 0){
+        length += channel_list.size() * 12 + 8;
+    }
+
+    /* Generic Conference Control (T.124) ConferenceCreateRequest */
+    data.out_uint16_be(5);
+    data.out_uint16_be(0x14);
+    data.out_uint8(0x7c);
+    data.out_uint16_be(1);
+
+    data.out_uint16_be((length | 0x8000)); /* remaining length */
+
+    data.out_uint16_be(8); /* length? */
+    data.out_uint16_be(16);
+    data.out_uint8(0);
+    data.out_uint16_le(0xc001);
+    data.out_uint8(0);
+
+    data.out_uint32_le(0x61637544); /* OEM ID: "Duca", as in Ducati. */
+    data.out_uint16_be(((length - 14) | 0x8000)); /* remaining length */
+
+    /* Client information */
+    data.out_uint16_le(CS_CORE);
+    LOG(LOG_INFO, "Sending Client Core Data to remote server\n");
+    data.out_uint16_le(212); /* length */
+    LOG(LOG_INFO, "core::header::length = %u\n", 212);
+    data.out_uint32_le(0x00080004); // RDP version. 1 == RDP4, 4 == RDP5.
+    LOG(LOG_INFO, "core::header::version (0x00080004 = RDP 5.0, 5.1, 5.2, and 6.0 clients)");
+    data.out_uint16_le(width);
+    LOG(LOG_INFO, "core::desktopWidth = %u\n", width);
+    data.out_uint16_le(height);
+    LOG(LOG_INFO, "core::desktopHeight = %u\n", height);
+    data.out_uint16_le(0xca01);
+    LOG(LOG_INFO, "core::colorDepth = RNS_UD_COLOR_8BPP (superseded by postBeta2ColorDepth)");
+    data.out_uint16_le(0xaa03);
+    LOG(LOG_INFO, "core::SASSequence = RNS_UD_SAS_DEL");
+    data.out_uint32_le(keylayout);
+    LOG(LOG_INFO, "core::keyboardLayout = %x", keylayout);
+    data.out_uint32_le(2600); /* Client build. We are now 2600 compatible :-) */
+    LOG(LOG_INFO, "core::clientBuild = 2600");
+    LOG(LOG_INFO, "core::clientName=%s\n", hostname);
+
+    /* Added in order to limit hostlen and hostname size */
+    int hostlen = 2 * strlen(hostname);
+    if (hostlen > 30){
+        hostlen = 30;
+    }
+    /* Unicode name of client, padded to 30 bytes */
+    data.out_unistr(hostname);
+    data.out_clear_bytes(30 - hostlen);
+
+    /* See
+    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wceddk40/html/cxtsksupportingremotedesktopprotocol.asp */
+    #warning code should be updated to take care of keyboard type
+    data.out_uint32_le(4); // g_keyboard_type
+    LOG(LOG_INFO, "core::keyboardType = IBM enhanced (101- or 102-key) keyboard");
+    data.out_uint32_le(0); // g_keyboard_subtype
+    LOG(LOG_INFO, "core::keyboardSubType = 0");
+    data.out_uint32_le(12); // g_keyboard_functionkeys
+    LOG(LOG_INFO, "core::keyboardFunctionKey = 12 function keys");
+    data.out_clear_bytes(64); /* imeFileName */
+    LOG(LOG_INFO, "core::imeFileName = \"\"");
+    data.out_uint16_le(0xca01); /* color depth 8bpp */
+    LOG(LOG_INFO, "core::postBeta2ColorDepth = RNS_UD_COLOR_8BPP (superseded by highColorDepth)");
+    data.out_uint16_le(1);
+    LOG(LOG_INFO, "core::clientProductId = 1");
+    data.out_uint32_le(0);
+    LOG(LOG_INFO, "core::serialNumber = 0");
+    data.out_uint16_le(rdp_bpp);
+    LOG(LOG_INFO, "core::highColorDepth = %u", rdp_bpp);
+    data.out_uint16_le(0x0007);
+    LOG(LOG_INFO, "core::supportedColorDepths = 24/16/15");
+    data.out_uint16_le(1);
+    LOG(LOG_INFO, "core::earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU");
+    data.out_clear_bytes(64);
+    LOG(LOG_INFO, "core::clientDigProductId = \"\"");
+    data.out_clear_bytes(2);
+    LOG(LOG_INFO, "core::pad2octets");
+//        data.out_uint32_le(0); // optional
+//        LOG(LOG_INFO, "core::serverSelectedProtocol = 0");
+    /* End of client info */
+
+    data.out_uint16_le(CS_CLUSTER);
+    data.out_uint16_le(12);
+    #warning check that should depend on g_console_session
+    data.out_uint32_le(console_session ? 0xb : 9);
+    data.out_uint32_le(0);
+
+    /* Client encryption settings */
+    data.out_uint16_le(CS_SECURITY);
+    data.out_uint16_le(12); /* length */
+
+    #warning check that, should depend on g_encryption
+    /* encryption supported, 128-bit supported */
+    data.out_uint32_le(0x3);
+    data.out_uint32_le(0); /* Unknown */
+
+    /* Here we need to put channel information in order to redirect channel data
+    from client to server passing through the "proxy" */
+    size_t num_channels = channel_list.size();
+
+    #warning this looks like holy shit. Check that
+    if (num_channels > 0) {
+        data.out_uint16_le(CS_NET);
+        data.out_uint16_le(num_channels * 12 + 8); /* length */
+        data.out_uint32_le(num_channels); /* number of virtual channels */
+        for (size_t i = 0; i < num_channels; i++){
+            const mcs_channel_item* channel_item = channel_list[i];
+
+            LOG(LOG_DEBUG, "Requesting channel %s\n", channel_item->name);
+            memcpy(data.p, channel_item->name, 8);
+            data.p += 8;
+
+            data.out_uint32_be(channel_item->flags);
+        }
+    }
+    data.mark_end();
+
+    send_connection_initial(trans, data);
+}
+
+
+/* process the mcs client data we received from the mcs layer */
+static inline void process_mcs_data(Stream & stream, ClientInfo * client_info, vector<struct mcs_channel_item *> & channel_list) throw (Error)
+{
 }
 
 //   2.2.1.5 Client MCS Erect Domain Request PDU
