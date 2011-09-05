@@ -647,61 +647,6 @@ struct server_rdp {
     }
 
 
-    // Basic Settings Exchange
-    // -----------------------
-
-    // Basic Settings Exchange: Basic settings are exchanged between the client and
-    // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
-    // Connect Initial PDU contains a GCC Conference Create Request, while the
-    // Connect Response PDU contains a GCC Conference Create Response.
-
-    // These two Generic Conference Control (GCC) packets contain concatenated
-    // blocks of settings data (such as core data, security data and network data)
-    // which are read by client and server
-
-
-    // Client                                                     Server
-    //    |--------------MCS Connect Initial PDU with-------------> |
-    //                   GCC Conference Create Request
-    //    | <------------MCS Connect Response PDU with------------- |
-    //                   GCC conference Create Response
-
-    // Channel Connection
-    // ------------------
-
-    // Channel Connection: The client sends an MCS Erect Domain Request PDU,
-    // followed by an MCS Attach User Request PDU to attach the primary user
-    // identity to the MCS domain.
-
-    // The server responds with an MCS Attach User Response PDU containing the user
-    // channel ID.
-
-    // The client then proceeds to join the :
-    // - user channel,
-    // - the input/output (I/O) channel
-    // - and all of the static virtual channels
-
-    // (the I/O and static virtual channel IDs are obtained from the data embedded
-    //  in the GCC packets) by using multiple MCS Channel Join Request PDUs.
-
-    // The server confirms each channel with an MCS Channel Join Confirm PDU.
-    // (The client only sends a Channel Join Request after it has received the
-    // Channel Join Confirm for the previously sent request.)
-
-    // From this point, all subsequent data sent from the client to the server is
-    // wrapped in an MCS Send Data Request PDU, while data sent from the server to
-    //  the client is wrapped in an MCS Send Data Indication PDU. This is in
-    // addition to the data being wrapped by an X.224 Data PDU.
-
-    // Client                                                     Server
-    //    |-------MCS Erect Domain Request PDU--------------------> |
-    //    |-------MCS Attach User Request PDU---------------------> |
-
-    //    | <-----MCS Attach User Confirm PDU---------------------- |
-
-    //    |-------MCS Channel Join Request PDU--------------------> |
-    //    | <-----MCS Channel Join Confirm PDU--------------------- |
-
 
     // RDP Security Commencement
     // -------------------------
@@ -846,8 +791,19 @@ struct server_rdp {
         this->recv_x224_connection_request_pdu(this->trans);
         this->send_x224_connection_confirm_pdu(this->trans);
 
-        Rsakeys rsa_keys(CFG_PATH "/" RSAKEYS_INI);
+        // Basic Settings Exchange
+        // -----------------------
 
+        // Basic Settings Exchange: Basic settings are exchanged between the client and
+        // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
+        // Connect Initial PDU contains a GCC Conference Create Request, while the
+        // Connect Response PDU contains a GCC Conference Create Response.
+
+        // These two Generic Conference Control (GCC) packets contain concatenated
+        // blocks of settings data (such as core data, security data and network data)
+        // which are read by client and server
+
+        Rsakeys rsa_keys(CFG_PATH "/" RSAKEYS_INI);
         memset(this->sec_layer.server_random, 0x44, 32);
         int fd = open("/dev/urandom", O_RDONLY);
         if (fd == -1) {
@@ -864,11 +820,56 @@ struct server_rdp {
         memcpy(this->sec_layer.pub_sig, rsa_keys.pub_sig, 64);
         memcpy(this->sec_layer.pri_exp, rsa_keys.pri_exp, 64);
 
-        this->sec_layer.recv_connection_initial(this->trans, this->client_mcs_data);
+
+
+        // Client                                                     Server
+        //    |--------------MCS Connect Initial PDU with-------------> |
+        //                   GCC Conference Create Request
+        //    | <------------MCS Connect Response PDU with------------- |
+        //                   GCC conference Create Response
+
+        recv_connection_initial(this->trans, this->client_mcs_data);
         #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
         this->sec_layer.server_sec_process_mcs_data(this->client_mcs_data, &this->client_info);
         this->sec_layer.server_sec_out_mcs_data(this->client_mcs_data, &this->client_info);
         this->sec_layer.send_connect_response(this->client_mcs_data, this->trans);
+
+        // Channel Connection
+        // ------------------
+
+        // Channel Connection: The client sends an MCS Erect Domain Request PDU,
+        // followed by an MCS Attach User Request PDU to attach the primary user
+        // identity to the MCS domain.
+
+        // The server responds with an MCS Attach User Response PDU containing the user
+        // channel ID.
+
+        // The client then proceeds to join the :
+        // - user channel,
+        // - the input/output (I/O) channel
+        // - and all of the static virtual channels
+
+        // (the I/O and static virtual channel IDs are obtained from the data embedded
+        //  in the GCC packets) by using multiple MCS Channel Join Request PDUs.
+
+        // The server confirms each channel with an MCS Channel Join Confirm PDU.
+        // (The client only sends a Channel Join Request after it has received the
+        // Channel Join Confirm for the previously sent request.)
+
+        // From this point, all subsequent data sent from the client to the server is
+        // wrapped in an MCS Send Data Request PDU, while data sent from the server to
+        //  the client is wrapped in an MCS Send Data Indication PDU. This is in
+        // addition to the data being wrapped by an X.224 Data PDU.
+
+        // Client                                                     Server
+        //    |-------MCS Erect Domain Request PDU--------------------> |
+        //    |-------MCS Attach User Request PDU---------------------> |
+
+        //    | <-----MCS Attach User Confirm PDU---------------------- |
+
+        //    |-------MCS Channel Join Request PDU--------------------> |
+        //    | <-----MCS Channel Join Confirm PDU--------------------- |
+
 
         //   2.2.1.5 Client MCS Erect Domain Request PDU
         //   -------------------------------------------
@@ -968,84 +969,82 @@ struct server_rdp {
         }
 
         {
-            {
-                Stream stream(8192);
-                // read tpktHeader (4 bytes = 3 0 len)
-                // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-                X224In(this->trans, stream);
+            Stream stream(8192);
+            // read tpktHeader (4 bytes = 3 0 len)
+            // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+            X224In(this->trans, stream);
 
-                int opcode = stream.in_uint8();
-                if ((opcode >> 2) != MCS_CJRQ) {
-                    throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
-                }
-                stream.skip_uint8(4);
-                if (opcode & 2) {
-                    stream.skip_uint8(2);
-                }
+            int opcode = stream.in_uint8();
+            if ((opcode >> 2) != MCS_CJRQ) {
+                throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
             }
+            stream.skip_uint8(4);
+            if (opcode & 2) {
+                stream.skip_uint8(2);
+            }
+        }
 
-            // 2.2.1.9 Server MCS Channel Join Confirm PDU
-            // -------------------------------------------
-            // The MCS Channel Join Confirm PDU is an RDP Connection Sequence
-            // PDU sent from server to client during the Channel Connection
-            // phase (see section 1.3.1.1). It is sent as a response to the MCS
-            // Channel Join Request PDU (section 2.2.1.8).
+        // 2.2.1.9 Server MCS Channel Join Confirm PDU
+        // -------------------------------------------
+        // The MCS Channel Join Confirm PDU is an RDP Connection Sequence
+        // PDU sent from server to client during the Channel Connection
+        // phase (see section 1.3.1.1). It is sent as a response to the MCS
+        // Channel Join Request PDU (section 2.2.1.8).
 
-            // tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
-            //   section 8.
+        // tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+        //   section 8.
 
-            // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
-            //  [X224] section 13.7.
+        // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+        //  [X224] section 13.7.
 
-            // mcsCJcf (8 bytes): PER-encoded MCS Domain PDU which encapsulates
-            //  an MCS Channel Join Confirm PDU structure, as specified in
-            //  [T125] (the ASN.1 structure definitions are given in [T125]
-            //  section 7, parts 6 and 10).
+        // mcsCJcf (8 bytes): PER-encoded MCS Domain PDU which encapsulates
+        //  an MCS Channel Join Confirm PDU structure, as specified in
+        //  [T125] (the ASN.1 structure definitions are given in [T125]
+        //  section 7, parts 6 and 10).
 
-            {
-                Stream stream(8192);
-                X224Out tpdu(X224Packet::DT_TPDU, stream);
-                stream.out_uint8((MCS_CJCF << 2) | 2);
-                stream.out_uint8(0);
-                stream.out_uint16_be(this->userid);
-                stream.out_uint16_be(this->userid + MCS_USERCHANNEL_BASE);
-                stream.out_uint16_be(this->userid + MCS_USERCHANNEL_BASE);
-                tpdu.end();
-                tpdu.send(this->trans);
+        {
+            Stream stream(8192);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+            stream.out_uint8((MCS_CJCF << 2) | 2);
+            stream.out_uint8(0);
+            stream.out_uint16_be(this->userid);
+            stream.out_uint16_be(this->userid + MCS_USERCHANNEL_BASE);
+            stream.out_uint16_be(this->userid + MCS_USERCHANNEL_BASE);
+            tpdu.end();
+            tpdu.send(this->trans);
+        }
+
+        {
+            Stream stream(8192);
+            // read tpktHeader (4 bytes = 3 0 len)
+            // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+            X224In(this->trans, stream);
+
+            int opcode = stream.in_uint8();
+            if ((opcode >> 2) != MCS_CJRQ) {
+                throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
+            }
+            stream.skip_uint8(4);
+            if (opcode & 2) {
+                stream.skip_uint8(2);
             }
         }
 
         {
-            {
-                Stream stream(8192);
-                // read tpktHeader (4 bytes = 3 0 len)
-                // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-                X224In(this->trans, stream);
-
-                int opcode = stream.in_uint8();
-                if ((opcode >> 2) != MCS_CJRQ) {
-                    throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
-                }
-                stream.skip_uint8(4);
-                if (opcode & 2) {
-                    stream.skip_uint8(2);
-                }
-            }
-
-            {
-                Stream stream(8192);
-                X224Out tpdu(X224Packet::DT_TPDU, stream);
-                stream.out_uint8((MCS_CJCF << 2) | 2);
-                stream.out_uint8(0);
-                stream.out_uint16_be(this->userid);
-                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-                stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
-                tpdu.end();
-                tpdu.send(this->trans);
-            }
+            Stream stream(8192);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+            stream.out_uint8((MCS_CJCF << 2) | 2);
+            stream.out_uint8(0);
+            stream.out_uint16_be(this->userid);
+            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+            stream.out_uint16_be(MCS_GLOBAL_CHANNEL);
+            tpdu.end();
+            tpdu.send(this->trans);
         }
 
         this->mcs_channel = this->userid + MCS_USERCHANNEL_BASE;
+
+
     }
 
     /*****************************************************************************/

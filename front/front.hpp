@@ -47,6 +47,7 @@
 #include "cache.hpp"
 
 #include "RDP/x224.hpp"
+#include "RDP/mcs.hpp"
 #include "RDP/rdp.hpp"
 #include "server_rdp.hpp"
 
