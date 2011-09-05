@@ -406,249 +406,6 @@ struct server_rdp {
 
     }
 
-    void activate_and_process_data(Callback & cb)
-    {
-        #warning this code needs (yet and again) much clarification
-
-        Stream input_stream(65535);
-
-        do {
-            input_stream.init(65535);
-            X224In tpdu(this->trans, input_stream);
-            int opcode = input_stream.in_uint8();
-            int appid = opcode >> 2;
-
-//            LOG(LOG_INFO, "appid = %u", appid);
-            /* Channel Join ReQuest datagram */
-            #warning this loop should move to sec layer
-            while(appid == MCS_CJRQ) {
-                /* this is channels getting added from the client */
-                int userid = input_stream.in_uint16_be();
-                int chanid = input_stream.in_uint16_be();
-
-                Stream stream(8192);
-                X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-                stream.out_uint8((MCS_CJCF << 2) | 2);
-                stream.out_uint8(0);
-                stream.out_uint16_be(userid);
-                stream.out_uint16_be(chanid);
-                stream.out_uint16_be(chanid);
-
-                tpdu.end();
-                tpdu.send(this->trans);
-
-                input_stream.init(65535);
-                X224In(this->trans, input_stream);
-                appid = input_stream.in_uint8() >> 2;
-
-            }
-            /* Disconnect Provider Ultimatum datagram */
-            if (appid == MCS_DPUM) {
-                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
-            }
-            /* SenD ReQuest datagram */
-            if (appid != MCS_SDRQ) {
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-            }
-
-            input_stream.skip_uint8(2);
-            int chan = input_stream.in_uint16_be();
-            input_stream.skip_uint8(1);
-            int len = input_stream.in_uint8();
-            if (len & 0x80) {
-                input_stream.skip_uint8(1);
-            }
-
-            SecIn sec(input_stream, this->sec_layer.decrypt);
-
-            #warning this should move to SecIn
-            if (sec.flags & SEC_CLIENT_RANDOM) { /* 0x01 */
-                input_stream.in_uint32_le(); // len
-
-                memcpy(this->sec_layer.client_crypt_random, input_stream.in_uint8p(64), 64);
-
-                ssl_mod_exp(this->sec_layer.client_random, 64,
-                        this->sec_layer.client_crypt_random, 64,
-                        this->sec_layer.pub_mod, 64,
-                        this->sec_layer.pri_exp, 64);
-                {
-                    ssllib ssl;
-
-                    uint8_t pre_master_secret[48];
-                    uint8_t master_secret[48];
-                    uint8_t key_block[48];
-
-                    /* Construct pre-master secret (session key) */
-                    memcpy(key_block, this->sec_layer.client_random, 24);
-                    memcpy(key_block + 24, this->sec_layer.server_random, 24);
-
-                    /* Generate master secret and then key material */
-                    this->sec_layer.sec_hash_48(master_secret, key_block, this->sec_layer.client_random, this->sec_layer.server_random, 65);
-                    this->sec_layer.sec_hash_48(pre_master_secret, master_secret, this->sec_layer.client_random, this->sec_layer.server_random, 88);
-
-                    /* First 16 bytes of key material is MAC secret */
-                    memcpy(this->sec_layer.encrypt.sign_key, pre_master_secret, 16);
-
-                    /* Generate export keys from next two blocks of 16 bytes */
-                    this->sec_layer.sec_hash_16(this->sec_layer.encrypt.key, &pre_master_secret[16], this->sec_layer.client_random, this->sec_layer.server_random);
-                    this->sec_layer.sec_hash_16(this->sec_layer.decrypt.key, &pre_master_secret[32], this->sec_layer.client_random, this->sec_layer.server_random);
-
-                    if (this->sec_layer.rc4_key_size == 1) {
-                        sec_make_40bit(this->sec_layer.encrypt.sign_key);
-                        sec_make_40bit(this->sec_layer.encrypt.key);
-                        sec_make_40bit(this->sec_layer.decrypt.key);
-                        this->sec_layer.decrypt.rc4_key_len = 8;
-                        this->sec_layer.encrypt.rc4_key_len = 8;
-                    } else {
-                        this->sec_layer.decrypt.rc4_key_len = 16;
-                        this->sec_layer.encrypt.rc4_key_len = 16;
-                    }
-                    memcpy(this->sec_layer.decrypt.update_key, this->sec_layer.decrypt.key, 16);
-                    memcpy(this->sec_layer.encrypt.update_key, this->sec_layer.encrypt.key, 16);
-                    ssl.rc4_set_key(this->sec_layer.decrypt.rc4_info, this->sec_layer.decrypt.key, this->sec_layer.decrypt.rc4_key_len);
-                    ssl.rc4_set_key(this->sec_layer.encrypt.rc4_info, this->sec_layer.encrypt.key, this->sec_layer.encrypt.rc4_key_len);
-                }
-                if (!this->up_and_running){
-//                    input_stream.next_packet = input_stream.end;
-                    continue;
-                }
-            }
-            else if (sec.flags & SEC_LOGON_INFO) { /* 0x40 */
-                this->sec_layer.server_sec_process_logon_info(input_stream, &this->client_info);
-                if (this->client_info.is_mce) {
-//                    LOG(LOG_INFO, "server_sec_send media_lic_response");
-                    this->sec_layer.server_sec_send_media_lic_response(this->trans, this->userid);
-                    this->server_rdp_send_demand_active();
-                    if (!this->up_and_running){
-//                        input_stream.next_packet = input_stream.end;
-                        continue;
-                    }
-                }
-                else {
-//                    LOG(LOG_INFO, "server_sec_send lic_initial");
-                    this->sec_layer.server_sec_send_lic_initial(this->trans, this->userid);
-                    if (!this->up_and_running){
-//                        input_stream.next_packet = input_stream.end;
-                        continue;
-                    }
-                }
-            }
-            else if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
-//                LOG(LOG_INFO, "server_sec_send lic_response");
-                this->sec_layer.server_sec_send_lic_response(this->trans, this->userid);
-                this->server_rdp_send_demand_active();
-                if (!this->up_and_running){
-//                    input_stream.next_packet = input_stream.end;
-                    continue;
-                }
-            }
-            else if (chan > MCS_GLOBAL_CHANNEL) {
-            #warning is it possible to get channel data when we are not up and running ?
-                /*****************************************************************************/
-                /* This is called from the secure layer to process an incoming non global
-                   channel packet.
-                   'chan' passed in here is the mcs channel id so it is
-                   MCS_GLOBAL_CHANNEL plus something. */
-
-                /* this assumes that the channels are in order of chanid(mcs channel id)
-                   but they should be, see server_sec_process_mcs_data_channels
-                   the first channel should be MCS_GLOBAL_CHANNEL + 1, second
-                   one should be MCS_GLOBAL_CHANNEL + 2, and so on */
-                int channel_id = (chan - MCS_GLOBAL_CHANNEL) - 1;
-
-                struct mcs_channel_item* channel = this->sec_layer.channel_list[channel_id];
-
-                if (channel == 0) {
-                    throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
-                }
-                int length = input_stream.in_uint32_le();
-                int flags = input_stream.in_uint32_le();
-
-                int size = (int)(input_stream.end - input_stream.p);
-                #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
-                cb.callback(WM_CHANNELDATA,
-                                  ((flags & 0xffff) << 16) | (channel_id & 0xffff),
-                                  size, (long)(input_stream.p), length);
-//                if (!this->up_and_running){ continue; }
-                // We consume all the data of the packet
-                input_stream.p = input_stream.end;
-            }
-//            LOG(LOG_INFO, "PDUTYPE DATA");
-
-            input_stream.next_packet = input_stream.p;
-
-            if (input_stream.next_packet < input_stream.end){
-                int length = input_stream.in_uint16_le();
-                if (length == 0x8000) {
-                    input_stream.next_packet += 8;
-                }
-                else {
-                    int pdu_code = input_stream.in_uint16_le();
-                    input_stream.skip_uint8(2); /* mcs user id */
-                    input_stream.next_packet += length;
-                    switch (pdu_code & 0xf) {
-
-                    case 0:
-//                        LOG(LOG_INFO, "PDUTYPE_ZERO");
-                        break;
-                    case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
-//                        LOG(LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU");
-                        break;
-                    case PDUTYPE_CONFIRMACTIVEPDU:
-//                        LOG(LOG_INFO, "PDUTYPE_CONFIRMACTIVEPDU");
-                        this->process_confirm_active(input_stream);
-                        break;
-                    case PDUTYPE_DATAPDU: /* 7 */
-//                        LOG(LOG_INFO, "PDUTYPE_DATAPDU");
-                        // this is rdp_process_data that will set up_and_running to 1
-                        // when fonts have been received
-                        // we will not exit this loop until we are in this state.
-                        #warning see what happen if we never receive up_and_running due to some error in client code ?
-                        this->process_data(input_stream, cb);
-//                        LOG(LOG_INFO, "PROCESS_DATA_DONE");
-                        break;
-                    case PDUTYPE_DEACTIVATEALLPDU:
-                        LOG(LOG_WARNING, "unsupported PDU DEACTIVATEALLPDU in session_data (%d)\n", pdu_code & 0xf);
-                        break;
-                    case PDUTYPE_SERVER_REDIR_PKT:
-                        LOG(LOG_WARNING, "unsupported PDU SERVER_REDIR_PKT in session_data (%d)\n", pdu_code & 0xf);
-                        break;
-                    default:
-                        LOG(LOG_WARNING, "unknown PDU type in session_data (%d)\n", pdu_code & 0xf);
-                        break;
-                    }
-                }
-            }
-//            LOG(LOG_INFO, "READY TO LOOP IN activate and process data");
-        } while ((input_stream.next_packet < input_stream.end) || !this->up_and_running);
-
-        #warning the postcondition could be changed to signify we want to get hand back immediately, because we still have data to process.
-//        LOG(LOG_INFO, "out of activate and process data");
-    }
-
-    /*****************************************************************************/
-    void server_rdp_send_data_update_sync() throw (Error)
-    {
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
-
-        ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->mcs_channel, this->share_id);
-
-        stream.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
-        stream.out_clear_bytes(2);
-
-        stream.mark_end();
-        rdp_out.end();
-        sec_out.end();
-        sdin_out.end();
-        tpdu.end();
-        tpdu.send(this->trans);
-
-    }
-
 
 
     // RDP Security Commencement
@@ -1031,6 +788,252 @@ struct server_rdp {
 
 
     }
+
+
+    void activate_and_process_data(Callback & cb)
+    {
+        #warning this code needs (yet and again) much clarification
+
+        Stream input_stream(65535);
+
+        do {
+            input_stream.init(65535);
+            X224In tpdu(this->trans, input_stream);
+            int opcode = input_stream.in_uint8();
+            int appid = opcode >> 2;
+
+//            LOG(LOG_INFO, "appid = %u", appid);
+            /* Channel Join ReQuest datagram */
+            #warning this loop should move to sec layer
+            while(appid == MCS_CJRQ) {
+                /* this is channels getting added from the client */
+                int userid = input_stream.in_uint16_be();
+                int chanid = input_stream.in_uint16_be();
+
+                Stream stream(8192);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+                stream.out_uint8((MCS_CJCF << 2) | 2);
+                stream.out_uint8(0);
+                stream.out_uint16_be(userid);
+                stream.out_uint16_be(chanid);
+                stream.out_uint16_be(chanid);
+
+                tpdu.end();
+                tpdu.send(this->trans);
+
+                input_stream.init(65535);
+                X224In(this->trans, input_stream);
+                appid = input_stream.in_uint8() >> 2;
+
+            }
+            /* Disconnect Provider Ultimatum datagram */
+            if (appid == MCS_DPUM) {
+                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+            }
+            /* SenD ReQuest datagram */
+            if (appid != MCS_SDRQ) {
+                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+            }
+
+            input_stream.skip_uint8(2);
+            int chan = input_stream.in_uint16_be();
+            input_stream.skip_uint8(1);
+            int len = input_stream.in_uint8();
+            if (len & 0x80) {
+                input_stream.skip_uint8(1);
+            }
+
+            SecIn sec(input_stream, this->sec_layer.decrypt);
+
+            #warning this should move to SecIn
+            if (sec.flags & SEC_CLIENT_RANDOM) { /* 0x01 */
+                input_stream.in_uint32_le(); // len
+
+                memcpy(this->sec_layer.client_crypt_random, input_stream.in_uint8p(64), 64);
+
+                ssl_mod_exp(this->sec_layer.client_random, 64,
+                        this->sec_layer.client_crypt_random, 64,
+                        this->sec_layer.pub_mod, 64,
+                        this->sec_layer.pri_exp, 64);
+                {
+                    ssllib ssl;
+
+                    uint8_t pre_master_secret[48];
+                    uint8_t master_secret[48];
+                    uint8_t key_block[48];
+
+                    /* Construct pre-master secret (session key) */
+                    memcpy(key_block, this->sec_layer.client_random, 24);
+                    memcpy(key_block + 24, this->sec_layer.server_random, 24);
+
+                    /* Generate master secret and then key material */
+                    this->sec_layer.sec_hash_48(master_secret, key_block, this->sec_layer.client_random, this->sec_layer.server_random, 65);
+                    this->sec_layer.sec_hash_48(pre_master_secret, master_secret, this->sec_layer.client_random, this->sec_layer.server_random, 88);
+
+                    /* First 16 bytes of key material is MAC secret */
+                    memcpy(this->sec_layer.encrypt.sign_key, pre_master_secret, 16);
+
+                    /* Generate export keys from next two blocks of 16 bytes */
+                    this->sec_layer.sec_hash_16(this->sec_layer.encrypt.key, &pre_master_secret[16], this->sec_layer.client_random, this->sec_layer.server_random);
+                    this->sec_layer.sec_hash_16(this->sec_layer.decrypt.key, &pre_master_secret[32], this->sec_layer.client_random, this->sec_layer.server_random);
+
+                    if (this->sec_layer.rc4_key_size == 1) {
+                        sec_make_40bit(this->sec_layer.encrypt.sign_key);
+                        sec_make_40bit(this->sec_layer.encrypt.key);
+                        sec_make_40bit(this->sec_layer.decrypt.key);
+                        this->sec_layer.decrypt.rc4_key_len = 8;
+                        this->sec_layer.encrypt.rc4_key_len = 8;
+                    } else {
+                        this->sec_layer.decrypt.rc4_key_len = 16;
+                        this->sec_layer.encrypt.rc4_key_len = 16;
+                    }
+                    memcpy(this->sec_layer.decrypt.update_key, this->sec_layer.decrypt.key, 16);
+                    memcpy(this->sec_layer.encrypt.update_key, this->sec_layer.encrypt.key, 16);
+                    ssl.rc4_set_key(this->sec_layer.decrypt.rc4_info, this->sec_layer.decrypt.key, this->sec_layer.decrypt.rc4_key_len);
+                    ssl.rc4_set_key(this->sec_layer.encrypt.rc4_info, this->sec_layer.encrypt.key, this->sec_layer.encrypt.rc4_key_len);
+                }
+                if (!this->up_and_running){
+//                    input_stream.next_packet = input_stream.end;
+                    continue;
+                }
+            }
+            else if (sec.flags & SEC_LOGON_INFO) { /* 0x40 */
+                this->sec_layer.server_sec_process_logon_info(input_stream, &this->client_info);
+                if (this->client_info.is_mce) {
+//                    LOG(LOG_INFO, "server_sec_send media_lic_response");
+                    this->sec_layer.server_sec_send_media_lic_response(this->trans, this->userid);
+                    this->server_rdp_send_demand_active();
+                    if (!this->up_and_running){
+//                        input_stream.next_packet = input_stream.end;
+                        continue;
+                    }
+                }
+                else {
+//                    LOG(LOG_INFO, "server_sec_send lic_initial");
+                    this->sec_layer.server_sec_send_lic_initial(this->trans, this->userid);
+                    if (!this->up_and_running){
+//                        input_stream.next_packet = input_stream.end;
+                        continue;
+                    }
+                }
+            }
+            else if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
+//                LOG(LOG_INFO, "server_sec_send lic_response");
+                this->sec_layer.server_sec_send_lic_response(this->trans, this->userid);
+                this->server_rdp_send_demand_active();
+                if (!this->up_and_running){
+//                    input_stream.next_packet = input_stream.end;
+                    continue;
+                }
+            }
+            else if (chan > MCS_GLOBAL_CHANNEL) {
+            #warning is it possible to get channel data when we are not up and running ?
+                /*****************************************************************************/
+                /* This is called from the secure layer to process an incoming non global
+                   channel packet.
+                   'chan' passed in here is the mcs channel id so it is
+                   MCS_GLOBAL_CHANNEL plus something. */
+
+                /* this assumes that the channels are in order of chanid(mcs channel id)
+                   but they should be, see server_sec_process_mcs_data_channels
+                   the first channel should be MCS_GLOBAL_CHANNEL + 1, second
+                   one should be MCS_GLOBAL_CHANNEL + 2, and so on */
+                int channel_id = (chan - MCS_GLOBAL_CHANNEL) - 1;
+
+                struct mcs_channel_item* channel = this->sec_layer.channel_list[channel_id];
+
+                if (channel == 0) {
+                    throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
+                }
+                int length = input_stream.in_uint32_le();
+                int flags = input_stream.in_uint32_le();
+
+                int size = (int)(input_stream.end - input_stream.p);
+                #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
+                cb.callback(WM_CHANNELDATA,
+                                  ((flags & 0xffff) << 16) | (channel_id & 0xffff),
+                                  size, (long)(input_stream.p), length);
+//                if (!this->up_and_running){ continue; }
+                // We consume all the data of the packet
+                input_stream.p = input_stream.end;
+            }
+//            LOG(LOG_INFO, "PDUTYPE DATA");
+
+            input_stream.next_packet = input_stream.p;
+
+            if (input_stream.next_packet < input_stream.end){
+                int length = input_stream.in_uint16_le();
+                if (length == 0x8000) {
+                    input_stream.next_packet += 8;
+                }
+                else {
+                    int pdu_code = input_stream.in_uint16_le();
+                    input_stream.skip_uint8(2); /* mcs user id */
+                    input_stream.next_packet += length;
+                    switch (pdu_code & 0xf) {
+
+                    case 0:
+//                        LOG(LOG_INFO, "PDUTYPE_ZERO");
+                        break;
+                    case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
+//                        LOG(LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU");
+                        break;
+                    case PDUTYPE_CONFIRMACTIVEPDU:
+//                        LOG(LOG_INFO, "PDUTYPE_CONFIRMACTIVEPDU");
+                        this->process_confirm_active(input_stream);
+                        break;
+                    case PDUTYPE_DATAPDU: /* 7 */
+//                        LOG(LOG_INFO, "PDUTYPE_DATAPDU");
+                        // this is rdp_process_data that will set up_and_running to 1
+                        // when fonts have been received
+                        // we will not exit this loop until we are in this state.
+                        #warning see what happen if we never receive up_and_running due to some error in client code ?
+                        this->process_data(input_stream, cb);
+//                        LOG(LOG_INFO, "PROCESS_DATA_DONE");
+                        break;
+                    case PDUTYPE_DEACTIVATEALLPDU:
+                        LOG(LOG_WARNING, "unsupported PDU DEACTIVATEALLPDU in session_data (%d)\n", pdu_code & 0xf);
+                        break;
+                    case PDUTYPE_SERVER_REDIR_PKT:
+                        LOG(LOG_WARNING, "unsupported PDU SERVER_REDIR_PKT in session_data (%d)\n", pdu_code & 0xf);
+                        break;
+                    default:
+                        LOG(LOG_WARNING, "unknown PDU type in session_data (%d)\n", pdu_code & 0xf);
+                        break;
+                    }
+                }
+            }
+//            LOG(LOG_INFO, "READY TO LOOP IN activate and process data");
+        } while ((input_stream.next_packet < input_stream.end) || !this->up_and_running);
+
+        #warning the postcondition could be changed to signify we want to get hand back immediately, because we still have data to process.
+//        LOG(LOG_INFO, "out of activate and process data");
+    }
+
+    /*****************************************************************************/
+    void server_rdp_send_data_update_sync() throw (Error)
+    {
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
+
+        ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->mcs_channel, this->share_id);
+
+        stream.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
+        stream.out_clear_bytes(2);
+
+        stream.mark_end();
+        rdp_out.end();
+        sec_out.end();
+        sdin_out.end();
+        tpdu.end();
+        tpdu.send(this->trans);
+
+    }
+
+
 
     /*****************************************************************************/
     void server_rdp_send_demand_active() throw (Error)

@@ -326,7 +326,7 @@ struct mod_rdp : public client_mod {
         case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
         {
             this->mcs_attach_user_confirm_pdu(this->trans, this->rdp_layer.userid);
-            this->mcs_channel_join_request_and_confirm_pdu(this->trans, this->rdp_layer.userid, this->channel_list);
+            send_mcs_channel_join_request_and_recv_confirm_pdu(this->trans, this->rdp_layer.userid, this->channel_list);
 
             // RDP Security Commencement
             // -------------------------
@@ -1384,84 +1384,6 @@ struct mod_rdp : public client_mod {
             userid = aucf_stream.in_uint16_be();
         }
         aucf_tpdu.end();
-    }
-
-
-    // 2.2.1.8 Client MCS Channel Join Request PDU
-    // -------------------------------------------
-    // The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
-    // from client to server during the Channel Connection phase (see section
-    // 1.3.1.1). It is sent after receiving the MCS Attach User Confirm PDU
-    // (section 2.2.1.7). The client uses the MCS Channel Join Request PDU to
-    // join the user channel obtained from the Attach User Confirm PDU, the
-    // I/O channel and all of the static virtual channels obtained from the
-    // Server Network Data structure (section 2.2.1.4.4).
-
-    // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-    // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
-    //                     section 13.7.
-
-    // mcsCJrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an
-    //                    MCS Channel Join Request structure as specified in
-    //                    [T125] sections 10.19 and I.3 (the ASN.1 structure
-    //                    definitions are given in [T125] section 7, parts 6
-    //                    and 10).
-
-    // ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
-    // {
-    //     initiator UserId
-    //     channelId ChannelId
-    //               -- may be zero
-    // }
-
-    void mcs_channel_join_request_pdu(Transport * trans, int userid, int chanid)
-    {
-        Stream cjrq_stream(8192);
-        X224Out cjrq_tpdu(X224Packet::DT_TPDU, cjrq_stream);
-        cjrq_stream.out_uint8((MCS_CJRQ << 2));
-        cjrq_stream.out_uint16_be(userid);
-        cjrq_stream.out_uint16_be(chanid);
-        cjrq_tpdu.end();
-        cjrq_tpdu.send(trans);
-    }
-
-    void mcs_channel_join_confirm_pdu(Transport * trans)
-    {
-        Stream cjcf_stream(8192);
-        X224In cjcf_tpdu(this->trans, cjcf_stream);
-        int opcode = cjcf_stream.in_uint8();
-        if ((opcode >> 2) != MCS_CJCF) {
-            throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
-        }
-        if (0 != cjcf_stream.in_uint8()) {
-            throw Error(ERR_MCS_RECV_CJCF_EMPTY);
-        }
-        cjcf_stream.skip_uint8(4); /* mcs_userid, req_chanid */
-        if (opcode & 2) {
-            cjcf_stream.skip_uint8(2); /* join_chanid */
-        }
-        cjcf_tpdu.end();
-    }
-
-    void mcs_channel_join_request_and_confirm_pdu(Transport * trans,
-                        int userid, vector<mcs_channel_item*> & channel_list)
-    {
-        #warning the array size below is arbitrary, it should be checked to avoid buffer overflow
-        uint16_t channels[100];
-
-        size_t num_channels = this->channel_list.size();
-        channels[0] = userid + 1001;
-        channels[1] = MCS_GLOBAL_CHANNEL;
-        for (size_t index = 2; index < num_channels+2; index++){
-            const mcs_channel_item* channel_item = this->channel_list[index-2];
-            channels[index] = channel_item->chanid;
-        }
-
-        for (size_t index = 0; index < num_channels+2; index++){
-            this->mcs_channel_join_request_pdu(trans, userid, channels[index]);
-            this->mcs_channel_join_confirm_pdu(trans);
-        }
     }
 
 };
