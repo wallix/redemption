@@ -400,10 +400,10 @@ struct Sec
     uint8_t server_random[32];
     uint8_t client_random[64];
 
-    uint8_t pub_exp[4];
-    uint8_t pub_mod[64];
-    uint8_t pub_sig[64];
-    uint8_t pri_exp[64];
+    uint8_t pub_exp[24];
+    uint8_t pub_mod[512];
+    uint8_t pub_sig[512];
+    uint8_t pri_exp[512];
 
 // only in rdp_sec : need cleanup
     int server_public_key_len;
@@ -446,11 +446,6 @@ struct Sec
         memset(this->server_random, 0, 32);
         memset(this->client_random, 0, 64);
         memset(this->client_crypt_random, 0, 72);
-
-        memset(this->pub_exp, 0, 4);
-        memset(this->pub_mod, 0, 64);
-        memset(this->pub_sig, 0, 64);
-        memset(this->pri_exp, 0, 64);
 
         // from rdp_sec
         memset(this->client_crypt_random, 0, 512);
@@ -639,16 +634,6 @@ struct Sec
         sdin_out.end();
         tpdu.end();
         tpdu.send(trans);
-// ----------------------------
-
-    }
-
-    void server_sec_rsa_op()
-    {
-        ssl_mod_exp(this->client_random, 64,
-                    this->client_crypt_random, 64,
-                    this->pub_mod, 64,
-                    this->pri_exp, 64);
     }
 
     void server_sec_process_logon_info(Stream & stream, ClientInfo * client_info) throw (Error)
@@ -766,6 +751,23 @@ struct Sec
     /* prepare server mcs data to send in mcs layer */
     void server_sec_out_mcs_data(Stream & data, ClientInfo * client_info)
     {
+        Rsakeys rsa_keys(CFG_PATH "/" RSAKEYS_INI);
+        memset(this->server_random, 0x44, 32);
+        int fd = open("/dev/urandom", O_RDONLY);
+        if (fd == -1) {
+            fd = open("/dev/random", O_RDONLY);
+        }
+        if (fd != -1) {
+            if (read(fd, this->server_random, 32) != 32) {
+            }
+            close(fd);
+        }
+
+        memcpy(this->pub_exp, rsa_keys.pub_exp, 4);
+        memcpy(this->pub_mod, rsa_keys.pub_mod, 64);
+        memcpy(this->pub_sig, rsa_keys.pub_sig, 64);
+        memcpy(this->pri_exp, rsa_keys.pri_exp, 64);
+
         /* Same code above using list_test */
         int num_channels = (int) this->channel_list.size();
         int num_channels_even = num_channels + (num_channels & 1);

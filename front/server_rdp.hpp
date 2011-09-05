@@ -468,7 +468,10 @@ struct server_rdp {
 
                 memcpy(this->sec_layer.client_crypt_random, input_stream.in_uint8p(64), 64);
 
-                this->sec_layer.server_sec_rsa_op();
+                ssl_mod_exp(this->sec_layer.client_random, 64,
+                        this->sec_layer.client_crypt_random, 64,
+                        this->sec_layer.pub_mod, 64,
+                        this->sec_layer.pri_exp, 64);
                 {
                     ssllib ssl;
 
@@ -803,25 +806,6 @@ struct server_rdp {
         // blocks of settings data (such as core data, security data and network data)
         // which are read by client and server
 
-        Rsakeys rsa_keys(CFG_PATH "/" RSAKEYS_INI);
-        memset(this->sec_layer.server_random, 0x44, 32);
-        int fd = open("/dev/urandom", O_RDONLY);
-        if (fd == -1) {
-            fd = open("/dev/random", O_RDONLY);
-        }
-        if (fd != -1) {
-            if (read(fd, this->sec_layer.server_random, 32) != 32) {
-            }
-            close(fd);
-        }
-
-        memcpy(this->sec_layer.pub_exp, rsa_keys.pub_exp, 4);
-        memcpy(this->sec_layer.pub_mod, rsa_keys.pub_mod, 64);
-        memcpy(this->sec_layer.pub_sig, rsa_keys.pub_sig, 64);
-        memcpy(this->sec_layer.pri_exp, rsa_keys.pri_exp, 64);
-
-
-
         // Client                                                     Server
         //    |--------------MCS Connect Initial PDU with-------------> |
         //                   GCC Conference Create Request
@@ -831,6 +815,7 @@ struct server_rdp {
         recv_connection_initial(this->trans, this->client_mcs_data);
         #warning we should fully decode Client MCS Connect Initial PDU with GCC Conference Create Request instead of just calling the function below to extract the fields, that is quite dirty
         process_mcs_data(this->client_mcs_data, &this->client_info, this->sec_layer.channel_list);
+
         this->sec_layer.server_sec_out_mcs_data(this->client_mcs_data, &this->client_info);
         this->sec_layer.send_connect_response(this->client_mcs_data, this->trans);
 
