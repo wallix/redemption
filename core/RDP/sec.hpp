@@ -707,49 +707,7 @@ struct Sec
 
 
 
-    void send_connect_response(Stream & data, Transport * trans) throw(Error)
-    {
-//        LOG(LOG_INFO, send_connect_response");
-        #warning why don't we build directly in final data buffer ? Instead of building in data and copying in stream ?
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        int data_len = data.end - data.data;
-        stream.out_uint16_be(BER_TAG_MCS_CONNECT_RESPONSE);
-        stream.out_ber_len(data_len + 38);
-
-        stream.out_uint8(BER_TAG_RESULT);
-        stream.out_uint8(1);
-        stream.out_uint8(0);
-
-        stream.out_uint8(BER_TAG_INTEGER);
-        stream.out_uint8(1);
-        stream.out_uint8(0);
-
-        stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-        stream.out_uint8(26);
-        stream.out_ber_int8(22); // max_channels
-        stream.out_ber_int8(3); // max_users
-        stream.out_ber_int8(0); // max_tokens
-        stream.out_ber_int8(1);
-        stream.out_ber_int8(0);
-        stream.out_ber_int8(1);
-        stream.out_ber_int24(0xfff8); // max_pdu_size
-        stream.out_ber_int8(2);
-
-        stream.out_uint8(BER_TAG_OCTET_STRING);
-        stream.out_ber_len(data_len);
-        /* mcs data */
-        stream.out_copy_bytes(data.data, data_len);
-
-        tpdu.end();
-        tpdu.send(trans);
-    }
-
-
-    /*****************************************************************************/
-    /* prepare server mcs data to send in mcs layer */
-    void server_sec_out_mcs_data(Stream & data, ClientInfo * client_info)
+    void mcs_connect_response_pdu_with_gcc_conference_create_response(Transport * trans, ClientInfo * client_info) throw(Error)
     {
         Rsakeys rsa_keys(CFG_PATH "/" RSAKEYS_INI);
         memset(this->server_random, 0x44, 32);
@@ -772,7 +730,7 @@ struct Sec
         int num_channels = (int) this->channel_list.size();
         int num_channels_even = num_channels + (num_channels & 1);
 
-        data.init(512);
+        Stream data(8192);
 
         data.out_uint16_be(5);
         data.out_uint16_be(0x14);
@@ -839,6 +797,42 @@ struct Sec
         data.out_clear_bytes(8); /* pad */
         /* end certificate */
         data.mark_end();
+
+//        LOG(LOG_INFO, send_connect_response");
+        #warning why don't we build directly in final data buffer ? Instead of building in data and copying in stream ?
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+        int data_len = data.end - data.data;
+        stream.out_uint16_be(BER_TAG_MCS_CONNECT_RESPONSE);
+        stream.out_ber_len(data_len + 38);
+
+        stream.out_uint8(BER_TAG_RESULT);
+        stream.out_uint8(1);
+        stream.out_uint8(0);
+
+        stream.out_uint8(BER_TAG_INTEGER);
+        stream.out_uint8(1);
+        stream.out_uint8(0);
+
+        stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+        stream.out_uint8(26);
+        stream.out_ber_int8(22); // max_channels
+        stream.out_ber_int8(3); // max_users
+        stream.out_ber_int8(0); // max_tokens
+        stream.out_ber_int8(1);
+        stream.out_ber_int8(0);
+        stream.out_ber_int8(1);
+        stream.out_ber_int24(0xfff8); // max_pdu_size
+        stream.out_ber_int8(2);
+
+        stream.out_uint8(BER_TAG_OCTET_STRING);
+        stream.out_ber_len(data_len);
+        /* mcs data */
+        stream.out_copy_bytes(data.data, data_len);
+
+        tpdu.end();
+        tpdu.send(trans);
     }
 
 
