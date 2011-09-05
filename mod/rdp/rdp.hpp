@@ -934,65 +934,7 @@ struct mod_rdp : public client_mod {
         }
         data.mark_end();
 
-        int data_len = data.end - data.data;
-        int len = 7 + 3 * 34 + 4 + data_len;
-
-        Stream ci_stream(8192);
-        X224Out ci_tpdu(X224Packet::DT_TPDU, ci_stream);
-
-        ci_stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
-        ci_stream.out_ber_len(len);
-        ci_stream.out_uint8(BER_TAG_OCTET_STRING);
-        ci_stream.out_ber_len(0); /* calling domain */
-        ci_stream.out_uint8(BER_TAG_OCTET_STRING);
-        ci_stream.out_ber_len(0); /* called domain */
-        ci_stream.out_uint8(BER_TAG_BOOLEAN);
-        ci_stream.out_ber_len(1);
-        ci_stream.out_uint8(0xff); /* upward flag */
-
-        // target params
-        ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-        ci_stream.out_ber_len(32);
-        ci_stream.out_ber_int16(34);     // max_channels
-        ci_stream.out_ber_int16(2);      // max_users
-        ci_stream.out_ber_int16(0);      // max_tokens
-        ci_stream.out_ber_int16(1);
-        ci_stream.out_ber_int16(0);
-        ci_stream.out_ber_int16(1);
-        ci_stream.out_ber_int16(0xffff); // max_pdu_size
-        ci_stream.out_ber_int16(2);
-
-        // min params
-        ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-        ci_stream.out_ber_len(32);
-        ci_stream.out_ber_int16(1);     // max_channels
-        ci_stream.out_ber_int16(1);     // max_users
-        ci_stream.out_ber_int16(1);     // max_tokens
-        ci_stream.out_ber_int16(1);
-        ci_stream.out_ber_int16(0);
-        ci_stream.out_ber_int16(1);
-        ci_stream.out_ber_int16(0x420); // max_pdu_size
-        ci_stream.out_ber_int16(2);
-
-        // max params
-        ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-        ci_stream.out_ber_len(32);
-        ci_stream.out_ber_int16(0xffff); // max_channels
-        ci_stream.out_ber_int16(0xfc17); // max_users
-        ci_stream.out_ber_int16(0xffff); // max_tokens
-        ci_stream.out_ber_int16(1);
-        ci_stream.out_ber_int16(0);
-        ci_stream.out_ber_int16(1);
-        ci_stream.out_ber_int16(0xffff); // max_pdu_size
-        ci_stream.out_ber_int16(2);
-
-        ci_stream.out_uint8(BER_TAG_OCTET_STRING);
-        ci_stream.out_ber_len(data_len);
-        ci_stream.out_copy_bytes(data.data, data_len);
-
-        ci_tpdu.end();
-        ci_tpdu.send(trans);
-
+        send_connection_initial(trans, data);
     }
 
 
