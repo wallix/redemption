@@ -889,6 +889,98 @@ static inline void process_mcs_data(Stream & stream, ClientInfo * client_info, v
     }
 }
 
+//   2.2.1.5 Client MCS Erect Domain Request PDU
+//   -------------------------------------------
+//   The MCS Erect Domain Request PDU is an RDP Connection Sequence PDU sent
+//   from client to server during the Channel Connection phase (see section
+//   1.3.1.1). It is sent after receiving the MCS Connect Response PDU (section
+//   2.2.1.4).
+
+//   tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+//   x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+//      section 13.7.
+
+// See description of tpktHeader and x224 Data TPDU in cheat sheet
+
+//   mcsEDrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an MCS
+//      Erect Domain Request structure, as specified in [T125] (the ASN.1
+//      structure definitions are given in [T125] section 7, parts 3 and 10).
+
+
+// 2.2.1.6 Client MCS Attach User Request PDU
+// ------------------------------------------
+// The MCS Attach User Request PDU is an RDP Connection Sequence PDU
+// sent from client to server during the Channel Connection phase (see
+// section 1.3.1.1) to request a user channel ID. It is sent after
+// transmitting the MCS Erect Domain Request PDU (section 2.2.1.5).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+//   [X224] section 13.7.
+
+// See description of tpktHeader and x224 Data TPDU in cheat sheet
+
+// mcsAUrq (1 byte): PER-encoded MCS Domain PDU which encapsulates an
+//  MCS Attach User Request structure, as specified in [T125] (the ASN.1
+//  structure definitions are given in [T125] section 7, parts 5 and 10).
+
+static inline void send_mcs_erect_domain_and_attach_user_request_pdu(Transport * trans)
+{
+    #warning there should be a way to merge both packets in the same stream to only perform one unique send
+    Stream edrq_stream(8192);
+    X224Out edrq_tpdu(X224Packet::DT_TPDU, edrq_stream);
+    edrq_stream.out_uint8((MCS_EDRQ << 2));
+    edrq_stream.out_uint16_be(0x100); /* height */
+    edrq_stream.out_uint16_be(0x100); /* interval */
+    edrq_tpdu.end();
+    edrq_tpdu.send(trans);
+
+    Stream aurq_stream(8192);
+    X224Out aurq_tpdu(X224Packet::DT_TPDU, aurq_stream);
+    aurq_stream.out_uint8((MCS_AURQ << 2));
+    aurq_tpdu.end();
+    aurq_tpdu.send(trans);
+}
+
+static inline void recv_mcs_erect_domain_and_attach_user_request_pdu(Transport * trans, uint16_t & userid)
+{
+    #warning this code could lead to some problem if both MCS are combined in the same TPDU, we should manage this case
+    {
+        Stream stream(8192);
+        X224In(trans, stream);
+        uint8_t opcode = stream.in_uint8();
+        if ((opcode >> 2) != MCS_EDRQ) {
+            throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
+        }
+        stream.skip_uint8(2);
+        stream.skip_uint8(2);
+        if (opcode & 2) {
+            userid = stream.in_uint16_be();
+        }
+        if (!stream.check_end()) {
+            throw Error(ERR_MCS_RECV_EDQR_TRUNCATED);
+        }
+    }
+
+    {
+        Stream stream(8192);
+        X224In(trans, stream);
+        uint8_t opcode = stream.in_uint8();
+        if ((opcode >> 2) != MCS_AURQ) {
+            throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
+        }
+        if (opcode & 2) {
+            userid = stream.in_uint16_be();
+        }
+        if (!stream.check_end()) {
+            throw Error(ERR_MCS_RECV_AURQ_TRUNCATED);
+        }
+    }
+
+}
+
 // 2.2.1.8 Client MCS Channel Join Request PDU
 // -------------------------------------------
 // The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
@@ -1023,6 +1115,53 @@ static inline void send_mcs_channel_join_request_and_recv_confirm_pdu(Transport 
         send_mcs_channel_join_request_pdu(trans, userid, channels[index]);
         recv_mcs_channel_join_confirm_pdu(trans);
     }
+}
+
+// 2.2.1.7 Server MCS Attach User Confirm PDU
+// ------------------------------------------
+// The MCS Attach User Confirm PDU is an RDP Connection Sequence
+// PDU sent from server to client during the Channel Connection
+// phase (see section 1.3.1.1). It is sent as a response to the MCS
+// Attach User Request PDU (section 2.2.1.6).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+//   section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+//   section [X224] 13.7.
+
+// mcsAUcf (4 bytes): PER-encoded MCS Domain PDU which encapsulates
+//   an MCS Attach User Confirm structure, as specified in [T125]
+//   (the ASN.1 structure definitions are given in [T125] section 7,
+// parts 5 and 10).
+
+static inline void recv_mcs_attach_user_confirm_pdu(Transport * trans, int & userid)
+{
+    Stream aucf_stream(8192);
+    X224In aucf_tpdu(trans, aucf_stream);
+    int opcode = aucf_stream.in_uint8();
+    if ((opcode >> 2) != MCS_AUCF) {
+        throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
+    }
+    int res = aucf_stream.in_uint8();
+    if (res != 0) {
+        throw Error(ERR_MCS_RECV_AUCF_RES_NOT_0);
+    }
+    if (opcode & 2) {
+        userid = aucf_stream.in_uint16_be();
+    }
+    aucf_tpdu.end();
+}
+
+static inline void send_mcs_attach_user_confirm_pdu(Transport * trans, uint16_t userid)
+{
+    Stream stream(8192);
+    X224Out tpdu(X224Packet::DT_TPDU, stream);
+    stream.out_uint8(((MCS_AUCF << 2) | 2));
+    stream.out_uint8(0);
+    stream.out_uint16_be(userid);
+    tpdu.end();
+    tpdu.send(trans);
 }
 
 
