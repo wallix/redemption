@@ -889,33 +889,33 @@ static inline void process_mcs_data(Stream & stream, ClientInfo * client_info, v
     }
 }
 
-    // 2.2.1.8 Client MCS Channel Join Request PDU
-    // -------------------------------------------
-    // The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
-    // from client to server during the Channel Connection phase (see section
-    // 1.3.1.1). It is sent after receiving the MCS Attach User Confirm PDU
-    // (section 2.2.1.7). The client uses the MCS Channel Join Request PDU to
-    // join the user channel obtained from the Attach User Confirm PDU, the
-    // I/O channel and all of the static virtual channels obtained from the
-    // Server Network Data structure (section 2.2.1.4.4).
+// 2.2.1.8 Client MCS Channel Join Request PDU
+// -------------------------------------------
+// The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
+// from client to server during the Channel Connection phase (see section
+// 1.3.1.1). It is sent after receiving the MCS Attach User Confirm PDU
+// (section 2.2.1.7). The client uses the MCS Channel Join Request PDU to
+// join the user channel obtained from the Attach User Confirm PDU, the
+// I/O channel and all of the static virtual channels obtained from the
+// Server Network Data structure (section 2.2.1.4.4).
 
-    // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
 
-    // x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
-    //                     section 13.7.
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+//                     section 13.7.
 
-    // mcsCJrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an
-    //                    MCS Channel Join Request structure as specified in
-    //                    [T125] sections 10.19 and I.3 (the ASN.1 structure
-    //                    definitions are given in [T125] section 7, parts 6
-    //                    and 10).
+// mcsCJrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an
+//                    MCS Channel Join Request structure as specified in
+//                    [T125] sections 10.19 and I.3 (the ASN.1 structure
+//                    definitions are given in [T125] section 7, parts 6
+//                    and 10).
 
-    // ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
-    // {
-    //     initiator UserId
-    //     channelId ChannelId
-    //               -- may be zero
-    // }
+// ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+// {
+//     initiator UserId
+//     channelId ChannelId
+//               -- may be zero
+// }
 
 static inline void send_mcs_channel_join_request_pdu(Transport * trans, int userid, int chanid)
 {
@@ -927,6 +927,52 @@ static inline void send_mcs_channel_join_request_pdu(Transport * trans, int user
     cjrq_tpdu.end();
     cjrq_tpdu.send(trans);
 }
+
+static inline void recv_mcs_channel_join_request_pdu(Transport * trans, uint16_t & userid, uint16_t & chanid){
+    Stream stream(8192);
+    // read tpktHeader (4 bytes = 3 0 len)
+    // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+    X224In in(trans, stream);
+
+    uint8_t opcode = stream.in_uint8();
+    if ((opcode >> 2) != MCS_CJRQ) {
+        throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
+    }
+    userid = stream.in_uint16_be();
+    chanid = stream.in_uint16_be();
+
+    if (opcode & 2) {
+        stream.skip_uint8(2);
+    }
+
+    in.end();
+}
+
+// 2.2.1.9 Server MCS Channel Join Confirm PDU
+// -------------------------------------------
+// The MCS Channel Join Confirm PDU is an RDP Connection Sequence
+// PDU sent from server to client during the Channel Connection
+// phase (see section 1.3.1.1). It is sent as a response to the MCS
+// Channel Join Request PDU (section 2.2.1.8).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+//   section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+//  [X224] section 13.7.
+
+// mcsCJcf (8 bytes): PER-encoded MCS Domain PDU which encapsulates
+//  an MCS Channel Join Confirm PDU structure, as specified in
+//  [T125] (the ASN.1 structure definitions are given in [T125]
+//  section 7, parts 6 and 10).
+
+// ChannelJoinConfirm ::= [APPLICATION 15] IMPLICIT SEQUENCE
+// {
+//   result Result,
+//   initiator UserId,
+//   requested ChannelId, -- may be zero
+//   channelId ChannelId OPTIONAL
+// }
 
 static inline void recv_mcs_channel_join_confirm_pdu(Transport * trans)
 {
@@ -946,6 +992,18 @@ static inline void recv_mcs_channel_join_confirm_pdu(Transport * trans)
     cjcf_tpdu.end();
 }
 
+static inline void send_mcs_channel_join_confirm_pdu(Transport * trans, uint16_t userid, uint16_t chanid)
+{
+    Stream stream(8192);
+    X224Out tpdu(X224Packet::DT_TPDU, stream);
+    stream.out_uint8((MCS_CJCF << 2) | 2);
+    stream.out_uint8(0);
+    stream.out_uint16_be(userid);
+    stream.out_uint16_be(chanid);
+    stream.out_uint16_be(chanid);
+    tpdu.end();
+    tpdu.send(trans);
+}
 
 static inline void send_mcs_channel_join_request_and_recv_confirm_pdu(Transport * trans,
                     int userid, vector<mcs_channel_item*> & channel_list)
@@ -954,7 +1012,7 @@ static inline void send_mcs_channel_join_request_and_recv_confirm_pdu(Transport 
     uint16_t channels[100];
 
     size_t num_channels = channel_list.size();
-    channels[0] = userid + 1001;
+    channels[0] = userid + MCS_USERCHANNEL_BASE;
     channels[1] = MCS_GLOBAL_CHANNEL;
     for (size_t index = 2; index < num_channels+2; index++){
         const mcs_channel_item* channel_item = channel_list[index-2];
