@@ -145,61 +145,6 @@ class McsIn
 
 #warning create McsConnectionInitialIn and McsConnectionInitialOut classes instead of recv_ and send_ functions below (it would also much simplify length management) and allow inlining data part instead of preparint it in a separate buffer.
 
-inline static void recv_connection_initial(Transport * trans, Stream & data)
-{
-    Stream stream(8192);
-    X224In(trans, stream);
-
-    if (stream.in_uint16_be() != BER_TAG_MCS_CONNECT_INITIAL) {
-        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-    }
-    int len = stream.in_ber_len();
-    if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
-        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-    }
-    len = stream.in_ber_len();
-    stream.skip_uint8(len);
-
-    if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
-        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-    }
-    len = stream.in_ber_len();
-    stream.skip_uint8(len);
-    if (stream.in_uint8() != BER_TAG_BOOLEAN) {
-        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-    }
-    len = stream.in_ber_len();
-    stream.skip_uint8(len);
-
-    if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
-        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-    }
-    len = stream.in_ber_len();
-    stream.skip_uint8(len);
-
-    if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
-        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-    }
-    len = stream.in_ber_len();
-    stream.skip_uint8(len);
-
-    if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
-        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-    }
-    len = stream.in_ber_len();
-    stream.skip_uint8(len);
-
-    if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
-        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-    }
-    len = stream.in_ber_len();
-
-    /* make a copy of client mcs data */
-    data.init(len);
-    data.out_copy_bytes(stream.p, len);
-    data.mark_end();
-    stream.skip_uint8(len);
-}
 
 inline static void send_connection_initial(Transport * trans, Stream & data)
 {
@@ -1134,11 +1079,6 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
     send_connection_initial(trans, data);
 }
 
-
-/* process the mcs client data we received from the mcs layer */
-static inline void process_mcs_data(Stream & stream, ClientInfo * client_info, vector<struct mcs_channel_item *> & channel_list) throw (Error)
-{
-}
 
 //   2.2.1.5 Client MCS Erect Domain Request PDU
 //   -------------------------------------------
