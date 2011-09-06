@@ -1549,7 +1549,7 @@ struct Sec
 
 
     /* this adds the mcs channels in the list of channels to be used when creating the server mcs data */
-    void rdp_sec_process_srv_channels(Stream & stream, vector<mcs_channel_item*> channel_list)
+    void rdp_sec_process_srv_channels(Stream & stream, vector<mcs_channel_item*> & channel_list)
     {
         stream.in_uint16_le(); /* base_channel */
         size_t num_channels = stream.in_uint16_le();
@@ -1565,7 +1565,7 @@ struct Sec
             channel_item_srv->chanid = chanid;
             strcpy(channel_item_srv->name, channel_item_cli->name);
             channel_item_srv->flags = channel_item_cli->flags;
-            this->channel_list.push_back(channel_item_srv);
+            channel_list.push_back(channel_item_srv);
         }
     }
 
