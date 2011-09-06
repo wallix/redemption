@@ -459,7 +459,7 @@ public:
 //        LOG(LOG_INFO, "set_console_session done");
     }
 
-    const vector<struct mcs_channel_item *> & get_channel_list(void) const
+    const ChannelList & get_channel_list(void) const
     {
 //        LOG(LOG_INFO, "get_channel_list()");
         return rdp_layer.sec_layer.channel_list;
@@ -489,12 +489,10 @@ public:
         int count = (int) this->rdp_layer.sec_layer.channel_list.size();
 
         for (int index = 0; index < count; index++) {
-            mcs_channel_item* channel_item = this->rdp_layer.sec_layer.channel_list[index];
-            if (0 != channel_item) {
-                if (0 == strcasecmp(name, channel_item->name)) {
-                    rv = index;
-                    break;
-                }
+            const McsChannelItem & channel_item = this->rdp_layer.sec_layer.channel_list[index];
+            if (0 == strcasecmp(name, channel_item.name)) {
+                rv = index;
+                break;
             }
         }
         return rv;

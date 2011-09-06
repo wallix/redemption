@@ -29,6 +29,7 @@
 #include "client_mod.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/sec.hpp"
+#include "channel_list.hpp"
 
 /* rdp */
 struct rdp_rdp {
@@ -52,11 +53,12 @@ struct rdp_rdp {
     bool console_session;
     int bpp;
     Transport * trans;
+    const ChannelList & front_channel_list;
 
     struct rdp_cursor cursors[32];
-    rdp_rdp(struct mod_rdp* owner, Transport *trans, const char * username, const char * password, const char * hostname, vector<mcs_channel_item*> channel_list, int rdp_performance_flags, int width, int height, int bpp, int keylayout, bool console_session)
+    rdp_rdp(struct mod_rdp* owner, Transport *trans, const char * username, const char * password, const char * hostname, const ChannelList & front_channel_list, int rdp_performance_flags, int width, int height, int bpp, int keylayout, bool console_session)
         #warning initialize members through constructor
-        : sec_layer(0), userid(0), bpp(bpp), trans(trans)
+        : sec_layer(0), userid(0), bpp(bpp), trans(trans), front_channel_list(front_channel_list)
         {
             #warning and if hostname is really larger, what happens ? We should at least emit a warning log
             strncpy(this->hostname, hostname, 15);
@@ -865,13 +867,10 @@ struct rdp_rdp {
             tpdu.send(this->trans);
         }
 
-        #warning this function connects front-end channels given in channel_list with back_end channels in this->sec_layer.channel_list. This kind of things should be done through client_mod API (as it is done for color conversion). Change that by performing a call to some client_mod function.
-        void send_redirect_pdu(long param1, long param2, long param3, int param4,
-                                      vector<mcs_channel_item*> channel_list) throw(Error)
+        void send_redirect_pdu(long param1, long param2, long param3, int param4, const ChannelList & mod_channel_list) throw(Error)
         {
 //            LOG(LOG_INFO, "send_redirect_pdu\n");
             char* name = 0;
-            struct mcs_channel_item* channel_item;
             /* We need to verify this in order to right process the stream passed */
             int chan_id = (int)(param1 & 0xffff) + MCS_GLOBAL_CHANNEL + 1;
             int flags = (int)((param1 >> 16) & 0xffff);
@@ -881,28 +880,27 @@ struct rdp_rdp {
             /* We need to recover the name of the channel linked with this
             channel_id in order to match it with the same channel on the
             first channel_list created by the RDP client at initialization
-            process*/
+            process */
 
-            int num_channels_src = (int) channel_list.size();
-            for (int index = 0; index < num_channels_src; index++){
-                channel_item = channel_list[index];
-                if (chan_id == channel_item->chanid){
-                    name = channel_item->name;
+            #warning all this is probably useless, look closer at channel management
+            int channel_id = 0;
+            size_t num_channels_src = this->front_channel_list.size();
+            for (size_t index = 0; index < num_channels_src; index++){
+                const McsChannelItem & front_channel_item = this->front_channel_list[index];
+                if (chan_id == front_channel_item.chanid){
+                    size_t num_channels_dst = mod_channel_list.size();
+                    for (size_t index = 0; index < num_channels_dst; index++){
+                        const McsChannelItem & mod_channel_item = mod_channel_list[index];
+                        if (strcmp(front_channel_item.name, mod_channel_item.name) == 0){
+                            channel_id = mod_channel_item.chanid;
+                        }
+                        break;
+                    }
                 }
             }
 //            LOG(LOG_INFO, "send_redirect_pdu channel=%s\n", name);
             /* Here, we're going to search the correct channel in order to send
             information throughout this channel to RDP server */
-            int channel_id = 0;
-            int num_channels_dst = (int) this->sec_layer.channel_list.size();
-            for (int index = 0; index < num_channels_dst; index++){
-                channel_item = this->sec_layer.channel_list[index];
-                if (strcmp(name, channel_item->name) == 0){
-                    channel_id = channel_item->chanid;
-                }
-            }
-            #warning what to do if no matching channel was found in back-end ?
-            assert(channel_id);
             /*Copy data from s to data and after that close stream and send
             it to send_data with channel_id so we need to pass chan_id to
             send_data also in order to be able to redirect data in the correct
@@ -911,11 +909,6 @@ struct rdp_rdp {
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, channel_id);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->sec_layer.encrypt);
-            stream.channel_hdr = stream.p;
-            stream.p += 8;
-
-            stream.p = stream.channel_hdr;
-
             stream.out_uint32_le(total_data_length);
             stream.out_uint32_le(flags);
             memcpy(stream.p, data, size);

@@ -30,6 +30,8 @@
 #include <arpa/inet.h>
 #include <locale.h>
 
+
+#include "channel_list.hpp"
 #include "client_info.hpp"
 #include "font.hpp"
 #include "cache.hpp"
@@ -53,7 +55,7 @@ struct client_mod : public Callback {
     bool pointer_displayed;
     Front & front;
     int sck;
-    vector<struct mcs_channel_item *> channel_list;
+    ChannelList channel_list;
     char ip_source[256];
     int rdp_compression;
     int bitmap_cache_persist_enable;
