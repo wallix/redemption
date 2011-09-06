@@ -632,6 +632,28 @@ static inline void parse_mcs_data_cs_security(Stream & stream)
 //REMOTE_CONTROL_PERSISTENT     Channel MUST be persistent across remote
 //                              control 0x00100000 transactions.
 
+
+static inline void send_cs_net(Stream & stream, const vector<struct mcs_channel_item *> & channel_list)
+{
+    /* Here we need to put channel information in order to redirect channel data
+    from client to server passing through the "proxy" */
+    size_t num_channels = channel_list.size();
+
+    if (num_channels > 0) {
+        stream.out_uint16_le(CS_NET);
+        stream.out_uint16_le(num_channels * 12 + 8); /* length */
+        stream.out_uint32_le(num_channels); /* number of virtual channels */
+        for (size_t i = 0; i < num_channels; i++){
+            const mcs_channel_item * channel_item = channel_list[i];
+            stream.out_copy_bytes(channel_item->name, 8);
+            stream.p += 8;
+            stream.out_uint32_be(channel_item->flags);
+        }
+    }
+
+
+}
+
 // this adds the mcs channels in the list of channels to be used when
 // creating the server mcs data
 static inline void parse_mcs_data_cs_net(Stream & stream, ClientInfo * client_info, vector<struct mcs_channel_item *> & channel_list)
@@ -1055,25 +1077,8 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
     data.out_uint32_le(0x3);
     data.out_uint32_le(0); /* Unknown */
 
-    /* Here we need to put channel information in order to redirect channel data
-    from client to server passing through the "proxy" */
-    size_t num_channels = channel_list.size();
+    send_cs_net(data, channel_list);
 
-    #warning this looks like holy shit. Check that
-    if (num_channels > 0) {
-        data.out_uint16_le(CS_NET);
-        data.out_uint16_le(num_channels * 12 + 8); /* length */
-        data.out_uint32_le(num_channels); /* number of virtual channels */
-        for (size_t i = 0; i < num_channels; i++){
-            const mcs_channel_item* channel_item = channel_list[i];
-
-            LOG(LOG_DEBUG, "Requesting channel %s\n", channel_item->name);
-            memcpy(data.p, channel_item->name, 8);
-            data.p += 8;
-
-            data.out_uint32_be(channel_item->flags);
-        }
-    }
     data.mark_end();
 
     send_connection_initial(trans, data);

@@ -634,6 +634,13 @@ struct server_rdp {
 
         send_mcs_channel_join_confirm_pdu(this->trans, this->userid, MCS_GLOBAL_CHANNEL);
 
+        for (size_t i = 0 ; i < this->sec_layer.channel_list.size() ; i++){
+                uint16_t tmp_userid;
+                uint16_t tmp_chanid;
+                recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
+                send_mcs_channel_join_confirm_pdu(this->trans, tmp_userid, tmp_chanid);
+        }
+
     }
 
 
