@@ -26,17 +26,7 @@
 #define __CORE_RDP_MCS_HPP__
 
 #include "RDP/x224.hpp"
-
-struct mcs_channel_item {
-    char name[16];
-    int flags;
-    int chanid;
-    mcs_channel_item(){
-        this->name[0] = 0;
-        this->flags = 0;
-        this->chanid = 0;
-    }
-};
+#include "channel_list.hpp"
 
 
 class McsOut
@@ -633,7 +623,7 @@ static inline void parse_mcs_data_cs_security(Stream & stream)
 //                              control 0x00100000 transactions.
 
 
-static inline void send_cs_net(Stream & stream, const vector<struct mcs_channel_item *> & channel_list)
+static inline void send_cs_net(Stream & stream, const ChannelList & channel_list)
 {
     /* Here we need to put channel information in order to redirect channel data
     from client to server passing through the "proxy" */
@@ -644,10 +634,9 @@ static inline void send_cs_net(Stream & stream, const vector<struct mcs_channel_
         stream.out_uint16_le(num_channels * 12 + 8); /* length */
         stream.out_uint32_le(num_channels); /* number of virtual channels */
         for (size_t i = 0; i < num_channels; i++){
-            const mcs_channel_item * channel_item = channel_list[i];
-            stream.out_copy_bytes(channel_item->name, 8);
-            stream.p += 8;
-            stream.out_uint32_be(channel_item->flags);
+            const McsChannelItem & channel_item = channel_list[i];
+            stream.out_copy_bytes(channel_item.name, 8);
+            stream.out_uint32_be(channel_item.flags);
         }
     }
 
@@ -656,22 +645,22 @@ static inline void send_cs_net(Stream & stream, const vector<struct mcs_channel_
 
 // this adds the mcs channels in the list of channels to be used when
 // creating the server mcs data
-static inline void parse_mcs_data_cs_net(Stream & stream, ClientInfo * client_info, vector<struct mcs_channel_item *> & channel_list)
+static inline void parse_mcs_data_cs_net(Stream & stream, ClientInfo * client_info, ChannelList & channel_list)
 {
     LOG(LOG_INFO, "CS_NET\n");
-    // this is an option set in rdpproxy.ini
-    // to disable all channels (no clipboard, no device redirection, etc)
-    if (client_info->channel_code != 1) { /* are channels on? */
-        return;
-    }
+//    // this is an option set in rdpproxy.ini
+//    // to disable all channels (no clipboard, no device redirection, etc)
+//    if (client_info->channel_code != 1) { /* are channels on? */
+//        return;
+//    }
     uint32_t channelCount = stream.in_uint32_le();
 
-    #warning make an object with the channel list and let it manage creation of channels
     for (uint32_t index = 0; index < channelCount; index++) {
-        struct mcs_channel_item *channel_item = new mcs_channel_item; /* zeroed */
-        memcpy(channel_item->name, stream.in_uint8p(8), 8);
-        channel_item->flags = stream.in_uint32_be();
-        channel_item->chanid = MCS_GLOBAL_CHANNEL + (index + 1);
+        McsChannelItem channel_item;
+        memcpy(channel_item.name, stream.in_uint8p(8), 8);
+        channel_item.flags = stream.in_uint32_be();
+        channel_item.chanid = MCS_GLOBAL_CHANNEL + (index + 1);
+        #warning push_back is not the best choice here, as we have static space already available in channel_list, we could even let ChannelList manage parsing
         channel_list.push_back(channel_item);
     }
 }
@@ -833,9 +822,9 @@ static inline void parse_mcs_data_sc_net(Stream & stream)
 
 
 static inline void recv_mcs_connect_initial_pdu_with_gcc_conference_create_request(
-                Transport * trans, 
+                Transport * trans,
                 ClientInfo * client_info,
-                vector<mcs_channel_item*> & channel_list)
+                ChannelList & channel_list)
 {
     Stream stream(8192);
     X224In(trans, stream);
@@ -968,7 +957,7 @@ static inline void recv_mcs_connect_initial_pdu_with_gcc_conference_create_reque
 
 static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_request(
                 Transport * trans,
-                const vector<mcs_channel_item*> & channel_list,
+                const ChannelList & channel_list,
                 int width,
                 int height,
                 int rdp_bpp,
@@ -980,6 +969,7 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
 
     int length = 158 + 76 + 12 + 4;
 
+    #warning another option could be to emit channel list even if number of channel is zero. It looks more logical to me than not passing any channel information (what happens in this case ?)
     if (channel_list.size() > 0){
         length += channel_list.size() * 12 + 8;
     }
@@ -1294,7 +1284,7 @@ static inline void send_mcs_channel_join_confirm_pdu(Transport * trans, uint16_t
 }
 
 static inline void send_mcs_channel_join_request_and_recv_confirm_pdu(Transport * trans,
-                    int userid, vector<mcs_channel_item*> & channel_list)
+                    int userid, ChannelList & channel_list)
 {
     #warning the array size below is arbitrary, it should be checked to avoid buffer overflow
     uint16_t channels[100];
@@ -1303,8 +1293,8 @@ static inline void send_mcs_channel_join_request_and_recv_confirm_pdu(Transport 
     channels[0] = userid + MCS_USERCHANNEL_BASE;
     channels[1] = MCS_GLOBAL_CHANNEL;
     for (size_t index = 2; index < num_channels+2; index++){
-        const mcs_channel_item* channel_item = channel_list[index-2];
-        channels[index] = channel_item->chanid;
+        const McsChannelItem & channel_item = channel_list[index-2];
+        channels[index] = channel_item.chanid;
     }
 
     for (size_t index = 0; index < num_channels+2; index++){

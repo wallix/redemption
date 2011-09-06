@@ -48,7 +48,7 @@ struct mod_rdp : public client_mod {
     int up_and_running;
     Stream in_stream;
     Transport *trans;
-    struct vector<mcs_channel_item*> front_channel_list;
+    ChannelList mod_channel_list;
     bool dev_redirection_enable;
     struct ModContext & context;
     wait_obj & event;
@@ -79,7 +79,7 @@ struct mod_rdp : public client_mod {
     mod_rdp(Transport * trans, wait_obj & event,
             int (& keys)[256], int & key_flags, Keymap * &keymap,
             struct ModContext & context, struct Front & front,
-            vector<mcs_channel_item*> channel_list,
+            ChannelList front_channel_list,
             const char * hostname, int keylayout,
             bool clipboard_enable, bool dev_redirection_enable)
             :
@@ -87,7 +87,7 @@ struct mod_rdp : public client_mod {
                   rdp_layer(this, trans,
                     context.get(STRAUTHID_TARGET_USER),
                     context.get(STRAUTHID_TARGET_PASSWORD),
-                    hostname, channel_list,
+                    hostname, front_channel_list,
                     this->get_client_info().rdp5_performanceflags,
                     this->get_front_width(),
                     this->get_front_height(),
@@ -106,7 +106,6 @@ struct mod_rdp : public client_mod {
         // copy channel list from client.
         // It will be changed after negotiation with server
         // to hold only channels actually supported.
-        this->front_channel_list = channel_list;
         this->up_and_running = 0;
         /* clipboard allow us to deactivate copy/paste sequence from server
         to client communication. This is allowed by default */
@@ -207,7 +206,7 @@ struct mod_rdp : public client_mod {
                 break;
             case WM_CHANNELDATA:
 //                LOG(LOG_INFO, "rdp::mod_event::WM_CHANNEL_DATA");
-                this->rdp_layer.send_redirect_pdu(param1, param2, param3, param4, this->front_channel_list);
+                this->rdp_layer.send_redirect_pdu(param1, param2, param3, param4, this->mod_channel_list);
                 break;
             default:
                 break;
@@ -668,49 +667,34 @@ struct mod_rdp : public client_mod {
          process*/
 
         int num_channels_src = (int) this->channel_list.size();
-        mcs_channel_item *channel_item = NULL;
         for (int index = 0; index < num_channels_src; index++){
-            channel_item = this->channel_list[index];
-            if (chan == channel_item->chanid){
+            const McsChannelItem & channel_item = this->channel_list[index];
+            if (chan == channel_item.chanid){
+                /* Here, we're going to search the correct channel in order to send
+                information throughout this channel to RDP client*/
+
+                int num_channels_dst = (int) this->channel_list.size();
+                for (int index = 0; index < num_channels_dst; index++){
+                    const McsChannelItem & channel_item = this->channel_list[index];
+                    if (strcmp(channel_item.name, channel_item.name) == 0){
+                        int size = (int)(stream.end - stream.p);
+
+                        /* TODO: create new function in order to activate / deactivate copy-paste
+                        sequence from server to client */
+
+//                        if(this->rdp_layer.sec_layer.clipboard_check(name, this->clipboard_enable) == 1){
+//                            /* Clipboard deactivation required */
+//                        }
+//                        else if (channel_item.chanid < 0){
+//                            LOG(LOG_ERR, "Error sending information, wrong channel id");
+//                        }
+//                        else {
+                            this->server_send_to_channel_mod(channel_item.chanid, stream.p, size, length, channel_flags);
+//                        }
+                        break;
+                    }
+                }
                 break;
-            }
-        }
-
-        if (!channel_item || (chan != channel_item->chanid)){
-            LOG(LOG_ERR, "failed to recover name of linked channel\n");
-        }
-        else {
-            char * name = channel_item->name;
-
-            /* Here, we're going to search the correct channel in order to send
-            information throughout this channel to RDP client*/
-
-            int num_channels_dst = (int) this->channel_list.size();
-            for (int index = 0; index < num_channels_dst; index++){
-                channel_item = this->channel_list[index];
-                if (strcmp(name, channel_item->name) == 0){
-                    break;
-                }
-            }
-            if (strcmp(name, channel_item->name) != 0){
-                LOG(LOG_ERR, "failed to recover channel id\n");
-            }
-            else {
-                int channel_id = channel_item->chanid;
-                int size = (int)(stream.end - stream.p);
-
-                /* TODO: create new function in order to activate / deactivate copy-paste
-                sequence from server to client */
-
-                if(this->rdp_layer.sec_layer.clipboard_check(name, this->clipboard_enable) == 1){
-                    /* Clipboard deactivation required */
-                }
-                else if (channel_id < 0){
-                    LOG(LOG_ERR, "Error sending information, wrong channel id");
-                }
-                else {
-                    this->server_send_to_channel_mod(channel_id, stream.p, size, length, channel_flags);
-                }
             }
         }
     }
@@ -801,8 +785,6 @@ struct mod_rdp : public client_mod {
             throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
         }
     }
-
-
 
 // 2.2.1.4  Server MCS Connect Response PDU with GCC Conference Create Response
 // ----------------------------------------------------------------------------
@@ -1083,7 +1065,7 @@ struct mod_rdp : public client_mod {
 
     void mcs_connect_response_pdu_with_gcc_conference_create_response(
                                 Transport * trans,
-                                vector<mcs_channel_item*> & channel_list,
+                                ChannelList & channel_list,
                                 int & use_rdp5)
     {
         Stream cr_stream(8192);
@@ -1149,14 +1131,9 @@ struct mod_rdp : public client_mod {
                 this->rdp_layer.sec_layer.rdp_sec_process_crypt_info(cr_stream, this->rdp_layer.sec_layer.server_public_key_len, this->rdp_layer.sec_layer.crypt_level);
             break;
             case SEC_TAG_SRV_CHANNELS:
-            /*  This is what rdesktop says in comment:
-                FIXME: We should parse this information and
-                use it to map RDP5 channels to MCS
-                channels
-                rdesktop does not call the function below
-            */
-                #warning rdesktop does not call the function below
-                 this->rdp_layer.sec_layer.rdp_sec_process_srv_channels(cr_stream, channel_list);
+                // map front channels to mod channels
+                    #warning we should have mod_rdp and front channel lists
+                 process_srv_channels(cr_stream, channel_list, channel_list);
                 break;
             default:
                 LOG(LOG_WARNING, "response tag 0x%x\n", tag);

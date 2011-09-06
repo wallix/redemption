@@ -25,16 +25,17 @@
 #if !defined(__SEC_HPP__)
 #define __SEC_HPP__
 
+#include <assert.h>
+#include <stdint.h>
+
+#include <iostream>
+
 #include "RDP/x224.hpp"
 #include "RDP/rdp.hpp"
 #include "client_info.hpp"
 #include "rsa_keys.hpp"
 #include "constants.hpp"
 
-#include <assert.h>
-#include <stdint.h>
-
-#include <iostream>
 
 #warning ssl calls introduce some dependency on ssl system library, injecting it in the sec object would be better.
 #include "ssl_calls.hpp"
@@ -424,7 +425,7 @@ struct Sec
     uint8_t * licence_data;
     size_t licence_size;
 
-    vector<struct mcs_channel_item *> channel_list;
+    ChannelList channel_list;
 
     #warning windows 2008 does not write trailer because of overflow of buffer below, checked actual size: 64 bytes on xp, 256 bytes on windows 2008
     uint8_t client_crypt_random[512];
@@ -472,17 +473,7 @@ struct Sec
 
     }
 
-    ~Sec()
-    {
-        // clear channel_list
-        int count = (int) this->channel_list.size();
-        for (int index = 0; index < count; index++) {
-            mcs_channel_item* channel_item = this->channel_list[index];
-            if (0 != channel_item) {
-                delete channel_item;
-            }
-        }
-    }
+    ~Sec() {}
 
 
     // 16-byte transformation used to generate export keys (6.2.2).
@@ -1547,27 +1538,6 @@ struct Sec
 //                    exp, SEC_EXPONENT_SIZE); /* 4 */
 //    }
 
-
-    /* this adds the mcs channels in the list of channels to be used when creating the server mcs data */
-    void rdp_sec_process_srv_channels(Stream & stream, vector<mcs_channel_item*> & channel_list)
-    {
-        stream.in_uint16_le(); /* base_channel */
-        size_t num_channels = stream.in_uint16_le();
-
-        /* We assume that the channel_id array is confirmed in the same order
-        that it has been sent. If there are any channels not confirmed, they're
-        going to be the last channels on the array sent in MCS Connect Initial */
-        for (size_t index = 0; index < num_channels; index++){
-            mcs_channel_item *channel_item_cli = channel_list[index];
-            #warning check matching delete, valgrind say memory leak
-            mcs_channel_item *channel_item_srv = new mcs_channel_item;
-            int chanid = stream.in_uint16_le();
-            channel_item_srv->chanid = chanid;
-            strcpy(channel_item_srv->name, channel_item_cli->name);
-            channel_item_srv->flags = channel_item_cli->flags;
-            channel_list.push_back(channel_item_srv);
-        }
-    }
 
     /******************************************************************************/
 

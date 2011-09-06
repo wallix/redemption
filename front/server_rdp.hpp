@@ -83,20 +83,20 @@ struct server_rdp {
         stream.out_copy_bytes(data, data_len);
         stream.mark_end();
 
-        int index = channel_id - MCS_GLOBAL_CHANNEL - 1;
-        int count = (int) this->sec_layer.channel_list.size();
-        if (index < 0 || index >= count) {
+        size_t index = channel_id - MCS_GLOBAL_CHANNEL - 1;
+        size_t count = this->sec_layer.channel_list.size();
+        if (index >= count) {
             throw Error(ERR_MCS_CHANNEL_NOT_FOUND);
         }
-        mcs_channel_item* channel = this->sec_layer.channel_list[index];
+        const McsChannelItem & channel = this->sec_layer.channel_list[index];
 
         stream.p = stream.channel_hdr;
         stream.out_uint32_le(total_data_len);
-        if (channel->flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
+        if (channel.flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
             flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
         }
         stream.out_uint32_le(flags);
-        assert(channel->chanid == channel_id);
+        assert(channel.chanid == channel_id);
 
         sec_out.end();
         sdin_out.end();
@@ -520,7 +520,7 @@ struct server_rdp {
 
         recv_mcs_connect_initial_pdu_with_gcc_conference_create_request(
                 this->trans,
-                &this->client_info, 
+                &this->client_info,
                 this->sec_layer.channel_list);
 
         this->sec_layer.mcs_connect_response_pdu_with_gcc_conference_create_response(this->trans, &this->client_info);
@@ -751,13 +751,12 @@ struct server_rdp {
                    but they should be, see server_sec_process_mcs_data_channels
                    the first channel should be MCS_GLOBAL_CHANNEL + 1, second
                    one should be MCS_GLOBAL_CHANNEL + 2, and so on */
-                int channel_id = (chan - MCS_GLOBAL_CHANNEL) - 1;
+                size_t channel_id = (chan - MCS_GLOBAL_CHANNEL) - 1;
 
-                struct mcs_channel_item* channel = this->sec_layer.channel_list[channel_id];
-
-                if (channel == 0) {
+                if (channel_id >= this->sec_layer.channel_list.size()) {
                     throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                 }
+
                 int length = input_stream.in_uint32_le();
                 int flags = input_stream.in_uint32_le();
 
