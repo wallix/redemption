@@ -1272,48 +1272,9 @@ struct Sec
         ssl.rc4_set_key(this->encrypt.rc4_info, this->encrypt.key, this->encrypt.rc4_key_len);
     }
 
-    /* Perform an RSA public key encryption operation */
-    static void rdp_sec_rsa_encrypt(uint8_t * out, uint8_t * in, uint8_t len, uint32_t modulus_size, uint8_t * modulus, uint8_t * exponent)
+    int rdp_sec_parse_public_sig(Stream & stream, int len, uint8_t* modulus, uint8_t* exponent, int server_public_key_len)
     {
-        ssllib ssl;
-
-        ssl.rsa_encrypt(out, in, len, modulus_size, modulus, exponent);
-    }
-
-    /* Parse a public key structure */
-    void rdp_sec_parse_public_key(Stream & stream, uint8_t* modulus, uint8_t* exponent)
-    {
-        uint32_t magic;
-        uint32_t modulus_len;
-
-        magic = stream.in_uint32_le();
-        if (magic != SEC_RSA_MAGIC) {
-            LOG(LOG_WARNING, "RSA magic 0x%x\n", magic);
-            throw Error(ERR_SEC_PARSE_PUB_KEY_MAGIC_NOT_OK);
-        }
-        modulus_len = stream.in_uint32_le();
-        modulus_len -= SEC_PADDING_SIZE;
-
-        if ((modulus_len < SEC_MODULUS_SIZE)
-        ||  (modulus_len > SEC_MAX_MODULUS_SIZE)) {
-            LOG(LOG_WARNING, "Bad server public key size (%u bits)\n", modulus_len * 8);
-            throw Error(ERR_SEC_PARSE_PUB_KEY_MODUL_NOT_OK);
-        }
-        stream.skip_uint8(8); /* modulus_bits, unknown */
-        memcpy(exponent, stream.in_uint8p(SEC_EXPONENT_SIZE), SEC_EXPONENT_SIZE);
-        memcpy(modulus, stream.in_uint8p(modulus_len), modulus_len);
-        stream.skip_uint8(SEC_PADDING_SIZE);
-        this->server_public_key_len = modulus_len;
-
-        if (!stream.check()){
-            throw Error(ERR_SEC_PARSE_PUB_KEY_ERROR_CHECKING_STREAM);
-        }
-    }
-
-
-    /* Parse a public key structure */
-    int rdp_sec_parse_public_sig(Stream & stream, int len, uint8_t* modulus, uint8_t* exponent)
-    {
+        /* Parse a public key structure */
         uint8_t signature[SEC_MAX_MODULUS_SIZE];
         uint32_t sig_len;
 
@@ -1325,16 +1286,16 @@ struct Sec
         memset(signature, 0, sizeof(signature));
         sig_len = len - 8;
         memcpy(signature, stream.in_uint8p(sig_len), sig_len);
-        return ssl_sig_ok(exponent, SEC_EXPONENT_SIZE,
-                        modulus, this->server_public_key_len,
-                        signature, sig_len);
+        return ssl_sig_ok(exponent, SEC_EXPONENT_SIZE, modulus, server_public_key_len, signature, sig_len);
     }
 
 
     /* Parse a crypto information structure */
     int rdp_sec_parse_crypt_info(Stream & stream, uint32_t *rc4_key_size,
                                   uint8_t * server_random,
-                                  uint8_t* modulus, uint8_t* exponent)
+                                  uint8_t* modulus, uint8_t* exponent,
+                                  int & server_public_key_len,
+                                  uint8_t & crypt_level)
     {
         uint32_t random_len;
         uint32_t rsa_info_len;
@@ -1350,8 +1311,8 @@ struct Sec
         uint8_t* end;
 
         *rc4_key_size = stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
-        this->crypt_level = stream.in_uint32_le(); /* 1 = low, 2 = medium, 3 = high */
-        if (this->crypt_level == 0) { /* no encryption */
+        crypt_level = stream.in_uint32_le(); /* 1 = low, 2 = medium, 3 = high */
+        if (crypt_level == 0) { /* no encryption */
             LOG(LOG_INFO, "No encryption");
             return 0;
         }
@@ -1388,7 +1349,32 @@ struct Sec
                 case SEC_TAG_PUBKEY:
                     #warning exception style should be used throughout the code, not an horrible mixup as below
                     try {
-                        this->rdp_sec_parse_public_key(stream, modulus, exponent);
+                        /* Parse a public key structure */
+                        uint32_t magic;
+                        uint32_t modulus_len;
+
+                        magic = stream.in_uint32_le();
+                        if (magic != SEC_RSA_MAGIC) {
+                            LOG(LOG_WARNING, "RSA magic 0x%x\n", magic);
+                            throw Error(ERR_SEC_PARSE_PUB_KEY_MAGIC_NOT_OK);
+                        }
+                        modulus_len = stream.in_uint32_le();
+                        modulus_len -= SEC_PADDING_SIZE;
+
+                        if ((modulus_len < SEC_MODULUS_SIZE)
+                        ||  (modulus_len > SEC_MAX_MODULUS_SIZE)) {
+                            LOG(LOG_WARNING, "Bad server public key size (%u bits)\n", modulus_len * 8);
+                            throw Error(ERR_SEC_PARSE_PUB_KEY_MODUL_NOT_OK);
+                        }
+                        stream.skip_uint8(8); /* modulus_bits, unknown */
+                        memcpy(exponent, stream.in_uint8p(SEC_EXPONENT_SIZE), SEC_EXPONENT_SIZE);
+                        memcpy(modulus, stream.in_uint8p(modulus_len), modulus_len);
+                        stream.skip_uint8(SEC_PADDING_SIZE);
+                        server_public_key_len = modulus_len;
+
+                        if (!stream.check()){
+                            throw Error(ERR_SEC_PARSE_PUB_KEY_ERROR_CHECKING_STREAM);
+                        }
                     }
                     catch (...) {
                         return 0;
@@ -1472,7 +1458,7 @@ struct Sec
                 }
                 ssl_cert_free(cacert);
                 stream.skip_uint8(16); /* Padding */
-                server_public_key = ssl_cert_to_rkey(server_cert, this->server_public_key_len);
+                server_public_key = ssl_cert_to_rkey(server_cert, server_public_key_len);
                 if (NULL == server_public_key){
                     LOG(LOG_DEBUG, "Didn't parse X509 correctly\n");
                     ssl_cert_free(server_cert);
@@ -1480,11 +1466,11 @@ struct Sec
 
                 }
                 ssl_cert_free(server_cert);
-                LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d\n", this->server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
-                if ((this->server_public_key_len < SEC_MODULUS_SIZE) ||
-                    (this->server_public_key_len > SEC_MAX_MODULUS_SIZE)){
+                LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d\n", server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
+                if ((server_public_key_len < SEC_MODULUS_SIZE) ||
+                    (server_public_key_len > SEC_MAX_MODULUS_SIZE)){
                     LOG(LOG_DEBUG, "Bad server public key size (%u bits)\n",
-                        this->server_public_key_len * 8);
+                        server_public_key_len * 8);
                     ssl.rkey_free(server_public_key);
                     throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
                 }
@@ -1510,7 +1496,7 @@ struct Sec
 
     /*****************************************************************************/
     /* Process crypto information blob */
-    void rdp_sec_process_crypt_info(Stream & stream)
+    void rdp_sec_process_crypt_info(Stream & stream, int & server_public_key_len, uint8_t & crypt_level)
     {
         uint8_t server_random[SEC_RANDOM_SIZE];
         uint8_t client_random[SEC_RANDOM_SIZE];
@@ -1523,7 +1509,7 @@ struct Sec
         memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
         #warning check for the true size
         memset(server_random, 0, SEC_RANDOM_SIZE);
-        if (!this->rdp_sec_parse_crypt_info(stream, &rc4_key_size, server_random, modulus, exponent)){
+        if (!this->rdp_sec_parse_crypt_info(stream, &rc4_key_size, server_random, modulus, exponent, server_public_key_len, crypt_level)){
             return;
         }
         /* Generate a client random, and determine encryption keys */
@@ -1543,8 +1529,9 @@ struct Sec
         else {
             LOG(LOG_WARNING, "random source failed to provide random data : couldn't open device\n");
         }
-        #warning see order of parameters, (always buffer len of len, buffer, but not both)
-        this->rdp_sec_rsa_encrypt(this->client_crypt_random, client_random, SEC_RANDOM_SIZE, this->server_public_key_len, modulus, exponent);
+        ssllib ssl;
+        ssl.rsa_encrypt(this->client_crypt_random, client_random, SEC_RANDOM_SIZE, server_public_key_len, modulus, exponent);
+
         this->rdp_sec_generate_keys(client_random, server_random, rc4_key_size);
     }
 
@@ -1601,19 +1588,6 @@ struct Sec
       }
       return 0;
     }
-
-    /* Process SRV_INFO, find RDP version supported by server */
-    void process_srv_info(Stream & stream, int & use_rdp5)
-    {
-        uint16_t rdp_version = stream.in_uint16_le();
-        LOG(LOG_DEBUG, "Server RDP version is %d\n", rdp_version);
-        if (1 == rdp_version){ // can't use rdp5
-            use_rdp5 = 0;
-        #warning why caring of server_depth here ? Quite strange
-        //        this->server_depth = 8;
-        }
-    }
-
 
     void security_exchange_PDU(Transport * trans, int userid)
     {

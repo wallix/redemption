@@ -1135,11 +1135,19 @@ struct mod_rdp : public client_mod {
             uint8_t *next_tag = (cr_stream.p + length) - 4;
             switch (tag) {
             case SEC_TAG_SRV_INFO:
-                this->rdp_layer.sec_layer.process_srv_info(cr_stream, use_rdp5);
-                break;
+            {
+                uint16_t rdp_version = cr_stream.in_uint16_le();
+                LOG(LOG_DEBUG, "Server RDP version is %d\n", rdp_version);
+                if (1 == rdp_version){ // can't use rdp5
+                    use_rdp5 = 0;
+                    #warning why caring of server_depth here ? Quite strange
+                    //        this->server_depth = 8;
+                }
+            }
+            break;
             case SEC_TAG_SRV_CRYPT:
-                this->rdp_layer.sec_layer.rdp_sec_process_crypt_info(cr_stream);
-                break;
+                this->rdp_layer.sec_layer.rdp_sec_process_crypt_info(cr_stream, this->rdp_layer.sec_layer.server_public_key_len, this->rdp_layer.sec_layer.crypt_level);
+            break;
             case SEC_TAG_SRV_CHANNELS:
             /*  This is what rdesktop says in comment:
                 FIXME: We should parse this information and
