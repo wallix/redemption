@@ -405,35 +405,6 @@ struct server_rdp {
 
 
 
-    // RDP Security Commencement
-    // -------------------------
-
-    // RDP Security Commencement: If standard RDP security methods are being
-    // employed and encryption is in force (this is determined by examining the data
-    // embedded in the GCC Conference Create Response packet) then the client sends
-    // a Security Exchange PDU containing an encrypted 32-byte random number to the
-    // server. This random number is encrypted with the public key of the server
-    // (the server's public key, as well as a 32-byte server-generated random
-    // number, are both obtained from the data embedded in the GCC Conference Create
-    //  Response packet).
-
-    // The client and server then utilize the two 32-byte random numbers to generate
-    // session keys which are used to encrypt and validate the integrity of
-    // subsequent RDP traffic.
-
-    // From this point, all subsequent RDP traffic can be encrypted and a security
-    // header is included with the data if encryption is in force (the Client Info
-    // and licensing PDUs are an exception in that they always have a security
-    // header). The Security Header follows the X.224 and MCS Headers and indicates
-    // whether the attached data is encrypted.
-
-    // Even if encryption is in force server-to-client traffic may not always be
-    // encrypted, while client-to-server traffic will always be encrypted by
-    // Microsoft RDP implementations (encryption of licensing PDUs is optional,
-    // however).
-
-    // Client                                                     Server
-    //    |------Security Exchange PDU ---------------------------> |
 
     // Secure Settings Exchange
     // ------------------------
@@ -512,25 +483,6 @@ struct server_rdp {
     // between client-side plug-ins and server-side applications).
 
 
-    void recv_x224_connection_request_pdu(Transport * trans)
-    {
-        Stream in(8192);
-        X224In crtpdu(this->trans, in);
-        if (crtpdu.tpdu_hdr.code != ISO_PDU_CR) {
-            throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
-        }
-        crtpdu.end();
-    }
-
-
-    void send_x224_connection_confirm_pdu(Transport * trans)
-    {
-        Stream out(11);
-        X224Out cctpdu(X224Packet::CC_TPDU, out);
-        cctpdu.end();
-        cctpdu.send(this->trans);
-    }
-
     void server_rdp_incoming() throw (Error)
     {
         // Connection Initiation
@@ -545,8 +497,8 @@ struct server_rdp {
         //    |------------X224 Connection Request PDU----------------> |
         //    | <----------X224 Connection Confirm PDU----------------- |
 
-        this->recv_x224_connection_request_pdu(this->trans);
-        this->send_x224_connection_confirm_pdu(this->trans);
+        recv_x224_connection_request_pdu(this->trans);
+        send_x224_connection_confirm_pdu(this->trans);
 
         // Basic Settings Exchange
         // -----------------------
@@ -640,6 +592,37 @@ struct server_rdp {
                 recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
                 send_mcs_channel_join_confirm_pdu(this->trans, tmp_userid, tmp_chanid);
         }
+
+        // RDP Security Commencement
+        // -------------------------
+
+        // RDP Security Commencement: If standard RDP security methods are being
+        // employed and encryption is in force (this is determined by examining the data
+        // embedded in the GCC Conference Create Response packet) then the client sends
+        // a Security Exchange PDU containing an encrypted 32-byte random number to the
+        // server. This random number is encrypted with the public key of the server
+        // (the server's public key, as well as a 32-byte server-generated random
+        // number, are both obtained from the data embedded in the GCC Conference Create
+        //  Response packet).
+
+        // The client and server then utilize the two 32-byte random numbers to generate
+        // session keys which are used to encrypt and validate the integrity of
+        // subsequent RDP traffic.
+
+        // From this point, all subsequent RDP traffic can be encrypted and a security
+        // header is included with the data if encryption is in force (the Client Info
+        // and licensing PDUs are an exception in that they always have a security
+        // header). The Security Header follows the X.224 and MCS Headers and indicates
+        // whether the attached data is encrypted.
+
+        // Even if encryption is in force server-to-client traffic may not always be
+        // encrypted, while client-to-server traffic will always be encrypted by
+        // Microsoft RDP implementations (encryption of licensing PDUs is optional,
+        // however).
+
+        // Client                                                     Server
+        //    |------Security Exchange PDU ---------------------------> |
+
 
     }
 
