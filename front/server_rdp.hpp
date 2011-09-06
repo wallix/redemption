@@ -656,31 +656,6 @@ struct server_rdp {
             int opcode = input_stream.in_uint8();
             int appid = opcode >> 2;
 
-//            LOG(LOG_INFO, "appid = %u", appid);
-            /* Channel Join ReQuest datagram */
-            #warning this loop should move to sec layer
-            while(appid == MCS_CJRQ) {
-                /* this is channels getting added from the client */
-                int userid = input_stream.in_uint16_be();
-                int chanid = input_stream.in_uint16_be();
-
-                Stream stream(8192);
-                X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-                stream.out_uint8((MCS_CJCF << 2) | 2);
-                stream.out_uint8(0);
-                stream.out_uint16_be(userid);
-                stream.out_uint16_be(chanid);
-                stream.out_uint16_be(chanid);
-
-                tpdu.end();
-                tpdu.send(this->trans);
-
-                input_stream.init(65535);
-                X224In(this->trans, input_stream);
-                appid = input_stream.in_uint8() >> 2;
-
-            }
             /* Disconnect Provider Ultimatum datagram */
             if (appid == MCS_DPUM) {
                 throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
