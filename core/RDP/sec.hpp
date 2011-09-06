@@ -445,7 +445,6 @@ struct Sec
         // CGR: see if init has influence for the 3 following fields
         memset(this->server_random, 0, 32);
         memset(this->client_random, 0, 64);
-        memset(this->client_crypt_random, 0, 72);
 
         // from rdp_sec
         memset(this->client_crypt_random, 0, 512);
