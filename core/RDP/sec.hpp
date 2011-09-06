@@ -425,7 +425,7 @@ struct Sec
     uint8_t * licence_data;
     size_t licence_size;
 
-    ChannelList channel_list;
+//    ChannelList channel_list;
 
     #warning windows 2008 does not write trailer because of overflow of buffer below, checked actual size: 64 bytes on xp, 256 bytes on windows 2008
     uint8_t client_crypt_random[512];
@@ -697,7 +697,7 @@ struct Sec
 
 
 
-    void mcs_connect_response_pdu_with_gcc_conference_create_response(Transport * trans, ClientInfo * client_info) throw(Error)
+    void send_mcs_connect_response_pdu_with_gcc_conference_create_response(Transport * trans, ClientInfo * client_info, const ChannelList & channel_list) throw(Error)
     {
         Rsakeys rsa_keys(CFG_PATH "/" RSAKEYS_INI);
         memset(this->server_random, 0x44, 32);
@@ -717,7 +717,7 @@ struct Sec
         memcpy(this->pri_exp, rsa_keys.pri_exp, 64);
 
         /* Same code above using list_test */
-        int num_channels = (int) this->channel_list.size();
+        int num_channels = (int) channel_list.size();
         int num_channels_even = num_channels + (num_channels & 1);
 
         Stream data(8192);

@@ -527,7 +527,7 @@ struct server_rdp {
                 &this->client_info,
                 channel_list);
 
-        this->sec_layer.mcs_connect_response_pdu_with_gcc_conference_create_response(this->trans, &this->client_info);
+        this->sec_layer.send_mcs_connect_response_pdu_with_gcc_conference_create_response(this->trans, &this->client_info, channel_list);
 
         // Channel Connection
         // ------------------
