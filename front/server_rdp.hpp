@@ -70,7 +70,8 @@ struct server_rdp {
     };
 
 
-    void server_send_to_channel(int channel_id, uint8_t *data, int data_len, int total_data_len, int flags) throw (Error)
+    #warning we should provide directly target channel informations, no need to seek it in channel_list here
+    void server_send_to_channel(ChannelList & channel_list, int channel_id, uint8_t *data, int data_len, int total_data_len, int flags) throw (Error)
     {
         Stream stream(data_len + 1024); /* this should be big enough */
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -84,11 +85,11 @@ struct server_rdp {
         stream.mark_end();
 
         size_t index = channel_id - MCS_GLOBAL_CHANNEL - 1;
-        size_t count = this->sec_layer.channel_list.size();
+        size_t count = channel_list.size();
         if (index >= count) {
             throw Error(ERR_MCS_CHANNEL_NOT_FOUND);
         }
-        const McsChannelItem & channel = this->sec_layer.channel_list[index];
+        const McsChannelItem & channel = channel_list[index];
 
         stream.p = stream.channel_hdr;
         stream.out_uint32_le(total_data_len);
@@ -102,7 +103,6 @@ struct server_rdp {
         sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
-
     }
 
     // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
@@ -483,8 +483,9 @@ struct server_rdp {
     // between client-side plug-ins and server-side applications).
 
 
-    void server_rdp_incoming() throw (Error)
+    void server_rdp_incoming(ChannelList & channel_list) throw (Error)
     {
+        LOG(LOG_INFO, "Connection Initiation");
         // Connection Initiation
         // ---------------------
 
@@ -518,10 +519,13 @@ struct server_rdp {
         //    | <------------MCS Connect Response PDU with------------- |
         //                   GCC conference Create Response
 
+        LOG(LOG_INFO, "Basic Settings Exchange");
+        LOG(LOG_INFO, "front:basic_settings:channel_list : %u", channel_list.size());
+
         recv_mcs_connect_initial_pdu_with_gcc_conference_create_request(
                 this->trans,
                 &this->client_info,
-                this->sec_layer.channel_list);
+                channel_list);
 
         this->sec_layer.mcs_connect_response_pdu_with_gcc_conference_create_response(this->trans, &this->client_info);
 
@@ -561,6 +565,8 @@ struct server_rdp {
         //    |-------MCS Channel Join Request PDU--------------------> |
         //    | <-----MCS Channel Join Confirm PDU--------------------- |
 
+        LOG(LOG_INFO, "Channel Connection");
+        LOG(LOG_INFO, "AURQ");
         {
             #warning change userid to uint16_t
             uint16_t tmp_userid;
@@ -568,30 +574,39 @@ struct server_rdp {
             this->userid = tmp_userid;
         }
 
+        LOG(LOG_INFO, "AUCF");
         send_mcs_attach_user_confirm_pdu(this->trans, this->userid);
 
+        LOG(LOG_INFO, "CJRQ");
         {
             uint16_t tmp_userid;
             uint16_t tmp_chanid;
             recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
         }
 
+        LOG(LOG_INFO, "CJCF");
         send_mcs_channel_join_confirm_pdu(this->trans, this->userid, this->userid + MCS_USERCHANNEL_BASE);
 
+        LOG(LOG_INFO, "CJRQ");
         {
             uint16_t tmp_userid;
             uint16_t tmp_chanid;
             recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
         }
 
+        LOG(LOG_INFO, "CJCF");
         send_mcs_channel_join_confirm_pdu(this->trans, this->userid, MCS_GLOBAL_CHANNEL);
 
-        for (size_t i = 0 ; i < this->sec_layer.channel_list.size() ; i++){
+        LOG(LOG_INFO, "channel_list = %u", channel_list.size());
+        for (size_t i = 0 ; i < channel_list.size() ; i++){
                 uint16_t tmp_userid;
                 uint16_t tmp_chanid;
+                LOG(LOG_INFO, "CJRQ %u", i);
                 recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
+                LOG(LOG_INFO, "CJCF userid=%u [%u] chanid=%u",  tmp_userid, this->userid, tmp_chanid);
                 send_mcs_channel_join_confirm_pdu(this->trans, tmp_userid, tmp_chanid);
         }
+        LOG(LOG_INFO, "RDP Security Commencement");
 
         // RDP Security Commencement
         // -------------------------
@@ -627,7 +642,7 @@ struct server_rdp {
     }
 
 
-    void activate_and_process_data(Callback & cb)
+    void activate_and_process_data(Callback & cb, ChannelList & channel_list)
     {
         #warning this code needs (yet and again) much clarification
 
@@ -753,7 +768,7 @@ struct server_rdp {
                    one should be MCS_GLOBAL_CHANNEL + 2, and so on */
                 size_t channel_id = (chan - MCS_GLOBAL_CHANNEL) - 1;
 
-                if (channel_id >= this->sec_layer.channel_list.size()) {
+                if (channel_id >= channel_list.size()) {
                     throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                 }
 

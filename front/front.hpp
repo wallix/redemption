@@ -348,6 +348,7 @@ public:
     bool nomouse;
     bool notimestamp;
     int timezone;
+//    ChannelList channel_list;
 
     struct server_rdp rdp_layer;
     int order_level;
@@ -441,7 +442,7 @@ public:
     void activate_and_process_data(Callback & cb)
     {
 //        LOG(LOG_INFO, "activate_and_process_data\n");
-        this->rdp_layer.activate_and_process_data(cb);
+        this->rdp_layer.activate_and_process_data(cb, this->rdp_layer.sec_layer.channel_list);
 //        LOG(LOG_INFO, "activate_and_process_data done\n");
     }
 
@@ -461,15 +462,13 @@ public:
 
     const ChannelList & get_channel_list(void) const
     {
-//        LOG(LOG_INFO, "get_channel_list()");
-        return rdp_layer.sec_layer.channel_list;
-//        LOG(LOG_INFO, "get_channel_list() done");
+        return this->rdp_layer.sec_layer.channel_list;
     }
 
     void incoming(void)
     {
 //        LOG(LOG_INFO, "incoming");
-        this->rdp_layer.server_rdp_incoming();
+        this->rdp_layer.server_rdp_incoming(this->rdp_layer.sec_layer.channel_list);
 //        LOG(LOG_INFO, "incoming done");
     }
 
@@ -485,10 +484,7 @@ public:
     {
 //        LOG(LOG_INFO, "front::get_channel_id\n");
         int rv = -1;
-
-        int count = (int) this->rdp_layer.sec_layer.channel_list.size();
-
-        for (int index = 0; index < count; index++) {
+        for (size_t index = 0; index < this->rdp_layer.sec_layer.channel_list.size(); index++) {
             const McsChannelItem & channel_item = this->rdp_layer.sec_layer.channel_list[index];
             if (0 == strcasecmp(name, channel_item.name)) {
                 rv = index;
@@ -498,12 +494,10 @@ public:
         return rv;
     }
 
-    void send_to_channel(int channel_id,
-                       uint8_t* data, int data_len,
-                       int total_data_len, int flags)
+    void send_to_channel(int channel_id, uint8_t* data, int data_len, int total_data_len, int flags)
     {
 //        LOG(LOG_INFO, "send_to_channel()");
-        this->rdp_layer.server_send_to_channel(channel_id, data, data_len, total_data_len, flags);
+        this->rdp_layer.server_send_to_channel(this->rdp_layer.sec_layer.channel_list, channel_id, data, data_len, total_data_len, flags);
 //        LOG(LOG_INFO, "send_to_channel() done");
     }
 

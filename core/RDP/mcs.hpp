@@ -654,6 +654,7 @@ static inline void parse_mcs_data_cs_net(Stream & stream, ClientInfo * client_in
 //        return;
 //    }
     uint32_t channelCount = stream.in_uint32_le();
+    LOG(LOG_INFO, "front:basic_settings:channel_list:cs_net:channel_count %u [%u]", channelCount, channel_list.size());
 
     for (uint32_t index = 0; index < channelCount; index++) {
         McsChannelItem channel_item;
@@ -662,7 +663,9 @@ static inline void parse_mcs_data_cs_net(Stream & stream, ClientInfo * client_in
         channel_item.chanid = MCS_GLOBAL_CHANNEL + (index + 1);
         #warning push_back is not the best choice here, as we have static space already available in channel_list, we could even let ChannelList manage parsing
         channel_list.push_back(channel_item);
+        LOG(LOG_INFO, "channel[%u] (%s, %x, chanid=%u)", index, channel_list[index].name, channel_list[index].flags, channel_list[index].chanid);
     }
+    LOG(LOG_INFO, "Number of virtual channels: %u", channel_list.size());
 }
 
 
@@ -930,6 +933,7 @@ static inline void recv_mcs_connect_initial_pdu_with_gcc_conference_create_reque
                 parse_mcs_data_cs_security(stream);
             break;
             case CS_NET:
+                LOG(LOG_INFO, "front:basic_settings:channel_list:cs_net %u", channel_list.size());
                 parse_mcs_data_cs_net(stream, client_info, channel_list);
             break;
             case CS_CLUSTER:
@@ -1214,6 +1218,7 @@ static inline void recv_mcs_channel_join_request_pdu(Transport * trans, uint16_t
 
     uint8_t opcode = stream.in_uint8();
     if ((opcode >> 2) != MCS_CJRQ) {
+        LOG(LOG_INFO, "unexpected opcode = %u", opcode);
         throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
     }
     userid = stream.in_uint16_be();
@@ -1223,7 +1228,8 @@ static inline void recv_mcs_channel_join_request_pdu(Transport * trans, uint16_t
         stream.skip_uint8(2);
     }
 
-    in.end();
+    LOG(LOG_INFO, "recv cjrq done");
+//    in.end();
 }
 
 // 2.2.1.9 Server MCS Channel Join Confirm PDU
