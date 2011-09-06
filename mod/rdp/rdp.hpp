@@ -1083,7 +1083,7 @@ struct mod_rdp : public client_mod {
 
     void mcs_connect_response_pdu_with_gcc_conference_create_response(
                                 Transport * trans,
-                                const vector<mcs_channel_item*> & channel_list,
+                                vector<mcs_channel_item*> & channel_list,
                                 int & use_rdp5)
     {
         Stream cr_stream(8192);
