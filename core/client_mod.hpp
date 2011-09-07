@@ -30,8 +30,6 @@
 #include <arpa/inet.h>
 #include <locale.h>
 
-
-#include "channel_list.hpp"
 #include "client_info.hpp"
 #include "font.hpp"
 #include "cache.hpp"
@@ -41,8 +39,6 @@
 #include "wait_obj.hpp"
 #include "keymap.hpp"
 #include "callback.hpp"
-
-#warning server_ naming convention is really confusing, it means internal RDP server, it would be clearer to call that front (like in front.hpp).
 
 struct client_mod : public Callback {
     int (& keys)[256];
@@ -55,7 +51,6 @@ struct client_mod : public Callback {
     bool pointer_displayed;
     Front & front;
     int sck;
-    ChannelList channel_list;
     char ip_source[256];
     int rdp_compression;
     int bitmap_cache_persist_enable;

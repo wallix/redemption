@@ -806,7 +806,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                     this->keymap,
                                     *this->context,
                                     *(this->front),
-                                    this->front->get_channel_list(),
                                     hostname,
                                     this->front->get_client_info().keylayout,
                                     this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),

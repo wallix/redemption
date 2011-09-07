@@ -759,6 +759,11 @@ struct server_rdp {
                    one should be MCS_GLOBAL_CHANNEL + 2, and so on */
                 size_t channel_id = (mcs_in.chan_id - MCS_GLOBAL_CHANNEL) - 1;
 
+                LOG(LOG_INFO, "received data in channel %u(=%u) [%s]", 
+                    channel_list[channel_id].chanid, mcs_in.chan_id,
+                    channel_list[channel_id].name);
+
+
                 if (channel_id >= channel_list.size()) {
                     throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                 }

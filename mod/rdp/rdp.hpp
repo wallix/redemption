@@ -79,7 +79,6 @@ struct mod_rdp : public client_mod {
     mod_rdp(Transport * trans, wait_obj & event,
             int (& keys)[256], int & key_flags, Keymap * &keymap,
             struct ModContext & context, struct Front & front,
-            ChannelList front_channel_list,
             const char * hostname, int keylayout,
             bool clipboard_enable, bool dev_redirection_enable)
             :
@@ -87,7 +86,7 @@ struct mod_rdp : public client_mod {
                   rdp_layer(this, trans,
                     context.get(STRAUTHID_TARGET_USER),
                     context.get(STRAUTHID_TARGET_PASSWORD),
-                    hostname, front_channel_list,
+                    hostname, 
                     this->get_client_info().rdp5_performanceflags,
                     this->get_front_width(),
                     this->get_front_height(),
@@ -106,6 +105,10 @@ struct mod_rdp : public client_mod {
         // copy channel list from client.
         // It will be changed after negotiation with server
         // to hold only channels actually supported.
+//        for(size_t index = 0 ; index < front.get_channel_list().size() ; index++){
+//            this->mod_channel_list.push_back(front.get_channel_list()[index]);
+//        }
+
         this->up_and_running = 0;
         /* clipboard allow us to deactivate copy/paste sequence from server
         to client communication. This is allowed by default */
@@ -148,7 +151,6 @@ struct mod_rdp : public client_mod {
         }
     }
 
-    #warning most of code below should move to rdp_rdp
     virtual int mod_event(int msg, long param1, long param2, long param3, long param4)
     {
         try{
@@ -205,8 +207,8 @@ struct mod_rdp : public client_mod {
                 this->rdp_layer.send_invalidate(stream, (param1 >> 16) & 0xffff, param1 & 0xffff,(param2 >> 16) & 0xffff, param2 & 0xffff);
                 break;
             case WM_CHANNELDATA:
-//                LOG(LOG_INFO, "rdp::mod_event::WM_CHANNEL_DATA");
-                this->rdp_layer.send_redirect_pdu(param1, param2, param3, param4, this->mod_channel_list);
+                LOG(LOG_INFO, "rdp::mod_event::WM_CHANNEL_DATA");
+                this->rdp_layer.send_redirect_pdu(param1, param2, param3, param4, this->mod_channel_list, this->front.get_channel_list());
                 break;
             default:
                 break;
@@ -272,14 +274,14 @@ struct mod_rdp : public client_mod {
             //                   GCC conference Create Response
 
             send_mcs_connect_initial_pdu_with_gcc_conference_create_request(
-                    this->trans, this->channel_list, width, height, rdp_bpp, keylayout, console_session, hostname);
+                    this->trans, this->mod_channel_list, width, height, rdp_bpp, keylayout, console_session, hostname);
 
             this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
         break;
 
         case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
             this->mcs_connect_response_pdu_with_gcc_conference_create_response(
-                    this->trans, this->channel_list, this->use_rdp5);
+                    this->trans, this->mod_channel_list, this->use_rdp5);
 
             // Channel Connection
             // ------------------
@@ -325,7 +327,7 @@ struct mod_rdp : public client_mod {
         case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
         {
             recv_mcs_attach_user_confirm_pdu(this->trans, this->rdp_layer.userid);
-            send_mcs_channel_join_request_and_recv_confirm_pdu(this->trans, this->rdp_layer.userid, this->channel_list);
+            send_mcs_channel_join_request_and_recv_confirm_pdu(this->trans, this->rdp_layer.userid, this->mod_channel_list);
 
             // RDP Security Commencement
             // -------------------------
@@ -659,6 +661,7 @@ struct mod_rdp : public client_mod {
     // redirect_pdu
     void recv_virtual_channel(Stream & stream, int chan)
     {
+        LOG(LOG_INFO, "recv virtual channel %u", chan);
       uint32_t length = stream.in_uint32_le();
       int channel_flags = stream.in_uint32_le();
         /* We need to recover the name of the channel linked with this
@@ -666,16 +669,16 @@ struct mod_rdp : public client_mod {
          first channel_list created by the RDP client at initialization
          process*/
 
-        int num_channels_src = (int) this->channel_list.size();
+        int num_channels_src = (int) this->mod_channel_list.size();
         for (int index = 0; index < num_channels_src; index++){
-            const McsChannelItem & channel_item = this->channel_list[index];
+            const McsChannelItem & channel_item = this->mod_channel_list[index];
             if (chan == channel_item.chanid){
                 /* Here, we're going to search the correct channel in order to send
                 information throughout this channel to RDP client*/
 
-                int num_channels_dst = (int) this->channel_list.size();
+                int num_channels_dst = (int) this->front.get_channel_list().size();
                 for (int index = 0; index < num_channels_dst; index++){
-                    const McsChannelItem & channel_item = this->channel_list[index];
+                    const McsChannelItem & channel_item = this->front.get_channel_list()[index];
                     if (strcmp(channel_item.name, channel_item.name) == 0){
                         int size = (int)(stream.end - stream.p);
 
