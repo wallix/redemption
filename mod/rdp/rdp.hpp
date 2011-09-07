@@ -86,7 +86,7 @@ struct mod_rdp : public client_mod {
                   rdp_layer(this, trans,
                     context.get(STRAUTHID_TARGET_USER),
                     context.get(STRAUTHID_TARGET_PASSWORD),
-                    hostname, 
+                    hostname,
                     this->get_client_info().rdp5_performanceflags,
                     this->get_front_width(),
                     this->get_front_height(),
@@ -102,13 +102,6 @@ struct mod_rdp : public client_mod {
                     connection_finalization_state(EARLY),
                     state(MOD_RDP_CONNECTING)
         {
-        // copy channel list from client.
-        // It will be changed after negotiation with server
-        // to hold only channels actually supported.
-        for(size_t index = 0 ; index < front.get_channel_list().size() ; index++){
-            this->mod_channel_list.push_back(front.get_channel_list()[index]);
-        }
-
         this->up_and_running = 0;
         /* clipboard allow us to deactivate copy/paste sequence from server
         to client communication. This is allowed by default */
@@ -288,10 +281,15 @@ struct mod_rdp : public client_mod {
         int rdp_bpp = this->get_front_bpp();
         bool console_session = this->get_client_info().console_session;
         char * hostname = this->rdp_layer.hostname;
+
+
         int & userid = this->rdp_layer.userid;
+
+        LOG(LOG_INFO, "userid=%u", userid);
 
         switch (this->state){
         case MOD_RDP_CONNECTING:
+            LOG(LOG_INFO, "MOD_RDP_CONNECTING");
             // Connection Initiation
             // ---------------------
 
@@ -309,7 +307,7 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_CONNECTION_INITIATION:
-
+            LOG(LOG_INFO, "MOD_RDP_CONNECTION_INITIATION");
             this->recv_x224_connection_confirm_pdu(this->trans);
 
             // Basic Settings Exchange
@@ -332,12 +330,13 @@ struct mod_rdp : public client_mod {
             //                   GCC conference Create Response
 
             send_mcs_connect_initial_pdu_with_gcc_conference_create_request(
-                    this->trans, this->mod_channel_list, width, height, rdp_bpp, keylayout, console_session, hostname);
+                    this->trans, this->front.get_channel_list(), width, height, rdp_bpp, keylayout, console_session, hostname);
 
             this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
         break;
 
         case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
+            LOG(LOG_INFO, "MOD_RDP_BASIC_SETTINGS_EXCHANGE");
             this->mcs_connect_response_pdu_with_gcc_conference_create_response(
                     this->trans, this->mod_channel_list, this->use_rdp5);
 
@@ -383,8 +382,10 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
+        LOG(LOG_INFO, "MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER");
         {
             recv_mcs_attach_user_confirm_pdu(this->trans, this->rdp_layer.userid);
+            LOG(LOG_INFO, "send_mcs_channel_join_request_and_recv_confirm_pdu");
             send_mcs_channel_join_request_and_recv_confirm_pdu(this->trans, this->rdp_layer.userid, this->mod_channel_list);
 
             // RDP Security Commencement
@@ -417,6 +418,7 @@ struct mod_rdp : public client_mod {
             // Client                                                     Server
             //    |------Security Exchange PDU ---------------------------> |
 
+            LOG(LOG_INFO, "sec_layer.security_exchange_PDU");
             this->rdp_layer.sec_layer.security_exchange_PDU(trans, this->rdp_layer.userid);
 
             // Secure Settings Exchange
@@ -429,6 +431,7 @@ struct mod_rdp : public client_mod {
             // Client                                                     Server
             //    |------ Client Info PDU      ---------------------------> |
 
+            LOG(LOG_INFO, "client_info_pdu");
             int rdp5_performanceflags = this->get_client_info().rdp5_performanceflags;
             rdp5_performanceflags = RDP5_NO_WALLPAPER;
 
@@ -444,6 +447,7 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_GET_LICENSE:
+        LOG(LOG_INFO, "MOD_RDP_GET_LICENSE");
             // Licensing
             // ---------
 
@@ -516,6 +520,7 @@ struct mod_rdp : public client_mod {
             // between client-side plug-ins and server-side applications).
 
         case MOD_RDP_CONNECTED:
+        LOG(LOG_INFO, "MOD_RDP_CONNECTED");
         {
             int pdu_type;
 
@@ -1194,7 +1199,7 @@ struct mod_rdp : public client_mod {
             case SEC_TAG_SRV_CHANNELS:
                 // map front channels to mod channels
                     #warning we should have mod_rdp and front channel lists
-                 process_srv_channels(cr_stream, channel_list, channel_list);
+                 process_srv_channels(cr_stream, this->front.get_channel_list(), channel_list);
                 break;
             default:
                 LOG(LOG_WARNING, "response tag 0x%x\n", tag);

@@ -343,7 +343,8 @@ struct X224In : public X224Packet
     }
 
     void end(){
-        if (!stream.check_end()) {
+        if (this->stream.p != this->stream.end) {
+            LOG(LOG_INFO, "%u bytes remaining in X224 TPDU", this->stream.end - this->stream.p);
             throw Error(ERR_MCS_RECV_CJCF_ERROR_CHECKING_STREAM);
         }
     }
