@@ -49,6 +49,10 @@ public:
         return this->items[index];
     }
 
+    void set_chanid(size_t index, int chanid){
+        this->items[index].chanid = chanid;
+    }
+
     size_t size() const {
         return this->num;
     }
@@ -56,6 +60,7 @@ public:
     void push_back(const McsChannelItem & item){
         this->items[this->num] = item;
         this->num++;
+        LOG(LOG_INFO, "push_back <-------------------------------- %p ----------- num = %u", this, this->num);
     }
 
     ChannelList() : num(0) {}

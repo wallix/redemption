@@ -305,9 +305,9 @@ struct rdp_rdp {
 
             stream.out_uint16_le(2 + 14 + caplen + sizeof(RDP_SOURCE));
             stream.out_uint16_le((PDUTYPE_CONFIRMACTIVEPDU | 0x10)); /* Version 1 */
-            stream.out_uint16_le((this->userid + 1001)); // channel
+            stream.out_uint16_le((this->userid + MCS_USERCHANNEL_BASE)); // channel
             stream.out_uint32_le(this->share_id);
-            stream.out_uint16_le(0x3ea); /* userid */
+            stream.out_uint16_le(1002); /* userid */
             stream.out_uint16_le(sizeof(RDP_SOURCE));
             stream.out_uint16_le(caplen);
 

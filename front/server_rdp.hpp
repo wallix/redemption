@@ -574,36 +574,29 @@ struct server_rdp {
             this->userid = tmp_userid;
         }
 
-        LOG(LOG_INFO, "AUCF");
         send_mcs_attach_user_confirm_pdu(this->trans, this->userid);
 
-        LOG(LOG_INFO, "CJRQ");
         {
             uint16_t tmp_userid;
             uint16_t tmp_chanid;
             recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
         }
 
-        LOG(LOG_INFO, "CJCF");
         send_mcs_channel_join_confirm_pdu(this->trans, this->userid, this->userid + MCS_USERCHANNEL_BASE);
 
-        LOG(LOG_INFO, "CJRQ");
         {
             uint16_t tmp_userid;
             uint16_t tmp_chanid;
             recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
         }
 
-        LOG(LOG_INFO, "CJCF");
         send_mcs_channel_join_confirm_pdu(this->trans, this->userid, MCS_GLOBAL_CHANNEL);
 
         LOG(LOG_INFO, "channel_list = %u", channel_list.size());
         for (size_t i = 0 ; i < channel_list.size() ; i++){
                 uint16_t tmp_userid;
                 uint16_t tmp_chanid;
-                LOG(LOG_INFO, "CJRQ %u", i);
                 recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
-                LOG(LOG_INFO, "CJCF userid=%u [%u] chanid=%u",  tmp_userid, this->userid, tmp_chanid);
                 send_mcs_channel_join_confirm_pdu(this->trans, tmp_userid, tmp_chanid);
         }
         LOG(LOG_INFO, "RDP Security Commencement");
@@ -759,7 +752,7 @@ struct server_rdp {
                    one should be MCS_GLOBAL_CHANNEL + 2, and so on */
                 size_t channel_id = (mcs_in.chan_id - MCS_GLOBAL_CHANNEL) - 1;
 
-                LOG(LOG_INFO, "received data in channel %u(=%u) [%s]", 
+                LOG(LOG_INFO, "received data in channel %u(=%u) [%s]",
                     channel_list[channel_id].chanid, mcs_in.chan_id,
                     channel_list[channel_id].name);
 
@@ -772,15 +765,18 @@ struct server_rdp {
                 int flags = input_stream.in_uint32_le();
 
                 int size = (int)(input_stream.end - input_stream.p);
+
+                LOG(LOG_INFO, "up_and_running=%u", this->up_and_running);
+                LOG(LOG_INFO, "got channel data from client chan_id=%u [%s] length=%u size=%u, sending to server length=%u size=%u", mcs_in.chan_id, channel_list[channel_id].name, length, size);
+
                 #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
                 cb.callback(WM_CHANNELDATA,
-                                  ((flags & 0xffff) << 16) | (channel_id & 0xffff),
-                                  size, (long)(input_stream.p), length);
-//                if (!this->up_and_running){ continue; }
+                          ((flags & 0xffff) << 16) | (channel_id & 0xffff),
+                          size, (long)(input_stream.p), length);
                 // We consume all the data of the packet
                 input_stream.p = input_stream.end;
             }
-//            LOG(LOG_INFO, "PDUTYPE DATA");
+            LOG(LOG_INFO, "PDUTYPE DATA");
 
             input_stream.next_packet = input_stream.p;
 
@@ -826,11 +822,11 @@ struct server_rdp {
                     }
                 }
             }
-//            LOG(LOG_INFO, "READY TO LOOP IN activate and process data");
+            LOG(LOG_INFO, "READY TO LOOP IN activate and process data");
         } while ((input_stream.next_packet < input_stream.end) || !this->up_and_running);
 
         #warning the postcondition could be changed to signify we want to get hand back immediately, because we still have data to process.
-//        LOG(LOG_INFO, "out of activate and process data");
+        LOG(LOG_INFO, "out of activate and process data");
     }
 
     /*****************************************************************************/
