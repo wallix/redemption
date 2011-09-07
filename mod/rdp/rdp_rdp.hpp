@@ -53,12 +53,11 @@ struct rdp_rdp {
     bool console_session;
     int bpp;
     Transport * trans;
-    const ChannelList & front_channel_list;
 
     struct rdp_cursor cursors[32];
-    rdp_rdp(struct mod_rdp* owner, Transport *trans, const char * username, const char * password, const char * hostname, const ChannelList & front_channel_list, int rdp_performance_flags, int width, int height, int bpp, int keylayout, bool console_session)
+    rdp_rdp(struct mod_rdp* owner, Transport *trans, const char * username, const char * password, const char * hostname, int rdp_performance_flags, int width, int height, int bpp, int keylayout, bool console_session)
         #warning initialize members through constructor
-        : sec_layer(0), userid(0), bpp(bpp), trans(trans), front_channel_list(front_channel_list)
+        : sec_layer(0), userid(0), bpp(bpp), trans(trans)
         {
             #warning and if hostname is really larger, what happens ? We should at least emit a warning log
             strncpy(this->hostname, hostname, 15);
@@ -867,9 +866,9 @@ struct rdp_rdp {
             tpdu.send(this->trans);
         }
 
-        void send_redirect_pdu(long param1, long param2, long param3, int param4, const ChannelList & mod_channel_list) throw(Error)
+        void send_redirect_pdu(long param1, long param2, long param3, int param4, const ChannelList & mod_channel_list, const ChannelList & front_channel_list) throw(Error)
         {
-//            LOG(LOG_INFO, "send_redirect_pdu\n");
+            LOG(LOG_INFO, "send_redirect_pdu\n");
             char* name = 0;
             /* We need to verify this in order to right process the stream passed */
             int chan_id = (int)(param1 & 0xffff) + MCS_GLOBAL_CHANNEL + 1;
@@ -882,11 +881,11 @@ struct rdp_rdp {
             first channel_list created by the RDP client at initialization
             process */
 
-            #warning all this is probably useless, look closer at channel management
+            #warning all (most of) this is probably useless, look closer at channel management
             int channel_id = 0;
-            size_t num_channels_src = this->front_channel_list.size();
+            size_t num_channels_src = front_channel_list.size();
             for (size_t index = 0; index < num_channels_src; index++){
-                const McsChannelItem & front_channel_item = this->front_channel_list[index];
+                const McsChannelItem & front_channel_item = front_channel_list[index];
                 if (chan_id == front_channel_item.chanid){
                     size_t num_channels_dst = mod_channel_list.size();
                     for (size_t index = 0; index < num_channels_dst; index++){

@@ -627,6 +627,8 @@ static inline void send_cs_net(Stream & stream, const ChannelList & channel_list
 {
     /* Here we need to put channel information in order to redirect channel data
     from client to server passing through the "proxy" */
+    LOG(LOG_INFO, "sending channels information to server : %u channels", channel_list.size());
+
     size_t num_channels = channel_list.size();
 
     if (num_channels > 0) {
