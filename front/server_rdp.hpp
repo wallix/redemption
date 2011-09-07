@@ -651,29 +651,20 @@ struct server_rdp {
         do {
             input_stream.init(65535);
             X224In tpdu(this->trans, input_stream);
-            int opcode = input_stream.in_uint8();
-            int appid = opcode >> 2;
+            McsIn mcs_in(input_stream);
 
-            /* Disconnect Provider Ultimatum datagram */
-            if (appid == MCS_DPUM) {
+            // Disconnect Provider Ultimatum datagram
+            if ((mcs_in.opcode >> 2) == MCS_DPUM) {
                 throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
             }
-            /* SenD ReQuest datagram */
-            if (appid != MCS_SDRQ) {
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-            }
 
-            input_stream.skip_uint8(2);
-            int chan = input_stream.in_uint16_be();
-            input_stream.skip_uint8(1);
-            int len = input_stream.in_uint8();
-            if (len & 0x80) {
-                input_stream.skip_uint8(1);
+            if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
+                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
 
             SecIn sec(input_stream, this->sec_layer.decrypt);
 
-            #warning this should move to SecIn
+            #warning this should move to incoming (connection initiation phase)
             if (sec.flags & SEC_CLIENT_RANDOM) { /* 0x01 */
                 input_stream.in_uint32_le(); // len
 
@@ -754,7 +745,7 @@ struct server_rdp {
                     continue;
                 }
             }
-            else if (chan > MCS_GLOBAL_CHANNEL) {
+            else if (mcs_in.chan_id > MCS_GLOBAL_CHANNEL) {
             #warning is it possible to get channel data when we are not up and running ?
                 /*****************************************************************************/
                 /* This is called from the secure layer to process an incoming non global
@@ -766,7 +757,7 @@ struct server_rdp {
                    but they should be, see server_sec_process_mcs_data_channels
                    the first channel should be MCS_GLOBAL_CHANNEL + 1, second
                    one should be MCS_GLOBAL_CHANNEL + 2, and so on */
-                size_t channel_id = (chan - MCS_GLOBAL_CHANNEL) - 1;
+                size_t channel_id = (mcs_in.chan_id - MCS_GLOBAL_CHANNEL) - 1;
 
                 if (channel_id >= channel_list.size()) {
                     throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
