@@ -105,9 +105,9 @@ struct mod_rdp : public client_mod {
         // copy channel list from client.
         // It will be changed after negotiation with server
         // to hold only channels actually supported.
-//        for(size_t index = 0 ; index < front.get_channel_list().size() ; index++){
-//            this->mod_channel_list.push_back(front.get_channel_list()[index]);
-//        }
+        for(size_t index = 0 ; index < front.get_channel_list().size() ; index++){
+            this->mod_channel_list.push_back(front.get_channel_list()[index]);
+        }
 
         this->up_and_running = 0;
         /* clipboard allow us to deactivate copy/paste sequence from server
@@ -208,7 +208,7 @@ struct mod_rdp : public client_mod {
                 break;
             case WM_CHANNELDATA:
                 LOG(LOG_INFO, "rdp::mod_event::WM_CHANNEL_DATA");
-                this->rdp_layer.send_redirect_pdu(param1, param2, param3, param4, this->mod_channel_list, this->front.get_channel_list());
+                this->send_redirect_pdu(param1, param2, param3, param4, this->mod_channel_list, this->front.get_channel_list());
                 break;
             default:
                 break;
@@ -219,6 +219,64 @@ struct mod_rdp : public client_mod {
         }
         return 0;
     }
+
+    void send_redirect_pdu(long param1, long param2, long param3, int param4, const ChannelList & mod_channel_list, const ChannelList & front_channel_list) throw(Error)
+    {
+        LOG(LOG_INFO, "send_redirect_pdu\n");
+        char* name = 0;
+        /* We need to verify this in order to right process the stream passed */
+        int chan_id = (int)(param1 & 0xffff) + MCS_GLOBAL_CHANNEL + 1;
+        int flags = (int)((param1 >> 16) & 0xffff);
+        int size = param2;
+        char * data = (char*)param3;
+        int total_data_length = param4;
+        /* We need to recover the name of the channel linked with this
+        channel_id in order to match it with the same channel on the
+        first channel_list created by the RDP client at initialization
+        process */
+
+        #warning all (most of) this is probably useless, look closer at channel management
+        int channel_id = 0;
+        size_t num_channels_src = front_channel_list.size();
+        for (size_t index = 0; index < num_channels_src; index++){
+            const McsChannelItem & front_channel_item = front_channel_list[index];
+            if (chan_id == front_channel_item.chanid){
+                size_t num_channels_dst = mod_channel_list.size();
+                for (size_t index = 0; index < num_channels_dst; index++){
+                    const McsChannelItem & mod_channel_item = mod_channel_list[index];
+                    if (strcmp(front_channel_item.name, mod_channel_item.name) == 0){
+                        channel_id = mod_channel_item.chanid;
+                    }
+                    break;
+                }
+            }
+        }
+//            LOG(LOG_INFO, "send_redirect_pdu channel=%s\n", name);
+        /* Here, we're going to search the correct channel in order to send
+        information throughout this channel to RDP server */
+        /*Copy data from s to data and after that close stream and send
+        it to send_data with channel_id so we need to pass chan_id to
+        send_data also in order to be able to redirect data in the correct
+        way*/
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        McsOut sdrq_out(stream, MCS_SDRQ, this->rdp_layer.userid, channel_id);
+        SecOut sec_out(stream, 2, SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
+        stream.out_uint32_le(total_data_length);
+        stream.out_uint32_le(flags);
+        memcpy(stream.p, data, size);
+        stream.p+= size;
+
+        /* in send_redirect_pdu, sending data from stream.p throughout channel channel_item->name */
+        //g_hexdump(stream.p, size + 8);
+        /* We need to call send_data but with another code because we need to build an
+        virtual_channel packet and not an MCS_GLOBAL_CHANNEL packet */
+        sec_out.end();
+        sdrq_out.end();
+        tpdu.end();
+        tpdu.send(this->rdp_layer.trans);
+    }
+
 
     #warning most of code below should move to rdp_rdp
     virtual int mod_signal(void)
