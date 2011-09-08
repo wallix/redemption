@@ -136,12 +136,12 @@ class Authentifier(object):
         self.sck = sck
 
     def read(self):
-        print "Reading"
+        print("Reading")
         try:
             _packet_size, = unpack(">L", self.sck.recv(4))
             print("Received Data length : %s" % _packet_size)
             _data = self.sck.recv(int(_packet_size))
-        except Exception, e:
+        except Exception:
             # It's quick and dirty, but we do as if all possible errors
             # are authentifier socket was closed.
             return False
@@ -149,24 +149,24 @@ class Authentifier(object):
         p = iter(_data.split('\n'))
         self.dic = dict((x, y) for x, y in zip(p, p) if (x[:6] != 'trans_'))
 
-        print self.dic
+        print(self.dic)
         _login = self.dic.get('login')
         if _login:
             _password = self.dic.get('password')
             if _password and self.passwords.get(_login) == _password:
-                print "Password OK"
+                print("Password OK")
                 if _login[:5] == 'error':
                     self.dic = self.targets.get(_login, {})
                 else:
                     self.dic.update(self.targets.get(_login, {}))
             else:
-                print "Wrong Password"
+                print("Wrong Password")
                 self.dic = {'login' : 'ASK' }
         self.send()
         return True
 
     def send(self):
-        print "Sending", self.dic
+        print("Sending", self.dic)
         _data = ''.join(["%s\n" % v for tu in self.dic.iteritems() for v in tu])
         _len = len(_data)
         self.sck.send(pack(">L", _len+4))
@@ -189,7 +189,7 @@ while 1:
             (sck, address) = server.accept()
             rsockets.append(sck)
             manager[sck] = Authentifier(sck)
-            print "Accepting connection\n"
+            print("Accepting connection\n")
         else:
             if not manager[s].read():
                 del manager[s]
