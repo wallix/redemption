@@ -679,15 +679,15 @@ struct server_rdp {
                     memcpy(key_block + 24, this->sec_layer.server_random, 24);
 
                     /* Generate master secret and then key material */
-                    this->sec_layer.sec_hash_48(master_secret, key_block, this->sec_layer.client_random, this->sec_layer.server_random, 65);
-                    this->sec_layer.sec_hash_48(pre_master_secret, master_secret, this->sec_layer.client_random, this->sec_layer.server_random, 88);
+                    sec_hash_48(master_secret, key_block, this->sec_layer.client_random, this->sec_layer.server_random, 65);
+                    sec_hash_48(pre_master_secret, master_secret, this->sec_layer.client_random, this->sec_layer.server_random, 88);
 
                     /* First 16 bytes of key material is MAC secret */
                     memcpy(this->sec_layer.encrypt.sign_key, pre_master_secret, 16);
 
                     /* Generate export keys from next two blocks of 16 bytes */
-                    this->sec_layer.sec_hash_16(this->sec_layer.encrypt.key, &pre_master_secret[16], this->sec_layer.client_random, this->sec_layer.server_random);
-                    this->sec_layer.sec_hash_16(this->sec_layer.decrypt.key, &pre_master_secret[32], this->sec_layer.client_random, this->sec_layer.server_random);
+                    sec_hash_16(this->sec_layer.encrypt.key, &pre_master_secret[16], this->sec_layer.client_random, this->sec_layer.server_random);
+                    sec_hash_16(this->sec_layer.decrypt.key, &pre_master_secret[32], this->sec_layer.client_random, this->sec_layer.server_random);
 
                     if (this->sec_layer.rc4_key_size == 1) {
                         sec_make_40bit(this->sec_layer.encrypt.sign_key);
