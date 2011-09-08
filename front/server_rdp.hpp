@@ -406,16 +406,6 @@ struct server_rdp {
 
 
 
-    // Secure Settings Exchange
-    // ------------------------
-
-    // Secure Settings Exchange: Secure client data (such as the username,
-    // password and auto-reconnect cookie) is sent to the server using the Client
-    // Info PDU.
-
-    // Client                                                     Server
-    //    |------ Client Info PDU      ---------------------------> |
-
     // Licensing
     // ---------
 
@@ -631,8 +621,31 @@ struct server_rdp {
         // Client                                                     Server
         //    |------Security Exchange PDU ---------------------------> |
 
+        {
+            Stream stream(8192);
+            X224In tpdu(this->trans, stream);
+            McsIn mcs_in(stream);
 
+            if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
+                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+            }
+
+            SecIn sec(stream, this->sec_layer.decrypt);
+            if (sec.flags & SEC_CLIENT_RANDOM) { /* 0x01 */
+                this->recv_client_random(stream);
+            }
+        }
     }
+
+    // Secure Settings Exchange
+    // ------------------------
+
+    // Secure Settings Exchange: Secure client data (such as the username,
+    // password and auto-reconnect cookie) is sent to the server using the Client
+    // Info PDU.
+
+    // Client                                                     Server
+    //    |------ Client Info PDU      ---------------------------> |
 
 
     void activate_and_process_data(Callback & cb, ChannelList & channel_list)
@@ -657,15 +670,7 @@ struct server_rdp {
 
             SecIn sec(input_stream, this->sec_layer.decrypt);
 
-            #warning this should move to incoming (connection initiation phase)
-            if (sec.flags & SEC_CLIENT_RANDOM) { /* 0x01 */
-                this->recv_client_random(input_stream);
-                if (!this->up_and_running){
-//                    input_stream.next_packet = input_stream.end;
-                    continue;
-                }
-            }
-            else if (sec.flags & SEC_LOGON_INFO) { /* 0x40 */
+            if (sec.flags & SEC_LOGON_INFO) { /* 0x40 */
                 this->sec_layer.server_sec_process_logon_info(input_stream, &this->client_info);
                 if (this->client_info.is_mce) {
 //                    LOG(LOG_INFO, "server_sec_send media_lic_response");
