@@ -392,6 +392,22 @@ class SecIn
 
 };
 
+static inline int rdp_sec_parse_public_sig(Stream & stream, int len, uint8_t* modulus, uint8_t* exponent, int server_public_key_len)
+{
+    /* Parse a public key structure */
+    uint8_t signature[SEC_MAX_MODULUS_SIZE];
+    uint32_t sig_len;
+
+    #warning check that. Why is it ok if signature len is not of the right size ?
+    #warning Use Exception instead of return value for error cases.
+    if (len != 72){
+        return 1;
+    }
+    memset(signature, 0, sizeof(signature));
+    sig_len = len - 8;
+    memcpy(signature, stream.in_uint8p(sig_len), sig_len);
+    return ssl_sig_ok(exponent, SEC_EXPONENT_SIZE, modulus, server_public_key_len, signature, sig_len);
+}
 
 struct Sec
 {
@@ -1263,24 +1279,6 @@ struct Sec
         ssl.rc4_set_key(this->encrypt.rc4_info, this->encrypt.key, this->encrypt.rc4_key_len);
     }
 
-    int rdp_sec_parse_public_sig(Stream & stream, int len, uint8_t* modulus, uint8_t* exponent, int server_public_key_len)
-    {
-        /* Parse a public key structure */
-        uint8_t signature[SEC_MAX_MODULUS_SIZE];
-        uint32_t sig_len;
-
-        #warning check that. Why is it ok if signature len is not of the right size ?
-        #warning Use Exception instead of return value for error cases.
-        if (len != 72){
-            return 1;
-        }
-        memset(signature, 0, sizeof(signature));
-        sig_len = len - 8;
-        memcpy(signature, stream.in_uint8p(sig_len), sig_len);
-        return ssl_sig_ok(exponent, SEC_EXPONENT_SIZE, modulus, server_public_key_len, signature, sig_len);
-    }
-
-
     /* Parse a crypto information structure */
     int rdp_sec_parse_crypt_info(Stream & stream, uint32_t *rc4_key_size,
                                   uint8_t * server_random,
@@ -1374,9 +1372,9 @@ struct Sec
                     break;
                 case SEC_TAG_KEYSIG:
                     LOG(LOG_DEBUG, "SEC_TAG_KEYSIG RDP4-style\n");
-                    //if (!this->rdp_sec_parse_public_sig(stream, length, modulus, exponent)){
-                    //    return 0;
-                    //}
+//                    if (!rdp_sec_parse_public_sig(stream, length, modulus, exponent, server_public_key_len)){
+//                        return 0;
+//                    }
                     break;
                 default:
                     LOG(LOG_DEBUG, "unimplemented: crypt tag 0x%x\n", tag);
@@ -1559,7 +1557,7 @@ struct Sec
       return 0;
     }
 
-    void security_exchange_PDU(Transport * trans, int userid)
+    void send_security_exchange_PDU(Transport * trans, int userid)
     {
         LOG(LOG_INFO, "Iso Layer : setting encryption\n");
         /* Send the client random to the server */
@@ -1580,6 +1578,7 @@ struct Sec
     }
 
 };
+
 
 
 #endif

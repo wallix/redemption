@@ -228,17 +228,17 @@ struct mod_rdp : public client_mod {
         first channel_list created by the RDP client at initialization
         process */
 
-        #warning all (most of) this is probably useless, look closer at channel management
-        int channel_id = 0;
+        int mod_chan_id = 0;
         size_t num_channels_src = front_channel_list.size();
         for (size_t index = 0; index < num_channels_src; index++){
             const McsChannelItem & front_channel_item = front_channel_list[index];
-            if (chan_id == front_channel_item.chanid){
+            if (chan_id == front_channel_item.chanid){ // found channel
+
                 size_t num_channels_dst = mod_channel_list.size();
                 for (size_t index = 0; index < num_channels_dst; index++){
                     const McsChannelItem & mod_channel_item = mod_channel_list[index];
                     if (strcmp(front_channel_item.name, mod_channel_item.name) == 0){
-                        channel_id = mod_channel_item.chanid;
+                        mod_chan_id = mod_channel_item.chanid;
                     }
                     break;
                 }
@@ -251,23 +251,26 @@ struct mod_rdp : public client_mod {
         it to send_data with channel_id so we need to pass chan_id to
         send_data also in order to be able to redirect data in the correct
         way*/
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdrq_out(stream, MCS_SDRQ, this->rdp_layer.userid, channel_id);
-        SecOut sec_out(stream, 2, SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
-        stream.out_uint32_le(total_data_length);
-        stream.out_uint32_le(flags);
-        memcpy(stream.p, data, size);
-        stream.p+= size;
+        if (mod_chan_id){
+            LOG(LOG_INFO, "sent to %u", mod_chan_id);
+            Stream stream(8192);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->rdp_layer.userid, mod_chan_id);
+            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
+            stream.out_uint32_le(total_data_length);
+            stream.out_uint32_le(flags);
+            memcpy(stream.p, data, size);
+            stream.p+= size;
 
-        /* in send_redirect_pdu, sending data from stream.p throughout channel channel_item->name */
-        //g_hexdump(stream.p, size + 8);
-        /* We need to call send_data but with another code because we need to build an
-        virtual_channel packet and not an MCS_GLOBAL_CHANNEL packet */
-        sec_out.end();
-        sdrq_out.end();
-        tpdu.end();
-        tpdu.send(this->rdp_layer.trans);
+            /* in send_redirect_pdu, sending data from stream.p throughout channel channel_item->name */
+            //g_hexdump(stream.p, size + 8);
+            /* We need to call send_data but with another code because we need to build an
+            virtual_channel packet and not an MCS_GLOBAL_CHANNEL packet */
+            sec_out.end();
+            sdrq_out.end();
+            tpdu.end();
+            tpdu.send(this->rdp_layer.trans);
+        }
     }
 
 
@@ -419,7 +422,7 @@ struct mod_rdp : public client_mod {
             //    |------Security Exchange PDU ---------------------------> |
 
             LOG(LOG_INFO, "sec_layer.security_exchange_PDU");
-            this->rdp_layer.sec_layer.security_exchange_PDU(trans, this->rdp_layer.userid);
+            this->rdp_layer.sec_layer.send_security_exchange_PDU(trans, this->rdp_layer.userid);
 
             // Secure Settings Exchange
             // ------------------------
@@ -734,15 +737,15 @@ struct mod_rdp : public client_mod {
 
         int num_channels_src = (int) this->mod_channel_list.size();
         for (int index = 0; index < num_channels_src; index++){
-            const McsChannelItem & channel_item = this->mod_channel_list[index];
-            if (chan == channel_item.chanid){
+            const McsChannelItem & mod_channel_item = this->mod_channel_list[index];
+            if (chan == mod_channel_item.chanid){
                 /* Here, we're going to search the correct channel in order to send
                 information throughout this channel to RDP client*/
 
                 int num_channels_dst = (int) this->front.get_channel_list().size();
-                for (int index = 0; index < num_channels_dst; index++){
-                    const McsChannelItem & channel_item = this->front.get_channel_list()[index];
-                    if (strcmp(channel_item.name, channel_item.name) == 0){
+                for (int front_index = 0; front_index < num_channels_dst; front_index++){
+                    const McsChannelItem & front_channel_item = this->front.get_channel_list()[front_index];
+                    if (strcmp(mod_channel_item.name, front_channel_item.name) == 0){
                         int size = (int)(stream.end - stream.p);
 
                         /* TODO: create new function in order to activate / deactivate copy-paste
@@ -755,7 +758,7 @@ struct mod_rdp : public client_mod {
 //                            LOG(LOG_ERR, "Error sending information, wrong channel id");
 //                        }
 //                        else {
-                            this->server_send_to_channel_mod(channel_item.chanid, stream.p, size, length, channel_flags);
+                            this->server_send_to_channel_mod(front_channel_item.chanid, stream.p, size, length, channel_flags);
 //                        }
                         break;
                     }
