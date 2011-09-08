@@ -409,6 +409,271 @@ static inline int rdp_sec_parse_public_sig(Stream & stream, int len, uint8_t* mo
     return ssl_sig_ok(exponent, SEC_EXPONENT_SIZE, modulus, server_public_key_len, signature, sig_len);
 }
 
+/* Parse a crypto information structure */
+static inline int rdp_sec_parse_crypt_info(Stream & stream, uint32_t *rc4_key_size,
+                              uint8_t * server_random,
+                              uint8_t* modulus, uint8_t* exponent,
+                              int & server_public_key_len,
+                              uint8_t & crypt_level)
+{
+    uint32_t random_len;
+    uint32_t rsa_info_len;
+    uint32_t cacert_len;
+    uint32_t cert_len;
+    uint32_t flags;
+    SSL_CERT *cacert;
+    SSL_CERT *server_cert;
+    SSL_RKEY *server_public_key;
+    uint16_t tag;
+    uint16_t length;
+    uint8_t* next_tag;
+    uint8_t* end;
+
+    *rc4_key_size = stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
+    crypt_level = stream.in_uint32_le(); /* 1 = low, 2 = medium, 3 = high */
+    if (crypt_level == 0) { /* no encryption */
+        LOG(LOG_INFO, "No encryption");
+        return 0;
+    }
+    random_len = stream.in_uint32_le();
+    rsa_info_len = stream.in_uint32_le();
+    if (random_len != SEC_RANDOM_SIZE) {
+        LOG(LOG_ERR,
+            "parse_crypt_info_error: random len %d, expected %d\n",
+            random_len, SEC_RANDOM_SIZE);
+        return 0;
+    }
+    memcpy(server_random, stream.in_uint8p(random_len), random_len);
+
+    /* RSA info */
+    end = stream.p + rsa_info_len;
+    if (end > stream.end) {
+        return 0;
+    }
+
+    flags = stream.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
+    LOG(LOG_INFO, "crypt flags %x\n", flags);
+    if (flags & 1) {
+
+        LOG(LOG_DEBUG, "We're going for the RDP4-style encryption\n");
+        stream.skip_uint8(8); /* unknown */
+
+        while (stream.p < end) {
+            tag = stream.in_uint16_le();
+            length = stream.in_uint16_le();
+
+            next_tag = stream.p + length;
+
+            switch (tag) {
+            case SEC_TAG_PUBKEY:
+                #warning exception style should be used throughout the code, not an horrible mixup as below
+                try {
+                    /* Parse a public key structure */
+                    uint32_t magic;
+                    uint32_t modulus_len;
+
+                    magic = stream.in_uint32_le();
+                    if (magic != SEC_RSA_MAGIC) {
+                        LOG(LOG_WARNING, "RSA magic 0x%x\n", magic);
+                        throw Error(ERR_SEC_PARSE_PUB_KEY_MAGIC_NOT_OK);
+                    }
+                    modulus_len = stream.in_uint32_le();
+                    modulus_len -= SEC_PADDING_SIZE;
+
+                    if ((modulus_len < SEC_MODULUS_SIZE)
+                    ||  (modulus_len > SEC_MAX_MODULUS_SIZE)) {
+                        LOG(LOG_WARNING, "Bad server public key size (%u bits)\n", modulus_len * 8);
+                        throw Error(ERR_SEC_PARSE_PUB_KEY_MODUL_NOT_OK);
+                    }
+                    stream.skip_uint8(8); /* modulus_bits, unknown */
+                    memcpy(exponent, stream.in_uint8p(SEC_EXPONENT_SIZE), SEC_EXPONENT_SIZE);
+                    memcpy(modulus, stream.in_uint8p(modulus_len), modulus_len);
+                    stream.skip_uint8(SEC_PADDING_SIZE);
+                    server_public_key_len = modulus_len;
+
+                    if (!stream.check()){
+                        throw Error(ERR_SEC_PARSE_PUB_KEY_ERROR_CHECKING_STREAM);
+                    }
+                }
+                catch (...) {
+                    return 0;
+                }
+                LOG(LOG_DEBUG, "Got Public key, RDP4-style\n");
+                break;
+            case SEC_TAG_KEYSIG:
+                LOG(LOG_DEBUG, "SEC_TAG_KEYSIG RDP4-style\n");
+//                    if (!rdp_sec_parse_public_sig(stream, length, modulus, exponent, server_public_key_len)){
+//                        return 0;
+//                    }
+                break;
+            default:
+                LOG(LOG_DEBUG, "unimplemented: crypt tag 0x%x\n", tag);
+                return 0;
+                break;
+            }
+            stream.p = next_tag;
+        }
+    }
+    else {
+        try {
+            LOG(LOG_DEBUG, "We're going for the RDP5-style encryption\n");
+            LOG(LOG_DEBUG, "RDP5-style encryption with certificates not available\n");
+            uint32_t certcount = stream.in_uint32_le();
+            if (certcount < 2){
+                LOG(LOG_DEBUG, "Server didn't send enough X509 certificates\n");
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_CERT_NOK);
+            }
+            for (; certcount > 2; certcount--){
+                /* ignore all the certificates between the root and the signing CA */
+                LOG(LOG_WARNING, " Ignored certs left: %d\n", certcount);
+                uint32_t ignorelen = stream.in_uint32_le();
+                LOG(LOG_WARNING, "Ignored Certificate length is %d\n", ignorelen);
+                SSL_CERT *ignorecert = ssl_cert_read(stream.p, ignorelen);
+                stream.skip_uint8(ignorelen);
+                if (ignorecert == NULL){
+                    LOG(LOG_WARNING,
+                        "got a bad cert: this will probably screw up"
+                        " the rest of the communication\n");
+                }
+            }
+
+            /* Do da funky X.509 stuffy
+
+           "How did I find out about this?  I looked up and saw a
+           bright light and when I came to I had a scar on my forehead
+           and knew about X.500"
+           - Peter Gutman in a early version of
+           http://www.cs.auckland.ac.nz/~pgut001/pubs/x509guide.txt
+           */
+
+            /* Loading CA_Certificate from server*/
+            cacert_len = stream.in_uint32_le();
+            LOG(LOG_DEBUG, "CA Certificate length is %d\n", cacert_len);
+            cacert = ssl_cert_read(stream.p, cacert_len);
+            stream.skip_uint8(cacert_len);
+            if (NULL == cacert){
+                LOG(LOG_DEBUG, "Couldn't load CA Certificate from server\n");
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NULL);
+            }
+
+            ssllib ssl;
+
+            /* Loading Certificate from server*/
+            cert_len = stream.in_uint32_le();
+            LOG(LOG_DEBUG, "Certificate length is %d\n", cert_len);
+            server_cert = ssl_cert_read(stream.p, cert_len);
+            stream.skip_uint8(cert_len);
+            if (NULL == server_cert){
+                ssl_cert_free(cacert);
+                LOG(LOG_DEBUG, "Couldn't load Certificate from server\n");
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_LOADED);
+            }
+            /* Matching certificates */
+            if (!ssl_certs_ok(server_cert,cacert)){
+                ssl_cert_free(server_cert);
+                ssl_cert_free(cacert);
+                LOG(LOG_DEBUG, "Security error CA Certificate invalid\n");
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_MATCH);
+            }
+            ssl_cert_free(cacert);
+            stream.skip_uint8(16); /* Padding */
+            server_public_key = ssl_cert_to_rkey(server_cert, server_public_key_len);
+            if (NULL == server_public_key){
+                LOG(LOG_DEBUG, "Didn't parse X509 correctly\n");
+                ssl_cert_free(server_cert);
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_X509_NOT_PARSED);
+
+            }
+            ssl_cert_free(server_cert);
+            LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d\n", server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
+            if ((server_public_key_len < SEC_MODULUS_SIZE) ||
+                (server_public_key_len > SEC_MAX_MODULUS_SIZE)){
+                LOG(LOG_DEBUG, "Bad server public key size (%u bits)\n",
+                    server_public_key_len * 8);
+                ssl.rkey_free(server_public_key);
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
+            }
+            if (ssl_rkey_get_exp_mod(server_public_key, exponent, SEC_EXPONENT_SIZE,
+                modulus, SEC_MAX_MODULUS_SIZE) != 0){
+                LOG(LOG_DEBUG, "Problem extracting RSA exponent, modulus");
+                ssl.rkey_free(server_public_key);
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_RSA_EXP_NOT_OK);
+
+            }
+            ssl.rkey_free(server_public_key);
+            return 1; /* There's some garbage here we don't care about */
+        }
+        catch (...){
+            return 0;
+        };
+    }
+    if (!stream.check_end()) {
+        throw Error(ERR_SEC_PARSE_CRYPT_INFO_ERROR_CHECKING_STREAM);
+    }
+    return 1;
+}
+
+// 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
+// Both SHA1 and MD5 algorithms are used.
+static inline void sec_hash_48(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2, const uint8_t salt)
+{
+    uint8_t shasig[20];
+    uint8_t pad[4];
+    SSL_SHA1 sha1;
+    SSL_MD5 md5;
+
+    ssllib ssl;
+
+    for (int i = 0; i < 3; i++) {
+        memset(pad, salt + i, i + 1);
+
+        ssl.sha1_init(&sha1);
+        ssl.sha1_update(&sha1, pad, i + 1);
+        ssl.sha1_update(&sha1, in, 48);
+        ssl.sha1_update(&sha1, salt1, 32);
+        ssl.sha1_update(&sha1, salt2, 32);
+        ssl.sha1_final(&sha1, shasig);
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, in, 48);
+        ssl.md5_update(&md5, shasig, 20);
+        ssl.md5_final(&md5, &out[i * 16]);
+    }
+}
+
+
+// 16-byte transformation used to generate export keys (6.2.2).
+static inline void sec_hash_16(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2)
+{
+    SSL_MD5 md5;
+
+    ssllib ssl;
+
+    ssl.md5_init(&md5);
+    ssl.md5_update(&md5, in, 16);
+    ssl.md5_update(&md5, salt1, 32);
+    ssl.md5_update(&md5, salt2, 32);
+    ssl.md5_final(&md5, out);
+}
+
+
+static inline void unicode_in(Stream & stream, int uni_len, uint8_t* dst, int dst_len) throw (Error)
+{
+    int dst_index = 0;
+    int src_index = 0;
+    while (src_index < uni_len) {
+        if (dst_index >= dst_len || src_index > 512) {
+            break;
+        }
+        dst[dst_index] = stream.in_uint8();
+        stream.skip_uint8(1);
+        dst_index++;
+        src_index += 2;
+    }
+    stream.skip_uint8(2);
+}
+
+
 struct Sec
 {
 
@@ -448,7 +713,6 @@ struct Sec
 
 
     CryptContext encrypt, decrypt;
-
 
     uint8_t crypt_level;
     int rc4_key_size; /* 1 = 40-bit, 2 = 128-bit */
@@ -490,65 +754,6 @@ struct Sec
     }
 
     ~Sec() {}
-
-
-    // 16-byte transformation used to generate export keys (6.2.2).
-    static void sec_hash_16(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2)
-    {
-        SSL_MD5 md5;
-
-        ssllib ssl;
-
-        ssl.md5_init(&md5);
-        ssl.md5_update(&md5, in, 16);
-        ssl.md5_update(&md5, salt1, 32);
-        ssl.md5_update(&md5, salt2, 32);
-        ssl.md5_final(&md5, out);
-    }
-
-    // 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
-    // Both SHA1 and MD5 algorithms are used.
-    static void sec_hash_48(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2, const uint8_t salt)
-    {
-        uint8_t shasig[20];
-        uint8_t pad[4];
-        SSL_SHA1 sha1;
-        SSL_MD5 md5;
-
-        ssllib ssl;
-
-        for (int i = 0; i < 3; i++) {
-            memset(pad, salt + i, i + 1);
-
-            ssl.sha1_init(&sha1);
-            ssl.sha1_update(&sha1, pad, i + 1);
-            ssl.sha1_update(&sha1, in, 48);
-            ssl.sha1_update(&sha1, salt1, 32);
-            ssl.sha1_update(&sha1, salt2, 32);
-            ssl.sha1_final(&sha1, shasig);
-
-            ssl.md5_init(&md5);
-            ssl.md5_update(&md5, in, 48);
-            ssl.md5_update(&md5, shasig, 20);
-            ssl.md5_final(&md5, &out[i * 16]);
-        }
-    }
-
-    void unicode_in(Stream & stream, int uni_len, uint8_t* dst, int dst_len) throw (Error)
-    {
-        int dst_index = 0;
-        int src_index = 0;
-        while (src_index < uni_len) {
-            if (dst_index >= dst_len || src_index > 512) {
-                break;
-            }
-            dst[dst_index] = stream.in_uint8();
-            stream.skip_uint8(1);
-            dst_index++;
-            src_index += 2;
-        }
-        stream.skip_uint8(2);
-    }
 
 
     void server_sec_send_lic_initial(Transport * trans, int userid) throw (Error)
@@ -946,12 +1151,12 @@ struct Sec
             uint8_t key_block[48];
 
             /* Generate master secret and then key material */
-            this->sec_hash_48(master_secret, pre_master_secret, client_random, server_random, 65);
-            this->sec_hash_48(key_block, master_secret, server_random, client_random, 65);
+            sec_hash_48(master_secret, pre_master_secret, client_random, server_random, 65);
+            sec_hash_48(key_block, master_secret, server_random, client_random, 65);
             /* Store first 16 bytes of session key as MAC secret */
             memcpy(this->lic_layer.licence_sign_key, key_block, 16);
             /* Generate RC4 key from next 16 bytes */
-            this->sec_hash_16(this->lic_layer.licence_key, key_block + 16, client_random, server_random);
+            sec_hash_16(this->lic_layer.licence_key, key_block + 16, client_random, server_random);
         }
 
         if (this->licence_size > 0) {
@@ -1245,15 +1450,15 @@ struct Sec
         memcpy(pre_master_secret + 24, server_random, 24);
 
         /* Generate master secret and then key material */
-        this->sec_hash_48(master_secret, pre_master_secret, client_random, server_random, 'A');
-        this->sec_hash_48(key_block, master_secret, client_random, server_random, 'X');
+        sec_hash_48(master_secret, pre_master_secret, client_random, server_random, 'A');
+        sec_hash_48(key_block, master_secret, client_random, server_random, 'X');
 
         /* First 16 bytes of key material is MAC secret */
         memcpy(this->encrypt.sign_key, key_block, 16);
 
         /* Generate export keys from next two blocks of 16 bytes */
-        this->sec_hash_16(this->decrypt.key, &key_block[16], client_random, server_random);
-        this->sec_hash_16(this->encrypt.key, &key_block[32], client_random, server_random);
+        sec_hash_16(this->decrypt.key, &key_block[16], client_random, server_random);
+        sec_hash_16(this->encrypt.key, &key_block[32], client_random, server_random);
 
         if (rc4_key_size == 1) {
             // LOG(LOG_DEBUG, "40-bit encryption enabled\n");
@@ -1279,209 +1484,6 @@ struct Sec
         ssl.rc4_set_key(this->encrypt.rc4_info, this->encrypt.key, this->encrypt.rc4_key_len);
     }
 
-    /* Parse a crypto information structure */
-    int rdp_sec_parse_crypt_info(Stream & stream, uint32_t *rc4_key_size,
-                                  uint8_t * server_random,
-                                  uint8_t* modulus, uint8_t* exponent,
-                                  int & server_public_key_len,
-                                  uint8_t & crypt_level)
-    {
-        uint32_t random_len;
-        uint32_t rsa_info_len;
-        uint32_t cacert_len;
-        uint32_t cert_len;
-        uint32_t flags;
-        SSL_CERT *cacert;
-        SSL_CERT *server_cert;
-        SSL_RKEY *server_public_key;
-        uint16_t tag;
-        uint16_t length;
-        uint8_t* next_tag;
-        uint8_t* end;
-
-        *rc4_key_size = stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
-        crypt_level = stream.in_uint32_le(); /* 1 = low, 2 = medium, 3 = high */
-        if (crypt_level == 0) { /* no encryption */
-            LOG(LOG_INFO, "No encryption");
-            return 0;
-        }
-        random_len = stream.in_uint32_le();
-        rsa_info_len = stream.in_uint32_le();
-        if (random_len != SEC_RANDOM_SIZE) {
-            LOG(LOG_ERR,
-                "parse_crypt_info_error: random len %d, expected %d\n",
-                random_len, SEC_RANDOM_SIZE);
-            return 0;
-        }
-        memcpy(server_random, stream.in_uint8p(random_len), random_len);
-
-        /* RSA info */
-        end = stream.p + rsa_info_len;
-        if (end > stream.end) {
-            return 0;
-        }
-
-        flags = stream.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
-        LOG(LOG_INFO, "crypt flags %x\n", flags);
-        if (flags & 1) {
-
-            LOG(LOG_DEBUG, "We're going for the RDP4-style encryption\n");
-            stream.skip_uint8(8); /* unknown */
-
-            while (stream.p < end) {
-                tag = stream.in_uint16_le();
-                length = stream.in_uint16_le();
-
-                next_tag = stream.p + length;
-
-                switch (tag) {
-                case SEC_TAG_PUBKEY:
-                    #warning exception style should be used throughout the code, not an horrible mixup as below
-                    try {
-                        /* Parse a public key structure */
-                        uint32_t magic;
-                        uint32_t modulus_len;
-
-                        magic = stream.in_uint32_le();
-                        if (magic != SEC_RSA_MAGIC) {
-                            LOG(LOG_WARNING, "RSA magic 0x%x\n", magic);
-                            throw Error(ERR_SEC_PARSE_PUB_KEY_MAGIC_NOT_OK);
-                        }
-                        modulus_len = stream.in_uint32_le();
-                        modulus_len -= SEC_PADDING_SIZE;
-
-                        if ((modulus_len < SEC_MODULUS_SIZE)
-                        ||  (modulus_len > SEC_MAX_MODULUS_SIZE)) {
-                            LOG(LOG_WARNING, "Bad server public key size (%u bits)\n", modulus_len * 8);
-                            throw Error(ERR_SEC_PARSE_PUB_KEY_MODUL_NOT_OK);
-                        }
-                        stream.skip_uint8(8); /* modulus_bits, unknown */
-                        memcpy(exponent, stream.in_uint8p(SEC_EXPONENT_SIZE), SEC_EXPONENT_SIZE);
-                        memcpy(modulus, stream.in_uint8p(modulus_len), modulus_len);
-                        stream.skip_uint8(SEC_PADDING_SIZE);
-                        server_public_key_len = modulus_len;
-
-                        if (!stream.check()){
-                            throw Error(ERR_SEC_PARSE_PUB_KEY_ERROR_CHECKING_STREAM);
-                        }
-                    }
-                    catch (...) {
-                        return 0;
-                    }
-                    LOG(LOG_DEBUG, "Got Public key, RDP4-style\n");
-                    break;
-                case SEC_TAG_KEYSIG:
-                    LOG(LOG_DEBUG, "SEC_TAG_KEYSIG RDP4-style\n");
-//                    if (!rdp_sec_parse_public_sig(stream, length, modulus, exponent, server_public_key_len)){
-//                        return 0;
-//                    }
-                    break;
-                default:
-                    LOG(LOG_DEBUG, "unimplemented: crypt tag 0x%x\n", tag);
-                    return 0;
-                    break;
-                }
-                stream.p = next_tag;
-            }
-        }
-        else {
-            try {
-                LOG(LOG_DEBUG, "We're going for the RDP5-style encryption\n");
-                LOG(LOG_DEBUG, "RDP5-style encryption with certificates not available\n");
-                uint32_t certcount = stream.in_uint32_le();
-                if (certcount < 2){
-                    LOG(LOG_DEBUG, "Server didn't send enough X509 certificates\n");
-                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CERT_NOK);
-                }
-                for (; certcount > 2; certcount--){
-                    /* ignore all the certificates between the root and the signing CA */
-                    LOG(LOG_WARNING, " Ignored certs left: %d\n", certcount);
-                    uint32_t ignorelen = stream.in_uint32_le();
-                    LOG(LOG_WARNING, "Ignored Certificate length is %d\n", ignorelen);
-                    SSL_CERT *ignorecert = ssl_cert_read(stream.p, ignorelen);
-                    stream.skip_uint8(ignorelen);
-                    if (ignorecert == NULL){
-                        LOG(LOG_WARNING,
-                            "got a bad cert: this will probably screw up"
-                            " the rest of the communication\n");
-                    }
-                }
-
-                /* Do da funky X.509 stuffy
-
-               "How did I find out about this?  I looked up and saw a
-               bright light and when I came to I had a scar on my forehead
-               and knew about X.500"
-               - Peter Gutman in a early version of
-               http://www.cs.auckland.ac.nz/~pgut001/pubs/x509guide.txt
-               */
-
-                /* Loading CA_Certificate from server*/
-                cacert_len = stream.in_uint32_le();
-                LOG(LOG_DEBUG, "CA Certificate length is %d\n", cacert_len);
-                cacert = ssl_cert_read(stream.p, cacert_len);
-                stream.skip_uint8(cacert_len);
-                if (NULL == cacert){
-                    LOG(LOG_DEBUG, "Couldn't load CA Certificate from server\n");
-                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NULL);
-                }
-
-                ssllib ssl;
-
-                /* Loading Certificate from server*/
-                cert_len = stream.in_uint32_le();
-                LOG(LOG_DEBUG, "Certificate length is %d\n", cert_len);
-                server_cert = ssl_cert_read(stream.p, cert_len);
-                stream.skip_uint8(cert_len);
-                if (NULL == server_cert){
-                    ssl_cert_free(cacert);
-                    LOG(LOG_DEBUG, "Couldn't load Certificate from server\n");
-                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_LOADED);
-                }
-                /* Matching certificates */
-                if (!ssl_certs_ok(server_cert,cacert)){
-                    ssl_cert_free(server_cert);
-                    ssl_cert_free(cacert);
-                    LOG(LOG_DEBUG, "Security error CA Certificate invalid\n");
-                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_MATCH);
-                }
-                ssl_cert_free(cacert);
-                stream.skip_uint8(16); /* Padding */
-                server_public_key = ssl_cert_to_rkey(server_cert, server_public_key_len);
-                if (NULL == server_public_key){
-                    LOG(LOG_DEBUG, "Didn't parse X509 correctly\n");
-                    ssl_cert_free(server_cert);
-                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_X509_NOT_PARSED);
-
-                }
-                ssl_cert_free(server_cert);
-                LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d\n", server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
-                if ((server_public_key_len < SEC_MODULUS_SIZE) ||
-                    (server_public_key_len > SEC_MAX_MODULUS_SIZE)){
-                    LOG(LOG_DEBUG, "Bad server public key size (%u bits)\n",
-                        server_public_key_len * 8);
-                    ssl.rkey_free(server_public_key);
-                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
-                }
-                if (ssl_rkey_get_exp_mod(server_public_key, exponent, SEC_EXPONENT_SIZE,
-                    modulus, SEC_MAX_MODULUS_SIZE) != 0){
-                    LOG(LOG_DEBUG, "Problem extracting RSA exponent, modulus");
-                    ssl.rkey_free(server_public_key);
-                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_RSA_EXP_NOT_OK);
-
-                }
-                ssl.rkey_free(server_public_key);
-                return 1; /* There's some garbage here we don't care about */
-            }
-            catch (...){
-                return 0;
-            };
-        }
-        if (!stream.check_end()) {
-            throw Error(ERR_SEC_PARSE_CRYPT_INFO_ERROR_CHECKING_STREAM);
-        }
-        return 1;
-    }
 
     /*****************************************************************************/
     /* Process crypto information blob */
@@ -1498,7 +1500,7 @@ struct Sec
         memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
         #warning check for the true size
         memset(server_random, 0, SEC_RANDOM_SIZE);
-        if (!this->rdp_sec_parse_crypt_info(stream, &rc4_key_size, server_random, modulus, exponent, server_public_key_len, crypt_level)){
+        if (!rdp_sec_parse_crypt_info(stream, &rc4_key_size, server_random, modulus, exponent, server_public_key_len, crypt_level)){
             return;
         }
         /* Generate a client random, and determine encryption keys */
