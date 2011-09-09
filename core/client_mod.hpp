@@ -129,6 +129,9 @@ struct client_mod : public Callback {
         return rv;
     }
 
+    virtual void send_to_mod_channel(const McsChannelItem & channel, uint8_t * data, size_t size, size_t length, uint32_t flags)
+    {
+    }
 
     void set_mod_palette(const BGRPalette & palette)
     {

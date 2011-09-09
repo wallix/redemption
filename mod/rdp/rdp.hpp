@@ -213,6 +213,33 @@ struct mod_rdp : public client_mod {
         return 0;
     }
 
+    virtual void send_to_mod_channel(const McsChannelItem & front_channel, uint8_t * data, size_t size, size_t length, uint32_t flags)
+    {
+        size_t index = mod_channel_list.size();
+        for (size_t i = 0; i < mod_channel_list.size(); i++){
+            if (strcmp(front_channel.name, mod_channel_list[i].name) == 0){
+                index = i;
+            }
+            break;
+        }
+        if (index <= mod_channel_list.size()){
+            const McsChannelItem & mod_channel = mod_channel_list[index];
+            LOG(LOG_INFO, "sent to %u", mod_channel.chanid);
+            Stream stream(8192);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->rdp_layer.userid, mod_channel.chanid);
+            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
+            stream.out_uint32_le(length);
+            stream.out_uint32_le(flags);
+            memcpy(stream.p, data, size);
+            stream.p+= size;
+            sec_out.end();
+            sdrq_out.end();
+            tpdu.end();
+            tpdu.send(this->rdp_layer.trans);
+        }
+    }
+
     void send_redirect_pdu(long param1, long param2, long param3, int param4, const ChannelList & mod_channel_list, const ChannelList & front_channel_list) throw(Error)
     {
         LOG(LOG_INFO, "send_redirect_pdu\n");
@@ -244,13 +271,6 @@ struct mod_rdp : public client_mod {
                 }
             }
         }
-//            LOG(LOG_INFO, "send_redirect_pdu channel=%s\n", name);
-        /* Here, we're going to search the correct channel in order to send
-        information throughout this channel to RDP server */
-        /*Copy data from s to data and after that close stream and send
-        it to send_data with channel_id so we need to pass chan_id to
-        send_data also in order to be able to redirect data in the correct
-        way*/
         if (mod_chan_id){
             LOG(LOG_INFO, "sent to %u", mod_chan_id);
             Stream stream(8192);
@@ -287,8 +307,6 @@ struct mod_rdp : public client_mod {
 
 
         int & userid = this->rdp_layer.userid;
-
-        LOG(LOG_INFO, "userid=%u", userid);
 
         switch (this->state){
         case MOD_RDP_CONNECTING:
@@ -434,11 +452,11 @@ struct mod_rdp : public client_mod {
             // Client                                                     Server
             //    |------ Client Info PDU      ---------------------------> |
 
-            LOG(LOG_INFO, "client_info_pdu");
+            LOG(LOG_INFO, "send_client_info_pdu");
             int rdp5_performanceflags = this->get_client_info().rdp5_performanceflags;
             rdp5_performanceflags = RDP5_NO_WALLPAPER;
 
-            this->rdp_layer.client_info_pdu(
+            this->rdp_layer.send_client_info_pdu(
                                 this->trans,
                                 this->rdp_layer.userid,
                                 context.get(STRAUTHID_TARGET_PASSWORD),
@@ -523,7 +541,6 @@ struct mod_rdp : public client_mod {
             // between client-side plug-ins and server-side applications).
 
         case MOD_RDP_CONNECTED:
-        LOG(LOG_INFO, "MOD_RDP_CONNECTED");
         {
             int pdu_type;
 
@@ -743,6 +760,7 @@ struct mod_rdp : public client_mod {
             if (chan == mod_channel_item.chanid){
                 /* Here, we're going to search the correct channel in order to send
                 information throughout this channel to RDP client*/
+                #warning move that code to server_send_to_channel_mod
                 LOG(LOG_INFO, "found back channel chanid=%u flags=%x [channel_flags=%x] name=%s", chan, channel_flags, mod_channel_item.flags, mod_channel_item.name);
                 int num_channels_dst = (int) this->front.get_channel_list().size();
                 for (int front_index = 0; front_index < num_channels_dst; front_index++){
@@ -757,7 +775,7 @@ struct mod_rdp : public client_mod {
 //                        if(this->rdp_layer.sec_layer.clipboard_check(name, this->clipboard_enable) == 1){
 //                            /* Clipboard deactivation required */
 //                        }
-                        this->server_send_to_channel_mod(front_channel_item, stream.p, size, length, channel_flags);
+                        this->server_send_to_channel_mod(front_channel_item, stream.p, length, length, channel_flags);
                         break;
                     }
                 }
