@@ -769,11 +769,11 @@ struct client_mod : public Callback {
         return this->front.get_channel_id(name);
     }
 
-    void server_send_to_channel_mod(int channel_id,
+    void server_send_to_channel_mod(const McsChannelItem & channel,
                            uint8_t* data, int data_len,
                            int total_data_len, int flags)
     {
-        this->front.send_to_channel(channel_id, data, data_len, total_data_len, flags);
+        this->front.send_to_channel(channel, data, data_len, total_data_len, flags);
     }
 
     bool get_pointer_displayed() {

@@ -70,42 +70,19 @@ struct server_rdp {
     };
 
 
-    #warning we should provide directly target channel informations, no need to seek it in channel_list here
-    void server_send_to_channel(ChannelList & channel_list, int channel_id, uint8_t *data, int data_len, int total_data_len, int flags) throw (Error)
+    void server_send_to_channel(const McsChannelItem & channel, uint8_t *data, int data_len, int total_data_len, int flags) throw (Error)
     {
         Stream stream(data_len + 1024); /* this should be big enough */
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdin_out(stream, MCS_SDIN, this->userid, channel_id);
+        McsOut sdin_out(stream, MCS_SDIN, this->userid, channel.chanid);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
-
-        stream.channel_hdr = stream.p;
-        stream.p += 8;
-
-        stream.out_copy_bytes(data, data_len);
-        stream.mark_end();
-
-        size_t index = channel_id - MCS_GLOBAL_CHANNEL - 1;
-        size_t count = channel_list.size();
-        for (size_t i = 0; i < count ; i++){
-            if  (channel_list[i].chanid == channel_id){
-                index = i;
-                break;
-            }
-        }
-        if (index >= count) {
-            throw Error(ERR_MCS_CHANNEL_NOT_FOUND);
-        }
-        const McsChannelItem & channel = channel_list[index];
-
-        stream.p = stream.channel_hdr;
         stream.out_uint32_le(total_data_len);
         if (channel.flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
             flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
         }
         stream.out_uint32_le(flags);
-        assert(channel.chanid == channel_id);
-
-        stream.p = stream.end;
+        stream.out_copy_bytes(data, data_len);
+        stream.mark_end();
         sec_out.end();
         sdin_out.end();
         tpdu.end();

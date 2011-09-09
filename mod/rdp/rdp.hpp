@@ -757,12 +757,7 @@ struct mod_rdp : public client_mod {
 //                        if(this->rdp_layer.sec_layer.clipboard_check(name, this->clipboard_enable) == 1){
 //                            /* Clipboard deactivation required */
 //                        }
-//                        else if (channel_item.chanid < 0){
-//                            LOG(LOG_ERR, "Error sending information, wrong channel id");
-//                        }
-//                        else {
-                            this->server_send_to_channel_mod(front_channel_item.chanid, stream.p, size, length, channel_flags);
-//                        }
+                        this->server_send_to_channel_mod(front_channel_item, stream.p, size, length, channel_flags);
                         break;
                     }
                 }
