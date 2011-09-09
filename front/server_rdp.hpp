@@ -43,7 +43,7 @@ struct server_rdp {
     struct Sec sec_layer;
     uint32_t packet_number;
     Transport * trans;
-    int userid;
+    uint16_t userid;
 
     server_rdp(Transport * trans, Inifile * ini)
         :
@@ -508,13 +508,7 @@ struct server_rdp {
         //    | <-----MCS Channel Join Confirm PDU--------------------- |
 
         LOG(LOG_INFO, "Channel Connection");
-        LOG(LOG_INFO, "AURQ");
-        {
-            #warning change userid to uint16_t
-            uint16_t tmp_userid;
-            recv_mcs_erect_domain_and_attach_user_request_pdu(this->trans, tmp_userid);
-            this->userid = tmp_userid;
-        }
+        recv_mcs_erect_domain_and_attach_user_request_pdu(this->trans, this->userid);
 
         send_mcs_attach_user_confirm_pdu(this->trans, this->userid);
 
@@ -685,62 +679,58 @@ struct server_rdp {
 
         Stream input_stream(65535);
 
-        do {
-            input_stream.init(65535);
-            X224In tpdu(this->trans, input_stream);
-            McsIn mcs_in(input_stream);
+        X224In tpdu(this->trans, input_stream);
+        McsIn mcs_in(input_stream);
 
-            // Disconnect Provider Ultimatum datagram
-            if ((mcs_in.opcode >> 2) == MCS_DPUM) {
-                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
-            }
+        // Disconnect Provider Ultimatum datagram
+        if ((mcs_in.opcode >> 2) == MCS_DPUM) {
+            throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+        }
 
-            if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-            }
+        if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
+            throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+        }
 
-            SecIn sec(input_stream, this->sec_layer.decrypt);
+        SecIn sec(input_stream, this->sec_layer.decrypt);
 
-            if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL) {
+        if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL) {
 
-                size_t index = channel_list.size();
-                for (size_t i = 0; i < channel_list.size(); i++){
-                    if (channel_list[i].chanid == mcs_in.chan_id){
-                        index = i;
-                    }
+            size_t index = channel_list.size();
+            for (size_t i = 0; i < channel_list.size(); i++){
+                if (channel_list[i].chanid == mcs_in.chan_id){
+                    index = i;
                 }
-
-                if (index >= channel_list.size()) {
-                    throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
-                }
-
-                const McsChannelItem & channel = channel_list[index];
-
-                LOG(LOG_INFO, "received data in channel %u [%s]", channel.chanid, channel.name);
-
-                int length = input_stream.in_uint32_le();
-                int flags = input_stream.in_uint32_le();
-
-                int size = (int)(input_stream.end - input_stream.p);
-
-                LOG(LOG_INFO, "up_and_running=%u", this->up_and_running);
-                LOG(LOG_INFO, "received data in channel %u [%s]", channel.chanid, channel.name);
-
-                #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
-                cb.send_to_mod_channel(channel, input_stream.p, size, length, flags);
-                input_stream.p = input_stream.end;
             }
-            input_stream.next_packet = input_stream.p;
 
-            if (input_stream.next_packet < input_stream.end){
+            if (index >= channel_list.size()) {
+                throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
+            }
+
+            const McsChannelItem & channel = channel_list[index];
+
+            LOG(LOG_INFO, "received data in channel %u [%s]", channel.chanid, channel.name);
+
+            int length = input_stream.in_uint32_le();
+            int flags = input_stream.in_uint32_le();
+
+            int size = (int)(input_stream.end - input_stream.p);
+
+            LOG(LOG_INFO, "up_and_running=%u", this->up_and_running);
+            LOG(LOG_INFO, "received data in channel %u [%s]", channel.chanid, channel.name);
+
+            #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
+            cb.send_to_mod_channel(channel, input_stream.p, size, length, flags);
+        }
+        else {
+            while (input_stream.p < input_stream.end) {
                 int length = input_stream.in_uint16_le();
+                uint8_t * next_packet = input_stream.p + length;
                 if (length == 0x8000) {
-                    input_stream.next_packet += 8;
+                    next_packet = next_packet - 0x8000 + 8;
                 }
                 else {
                     int pdu_code = input_stream.in_uint16_le();
                     input_stream.skip_uint8(2); /* mcs user id */
-                    input_stream.next_packet += length;
                     switch (pdu_code & 0xf) {
 
                     case 0:
@@ -773,10 +763,9 @@ struct server_rdp {
                         break;
                     }
                 }
+                next_packet = input_stream.p + length;
             }
-        } while ((input_stream.next_packet < input_stream.end) || !this->up_and_running);
-
-        #warning the postcondition could be changed to signify we want to get hand back immediately, because we still have data to process.
+        }
     }
 
 

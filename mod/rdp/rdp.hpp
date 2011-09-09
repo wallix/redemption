@@ -199,10 +199,6 @@ struct mod_rdp : public client_mod {
             case WM_INVALIDATE:
                 this->rdp_layer.send_invalidate(stream, (param1 >> 16) & 0xffff, param1 & 0xffff,(param2 >> 16) & 0xffff, param2 & 0xffff);
                 break;
-            case WM_CHANNELDATA:
-                LOG(LOG_INFO, "rdp::mod_event::WM_CHANNEL_DATA");
-                this->send_redirect_pdu(param1, param2, param3, param4, this->mod_channel_list, this->front.get_channel_list());
-                break;
             default:
                 break;
             }
@@ -215,6 +211,8 @@ struct mod_rdp : public client_mod {
 
     virtual void send_to_mod_channel(const McsChannelItem & front_channel, uint8_t * data, size_t size, size_t length, uint32_t flags)
     {
+        LOG(LOG_INFO, "---------------------------------> send_to_mod_channel(front_channel(%u,%x,%s), data=%p, size=%u, length=%u, flags=%x)",
+            front_channel.chanid, front_channel.flags, front_channel.name, data, size, length, flags);
         size_t index = mod_channel_list.size();
         for (size_t i = 0; i < mod_channel_list.size(); i++){
             if (strcmp(front_channel.name, mod_channel_list[i].name) == 0){
@@ -222,7 +220,7 @@ struct mod_rdp : public client_mod {
             }
             break;
         }
-        if (index <= mod_channel_list.size()){
+        if (index < mod_channel_list.size()){
             const McsChannelItem & mod_channel = mod_channel_list[index];
             LOG(LOG_INFO, "sent to %u", mod_channel.chanid);
             Stream stream(8192);
@@ -240,58 +238,58 @@ struct mod_rdp : public client_mod {
         }
     }
 
-    void send_redirect_pdu(long param1, long param2, long param3, int param4, const ChannelList & mod_channel_list, const ChannelList & front_channel_list) throw(Error)
-    {
-        LOG(LOG_INFO, "send_redirect_pdu\n");
-        char* name = 0;
-        /* We need to verify this in order to right process the stream passed */
-        int chan_id = (int)(param1 & 0xffff) + MCS_GLOBAL_CHANNEL + 1;
-        int flags = (int)((param1 >> 16) & 0xffff);
-        int size = param2;
-        char * data = (char*)param3;
-        int total_data_length = param4;
-        /* We need to recover the name of the channel linked with this
-        channel_id in order to match it with the same channel on the
-        first channel_list created by the RDP client at initialization
-        process */
+//    void send_redirect_pdu(long param1, long param2, long param3, int param4, const ChannelList & mod_channel_list, const ChannelList & front_channel_list) throw(Error)
+//    {
+//        LOG(LOG_INFO, "send_redirect_pdu\n");
+//        char* name = 0;
+//        /* We need to verify this in order to right process the stream passed */
+//        int chan_id = (int)(param1 & 0xffff) + MCS_GLOBAL_CHANNEL + 1;
+//        int flags = (int)((param1 >> 16) & 0xffff);
+//        int size = param2;
+//        char * data = (char*)param3;
+//        int total_data_length = param4;
+//        /* We need to recover the name of the channel linked with this
+//        channel_id in order to match it with the same channel on the
+//        first channel_list created by the RDP client at initialization
+//        process */
 
-        int mod_chan_id = 0;
-        size_t num_channels_src = front_channel_list.size();
-        for (size_t index = 0; index < num_channels_src; index++){
-            const McsChannelItem & front_channel_item = front_channel_list[index];
-            if (chan_id == front_channel_item.chanid){ // found channel
+//        int mod_chan_id = 0;
+//        size_t num_channels_src = front_channel_list.size();
+//        for (size_t index = 0; index < num_channels_src; index++){
+//            const McsChannelItem & front_channel_item = front_channel_list[index];
+//            if (chan_id == front_channel_item.chanid){ // found channel
 
-                size_t num_channels_dst = mod_channel_list.size();
-                for (size_t index = 0; index < num_channels_dst; index++){
-                    const McsChannelItem & mod_channel_item = mod_channel_list[index];
-                    if (strcmp(front_channel_item.name, mod_channel_item.name) == 0){
-                        mod_chan_id = mod_channel_item.chanid;
-                    }
-                    break;
-                }
-            }
-        }
-        if (mod_chan_id){
-            LOG(LOG_INFO, "sent to %u", mod_chan_id);
-            Stream stream(8192);
-            X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsOut sdrq_out(stream, MCS_SDRQ, this->rdp_layer.userid, mod_chan_id);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
-            stream.out_uint32_le(total_data_length);
-            stream.out_uint32_le(flags);
-            memcpy(stream.p, data, size);
-            stream.p+= size;
+//                size_t num_channels_dst = mod_channel_list.size();
+//                for (size_t index = 0; index < num_channels_dst; index++){
+//                    const McsChannelItem & mod_channel_item = mod_channel_list[index];
+//                    if (strcmp(front_channel_item.name, mod_channel_item.name) == 0){
+//                        mod_chan_id = mod_channel_item.chanid;
+//                    }
+//                    break;
+//                }
+//            }
+//        }
+//        if (mod_chan_id){
+//            LOG(LOG_INFO, "sent to %u", mod_chan_id);
+//            Stream stream(8192);
+//            X224Out tpdu(X224Packet::DT_TPDU, stream);
+//            McsOut sdrq_out(stream, MCS_SDRQ, this->rdp_layer.userid, mod_chan_id);
+//            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
+//            stream.out_uint32_le(total_data_length);
+//            stream.out_uint32_le(flags);
+//            memcpy(stream.p, data, size);
+//            stream.p+= size;
 
-            /* in send_redirect_pdu, sending data from stream.p throughout channel channel_item->name */
-            //g_hexdump(stream.p, size + 8);
-            /* We need to call send_data but with another code because we need to build an
-            virtual_channel packet and not an MCS_GLOBAL_CHANNEL packet */
-            sec_out.end();
-            sdrq_out.end();
-            tpdu.end();
-            tpdu.send(this->rdp_layer.trans);
-        }
-    }
+//            /* in send_redirect_pdu, sending data from stream.p throughout channel channel_item->name */
+//            //g_hexdump(stream.p, size + 8);
+//            /* We need to call send_data but with another code because we need to build an
+//            virtual_channel packet and not an MCS_GLOBAL_CHANNEL packet */
+//            sec_out.end();
+//            sdrq_out.end();
+//            tpdu.end();
+//            tpdu.send(this->rdp_layer.trans);
+//        }
+//    }
 
 
     #warning most of code below should move to rdp_rdp

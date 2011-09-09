@@ -30,6 +30,7 @@ struct Callback
 {
     virtual int callback(int msg, long param1, long param2, long param3, long param4) = 0;
     virtual void send_to_mod_channel(const McsChannelItem & front_channel, uint8_t * data, size_t size, size_t length, uint32_t flags) {
+        LOG(LOG_INFO, "overloaded by subclass");
     }
 };
 
