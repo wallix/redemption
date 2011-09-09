@@ -604,7 +604,7 @@ struct mod_vnc : public client_mod {
                 out_s->out_clear_bytes(4); /* pad */
                 out_s->mark_end();
                 length = (int)(out_s->end - out_s->data);
-                this->server_send_to_channel_mod(this->clip_chanid, out_s->data, length, length, 3);
+//                this->server_send_to_channel_mod(this->clip_chanid, out_s->data, length, length, 3);
                 delete out_s;
             }
             break;
@@ -639,8 +639,7 @@ struct mod_vnc : public client_mod {
                 out_s->out_clear_bytes( 4); /* pad */
                 out_s->mark_end();
                 length = (int)(out_s->end - out_s->data);
-                this->server_send_to_channel_mod(this->clip_chanid, out_s->data, length,
-                                       length, 3);
+//                this->server_send_to_channel_mod(this->clip_chanid, out_s->data, length, length, 3);
                 delete out_s;
             }
             break;
@@ -834,7 +833,7 @@ struct mod_vnc : public client_mod {
         out_s.out_clear_bytes(4);
         out_s.mark_end();
         size = (int)(out_s.end - out_s.data);
-        this->server_send_to_channel_mod(this->clip_chanid, out_s.data, size, size, 3);
+//        this->server_send_to_channel_mod(this->clip_chanid, out_s.data, size, size, 3);
     }
 
     /******************************************************************************/
@@ -877,7 +876,7 @@ struct mod_vnc : public client_mod {
         this->clip_chanid = this->server_get_channel_id((char*)"cliprdr");
 
         if (this->clip_chanid >= 0) {
-            this->server_send_to_channel_mod(this->clip_chanid, init_data, 12, 12, 3);
+//            this->server_send_to_channel_mod(this->clip_chanid, init_data, 12, 12, 3);
         }
     }
 

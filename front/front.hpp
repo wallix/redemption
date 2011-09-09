@@ -499,11 +499,11 @@ public:
         return rv;
     }
 
-    void send_to_channel(int channel_id, uint8_t* data, int data_len, int total_data_len, int flags)
+    void send_to_channel(const McsChannelItem & channel, uint8_t* data, int data_len, int total_data_len, int flags)
     {
 //        LOG(LOG_INFO, "send_to_channel()");
 //        this->rdp_layer.server_send_to_channel(this->rdp_layer.sec_layer.channel_list, channel_id, data, data_len, total_data_len, flags);
-        this->rdp_layer.server_send_to_channel(this->channel_list, channel_id, data, data_len, total_data_len, flags);
+        this->rdp_layer.server_send_to_channel(channel, data, data_len, total_data_len, flags);
 //        LOG(LOG_INFO, "send_to_channel() done");
     }
 
