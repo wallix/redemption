@@ -482,29 +482,9 @@ public:
 //        LOG(LOG_INFO, "send_global_palette() done");
     }
 
-    /* returns a zero based index of the channel, -1 if error or if it dosen't exist */
-    int get_channel_id(char* name)
-    {
-//        LOG(LOG_INFO, "front::get_channel_id\n");
-//        ChannelListe & channel_list = this->rdp_layer.sec_layer.channel_list;
-        ChannelList & channel_list = this->channel_list;
-        int rv = -1;
-        for (size_t index = 0; index < channel_list.size(); index++) {
-            const McsChannelItem & channel_item = channel_list[index];
-            if (0 == strcasecmp(name, channel_item.name)) {
-                rv = index;
-                break;
-            }
-        }
-        return rv;
-    }
-
     void send_to_channel(const McsChannelItem & channel, uint8_t* data, int data_len, int total_data_len, int flags)
     {
-//        LOG(LOG_INFO, "send_to_channel()");
-//        this->rdp_layer.server_send_to_channel(this->rdp_layer.sec_layer.channel_list, channel_id, data, data_len, total_data_len, flags);
         this->rdp_layer.server_send_to_channel(channel, data, data_len, total_data_len, flags);
-//        LOG(LOG_INFO, "send_to_channel() done");
     }
 
 };

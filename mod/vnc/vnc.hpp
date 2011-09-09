@@ -873,11 +873,11 @@ struct mod_vnc : public client_mod {
         return;
         uint8_t init_data[12] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-        this->clip_chanid = this->server_get_channel_id((char*)"cliprdr");
+//        this->clip_chanid = this->server_get_channel_id((char*)"cliprdr");
 
-        if (this->clip_chanid >= 0) {
+//        if (this->clip_chanid >= 0) {
 //            this->server_send_to_channel_mod(this->clip_chanid, init_data, 12, 12, 3);
-        }
+//        }
     }
 
     private:

@@ -118,19 +118,11 @@ struct client_mod : public Callback {
 //            LOG(LOG_INFO, "callback SCREENUPDATE");
             this->invalidate(Rect(param1, param2, param3, param4));
             break;
-        case WM_CHANNELDATA:
-//            LOG(LOG_INFO, "callback CHANNELDATA");
-            rv = this->mod_event(WM_CHANNELDATA, param1, param2, param3, param4);
-            break;
         default:
             LOG(LOG_INFO, "callback unsupported msg %u", msg);
             break;
         }
         return rv;
-    }
-
-    virtual void send_to_mod_channel(const McsChannelItem & channel, uint8_t * data, size_t size, size_t length, uint32_t flags)
-    {
     }
 
     void set_mod_palette(const BGRPalette & palette)
@@ -765,11 +757,6 @@ struct client_mod : public Callback {
         struct FontChar fi(offset, baseline, width, height, 0);
         memcpy(fi.data, data, fi.datasize());
         this->glyph_cache(fi, font, character);
-    }
-
-    int server_get_channel_id(char* name)
-    {
-        return this->front.get_channel_id(name);
     }
 
     void server_send_to_channel_mod(const McsChannelItem & channel,
