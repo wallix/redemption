@@ -560,6 +560,7 @@ struct mod_rdp : public client_mod {
                 }
 
                 if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
+                    LOG(LOG_INFO, "sec redirect encrypt");
                     /* Check for a redirect packet, starts with 00 04 */
                     if (stream.p[0] == 0 && stream.p[1] == 4){
                     /* for some reason the PDU and the length seem to be swapped.
@@ -721,6 +722,7 @@ struct mod_rdp : public client_mod {
                 return (e.id == ERR_SOCKET_CLOSED)?2:1;
             }
             catch(...){
+                LOG(LOG_INFO, "WTF ????????????????????????");
                 #warning this exception happen, check why (it shouldnt, some error not of Error type is generated)
                 return 1;
             }
@@ -755,27 +757,7 @@ struct mod_rdp : public client_mod {
         for (int index = 0; index < num_channels_src; index++){
             const McsChannelItem & mod_channel_item = this->mod_channel_list[index];
             if (chan == mod_channel_item.chanid){
-                /* Here, we're going to search the correct channel in order to send
-                information throughout this channel to RDP client*/
-                #warning move that code to server_send_to_channel_mod
-                LOG(LOG_INFO, "found back channel chanid=%u flags=%x [channel_flags=%x] name=%s", chan, channel_flags, mod_channel_item.flags, mod_channel_item.name);
-                int num_channels_dst = (int) this->front.get_channel_list().size();
-                for (int front_index = 0; front_index < num_channels_dst; front_index++){
-                    const McsChannelItem & front_channel_item = this->front.get_channel_list()[front_index];
-                    if (strcmp(mod_channel_item.name, front_channel_item.name) == 0){
-                        LOG(LOG_INFO, "found front channel chanid=%u flags=%x [channel_flags=%x] name=%s", front_channel_item.chanid, channel_flags, front_channel_item.flags, front_channel_item.name);
-                        int size = (int)(stream.end - stream.p);
-
-                        /* TODO: create new function in order to activate / deactivate copy-paste
-                        sequence from server to client */
-
-//                        if(this->rdp_layer.sec_layer.clipboard_check(name, this->clipboard_enable) == 1){
-//                            /* Clipboard deactivation required */
-//                        }
-                        this->server_send_to_channel_mod(front_channel_item, stream.p, length, length, channel_flags);
-                        break;
-                    }
-                }
+                this->server_send_to_channel_mod(mod_channel_item, stream.p, length, length, channel_flags);
                 break;
             }
         }

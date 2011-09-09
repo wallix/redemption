@@ -72,7 +72,8 @@ struct server_rdp {
 
     void server_send_to_channel(const McsChannelItem & channel, uint8_t *data, int data_len, int total_data_len, int flags) throw (Error)
     {
-        Stream stream(data_len + 1024); /* this should be big enough */
+        LOG(LOG_INFO, "server_send_to_channel %u[%s] %u %u", channel.chanid, channel.name, data_len, total_data_len);
+        Stream stream(65536);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, channel.chanid);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
@@ -675,12 +676,10 @@ struct server_rdp {
 
     void activate_and_process_data(Callback & cb, ChannelList & channel_list)
     {
-        #warning this code needs (yet and again) much clarification
+        Stream stream(65535);
 
-        Stream input_stream(65535);
-
-        X224In tpdu(this->trans, input_stream);
-        McsIn mcs_in(input_stream);
+        X224In tpdu(this->trans, stream);
+        McsIn mcs_in(stream);
 
         // Disconnect Provider Ultimatum datagram
         if ((mcs_in.opcode >> 2) == MCS_DPUM) {
@@ -691,9 +690,34 @@ struct server_rdp {
             throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
         }
 
-        SecIn sec(input_stream, this->sec_layer.decrypt);
+        SecIn sec(stream, this->sec_layer.decrypt);
 
         if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL) {
+
+            if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
+                LOG(LOG_INFO, "sec redirect encrypt");
+                /* Check for a redirect packet, starts with 00 04 */
+                if (stream.p[0] == 0 && stream.p[1] == 4){
+                /* for some reason the PDU and the length seem to be swapped.
+                   This isn't good, but we're going to do a byte for byte
+                   swap.  So the first four value appear as: 00 04 XX YY,
+                   where XX YY is the little endian length. We're going to
+                   use 04 00 as the PDU type, so after our swap this will look
+                   like: XX YY 04 00 */
+
+                    uint8_t swapbyte1 = stream.p[0];
+                    stream.p[0] = stream.p[2];
+                    stream.p[2] = swapbyte1;
+
+                    uint8_t swapbyte2 = stream.p[1];
+                    stream.p[1] = stream.p[3];
+                    stream.p[3] = swapbyte2;
+
+                    uint8_t swapbyte3 = stream.p[2];
+                    stream.p[2] = stream.p[3];
+                    stream.p[3] = swapbyte3;
+                }
+            }
 
             size_t index = channel_list.size();
             for (size_t i = 0; i < channel_list.size(); i++){
@@ -710,27 +734,27 @@ struct server_rdp {
 
             LOG(LOG_INFO, "received data in channel %u [%s]", channel.chanid, channel.name);
 
-            int length = input_stream.in_uint32_le();
-            int flags = input_stream.in_uint32_le();
+            int length = stream.in_uint32_le();
+            int flags = stream.in_uint32_le();
 
-            int size = (int)(input_stream.end - input_stream.p);
+            int size = (int)(stream.end - stream.p);
 
             LOG(LOG_INFO, "up_and_running=%u", this->up_and_running);
-            LOG(LOG_INFO, "received data in channel %u [%s]", channel.chanid, channel.name);
+            LOG(LOG_INFO, "received data in channel %u [%s] %u %u", channel.chanid, channel.name, length, size);
 
             #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
-            cb.send_to_mod_channel(channel, input_stream.p, size, length, flags);
+            cb.send_to_mod_channel(channel, stream.p, size, length, flags);
         }
         else {
-            while (input_stream.p < input_stream.end) {
-                int length = input_stream.in_uint16_le();
-                uint8_t * next_packet = input_stream.p + length;
+            while (stream.p < stream.end) {
+                int length = stream.in_uint16_le();
+                uint8_t * next_packet = stream.p + length;
                 if (length == 0x8000) {
                     next_packet = next_packet - 0x8000 + 8;
                 }
                 else {
-                    int pdu_code = input_stream.in_uint16_le();
-                    input_stream.skip_uint8(2); /* mcs user id */
+                    int pdu_code = stream.in_uint16_le();
+                    stream.skip_uint8(2); /* mcs user id */
                     switch (pdu_code & 0xf) {
 
                     case 0:
@@ -741,7 +765,7 @@ struct server_rdp {
                         break;
                     case PDUTYPE_CONFIRMACTIVEPDU:
 //                        LOG(LOG_INFO, "PDUTYPE_CONFIRMACTIVEPDU");
-                        this->process_confirm_active(input_stream);
+                        this->process_confirm_active(stream);
                         break;
                     case PDUTYPE_DATAPDU: /* 7 */
 //                        LOG(LOG_INFO, "PDUTYPE_DATAPDU");
@@ -749,7 +773,7 @@ struct server_rdp {
                         // when fonts have been received
                         // we will not exit this loop until we are in this state.
                         #warning see what happen if we never receive up_and_running due to some error in client code ?
-                        this->process_data(input_stream, cb);
+                        this->process_data(stream, cb);
 //                        LOG(LOG_INFO, "PROCESS_DATA_DONE");
                         break;
                     case PDUTYPE_DEACTIVATEALLPDU:
@@ -763,7 +787,7 @@ struct server_rdp {
                         break;
                     }
                 }
-                next_packet = input_stream.p + length;
+                next_packet = stream.p + length;
             }
         }
     }

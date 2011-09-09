@@ -477,9 +477,7 @@ public:
 
     void send_global_palette(const BGRPalette & palette)
     {
-//        LOG(LOG_INFO, "send_global_palette()");
         this->rdp_layer.send_global_palette(palette);
-//        LOG(LOG_INFO, "send_global_palette() done");
     }
 
     void send_to_channel(const McsChannelItem & channel, uint8_t* data, int data_len, int total_data_len, int flags)
