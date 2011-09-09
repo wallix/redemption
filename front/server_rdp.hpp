@@ -86,6 +86,12 @@ struct server_rdp {
 
         size_t index = channel_id - MCS_GLOBAL_CHANNEL - 1;
         size_t count = channel_list.size();
+        for (size_t i = 0; i < count ; i++){
+            if  (channel_list[i].chanid == channel_id){
+                index = i;
+                break;
+            }
+        }
         if (index >= count) {
             throw Error(ERR_MCS_CHANNEL_NOT_FOUND);
         }
@@ -99,6 +105,7 @@ struct server_rdp {
         stream.out_uint32_le(flags);
         assert(channel.chanid == channel_id);
 
+        stream.p = stream.end;
         sec_out.end();
         sdin_out.end();
         tpdu.end();

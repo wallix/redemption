@@ -727,9 +727,11 @@ struct mod_rdp : public client_mod {
     // redirect_pdu
     void recv_virtual_channel(Stream & stream, int chan)
     {
-        LOG(LOG_INFO, "recv virtual channel %u", chan);
       uint32_t length = stream.in_uint32_le();
       int channel_flags = stream.in_uint32_le();
+
+      LOG(LOG_INFO, "recv virtual channel %u length=%u flags=%x", chan, length, channel_flags);
+
         /* We need to recover the name of the channel linked with this
          channel_id in order to match it with the same channel on the
          first channel_list created by the RDP client at initialization
@@ -741,11 +743,12 @@ struct mod_rdp : public client_mod {
             if (chan == mod_channel_item.chanid){
                 /* Here, we're going to search the correct channel in order to send
                 information throughout this channel to RDP client*/
-
+                LOG(LOG_INFO, "found back channel chanid=%u flags=%x [channel_flags=%x] name=%s", chan, channel_flags, mod_channel_item.flags, mod_channel_item.name);
                 int num_channels_dst = (int) this->front.get_channel_list().size();
                 for (int front_index = 0; front_index < num_channels_dst; front_index++){
                     const McsChannelItem & front_channel_item = this->front.get_channel_list()[front_index];
                     if (strcmp(mod_channel_item.name, front_channel_item.name) == 0){
+                        LOG(LOG_INFO, "found front channel chanid=%u flags=%x [channel_flags=%x] name=%s", front_channel_item.chanid, channel_flags, front_channel_item.flags, front_channel_item.name);
                         int size = (int)(stream.end - stream.p);
 
                         /* TODO: create new function in order to activate / deactivate copy-paste
