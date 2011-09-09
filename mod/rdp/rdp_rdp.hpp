@@ -1125,7 +1125,7 @@ struct rdp_rdp {
     }
 
 
-    void client_info_pdu(Transport * trans, int userid, const char * password, int rdp5_performanceflags, int & use_rdp5)
+    void send_client_info_pdu(Transport * trans, int userid, const char * password, int rdp5_performanceflags, int & use_rdp5)
     {
 
         int flags = RDP_LOGON_NORMAL | ((strlen(password) > 0)?RDP_LOGON_AUTO:0);

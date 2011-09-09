@@ -388,38 +388,6 @@ struct server_rdp {
     }
 
 
-
-
-    // Licensing
-    // ---------
-
-    // Licensing: The goal of the licensing exchange is to transfer a
-    // license from the server to the client.
-
-    // The client should store this license and on subsequent
-    // connections send the license to the server for validation.
-    // However, in some situations the client may not be issued a
-    // license to store. In effect, the packets exchanged during this
-    // phase of the protocol depend on the licensing mechanisms
-    // employed by the server. Within the context of this document
-    // we will assume that the client will not be issued a license to
-    // store. For details regarding more advanced licensing scenarios
-    // that take place during the Licensing Phase, see [MS-RDPELE].
-
-    // Client                                                     Server
-    //    | <------ Licence Error PDU Valid Client ---------------- |
-
-    // Capabilities Exchange
-    // ---------------------
-
-    // Capabilities Negotiation: The server sends the set of capabilities it
-    // supports to the client in a Demand Active PDU. The client responds with its
-    // capabilities by sending a Confirm Active PDU.
-
-    // Client                                                     Server
-    //    | <------- Demand Active PDU ---------------------------- |
-    //    |--------- Confirm Active PDU --------------------------> |
-
     // Connection Finalization
     // -----------------------
 
@@ -615,21 +583,100 @@ struct server_rdp {
             }
 
             SecIn sec(stream, this->sec_layer.decrypt);
-            if (sec.flags & SEC_CLIENT_RANDOM) { /* 0x01 */
-                this->recv_client_random(stream);
+            if (!sec.flags & SEC_CLIENT_RANDOM) { /* 0x01 */
+                throw Error(ERR_SEC_EXPECTED_CLIENT_RANDOM);
             }
+            this->recv_client_random(stream);
         }
+
+        // Secure Settings Exchange
+        // ------------------------
+
+        // Secure Settings Exchange: Secure client data (such as the username,
+        // password and auto-reconnect cookie) is sent to the server using the Client
+        // Info PDU.
+
+        // Client                                                     Server
+        //    |------ Client Info PDU      ---------------------------> |
+
+        {
+            Stream stream(8192);
+            X224In tpdu(this->trans, stream);
+            McsIn mcs_in(stream);
+
+            if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
+                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+            }
+
+            SecIn sec(stream, this->sec_layer.decrypt);
+
+            if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
+                throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
+            }
+
+            this->sec_layer.server_sec_process_logon_info(stream, &this->client_info);
+        }
+
+        // Licensing
+        // ---------
+
+        // Licensing: The goal of the licensing exchange is to transfer a
+        // license from the server to the client.
+
+        // The client should store this license and on subsequent
+        // connections send the license to the server for validation.
+        // However, in some situations the client may not be issued a
+        // license to store. In effect, the packets exchanged during this
+        // phase of the protocol depend on the licensing mechanisms
+        // employed by the server. Within the context of this document
+        // we will assume that the client will not be issued a license to
+        // store. For details regarding more advanced licensing scenarios
+        // that take place during the Licensing Phase, see [MS-RDPELE].
+
+        // Client                                                     Server
+        //    | <------ Licence Error PDU Valid Client ---------------- |
+
+        if (this->client_info.is_mce) {
+            send_media_lic_response(this->trans, this->userid);
+        }
+        else {
+            send_lic_initial(this->trans, this->userid);
+
+            Stream stream(65535);
+            X224In tpdu(this->trans, stream);
+            McsIn mcs_in(stream);
+
+            // Disconnect Provider Ultimatum datagram
+            if ((mcs_in.opcode >> 2) == MCS_DPUM) {
+                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+            }
+
+            if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
+                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+            }
+
+            SecIn sec(stream, this->sec_layer.decrypt);
+
+            if (!sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
+                throw Error(ERR_SEC_EXPECTED_LICENCE_NEG);
+            }
+            send_lic_response(this->trans, this->userid);
+        }
+
+        // Capabilities Exchange
+        // ---------------------
+
+        // Capabilities Negotiation: The server sends the set of capabilities it
+        // supports to the client in a Demand Active PDU. The client responds with its
+        // capabilities by sending a Confirm Active PDU.
+
+        // Client                                                     Server
+        //    | <------- Demand Active PDU ---------------------------- |
+        //    |--------- Confirm Active PDU --------------------------> |
+
+        this->server_rdp_send_demand_active();
+
     }
-
-    // Secure Settings Exchange
-    // ------------------------
-
-    // Secure Settings Exchange: Secure client data (such as the username,
-    // password and auto-reconnect cookie) is sent to the server using the Client
-    // Info PDU.
-
-    // Client                                                     Server
-    //    |------ Client Info PDU      ---------------------------> |
 
 
     void activate_and_process_data(Callback & cb, ChannelList & channel_list)
@@ -654,57 +701,22 @@ struct server_rdp {
 
             SecIn sec(input_stream, this->sec_layer.decrypt);
 
-            if (sec.flags & SEC_LOGON_INFO) { /* 0x40 */
-                this->sec_layer.server_sec_process_logon_info(input_stream, &this->client_info);
-                if (this->client_info.is_mce) {
-//                    LOG(LOG_INFO, "server_sec_send media_lic_response");
-                    this->sec_layer.server_sec_send_media_lic_response(this->trans, this->userid);
-                    this->server_rdp_send_demand_active();
-                    if (!this->up_and_running){
-//                        input_stream.next_packet = input_stream.end;
-                        continue;
+            if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL) {
+
+                size_t index = channel_list.size();
+                for (size_t i = 0; i < channel_list.size(); i++){
+                    if (channel_list[i].chanid == mcs_in.chan_id){
+                        index = i;
                     }
                 }
-                else {
-//                    LOG(LOG_INFO, "server_sec_send lic_initial");
-                    this->sec_layer.server_sec_send_lic_initial(this->trans, this->userid);
-                    if (!this->up_and_running){
-//                        input_stream.next_packet = input_stream.end;
-                        continue;
-                    }
-                }
-            }
-            else if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
-//                LOG(LOG_INFO, "server_sec_send lic_response");
-                this->sec_layer.server_sec_send_lic_response(this->trans, this->userid);
-                this->server_rdp_send_demand_active();
-                if (!this->up_and_running){
-//                    input_stream.next_packet = input_stream.end;
-                    continue;
-                }
-            }
-            else if (mcs_in.chan_id > MCS_GLOBAL_CHANNEL) {
-            #warning is it possible to get channel data when we are not up and running ?
-                /*****************************************************************************/
-                /* This is called from the secure layer to process an incoming non global
-                   channel packet.
-                   'chan' passed in here is the mcs channel id so it is
-                   MCS_GLOBAL_CHANNEL plus something. */
 
-                /* this assumes that the channels are in order of chanid(mcs channel id)
-                   but they should be, see server_sec_process_mcs_data_channels
-                   the first channel should be MCS_GLOBAL_CHANNEL + 1, second
-                   one should be MCS_GLOBAL_CHANNEL + 2, and so on */
-                size_t channel_id = (mcs_in.chan_id - MCS_GLOBAL_CHANNEL) - 1;
-
-                LOG(LOG_INFO, "received data in channel %u(=%u) [%s]",
-                    channel_list[channel_id].chanid, mcs_in.chan_id,
-                    channel_list[channel_id].name);
-
-
-                if (channel_id >= channel_list.size()) {
+                if (index >= channel_list.size()) {
                     throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                 }
+
+                const McsChannelItem & channel = channel_list[index];
+
+                LOG(LOG_INFO, "received data in channel %u [%s]", channel.chanid, channel.name);
 
                 int length = input_stream.in_uint32_le();
                 int flags = input_stream.in_uint32_le();
@@ -712,17 +724,12 @@ struct server_rdp {
                 int size = (int)(input_stream.end - input_stream.p);
 
                 LOG(LOG_INFO, "up_and_running=%u", this->up_and_running);
-                LOG(LOG_INFO, "got channel data from client chan_id=%u [%s] length=%u size=%u, sending to server length=%u size=%u", mcs_in.chan_id, channel_list[channel_id].name, length, size);
+                LOG(LOG_INFO, "received data in channel %u [%s]", channel.chanid, channel.name);
 
                 #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
-                cb.callback(WM_CHANNELDATA,
-                          ((flags & 0xffff) << 16) | (channel_id & 0xffff),
-                          size, (long)(input_stream.p), length);
-                // We consume all the data of the packet
+                cb.send_to_mod_channel(channel, input_stream.p, size, length, flags);
                 input_stream.p = input_stream.end;
             }
-            LOG(LOG_INFO, "PDUTYPE DATA");
-
             input_stream.next_packet = input_stream.p;
 
             if (input_stream.next_packet < input_stream.end){
@@ -767,11 +774,9 @@ struct server_rdp {
                     }
                 }
             }
-            LOG(LOG_INFO, "READY TO LOOP IN activate and process data");
         } while ((input_stream.next_packet < input_stream.end) || !this->up_and_running);
 
         #warning the postcondition could be changed to signify we want to get hand back immediately, because we still have data to process.
-        LOG(LOG_INFO, "out of activate and process data");
     }
 
 
