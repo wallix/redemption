@@ -763,7 +763,21 @@ struct client_mod : public Callback {
                            uint8_t* data, int data_len,
                            int total_data_len, int flags)
     {
-        this->front.send_to_channel(channel, data, data_len, total_data_len, flags);
+        for (int front_index = 0; front_index < this->front.get_channel_list().size(); front_index++){
+            const McsChannelItem & front_channel_item = this->front.get_channel_list()[front_index];
+            if (strcmp(channel.name, front_channel_item.name) == 0){
+                LOG(LOG_INFO, "found front channel chanid=%u flags=%x [channel_flags=%x] name=%s", front_channel_item.chanid, flags, front_channel_item.flags, front_channel_item.name);
+                this->front.send_to_channel(front_channel_item, data, data_len, total_data_len, flags);
+                break;
+            }
+        }
+
+            /* TODO: create new function in order to activate / deactivate copy-paste
+            sequence from server to client */
+//            if(this->rdp_layer.sec_layer.clipboard_check(name, this->clipboard_enable) == 1){
+//                            /* Clipboard deactivation required */
+//                        }
+
     }
 
     bool get_pointer_displayed() {
