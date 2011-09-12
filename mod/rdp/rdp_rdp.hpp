@@ -37,9 +37,6 @@ struct rdp_rdp {
     rdp_orders orders;
     int share_id;
     int bitmap_compression;
-    int bitmap_cache;
-    int desktop_save;
-    int polygon_ellipse_orders;
     int version;
     int userid;
 
@@ -81,9 +78,6 @@ struct rdp_rdp {
             LOG(LOG_INFO, "Remote RDP Server login:%s host:%s\n", username, hostname);
             this->share_id = 0;
             this->bitmap_compression = 1;
-            this->bitmap_cache = 1;
-            this->desktop_save = 0;
-            this->polygon_ellipse_orders = 0;
             this->console_session = console_session;
 
             memset(this->password, 0, 256);
@@ -144,22 +138,23 @@ struct rdp_rdp {
             char order_caps[32];
 
             memset(order_caps, 0, 32);
+            #warning use symbolic constants for order numerotation
             order_caps[0] = 1; /* dest blt */
             order_caps[1] = 1; /* pat blt */
             order_caps[2] = 1; /* screen blt */
-            order_caps[3] = this->bitmap_cache; /* memblt */
+            order_caps[3] = 1; /* memblt */
             order_caps[4] = 0; /* triblt */
             order_caps[8] = 1; /* line */
             order_caps[9] = 1; /* line */
             order_caps[10] = 1; /* rect */
-            order_caps[11] = this->desktop_save; /* desksave */
+            order_caps[11] = 0; /* todo desksave */
             order_caps[13] = 1; /* memblt another above */
             order_caps[14] = 1; /* triblt another above */
-            order_caps[20] = this->polygon_ellipse_orders; /* polygon */
-            order_caps[21] = this->polygon_ellipse_orders; /* polygon2 */
+            order_caps[20] = 0; /* todo polygon */
+            order_caps[21] = 0; /* todo polygon2 */
             order_caps[22] = 0; /* todo polyline */
-            order_caps[25] = this->polygon_ellipse_orders; /* ellipse */
-            order_caps[26] = this->polygon_ellipse_orders; /* ellipse2 */
+            order_caps[25] = 0; /* todo ellipse */
+            order_caps[26] = 0; /* todo ellipse2 */
             order_caps[27] = 1; /* text2 */
             stream.out_uint16_le(RDP_CAPSET_ORDER);
             stream.out_uint16_le(RDP_CAPLEN_ORDER);
@@ -173,7 +168,7 @@ struct rdp_rdp {
             stream.out_copy_bytes(order_caps, 32); /* Orders supported */
             stream.out_uint16_le(0x6a1); /* Text capability flags */
             stream.out_clear_bytes(6); /* Pad */
-            stream.out_uint32_le(this->desktop_save * 0x38400); /* Desktop cache size */
+            stream.out_uint32_le(0 * 0x38400); /* Desktop cache size, for desktop_save */
             stream.out_uint32_le(0); /* Unknown */
             stream.out_uint32_le(0x4e4); /* Unknown */
         }
