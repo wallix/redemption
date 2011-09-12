@@ -225,8 +225,6 @@ struct CryptContext
 };
 
 
-
-
 // 2.2.1.1.1   RDP Negotiation Request (RDP_NEG_REQ)
 // =================================================
 //  The RDP Negotiation Request structure is used by a client to advertise the
