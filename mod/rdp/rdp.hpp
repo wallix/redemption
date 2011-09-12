@@ -41,6 +41,8 @@
 
 #include "rdp_rdp.hpp"
 
+#include "RDP/lic.hpp"
+
 struct mod_rdp : public client_mod {
 
     /* mod data */
