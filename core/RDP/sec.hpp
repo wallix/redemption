@@ -765,6 +765,317 @@ static inline void send_media_lic_response(Transport * trans, int userid) throw 
     tpdu.send(trans);
 }
 
+struct RdpLicence {
+    uint8_t licence_key[16];
+    uint8_t licence_sign_key[16];
+    int licence_issued;
+    uint8_t * licence_data;
+    size_t licence_size;
+
+    RdpLicence(const char * hostname) : licence_issued(0) {
+        memset(this->licence_key, 0, 16);
+        memset(this->licence_sign_key, 0, 16);
+        #warning licence loading should be done before creating protocol layers
+        struct stat st;
+        char path[256];
+        sprintf(path, "/etc/xrdp/.xrdp/licence.%s", hostname);
+        int fd = open(path, O_RDONLY);
+        if (fd != -1 && fstat(fd, &st) != 0){
+            this->licence_data = (uint8_t *)malloc(this->licence_size);
+            #warning check error code here
+            if (this->licence_size != read(fd, this->licence_data, this->licence_size)){
+                #warning throwing an error would be better
+                return;
+            }
+            close(fd);
+        }
+    }
+
+    void rdp_lic_process_authreq(Transport * trans, Stream & stream, const char * hostname, int userid, int licence_issued)
+    {
+
+        ssllib ssl;
+
+        const uint8_t* in_token;
+        const uint8_t* in_sig;
+        uint8_t out_token[LICENCE_TOKEN_SIZE];
+        uint8_t decrypt_token[LICENCE_TOKEN_SIZE];
+        uint8_t hwid[LICENCE_HWID_SIZE];
+        uint8_t crypt_hwid[LICENCE_HWID_SIZE];
+        uint8_t sealed_buffer[LICENCE_TOKEN_SIZE + LICENCE_HWID_SIZE];
+        uint8_t out_sig[LICENCE_SIGNATURE_SIZE];
+
+        in_token = 0;
+        in_sig = 0;
+        /* Parse incoming packet and save the encrypted token */
+        stream.skip_uint8(6); /* unknown: f8 3d 15 00 04 f6 */
+
+        int tokenlen = stream.in_uint16_le();
+        if (tokenlen != LICENCE_TOKEN_SIZE) {
+            LOG(LOG_ERR, "token len = %d, expected %d\n", tokenlen, LICENCE_TOKEN_SIZE);
+        }
+        else{
+            in_token = stream.in_uint8p(tokenlen);
+            in_sig = stream.in_uint8p(LICENCE_SIGNATURE_SIZE);
+            stream.check_end();
+        }
+
+        memcpy(out_token, in_token, LICENCE_TOKEN_SIZE);
+        /* Decrypt the token. It should read TEST in Unicode. */
+        SSL_RC4 crypt_key;
+        ssl.rc4_set_key(crypt_key, this->licence_key, 16);
+        memcpy(decrypt_token, in_token, LICENCE_TOKEN_SIZE);
+        ssl.rc4_crypt(crypt_key, decrypt_token, decrypt_token, LICENCE_TOKEN_SIZE);
+        /* Generate a signature for a buffer of token and HWID */
+        this->rdp_lic_generate_hwid(hwid, hostname);
+        memcpy(sealed_buffer, decrypt_token, LICENCE_TOKEN_SIZE);
+        memcpy(sealed_buffer + LICENCE_TOKEN_SIZE, hwid, LICENCE_HWID_SIZE);
+        sec_sign(out_sig, 16, this->licence_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
+        /* Now encrypt the HWID */
+        ssl.rc4_set_key(crypt_key, this->licence_key, 16);
+        memcpy(crypt_hwid, hwid, LICENCE_HWID_SIZE);
+        ssl.rc4_crypt(crypt_key, crypt_hwid, crypt_hwid, LICENCE_HWID_SIZE);
+
+        rdp_lic_send_authresp(trans, out_token, crypt_hwid, out_sig, userid, licence_issued);
+    }
+
+    void rdp_lic_send_authresp(Transport * trans, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature, int userid, int licence_issued)
+    {
+        int length = 58;
+
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
+
+        stream.out_uint8(licence_issued?LICENCE_TAG_AUTHRESP:SEC_LICENCE_NEG);
+
+        stream.out_uint8(2); /* version */
+        stream.out_uint16_le(length);
+        stream.out_uint16_le(1);
+        stream.out_uint16_le(LICENCE_TOKEN_SIZE);
+        stream.out_copy_bytes(token, LICENCE_TOKEN_SIZE);
+        stream.out_uint16_le(1);
+        stream.out_uint16_le(LICENCE_HWID_SIZE);
+        stream.out_copy_bytes(crypt_hwid, LICENCE_HWID_SIZE);
+        stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
+
+        sdrq_out.end();
+        tpdu.end();
+
+        tpdu.send(trans);
+    }
+
+
+    void rdp_lic_process_demand(Transport * trans, Stream & stream, const char * hostname, const char * username, int userid, const int licence_issued)
+    {
+        uint8_t null_data[SEC_MODULUS_SIZE];
+        uint8_t signature[LICENCE_SIGNATURE_SIZE];
+        uint8_t hwid[LICENCE_HWID_SIZE];
+
+        /* Retrieve the server random from the incoming packet */
+        const uint8_t * server_random = stream.in_uint8p(SEC_RANDOM_SIZE);
+
+        // RDP licence generate key
+        {
+            /* We currently use null client keys. This is a bit naughty but, hey,
+               the security of licence negotiation isn't exactly paramount. */
+            memset(null_data, 0, sizeof(null_data));
+            uint8_t* client_random = null_data;
+            uint8_t* pre_master_secret = null_data;
+            uint8_t master_secret[48];
+            uint8_t key_block[48];
+
+            /* Generate master secret and then key material */
+            sec_hash_48(master_secret, pre_master_secret, client_random, server_random, 65);
+            sec_hash_48(key_block, master_secret, server_random, client_random, 65);
+            /* Store first 16 bytes of session key as MAC secret */
+            memcpy(this->licence_sign_key, key_block, 16);
+            /* Generate RC4 key from next 16 bytes */
+            sec_hash_16(this->licence_key, key_block + 16, client_random, server_random);
+        }
+
+        if (this->licence_size > 0) {
+            /* Generate a signature for the HWID buffer */
+            this->rdp_lic_generate_hwid(hwid, hostname);
+            sec_sign(signature, 16, this->licence_sign_key, 16, hwid, sizeof(hwid));
+            /* Now encrypt the HWID */
+            ssllib ssl;
+
+            SSL_RC4 crypt_key;
+            ssl.rc4_set_key(crypt_key, this->licence_key, 16);
+            ssl.rc4_crypt(crypt_key, hwid, hwid, sizeof(hwid));
+
+            this->rdp_lic_present(trans, null_data, null_data,
+                                  this->licence_data,
+                                  this->licence_size,
+                                  hwid, signature, userid, licence_issued);
+        }
+        else {
+            this->rdp_lic_send_request(trans, null_data, null_data, hostname, username, userid, licence_issued);
+        }
+    }
+
+    int rdp_lic_process_issue(Stream & stream, const char * hostname, int & licence_issued)
+    {
+        stream.skip_uint8(2); /* 3d 45 - unknown */
+        int length = stream.in_uint16_le();
+        if (!stream.check_rem(length)) {
+            #warning use exception
+            return 0;
+        }
+        ssllib ssl;
+        SSL_RC4 crypt_key;
+        ssl.rc4_set_key(crypt_key, this->licence_key, 16);
+        ssl.rc4_crypt(crypt_key, stream.p, stream.p, length);
+        int check = stream.in_uint16_le();
+        if (check != 0) {
+            #warning use exception
+            return 0;
+        }
+        licence_issued = 1;
+        stream.skip_uint8(2); /* pad */
+        /* advance to fourth string */
+        length = 0;
+        for (int i = 0; i < 4; i++) {
+            stream.skip_uint8(length);
+            length = stream.in_uint32_le();
+            if (!stream.check_rem(length)) {
+            #warning use exception
+                return 0;
+            }
+        }
+        /* todo save_licence(stream.p, length); */
+        this->rdp_save_licence(stream.p, length, hostname);
+        return 1;
+    }
+
+    #warning this is not supported yet, but using rdp_save_licence we would keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Anyway the use of files to stoe licences should be abstracted.
+    void rdp_save_licence(uint8_t *data, int length, const char * hostname)
+    {
+        int fd;
+        char* path = NULL;
+        char* tmppath = NULL;
+
+        path = new char[256];
+        /* TODO: verify if location that we've stablished is right or not */
+        sprintf(path, "/etc/xrdp./xrdp/licence.%s", hostname);
+
+        if ((mkdir(path, 0700) == -1))
+        {
+            if (errno != EEXIST){
+                perror(path);
+                return;
+            }
+        }
+
+        /* write licence to licence.hostname.new and after rename to licence.hostname */
+
+        sprintf(path, "/etc/xrdp./xrdp/licence.%s", hostname);
+        tmppath = new char[256];
+        strcpy(tmppath, path);
+        strcat(tmppath, ".new");
+
+        fd = open(tmppath, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+
+        if (fd == -1){
+            perror(tmppath);
+            return;
+        }
+        if (write(fd, data, length) != length){
+            perror(tmppath);
+            unlink(tmppath);
+        }
+        else if (rename(tmppath, path) == -1){
+            printf("Error renaming licence file\n");
+            unlink(tmppath);
+        }
+        close(fd);
+        delete [] tmppath;
+        delete [] path;
+    }
+
+    void rdp_lic_generate_hwid(uint8_t* hwid, const char * hostname)
+    {
+        buf_out_uint32(hwid, 2);
+        memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
+    }
+
+    void rdp_lic_send_request(Transport * trans, uint8_t* client_random, uint8_t* rsa_data, const char * hostname, const char * username, int userid, int licence_issued)
+    {
+        int userlen = strlen(username) + 1;
+        int hostlen = strlen(hostname) + 1;
+        int length = 128 + userlen + hostlen;
+
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
+
+        #warning if we are performing licence request doesn't it mean that licence has not been issued ?
+        stream.out_uint8(licence_issued?LICENCE_TAG_REQUEST:SEC_LICENCE_NEG);
+        stream.out_uint8(2); /* version */
+        stream.out_uint16_le(length);
+        stream.out_uint32_le(1);
+        stream.out_uint16_le(0);
+        stream.out_uint16_le(0xff01);
+        stream.out_copy_bytes(client_random, SEC_RANDOM_SIZE);
+        stream.out_uint16_le(0);
+        stream.out_uint16_le((SEC_MODULUS_SIZE + SEC_PADDING_SIZE));
+        stream.out_copy_bytes(rsa_data, SEC_MODULUS_SIZE);
+        stream.out_clear_bytes(SEC_PADDING_SIZE);
+
+        stream.out_uint16_le(LICENCE_TAG_USER);
+        stream.out_uint16_le(userlen);
+        stream.out_copy_bytes(username, userlen);
+
+        stream.out_uint16_le(LICENCE_TAG_HOST);
+        stream.out_uint16_le(hostlen);
+        stream.out_copy_bytes(hostname, hostlen);
+
+        sdrq_out.end();
+        tpdu.end();
+        tpdu.send(trans);
+    }
+
+    void rdp_lic_present(Transport * trans, uint8_t* client_random, uint8_t* rsa_data,
+                uint8_t* licence_data, int licence_size, uint8_t* hwid,
+                uint8_t* signature, int userid, const int licence_issued)
+    {
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
+
+        int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
+                 licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
+
+        stream.out_uint8(licence_issued?LICENCE_TAG_PRESENT:SEC_LICENCE_NEG);
+        stream.out_uint8(2); /* version */
+        stream.out_uint16_le(length);
+        stream.out_uint32_le(1);
+        stream.out_uint16_le(0);
+        stream.out_uint16_le(0x0201);
+        stream.out_copy_bytes(client_random, SEC_RANDOM_SIZE);
+        stream.out_uint16_le(0);
+        stream.out_uint16_le((SEC_MODULUS_SIZE + SEC_PADDING_SIZE));
+        stream.out_copy_bytes(rsa_data, SEC_MODULUS_SIZE);
+        stream.out_clear_bytes( SEC_PADDING_SIZE);
+        stream.out_uint16_le(1);
+        stream.out_uint16_le(licence_size);
+        stream.out_copy_bytes(licence_data, licence_size);
+        stream.out_uint16_le(1);
+        stream.out_uint16_le(LICENCE_HWID_SIZE);
+        stream.out_copy_bytes(hwid, LICENCE_HWID_SIZE);
+        stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
+
+        sdrq_out.end();
+        tpdu.end();
+        tpdu.send(trans);
+    }
+
+
+
+
+};
+
 
 struct Sec
 {
@@ -783,19 +1094,6 @@ struct Sec
     int server_public_key_len;
 
 // shared
-    struct rdp_lic {
-        uint8_t licence_key[16];
-        uint8_t licence_sign_key[16];
-        int licence_issued;
-
-        rdp_lic(void) : licence_issued(0) {
-            memset(this->licence_key, 0, 16);
-            memset(this->licence_sign_key, 0, 16);
-        }
-        uint8_t * licence_data;
-        size_t licence_size;
-    } lic_layer;
-
 
 //    ChannelList channel_list;
 
@@ -1043,394 +1341,6 @@ struct Sec
         tpdu.end();
         tpdu.send(trans);
     }
-
-
-    void rdp_lic_generate_hwid(uint8_t* hwid, const char * hostname)
-    {
-        buf_out_uint32(hwid, 2);
-        memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
-    }
-
-    void rdp_lic_process_authreq(Transport * trans, Stream & stream, const char * hostname, int userid, int licence_issued)
-    {
-
-        ssllib ssl;
-
-        const uint8_t* in_token;
-        const uint8_t* in_sig;
-        uint8_t out_token[LICENCE_TOKEN_SIZE];
-        uint8_t decrypt_token[LICENCE_TOKEN_SIZE];
-        uint8_t hwid[LICENCE_HWID_SIZE];
-        uint8_t crypt_hwid[LICENCE_HWID_SIZE];
-        uint8_t sealed_buffer[LICENCE_TOKEN_SIZE + LICENCE_HWID_SIZE];
-        uint8_t out_sig[LICENCE_SIGNATURE_SIZE];
-
-        in_token = 0;
-        in_sig = 0;
-        /* Parse incoming packet and save the encrypted token */
-        stream.skip_uint8(6); /* unknown: f8 3d 15 00 04 f6 */
-
-        int tokenlen = stream.in_uint16_le();
-        if (tokenlen != LICENCE_TOKEN_SIZE) {
-            LOG(LOG_ERR, "token len = %d, expected %d\n", tokenlen, LICENCE_TOKEN_SIZE);
-        }
-        else{
-            in_token = stream.in_uint8p(tokenlen);
-            in_sig = stream.in_uint8p(LICENCE_SIGNATURE_SIZE);
-            stream.check_end();
-        }
-
-        memcpy(out_token, in_token, LICENCE_TOKEN_SIZE);
-        /* Decrypt the token. It should read TEST in Unicode. */
-        SSL_RC4 crypt_key;
-        ssl.rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
-        memcpy(decrypt_token, in_token, LICENCE_TOKEN_SIZE);
-        ssl.rc4_crypt(crypt_key, decrypt_token, decrypt_token, LICENCE_TOKEN_SIZE);
-        /* Generate a signature for a buffer of token and HWID */
-        this->rdp_lic_generate_hwid(hwid, hostname);
-        memcpy(sealed_buffer, decrypt_token, LICENCE_TOKEN_SIZE);
-        memcpy(sealed_buffer + LICENCE_TOKEN_SIZE, hwid, LICENCE_HWID_SIZE);
-        sec_sign(out_sig, 16, this->lic_layer.licence_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
-        /* Now encrypt the HWID */
-        ssl.rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
-        memcpy(crypt_hwid, hwid, LICENCE_HWID_SIZE);
-        ssl.rc4_crypt(crypt_key, crypt_hwid, crypt_hwid, LICENCE_HWID_SIZE);
-
-        this->rdp_lic_send_authresp(trans, out_token, crypt_hwid, out_sig, userid, licence_issued);
-    }
-
-    void rdp_lic_send_authresp(Transport * trans, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature, int userid, int licence_issued)
-    {
-        int length = 58;
-
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
-
-        stream.out_uint8(licence_issued?LICENCE_TAG_AUTHRESP:SEC_LICENCE_NEG);
-
-        stream.out_uint8(2); /* version */
-        stream.out_uint16_le(length);
-        stream.out_uint16_le(1);
-        stream.out_uint16_le(LICENCE_TOKEN_SIZE);
-        stream.out_copy_bytes(token, LICENCE_TOKEN_SIZE);
-        stream.out_uint16_le(1);
-        stream.out_uint16_le(LICENCE_HWID_SIZE);
-        stream.out_copy_bytes(crypt_hwid, LICENCE_HWID_SIZE);
-        stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
-
-        sdrq_out.end();
-        tpdu.end();
-
-        tpdu.send(trans);
-    }
-
-    void rdp_lic_process_demand(Transport * trans, Stream & stream, const char * hostname, const char * username, int userid, const int licence_issued)
-    {
-        uint8_t null_data[SEC_MODULUS_SIZE];
-        uint8_t signature[LICENCE_SIGNATURE_SIZE];
-        uint8_t hwid[LICENCE_HWID_SIZE];
-
-        /* Retrieve the server random from the incoming packet */
-        const uint8_t * server_random = stream.in_uint8p(SEC_RANDOM_SIZE);
-
-        // RDP licence generate key
-        {
-            /* We currently use null client keys. This is a bit naughty but, hey,
-               the security of licence negotiation isn't exactly paramount. */
-            memset(null_data, 0, sizeof(null_data));
-            uint8_t* client_random = null_data;
-            uint8_t* pre_master_secret = null_data;
-            uint8_t master_secret[48];
-            uint8_t key_block[48];
-
-            /* Generate master secret and then key material */
-            sec_hash_48(master_secret, pre_master_secret, client_random, server_random, 65);
-            sec_hash_48(key_block, master_secret, server_random, client_random, 65);
-            /* Store first 16 bytes of session key as MAC secret */
-            memcpy(this->lic_layer.licence_sign_key, key_block, 16);
-            /* Generate RC4 key from next 16 bytes */
-            sec_hash_16(this->lic_layer.licence_key, key_block + 16, client_random, server_random);
-        }
-
-        if (this->lic_layer.licence_size > 0) {
-            /* Generate a signature for the HWID buffer */
-            this->rdp_lic_generate_hwid(hwid, hostname);
-            sec_sign(signature, 16, this->lic_layer.licence_sign_key, 16, hwid, sizeof(hwid));
-            /* Now encrypt the HWID */
-            ssllib ssl;
-
-            SSL_RC4 crypt_key;
-            ssl.rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
-            ssl.rc4_crypt(crypt_key, hwid, hwid, sizeof(hwid));
-
-            this->rdp_lic_present(trans, null_data, null_data,
-                                  this->lic_layer.licence_data,
-                                  this->lic_layer.licence_size,
-                                  hwid, signature, userid, licence_issued);
-        }
-        else {
-            this->rdp_lic_send_request(trans, null_data, null_data, hostname, username, userid, licence_issued);
-        }
-    }
-
-    void rdp_lic_send_request(Transport * trans, uint8_t* client_random, uint8_t* rsa_data, const char * hostname, const char * username, int userid, int licence_issued)
-    {
-        int userlen = strlen(username) + 1;
-        int hostlen = strlen(hostname) + 1;
-        int length = 128 + userlen + hostlen;
-
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
-
-        #warning if we are performing licence request doesn't it mean that licence has not been issued ?
-        stream.out_uint8(licence_issued?LICENCE_TAG_REQUEST:SEC_LICENCE_NEG);
-        stream.out_uint8(2); /* version */
-        stream.out_uint16_le(length);
-        stream.out_uint32_le(1);
-        stream.out_uint16_le(0);
-        stream.out_uint16_le(0xff01);
-        stream.out_copy_bytes(client_random, SEC_RANDOM_SIZE);
-        stream.out_uint16_le(0);
-        stream.out_uint16_le((SEC_MODULUS_SIZE + SEC_PADDING_SIZE));
-        stream.out_copy_bytes(rsa_data, SEC_MODULUS_SIZE);
-        stream.out_clear_bytes(SEC_PADDING_SIZE);
-
-        stream.out_uint16_le(LICENCE_TAG_USER);
-        stream.out_uint16_le(userlen);
-        stream.out_copy_bytes(username, userlen);
-
-        stream.out_uint16_le(LICENCE_TAG_HOST);
-        stream.out_uint16_le(hostlen);
-        stream.out_copy_bytes(hostname, hostlen);
-
-        sdrq_out.end();
-        tpdu.end();
-        tpdu.send(trans);
-    }
-
-    void rdp_lic_present(Transport * trans, uint8_t* client_random, uint8_t* rsa_data,
-                uint8_t* licence_data, int licence_size, uint8_t* hwid,
-                uint8_t* signature, int userid, const int licence_issued)
-    {
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
-
-        int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
-                 licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
-
-        stream.out_uint8(licence_issued?LICENCE_TAG_PRESENT:SEC_LICENCE_NEG);
-        stream.out_uint8(2); /* version */
-        stream.out_uint16_le(length);
-        stream.out_uint32_le(1);
-        stream.out_uint16_le(0);
-        stream.out_uint16_le(0x0201);
-        stream.out_copy_bytes(client_random, SEC_RANDOM_SIZE);
-        stream.out_uint16_le(0);
-        stream.out_uint16_le((SEC_MODULUS_SIZE + SEC_PADDING_SIZE));
-        stream.out_copy_bytes(rsa_data, SEC_MODULUS_SIZE);
-        stream.out_clear_bytes( SEC_PADDING_SIZE);
-        stream.out_uint16_le(1);
-        stream.out_uint16_le(licence_size);
-        stream.out_copy_bytes(licence_data, licence_size);
-        stream.out_uint16_le(1);
-        stream.out_uint16_le(LICENCE_HWID_SIZE);
-        stream.out_copy_bytes(hwid, LICENCE_HWID_SIZE);
-        stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
-
-        sdrq_out.end();
-        tpdu.end();
-        tpdu.send(trans);
-    }
-
-    #warning this is not supported yet, but using rdp_save_licence we would keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Anyway the use of files to stoe licences should be abstracted.
-    void rdp_save_licence(uint8_t *data, int length, const char * hostname)
-    {
-      int fd;
-      char* path = NULL;
-      char* tmppath = NULL;
-
-      path = new char[256];
-      /* TODO: verify if location that we've stablished is right or not */
-      sprintf(path, "/etc/xrdp./xrdp/licence.%s", hostname);
-
-      if ((mkdir(path, 0700) == -1))
-      {
-        if (errno != EEXIST){
-          perror(path);
-          return;
-        }
-      }
-
-      /* write licence to licence.hostname.new and after rename to licence.hostname */
-
-      sprintf(path, "/etc/xrdp./xrdp/licence.%s", hostname);
-      tmppath = new char[256];
-      strcpy(tmppath, path);
-      strcat(tmppath, ".new");
-
-      fd = open(tmppath, O_WRONLY | O_CREAT | O_TRUNC, 0600);
-
-      if (fd == -1){
-        perror(tmppath);
-        return;
-      }
-      if (write(fd, data, length) != length){
-        perror(tmppath);
-        unlink(tmppath);
-      }
-      else if (rename(tmppath, path) == -1){
-        printf("Error renaming licence file\n");
-        unlink(tmppath);
-      }
-      close(fd);
-      delete [] tmppath;
-      delete [] path;
-    }
-
-    int rdp_lic_process_issue(Stream & stream, const char * hostname, int & licence_issued)
-    {
-        stream.skip_uint8(2); /* 3d 45 - unknown */
-        int length = stream.in_uint16_le();
-        if (!stream.check_rem(length)) {
-            #warning use exception
-            return 0;
-        }
-        ssllib ssl;
-        SSL_RC4 crypt_key;
-        ssl.rc4_set_key(crypt_key, this->lic_layer.licence_key, 16);
-        ssl.rc4_crypt(crypt_key, stream.p, stream.p, length);
-        int check = stream.in_uint16_le();
-        if (check != 0) {
-            #warning use exception
-            return 0;
-        }
-        licence_issued = 1;
-        stream.skip_uint8(2); /* pad */
-        /* advance to fourth string */
-        length = 0;
-        for (int i = 0; i < 4; i++) {
-            stream.skip_uint8(length);
-            length = stream.in_uint32_le();
-            if (!stream.check_rem(length)) {
-            #warning use exception
-                return 0;
-            }
-        }
-        /* todo save_licence(stream.p, length); */
-        this->rdp_save_licence(stream.p, length, hostname);
-        return 1;
-    }
-
-
-// 2.2.1.12 Server License Error PDU - Valid Client
-// ================================================
-
-// The License Error (Valid Client) PDU is an RDP Connection Sequence PDU sent
-// from server to client during the Licensing phase of the RDP Connection
-// Sequence (see section 1.3.1.1 for an overview of the RDP Connection Sequence
-// phases). This licensing PDU indicates that the server will not issue the
-// client a license to store and that the Licensing Phase has ended
-// successfully. This is one possible licensing PDU that may be sent during the
-// Licensing Phase (see [MS-RDPELE] section 2.2.2 for a list of all permissible
-// licensing PDUs).
-
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224] section 13.7.
-
-// mcsSDin (variable): Variable-length PER-encoded MCS Domain PDU (DomainMCSPDU)
-// which encapsulates an MCS Send Data Indication structure (SDin, choice 26
-// from DomainMCSPDU), as specified in [T125] section 11.33 (the ASN.1 structure
-// definitions are given in [T125] section 7, parts 7 and 10). The userData
-// field of the MCS Send Data Indication contains a Security Header and a Valid
-// Client License Data (section 2.2.1.12.1) structure.
-
-// securityHeader (variable): Security header. The format of the security header
-// depends on the Encryption Level and Encryption Method selected by the server
-// (sections 5.3.2 and 2.2.1.4.3).
-
-// This field MUST contain one of the following headers:
-//  - Basic Security Header (section 2.2.8.1.1.2.1) if the Encryption Level
-// selected by the server is ENCRYPTION_LEVEL_NONE (0) or ENCRYPTION_LEVEL_LOW
-// (1) and the embedded flags field does not contain the SEC_ENCRYPT (0x0008)
-// flag.
-//  - Non-FIPS Security Header (section 2.2.8.1.1.2.2) if the Encryption Method
-// selected by the server is ENCRYPTION_METHOD_40BIT (0x00000001),
-// ENCRYPTION_METHOD_56BIT (0x00000008), or ENCRYPTION_METHOD_128BIT
-// (0x00000002) and the embedded flags field contains the SEC_ENCRYPT (0x0008)
-// flag.
-//  - FIPS Security Header (section 2.2.8.1.1.2.3) if the Encryption Method
-// selected by the server is ENCRYPTION_METHOD_FIPS (0x00000010) and the
-// embedded flags field contains the SEC_ENCRYPT (0x0008) flag.
-
-// If the Encryption Level is set to ENCRYPTION_LEVEL_CLIENT_COMPATIBLE (2),
-// ENCRYPTION_LEVEL_HIGH (3), or ENCRYPTION_LEVEL_FIPS (4) and the flags field
-// of the security header does not contain the SEC_ENCRYPT (0x0008) flag (the
-// licensing PDU is not encrypted), then the field MUST contain a Basic Security
-// Header. This MUST be the case if SEC_LICENSE_ENCRYPT_SC (0x0200) flag was not
-// set on the Security Exchange PDU (section 2.2.1.10).
-
-// The flags field of the security header MUST contain the SEC_LICENSE_PKT
-// (0x0080) flag (see Basic (TS_SECURITY_HEADER)).
-
-// validClientLicenseData (variable): The actual contents of the License Error
-// (Valid Client) PDU, as specified in section 2.2.1.12.1.
-
-    int rdp_lic_process(Transport * trans, const char * hostname, const char * username, int userid, int & licence_issued)
-    {
-        LOG(LOG_INFO, "rdp lic process");
-        int res = 0;
-        Stream stream(65535);
-        // read tpktHeader (4 bytes = 3 0 len)
-        // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-        X224In in_tpdu(trans, stream);
-        McsIn mcs_in(stream);
-        if ((mcs_in.opcode >> 2) != MCS_SDIN) {
-            throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
-        }
-        int len = mcs_in.len;
-        SecIn sec(stream, this->decrypt);
-
-        if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
-            uint8_t tag = stream.in_uint8();
-            stream.skip_uint8(3); /* version, length */
-            switch (tag) {
-            case LICENCE_TAG_DEMAND:
-                LOG(LOG_INFO, "LICENCE_TAG_DEMAND");
-                this->rdp_lic_process_demand(trans, stream, hostname, username, userid, licence_issued);
-                break;
-            case LICENCE_TAG_AUTHREQ:
-                LOG(LOG_INFO, "LICENCE_TAG_AUTHREQ");
-                this->rdp_lic_process_authreq(trans, stream, hostname, userid, licence_issued);
-                break;
-            case LICENCE_TAG_ISSUE:
-                LOG(LOG_INFO, "LICENCE_TAG_ISSUE");
-                res = this->rdp_lic_process_issue(stream, hostname, licence_issued);
-                break;
-            case LICENCE_TAG_REISSUE:
-                LOG(LOG_INFO, "LICENCE_TAG_REISSUE");
-                break;
-            case LICENCE_TAG_RESULT:
-                LOG(LOG_INFO, "LICENCE_TAG_RESULT");
-                res = 1;
-                break;
-            default:
-                break;
-                /* todo unimpl("licence tag 0x%x\n", tag); */
-            }
-        }
-        else {
-            LOG(LOG_INFO, "ERR_SEC_EXPECTED_LICENCE_NEGOTIATION_PDU");
-            throw Error(ERR_SEC_EXPECTED_LICENCE_NEGOTIATION_PDU);
-        }
-        #warning we haven't actually read all the actual data available, hence we can't check end. Implement full decoding and activate it.
-//        in_tpdu.end();
-        return res;
-    }
-
 
     /*****************************************************************************/
     void rdp_sec_generate_keys(uint8_t *client_random, uint8_t *server_random, uint32_t rc4_key_size)

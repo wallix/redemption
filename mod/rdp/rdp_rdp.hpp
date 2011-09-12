@@ -63,18 +63,6 @@ struct rdp_rdp {
             strncpy(this->username, username, 127);
             this->username[127] = 0;
 
-            #warning licence loading should be done before creating protocol layers
-            struct stat st;
-            char path[256];
-            sprintf(path, "/etc/xrdp/.xrdp/licence.%s", this->hostname);
-            int fd = open(path, O_RDONLY);
-            if (fd != -1 && fstat(fd, &st) != 0){
-                this->sec_layer.lic_layer.licence_data = (uint8_t *)malloc(this->sec_layer.lic_layer.licence_size);
-                #warning check error code here
-                read(fd, this->sec_layer.lic_layer.licence_data, this->sec_layer.lic_layer.licence_size);
-                close(fd);
-            }
-
             LOG(LOG_INFO, "Remote RDP Server login:%s host:%s\n", username, hostname);
             this->share_id = 0;
             this->bitmap_compression = 1;
