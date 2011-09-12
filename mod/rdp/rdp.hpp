@@ -540,10 +540,7 @@ struct mod_rdp : public client_mod {
 
         case MOD_RDP_CONNECTED:
         {
-            int pdu_type;
-
             Stream stream(65536);
-            uint32_t sec_flags = 0;
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
             X224In(this->trans, stream);
@@ -589,19 +586,17 @@ struct mod_rdp : public client_mod {
             else {
                 uint8_t * next_packet = stream.p;
                 while (next_packet < stream.end) {
-                        stream.p = next_packet;
-                    {
-                        int len = stream.in_uint16_le();
-                        if (len == 0x8000) {
-                            next_packet += 8;
-                            pdu_type = 0;
-                        }
-                        else {
-                            pdu_type = stream.in_uint16_le();
-                            stream.skip_uint8(2);
-                            next_packet += len;
-                        }
+                    stream.p = next_packet;
+                    int len = stream.in_uint16_le();
+                    if (len == 0x8000) {
+                        next_packet += 8;
+                        continue;
                     }
+
+                    uint16_t pdu_type = stream.in_uint16_le();
+                    stream.skip_uint8(2);
+                    next_packet += len;
+
                     switch (pdu_type & 0xF) {
                     case PDUTYPE_DATAPDU:
                         switch (this->connection_finalization_state){
