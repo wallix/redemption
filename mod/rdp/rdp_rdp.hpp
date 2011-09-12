@@ -69,9 +69,9 @@ struct rdp_rdp {
             sprintf(path, "/etc/xrdp/.xrdp/licence.%s", this->hostname);
             int fd = open(path, O_RDONLY);
             if (fd != -1 && fstat(fd, &st) != 0){
-                this->sec_layer.licence_data = (uint8_t *)malloc(this->sec_layer.licence_size);
+                this->sec_layer.lic_layer.licence_data = (uint8_t *)malloc(this->sec_layer.lic_layer.licence_size);
                 #warning check error code here
-                read(fd, this->sec_layer.licence_data, this->sec_layer.licence_size);
+                read(fd, this->sec_layer.lic_layer.licence_data, this->sec_layer.lic_layer.licence_size);
                 close(fd);
             }
 
