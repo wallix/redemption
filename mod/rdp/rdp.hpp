@@ -637,26 +637,58 @@ struct mod_rdp : public client_mod {
                             uint8_t compressedLen = stream.in_uint16_le();
                             switch (pdutype2) {
                             case PDUTYPE2_UPDATE:
-                                this->rdp_layer.process_update_pdu(stream, this);
-                                break;
+                            {
+    // MS-RDPBCGR: 1.3.6
+    // -----------------
+    // The most fundamental output that a server can send to a connected client
+    // is bitmap images of the remote session using the Update Bitmap PDU. This
+    // allows the client to render the working space and enables a user to
+    // interact with the session running on the server. The global palette
+    // information for a session is sent to the client in the Update Palette PDU.
+
+                                int update_type = stream.in_uint16_le();
+                                this->server_begin_update();
+                                switch (update_type) {
+                                case RDP_UPDATE_ORDERS:
+                                    {
+                                        stream.skip_uint8(2); /* pad */
+                                        int count = stream.in_uint16_le();
+                                        stream.skip_uint8(2); /* pad */
+                                        this->rdp_layer.orders.process_orders(this->rdp_layer.bpp, stream, count, this);
+                                    }
+                                    break;
+                                case RDP_UPDATE_BITMAP:
+                                    this->rdp_layer.process_bitmap_updates(stream, this);
+                                    break;
+                                case RDP_UPDATE_PALETTE:
+                                    this->rdp_layer.process_palette(stream, this);
+                                    break;
+                                case RDP_UPDATE_SYNCHRONIZE:
+                                    break;
+                                default:
+                                    break;
+                                }
+                                this->server_end_update();
+                            }
+                            break;
                             case PDUTYPE2_CONTROL:
-                                break;
+                            break;
                             case PDUTYPE2_SYNCHRONIZE:
-                                break;
+                            break;
                             case PDUTYPE2_POINTER:
                                 this->rdp_layer.process_pointer_pdu(stream, this);
-                                break;
+                            break;
                             case PDUTYPE2_PLAY_SOUND:
-                                break;
+                            break;
                             case PDUTYPE2_SAVE_SESSION_INFO:
                 //                LOG(LOG_INFO, "DATA PDU LOGON\n");
-                                break;
+                            break;
                             case PDUTYPE2_SET_ERROR_INFO_PDU:
                 //                LOG(LOG_INFO, "DATA PDU DISCONNECT\n");
                                 this->rdp_layer.process_disconnect_pdu(stream);
-                                break;
+                            break;
                             default:
-                                break;
+                            break;
                             }
                         }
                         break;

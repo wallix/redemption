@@ -1066,41 +1066,6 @@ struct rdp_rdp {
         mod->server_end_update();
     }
 
-    void process_update_pdu(Stream & stream, client_mod * mod)
-    {
-    // MS-RDPBCGR: 1.3.6
-    // -----------------
-    // The most fundamental output that a server can send to a connected client
-    // is bitmap images of the remote session using the Update Bitmap PDU. This
-    // allows the client to render the working space and enables a user to
-    // interact with the session running on the server. The global palette
-    // information for a session is sent to the client in the Update Palette PDU.
-
-        int update_type = stream.in_uint16_le();
-        mod->server_begin_update();
-        switch (update_type) {
-        case RDP_UPDATE_ORDERS:
-            {
-                stream.skip_uint8(2); /* pad */
-                int count = stream.in_uint16_le();
-                stream.skip_uint8(2); /* pad */
-                this->orders.process_orders(this->bpp, stream, count, mod);
-            }
-            break;
-        case RDP_UPDATE_BITMAP:
-            this->process_bitmap_updates(stream, mod);
-            break;
-        case RDP_UPDATE_PALETTE:
-            this->process_palette(stream, mod);
-            break;
-        case RDP_UPDATE_SYNCHRONIZE:
-            break;
-        default:
-            break;
-        }
-        mod->server_end_update();
-    }
-
     void out_bmpcache2_caps(Stream & stream, const ClientInfo & client_info)
     {
         stream.out_uint16_le(RDP_CAPSET_BMPCACHE2);
