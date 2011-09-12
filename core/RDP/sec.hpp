@@ -788,15 +788,14 @@ struct Sec
         uint8_t licence_sign_key[16];
         int licence_issued;
 
-        rdp_lic(void){
+        rdp_lic(void) : licence_issued(0) {
             memset(this->licence_key, 0, 16);
             memset(this->licence_sign_key, 0, 16);
-            this->licence_issued = 0;
         }
+        uint8_t * licence_data;
+        size_t licence_size;
     } lic_layer;
 
-    uint8_t * licence_data;
-    size_t licence_size;
 
 //    ChannelList channel_list;
 
@@ -810,8 +809,6 @@ struct Sec
     int rc4_key_size; /* 1 = 40-bit, 2 = 128-bit */
 
     Sec(uint8_t crypt_level) :
-      licence_data(0),
-      licence_size(0),
       crypt_level(crypt_level)
     {
         // from server_sec
@@ -1054,7 +1051,7 @@ struct Sec
         memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
     }
 
-    void rdp_lic_process_authreq(Transport * trans, Stream & stream, const char * hostname, int userid)
+    void rdp_lic_process_authreq(Transport * trans, Stream & stream, const char * hostname, int userid, int licence_issued)
     {
 
         ssllib ssl;
@@ -1099,10 +1096,10 @@ struct Sec
         memcpy(crypt_hwid, hwid, LICENCE_HWID_SIZE);
         ssl.rc4_crypt(crypt_key, crypt_hwid, crypt_hwid, LICENCE_HWID_SIZE);
 
-        this->rdp_lic_send_authresp(trans, out_token, crypt_hwid, out_sig, userid);
+        this->rdp_lic_send_authresp(trans, out_token, crypt_hwid, out_sig, userid, licence_issued);
     }
 
-    void rdp_lic_send_authresp(Transport * trans, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature, int userid)
+    void rdp_lic_send_authresp(Transport * trans, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature, int userid, int licence_issued)
     {
         int length = 58;
 
@@ -1110,9 +1107,7 @@ struct Sec
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
 
-        stream.out_uint8(this->lic_layer.licence_issued
-                         ? LICENCE_TAG_AUTHRESP
-                         : SEC_LICENCE_NEG);
+        stream.out_uint8(licence_issued?LICENCE_TAG_AUTHRESP:SEC_LICENCE_NEG);
 
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
@@ -1130,14 +1125,12 @@ struct Sec
         tpdu.send(trans);
     }
 
-    void rdp_lic_process_demand(Transport * trans, Stream & stream, const char * hostname, const char * username, int userid)
+    void rdp_lic_process_demand(Transport * trans, Stream & stream, const char * hostname, const char * username, int userid, const int licence_issued)
     {
         uint8_t null_data[SEC_MODULUS_SIZE];
         uint8_t signature[LICENCE_SIGNATURE_SIZE];
         uint8_t hwid[LICENCE_HWID_SIZE];
-        uint8_t* licence_data;
 
-        licence_data = 0;
         /* Retrieve the server random from the incoming packet */
         const uint8_t * server_random = stream.in_uint8p(SEC_RANDOM_SIZE);
 
@@ -1160,7 +1153,7 @@ struct Sec
             sec_hash_16(this->lic_layer.licence_key, key_block + 16, client_random, server_random);
         }
 
-        if (this->licence_size > 0) {
+        if (this->lic_layer.licence_size > 0) {
             /* Generate a signature for the HWID buffer */
             this->rdp_lic_generate_hwid(hwid, hostname);
             sec_sign(signature, 16, this->lic_layer.licence_sign_key, 16, hwid, sizeof(hwid));
@@ -1172,16 +1165,16 @@ struct Sec
             ssl.rc4_crypt(crypt_key, hwid, hwid, sizeof(hwid));
 
             this->rdp_lic_present(trans, null_data, null_data,
-                                  this->licence_data,
-                                  this->licence_size,
-                                  hwid, signature, userid);
+                                  this->lic_layer.licence_data,
+                                  this->lic_layer.licence_size,
+                                  hwid, signature, userid, licence_issued);
         }
         else {
-            this->rdp_lic_send_request(trans, null_data, null_data, hostname, username, userid);
+            this->rdp_lic_send_request(trans, null_data, null_data, hostname, username, userid, licence_issued);
         }
     }
 
-    void rdp_lic_send_request(Transport * trans, uint8_t* client_random, uint8_t* rsa_data, const char * hostname, const char * username, int userid)
+    void rdp_lic_send_request(Transport * trans, uint8_t* client_random, uint8_t* rsa_data, const char * hostname, const char * username, int userid, int licence_issued)
     {
         int userlen = strlen(username) + 1;
         int hostlen = strlen(hostname) + 1;
@@ -1192,7 +1185,7 @@ struct Sec
         McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
 
         #warning if we are performing licence request doesn't it mean that licence has not been issued ?
-        stream.out_uint8(this->lic_layer.licence_issued?LICENCE_TAG_REQUEST:SEC_LICENCE_NEG);
+        stream.out_uint8(licence_issued?LICENCE_TAG_REQUEST:SEC_LICENCE_NEG);
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
         stream.out_uint32_le(1);
@@ -1219,7 +1212,7 @@ struct Sec
 
     void rdp_lic_present(Transport * trans, uint8_t* client_random, uint8_t* rsa_data,
                 uint8_t* licence_data, int licence_size, uint8_t* hwid,
-                uint8_t* signature, int userid)
+                uint8_t* signature, int userid, const int licence_issued)
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -1228,7 +1221,7 @@ struct Sec
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
 
-        stream.out_uint8(this->lic_layer.licence_issued ?LICENCE_TAG_PRESENT:SEC_LICENCE_NEG);
+        stream.out_uint8(licence_issued?LICENCE_TAG_PRESENT:SEC_LICENCE_NEG);
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
         stream.out_uint32_le(1);
@@ -1297,7 +1290,7 @@ struct Sec
       delete [] path;
     }
 
-    int rdp_lic_process_issue(Stream & stream, const char * hostname)
+    int rdp_lic_process_issue(Stream & stream, const char * hostname, int & licence_issued)
     {
         stream.skip_uint8(2); /* 3d 45 - unknown */
         int length = stream.in_uint16_le();
@@ -1314,7 +1307,7 @@ struct Sec
             #warning use exception
             return 0;
         }
-        this->lic_layer.licence_issued = 1;
+        licence_issued = 1;
         stream.skip_uint8(2); /* pad */
         /* advance to fourth string */
         length = 0;
@@ -1386,7 +1379,7 @@ struct Sec
 // validClientLicenseData (variable): The actual contents of the License Error
 // (Valid Client) PDU, as specified in section 2.2.1.12.1.
 
-    int rdp_lic_process(Transport * trans, const char * hostname, const char * username, int userid)
+    int rdp_lic_process(Transport * trans, const char * hostname, const char * username, int userid, int & licence_issued)
     {
         LOG(LOG_INFO, "rdp lic process");
         int res = 0;
@@ -1407,15 +1400,15 @@ struct Sec
             switch (tag) {
             case LICENCE_TAG_DEMAND:
                 LOG(LOG_INFO, "LICENCE_TAG_DEMAND");
-                this->rdp_lic_process_demand(trans, stream, hostname, username, userid);
+                this->rdp_lic_process_demand(trans, stream, hostname, username, userid, licence_issued);
                 break;
             case LICENCE_TAG_AUTHREQ:
                 LOG(LOG_INFO, "LICENCE_TAG_AUTHREQ");
-                this->rdp_lic_process_authreq(trans, stream, hostname, userid);
+                this->rdp_lic_process_authreq(trans, stream, hostname, userid, licence_issued);
                 break;
             case LICENCE_TAG_ISSUE:
                 LOG(LOG_INFO, "LICENCE_TAG_ISSUE");
-                res = this->rdp_lic_process_issue(stream, hostname);
+                res = this->rdp_lic_process_issue(stream, hostname, licence_issued);
                 break;
             case LICENCE_TAG_REISSUE:
                 LOG(LOG_INFO, "LICENCE_TAG_REISSUE");

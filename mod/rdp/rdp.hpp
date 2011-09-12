@@ -486,7 +486,7 @@ struct mod_rdp : public client_mod {
             // Client                                                     Server
             //    | <------ Licence Error PDU Valid Client ---------------- |
 
-            if (this->rdp_layer.sec_layer.rdp_lic_process(this->trans, this->rdp_layer.hostname, this->rdp_layer.username, this->rdp_layer.userid)){
+            if (this->rdp_layer.sec_layer.rdp_lic_process(this->trans, this->rdp_layer.hostname, this->rdp_layer.username, this->rdp_layer.userid, this->rdp_layer.sec_layer.lic_layer.licence_issued)){
                 this->state = MOD_RDP_CONNECTED;
             }
         break;
