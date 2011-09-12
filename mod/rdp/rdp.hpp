@@ -543,198 +543,193 @@ struct mod_rdp : public client_mod {
             int pdu_type;
 
             Stream stream(65536);
-            try{
-                uint32_t sec_flags = 0;
-                // read tpktHeader (4 bytes = 3 0 len)
-                // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-                X224In(this->trans, stream);
-                McsIn mcs_in(stream);
-                if ((mcs_in.opcode >> 2) != MCS_SDIN) {
-                    LOG(LOG_INFO, "Error: MCS_SDIN TPDU expected");
-                    throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
+            uint32_t sec_flags = 0;
+            // read tpktHeader (4 bytes = 3 0 len)
+            // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+            X224In(this->trans, stream);
+            McsIn mcs_in(stream);
+            if ((mcs_in.opcode >> 2) != MCS_SDIN) {
+                LOG(LOG_INFO, "Error: MCS_SDIN TPDU expected");
+                throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
+            }
+            SecIn sec(stream, this->rdp_layer.sec_layer.decrypt);
+            if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
+                LOG(LOG_INFO, "Error: unexpected licence negotiation sec packet");
+                throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
+            }
+
+            if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
+                LOG(LOG_INFO, "sec redirect encrypt");
+                /* Check for a redirect packet, starts with 00 04 */
+                if (stream.p[0] == 0 && stream.p[1] == 4){
+                /* for some reason the PDU and the length seem to be swapped.
+                   This isn't good, but we're going to do a byte for byte
+                   swap.  So the first four value appear as: 00 04 XX YY,
+                   where XX YY is the little endian length. We're going to
+                   use 04 00 as the PDU type, so after our swap this will look
+                   like: XX YY 04 00 */
+
+                    uint8_t swapbyte1 = stream.p[0];
+                    stream.p[0] = stream.p[2];
+                    stream.p[2] = swapbyte1;
+
+                    uint8_t swapbyte2 = stream.p[1];
+                    stream.p[1] = stream.p[3];
+                    stream.p[3] = swapbyte2;
+
+                    uint8_t swapbyte3 = stream.p[2];
+                    stream.p[2] = stream.p[3];
+                    stream.p[3] = swapbyte3;
                 }
-                SecIn sec(stream, this->rdp_layer.sec_layer.decrypt);
-                if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
-                    LOG(LOG_INFO, "Error: unexpected licence negotiation sec packet");
-                    throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
-                }
+            }
 
-                if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
-                    LOG(LOG_INFO, "sec redirect encrypt");
-                    /* Check for a redirect packet, starts with 00 04 */
-                    if (stream.p[0] == 0 && stream.p[1] == 4){
-                    /* for some reason the PDU and the length seem to be swapped.
-                       This isn't good, but we're going to do a byte for byte
-                       swap.  So the first four value appear as: 00 04 XX YY,
-                       where XX YY is the little endian length. We're going to
-                       use 04 00 as the PDU type, so after our swap this will look
-                       like: XX YY 04 00 */
-
-                        uint8_t swapbyte1 = stream.p[0];
-                        stream.p[0] = stream.p[2];
-                        stream.p[2] = swapbyte1;
-
-                        uint8_t swapbyte2 = stream.p[1];
-                        stream.p[1] = stream.p[3];
-                        stream.p[3] = swapbyte2;
-
-                        uint8_t swapbyte3 = stream.p[2];
-                        stream.p[2] = stream.p[3];
-                        stream.p[3] = swapbyte3;
+            if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL){
+                this->recv_virtual_channel(stream, mcs_in.chan_id);
+            }
+            else {
+                uint8_t * next_packet = stream.p;
+                while (next_packet < stream.end) {
+                        stream.p = next_packet;
+                    {
+                        int len = stream.in_uint16_le();
+                        if (len == 0x8000) {
+                            next_packet += 8;
+                            pdu_type = 0;
+                        }
+                        else {
+                            pdu_type = stream.in_uint16_le();
+                            stream.skip_uint8(2);
+                            next_packet += len;
+                        }
                     }
-                }
-
-                if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL){
-                    this->recv_virtual_channel(stream, mcs_in.chan_id);
-                }
-                else {
-                    uint8_t * next_packet = stream.p;
-                    while (next_packet < stream.end) {
-                            stream.p = next_packet;
+                    switch (pdu_type & 0xF) {
+                    case PDUTYPE_DATAPDU:
+                        switch (this->connection_finalization_state){
+                        case EARLY:
+                        break;
+                        case WAITING_SYNCHRONIZE:
+                            LOG(LOG_INFO, "Receiving Synchronize");
+//                            this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
+                            this->connection_finalization_state = WAITING_CTL_COOPERATE;
+                        break;
+                        case WAITING_CTL_COOPERATE:
+//                            this->check_data_pdu(PDUTYPE2_CONTROL);
+                            LOG(LOG_INFO, "Receiving Control Cooperate");
+                            this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
+                        break;
+                        case WAITING_GRANT_CONTROL_COOPERATE:
+//                            this->check_data_pdu(PDUTYPE2_CONTROL);
+                            LOG(LOG_INFO, "Receiving Granted Control");
+                            this->connection_finalization_state = WAITING_FONT_MAP;
+                        break;
+                        case WAITING_FONT_MAP:
+                            LOG(LOG_INFO, "Receiving Font Map");
+//                            this->check_data_pdu(PDUTYPE2_FONTMAP);
+                            this->rdp_layer.orders.rdp_orders_reset_state();
+                            LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->rdp_layer.bpp);
+                            this->mod_bpp = this->rdp_layer.bpp;
+                            this->up_and_running = 1;
+                            this->connection_finalization_state = UP_AND_RUNNING;
+                        break;
+                        case UP_AND_RUNNING:
                         {
-                            int len = stream.in_uint16_le();
-                            if (len == 0x8000) {
-                                next_packet += 8;
-                                pdu_type = 0;
-                            }
-                            else {
-                                pdu_type = stream.in_uint16_le();
-                                stream.skip_uint8(2);
-                                next_packet += len;
+                            uint32_t shareid = stream.in_uint32_le();
+                            uint8_t pad1 = stream.in_uint8();
+                            uint8_t streamid = stream.in_uint8();
+                            uint16_t len = stream.in_uint16_le();
+                            uint8_t pdutype2 = stream.in_uint8();
+                            uint8_t compressedType = stream.in_uint8();
+                            uint8_t compressedLen = stream.in_uint16_le();
+                            switch (pdutype2) {
+                            case PDUTYPE2_UPDATE:
+                                this->rdp_layer.process_update_pdu(stream, this);
+                                break;
+                            case PDUTYPE2_CONTROL:
+                                break;
+                            case PDUTYPE2_SYNCHRONIZE:
+                                break;
+                            case PDUTYPE2_POINTER:
+                                this->rdp_layer.process_pointer_pdu(stream, this);
+                                break;
+                            case PDUTYPE2_PLAY_SOUND:
+                                break;
+                            case PDUTYPE2_SAVE_SESSION_INFO:
+                //                LOG(LOG_INFO, "DATA PDU LOGON\n");
+                                break;
+                            case PDUTYPE2_SET_ERROR_INFO_PDU:
+                //                LOG(LOG_INFO, "DATA PDU DISCONNECT\n");
+                                this->rdp_layer.process_disconnect_pdu(stream);
+                                break;
+                            default:
+                                break;
                             }
                         }
-                        switch (pdu_type & 0xF) {
-                        case PDUTYPE_DATAPDU:
-                            switch (this->connection_finalization_state){
-                            case EARLY:
-                            break;
-                            case WAITING_SYNCHRONIZE:
-                                LOG(LOG_INFO, "Receiving Synchronize");
-    //                            this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
-                                this->connection_finalization_state = WAITING_CTL_COOPERATE;
-                            break;
-                            case WAITING_CTL_COOPERATE:
-    //                            this->check_data_pdu(PDUTYPE2_CONTROL);
-                                LOG(LOG_INFO, "Receiving Control Cooperate");
-                                this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
-                            break;
-                            case WAITING_GRANT_CONTROL_COOPERATE:
-    //                            this->check_data_pdu(PDUTYPE2_CONTROL);
-                                LOG(LOG_INFO, "Receiving Granted Control");
-                                this->connection_finalization_state = WAITING_FONT_MAP;
-                            break;
-                            case WAITING_FONT_MAP:
-                                LOG(LOG_INFO, "Receiving Font Map");
-    //                            this->check_data_pdu(PDUTYPE2_FONTMAP);
-                                this->rdp_layer.orders.rdp_orders_reset_state();
-                                LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->rdp_layer.bpp);
-                                this->mod_bpp = this->rdp_layer.bpp;
-                                this->up_and_running = 1;
-                                this->connection_finalization_state = UP_AND_RUNNING;
-                            break;
-                            case UP_AND_RUNNING:
-                            {
-                                uint32_t shareid = stream.in_uint32_le();
-                                uint8_t pad1 = stream.in_uint8();
-                                uint8_t streamid = stream.in_uint8();
-                                uint16_t len = stream.in_uint16_le();
-                                uint8_t pdutype2 = stream.in_uint8();
-                                uint8_t compressedType = stream.in_uint8();
-                                uint8_t compressedLen = stream.in_uint16_le();
-                                switch (pdutype2) {
-                                case PDUTYPE2_UPDATE:
-                                    this->rdp_layer.process_update_pdu(stream, this);
-                                    break;
-                                case PDUTYPE2_CONTROL:
-                                    break;
-                                case PDUTYPE2_SYNCHRONIZE:
-                                    break;
-                                case PDUTYPE2_POINTER:
-                                    this->rdp_layer.process_pointer_pdu(stream, this);
-                                    break;
-                                case PDUTYPE2_PLAY_SOUND:
-                                    break;
-                                case PDUTYPE2_SAVE_SESSION_INFO:
-                    //                LOG(LOG_INFO, "DATA PDU LOGON\n");
-                                    break;
-                                case PDUTYPE2_SET_ERROR_INFO_PDU:
-                    //                LOG(LOG_INFO, "DATA PDU DISCONNECT\n");
-                                    this->rdp_layer.process_disconnect_pdu(stream);
-                                    break;
-                                default:
-                                    break;
-                                }
-                            }
-                            break;
-                            }
-                            break;
-                        case PDUTYPE_DEMANDACTIVEPDU:
-                            LOG(LOG_INFO, "Received demand active PDU");
-                            {
-                                client_mod * mod = this;
-                                int len_src_descriptor;
-                                int len_combined_caps;
+                        break;
+                        }
+                        break;
+                    case PDUTYPE_DEMANDACTIVEPDU:
+                        LOG(LOG_INFO, "Received demand active PDU");
+                        {
+                            client_mod * mod = this;
+                            int len_src_descriptor;
+                            int len_combined_caps;
 
-                                this->rdp_layer.share_id = stream.in_uint32_le();
-                                len_src_descriptor = stream.in_uint16_le();
-                                len_combined_caps = stream.in_uint16_le();
-                                stream.skip_uint8(len_src_descriptor);
-                                this->rdp_layer.process_server_caps(stream, len_combined_caps, this->use_rdp5);
-                                #warning we should be able to pack all the following sends to the same X224 TPDU, instead of creating a different one for each send
-                                LOG(LOG_INFO, "Sending confirm active PDU");
-                                this->rdp_layer.send_confirm_active(mod, this->use_rdp5);
-                                LOG(LOG_INFO, "Sending synchronize");
-                                this->rdp_layer.send_synchronise();
-                                LOG(LOG_INFO, "Sending control cooperate");
-                                this->rdp_layer.send_control(RDP_CTL_COOPERATE);
-                                LOG(LOG_INFO, "Sending request control");
-                                this->rdp_layer.send_control(RDP_CTL_REQUEST_CONTROL);
-                                LOG(LOG_INFO, "Sending input synchronize");
-                                this->rdp_layer.send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
-                                LOG(LOG_INFO, "Sending font List");
-                                /* Including RDP 5.0 capabilities */
-                                if (this->use_rdp5 != 0){
-                                    this->rdp_layer.enum_bmpcache2();
-                                    this->rdp_layer.send_fonts(stream, 3);
-                                }
-                                else{
-                                    this->rdp_layer.send_fonts(stream, 1);
-                                    this->rdp_layer.send_fonts(stream, 2);
-                                }
-                                this->connection_finalization_state = WAITING_SYNCHRONIZE;
+                            this->rdp_layer.share_id = stream.in_uint32_le();
+                            len_src_descriptor = stream.in_uint16_le();
+                            len_combined_caps = stream.in_uint16_le();
+                            stream.skip_uint8(len_src_descriptor);
+                            this->rdp_layer.process_server_caps(stream, len_combined_caps, this->use_rdp5);
+                            #warning we should be able to pack all the following sends to the same X224 TPDU, instead of creating a different one for each send
+                            LOG(LOG_INFO, "Sending confirm active PDU");
+                            this->rdp_layer.send_confirm_active(mod, this->use_rdp5);
+                            LOG(LOG_INFO, "Sending synchronize");
+                            this->rdp_layer.send_synchronise();
+                            LOG(LOG_INFO, "Sending control cooperate");
+                            this->rdp_layer.send_control(RDP_CTL_COOPERATE);
+                            LOG(LOG_INFO, "Sending request control");
+                            this->rdp_layer.send_control(RDP_CTL_REQUEST_CONTROL);
+                            LOG(LOG_INFO, "Sending input synchronize");
+                            this->rdp_layer.send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
+                            LOG(LOG_INFO, "Sending font List");
+                            /* Including RDP 5.0 capabilities */
+                            if (this->use_rdp5 != 0){
+                                this->rdp_layer.enum_bmpcache2();
+                                this->rdp_layer.send_fonts(stream, 3);
                             }
-                            break;
-                        case PDUTYPE_DEACTIVATEALLPDU:
-                            this->up_and_running = 0;
-                            break;
-                        #warning this PDUTYPE is undocumented and seems to mean the same as type 10
-                        case RDP_PDU_REDIRECT:
-                            break;
-                        case 0:
-                            break;
-                        default:
-                            break;
+                            else{
+                                this->rdp_layer.send_fonts(stream, 1);
+                                this->rdp_layer.send_fonts(stream, 2);
+                            }
+                            this->connection_finalization_state = WAITING_SYNCHRONIZE;
                         }
+                        break;
+                    case PDUTYPE_DEACTIVATEALLPDU:
+                        this->up_and_running = 0;
+                        break;
+                    #warning this PDUTYPE is undocumented and seems to mean the same as type 10
+                    case RDP_PDU_REDIRECT:
+                        break;
+                    case 0:
+                        break;
+                    default:
+                        break;
                     }
                 }
+            }
+        }
+        }
+        }
+        catch(Error e){
+            try {
+                Stream stream(11);
+                X224Out tpdu(X224Packet::DR_TPDU, stream);
+                tpdu.end();
+                tpdu.send(this->trans);
             }
             catch(Error e){
                 return (e.id == ERR_SOCKET_CLOSED)?2:1;
-            }
-            catch(...){
-                LOG(LOG_INFO, "WTF ????????????????????????");
-                #warning this exception happen, check why (it shouldnt, some error not of Error type is generated)
-                return 1;
-            }
-        }
-        }
-        }
-        catch(...){
-            Stream stream(11);
-            X224Out tpdu(X224Packet::DR_TPDU, stream);
-            tpdu.end();
-            tpdu.send(this->trans);
-            throw;
+            };
+            return 1;
         }
         return 0;
     }
