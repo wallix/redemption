@@ -33,6 +33,7 @@
 #include "colors.hpp"
 #include "altoco.hpp"
 #include "RDP/x224.hpp"
+#include "RDP/lic.hpp"
 
 /* rdp */
 struct server_rdp {
@@ -795,51 +796,27 @@ struct server_rdp {
 
     void recv_client_random(Stream & stream)
     {
+        #warning use and at least check len
         stream.in_uint32_le(); // len
 
         memcpy(this->sec_layer.client_crypt_random, stream.in_uint8p(64), 64);
+
 
         ssl_mod_exp(this->sec_layer.client_random, 64,
                 this->sec_layer.client_crypt_random, 64,
                 this->sec_layer.pub_mod, 64,
                 this->sec_layer.pri_exp, 64);
-        {
-            ssllib ssl;
 
-            uint8_t pre_master_secret[48];
-            uint8_t master_secret[48];
-            uint8_t key_block[48];
-
-            /* Construct pre-master secret (session key) */
-            memcpy(key_block, this->sec_layer.client_random, 24);
-            memcpy(key_block + 24, this->sec_layer.server_random, 24);
-
-            /* Generate master secret and then key material */
-            sec_hash_48(master_secret, key_block, this->sec_layer.client_random, this->sec_layer.server_random, 65);
-            sec_hash_48(pre_master_secret, master_secret, this->sec_layer.client_random, this->sec_layer.server_random, 88);
-
-            /* First 16 bytes of key material is MAC secret */
-            memcpy(this->sec_layer.encrypt.sign_key, pre_master_secret, 16);
-
-            /* Generate export keys from next two blocks of 16 bytes */
-            sec_hash_16(this->sec_layer.encrypt.key, &pre_master_secret[16], this->sec_layer.client_random, this->sec_layer.server_random);
-            sec_hash_16(this->sec_layer.decrypt.key, &pre_master_secret[32], this->sec_layer.client_random, this->sec_layer.server_random);
-
-            if (this->sec_layer.rc4_key_size == 1) {
-                sec_make_40bit(this->sec_layer.encrypt.sign_key);
-                sec_make_40bit(this->sec_layer.encrypt.key);
-                sec_make_40bit(this->sec_layer.decrypt.key);
-                this->sec_layer.decrypt.rc4_key_len = 8;
-                this->sec_layer.encrypt.rc4_key_len = 8;
-            } else {
-                this->sec_layer.decrypt.rc4_key_len = 16;
-                this->sec_layer.encrypt.rc4_key_len = 16;
-            }
-            memcpy(this->sec_layer.decrypt.update_key, this->sec_layer.decrypt.key, 16);
-            memcpy(this->sec_layer.encrypt.update_key, this->sec_layer.encrypt.key, 16);
-            ssl.rc4_set_key(this->sec_layer.decrypt.rc4_info, this->sec_layer.decrypt.key, this->sec_layer.decrypt.rc4_key_len);
-            ssl.rc4_set_key(this->sec_layer.encrypt.rc4_info, this->sec_layer.encrypt.key, this->sec_layer.encrypt.rc4_key_len);
-        }
+        // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
+        #warning looks like decrypt sign key is never used, if it's true remove it from CryptContext
+        #warning this methode should probably move to ssl_calls
+        this->sec_layer.rdp_sec_generate_keys(
+            this->sec_layer.decrypt,
+            this->sec_layer.encrypt,
+            this->sec_layer.encrypt.sign_key,
+            this->sec_layer.client_random,
+            this->sec_layer.server_random,
+            this->sec_layer.rc4_key_size);
     }
 
     /*****************************************************************************/
