@@ -793,7 +793,126 @@ struct Sec
         uint32_t offset_len_mcs_data = stream.p - stream.data;
         stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
-        /* mcs data */
+        // GCC Conference Create Response
+        // ------------------------------
+
+        // ConferenceCreateResponse Parameters
+        // -----------------------------------
+
+        // Conference Name           : Mandatory(=)
+
+//Conference Name: Name by which the conference to be created is identified. This consists of a
+//numerical string along with an optional Unicode Row 00 text string, from zero to 255 characters
+//each. If both forms of a Conference Name are used, if a node wishes to join this conference, it may
+//specify either form of the name in the join request. In the join request, a numeric value will
+//necessarily be included in numeric variant of the Conference Name. As a result, use of a text
+//Conference Name including only numeric characters will never be compared against and therefore
+//should not be used – that is, the text variant of the Conference Name should include at least one
+//non-numeric character.
+
+
+        // A numerical string and an optional Unicode Row 00 text string
+        // identifying the conference. If both forms of Conference Name are used
+        // when a conference is created, when that conference is joined, either
+        // form may be specified to indicate the conference to be joined.
+
+        // Conference Name Modifier  : Conditional
+
+        // If the GCC-Conference-Create response includes a Conference Name
+        // Modifier parameter, the GCC Provider (now the Top GCC Provider) shall
+        // retain this name modifier for later use in handling the conference
+        // query, conference join, and conference invite procedures.
+
+        // Conference Name Modifier: If the requesting or responding node is
+        // already joined to a conference with the same Conference Name (either
+        // numerical or text portion) as that included in the request, this
+        // parameter shall also be included in the corresponding request or
+        // response primitive. The value of this parameter shall be unique
+        // among all conferences at the corresponding node which have this
+        // Conference Name. This modifier, if included, shall be used as the
+        // Called Node Conference Name Modifier parameter in a
+        // GCC-Conference-Join request by another node attempting to join the
+        // conference through a direct connection with the corresponding node.
+        // This modifier is also included in the response to a
+        // GCC-Conference-Query directed at this node. This parameter is a
+        // numerical string up to 255 digits in length.
+
+        // Conference ID             : Mandatory(=)
+
+        // Conference ID: Locally-allocated identifier of the newly-created
+        // conference. All subsequent references to the conference are made
+        // using the Conference ID as a unique identifier. The Conference ID
+        // shall be identical with the MCS Domain Selector used locally to
+        // identify the MCS Domain associated with the conference.
+
+        // The Conference ID is sent as part of the MCS-Connect-Provider request
+        // as the Calling Domain Selector.
+
+
+        // Domain Parameters         : Mandatory
+
+        // Domain Parameters: Domain parameters to be included in the
+        // MCS-Connect-Provider primitive on establishing an MCS connection.
+        // See [ITU-T T.122] for the interpretation of this parameter.
+
+
+        // Quality of Service        : Mandatory
+
+        // Quality of Service: Quality of Service parameters to be included in
+        // the MCS-Connect-Provider primitive on establishing an MCS connection.
+        // See [ITU-T T.122] for the interpretation of this parameter.
+
+
+        // Local Network Address     : Optional
+
+//Local Network Address: If included in either the request or response, the local GCC Provider at the
+//corresponding node shall use this information to include as the Network Address parameter in the
+//Conference Descriptor List sent as part of the response to a GCC-Conference-Query request from
+//another node. In the GCC protocol, this parameter is reflected by ASN.1 structures NetworkAddress
+//and NetworkAddressV2. See Annex B for the description and use of these.
+
+
+        // User Data                 : Optional
+
+//User Data: Optional user data which may be used for functions outside the scope of this
+//Recommendation such as authentication, billing, etc.
+
+        // Result                    : Mandatory
+
+//Result: An indication of whether the request was accepted or rejected, and if rejected, the reason
+//why. It contains one of a list of possible results: successful, user rejected, resources not available,
+//rejected for symmetry-breaking, locked conference not supported, Conference Name and Conference
+//Name Modifier already exist, domain parameters unacceptable, domain not hierarchical, lower-layer
+//initiated disconnect, unspecified failure to connect. A negative result in the GCC-Conference-Create
+//confirm does not imply that the physical connection to the node to which the connection was being
+//attempted is disconnected.
+
+
+        // The ConferenceCreateResponse PDU is shown in Table 8-4. The Node ID
+        // parameter, which is the User ID assigned by MCS in response to the
+        // MCS-Attach-User request issued by the GCC Provider, shall be supplied
+        // by the GCC Provider sourcing this PDU. The Tag parameter is assigned
+        // by the source GCC Provider to be locally unique. It is used to
+        // identify the returned UserIDIndication PDU. The Result parameter
+        // includes GCC-specific failure information sourced directly from
+        // the Result parameter in the GCC-Conference-Create response primitive.
+        // If the Result parameter is anything except successful, the Result
+        // parameter in the MCS-Connect-Provider response is set to
+        // user-rejected.
+
+        //            Table 8-4 – ConferenceCreateResponse GCCPDU
+        // +------------------+------------------+--------------------------+
+        // | Content          |     Source       |         Sink             |
+        // +==================+==================+==========================+
+        // | Node ID          | Top GCC Provider | Destination GCC Provider |
+        // +------------------+------------------+--------------------------+
+        // | Tag              | Top GCC Provider | Destination GCC Provider |
+        // +------------------+------------------+--------------------------+
+        // | Result           | Response         | Confirm                  |
+        // +------------------+------------------+--------------------------+
+        // | User Data (opt.) | Response         | Confirm                  |
+        // +------------------+------------------+--------------------------+
+
         stream.out_uint16_be(5);
         stream.out_uint16_be(0x14);
         stream.out_uint8(0x7c);
