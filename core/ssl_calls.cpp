@@ -301,7 +301,7 @@ int ssl_certs_ok(SSL_CERT * server_cert, SSL_CERT * cacert)
 /*****************************************************************************/
 
 /* returns newly allocated SSL_RKEY or NULL */
-SSL_RKEY *ssl_cert_to_rkey(SSL_CERT* cert, int & key_len)
+SSL_RKEY *ssl_cert_to_rkey(SSL_CERT* cert, uint32_t & key_len)
 {
   EVP_PKEY *epk = NULL;
   SSL_RKEY *lkey;

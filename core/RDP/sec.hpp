@@ -413,7 +413,7 @@ static inline int rdp_sec_parse_public_sig(Stream & stream, int len, uint8_t* mo
 static inline void rdp_sec_parse_crypt_info(Stream & stream, uint32_t *rc4_key_size,
                               uint8_t * server_random,
                               uint8_t* modulus, uint8_t* exponent,
-                              int & server_public_key_len,
+                              uint32_t & server_public_key_len,
                               uint8_t & crypt_level)
 {
     uint32_t random_len;
@@ -467,27 +467,22 @@ static inline void rdp_sec_parse_crypt_info(Stream & stream, uint32_t *rc4_key_s
             case SEC_TAG_PUBKEY:
             {
                 /* Parse a public key structure */
-                uint32_t magic;
-                uint32_t modulus_len;
-
-                magic = stream.in_uint32_le();
+                uint32_t magic = stream.in_uint32_le();
                 if (magic != SEC_RSA_MAGIC) {
                     LOG(LOG_WARNING, "RSA magic 0x%x\n", magic);
                     throw Error(ERR_SEC_PARSE_PUB_KEY_MAGIC_NOT_OK);
                 }
-                modulus_len = stream.in_uint32_le();
-                modulus_len -= SEC_PADDING_SIZE;
+                server_public_key_len = stream.in_uint32_le() - SEC_PADDING_SIZE;
 
-                if ((modulus_len < SEC_MODULUS_SIZE)
-                ||  (modulus_len > SEC_MAX_MODULUS_SIZE)) {
-                    LOG(LOG_WARNING, "Bad server public key size (%u bits)\n", modulus_len * 8);
+                if ((server_public_key_len < SEC_MODULUS_SIZE)
+                ||  (server_public_key_len > SEC_MAX_MODULUS_SIZE)) {
+                    LOG(LOG_WARNING, "Bad server public key size (%u bits)\n", server_public_key_len * 8);
                     throw Error(ERR_SEC_PARSE_PUB_KEY_MODUL_NOT_OK);
                 }
                 stream.skip_uint8(8); /* modulus_bits, unknown */
                 memcpy(exponent, stream.in_uint8p(SEC_EXPONENT_SIZE), SEC_EXPONENT_SIZE);
-                memcpy(modulus, stream.in_uint8p(modulus_len), modulus_len);
+                memcpy(modulus, stream.in_uint8p(server_public_key_len), server_public_key_len);
                 stream.skip_uint8(SEC_PADDING_SIZE);
-                server_public_key_len = modulus_len;
 
                 if (!stream.check()){
                     throw Error(ERR_SEC_PARSE_PUB_KEY_ERROR_CHECKING_STREAM);
@@ -648,23 +643,6 @@ static inline void sec_hash_16(uint8_t* out, const uint8_t* in, const uint8_t* s
 }
 
 
-static inline void unicode_in(Stream & stream, int uni_len, uint8_t* dst, int dst_len) throw (Error)
-{
-    int dst_index = 0;
-    int src_index = 0;
-    while (src_index < uni_len) {
-        if (dst_index >= dst_len || src_index > 512) {
-            break;
-        }
-        dst[dst_index] = stream.in_uint8();
-        stream.skip_uint8(1);
-        dst_index++;
-        src_index += 2;
-    }
-    stream.skip_uint8(2);
-}
-
-
 struct Sec
 {
 
@@ -679,7 +657,7 @@ struct Sec
     uint8_t pri_exp[512];
 
 // only in rdp_sec : need cleanup
-    int server_public_key_len;
+    uint32_t server_public_key_len;
 
 // shared
 
@@ -922,7 +900,7 @@ struct Sec
 
     /*****************************************************************************/
     /* Process crypto information blob */
-    void rdp_sec_process_crypt_info(Stream & stream, int & server_public_key_len, uint8_t & crypt_level)
+    void rdp_sec_process_crypt_info(Stream & stream, uint32_t & server_public_key_len, uint8_t & crypt_level)
     {
         uint8_t server_random[SEC_RANDOM_SIZE];
         uint8_t client_random[SEC_RANDOM_SIZE];
