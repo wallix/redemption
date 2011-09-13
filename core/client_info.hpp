@@ -27,6 +27,7 @@
 
 #include <string.h>
 #include "config.hpp"
+#include "stream.hpp"
 
 struct ClientInfo {
     int bpp;
@@ -124,5 +125,79 @@ struct ClientInfo {
         /* channel_code : 0 = no channels 1 = channels */
         this->channel_code = ini->globals.channel_code;
     }
+
+    #warning this is ugly, rewrite that
+    void unicode_in(Stream & stream, int uni_len, uint8_t* dst, int dst_len) throw (Error)
+    {
+        int dst_index = 0;
+        int src_index = 0;
+        while (src_index < uni_len) {
+            if (dst_index >= dst_len || src_index > 512) {
+                break;
+            }
+            dst[dst_index] = stream.in_uint8();
+            stream.skip_uint8(1);
+            dst_index++;
+            src_index += 2;
+        }
+        stream.skip_uint8(2);
+    }
+
+    void process_logon_info(Stream & stream) throw (Error)
+    {
+        // LOG(LOG_DEBUG, "server_sec_process_logon_info\n");
+        stream.skip_uint8(4);
+        int flags = stream.in_uint32_le();
+        /* this is the first test that the decrypt is working */
+        if ((flags & RDP_LOGON_NORMAL) != RDP_LOGON_NORMAL) /* 0x33 */
+        {                                                   /* must be or error */
+            throw Error(ERR_SEC_PROCESS_LOGON_UNKNOWN_FLAGS);
+        }
+        if (flags & RDP_LOGON_LEAVE_AUDIO) {
+            this->sound_code = 1;
+        }
+        if ((flags & RDP_LOGON_AUTO) && (!this->is_mce))
+            /* todo, for now not allowing autologon and mce both */
+        {
+            this->rdp_autologin = 1;
+        }
+        if (flags & RDP_COMPRESSION) {
+            this->rdp_compression = 1;
+        }
+        unsigned len_domain = stream.in_uint16_le();
+        unsigned len_user = stream.in_uint16_le();
+        unsigned len_password = stream.in_uint16_le();
+        unsigned len_program = stream.in_uint16_le();
+        unsigned len_directory = stream.in_uint16_le();
+        /* todo, we should error out if any of the above lengths are > 512 */
+        /* to avoid buffer overruns */
+        #warning check for length overflow
+        unicode_in(stream, len_domain, (uint8_t*)this->domain, 255);
+        unicode_in(stream, len_user, (uint8_t*)this->username, 255);
+        // LOG(LOG_DEBUG, "setting username to %s\n", this->username);
+
+        if (flags & RDP_LOGON_AUTO) {
+            unicode_in(stream, len_password, (uint8_t*)this->password, 255);
+        } else {
+            stream.skip_uint8(len_password + 2);
+        }
+        unicode_in(stream, len_program, (uint8_t*)this->program, 255);
+        unicode_in(stream, len_directory, (uint8_t*)this->directory, 255);
+        if (flags & RDP_LOGON_BLOB) {
+            stream.skip_uint8(2);                                    /* unknown */
+            unsigned len_ip = stream.in_uint16_le();
+            uint8_t tmpdata[256];
+            unicode_in(stream, len_ip - 2, tmpdata, 255);
+            unsigned len_dll = stream.in_uint16_le();
+            unicode_in(stream, len_dll - 2, tmpdata, 255);
+            stream.in_uint32_le(); /* len of timetone */
+            stream.skip_uint8(62); /* skip */
+            stream.skip_uint8(22); /* skip misc. */
+            stream.skip_uint8(62); /* skip */
+            stream.skip_uint8(26); /* skip stuff */
+            this->rdp5_performanceflags = stream.in_uint32_le();
+        }
+    }
+
 };
 #endif

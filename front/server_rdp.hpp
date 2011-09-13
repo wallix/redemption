@@ -610,7 +610,7 @@ struct server_rdp {
                 throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
             }
 
-            this->sec_layer.server_sec_process_logon_info(stream, &this->client_info);
+            this->client_info.process_logon_info(stream);
         }
 
         // Licensing
