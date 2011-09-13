@@ -768,18 +768,18 @@ struct Sec
 
         stream.out_uint16_be(BER_TAG_MCS_CONNECT_RESPONSE);
         uint32_t offset_len_mcs_connect_response = stream.p - stream.data;
-        stream.out_ber_len(1024); // placeholder to force len >= 128 (3 bytes)
+        stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
         stream.out_uint8(BER_TAG_RESULT);
-        stream.out_uint8(1);
+        stream.out_ber_len_uint7(1);
         stream.out_uint8(0);
 
         stream.out_uint8(BER_TAG_INTEGER);
-        stream.out_uint8(1);
+        stream.out_ber_len_uint7(1);
         stream.out_uint8(0);
 
         stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-        stream.out_uint8(26);
+        stream.out_ber_len_uint7(26);
         stream.out_ber_int8(22); // max_channels
         stream.out_ber_int8(3); // max_users
         stream.out_ber_int8(0); // max_tokens
@@ -791,7 +791,7 @@ struct Sec
 
         stream.out_uint8(BER_TAG_OCTET_STRING);
         uint32_t offset_len_mcs_data = stream.p - stream.data;
-        stream.out_ber_len(1024); // placeholder to force > 128 offset (3 bytes)
+        stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
         /* mcs data */
         stream.out_uint16_be(5);
@@ -809,10 +809,9 @@ struct Sec
         stream.out_uint8(0);
         stream.out_copy_bytes("McDn", 4);
 
-        uint16_t num_channels = channel_list.size();
-        uint16_t padchan = num_channels & 1;
-
-        stream.out_uint16_be(0x8000 + 252 + (channel_list.size() + padchan) * 2); // len
+        uint16_t padding = channel_list.size() & 1;
+        uint16_t srv_channel_size = 8 + (channel_list.size() + padding) * 2;
+        stream.out_2BUE(8 + srv_channel_size + 236); // len
 
         stream.out_uint16_le(SEC_TAG_SRV_INFO);
         // length, including tag and length fields
@@ -821,6 +820,9 @@ struct Sec
         stream.out_uint8(0);
         stream.out_uint8(8);
         stream.out_uint8(0);
+
+        uint16_t num_channels = channel_list.size();
+        uint16_t padchan = num_channels & 1;
 
         stream.out_uint16_le(SEC_TAG_SRV_CHANNELS);
         // length, including tag and length fields
@@ -860,9 +862,9 @@ struct Sec
 
         #warning create a function in stream that sets differed ber_len_offsets
         // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
-        stream.set_out_ber_len(stream.p - stream.data - offset_len_mcs_data - 3, offset_len_mcs_data);
+        stream.set_out_ber_len_uint16(stream.p - stream.data - offset_len_mcs_data - 3, offset_len_mcs_data);
         // set BER_TAG_MCS_CONNECT_RESPONSE len
-        stream.set_out_ber_len(stream.p - stream.data - offset_len_mcs_connect_response - 3, offset_len_mcs_connect_response);
+        stream.set_out_ber_len_uint16(stream.p - stream.data - offset_len_mcs_connect_response - 3, offset_len_mcs_connect_response);
 
         tpdu.end();
         tpdu.send(trans);
