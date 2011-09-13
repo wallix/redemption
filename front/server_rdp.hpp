@@ -471,7 +471,7 @@ struct server_rdp {
                 &this->client_info,
                 channel_list);
 
-        this->sec_layer.send_mcs_connect_response_pdu_with_gcc_conference_create_response(this->trans, &this->client_info, channel_list);
+        this->sec_layer.send_mcs_connect_response_pdu_with_gcc_conference_create_response(this->trans, &this->client_info, channel_list, this->sec_layer.encrypt.rc4_key_size);
 
         // Channel Connection
         // ------------------
@@ -816,7 +816,7 @@ struct server_rdp {
             this->sec_layer.encrypt.sign_key,
             this->sec_layer.client_random,
             this->sec_layer.server_random,
-            this->sec_layer.rc4_key_size);
+            this->sec_layer.encrypt.rc4_key_size);
     }
 
     /*****************************************************************************/
