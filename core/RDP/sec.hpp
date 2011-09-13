@@ -651,7 +651,6 @@ struct Sec
     uint8_t server_random[32];
     uint8_t client_random[64];
 
-    uint8_t pub_sig[512];
     uint8_t pri_exp[512];
 
 // only in rdp_sec : need cleanup
@@ -742,10 +741,11 @@ struct Sec
         }
 
         uint8_t pub_exp[24];
+        uint8_t pub_sig[512];
 
         memcpy(pub_exp, rsa_keys.pub_exp, 4);
         memcpy(pub_mod, rsa_keys.pub_mod, 64);
-        memcpy(this->pub_sig, rsa_keys.pub_sig, 64);
+        memcpy(pub_sig, rsa_keys.pub_sig, 64);
         memcpy(this->pri_exp, rsa_keys.pri_exp, 64);
 
         /* Same code above using list_test */
@@ -815,7 +815,7 @@ struct Sec
         data.out_clear_bytes(8); /* pad */
         data.out_uint16_le(SEC_TAG_KEYSIG);
         data.out_uint16_le(72); /* len */
-        data.out_copy_bytes(this->pub_sig, 64); /* pub sig */
+        data.out_copy_bytes(pub_sig, 64); /* pub sig */
         data.out_clear_bytes(8); /* pad */
         /* end certificate */
         data.mark_end();
