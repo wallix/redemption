@@ -368,13 +368,3 @@ void reverse(uint8_t* p, int len)
 }
 
 /*****************************************************************************/
-
-/* returns boolean */
-int ssl_sig_ok(uint8_t* exponent, int exp_len, uint8_t* modulus, int mod_len,
-   uint8_t* signature, int sig_len)
-{
-	/* Currently, we don't check the signature
-	   FIXME:
-	 */
-	return 0;
-}

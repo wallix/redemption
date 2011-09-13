@@ -392,22 +392,63 @@ class SecIn
 
 };
 
-static inline int rdp_sec_parse_public_sig(Stream & stream, int len, uint8_t* modulus, uint8_t* exponent, int server_public_key_len)
+static inline int recv_sec_tag_sig(Stream & stream, uint16_t len)
+{
+    stream.skip_uint8(len);
+    /* Parse a public key structure */
+    #warning is padding always 8 bytes long, may signature length change ? Check in documentation
+    #warning we should check the signature is ok (using other provided parameters), this is not yet done today, signature is just dropped
+}
+
+
+static inline void send_sec_tag_sig(Stream & stream, const uint8_t (&pub_sig)[512])
+{
+    stream.out_uint16_le(SEC_TAG_KEYSIG);
+    stream.out_uint16_le(72); /* len */
+    stream.out_copy_bytes(pub_sig, 64); /* pub sig */
+    stream.out_clear_bytes(8); /* pad */
+}
+
+static inline void send_sec_tag_pubkey(Stream & stream, const char (&pub_exp)[4], const uint8_t (&pub_mod)[512])
+{
+    stream.out_uint16_le(SEC_TAG_PUBKEY);
+    stream.out_uint16_le(92); // length
+    stream.out_uint32_le(SEC_RSA_MAGIC);
+    stream.out_uint32_le(72); /* 72 bytes modulus len */
+    stream.out_uint32_be(0x00020000);
+    stream.out_uint32_be(0x3f000000);
+    stream.out_copy_bytes(pub_exp, 4); /* pub exp */
+    stream.out_copy_bytes(pub_mod, 64); /* pub mod */
+    stream.out_clear_bytes(8); /* pad */
+}
+
+
+static inline void recv_sec_tag_pubkey(Stream & stream, uint32_t & server_public_key_len, uint8_t* modulus, uint8_t* exponent)
 {
     /* Parse a public key structure */
-    uint8_t signature[SEC_MAX_MODULUS_SIZE];
-    uint32_t sig_len;
-
-    #warning check that. Why is it ok if signature len is not of the right size ?
-    #warning Use Exception instead of return value for error cases.
-    if (len != 72){
-        return 1;
+    uint32_t magic = stream.in_uint32_le();
+    if (magic != SEC_RSA_MAGIC) {
+        LOG(LOG_WARNING, "RSA magic 0x%x\n", magic);
+        throw Error(ERR_SEC_PARSE_PUB_KEY_MAGIC_NOT_OK);
     }
-    memset(signature, 0, sizeof(signature));
-    sig_len = len - 8;
-    memcpy(signature, stream.in_uint8p(sig_len), sig_len);
-    return ssl_sig_ok(exponent, SEC_EXPONENT_SIZE, modulus, server_public_key_len, signature, sig_len);
+    server_public_key_len = stream.in_uint32_le() - SEC_PADDING_SIZE;
+
+    if ((server_public_key_len < SEC_MODULUS_SIZE)
+    ||  (server_public_key_len > SEC_MAX_MODULUS_SIZE)) {
+        LOG(LOG_WARNING, "Bad server public key size (%u bits)\n", server_public_key_len * 8);
+        throw Error(ERR_SEC_PARSE_PUB_KEY_MODUL_NOT_OK);
+    }
+    stream.skip_uint8(8); /* modulus_bits, unknown */
+    memcpy(exponent, stream.in_uint8p(SEC_EXPONENT_SIZE), SEC_EXPONENT_SIZE);
+    memcpy(modulus, stream.in_uint8p(server_public_key_len), server_public_key_len);
+    stream.skip_uint8(SEC_PADDING_SIZE);
+
+    if (!stream.check()){
+        throw Error(ERR_SEC_PARSE_PUB_KEY_ERROR_CHECKING_STREAM);
+    }
+    LOG(LOG_DEBUG, "Got Public key, RDP4-style\n");
 }
+
 
 /* Parse a crypto information structure */
 static inline void rdp_sec_parse_crypt_info(Stream & stream, uint32_t *rc4_key_size,
@@ -461,40 +502,16 @@ static inline void rdp_sec_parse_crypt_info(Stream & stream, uint32_t *rc4_key_s
         while (stream.p < end) {
             tag = stream.in_uint16_le();
             length = stream.in_uint16_le();
+            #warning this should not be necessary any more as received tag are fully decoded (but we should check length does not lead accessing data out of buffer)
             next_tag = stream.p + length;
 
             switch (tag) {
             case SEC_TAG_PUBKEY:
-            {
-                /* Parse a public key structure */
-                uint32_t magic = stream.in_uint32_le();
-                if (magic != SEC_RSA_MAGIC) {
-                    LOG(LOG_WARNING, "RSA magic 0x%x\n", magic);
-                    throw Error(ERR_SEC_PARSE_PUB_KEY_MAGIC_NOT_OK);
-                }
-                server_public_key_len = stream.in_uint32_le() - SEC_PADDING_SIZE;
-
-                if ((server_public_key_len < SEC_MODULUS_SIZE)
-                ||  (server_public_key_len > SEC_MAX_MODULUS_SIZE)) {
-                    LOG(LOG_WARNING, "Bad server public key size (%u bits)\n", server_public_key_len * 8);
-                    throw Error(ERR_SEC_PARSE_PUB_KEY_MODUL_NOT_OK);
-                }
-                stream.skip_uint8(8); /* modulus_bits, unknown */
-                memcpy(exponent, stream.in_uint8p(SEC_EXPONENT_SIZE), SEC_EXPONENT_SIZE);
-                memcpy(modulus, stream.in_uint8p(server_public_key_len), server_public_key_len);
-                stream.skip_uint8(SEC_PADDING_SIZE);
-
-                if (!stream.check()){
-                    throw Error(ERR_SEC_PARSE_PUB_KEY_ERROR_CHECKING_STREAM);
-                }
-                LOG(LOG_DEBUG, "Got Public key, RDP4-style\n");
-            }
+                recv_sec_tag_pubkey(stream, server_public_key_len, modulus, exponent);
             break;
             case SEC_TAG_KEYSIG:
                 LOG(LOG_DEBUG, "SEC_TAG_KEYSIG RDP4-style\n");
-//                    if (!rdp_sec_parse_public_sig(stream, length, modulus, exponent, server_public_key_len)){
-//                        return 0;
-//                    }
+                recv_sec_tag_sig(stream, length);
                 break;
             default:
                 LOG(LOG_DEBUG, "unimplemented: crypt tag 0x%x\n", tag);
@@ -739,17 +756,11 @@ struct Sec
             close(fd);
         }
 
-        uint8_t pub_exp[24];
         uint8_t pub_sig[512];
 
-        memcpy(pub_exp, rsa_keys.pub_exp, 4);
         memcpy(pub_mod, rsa_keys.pub_mod, 64);
         memcpy(pub_sig, rsa_keys.pub_sig, 64);
         memcpy(pri_exp, rsa_keys.pri_exp, 64);
-
-        /* Same code above using list_test */
-        int num_channels = (int) channel_list.size();
-        int num_channels_even = num_channels + (num_channels & 1);
 
         Stream stream(8192);
 
@@ -796,13 +807,15 @@ struct Sec
         stream.out_uint8(0);
         stream.out_uint16_le(0xc001);
         stream.out_uint8(0);
-        stream.out_uint8(0x4d); /* M */
-        stream.out_uint8(0x63); /* c */
-        stream.out_uint8(0x44); /* D */
-        stream.out_uint8(0x6e); /* n */
-        stream.out_uint16_be(0x80fc + (num_channels_even * 2));
+        stream.out_copy_bytes("McDn", 4);
+
+        uint16_t num_channels = channel_list.size();
+        uint16_t padchan = num_channels & 1;
+
+        stream.out_uint16_be(0x8000 + 252 + (channel_list.size() + padchan) * 2); // len
 
         stream.out_uint16_le(SEC_TAG_SRV_INFO);
+        // length, including tag and length fields
         stream.out_uint16_le(8); /* len */
         stream.out_uint8(4); /* 4 = rdp5 1 = rdp4 */
         stream.out_uint8(0);
@@ -810,24 +823,25 @@ struct Sec
         stream.out_uint8(0);
 
         stream.out_uint16_le(SEC_TAG_SRV_CHANNELS);
-        stream.out_uint16_le(8 + (num_channels_even * 2)); /* len */
-        stream.out_uint16_le(MCS_GLOBAL_CHANNEL); /* 1003, 0x03eb main channel */
+        // length, including tag and length fields
+        stream.out_uint16_le(8 + (num_channels + padchan) * 2);
+        stream.out_uint16_le(MCS_GLOBAL_CHANNEL);
         stream.out_uint16_le(num_channels); /* number of other channels */
 
-        for (int index = 0; index < num_channels_even; index++) {
-            if (index < num_channels) {
+        for (int index = 0; index < num_channels; index++) {
                 stream.out_uint16_le(MCS_GLOBAL_CHANNEL + (index + 1));
-            } else {
-                stream.out_uint16_le( 0);
-            }
         }
+        if (padchan){
+            stream.out_uint16_le(0);
+        }
+
         stream.out_uint16_le(SEC_TAG_SRV_CRYPT);
-        stream.out_uint16_le(0x00ec); /* len is 236 */
-        stream.out_uint32_le(rc4_key_size); /* key len 1 = 40 bit 2 = 128 bit */
-        stream.out_uint32_le(client_info->crypt_level); /* crypt level 1 = low 2 = medium */
+        stream.out_uint16_le(236); // length, including tag and length fields
+        stream.out_uint32_le(rc4_key_size); // key len 1 = 40 bit 2 = 128 bit
+        stream.out_uint32_le(client_info->crypt_level); // crypt level 1 = low 2 = medium
         /* 3 = high */
-        stream.out_uint32_le(32);     /* 32 bytes random len */
-        stream.out_uint32_le(0xb8);   /* 184 bytes rsa info(certificate) len */
+        stream.out_uint32_le(32);  // random len
+        stream.out_uint32_le(184); // len of rsa info(certificate)
         stream.out_copy_bytes(this->server_random, 32);
         /* here to end is certificate */
         /* HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ */
@@ -836,21 +850,10 @@ struct Sec
         stream.out_uint32_le(1);
         stream.out_uint32_le(1);
 
-        stream.out_uint16_le(SEC_TAG_PUBKEY);
-        stream.out_uint16_le(92); /* 92 bytes length of SEC_TAG_PUBKEY */
-
-        stream.out_uint32_le(SEC_RSA_MAGIC);
-        stream.out_uint32_le(72); /* 72 bytes modulus len */
-        stream.out_uint32_be(0x00020000);
-        stream.out_uint32_be(0x3f000000);
-        stream.out_copy_bytes(pub_exp, 4); /* pub exp */
-        stream.out_copy_bytes(pub_mod, 64); /* pub mod */
-        stream.out_clear_bytes(8); /* pad */
-
-        stream.out_uint16_le(SEC_TAG_KEYSIG);
-        stream.out_uint16_le(72); /* len */
-        stream.out_copy_bytes(pub_sig, 64); /* pub sig */
-        stream.out_clear_bytes(8); /* pad */
+        // 96 bytes long of sec_tag pubkey
+        send_sec_tag_pubkey(stream, rsa_keys.pub_exp, pub_mod);
+        // 76 bytes long of sec_tag_pub_sig
+        send_sec_tag_sig(stream, pub_sig);
         /* end certificate */
 
         assert(offset_len_mcs_connect_response - offset_len_mcs_data == 38);
@@ -930,10 +933,8 @@ struct Sec
         rdp_sec_parse_crypt_info(stream, &rc4_key_size, server_random, modulus, exponent, server_public_key_len, crypt_level);
 
         /* Generate a client random, and determine encryption keys */
-        int fd;
-
         memset(client_random, 0x44, SEC_RANDOM_SIZE);
-        fd = open("/dev/urandom", O_RDONLY);
+        int fd = open("/dev/urandom", O_RDONLY);
         if (fd == -1) {
             fd = open("/dev/random", O_RDONLY);
         }
