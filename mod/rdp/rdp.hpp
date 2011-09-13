@@ -1314,6 +1314,7 @@ struct mod_rdp : public client_mod {
             if (length <= 4) {
                 return;
             }
+            #warning for SEC_TAG_XXX length provided includes headers (4 bytes tag and length)
             uint8_t *next_tag = (cr_stream.p + length) - 4;
             switch (tag) {
             case SEC_TAG_SRV_INFO:

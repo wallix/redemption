@@ -345,6 +345,7 @@ class Stream {
 
     void out_ber_len(unsigned int v){
         if (v >= 0x80) {
+            #warning works only for 2 bytes (16 bits) ber length
             this->out_uint8(0x82);
             this->out_uint16_be(v);
         }
@@ -353,8 +354,35 @@ class Stream {
         }
     }
 
+    void set_out_ber_len_uint7(unsigned int v, size_t offset){
+        if (v >= 0x80) {
+            LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
+            throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
+        }
+        this->set_out_uint8(v, offset+0);
+    }
+
+    void out_ber_len_uint7(unsigned int v){
+        if (v >= 0x80) {
+            LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
+            throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
+        }
+        this->out_uint8(v);
+    }
+
+    void set_out_ber_len_uint16(unsigned int v, size_t offset){
+        this->set_out_uint8(0x82, offset+0);
+        this->set_out_uint16_be(v, offset+1);
+    }
+
+    void out_ber_len_uint16(unsigned int v){
+        this->out_uint8(0x82);
+        this->out_uint16_be(v);
+    }
+
     void set_out_ber_len(unsigned int v, size_t offset){
         if (v>= 0x80){
+            #warning works only for 2 bytes (16 bits) ber length
             this->data[offset+0] = 0x82;
             this->set_out_uint16_be(v, offset+1);
         }
