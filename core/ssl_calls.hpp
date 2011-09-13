@@ -172,7 +172,7 @@ void ssl_cert_free(SSL_CERT * cert);
 
 int ssl_certs_ok(SSL_CERT * server_cert, SSL_CERT * cacert);
 
-SSL_RKEY * ssl_cert_to_rkey(SSL_CERT* cert, int & key_len);
+SSL_RKEY * ssl_cert_to_rkey(SSL_CERT* cert, uint32_t & key_len);
 
 int ssl_rkey_get_exp_mod(SSL_RKEY * rkey,
                          uint8_t* exponent, int max_exp_len,
