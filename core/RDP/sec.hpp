@@ -742,7 +742,6 @@ struct Sec
         uint8_t pub_exp[24];
         uint8_t pub_sig[512];
 
-
         memcpy(pub_exp, rsa_keys.pub_exp, 4);
         memcpy(pub_mod, rsa_keys.pub_mod, 64);
         memcpy(pub_sig, rsa_keys.pub_sig, 64);
@@ -752,82 +751,13 @@ struct Sec
         int num_channels = (int) channel_list.size();
         int num_channels_even = num_channels + (num_channels & 1);
 
-        Stream data(8192);
-
-        data.out_uint16_be(5);
-        data.out_uint16_be(0x14);
-        data.out_uint8(0x7c);
-        data.out_uint16_be(1);
-        data.out_uint8(0x2a);
-        data.out_uint8(0x14);
-        data.out_uint8(0x76);
-        data.out_uint8(0x0a);
-        data.out_uint8(1);
-        data.out_uint8(1);
-        data.out_uint8(0);
-        data.out_uint16_le(0xc001);
-        data.out_uint8(0);
-        data.out_uint8(0x4d); /* M */
-        data.out_uint8(0x63); /* c */
-        data.out_uint8(0x44); /* D */
-        data.out_uint8(0x6e); /* n */
-        data.out_uint16_be(0x80fc + (num_channels_even * 2));
-        data.out_uint16_le(SEC_TAG_SRV_INFO);
-        data.out_uint16_le(8); /* len */
-        data.out_uint8(4); /* 4 = rdp5 1 = rdp4 */
-        data.out_uint8(0);
-        data.out_uint8(8);
-        data.out_uint8(0);
-        data.out_uint16_le(SEC_TAG_SRV_CHANNELS);
-        data.out_uint16_le(8 + (num_channels_even * 2)); /* len */
-        data.out_uint16_le(MCS_GLOBAL_CHANNEL); /* 1003, 0x03eb main channel */
-        data.out_uint16_le(num_channels); /* number of other channels */
-
-        for (int index = 0; index < num_channels_even; index++) {
-            if (index < num_channels) {
-                data.out_uint16_le(MCS_GLOBAL_CHANNEL + (index + 1));
-            } else {
-                data.out_uint16_le( 0);
-            }
-        }
-        data.out_uint16_le(SEC_TAG_SRV_CRYPT);
-        data.out_uint16_le(0x00ec); /* len is 236 */
-        data.out_uint32_le(rc4_key_size); /* key len 1 = 40 bit 2 = 128 bit */
-        data.out_uint32_le(client_info->crypt_level); /* crypt level 1 = low 2 = medium */
-        /* 3 = high */
-        data.out_uint32_le(32);     /* 32 bytes random len */
-        data.out_uint32_le(0xb8);   /* 184 bytes rsa info(certificate) len */
-        data.out_copy_bytes(this->server_random, 32);
-        /* here to end is certificate */
-        /* HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ */
-        /* TermService\Parameters\Certificate */
-        data.out_uint32_le(1);
-        data.out_uint32_le(1);
-        data.out_uint32_le(1);
-        data.out_uint16_le(SEC_TAG_PUBKEY);
-        data.out_uint16_le(0x005c); /* 92 bytes length of SEC_TAG_PUBKEY */
-        data.out_uint32_le(SEC_RSA_MAGIC);
-        data.out_uint32_le(0x48); /* 72 bytes modulus len */
-        data.out_uint32_be(0x00020000);
-        data.out_uint32_be(0x3f000000);
-        data.out_copy_bytes(pub_exp, 4); /* pub exp */
-        data.out_copy_bytes(pub_mod, 64); /* pub mod */
-        data.out_clear_bytes(8); /* pad */
-        data.out_uint16_le(SEC_TAG_KEYSIG);
-        data.out_uint16_le(72); /* len */
-        data.out_copy_bytes(pub_sig, 64); /* pub sig */
-        data.out_clear_bytes(8); /* pad */
-        /* end certificate */
-        data.mark_end();
-
-//        LOG(LOG_INFO, send_connect_response");
-        #warning why don't we build directly in final data buffer ? Instead of building in data and copying in stream ?
         Stream stream(8192);
+
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
-        int data_len = data.end - data.data;
         stream.out_uint16_be(BER_TAG_MCS_CONNECT_RESPONSE);
-        stream.out_ber_len(data_len + 38);
+        uint32_t offset_len_mcs_connect_response = stream.p - stream.data;
+        stream.out_ber_len(1024); // placeholder to force len >= 128 (3 bytes)
 
         stream.out_uint8(BER_TAG_RESULT);
         stream.out_uint8(1);
@@ -849,9 +779,87 @@ struct Sec
         stream.out_ber_int8(2);
 
         stream.out_uint8(BER_TAG_OCTET_STRING);
-        stream.out_ber_len(data_len);
+        uint32_t offset_len_mcs_data = stream.p - stream.data;
+        stream.out_ber_len(1024); // placeholder to force > 128 offset (3 bytes)
+
         /* mcs data */
-        stream.out_copy_bytes(data.data, data_len);
+        stream.out_uint16_be(5);
+        stream.out_uint16_be(0x14);
+        stream.out_uint8(0x7c);
+        stream.out_uint16_be(1);
+        stream.out_uint8(0x2a);
+        stream.out_uint8(0x14);
+        stream.out_uint8(0x76);
+        stream.out_uint8(0x0a);
+        stream.out_uint8(1);
+        stream.out_uint8(1);
+        stream.out_uint8(0);
+        stream.out_uint16_le(0xc001);
+        stream.out_uint8(0);
+        stream.out_uint8(0x4d); /* M */
+        stream.out_uint8(0x63); /* c */
+        stream.out_uint8(0x44); /* D */
+        stream.out_uint8(0x6e); /* n */
+        stream.out_uint16_be(0x80fc + (num_channels_even * 2));
+
+        stream.out_uint16_le(SEC_TAG_SRV_INFO);
+        stream.out_uint16_le(8); /* len */
+        stream.out_uint8(4); /* 4 = rdp5 1 = rdp4 */
+        stream.out_uint8(0);
+        stream.out_uint8(8);
+        stream.out_uint8(0);
+
+        stream.out_uint16_le(SEC_TAG_SRV_CHANNELS);
+        stream.out_uint16_le(8 + (num_channels_even * 2)); /* len */
+        stream.out_uint16_le(MCS_GLOBAL_CHANNEL); /* 1003, 0x03eb main channel */
+        stream.out_uint16_le(num_channels); /* number of other channels */
+
+        for (int index = 0; index < num_channels_even; index++) {
+            if (index < num_channels) {
+                stream.out_uint16_le(MCS_GLOBAL_CHANNEL + (index + 1));
+            } else {
+                stream.out_uint16_le( 0);
+            }
+        }
+        stream.out_uint16_le(SEC_TAG_SRV_CRYPT);
+        stream.out_uint16_le(0x00ec); /* len is 236 */
+        stream.out_uint32_le(rc4_key_size); /* key len 1 = 40 bit 2 = 128 bit */
+        stream.out_uint32_le(client_info->crypt_level); /* crypt level 1 = low 2 = medium */
+        /* 3 = high */
+        stream.out_uint32_le(32);     /* 32 bytes random len */
+        stream.out_uint32_le(0xb8);   /* 184 bytes rsa info(certificate) len */
+        stream.out_copy_bytes(this->server_random, 32);
+        /* here to end is certificate */
+        /* HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ */
+        /* TermService\Parameters\Certificate */
+        stream.out_uint32_le(1);
+        stream.out_uint32_le(1);
+        stream.out_uint32_le(1);
+
+        stream.out_uint16_le(SEC_TAG_PUBKEY);
+        stream.out_uint16_le(92); /* 92 bytes length of SEC_TAG_PUBKEY */
+
+        stream.out_uint32_le(SEC_RSA_MAGIC);
+        stream.out_uint32_le(72); /* 72 bytes modulus len */
+        stream.out_uint32_be(0x00020000);
+        stream.out_uint32_be(0x3f000000);
+        stream.out_copy_bytes(pub_exp, 4); /* pub exp */
+        stream.out_copy_bytes(pub_mod, 64); /* pub mod */
+        stream.out_clear_bytes(8); /* pad */
+
+        stream.out_uint16_le(SEC_TAG_KEYSIG);
+        stream.out_uint16_le(72); /* len */
+        stream.out_copy_bytes(pub_sig, 64); /* pub sig */
+        stream.out_clear_bytes(8); /* pad */
+        /* end certificate */
+
+        assert(offset_len_mcs_connect_response - offset_len_mcs_data == 38);
+
+        #warning create a function in stream that sets differed ber_len_offsets
+        // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
+        stream.set_out_ber_len(stream.p - stream.data - offset_len_mcs_data - 3, offset_len_mcs_data);
+        // set BER_TAG_MCS_CONNECT_RESPONSE len
+        stream.set_out_ber_len(stream.p - stream.data - offset_len_mcs_connect_response - 3, offset_len_mcs_connect_response);
 
         tpdu.end();
         tpdu.send(trans);
