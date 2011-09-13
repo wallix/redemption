@@ -45,6 +45,7 @@ struct server_rdp {
     uint32_t packet_number;
     Transport * trans;
     uint16_t userid;
+    uint8_t pub_mod[512];
 
     server_rdp(Transport * trans, Inifile * ini)
         :
@@ -471,7 +472,7 @@ struct server_rdp {
                 &this->client_info,
                 channel_list);
 
-        this->sec_layer.send_mcs_connect_response_pdu_with_gcc_conference_create_response(this->trans, &this->client_info, channel_list, this->sec_layer.encrypt.rc4_key_size);
+        this->sec_layer.send_mcs_connect_response_pdu_with_gcc_conference_create_response(this->trans, &this->client_info, channel_list, this->sec_layer.encrypt.rc4_key_size, this->pub_mod);
 
         // Channel Connection
         // ------------------
@@ -804,7 +805,7 @@ struct server_rdp {
 
         ssl_mod_exp(this->sec_layer.client_random, 64,
                 this->sec_layer.client_crypt_random, 64,
-                this->sec_layer.pub_mod, 64,
+                this->pub_mod, 64,
                 this->sec_layer.pri_exp, 64);
 
         // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client

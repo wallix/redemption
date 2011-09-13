@@ -651,7 +651,6 @@ struct Sec
     uint8_t server_random[32];
     uint8_t client_random[64];
 
-    uint8_t pub_mod[512];
     uint8_t pub_sig[512];
     uint8_t pri_exp[512];
 
@@ -722,7 +721,13 @@ struct Sec
 
 
 
-    void send_mcs_connect_response_pdu_with_gcc_conference_create_response(Transport * trans, ClientInfo * client_info, const ChannelList & channel_list, int rc4_key_size) throw(Error)
+    void send_mcs_connect_response_pdu_with_gcc_conference_create_response(
+                                            Transport * trans,
+                                            ClientInfo * client_info,
+                                            const ChannelList & channel_list,
+                                            int rc4_key_size,
+                                            uint8_t (&pub_mod)[512]
+                                        ) throw(Error)
     {
         Rsakeys rsa_keys(CFG_PATH "/" RSAKEYS_INI);
         memset(this->server_random, 0x44, 32);
@@ -739,7 +744,7 @@ struct Sec
         uint8_t pub_exp[24];
 
         memcpy(pub_exp, rsa_keys.pub_exp, 4);
-        memcpy(this->pub_mod, rsa_keys.pub_mod, 64);
+        memcpy(pub_mod, rsa_keys.pub_mod, 64);
         memcpy(this->pub_sig, rsa_keys.pub_sig, 64);
         memcpy(this->pri_exp, rsa_keys.pri_exp, 64);
 
@@ -806,7 +811,7 @@ struct Sec
         data.out_uint32_be(0x00020000);
         data.out_uint32_be(0x3f000000);
         data.out_copy_bytes(pub_exp, 4); /* pub exp */
-        data.out_copy_bytes(this->pub_mod, 64); /* pub mod */
+        data.out_copy_bytes(pub_mod, 64); /* pub mod */
         data.out_clear_bytes(8); /* pad */
         data.out_uint16_le(SEC_TAG_KEYSIG);
         data.out_uint16_le(72); /* len */
