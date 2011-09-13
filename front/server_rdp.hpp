@@ -46,6 +46,7 @@ struct server_rdp {
     Transport * trans;
     uint16_t userid;
     uint8_t pub_mod[512];
+    uint8_t pri_exp[512];
 
     server_rdp(Transport * trans, Inifile * ini)
         :
@@ -472,7 +473,7 @@ struct server_rdp {
                 &this->client_info,
                 channel_list);
 
-        this->sec_layer.send_mcs_connect_response_pdu_with_gcc_conference_create_response(this->trans, &this->client_info, channel_list, this->sec_layer.encrypt.rc4_key_size, this->pub_mod);
+        this->sec_layer.send_mcs_connect_response_pdu_with_gcc_conference_create_response(this->trans, &this->client_info, channel_list, this->sec_layer.encrypt.rc4_key_size, this->pub_mod, this->pri_exp);
 
         // Channel Connection
         // ------------------
@@ -802,11 +803,10 @@ struct server_rdp {
 
         memcpy(this->sec_layer.client_crypt_random, stream.in_uint8p(64), 64);
 
-
         ssl_mod_exp(this->sec_layer.client_random, 64,
                 this->sec_layer.client_crypt_random, 64,
                 this->pub_mod, 64,
-                this->sec_layer.pri_exp, 64);
+                this->pri_exp, 64);
 
         // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
         #warning looks like decrypt sign key is never used, if it's true remove it from CryptContext
