@@ -1317,7 +1317,7 @@ struct mod_rdp : public client_mod {
             #warning for SEC_TAG_XXX length provided includes headers (4 bytes tag and length)
             uint8_t *next_tag = (cr_stream.p + length) - 4;
             switch (tag) {
-            case SEC_TAG_SRV_INFO:
+            case SC_CORE:
             {
                 uint16_t rdp_version = cr_stream.in_uint16_le();
                 LOG(LOG_DEBUG, "Server RDP version is %d\n", rdp_version);
@@ -1328,10 +1328,10 @@ struct mod_rdp : public client_mod {
                 }
             }
             break;
-            case SEC_TAG_SRV_CRYPT:
+            case SC_SECURITY:
                 this->rdp_layer.sec_layer.rdp_sec_process_crypt_info(cr_stream, this->rdp_layer.sec_layer.server_public_key_len, this->rdp_layer.sec_layer.crypt_level);
             break;
-            case SEC_TAG_SRV_CHANNELS:
+            case SC_NET:
                 // map front channels to mod channels
                     #warning we should have mod_rdp and front channel lists
                  process_srv_channels(cr_stream, this->front.get_channel_list(), channel_list);
