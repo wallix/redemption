@@ -764,34 +764,54 @@ struct Sec
 
         Stream stream(8192);
 
+        // TPKT Header (length = 337 bytes)
+        // X.224 Data TPDU
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
+        // BER: Application-Defined Type = APPLICATION 102 = Connect-Response
         stream.out_uint16_be(BER_TAG_MCS_CONNECT_RESPONSE);
         uint32_t offset_len_mcs_connect_response = stream.p - stream.data;
+        // BER: Type Length
         stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
+        // Connect-Response::result = rt-successful (0)
+        // The first byte (0x0a) is the ASN.1 BER encoded Enumerated type. The
+        // length of the value is given by the second byte (1 byte), and the
+        // actual value is 0 (rt-successful).
         stream.out_uint8(BER_TAG_RESULT);
         stream.out_ber_len_uint7(1);
         stream.out_uint8(0);
 
+        // Connect-Response::calledConnectId = 0
         stream.out_uint8(BER_TAG_INTEGER);
         stream.out_ber_len_uint7(1);
         stream.out_uint8(0);
 
+        // Connect-Response::domainParameters (26 bytes)
         stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
         stream.out_ber_len_uint7(26);
-        stream.out_ber_int8(22); // max_channels
-        stream.out_ber_int8(3); // max_users
-        stream.out_ber_int8(0); // max_tokens
-        stream.out_ber_int8(1);
+        // DomainParameters::maxChannelIds = 34
+        stream.out_ber_int8(22);
+        // DomainParameters::maxUserIds = 3
+        stream.out_ber_int8(3);
+        // DomainParameters::maximumTokenIds = 0
         stream.out_ber_int8(0);
+        // DomainParameters::numPriorities = 1
         stream.out_ber_int8(1);
-        stream.out_ber_int24(0xfff8); // max_pdu_size
+        // DomainParameters::minThroughput = 0
+        stream.out_ber_int8(0);
+        // DomainParameters::maxHeight = 1
+        stream.out_ber_int8(1);
+        // DomainParameters::maxMCSPDUsize = 65528
+        stream.out_ber_int24(0xfff8);
+        // DomainParameters::protocolVersion = 2
         stream.out_ber_int8(2);
 
+        // Connect-Response::userData (287 bytes)
         stream.out_uint8(BER_TAG_OCTET_STRING);
         uint32_t offset_len_mcs_data = stream.p - stream.data;
         stream.out_ber_len_uint16(0); // filled later, 3 bytes
+
 
         // GCC Conference Create Response
         // ------------------------------
@@ -799,94 +819,77 @@ struct Sec
         // ConferenceCreateResponse Parameters
         // -----------------------------------
 
-        // Conference Name           : Mandatory(=)
+        // Generic definitions used in parameter descriptions:
 
-//Conference Name: Name by which the conference to be created is identified. This consists of a
-//numerical string along with an optional Unicode Row 00 text string, from zero to 255 characters
-//each. If both forms of a Conference Name are used, if a node wishes to join this conference, it may
-//specify either form of the name in the join request. In the join request, a numeric value will
-//necessarily be included in numeric variant of the Conference Name. As a result, use of a text
-//Conference Name including only numeric characters will never be compared against and therefore
-//should not be used – that is, the text variant of the Conference Name should include at least one
-//non-numeric character.
+        // simpleTextFirstCharacter UniversalString ::= {0, 0, 0, 0}
 
+        // simpleTextLastCharacter UniversalString ::= {0, 0, 0, 255}
 
-        // A numerical string and an optional Unicode Row 00 text string
-        // identifying the conference. If both forms of Conference Name are used
-        // when a conference is created, when that conference is joined, either
-        // form may be specified to indicate the conference to be joined.
+        // SimpleTextString ::=  BMPString (SIZE (0..255)) (FROM (simpleTextFirstCharacter..simpleTextLastCharacter))
 
-        // Conference Name Modifier  : Conditional
+        // TextString ::= BMPString (SIZE (0..255)) -- Basic Multilingual Plane of ISO/IEC 10646-1 (Unicode)
 
-        // If the GCC-Conference-Create response includes a Conference Name
-        // Modifier parameter, the GCC Provider (now the Top GCC Provider) shall
-        // retain this name modifier for later use in handling the conference
-        // query, conference join, and conference invite procedures.
+        // SimpleNumericString ::= NumericString (SIZE (1..255)) (FROM ("0123456789"))
 
-        // Conference Name Modifier: If the requesting or responding node is
-        // already joined to a conference with the same Conference Name (either
-        // numerical or text portion) as that included in the request, this
-        // parameter shall also be included in the corresponding request or
-        // response primitive. The value of this parameter shall be unique
-        // among all conferences at the corresponding node which have this
-        // Conference Name. This modifier, if included, shall be used as the
-        // Called Node Conference Name Modifier parameter in a
-        // GCC-Conference-Join request by another node attempting to join the
-        // conference through a direct connection with the corresponding node.
-        // This modifier is also included in the response to a
-        // GCC-Conference-Query directed at this node. This parameter is a
-        // numerical string up to 255 digits in length.
+        // DynamicChannelID ::= INTEGER (1001..65535) -- Those created and deleted by MCS
 
-        // Conference ID             : Mandatory(=)
+        // UserID ::= DynamicChannelID
 
-        // Conference ID: Locally-allocated identifier of the newly-created
-        // conference. All subsequent references to the conference are made
-        // using the Conference ID as a unique identifier. The Conference ID
-        // shall be identical with the MCS Domain Selector used locally to
-        // identify the MCS Domain associated with the conference.
+        // H221NonStandardIdentifier ::= OCTET STRING (SIZE (4..255))
+        //      -- First four octets shall be country code and
+        //      -- Manufacturer code, assigned as specified in
+        //      -- Annex A/H.221 for NS-cap and NS-comm
 
-        // The Conference ID is sent as part of the MCS-Connect-Provider request
-        // as the Calling Domain Selector.
+        // Key ::= CHOICE   -- Identifier of a standard or non-standard object
+        // {
+        //      object              OBJECT IDENTIFIER,
+        //      h221NonStandard     H221NonStandardIdentifier
+        // }
 
+        // UserData ::= SET OF SEQUENCE
+        // {
+        //      key     Key,
+        //      value   OCTET STRING OPTIONAL
+        // }
 
-        // Domain Parameters         : Mandatory
-
-        // Domain Parameters: Domain parameters to be included in the
-        // MCS-Connect-Provider primitive on establishing an MCS connection.
-        // See [ITU-T T.122] for the interpretation of this parameter.
-
-
-        // Quality of Service        : Mandatory
-
-        // Quality of Service: Quality of Service parameters to be included in
-        // the MCS-Connect-Provider primitive on establishing an MCS connection.
-        // See [ITU-T T.122] for the interpretation of this parameter.
-
-
-        // Local Network Address     : Optional
-
-//Local Network Address: If included in either the request or response, the local GCC Provider at the
-//corresponding node shall use this information to include as the Network Address parameter in the
-//Conference Descriptor List sent as part of the response to a GCC-Conference-Query request from
-//another node. In the GCC protocol, this parameter is reflected by ASN.1 structures NetworkAddress
-//and NetworkAddressV2. See Annex B for the description and use of these.
+        // ConferenceCreateResponse ::= SEQUENCE
+        // {    -- MCS-Connect-Provider response user data
+        //      nodeID              UserID, -- Node ID of the sending node
+        //      tag                 INTEGER,
+        //      result              ENUMERATED
+        //      {
+        //          success                         (0),
+        //          userRejected                    (1),
+        //          resourcesNotAvailable           (2),
+        //          rejectedForSymmetryBreaking     (3),
+        //          lockedConferenceNotSupported    (4),
+        //          ...
+        //      },
+        //      userData            UserData OPTIONAL,
+        //      ...
+        //}
 
 
         // User Data                 : Optional
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-//User Data: Optional user data which may be used for functions outside the scope of this
-//Recommendation such as authentication, billing, etc.
+        // User Data: Optional user data which may be used for functions outside
+        // the scope of this Recommendation such as authentication, billing,
+        // etc.
 
         // Result                    : Mandatory
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-//Result: An indication of whether the request was accepted or rejected, and if rejected, the reason
-//why. It contains one of a list of possible results: successful, user rejected, resources not available,
-//rejected for symmetry-breaking, locked conference not supported, Conference Name and Conference
-//Name Modifier already exist, domain parameters unacceptable, domain not hierarchical, lower-layer
-//initiated disconnect, unspecified failure to connect. A negative result in the GCC-Conference-Create
-//confirm does not imply that the physical connection to the node to which the connection was being
-//attempted is disconnected.
-
+        // An indication of whether the request was accepted or rejected, and if
+        // rejected, the reason why. It contains one of a list of possible
+        // results: successful, user rejected, resources not available, rejected
+        // for symmetry-breaking, locked conference not supported, Conference
+        // Name and Conference Name Modifier already exist, domain parameters
+        // unacceptable, domain not hierarchical, lower-layer initiated
+        // disconnect, unspecified failure to connect. A negative result in the
+        // GCC-Conference-Create confirm does not imply that the physical
+        // connection to the node to which the connection was being attempted
+        // is disconnected.
 
         // The ConferenceCreateResponse PDU is shown in Table 8-4. The Node ID
         // parameter, which is the User ID assigned by MCS in response to the
@@ -913,26 +916,88 @@ struct Sec
         // | User Data (opt.) | Response         | Confirm                  |
         // +------------------+------------------+--------------------------+
 
+        //PER encoded (ALIGNED variant of BASIC-PER) GCC Connection Data (ConnectData):
+        // 00 05 00
+        // 14 7c 00 01
+        // 2a
+        // 14 76 0a 01 01 00 01 c0 00 4d 63 44 6e
+        // 81 08
+
+
+        // 00 05 -> Key::object length = 5 bytes
+        // 00 14 7c 00 01 -> Key::object = { 0 0 20 124 0 1 }
         stream.out_uint16_be(5);
-        stream.out_uint16_be(0x14);
-        stream.out_uint8(0x7c);
-        stream.out_uint16_be(1);
+        stream.out_copy_bytes("\x00\x14\x7c\x00\x01", 5);
+
+
+        // 2a -> ConnectData::connectPDU length = 42 bytes
+        // This length MUST be ignored by the client.
         stream.out_uint8(0x2a);
-        stream.out_uint8(0x14);
-        stream.out_uint8(0x76);
-        stream.out_uint8(0x0a);
+
+        // PER encoded (ALIGNED variant of BASIC-PER) GCC Conference Create Response
+        // PDU:
+        // 14 76 0a 01 01 00 01 c0 00 00 4d 63 44 6e 81 08
+
+        // 0x14:
+        // 0 - extension bit (ConnectGCCPDU)
+        // 0 - --\
+        // 0 -   | CHOICE: From ConnectGCCPDU select conferenceCreateResponse (1)
+        // 1 - --/ of type ConferenceCreateResponse
+        // 0 - extension bit (ConferenceCreateResponse)
+        // 1 - ConferenceCreateResponse::userData present
+        // 0 - padding
+        // 0 - padding
+        stream.out_uint8(0x10 | 4);
+
+        // ConferenceCreateResponse::nodeID
+        //  = 0x760a + 1001 = 30218 + 1001 = 31219
+        //  (minimum for UserID is 1001)
+        stream.out_uint16_le(0x760a);
+
+        // ConferenceCreateResponse::tag length = 1 byte
         stream.out_uint8(1);
+
+        // ConferenceCreateResponse::tag = 1
         stream.out_uint8(1);
+
+        // 0x00:
+        // 0 - extension bit (Result)
+        // 0 - --\
+        // 0 -   | ConferenceCreateResponse::result = success (0)
+        // 0 - --/
+        // 0 - padding
+        // 0 - padding
+        // 0 - padding
+        // 0 - padding
         stream.out_uint8(0);
-        stream.out_uint16_le(0xc001);
+
+        // number of UserData sets = 1
+        stream.out_uint8(1);
+
+        // 0xc0:
+        // 1 - UserData::value present
+        // 1 - CHOICE: From Key select h221NonStandard (1)
+        //               of type H221NonStandardIdentifier
+        // 0 - padding
+        // 0 - padding
+        // 0 - padding
+        // 0 - padding
+        // 0 - padding
+        // 0 - padding
+        stream.out_uint8(0xc0);
+
+        // h221NonStandard length = 0 + 4 = 4 octets
+        //   (minimum for H221NonStandardIdentifier is 4)
         stream.out_uint8(0);
+
+        // h221NonStandard (server-to-client H.221 key) = "McDn"
         stream.out_copy_bytes("McDn", 4);
 
         uint16_t padding = channel_list.size() & 1;
         uint16_t srv_channel_size = 8 + (channel_list.size() + padding) * 2;
         stream.out_2BUE(8 + srv_channel_size + 236); // len
 
-        stream.out_uint16_le(SEC_TAG_SRV_INFO);
+        stream.out_uint16_le(SC_CORE);
         // length, including tag and length fields
         stream.out_uint16_le(8); /* len */
         stream.out_uint8(4); /* 4 = rdp5 1 = rdp4 */
@@ -942,6 +1007,29 @@ struct Sec
 
         uint16_t num_channels = channel_list.size();
         uint16_t padchan = num_channels & 1;
+
+//01 0c 0c 00 -> TS_UD_HEADER::type = SC_CORE (0x0c01), length = 12
+//bytes
+
+//04 00 08 00 -> TS_UD_SC_CORE::version = 0x0008004
+//00 00 00 00 -> TS_UD_SC_CORE::clientRequestedProtocols = PROTOCOL_RDP
+
+//03 0c 10 00 -> TS_UD_HEADER::type = SC_NET (0x0c03), length = 16 bytes
+
+//eb 03 -> TS_UD_SC_NET::MCSChannelID = 0x3eb = 1003 (I/O channel)
+//03 00 -> TS_UD_SC_NET::channelCount = 3
+//ec 03 -> channel0 = 0x3ec = 1004 (rdpdr)
+//ed 03 -> channel1 = 0x3ed = 1005 (cliprdr)
+//ee 03 -> channel2 = 0x3ee = 1006 (rdpsnd)
+//00 00 -> padding
+
+//02 0c ec 00 -> TS_UD_HEADER::type = SC_SECURITY, length = 236
+
+//02 00 00 00 -> TS_UD_SC_SEC1::encryptionMethod = 128BIT_ENCRYPTION_FLAG
+//02 00 00 00 -> TS_UD_SC_SEC1::encryptionLevel = TS_ENCRYPTION_LEVEL_CLIENT_COMPATIBLE
+//20 00 00 00 -> TS_UD_SC_SEC1::serverRandomLen = 32 bytes
+//b8 00 00 00 -> TS_UD_SC_SEC1::serverCertLen = 184 bytes
+
 
         stream.out_uint16_le(SEC_TAG_SRV_CHANNELS);
         // length, including tag and length fields
