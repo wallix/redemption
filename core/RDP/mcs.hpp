@@ -1401,12 +1401,9 @@ static inline void recv_mcs_channel_join_confirm_pdu(Transport * trans, uint16_t
         throw Error(ERR_MCS_RECV_CJCF_EMPTY);
     }
     mcs_userid = cjcf_stream.in_uint16_be();
-    req_chanid = cjcf_stream.in_uint16_be();
+    req_chanid = join_chanid = cjcf_stream.in_uint16_be();
     if (opcode & 2) {
         join_chanid = cjcf_stream.in_uint16_be();
-    }
-    else {
-        join_chanid = req_chanid;
     }
     LOG(LOG_INFO, "recv_mcs_channel_join_confirm_pdu opcode=%u userid=%u req_chanid=%u join_chanid=%u", opcode, mcs_userid, req_chanid, join_chanid);
     cjcf_tpdu.end();
