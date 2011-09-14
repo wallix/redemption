@@ -1031,7 +1031,7 @@ struct Sec
 //b8 00 00 00 -> TS_UD_SC_SEC1::serverCertLen = 184 bytes
 
 
-        stream.out_uint16_le(SEC_TAG_SRV_CHANNELS);
+        stream.out_uint16_le(SC_NET);
         // length, including tag and length fields
         stream.out_uint16_le(8 + (num_channels + padchan) * 2);
         stream.out_uint16_le(MCS_GLOBAL_CHANNEL);
@@ -1044,7 +1044,7 @@ struct Sec
             stream.out_uint16_le(0);
         }
 
-        stream.out_uint16_le(SEC_TAG_SRV_CRYPT);
+        stream.out_uint16_le(SC_SECURITY);
         stream.out_uint16_le(236); // length, including tag and length fields
         stream.out_uint32_le(rc4_key_size); // key len 1 = 40 bit 2 = 128 bit
         stream.out_uint32_le(client_info->crypt_level); // crypt level 1 = low 2 = medium
