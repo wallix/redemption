@@ -100,19 +100,10 @@ enum {
     SEC_LOGON_INFO    = 0x0040,
     SEC_LICENCE_NEG   = 0x0080,
 
-    SEC_TAG_SRV_INFO     = 0x0c01,
-    SEC_TAG_SRV_CRYPT    = 0x0c02,
-    SEC_TAG_SRV_CHANNELS = 0x0c03,
+    SEC_TAG_PUBKEY    = 0x0006,
+    SEC_TAG_KEYSIG    = 0x0008,
 
-    SEC_TAG_CLI_INFO     = 0xc001,
-    SEC_TAG_CLI_CRYPT    = 0xc002,
-    SEC_TAG_CLI_CHANNELS = 0xc003,
-    SEC_TAG_CLI_4        = 0xc004,
-
-    SEC_TAG_PUBKEY       = 0x0006,
-    SEC_TAG_KEYSIG       = 0x0008,
-
-    SEC_RSA_MAGIC        = 0x31415352, /* RSA1 */
+    SEC_RSA_MAGIC     = 0x31415352, /* RSA1 */
 };
 
 enum DATA_BLOCK_TYPE {
