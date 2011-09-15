@@ -264,25 +264,6 @@ struct Sec
 
     ~Sec() {}
 
-
-    /* TODO: this function is not working well because it is stopping copy / paste
-       what is required is to stop data from server to client. What we need to do is
-       to recover clip_flags, send it to rdp_process_redirect_pdu. After that, we
-       need to pass this flags to session_send_to_channel and before doing the
-       stream.out_uint8a(data, data_len), we need to do stream.out_uint16_le(clip_flags)*/
-
-    int clipboard_check(char* name, bool clipboard)
-    {
-      if (!clipboard)
-      {
-        if (strcmp("cliprdr", name) == 0)
-        {
-          return 1;
-        }
-      }
-      return 0;
-    }
-
 };
 
 static inline void recv_security_exchange_PDU(
