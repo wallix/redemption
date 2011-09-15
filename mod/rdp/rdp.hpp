@@ -450,7 +450,10 @@ struct mod_rdp : public client_mod {
             //    |------Security Exchange PDU ---------------------------> |
 
             LOG(LOG_INFO, "sec_layer.security_exchange_PDU");
-            this->rdp_layer.sec_layer.send_security_exchange_PDU(trans, this->rdp_layer.userid);
+            send_security_exchange_PDU(trans,
+                this->rdp_layer.userid,
+                this->rdp_layer.sec_layer.server_public_key_len,
+                this->rdp_layer.sec_layer.client_crypt_random);
 
             // Secure Settings Exchange
             // ------------------------
