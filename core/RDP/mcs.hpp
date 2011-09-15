@@ -28,6 +28,8 @@
 #include "RDP/x224.hpp"
 #include "channel_list.hpp"
 
+#warning ssl calls introduce some dependency on ssl system library, injecting it in the sec object would be better.
+#include "ssl_calls.hpp"
 
 class McsOut
 {
@@ -1544,5 +1546,708 @@ static inline void send_mcs_attach_user_confirm_pdu(Transport * trans, uint16_t 
     tpdu.send(trans);
 }
 
+
+
+
+// 48-byte transformation used to generate master secret (6.1) and key material (6.2.2).
+// Both SHA1 and MD5 algorithms are used.
+static inline void sec_hash_48(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2, const uint8_t salt)
+{
+    uint8_t shasig[20];
+    uint8_t pad[4];
+    SSL_SHA1 sha1;
+    SSL_MD5 md5;
+
+    ssllib ssl;
+
+    for (int i = 0; i < 3; i++) {
+        memset(pad, salt + i, i + 1);
+
+        ssl.sha1_init(&sha1);
+        ssl.sha1_update(&sha1, pad, i + 1);
+        ssl.sha1_update(&sha1, in, 48);
+        ssl.sha1_update(&sha1, salt1, 32);
+        ssl.sha1_update(&sha1, salt2, 32);
+        ssl.sha1_final(&sha1, shasig);
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, in, 48);
+        ssl.md5_update(&md5, shasig, 20);
+        ssl.md5_final(&md5, &out[i * 16]);
+    }
+}
+
+
+// 16-byte transformation used to generate export keys (6.2.2).
+static inline void sec_hash_16(uint8_t* out, const uint8_t* in, const uint8_t* salt1, const uint8_t* salt2)
+{
+    SSL_MD5 md5;
+
+    ssllib ssl;
+
+    ssl.md5_init(&md5);
+    ssl.md5_update(&md5, in, 16);
+    ssl.md5_update(&md5, salt1, 32);
+    ssl.md5_update(&md5, salt2, 32);
+    ssl.md5_final(&md5, out);
+}
+
+inline static void rdp_sec_generate_keys(CryptContext & encrypt, CryptContext & decrypt, uint8_t (& sign_key)[16], uint8_t *client_random, uint8_t *server_random, uint32_t rc4_key_size)
+{
+    uint8_t pre_master_secret[48];
+    uint8_t master_secret[48];
+    uint8_t key_block[48];
+
+    /* Construct pre-master secret (session key) */
+    memcpy(pre_master_secret, client_random, 24);
+    memcpy(pre_master_secret + 24, server_random, 24);
+
+    /* Generate master secret and then key material */
+    sec_hash_48(master_secret, pre_master_secret, client_random, server_random, 'A');
+    sec_hash_48(key_block, master_secret, client_random, server_random, 'X');
+
+    /* First 16 bytes of key material is MAC secret */
+    memcpy(sign_key, key_block, 16);
+
+    /* Generate export keys from next two blocks of 16 bytes */
+    sec_hash_16(decrypt.key, &key_block[16], client_random, server_random);
+    sec_hash_16(encrypt.key, &key_block[32], client_random, server_random);
+
+    if (rc4_key_size == 1) {
+        // LOG(LOG_DEBUG, "40-bit encryption enabled\n");
+        sec_make_40bit(sign_key);
+        sec_make_40bit(decrypt.key);
+        sec_make_40bit(encrypt.key);
+        decrypt.rc4_key_len = 8;
+        encrypt.rc4_key_len = 8;
+    }
+    else {
+        //LOG(LOG_DEBUG, "rc_4_key_size == %d, 128-bit encryption enabled\n", rc4_key_size);
+        decrypt.rc4_key_len = 16;
+        encrypt.rc4_key_len = 16;
+    }
+
+    /* Save initial RC4 keys as update keys */
+    memcpy(decrypt.update_key, decrypt.key, 16);
+    memcpy(encrypt.update_key, encrypt.key, 16);
+
+    ssllib ssl;
+
+    ssl.rc4_set_key(decrypt.rc4_info, decrypt.key, decrypt.rc4_key_len);
+    ssl.rc4_set_key(encrypt.rc4_info, encrypt.key, encrypt.rc4_key_len);
+}
+
+
+static inline int recv_sec_tag_sig(Stream & stream, uint16_t len)
+{
+    stream.skip_uint8(len);
+    /* Parse a public key structure */
+    #warning is padding always 8 bytes long, may signature length change ? Check in documentation
+    #warning we should check the signature is ok (using other provided parameters), this is not yet done today, signature is just dropped
+}
+
+
+static inline void send_sec_tag_sig(Stream & stream, const uint8_t (&pub_sig)[512])
+{
+    stream.out_uint16_le(SEC_TAG_KEYSIG);
+    stream.out_uint16_le(72); /* len */
+    stream.out_copy_bytes(pub_sig, 64); /* pub sig */
+    stream.out_clear_bytes(8); /* pad */
+}
+
+static inline void send_sec_tag_pubkey(Stream & stream, const char (&pub_exp)[4], const uint8_t (&pub_mod)[512])
+{
+    stream.out_uint16_le(SEC_TAG_PUBKEY);
+    stream.out_uint16_le(92); // length
+    stream.out_uint32_le(SEC_RSA_MAGIC);
+    stream.out_uint32_le(72); /* 72 bytes modulus len */
+    stream.out_uint32_be(0x00020000);
+    stream.out_uint32_be(0x3f000000);
+    stream.out_copy_bytes(pub_exp, 4); /* pub exp */
+    stream.out_copy_bytes(pub_mod, 64); /* pub mod */
+    stream.out_clear_bytes(8); /* pad */
+}
+
+
+static inline void recv_sec_tag_pubkey(Stream & stream, uint32_t & server_public_key_len, uint8_t* modulus, uint8_t* exponent)
+{
+    /* Parse a public key structure */
+    uint32_t magic = stream.in_uint32_le();
+    if (magic != SEC_RSA_MAGIC) {
+        LOG(LOG_WARNING, "RSA magic 0x%x\n", magic);
+        throw Error(ERR_SEC_PARSE_PUB_KEY_MAGIC_NOT_OK);
+    }
+    server_public_key_len = stream.in_uint32_le() - SEC_PADDING_SIZE;
+
+    if ((server_public_key_len < SEC_MODULUS_SIZE)
+    ||  (server_public_key_len > SEC_MAX_MODULUS_SIZE)) {
+        LOG(LOG_WARNING, "Bad server public key size (%u bits)\n", server_public_key_len * 8);
+        throw Error(ERR_SEC_PARSE_PUB_KEY_MODUL_NOT_OK);
+    }
+    stream.skip_uint8(8); /* modulus_bits, unknown */
+    memcpy(exponent, stream.in_uint8p(SEC_EXPONENT_SIZE), SEC_EXPONENT_SIZE);
+    memcpy(modulus, stream.in_uint8p(server_public_key_len), server_public_key_len);
+    stream.skip_uint8(SEC_PADDING_SIZE);
+
+    if (!stream.check()){
+        throw Error(ERR_SEC_PARSE_PUB_KEY_ERROR_CHECKING_STREAM);
+    }
+    LOG(LOG_DEBUG, "Got Public key, RDP4-style\n");
+}
+
+
+// 2.2.1.4  Server MCS Connect Response PDU with GCC Conference Create Response
+// ----------------------------------------------------------------------------
+
+// From [MSRDPCGR]
+
+// The MCS Connect Response PDU is an RDP Connection Sequence PDU sent from
+// server to client during the Basic Settings Exchange phase (see section
+// 1.3.1.1). It is sent as a response to the MCS Connect Initial PDU (section
+// 2.2.1.3). The MCS Connect Response PDU encapsulates a GCC Conference Create
+// Response, which encapsulates concatenated blocks of settings data.
+
+// A basic high-level overview of the nested structure for the Server MCS
+// Connect Response PDU is illustrated in section 1.3.1.1, in the figure
+// specifying MCS Connect Response PDU. Note that the order of the settings
+// data blocks is allowed to vary from that shown in the previously mentioned
+// figure and the message syntax layout that follows. This is possible because
+// each data block is identified by a User Data Header structure (section
+// 2.2.1.4.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+// section 13.7.
+
+// mcsCrsp (variable): Variable-length BER-encoded MCS Connect Response
+//   structure (using definite-length encoding) as described in [T125]
+//   (the ASN.1 structure definition is detailed in [T125] section 7, part 2).
+//   The userData field of the MCS Connect Response encapsulates the GCC
+//   Conference Create Response data (contained in the gccCCrsp and subsequent
+//   fields).
+
+// gccCCrsp (variable): Variable-length PER-encoded GCC Connect Data structure
+//   which encapsulates a Connect GCC PDU that contains a GCC Conference Create
+//   Response structure as described in [T124] (the ASN.1 structure definitions
+//   are specified in [T124] section 8.7) appended as user data to the MCS
+//   Connect Response (using the format specified in [T124] sections 9.5 and
+//   9.6). The userData field of the GCC Conference Create Response contains
+//   one user data set consisting of concatenated server data blocks.
+
+// serverCoreData (12 bytes): Server Core Data structure (section 2.2.1.4.2).
+
+// serverSecurityData (variable): Variable-length Server Security Data structure
+//   (section 2.2.1.4.3).
+
+// serverNetworkData (variable): Variable-length Server Network Data structure
+//   (section 2.2.1.4.4).
+
+
+// 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
+// ------------------------------------------
+
+//The TS_UD_CS_CORE data block contains core client connection-related
+// information.
+
+//header (4 bytes): GCC user data block header, as specified in section
+//                  2.2.1.3.1. The User Data Header type field MUST be set to
+//                  CS_CORE (0xC001).
+
+// version (4 bytes): A 32-bit, unsigned integer. Client version number for the
+//                    RDP. The major version number is stored in the high 2
+//                    bytes, while the minor version number is stored in the
+//                    low 2 bytes.
+// +------------+------------------------------------+
+// |   Value    |    Meaning                         |
+// +------------+------------------------------------+
+// | 0x00080001 | RDP 4.0 clients                    |
+// +------------+------------------------------------+
+// | 0x00080004 | RDP 5.0, 5.1, 5.2, and 6.0 clients |
+// +------------+------------------------------------+
+
+// desktopWidth (2 bytes): A 16-bit, unsigned integer. The requested desktop
+//                         width in pixels (up to a maximum value of 4096
+//                         pixels).
+
+// desktopHeight (2 bytes): A 16-bit, unsigned integer. The requested desktop
+//                          height in pixels (up to a maximum value of 2048
+//                          pixels).
+
+// colorDepth (2 bytes): A 16-bit, unsigned integer. The requested color depth.
+//                       Values in this field MUST be ignored if the
+//                       postBeta2ColorDepth field is present.
+// +--------------------------+-------------------------+
+// |     Value                |        Meaning          |
+// +--------------------------+-------------------------+
+// | 0xCA00 RNS_UD_COLOR_4BPP | 4 bits-per-pixel (bpp)  |
+// +--------------------------+-------------------------+
+// | 0xCA01 RNS_UD_COLOR_8BPP | 8 bpp                   |
+// +--------------------------+-------------------------+
+
+// SASSequence (2 bytes): A 16-bit, unsigned integer. Secure access sequence.
+//                        This field SHOULD be set to RNS_UD_SAS_DEL (0xAA03).
+
+// keyboardLayout (4 bytes): A 32-bit, unsigned integer. Keyboard layout (active
+//                           input locale identifier). For a list of possible
+//                           input locales, see [MSDN-MUI].
+
+// clientBuild (4 bytes): A 32-bit, unsigned integer. The build number of the
+//                        client.
+
+// clientName (32 bytes): Name of the client computer. This field contains up to
+//                        15 Unicode characters plus a null terminator.
+
+// keyboardType (4 bytes): A 32-bit, unsigned integer. The keyboard type.
+// +-------+--------------------------------------------+
+// | Value |              Meaning                       |
+// +-------+--------------------------------------------+
+// |   1   | IBM PC/XT or compatible (83-key) keyboard  |
+// +-------+--------------------------------------------+
+// |   2   | Olivetti "ICO" (102-key) keyboard          |
+// +-------+--------------------------------------------+
+// |   3   | IBM PC/AT (84-key) and similar keyboards   |
+// +-------+--------------------------------------------+
+// |   4   | IBM enhanced (101- or 102-key) keyboard    |
+// +-------+--------------------------------------------+
+// |   5   | Nokia 1050 and similar keyboards           |
+// +-------+--------------------------------------------+
+// |   6   | Nokia 9140 and similar keyboards           |
+// +-------+--------------------------------------------+
+// |   7   | Japanese keyboard                          |
+// +-------+--------------------------------------------+
+
+// keyboardSubType (4 bytes): A 32-bit, unsigned integer. The keyboard subtype
+//                            (an original equipment manufacturer-dependent
+//                            value).
+
+// keyboardFunctionKey (4 bytes): A 32-bit, unsigned integer. The number of
+//                                function keys on the keyboard.
+
+// imeFileName (64 bytes): A 64-byte field. The Input Method Editor (IME) file
+//                         name associated with the input locale. This field
+//                         contains up to 31 Unicode characters plus a null
+//                         terminator.
+
+// postBeta2ColorDepth (2 bytes): A 16-bit, unsigned integer. The requested
+//                                color depth. Values in this field MUST be
+//                                ignored if the highColorDepth field is
+//                                present.
+// +--------------------------+-------------------------+
+// |      Value               |         Meaning         |
+// +--------------------------+-------------------------+
+// | 0xCA00 RNS_UD_COLOR_4BPP | 4 bits-per-pixel (bpp)  |
+// +--------------------------+-------------------------+
+// | 0xCA01 RNS_UD_COLOR_8BPP | 8 bpp                   |
+// +--------------------------+-------------------------+
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// clientProductId (2 bytes): A 16-bit, unsigned integer. The client product ID.
+//                            This field SHOULD be initialized to 1. If this
+//                            field is present, then all of the preceding fields
+//                            MUST also be present. If this field is not
+//                            present, then none of the subsequent fields MUST
+//                            be present.
+
+// serialNumber (4 bytes): A 32-bit, unsigned integer. Serial number. This field
+//                         SHOULD be initialized to 0. If this field is present,
+//                         then all of the preceding fields MUST also be
+//                         present. If this field is not present, then none of
+//                         the subsequent fields MUST be present.
+
+// highColorDepth (2 bytes): A 16-bit, unsigned integer. The requested color
+//                           depth.
+// +-------+-------------------------------------------------------------------+
+// | Value |                      Meaning                                      |
+// +-------+-------------------------------------------------------------------+
+// |     4 |   4 bpp                                                           |
+// +-------+-------------------------------------------------------------------+
+// |     8 |   8 bpp                                                           |
+// +-------+-------------------------------------------------------------------+
+// |    15 |  15-bit 555 RGB mask                                              |
+// |       |  (5 bits for red, 5 bits for green, and 5 bits for blue)          |
+// +-------+-------------------------------------------------------------------+
+// |    16 |  16-bit 565 RGB mask                                              |
+// |       |  (5 bits for red, 6 bits for green, and 5 bits for blue)          |
+// +-------+-------------------------------------------------------------------+
+// |    24 |  24-bit RGB mask                                                  |
+// |       |  (8 bits for red, 8 bits for green, and 8 bits for blue)          |
+// +-------+-------------------------------------------------------------------+
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// supportedColorDepths (2 bytes): A 16-bit, unsigned integer. Specifies the
+//                                 high color depths that the client is capable
+//                                 of supporting.
+// +-----------------------------+---------------------------------------------+
+// |          Flag               |                Meaning                      |
+// +-----------------------------+---------------------------------------------+
+// | 0x0001 RNS_UD_24BPP_SUPPORT | 24-bit RGB mask                             |
+// |                             | (8 bits for red, 8 bits for green,          |
+// |                             | and 8 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// | 0x0002 RNS_UD_16BPP_SUPPORT | 16-bit 565 RGB mask                         |
+// |                             | (5 bits for red, 6 bits for green,          |
+// |                             | and 5 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// | 0x0004 RNS_UD_15BPP_SUPPORT | 15-bit 555 RGB mask                         |
+// |                             | (5 bits for red, 5 bits for green,          |
+// |                             | and 5 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// | 0x0008 RNS_UD_32BPP_SUPPORT | 32-bit RGB mask                             |
+// |                             | (8 bits for the alpha channel,              |
+// |                             | 8 bits for red, 8 bits for green,           |
+// |                             | and 8 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// earlyCapabilityFlags (2 bytes): A 16-bit, unsigned integer. It specifies
+// capabilities early in the connection sequence.
+// +---------------------------------------------+-----------------------------|
+// |                Flag                         |              Meaning        |
+// +---------------------------------------------+-----------------------------|
+// | 0x0001 RNS_UD_CS_SUPPORT_ERRINFO_PDU        | Indicates that the client   |
+// |                                             | supports the Set Error Info |
+// |                                             | PDU (section 2.2.5.1).      |
+// +---------------------------------------------+-----------------------------|
+// | 0x0002 RNS_UD_CS_WANT_32BPP_SESSION         | Indicates that the client is|
+// |                                             | requesting a session color  |
+// |                                             | depth of 32 bpp. This flag  |
+// |                                             | is necessary because the    |
+// |                                             | highColorDepth field does   |
+// |                                             | not support a value of 32.  |
+// |                                             | If this flag is set, the    |
+// |                                             | highColorDepth field SHOULD |
+// |                                             | be set to 24 to provide an  |
+// |                                             | acceptable fallback for the |
+// |                                             | scenario where the server   |
+// |                                             | does not support 32 bpp     |
+// |                                             | color.                      |
+// +---------------------------------------------+-----------------------------|
+// | 0x0004 RNS_UD_CS_SUPPORT_STATUSINFO_PDU     | Indicates that the client   |
+// |                                             | supports the Server Status  |
+// |                                             | Info PDU (section 2.2.5.2). |
+// +---------------------------------------------+-----------------------------|
+// | 0x0008 RNS_UD_CS_STRONG_ASYMMETRIC_KEYS     | Indicates that the client   |
+// |                                             | supports asymmetric keys    |
+// |                                             | larger than 512 bits for use|
+// |                                             | with the Server Certificate |
+// |                                             | (section 2.2.1.4.3.1) sent  |
+// |                                             | in the Server Security Data |
+// |                                             | block (section 2.2.1.4.3).  |
+// +---------------------------------------------+-----------------------------|
+// | 0x0020 RNS_UD_CS_RESERVED1                  | Reserved for future use.    |
+// |                                             | This flag is ignored by the |
+// |                                             | server.                     |
+// +---------------------------------------------+-----------------------------+
+// | 0x0040 RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU | Indicates that the client   |
+// |                                             | supports the Monitor Layout |
+// |                                             | PDU (section 2.2.12.1).     |
+// +---------------------------------------------+-----------------------------|
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// clientDigProductId (64 bytes): Contains a value that uniquely identifies the
+//                                client. If this field is present, then all of
+//                                the preceding fields MUST also be present. If
+//                                this field is not present, then none of the
+//                                subsequent fields MUST be present.
+
+// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding to align the
+//   serverSelectedProtocol field on the correct byte boundary.
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// serverSelectedProtocol (4 bytes): A 32-bit, unsigned integer. It contains the value returned
+//   by the server in the selectedProtocol field of the RDP Negotiation Response structure
+//   (section 2.2.1.2.1). In the event that an RDP Negotiation Response structure was not sent,
+//   this field MUST be initialized to PROTOCOL_RDP (0). If this field is present, then all of the
+//   preceding fields MUST also be present.
+
+
+
+static inline void recv_mcs_connect_response_pdu_with_gcc_conference_create_response(
+                            Transport * trans,
+                            ChannelList & mod_channel_list,
+                            const ChannelList & front_channel_list,
+                            CryptContext & encrypt, CryptContext & decrypt,
+                            uint32_t & server_public_key_len,
+                            uint8_t (& client_crypt_random)[512],
+                            int crypt_level,
+                            int & use_rdp5)
+{
+    Stream cr_stream(8192);
+    X224In(trans, cr_stream);
+    if (cr_stream.in_uint16_be() != BER_TAG_MCS_CONNECT_RESPONSE) {
+        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+    }
+    int len = cr_stream.in_ber_len();
+
+    if (cr_stream.in_uint8() != BER_TAG_RESULT) {
+        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+    }
+    len = cr_stream.in_ber_len();
+
+    int res = cr_stream.in_uint8();
+
+    if (res != 0) {
+        throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
+    }
+    if (cr_stream.in_uint8() != BER_TAG_INTEGER) {
+        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+    }
+    len = cr_stream.in_ber_len();
+    cr_stream.skip_uint8(len); /* connect id */
+
+    if (cr_stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+    }
+    len = cr_stream.in_ber_len();
+    cr_stream.skip_uint8(len);
+
+    if (cr_stream.in_uint8() != BER_TAG_OCTET_STRING) {
+        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+    }
+    len = cr_stream.in_ber_len();
+
+    cr_stream.skip_uint8(21); /* header (T.124 ConferenceCreateResponse) */
+    len = cr_stream.in_uint8();
+
+    if (len & 0x80) {
+        len = cr_stream.in_uint8();
+    }
+    while (cr_stream.p < cr_stream.end) {
+        uint16_t tag = cr_stream.in_uint16_le();
+        uint16_t length = cr_stream.in_uint16_le();
+        if (length <= 4) {
+            throw Error(ERR_MCS_DATA_SHORT_HEADER);
+        }
+        uint8_t *next_tag = (cr_stream.p + length) - 4;
+        switch (tag) {
+        case SC_CORE:
+            parse_mcs_data_sc_core(cr_stream, use_rdp5);
+        break;
+        case SC_SECURITY:
+//            rdp_sec_process_crypt_info(cr_stream, encrypt, decrypt, server_public_key_len, client_crypt_random, crypt_level);
+//        void rdp_sec_process_crypt_info(
+//                        Stream & stream,
+//                        CryptContext & encrypt,
+//                        CryptContext & decrypt,
+//                        uint32_t & server_public_key_len,
+//                        uint8_t (& client_crypt_random)[512],
+//                        uint8_t & crypt_level)
+        {
+        uint8_t server_random[SEC_RANDOM_SIZE];
+        uint8_t client_random[SEC_RANDOM_SIZE];
+        uint8_t modulus[SEC_MAX_MODULUS_SIZE];
+        uint8_t exponent[SEC_EXPONENT_SIZE];
+        uint32_t rc4_key_size;
+
+        memset(modulus, 0, sizeof(modulus));
+        memset(exponent, 0, sizeof(exponent));
+        memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
+        #warning check for the true size
+        memset(server_random, 0, SEC_RANDOM_SIZE);
+//        rdp_sec_parse_crypt_info(cr_stream, &rc4_key_size, server_random, modulus, exponent, server_public_key_len, crypt_level);
+//
+//        static inline void rdp_sec_parse_crypt_info(Stream & stream, uint32_t *rc4_key_size,
+//                                      uint8_t * server_random,
+//                                      uint8_t* modulus, uint8_t* exponent,
+//                                      uint32_t & server_public_key_len,
+//                                      uint8_t & crypt_level)
+        {
+            uint32_t random_len;
+            uint32_t rsa_info_len;
+            uint32_t cacert_len;
+            uint32_t cert_len;
+            uint32_t flags;
+            SSL_CERT *cacert;
+            SSL_CERT *server_cert;
+            SSL_RKEY *server_public_key;
+            uint16_t tag;
+            uint16_t length;
+            uint8_t* next_tag;
+            uint8_t* end;
+
+            rc4_key_size = cr_stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
+            crypt_level = cr_stream.in_uint32_le(); /* 1 = low, 2 = medium, 3 = high */
+            if (crypt_level == 0) { /* no encryption */
+                LOG(LOG_INFO, "No encryption");
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_ENCRYPTION_REQUIRED);
+            }
+            random_len = cr_stream.in_uint32_le();
+            rsa_info_len = cr_stream.in_uint32_le();
+            if (random_len != SEC_RANDOM_SIZE) {
+                LOG(LOG_ERR,
+                    "parse_crypt_info_error: random len %d, expected %d\n",
+                    random_len, SEC_RANDOM_SIZE);
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RANDOM_LEN);
+            }
+            memcpy(server_random, cr_stream.in_uint8p(random_len), random_len);
+
+            /* RSA info */
+            end = cr_stream.p + rsa_info_len;
+            if (end > cr_stream.end) {
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RSA_LEN);
+            }
+
+            flags = cr_stream.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
+            LOG(LOG_INFO, "crypt flags %x\n", flags);
+            if (flags & 1) {
+
+                LOG(LOG_DEBUG, "We're going for the RDP4-style encryption\n");
+                cr_stream.skip_uint8(8); /* unknown */
+
+                while (cr_stream.p < end) {
+                    tag = cr_stream.in_uint16_le();
+                    length = cr_stream.in_uint16_le();
+                    #warning this should not be necessary any more as received tag are fully decoded (but we should check length does not lead accessing data out of buffer)
+                    next_tag = cr_stream.p + length;
+
+                    switch (tag) {
+                    case SEC_TAG_PUBKEY:
+                        recv_sec_tag_pubkey(cr_stream, server_public_key_len, modulus, exponent);
+                    break;
+                    case SEC_TAG_KEYSIG:
+                        LOG(LOG_DEBUG, "SEC_TAG_KEYSIG RDP4-style\n");
+                        recv_sec_tag_sig(cr_stream, length);
+                        break;
+                    default:
+                        LOG(LOG_DEBUG, "unimplemented: crypt tag 0x%x\n", tag);
+                        throw Error(ERR_SEC_PARSE_CRYPT_INFO_UNIMPLEMENTED_TAG);
+                        break;
+                    }
+                    cr_stream.p = next_tag;
+                }
+            }
+            else {
+                LOG(LOG_DEBUG, "We're going for the RDP5-style encryption\n");
+                LOG(LOG_DEBUG, "RDP5-style encryption with certificates not available\n");
+                uint32_t certcount = cr_stream.in_uint32_le();
+                if (certcount < 2){
+                    LOG(LOG_DEBUG, "Server didn't send enough X509 certificates\n");
+                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CERT_NOK);
+                }
+                for (; certcount > 2; certcount--){
+                    /* ignore all the certificates between the root and the signing CA */
+                    LOG(LOG_WARNING, " Ignored certs left: %d\n", certcount);
+                    uint32_t ignorelen = cr_stream.in_uint32_le();
+                    LOG(LOG_WARNING, "Ignored Certificate length is %d\n", ignorelen);
+                    SSL_CERT *ignorecert = ssl_cert_read(cr_stream.p, ignorelen);
+                    cr_stream.skip_uint8(ignorelen);
+                    if (ignorecert == NULL){
+                        LOG(LOG_WARNING,
+                            "got a bad cert: this will probably screw up"
+                            " the rest of the communication\n");
+                    }
+                }
+
+                /* Do da funky X.509 stuffy
+
+               "How did I find out about this?  I looked up and saw a
+               bright light and when I came to I had a scar on my forehead
+               and knew about X.500"
+               - Peter Gutman in a early version of
+               http://www.cs.auckland.ac.nz/~pgut001/pubs/x509guide.txt
+               */
+
+                /* Loading CA_Certificate from server*/
+                cacert_len = cr_stream.in_uint32_le();
+                LOG(LOG_DEBUG, "CA Certificate length is %d\n", cacert_len);
+                cacert = ssl_cert_read(cr_stream.p, cacert_len);
+                cr_stream.skip_uint8(cacert_len);
+                if (NULL == cacert){
+                    LOG(LOG_DEBUG, "Couldn't load CA Certificate from server\n");
+                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NULL);
+                }
+
+                ssllib ssl;
+
+                /* Loading Certificate from server*/
+                cert_len = cr_stream.in_uint32_le();
+                LOG(LOG_DEBUG, "Certificate length is %d\n", cert_len);
+                server_cert = ssl_cert_read(cr_stream.p, cert_len);
+                cr_stream.skip_uint8(cert_len);
+                if (NULL == server_cert){
+                    ssl_cert_free(cacert);
+                    LOG(LOG_DEBUG, "Couldn't load Certificate from server\n");
+                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_LOADED);
+                }
+                /* Matching certificates */
+                if (!ssl_certs_ok(server_cert, cacert)){
+                    ssl_cert_free(server_cert);
+                    ssl_cert_free(cacert);
+                    LOG(LOG_DEBUG, "Security error CA Certificate invalid\n");
+                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_MATCH);
+                }
+                ssl_cert_free(cacert);
+                cr_stream.skip_uint8(16); /* Padding */
+                server_public_key = ssl_cert_to_rkey(server_cert, server_public_key_len);
+                if (NULL == server_public_key){
+                    LOG(LOG_DEBUG, "Didn't parse X509 correctly\n");
+                    ssl_cert_free(server_cert);
+                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_X509_NOT_PARSED);
+
+                }
+                ssl_cert_free(server_cert);
+                LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d\n", server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
+                if ((server_public_key_len < SEC_MODULUS_SIZE) ||
+                    (server_public_key_len > SEC_MAX_MODULUS_SIZE)){
+                    LOG(LOG_DEBUG, "Bad server public key size (%u bits)\n",
+                        server_public_key_len * 8);
+                    ssl.rkey_free(server_public_key);
+                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
+                }
+                if (ssl_rkey_get_exp_mod(server_public_key, exponent, SEC_EXPONENT_SIZE,
+                    modulus, SEC_MAX_MODULUS_SIZE) != 0){
+                    LOG(LOG_DEBUG, "Problem extracting RSA exponent, modulus");
+                    ssl.rkey_free(server_public_key);
+                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_RSA_EXP_NOT_OK);
+
+                }
+                ssl.rkey_free(server_public_key);
+                #warning find a way to correctly dispose of garbage at end of buffer
+                /* There's some garbage here we don't care about */
+            }
+        }
+
+        /* Generate a client random, and determine encryption keys */
+        memset(client_random, 0x44, SEC_RANDOM_SIZE);
+        int fd = open("/dev/urandom", O_RDONLY);
+        if (fd == -1) {
+            fd = open("/dev/random", O_RDONLY);
+        }
+        if (fd != -1) {
+            if (read(fd, client_random, SEC_RANDOM_SIZE) != SEC_RANDOM_SIZE) {
+                LOG(LOG_WARNING, "random source failed to provide random data\n");
+            }
+            close(fd);
+        }
+        else {
+            LOG(LOG_WARNING, "random source failed to provide random data : couldn't open device\n");
+        }
+        ssllib ssl;
+        ssl.rsa_encrypt(client_crypt_random, client_random, SEC_RANDOM_SIZE, server_public_key_len, modulus, exponent);
+
+        rdp_sec_generate_keys(encrypt, decrypt, encrypt.sign_key, client_random, server_random, rc4_key_size);
+        }
+        break;
+        case SC_NET:
+            parse_mcs_data_sc_net(cr_stream, front_channel_list, mod_channel_list);
+            break;
+        default:
+            LOG(LOG_WARNING, "response tag 0x%x\n", tag);
+            break;
+        }
+        cr_stream.p = next_tag;
+    }
+}
 
 #endif
