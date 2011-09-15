@@ -1348,7 +1348,6 @@ struct server_rdp {
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTMAP, this->userid + MCS_USERCHANNEL_BASE, this->share_id);
         stream.out_copy_bytes((char*)g_fontmap, 172);
-        stream.mark_end();
 
         rdp_out.end();
         sec_out.end();
@@ -1445,7 +1444,7 @@ struct server_rdp {
                 McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
                 SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
                 ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SHUTDOWN_DENIED, this->userid + MCS_USERCHANNEL_BASE, this->share_id);
-                stream.mark_end();
+
                 rdp_out.end();
                 sec_out.end();
                 sdin_out.end();
