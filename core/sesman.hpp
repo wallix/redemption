@@ -66,10 +66,9 @@ class SessionManager {
 
             stream.skip_uint8(4); // skip length
             this->out_ask_item(stream, STRAUTHID_KEEPALIVE);
-            stream.mark_end();
             // now set length
+            int total_length = stream.p - stream.data;
             stream.p = stream.data;
-            int total_length = stream.end - stream.data;
             stream.out_uint32_be(total_length);
             // and send
             this->auth_trans_t->send((char*)stream.data, total_length);
@@ -197,10 +196,9 @@ class SessionManager {
                 stream.skip_uint8(4);
                 // set data
                 this->out_ask_item(stream, STRAUTHID_KEEPALIVE);
-                stream.mark_end();
                 // now set length in header
+                int total_length = stream.p - stream.data;
                 stream.p = stream.data;
-                int total_length = stream.end - stream.data;
                 stream.out_uint32_be(total_length); /* size */
                 // and send
                 this->auth_trans_t->send((char*)stream.data, total_length);
@@ -413,10 +411,9 @@ class SessionManager {
             this->out_item(stream, STRAUTHID_TRANS_TARGET);
             this->out_item(stream, STRAUTHID_TRANS_DIAGNOSTIC);
             this->out_item(stream, STRAUTHID_TRANS_CONNECTION_CLOSED);
-            stream.mark_end();
 
+            int total_length = stream.p - stream.data;
             stream.p = stream.data;
-            int total_length = stream.end - stream.data;
             stream.out_uint32_be(total_length); /* size */
             this->auth_trans_t->send((char*)stream.data, total_length);
 

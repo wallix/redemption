@@ -216,10 +216,9 @@ struct GraphicsUpdatePDU
 //            LOG(LOG_ERR, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
             this->order_count = 0;
-            stream.mark_end();
+
             this->out_data->end();
             this->out_control->end();
-
             this->sec_out->end();
             this->mcs_sdin->end();
             this->tpdu->end();
