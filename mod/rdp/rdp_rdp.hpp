@@ -752,10 +752,10 @@ struct rdp_rdp {
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, this->userid, this->share_id);
+
             stream.out_uint16_le(action);
             stream.out_uint16_le(0); /* userid */
             stream.out_uint32_le(0); /* control id */
-            stream.mark_end();
 
             rdp_out.end();
             sec_out.end();
@@ -794,7 +794,7 @@ struct rdp_rdp {
             stream.out_uint16_le(0); /* pad? */
             stream.out_uint16_le(seq); /* unknown */
             stream.out_uint16_le(0x32); /* entry size */
-            stream.mark_end();
+
             rdp_out.end();
             sec_out.end();
             sdrq_out.end();
@@ -836,7 +836,6 @@ struct rdp_rdp {
             stream.out_uint16_le(param1);
             stream.out_uint16_le(param2);
 
-            stream.mark_end();
             rdp_out.end();
             sec_out.end();
             sdrq_out.end();
@@ -858,7 +857,6 @@ struct rdp_rdp {
             stream.out_uint16_le(top);
             stream.out_uint16_le((left + width) - 1);
             stream.out_uint16_le((top + height) - 1);
-            stream.mark_end();
 
             rdp_out.end();
             sec_out.end();

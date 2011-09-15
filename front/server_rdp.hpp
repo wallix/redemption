@@ -111,13 +111,14 @@ struct server_rdp {
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, channel.chanid);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
+
         stream.out_uint32_le(total_data_len);
         if (channel.flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
             flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
         }
         stream.out_uint32_le(flags);
         stream.out_copy_bytes(data, data_len);
-        stream.mark_end();
+
         sec_out.end();
         sdin_out.end();
         tpdu.end();
@@ -143,13 +144,11 @@ struct server_rdp {
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
-
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->userid + MCS_USERCHANNEL_BASE, this->share_id);
 
         stream.out_uint16_le(RDP_UPDATE_PALETTE);
         stream.out_uint16_le(0);
         stream.out_uint32_le(256); /* # of colors */
-
         for (int i = 0; i < 256; i++) {
             int color = palette[i];
             uint8_t r = color >> 16;
@@ -159,9 +158,8 @@ struct server_rdp {
             stream.out_uint8(g);
             stream.out_uint8(r);
         }
-        stream.mark_end();
-        rdp_out.end();
 
+        rdp_out.end();
         sec_out.end();
         sdin_out.end();
         tpdu.end();
@@ -355,14 +353,11 @@ struct server_rdp {
 //      is being sent, then each scan-line will consume 2 bytes (7 pixels per
 //      scan-line multiplied by 1 bpp, rounded up to the next even number of
 //      bytes).
-
-
         stream.out_copy_bytes(mask, 128); /* mask */
 
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
 
-        stream.mark_end();
         rdp_out.end();
         sec_out.end();
         sdin_out.end();
@@ -413,7 +408,6 @@ struct server_rdp {
         stream.out_uint16_le(0); /* pad */
         stream.out_uint16_le(cache_idx);
 
-        stream.mark_end();
         rdp_out.end();
         sec_out.end();
         sdin_out.end();
@@ -851,7 +845,6 @@ struct server_rdp {
         stream.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
         stream.out_clear_bytes(2);
 
-        stream.mark_end();
         rdp_out.end();
         sec_out.end();
         sdin_out.end();
@@ -867,11 +860,6 @@ struct server_rdp {
     {
 
 //        LOG(LOG_INFO, "server_rdp_send_demand_active()");
-        int caps_count;
-        int caps_size;
-        uint8_t* caps_count_ptr;
-        uint8_t* caps_size_ptr;
-        uint8_t* caps_ptr;
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -879,20 +867,20 @@ struct server_rdp {
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlOut rdp_out(stream, PDUTYPE_DEMANDACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
 
-        caps_count = 0;
+        size_t caps_count = 0;
         stream.out_uint32_le(this->share_id);
         stream.out_uint16_le(4); /* 4 chars for RDP\0 */
 
         /* 2 bytes size after num caps, set later */
-        caps_size_ptr = stream.p;
+        uint8_t * caps_size_ptr = stream.p;
         stream.out_clear_bytes(2);
         stream.out_copy_bytes("RDP", 4);
 
         /* 4 byte num caps, set later */
-        caps_count_ptr = stream.p;
+        uint8_t * caps_count_ptr = stream.p;
         stream.out_clear_bytes(4);
 
-        caps_ptr = stream.p;
+        uint8_t * caps_ptr = stream.p;
 
         /* Output share capability set */
         caps_count++;
@@ -1014,9 +1002,7 @@ struct server_rdp {
 
         stream.out_clear_bytes(4); /* pad */
 
-        stream.mark_end();
-
-        caps_size = (int)(stream.end - caps_ptr);
+        size_t caps_size = stream.p - caps_ptr;
         caps_size_ptr[0] = caps_size;
         caps_size_ptr[1] = caps_size >> 8;
 
