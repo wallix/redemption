@@ -199,7 +199,7 @@ struct GraphicsUpdatePDU
         this->stream.init(4096);
         this->tpdu = new X224Out(X224Packet::DT_TPDU, this->stream);
         this->mcs_sdin = new McsOut(stream, MCS_SDIN, this->rdp_layer.userid, MCS_GLOBAL_CHANNEL);
-        this->sec_out = new SecOut(stream, this->rdp_layer.client_info.crypt_level, SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
+        this->sec_out = new SecOut(stream, this->rdp_layer.client_info.crypt_level, SEC_ENCRYPT, this->rdp_layer.encrypt);
         this->out_control = new ShareControlOut(this->stream, PDUTYPE_DATAPDU, this->rdp_layer.userid + MCS_USERCHANNEL_BASE);
         this->out_data = new ShareDataOut(this->stream, PDUTYPE2_UPDATE, this->rdp_layer.share_id);
 
@@ -442,7 +442,6 @@ public:
     void activate_and_process_data(Callback & cb)
     {
 //        LOG(LOG_INFO, "activate_and_process_data\n");
-//        this->rdp_layer.activate_and_process_data(cb, this->rdp_layer.sec_layer.channel_list);
         this->rdp_layer.activate_and_process_data(cb, this->channel_list);
 //        LOG(LOG_INFO, "activate_and_process_data done\n");
     }
@@ -463,14 +462,12 @@ public:
 
     const ChannelList & get_channel_list(void) const
     {
-//        return this->rdp_layer.sec_layer.channel_list;
         return this->channel_list;
     }
 
     void incoming(void)
     {
 //        LOG(LOG_INFO, "incoming");
-//        this->rdp_layer.server_rdp_incoming(this->rdp_layer.sec_layer.channel_list);
         this->rdp_layer.server_rdp_incoming(this->channel_list);
 //        LOG(LOG_INFO, "incoming done");
     }

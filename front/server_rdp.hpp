@@ -41,23 +41,54 @@ struct server_rdp {
 
     int share_id;
     struct ClientInfo client_info;
-    struct Sec sec_layer;
     uint32_t packet_number;
     Transport * trans;
     uint16_t userid;
     uint8_t pub_mod[512];
     uint8_t pri_exp[512];
+    uint8_t server_random[32];
+    uint8_t client_random[64];
+    uint8_t client_crypt_random[512];
+    CryptContext encrypt, decrypt;
 
     server_rdp(Transport * trans, Inifile * ini)
         :
         up_and_running(0),
         share_id(65538),
         client_info(ini),
-        sec_layer(this->client_info.crypt_level),
         packet_number(1),
         trans(trans),
         userid(0)
     {
+        // from server_sec
+        // CGR: see if init has influence for the 3 following fields
+        memset(this->server_random, 0, 32);
+        memset(this->client_random, 0, 64);
+
+        // from rdp_sec
+        memset(this->client_crypt_random, 0, 512);
+
+        // shared
+        memset(this->decrypt.key, 0, 16);
+        memset(this->encrypt.key, 0, 16);
+        memset(this->decrypt.update_key, 0, 16);
+        memset(this->encrypt.update_key, 0, 16);
+        switch (this->client_info.crypt_level) {
+        case 1:
+        case 2:
+            this->decrypt.rc4_key_size = 1; /* 40 bits */
+            this->encrypt.rc4_key_size = 1; /* 40 bits */
+            this->decrypt.rc4_key_len = 8; /* 8 = 40 bit */
+            this->encrypt.rc4_key_len = 8; /* 8 = 40 bit */
+        break;
+        default:
+        case 3:
+            this->decrypt.rc4_key_size = 2; /* 128 bits */
+            this->encrypt.rc4_key_size = 2; /* 128 bits */
+            this->decrypt.rc4_key_len = 16; /* 16 = 128 bit */
+            this->encrypt.rc4_key_len = 16; /* 16 = 128 bit */
+        break;
+        }
     }
 
     ~server_rdp()
@@ -79,7 +110,7 @@ struct server_rdp {
         Stream stream(65536);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, channel.chanid);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         stream.out_uint32_le(total_data_len);
         if (channel.flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
             flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
@@ -111,7 +142,7 @@ struct server_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
 
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->userid + MCS_USERCHANNEL_BASE, this->share_id);
 
@@ -252,7 +283,7 @@ struct server_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, this->userid + MCS_USERCHANNEL_BASE, this->share_id);
 
         stream.out_uint16_le(RDP_POINTER_COLOR);
@@ -375,7 +406,7 @@ struct server_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_POINTER, this->userid + MCS_USERCHANNEL_BASE, this->share_id);
 
         stream.out_uint16_le(RDP_POINTER_CACHED);
@@ -477,8 +508,8 @@ struct server_rdp {
             this->trans,
             &this->client_info,
             channel_list,
-            this->sec_layer.server_random,
-            this->sec_layer.encrypt.rc4_key_size,
+            this->server_random,
+            this->encrypt.rc4_key_size,
             this->pub_mod,
             this->pri_exp);
 
@@ -579,10 +610,10 @@ struct server_rdp {
         //    |------Security Exchange PDU ---------------------------> |
 
         recv_security_exchange_PDU(this->trans,
-            this->sec_layer.decrypt, this->sec_layer.client_crypt_random);
+            this->decrypt, this->client_crypt_random);
 
-        ssl_mod_exp(this->sec_layer.client_random, 64,
-                    this->sec_layer.client_crypt_random, 64,
+        ssl_mod_exp(this->client_random, 64,
+                    this->client_crypt_random, 64,
                     this->pub_mod, 64,
                     this->pri_exp, 64);
 
@@ -590,12 +621,12 @@ struct server_rdp {
         #warning looks like decrypt sign key is never used, if it's true remove it from CryptContext
         #warning this methode should probably move to ssl_calls
         rdp_sec_generate_keys(
-            this->sec_layer.decrypt,
-            this->sec_layer.encrypt,
-            this->sec_layer.encrypt.sign_key,
-            this->sec_layer.client_random,
-            this->sec_layer.server_random,
-            this->sec_layer.encrypt.rc4_key_size);
+            this->decrypt,
+            this->encrypt,
+            this->encrypt.sign_key,
+            this->client_random,
+            this->server_random,
+            this->encrypt.rc4_key_size);
 
 
         // Secure Settings Exchange
@@ -617,7 +648,7 @@ struct server_rdp {
                 throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
 
-            SecIn sec(stream, this->sec_layer.decrypt);
+            SecIn sec(stream, this->decrypt);
 
             if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
                 throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
@@ -664,7 +695,7 @@ struct server_rdp {
                 throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
 
-            SecIn sec(stream, this->sec_layer.decrypt);
+            SecIn sec(stream, this->decrypt);
 
             if (!sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
                 throw Error(ERR_SEC_EXPECTED_LICENCE_NEG);
@@ -704,7 +735,7 @@ struct server_rdp {
             throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
         }
 
-        SecIn sec(stream, this->sec_layer.decrypt);
+        SecIn sec(stream, this->decrypt);
 
         if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL) {
 
@@ -813,7 +844,7 @@ struct server_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
 
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, this->userid + MCS_USERCHANNEL_BASE, this->share_id);
 
@@ -845,7 +876,7 @@ struct server_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlOut rdp_out(stream, PDUTYPE_DEMANDACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
 
         caps_count = 0;
@@ -1239,7 +1270,7 @@ struct server_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, this->userid + MCS_USERCHANNEL_BASE, this->share_id);
 
         stream.out_uint16_le(1); /* messageType */
@@ -1280,7 +1311,7 @@ struct server_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, this->userid + MCS_USERCHANNEL_BASE, this->share_id);
 
         stream.out_uint16_le(action);
@@ -1328,7 +1359,7 @@ struct server_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTMAP, this->userid + MCS_USERCHANNEL_BASE, this->share_id);
         stream.out_copy_bytes((char*)g_fontmap, 172);
         stream.mark_end();
@@ -1426,7 +1457,7 @@ struct server_rdp {
                 Stream stream(8192);
                 X224Out tpdu(X224Packet::DT_TPDU, stream);
                 McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-                SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
+                SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
                 ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SHUTDOWN_DENIED, this->userid + MCS_USERCHANNEL_BASE, this->share_id);
                 stream.mark_end();
                 rdp_out.end();
@@ -1477,7 +1508,7 @@ struct server_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
+        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlOut(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + MCS_USERCHANNEL_BASE).end();
         sec_out.end();
         sdin_out.end();
