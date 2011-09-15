@@ -183,4 +183,191 @@ void reverse(uint8_t* p, int len);
 int ssl_sig_ok(uint8_t* exponent, int exp_len, uint8_t* modulus, int mod_len,
    uint8_t* signature, int sig_len);
 
+
+inline static void sec_make_40bit(uint8_t* key)
+{
+    key[0] = 0xd1;
+    key[1] = 0x26;
+    key[2] = 0x9e;
+}
+
+// Output a uint32 into a buffer (little-endian)
+inline static void buf_out_uint32(uint8_t* buffer, int value)
+{
+  buffer[0] = value & 0xff;
+  buffer[1] = (value >> 8) & 0xff;
+  buffer[2] = (value >> 16) & 0xff;
+  buffer[3] = (value >> 24) & 0xff;
+}
+
+
+#warning method used by licence, common with basic crypto support code should be made common. pad are also common to several functions.
+/* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
+inline static void sec_sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen, uint8_t* data, int datalen)
+{
+    static uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                 54, 54, 54, 54, 54, 54, 54, 54
+                               };
+    static uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                             92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                             92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
+                           };
+
+    uint8_t shasig[20];
+    uint8_t md5sig[16];
+    uint8_t lenhdr[4];
+    SSL_SHA1 sha1;
+    SSL_MD5 md5;
+
+    buf_out_uint32(lenhdr, datalen);
+
+    ssllib ssl;
+
+    ssl.sha1_init(&sha1);
+    ssl.sha1_update(&sha1, session_key, keylen);
+    ssl.sha1_update(&sha1, pad_54, 40);
+    ssl.sha1_update(&sha1, lenhdr, 4);
+    ssl.sha1_update(&sha1, data, datalen);
+    ssl.sha1_final(&sha1, shasig);
+
+    ssl.md5_init(&md5);
+    ssl.md5_update(&md5, session_key, keylen);
+    ssl.md5_update(&md5, pad_92, 48);
+    ssl.md5_update(&md5, shasig, 20);
+    ssl.md5_final(&md5, md5sig);
+
+    memcpy(signature, md5sig, siglen);
+}
+
+
+
+
+struct CryptContext
+{
+    int use_count;
+    uint8_t sign_key[16]; // should I call it session_key ?
+    uint8_t key[16];
+    uint8_t update_key[16];
+    int rc4_key_len;
+    SSL_RC4 rc4_info;
+    int rc4_key_size; /* 1 = 40-bit, 2 = 128-bit */
+
+    CryptContext() : use_count(0)
+    {
+        memset(this->sign_key, 0, 16);
+    }
+
+    /* Encrypt data using RC4 */
+    void encrypt(uint8_t* data, int length)
+    {
+        ssllib ssl;
+
+        if (this->use_count == 4096){
+            this->update();
+            if (this->rc4_key_len == 8) {
+                sec_make_40bit(this->key);
+            }
+            ssl.rc4_set_key(this->rc4_info, this->key, this->rc4_key_len);
+            this->use_count = 0;
+        }
+        ssl.rc4_crypt(this->rc4_info, data, data, length);
+        this->use_count++;
+    }
+
+    /* Decrypt data using RC4 */
+    void decrypt(uint8_t* data, int len)
+    {
+        ssllib ssl;
+
+        if (this->use_count == 4096) {
+            this->update();
+            if (this->rc4_key_len == 8) {
+                sec_make_40bit(this->key);
+            }
+            ssl.rc4_set_key(this->rc4_info, this->key, this->rc4_key_len);
+            this->use_count = 0;
+        }
+        ssl.rc4_crypt(this->rc4_info, data, data, len);
+        this->use_count++;
+    }
+
+    /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
+    void sign(uint8_t* signature, int siglen, uint8_t* data, int datalen)
+    {
+        static uint8_t pad_54[40] = { 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                     54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+                                     54, 54, 54, 54, 54, 54, 54, 54
+                                   };
+        static uint8_t pad_92[48] = { 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+                                 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
+                               };
+
+        uint8_t shasig[20];
+        uint8_t md5sig[16];
+        uint8_t lenhdr[4];
+        SSL_SHA1 sha1;
+        SSL_MD5 md5;
+
+        buf_out_uint32(lenhdr, datalen);
+
+        ssllib ssl;
+
+        ssl.sha1_init(&sha1);
+        ssl.sha1_update(&sha1, this->sign_key, this->rc4_key_len);
+        ssl.sha1_update(&sha1, pad_54, 40);
+        ssl.sha1_update(&sha1, lenhdr, 4);
+        ssl.sha1_update(&sha1, data, datalen);
+        ssl.sha1_final(&sha1, shasig);
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, this->sign_key, this->rc4_key_len);
+        ssl.md5_update(&md5, pad_92, 48);
+        ssl.md5_update(&md5, shasig, 20);
+        ssl.md5_final(&md5, md5sig);
+
+        memcpy(signature, md5sig, siglen);
+    }
+
+    void update()
+    {
+        static uint8_t pad_54[40] = {
+            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+            54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54, 54,
+            54, 54, 54, 54, 54, 54, 54, 54
+        };
+
+        static uint8_t pad_92[48] = {
+            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92,
+            92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92, 92
+        };
+
+        uint8_t shasig[20];
+        SSL_SHA1 sha1;
+        SSL_MD5 md5;
+        SSL_RC4 update;
+
+        ssllib ssl;
+
+        ssl.sha1_init(&sha1);
+        ssl.sha1_update(&sha1, this->update_key, this->rc4_key_len);
+        ssl.sha1_update(&sha1, pad_54, 40);
+        ssl.sha1_update(&sha1, this->key, this->rc4_key_len);
+        ssl.sha1_final(&sha1, shasig);
+
+        ssl.md5_init(&md5);
+        ssl.md5_update(&md5, this->update_key, this->rc4_key_len);
+        ssl.md5_update(&md5, pad_92, 48);
+        ssl.md5_update(&md5, shasig, 20);
+        ssl.md5_final(&md5, key);
+
+        ssl.rc4_set_key(update, this->key, this->rc4_key_len);
+        ssl.rc4_crypt(update, this->key, this->key, this->rc4_key_len);
+    }
+
+};
+
+
 #endif

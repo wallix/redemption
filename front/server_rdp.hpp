@@ -811,7 +811,7 @@ struct server_rdp {
         // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
         #warning looks like decrypt sign key is never used, if it's true remove it from CryptContext
         #warning this methode should probably move to ssl_calls
-        this->sec_layer.rdp_sec_generate_keys(
+        rdp_sec_generate_keys(
             this->sec_layer.decrypt,
             this->sec_layer.encrypt,
             this->sec_layer.encrypt.sign_key,
