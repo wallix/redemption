@@ -33,7 +33,6 @@
 
 /* rdp */
 struct rdp_rdp {
-    Sec sec_layer;
     rdp_orders orders;
     int share_id;
     int bitmap_compression;
@@ -51,11 +50,30 @@ struct rdp_rdp {
     int bpp;
     Transport * trans;
 
+    uint32_t server_public_key_len;
+    uint8_t client_crypt_random[512];
+    CryptContext encrypt, decrypt;
+
+
     struct rdp_cursor cursors[32];
     rdp_rdp(struct mod_rdp* owner, Transport *trans, const char * username, const char * password, const char * hostname, int rdp_performance_flags, int width, int height, int bpp, int keylayout, bool console_session)
         #warning initialize members through constructor
-        : sec_layer(0), userid(0), bpp(bpp), trans(trans)
+        : userid(0), bpp(bpp), trans(trans)
         {
+            // from rdp_sec
+            memset(this->client_crypt_random, 0, 512);
+            this->server_public_key_len = 0;
+
+            // shared
+            memset(this->decrypt.key, 0, 16);
+            memset(this->encrypt.key, 0, 16);
+            memset(this->decrypt.update_key, 0, 16);
+            memset(this->encrypt.update_key, 0, 16);
+            this->decrypt.rc4_key_size = 2; /* 128 bits */
+            this->encrypt.rc4_key_size = 2; /* 128 bits */
+            this->decrypt.rc4_key_len = 16; /* 16 = 128 bit */
+            this->encrypt.rc4_key_len = 16; /* 16 = 128 bit */
+
             #warning and if hostname is really larger, what happens ? We should at least emit a warning log
             strncpy(this->hostname, hostname, 15);
             this->hostname[15] = 0;
@@ -284,7 +302,7 @@ struct rdp_rdp {
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->sec_layer.encrypt);
+            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
 
             stream.out_uint16_le(2 + 14 + caplen + sizeof(RDP_SOURCE));
             stream.out_uint16_le((PDUTYPE_CONFIRMACTIVEPDU | 0x10)); /* Version 1 */
@@ -732,7 +750,7 @@ struct rdp_rdp {
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->sec_layer.encrypt);
+            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_CONTROL, this->userid, this->share_id);
             stream.out_uint16_le(action);
             stream.out_uint16_le(0); /* userid */
@@ -752,7 +770,7 @@ struct rdp_rdp {
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->sec_layer.encrypt);
+            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_SYNCHRONIZE, this->userid, this->share_id);
 
             stream.out_uint16_le(1); /* type */
@@ -769,7 +787,7 @@ struct rdp_rdp {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->sec_layer.encrypt);
+            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_FONTLIST, this->userid, this->share_id);
 
             stream.out_uint16_le(0); /* number of fonts */
@@ -807,7 +825,7 @@ struct rdp_rdp {
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->sec_layer.encrypt);
+            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_INPUT, this->userid, this->share_id);
 
             stream.out_uint16_le(1); /* number of events */
@@ -832,7 +850,7 @@ struct rdp_rdp {
             stream.init(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->sec_layer.encrypt);
+            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
             ShareControlAndDataOut rdp_out(stream, PDUTYPE_DATAPDU, PDUTYPE2_REFRESH_RECT, this->userid, this->share_id);
 
             stream.out_uint32_le(1);
@@ -1088,7 +1106,7 @@ struct rdp_rdp {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out2(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, 2, SEC_LOGON_INFO | SEC_ENCRYPT, this->sec_layer.encrypt);
+        SecOut sec_out(stream, 2, SEC_LOGON_INFO | SEC_ENCRYPT, this->encrypt);
 
         if(!use_rdp5){
             LOG(LOG_INFO, "send login info (RDP4-style) %s:%s\n",this->domain, this->username);

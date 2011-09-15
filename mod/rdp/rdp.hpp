@@ -232,7 +232,7 @@ struct mod_rdp : public client_mod {
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->rdp_layer.userid, mod_channel.chanid);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
+            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->rdp_layer.encrypt);
             stream.out_uint32_le(length);
             stream.out_uint32_le(flags);
             memcpy(stream.p, data, size);
@@ -280,7 +280,7 @@ struct mod_rdp : public client_mod {
 //            Stream stream(8192);
 //            X224Out tpdu(X224Packet::DT_TPDU, stream);
 //            McsOut sdrq_out(stream, MCS_SDRQ, this->rdp_layer.userid, mod_chan_id);
-//            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->rdp_layer.sec_layer.encrypt);
+//            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->rdp_layer.encrypt);
 //            stream.out_uint32_le(total_data_length);
 //            stream.out_uint32_le(flags);
 //            memcpy(stream.p, data, size);
@@ -364,11 +364,11 @@ struct mod_rdp : public client_mod {
             LOG(LOG_INFO, "MOD_RDP_BASIC_SETTINGS_EXCHANGE");
             recv_mcs_connect_response_pdu_with_gcc_conference_create_response(
                     this->trans, this->mod_channel_list, this->front.get_channel_list(),
-                    this->rdp_layer.sec_layer.encrypt,
-                    this->rdp_layer.sec_layer.decrypt,
-                    this->rdp_layer.sec_layer.server_public_key_len,
-                    this->rdp_layer.sec_layer.client_crypt_random,
-                    this->rdp_layer.sec_layer.crypt_level,
+                    this->rdp_layer.encrypt,
+                    this->rdp_layer.decrypt,
+                    this->rdp_layer.server_public_key_len,
+                    this->rdp_layer.client_crypt_random,
+                    this->get_client_info().crypt_level,
                     this->use_rdp5);
 
             // Channel Connection
@@ -449,11 +449,11 @@ struct mod_rdp : public client_mod {
             // Client                                                     Server
             //    |------Security Exchange PDU ---------------------------> |
 
-            LOG(LOG_INFO, "sec_layer.security_exchange_PDU");
+            LOG(LOG_INFO, "security_exchange_PDU");
             send_security_exchange_PDU(trans,
                 this->rdp_layer.userid,
-                this->rdp_layer.sec_layer.server_public_key_len,
-                this->rdp_layer.sec_layer.client_crypt_random);
+                this->rdp_layer.server_public_key_len,
+                this->rdp_layer.client_crypt_random);
 
             // Secure Settings Exchange
             // ------------------------
@@ -572,7 +572,7 @@ struct mod_rdp : public client_mod {
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
             int len = mcs_in.len;
-            SecIn sec(stream, this->rdp_layer.sec_layer.decrypt);
+            SecIn sec(stream, this->rdp_layer.decrypt);
 
             if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
                 uint8_t tag = stream.in_uint8();
@@ -672,7 +672,7 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_INFO, "Error: MCS_SDIN TPDU expected");
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
-            SecIn sec(stream, this->rdp_layer.sec_layer.decrypt);
+            SecIn sec(stream, this->rdp_layer.decrypt);
             if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
                 LOG(LOG_INFO, "Error: unexpected licence negotiation sec packet");
                 throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);

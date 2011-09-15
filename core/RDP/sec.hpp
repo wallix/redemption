@@ -205,67 +205,6 @@ class SecIn
 
 };
 
-
-struct Sec
-{
-
-// only in server_sec : need cleanup
-
-    uint8_t server_random[32];
-    uint8_t client_random[64];
-
-// only in rdp_sec : need cleanup
-    uint32_t server_public_key_len;
-
-// shared
-
-    #warning windows 2008 does not write trailer because of overflow of buffer below, checked actual size: 64 bytes on xp, 256 bytes on windows 2008
-    uint8_t client_crypt_random[512];
-
-    CryptContext encrypt, decrypt;
-    uint8_t crypt_level;
-    #warning seems rc4_key_size is redundant with crypt level ?
-
-    Sec(uint8_t crypt_level) :
-      crypt_level(crypt_level)
-    {
-        // from server_sec
-        // CGR: see if init has influence for the 3 following fields
-        memset(this->server_random, 0, 32);
-        memset(this->client_random, 0, 64);
-
-        // from rdp_sec
-        memset(this->client_crypt_random, 0, 512);
-        this->server_public_key_len = 0;
-
-        // shared
-        memset(this->decrypt.key, 0, 16);
-        memset(this->encrypt.key, 0, 16);
-        memset(this->decrypt.update_key, 0, 16);
-        memset(this->encrypt.update_key, 0, 16);
-        switch (crypt_level) {
-        case 1:
-        case 2:
-            this->decrypt.rc4_key_size = 1; /* 40 bits */
-            this->encrypt.rc4_key_size = 1; /* 40 bits */
-            this->decrypt.rc4_key_len = 8; /* 8 = 40 bit */
-            this->encrypt.rc4_key_len = 8; /* 8 = 40 bit */
-        break;
-        default:
-        case 3:
-            this->decrypt.rc4_key_size = 2; /* 128 bits */
-            this->encrypt.rc4_key_size = 2; /* 128 bits */
-            this->decrypt.rc4_key_len = 16; /* 16 = 128 bit */
-            this->encrypt.rc4_key_len = 16; /* 16 = 128 bit */
-        break;
-        }
-
-    }
-
-    ~Sec() {}
-
-};
-
 static inline void recv_security_exchange_PDU(
                         Transport * trans,
                         CryptContext & decrypt,
