@@ -392,6 +392,7 @@ struct server_rdp {
     }
 
 
+
     // Connection Finalization
     // -----------------------
 
@@ -469,11 +470,17 @@ struct server_rdp {
         LOG(LOG_INFO, "front:basic_settings:channel_list : %u", channel_list.size());
 
         recv_mcs_connect_initial_pdu_with_gcc_conference_create_request(
-                this->trans,
-                &this->client_info,
-                channel_list);
-
-        this->sec_layer.send_mcs_connect_response_pdu_with_gcc_conference_create_response(this->trans, &this->client_info, channel_list, this->sec_layer.encrypt.rc4_key_size, this->pub_mod, this->pri_exp);
+            this->trans,
+            &this->client_info,
+            channel_list);
+        send_mcs_connect_response_pdu_with_gcc_conference_create_response(
+            this->trans,
+            &this->client_info,
+            channel_list,
+            this->sec_layer.server_random,
+            this->sec_layer.encrypt.rc4_key_size,
+            this->pub_mod,
+            this->pri_exp);
 
         // Channel Connection
         // ------------------
@@ -571,21 +578,25 @@ struct server_rdp {
         // Client                                                     Server
         //    |------Security Exchange PDU ---------------------------> |
 
-        {
-            Stream stream(8192);
-            X224In tpdu(this->trans, stream);
-            McsIn mcs_in(stream);
+        recv_security_exchange_PDU(this->trans,
+            this->sec_layer.decrypt, this->sec_layer.client_crypt_random);
 
-            if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-            }
+        ssl_mod_exp(this->sec_layer.client_random, 64,
+                    this->sec_layer.client_crypt_random, 64,
+                    this->pub_mod, 64,
+                    this->pri_exp, 64);
 
-            SecIn sec(stream, this->sec_layer.decrypt);
-            if (!sec.flags & SEC_CLIENT_RANDOM) { /* 0x01 */
-                throw Error(ERR_SEC_EXPECTED_CLIENT_RANDOM);
-            }
-            this->recv_client_random(stream);
-        }
+        // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
+        #warning looks like decrypt sign key is never used, if it's true remove it from CryptContext
+        #warning this methode should probably move to ssl_calls
+        rdp_sec_generate_keys(
+            this->sec_layer.decrypt,
+            this->sec_layer.encrypt,
+            this->sec_layer.encrypt.sign_key,
+            this->sec_layer.client_random,
+            this->sec_layer.server_random,
+            this->sec_layer.encrypt.rc4_key_size);
+
 
         // Secure Settings Exchange
         // ------------------------
@@ -795,30 +806,6 @@ struct server_rdp {
         }
     }
 
-
-    void recv_client_random(Stream & stream)
-    {
-        #warning use and at least check len
-        stream.in_uint32_le(); // len
-
-        memcpy(this->sec_layer.client_crypt_random, stream.in_uint8p(64), 64);
-
-        ssl_mod_exp(this->sec_layer.client_random, 64,
-                this->sec_layer.client_crypt_random, 64,
-                this->pub_mod, 64,
-                this->pri_exp, 64);
-
-        // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
-        #warning looks like decrypt sign key is never used, if it's true remove it from CryptContext
-        #warning this methode should probably move to ssl_calls
-        rdp_sec_generate_keys(
-            this->sec_layer.decrypt,
-            this->sec_layer.encrypt,
-            this->sec_layer.encrypt.sign_key,
-            this->sec_layer.client_random,
-            this->sec_layer.server_random,
-            this->sec_layer.encrypt.rc4_key_size);
-    }
 
     /*****************************************************************************/
     void server_rdp_send_data_update_sync() throw (Error)

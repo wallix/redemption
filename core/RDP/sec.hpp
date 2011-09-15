@@ -279,363 +279,6 @@ struct Sec
         tpdu.send(trans);
     }
 
-
-
-    void send_mcs_connect_response_pdu_with_gcc_conference_create_response(
-                                            Transport * trans,
-                                            ClientInfo * client_info,
-                                            const ChannelList & channel_list,
-                                            int rc4_key_size,
-                                            uint8_t (&pub_mod)[512],
-                                            uint8_t (&pri_exp)[512]
-                                        ) throw(Error)
-    {
-        Rsakeys rsa_keys(CFG_PATH "/" RSAKEYS_INI);
-        memset(this->server_random, 0x44, 32);
-        int fd = open("/dev/urandom", O_RDONLY);
-        if (fd == -1) {
-            fd = open("/dev/random", O_RDONLY);
-        }
-        if (fd != -1) {
-            if (read(fd, this->server_random, 32) != 32) {
-            }
-            close(fd);
-        }
-
-        uint8_t pub_sig[512];
-
-        memcpy(pub_mod, rsa_keys.pub_mod, 64);
-        memcpy(pub_sig, rsa_keys.pub_sig, 64);
-        memcpy(pri_exp, rsa_keys.pri_exp, 64);
-
-        Stream stream(8192);
-
-        // TPKT Header (length = 337 bytes)
-        // X.224 Data TPDU
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        // BER: Application-Defined Type = APPLICATION 102 = Connect-Response
-        stream.out_uint16_be(BER_TAG_MCS_CONNECT_RESPONSE);
-        uint32_t offset_len_mcs_connect_response = stream.p - stream.data;
-        // BER: Type Length
-        stream.out_ber_len_uint16(0); // filled later, 3 bytes
-
-        // Connect-Response::result = rt-successful (0)
-        // The first byte (0x0a) is the ASN.1 BER encoded Enumerated type. The
-        // length of the value is given by the second byte (1 byte), and the
-        // actual value is 0 (rt-successful).
-        stream.out_uint8(BER_TAG_RESULT);
-        stream.out_ber_len_uint7(1);
-        stream.out_uint8(0);
-
-        // Connect-Response::calledConnectId = 0
-        stream.out_uint8(BER_TAG_INTEGER);
-        stream.out_ber_len_uint7(1);
-        stream.out_uint8(0);
-
-        // Connect-Response::domainParameters (26 bytes)
-        stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-        stream.out_ber_len_uint7(26);
-        // DomainParameters::maxChannelIds = 34
-        stream.out_ber_int8(22);
-        // DomainParameters::maxUserIds = 3
-        stream.out_ber_int8(3);
-        // DomainParameters::maximumTokenIds = 0
-        stream.out_ber_int8(0);
-        // DomainParameters::numPriorities = 1
-        stream.out_ber_int8(1);
-        // DomainParameters::minThroughput = 0
-        stream.out_ber_int8(0);
-        // DomainParameters::maxHeight = 1
-        stream.out_ber_int8(1);
-        // DomainParameters::maxMCSPDUsize = 65528
-        stream.out_ber_int24(0xfff8);
-        // DomainParameters::protocolVersion = 2
-        stream.out_ber_int8(2);
-
-        // Connect-Response::userData (287 bytes)
-        stream.out_uint8(BER_TAG_OCTET_STRING);
-        uint32_t offset_len_mcs_data = stream.p - stream.data;
-        stream.out_ber_len_uint16(0); // filled later, 3 bytes
-
-
-        // GCC Conference Create Response
-        // ------------------------------
-
-        // ConferenceCreateResponse Parameters
-        // -----------------------------------
-
-        // Generic definitions used in parameter descriptions:
-
-        // simpleTextFirstCharacter UniversalString ::= {0, 0, 0, 0}
-
-        // simpleTextLastCharacter UniversalString ::= {0, 0, 0, 255}
-
-        // SimpleTextString ::=  BMPString (SIZE (0..255)) (FROM (simpleTextFirstCharacter..simpleTextLastCharacter))
-
-        // TextString ::= BMPString (SIZE (0..255)) -- Basic Multilingual Plane of ISO/IEC 10646-1 (Unicode)
-
-        // SimpleNumericString ::= NumericString (SIZE (1..255)) (FROM ("0123456789"))
-
-        // DynamicChannelID ::= INTEGER (1001..65535) -- Those created and deleted by MCS
-
-        // UserID ::= DynamicChannelID
-
-        // H221NonStandardIdentifier ::= OCTET STRING (SIZE (4..255))
-        //      -- First four octets shall be country code and
-        //      -- Manufacturer code, assigned as specified in
-        //      -- Annex A/H.221 for NS-cap and NS-comm
-
-        // Key ::= CHOICE   -- Identifier of a standard or non-standard object
-        // {
-        //      object              OBJECT IDENTIFIER,
-        //      h221NonStandard     H221NonStandardIdentifier
-        // }
-
-        // UserData ::= SET OF SEQUENCE
-        // {
-        //      key     Key,
-        //      value   OCTET STRING OPTIONAL
-        // }
-
-        // ConferenceCreateResponse ::= SEQUENCE
-        // {    -- MCS-Connect-Provider response user data
-        //      nodeID              UserID, -- Node ID of the sending node
-        //      tag                 INTEGER,
-        //      result              ENUMERATED
-        //      {
-        //          success                         (0),
-        //          userRejected                    (1),
-        //          resourcesNotAvailable           (2),
-        //          rejectedForSymmetryBreaking     (3),
-        //          lockedConferenceNotSupported    (4),
-        //          ...
-        //      },
-        //      userData            UserData OPTIONAL,
-        //      ...
-        //}
-
-
-        // User Data                 : Optional
-        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-        // User Data: Optional user data which may be used for functions outside
-        // the scope of this Recommendation such as authentication, billing,
-        // etc.
-
-        // Result                    : Mandatory
-        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-        // An indication of whether the request was accepted or rejected, and if
-        // rejected, the reason why. It contains one of a list of possible
-        // results: successful, user rejected, resources not available, rejected
-        // for symmetry-breaking, locked conference not supported, Conference
-        // Name and Conference Name Modifier already exist, domain parameters
-        // unacceptable, domain not hierarchical, lower-layer initiated
-        // disconnect, unspecified failure to connect. A negative result in the
-        // GCC-Conference-Create confirm does not imply that the physical
-        // connection to the node to which the connection was being attempted
-        // is disconnected.
-
-        // The ConferenceCreateResponse PDU is shown in Table 8-4. The Node ID
-        // parameter, which is the User ID assigned by MCS in response to the
-        // MCS-Attach-User request issued by the GCC Provider, shall be supplied
-        // by the GCC Provider sourcing this PDU. The Tag parameter is assigned
-        // by the source GCC Provider to be locally unique. It is used to
-        // identify the returned UserIDIndication PDU. The Result parameter
-        // includes GCC-specific failure information sourced directly from
-        // the Result parameter in the GCC-Conference-Create response primitive.
-        // If the Result parameter is anything except successful, the Result
-        // parameter in the MCS-Connect-Provider response is set to
-        // user-rejected.
-
-        //            Table 8-4 – ConferenceCreateResponse GCCPDU
-        // +------------------+------------------+--------------------------+
-        // | Content          |     Source       |         Sink             |
-        // +==================+==================+==========================+
-        // | Node ID          | Top GCC Provider | Destination GCC Provider |
-        // +------------------+------------------+--------------------------+
-        // | Tag              | Top GCC Provider | Destination GCC Provider |
-        // +------------------+------------------+--------------------------+
-        // | Result           | Response         | Confirm                  |
-        // +------------------+------------------+--------------------------+
-        // | User Data (opt.) | Response         | Confirm                  |
-        // +------------------+------------------+--------------------------+
-
-        //PER encoded (ALIGNED variant of BASIC-PER) GCC Connection Data (ConnectData):
-        // 00 05 00
-        // 14 7c 00 01
-        // 2a
-        // 14 76 0a 01 01 00 01 c0 00 4d 63 44 6e
-        // 81 08
-
-
-        // 00 05 -> Key::object length = 5 bytes
-        // 00 14 7c 00 01 -> Key::object = { 0 0 20 124 0 1 }
-        stream.out_uint16_be(5);
-        stream.out_copy_bytes("\x00\x14\x7c\x00\x01", 5);
-
-
-        // 2a -> ConnectData::connectPDU length = 42 bytes
-        // This length MUST be ignored by the client.
-        stream.out_uint8(0x2a);
-
-        // PER encoded (ALIGNED variant of BASIC-PER) GCC Conference Create Response
-        // PDU:
-        // 14 76 0a 01 01 00 01 c0 00 00 4d 63 44 6e 81 08
-
-        // 0x14:
-        // 0 - extension bit (ConnectGCCPDU)
-        // 0 - --\
-        // 0 -   | CHOICE: From ConnectGCCPDU select conferenceCreateResponse (1)
-        // 1 - --/ of type ConferenceCreateResponse
-        // 0 - extension bit (ConferenceCreateResponse)
-        // 1 - ConferenceCreateResponse::userData present
-        // 0 - padding
-        // 0 - padding
-        stream.out_uint8(0x10 | 4);
-
-        // ConferenceCreateResponse::nodeID
-        //  = 0x760a + 1001 = 30218 + 1001 = 31219
-        //  (minimum for UserID is 1001)
-        stream.out_uint16_le(0x760a);
-
-        // ConferenceCreateResponse::tag length = 1 byte
-        stream.out_uint8(1);
-
-        // ConferenceCreateResponse::tag = 1
-        stream.out_uint8(1);
-
-        // 0x00:
-        // 0 - extension bit (Result)
-        // 0 - --\
-        // 0 -   | ConferenceCreateResponse::result = success (0)
-        // 0 - --/
-        // 0 - padding
-        // 0 - padding
-        // 0 - padding
-        // 0 - padding
-        stream.out_uint8(0);
-
-        // number of UserData sets = 1
-        stream.out_uint8(1);
-
-        // 0xc0:
-        // 1 - UserData::value present
-        // 1 - CHOICE: From Key select h221NonStandard (1)
-        //               of type H221NonStandardIdentifier
-        // 0 - padding
-        // 0 - padding
-        // 0 - padding
-        // 0 - padding
-        // 0 - padding
-        // 0 - padding
-        stream.out_uint8(0xc0);
-
-        // h221NonStandard length = 0 + 4 = 4 octets
-        //   (minimum for H221NonStandardIdentifier is 4)
-        stream.out_uint8(0);
-
-        // h221NonStandard (server-to-client H.221 key) = "McDn"
-        stream.out_copy_bytes("McDn", 4);
-
-        uint16_t padding = channel_list.size() & 1;
-        uint16_t srv_channel_size = 8 + (channel_list.size() + padding) * 2;
-        stream.out_2BUE(8 + srv_channel_size + 236); // len
-
-        stream.out_uint16_le(SC_CORE);
-        // length, including tag and length fields
-        stream.out_uint16_le(8); /* len */
-        stream.out_uint8(4); /* 4 = rdp5 1 = rdp4 */
-        stream.out_uint8(0);
-        stream.out_uint8(8);
-        stream.out_uint8(0);
-
-        uint16_t num_channels = channel_list.size();
-        uint16_t padchan = num_channels & 1;
-
-//01 0c 0c 00 -> TS_UD_HEADER::type = SC_CORE (0x0c01), length = 12
-//bytes
-
-//04 00 08 00 -> TS_UD_SC_CORE::version = 0x0008004
-//00 00 00 00 -> TS_UD_SC_CORE::clientRequestedProtocols = PROTOCOL_RDP
-
-//03 0c 10 00 -> TS_UD_HEADER::type = SC_NET (0x0c03), length = 16 bytes
-
-//eb 03 -> TS_UD_SC_NET::MCSChannelID = 0x3eb = 1003 (I/O channel)
-//03 00 -> TS_UD_SC_NET::channelCount = 3
-//ec 03 -> channel0 = 0x3ec = 1004 (rdpdr)
-//ed 03 -> channel1 = 0x3ed = 1005 (cliprdr)
-//ee 03 -> channel2 = 0x3ee = 1006 (rdpsnd)
-//00 00 -> padding
-
-//02 0c ec 00 -> TS_UD_HEADER::type = SC_SECURITY, length = 236
-
-//02 00 00 00 -> TS_UD_SC_SEC1::encryptionMethod = 128BIT_ENCRYPTION_FLAG
-//02 00 00 00 -> TS_UD_SC_SEC1::encryptionLevel = TS_ENCRYPTION_LEVEL_CLIENT_COMPATIBLE
-//20 00 00 00 -> TS_UD_SC_SEC1::serverRandomLen = 32 bytes
-//b8 00 00 00 -> TS_UD_SC_SEC1::serverCertLen = 184 bytes
-
-
-        stream.out_uint16_le(SC_NET);
-        // length, including tag and length fields
-        stream.out_uint16_le(8 + (num_channels + padchan) * 2);
-        stream.out_uint16_le(MCS_GLOBAL_CHANNEL);
-        stream.out_uint16_le(num_channels); /* number of other channels */
-
-        for (int index = 0; index < num_channels; index++) {
-                stream.out_uint16_le(MCS_GLOBAL_CHANNEL + (index + 1));
-        }
-        if (padchan){
-            stream.out_uint16_le(0);
-        }
-
-        stream.out_uint16_le(SC_SECURITY);
-        stream.out_uint16_le(236); // length, including tag and length fields
-        stream.out_uint32_le(rc4_key_size); // key len 1 = 40 bit 2 = 128 bit
-        stream.out_uint32_le(client_info->crypt_level); // crypt level 1 = low 2 = medium
-        /* 3 = high */
-        stream.out_uint32_le(32);  // random len
-        stream.out_uint32_le(184); // len of rsa info(certificate)
-        stream.out_copy_bytes(this->server_random, 32);
-        /* here to end is certificate */
-        /* HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ */
-        /* TermService\Parameters\Certificate */
-        stream.out_uint32_le(1);
-        stream.out_uint32_le(1);
-        stream.out_uint32_le(1);
-
-        // 96 bytes long of sec_tag pubkey
-        send_sec_tag_pubkey(stream, rsa_keys.pub_exp, pub_mod);
-        // 76 bytes long of sec_tag_pub_sig
-        send_sec_tag_sig(stream, pub_sig);
-        /* end certificate */
-
-        assert(offset_len_mcs_connect_response - offset_len_mcs_data == 38);
-
-        #warning create a function in stream that sets differed ber_len_offsets
-        // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
-        stream.set_out_ber_len_uint16(stream.p - stream.data - offset_len_mcs_data - 3, offset_len_mcs_data);
-        // set BER_TAG_MCS_CONNECT_RESPONSE len
-        stream.set_out_ber_len_uint16(stream.p - stream.data - offset_len_mcs_connect_response - 3, offset_len_mcs_connect_response);
-
-        tpdu.end();
-        tpdu.send(trans);
-    }
-
-    /*****************************************************************************/
-    /* Process crypto information blob */
-
-//    /*****************************************************************************/
-//    static void rdp_sec_rsa_op(uint8_t* out, uint8_t* in, uint8_t* mod, uint8_t* exp)
-//    {
-//        ssl_mod_exp(out, SEC_MODULUS_SIZE, /* 64 */
-//                    in, SEC_RANDOM_SIZE, /* 32 */
-//                    mod, SEC_MODULUS_SIZE, /* 64 */
-//                    exp, SEC_EXPONENT_SIZE); /* 4 */
-//    }
-
-
     /******************************************************************************/
 
     /* TODO: this function is not working well because it is stopping copy / paste
@@ -656,27 +299,58 @@ struct Sec
       return 0;
     }
 
-    void send_security_exchange_PDU(Transport * trans, int userid)
-    {
-        LOG(LOG_INFO, "Iso Layer : setting encryption\n");
-        /* Send the client random to the server */
-        //      if (this->encryption)
-        Stream sdrq_stream(8192);
-        X224Out sdrq_tpdu(X224Packet::DT_TPDU, sdrq_stream);
-        McsOut sdrq_out(sdrq_stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
+};
 
-        sdrq_stream.out_uint32_le(SEC_CLIENT_RANDOM);
-        sdrq_stream.out_uint32_le(this->server_public_key_len + SEC_PADDING_SIZE);
-        LOG(LOG_INFO, "Server public key is %d bytes long", this->server_public_key_len);
-        sdrq_stream.out_copy_bytes(this->client_crypt_random, this->server_public_key_len);
-        sdrq_stream.out_clear_bytes(SEC_PADDING_SIZE);
+static inline void recv_security_exchange_PDU(
+                        Transport * trans,
+                        CryptContext & decrypt,
+                        uint8_t * client_crypt_random)
+{
+    Stream stream(8192);
+    X224In tpdu(trans, stream);
+    McsIn mcs_in(stream);
 
-        sdrq_out.end();
-        sdrq_tpdu.end();
-        sdrq_tpdu.send(trans);
+    if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
+        throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
     }
 
-};
+    SecIn sec(stream, decrypt);
+    if (!sec.flags & SEC_CLIENT_RANDOM) { /* 0x01 */
+        throw Error(ERR_SEC_EXPECTING_CLIENT_RANDOM);
+    }
+    uint32_t len = stream.in_uint32_le() - SEC_PADDING_SIZE;
+
+    if (len != 64){
+        throw Error(ERR_SEC_EXPECTING_512_BITS_CLIENT_RANDOM);
+    }
+
+    memcpy(client_crypt_random, stream.in_uint8p(len), len);
+    stream.skip_uint8(SEC_PADDING_SIZE);
+
+    mcs_in.end();
+    tpdu.end();
+}
+
+
+static inline void send_security_exchange_PDU(Transport * trans, int userid, uint32_t server_public_key_len, uint8_t * client_crypt_random)
+{
+    LOG(LOG_INFO, "Iso Layer : setting encryption\n");
+    /* Send the client random to the server */
+    //      if (this->encryption)
+    Stream sdrq_stream(8192);
+    X224Out sdrq_tpdu(X224Packet::DT_TPDU, sdrq_stream);
+    McsOut sdrq_out(sdrq_stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
+
+    sdrq_stream.out_uint32_le(SEC_CLIENT_RANDOM);
+    sdrq_stream.out_uint32_le(server_public_key_len + SEC_PADDING_SIZE);
+    LOG(LOG_INFO, "Server public key is %d bytes long", server_public_key_len);
+    sdrq_stream.out_copy_bytes(client_crypt_random, server_public_key_len);
+    sdrq_stream.out_clear_bytes(SEC_PADDING_SIZE);
+
+    sdrq_out.end();
+    sdrq_tpdu.end();
+    sdrq_tpdu.send(trans);
+}
 
 
 

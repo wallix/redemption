@@ -28,6 +28,7 @@
 #include "RDP/x224.hpp"
 #include "channel_list.hpp"
 
+#include "rsa_keys.hpp"
 #warning ssl calls introduce some dependency on ssl system library, injecting it in the sec object would be better.
 #include "ssl_calls.hpp"
 
@@ -1696,6 +1697,350 @@ static inline void recv_sec_tag_pubkey(Stream & stream, uint32_t & server_public
 }
 
 
+
+static inline void send_mcs_connect_response_pdu_with_gcc_conference_create_response(
+                                        Transport * trans,
+                                        ClientInfo * client_info,
+                                        const ChannelList & channel_list,
+                                        uint8_t (&server_random)[32],
+                                        int rc4_key_size,
+                                        uint8_t (&pub_mod)[512],
+                                        uint8_t (&pri_exp)[512]
+                                    ) throw(Error)
+{
+    Rsakeys rsa_keys(CFG_PATH "/" RSAKEYS_INI);
+    memset(server_random, 0x44, 32);
+    int fd = open("/dev/urandom", O_RDONLY);
+    if (fd == -1) {
+        fd = open("/dev/random", O_RDONLY);
+    }
+    if (fd != -1) {
+        if (read(fd, server_random, 32) != 32) {
+        }
+        close(fd);
+    }
+
+    uint8_t pub_sig[512];
+
+    memcpy(pub_mod, rsa_keys.pub_mod, 64);
+    memcpy(pub_sig, rsa_keys.pub_sig, 64);
+    memcpy(pri_exp, rsa_keys.pri_exp, 64);
+
+    Stream stream(8192);
+
+    // TPKT Header (length = 337 bytes)
+    // X.224 Data TPDU
+    X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+    // BER: Application-Defined Type = APPLICATION 102 = Connect-Response
+    stream.out_uint16_be(BER_TAG_MCS_CONNECT_RESPONSE);
+    uint32_t offset_len_mcs_connect_response = stream.p - stream.data;
+    // BER: Type Length
+    stream.out_ber_len_uint16(0); // filled later, 3 bytes
+
+    // Connect-Response::result = rt-successful (0)
+    // The first byte (0x0a) is the ASN.1 BER encoded Enumerated type. The
+    // length of the value is given by the second byte (1 byte), and the
+    // actual value is 0 (rt-successful).
+    stream.out_uint8(BER_TAG_RESULT);
+    stream.out_ber_len_uint7(1);
+    stream.out_uint8(0);
+
+    // Connect-Response::calledConnectId = 0
+    stream.out_uint8(BER_TAG_INTEGER);
+    stream.out_ber_len_uint7(1);
+    stream.out_uint8(0);
+
+    // Connect-Response::domainParameters (26 bytes)
+    stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+    stream.out_ber_len_uint7(26);
+    // DomainParameters::maxChannelIds = 34
+    stream.out_ber_int8(22);
+    // DomainParameters::maxUserIds = 3
+    stream.out_ber_int8(3);
+    // DomainParameters::maximumTokenIds = 0
+    stream.out_ber_int8(0);
+    // DomainParameters::numPriorities = 1
+    stream.out_ber_int8(1);
+    // DomainParameters::minThroughput = 0
+    stream.out_ber_int8(0);
+    // DomainParameters::maxHeight = 1
+    stream.out_ber_int8(1);
+    // DomainParameters::maxMCSPDUsize = 65528
+    stream.out_ber_int24(0xfff8);
+    // DomainParameters::protocolVersion = 2
+    stream.out_ber_int8(2);
+
+    // Connect-Response::userData (287 bytes)
+    stream.out_uint8(BER_TAG_OCTET_STRING);
+    uint32_t offset_len_mcs_data = stream.p - stream.data;
+    stream.out_ber_len_uint16(0); // filled later, 3 bytes
+
+
+    // GCC Conference Create Response
+    // ------------------------------
+
+    // ConferenceCreateResponse Parameters
+    // -----------------------------------
+
+    // Generic definitions used in parameter descriptions:
+
+    // simpleTextFirstCharacter UniversalString ::= {0, 0, 0, 0}
+
+    // simpleTextLastCharacter UniversalString ::= {0, 0, 0, 255}
+
+    // SimpleTextString ::=  BMPString (SIZE (0..255)) (FROM (simpleTextFirstCharacter..simpleTextLastCharacter))
+
+    // TextString ::= BMPString (SIZE (0..255)) -- Basic Multilingual Plane of ISO/IEC 10646-1 (Unicode)
+
+    // SimpleNumericString ::= NumericString (SIZE (1..255)) (FROM ("0123456789"))
+
+    // DynamicChannelID ::= INTEGER (1001..65535) -- Those created and deleted by MCS
+
+    // UserID ::= DynamicChannelID
+
+    // H221NonStandardIdentifier ::= OCTET STRING (SIZE (4..255))
+    //      -- First four octets shall be country code and
+    //      -- Manufacturer code, assigned as specified in
+    //      -- Annex A/H.221 for NS-cap and NS-comm
+
+    // Key ::= CHOICE   -- Identifier of a standard or non-standard object
+    // {
+    //      object              OBJECT IDENTIFIER,
+    //      h221NonStandard     H221NonStandardIdentifier
+    // }
+
+    // UserData ::= SET OF SEQUENCE
+    // {
+    //      key     Key,
+    //      value   OCTET STRING OPTIONAL
+    // }
+
+    // ConferenceCreateResponse ::= SEQUENCE
+    // {    -- MCS-Connect-Provider response user data
+    //      nodeID              UserID, -- Node ID of the sending node
+    //      tag                 INTEGER,
+    //      result              ENUMERATED
+    //      {
+    //          success                         (0),
+    //          userRejected                    (1),
+    //          resourcesNotAvailable           (2),
+    //          rejectedForSymmetryBreaking     (3),
+    //          lockedConferenceNotSupported    (4),
+    //          ...
+    //      },
+    //      userData            UserData OPTIONAL,
+    //      ...
+    //}
+
+
+    // User Data                 : Optional
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    // User Data: Optional user data which may be used for functions outside
+    // the scope of this Recommendation such as authentication, billing,
+    // etc.
+
+    // Result                    : Mandatory
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    // An indication of whether the request was accepted or rejected, and if
+    // rejected, the reason why. It contains one of a list of possible
+    // results: successful, user rejected, resources not available, rejected
+    // for symmetry-breaking, locked conference not supported, Conference
+    // Name and Conference Name Modifier already exist, domain parameters
+    // unacceptable, domain not hierarchical, lower-layer initiated
+    // disconnect, unspecified failure to connect. A negative result in the
+    // GCC-Conference-Create confirm does not imply that the physical
+    // connection to the node to which the connection was being attempted
+    // is disconnected.
+
+    // The ConferenceCreateResponse PDU is shown in Table 8-4. The Node ID
+    // parameter, which is the User ID assigned by MCS in response to the
+    // MCS-Attach-User request issued by the GCC Provider, shall be supplied
+    // by the GCC Provider sourcing this PDU. The Tag parameter is assigned
+    // by the source GCC Provider to be locally unique. It is used to
+    // identify the returned UserIDIndication PDU. The Result parameter
+    // includes GCC-specific failure information sourced directly from
+    // the Result parameter in the GCC-Conference-Create response primitive.
+    // If the Result parameter is anything except successful, the Result
+    // parameter in the MCS-Connect-Provider response is set to
+    // user-rejected.
+
+    //            Table 8-4 – ConferenceCreateResponse GCCPDU
+    // +------------------+------------------+--------------------------+
+    // | Content          |     Source       |         Sink             |
+    // +==================+==================+==========================+
+    // | Node ID          | Top GCC Provider | Destination GCC Provider |
+    // +------------------+------------------+--------------------------+
+    // | Tag              | Top GCC Provider | Destination GCC Provider |
+    // +------------------+------------------+--------------------------+
+    // | Result           | Response         | Confirm                  |
+    // +------------------+------------------+--------------------------+
+    // | User Data (opt.) | Response         | Confirm                  |
+    // +------------------+------------------+--------------------------+
+
+    //PER encoded (ALIGNED variant of BASIC-PER) GCC Connection Data (ConnectData):
+    // 00 05 00
+    // 14 7c 00 01
+    // 2a
+    // 14 76 0a 01 01 00 01 c0 00 4d 63 44 6e
+    // 81 08
+
+
+    // 00 05 -> Key::object length = 5 bytes
+    // 00 14 7c 00 01 -> Key::object = { 0 0 20 124 0 1 }
+    stream.out_uint16_be(5);
+    stream.out_copy_bytes("\x00\x14\x7c\x00\x01", 5);
+
+
+    // 2a -> ConnectData::connectPDU length = 42 bytes
+    // This length MUST be ignored by the client.
+    stream.out_uint8(0x2a);
+
+    // PER encoded (ALIGNED variant of BASIC-PER) GCC Conference Create Response
+    // PDU:
+    // 14 76 0a 01 01 00 01 c0 00 00 4d 63 44 6e 81 08
+
+    // 0x14:
+    // 0 - extension bit (ConnectGCCPDU)
+    // 0 - --\
+    // 0 -   | CHOICE: From ConnectGCCPDU select conferenceCreateResponse (1)
+    // 1 - --/ of type ConferenceCreateResponse
+    // 0 - extension bit (ConferenceCreateResponse)
+    // 1 - ConferenceCreateResponse::userData present
+    // 0 - padding
+    // 0 - padding
+    stream.out_uint8(0x10 | 4);
+
+    // ConferenceCreateResponse::nodeID
+    //  = 0x760a + 1001 = 30218 + 1001 = 31219
+    //  (minimum for UserID is 1001)
+    stream.out_uint16_le(0x760a);
+
+    // ConferenceCreateResponse::tag length = 1 byte
+    stream.out_uint8(1);
+
+    // ConferenceCreateResponse::tag = 1
+    stream.out_uint8(1);
+
+    // 0x00:
+    // 0 - extension bit (Result)
+    // 0 - --\
+    // 0 -   | ConferenceCreateResponse::result = success (0)
+    // 0 - --/
+    // 0 - padding
+    // 0 - padding
+    // 0 - padding
+    // 0 - padding
+    stream.out_uint8(0);
+
+    // number of UserData sets = 1
+    stream.out_uint8(1);
+
+    // 0xc0:
+    // 1 - UserData::value present
+    // 1 - CHOICE: From Key select h221NonStandard (1)
+    //               of type H221NonStandardIdentifier
+    // 0 - padding
+    // 0 - padding
+    // 0 - padding
+    // 0 - padding
+    // 0 - padding
+    // 0 - padding
+    stream.out_uint8(0xc0);
+
+    // h221NonStandard length = 0 + 4 = 4 octets
+    //   (minimum for H221NonStandardIdentifier is 4)
+    stream.out_uint8(0);
+
+    // h221NonStandard (server-to-client H.221 key) = "McDn"
+    stream.out_copy_bytes("McDn", 4);
+
+    uint16_t padding = channel_list.size() & 1;
+    uint16_t srv_channel_size = 8 + (channel_list.size() + padding) * 2;
+    stream.out_2BUE(8 + srv_channel_size + 236); // len
+
+    stream.out_uint16_le(SC_CORE);
+    // length, including tag and length fields
+    stream.out_uint16_le(8); /* len */
+    stream.out_uint8(4); /* 4 = rdp5 1 = rdp4 */
+    stream.out_uint8(0);
+    stream.out_uint8(8);
+    stream.out_uint8(0);
+
+    uint16_t num_channels = channel_list.size();
+    uint16_t padchan = num_channels & 1;
+
+//01 0c 0c 00 -> TS_UD_HEADER::type = SC_CORE (0x0c01), length = 12
+//bytes
+
+//04 00 08 00 -> TS_UD_SC_CORE::version = 0x0008004
+//00 00 00 00 -> TS_UD_SC_CORE::clientRequestedProtocols = PROTOCOL_RDP
+
+//03 0c 10 00 -> TS_UD_HEADER::type = SC_NET (0x0c03), length = 16 bytes
+
+//eb 03 -> TS_UD_SC_NET::MCSChannelID = 0x3eb = 1003 (I/O channel)
+//03 00 -> TS_UD_SC_NET::channelCount = 3
+//ec 03 -> channel0 = 0x3ec = 1004 (rdpdr)
+//ed 03 -> channel1 = 0x3ed = 1005 (cliprdr)
+//ee 03 -> channel2 = 0x3ee = 1006 (rdpsnd)
+//00 00 -> padding
+
+//02 0c ec 00 -> TS_UD_HEADER::type = SC_SECURITY, length = 236
+
+//02 00 00 00 -> TS_UD_SC_SEC1::encryptionMethod = 128BIT_ENCRYPTION_FLAG
+//02 00 00 00 -> TS_UD_SC_SEC1::encryptionLevel = TS_ENCRYPTION_LEVEL_CLIENT_COMPATIBLE
+//20 00 00 00 -> TS_UD_SC_SEC1::serverRandomLen = 32 bytes
+//b8 00 00 00 -> TS_UD_SC_SEC1::serverCertLen = 184 bytes
+
+
+    stream.out_uint16_le(SC_NET);
+    // length, including tag and length fields
+    stream.out_uint16_le(8 + (num_channels + padchan) * 2);
+    stream.out_uint16_le(MCS_GLOBAL_CHANNEL);
+    stream.out_uint16_le(num_channels); /* number of other channels */
+
+    for (int index = 0; index < num_channels; index++) {
+            stream.out_uint16_le(MCS_GLOBAL_CHANNEL + (index + 1));
+    }
+    if (padchan){
+        stream.out_uint16_le(0);
+    }
+
+    stream.out_uint16_le(SC_SECURITY);
+    stream.out_uint16_le(236); // length, including tag and length fields
+    stream.out_uint32_le(rc4_key_size); // key len 1 = 40 bit 2 = 128 bit
+    stream.out_uint32_le(client_info->crypt_level); // crypt level 1 = low 2 = medium
+    /* 3 = high */
+    stream.out_uint32_le(32);  // random len
+    stream.out_uint32_le(184); // len of rsa info(certificate)
+    stream.out_copy_bytes(server_random, 32);
+    /* here to end is certificate */
+    /* HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ */
+    /* TermService\Parameters\Certificate */
+    stream.out_uint32_le(1);
+    stream.out_uint32_le(1);
+    stream.out_uint32_le(1);
+
+    // 96 bytes long of sec_tag pubkey
+    send_sec_tag_pubkey(stream, rsa_keys.pub_exp, pub_mod);
+    // 76 bytes long of sec_tag_pub_sig
+    send_sec_tag_sig(stream, pub_sig);
+    /* end certificate */
+
+    assert(offset_len_mcs_connect_response - offset_len_mcs_data == 38);
+
+    #warning create a function in stream that sets differed ber_len_offsets
+    // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
+    stream.set_out_ber_len_uint16(stream.p - stream.data - offset_len_mcs_data - 3, offset_len_mcs_data);
+    // set BER_TAG_MCS_CONNECT_RESPONSE len
+    stream.set_out_ber_len_uint16(stream.p - stream.data - offset_len_mcs_connect_response - 3, offset_len_mcs_connect_response);
+
+    tpdu.end();
+    tpdu.send(trans);
+}
+
 // 2.2.1.4  Server MCS Connect Response PDU with GCC Conference Create Response
 // ----------------------------------------------------------------------------
 
@@ -2035,14 +2380,6 @@ static inline void recv_mcs_connect_response_pdu_with_gcc_conference_create_resp
             parse_mcs_data_sc_core(cr_stream, use_rdp5);
         break;
         case SC_SECURITY:
-//            rdp_sec_process_crypt_info(cr_stream, encrypt, decrypt, server_public_key_len, client_crypt_random, crypt_level);
-//        void rdp_sec_process_crypt_info(
-//                        Stream & stream,
-//                        CryptContext & encrypt,
-//                        CryptContext & decrypt,
-//                        uint32_t & server_public_key_len,
-//                        uint8_t (& client_crypt_random)[512],
-//                        uint8_t & crypt_level)
         {
         uint8_t server_random[SEC_RANDOM_SIZE];
         uint8_t client_random[SEC_RANDOM_SIZE];
@@ -2055,167 +2392,159 @@ static inline void recv_mcs_connect_response_pdu_with_gcc_conference_create_resp
         memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
         #warning check for the true size
         memset(server_random, 0, SEC_RANDOM_SIZE);
-//        rdp_sec_parse_crypt_info(cr_stream, &rc4_key_size, server_random, modulus, exponent, server_public_key_len, crypt_level);
-//
-//        static inline void rdp_sec_parse_crypt_info(Stream & stream, uint32_t *rc4_key_size,
-//                                      uint8_t * server_random,
-//                                      uint8_t* modulus, uint8_t* exponent,
-//                                      uint32_t & server_public_key_len,
-//                                      uint8_t & crypt_level)
-        {
-            uint32_t random_len;
-            uint32_t rsa_info_len;
-            uint32_t cacert_len;
-            uint32_t cert_len;
-            uint32_t flags;
-            SSL_CERT *cacert;
-            SSL_CERT *server_cert;
-            SSL_RKEY *server_public_key;
-            uint16_t tag;
-            uint16_t length;
-            uint8_t* next_tag;
-            uint8_t* end;
 
-            rc4_key_size = cr_stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
-            crypt_level = cr_stream.in_uint32_le(); /* 1 = low, 2 = medium, 3 = high */
-            if (crypt_level == 0) { /* no encryption */
-                LOG(LOG_INFO, "No encryption");
-                throw Error(ERR_SEC_PARSE_CRYPT_INFO_ENCRYPTION_REQUIRED);
-            }
-            random_len = cr_stream.in_uint32_le();
-            rsa_info_len = cr_stream.in_uint32_le();
-            if (random_len != SEC_RANDOM_SIZE) {
-                LOG(LOG_ERR,
-                    "parse_crypt_info_error: random len %d, expected %d\n",
-                    random_len, SEC_RANDOM_SIZE);
-                throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RANDOM_LEN);
-            }
-            memcpy(server_random, cr_stream.in_uint8p(random_len), random_len);
+        uint32_t random_len;
+        uint32_t rsa_info_len;
+        uint32_t cacert_len;
+        uint32_t cert_len;
+        uint32_t flags;
+        SSL_CERT *cacert;
+        SSL_CERT *server_cert;
+        SSL_RKEY *server_public_key;
+        uint16_t tag;
+        uint16_t length;
+        uint8_t* next_tag;
+        uint8_t* end;
 
-            /* RSA info */
-            end = cr_stream.p + rsa_info_len;
-            if (end > cr_stream.end) {
-                throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RSA_LEN);
-            }
+        rc4_key_size = cr_stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
+        crypt_level = cr_stream.in_uint32_le(); /* 1 = low, 2 = medium, 3 = high */
+        if (crypt_level == 0) { /* no encryption */
+            LOG(LOG_INFO, "No encryption");
+            throw Error(ERR_SEC_PARSE_CRYPT_INFO_ENCRYPTION_REQUIRED);
+        }
+        random_len = cr_stream.in_uint32_le();
+        rsa_info_len = cr_stream.in_uint32_le();
+        if (random_len != SEC_RANDOM_SIZE) {
+            LOG(LOG_ERR,
+                "parse_crypt_info_error: random len %d, expected %d\n",
+                random_len, SEC_RANDOM_SIZE);
+            throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RANDOM_LEN);
+        }
+        memcpy(server_random, cr_stream.in_uint8p(random_len), random_len);
 
-            flags = cr_stream.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
-            LOG(LOG_INFO, "crypt flags %x\n", flags);
-            if (flags & 1) {
+        /* RSA info */
+        end = cr_stream.p + rsa_info_len;
+        if (end > cr_stream.end) {
+            throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RSA_LEN);
+        }
 
-                LOG(LOG_DEBUG, "We're going for the RDP4-style encryption\n");
-                cr_stream.skip_uint8(8); /* unknown */
+        flags = cr_stream.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
+        LOG(LOG_INFO, "crypt flags %x\n", flags);
+        if (flags & 1) {
 
-                while (cr_stream.p < end) {
-                    tag = cr_stream.in_uint16_le();
-                    length = cr_stream.in_uint16_le();
-                    #warning this should not be necessary any more as received tag are fully decoded (but we should check length does not lead accessing data out of buffer)
-                    next_tag = cr_stream.p + length;
+            LOG(LOG_DEBUG, "We're going for the RDP4-style encryption\n");
+            cr_stream.skip_uint8(8); /* unknown */
 
-                    switch (tag) {
-                    case SEC_TAG_PUBKEY:
-                        recv_sec_tag_pubkey(cr_stream, server_public_key_len, modulus, exponent);
+            while (cr_stream.p < end) {
+                tag = cr_stream.in_uint16_le();
+                length = cr_stream.in_uint16_le();
+                #warning this should not be necessary any more as received tag are fully decoded (but we should check length does not lead accessing data out of buffer)
+                next_tag = cr_stream.p + length;
+
+                switch (tag) {
+                case SEC_TAG_PUBKEY:
+                    recv_sec_tag_pubkey(cr_stream, server_public_key_len, modulus, exponent);
+                break;
+                case SEC_TAG_KEYSIG:
+                    LOG(LOG_DEBUG, "SEC_TAG_KEYSIG RDP4-style\n");
+                    recv_sec_tag_sig(cr_stream, length);
                     break;
-                    case SEC_TAG_KEYSIG:
-                        LOG(LOG_DEBUG, "SEC_TAG_KEYSIG RDP4-style\n");
-                        recv_sec_tag_sig(cr_stream, length);
-                        break;
-                    default:
-                        LOG(LOG_DEBUG, "unimplemented: crypt tag 0x%x\n", tag);
-                        throw Error(ERR_SEC_PARSE_CRYPT_INFO_UNIMPLEMENTED_TAG);
-                        break;
-                    }
-                    cr_stream.p = next_tag;
+                default:
+                    LOG(LOG_DEBUG, "unimplemented: crypt tag 0x%x\n", tag);
+                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_UNIMPLEMENTED_TAG);
+                    break;
+                }
+                cr_stream.p = next_tag;
+            }
+        }
+        else {
+            LOG(LOG_DEBUG, "We're going for the RDP5-style encryption\n");
+            LOG(LOG_DEBUG, "RDP5-style encryption with certificates not available\n");
+            uint32_t certcount = cr_stream.in_uint32_le();
+            if (certcount < 2){
+                LOG(LOG_DEBUG, "Server didn't send enough X509 certificates\n");
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_CERT_NOK);
+            }
+            for (; certcount > 2; certcount--){
+                /* ignore all the certificates between the root and the signing CA */
+                LOG(LOG_WARNING, " Ignored certs left: %d\n", certcount);
+                uint32_t ignorelen = cr_stream.in_uint32_le();
+                LOG(LOG_WARNING, "Ignored Certificate length is %d\n", ignorelen);
+                SSL_CERT *ignorecert = ssl_cert_read(cr_stream.p, ignorelen);
+                cr_stream.skip_uint8(ignorelen);
+                if (ignorecert == NULL){
+                    LOG(LOG_WARNING,
+                        "got a bad cert: this will probably screw up"
+                        " the rest of the communication\n");
                 }
             }
-            else {
-                LOG(LOG_DEBUG, "We're going for the RDP5-style encryption\n");
-                LOG(LOG_DEBUG, "RDP5-style encryption with certificates not available\n");
-                uint32_t certcount = cr_stream.in_uint32_le();
-                if (certcount < 2){
-                    LOG(LOG_DEBUG, "Server didn't send enough X509 certificates\n");
-                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CERT_NOK);
-                }
-                for (; certcount > 2; certcount--){
-                    /* ignore all the certificates between the root and the signing CA */
-                    LOG(LOG_WARNING, " Ignored certs left: %d\n", certcount);
-                    uint32_t ignorelen = cr_stream.in_uint32_le();
-                    LOG(LOG_WARNING, "Ignored Certificate length is %d\n", ignorelen);
-                    SSL_CERT *ignorecert = ssl_cert_read(cr_stream.p, ignorelen);
-                    cr_stream.skip_uint8(ignorelen);
-                    if (ignorecert == NULL){
-                        LOG(LOG_WARNING,
-                            "got a bad cert: this will probably screw up"
-                            " the rest of the communication\n");
-                    }
-                }
 
-                /* Do da funky X.509 stuffy
+            /* Do da funky X.509 stuffy
 
-               "How did I find out about this?  I looked up and saw a
-               bright light and when I came to I had a scar on my forehead
-               and knew about X.500"
-               - Peter Gutman in a early version of
-               http://www.cs.auckland.ac.nz/~pgut001/pubs/x509guide.txt
-               */
+           "How did I find out about this?  I looked up and saw a
+           bright light and when I came to I had a scar on my forehead
+           and knew about X.500"
+           - Peter Gutman in a early version of
+           http://www.cs.auckland.ac.nz/~pgut001/pubs/x509guide.txt
+           */
 
-                /* Loading CA_Certificate from server*/
-                cacert_len = cr_stream.in_uint32_le();
-                LOG(LOG_DEBUG, "CA Certificate length is %d\n", cacert_len);
-                cacert = ssl_cert_read(cr_stream.p, cacert_len);
-                cr_stream.skip_uint8(cacert_len);
-                if (NULL == cacert){
-                    LOG(LOG_DEBUG, "Couldn't load CA Certificate from server\n");
-                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NULL);
-                }
+            /* Loading CA_Certificate from server*/
+            cacert_len = cr_stream.in_uint32_le();
+            LOG(LOG_DEBUG, "CA Certificate length is %d\n", cacert_len);
+            cacert = ssl_cert_read(cr_stream.p, cacert_len);
+            cr_stream.skip_uint8(cacert_len);
+            if (NULL == cacert){
+                LOG(LOG_DEBUG, "Couldn't load CA Certificate from server\n");
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NULL);
+            }
 
-                ssllib ssl;
+            ssllib ssl;
 
-                /* Loading Certificate from server*/
-                cert_len = cr_stream.in_uint32_le();
-                LOG(LOG_DEBUG, "Certificate length is %d\n", cert_len);
-                server_cert = ssl_cert_read(cr_stream.p, cert_len);
-                cr_stream.skip_uint8(cert_len);
-                if (NULL == server_cert){
-                    ssl_cert_free(cacert);
-                    LOG(LOG_DEBUG, "Couldn't load Certificate from server\n");
-                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_LOADED);
-                }
-                /* Matching certificates */
-                if (!ssl_certs_ok(server_cert, cacert)){
-                    ssl_cert_free(server_cert);
-                    ssl_cert_free(cacert);
-                    LOG(LOG_DEBUG, "Security error CA Certificate invalid\n");
-                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_MATCH);
-                }
+            /* Loading Certificate from server*/
+            cert_len = cr_stream.in_uint32_le();
+            LOG(LOG_DEBUG, "Certificate length is %d\n", cert_len);
+            server_cert = ssl_cert_read(cr_stream.p, cert_len);
+            cr_stream.skip_uint8(cert_len);
+            if (NULL == server_cert){
                 ssl_cert_free(cacert);
-                cr_stream.skip_uint8(16); /* Padding */
-                server_public_key = ssl_cert_to_rkey(server_cert, server_public_key_len);
-                if (NULL == server_public_key){
-                    LOG(LOG_DEBUG, "Didn't parse X509 correctly\n");
-                    ssl_cert_free(server_cert);
-                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_X509_NOT_PARSED);
-
-                }
-                ssl_cert_free(server_cert);
-                LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d\n", server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
-                if ((server_public_key_len < SEC_MODULUS_SIZE) ||
-                    (server_public_key_len > SEC_MAX_MODULUS_SIZE)){
-                    LOG(LOG_DEBUG, "Bad server public key size (%u bits)\n",
-                        server_public_key_len * 8);
-                    ssl.rkey_free(server_public_key);
-                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
-                }
-                if (ssl_rkey_get_exp_mod(server_public_key, exponent, SEC_EXPONENT_SIZE,
-                    modulus, SEC_MAX_MODULUS_SIZE) != 0){
-                    LOG(LOG_DEBUG, "Problem extracting RSA exponent, modulus");
-                    ssl.rkey_free(server_public_key);
-                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_RSA_EXP_NOT_OK);
-
-                }
-                ssl.rkey_free(server_public_key);
-                #warning find a way to correctly dispose of garbage at end of buffer
-                /* There's some garbage here we don't care about */
+                LOG(LOG_DEBUG, "Couldn't load Certificate from server\n");
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_LOADED);
             }
+            /* Matching certificates */
+            if (!ssl_certs_ok(server_cert, cacert)){
+                ssl_cert_free(server_cert);
+                ssl_cert_free(cacert);
+                LOG(LOG_DEBUG, "Security error CA Certificate invalid\n");
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_MATCH);
+            }
+            ssl_cert_free(cacert);
+            cr_stream.skip_uint8(16); /* Padding */
+            server_public_key = ssl_cert_to_rkey(server_cert, server_public_key_len);
+            if (NULL == server_public_key){
+                LOG(LOG_DEBUG, "Didn't parse X509 correctly\n");
+                ssl_cert_free(server_cert);
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_X509_NOT_PARSED);
+
+            }
+            ssl_cert_free(server_cert);
+            LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d\n", server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
+            if ((server_public_key_len < SEC_MODULUS_SIZE) ||
+                (server_public_key_len > SEC_MAX_MODULUS_SIZE)){
+                LOG(LOG_DEBUG, "Bad server public key size (%u bits)\n",
+                    server_public_key_len * 8);
+                ssl.rkey_free(server_public_key);
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
+            }
+            if (ssl_rkey_get_exp_mod(server_public_key, exponent, SEC_EXPONENT_SIZE,
+                modulus, SEC_MAX_MODULUS_SIZE) != 0){
+                LOG(LOG_DEBUG, "Problem extracting RSA exponent, modulus");
+                ssl.rkey_free(server_public_key);
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_RSA_EXP_NOT_OK);
+
+            }
+            ssl.rkey_free(server_public_key);
+            #warning find a way to correctly dispose of garbage at end of buffer
+            /* There's some garbage here we don't care about */
         }
 
         /* Generate a client random, and determine encryption keys */
