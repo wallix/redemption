@@ -265,22 +265,6 @@ struct Sec
     ~Sec() {}
 
 
-
-    /*****************************************************************************/
-    void server_sec_disconnect(Transport * trans)
-    {
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        stream.out_uint8((MCS_DPUM << 2) | 1);
-        stream.out_uint8(0x80);
-
-        tpdu.end();
-        tpdu.send(trans);
-    }
-
-    /******************************************************************************/
-
     /* TODO: this function is not working well because it is stopping copy / paste
        what is required is to stop data from server to client. What we need to do is
        to recover clip_flags, send it to rdp_process_redirect_pdu. After that, we

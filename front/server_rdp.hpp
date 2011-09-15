@@ -1462,20 +1462,23 @@ struct server_rdp {
 
     void server_rdp_disconnect() throw (Error)
     {
-        this->sec_layer.server_sec_disconnect(this->trans);
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+        stream.out_uint8((MCS_DPUM << 2) | 1);
+        stream.out_uint8(0x80);
+
+        tpdu.end();
+        tpdu.send(trans);
     }
 
     void server_rdp_send_deactive() throw (Error)
     {
-        #warning we should create some RDPStream object created on init and sent before destruction
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->sec_layer.encrypt);
-
         ShareControlOut(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + MCS_USERCHANNEL_BASE).end();
-        stream.mark_end();
-
         sec_out.end();
         sdin_out.end();
         tpdu.end();
