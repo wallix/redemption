@@ -53,7 +53,6 @@ BOOST_AUTO_TEST_CASE(TestStream)
     BOOST_CHECK(s->data);
     BOOST_CHECK(s->data == s->p);
     BOOST_CHECK(s->data == s->end);
-    BOOST_CHECK(!s->next_packet);
 
     // buffer is empty but no underflow check ok
     BOOST_CHECK(s->check());
