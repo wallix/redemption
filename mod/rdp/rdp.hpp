@@ -1312,29 +1312,18 @@ struct mod_rdp : public client_mod {
             uint16_t tag = cr_stream.in_uint16_le();
             uint16_t length = cr_stream.in_uint16_le();
             if (length <= 4) {
-                return;
+                throw Error(ERR_MCS_DATA_SHORT_HEADER);
             }
-            #warning for SEC_TAG_XXX length provided includes headers (4 bytes tag and length)
             uint8_t *next_tag = (cr_stream.p + length) - 4;
             switch (tag) {
             case SC_CORE:
-            {
-                uint16_t rdp_version = cr_stream.in_uint16_le();
-                LOG(LOG_DEBUG, "Server RDP version is %d\n", rdp_version);
-                if (1 == rdp_version){ // can't use rdp5
-                    use_rdp5 = 0;
-                    #warning why caring of server_depth here ? Quite strange
-                    //        this->server_depth = 8;
-                }
-            }
+                parse_mcs_data_sc_core(cr_stream, use_rdp5);
             break;
             case SC_SECURITY:
                 this->rdp_layer.sec_layer.rdp_sec_process_crypt_info(cr_stream, this->rdp_layer.sec_layer.server_public_key_len, this->rdp_layer.sec_layer.crypt_level);
             break;
             case SC_NET:
-                // map front channels to mod channels
-                    #warning we should have mod_rdp and front channel lists
-                 process_srv_channels(cr_stream, this->front.get_channel_list(), channel_list);
+                parse_mcs_data_sc_net(cr_stream, this->front.get_channel_list(), channel_list);
                 break;
             default:
                 LOG(LOG_WARNING, "response tag 0x%x\n", tag);

@@ -318,18 +318,4 @@ class ShareDataIn
 };
 
 
-/* this adds the mcs channels in the list of channels to be used when creating the server mcs data */
-static inline void process_srv_channels(Stream & stream, const ChannelList & front_channel_list, ChannelList & mod_channel_list)
-{
-    stream.in_uint16_le(); /* base_channel */
-    size_t num_channels = stream.in_uint16_le();
-
-    /* We assume that the channel_id array is confirmed in the same order
-    that it has been sent. If there are any channels not confirmed, they're
-    going to be the last channels on the array sent in MCS Connect Initial */
-    for (size_t index = 0; index < num_channels; index++){
-        mod_channel_list.push_back(front_channel_list[index]);
-    }
-}
-
 #endif
