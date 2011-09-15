@@ -51,11 +51,6 @@ class Stream {
     uint8_t* end;
     uint8_t* data;
     size_t capacity;
-
-    /* offsets of various headers */
-    uint8_t* channel_hdr;
-    uint8_t* next_packet;
-
     uint8_t autobuffer[AUTOSIZE];
 
     Stream(size_t size = AUTOSIZE) {
@@ -95,7 +90,6 @@ class Stream {
         }
         this->p = this->data;
         this->end = this->data;
-        this->next_packet = (uint8_t*)0;
     }
 
     bool has_room(unsigned n) {
