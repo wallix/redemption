@@ -812,9 +812,16 @@ static inline void parse_mcs_data_cs_monitor(Stream & stream)
 }
 
 // 2.2.1.4.2 Server Core Data (TS_UD_SC_CORE)
-static inline void parse_mcs_data_sc_core(Stream & stream)
+static inline void parse_mcs_data_sc_core(Stream & stream, int & use_rdp5)
 {
     LOG(LOG_INFO, "SC_CORE\n");
+    uint16_t rdp_version = stream.in_uint16_le();
+    LOG(LOG_DEBUG, "Server RDP version is %d\n", rdp_version);
+    if (1 == rdp_version){ // can't use rdp5
+        use_rdp5 = 0;
+        #warning why caring of server_depth here ? Quite strange
+        //        this->server_depth = 8;
+    }
 }
 
 // 2.2.1.4.3 Server Security Data (TS_UD_SC_SEC1)
@@ -824,9 +831,20 @@ static inline void parse_mcs_data_sc_security(Stream & stream)
 }
 
 // 2.2.1.4.4 Server Network Data (TS_UD_SC_NET)
-static inline void parse_mcs_data_sc_net(Stream & stream)
+/* this adds the mcs channels in the list of channels to be used when creating the server mcs data */
+static inline void parse_mcs_data_sc_net(Stream & stream, const ChannelList & front_channel_list, ChannelList & mod_channel_list)
 {
     LOG(LOG_INFO, "SC_NET\n");
+
+    stream.in_uint16_le(); /* base_channel */
+    size_t num_channels = stream.in_uint16_le();
+
+    /* We assume that the channel_id array is confirmed in the same order
+    that it has been sent. If there are any channels not confirmed, they're
+    going to be the last channels on the array sent in MCS Connect Initial */
+    for (size_t index = 0; index < num_channels; index++){
+        mod_channel_list.push_back(front_channel_list[index]);
+    }
 }
 
 
@@ -891,29 +909,29 @@ static inline void recv_mcs_connect_initial_pdu_with_gcc_conference_create_reque
 //                 block that this header precedes.
 
 // +-------------------+-------------------------------------------------------+
-// | CS_CORE 0xC001 : The data block that follows contains Client Core
-//                 Data (section 2.2.1.3.2).
+// | CS_CORE 0xC001    | The data block that follows contains Client Core      |
+// |                   | Data (section 2.2.1.3.2).                             |
 // +-------------------+-------------------------------------------------------+
-// | CS_SECURITY 0xC002 : The data block that follows contains Client
-//                  Security Data (section 2.2.1.3.3).
+// | CS_SECURITY 0xC002| The data block that follows contains Client           |
+// |                   | Security Data (section 2.2.1.3.3).                    |
 // +-------------------+-------------------------------------------------------+
-// | CS_NET 0xC003 : The data block that follows contains Client Network
-//                 Data (section 2.2.1.3.4).
+// | CS_NET 0xC003     | The data block that follows contains Client Network   |
+// |                   | Data (section 2.2.1.3.4).                             |
 // +-------------------+-------------------------------------------------------+
 // | CS_CLUSTER 0xC004 | The data block that follows contains Client Cluster   |
 // |                   | Data (section 2.2.1.3.5).                             |
 // +-------------------+-------------------------------------------------------+
-// | CS_MONITOR 0xC005 | The data block that follows contains Client
-//                 Monitor Data (section 2.2.1.3.6).
+// | CS_MONITOR 0xC005 | The data block that follows contains Client           |
+// |                   | Monitor Data (section 2.2.1.3.6).                     |
 // +-------------------+-------------------------------------------------------+
-// | SC_CORE 0x0C01 : The data block that follows contains Server Core
-//                 Data (section 2.2.1.4.2)
+// | SC_CORE 0x0C01    | The data block that follows contains Server Core      |
+// |                   | Data (section 2.2.1.4.2)                              |
 // +-------------------+-------------------------------------------------------+
-// | SC_SECURITY 0x0C02 : The data block that follows contains Server
-//                 Security Data (section 2.2.1.4.3).
+// | SC_SECURITY 0x0C02| The data block that follows contains Server           |
+// |                   | Security Data (section 2.2.1.4.3).                    |
 // +-------------------+-------------------------------------------------------+
-// | SC_NET 0x0C03 : The data block that follows contains Server Network
-//                 Data (section 2.2.1.4.4)
+// | SC_NET 0x0C03     | The data block that follows contains Server Network   |
+// |                   | Data (section 2.2.1.4.4)                              |
 // +-------------------+-------------------------------------------------------+
 
 // length (2 bytes): A 16-bit, unsigned integer. The size in bytes of the data
@@ -948,17 +966,11 @@ static inline void recv_mcs_connect_initial_pdu_with_gcc_conference_create_reque
             case CS_MONITOR:
                 parse_mcs_data_cs_monitor(stream);
             break;
-            case SC_CORE:
-                parse_mcs_data_sc_core(stream);
-            break;
             case SC_SECURITY:
                 parse_mcs_data_sc_security(stream);
             break;
-            case SC_NET:
-                parse_mcs_data_sc_net(stream);
-            break;
             default:
-                LOG(LOG_INFO, "Unknown data block tag\n");
+                LOG(LOG_INFO, "Unexpected data block tag %x\n", tag);
             break;
         }
         stream.p = current_header + length;
