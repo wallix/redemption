@@ -81,127 +81,6 @@ class McsIn
 
 };
 
-// 2.2.1.3 Client MCS Connect Initial PDU with GCC Conference Create Request
-// =========================================================================
-
-// The MCS Connect Initial PDU is an RDP Connection Sequence PDU sent from
-// client to server during the Basic Settings Exchange phase (see section
-// 1.3.1.1). It is sent after receiving the X.224 Connection Confirm PDU
-// (section 2.2.1.2). The MCS Connect Initial PDU encapsulates a GCC Conference
-// Create Request, which encapsulates concatenated blocks of settings data. A
-// basic high-level overview of the nested structure for the Client MCS Connect
-// Initial PDU is illustrated in section 1.3.1.1, in the figure specifying MCS
-// Connect Initial PDU. Note that the order of the settings data blocks is
-// allowed to vary from that shown in the previously mentioned figure and the
-// message syntax layout that follows. This is possible because each data block
-// is identified by a User Data Header structure (section 2.2.1.3.1).
-
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
-//   section 13.7.
-
-// mcsCi (variable): Variable-length BER-encoded MCS Connect Initial structure
-//   (using definite-length encoding) as described in [T125] (the ASN.1
-//   structure definition is detailed in [T125] section 7, part 2). The userData
-//   field of the MCS Connect Initial encapsulates the GCC Conference Create
-//   Request data (contained in the gccCCrq and subsequent fields). The maximum
-//   allowed size of this user data is 1024 bytes, which implies that the
-//   combined size of the gccCCrq and subsequent fields MUST be less than 1024
-//   bytes.
-
-// gccCCrq (variable): Variable-length Packed Encoding Rule encoded
-//   (PER-encoded) GCC Connect Data structure, which encapsulates a Connect GCC
-//   PDU that contains a GCC Conference Create Request structure as described in
-//   [T124] (the ASN.1 structure definitions are detailed in [T124] section 8.7)
-//   appended as user data to the MCS Connect Initial (using the format
-//   described in [T124] sections 9.5 and 9.6). The userData field of the GCC
-//   Conference Create Request contains one user data set consisting of
-//   concatenated client data blocks.
-
-// clientCoreData (216 bytes): Client Core Data structure (section 2.2.1.3.2).
-
-// clientSecurityData (12 bytes): Client Security Data structure (section
-//   2.2.1.3.3).
-
-// clientNetworkData (variable): Optional and variable-length Client Network
-//   Data structure (section 2.2.1.3.4).
-
-// clientClusterData (12 bytes): Optional Client Cluster Data structure (section
-//   2.2.1.3.5).
-
-// clientMonitorData (variable): Optional Client Monitor Data structure (section
-//   2.2.1.3.6). This field MUST NOT be included if the server does not
-//   advertise support for extended client data blocks by using the
-//   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
-//   2.2.1.2.1.
-
-#warning create McsConnectionInitialIn and McsConnectionInitialOut classes instead of recv_ and send_ functions below (it would also much simplify length management) and allow inlining data part instead of preparint it in a separate buffer.
-
-
-inline static void send_connection_initial(Transport * trans, Stream & data)
-{
-    int data_len = data.end - data.data;
-    int len = 7 + 3 * 34 + 4 + data_len;
-
-    Stream ci_stream(8192);
-    X224Out ci_tpdu(X224Packet::DT_TPDU, ci_stream);
-
-    ci_stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
-    ci_stream.out_ber_len(len);
-    ci_stream.out_uint8(BER_TAG_OCTET_STRING);
-    ci_stream.out_ber_len(0); /* calling domain */
-    ci_stream.out_uint8(BER_TAG_OCTET_STRING);
-    ci_stream.out_ber_len(0); /* called domain */
-    ci_stream.out_uint8(BER_TAG_BOOLEAN);
-    ci_stream.out_ber_len(1);
-    ci_stream.out_uint8(0xff); /* upward flag */
-
-    // target params
-    ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-    ci_stream.out_ber_len(32);
-    ci_stream.out_ber_int16(34);     // max_channels
-    ci_stream.out_ber_int16(2);      // max_users
-    ci_stream.out_ber_int16(0);      // max_tokens
-    ci_stream.out_ber_int16(1);
-    ci_stream.out_ber_int16(0);
-    ci_stream.out_ber_int16(1);
-    ci_stream.out_ber_int16(0xffff); // max_pdu_size
-    ci_stream.out_ber_int16(2);
-
-    // min params
-    ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-    ci_stream.out_ber_len(32);
-    ci_stream.out_ber_int16(1);     // max_channels
-    ci_stream.out_ber_int16(1);     // max_users
-    ci_stream.out_ber_int16(1);     // max_tokens
-    ci_stream.out_ber_int16(1);
-    ci_stream.out_ber_int16(0);
-    ci_stream.out_ber_int16(1);
-    ci_stream.out_ber_int16(0x420); // max_pdu_size
-    ci_stream.out_ber_int16(2);
-
-    // max params
-    ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-    ci_stream.out_ber_len(32);
-    ci_stream.out_ber_int16(0xffff); // max_channels
-    ci_stream.out_ber_int16(0xfc17); // max_users
-    ci_stream.out_ber_int16(0xffff); // max_tokens
-    ci_stream.out_ber_int16(1);
-    ci_stream.out_ber_int16(0);
-    ci_stream.out_ber_int16(1);
-    ci_stream.out_ber_int16(0xffff); // max_pdu_size
-    ci_stream.out_ber_int16(2);
-
-    ci_stream.out_uint8(BER_TAG_OCTET_STRING);
-    ci_stream.out_ber_len(data_len);
-    ci_stream.out_copy_bytes(data.data, data_len);
-
-    ci_tpdu.end();
-    ci_tpdu.send(trans);
-}
-
-
 
 // 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
 // -------------------------------------
@@ -851,6 +730,64 @@ static inline void parse_mcs_data_sc_net(Stream & stream, const ChannelList & fr
 }
 
 
+
+// 2.2.1.3 Client MCS Connect Initial PDU with GCC Conference Create Request
+// =========================================================================
+
+// The MCS Connect Initial PDU is an RDP Connection Sequence PDU sent from
+// client to server during the Basic Settings Exchange phase (see section
+// 1.3.1.1). It is sent after receiving the X.224 Connection Confirm PDU
+// (section 2.2.1.2). The MCS Connect Initial PDU encapsulates a GCC Conference
+// Create Request, which encapsulates concatenated blocks of settings data. A
+// basic high-level overview of the nested structure for the Client MCS Connect
+// Initial PDU is illustrated in section 1.3.1.1, in the figure specifying MCS
+// Connect Initial PDU. Note that the order of the settings data blocks is
+// allowed to vary from that shown in the previously mentioned figure and the
+// message syntax layout that follows. This is possible because each data block
+// is identified by a User Data Header structure (section 2.2.1.3.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+//   section 13.7.
+
+// mcsCi (variable): Variable-length BER-encoded MCS Connect Initial structure
+//   (using definite-length encoding) as described in [T125] (the ASN.1
+//   structure definition is detailed in [T125] section 7, part 2). The userData
+//   field of the MCS Connect Initial encapsulates the GCC Conference Create
+//   Request data (contained in the gccCCrq and subsequent fields). The maximum
+//   allowed size of this user data is 1024 bytes, which implies that the
+//   combined size of the gccCCrq and subsequent fields MUST be less than 1024
+//   bytes.
+
+// gccCCrq (variable): Variable-length Packed Encoding Rule encoded
+//   (PER-encoded) GCC Connect Data structure, which encapsulates a Connect GCC
+//   PDU that contains a GCC Conference Create Request structure as described in
+//   [T124] (the ASN.1 structure definitions are detailed in [T124] section 8.7)
+//   appended as user data to the MCS Connect Initial (using the format
+//   described in [T124] sections 9.5 and 9.6). The userData field of the GCC
+//   Conference Create Request contains one user data set consisting of
+//   concatenated client data blocks.
+
+// clientCoreData (216 bytes): Client Core Data structure (section 2.2.1.3.2).
+
+// clientSecurityData (12 bytes): Client Security Data structure (section
+//   2.2.1.3.3).
+
+// clientNetworkData (variable): Optional and variable-length Client Network
+//   Data structure (section 2.2.1.3.4).
+
+// clientClusterData (12 bytes): Optional Client Cluster Data structure (section
+//   2.2.1.3.5).
+
+// clientMonitorData (variable): Optional Client Monitor Data structure (section
+//   2.2.1.3.6). This field MUST NOT be included if the server does not
+//   advertise support for extended client data blocks by using the
+//   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
+//   2.2.1.2.1.
+
+
+
 static inline void recv_mcs_connect_initial_pdu_with_gcc_conference_create_request(
                 Transport * trans,
                 ClientInfo * client_info,
@@ -1013,7 +950,7 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
     data.out_uint16_le(0xc001);
     data.out_uint8(0);
 
-    data.out_uint32_le(0x61637544); /* OEM ID: "Duca", as in Ducati. */
+    data.out_copy_bytes("Duca", 4); /* OEM ID: "Duca", as in Ducati. */
     data.out_uint16_be(((length - 14) | 0x8000)); /* remaining length */
 
     /* Client information */
@@ -1096,7 +1033,64 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
 
     data.mark_end();
 
-    send_connection_initial(trans, data);
+    int data_len = data.end - data.data;
+    int len = 7 + 3 * 34 + 4 + data_len;
+
+    Stream ci_stream(8192);
+    X224Out ci_tpdu(X224Packet::DT_TPDU, ci_stream);
+
+    ci_stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
+    ci_stream.out_ber_len(len);
+    ci_stream.out_uint8(BER_TAG_OCTET_STRING);
+    ci_stream.out_ber_len(0); /* calling domain */
+    ci_stream.out_uint8(BER_TAG_OCTET_STRING);
+    ci_stream.out_ber_len(0); /* called domain */
+    ci_stream.out_uint8(BER_TAG_BOOLEAN);
+    ci_stream.out_ber_len(1);
+    ci_stream.out_uint8(0xff); /* upward flag */
+
+    // target params
+    ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+    ci_stream.out_ber_len(32);
+    ci_stream.out_ber_int16(34);     // max_channels
+    ci_stream.out_ber_int16(2);      // max_users
+    ci_stream.out_ber_int16(0);      // max_tokens
+    ci_stream.out_ber_int16(1);
+    ci_stream.out_ber_int16(0);
+    ci_stream.out_ber_int16(1);
+    ci_stream.out_ber_int16(0xffff); // max_pdu_size
+    ci_stream.out_ber_int16(2);
+
+    // min params
+    ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+    ci_stream.out_ber_len(32);
+    ci_stream.out_ber_int16(1);     // max_channels
+    ci_stream.out_ber_int16(1);     // max_users
+    ci_stream.out_ber_int16(1);     // max_tokens
+    ci_stream.out_ber_int16(1);
+    ci_stream.out_ber_int16(0);
+    ci_stream.out_ber_int16(1);
+    ci_stream.out_ber_int16(0x420); // max_pdu_size
+    ci_stream.out_ber_int16(2);
+
+    // max params
+    ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+    ci_stream.out_ber_len(32);
+    ci_stream.out_ber_int16(0xffff); // max_channels
+    ci_stream.out_ber_int16(0xfc17); // max_users
+    ci_stream.out_ber_int16(0xffff); // max_tokens
+    ci_stream.out_ber_int16(1);
+    ci_stream.out_ber_int16(0);
+    ci_stream.out_ber_int16(1);
+    ci_stream.out_ber_int16(0xffff); // max_pdu_size
+    ci_stream.out_ber_int16(2);
+
+    ci_stream.out_uint8(BER_TAG_OCTET_STRING);
+    ci_stream.out_ber_len(data_len);
+    ci_stream.out_copy_bytes(data.data, data_len);
+
+    ci_tpdu.end();
+    ci_tpdu.send(trans);
 }
 
 
