@@ -104,20 +104,20 @@ struct server_rdp {
     };
 
 
-    void server_send_to_channel(const McsChannelItem & channel, uint8_t *data, int data_len, int total_data_len, int flags) throw (Error)
+    void server_send_to_channel(const McsChannelItem & channel, uint8_t *data, size_t length, int flags) throw (Error)
     {
-        LOG(LOG_INFO, "server_send_to_channel %u[%s] %u %u", channel.chanid, channel.name, data_len, total_data_len);
+        LOG(LOG_INFO, "server_send_to_channel %u[%s] %u", channel.chanid, channel.name, length);
         Stream stream(65536);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, channel.chanid);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
 
-        stream.out_uint32_le(total_data_len);
+        stream.out_uint32_le(length);
         if (channel.flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
             flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
         }
         stream.out_uint32_le(flags);
-        stream.out_copy_bytes(data, data_len);
+        stream.out_copy_bytes(data, length);
 
         sec_out.end();
         sdin_out.end();
@@ -386,7 +386,7 @@ struct server_rdp {
 //      to a 4-byte boundary per scan line, while color pointer XOR data is
 //      still packed on a 2-byte boundary. Color XOR data is presented in the
 ///     color depth described in the xorBpp field (for 8 bpp, each byte contains
-//      one palette index; for 4 bpp, there are two palette indices per byte).
+//      one palette index; for 4 bpp, there are two palette indices per byserver_rdp_incomingte).
 
 //    2.2.9.1.1.4.6    Cached Pointer Update (TS_CACHEDPOINTERATTRIBUTE)
 //    ------------------------------------------------------------------
@@ -504,6 +504,7 @@ struct server_rdp {
             this->trans,
             &this->client_info,
             channel_list);
+
         send_mcs_connect_response_pdu_with_gcc_conference_create_response(
             this->trans,
             &this->client_info,
@@ -558,24 +559,49 @@ struct server_rdp {
             uint16_t tmp_userid;
             uint16_t tmp_chanid;
             recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
+            if (tmp_userid != this->userid){
+                LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
+                throw Error(ERR_MCS_BAD_USERID);
+            }
+            if (tmp_chanid != this->userid + MCS_USERCHANNEL_BASE){
+                LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->userid + MCS_USERCHANNEL_BASE, tmp_chanid);
+                throw Error(ERR_MCS_BAD_CHANID);
+            }
+            send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
         }
 
-        send_mcs_channel_join_confirm_pdu(this->trans, this->userid, this->userid + MCS_USERCHANNEL_BASE);
 
         {
             uint16_t tmp_userid;
             uint16_t tmp_chanid;
             recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
+            if (tmp_userid != this->userid){
+                LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
+                throw Error(ERR_MCS_BAD_USERID);
+            }
+            if (tmp_chanid != MCS_GLOBAL_CHANNEL){
+                LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", MCS_GLOBAL_CHANNEL, tmp_chanid);
+                throw Error(ERR_MCS_BAD_CHANID);
+            }
+            send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
         }
 
-        send_mcs_channel_join_confirm_pdu(this->trans, this->userid, MCS_GLOBAL_CHANNEL);
 
         LOG(LOG_INFO, "channel_list = %u", channel_list.size());
         for (size_t i = 0 ; i < channel_list.size() ; i++){
                 uint16_t tmp_userid;
                 uint16_t tmp_chanid;
                 recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
-                send_mcs_channel_join_confirm_pdu(this->trans, tmp_userid, tmp_chanid);
+                if (tmp_userid != this->userid){
+                    LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
+                    throw Error(ERR_MCS_BAD_USERID);
+                }
+                if (tmp_chanid != channel_list[i].chanid){
+                    LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", channel_list[i].chanid, tmp_chanid);
+                    throw Error(ERR_MCS_BAD_CHANID);
+                }
+                send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
+                channel_list.set_chanid(i, tmp_chanid);
         }
         LOG(LOG_INFO, "RDP Security Commencement");
 
@@ -782,13 +808,11 @@ struct server_rdp {
             int length = stream.in_uint32_le();
             int flags = stream.in_uint32_le();
 
-            int size = (int)(stream.end - stream.p);
-
             LOG(LOG_INFO, "up_and_running=%u", this->up_and_running);
-            LOG(LOG_INFO, "received data in channel %u [%s] %u %u", channel.chanid, channel.name, length, size);
+            LOG(LOG_INFO, "received data in channel %u [%s] %u", channel.chanid, channel.name, length);
 
             #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
-            cb.send_to_mod_channel(channel, stream.p, size, length, flags);
+            cb.send_to_mod_channel(channel, stream.p, length, flags);
         }
         else {
             while (stream.p < stream.end) {

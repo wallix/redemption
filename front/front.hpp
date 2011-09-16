@@ -476,9 +476,9 @@ public:
         this->rdp_layer.send_global_palette(palette);
     }
 
-    void send_to_channel(const McsChannelItem & channel, uint8_t* data, int data_len, int total_data_len, int flags)
+    void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, int flags)
     {
-        this->rdp_layer.server_send_to_channel(channel, data, data_len, total_data_len, flags);
+        this->rdp_layer.server_send_to_channel(channel, data, length, flags);
     }
 
 };
