@@ -410,7 +410,7 @@ struct RdpLicence {
         stream.out_uint16_le(0x0201);
         stream.out_copy_bytes(client_random, SEC_RANDOM_SIZE);
         stream.out_uint16_le(0);
-        stream.out_uint16_le((SEC_MODULUS_SIZE + SEC_PADDING_SIZE));
+        stream.out_uint16_le(SEC_MODULUS_SIZE + SEC_PADDING_SIZE);
         stream.out_copy_bytes(rsa_data, SEC_MODULUS_SIZE);
         stream.out_clear_bytes( SEC_PADDING_SIZE);
         stream.out_uint16_le(1);

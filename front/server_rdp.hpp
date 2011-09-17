@@ -763,6 +763,7 @@ struct server_rdp {
 
         SecIn sec(stream, this->decrypt);
 
+        LOG(LOG_INFO, "chanid = %u", mcs_in.chan_id);
         if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL) {
 
             if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
@@ -811,11 +812,14 @@ struct server_rdp {
             LOG(LOG_INFO, "up_and_running=%u", this->up_and_running);
             LOG(LOG_INFO, "received data in channel %u [%s] %u", channel.chanid, channel.name, length);
 
-            #warning check the long parameter is OK for p here. At start it is a pointer, converting to long is dangerous. See why this should be necessary in callback.
-            cb.send_to_mod_channel(channel, stream.p, length, flags);
+            size_t chunk_size = stream.end - stream.p;
+
+            cb.send_to_mod_channel(channel, stream.p, length, chunk_size, flags);
+            stream.p += chunk_size;
         }
         else {
             while (stream.p < stream.end) {
+                #warning here should be a ShareControlHeader/ShareDataHeader, check
                 int length = stream.in_uint16_le();
                 uint8_t * next_packet = stream.p + length;
                 if (length == 0x8000) {
