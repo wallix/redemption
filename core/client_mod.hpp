@@ -759,11 +759,10 @@ struct client_mod : public Callback {
         this->glyph_cache(fi, font, character);
     }
 
-    void server_send_to_channel_mod(const McsChannelItem & channel,
-                           uint8_t* data, int length, int flags)
+    void server_send_to_channel_mod(const McsChannelItem & channel, uint8_t* data, int length, int flags)
     {
-        for (int front_index = 0; front_index < this->front.get_channel_list().size(); front_index++){
-            const McsChannelItem & front_channel_item = this->front.get_channel_list()[front_index];
+        for (size_t index = 0; index < this->front.get_channel_list().size(); index++){
+            const McsChannelItem & front_channel_item = this->front.get_channel_list()[index];
             if (strcmp(channel.name, front_channel_item.name) == 0){
                 LOG(LOG_INFO, "found front channel chanid=%u flags=%x [channel_flags=%x] name=%s", front_channel_item.chanid, flags, front_channel_item.flags, front_channel_item.name);
                 this->front.send_to_channel(front_channel_item, data, length, flags);

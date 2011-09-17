@@ -269,32 +269,31 @@ struct mod_rdp : public client_mod {
         return 0;
     }
 
-    virtual void send_to_mod_channel(const McsChannelItem & front_channel, uint8_t * data, size_t length, uint32_t flags)
+    virtual void send_to_mod_channel(
+                const McsChannelItem & front_channel,
+                uint8_t * data,
+                size_t length,
+                size_t chunk_size,
+                uint32_t flags)
     {
-        LOG(LOG_INFO, "---------------------------------> send_to_mod_channel(front_channel(%u,%x,%s), data=%p, length=%u, flags=%x)",
-            front_channel.chanid, front_channel.flags, front_channel.name, data, length, flags);
         size_t index = mod_channel_list.size();
-        for (size_t i = 0; i < mod_channel_list.size(); i++){
-            if (strcmp(front_channel.name, mod_channel_list[i].name) == 0){
-                index = i;
+        for (size_t index = 0; index < mod_channel_list.size(); index++){
+            if (strcmp(front_channel.name, mod_channel_list[index].name) == 0){
+                const McsChannelItem & mod_channel = mod_channel_list[index];
+                Stream stream(65536);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+                McsOut sdrq_out(stream, MCS_SDRQ, this->userid, mod_channel.chanid);
+                SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
+                stream.out_uint32_le(length);
+                stream.out_uint32_le(flags);
+                memcpy(stream.p, data, chunk_size);
+                stream.p += chunk_size;
+                sec_out.end();
+                sdrq_out.end();
+                tpdu.end();
+                tpdu.send(this->trans);
                 break;
             }
-        }
-        if (index < mod_channel_list.size()){
-            const McsChannelItem & mod_channel = mod_channel_list[index];
-            LOG(LOG_INFO, "sent to %u", mod_channel.chanid);
-            Stream stream(8192);
-            X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsOut sdrq_out(stream, MCS_SDRQ, this->userid, mod_channel.chanid);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
-            stream.out_uint32_le(length);
-            stream.out_uint32_le(flags);
-            memcpy(stream.p, data, length);
-            stream.p += length;
-            sec_out.end();
-            sdrq_out.end();
-            tpdu.end();
-            tpdu.send(this->trans);
         }
     }
 
