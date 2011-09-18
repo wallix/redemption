@@ -23,6 +23,7 @@
 */
 
 #define BOOST_AUTO_TEST_MAIN
+#define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestALignedToCompact
 #include <boost/test/auto_unit_test.hpp>
 
