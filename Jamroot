@@ -74,8 +74,8 @@ install install-etc
     : <location>$(ETC_PREFIX)
     ;
 
-lib libboost_unit_test : : <name>boost_unit_test_framework <link>static ;
-lib libboost_program_options : : <name>boost_program_options <link>static ;
+lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
+lib libboost_program_options : : <name>boost_program_options <link>shared ;
 lib openssl : : <name>ssl <link>shared ;
 lib X11 : : <name>X11 <link>shared ;
 lib Xfixes : : <name>Xfixes <link>static ;
