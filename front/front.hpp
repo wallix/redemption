@@ -187,12 +187,12 @@ struct GraphicsUpdatePDU
         // state variables for a batch of orders
         order_count(0),
         offset_order_count(0),
-        trans(trans),
         tpdu(NULL),
         mcs_sdin(NULL),
         sec_out(0),
         out_control(NULL),
         out_data(NULL),
+        trans(trans),
         userid(userid),
         shareid(shareid),
         crypt_level(crypt_level),
@@ -289,7 +289,6 @@ struct GraphicsUpdatePDU
         this->common = newcommon;
         this->destblt = cmd;
     }
-
 
     void send(const RDPPatBlt & cmd, const Rect &clip)
     {
@@ -433,7 +432,11 @@ public:
         break;
         }
 
-        this->orders = new GraphicsUpdatePDU(trans, this->userid, this->share_id, this->client_info.crypt_level, this->encrypt);
+        this->orders = new GraphicsUpdatePDU(trans, 
+                            this->userid, 
+                            this->share_id, 
+                            this->client_info.crypt_level, 
+                            this->encrypt);
     }
 
     ~Front(){
@@ -494,27 +497,6 @@ public:
         if (this->order_level == 0){
             this->orders->flush();
         }
-    }
-
-    void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
-    {
-//        LOG(LOG_INFO, "front::send_pointer\n");
-        this->server_rdp_send_pointer(cache_idx, data, mask, x, y);
-//        LOG(LOG_INFO, "front::send_pointer done\n");
-    }
-
-    void set_pointer(int cache_idx) throw (Error)
-    {
-//        LOG(LOG_INFO, "front::set_pointer\n");
-        this->server_rdp_set_pointer(cache_idx);
-//        LOG(LOG_INFO, "front::set_pointer done\n");
-    }
-
-    void activate_and_process_data(Callback & cb)
-    {
-//        LOG(LOG_INFO, "activate_and_process_data\n");
-        this->activate_and_process_data(cb, this->channel_list);
-//        LOG(LOG_INFO, "activate_and_process_data done\n");
     }
 
     void disconnect() throw (Error)
@@ -722,7 +704,7 @@ public:
 //    color pointer, as specified in [T128] section 8.14.3. This pointer update
 //    is used for both monochrome and color pointers in RDP.
 
-    void server_rdp_send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
+    void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -844,7 +826,7 @@ public:
 //      cached using either the Color Pointer Update (section 2.2.9.1.1.4.4) or
 //      New Pointer Update (section 2.2.9.1.1.4.5).
 
-    void server_rdp_set_pointer(int cache_idx) throw (Error)
+    void set_pointer(int cache_idx) throw (Error)
     {
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -1189,8 +1171,9 @@ public:
     }
 
 
-    void activate_and_process_data(Callback & cb, ChannelList & channel_list)
+    void activate_and_process_data(Callback & cb)
     {
+        ChannelList & channel_list = this->channel_list;
         Stream stream(65535);
 
         X224In tpdu(this->trans, stream);

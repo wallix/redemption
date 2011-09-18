@@ -24,7 +24,6 @@
 
 #include "../mod/internal/widget.hpp"
 #include "client_mod.hpp"
-#include "server_rdp.hpp"
 
 struct internal_mod : public client_mod {
     public:
