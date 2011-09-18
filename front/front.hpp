@@ -501,9 +501,14 @@ public:
 
     void disconnect() throw (Error)
     {
-//        LOG(LOG_INFO, "disconnect()");
-        this->server_rdp_disconnect();
-//        LOG(LOG_INFO, "disconnect() done");
+        Stream stream(8192);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+        stream.out_uint8((MCS_DPUM << 2) | 1);
+        stream.out_uint8(0x80);
+
+        tpdu.end();
+        tpdu.send(this->trans);
     }
 
     void set_console_session(bool b)
@@ -516,13 +521,6 @@ public:
     const ChannelList & get_channel_list(void) const
     {
         return this->channel_list;
-    }
-
-    void incoming(void)
-    {
-//        LOG(LOG_INFO, "incoming");
-        this->server_rdp_incoming(this->channel_list);
-//        LOG(LOG_INFO, "incoming done");
     }
 
     void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, int flags)
@@ -887,7 +885,7 @@ public:
     // between client-side plug-ins and server-side applications).
 
 
-    void server_rdp_incoming(ChannelList & channel_list) throw (Error)
+    void incoming() throw (Error)
     {
         LOG(LOG_INFO, "Connection Initiation");
         // Connection Initiation
@@ -924,17 +922,17 @@ public:
         //                   GCC conference Create Response
 
         LOG(LOG_INFO, "Basic Settings Exchange");
-        LOG(LOG_INFO, "front:basic_settings:channel_list : %u", channel_list.size());
+        LOG(LOG_INFO, "front:basic_settings:channel_list : %u", this->channel_list.size());
 
         recv_mcs_connect_initial_pdu_with_gcc_conference_create_request(
             this->trans,
             &this->client_info,
-            channel_list);
+            this->channel_list);
 
         send_mcs_connect_response_pdu_with_gcc_conference_create_response(
             this->trans,
             &this->client_info,
-            channel_list,
+            this->channel_list,
             this->server_random,
             this->encrypt.rc4_key_size,
             this->pub_mod,
@@ -1013,8 +1011,8 @@ public:
         }
 
 
-        LOG(LOG_INFO, "channel_list = %u", channel_list.size());
-        for (size_t i = 0 ; i < channel_list.size() ; i++){
+        LOG(LOG_INFO, "channel_list = %u", this->channel_list.size());
+        for (size_t i = 0 ; i < this->channel_list.size() ; i++){
                 uint16_t tmp_userid;
                 uint16_t tmp_chanid;
                 recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
@@ -1022,12 +1020,12 @@ public:
                     LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
                     throw Error(ERR_MCS_BAD_USERID);
                 }
-                if (tmp_chanid != channel_list[i].chanid){
-                    LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", channel_list[i].chanid, tmp_chanid);
+                if (tmp_chanid != this->channel_list[i].chanid){
+                    LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->channel_list[i].chanid, tmp_chanid);
                     throw Error(ERR_MCS_BAD_CHANID);
                 }
                 send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
-                channel_list.set_chanid(i, tmp_chanid);
+                this->channel_list.set_chanid(i, tmp_chanid);
         }
         LOG(LOG_INFO, "RDP Security Commencement");
 
@@ -1943,18 +1941,6 @@ public:
             LOG(LOG_WARNING, "unsupported PDUTYPE in process_data %d\n", data_type);
             break;
         }
-    }
-
-    void server_rdp_disconnect() throw (Error)
-    {
-        Stream stream(8192);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
-
-        stream.out_uint8((MCS_DPUM << 2) | 1);
-        stream.out_uint8(0x80);
-
-        tpdu.end();
-        tpdu.send(trans);
     }
 
     void server_rdp_send_deactive() throw (Error)
