@@ -202,7 +202,7 @@ struct RdpLicence {
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
 
-        stream.out_uint8(licence_issued?LICENCE_TAG_AUTHRESP:SEC_LICENCE_NEG);
+        stream.out_uint8(LICENCE_TAG_AUTHRESP);
 
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
@@ -272,11 +272,11 @@ struct RdpLicence {
 
     int rdp_lic_process_issue(Stream & stream, const char * hostname, int & licence_issued)
     {
+
         stream.skip_uint8(2); /* 3d 45 - unknown */
         int length = stream.in_uint16_le();
         if (!stream.check_rem(length)) {
-            #warning use exception
-            return 0;
+            return 0; // 0 = not connected, this case is probably worse and should cause a disconnection
         }
         ssllib ssl;
         SSL_RC4 crypt_key;
@@ -284,10 +284,12 @@ struct RdpLicence {
         ssl.rc4_crypt(crypt_key, stream.p, stream.p, length);
         int check = stream.in_uint16_le();
         if (check != 0) {
-            #warning use exception
-            return 0;
+            return 0; // 0 = not connected, is it enough ?
         }
+
+
         licence_issued = 1;
+
         stream.skip_uint8(2); /* pad */
         /* advance to fourth string */
         length = 0;
@@ -295,11 +297,11 @@ struct RdpLicence {
             stream.skip_uint8(length);
             length = stream.in_uint32_le();
             if (!stream.check_rem(length)) {
-            #warning use exception
-                return 0;
+                // remaining data after licence
+                return 0; // 0 = not connected, this case is probably worse and should cause a disconnection
             }
         }
-        /* todo save_licence(stream.p, length); */
+
         this->rdp_save_licence(stream.p, length, hostname);
         return 1;
     }
@@ -365,8 +367,7 @@ struct RdpLicence {
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
 
-        #warning if we are performing licence request doesn't it mean that licence has not been issued ?
-        stream.out_uint8(licence_issued?LICENCE_TAG_REQUEST:SEC_LICENCE_NEG);
+        stream.out_uint8(LICENCE_TAG_REQUEST);
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
         stream.out_uint32_le(1);
@@ -402,7 +403,7 @@ struct RdpLicence {
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
 
-        stream.out_uint8(licence_issued?LICENCE_TAG_PRESENT:SEC_LICENCE_NEG);
+        stream.out_uint8(LICENCE_TAG_PRESENT);
         stream.out_uint8(2); /* version */
         stream.out_uint16_le(length);
         stream.out_uint32_le(1);

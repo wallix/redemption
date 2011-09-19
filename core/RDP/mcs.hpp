@@ -509,8 +509,6 @@ static inline void send_cs_net(Stream & stream, const ChannelList & channel_list
 {
     /* Here we need to put channel information in order to redirect channel data
     from client to server passing through the "proxy" */
-    LOG(LOG_INFO, "sending channels information to server : %u channels", channel_list.size());
-
     size_t num_channels = channel_list.size();
 
     if (num_channels > 0) {
@@ -524,7 +522,6 @@ static inline void send_cs_net(Stream & stream, const ChannelList & channel_list
             const McsChannelItem & channel_item = channel_list[index];
             stream.out_copy_bytes(channel_item.name, 8);
             stream.out_uint32_be(channel_item.flags);
-            LOG(LOG_INFO, "channel[%u] (%s, %x, chanid=%u)", index, channel_list[index].name, channel_list[index].flags, channel_list[index].chanid);
         }
     }
 
@@ -551,9 +548,7 @@ static inline void parse_mcs_data_cs_net(Stream & stream, ClientInfo * client_in
         channel_item.chanid = MCS_GLOBAL_CHANNEL + (index + 1);
         #warning push_back is not the best choice here, as we have static space already available in channel_list, we could even let ChannelList manage parsing
         channel_list.push_back(channel_item);
-        LOG(LOG_INFO, "channel[%u] (%s, %x, chanid=%u)", index, channel_list[index].name, channel_list[index].flags, channel_list[index].chanid);
     }
-    LOG(LOG_INFO, "Number of virtual channels: %u", channel_list.size());
 }
 
 
