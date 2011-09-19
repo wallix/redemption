@@ -1662,7 +1662,7 @@ struct mod_rdp : public client_mod {
             tpdu.send(this->trans);
         }
 
-
+        #warning duplicated code in front
         void send_synchronise() throw (Error)
         {
             Stream stream(8192);
@@ -1711,7 +1711,7 @@ struct mod_rdp : public client_mod {
 
         /* Send persistent bitmap cache enumeration PDU's
         Not implemented yet because it should be implemented
-        before in server_rdp_process_data case. The problem is that
+        before in process_data case. The problem is that
         we don't save the bitmap key list attached with rdp_bmpcache2 capability
         message so we can't develop this function yet */
 

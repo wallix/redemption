@@ -17,14 +17,15 @@
    Copyright (C) Wallix 2010
    Author(s): Christophe Grosjean, Javier Caverni
 
-   This class implement abstract callback used by server_rdp layer
-   it is used to avoid explicit dependency between rdp_server layer
-   and session (to enable to use server_rdp layer in tests).
+   This class implement abstract callback used by front layer
+   it is used to avoid explicit dependency between front layer
+   and session (to enable to use front layer in tests).
 
 */
 
 #ifndef __CALLBACK_HPP__
 #define __CALLBACK_HPP__
+#include "channel_list.hpp"
 
 struct Callback
 {

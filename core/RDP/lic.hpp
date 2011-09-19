@@ -138,7 +138,7 @@ struct RdpLicence {
         if (fd != -1 && fstat(fd, &st) != 0){
             this->licence_data = (uint8_t *)malloc(this->licence_size);
             #warning check error code here
-            if (this->licence_size != read(fd, this->licence_data, this->licence_size)){
+            if (((int)this->licence_size) != read(fd, this->licence_data, this->licence_size)){
                 #warning throwing an error would be better
                 return;
             }
