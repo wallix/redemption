@@ -227,7 +227,7 @@ struct GraphicsUpdatePDU
     void flush()
     {
         if (this->order_count > 0){
-//            LOG(LOG_ERR, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
+            LOG(LOG_ERR, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
             this->order_count = 0;
 

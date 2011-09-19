@@ -635,7 +635,6 @@ struct client_mod : public Callback {
         this->front.orders->send(cmd);
     }
 
-    #warning this should become BITMAP UPDATE, we should be able to send bitmaps either through orders and cache or through BITMAP UPDATE
     void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy)
     {
         const uint16_t width = bitmap.cx;
