@@ -246,10 +246,10 @@ struct GraphicsUpdatePDU
     // if not send previous orders we got and init a new packet
     void reserve_order(size_t asked_size)
     {
-//        LOG(LOG_INFO, "reserve_order[%u](%u) remains=%u", this->order_count, asked_size, std::min(this->stream.capacity, (size_t)4096) - this->stream.get_offset(0));
+        LOG(LOG_INFO, "reserve_order[%u](%u) remains=%u", this->order_count, asked_size, std::min(this->stream.capacity, (size_t)4096) - this->stream.get_offset(0));
         size_t max_packet_size = std::min(this->stream.capacity, (size_t)4096);
         size_t used_size = this->stream.get_offset(0);
-        const size_t max_order_batch = 4096;
+        const size_t max_order_batch = 1;
         if ((this->order_count >= max_order_batch)
         || (used_size + asked_size + 100) > max_packet_size) {
             this->flush();
