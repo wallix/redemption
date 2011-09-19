@@ -240,7 +240,7 @@ struct mod_vnc : public client_mod {
                     this->blue_shift = stream.in_uint8();
                     stream.skip_uint8(3); // skip padding
 
-//                    LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
+                    LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
 
                     this->server_set_clip(Rect(0, 0, width, height));
 
@@ -445,22 +445,6 @@ struct mod_vnc : public client_mod {
         int error = 0;
         Stream stream(8192);
         switch (msg){
-        case WM_CHANNELDATA:
-        {
-            int chanid = param1  & 0xffff;
-            int flags =  (param1 & 0xffff0000) >> 16;
-            int size = (int)param2;
-            char *data = (char*)param3;
-            int total_size = (int)param4;
-            if ((size >= 0) && (size <= (32 * 1024)) && (data != 0)) {
-                stream.init(size);
-                stream.out_copy_bytes(data, size);
-                stream.mark_end();
-                stream.p = stream.data;
-                error = this->lib_process_channel_data(chanid, flags, size, &stream, total_size);
-            }
-        }
-        break;
         case WM_KEYDOWN:
         case WM_KEYUP:
         { /* key events */
@@ -475,51 +459,87 @@ struct mod_vnc : public client_mod {
         }
         break;
         case WM_MOUSEMOVE:
+            stream.out_uint8(5);
+            stream.out_uint8(this->mod_mouse_state);
+            stream.out_uint16_be(param1);
+            stream.out_uint16_be(param2);
+            this->t->send((char*)stream.data, 6);
+        break;
         case WM_LBUTTONUP:
+            this->mod_mouse_state &= ~1; // clear bit 0
+            stream.out_uint8(5);
+            stream.out_uint8(this->mod_mouse_state);
+            stream.out_uint16_be(param1);
+            stream.out_uint16_be(param2);
+            this->t->send((char*)stream.data, 6);
+        break;
         case WM_LBUTTONDOWN:
+            this->mod_mouse_state |= 1; // set bit 0
+            stream.out_uint8(5);
+            stream.out_uint8(this->mod_mouse_state);
+            stream.out_uint16_be(param1);
+            stream.out_uint16_be(param2);
+            this->t->send((char*)stream.data, 6);
+        break;
         case WM_RBUTTONUP:
+            this->mod_mouse_state &= ~4; // clear bit 2
+            stream.out_uint8(5);
+            stream.out_uint8(this->mod_mouse_state);
+            stream.out_uint16_be(param1);
+            stream.out_uint16_be(param2);
+            this->t->send((char*)stream.data, 6);
+        break;
         case WM_RBUTTONDOWN:
+            this->mod_mouse_state |= 4; // set bit 2
+            stream.out_uint8(5);
+            stream.out_uint8(this->mod_mouse_state);
+            stream.out_uint16_be(param1);
+            stream.out_uint16_be(param2);
+            this->t->send((char*)stream.data, 6);
+        break;
         case WM_BUTTON3UP:
+            this->mod_mouse_state &= ~2; // clear bit 1
+            stream.out_uint8(5);
+            stream.out_uint8(this->mod_mouse_state);
+            stream.out_uint16_be(param1);
+            stream.out_uint16_be(param2);
+            this->t->send((char*)stream.data, 6);
+        break;
         case WM_BUTTON3DOWN:
+            this->mod_mouse_state |= 2; // set bit 1
+            stream.out_uint8(5);
+            stream.out_uint8(this->mod_mouse_state);
+            stream.out_uint16_be(param1);
+            stream.out_uint16_be(param2);
+            this->t->send((char*)stream.data, 6);
+        break;
         case WM_BUTTON4UP:
+            this->mod_mouse_state &= ~8; // clear bit 3
+            stream.out_uint8(5);
+            stream.out_uint8(this->mod_mouse_state);
+            stream.out_uint16_be(param1);
+            stream.out_uint16_be(param2);
+            this->t->send((char*)stream.data, 6);
+        break;
         case WM_BUTTON4DOWN:
+            this->mod_mouse_state |= 8; // set bit 3
+            stream.out_uint8(5);
+            stream.out_uint8(this->mod_mouse_state);
+            stream.out_uint16_be(param1);
+            stream.out_uint16_be(param2);
+            this->t->send((char*)stream.data, 6);
+            break;
+        break;
         case WM_BUTTON5UP:
+            this->mod_mouse_state &= ~16; // clear bit 4
+            stream.out_uint8(5);
+            stream.out_uint8(this->mod_mouse_state);
+            stream.out_uint16_be(param1);
+            stream.out_uint16_be(param2);
+            this->t->send((char*)stream.data, 6);
+        break;
         case WM_BUTTON5DOWN:
-        #warning switch below should be easy to simplify using some math it is basically clear_bit/set_bit
-            switch (msg) {
-            case WM_MOUSEMOVE:
-                break;
-            case WM_LBUTTONUP:
-                this->mod_mouse_state &= ~1; // clear bit 0
-                break;
-            case WM_LBUTTONDOWN:
-                this->mod_mouse_state |= 1; // set bit 0
-                break;
-            case WM_RBUTTONUP:
-                this->mod_mouse_state &= ~4; // clear bit 2
-                break;
-            case WM_RBUTTONDOWN:
-                this->mod_mouse_state |= 4; // set bit 2
-                break;
-            case WM_BUTTON3UP:
-                this->mod_mouse_state &= ~2; // clear bit 1
-                break;
-            case WM_BUTTON3DOWN:
-                this->mod_mouse_state |= 2; // set bit 1
-                break;
-            case WM_BUTTON4UP:
-                this->mod_mouse_state &= ~8; // clear bit 3
-                break;
-            case WM_BUTTON4DOWN:
-                this->mod_mouse_state |= 8; // set bit 3
-                break;
-            case WM_BUTTON5UP:
-                this->mod_mouse_state &= ~16; // clear bit 4
-                break;
-            case WM_BUTTON5DOWN:
-                this->mod_mouse_state |= 16; // set bit 4
-                break;
-            }
+            this->mod_mouse_state |= 16; // set bit 4
             stream.out_uint8(5);
             stream.out_uint8(this->mod_mouse_state);
             stream.out_uint16_be(param1);
@@ -544,6 +564,8 @@ struct mod_vnc : public client_mod {
             this->t->send((char*)stream.data, 10);
         }
         break;
+        case WM_SYNCHRONIZE:
+            break;
         default:
             LOG(LOG_WARNING, "unexpected message %d\n", msg);
             break;
@@ -571,8 +593,12 @@ struct mod_vnc : public client_mod {
                     this->lib_clip_data();
                 break;
                 default:
-                LOG(LOG_INFO, "unknown in vnc_lib_mod_signal %d\n", type);
+                    LOG(LOG_INFO, "unknown in vnc_lib_mod_signal %d\n", type);
             }
+        }
+        catch(const Error & e) {
+            LOG(LOG_INFO, "exception raised id=%u", e.id);
+            rv = 1;
         }
         catch(...) {
             LOG(LOG_INFO, "exception raised");
@@ -582,70 +608,66 @@ struct mod_vnc : public client_mod {
     }
 
     private:
-    #warning does it work ? Seems designed for copy/paste
-    int lib_process_channel_data(int chanid, int flags, int size, Stream* s, int total_size)
+    #warning use it for copy/paste
+    int lib_process_channel_data(int chanid, int flags, int size, Stream & stream, int total_size)
     {
-        int type;
-        int status;
-        int length;
-        int index;
-        int format;
-
         if (chanid == this->clip_chanid) {
-            type = s->in_uint16_le();
-            status = s->in_uint16_le();
-            length = s->in_uint32_le();
+            uint16_t type = stream.in_uint16_le();
+            uint16_t status = stream.in_uint16_le();
+            uint32_t length = stream.in_uint32_le();
             switch (type) {
-            case 2: { /* CLIPRDR_FORMAT_ANNOUNCE */
-                Stream* out_s = new Stream(8192);
-                out_s->out_uint16_le(3);
-                out_s->out_uint16_le(1);
-                out_s->out_uint32_le(0);
-                out_s->out_clear_bytes(4); /* pad */
-                out_s->mark_end();
-                length = (int)(out_s->end - out_s->data);
-//                this->server_send_to_channel_mod(this->clip_chanid, out_s->data, length, length, 3);
-                delete out_s;
+            case 2:
+            { /* CLIPRDR_FORMAT_ANNOUNCE */
+                Stream out_s(8192);
+                out_s.out_uint16_le(3);
+                out_s.out_uint16_le(1);
+                out_s.out_uint32_le(0);
+                out_s.out_clear_bytes(4); /* pad */
+                out_s.mark_end();
+                length = (int)(out_s.end - out_s.data);
+//                this->server_send_to_channel_mod(this->clip_chanid, out_s.data, length, length, 3);
             }
             break;
             case 3: /* CLIPRDR_FORMAT_ACK */
                 break;
-            case 4: { /* CLIPRDR_DATA_REQUEST */
-                format = 0;
+            case 4:
+            { /* CLIPRDR_DATA_REQUEST */
+                uint32_t format = 0;
                 if (length >= 4) {
-                    format = s->in_uint32_le();
+                    format = stream.in_uint32_le();
                 }
                 /* only support CF_TEXT and CF_UNICODETEXT */
                 if ((format != 1) && (format != 13)) {
                     break;
                 }
-                Stream* out_s = new Stream(8192);
-                out_s->out_uint16_le(5);
-                out_s->out_uint16_le(1);
+                Stream out_s(8192);
+                out_s.out_uint16_le(5);
+                out_s.out_uint16_le(1);
                 if (format == 13) { /* CF_UNICODETEXT */
-                    out_s->out_uint32_le( this->clip_data_size * 2 + 2);
-                    for (index = 0; index < this->clip_data_size; index++) {
-                        out_s->out_uint8(this->clip_data.data[index]);
-                        out_s->out_uint8(0);
+                    out_s.out_uint32_le( this->clip_data_size * 2 + 2);
+                    for (size_t index = 0; index < this->clip_data_size; index++) {
+                        out_s.out_uint8(this->clip_data.data[index]);
+                        out_s.out_uint8(0);
                     }
-                    out_s->out_clear_bytes(2);
-                } else if (format == 1) { /* CF_TEXT */
-                    out_s->out_uint32_le(this->clip_data_size + 1);
-                    for (index = 0; index < this->clip_data_size; index++) {
-                        out_s->out_uint8(this->clip_data.data[index]);
-                    }
-                    out_s->out_clear_bytes( 1);
+                    out_s.out_clear_bytes(2);
                 }
-                out_s->out_clear_bytes( 4); /* pad */
-                out_s->mark_end();
-                length = (int)(out_s->end - out_s->data);
-//                this->server_send_to_channel_mod(this->clip_chanid, out_s->data, length, length, 3);
-                delete out_s;
+                else if (format == 1) { /* CF_TEXT */
+                    out_s.out_uint32_le(this->clip_data_size + 1);
+                    for (size_t index = 0; index < this->clip_data_size; index++) {
+                        out_s.out_uint8(this->clip_data.data[index]);
+                    }
+                    out_s.out_clear_bytes( 1);
+                }
+                out_s.out_clear_bytes( 4); /* pad */
+                out_s.mark_end();
+                length = (int)(out_s.end - out_s.data);
+//                this->server_send_to_channel_mod(this->clip_chanid, out_s.data, length, length, 3);
             }
             break;
             }
         } else {
-            printf("lib_process_channel_data: unknown chanid %d this->clip_chanid %d\n",
+            printf("lib_process_channel_data: unknown chanid %d"
+                   " this->clip_chanid %d\n",
                       chanid, this->clip_chanid);
         }
         return 0;
@@ -653,7 +675,6 @@ struct mod_vnc : public client_mod {
 
     void lib_framebuffer_update() throw (Error)
     {
-        int encoding;
         size_t num_recs = 0;
         int Bpp = nbbytes(this->bpp);
         {
@@ -672,15 +693,15 @@ struct mod_vnc : public client_mod {
             int y = stream.in_uint16_be();
             int cx = stream.in_uint16_be();
             int cy = stream.in_uint16_be();
-            encoding = stream.in_uint32_be();
+            uint32_t encoding = stream.in_uint32_be();
 
-//                LOG(LOG_INFO, "----------------> x=%d y=%d cx=%d cy=%d encoding=%d", x, y, cx, cy, encoding);
+                LOG(LOG_INFO, "----------------> x=%d y=%d cx=%d cy=%d encoding=%d", x, y, cx, cy, encoding);
 
             switch (encoding){
             case 0: /* raw */
             {
                 int need_size = cx * cy * Bpp;
-//                    LOG(LOG_INFO, "raw: x=%d y=%d cx=%d cy=%d encoding=%d need_size=%d", x, y, cx, cy, encoding, need_size);
+                    LOG(LOG_INFO, "raw: x=%d y=%d cx=%d cy=%d encoding=%d need_size=%d", x, y, cx, cy, encoding, need_size);
                 uint8_t * raw = (uint8_t *)malloc(need_size);
                 if (!raw){
                     LOG(LOG_ERR, "Memory allocation failed for raw buffer in VNC");
@@ -786,7 +807,8 @@ struct mod_vnc : public client_mod {
             }
             break;
             default:
-                throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
+                LOG(LOG_INFO, "unexpected encoding %8x in lib_frame_buffer", encoding);
+//                throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
                 break;
             }
         }

@@ -45,22 +45,20 @@
 #include "bitmap.hpp"
 #include "bitmap_cache.hpp"
 #include "cache.hpp"
-
-#include "RDP/x224.hpp"
-#include "RDP/mcs.hpp"
-#include "RDP/rdp.hpp"
-#include "RDP/sec.hpp"
 #include "client_info.hpp"
 #include "config.hpp"
 #include "error.hpp"
 #include "callback.hpp"
 #include "colors.hpp"
 #include "altoco.hpp"
+#include "transport.hpp"
+
 #include "RDP/x224.hpp"
+#include "RDP/mcs.hpp"
+#include "RDP/rdp.hpp"
+#include "RDP/sec.hpp"
 #include "RDP/lic.hpp"
-
 #include "RDP/orders/RDPOrdersCommon.hpp"
-
 #include "RDP/orders/RDPOrdersPrimaryHeader.hpp"
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
@@ -69,16 +67,12 @@
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
-
 #include "RDP/orders/RDPOrdersSecondaryHeader.hpp"
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 
-#include "transport.hpp"
-#include "config.hpp"
-#include "error.hpp"
 
 
 // MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
@@ -169,8 +163,8 @@ struct GraphicsUpdatePDU
     int & crypt_level;
     CryptContext & encrypt;
 
-    GraphicsUpdatePDU(Transport * trans, 
-                      uint16_t & userid, 
+    GraphicsUpdatePDU(Transport * trans,
+                      uint16_t & userid,
                       int & shareid,
                       int & crypt_level,
                       CryptContext & encrypt)
@@ -432,10 +426,10 @@ public:
         break;
         }
 
-        this->orders = new GraphicsUpdatePDU(trans, 
-                            this->userid, 
-                            this->share_id, 
-                            this->client_info.crypt_level, 
+        this->orders = new GraphicsUpdatePDU(trans,
+                            this->userid,
+                            this->share_id,
+                            this->client_info.crypt_level,
                             this->encrypt);
     }
 
@@ -469,10 +463,10 @@ public:
         this->orders->flush();
 
         /* shut down the rdp client */
-        this->server_rdp_send_deactive();
+        this->send_deactive();
 
         /* this should do the resizing */
-        this->server_rdp_send_demand_active();
+        this->send_demand_active();
 
         delete this->orders;
         this->orders = new GraphicsUpdatePDU(trans, this->userid, this->share_id, this->client_info.crypt_level, this->encrypt);
@@ -524,11 +518,6 @@ public:
     }
 
     void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, int flags)
-    {
-        this->server_send_to_channel(channel, data, length, flags);
-    }
-
-    void server_send_to_channel(const McsChannelItem & channel, uint8_t *data, size_t length, int flags) throw (Error)
     {
         Stream stream(65536);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -755,7 +744,7 @@ public:
 //    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the xorMaskData field.
 
-        stream.out_uint16_le(3072);
+        stream.out_uint16_le(32*32*3);
 
 //    xorMaskData (variable): Variable number of bytes: Contains the 24-bpp,
 //      bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte
@@ -763,15 +752,7 @@ public:
 //      is being sent, then each scan-line will consume 10 bytes (3 pixels per
 //      scan-line multiplied by 3 bpp, rounded up to the next even number of
 //      bytes).
-
-        #warning a memcopy (or equivalent build in stream) would be much more efficient
-        for (int i = 0; i < 32; i++) {
-            for (int j = 0; j < 32; j++) {
-                stream.out_uint8(*data++);
-                stream.out_uint8(*data++);
-                stream.out_uint8(*data++);
-            }
-        }
+        stream.out_copy_bytes(data, 32*32*3);
 
 //    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
 //      bottom-up AND mask scan-line data. The AND mask is padded to a 2-byte
@@ -809,7 +790,7 @@ public:
 //      to a 4-byte boundary per scan line, while color pointer XOR data is
 //      still packed on a 2-byte boundary. Color XOR data is presented in the
 ///     color depth described in the xorBpp field (for 8 bpp, each byte contains
-//      one palette index; for 4 bpp, there are two palette indices per byserver_rdp_incomingte).
+//      one palette index; for 4 bpp, there are two palette indices per byte).
 
 //    2.2.9.1.1.4.6    Cached Pointer Update (TS_CACHEDPOINTERATTRIBUTE)
 //    ------------------------------------------------------------------
@@ -1162,13 +1143,14 @@ public:
         //    | <------- Demand Active PDU ---------------------------- |
         //    |--------- Confirm Active PDU --------------------------> |
 
-        this->server_rdp_send_demand_active();
+        this->send_demand_active();
 
     }
 
 
     void activate_and_process_data(Callback & cb)
     {
+        LOG(LOG_INFO, "activate_and_process_data");
         ChannelList & channel_list = this->channel_list;
         Stream stream(65535);
 
@@ -1284,8 +1266,9 @@ public:
 
 
     /*****************************************************************************/
-    void server_rdp_send_data_update_sync() throw (Error)
+    void send_data_update_sync() throw (Error)
     {
+        LOG(LOG_INFO, "send_data_update_sync");
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
@@ -1308,10 +1291,10 @@ public:
 
 
     /*****************************************************************************/
-    void server_rdp_send_demand_active() throw (Error)
+    void send_demand_active() throw (Error)
     {
 
-//        LOG(LOG_INFO, "server_rdp_send_demand_active()");
+        LOG(LOG_INFO, "send_demand_active()");
 
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -1493,7 +1476,7 @@ public:
     /*****************************************************************************/
     void capset_order(Stream & stream, int len)
     {
-
+        LOG(LOG_INFO, "capset_order");
         stream.skip_uint8(20); /* Terminal desc, pad */
         stream.skip_uint8(2); /* Cache X granularity */
         stream.skip_uint8(2); /* Cache Y granularity */
@@ -1566,11 +1549,13 @@ public:
     /* store the number of client cursor cache in client_info */
     void capset_pointercache(Stream & stream, int len)
     {
+        LOG(LOG_INFO, "capset_pointercache");
     }
 
 
     void process_confirm_active(Stream & stream)
     {
+        LOG(LOG_INFO, "process_confirm_active");
         stream.skip_uint8(4); /* rdp_shareid */
         stream.skip_uint8(2); /* userid */
         int source_len = stream.in_uint16_le(); /* sizeof RDP_SOURCE */
@@ -1703,8 +1688,11 @@ public:
 // targetUser (2 bytes): A 16-bit, unsigned integer. The MCS channel ID of the
 //   target user.
 
-    void server_rdp_send_synchronize()
+    #warning duplicated code in mod/rdp
+    void send_synchronize()
     {
+        LOG(LOG_INFO, "send_synchronize");
+
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
@@ -1746,8 +1734,10 @@ public:
 
 // controlId (4 bytes): A 32-bit, unsigned integer. The control identifier.
 
-    void server_rdp_send_control(int action)
+    void send_control(int action)
     {
+        LOG(LOG_INFO, "send_control");
+
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
@@ -1771,8 +1761,10 @@ public:
 
 
     /*****************************************************************************/
-    void server_rdp_send_fontmap() throw (Error)
+    void send_fontmap() throw (Error)
     {
+        LOG(LOG_INFO, "send_fontmap");
+
     static uint8_t g_fontmap[172] = { 0xff, 0x02, 0xb6, 0x00, 0x28, 0x00, 0x00, 0x00,
                                 0x27, 0x00, 0x27, 0x00, 0x03, 0x00, 0x04, 0x00,
                                 0x00, 0x00, 0x26, 0x00, 0x01, 0x00, 0x1e, 0x00,
@@ -1819,6 +1811,7 @@ public:
     /* PDUTYPE_DATAPDU */
     void process_data(Stream & stream, Callback & cb) throw (Error)
     {
+        LOG(LOG_INFO, "process_data");
         stream.skip_uint8(6);
         stream.in_uint16_le(); // len
         int data_type = stream.in_uint8();
@@ -1826,10 +1819,10 @@ public:
         stream.in_uint16_le(); // clen
         switch (data_type) {
         case PDUTYPE2_POINTER: /* 27(0x1b) */
-//            LOG(LOG_INFO, "PDUTYPE2_POINTER");
+            LOG(LOG_INFO, "PDUTYPE2_POINTER");
             break;
         case PDUTYPE2_INPUT: /* 28(0x1c) */
-//            LOG(LOG_INFO, "PDUTYPE2_INPUT");
+            LOG(LOG_INFO, "PDUTYPE2_INPUT");
             {
                 int num_events = stream.in_uint16_le();
                 stream.skip_uint8(2); /* pad */
@@ -1851,17 +1844,17 @@ public:
             }
             break;
         case PDUTYPE2_CONTROL: /* 20(0x14) */
-//            LOG(LOG_INFO, "PDUTYPE2_CONTROL");
+            LOG(LOG_INFO, "PDUTYPE2_CONTROL");
             {
                 int action = stream.in_uint16_le();
                 stream.skip_uint8(2); /* user id */
                 stream.skip_uint8(4); /* control id */
                 switch (action){
                     case RDP_CTL_REQUEST_CONTROL:
-                        this->server_rdp_send_control(RDP_CTL_GRANT_CONTROL);
+                        this->send_control(RDP_CTL_GRANT_CONTROL);
                     break;
                     case RDP_CTL_COOPERATE:
-                        this->server_rdp_send_control(RDP_CTL_COOPERATE);
+                        this->send_control(RDP_CTL_COOPERATE);
                     break;
                     default:
                         LOG(LOG_WARNING, "process DATA_PDU_CONTROL unknown action (%d)\n", action);
@@ -1869,11 +1862,11 @@ public:
             }
             break;
         case PDUTYPE2_SYNCHRONIZE:
-//            LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");
-            this->server_rdp_send_synchronize();
+            LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");
+            this->send_synchronize();
             break;
         case PDUTYPE2_REFRESH_RECT:
-//            LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT");
+            LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT");
             {
                 /* int op = */ stream.in_uint32_le();
                 int left = stream.in_uint16_le();
@@ -1886,14 +1879,14 @@ public:
             }
             break;
         case PDUTYPE2_SUPPRESS_OUTPUT:
-//            LOG(LOG_INFO, "PDUTYPE2_SUPPRESS_OUTPUT");
+            LOG(LOG_INFO, "PDUTYPE2_SUPPRESS_OUTPUT");
             // PDUTYPE2_SUPPRESS_OUTPUT comes when minimizing a full screen
             // mstsc.exe 2600. I think this is saying the client no longer wants
             // screen updates and it will issue a PDUTYPE2_REFRESH_RECT above
             // to catch up so minimized apps don't take bandwidth
             break;
         case PDUTYPE2_SHUTDOWN_REQUEST:
-//            LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_REQUEST");
+            LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_REQUEST");
             {
                 // when this message comes, send a PDUTYPE2_SHUTDOWN_DENIED back
                 // so the client is sure the connection is alive and it can ask
@@ -1923,9 +1916,9 @@ public:
                 /* after second font message, we are up and running */
                 if (seq == 2 || seq == 3)
                 {
-                    this->server_rdp_send_fontmap();
+                    this->send_fontmap();
                     this->up_and_running = 1;
-                    this->server_rdp_send_data_update_sync();
+                    this->send_data_update_sync();
                 }
             }
             break;
@@ -1935,8 +1928,9 @@ public:
         }
     }
 
-    void server_rdp_send_deactive() throw (Error)
+    void send_deactive() throw (Error)
     {
+        LOG(LOG_INFO, "send_deactive");
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);

@@ -1628,7 +1628,7 @@ inline static void rdp_sec_generate_keys(CryptContext & encrypt, CryptContext & 
 }
 
 
-static inline int recv_sec_tag_sig(Stream & stream, uint16_t len)
+static inline void recv_sec_tag_sig(Stream & stream, uint16_t len)
 {
     stream.skip_uint8(len);
     /* Parse a public key structure */

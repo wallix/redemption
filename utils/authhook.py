@@ -88,9 +88,9 @@ class Authentifier(object):
         'n' : {
             'proxy_type': 'RDP',
             'target_login' : r'vnc',
-            'target_device' : '10.10.4.163',
-            'target_password' : 'tabra',
-            'target_port':'5900',
+            'target_device' : '127.0.0.1',
+            'target_password' : 'silver',
+            'target_port':'5901',
             'proto_dest': 'VNC'
         },
         'v' : {

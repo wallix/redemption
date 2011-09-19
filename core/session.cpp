@@ -447,7 +447,8 @@ int Session::step_STATE_RUNNING(const struct timeval & time_mark)
     this->front_event->add_to_fd_set(rfds, max);
     this->back_event->add_to_fd_set(rfds, max);
     this->sesman->add_to_fd_set(rfds, max);
-    int ready = select(max + 1, &rfds, &wfds, 0, &timeout);
+
+    select(max + 1, &rfds, &wfds, 0, &timeout);
 
     time_t timestamp = time(NULL);
     this->mod->periodic_snapshot(this->mod->get_pointer_displayed());
