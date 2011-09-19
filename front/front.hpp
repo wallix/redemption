@@ -530,7 +530,6 @@ public:
 
     void server_send_to_channel(const McsChannelItem & channel, uint8_t *data, size_t length, int flags) throw (Error)
     {
-        LOG(LOG_INFO, "server_send_to_channel %u[%s] %u", channel.chanid, channel.name, length);
         Stream stream(65536);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, channel.chanid);
@@ -1011,7 +1010,6 @@ public:
         }
 
 
-        LOG(LOG_INFO, "channel_list = %u", this->channel_list.size());
         for (size_t i = 0 ; i < this->channel_list.size() ; i++){
                 uint16_t tmp_userid;
                 uint16_t tmp_chanid;
@@ -1188,7 +1186,6 @@ public:
 
         SecIn sec(stream, this->decrypt);
 
-        LOG(LOG_INFO, "chanid = %u", mcs_in.chan_id);
         if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL) {
 
             if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
@@ -1229,13 +1226,8 @@ public:
 
             const McsChannelItem & channel = channel_list[index];
 
-            LOG(LOG_INFO, "received data in channel %u [%s]", channel.chanid, channel.name);
-
             int length = stream.in_uint32_le();
             int flags = stream.in_uint32_le();
-
-            LOG(LOG_INFO, "up_and_running=%u", this->up_and_running);
-            LOG(LOG_INFO, "received data in channel %u [%s] %u", channel.chanid, channel.name, length);
 
             size_t chunk_size = stream.end - stream.p;
 
@@ -1483,7 +1475,7 @@ public:
     /*****************************************************************************/
     void capset_general(Stream & stream, int len)
     {
-//        LOG(LOG_INFO, "capset_general");
+        LOG(LOG_INFO, "capset_general");
         stream.skip_uint8(10);
         /* use_compact_packets is pretty much 'use rdp5' */
         this->client_info.use_compact_packets = stream.in_uint16_le();
