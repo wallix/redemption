@@ -227,7 +227,7 @@ struct GraphicsUpdatePDU
     void flush()
     {
         if (this->order_count > 0){
-            LOG(LOG_ERR, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
+//            LOG(LOG_ERR, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
             this->order_count = 0;
 
@@ -246,10 +246,10 @@ struct GraphicsUpdatePDU
     // if not send previous orders we got and init a new packet
     void reserve_order(size_t asked_size)
     {
-        LOG(LOG_INFO, "reserve_order[%u](%u) remains=%u", this->order_count, asked_size, std::min(this->stream.capacity, (size_t)4096) - this->stream.get_offset(0));
+//        LOG(LOG_INFO, "reserve_order[%u](%u) remains=%u", this->order_count, asked_size, std::min(this->stream.capacity, (size_t)4096) - this->stream.get_offset(0));
         size_t max_packet_size = std::min(this->stream.capacity, (size_t)4096);
         size_t used_size = this->stream.get_offset(0);
-        const size_t max_order_batch = 1;
+        const size_t max_order_batch = 4096;
         if ((this->order_count >= max_order_batch)
         || (used_size + asked_size + 100) > max_packet_size) {
             this->flush();
@@ -264,7 +264,7 @@ struct GraphicsUpdatePDU
         cmd.emit(this->stream, newcommon, this->common, this->opaquerect);
         this->common = newcommon;
         this->opaquerect = cmd;
-        cmd.log(LOG_INFO, common.clip);
+//        cmd.log(LOG_INFO, common.clip);
     }
 
     void send(const RDPScrBlt & cmd, const Rect &clip)
@@ -274,7 +274,7 @@ struct GraphicsUpdatePDU
         cmd.emit(this->stream, newcommon, this->common, this->scrblt);
         this->common = newcommon;
         this->scrblt = cmd;
-        cmd.log(LOG_INFO, common.clip);
+//        cmd.log(LOG_INFO, common.clip);
     }
 
     void send(const RDPDestBlt & cmd, const Rect &clip)
@@ -284,7 +284,7 @@ struct GraphicsUpdatePDU
         cmd.emit(this->stream, newcommon, this->common, this->destblt);
         this->common = newcommon;
         this->destblt = cmd;
-        cmd.log(LOG_INFO, common.clip);
+//        cmd.log(LOG_INFO, common.clip);
     }
 
     void send(const RDPPatBlt & cmd, const Rect &clip)
@@ -295,7 +295,7 @@ struct GraphicsUpdatePDU
         cmd.emit(this->stream, newcommon, this->common, this->patblt);
         this->common = newcommon;
         this->patblt = cmd;
-        cmd.log(LOG_INFO, common.clip);
+//        cmd.log(LOG_INFO, common.clip);
     }
 
 
@@ -306,7 +306,7 @@ struct GraphicsUpdatePDU
         cmd.emit(this->stream, newcommon, this->common, this->memblt);
         this->common = newcommon;
         this->memblt = cmd;
-        cmd.log(LOG_INFO, common.clip);
+//        cmd.log(LOG_INFO, common.clip);
     }
 
     void send(const RDPLineTo& cmd, const Rect & clip)
@@ -316,7 +316,7 @@ struct GraphicsUpdatePDU
         cmd.emit(this->stream, newcommon, this->common, this->lineto);
         this->common = newcommon;
         this->lineto = cmd;
-        cmd.log(LOG_INFO, common.clip);
+//        cmd.log(LOG_INFO, common.clip);
     }
 
     void send(const RDPGlyphIndex & cmd, const Rect & clip)
@@ -332,21 +332,21 @@ struct GraphicsUpdatePDU
     {
         this->reserve_order(cmd.size + 12);
         cmd.emit(this->stream);
-        cmd.log(LOG_INFO);
+//        cmd.log(LOG_INFO);
     }
 
     void send(const RDPColCache & cmd)
     {
         this->reserve_order(2000);
         cmd.emit(this->stream);
-        cmd.log(LOG_INFO);
+//        cmd.log(LOG_INFO);
     }
 
     void send(const RDPBmpCache & cmd)
     {
         this->reserve_order(cmd.bmp->bmp_size(cmd.bpp) + 16);
         cmd.emit(this->stream);
-        cmd.log(LOG_INFO);
+//        cmd.log(LOG_INFO);
     }
 
     void send(const RDPGlyphCache & cmd)
@@ -354,7 +354,7 @@ struct GraphicsUpdatePDU
         #warning compute actual size, instead of a majoration as below
         this->reserve_order(1000);
         cmd.emit(this->stream);
-        cmd.log(LOG_INFO);
+//        cmd.log(LOG_INFO);
     }
 
 };
@@ -1160,7 +1160,6 @@ public:
 
     void activate_and_process_data(Callback & cb)
     {
-        LOG(LOG_INFO, "activate_and_process_data");
         ChannelList & channel_list = this->channel_list;
         Stream stream(65535);
 
@@ -1303,9 +1302,6 @@ public:
     /*****************************************************************************/
     void send_demand_active() throw (Error)
     {
-
-        LOG(LOG_INFO, "send_demand_active()");
-
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
@@ -1821,7 +1817,6 @@ public:
     /* PDUTYPE_DATAPDU */
     void process_data(Stream & stream, Callback & cb) throw (Error)
     {
-        LOG(LOG_INFO, "process_data");
         stream.skip_uint8(6);
         stream.in_uint16_le(); // len
         int data_type = stream.in_uint8();
@@ -1832,7 +1827,6 @@ public:
             LOG(LOG_INFO, "PDUTYPE2_POINTER");
             break;
         case PDUTYPE2_INPUT: /* 28(0x1c) */
-            LOG(LOG_INFO, "PDUTYPE2_INPUT");
             {
                 int num_events = stream.in_uint16_le();
                 stream.skip_uint8(2); /* pad */

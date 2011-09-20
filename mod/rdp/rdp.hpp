@@ -889,7 +889,7 @@ struct mod_rdp : public client_mod {
       uint32_t length = stream.in_uint32_le();
       int channel_flags = stream.in_uint32_le();
 
-      LOG(LOG_INFO, "recv virtual channel %u length=%u flags=%x", chan, length, channel_flags);
+//      LOG(LOG_INFO, "recv virtual channel %u length=%u flags=%x", chan, length, channel_flags);
 
         /* We need to recover the name of the channel linked with this
          channel_id in order to match it with the same channel on the

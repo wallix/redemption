@@ -763,7 +763,7 @@ struct client_mod : public Callback {
         for (size_t index = 0; index < this->front.get_channel_list().size(); index++){
             const McsChannelItem & front_channel_item = this->front.get_channel_list()[index];
             if (strcmp(channel.name, front_channel_item.name) == 0){
-                LOG(LOG_INFO, "found front channel chanid=%u flags=%x [channel_flags=%x] name=%s", front_channel_item.chanid, flags, front_channel_item.flags, front_channel_item.name);
+//                LOG(LOG_INFO, "found front channel chanid=%u flags=%x [channel_flags=%x] name=%s", front_channel_item.chanid, flags, front_channel_item.flags, front_channel_item.name);
                 this->front.send_to_channel(front_channel_item, data, length, flags);
                 break;
             }

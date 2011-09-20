@@ -83,7 +83,7 @@ class NativeCapture
         fprintf(this->f, "    RDPScrBlt cmd(Rect(%u, %u, %u, %u), %u, %u, %u);\n",
             cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
             cmd.rop, cmd.srcx, cmd.srcy);
-        fprintf(this->f, "    this->front.scr_blt(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->front.orders->send(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
         fprintf(this->f, "}\n");
     }
 
@@ -121,9 +121,9 @@ class NativeCapture
         fprintf(this->f, "    }; /* %p */\n", &bmp);
         fprintf(this->f, "    Bitmap bmp%p(%d, &this->palette332, %d, %d, raw%p, sizeof(raw%p));\n",
             &bmp, this->bpp, bmp.cx, bmp.cy, &bmp, &bmp);
-        fprintf(this->f, "    RDPBmpCache cmd(%d, &this->palette332, &bmp%p, %u, %u, &this->get_client_info());\n",
+        fprintf(this->f, "    RDPBmpCache cmd(%d, &bmp%p, %u, %u, &this->get_client_info());\n",
             this->bpp, &bmp, cache_id, cache_idx);
-        fprintf(this->f, "    this->front.bitmap_cache(cmd);\n");
+        fprintf(this->f, "    this->front.orders->send(cmd);\n");
         fprintf(this->f, "}\n");
     }
     void mem_blt(const RDPMemBlt & cmd, const BitmapCache & bmp_cache, const Rect & clip)
@@ -133,7 +133,7 @@ class NativeCapture
         fprintf(this->f, "    RDPMemBlt cmd(%u, Rect(%u, %u, %u, %u), %u, %u, %u, %u);\n",
             cmd.cache_id, cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
             cmd.rop, cmd.srcx, cmd.srcy, cmd.cache_idx);
-        fprintf(this->f, "    this->front.mem_blt(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->front.orders->send(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
         fprintf(this->f, "}\n");
     }
 
@@ -144,7 +144,7 @@ class NativeCapture
         fprintf(this->f, "    RDPOpaqueRect cmd(Rect(%u, %u, %u, %u), 0x%.6x);\n",
             cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
             cmd.color);
-        fprintf(this->f, "    this->front.opaque_rect(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->front.orders->send(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
         fprintf(this->f, "}\n");
     }
 
@@ -155,7 +155,7 @@ class NativeCapture
         fprintf(this->f, "    RDPDestBlt cmd(Rect(%u, %u, %u, %u), %u);\n",
             cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
             cmd.rop);
-        fprintf(this->f, "    this->front.dest_blt(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->front.orders->send(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
         fprintf(this->f, "}\n");
     }
 
@@ -172,7 +172,7 @@ class NativeCapture
             cmd.brush.extra[0], cmd.brush.extra[1], cmd.brush.extra[2],
             cmd.brush.extra[3], cmd.brush.extra[4], cmd.brush.extra[5],
             cmd.brush.extra[6]);
-        fprintf(this->f, "    this->front.pat_blt(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->front.orders->send(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
         fprintf(this->f, "}\n");
     }
 
@@ -186,7 +186,7 @@ class NativeCapture
             cmd.startx, cmd.starty, cmd.endx, cmd.endy,
             cmd.back_color, cmd.rop2,
             cmd.pen.style, cmd.pen.width, cmd.pen.color);
-        fprintf(this->f, "    this->front.line_to(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->front.orders->send(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
         fprintf(this->f, "}\n");
     }
 
@@ -219,7 +219,7 @@ class NativeCapture
             cmd.brush.extra[6],
             cmd.glyph_x, cmd.glyph_y,
             cmd.data_len, buffer);
-        fprintf(this->f, "    this->front.glyph_index(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
+        fprintf(this->f, "    this->front.orders->send(cmd, Rect(%u, %u, %u, %u));\n", clip.x, clip.y, clip.cx, clip.cy);
         fprintf(this->f, "}\n");
     }
 

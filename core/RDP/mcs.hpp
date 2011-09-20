@@ -539,7 +539,7 @@ static inline void parse_mcs_data_cs_net(Stream & stream, ClientInfo * client_in
 //        return;
 //    }
     uint32_t channelCount = stream.in_uint32_le();
-    LOG(LOG_INFO, "front:basic_settings:channel_list:cs_net:channel_count %u [%u]", channelCount, channel_list.size());
+    LOG(LOG_INFO, "cs_net:channel_count %u [%u]", channelCount, channel_list.size());
 
     for (uint32_t index = 0; index < channelCount; index++) {
         McsChannelItem channel_item;
@@ -892,7 +892,6 @@ static inline void recv_mcs_connect_initial_pdu_with_gcc_conference_create_reque
                 parse_mcs_data_cs_security(stream);
             break;
             case CS_NET:
-                LOG(LOG_INFO, "front:basic_settings:channel_list:cs_net %u", channel_list.size());
                 parse_mcs_data_cs_net(stream, client_info, channel_list);
             break;
             case CS_CLUSTER:
@@ -1284,7 +1283,6 @@ static inline void recv_mcs_erect_domain_and_attach_user_request_pdu(Transport *
 
 static inline void send_mcs_channel_join_request_pdu(Transport * trans, int userid, int chanid)
 {
-    LOG(LOG_INFO, "send_mcs_channel_join_request_pdu userid=%u chanid=%u", userid, chanid);
     Stream cjrq_stream(8192);
     X224Out cjrq_tpdu(X224Packet::DT_TPDU, cjrq_stream);
     cjrq_stream.out_uint8((MCS_CJRQ << 2));
@@ -1311,9 +1309,6 @@ static inline void recv_mcs_channel_join_request_pdu(Transport * trans, uint16_t
     if (opcode & 2) {
         stream.skip_uint8(2);
     }
-
-    LOG(LOG_INFO, "recv cjrq done");
-    LOG(LOG_INFO, "recv_mcs_channel_join_request_pdu(userid=%u, chanid=%u)", userid, chanid);
 
     in.end();
 }
@@ -1392,7 +1387,6 @@ static inline void recv_mcs_channel_join_request_pdu(Transport * trans, uint16_t
 
 static inline void recv_mcs_channel_join_confirm_pdu(Transport * trans, uint16_t & mcs_userid, uint16_t & req_chanid, uint16_t & join_chanid)
 {
-    LOG(LOG_INFO, "recv_mcs_channel_join_confirm_pdu");
     Stream cjcf_stream(8192);
     X224In cjcf_tpdu(trans, cjcf_stream);
     int opcode = cjcf_stream.in_uint8();
@@ -1409,13 +1403,11 @@ static inline void recv_mcs_channel_join_confirm_pdu(Transport * trans, uint16_t
     if (opcode & 2) {
         join_chanid = cjcf_stream.in_uint16_be();
     }
-    LOG(LOG_INFO, "recv_mcs_channel_join_confirm_pdu opcode=%u userid=%u req_chanid=%u join_chanid=%u", opcode, mcs_userid, req_chanid, join_chanid);
     cjcf_tpdu.end();
 }
 
 static inline void send_mcs_channel_join_confirm_pdu(Transport * trans, uint16_t userid, uint16_t chanid)
 {
-    LOG(LOG_INFO, "send_mcs_channel_join_confirm_pdu(userid=%u, chanid=%u)", userid, chanid);
     Stream stream(8192);
     X224Out tpdu(X224Packet::DT_TPDU, stream);
     stream.out_uint8((MCS_CJCF << 2) | 2);
@@ -1433,8 +1425,6 @@ static inline void send_mcs_channel_join_request_and_recv_confirm_pdu(Transport 
 {
     #warning the array size below is arbitrary, it should be checked to avoid buffer overflow
 
-    LOG(LOG_INFO, "send_cjrq_recv_cf userid=%u", userid);
-
     size_t num_channels = channel_list.size();
     uint16_t channels_id[100];
     channels_id[0] = userid + MCS_USERCHANNEL_BASE;
@@ -1443,7 +1433,6 @@ static inline void send_mcs_channel_join_request_and_recv_confirm_pdu(Transport 
         channels_id[index+2] = channel_list[index].chanid;
     }
 
-    LOG(LOG_INFO, "num_channels=%u", num_channels);
     for (size_t index = 0; index < num_channels+2; index++){
         send_mcs_channel_join_request_pdu(trans, userid, channels_id[index]);
         {
@@ -1452,7 +1441,6 @@ static inline void send_mcs_channel_join_request_and_recv_confirm_pdu(Transport 
             uint16_t tmp_join_chanid;
             recv_mcs_channel_join_confirm_pdu(trans, tmp_userid, tmp_req_chanid, tmp_join_chanid);
         }
-        LOG(LOG_INFO, "----------------------- %u ---------------------------", index);
     }
 }
 
@@ -1517,11 +1505,9 @@ static inline void recv_mcs_attach_user_confirm_pdu(Transport * trans, int & use
     if (res != 0) {
         throw Error(ERR_MCS_RECV_AUCF_RES_NOT_0);
     }
-    LOG(LOG_INFO, "aucf opcode=%u, userid=%u", opcode, userid);
     if (opcode & 2) {
         userid = aucf_stream.in_uint16_be();
     }
-    LOG(LOG_INFO, "aucf2 opcode=%u, userid=%u", opcode, userid);
     aucf_tpdu.end();
 }
 
