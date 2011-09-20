@@ -78,6 +78,7 @@ struct mod_vnc : public client_mod {
         const char * username = context.get(STRAUTHID_TARGET_USER);
         this->t = t;
         try {
+            LOG(LOG_INFO, "--------1------------ > vnc bpp=%u front bpp=%u", this->bpp, this->get_front_bpp());
             memset(this->mod_name, 0, 256);
             this->mod_mouse_state = 0;
             memset(this->palette, 0, sizeof(BGRPalette));
@@ -136,6 +137,7 @@ struct mod_vnc : public client_mod {
                     default:
                         throw 1;
                 }
+                LOG(LOG_INFO, "--------2------------ > vnc bpp=%u front bpp=%u", this->bpp, this->get_front_bpp());
 
                 {
                     Stream stream(8192);
@@ -244,6 +246,7 @@ struct mod_vnc : public client_mod {
 
                     this->server_set_clip(Rect(0, 0, width, height));
 
+                    LOG(LOG_INFO, "--------3------------ > vnc bpp=%u front bpp=%u", this->bpp, this->get_front_bpp());
 
                     int lg = stream.in_uint32_be();
 
@@ -355,6 +358,7 @@ struct mod_vnc : public client_mod {
                     this->blue_shift = 0;
                 }
 
+                LOG(LOG_INFO, "--------4------------ > vnc bpp=%u front bpp=%u", this->bpp, this->get_front_bpp());
 
                 // 7.4.2   SetEncodings
                 // --------------------
@@ -388,8 +392,10 @@ struct mod_vnc : public client_mod {
                 }
 
 //                LOG(LOG_INFO, "Server resize(%d, %d, %d)", this->width, this->height, this->bpp);
-                this->server_resize(this->width, this->height, this->bpp);
+                this->server_resize(this->width, this->height, this->get_front_bpp());
 //                LOG(LOG_INFO, "Server resize(%d, %d, %d)", this->width, this->height, this->bpp);
+
+                LOG(LOG_INFO, "--------5------------ > vnc bpp=%u front bpp=%u", this->bpp, this->get_front_bpp());
 
                 {
                     /* FrambufferUpdateRequest */
@@ -422,6 +428,7 @@ struct mod_vnc : public client_mod {
                 error = 1;
             };
 
+            LOG(LOG_INFO, "--------6------------ > vnc bpp=%u front bpp=%u", this->bpp, this->get_front_bpp());
             if (error) {
                 LOG(LOG_INFO, "error - problem connecting\n");
                 throw Error(ERR_VNC_CONNECTION_ERROR);
@@ -713,6 +720,7 @@ struct mod_vnc : public client_mod {
                 Bitmap bmp(this->bpp, &this->palette332, cx, cy, raw, need_size, false, true);
                 free(raw);
                 #warning see bitmap_update and Bitmap below, suspicious code, does it works ?
+                LOG(LOG_INFO, "--------------------- > vnc bpp=%u front bpp=%u", this->bpp, this->get_front_bpp());
                 this->bitmap_update(bmp, Rect(x, y, cx, cy), 0, 0);
             }
             break;
