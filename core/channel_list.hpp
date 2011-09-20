@@ -60,7 +60,6 @@ public:
     void push_back(const McsChannelItem & item){
         this->items[this->num] = item;
         this->num++;
-        LOG(LOG_INFO, "push_back <-------------------------------- %p ----------- num = %u", this, this->num);
     }
 
     ChannelList() : num(0) {}

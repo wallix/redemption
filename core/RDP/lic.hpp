@@ -152,7 +152,6 @@ struct RdpLicence {
         ssllib ssl;
 
         const uint8_t* in_token;
-        const uint8_t* in_sig;
         uint8_t out_token[LICENCE_TOKEN_SIZE];
         uint8_t decrypt_token[LICENCE_TOKEN_SIZE];
         uint8_t hwid[LICENCE_HWID_SIZE];
@@ -161,7 +160,6 @@ struct RdpLicence {
         uint8_t out_sig[LICENCE_SIGNATURE_SIZE];
 
         in_token = 0;
-        in_sig = 0;
         /* Parse incoming packet and save the encrypted token */
         stream.skip_uint8(6); /* unknown: f8 3d 15 00 04 f6 */
 
@@ -171,7 +169,7 @@ struct RdpLicence {
         }
         else{
             in_token = stream.in_uint8p(tokenlen);
-            in_sig = stream.in_uint8p(LICENCE_SIGNATURE_SIZE);
+            stream.in_uint8p(LICENCE_SIGNATURE_SIZE); // in_sig
             stream.check_end();
         }
 
