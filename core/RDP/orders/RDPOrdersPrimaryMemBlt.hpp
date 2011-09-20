@@ -97,6 +97,11 @@ class RDPMemBlt {
     uint16_t srcy;
     uint16_t cache_idx;
 
+    static const uint8_t id(void)
+    {
+        return RDP::MEMBLT;
+    }
+
     RDPMemBlt(uint16_t cache_id, Rect rect, uint8_t rop, uint16_t srcx, uint16_t srcy, uint16_t cache_idx) :
         cache_id(cache_id),
         rect(rect),
@@ -224,13 +229,13 @@ class RDPMemBlt {
 
     void log(int level, const Rect & clip) const {
         char buffer[1024];
-        this->str(buffer, 1024, RDPOrderCommon(RDP::MEMBLT, clip));
+        this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
         LOG(level, buffer);
     }
 
     void print(const Rect & clip) const {
         char buffer[1024];
-        this->str(buffer, 1024, RDPOrderCommon(RDP::MEMBLT, clip));
+        this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
         printf("%s", buffer);
     }
 

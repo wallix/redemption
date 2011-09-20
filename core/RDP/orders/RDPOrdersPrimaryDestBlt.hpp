@@ -855,6 +855,11 @@ class RDPDestBlt {
     Rect rect;
     uint8_t rop;
 
+    static const uint8_t id(void)
+    {
+        return RDP::DESTBLT;
+    }
+
     RDPDestBlt(Rect rect, uint8_t rop) :
         rect(rect), rop(rop)
         {}
@@ -935,9 +940,15 @@ class RDPDestBlt {
         return lg;
     }
 
+    void log(int level, const Rect & clip) const {
+        char buffer[1024];
+        this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
+        LOG(level, buffer);
+    }
+
     void print(const Rect & clip) const {
         char buffer[1024];
-        this->str(buffer, 1024, RDPOrderCommon(RDP::DESTBLT, clip));
+        this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
         printf("%s", buffer);
     }
 

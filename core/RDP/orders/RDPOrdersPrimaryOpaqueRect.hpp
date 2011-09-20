@@ -30,6 +30,11 @@ class RDPOpaqueRect {
     Rect rect;
     uint32_t color;
 
+    static const uint8_t id(void)
+    {
+        return RDP::RECT;
+    }
+
     RDPOpaqueRect(Rect rect, int color) :
         rect(rect), color(color)
         {}
@@ -145,13 +150,13 @@ class RDPOpaqueRect {
 
     void log(int level, const Rect & clip) const {
         char buffer[1024];
-        this->str(buffer, 1024, RDPOrderCommon(RDP::RECT, clip));
+        this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
         LOG(level, buffer);
     }
 
     void print(const Rect & clip) const {
         char buffer[1024];
-        this->str(buffer, 1024, RDPOrderCommon(RDP::RECT, clip));
+        this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
         printf("%s", buffer);
     }
 

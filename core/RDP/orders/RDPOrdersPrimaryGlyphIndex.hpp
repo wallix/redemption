@@ -69,6 +69,12 @@ class RDPGlyphIndex {
     uint8_t data_len;
     uint8_t * data;
 
+    static const uint8_t id(void)
+    {
+        return RDP::GLYPHINDEX;
+    }
+
+
     RDPGlyphIndex(uint8_t cache_id, uint8_t fl_accel, uint8_t ui_charinc,
         uint8_t f_op_redundant, uint32_t back_color, uint32_t fore_color,
         const Rect & bk, const Rect & op, const RDPBrush & brush,
@@ -352,6 +358,20 @@ class RDPGlyphIndex {
         }
         return lg;
     }
+
+    void log(int level, const Rect & clip) const {
+        char buffer[1024];
+        this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
+        LOG(level, buffer);
+    }
+
+    void print(const Rect & clip) const {
+        char buffer[1024];
+        this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
+        printf("%s", buffer);
+    }
+
+
 };
 
 #endif

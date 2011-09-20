@@ -994,14 +994,15 @@ class RDPBmpCache {
     {
         size_t lg;
         if (client_info){
-              lg = snprintf(buffer, sz, "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u cache_version=%u compression=%u)",
-                this->cache_id, this->cache_idx, this->bpp,
+              lg = snprintf(buffer, sz, "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u cx=%u cy=%u cache_version=%u compression=%u)",
+                this->cache_id, this->cache_idx, this->bpp, 
+                this->bmp->cx, this->bmp->cy,
                 this->client_info->bitmap_cache_version,
                 this->client_info->use_bitmap_comp);
         }
         else {
-              lg = snprintf(buffer, sz, "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u cache_version=? compression=?)",
-                this->cache_id, this->cache_idx, this->bpp);
+              lg = snprintf(buffer, sz, "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u cx=%u cy=%u cache_version=? compression=?)",
+                this->cache_id, this->cache_idx, this->bpp, this->bmp->cx, this->bmp->cy);
         }
         if (lg >= sz){
             return sz;

@@ -88,10 +88,12 @@ class Authentifier(object):
         'n' : {
             'proxy_type': 'RDP',
             'target_login' : r'vnc',
-            'target_device' : '127.0.0.1',
+            'target_device' : '10.10.4.13',
             'target_password' : 'silver',
             'target_port':'5901',
-            'proto_dest': 'VNC'
+            'proto_dest': 'VNC',
+            'is_rec':'True',
+            'rec_path':'/tmp/vnctest.cpp',
         },
         'v' : {
             'proxy_type': 'RDP',

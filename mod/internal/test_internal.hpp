@@ -62,27 +62,28 @@ struct test_internal_mod : public internal_mod {
         this->front.send_global_palette(this->palette332);
 
         this->server_begin_update();
-        this->color_cache(this->palette332, 0);
-        this->color_cache(this->palette332, 1);
-        this->color_cache(this->palette332, 2);
-        this->color_cache(this->palette332, 3);
-        this->color_cache(this->palette332, 4);
-        this->color_cache(this->palette332, 5);
+//        this->color_cache(this->palette332, 0);
+//        this->color_cache(this->palette332, 1);
+//        this->color_cache(this->palette332, 2);
+//        this->color_cache(this->palette332, 3);
+//        this->color_cache(this->palette332, 4);
+//        this->color_cache(this->palette332, 5);
 
 //        #include "trace2008.cpp"
+        #include "vnctest.cpp"
 
 // {
 //     RDPPatBlt cmd(Rect(381, 702, 10, 16), 240, 0xffffff, 0xd6d3ce,
 //          RDPBrush(5, 7, 3, 170,            (const uint8_t *)"\x55\xaa\x55\xaa\x55\xaa\x55"));
 //     this->front.pat_blt(cmd, Rect(0, 0, 1280, 800));
 // }
-     {
-         RDPBrushCache cmd1(9, 1, 8, 8, 0, 8,(const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55");
-         this->front.orders->send(cmd1);
-         RDPBrush brush(5, 7, 0x81, 9);
-         RDPPatBlt cmd(Rect(381, 702, 10, 16), 240, 0xffffff, 0xd6d3ce, brush );
-         this->front.orders->send(cmd, Rect(0, 0, 1280, 800));
-     }
+//     {
+//         RDPBrushCache cmd1(9, 1, 8, 8, 0, 8,(const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55");
+//         this->front.orders->send(cmd1);
+//         RDPBrush brush(5, 7, 0x81, 9);
+//         RDPPatBlt cmd(Rect(381, 702, 10, 16), 240, 0xffffff, 0xd6d3ce, brush );
+//         this->front.orders->send(cmd, Rect(0, 0, 1280, 800));
+//     }
         this->server_end_update();
     }
 
