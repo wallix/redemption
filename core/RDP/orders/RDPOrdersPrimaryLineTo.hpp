@@ -49,6 +49,11 @@ class RDPLineTo {
     uint8_t rop2;
     RDPPen pen;
 
+    static const uint8_t id(void)
+    {
+        return RDP::LINE;
+    }
+
     RDPLineTo(uint8_t back_mode,
               int16_t startx, int16_t starty, int16_t endx, int16_t endy,
               uint32_t back_color,
@@ -179,6 +184,19 @@ class RDPLineTo {
         }
         return lg;
     }
+
+    void log(int level, const Rect & clip) const {
+        char buffer[1024];
+        this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
+        LOG(level, buffer);
+    }
+
+    void print(const Rect & clip) const {
+        char buffer[1024];
+        this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
+        printf("%s", buffer);
+    }
+
 };
 
 

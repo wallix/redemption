@@ -155,6 +155,11 @@ class RDPPatBlt {
     uint32_t fore_color;
     RDPBrush brush;
 
+    static const uint8_t id(void)
+    {
+        return RDP::PATBLT;
+    }
+
     RDPPatBlt(const Rect rect, uint8_t rop,
               uint32_t back_color, uint32_t fore_color,
               const RDPBrush & brush) :

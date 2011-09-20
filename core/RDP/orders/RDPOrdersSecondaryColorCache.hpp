@@ -163,6 +163,20 @@ class RDPColCache {
         return lg;
     }
 
+    void log(int level) const
+    {
+        char buffer[1024];
+        this->str(buffer, 1024);
+        LOG(level, buffer);
+    }
+
+    void print() const
+    {
+        char buffer[1024];
+        this->str(buffer, 1024);
+        printf("%s", buffer);
+    }
+
 };
 
 

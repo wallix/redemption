@@ -264,6 +264,7 @@ struct GraphicsUpdatePDU
         cmd.emit(this->stream, newcommon, this->common, this->opaquerect);
         this->common = newcommon;
         this->opaquerect = cmd;
+        cmd.log(LOG_INFO, common.clip);
     }
 
     void send(const RDPScrBlt & cmd, const Rect &clip)
@@ -273,6 +274,7 @@ struct GraphicsUpdatePDU
         cmd.emit(this->stream, newcommon, this->common, this->scrblt);
         this->common = newcommon;
         this->scrblt = cmd;
+        cmd.log(LOG_INFO, common.clip);
     }
 
     void send(const RDPDestBlt & cmd, const Rect &clip)
@@ -282,6 +284,7 @@ struct GraphicsUpdatePDU
         cmd.emit(this->stream, newcommon, this->common, this->destblt);
         this->common = newcommon;
         this->destblt = cmd;
+        cmd.log(LOG_INFO, common.clip);
     }
 
     void send(const RDPPatBlt & cmd, const Rect &clip)
@@ -292,6 +295,7 @@ struct GraphicsUpdatePDU
         cmd.emit(this->stream, newcommon, this->common, this->patblt);
         this->common = newcommon;
         this->patblt = cmd;
+        cmd.log(LOG_INFO, common.clip);
     }
 
 
@@ -302,6 +306,7 @@ struct GraphicsUpdatePDU
         cmd.emit(this->stream, newcommon, this->common, this->memblt);
         this->common = newcommon;
         this->memblt = cmd;
+        cmd.log(LOG_INFO, common.clip);
     }
 
     void send(const RDPLineTo& cmd, const Rect & clip)
@@ -311,6 +316,7 @@ struct GraphicsUpdatePDU
         cmd.emit(this->stream, newcommon, this->common, this->lineto);
         this->common = newcommon;
         this->lineto = cmd;
+        cmd.log(LOG_INFO, common.clip);
     }
 
     void send(const RDPGlyphIndex & cmd, const Rect & clip)
@@ -326,18 +332,21 @@ struct GraphicsUpdatePDU
     {
         this->reserve_order(cmd.size + 12);
         cmd.emit(this->stream);
+        cmd.log(LOG_INFO);
     }
 
     void send(const RDPColCache & cmd)
     {
         this->reserve_order(2000);
         cmd.emit(this->stream);
+        cmd.log(LOG_INFO);
     }
 
     void send(const RDPBmpCache & cmd)
     {
         this->reserve_order(cmd.bmp->bmp_size(cmd.bpp) + 16);
         cmd.emit(this->stream);
+        cmd.log(LOG_INFO);
     }
 
     void send(const RDPGlyphCache & cmd)
@@ -345,6 +354,7 @@ struct GraphicsUpdatePDU
         #warning compute actual size, instead of a majoration as below
         this->reserve_order(1000);
         cmd.emit(this->stream);
+        cmd.log(LOG_INFO);
     }
 
 };

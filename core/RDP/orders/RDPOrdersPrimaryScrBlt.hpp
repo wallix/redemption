@@ -31,6 +31,11 @@ class RDPScrBlt {
     uint16_t srcx;
     uint16_t srcy;
 
+    static const uint8_t id(void)
+    {
+        return RDP::SCREENBLT;
+    }
+
     RDPScrBlt(Rect rect, uint8_t rop, uint16_t srcx, uint16_t srcy) :
         rect(rect), rop(rop), srcx(srcx), srcy(srcy)
         {}
