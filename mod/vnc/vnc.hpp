@@ -78,7 +78,6 @@ struct mod_vnc : public client_mod {
         const char * username = context.get(STRAUTHID_TARGET_USER);
         this->t = t;
         try {
-            LOG(LOG_INFO, "--------1------------ > vnc bpp=%u front bpp=%u", this->bpp, this->get_front_bpp());
             memset(this->mod_name, 0, 256);
             this->mod_mouse_state = 0;
             memset(this->palette, 0, sizeof(BGRPalette));
@@ -137,8 +136,6 @@ struct mod_vnc : public client_mod {
                     default:
                         throw 1;
                 }
-                LOG(LOG_INFO, "--------2------------ > vnc bpp=%u front bpp=%u", this->bpp, this->get_front_bpp());
-
                 {
                     Stream stream(8192);
                     stream.data[0] = 1;
@@ -245,8 +242,6 @@ struct mod_vnc : public client_mod {
                     LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
 
                     this->server_set_clip(Rect(0, 0, width, height));
-
-                    LOG(LOG_INFO, "--------3------------ > vnc bpp=%u front bpp=%u", this->bpp, this->get_front_bpp());
 
                     int lg = stream.in_uint32_be();
 
@@ -358,8 +353,6 @@ struct mod_vnc : public client_mod {
                     this->blue_shift = 0;
                 }
 
-                LOG(LOG_INFO, "--------4------------ > vnc bpp=%u front bpp=%u", this->bpp, this->get_front_bpp());
-
                 // 7.4.2   SetEncodings
                 // --------------------
 
@@ -391,11 +384,7 @@ struct mod_vnc : public client_mod {
                     this->t->send((char*)stream.data, 4 + 3 * 4);
                 }
 
-//                LOG(LOG_INFO, "Server resize(%d, %d, %d)", this->width, this->height, this->bpp);
                 this->server_resize(this->width, this->height, this->get_front_bpp());
-//                LOG(LOG_INFO, "Server resize(%d, %d, %d)", this->width, this->height, this->bpp);
-
-                LOG(LOG_INFO, "--------5------------ > vnc bpp=%u front bpp=%u", this->bpp, this->get_front_bpp());
 
                 {
                     /* FrambufferUpdateRequest */
@@ -428,7 +417,6 @@ struct mod_vnc : public client_mod {
                 error = 1;
             };
 
-            LOG(LOG_INFO, "--------6------------ > vnc bpp=%u front bpp=%u", this->bpp, this->get_front_bpp());
             if (error) {
                 LOG(LOG_INFO, "error - problem connecting\n");
                 throw Error(ERR_VNC_CONNECTION_ERROR);
@@ -702,13 +690,10 @@ struct mod_vnc : public client_mod {
             int cy = stream.in_uint16_be();
             uint32_t encoding = stream.in_uint32_be();
 
-                LOG(LOG_INFO, "----------------> x=%d y=%d cx=%d cy=%d encoding=%d", x, y, cx, cy, encoding);
-
             switch (encoding){
             case 0: /* raw */
             {
                 int need_size = cx * cy * Bpp;
-                    LOG(LOG_INFO, "raw: x=%d y=%d cx=%d cy=%d encoding=%d need_size=%d", x, y, cx, cy, encoding, need_size);
                 uint8_t * raw = (uint8_t *)malloc(need_size);
                 if (!raw){
                     LOG(LOG_ERR, "Memory allocation failed for raw buffer in VNC");
@@ -717,10 +702,9 @@ struct mod_vnc : public client_mod {
                 uint8_t * tmp = raw;
                 this->t->recv((char**)&tmp, need_size);
 
+                #warning there is still an alignement issue in bitmaps, fixed, but my fix is quite evil.
                 Bitmap bmp(this->bpp, &this->palette332, cx, cy, raw, need_size, false, true);
                 free(raw);
-                #warning see bitmap_update and Bitmap below, suspicious code, does it works ?
-                LOG(LOG_INFO, "--------------------- > vnc bpp=%u front bpp=%u", this->bpp, this->get_front_bpp());
                 this->bitmap_update(bmp, Rect(x, y, cx, cy), 0, 0);
             }
             break;
