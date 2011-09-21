@@ -31,11 +31,9 @@
 
 struct wab_close : public window_login
 {
-    wab_close(internal_mod * mod, const Rect & r, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
-    : window_login(mod, r, context, session, parent, notify_to, bg_color, title, ini, regular)
+    wab_close(internal_mod * mod, const Rect & r, ModContext & context, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
+    : window_login(mod, r, context, parent, notify_to, bg_color, title, ini, regular)
     {
-        this->session = session;
-        this->ini = ini;
         struct Widget* but;
 
         if (regular) {
@@ -128,16 +126,16 @@ struct wab_close : public window_login
 
 struct close_mod : public internal_mod {
     struct window_login * close_window;
-    Session * session;
     Widget* popup_wnd;
     Widget* button_down;
     int signal;
+    Inifile * ini;
 
     close_mod(
         wait_obj * event,
         int (& keys)[256], int & key_flags, Keymap * &keymap,
-        ModContext & context, Front & front, Session * session)
-            : internal_mod(keys, key_flags, keymap, front), signal(0)
+        ModContext & context, Front & front, Inifile * ini)
+            : internal_mod(keys, key_flags, keymap, front), signal(0), ini(ini)
     {
         this->event = event;
         this->event->set();
@@ -161,7 +159,6 @@ struct close_mod : public internal_mod {
         int log_height = 200+line*16;
 
         int regular = 1;
-        this->session = session;
 
         this->popup_wnd = 0;
         if (this->screen.rect.cx < log_width ) {
@@ -177,12 +174,12 @@ struct close_mod : public internal_mod {
             log_height);
 
         this->close_window = new wab_close(this,
-            r, context, session,
+            r, context,
             this->screen, // parent
             this->screen, // notify_to
             GREY,
             "Login",
-            session->ini,
+            this->ini,
             regular);
 
         this->screen.child_list.push_back(this->close_window);
