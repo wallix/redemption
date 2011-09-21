@@ -388,6 +388,8 @@ struct Bitmap {
 
     void copy_upsidedown(int bpp, const uint8_t* input, uint16_t cx)
     {
+        #warning without this evil alnment we are expirimenting problems with VNC bitmaps, but there should be a better fix.
+        this->cx = align4(cx);
         uint8_t * d8 = this->data_co(bpp) + (this->cy-1) * this->line_size(bpp);
         const uint8_t * s8 = input;
         uint32_t src_width = cx * nbbytes(bpp);
@@ -1547,7 +1549,8 @@ struct Bitmap {
     }
 
     size_t bmp_size(const int bpp) const {
-        return row_size(this->cx, bpp) * cy;
+        #warning without this evil alignment we are experimenting problems with VNC bitmaps, but there should be a better fix.
+        return row_size(align4(this->cx), bpp) * cy;
     }
 };
 
