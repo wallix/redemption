@@ -23,9 +23,7 @@
 #if !defined(__WIDGET_WINDOW_LOGIN_HPP__)
 #define __WIDGET_WINDOW_LOGIN_HPP__
 
-#include "session.hpp"
 #include "widget.hpp"
-#include "front.hpp"
 #include "internal_mod.hpp"
 
 struct window_login : public window
@@ -34,11 +32,10 @@ struct window_login : public window
     Widget & notify_to;
     Inifile * ini;
     widget_combo * combo;
-    Session * session;
     ModContext & context;
     window * help;
 
-    window_login(internal_mod * mod, const Rect & r, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
+    window_login(internal_mod * mod, const Rect & r, ModContext & context, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
     :   window(mod, r, parent, bg_color, title),
         notify_to(notify_to),
         context(context)

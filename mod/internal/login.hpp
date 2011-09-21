@@ -80,12 +80,11 @@ struct wab_help : public window
 
 struct wab_login : public window_login
 {
-    wab_login(internal_mod * mod, const Rect & r, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
-    : window_login(mod, r, context, session, parent, notify_to, bg_color, title, ini, regular)
+    wab_login(internal_mod * mod, const Rect & r, ModContext & context, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
+    : window_login(mod, r, context, parent, notify_to, bg_color, title, ini, regular)
     {
         context.get(STRAUTHID_PASSWORD)[0] = 0;
 
-        this->session = session;
         this->ini = ini;
         struct Widget* but;
 
@@ -255,10 +254,9 @@ struct combo_help : public window
 
 struct combo_login : public window_login
 {
-    combo_login(internal_mod * mod, const Rect & r, ModContext & context, Session* session, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
-    : window_login(mod, r, context, session, parent, notify_to, bg_color, title, ini, regular)
+    combo_login(internal_mod * mod, const Rect & r, ModContext & context, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
+    : window_login(mod, r, context, parent, notify_to, bg_color, title, ini, regular)
     {
-        this->session = session;
         this->ini = ini;
         struct Widget* but;
 
@@ -349,14 +347,13 @@ struct combo_login : public window_login
 
 struct login_mod : public internal_mod {
     struct window_login * login_window;
-    Session * session;
     Widget* popup_wnd;
     Widget* button_down;
 
 
     login_mod(wait_obj * event,
             int (& keys)[256], int & key_flags, Keymap * &keymap,
-            ModContext & context, Front & front, Session * session)
+            ModContext & context, Front & front, Inifile * ini)
             : internal_mod(keys, key_flags, keymap, front)
     {
         this->event = event;
@@ -366,7 +363,6 @@ struct login_mod : public internal_mod {
         int log_width = 600;
         int log_height = 200;
         int regular = 1;
-        this->session = session;
 
         this->popup_wnd = 0;
         if (this->screen.rect.cx < log_width ) {
@@ -384,22 +380,22 @@ struct login_mod : public internal_mod {
         #warning having two completely different LOGIN modules one with password only, the other one with full behavior would probably be much more clean than passing around that wab_auth. See that.
         if (context.wab_auth){
             this->login_window = new wab_login(this,
-                r, context, session,
+                r, context,
                 this->screen, // parent
                 this->screen, // notify_to
                 GREY,
                 "Login",
-                session->ini,
+                ini,
                 regular);
         }
         else {
             this->login_window = new combo_login(this,
-                r, context, session,
+                r, context,
                 this->screen, // parent
                 this->screen, // notify_to
                 GREY,
                 "Login",
-                session->ini,
+                ini,
                 regular);
         }
 

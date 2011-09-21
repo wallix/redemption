@@ -22,6 +22,7 @@
 #if !defined(__INTERNAL_MOD_HPP__)
 #define __INTERNAL_MOD_HPP__
 
+#include "modcontext.hpp"
 #include "../mod/internal/widget.hpp"
 #include "client_mod.hpp"
 
@@ -53,7 +54,7 @@ struct internal_mod : public client_mod {
 
     void server_draw_dragging_rect(const Rect & r, const Rect & clip)
     {
-        this->front.begin_update();
+        this->server_begin_update();
 
         RDPBrush brush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55");
 
@@ -72,7 +73,7 @@ struct internal_mod : public client_mod {
             RDPPatBlt(Rect(r.x, r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush));
         this->pat_blt(
             RDPPatBlt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush));
-        this->front.end_update();
+        this->server_end_update();
     }
 
 

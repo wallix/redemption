@@ -25,11 +25,12 @@
 #if !defined(__TEST_INTERNAL_HPP__)
 #define __TEST_INTERNAL_HPP__
 
+
 struct test_internal_mod : public internal_mod {
     test_internal_mod(
         wait_obj * event,
         int (& keys)[256], int & key_flags, Keymap * &keymap,
-        ModContext & context, Front & front, Session * session):
+        ModContext & context, Front & front):
             internal_mod(keys, key_flags, keymap, front)
     {
       this->mod_bpp = this->get_front_bpp();

@@ -645,7 +645,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
             {
                 #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of mod_event.
                 this->back_event = new wait_obj(-1);
-                this->mod = new login_mod(this->back_event, this->keys, this->key_flags, this->keymap,  *this->context, *(this->front), this);
+                this->mod = new login_mod(this->back_event, this->keys, this->key_flags, this->keymap,  *this->context, *(this->front), this->ini);
                 // force a WM_INVALIDATE on all screen
                 this->mod->callback(WM_SCREENUPDATE, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
                 LOG(LOG_INFO, "Creation of new mod 'LOGIN DIALOG' (%d,%d,%d,%d) suceeded\n",
@@ -669,7 +669,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 
                 #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of mod_event.
                 this->back_event = new wait_obj(-1);
-                this->mod = new dialog_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this, message, button);
+                this->mod = new dialog_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), message, button, this->ini);
                 // force a WM_INVALIDATE on all screen
                 this->mod->callback(WM_SCREENUPDATE, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
                 LOG(LOG_INFO, "Creation of new mod 'STATUS DIALOG' suceeded\n");
@@ -688,7 +688,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 }
                 #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of mod_event.
                 this->back_event = new wait_obj(-1);
-                this->mod = new close_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *this->front, this);
+                this->mod = new close_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *this->front, this->ini);
 
                 struct pointer_item pointer_item;
 
@@ -751,8 +751,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                         this->key_flags,
                                         this->keymap,
                                         *this->context,
-                                        *this->front,
-                                        this);
+                                        *this->front);
                     }
                     else {
                         LOG(LOG_INFO, "target is test_card mod");
@@ -762,8 +761,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                         this->key_flags,
                                         this->keymap,
                                         *this->context,
-                                        *this->front,
-                                        this);
+                                        *this->front);
                     }
                 }
                 // force a WM_INVALIDATE on all screen

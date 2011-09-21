@@ -32,11 +32,10 @@
 
 struct window_dialog : public window
 {
-    Session * session;
     ModContext * context;
 
     window_dialog(internal_mod * mod, const Rect & r,
-                  ModContext & context, Session* session,
+                  ModContext & context,
                   Widget & parent, Widget & owner, Widget & notify_to,
                   int bg_color,
                   const char * title, Inifile * ini, int regular,
@@ -44,7 +43,6 @@ struct window_dialog : public window
     : window(mod, r, parent, bg_color, title)
     {
         struct Widget* but;
-        this->session = session;
         this->context = &context;
         this->esc_button = NULL;
 
@@ -105,14 +103,13 @@ struct window_dialog : public window
 
 struct dialog_mod : public internal_mod {
     struct window_dialog * close_window;
-    Session * session;
     Widget* button_down;
 
     dialog_mod(wait_obj * event,
                int (& keys)[256], int & key_flags, Keymap * &keymap,
                ModContext & context,
-               Front & front, Session * session,
-               const char *message, const char * refuse)
+               Front & front,
+               const char *message, const char * refuse, Inifile * ini)
             :
             internal_mod(keys, key_flags, keymap, front)
     {
@@ -122,7 +119,6 @@ struct dialog_mod : public internal_mod {
         int log_width = 600;
         int log_height = 200;
         int regular = 1;
-        this->session = session;
 
         this->signal = 0;
 
@@ -135,13 +131,13 @@ struct dialog_mod : public internal_mod {
 
         #warning valgrind say there is a memory leak here
         this->close_window = new window_dialog(this,
-            r, context, session,
+            r, context,
             this->screen, // parent
             this->screen, // owner
             this->screen, // notify_to
             GREY,
             "Information",
-            session->ini,
+            ini,
             regular,
             message, refuse);
 
