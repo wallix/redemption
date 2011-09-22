@@ -505,29 +505,6 @@ static inline void parse_mcs_data_cs_security(Stream & stream)
 //                              control 0x00100000 transactions.
 
 
-static inline void send_cs_net(Stream & stream, const ChannelList & channel_list)
-{
-    /* Here we need to put channel information in order to redirect channel data
-    from client to server passing through the "proxy" */
-    size_t num_channels = channel_list.size();
-
-    if (num_channels > 0) {
-        LOG(LOG_INFO, "cs_net");
-        stream.out_uint16_le(CS_NET);
-        LOG(LOG_INFO, "cs_net::len=%u", num_channels * 12 + 8);
-        stream.out_uint16_le(num_channels * 12 + 8); /* length */
-        LOG(LOG_INFO, "cs_net::nb_chan=%u", num_channels);
-        stream.out_uint32_le(num_channels); /* number of virtual channels */
-        for (size_t index = 0; index < num_channels; index++){
-            const McsChannelItem & channel_item = channel_list[index];
-            stream.out_copy_bytes(channel_item.name, 8);
-            stream.out_uint32_be(channel_item.flags);
-        }
-    }
-
-
-}
-
 // this adds the mcs channels in the list of channels to be used when
 // creating the server mcs data
 static inline void parse_mcs_data_cs_net(Stream & stream, ClientInfo * client_info, ChannelList & channel_list)
@@ -921,7 +898,72 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
                 bool console_session,
                 char * hostname){
 
-    Stream data(8192);
+//    Stream data(8192);
+
+//    int data_len = data.end - data.data;
+//    int len = 7 + 3 * 34 + 4 + data_len;
+
+    Stream stream(8192);
+    X224Out ci_tpdu(X224Packet::DT_TPDU, stream);
+
+    stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
+    uint32_t offset_data_len_connect_initial = stream.p - stream.data;
+    stream.out_ber_len_uint16(0); // filled later, 3 bytes
+
+    stream.out_uint8(BER_TAG_OCTET_STRING);
+    stream.out_ber_len(0); /* calling domain */
+    stream.out_uint8(BER_TAG_OCTET_STRING);
+    stream.out_ber_len(0); /* called domain */
+    stream.out_uint8(BER_TAG_BOOLEAN);
+    stream.out_ber_len(1);
+    stream.out_uint8(0xff); /* upward flag */
+
+    // target params
+    stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+    stream.out_ber_len(32);
+    stream.out_ber_int16(34);     // max_channels
+    stream.out_ber_int16(2);      // max_users
+    stream.out_ber_int16(0);      // max_tokens
+    stream.out_ber_int16(1);
+    stream.out_ber_int16(0);
+    stream.out_ber_int16(1);
+    stream.out_ber_int16(0xffff); // max_pdu_size
+    stream.out_ber_int16(2);
+
+    // min params
+    stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+    stream.out_ber_len(32);
+    stream.out_ber_int16(1);     // max_channels
+    stream.out_ber_int16(1);     // max_users
+    stream.out_ber_int16(1);     // max_tokens
+    stream.out_ber_int16(1);
+    stream.out_ber_int16(0);
+    stream.out_ber_int16(1);
+    stream.out_ber_int16(0x420); // max_pdu_size
+    stream.out_ber_int16(2);
+
+    // max params
+    stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+    stream.out_ber_len(32);
+    stream.out_ber_int16(0xffff); // max_channels
+    stream.out_ber_int16(0xfc17); // max_users
+    stream.out_ber_int16(0xffff); // max_tokens
+    stream.out_ber_int16(1);
+    stream.out_ber_int16(0);
+    stream.out_ber_int16(1);
+    stream.out_ber_int16(0xffff); // max_pdu_size
+    stream.out_ber_int16(2);
+
+
+    stream.out_uint8(BER_TAG_OCTET_STRING);
+    uint32_t offset_data_len = stream.p - stream.data;
+    stream.out_ber_len_uint16(0); // filled later, 3 bytes
+
+    /* Generic Conference Control (T.124) ConferenceCreateRequest */
+    stream.out_uint16_be(5);
+    stream.out_uint16_be(0x14);
+    stream.out_uint8(0x7c);
+    stream.out_uint16_be(1);
 
     int length = 158 + 76 + 12 + 4;
 
@@ -930,41 +972,35 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
         length += channel_list.size() * 12 + 8;
     }
 
-    /* Generic Conference Control (T.124) ConferenceCreateRequest */
-    data.out_uint16_be(5);
-    data.out_uint16_be(0x14);
-    data.out_uint8(0x7c);
-    data.out_uint16_be(1);
+    stream.out_uint16_be((length | 0x8000)); /* remaining length */
 
-    data.out_uint16_be((length | 0x8000)); /* remaining length */
+    stream.out_uint16_be(8); /* length? */
+    stream.out_uint16_be(16);
+    stream.out_uint8(0);
+    stream.out_uint16_le(0xc001);
+    stream.out_uint8(0);
 
-    data.out_uint16_be(8); /* length? */
-    data.out_uint16_be(16);
-    data.out_uint8(0);
-    data.out_uint16_le(0xc001);
-    data.out_uint8(0);
-
-    data.out_copy_bytes("Duca", 4); /* OEM ID: "Duca", as in Ducati. */
-    data.out_uint16_be(((length - 14) | 0x8000)); /* remaining length */
+    stream.out_copy_bytes("Duca", 4); /* OEM ID: "Duca", as in Ducati. */
+    stream.out_uint16_be(((length - 14) | 0x8000)); /* remaining length */
 
     /* Client information */
-    data.out_uint16_le(CS_CORE);
+    stream.out_uint16_le(CS_CORE);
     LOG(LOG_INFO, "Sending Client Core Data to remote server\n");
-    data.out_uint16_le(212); /* length */
+    stream.out_uint16_le(212); /* length */
     LOG(LOG_INFO, "core::header::length = %u\n", 212);
-    data.out_uint32_le(0x00080004); // RDP version. 1 == RDP4, 4 == RDP5.
+    stream.out_uint32_le(0x00080004); // RDP version. 1 == RDP4, 4 == RDP5.
     LOG(LOG_INFO, "core::header::version (0x00080004 = RDP 5.0, 5.1, 5.2, and 6.0 clients)");
-    data.out_uint16_le(width);
+    stream.out_uint16_le(width);
     LOG(LOG_INFO, "core::desktopWidth = %u\n", width);
-    data.out_uint16_le(height);
+    stream.out_uint16_le(height);
     LOG(LOG_INFO, "core::desktopHeight = %u\n", height);
-    data.out_uint16_le(0xca01);
+    stream.out_uint16_le(0xca01);
     LOG(LOG_INFO, "core::colorDepth = RNS_UD_COLOR_8BPP (superseded by postBeta2ColorDepth)");
-    data.out_uint16_le(0xaa03);
+    stream.out_uint16_le(0xaa03);
     LOG(LOG_INFO, "core::SASSequence = RNS_UD_SAS_DEL");
-    data.out_uint32_le(keylayout);
+    stream.out_uint32_le(keylayout);
     LOG(LOG_INFO, "core::keyboardLayout = %x", keylayout);
-    data.out_uint32_le(2600); /* Client build. We are now 2600 compatible :-) */
+    stream.out_uint32_le(2600); /* Client build. We are now 2600 compatible :-) */
     LOG(LOG_INFO, "core::clientBuild = 2600");
     LOG(LOG_INFO, "core::clientName=%s\n", hostname);
 
@@ -974,114 +1010,79 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
         hostlen = 30;
     }
     /* Unicode name of client, padded to 30 bytes */
-    data.out_unistr(hostname);
-    data.out_clear_bytes(30 - hostlen);
+    stream.out_unistr(hostname);
+    stream.out_clear_bytes(30 - hostlen);
 
     /* See
     http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wceddk40/html/cxtsksupportingremotedesktopprotocol.asp */
     #warning code should be updated to take care of keyboard type
-    data.out_uint32_le(4); // g_keyboard_type
+    stream.out_uint32_le(4); // g_keyboard_type
     LOG(LOG_INFO, "core::keyboardType = IBM enhanced (101- or 102-key) keyboard");
-    data.out_uint32_le(0); // g_keyboard_subtype
+    stream.out_uint32_le(0); // g_keyboard_subtype
     LOG(LOG_INFO, "core::keyboardSubType = 0");
-    data.out_uint32_le(12); // g_keyboard_functionkeys
+    stream.out_uint32_le(12); // g_keyboard_functionkeys
     LOG(LOG_INFO, "core::keyboardFunctionKey = 12 function keys");
-    data.out_clear_bytes(64); /* imeFileName */
+    stream.out_clear_bytes(64); /* imeFileName */
     LOG(LOG_INFO, "core::imeFileName = \"\"");
-    data.out_uint16_le(0xca01); /* color depth 8bpp */
+    stream.out_uint16_le(0xca01); /* color depth 8bpp */
     LOG(LOG_INFO, "core::postBeta2ColorDepth = RNS_UD_COLOR_8BPP (superseded by highColorDepth)");
-    data.out_uint16_le(1);
+    stream.out_uint16_le(1);
     LOG(LOG_INFO, "core::clientProductId = 1");
-    data.out_uint32_le(0);
+    stream.out_uint32_le(0);
     LOG(LOG_INFO, "core::serialNumber = 0");
-    data.out_uint16_le(rdp_bpp);
+    stream.out_uint16_le(rdp_bpp);
     LOG(LOG_INFO, "core::highColorDepth = %u", rdp_bpp);
-    data.out_uint16_le(0x0007);
+    stream.out_uint16_le(0x0007);
     LOG(LOG_INFO, "core::supportedColorDepths = 24/16/15");
-    data.out_uint16_le(1);
+    stream.out_uint16_le(1);
     LOG(LOG_INFO, "core::earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU");
-    data.out_clear_bytes(64);
+    stream.out_clear_bytes(64);
     LOG(LOG_INFO, "core::clientDigProductId = \"\"");
-    data.out_clear_bytes(2);
+    stream.out_clear_bytes(2);
     LOG(LOG_INFO, "core::pad2octets");
-//        data.out_uint32_le(0); // optional
+//        stream.out_uint32_le(0); // optional
 //        LOG(LOG_INFO, "core::serverSelectedProtocol = 0");
     /* End of client info */
 
-    data.out_uint16_le(CS_CLUSTER);
-    data.out_uint16_le(12);
+    stream.out_uint16_le(CS_CLUSTER);
+    stream.out_uint16_le(12);
     #warning check that should depend on g_console_session
-    data.out_uint32_le(console_session ? 0xb : 9);
-    data.out_uint32_le(0);
+    stream.out_uint32_le(console_session ? 0xb : 9);
+    stream.out_uint32_le(0);
 
     /* Client encryption settings */
-    data.out_uint16_le(CS_SECURITY);
-    data.out_uint16_le(12); /* length */
+    stream.out_uint16_le(CS_SECURITY);
+    stream.out_uint16_le(12); /* length */
 
     #warning check that, should depend on g_encryption
     /* encryption supported, 128-bit supported */
-    data.out_uint32_le(0x3);
-    data.out_uint32_le(0); /* Unknown */
+    stream.out_uint32_le(0x3);
+    stream.out_uint32_le(0); /* Unknown */
 
-    send_cs_net(data, channel_list);
+    /* Here we need to put channel information in order to redirect channel data
+    from client to server passing through the "proxy" */
+    size_t num_channels = channel_list.size();
 
-    data.mark_end();
+    if (num_channels > 0) {
+        LOG(LOG_INFO, "cs_net");
+        stream.out_uint16_le(CS_NET);
+        LOG(LOG_INFO, "cs_net::len=%u", num_channels * 12 + 8);
+        stream.out_uint16_le(num_channels * 12 + 8); /* length */
+        LOG(LOG_INFO, "cs_net::nb_chan=%u", num_channels);
+        stream.out_uint32_le(num_channels); /* number of virtual channels */
+        for (size_t index = 0; index < num_channels; index++){
+            const McsChannelItem & channel_item = channel_list[index];
+            stream.out_copy_bytes(channel_item.name, 8);
+            stream.out_uint32_be(channel_item.flags);
+        }
+    }
 
-    int data_len = data.end - data.data;
-    int len = 7 + 3 * 34 + 4 + data_len;
+    #warning create a function in stream that sets differed ber_len_offsets
+    // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
+    stream.set_out_ber_len_uint16(stream.p - stream.data - offset_data_len - 3, offset_data_len);
 
-    Stream ci_stream(8192);
-    X224Out ci_tpdu(X224Packet::DT_TPDU, ci_stream);
-
-    ci_stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
-    ci_stream.out_ber_len(len);
-    ci_stream.out_uint8(BER_TAG_OCTET_STRING);
-    ci_stream.out_ber_len(0); /* calling domain */
-    ci_stream.out_uint8(BER_TAG_OCTET_STRING);
-    ci_stream.out_ber_len(0); /* called domain */
-    ci_stream.out_uint8(BER_TAG_BOOLEAN);
-    ci_stream.out_ber_len(1);
-    ci_stream.out_uint8(0xff); /* upward flag */
-
-    // target params
-    ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-    ci_stream.out_ber_len(32);
-    ci_stream.out_ber_int16(34);     // max_channels
-    ci_stream.out_ber_int16(2);      // max_users
-    ci_stream.out_ber_int16(0);      // max_tokens
-    ci_stream.out_ber_int16(1);
-    ci_stream.out_ber_int16(0);
-    ci_stream.out_ber_int16(1);
-    ci_stream.out_ber_int16(0xffff); // max_pdu_size
-    ci_stream.out_ber_int16(2);
-
-    // min params
-    ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-    ci_stream.out_ber_len(32);
-    ci_stream.out_ber_int16(1);     // max_channels
-    ci_stream.out_ber_int16(1);     // max_users
-    ci_stream.out_ber_int16(1);     // max_tokens
-    ci_stream.out_ber_int16(1);
-    ci_stream.out_ber_int16(0);
-    ci_stream.out_ber_int16(1);
-    ci_stream.out_ber_int16(0x420); // max_pdu_size
-    ci_stream.out_ber_int16(2);
-
-    // max params
-    ci_stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-    ci_stream.out_ber_len(32);
-    ci_stream.out_ber_int16(0xffff); // max_channels
-    ci_stream.out_ber_int16(0xfc17); // max_users
-    ci_stream.out_ber_int16(0xffff); // max_tokens
-    ci_stream.out_ber_int16(1);
-    ci_stream.out_ber_int16(0);
-    ci_stream.out_ber_int16(1);
-    ci_stream.out_ber_int16(0xffff); // max_pdu_size
-    ci_stream.out_ber_int16(2);
-
-    ci_stream.out_uint8(BER_TAG_OCTET_STRING);
-    ci_stream.out_ber_len(data_len);
-    ci_stream.out_copy_bytes(data.data, data_len);
+    // set mcs_data len for BER_TAG_MCS_CONNECT_INITIAL
+    stream.set_out_ber_len_uint16(stream.p - stream.data - offset_data_len_connect_initial - 3, offset_data_len_connect_initial);
 
     ci_tpdu.end();
     ci_tpdu.send(trans);
