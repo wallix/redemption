@@ -96,34 +96,11 @@ struct client_mod : public Callback {
         }
     }
 
+    virtual void set_key_flags(int key_flags) { this->key_flags = key_flags; }
+    virtual int get_key_flags() { return this->key_flags; }
+    virtual const Keymap * get_keymap() { return keymap; }
+    virtual const int  (& get_keys())[256] { return keys; };
 
-    int callback(int msg, long param1, long param2, long param3, long param4)
-    {
-        int rv = 0;
-        switch (msg) {
-        case 0: /* RDP_INPUT_SYNCHRONIZE */
-//            LOG(LOG_INFO, "callback RDP_INPUT_SYNCHRONIZE");
-            /* happens when client gets focus and sends key modifier info */
-            this->key_flags = param1;
-            // why do we not keep device flags ?
-            this->input_event(17, param1, param3, param1, param3);
-            break;
-        case RDP_INPUT_SCANCODE:
-            this->scancode(param1, param2, param3, param4, this->key_flags, *this->keymap, this->keys);
-            break;
-        case 0x8001: /* RDP_INPUT_MOUSE */
-            rv = this->input_mouse(param3, param1, param2);
-            break;
-        case WM_SCREENUPDATE:
-//            LOG(LOG_INFO, "callback SCREENUPDATE");
-            this->invalidate(Rect(param1, param2, param3, param4));
-            break;
-        default:
-            LOG(LOG_INFO, "callback unsupported msg %u", msg);
-            break;
-        }
-        return rv;
-    }
 
     void set_mod_palette(const BGRPalette & palette)
     {
@@ -231,40 +208,40 @@ struct client_mod : public Callback {
     // and returns 0 as long as the connection with server is still active.
     virtual int draw_event(void) = 0;
 
-    virtual void scancode(long param1, long param2, long param3, long param4, int & key_flags, Keymap & keymap, int keys[]){
+    virtual void scancode(long param1, long param2, long param3, long param4){
         param1 = param1 % 128;
         int msg = WM_KEYUP;
-        keys[param1] = 1 | param3;
+        this->keys[param1] = 1 | param3;
         if ((param3 & KBD_FLAG_UP) == 0) { /* 0x8000 */
             /* key down */
             msg = WM_KEYDOWN;
             switch (param1) {
             case 58:
-                key_flags ^= 4;
+                this->key_flags ^= 4;
                 break; /* caps lock */
             case 69:
-                key_flags ^= 2;
+                this->key_flags ^= 2;
                 break; /* num lock */
             case 70:
-                key_flags ^= 1;
+                this->key_flags ^= 1;
                 break; /* scroll lock */
             default:
                 ;
             }
         }
-        if (&keymap != NULL)
+        if (&this->keymap != NULL)
         {
-            struct key_info* ki = keymap.get_key_info_from_scan_code(
+            struct key_info* ki = this->keymap->get_key_info_from_scan_code(
                             param3,
                             param1,
-                            keys,
-                            key_flags);
+                            this->keys,
+                            this->key_flags);
             if (ki != 0) {
                 this->input_event(msg, ki->chr, ki->sym, param1, param3);
             }
         }
         if (msg == WM_KEYUP){
-            keys[param1] = 0;
+            this->keys[param1] = 0;
         }
     }
 
@@ -778,7 +755,7 @@ struct client_mod : public Callback {
         this->pointer_displayed = true;
     }
 
-    int input_mouse(int device_flags, int x, int y)
+    virtual int input_mouse(int device_flags, int x, int y)
     {
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
             this->input_event(WM_MOUSEMOVE, x, y, 0, 0);

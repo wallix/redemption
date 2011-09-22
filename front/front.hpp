@@ -1843,7 +1843,27 @@ public:
                     if (msg_type == 4){
 //                        LOG(LOG_INFO, "receive input: time=%u device_flags = %u param1=%u param2=%u\n", time, device_flags, param1, param2);
                     }
-                    cb.callback(msg_type, param1, param2, device_flags, time);
+                    switch (msg_type) {
+                    case 0: /* RDP_INPUT_SYNCHRONIZE */
+            //            LOG(LOG_INFO, "callback RDP_INPUT_SYNCHRONIZE");
+                        /* happens when client gets focus and sends key modifier info */
+                        cb.set_key_flags(param1);
+                        // why do we not keep device flags ?
+                        cb.input_event(17, param1, device_flags, param1, device_flags);
+                        break;
+                    case RDP_INPUT_SCANCODE:
+                        cb.scancode(param1, param2, device_flags, time);
+                        break;
+                    case 0x8001: /* RDP_INPUT_MOUSE */
+                        cb.input_mouse(device_flags, param1, param2);
+                        break;
+                    case WM_SCREENUPDATE:
+                        cb.invalidate(Rect(param1, param2, device_flags, time));
+                        break;
+                    default:
+                        LOG(LOG_INFO, "callback unsupported msg %u", msg_type);
+                        break;
+                    }
                 }
             }
             break;
@@ -1879,7 +1899,7 @@ public:
                 int bottom = stream.in_uint16_le();
                 int cx = (right - left) + 1;
                 int cy = (bottom - top) + 1;
-                cb.callback(0x4444, left, top, cx, cy);
+                cb.invalidate(Rect(left, top, cx, cy));
             }
             break;
         case PDUTYPE2_SUPPRESS_OUTPUT:

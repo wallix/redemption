@@ -646,10 +646,14 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of input_event.
                 this->back_event = new wait_obj(-1);
                 this->mod = new login_mod(this->back_event, this->keys, this->key_flags, this->keymap,  *this->context, *(this->front), this->ini);
-                // force a WM_INVALIDATE on all screen
-                this->mod->callback(WM_SCREENUPDATE, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
+
+                // force a refresh on all screen
+                this->mod->invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
+
                 LOG(LOG_INFO, "Creation of new mod 'LOGIN DIALOG' (%d,%d,%d,%d) suceeded\n",
-                    0, 0, this->mod->get_front_width(), this->mod->get_front_height());
+                    0, 0,
+                    this->front->get_client_info().width,
+                    this->front->get_client_info().height);
             }
             break;
 
@@ -671,7 +675,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 this->back_event = new wait_obj(-1);
                 this->mod = new dialog_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), message, button, this->ini);
                 // force a WM_INVALIDATE on all screen
-                this->mod->callback(WM_SCREENUPDATE, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
+                this->mod->invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 LOG(LOG_INFO, "Creation of new mod 'STATUS DIALOG' suceeded\n");
                 Inifile ini(CFG_PATH "/" RDPPROXY_INI);
                 if (htons(ini.globals.autovalidate)) {
@@ -721,7 +725,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                         pointer_item.y);
 
                 // force a WM_INVALIDATE on all screen
-                this->mod->callback(WM_SCREENUPDATE, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
+                this->mod->invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 LOG(LOG_INFO, "Creation of new mod 'CLOSE DIALOG' suceeded\n");
             }
             break;
@@ -765,7 +769,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                     }
                 }
                 // force a WM_INVALIDATE on all screen
-                this->mod->callback(WM_SCREENUPDATE, 0, 0, this->mod->get_front_width(), this->mod->get_front_height());
+                this->mod->invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 LOG(LOG_INFO, "Creation of new mod 'CLOSE DIALOG' suceeded\n");
             }
             break;
@@ -779,6 +783,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                             4, 2500000));
                 this->back_event = new wait_obj(t->sck);
                 this->mod = new xup_mod(t, this->keys, this->key_flags, this->keymap, *this->context, *(this->front));
+                this->mod->invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 LOG(LOG_INFO, "Creation of new mod 'XUP' suceeded\n");
             }
             break;
@@ -810,6 +815,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                     this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
                                     this->context->get_bool(STRAUTHID_OPT_DEVICEREDIRECTION));
                 this->back_event->set();
+                this->mod->invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 LOG(LOG_INFO, "Creation of new mod 'RDP' suceeded\n");
             }
             break;
@@ -821,6 +827,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                     connect(this->context->get(STRAUTHID_TARGET_DEVICE), atoi(this->context->get(STRAUTHID_TARGET_PORT))));
                 this->back_event = new wait_obj(t->sck);
                 this->mod = new mod_vnc(t, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this->front->get_client_info().keylayout);
+                this->mod->invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 LOG(LOG_INFO, "Creation of new mod 'VNC' suceeded\n");
             }
             break;
