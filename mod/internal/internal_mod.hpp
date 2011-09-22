@@ -104,7 +104,7 @@ struct internal_mod : public client_mod {
         if (!rect.isempty()) {
             this->server_begin_update();
             Rect & r = this->screen.rect;
-            this->mod_event(WM_INVALIDATE,
+            this->input_event(WM_INVALIDATE,
                 ((r.x & 0xffff) << 16) | (r.y & 0xffff),
                 ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
                 0, 0);
@@ -126,7 +126,7 @@ struct internal_mod : public client_mod {
     }
 
 
-    virtual int mod_event(int msg, long param1, long param2, long param3, long param4)
+    virtual int input_event(int msg, long param1, long param2, long param3, long param4)
     {
         return 0;
     }

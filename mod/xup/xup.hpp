@@ -84,7 +84,7 @@ struct xup_mod : public client_mod {
         delete this->t;
     }
 
-    virtual int mod_event(int msg, long param1, long param2, long param3, long param4)
+    virtual int input_event(int msg, long param1, long param2, long param3, long param4)
     {
         int rv = 0;
         Stream stream(8192);

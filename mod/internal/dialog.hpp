@@ -85,10 +85,10 @@ struct window_dialog : public window
         if (msg == 1) { /* click */
             switch (sender->id) {
                 case 2: /* cancel button -> Esc */
-                    this->mod->mod_event(WM_KEYUP, 0, 0, 1, 0);
+                    this->mod->input_event(WM_KEYUP, 0, 0, 1, 0);
                 break;
                 case 3: /* ok button -> Enter */
-                    this->mod->mod_event(WM_KEYUP, 0, 0, 28, 0);
+                    this->mod->input_event(WM_KEYUP, 0, 0, 28, 0);
                 break;
                 default:
                 break;
@@ -153,9 +153,9 @@ struct dialog_mod : public internal_mod {
 
     #warning unify close login and dialog and move to internal_mod
     // module received an event from client
-    virtual int mod_event(int msg, long x, long y, long param4, long param5)
+    virtual int input_event(int msg, long x, long y, long param4, long param5)
     {
-//        LOG(LOG_INFO, "mod_event(%d, %ld, %ld, %ld %ld)", msg, x, y, param4, param5);
+//        LOG(LOG_INFO, "input_event(%d, %ld, %ld, %ld %ld)", msg, x, y, param4, param5);
         switch (msg){
         case WM_KEYUP:
         {

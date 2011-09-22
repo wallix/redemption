@@ -43,7 +43,7 @@ struct test_internal_mod : public internal_mod {
     }
 
     // event from front (keyboard or mouse event)
-    virtual int mod_event(int msg, long x, long y, long param4, long param5)
+    virtual int input_event(int msg, long x, long y, long param4, long param5)
     {
         return 0;
     }

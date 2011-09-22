@@ -42,7 +42,7 @@ struct null_mod : public client_mod {
     }
 
     // module received an event from client
-    virtual int mod_event(int msg, long x, long y, long param4, long param5)
+    virtual int input_event(int msg, long x, long y, long param4, long param5)
     {
         return 0;
     }
