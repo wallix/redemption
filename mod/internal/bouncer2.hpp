@@ -67,7 +67,7 @@ struct bouncer2_mod : public internal_mod {
     {}
 
     // This should come from FRONT!
-    virtual int mod_event(int msg, long x, long y, long param4, long param5)
+    virtual int input_event(int msg, long x, long y, long param4, long param5)
     {
         // Get x% of the screen cx and cy
         int scarex = this->screen.rect.cx / 5;

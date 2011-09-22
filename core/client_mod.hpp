@@ -106,7 +106,7 @@ struct client_mod : public Callback {
             /* happens when client gets focus and sends key modifier info */
             this->key_flags = param1;
             // why do we not keep device flags ?
-            this->mod_event(17, param1, param3, param1, param3);
+            this->input_event(17, param1, param3, param1, param3);
             break;
         case RDP_INPUT_SCANCODE:
             this->scancode(param1, param2, param3, param4, this->key_flags, *this->keymap, this->keys);
@@ -222,9 +222,9 @@ struct client_mod : public Callback {
     }
 
     /* client functions */
-    virtual int mod_event(int msg, long param1, long param2, long param3, long param4) = 0;
+    virtual int input_event(int msg, long param1, long param2, long param3, long param4) = 0;
 
-    // draw_event should be run when client socket received some data (mod_event is set)
+    // draw_event should be run when client socket received some data (input_event is set)
     // In other words: when some data came from "server" and should be taken care of
     // draw_event returns not 0 (return status) when the module finished
     // (connection to remote or internal server closed)
@@ -260,7 +260,7 @@ struct client_mod : public Callback {
                             keys,
                             key_flags);
             if (ki != 0) {
-                this->mod_event(msg, ki->chr, ki->sym, param1, param3);
+                this->input_event(msg, ki->chr, ki->sym, param1, param3);
             }
         }
         if (msg == WM_KEYUP){
@@ -727,7 +727,7 @@ struct client_mod : public Callback {
     virtual void invalidate(const Rect & r)
     {
         if (!r.isempty()) {
-            this->mod_event(WM_INVALIDATE,
+            this->input_event(WM_INVALIDATE,
                 ((r.x & 0xffff) << 16) | (r.y & 0xffff),
                 ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
                 0, 0);
@@ -781,33 +781,33 @@ struct client_mod : public Callback {
     int input_mouse(int device_flags, int x, int y)
     {
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
-            this->mod_event(WM_MOUSEMOVE, x, y, 0, 0);
+            this->input_event(WM_MOUSEMOVE, x, y, 0, 0);
             this->front.mouse_x = x;
             this->front.mouse_y = y;
 
         }
         if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
-            this->mod_event(
+            this->input_event(
                 WM_LBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
                 x, y, 0, 0);
         }
         if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
-            this->mod_event(
+            this->input_event(
                 WM_RBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
                 x, y, 0, 0);
         }
         if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
-            this->mod_event(
+            this->input_event(
                 WM_BUTTON3UP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
                 x, y, 0, 0);
         }
         if (device_flags == MOUSE_FLAG_BUTTON4 || /* 0x0280 */ device_flags == 0x0278) {
-            this->mod_event(WM_BUTTON4DOWN, x, y, 0, 0);
-            this->mod_event(WM_BUTTON4UP, x, y, 0, 0);
+            this->input_event(WM_BUTTON4DOWN, x, y, 0, 0);
+            this->input_event(WM_BUTTON4UP, x, y, 0, 0);
         }
         if (device_flags == MOUSE_FLAG_BUTTON5 || /* 0x0380 */ device_flags == 0x0388) {
-            this->mod_event(WM_BUTTON5DOWN, x, y, 0, 0);
-            this->mod_event(WM_BUTTON5UP, x, y, 0, 0);
+            this->input_event(WM_BUTTON5DOWN, x, y, 0, 0);
+            this->input_event(WM_BUTTON5UP, x, y, 0, 0);
         }
         return 0;
     }

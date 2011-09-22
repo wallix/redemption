@@ -628,7 +628,7 @@ struct mod_rdp : public client_mod {
         }
     }
 
-    virtual int mod_event(int msg, long param1, long param2, long param3, long param4)
+    virtual int input_event(int msg, long param1, long param2, long param3, long param4)
     {
         try{
             if (!this->up_and_running) {
