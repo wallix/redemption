@@ -1836,33 +1836,23 @@ public:
                     uint16_t device_flags = stream.in_uint16_le();
                     int16_t param1 = stream.in_sint16_le();
                     int16_t param2 = stream.in_sint16_le();
-                    /* msg_type can be
-                       RDP_INPUT_SYNCHRONIZE = 0
-                       RDP_INPUT_SCANCODE = 4
-                       RDP_INPUT_MOUSE = 0x8001 */
-                    if (msg_type == 4){
-//                        LOG(LOG_INFO, "receive input: time=%u device_flags = %u param1=%u param2=%u\n", time, device_flags, param1, param2);
-                    }
+
+                    #warning we should always call send_input with original data, if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it
+                    #warning with the scheme above, any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.
                     switch (msg_type) {
-                    case RDP_INPUT_SYNCHRONIZE: /* RDP_INPUT_SYNCHRONIZE */
-            //            LOG(LOG_INFO, "callback RDP_INPUT_SYNCHRONIZE");
+                    case RDP_INPUT_SYNCHRONIZE:
                         /* happens when client gets focus and sends key modifier info */
                         cb.set_key_flags(param1);
                         cb.rdp_input_synchronize(time, device_flags, param1, param2);
-                        // why do we not keep device flags ?
-//                        cb.input_event(17, param1, device_flags, param1, device_flags);
                         break;
                     case RDP_INPUT_SCANCODE:
                         cb.scancode(param1, param2, device_flags, time);
                         break;
-                    case 0x8001: /* RDP_INPUT_MOUSE */
+                    case RDP_INPUT_MOUSE:
                         cb.input_mouse(device_flags, param1, param2);
                         break;
-                    case WM_SCREENUPDATE:
-                        cb.invalidate(Rect(param1, param2, device_flags, time));
-                        break;
                     default:
-                        LOG(LOG_INFO, "callback unsupported msg %u", msg_type);
+                        LOG(LOG_INFO, "unsupported PDUTYPE2_INPUT msg %u", msg_type);
                         break;
                     }
                 }
