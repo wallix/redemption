@@ -158,25 +158,6 @@ struct rdp_orders {
     ~rdp_orders(){
     }
 
-    #warning smells like code duplication, it would probably be better to destroy rdp_orders object and recreate it instead of calling that reset_state.
-    void rdp_orders_reset_state()
-    {
-        LOG(LOG_INFO, "rdp orders: reset state");
-        using namespace RDP;
-
-        memset(&this->state, 0, sizeof(this->state));
-        common = RDPOrderCommon(RDP::PATBLT, Rect(0, 0, 1, 1));
-        memblt = RDPMemBlt(0, Rect(), 0, 0, 0, 0);
-        opaquerect = RDPOpaqueRect(Rect(), 0);
-        scrblt = RDPScrBlt(Rect(), 0, 0, 0);
-        destblt = RDPDestBlt(Rect(), 0);
-        patblt = RDPPatBlt(Rect(), 0, 0, 0, RDPBrush());
-        lineto = RDPLineTo(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0));
-        glyph_index = RDPGlyphIndex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"");
-
-        common.order = PATBLT;
-    }
-
     void rdp_orders_process_bmpcache(int bpp, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
 //        LOG(LOG_INFO, "rdp_orders_process_bmpcache");
@@ -1184,8 +1165,7 @@ struct mod_rdp : public client_mod {
                         case WAITING_FONT_MAP:
                             LOG(LOG_INFO, "Receiving Font Map");
 //                            this->check_data_pdu(PDUTYPE2_FONTMAP);
-                            this->orders.rdp_orders_reset_state();
-                            LOG(LOG_INFO, "process demand active ok, reset state [bpp=%d]\n", this->bpp);
+                            LOG(LOG_INFO, "process demand active ok\n");
                             this->mod_bpp = this->bpp;
                             this->up_and_running = 1;
                             this->connection_finalization_state = UP_AND_RUNNING;
