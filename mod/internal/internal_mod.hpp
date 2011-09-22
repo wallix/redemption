@@ -103,7 +103,7 @@ struct internal_mod : public client_mod {
     {
         if (!rect.isempty()) {
             this->server_begin_update();
-            Rect r(0, 0, this->get_front_width(), this->get_front_height());
+            Rect & r = this->screen.rect;
             this->mod_event(WM_INVALIDATE,
                 ((r.x & 0xffff) << 16) | (r.y & 0xffff),
                 ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
