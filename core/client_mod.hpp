@@ -755,6 +755,13 @@ struct client_mod : public Callback {
         this->pointer_displayed = true;
     }
 
+    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+    {
+        LOG(LOG_INFO, "overloaded by subclasses");
+        return;
+    }
+
+
     virtual int input_mouse(int device_flags, int x, int y)
     {
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
