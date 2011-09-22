@@ -350,7 +350,7 @@ struct dialog_mod : public internal_mod {
     }
 
     // module got an internal event (like incoming data) and want to sent it outside
-    virtual int mod_signal()
+    virtual int draw_event()
     {
         return this->signal;
     }

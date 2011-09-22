@@ -480,7 +480,7 @@ int Session::step_STATE_RUNNING(const struct timeval & time_mark)
 
     if (this->back_event->is_set()){ // data incoming from server module
 //        LOG(LOG_INFO, "back_event fired");
-        int signal = this->mod->mod_signal();
+        int signal = this->mod->draw_event();
         if (signal){ // signal is the return status from module
                      // (used only for internal modules)
             if (signal == 4){

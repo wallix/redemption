@@ -591,7 +591,7 @@ struct mod_rdp : public client_mod {
         to client communication. This is allowed by default */
         this->clipboard_enable = clipboard_enable;
         this->dev_redirection_enable = dev_redirection_enable;
-        this->mod_signal();
+        this->draw_event();
     }
 
     virtual ~mod_rdp() {
@@ -721,7 +721,7 @@ struct mod_rdp : public client_mod {
         }
     }
 
-    virtual int mod_signal(void)
+    virtual int draw_event(void)
     {
         try{
 

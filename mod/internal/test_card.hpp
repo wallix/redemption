@@ -49,7 +49,7 @@ struct test_card_mod : public internal_mod {
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
     // non 0 if it wants to stop (to run another module)
-    virtual int mod_signal()
+    virtual int draw_event()
     {
         this->draw();
         this->event->reset();

@@ -52,7 +52,7 @@ struct transitory_mod : public client_mod {
     // return non zero if module is "finished", 0 if it's still running
     // the transitory module finish immediately,
     // but accept any event from client
-    virtual int mod_signal()
+    virtual int draw_event()
     {
         LOG(LOG_INFO, "signal in transitory mode\n");
         return 1;

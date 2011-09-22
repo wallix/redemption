@@ -224,12 +224,12 @@ struct client_mod : public Callback {
     /* client functions */
     virtual int mod_event(int msg, long param1, long param2, long param3, long param4) = 0;
 
-    // mod_signal should be run when client socket received some data (mod_event is set)
+    // draw_event should be run when client socket received some data (mod_event is set)
     // In other words: when some data came from "server" and should be taken care of
-    // mod_signal returns not 0 (return status) when the module finished
+    // draw_event returns not 0 (return status) when the module finished
     // (connection to remote or internal server closed)
     // and returns 0 as long as the connection with server is still active.
-    virtual int mod_signal(void) = 0;
+    virtual int draw_event(void) = 0;
 
     virtual void scancode(long param1, long param2, long param3, long param4, int & key_flags, Keymap & keymap, int keys[]){
         param1 = param1 % 128;
