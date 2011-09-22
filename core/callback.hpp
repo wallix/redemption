@@ -41,8 +41,7 @@ struct Callback
     virtual void invalidate(const Rect & r) = 0;
     virtual const Keymap * get_keymap() = 0;
     virtual const int  (& get_keys())[256] = 0;
-
-
+    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
 
 
 

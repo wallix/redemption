@@ -1844,12 +1844,13 @@ public:
 //                        LOG(LOG_INFO, "receive input: time=%u device_flags = %u param1=%u param2=%u\n", time, device_flags, param1, param2);
                     }
                     switch (msg_type) {
-                    case 0: /* RDP_INPUT_SYNCHRONIZE */
+                    case RDP_INPUT_SYNCHRONIZE: /* RDP_INPUT_SYNCHRONIZE */
             //            LOG(LOG_INFO, "callback RDP_INPUT_SYNCHRONIZE");
                         /* happens when client gets focus and sends key modifier info */
                         cb.set_key_flags(param1);
+                        cb.rdp_input_synchronize(time, device_flags, param1, param2);
                         // why do we not keep device flags ?
-                        cb.input_event(17, param1, device_flags, param1, device_flags);
+//                        cb.input_event(17, param1, device_flags, param1, device_flags);
                         break;
                     case RDP_INPUT_SCANCODE:
                         cb.scancode(param1, param2, device_flags, time);

@@ -628,6 +628,16 @@ struct mod_rdp : public client_mod {
         }
     }
 
+    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+    {
+        if (!this->up_and_running) {
+            LOG(LOG_INFO, "Not up and running\n");
+            return;
+        }
+        this->send_input(0, RDP_INPUT_SYNCHRONIZE, device_flags, param1, 0);
+    }
+
+
     virtual int input_event(int msg, long param1, long param2, long param3, long param4)
     {
         try{
