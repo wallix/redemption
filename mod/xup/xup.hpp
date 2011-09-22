@@ -109,7 +109,7 @@ struct xup_mod : public client_mod {
         return rv;
     }
 
-    virtual int mod_signal(void)
+    virtual int draw_event(void)
     {
         int rv = 0;
 

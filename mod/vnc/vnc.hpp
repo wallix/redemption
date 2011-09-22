@@ -568,7 +568,7 @@ struct mod_vnc : public client_mod {
         return error;
     }
 
-    virtual int mod_signal(void)
+    virtual int draw_event(void)
     {
         Stream stream(1);
         int rv = 0;
@@ -588,7 +588,7 @@ struct mod_vnc : public client_mod {
                     this->lib_clip_data();
                 break;
                 default:
-                    LOG(LOG_INFO, "unknown in vnc_lib_mod_signal %d\n", type);
+                    LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", type);
             }
         }
         catch(const Error & e) {

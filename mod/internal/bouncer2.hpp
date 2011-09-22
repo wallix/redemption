@@ -91,7 +91,7 @@ struct bouncer2_mod : public internal_mod {
     }
 
     // This should come from BACK!
-    virtual int mod_signal()
+    virtual int draw_event()
     {
 //        this->server_begin_update();
 //        this->opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00));
