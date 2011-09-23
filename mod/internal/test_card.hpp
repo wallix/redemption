@@ -41,7 +41,7 @@ struct test_card_mod : public internal_mod {
     }
 
     // event from front (keyboard or mouse event)
-    virtual int input_event(int msg, long x, long y, long param4, long param5)
+    virtual int input_event(const int msg, const long x, const long y, const long param4, const long param5, const int key_flags, const int (& keys)[256])
     {
         return 0;
     }

@@ -199,7 +199,7 @@ struct client_mod : public Callback {
     }
 
     /* client functions */
-    virtual int input_event(int msg, long param1, long param2, long param3, long param4) = 0;
+    virtual int input_event(const int msg, const long x, const long y, const long param4, const long param5, const int key_flags, const int (& keys)[256]) = 0;
 
     // draw_event should be run when client socket received some data (input_event is set)
     // In other words: when some data came from "server" and should be taken care of
@@ -672,7 +672,7 @@ struct client_mod : public Callback {
             this->input_event(WM_INVALIDATE,
                 ((r.x & 0xffff) << 16) | (r.y & 0xffff),
                 ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
-                0, 0);
+                0, 0, this->key_flags, this->keys);
         }
     }
 
@@ -730,7 +730,7 @@ struct client_mod : public Callback {
     virtual int input_mouse(int device_flags, int x, int y)
     {
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
-            this->input_event(WM_MOUSEMOVE, x, y, 0, 0);
+            this->input_event(WM_MOUSEMOVE, x, y, 0, 0, this->key_flags, this->keys);
             this->front.mouse_x = x;
             this->front.mouse_y = y;
 
@@ -738,25 +738,25 @@ struct client_mod : public Callback {
         if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
             this->input_event(
                 WM_LBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0);
+                x, y, 0, 0, this->key_flags, this->keys);
         }
         if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
             this->input_event(
                 WM_RBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0);
+                x, y, 0, 0, this->key_flags, this->keys);
         }
         if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
             this->input_event(
                 WM_BUTTON3UP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0);
+                x, y, 0, 0, this->key_flags, this->keys);
         }
         if (device_flags == MOUSE_FLAG_BUTTON4 || /* 0x0280 */ device_flags == 0x0278) {
-            this->input_event(WM_BUTTON4DOWN, x, y, 0, 0);
-            this->input_event(WM_BUTTON4UP, x, y, 0, 0);
+            this->input_event(WM_BUTTON4DOWN, x, y, 0, 0, this->key_flags, this->keys);
+            this->input_event(WM_BUTTON4UP, x, y, 0, 0, this->key_flags, this->keys);
         }
         if (device_flags == MOUSE_FLAG_BUTTON5 || /* 0x0380 */ device_flags == 0x0388) {
-            this->input_event(WM_BUTTON5DOWN, x, y, 0, 0);
-            this->input_event(WM_BUTTON5UP, x, y, 0, 0);
+            this->input_event(WM_BUTTON5DOWN, x, y, 0, 0, this->key_flags, this->keys);
+            this->input_event(WM_BUTTON5UP, x, y, 0, 0, this->key_flags, this->keys);
         }
         return 0;
     }
