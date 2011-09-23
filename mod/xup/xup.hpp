@@ -84,43 +84,6 @@ struct xup_mod : public client_mod {
         delete this->t;
     }
 
-    virtual void scancode(long param1, long param2, long param3, long param4){
-        param1 = param1 % 128;
-        int msg = WM_KEYUP;
-        this->keys[param1] = 1 | param3;
-        if ((param3 & KBD_FLAG_UP) == 0) { /* 0x8000 */
-            /* key down */
-            msg = WM_KEYDOWN;
-            switch (param1) {
-            case 58:
-                this->key_flags ^= 4;
-                break; /* caps lock */
-            case 69:
-                this->key_flags ^= 2;
-                break; /* num lock */
-            case 70:
-                this->key_flags ^= 1;
-                break; /* scroll lock */
-            default:
-                ;
-            }
-        }
-        if (&this->keymap != NULL)
-        {
-            struct key_info* ki = this->keymap->get_key_info_from_scan_code(
-                            param3,
-                            param1,
-                            this->keys,
-                            this->key_flags);
-            if (ki != 0) {
-                this->input_event(msg, ki->chr, ki->sym, param1, param3, this->key_flags, this->keys);
-            }
-        }
-        if (msg == WM_KEYUP){
-            this->keys[param1] = 0;
-        }
-    }
-
     virtual int input_event(const int msg, const long param1, const long param2, const long param3, const long param4, const int key_flags, const int (& keys)[256])
     {
         int rv = 0;
