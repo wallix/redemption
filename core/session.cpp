@@ -680,7 +680,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 Inifile ini(CFG_PATH "/" RDPPROXY_INI);
                 if (htons(ini.globals.autovalidate)) {
                     LOG(LOG_INFO, "dialog autovalidated");
-                    this->mod->input_event(WM_KEYUP, 0, 0, 28, 0);
+                    this->mod->input_event(WM_KEYUP, 0, 0, 28, 0, this->key_flags, this->keys);
                 }
             }
             break;
@@ -843,7 +843,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
     };
 
     /* sync modifiers */
-    this->mod->input_event(17, this->key_flags, 0, this->key_flags, 0);
+    this->mod->input_event(RDP_INPUT_SYNCHRONIZE, this->key_flags, 0, this->key_flags, 0, this->key_flags, this->keys);
 
     return true;
 }

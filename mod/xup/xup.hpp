@@ -113,7 +113,7 @@ struct xup_mod : public client_mod {
                             this->keys,
                             this->key_flags);
             if (ki != 0) {
-                this->input_event(msg, ki->chr, ki->sym, param1, param3);
+                this->input_event(msg, ki->chr, ki->sym, param1, param3, this->key_flags, this->keys);
             }
         }
         if (msg == WM_KEYUP){
@@ -121,7 +121,7 @@ struct xup_mod : public client_mod {
         }
     }
 
-    virtual int input_event(int msg, long param1, long param2, long param3, long param4)
+    virtual int input_event(const int msg, const long param1, const long param2, const long param3, const long param4, const int key_flags, const int (& keys)[256])
     {
         int rv = 0;
         Stream stream(8192);

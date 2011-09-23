@@ -638,7 +638,7 @@ struct mod_rdp : public client_mod {
     }
 
 
-    virtual int input_event(int msg, long param1, long param2, long param3, long param4)
+    virtual int input_event(const int msg, const long param1, const long param2, const long param3, const long param4, const int key_flags, const int (& keys)[256])
     {
         try{
             if (!this->up_and_running) {
@@ -647,14 +647,7 @@ struct mod_rdp : public client_mod {
             }
             Stream stream = Stream(8192 * 2);
             switch (msg) {
-            case WM_KEYDOWN:
-            case WM_KEYUP:
-                #warning bypassed by call to scancode, need some code cleanup here, we would probably be better of with less key decoding.
-                assert(false);
-                // this->send_input(0, RDP_INPUT_SCANCODE, param4, param3, 0);
-                break;
-            #warning find out what is this message and define symbolic constant
-            case 17:
+            case WM_SYNCHRONIZE:
                 this->send_input(0, RDP_INPUT_SYNCHRONIZE, param4, param3, 0);
                 break;
             case WM_MOUSEMOVE:

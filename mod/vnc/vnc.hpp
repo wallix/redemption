@@ -464,7 +464,7 @@ struct mod_vnc : public client_mod {
                             this->keys,
                             this->key_flags);
             if (ki != 0) {
-                this->input_event(msg, ki->chr, ki->sym, param1, param3);
+                this->input_event(msg, ki->chr, ki->sym, param1, param3, this->key_flags, this->keys);
             }
         }
         if (msg == WM_KEYUP){
@@ -472,18 +472,29 @@ struct mod_vnc : public client_mod {
         }
     }
 
-    virtual int input_event(int msg, long param1, long param2, long param3, long param4)
+    virtual int input_event(const int msg, const long param1, const long param2, const long param3, const long param4, const int key_flags, const int (& keys)[256])
     {
         int error = 0;
         Stream stream(8192);
         switch (msg){
         case WM_KEYDOWN:
+        { /* key events */
+            int key = param2;
+            if (key > 0) {
+                stream.out_uint8(4);
+                stream.out_uint8(1); /* down flag */
+                stream.out_clear_bytes(2);
+                stream.out_uint32_be(key);
+                this->t->send((char*)stream.data, 8);
+            }
+        }
+        break;
         case WM_KEYUP:
         { /* key events */
             int key = param2;
             if (key > 0) {
                 stream.out_uint8(4);
-                stream.out_uint8(msg == 15); /* down flag */
+                stream.out_uint8(0); /* down flag */
                 stream.out_clear_bytes(2);
                 stream.out_uint32_be(key);
                 this->t->send((char*)stream.data, 8);

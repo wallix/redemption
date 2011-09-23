@@ -68,7 +68,7 @@ struct cli_mod : public transitory_mod {
                             this->keys,
                             this->key_flags);
             if (ki != 0) {
-                this->input_event(msg, ki->chr, ki->sym, param1, param3);
+                this->input_event(msg, ki->chr, ki->sym, param1, param3, this->key_flags, this->keys);
             }
         }
         if (msg == WM_KEYUP){

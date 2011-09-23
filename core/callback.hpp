@@ -35,7 +35,7 @@ struct Callback
     }
     virtual void set_key_flags(int key_flags) = 0;
     virtual int get_key_flags() = 0;
-    virtual int input_event(int msg, long param1, long param2, long param3, long param4) = 0;
+    virtual int input_event(const int msg, const long param1, const long param2, const long param3, const long param4, const int key_flags, const int (& keys)[256]) = 0;
     virtual void scancode(long param1, long param2, long param3, long param4) = 0;
     virtual int input_mouse(int device_flags, int x, int y) = 0;
     virtual void invalidate(const Rect & r) = 0;
