@@ -598,22 +598,22 @@ struct mod_rdp : public client_mod {
         delete this->trans;
     }
 
-    virtual void scancode(long param1, long param2, long device_flags, long time, int & key_flags, Keymap & keymap, int keys[]){
+    virtual void scancode(long param1, long param2, long device_flags, long time){
         long p1 = param1 % 128;
         int msg = WM_KEYUP;
-        keys[p1] = 1 | device_flags;
+        this->keys[p1] = 1 | device_flags;
         if ((device_flags & KBD_FLAG_UP) == 0) { /* 0x8000 */
             /* key down */
             msg = WM_KEYDOWN;
             switch (p1) {
             case 58:
-                key_flags ^= 4;
+                this->key_flags ^= 4;
                 break; /* caps lock */
             case 69:
-                key_flags ^= 2;
+                this->key_flags ^= 2;
                 break; /* num lock */
             case 70:
-                key_flags ^= 1;
+                this->key_flags ^= 1;
                 break; /* scroll lock */
             default:
                 ;
@@ -624,7 +624,7 @@ struct mod_rdp : public client_mod {
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
         }
         if (msg == WM_KEYUP){
-            keys[param1] = 0;
+            this->keys[p1] = 0;
         }
     }
 
