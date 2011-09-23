@@ -258,7 +258,7 @@ struct close_mod : public internal_mod {
             if (this->popup_wnd != 0) {
                 this->clear_popup();
             } else if (this->close_window->has_focus) {
-                this->close_window->def_proc(msg, param4, param5);
+                this->close_window->def_proc(msg, param4, param5, this->key_flags);
                 this->signal = 4;
                 this->event->set();
             } else {
@@ -269,7 +269,7 @@ struct close_mod : public internal_mod {
             if (this->popup_wnd != 0) {
                 this->clear_popup();
             } else if (this->close_window->has_focus) {
-                this->close_window->def_proc(msg, param4, param5);
+                this->close_window->def_proc(msg, param4, param5, this->key_flags);
             }
         break;
         case WM_INVALIDATE:
@@ -302,7 +302,7 @@ struct close_mod : public internal_mod {
                 if (b->pointer != this->current_pointer) {
                     this->set_pointer(b->pointer);
                 }
-                b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y));
+                b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), this->key_flags);
                 if (this->button_down) {
                     this->button_down->state = (b == this->button_down);
                     this->button_down->Widget_invalidate(this->button_down->rect.wh());
@@ -406,7 +406,7 @@ struct close_mod : public internal_mod {
             if (this->popup_wnd) {
                 // click inside popup
                 if (this->popup_wnd == control){
-                    this->popup_wnd->def_proc(WM_LBUTTONUP, x, y);
+                    this->popup_wnd->def_proc(WM_LBUTTONUP, x, y, this->key_flags);
                 }
                 // clear popup
                 this->clear_popup();

@@ -795,7 +795,7 @@ static inline bool switch_focus(Widget * old_focus, Widget * new_focus) {
     return res;
 }
 
-void window::def_proc(int msg, int param1, int param2)
+void window::def_proc(const int msg, const int param1, const int param2, const int key_flags)
 {
     if (msg == WM_KEYDOWN) {
 
@@ -845,13 +845,13 @@ void window::def_proc(int msg, int param1, int param2)
         break;
         default:
             if (control_with_focus){
-                control_with_focus->def_proc(msg, param1, param2);
+                control_with_focus->def_proc(msg, param1, param2, key_flags);
             }
         }
     }
 }
 
-void widget_edit::def_proc(int msg, int param1, int param2)
+void widget_edit::def_proc(const int msg, int const param1, int const param2, const int key_flags)
 {
     wchar_t c;
     int n;
@@ -865,7 +865,7 @@ void widget_edit::def_proc(int msg, int param1, int param2)
         ext = param2 & 0x0100;
         /* left or up arrow */
         if ((scan_code == 75 || scan_code == 72)
-        && (ext || this->mod->key_flags & 5)) // numlock = 0
+        && (ext || key_flags & 5)) // numlock = 0
         {
             if (this->edit_pos > 0) {
                 this->edit_pos--;
@@ -874,7 +874,7 @@ void widget_edit::def_proc(int msg, int param1, int param2)
         }
         /* right or down arrow */
         else if ((scan_code == 77 || scan_code == 80)
-        && (ext || this->mod->key_flags & 5)) // numlock = 0
+        && (ext || key_flags & 5)) // numlock = 0
         {
             if (this->edit_pos < (int)mbstowcs(0, this->buffer, 0)) {
                 this->edit_pos++;
@@ -894,7 +894,7 @@ void widget_edit::def_proc(int msg, int param1, int param2)
             }
         }
         /* delete */
-        else if (scan_code == 83  && (ext || this->mod->key_flags & 5)) // numlock = 0
+        else if (scan_code == 83  && (ext || key_flags & 5)) // numlock = 0
         {
             n = mbstowcs(0, this->buffer, 0);
             if (n > 0) {
@@ -905,7 +905,7 @@ void widget_edit::def_proc(int msg, int param1, int param2)
             }
         }
         /* end */
-        else if (scan_code == 79  && (ext || this->mod->key_flags & 5)) {
+        else if (scan_code == 79  && (ext || key_flags & 5)) {
             n = mbstowcs(0, this->buffer, 0);
             if (this->edit_pos < n) {
                 this->edit_pos = n;
@@ -914,7 +914,7 @@ void widget_edit::def_proc(int msg, int param1, int param2)
         }
         /* home */
         else if ((scan_code == 71)  &&
-                 (ext || (this->mod->key_flags & 5))) {
+                 (ext || (key_flags & 5))) {
             if (this->edit_pos > 0) {
                 this->edit_pos = 0;
                 this->Widget_invalidate(this->rect.wh());
@@ -925,7 +925,7 @@ void widget_edit::def_proc(int msg, int param1, int param2)
                             ->get_key_info_from_scan_code(
                                                 param2, scan_code,
                                                 this->mod->keys,
-                                                this->mod->key_flags)->chr);
+                                                key_flags)->chr);
 
 
             num_chars = mbstowcs(0, this->buffer, 0);
@@ -963,7 +963,7 @@ void widget_edit::def_proc(int msg, int param1, int param2)
     }
 }
 
-void widget_combo::def_proc(int msg, int param1, int param2)
+void widget_combo::def_proc(const int msg, const int param1, const int param2, const int key_flags)
 {
     int ext;
     int scan_code;
@@ -972,8 +972,7 @@ void widget_combo::def_proc(int msg, int param1, int param2)
         scan_code = param1 % 128;
         ext = param2 & 0x0100;
         /* left or up arrow */
-        if (((scan_code == 75) || (scan_code == 72))
-        && (ext || (this->mod->key_flags & 5))) {
+        if (((scan_code == 75) || (scan_code == 72)) && (ext || (key_flags & 5))) {
             if (this->item_index > 0) {
                 this->item_index--;
                 this->Widget_invalidate(this->rect.wh());
@@ -981,8 +980,7 @@ void widget_combo::def_proc(int msg, int param1, int param2)
             }
         }
         /* right or down arrow */
-        else if ((scan_code == 77 || scan_code == 80) &&
-                 (ext || (this->mod->key_flags & 5))) {
+        else if ((scan_code == 77 || scan_code == 80) && (ext || (key_flags & 5))) {
                     size_t count = this->string_list.size();
             if ((this->item_index + 1) < count) {
                 this->item_index++;
@@ -994,7 +992,7 @@ void widget_combo::def_proc(int msg, int param1, int param2)
 }
 
 
-void widget_popup::def_proc(int msg, int param1, int param2)
+void widget_popup::def_proc(const int msg, const int param1, const int param2, const int key_flags)
 {
     if (msg == WM_MOUSEMOVE) {
         if (this->item_height > 0 && this->popped_from != 0) {
@@ -1015,6 +1013,6 @@ void widget_popup::def_proc(int msg, int param1, int param2)
     }
 }
 
-void Widget::def_proc(int msg, int param1, int param2)
+void Widget::def_proc(const int msg, const int param1, const int param2, const int key_flags)
 {
 }
