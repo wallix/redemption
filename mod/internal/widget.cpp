@@ -795,7 +795,7 @@ static inline bool switch_focus(Widget * old_focus, Widget * new_focus) {
     return res;
 }
 
-void window::def_proc(const int msg, const int param1, const int param2, const int key_flags)
+void window::def_proc(const int msg, const int param1, const int param2, const int key_flags, const int (& keys)[256])
 {
     if (msg == WM_KEYDOWN) {
 
@@ -816,7 +816,7 @@ void window::def_proc(const int msg, const int param1, const int param2, const i
         case 15:
         { /* tab */
             /* move to next tab stop */
-            int shift = this->mod->keys[42] || this->mod->keys[54];
+            int shift = keys[42] || keys[54];
             // find the next tab_stop
             if (shift) {
                 for (size_t i = (size+i_focus-1) % size ; i != i_focus ; i = (i+size-1) % size) {
@@ -845,13 +845,13 @@ void window::def_proc(const int msg, const int param1, const int param2, const i
         break;
         default:
             if (control_with_focus){
-                control_with_focus->def_proc(msg, param1, param2, key_flags);
+                control_with_focus->def_proc(msg, param1, param2, key_flags, keys);
             }
         }
     }
 }
 
-void widget_edit::def_proc(const int msg, int const param1, int const param2, const int key_flags)
+void widget_edit::def_proc(const int msg, int const param1, int const param2, const int key_flags, const int (& keys)[256])
 {
     wchar_t c;
     int n;
@@ -963,7 +963,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
     }
 }
 
-void widget_combo::def_proc(const int msg, const int param1, const int param2, const int key_flags)
+void widget_combo::def_proc(const int msg, const int param1, const int param2, const int key_flags, const int (& keys)[256])
 {
     int ext;
     int scan_code;
@@ -992,7 +992,7 @@ void widget_combo::def_proc(const int msg, const int param1, const int param2, c
 }
 
 
-void widget_popup::def_proc(const int msg, const int param1, const int param2, const int key_flags)
+void widget_popup::def_proc(const int msg, const int param1, const int param2, const int key_flags, const int (& keys)[256])
 {
     if (msg == WM_MOUSEMOVE) {
         if (this->item_height > 0 && this->popped_from != 0) {
@@ -1013,6 +1013,6 @@ void widget_popup::def_proc(const int msg, const int param1, const int param2, c
     }
 }
 
-void Widget::def_proc(const int msg, const int param1, const int param2, const int key_flags)
+void Widget::def_proc(const int msg, const int param1, const int param2, const int key_flags, const int (& keys)[256])
 {
 }

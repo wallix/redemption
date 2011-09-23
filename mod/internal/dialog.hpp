@@ -214,7 +214,7 @@ struct dialog_mod : public internal_mod {
                 if (b->pointer != this->current_pointer) {
                     this->set_pointer(b->pointer);
                 }
-                b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), this->key_flags);
+                b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), this->key_flags, this->keys);
                 if (this->button_down) {
                     this->button_down->state = (b == this->button_down);
                     this->button_down->Widget_invalidate(this->button_down->rect.wh());
