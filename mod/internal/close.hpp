@@ -207,48 +207,6 @@ struct close_mod : public internal_mod {
         #warning here delete all widgets from this->screen.child_list
     }
 
-    /*****************************************************************************/
-    int clear_popup()
-    {
-        #warning simplify that
-        if (this->popup_wnd != 0) {
-
-            vector<Widget*>::iterator to_erase;
-            for (vector<Widget*>::iterator it = this->screen.child_list.begin()
-                ; it != this->screen.child_list.end()
-                ; it++){
-                if (*it == this->popup_wnd){
-                    to_erase = it;
-                }
-            }
-            this->screen.child_list.erase(to_erase);
-
-            #warning below inlining of bogus invalidate_clip
-            this->server_begin_update();
-            this->screen.draw(this->popup_wnd->rect);
-
-            /* notify */
-            this->screen.notify(this->get_screen_wdg(), WM_PAINT, 0, 0); /* 3 */
-
-            /* draw any child windows in the area */
-            int count = this->screen.child_list.size();
-            for (int i = 0; i < count; i++) {
-                Widget* b = this->screen.child_list.at(i);
-                Rect r2 = this->popup_wnd->rect.intersect(b->rect);
-                if (!r2.isempty()) {
-                    r2 = r2.offset(-(b->rect.x), -(b->rect.y));
-                    b->Widget_invalidate_clip(r2);
-                }
-            }
-
-            this->server_end_update();
-
-            delete this->popup_wnd;
-            this->popup_wnd = 0;
-        }
-        return 0;
-    }
-
     virtual void invalidate(const Rect & rect)
     {
         if (!rect.isempty()) {
@@ -316,36 +274,68 @@ struct close_mod : public internal_mod {
             LOG(LOG_INFO, "button 1 clicked");
             // LBUTTON DOWN
             if (device_flags & MOUSE_FLAG_DOWN){
-                LOG(LOG_INFO, "button down");
-                /* loop on surface widgets on screen to find active window */
-                Widget* wnd = this->get_screen_wdg();
-                for (size_t i = 0; i < wnd->child_list.size(); i++) {
-                    if (wnd->child_list[i]->rect.rect_contains_pt(x, y)) {
-                        wnd = this->screen.child_list[i];
-                        break;
+                if (!this->dragging){
+                    LOG(LOG_INFO, "button down");
+                    /* loop on surface widgets on screen to find active window */
+                    Widget* wnd = this->get_screen_wdg();
+                    for (size_t i = 0; i < wnd->child_list.size(); i++) {
+                        if (wnd->child_list[i]->rect.rect_contains_pt(x, y)) {
+                            wnd = this->screen.child_list[i];
+                            break;
+                        }
                     }
-                }
 
-                /* set focus on window */
-                if (wnd && wnd->type == WND_TYPE_WND) {
-                    wnd->focus();
-                }
+                    /* set focus on window */
+                    if (wnd && wnd->type == WND_TYPE_WND) {
+                        wnd->focus();
+                    }
 
-                Widget * control = wnd->widget_at_pos(x, y);
-                if (control && control->type == WND_TYPE_BUTTON){
-                    control->state = 1;
-                    control->Widget_invalidate(control->rect.wh());
-                    this->closing = true;
-                    this->button_down = control;
+                    Widget * control = wnd->widget_at_pos(x, y);
+                    if (control && control->type == WND_TYPE_BUTTON){
+                        control->state = 1;
+                        control->Widget_invalidate(control->rect.wh());
+                        this->closing = true;
+                        this->button_down = control;
+                    }
+                    else if (control && control->type == WND_TYPE_WND){
+                        /* drag by clicking in title bar and keeping button down */
+                        if (y < (control->rect.y + 21)) {
+                            this->dragging = 1;
+                            this->dragging_window = control;
+
+                            this->draggingdx = x - control->rect.x;
+                            this->draggingdy = y - control->rect.y;
+
+                            this->dragging_rect = Rect(
+                                x - this->draggingdx, y - this->draggingdy,
+                                control->rect.cx, control->rect.cy);
+                            this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
+                        }
+                    }
                 }
             }
             // LBUTTON UP
             else {
-                if (this->button_down && this->closing){
-                    this->button_down->state = 0;
-                    this->button_down->Widget_invalidate(this->button_down->rect.wh());
-                    this->signal = 4;
-                    this->event->set();
+               if (this->dragging) {
+                    /* if done dragging */
+                    /* draw xor box one more time */
+                    this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
+                    /* move dragged window to new location */
+                    Rect r = this->dragging_window->rect;
+                    this->dragging_window->rect.x = this->dragging_rect.x;
+                    this->dragging_window->rect.y = this->dragging_rect.y;
+                    this->dragging_window->Widget_invalidate_clip(r);
+                    this->screen.Widget_invalidate(this->screen.rect.wh());
+                   this->dragging_window = 0;
+                    this->dragging = 0;
+                }
+                else {
+                    if (this->button_down && this->closing){
+                        this->button_down->state = 0;
+                        this->button_down->Widget_invalidate(this->button_down->rect.wh());
+                        this->signal = 4;
+                        this->event->set();
+                    }
                 }
                 this->button_down = 0;
             }
@@ -358,9 +348,7 @@ struct close_mod : public internal_mod {
         if (ki != 0) {
             switch (msg){
             case WM_KEYUP:
-                if (this->popup_wnd != 0) {
-                    this->clear_popup();
-                } else if (this->close_window->has_focus) {
+                if (this->close_window->has_focus) {
                     this->close_window->def_proc(msg, param1, param3, key_flags, keys);
                     this->signal = 4;
                     this->event->set();
@@ -369,9 +357,7 @@ struct close_mod : public internal_mod {
                 }
             break;
             case WM_KEYDOWN:
-                if (this->popup_wnd != 0) {
-                    this->clear_popup();
-                } else if (this->close_window->has_focus) {
+                if (this->close_window->has_focus) {
                     this->close_window->def_proc(msg, param1, param3, key_flags, keys);
                 }
             break;
