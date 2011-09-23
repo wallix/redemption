@@ -435,51 +435,139 @@ struct mod_vnc : public client_mod {
         delete this->t;
     }
 
+    #warning optimize this, much duplicated code and several send at once when not necessary
     virtual void rdp_input_mouse(int device_flags, int x, int y)
     {
-        LOG(LOG_INFO, "input mouse");
+        Stream stream(8192);
 
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
-            this->input_event(WM_MOUSEMOVE, x, y, 0, 0, this->key_flags, this->keys);
+            stream.init(8192);
+            stream.out_uint8(5);
+            stream.out_uint8(this->mod_mouse_state);
+            stream.out_uint16_be(x);
+            stream.out_uint16_be(y);
+            this->t->send((char*)stream.data, 6);
+            #warning this should not be here!!! Move it to front
             this->front.mouse_x = x;
             this->front.mouse_y = y;
-
         }
         if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
-            this->input_event(
-                WM_LBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0, this->key_flags, this->keys);
+            if (device_flags & MOUSE_FLAG_DOWN){
+                stream.init(8192);
+                this->mod_mouse_state |= 1; // set bit 0
+                stream.out_uint8(5);
+                stream.out_uint8(this->mod_mouse_state);
+                stream.out_uint16_be(x);
+                stream.out_uint16_be(y);
+                this->t->send((char*)stream.data, 6);
+            }
+            else {
+                stream.init(8192);
+                this->mod_mouse_state &= ~1; // clear bit 0
+                stream.out_uint8(5);
+                stream.out_uint8(this->mod_mouse_state);
+                stream.out_uint16_be(x);
+                stream.out_uint16_be(y);
+                this->t->send((char*)stream.data, 6);
+            }
         }
         if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
-            this->input_event(
-                WM_RBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0, this->key_flags, this->keys);
+            if (device_flags & MOUSE_FLAG_DOWN){
+                stream.init(8192);
+                this->mod_mouse_state |= 4; // set bit 0
+                stream.out_uint8(5);
+                stream.out_uint8(this->mod_mouse_state);
+                stream.out_uint16_be(x);
+                stream.out_uint16_be(y);
+                this->t->send((char*)stream.data, 6);
+            }
+            else {
+                stream.init(8192);
+                this->mod_mouse_state &= ~4; // clear bit 0
+                stream.out_uint8(5);
+                stream.out_uint8(this->mod_mouse_state);
+                stream.out_uint16_be(x);
+                stream.out_uint16_be(y);
+                this->t->send((char*)stream.data, 6);
+            }
         }
         if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
-            this->input_event(
-                WM_BUTTON3UP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0, this->key_flags, this->keys);
+            if (device_flags & MOUSE_FLAG_DOWN){
+                stream.init(8192);
+                this->mod_mouse_state |= 2; // set bit 0
+                stream.out_uint8(5);
+                stream.out_uint8(this->mod_mouse_state);
+                stream.out_uint16_be(x);
+                stream.out_uint16_be(y);
+                this->t->send((char*)stream.data, 6);
+            }
+            else {
+                stream.init(8192);
+                this->mod_mouse_state &= ~2; // clear bit 0
+                stream.out_uint8(5);
+                stream.out_uint8(this->mod_mouse_state);
+                stream.out_uint16_be(x);
+                stream.out_uint16_be(y);
+                this->t->send((char*)stream.data, 6);
+            }
         }
-        if (device_flags == MOUSE_FLAG_BUTTON4 || /* 0x0280 */ device_flags == 0x0278) {
-            this->input_event(WM_BUTTON4DOWN, x, y, 0, 0, this->key_flags, this->keys);
-            this->input_event(WM_BUTTON4UP, x, y, 0, 0, this->key_flags, this->keys);
+
+        // Wheel buttons
+        if (device_flags == MOUSE_FLAG_BUTTON4 /* 0x0280 */
+        ||  device_flags == 0x0278) {
+            // DOWN
+            stream.init(8192);
+            this->mod_mouse_state |= 8; // set bit 3
+            stream.out_uint8(5);
+            stream.out_uint8(this->mod_mouse_state);
+            stream.out_uint16_be(x);
+            stream.out_uint16_be(y);
+            this->t->send((char*)stream.data, 6);
+            // UP
+            stream.init(8192);
+            this->mod_mouse_state &= ~8; // clear bit 3
+            stream.out_uint8(5);
+            stream.out_uint8(this->mod_mouse_state);
+            stream.out_uint16_be(x);
+            stream.out_uint16_be(y);
+            this->t->send((char*)stream.data, 6);
         }
-        if (device_flags == MOUSE_FLAG_BUTTON5 || /* 0x0380 */ device_flags == 0x0388) {
-            this->input_event(WM_BUTTON5DOWN, x, y, 0, 0, this->key_flags, this->keys);
-            this->input_event(WM_BUTTON5UP, x, y, 0, 0, this->key_flags, this->keys);
+        if (device_flags == MOUSE_FLAG_BUTTON5 /* 0x0380 */
+        ||  device_flags == 0x0388) {
+            // DOWN
+            this->mod_mouse_state |= 16; // set bit 4
+            stream.out_uint8(5);
+            stream.out_uint8(this->mod_mouse_state);
+            stream.out_uint16_be(x);
+            stream.out_uint16_be(y);
+            this->t->send((char*)stream.data, 6);
+            // UP
+            stream.init(8192);
+            this->mod_mouse_state &= ~16; // clear bit 4
+            stream.out_uint8(5);
+            stream.out_uint8(this->mod_mouse_state);
+            stream.out_uint16_be(x);
+            stream.out_uint16_be(y);
+            this->t->send((char*)stream.data, 6);
         }
     }
 
     virtual void rdp_input_scancode(int msg, long param1, long param2, long param3, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
-        LOG(LOG_INFO, "scan code");
-        if (ki != 0) {
-            this->input_event(msg, ki->chr, ki->sym, param1, param3, key_flags, keys);
+        if (ki) {
+            int key = ki->sym;
+            if (key > 0) {
+                Stream stream(8192);
+                stream.out_uint8(4);
+                stream.out_uint8(msg == WM_KEYDOWN); /* down/up flag */
+                stream.out_clear_bytes(2);
+                stream.out_uint32_be(key);
+                this->t->send((char*)stream.data, 8);
+            }
         }
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     {
-        LOG(LOG_INFO, "overloaded by subclasses");
         return;
     }
 
@@ -487,155 +575,16 @@ struct mod_vnc : public client_mod {
     {
         LOG(LOG_INFO, "invalidate");
         if (!r.isempty()) {
-            this->input_event(WM_INVALIDATE,
-                ((r.x & 0xffff) << 16) | (r.y & 0xffff),
-                ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
-                0, 0, this->key_flags, this->keys);
-        }
-    }
-
-    int input_event(const int msg, const long param1, const long param2, const long param3, const long param4, const int key_flags, const int (& keys)[256])
-    {
-        int error = 0;
-        Stream stream(8192);
-        switch (msg){
-        case WM_KEYDOWN:
-        { /* key events */
-            int key = param2;
-            if (key > 0) {
-                stream.out_uint8(4);
-                stream.out_uint8(1); /* down flag */
-                stream.out_clear_bytes(2);
-                stream.out_uint32_be(key);
-                this->t->send((char*)stream.data, 8);
-            }
-        }
-        break;
-        case WM_KEYUP:
-        { /* key events */
-            int key = param2;
-            if (key > 0) {
-                stream.out_uint8(4);
-                stream.out_uint8(0); /* down flag */
-                stream.out_clear_bytes(2);
-                stream.out_uint32_be(key);
-                this->t->send((char*)stream.data, 8);
-            }
-        }
-        break;
-        case WM_MOUSEMOVE:
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(param1);
-            stream.out_uint16_be(param2);
-            this->t->send((char*)stream.data, 6);
-        break;
-        case WM_LBUTTONUP:
-            this->mod_mouse_state &= ~1; // clear bit 0
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(param1);
-            stream.out_uint16_be(param2);
-            this->t->send((char*)stream.data, 6);
-        break;
-        case WM_LBUTTONDOWN:
-            this->mod_mouse_state |= 1; // set bit 0
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(param1);
-            stream.out_uint16_be(param2);
-            this->t->send((char*)stream.data, 6);
-        break;
-        case WM_RBUTTONUP:
-            this->mod_mouse_state &= ~4; // clear bit 2
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(param1);
-            stream.out_uint16_be(param2);
-            this->t->send((char*)stream.data, 6);
-        break;
-        case WM_RBUTTONDOWN:
-            this->mod_mouse_state |= 4; // set bit 2
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(param1);
-            stream.out_uint16_be(param2);
-            this->t->send((char*)stream.data, 6);
-        break;
-        case WM_BUTTON3UP:
-            this->mod_mouse_state &= ~2; // clear bit 1
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(param1);
-            stream.out_uint16_be(param2);
-            this->t->send((char*)stream.data, 6);
-        break;
-        case WM_BUTTON3DOWN:
-            this->mod_mouse_state |= 2; // set bit 1
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(param1);
-            stream.out_uint16_be(param2);
-            this->t->send((char*)stream.data, 6);
-        break;
-        case WM_BUTTON4UP:
-            this->mod_mouse_state &= ~8; // clear bit 3
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(param1);
-            stream.out_uint16_be(param2);
-            this->t->send((char*)stream.data, 6);
-        break;
-        case WM_BUTTON4DOWN:
-            this->mod_mouse_state |= 8; // set bit 3
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(param1);
-            stream.out_uint16_be(param2);
-            this->t->send((char*)stream.data, 6);
-            break;
-        break;
-        case WM_BUTTON5UP:
-            this->mod_mouse_state &= ~16; // clear bit 4
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(param1);
-            stream.out_uint16_be(param2);
-            this->t->send((char*)stream.data, 6);
-        break;
-        case WM_BUTTON5DOWN:
-            this->mod_mouse_state |= 16; // set bit 4
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(param1);
-            stream.out_uint16_be(param2);
-            this->t->send((char*)stream.data, 6);
-        break;
-        case WM_INVALIDATE:
-        { /* invalidate */
-
+            Stream stream(8192);
             /* FrambufferUpdateRequest */
             stream.out_uint8(3);
             stream.out_uint8(0);
-            int x = (param1 >> 16) & 0xffff;
-            stream.out_uint16_be(x);
-            int y = param1 & 0xffff;
-            stream.out_uint16_be(y);
-            int cx = (param2 >> 16) & 0xffff;
-            stream.out_uint16_be(cx);
-            int cy = param2 & 0xffff;
-            stream.out_uint16_be(cy);
-
+            stream.out_uint16_be(r.x);
+            stream.out_uint16_be(r.y);
+            stream.out_uint16_be(r.cx);
+            stream.out_uint16_be(r.cy);
             this->t->send((char*)stream.data, 10);
         }
-        break;
-        case WM_SYNCHRONIZE:
-            break;
-        default:
-            LOG(LOG_WARNING, "unexpected message %d\n", msg);
-            break;
-        }
-        return error;
     }
 
     virtual int draw_event(void)
