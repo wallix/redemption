@@ -58,10 +58,6 @@ struct transitory_mod : public client_mod {
         return 1;
     }
 
-    virtual void scancode(long param1, long param2, long device_flags, long time){
-    }
-
-
 };
 
 #endif

@@ -1853,10 +1853,40 @@ public:
                         cb.rdp_input_synchronize(time, device_flags, param1, param2);
                         break;
                     case RDP_INPUT_SCANCODE:
-                        cb.scancode(param1, param2, device_flags, time);
+                        {
+                            long p1 = param1 % 128;
+                            int msg = WM_KEYUP;
+                            this->keys[p1] = 1 | device_flags;
+                            if ((device_flags & KBD_FLAG_UP) == 0) { /* 0x8000 */
+                                /* key down */
+                                msg = WM_KEYDOWN;
+                                switch (p1) {
+                                case 58:
+                                    this->key_flags ^= 4;
+                                    break; /* caps lock */
+                                case 69:
+                                    this->key_flags ^= 2;
+                                    break; /* num lock */
+                                case 70:
+                                    this->key_flags ^= 1;
+                                    break; /* scroll lock */
+                                default:
+                                    ;
+                                }
+                            }
+                            struct key_info* ki = this->keymap->get_key_info_from_scan_code(
+                                device_flags,
+                                param1,
+                                this->keys,
+                                this->key_flags);
+                            cb.rdp_input_scancode(msg, param1, param2, device_flags, time, this->key_flags, this->keys, ki);
+                            if (msg == WM_KEYUP){
+                                this->keys[p1] = 0;
+                            }
+                        }
                         break;
                     case RDP_INPUT_MOUSE:
-                        cb.input_mouse(device_flags, param1, param2);
+                        cb.rdp_input_mouse(device_flags, param1, param2);
                         break;
                     default:
                         LOG(LOG_INFO, "unsupported PDUTYPE2_INPUT msg %u", msg_type);

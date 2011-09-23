@@ -621,7 +621,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
         {
             case MCTX_STATUS_CLI:
             {
-                #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of input_event.
                 this->back_event = new wait_obj(-1);
                 this->mod = new cli_mod(this->keys, this->key_flags, this->keymap, *this->context, *(this->front));
                 this->back_event->set();
@@ -631,7 +630,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 
             case MCTX_STATUS_TRANSITORY:
             {
-                #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of input_event.
                 this->back_event = new wait_obj(-1);
                 this->mod = new transitory_mod(this->keys, this->key_flags, this->keymap, *this->context, *(this->front));
                 // Transitory finish immediately
@@ -642,7 +640,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 
             case MCTX_STATUS_LOGIN:
             {
-                #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of input_event.
                 this->back_event = new wait_obj(-1);
                 this->mod = new login_mod(this->back_event, this->keys, this->key_flags, this->keymap,  *this->context, *(this->front), this->ini);
 
@@ -670,7 +667,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                     button = this->context->get(STRAUTHID_TRANS_BUTTON_REFUSED);
                 }
 
-                #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of input_event.
                 this->back_event = new wait_obj(-1);
                 this->mod = new dialog_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), message, button, this->ini);
                 // force a WM_INVALIDATE on all screen
@@ -679,7 +675,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 Inifile ini(CFG_PATH "/" RDPPROXY_INI);
                 if (htons(ini.globals.autovalidate)) {
                     LOG(LOG_INFO, "dialog autovalidated");
-                    this->mod->input_event(WM_KEYUP, 0, 0, 28, 0, this->key_flags, this->keys);
+                    #warning : find a better way
                 }
             }
             break;
@@ -689,7 +685,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 if (this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                     this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection to server failed");
                 }
-                #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of input_event.
                 this->back_event = new wait_obj(-1);
                 this->mod = new close_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *this->front, this->ini);
 
@@ -731,7 +726,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 
             case MCTX_STATUS_INTERNAL:
             {
-                #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of input_event.
                 this->back_event = new wait_obj(-1);
 
                 {
@@ -775,7 +769,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 
             case MCTX_STATUS_XUP:
             {
-                #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of input_event.
                 SocketTransport * t = new SocketTransport(
                                             connect(this->context->get(STRAUTHID_TARGET_DEVICE),
                                             atoi(this->context->get(STRAUTHID_TARGET_PORT)),
@@ -797,7 +790,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                     memcpy(hostname, this->front->get_client_info().hostname, 31);
                     hostname[31] = 0;
                 }
-                #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of input_event.
                 SocketTransport * t = new SocketTransport(
                                         connect(this->context->get(STRAUTHID_TARGET_DEVICE),
                                             atoi(this->context->get(STRAUTHID_TARGET_PORT))));
@@ -821,7 +813,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
 
             case MCTX_STATUS_VNC:
             {
-                #warning I should create some kind of transport factory that could open socket or provide data if in test and desallocate it when exiting module. It should also manage the kind of input_event.
                 SocketTransport *t = new SocketTransport(
                     connect(this->context->get(STRAUTHID_TARGET_DEVICE), atoi(this->context->get(STRAUTHID_TARGET_PORT))));
                 this->back_event = new wait_obj(t->sck);
@@ -842,7 +833,8 @@ bool Session::session_setup_mod(int status, const ModContext * context)
     };
 
     /* sync modifiers */
-    this->mod->input_event(RDP_INPUT_SYNCHRONIZE, this->key_flags, 0, this->key_flags, 0, this->key_flags, this->keys);
+    this->key_flags = 0;
+    this->mod->rdp_input_synchronize(0, 0, 0, 0);
 
     return true;
 }

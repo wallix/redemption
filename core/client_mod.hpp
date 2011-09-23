@@ -208,7 +208,12 @@ struct client_mod : public Callback {
     // and returns 0 as long as the connection with server is still active.
     virtual int draw_event(void) = 0;
 
-    virtual void scancode(long param1, long param2, long param3, long param4) = 0;
+    virtual void rdp_input_scancode(int msg, long param1, long param2, long param3, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
+        LOG(LOG_INFO, "scan code");
+        if (ki != 0) {
+            this->input_event(msg, ki->chr, ki->sym, param1, param3, key_flags, keys);
+        }
+    }
 
     int server_begin_update() {
         this->front.begin_update();
@@ -668,6 +673,7 @@ struct client_mod : public Callback {
 
     virtual void invalidate(const Rect & r)
     {
+        LOG(LOG_INFO, "invalidate");
         if (!r.isempty()) {
             this->input_event(WM_INVALIDATE,
                 ((r.x & 0xffff) << 16) | (r.y & 0xffff),
@@ -727,8 +733,10 @@ struct client_mod : public Callback {
     }
 
 
-    virtual int input_mouse(int device_flags, int x, int y)
+    virtual void rdp_input_mouse(int device_flags, int x, int y)
     {
+        LOG(LOG_INFO, "input mouse");
+
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
             this->input_event(WM_MOUSEMOVE, x, y, 0, 0, this->key_flags, this->keys);
             this->front.mouse_x = x;
@@ -758,7 +766,6 @@ struct client_mod : public Callback {
             this->input_event(WM_BUTTON5DOWN, x, y, 0, 0, this->key_flags, this->keys);
             this->input_event(WM_BUTTON5UP, x, y, 0, 0, this->key_flags, this->keys);
         }
-        return 0;
     }
 
 };

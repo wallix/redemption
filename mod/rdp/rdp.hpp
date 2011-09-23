@@ -598,102 +598,52 @@ struct mod_rdp : public client_mod {
         delete this->trans;
     }
 
-    virtual void scancode(long param1, long param2, long device_flags, long time){
-        long p1 = param1 % 128;
-        int msg = WM_KEYUP;
-        this->keys[p1] = 1 | device_flags;
-        if ((device_flags & KBD_FLAG_UP) == 0) { /* 0x8000 */
-            /* key down */
-            msg = WM_KEYDOWN;
-            switch (p1) {
-            case 58:
-                this->key_flags ^= 4;
-                break; /* caps lock */
-            case 69:
-                this->key_flags ^= 2;
-                break; /* num lock */
-            case 70:
-                this->key_flags ^= 1;
-                break; /* scroll lock */
-            default:
-                ;
-            }
-        }
+    virtual void rdp_input_scancode(int msg, long param1, long param2, long device_flags, long time, const int key_flags, const int (& keys)[256], struct key_info* ki){
         if (this->up_and_running) {
 //            LOG(LOG_INFO, "Direct parameter transmission \n");
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
-        }
-        if (msg == WM_KEYUP){
-            this->keys[p1] = 0;
         }
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     {
-        if (!this->up_and_running) {
-            LOG(LOG_INFO, "Not up and running\n");
-            return;
+        if (this->up_and_running) {
+            this->send_input(0, RDP_INPUT_SYNCHRONIZE, device_flags, param1, 0);
         }
-        this->send_input(0, RDP_INPUT_SYNCHRONIZE, device_flags, param1, 0);
     }
 
+    virtual void rdp_input_mouse(int device_flags, int x, int y)
+    {
+        if (this->up_and_running) {
+            if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
+                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_MOVE, x, y);
+                this->front.mouse_x = x;
+                this->front.mouse_y = y;
+            }
+            if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
+                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON1 | (device_flags & MOUSE_FLAG_DOWN), x, y);
+            }
+            if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
+                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON2 | (device_flags & MOUSE_FLAG_DOWN), x, y);
+            }
+            if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
+                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON3 | (device_flags & MOUSE_FLAG_DOWN), x, y);
+            }
+            if (device_flags == MOUSE_FLAG_BUTTON4 || /* 0x0280 */ device_flags == 0x0278) {
+                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4 | MOUSE_FLAG_DOWN, x, y);
+                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4, x, y);
+            }
+            if (device_flags == MOUSE_FLAG_BUTTON5 || /* 0x0380 */ device_flags == 0x0388) {
+                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5 | MOUSE_FLAG_DOWN, x, y);
+                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5, x, y);
+            }
+        }
+    }
 
+    #warning this function should be removed soon
     virtual int input_event(const int msg, const long param1, const long param2, const long param3, const long param4, const int key_flags, const int (& keys)[256])
     {
-        try{
-            if (!this->up_and_running) {
-                LOG(LOG_INFO, "Not up and running\n");
-                return 0;
-            }
-            Stream stream = Stream(8192 * 2);
-            switch (msg) {
-            case WM_SYNCHRONIZE:
-                this->send_input(0, RDP_INPUT_SYNCHRONIZE, param4, param3, 0);
-                break;
-            case WM_MOUSEMOVE:
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_MOVE, param1, param2);
-                break;
-            case WM_LBUTTONUP:
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON1, param1, param2);
-                break;
-            case WM_LBUTTONDOWN:
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, param1, param2);
-                break;
-            case WM_RBUTTONUP:
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON2, param1, param2);
-                break;
-            case WM_RBUTTONDOWN:
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON2 | MOUSE_FLAG_DOWN, param1, param2);
-                break;
-            case WM_BUTTON3UP:
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON3, param1, param2);
-                break;
-            case WM_BUTTON3DOWN:
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON3 | MOUSE_FLAG_DOWN, param1, param2);
-                break;
-            case WM_BUTTON4UP:
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4, param1, param2);
-                break;
-            case WM_BUTTON4DOWN:
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON4 | MOUSE_FLAG_DOWN, param1, param2);
-                break;
-            case WM_BUTTON5UP:
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5, param1, param2);
-                break;
-            case WM_BUTTON5DOWN:
-                this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON5 | MOUSE_FLAG_DOWN, param1, param2);
-                break;
-            case WM_INVALIDATE:
-                this->send_invalidate(stream, (param1 >> 16) & 0xffff, param1 & 0xffff,(param2 >> 16) & 0xffff, param2 & 0xffff);
-                break;
-            default:
-                break;
-            }
-        }
-        catch(Error){
-            return 0;
-        }
-        return 0;
+        exit(0);
     }
 
     virtual void send_to_mod_channel(
@@ -2174,28 +2124,31 @@ struct mod_rdp : public client_mod {
             tpdu.send(this->trans);
         }
 
-        void send_invalidate(Stream & stream,int left, int top, int width, int height) throw(Error)
+        virtual void invalidate(const Rect & r)
         {
-            LOG(LOG_INFO, "send_invalidate\n");
-            stream.init(8192);
-            X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
-            ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-            ShareDataOut rdp_data_out(stream, PDUTYPE2_REFRESH_RECT, this->share_id);
+            LOG(LOG_INFO, "invalidate");
+            if (!r.isempty()){
+                Stream stream(8192);
+                X224Out tpdu(X224Packet::DT_TPDU, stream);
+                McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
+                SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
+                ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
+                ShareDataOut rdp_data_out(stream, PDUTYPE2_REFRESH_RECT, this->share_id);
 
-            stream.out_uint32_le(1);
-            stream.out_uint16_le(left);
-            stream.out_uint16_le(top);
-            stream.out_uint16_le((left + width) - 1);
-            stream.out_uint16_le((top + height) - 1);
+                stream.out_uint32_le(1);
+                stream.out_uint16_le(r.x);
+                stream.out_uint16_le(r.y);
+                #warning check this -1 (difference between rect and clip)
+                stream.out_uint16_le(r.cx - 1);
+                stream.out_uint16_le(r.cy - 1);
 
-            rdp_data_out.end();
-            rdp_control_out.end();
-            sec_out.end();
-            sdrq_out.end();
-            tpdu.end();
-            tpdu.send(this->trans);
+                rdp_data_out.end();
+                rdp_control_out.end();
+                sec_out.end();
+                sdrq_out.end();
+                tpdu.end();
+                tpdu.send(this->trans);
+            }
         }
 
     void process_color_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
