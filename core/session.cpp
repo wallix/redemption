@@ -144,11 +144,10 @@ Session::Session(int sck, const char * ip_source, Inifile * ini) {
 
     /* keyboard info */
     memset(this->keys, 0, 256 * sizeof(int)); /* key states 0 up 1 down*/
-    #warning we should be able to move all key management code to some object
     // scrool_lock = 1, num_lock = 2, caps_lock = 4
     this->key_flags = 0;
 
-    this->front = new Front(this->trans, ini);
+    this->front = new Front(this->trans, ini, this->keys, this->key_flags, this->keymap);
     this->no_mod = new null_mod(this->keys, this->key_flags, this->keymap, *this->context, *(this->front));
     this->mod = this->no_mod;
 
