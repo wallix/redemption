@@ -615,6 +615,7 @@ struct mod_rdp : public client_mod {
     virtual void rdp_input_mouse(int device_flags, int x, int y)
     {
         if (this->up_and_running) {
+            #warning is decoding and reencoding really necessary, a simple pass-through from front to back-end should be enough
             if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
                 this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_MOVE, x, y);
                 this->front.mouse_x = x;
@@ -641,7 +642,7 @@ struct mod_rdp : public client_mod {
     }
 
     #warning this function should be removed soon
-    virtual int input_event(const int msg, const long param1, const long param2, const long param3, const long param4, const int key_flags, const int (& keys)[256])
+    int input_event(const int msg, const long param1, const long param2, const long param3, const long param4, const int key_flags, const int (& keys)[256])
     {
         exit(0);
     }

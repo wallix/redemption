@@ -198,22 +198,12 @@ struct client_mod : public Callback {
         }
     }
 
-    /* client functions */
-    virtual int input_event(const int msg, const long x, const long y, const long param4, const long param5, const int key_flags, const int (& keys)[256]) = 0;
-
     // draw_event should be run when client socket received some data (input_event is set)
     // In other words: when some data came from "server" and should be taken care of
     // draw_event returns not 0 (return status) when the module finished
     // (connection to remote or internal server closed)
     // and returns 0 as long as the connection with server is still active.
     virtual int draw_event(void) = 0;
-
-    virtual void rdp_input_scancode(int msg, long param1, long param2, long param3, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
-        LOG(LOG_INFO, "scan code");
-        if (ki != 0) {
-            this->input_event(msg, ki->chr, ki->sym, param1, param3, key_flags, keys);
-        }
-    }
 
     int server_begin_update() {
         this->front.begin_update();
@@ -671,17 +661,6 @@ struct client_mod : public Callback {
         }
     }
 
-    virtual void invalidate(const Rect & r)
-    {
-        LOG(LOG_INFO, "invalidate");
-        if (!r.isempty()) {
-            this->input_event(WM_INVALIDATE,
-                ((r.x & 0xffff) << 16) | (r.y & 0xffff),
-                ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
-                0, 0, this->key_flags, this->keys);
-        }
-    }
-
     int server_is_term()
     {
         return g_is_term();
@@ -726,47 +705,66 @@ struct client_mod : public Callback {
         this->pointer_displayed = true;
     }
 
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
-    {
-        LOG(LOG_INFO, "overloaded by subclasses");
-        return;
-    }
+    virtual void invalidate(const Rect & r) = 0;
+//    {
+//        LOG(LOG_INFO, "invalidate");
+//        if (!r.isempty()) {
+//            this->input_event(WM_INVALIDATE,
+//                ((r.x & 0xffff) << 16) | (r.y & 0xffff),
+//                ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
+//                0, 0, this->key_flags, this->keys);
+//        }
+//    }
 
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y)
-    {
-        LOG(LOG_INFO, "input mouse");
+    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
+//    {
+//        LOG(LOG_INFO, "overloaded by subclasses");
+//        return;
+//    }
 
-        if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
-            this->input_event(WM_MOUSEMOVE, x, y, 0, 0, this->key_flags, this->keys);
-            this->front.mouse_x = x;
-            this->front.mouse_y = y;
+    virtual void rdp_input_scancode(int msg, long param1, long param2, long param3, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki) = 0;
+//    {
+//        LOG(LOG_INFO, "scan code");
+//        if (ki != 0) {
+//            this->input_event(msg, ki->chr, ki->sym, param1, param3, key_flags, keys);
+//        }
+//    }
 
-        }
-        if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
-            this->input_event(
-                WM_LBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0, this->key_flags, this->keys);
-        }
-        if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
-            this->input_event(
-                WM_RBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0, this->key_flags, this->keys);
-        }
-        if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
-            this->input_event(
-                WM_BUTTON3UP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0, this->key_flags, this->keys);
-        }
-        if (device_flags == MOUSE_FLAG_BUTTON4 || /* 0x0280 */ device_flags == 0x0278) {
-            this->input_event(WM_BUTTON4DOWN, x, y, 0, 0, this->key_flags, this->keys);
-            this->input_event(WM_BUTTON4UP, x, y, 0, 0, this->key_flags, this->keys);
-        }
-        if (device_flags == MOUSE_FLAG_BUTTON5 || /* 0x0380 */ device_flags == 0x0388) {
-            this->input_event(WM_BUTTON5DOWN, x, y, 0, 0, this->key_flags, this->keys);
-            this->input_event(WM_BUTTON5UP, x, y, 0, 0, this->key_flags, this->keys);
-        }
-    }
+    virtual void rdp_input_mouse(int device_flags, int x, int y) = 0;
+//    {
+//        LOG(LOG_INFO, "input mouse");
+
+//        if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
+//            this->input_event(WM_MOUSEMOVE, x, y, 0, 0, this->key_flags, this->keys);
+//            this->front.mouse_x = x;
+//            this->front.mouse_y = y;
+
+//        }
+//        if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
+//            this->input_event(
+//                WM_LBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
+//                x, y, 0, 0, this->key_flags, this->keys);
+//        }
+//        if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
+//            this->input_event(
+//                WM_RBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
+//                x, y, 0, 0, this->key_flags, this->keys);
+//        }
+//        if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
+//            this->input_event(
+//                WM_BUTTON3UP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
+//                x, y, 0, 0, this->key_flags, this->keys);
+//        }
+//        if (device_flags == MOUSE_FLAG_BUTTON4 || /* 0x0280 */ device_flags == 0x0278) {
+//            this->input_event(WM_BUTTON4DOWN, x, y, 0, 0, this->key_flags, this->keys);
+//            this->input_event(WM_BUTTON4UP, x, y, 0, 0, this->key_flags, this->keys);
+//        }
+//        if (device_flags == MOUSE_FLAG_BUTTON5 || /* 0x0380 */ device_flags == 0x0388) {
+//            this->input_event(WM_BUTTON5DOWN, x, y, 0, 0, this->key_flags, this->keys);
+//            this->input_event(WM_BUTTON5UP, x, y, 0, 0, this->key_flags, this->keys);
+//        }
+//    }
 
 };
 
