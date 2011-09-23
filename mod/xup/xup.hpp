@@ -89,7 +89,7 @@ struct xup_mod : public client_mod {
         LOG(LOG_INFO, "input mouse");
 
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
-            this->input_event(WM_MOUSEMOVE, x, y, 0, 0, this->key_flags, this->keys);
+            this->input_event(WM_MOUSEMOVE, x, y, 0, 0);
             this->front.mouse_x = x;
             this->front.mouse_y = y;
 
@@ -97,32 +97,32 @@ struct xup_mod : public client_mod {
         if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
             this->input_event(
                 WM_LBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0, this->key_flags, this->keys);
+                x, y, 0, 0);
         }
         if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
             this->input_event(
                 WM_RBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0, this->key_flags, this->keys);
+                x, y, 0, 0);
         }
         if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
             this->input_event(
                 WM_BUTTON3UP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0, this->key_flags, this->keys);
+                x, y, 0, 0);
         }
         if (device_flags == MOUSE_FLAG_BUTTON4 || /* 0x0280 */ device_flags == 0x0278) {
-            this->input_event(WM_BUTTON4DOWN, x, y, 0, 0, this->key_flags, this->keys);
-            this->input_event(WM_BUTTON4UP, x, y, 0, 0, this->key_flags, this->keys);
+            this->input_event(WM_BUTTON4DOWN, x, y, 0, 0);
+            this->input_event(WM_BUTTON4UP, x, y, 0, 0);
         }
         if (device_flags == MOUSE_FLAG_BUTTON5 || /* 0x0380 */ device_flags == 0x0388) {
-            this->input_event(WM_BUTTON5DOWN, x, y, 0, 0, this->key_flags, this->keys);
-            this->input_event(WM_BUTTON5UP, x, y, 0, 0, this->key_flags, this->keys);
+            this->input_event(WM_BUTTON5DOWN, x, y, 0, 0);
+            this->input_event(WM_BUTTON5UP, x, y, 0, 0);
         }
     }
 
     virtual void rdp_input_scancode(int msg, long param1, long param2, long param3, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
         LOG(LOG_INFO, "scan code");
         if (ki != 0) {
-            this->input_event(msg, ki->chr, ki->sym, param1, param3, key_flags, keys);
+            this->input_event(msg, ki->chr, ki->sym, param1, param3);
         }
     }
 
@@ -139,33 +139,23 @@ struct xup_mod : public client_mod {
             this->input_event(WM_INVALIDATE,
                 ((r.x & 0xffff) << 16) | (r.y & 0xffff),
                 ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
-                0, 0, this->key_flags, this->keys);
+                0, 0);
         }
     }
 
-    int input_event(const int msg, const long param1, const long param2, const long param3, const long param4, const int key_flags, const int (& keys)[256])
+    void input_event(const int msg, const long param1, const long param2, const long param3, const long param4)
     {
-        int rv = 0;
         Stream stream(8192);
-        uint8_t * hdr = stream.p;
-        stream.p += 4;
+        stream.out_uint32_le(0); // skip yet unknown len
         stream.out_uint16_le(103);
         stream.out_uint32_le(msg);
         stream.out_uint32_le(param1);
         stream.out_uint32_le(param2);
         stream.out_uint32_le(param3);
         stream.out_uint32_le(param4);
-        stream.mark_end();
-        int len = (int)(stream.end - stream.data);
-        stream.p = hdr;
-        stream.out_uint32_le(len);
-        try{
-            this->t->send((char*)stream.data, 8);
-        }
-        catch(...){
-            rv = 1;
-        }
-        return rv;
+        uint32_t len = stream.p - stream.data;
+        stream.set_out_uint32_le(len, 0);
+        this->t->send((char*)stream.data, len);
     }
 
     virtual int draw_event(void)
