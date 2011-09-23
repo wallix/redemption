@@ -362,6 +362,10 @@ struct GraphicsUpdatePDU
 #warning front is becoming an empty shell and should disappear soon
 class Front {
 public:
+    int (& keys)[256];
+    int & key_flags;
+    Keymap * &keymap;
+
     Cache cache;
     struct BitmapCache *bmp_cache;
     struct Font font;
@@ -389,7 +393,10 @@ public:
 
 public:
 
-    Front(SocketTransport * trans, Inifile * ini) :
+    Front(SocketTransport * trans, Inifile * ini, int (& keys)[256], int & key_flags, Keymap * &keymap) :
+        keys(keys),
+        key_flags(key_flags),
+        keymap(keymap),
         cache(),
         bmp_cache(0),
         font(SHARE_PATH "/" DEFAULT_FONT_NAME),
