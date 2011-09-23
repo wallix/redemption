@@ -251,7 +251,7 @@ struct close_mod : public internal_mod {
 
     #warning unify close login and dialog and move to internal_mod
     // module received an event from client
-    virtual int input_event(const int msg, const long x, const long y, const long param4, const long param5, const int key_flags, const int (& keys)[256])
+    int input_event(const int msg, const long x, const long y, const long param4, const long param5, const int key_flags, const int (& keys)[256])
     {
         switch (msg){
         case WM_KEYUP:

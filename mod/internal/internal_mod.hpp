@@ -99,6 +99,10 @@ struct internal_mod : public client_mod {
         return this->screen.child_list[i];
     }
 
+    widget_screen * get_screen_wdg(){
+        return &(this->screen);
+    }
+
     virtual void invalidate(const Rect & rect)
     {
         if (!rect.isempty()) {
@@ -121,12 +125,55 @@ struct internal_mod : public client_mod {
         }
     }
 
-    widget_screen * get_screen_wdg(){
-        return &(this->screen);
+    virtual void rdp_input_mouse(int device_flags, int x, int y)
+    {
+        LOG(LOG_INFO, "input mouse");
+
+        if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
+            this->input_event(WM_MOUSEMOVE, x, y, 0, 0, this->key_flags, this->keys);
+            this->front.mouse_x = x;
+            this->front.mouse_y = y;
+
+        }
+        if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
+            this->input_event(
+                WM_LBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
+                x, y, 0, 0, this->key_flags, this->keys);
+        }
+        if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
+            this->input_event(
+                WM_RBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
+                x, y, 0, 0, this->key_flags, this->keys);
+        }
+        if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
+            this->input_event(
+                WM_BUTTON3UP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
+                x, y, 0, 0, this->key_flags, this->keys);
+        }
+        if (device_flags == MOUSE_FLAG_BUTTON4 || /* 0x0280 */ device_flags == 0x0278) {
+            this->input_event(WM_BUTTON4DOWN, x, y, 0, 0, this->key_flags, this->keys);
+            this->input_event(WM_BUTTON4UP, x, y, 0, 0, this->key_flags, this->keys);
+        }
+        if (device_flags == MOUSE_FLAG_BUTTON5 || /* 0x0380 */ device_flags == 0x0388) {
+            this->input_event(WM_BUTTON5DOWN, x, y, 0, 0, this->key_flags, this->keys);
+            this->input_event(WM_BUTTON5UP, x, y, 0, 0, this->key_flags, this->keys);
+        }
     }
 
+    virtual void rdp_input_scancode(int msg, long param1, long param2, long param3, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
+        LOG(LOG_INFO, "scan code");
+        if (ki != 0) {
+            this->input_event(msg, ki->chr, ki->sym, param1, param3, key_flags, keys);
+        }
+    }
 
-    virtual int input_event(const int msg, const long param1, const long param2, const long param3, const long param4, const int key_flags, const int (& keys)[256])
+    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+    {
+        LOG(LOG_INFO, "overloaded by subclasses");
+        return;
+    }
+
+    int input_event(const int msg, const long param1, const long param2, const long param3, const long param4, const int key_flags, const int (& keys)[256])
     {
         return 0;
     }
