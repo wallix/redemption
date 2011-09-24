@@ -81,7 +81,7 @@ struct bouncer2_mod : public internal_mod {
                 Widget *b = this->window(i);
                 Rect r2 = rect.intersect(b->rect.wh());
                 if (!r2.isempty()) {
-                    b->Widget_invalidate_clip(r2);
+                    b->refresh_clip(r2);
                 }
             }
             this->server_end_update();

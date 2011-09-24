@@ -118,8 +118,8 @@ struct Widget {
     /******************************************************************/
     /* nil for rect means the whole thing */
     /* returns error */
-    virtual int Widget_invalidate(const Rect & clip);
-    virtual int Widget_invalidate_clip(const Rect & clip);
+    virtual int refresh(const Rect & clip);
+    virtual int refresh_clip(const Rect & clip);
 
     virtual void def_proc(const int msg, const int param1, const int param2, const int key_flags, const int (& keys)[256]);
     virtual void draw(const Rect & clip);

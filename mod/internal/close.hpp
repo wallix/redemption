@@ -126,7 +126,6 @@ struct wab_close : public window_login
 
 struct close_mod : public internal_mod {
     struct window_login * close_window;
-    Widget* popup_wnd;
     Widget* button_down;
     int signal;
     Inifile * ini;
@@ -142,7 +141,7 @@ struct close_mod : public internal_mod {
         this->event->set();
         this->button_down = 0;
 
-        int log_width = 600;
+        int width = 600;
         bool done = false;
         const char * message;
         message = context.get(STRAUTHID_AUTH_ERROR_MESSAGE);
@@ -157,29 +156,28 @@ struct close_mod : public internal_mod {
                 message = str + 4;
             }
         }
-        int log_height = 200+line*16;
+        int height = 200+line*16;
 
         int regular = 1;
 
-        this->popup_wnd = 0;
-        if (this->screen.rect.cx < log_width ) {
-            log_width = std::min(this->screen.rect.cx - 4, 240);
+        if (this->screen.rect.cx < width ) {
+            width = std::min(this->screen.rect.cx - 4, 240);
             regular = 0;
         }
 
         /* draw login window */
         Rect r(
-            this->screen.rect.cx / 2 - log_width / 2,
-            this->screen.rect.cy / 2 - log_height / 2,
-            log_width,
-            log_height);
+            this->screen.rect.cx / 2 - width / 2,
+            this->screen.rect.cy / 2 - height / 2,
+            width,
+            height);
 
         this->close_window = new wab_close(this,
             r, context,
             this->screen, // parent
             this->screen, // notify_to
             GREY,
-            "Login",
+            "Close",
             this->ini,
             regular);
 
@@ -199,7 +197,7 @@ struct close_mod : public internal_mod {
 
         this->close_window->focus(this->close_window->rect);
         this->close_window->has_focus = true;
-        this->screen.Widget_invalidate(this->screen.rect.wh());
+        this->screen.refresh(this->screen.rect.wh());
     }
 
     virtual ~close_mod()
@@ -219,7 +217,7 @@ struct close_mod : public internal_mod {
                 Widget *b = this->window(i);
                 Rect r2 = rect.intersect(b->rect.wh());
                 if (!r2.isempty()) {
-                    b->Widget_invalidate_clip(r2);
+                    b->refresh_clip(r2);
                 }
             }
             this->server_end_update();
@@ -258,7 +256,7 @@ struct close_mod : public internal_mod {
                 b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), this->key_flags, this->keys);
                 if (this->button_down) {
                     this->button_down->state = (b == this->button_down);
-                    this->button_down->Widget_invalidate(this->button_down->rect.wh());
+                    this->button_down->refresh(this->button_down->rect.wh());
                 }
                 else {
                     b->notify(&b->parent, 2, x, y);
@@ -293,7 +291,7 @@ struct close_mod : public internal_mod {
                     Widget * control = wnd->widget_at_pos(x, y);
                     if (control && control->type == WND_TYPE_BUTTON){
                         control->state = 1;
-                        control->Widget_invalidate(control->rect.wh());
+                        control->refresh(control->rect.wh());
                         this->closing = true;
                         this->button_down = control;
                     }
@@ -324,15 +322,15 @@ struct close_mod : public internal_mod {
                     Rect r = this->dragging_window->rect;
                     this->dragging_window->rect.x = this->dragging_rect.x;
                     this->dragging_window->rect.y = this->dragging_rect.y;
-                    this->dragging_window->Widget_invalidate_clip(r);
-                    this->screen.Widget_invalidate(this->screen.rect.wh());
+                    this->dragging_window->refresh_clip(r);
+                    this->screen.refresh(this->screen.rect.wh());
                    this->dragging_window = 0;
                     this->dragging = 0;
                 }
                 else {
                     if (this->button_down && this->closing){
                         this->button_down->state = 0;
-                        this->button_down->Widget_invalidate(this->button_down->rect.wh());
+                        this->button_down->refresh(this->button_down->rect.wh());
                         this->signal = 4;
                         this->event->set();
                     }

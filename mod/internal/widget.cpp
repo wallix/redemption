@@ -163,7 +163,7 @@ int Widget::delete_all_childs()
         size_t index = this->child_list.size();
         while (index > 0) {
             index--;
-            this->child_list[index]->Widget_invalidate(this->child_list[index]->rect.wh());
+            this->child_list[index]->refresh(this->child_list[index]->rect.wh());
         }
     }
     {
@@ -726,7 +726,7 @@ void widget_image::draw(const Rect & clip)
 
 }
 
-int Widget::Widget_invalidate_clip(const Rect & clip)
+int Widget::refresh_clip(const Rect & clip)
 {
     if (!clip.isempty()) {
 
@@ -743,7 +743,7 @@ int Widget::Widget_invalidate_clip(const Rect & clip)
             struct Rect r2 = clip.intersect(b->rect);
             if (!r2.isempty()) {
                 r2 = r2.offset(-(b->rect.x), -(b->rect.y));
-                b->Widget_invalidate_clip(r2);
+                b->refresh_clip(r2);
             }
         }
         this->mod->server_end_update();
@@ -751,7 +751,7 @@ int Widget::Widget_invalidate_clip(const Rect & clip)
     return 0;
 }
 
-int Widget::Widget_invalidate(const Rect & clip)
+int Widget::refresh(const Rect & clip)
 {
     struct Widget* b;
     struct Rect r1;
@@ -767,7 +767,7 @@ int Widget::Widget_invalidate(const Rect & clip)
     int count = this->child_list.size();
     for (int i = 0; i < count; i++) {
         b = this->child_list[i];
-        b->Widget_invalidate(b->rect.wh());
+        b->refresh(b->rect.wh());
     }
     this->mod->server_end_update();
     return 0;
@@ -784,11 +784,11 @@ static inline bool switch_focus(Widget * old_focus, Widget * new_focus) {
     if (new_focus->tab_stop){
         if (old_focus) {
             old_focus->has_focus = (old_focus == new_focus);
-            old_focus->Widget_invalidate(old_focus->rect.wh());
+            old_focus->refresh(old_focus->rect.wh());
         }
         if (old_focus != new_focus){
             new_focus->has_focus = true;
-            new_focus->Widget_invalidate(new_focus->rect.wh());
+            new_focus->refresh(new_focus->rect.wh());
         }
         res = true;
     }
@@ -869,7 +869,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
         {
             if (this->edit_pos > 0) {
                 this->edit_pos--;
-                this->Widget_invalidate(this->rect.wh());
+                this->refresh(this->rect.wh());
             }
         }
         /* right or down arrow */
@@ -878,7 +878,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
         {
             if (this->edit_pos < (int)mbstowcs(0, this->buffer, 0)) {
                 this->edit_pos++;
-                this->Widget_invalidate(this->rect.wh());
+                this->refresh(this->rect.wh());
             }
         }
         /* backspace */
@@ -889,7 +889,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
                 if (this->edit_pos > 0) {
                     this->edit_pos--;
                     remove_char_at(this->buffer, 255, this->edit_pos);
-                    this->Widget_invalidate(this->rect.wh());
+                    this->refresh(this->rect.wh());
                 }
             }
         }
@@ -900,7 +900,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
             if (n > 0) {
                 if (this->edit_pos < n) {
                     remove_char_at(this->buffer, 255, this->edit_pos);
-                    this->Widget_invalidate(this->rect.wh());
+                    this->refresh(this->rect.wh());
                 }
             }
         }
@@ -909,7 +909,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
             n = mbstowcs(0, this->buffer, 0);
             if (this->edit_pos < n) {
                 this->edit_pos = n;
-                this->Widget_invalidate(this->rect.wh());
+                this->refresh(this->rect.wh());
             }
         }
         /* home */
@@ -917,7 +917,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
                  (ext || (key_flags & 5))) {
             if (this->edit_pos > 0) {
                 this->edit_pos = 0;
-                this->Widget_invalidate(this->rect.wh());
+                this->refresh(this->rect.wh());
             }
         }
         else {
@@ -956,7 +956,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
                 this->edit_pos++;
                 strncpy(this->buffer, text, 255);
                 this->buffer[255] = 0;
-                this->Widget_invalidate(this->rect.wh());
+                this->refresh(this->rect.wh());
             }
 
         }
@@ -975,7 +975,7 @@ void widget_combo::def_proc(const int msg, const int param1, const int param2, c
         if (((scan_code == 75) || (scan_code == 72)) && (ext || (key_flags & 5))) {
             if (this->item_index > 0) {
                 this->item_index--;
-                this->Widget_invalidate(this->rect.wh());
+                this->refresh(this->rect.wh());
                 this->notify(this, CB_ITEMCHANGE, 0, 0);
             }
         }
@@ -984,7 +984,7 @@ void widget_combo::def_proc(const int msg, const int param1, const int param2, c
                     size_t count = this->string_list.size();
             if ((this->item_index + 1) < count) {
                 this->item_index++;
-                this->Widget_invalidate(this->rect.wh());
+                this->refresh(this->rect.wh());
                 this->notify(this, CB_ITEMCHANGE, 0, 0);
             }
         }
@@ -1000,14 +1000,14 @@ void widget_popup::def_proc(const int msg, const int param1, const int param2, c
             if (i != this->item_index && i < this->popped_from->string_list.size())
             {
                 this->item_index = i;
-                this->Widget_invalidate(this->rect.wh());
+                this->refresh(this->rect.wh());
             }
         }
     } else if (msg == WM_LBUTTONUP) {
 
         if (this->popped_from != 0) {
             this->popped_from->item_index = this->item_index;
-            this->popped_from->Widget_invalidate(this->popped_from->rect.wh());
+            this->popped_from->refresh(this->popped_from->rect.wh());
             this->popped_from->notify(this->popped_from, CB_ITEMCHANGE, 0, 0);
         }
     }
