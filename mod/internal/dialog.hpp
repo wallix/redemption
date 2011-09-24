@@ -146,7 +146,7 @@ struct dialog_mod : public internal_mod {
 
         this->close_window->focus(this->close_window->rect);
         this->close_window->has_focus = true;
-        this->screen.Widget_invalidate(this->screen.rect.wh());
+        this->screen.refresh(this->screen.rect.wh());
     }
     ~dialog_mod() {
     }
@@ -166,7 +166,7 @@ struct dialog_mod : public internal_mod {
                 Widget *b = this->window(i);
                 Rect r2 = rect.intersect(b->rect.wh());
                 if (!r2.isempty()) {
-                    b->Widget_invalidate_clip(r2);
+                    b->refresh_clip(r2);
                 }
             }
             this->server_end_update();
@@ -287,7 +287,7 @@ struct dialog_mod : public internal_mod {
                 b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), this->key_flags, this->keys);
                 if (this->button_down) {
                     this->button_down->state = (b == this->button_down);
-                    this->button_down->Widget_invalidate(this->button_down->rect.wh());
+                    this->button_down->refresh(this->button_down->rect.wh());
                 }
                 else {
                     b->notify(&b->parent, 2, x, y);
@@ -323,9 +323,9 @@ struct dialog_mod : public internal_mod {
                     control->has_focus = true;
                     for (size_t i = 0; i < wnd->child_list.size(); i++) {
                         wnd->child_list[i]->has_focus = false;
-                        wnd->child_list[i]->Widget_invalidate(wnd->child_list[i]->rect.wh());
+                        wnd->child_list[i]->refresh(wnd->child_list[i]->rect.wh());
                     }
-                    control->Widget_invalidate(control->rect.wh());
+                    control->refresh(control->rect.wh());
                 }
             }
 
@@ -333,7 +333,7 @@ struct dialog_mod : public internal_mod {
                 case WND_TYPE_BUTTON:
                     this->button_down = control;
                     control->state = 1;
-                    control->Widget_invalidate(control->rect.wh());
+                    control->refresh(control->rect.wh());
                 break;
                 case WND_TYPE_WND:
                     /* drag by clicking in title bar and keeping button down */
@@ -366,8 +366,8 @@ struct dialog_mod : public internal_mod {
                 Rect r = this->dragging_window->rect;
                 this->dragging_window->rect.x = this->dragging_rect.x;
                 this->dragging_window->rect.y = this->dragging_rect.y;
-                this->dragging_window->Widget_invalidate_clip(r);
-                this->screen.Widget_invalidate(this->screen.rect.wh());
+                this->dragging_window->refresh_clip(r);
+                this->screen.refresh(this->screen.rect.wh());
                 this->dragging_window = 0;
                 this->dragging = 0;
                 break;
@@ -392,7 +392,7 @@ struct dialog_mod : public internal_mod {
                 if (control != wnd && control->tab_stop) {
                 #warning previous focus on other control is not yet disabled
                     control->has_focus = true;
-                    control->Widget_invalidate(control->rect.wh());
+                    control->refresh(control->rect.wh());
                 }
             }
 
@@ -400,7 +400,7 @@ struct dialog_mod : public internal_mod {
                 case WND_TYPE_BUTTON:
                     if (this->button_down == control){
                         control->state = 0;
-                        control->Widget_invalidate(control->rect.wh());
+                        control->refresh(control->rect.wh());
                         control->notify(control, 1, x, y);
                     }
                 break;

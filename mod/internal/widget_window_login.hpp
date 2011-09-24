@@ -199,14 +199,14 @@ struct window_login : public window
                 if (b == sender){
                     this->mod->screen.child_list.erase(
                         this->mod->screen.child_list.begin()+i);
-                    this->mod->screen.Widget_invalidate_clip(this->mod->screen.rect);
+                    this->mod->screen.refresh_clip(this->mod->screen.rect);
                     this->modal_dialog = 0;
                     break;
                 }
             }
         } else if (msg == CB_ITEMCHANGE) { /* combo box change */
             this->login_window_show_edits();
-            this->Widget_invalidate(this->rect.wh()); /* invalidate the whole dialog for now */
+            this->refresh(this->rect.wh()); /* invalidate the whole dialog for now */
         }
         return;
     }
@@ -234,11 +234,11 @@ struct window_login : public window
         this->help->default_button = but;
         this->help->esc_button = but;
 
-        this->help->Widget_invalidate(this->help->rect.wh());
+        this->help->refresh(this->help->rect.wh());
         this->help->focus(this->help->rect);
         this->has_focus = false;
         this->help->has_focus = true;
-        this->help->Widget_invalidate(this->help->rect.wh());
+        this->help->refresh(this->help->rect.wh());
         return 0;
     }
 
