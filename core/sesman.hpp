@@ -245,35 +245,22 @@ class SessionManager {
         case MOD_STATE_RECEIVED_CREDENTIALS:
         LOG(LOG_INFO, "Received Credentials\n");
         {
-            if (this->context.is_asked(STRAUTHID_AUTH_USER)){
+            if (this->context.is_asked(STRAUTHID_AUTH_USER)
+            || this->context.is_asked(STRAUTHID_TARGET_DEVICE)
+            || this->context.is_asked(STRAUTHID_TARGET_USER)){
                 this->context.wab_auth = 0;
                 next_state = MCTX_STATUS_LOGIN;
                 this->context.mod_state = MOD_STATE_INIT;
             }
-
-            else if (this->context.is_asked(STRAUTHID_TARGET_DEVICE)){
-                this->context.wab_auth = 0;
-                next_state = MCTX_STATUS_LOGIN;
-                this->context.mod_state = MOD_STATE_INIT;
-            }
-
-            else if (this->context.is_asked(STRAUTHID_TARGET_USER)){
-                this->context.wab_auth = 0;
-                next_state = MCTX_STATUS_LOGIN;
-                this->context.mod_state = MOD_STATE_INIT;
-            }
-
             else if (this->context.is_asked(STRAUTHID_PASSWORD)){
                 this->context.wab_auth = 1;
                 next_state = MCTX_STATUS_LOGIN;
                 this->context.mod_state = MOD_STATE_INIT;
             }
-
             else if (this->context.is_asked(STRAUTHID_DISPLAY_MESSAGE)){
                 this->context.mod_state = MOD_STATE_DISPLAY_MESSAGE;
                 next_state = MCTX_STATUS_DIALOG;
             }
-
             else if (this->context.is_asked(STRAUTHID_ACCEPT_MESSAGE)){
                 this->context.mod_state = MOD_STATE_VALID_MESSAGE;
                 next_state = MCTX_STATUS_DIALOG;
@@ -332,7 +319,6 @@ class SessionManager {
     void out_item(Stream & stream, const char * key)
     {
         const char * tmp = this->context.get(key);
-        #warning why shouldn't I send empty values ?
         // do not send empty values
         if (tmp[0] != 0){
             if (strncasecmp(tmp, "ask", 3) != 0

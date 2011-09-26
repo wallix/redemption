@@ -26,6 +26,7 @@ class Authentifier(object):
         'cgr' : 'cgr',
         'bouncer' : 'bouncer',
         'test' : 'test',
+        'message' : 'message',
         'card' : 'card',
         'loop' : 'loop',
         'looop' : 'looop',
@@ -79,6 +80,14 @@ class Authentifier(object):
             'proxy_type': 'RDP',
             'target_device' : 'test',
             'proto_dest': 'INTERNAL'
+        },
+        'message' : {
+            'proxy_type': 'RDP',
+            'target_device' : 'test_card',
+            'display_message' : 'ASK',
+            'message' : 'Hello, World',
+            'proto_dest': 'INTERNAL',
+            'is_rec':'False',
         },
         'card' : {
             'proxy_type': 'RDP',
