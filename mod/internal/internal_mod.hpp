@@ -173,7 +173,7 @@ struct internal_mod : public client_mod {
         return;
     }
 
-    int input_event(const int msg, const long param1, const long param2, const long param3, const long param4, const int key_flags, const int (& keys)[256])
+    virtual int input_event(const int msg, const long param1, const long param2, const long param3, const long param4, const int key_flags, const int (& keys)[256])
     {
         return 0;
     }

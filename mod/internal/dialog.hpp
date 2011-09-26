@@ -86,9 +86,55 @@ struct window_dialog : public window
             switch (sender->id) {
                 case 2: /* cancel button -> Esc */
                     this->mod->input_event(WM_KEYUP, 0, 0, 1, 0, this->mod->key_flags, this->mod->keys);
+//                    {
+//                        int scan_code = param4 & 0x7F;
+//                        const char * message = NULL;
+//                        switch (scan_code) {
+//                            case 1: /* cancel button */
+//                                message = "False";
+//                            break;
+//                            case 28: /* ok button */
+//                                message = "True";
+//                            break;
+//                            default:
+//                                message = NULL;
+//                            break;
+//                        }
+//                        if (message){
+//                            strcpy(this->close_window->context->get(
+//                                    (this->close_window->esc_button)?STRAUTHID_ACCEPT_MESSAGE
+//                                                                    :STRAUTHID_DISPLAY_MESSAGE),
+//                                                        message);
+//                            this->event->set();
+//                            this->signal = 1;
+//                        }
+//                    }
                 break;
                 case 3: /* ok button -> Enter */
                     this->mod->input_event(WM_KEYUP, 0, 0, 28, 0, this->mod->key_flags, this->mod->keys);
+//                    {
+//                        int scan_code = param4 & 0x7F;
+//                        const char * message = NULL;
+//                        switch (scan_code) {
+//                            case 1: /* cancel button */
+//                                message = "False";
+//                            break;
+//                            case 28: /* ok button */
+//                                message = "True";
+//                            break;
+//                            default:
+//                                message = NULL;
+//                            break;
+//                        }
+//                        if (message){
+//                            strcpy(this->close_window->context->get(
+//                                    (this->close_window->esc_button)?STRAUTHID_ACCEPT_MESSAGE
+//                                                                    :STRAUTHID_DISPLAY_MESSAGE),
+//                                                        message);
+//                            this->event->set();
+//                            this->signal = 1;
+//                        }
+//                    }
                 break;
                 default:
                 break;
@@ -219,7 +265,7 @@ struct dialog_mod : public internal_mod {
 
     #warning unify close login and dialog and move to internal_mod
     // module received an event from client
-    int input_event(const int msg, const long x, const long y, const long param4, const long param5, const int key_flags, const int (& keys)[256])
+    virtual int input_event(const int msg, const long x, const long y, const long param4, const long param5, const int key_flags, const int (& keys)[256])
     {
 //        LOG(LOG_INFO, "input_event(%d, %ld, %ld, %ld %ld)", msg, x, y, param4, param5);
         switch (msg){
