@@ -2125,9 +2125,9 @@ struct mod_rdp : public client_mod {
             tpdu.send(this->trans);
         }
 
-        virtual void invalidate(const Rect & r)
+        virtual void rdp_input_invalidate(const Rect & r)
         {
-            LOG(LOG_INFO, "invalidate");
+            LOG(LOG_INFO, "rdp_input_invalidate");
             if (!r.isempty()){
                 Stream stream(8192);
                 X224Out tpdu(X224Packet::DT_TPDU, stream);

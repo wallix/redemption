@@ -54,7 +54,7 @@ struct transitory_mod : public client_mod {
     {
     }
 
-    virtual void invalidate(const Rect & r)
+    virtual void rdp_input_invalidate(const Rect & r)
     {
     }
 

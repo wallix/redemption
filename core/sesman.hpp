@@ -220,8 +220,21 @@ class SessionManager {
         else if (strncasecmp(protocol, "XUP", 4) == 0){
             res = MCTX_STATUS_XUP;
         }
-        else if (strncasecmp(protocol, "INTERNAL", 4) == 0){
+        else if (strncasecmp(protocol, "INTERNAL", 8) == 0){
             res = MCTX_STATUS_INTERNAL;
+            #warning : check, as far as I remember context->get returns a status buffer, checking if return is not null looks pretty useless
+            char * target = this->context.get(STRAUTHID_TARGET_DEVICE);
+            if (target){
+                if (target && 0 == strncmp(target, "bouncer2", 9)){
+                    this->context.nextmod = ModContext::INTERNAL_BOUNCER2;
+                }
+                else if (0 == strncmp(target, "test", 5)){
+                    this->context.nextmod = ModContext::INTERNAL_TEST;
+                }
+                else {
+                    this->context.nextmod = ModContext::INTERNAL_CARD;
+                }
+            }
         }
         else {
             assert(false);
@@ -249,12 +262,14 @@ class SessionManager {
             || this->context.is_asked(STRAUTHID_TARGET_DEVICE)
             || this->context.is_asked(STRAUTHID_TARGET_USER)){
                 this->context.wab_auth = 0;
-                next_state = MCTX_STATUS_LOGIN;
+                next_state = MCTX_STATUS_INTERNAL;
+                this->context.nextmod = ModContext::INTERNAL_LOGIN;
                 this->context.mod_state = MOD_STATE_INIT;
             }
             else if (this->context.is_asked(STRAUTHID_PASSWORD)){
                 this->context.wab_auth = 1;
-                next_state = MCTX_STATUS_LOGIN;
+                next_state = MCTX_STATUS_INTERNAL;
+                this->context.nextmod = ModContext::INTERNAL_LOGIN;
                 this->context.mod_state = MOD_STATE_INIT;
             }
             else if (this->context.is_asked(STRAUTHID_DISPLAY_MESSAGE)){

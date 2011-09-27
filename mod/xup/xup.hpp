@@ -132,9 +132,9 @@ struct xup_mod : public client_mod {
         return;
     }
 
-    virtual void invalidate(const Rect & r)
+    virtual void rdp_input_invalidate(const Rect & r)
     {
-        LOG(LOG_INFO, "invalidate");
+        LOG(LOG_INFO, "rdp_input_invalidate");
         if (!r.isempty()) {
             this->input_event(WM_INVALIDATE,
                 ((r.x & 0xffff) << 16) | (r.y & 0xffff),

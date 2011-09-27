@@ -1928,7 +1928,7 @@ public:
                 int bottom = stream.in_uint16_le();
                 int cx = (right - left) + 1;
                 int cy = (bottom - top) + 1;
-                cb.invalidate(Rect(left, top, cx, cy));
+                cb.rdp_input_invalidate(Rect(left, top, cx, cy));
             }
             break;
         case PDUTYPE2_SUPPRESS_OUTPUT:

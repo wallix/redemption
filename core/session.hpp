@@ -104,7 +104,7 @@ struct Session {
     Session(int sck, const char * ip_source, Inifile * ini);
     ~Session();
     int pointer(char* data, char* mask, int x, int y);
-    void invalidate(const Rect & rect);
+    void rdp_input_invalidate(const Rect & rect);
 
     int session_main_loop();
 

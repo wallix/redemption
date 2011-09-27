@@ -422,7 +422,7 @@ struct login_mod : public internal_mod {
         this->login_window->focus(this->login_window->rect);
 
         this->screen.refresh(this->screen.rect.wh());
-//        LOG(LOG_INFO, "invalidate screen done");
+//        LOG(LOG_INFO, "rdp_input_invalidate screen done");
     }
 
     virtual ~login_mod()
@@ -446,7 +446,7 @@ struct login_mod : public internal_mod {
             }
             this->screen.child_list.erase(to_erase);
 
-            #warning below inlining of bogus invalidate_clip
+            #warning below inlining of bogus rdp_input_invalidate_clip
             this->server_begin_update();
             this->screen.draw(this->popup_wnd->rect);
 
@@ -472,7 +472,7 @@ struct login_mod : public internal_mod {
         return 0;
     }
 
-    virtual void invalidate(const Rect & rect)
+    virtual void rdp_input_invalidate(const Rect & rect)
     {
         if (!rect.isempty()) {
             this->server_begin_update();

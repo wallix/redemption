@@ -640,21 +640,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
             }
             break;
 
-            case MCTX_STATUS_LOGIN:
-            {
-                this->back_event = new wait_obj(-1);
-                this->mod = new login_mod(this->back_event, this->keys, this->key_flags, this->keymap,  *this->context, *(this->front), this->ini);
-
-                // force a refresh on all screen
-                this->mod->invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
-
-                LOG(LOG_INFO, "Creation of new mod 'LOGIN DIALOG' (%d,%d,%d,%d) suceeded\n",
-                    0, 0,
-                    this->front->get_client_info().width,
-                    this->front->get_client_info().height);
-            }
-            break;
-
             case MCTX_STATUS_DIALOG:
             {
                 #warning change that to two different dialog modules
@@ -672,7 +657,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 this->back_event = new wait_obj(-1);
                 this->mod = new dialog_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), message, button, this->ini);
                 // force a WM_INVALIDATE on all screen
-                this->mod->invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
+                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 LOG(LOG_INFO, "Creation of new mod 'STATUS DIALOG' suceeded\n");
                 Inifile ini(CFG_PATH "/" RDPPROXY_INI);
                 if (htons(ini.globals.autovalidate)) {
@@ -721,7 +706,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                         pointer_item.y);
 
                 // force a WM_INVALIDATE on all screen
-                this->mod->invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
+                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 LOG(LOG_INFO, "Creation of new mod 'CLOSE DIALOG' suceeded\n");
             }
             break;
@@ -729,21 +714,29 @@ bool Session::session_setup_mod(int status, const ModContext * context)
             case MCTX_STATUS_INTERNAL:
             {
                 this->back_event = new wait_obj(-1);
-
-                {
-                    char * target = this->context->get(STRAUTHID_TARGET_DEVICE);
-                    LOG(LOG_INFO, "target=%s", target);
-                    if (target && 0 == strncmp(target, "bouncer2", 9)){
-                        LOG(LOG_INFO, "target is bouncer 2");
+                switch (this->context->nextmod){
+                    case ModContext::INTERNAL_LOGIN:
+                        LOG(LOG_INFO, "Creation of internal module 'Login'");
+                        this->mod = new login_mod(
+                                        this->back_event,
+                                        this->keys,
+                                        this->key_flags,
+                                        this->keymap,
+                                         *this->context,
+                                         *this->front,
+                                         this->ini);
+                    break;
+                    case ModContext::INTERNAL_BOUNCER2:
+                        LOG(LOG_INFO, "Creation of internal module 'bouncer2'");
                         this->mod = new bouncer2_mod(
                                         this->back_event,
                                         this->keys,
                                         this->key_flags,
                                         this->keymap,
                                         *this->front);
-                    }
-                    else if (target && 0 == strncmp(target, "test", 5)){
-                        LOG(LOG_INFO, "target is internal mod");
+                    break;
+                    case ModContext::INTERNAL_TEST:
+                        LOG(LOG_INFO, "Creation of internal module 'test'");
                         this->mod = new test_internal_mod(
                                         this->back_event,
                                         this->keys,
@@ -751,9 +744,9 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                         this->keymap,
                                         *this->context,
                                         *this->front);
-                    }
-                    else {
-                        LOG(LOG_INFO, "target is test_card mod");
+                    break;
+                    case ModContext::INTERNAL_CARD:
+                        LOG(LOG_INFO, "Creation of internal module 'test_card'");
                         this->mod = new test_card_mod(
                                         this->back_event,
                                         this->keys,
@@ -761,10 +754,13 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                         this->keymap,
                                         *this->context,
                                         *this->front);
-                    }
+                    break;
+                    default:
+                    break;
                 }
+
                 // force a WM_INVALIDATE on all screen
-                this->mod->invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
+                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 LOG(LOG_INFO, "Creation of new mod 'CLOSE DIALOG' suceeded\n");
             }
             break;
@@ -777,7 +773,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                             4, 2500000));
                 this->back_event = new wait_obj(t->sck);
                 this->mod = new xup_mod(t, this->keys, this->key_flags, this->keymap, *this->context, *(this->front));
-                this->mod->invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
+                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 LOG(LOG_INFO, "Creation of new mod 'XUP' suceeded\n");
             }
             break;
@@ -808,7 +804,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                     this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
                                     this->context->get_bool(STRAUTHID_OPT_DEVICEREDIRECTION));
                 this->back_event->set();
-                this->mod->invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
+                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 LOG(LOG_INFO, "Creation of new mod 'RDP' suceeded\n");
             }
             break;
@@ -819,7 +815,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                     connect(this->context->get(STRAUTHID_TARGET_DEVICE), atoi(this->context->get(STRAUTHID_TARGET_PORT))));
                 this->back_event = new wait_obj(t->sck);
                 this->mod = new mod_vnc(t, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this->front->get_client_info().keylayout);
-                this->mod->invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
+                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 LOG(LOG_INFO, "Creation of new mod 'VNC' suceeded\n");
             }
             break;
