@@ -183,58 +183,13 @@ struct dialog_mod : public internal_mod {
     virtual void rdp_input_mouse(int device_flags, int x, int y)
     {
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
-            this->input_event(WM_MOUSEMOVE, x, y, 0, 0, this->key_flags, this->keys);
-            this->front.mouse_x = x;
-            this->front.mouse_y = y;
-
-        }
-        if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
-            this->input_event(
-                WM_LBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0, this->key_flags, this->keys);
-        }
-        if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
-            this->input_event(
-                WM_RBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0, this->key_flags, this->keys);
-        }
-        if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
-            this->input_event(
-                WM_BUTTON3UP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0, this->key_flags, this->keys);
-        }
-        if (device_flags == MOUSE_FLAG_BUTTON4 || /* 0x0280 */ device_flags == 0x0278) {
-            this->input_event(WM_BUTTON4DOWN, x, y, 0, 0, this->key_flags, this->keys);
-            this->input_event(WM_BUTTON4UP, x, y, 0, 0, this->key_flags, this->keys);
-        }
-        if (device_flags == MOUSE_FLAG_BUTTON5 || /* 0x0380 */ device_flags == 0x0388) {
-            this->input_event(WM_BUTTON5DOWN, x, y, 0, 0, this->key_flags, this->keys);
-            this->input_event(WM_BUTTON5UP, x, y, 0, 0, this->key_flags, this->keys);
-        }
-    }
-
-    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
-        #warning dialog does not support keyboard any more, fix that
-    }
-
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
-    {
-        return;
-    }
-
-    // module received an event from client
-    virtual int input_event(const int msg, const long x, const long y, const long param4, const long param5, const int key_flags, const int (& keys)[256])
-    {
-        LOG(LOG_INFO, "dialog input_event(%d, %ld, %ld, %ld %ld)", msg, x, y, param4, param5);
-        switch (msg){
-        case WM_MOUSEMOVE:
             if (this->dragging) {
-                long dragx = (x < 0)                         ? 0
+                long dragx = (x < 0)                    ? 0
                            : (x < this->screen.rect.cx) ? x
                            : this->screen.rect.cx
                            ;
 
-                long dragy = (y < 0)                         ? 0
+                long dragy = (y < 0)                    ? 0
                            : (y < this->screen.rect.cy) ? y
                            : this->screen.rect.cy
                            ;
@@ -263,129 +218,135 @@ struct dialog_mod : public internal_mod {
                     b->notify(&b->parent, 2, x, y);
                 }
             }
-        break;
-        case WM_LBUTTONDOWN:
-        {
-            /* loop on surface widgets on screen to find active window */
-            Widget* wnd = this->get_screen_wdg();
-            for (size_t i = 0; i < wnd->child_list.size(); i++) {
-                if (wnd->child_list[i]->rect.rect_contains_pt(x, y)) {
-                    wnd = this->screen.child_list[i];
-                    break;
+        }
+
+
+        if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
+            if (device_flags & MOUSE_FLAG_DOWN){
+                /* loop on surface widgets on screen to find active window */
+                Widget* wnd = this->get_screen_wdg();
+                for (size_t i = 0; i < wnd->child_list.size(); i++) {
+                    if (wnd->child_list[i]->rect.rect_contains_pt(x, y)) {
+                        wnd = this->screen.child_list[i];
+                        break;
+                    }
+                }
+
+                /* set focus on window */
+                if (wnd && wnd->type == WND_TYPE_WND) {
+                    wnd->focus();
+                }
+
+                Widget * control = wnd->widget_at_pos(x, y);
+                if ((wnd == this->get_screen_wdg()) || (wnd->modal_dialog == 0)) {
+                    if (wnd != this->get_screen_wdg()) {
+                        // change focus. Is graphical feedback necessary ?
+                        if (control != wnd && control->tab_stop) {
+                            #warning control that had focus previously does not loose it, easy way could be to loop on all controls and clear all existing focus
+                            control->has_focus = true;
+                            for (size_t i = 0; i < wnd->child_list.size(); i++) {
+                                wnd->child_list[i]->has_focus = false;
+                                wnd->child_list[i]->refresh(wnd->child_list[i]->rect.wh());
+                            }
+                            control->refresh(control->rect.wh());
+                        }
+                    }
+
+                    switch (control->type) {
+                        case WND_TYPE_BUTTON:
+                            this->button_down = control;
+                            control->state = 1;
+                            control->refresh(control->rect.wh());
+                        break;
+                        case WND_TYPE_WND:
+                            /* drag by clicking in title bar and keeping button down */
+                            if (y < (control->rect.y + 21)) {
+                                this->dragging = 1;
+                                this->dragging_window = control;
+
+                                this->draggingdx = x - control->rect.x;
+                                this->draggingdy = y - control->rect.y;
+
+                                this->dragging_rect = Rect(
+                                    x - this->draggingdx, y - this->draggingdy,
+                                    control->rect.cx, control->rect.cy);
+                                this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
+                            }
+                        break;
+                        default:
+                        break;
+                    }
                 }
             }
+            else {
+                if (this->dragging) {
+                    /* if done dragging */
+                    /* draw xor box one more time */
+                    this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
 
-            /* set focus on window */
-            if (wnd && wnd->type == WND_TYPE_WND) {
-                wnd->focus();
-            }
-
-            Widget * control = wnd->widget_at_pos(x, y);
-
-            if (wnd != this->get_screen_wdg()) {
-                if (wnd->modal_dialog != 0) {
-                    /* window has a modal dialog (but we didn't clicked on it) */
-                    break;
+                    /* move dragged window to new location */
+                    Rect r = this->dragging_window->rect;
+                    this->dragging_window->rect.x = this->dragging_rect.x;
+                    this->dragging_window->rect.y = this->dragging_rect.y;
+                    this->dragging_window->refresh_clip(r);
+                    this->screen.refresh(this->screen.rect.wh());
+                    this->dragging_window = 0;
+                    this->dragging = 0;
                 }
-                // change focus. Is graphical feedback necessary ?
-                if (control != wnd && control->tab_stop) {
-                    #warning control that had focus previously does not loose it, easy way could be to loop on all controls and clear all existing focus
-                    control->has_focus = true;
+                else {
+                    /* loop on surface widgets on screen to find active window */
+                    Widget* wnd = this->get_screen_wdg();
                     for (size_t i = 0; i < wnd->child_list.size(); i++) {
-                        wnd->child_list[i]->has_focus = false;
-                        wnd->child_list[i]->refresh(wnd->child_list[i]->rect.wh());
+                        if (wnd->child_list[i]->rect.rect_contains_pt(x, y)) {
+                            wnd = this->screen.child_list[i];
+                            break;
+                        }
                     }
-                    control->refresh(control->rect.wh());
+
+                    Widget * control = wnd->widget_at_pos(x, y);
+
+                    if (wnd == this->get_screen_wdg() 
+                    || (wnd->modal_dialog == 0)) {
+
+                        if (wnd != this->get_screen_wdg()) {
+                            if (control != wnd && control->tab_stop) {
+                            #warning previous focus on other control is not yet disabled
+                                control->has_focus = true;
+                                control->refresh(control->rect.wh());
+                            }
+                        }
+
+                        switch (control->type) {
+                            case WND_TYPE_BUTTON:
+                                if (this->button_down == control){
+                                    control->state = 0;
+                                    control->refresh(control->rect.wh());
+                                    control->notify(control, 1, x, y);
+                                }
+                            break;
+                            default:
+                            break;
+                        }
+                        // mouse is up, no more button down, whatever
+                        this->button_down = 0;
+                    }
                 }
-            }
-
-            switch (control->type) {
-                case WND_TYPE_BUTTON:
-                    this->button_down = control;
-                    control->state = 1;
-                    control->refresh(control->rect.wh());
-                break;
-                case WND_TYPE_WND:
-                    /* drag by clicking in title bar and keeping button down */
-                    if (y < (control->rect.y + 21)) {
-                        this->dragging = 1;
-                        this->dragging_window = control;
-
-                        this->draggingdx = x - control->rect.x;
-                        this->draggingdy = y - control->rect.y;
-
-                        this->dragging_rect = Rect(
-                            x - this->draggingdx, y - this->draggingdy,
-                            control->rect.cx, control->rect.cy);
-                        this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
-                    }
-                break;
-                default:
-                break;
             }
         }
-        break;
-        case WM_LBUTTONUP:
-        {
-            if (this->dragging) {
-                /* if done dragging */
-                /* draw xor box one more time */
-                this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
+    }
 
-                /* move dragged window to new location */
-                Rect r = this->dragging_window->rect;
-                this->dragging_window->rect.x = this->dragging_rect.x;
-                this->dragging_window->rect.y = this->dragging_rect.y;
-                this->dragging_window->refresh_clip(r);
-                this->screen.refresh(this->screen.rect.wh());
-                this->dragging_window = 0;
-                this->dragging = 0;
-                break;
-            }
+    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
+        #warning dialog does not support keyboard any more, fix that
+    }
 
-            /* loop on surface widgets on screen to find active window */
-            Widget* wnd = this->get_screen_wdg();
-            for (size_t i = 0; i < wnd->child_list.size(); i++) {
-                if (wnd->child_list[i]->rect.rect_contains_pt(x, y)) {
-                    wnd = this->screen.child_list[i];
-                    break;
-                }
-            }
+    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+    {
+        return;
+    }
 
-            Widget * control = wnd->widget_at_pos(x, y);
-
-            if (wnd != this->get_screen_wdg()) {
-                if (wnd->modal_dialog != 0) {
-                    /* window has a modal dialog (but we didn't clicked on it) */
-                    break;
-                }
-                if (control != wnd && control->tab_stop) {
-                #warning previous focus on other control is not yet disabled
-                    control->has_focus = true;
-                    control->refresh(control->rect.wh());
-                }
-            }
-
-            switch (control->type) {
-                case WND_TYPE_BUTTON:
-                    if (this->button_down == control){
-                        control->state = 0;
-                        control->refresh(control->rect.wh());
-                        control->notify(control, 1, x, y);
-                    }
-                break;
-                default:
-                break;
-            }
-            // mouse is up, no more button down, whatever
-            this->button_down = 0;
-        }
-        break;
-
-        default:
-            /* internal : redemption interface only use button 1 */
-            break;
-        }
+    // module received an event from client
+    virtual int input_event(const int msg, const long x, const long y, const long param4, const long param5, const int key_flags, const int (& keys)[256])
+    {
         return 0;
     }
 
