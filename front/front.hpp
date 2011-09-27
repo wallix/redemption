@@ -1916,6 +1916,7 @@ public:
         case PDUTYPE2_SYNCHRONIZE:
             LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");
             this->send_synchronize();
+            this->up_and_running = 1;
             break;
         case PDUTYPE2_REFRESH_RECT:
             LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT");
@@ -1969,7 +1970,7 @@ public:
                 if (seq == 2 || seq == 3)
                 {
                     this->send_fontmap();
-                    this->up_and_running = 1;
+//                    this->up_and_running = 1;
                     this->send_data_update_sync();
                 }
             }

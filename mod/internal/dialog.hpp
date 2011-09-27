@@ -78,66 +78,31 @@ struct window_dialog : public window
 
     virtual void notify(struct Widget* sender, int msg, long param1, long param2)
     {
+        LOG(LOG_INFO, "dialog notify msg=%u", msg);
         if (this->modal_dialog != 0 && msg != 100) {
             return;
         }
         #warning use symbolic button ids instead of constants 2 and 3
         if (msg == 1) { /* click */
             switch (sender->id) {
-                case 2: /* cancel button -> Esc */
-                    this->mod->input_event(WM_KEYUP, 0, 0, 1, 0, this->mod->key_flags, this->mod->keys);
-//                    {
-//                        int scan_code = param4 & 0x7F;
-//                        const char * message = NULL;
-//                        switch (scan_code) {
-//                            case 1: /* cancel button */
-//                                message = "False";
-//                            break;
-//                            case 28: /* ok button */
-//                                message = "True";
-//                            break;
-//                            default:
-//                                message = NULL;
-//                            break;
-//                        }
-//                        if (message){
-//                            strcpy(this->close_window->context->get(
-//                                    (this->close_window->esc_button)?STRAUTHID_ACCEPT_MESSAGE
-//                                                                    :STRAUTHID_DISPLAY_MESSAGE),
-//                                                        message);
-//                            this->event->set();
-//                            this->signal = 1;
-//                        }
-//                    }
-                break;
-                case 3: /* ok button -> Enter */
-                    this->mod->input_event(WM_KEYUP, 0, 0, 28, 0, this->mod->key_flags, this->mod->keys);
-//                    {
-//                        int scan_code = param4 & 0x7F;
-//                        const char * message = NULL;
-//                        switch (scan_code) {
-//                            case 1: /* cancel button */
-//                                message = "False";
-//                            break;
-//                            case 28: /* ok button */
-//                                message = "True";
-//                            break;
-//                            default:
-//                                message = NULL;
-//                            break;
-//                        }
-//                        if (message){
-//                            strcpy(this->close_window->context->get(
-//                                    (this->close_window->esc_button)?STRAUTHID_ACCEPT_MESSAGE
-//                                                                    :STRAUTHID_DISPLAY_MESSAGE),
-//                                                        message);
-//                            this->event->set();
-//                            this->signal = 1;
-//                        }
-//                    }
-                break;
-                default:
-                break;
+            case 2: /* cancel button -> Esc */
+                strcpy(this->context->get(
+                    (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
+                                                    :STRAUTHID_DISPLAY_MESSAGE),
+                                            "False");
+                this->mod->event->set();
+                this->mod->signal = 1;
+            break;
+            case 3: /* ok button -> Enter */
+                strcpy(this->context->get(
+                    (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
+                                                    :STRAUTHID_DISPLAY_MESSAGE),
+                                            "True");
+                this->mod->event->set();
+                this->mod->signal = 1;
+            break;
+            default:
+            break;
             }
         }
         return;
@@ -263,11 +228,10 @@ struct dialog_mod : public internal_mod {
         return;
     }
 
-    #warning unify close login and dialog and move to internal_mod
     // module received an event from client
     virtual int input_event(const int msg, const long x, const long y, const long param4, const long param5, const int key_flags, const int (& keys)[256])
     {
-//        LOG(LOG_INFO, "input_event(%d, %ld, %ld, %ld %ld)", msg, x, y, param4, param5);
+        LOG(LOG_INFO, "dialog input_event(%d, %ld, %ld, %ld %ld)", msg, x, y, param4, param5);
         switch (msg){
         case WM_KEYUP:
         {

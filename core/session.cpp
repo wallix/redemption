@@ -308,65 +308,67 @@ int Session::step_STATE_ENTRY(const struct timeval & time_mark)
             return SESSION_STATE_STOP;
         };
 
-        // if we reach this point we are up_and_running,
-        // hence width and height and colors and keymap are availables
-        /* resize the main window */
-        this->mod->front_resize();
-        this->mod->server_reset_clip();
-        this->front->reset();
+        if (this->front->up_and_running){
+            // if we reach this point we are up_and_running,
+            // hence width and height and colors and keymap are availables
+            /* resize the main window */
+            this->mod->front_resize();
+            this->mod->server_reset_clip();
+            this->front->reset();
 
-        /* initialising keymap */
-        char filename[256];
-        snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->front->get_client_info().keylayout);
-        LOG(LOG_DEBUG, "loading keymap %s\n", filename);
-        this->keymap = new Keymap(filename);
+            /* initialising keymap */
+            char filename[256];
+            snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->front->get_client_info().keylayout);
+            LOG(LOG_DEBUG, "loading keymap %s\n", filename);
+            this->keymap = new Keymap(filename);
 
-        BGRPalette palette;
-        init_palette332(palette);
+            BGRPalette palette;
+            init_palette332(palette);
 
-        this->mod->color_cache(palette, 0);
+            this->mod->color_cache(palette, 0);
 
-        struct pointer_item pointer_item;
+            struct pointer_item pointer_item;
 
-        memset(&pointer_item, 0, sizeof(pointer_item));
-        load_pointer(SHARE_PATH "/" CURSOR0,
-            pointer_item.data,
-            pointer_item.mask,
-            &pointer_item.x,
-            &pointer_item.y);
+            memset(&pointer_item, 0, sizeof(pointer_item));
+            load_pointer(SHARE_PATH "/" CURSOR0,
+                pointer_item.data,
+                pointer_item.mask,
+                &pointer_item.x,
+                &pointer_item.y);
 
-        this->front->cache.add_pointer_static(&pointer_item, 0);
-        this->front->send_pointer(0,
-                         pointer_item.data,
-                         pointer_item.mask,
-                         pointer_item.x,
-                         pointer_item.y);
+            this->front->cache.add_pointer_static(&pointer_item, 0);
+            this->front->send_pointer(0,
+                             pointer_item.data,
+                             pointer_item.mask,
+                             pointer_item.x,
+                             pointer_item.y);
 
-        memset(&pointer_item, 0, sizeof(pointer_item));
-        load_pointer(SHARE_PATH "/" CURSOR1,
-            pointer_item.data,
-            pointer_item.mask,
-            &pointer_item.x,
-            &pointer_item.y);
-        this->front->cache.add_pointer_static(&pointer_item, 1);
+            memset(&pointer_item, 0, sizeof(pointer_item));
+            load_pointer(SHARE_PATH "/" CURSOR1,
+                pointer_item.data,
+                pointer_item.mask,
+                &pointer_item.x,
+                &pointer_item.y);
+            this->front->cache.add_pointer_static(&pointer_item, 1);
 
-        this->front->send_pointer(1,
-                         pointer_item.data,
-                         pointer_item.mask,
-                         pointer_item.x,
-                         pointer_item.y);
+            this->front->send_pointer(1,
+                             pointer_item.data,
+                             pointer_item.mask,
+                             pointer_item.x,
+                             pointer_item.y);
 
-        if (this->front->get_client_info().username[0]){
-            this->context->parse_username(this->front->get_client_info().username);
+            if (this->front->get_client_info().username[0]){
+                this->context->parse_username(this->front->get_client_info().username);
+            }
+
+            if (this->front->get_client_info().password[0]){
+                this->context->cpy(STRAUTHID_PASSWORD, this->front->get_client_info().password);
+            }
+
+            this->internal_state = SESSION_STATE_RUNNING;
+            this->context->mod_state = MOD_STATE_INIT;
+            this->session_setup_mod(MCTX_STATUS_CLI, this->context);
         }
-
-        if (this->front->get_client_info().password[0]){
-            this->context->cpy(STRAUTHID_PASSWORD, this->front->get_client_info().password);
-        }
-
-        this->internal_state = SESSION_STATE_RUNNING;
-        this->context->mod_state = MOD_STATE_INIT;
-        this->session_setup_mod(MCTX_STATUS_CLI, this->context);
     }
 
     return this->internal_state;
