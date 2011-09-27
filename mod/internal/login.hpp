@@ -599,60 +599,60 @@ struct login_mod : public internal_mod {
             Widget * control = wnd->widget_at_pos(x, y);
 
             if (wnd != this->get_screen_wdg()) {
-                if (wnd->modal_dialog != 0) {
-                    /* window has a modal dialog (but we didn't clicked on it) */
-                    break;
-                }
-                // change focus. Is graphical feedback necessary ?
-                if (control != wnd && control->tab_stop) {
-                    #warning control that had focus previously does not loose it, easy way could be to loop on all controls and clear all existing focus
-                    control->has_focus = true;
-                    for (size_t i = 0; i < wnd->child_list.size(); i++) {
-                        wnd->child_list[i]->has_focus = false;
-                        wnd->child_list[i]->refresh(wnd->child_list[i]->rect.wh());
+                if (!wnd->modal_dialog) {
+                    // change focus. Is graphical feedback necessary ?
+                    if (control != wnd && control->tab_stop) {
+                        #warning control that had focus previously does not loose it, easy way could be to loop on all controls and clear all existing focus
+                        control->has_focus = true;
+                        for (size_t i = 0; i < wnd->child_list.size(); i++) {
+                            wnd->child_list[i]->has_focus = false;
+                            wnd->child_list[i]->refresh(wnd->child_list[i]->rect.wh());
+                        }
+                        control->refresh(control->rect.wh());
                     }
-                    control->refresh(control->rect.wh());
                 }
             }
 
-            switch (control->type) {
-                case WND_TYPE_BUTTON:
-                    this->button_down = control;
-                    control->state = 1;
-                    control->refresh(control->rect.wh());
-                break;
-                case WND_TYPE_COMBO:
-                    this->button_down = control;
-                    control->state = 1;
-                    control->refresh(control->rect.wh());
-                    this->popup_wnd = new widget_popup(this,
-                                Rect(
-                                control->to_screenx(),
-                                control->to_screeny() + control->rect.cy,
-                                control->rect.cx,
-                                100),
-                            control, // popped_from
-                            this->screen, // parent
-                            control->item_index); // item_index
+            if ((wnd != this->get_screen_wdg()) && !wnd->modal_dialog){
+                switch (control->type) {
+                    case WND_TYPE_BUTTON:
+                        this->button_down = control;
+                        control->state = 1;
+                        control->refresh(control->rect.wh());
+                    break;
+                    case WND_TYPE_COMBO:
+                        this->button_down = control;
+                        control->state = 1;
+                        control->refresh(control->rect.wh());
+                        this->popup_wnd = new widget_popup(this,
+                                    Rect(
+                                    control->to_screenx(),
+                                    control->to_screeny() + control->rect.cy,
+                                    control->rect.cx,
+                                    100),
+                                control, // popped_from
+                                this->screen, // parent
+                                control->item_index); // item_index
 
-                    this->screen.child_list.insert(this->screen.child_list.begin(), this->popup_wnd);
-                    this->popup_wnd->refresh(this->popup_wnd->rect.wh());
-                break;
-                case WND_TYPE_WND:
-                    /* drag by clicking in title bar and keeping button down */
-                    if (y < (control->rect.y + 21)) {
-                        this->dragging = 1;
-                        this->dragging_window = control;
-                        this->draggingdx = x - control->rect.x;
-                        this->draggingdy = y - control->rect.y;
-                        this->dragging_rect = Rect(
-                            x - this->draggingdx, y - this->draggingdy,
-                            control->rect.cx, control->rect.cy);
-                        this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
-                    }
-                break;
-                default:
-                break;
+                        this->screen.child_list.insert(this->screen.child_list.begin(), this->popup_wnd);
+                        this->popup_wnd->refresh(this->popup_wnd->rect.wh());
+                    break;
+                    case WND_TYPE_WND:
+                        /* drag by clicking in title bar and keeping button down */
+                        if (y < (control->rect.y + 21)) {
+                            this->dragging = 1;
+                            this->dragging_window = control;
+                            this->draggingdx = x - control->rect.x;
+                            this->draggingdy = y - control->rect.y;
+                            this->dragging_rect = Rect(
+                                x - this->draggingdx, y - this->draggingdy,
+                                control->rect.cx, control->rect.cy);
+                            this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
+                        }
+                    break;
+                    default:
+                    break;
+                }
             }
         }
         break;
@@ -671,58 +671,58 @@ struct login_mod : public internal_mod {
                 this->screen.refresh(this->screen.rect.wh());
                 this->dragging_window = 0;
                 this->dragging = 0;
-                break;
             }
-
-            /* loop on surface widgets on screen to find active window */
-            Widget* wnd = this->get_screen_wdg();
-            for (size_t i = 0; i < wnd->child_list.size(); i++) {
-                if (wnd->child_list[i]->rect.rect_contains_pt(x, y)) {
-                    wnd = this->screen.child_list[i];
-                    break;
-                }
-            }
-
-            Widget * control = wnd->widget_at_pos(x, y);
-
-            // popup is opened
-            if (this->popup_wnd) {
-                // click inside popup
-                if (this->popup_wnd == control){
-                    this->popup_wnd->def_proc(WM_LBUTTONUP, x, y, this->key_flags, this->keys);
-                }
-                // clear popup
-                this->clear_popup();
-                this->screen.refresh(this->screen.rect.wh());
-                break;
-            }
-
-            if (wnd != this->get_screen_wdg()) {
-                if (wnd->modal_dialog != 0) {
-                    /* window has a modal dialog (but we didn't clicked on it) */
-                    break;
-                }
-                if (control != wnd && control->tab_stop) {
-                #warning previous focus on other control is not yet disabled
-                    control->has_focus = true;
-                    control->refresh(control->rect.wh());
-                }
-            }
-
-            switch (control->type) {
-                case WND_TYPE_BUTTON:
-                case WND_TYPE_COMBO:
-                    if (this->button_down == control){
-                        control->state = 0;
-                        control->refresh(control->rect.wh());
-                        control->notify(control, 1, x, y);
+            else {
+                /* loop on surface widgets on screen to find active window */
+                Widget* wnd = this->get_screen_wdg();
+                for (size_t i = 0; i < wnd->child_list.size(); i++) {
+                    if (wnd->child_list[i]->rect.rect_contains_pt(x, y)) {
+                        wnd = this->screen.child_list[i];
+                        break;
                     }
-                break;
-                default:
-                break;
+                }
+
+                Widget * control = wnd->widget_at_pos(x, y);
+
+                // popup is opened
+                if (this->popup_wnd) {
+                    // click inside popup
+                    if (this->popup_wnd == control){
+                        this->popup_wnd->def_proc(WM_LBUTTONUP, x, y, this->key_flags, this->keys);
+                    }
+                    // clear popup
+                    this->clear_popup();
+                    this->screen.refresh(this->screen.rect.wh());
+                }
+                else {
+                    if (wnd != this->get_screen_wdg()) {
+                        if (wnd->modal_dialog != 0) {
+                            /* window has a modal dialog (but we didn't clicked on it) */
+                            break;
+                        }
+                        if (control != wnd && control->tab_stop) {
+                        #warning previous focus on other control is not yet disabled
+                            control->has_focus = true;
+                            control->refresh(control->rect.wh());
+                        }
+                    }
+
+                    switch (control->type) {
+                        case WND_TYPE_BUTTON:
+                        case WND_TYPE_COMBO:
+                            if (this->button_down == control){
+                                control->state = 0;
+                                control->refresh(control->rect.wh());
+                                control->notify(control, 1, x, y);
+                            }
+                        break;
+                        default:
+                        break;
+                    }
+                    // mouse is up, no more button down, whatever
+                    this->button_down = 0;
+                }
             }
-            // mouse is up, no more button down, whatever
-            this->button_down = 0;
         }
         break;
 
