@@ -685,6 +685,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                 pointer_item.x,
                                 pointer_item.y);
                     }
+                    LOG(LOG_INFO, "internal module Close ready");
                     break;
                     case ModContext::INTERNAL_DIALOG:
                     {
@@ -711,6 +712,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                         button,
                                         this->ini);
                     }
+                        LOG(LOG_INFO, "internal module Dialog ready");
                     break;
                     case ModContext::INTERNAL_LOGIN:
                         LOG(LOG_INFO, "Creation of internal module 'Login'");
@@ -722,6 +724,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                          *this->context,
                                          *this->front,
                                          this->ini);
+                        LOG(LOG_INFO, "internal module Login ready");
                     break;
                     case ModContext::INTERNAL_BOUNCER2:
                         LOG(LOG_INFO, "Creation of internal module 'bouncer2'");
@@ -731,6 +734,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                         this->key_flags,
                                         this->keymap,
                                         *this->front);
+                        LOG(LOG_INFO, "internal module 'bouncer2' ready");
                     break;
                     case ModContext::INTERNAL_TEST:
                         LOG(LOG_INFO, "Creation of internal module 'test'");
@@ -741,6 +745,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                         this->keymap,
                                         *this->context,
                                         *this->front);
+                        LOG(LOG_INFO, "internal module 'test' ready");
                     break;
                     case ModContext::INTERNAL_CARD:
                         LOG(LOG_INFO, "Creation of internal module 'test_card'");
@@ -751,6 +756,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                         this->keymap,
                                         *this->context,
                                         *this->front);
+                        LOG(LOG_INFO, "internal module 'test_card' ready");
                     break;
                     default:
                     break;
