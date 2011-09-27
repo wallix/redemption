@@ -695,32 +695,30 @@ struct login_mod : public internal_mod {
                     this->screen.refresh(this->screen.rect.wh());
                 }
                 else {
-                    if (wnd != this->get_screen_wdg()) {
-                        if (wnd->modal_dialog != 0) {
-                            /* window has a modal dialog (but we didn't clicked on it) */
+                    if (wnd == this->get_screen_wdg() || (wnd->modal_dialog == 0)){
+                        if (wnd != this->get_screen_wdg()) {
+                            if (control != wnd && control->tab_stop) {
+                            #warning previous focus on other control is not yet disabled
+                                control->has_focus = true;
+                                control->refresh(control->rect.wh());
+                            }
+                        }
+
+                        switch (control->type) {
+                            case WND_TYPE_BUTTON:
+                            case WND_TYPE_COMBO:
+                                if (this->button_down == control){
+                                    control->state = 0;
+                                    control->refresh(control->rect.wh());
+                                    control->notify(control, 1, x, y);
+                                }
+                            break;
+                            default:
                             break;
                         }
-                        if (control != wnd && control->tab_stop) {
-                        #warning previous focus on other control is not yet disabled
-                            control->has_focus = true;
-                            control->refresh(control->rect.wh());
-                        }
+                        // mouse is up, no more button down, whatever
+                        this->button_down = 0;
                     }
-
-                    switch (control->type) {
-                        case WND_TYPE_BUTTON:
-                        case WND_TYPE_COMBO:
-                            if (this->button_down == control){
-                                control->state = 0;
-                                control->refresh(control->rect.wh());
-                                control->notify(control, 1, x, y);
-                            }
-                        break;
-                        default:
-                        break;
-                    }
-                    // mouse is up, no more button down, whatever
-                    this->button_down = 0;
                 }
             }
         }
