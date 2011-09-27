@@ -191,7 +191,14 @@ class Authentifier(object):
                 if _login[:5] == 'error':
                     self.dic = self.targets.get(_login, {})
                 else:
-                    self.dic.update(self.targets.get(_login, {}))
+                    d = self.targets.get(_login, {})
+                    print "---------- %s" % d
+                    if self.dic.get('display_message', 'ASK') == 'True':
+                        self.dic.update(d)
+                        self.dic['display_message'] = 'True'
+
+                    else:
+                        self.dic.update(d)
             else:
                 print("Wrong Password")
                 self.dic = {'login' : 'ASK' }

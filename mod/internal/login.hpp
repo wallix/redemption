@@ -539,11 +539,10 @@ struct login_mod : public internal_mod {
         return;
     }
 
-    #warning unify close login and dialog and move to internal_mod
     // module received an event from client
     virtual int input_event(const int msg, const long x, const long y, const long param3, const long param4, const int key_flags, const int (& keys)[256])
     {
-//        LOG(LOG_INFO, "input_event(%d, %ld, %ld, %ld %ld)", msg, x, y, param3, param4);
+        LOG(LOG_INFO, "login input_event(%d, %ld, %ld, %ld %ld)", msg, x, y, param3, param4);
         switch (msg){
         case WM_KEYDOWN:
             if (!this->popup_wnd && this->login_window->has_focus) {
