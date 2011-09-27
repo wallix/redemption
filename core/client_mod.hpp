@@ -198,8 +198,9 @@ struct client_mod : public Callback {
         }
     }
 
-    // draw_event should be run when client socket received some data (input_event is set)
-    // In other words: when some data came from "server" and should be taken care of
+    // draw_event is run when mod socket received some data (drawing order),
+    // these order could also be auto-generated, say to comply to some refresh.
+
     // draw_event returns not 0 (return status) when the module finished
     // (connection to remote or internal server closed)
     // and returns 0 as long as the connection with server is still active.
@@ -214,7 +215,6 @@ struct client_mod : public Callback {
         this->front.end_update();
         return 0;
     }
-
 
     const ClientInfo & get_client_info() const {
         return this->front.get_client_info();
@@ -333,7 +333,8 @@ struct client_mod : public Callback {
 
     void opaque_rect(const RDPOpaqueRect & cmd)
     {
-        if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
+        if (!clip.isempty() 
+        && !clip.intersect(cmd.rect).isempty()){
 
             this->send_global_palette();
 
@@ -374,7 +375,8 @@ struct client_mod : public Callback {
 
     void pat_blt(const RDPPatBlt & cmd)
     {
-        if (!this->clip.isempty() && !this->clip.intersect(cmd.rect).isempty()){
+        if (!this->clip.isempty() 
+        && !this->clip.intersect(cmd.rect).isempty()){
 
             this->send_global_palette();
 

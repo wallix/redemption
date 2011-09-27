@@ -692,11 +692,6 @@ struct login_mod : public internal_mod {
         return;
     }
 
-    virtual int input_event(const int msg, const long x, const long y, const long param3, const long param4, const int key_flags, const int (& keys)[256])
-    {
-        return 0;
-    }
-
     // module got an internal event (like incoming data) and want to sent it outside
     virtual int draw_event()
     {
