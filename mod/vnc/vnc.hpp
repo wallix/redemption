@@ -436,7 +436,7 @@ struct mod_vnc : public client_mod {
     }
 
     #warning optimize this, much duplicated code and several send at once when not necessary
-    virtual void rdp_input_mouse(int device_flags, int x, int y)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, const int key_flags, const int (& keys)[256])
     {
         Stream stream(8192);
 

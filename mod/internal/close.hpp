@@ -224,7 +224,7 @@ struct close_mod : public internal_mod {
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, const int key_flags, const int (& keys)[256])
     {
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
             if (this->dragging) {
@@ -253,7 +253,7 @@ struct close_mod : public internal_mod {
                 if (b->pointer != this->current_pointer) {
                     this->set_pointer(b->pointer);
                 }
-                b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), this->key_flags, this->keys);
+                b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), key_flags, keys);
                 if (this->button_down) {
                     this->button_down->state = (b == this->button_down);
                     this->button_down->refresh(this->button_down->rect.wh());

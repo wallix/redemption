@@ -710,7 +710,7 @@ struct client_mod : public Callback {
     virtual void rdp_input_invalidate(const Rect & r) = 0;
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
     virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki) = 0;
-    virtual void rdp_input_mouse(int device_flags, int x, int y) = 0;
+    virtual void rdp_input_mouse(int device_flags, int x, int y, const int key_flags, const int (& keys)[256]) = 0;
 
 };
 
