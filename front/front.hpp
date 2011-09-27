@@ -1886,7 +1886,7 @@ public:
                     case RDP_INPUT_MOUSE:
                         this->mouse_x = param1;
                         this->mouse_y = param2;
-                        cb.rdp_input_mouse(device_flags, param1, param2);
+                        cb.rdp_input_mouse(device_flags, param1, param2, this->key_flags, this->keys);
                         break;
                     default:
                         LOG(LOG_INFO, "unsupported PDUTYPE2_INPUT msg %u", msg_type);

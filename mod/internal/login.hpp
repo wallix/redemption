@@ -490,7 +490,7 @@ struct login_mod : public internal_mod {
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, const int key_flags, const int (& keys)[256])
     {
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
             if (this->dragging) {
@@ -519,7 +519,7 @@ struct login_mod : public internal_mod {
                 if (b->pointer != this->current_pointer) {
                     this->set_pointer(b->pointer);
                 }
-                b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), this->key_flags, this->keys);
+                b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), key_flags, keys);
                 if (this->button_down) {
                     this->button_down->state = (b == this->button_down);
                     this->button_down->refresh(this->button_down->rect.wh());
@@ -637,7 +637,7 @@ struct login_mod : public internal_mod {
                     if (this->popup_wnd) {
                         // click inside popup
                         if (this->popup_wnd == control){
-                            this->popup_wnd->def_proc(WM_LBUTTONUP, x, y, this->key_flags, this->keys);
+                            this->popup_wnd->def_proc(WM_LBUTTONUP, x, y, key_flags, keys);
                         }
                         // clear popup
                         this->clear_popup();
@@ -682,7 +682,7 @@ struct login_mod : public internal_mod {
         }
         else {
             if (!this->popup_wnd && this->login_window->has_focus) {
-                this->login_window->def_proc(WM_KEYDOWN, param1, device_flags, this->key_flags, this->keys);
+                this->login_window->def_proc(WM_KEYDOWN, param1, device_flags, key_flags, keys);
             }
         }
     }

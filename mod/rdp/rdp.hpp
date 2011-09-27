@@ -612,7 +612,7 @@ struct mod_rdp : public client_mod {
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, const int key_flags, const int (& keys)[256])
     {
         if (this->up_and_running) {
             #warning is decoding and reencoding really necessary, a simple pass-through from front to back-end should be enough

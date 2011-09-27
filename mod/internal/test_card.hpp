@@ -44,7 +44,7 @@ struct test_card_mod : public internal_mod {
     {
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, const int key_flags, const int (& keys)[256])
     {
     }
 
