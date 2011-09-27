@@ -58,12 +58,6 @@ struct transitory_mod : public client_mod {
     {
     }
 
-    // module received an event from client
-    int input_event(const int msg, const long x, const long y, const long param4, const long param5, const int key_flags, const int (& keys)[256])
-    {
-        return 0;
-    }
-
     // management of module originated event ("data received from server")
     // return non zero if module is "finished", 0 if it's still running
     // the transitory module finish immediately,

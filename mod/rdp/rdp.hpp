@@ -641,12 +641,6 @@ struct mod_rdp : public client_mod {
         }
     }
 
-    #warning this function should be removed soon
-    int input_event(const int msg, const long param1, const long param2, const long param3, const long param4, const int key_flags, const int (& keys)[256])
-    {
-        exit(0);
-    }
-
     virtual void send_to_mod_channel(
                 const McsChannelItem & front_channel,
                 uint8_t * data,

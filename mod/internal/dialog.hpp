@@ -78,7 +78,6 @@ struct window_dialog : public window
 
     virtual void notify(struct Widget* sender, int msg, long param1, long param2)
     {
-        LOG(LOG_INFO, "dialog notify msg=%u", msg);
         if (this->modal_dialog != 0 && msg != 100) {
             return;
         }
@@ -342,12 +341,6 @@ struct dialog_mod : public internal_mod {
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     {
         return;
-    }
-
-    // module received an event from client
-    virtual int input_event(const int msg, const long x, const long y, const long param4, const long param5, const int key_flags, const int (& keys)[256])
-    {
-        return 0;
     }
 
     // module got an internal event (like incoming data) and want to sent it outside
