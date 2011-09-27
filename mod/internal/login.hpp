@@ -493,11 +493,44 @@ struct login_mod : public internal_mod {
     virtual void rdp_input_mouse(int device_flags, int x, int y)
     {
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
-            this->input_event(WM_MOUSEMOVE, x, y, 0, 0, this->key_flags, this->keys);
-            this->front.mouse_x = x;
-            this->front.mouse_y = y;
+            if (this->dragging) {
+                long dragx = (x < 0)                         ? 0
+                           : (x < this->screen.rect.cx) ? x
+                           : this->screen.rect.cx
+                           ;
 
+                long dragy = (y < 0)                         ? 0
+                           : (y < this->screen.rect.cy) ? y
+                           : this->screen.rect.cy
+                           ;
+
+                this->server_begin_update();
+                this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
+                this->dragging_rect.x = dragx - this->draggingdx ;
+                this->dragging_rect.y = dragy - this->draggingdy;
+                this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
+                this->server_end_update();
+            }
+            else {
+                struct Widget *b = this->screen.widget_at_pos(x, y);
+                if (b == 0) { /* if b is null, the movement must be over the screen */
+                    b = this->get_screen_wdg();
+                }
+                if (b->pointer != this->current_pointer) {
+                    this->set_pointer(b->pointer);
+                }
+                b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), this->key_flags, this->keys);
+                if (this->button_down) {
+                    this->button_down->state = (b == this->button_down);
+                    this->button_down->refresh(this->button_down->rect.wh());
+                }
+                else {
+                    b->notify(&b->parent, 2, x, y);
+                }
+            }
         }
+
+        // -------------------------------------------------------
         if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
             this->input_event(
                 WM_LBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
@@ -547,44 +580,6 @@ struct login_mod : public internal_mod {
     {
         LOG(LOG_INFO, "login input_event(%d, %ld, %ld, %ld %ld)", msg, x, y, param3, param4);
         switch (msg){
-        case WM_MOUSEMOVE:
-//            LOG(LOG_INFO, "dragging = %d\n", this->dragging);
-            if (this->dragging) {
-                long dragx = (x < 0)                         ? 0
-                           : (x < this->screen.rect.cx) ? x
-                           : this->screen.rect.cx
-                           ;
-
-                long dragy = (y < 0)                         ? 0
-                           : (y < this->screen.rect.cy) ? y
-                           : this->screen.rect.cy
-                           ;
-
-                this->server_begin_update();
-                this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
-                this->dragging_rect.x = dragx - this->draggingdx ;
-                this->dragging_rect.y = dragy - this->draggingdy;
-                this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
-                this->server_end_update();
-            }
-            else {
-                struct Widget *b = this->screen.widget_at_pos(x, y);
-                if (b == 0) { /* if b is null, the movement must be over the screen */
-                    b = this->get_screen_wdg();
-                }
-                if (b->pointer != this->current_pointer) {
-                    this->set_pointer(b->pointer);
-                }
-                b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), this->key_flags, this->keys);
-                if (this->button_down) {
-                    this->button_down->state = (b == this->button_down);
-                    this->button_down->refresh(this->button_down->rect.wh());
-                }
-                else {
-                    b->notify(&b->parent, 2, x, y);
-                }
-            }
-        break;
         case WM_LBUTTONDOWN:
         {
             /* loop on surface widgets on screen to find active window */
