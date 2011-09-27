@@ -103,7 +103,7 @@ struct internal_mod : public client_mod {
         return &(this->screen);
     }
 
-    virtual void invalidate(const Rect & rect)
+    virtual void rdp_input_invalidate(const Rect & rect)
     {
         if (!rect.isempty()) {
             this->server_begin_update();

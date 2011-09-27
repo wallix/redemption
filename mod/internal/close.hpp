@@ -205,7 +205,7 @@ struct close_mod : public internal_mod {
         #warning here delete all widgets from this->screen.child_list
     }
 
-    virtual void invalidate(const Rect & rect)
+    virtual void rdp_input_invalidate(const Rect & rect)
     {
         if (!rect.isempty()) {
             this->server_begin_update();

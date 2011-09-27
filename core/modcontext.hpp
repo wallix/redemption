@@ -77,10 +77,19 @@ enum {
 struct ModContext : public Dico {
     int mod_state;
     int wab_auth;
+    enum {
+        INTERNAL_NONE,
+        INTERNAL_LOGIN,
+        INTERNAL_DIALOG,
+        INTERNAL_CLOSE,
+        INTERNAL_BOUNCER2,
+        INTERNAL_TEST,
+        INTERNAL_CARD,
+    } nextmod;
 
     public:
     ModContext(ProtocolKeyword * KeywordsDefinitions, unsigned nbkeywords) :
-        Dico(KeywordsDefinitions, nbkeywords)
+        Dico(KeywordsDefinitions, nbkeywords), nextmod(INTERNAL_NONE)
     {
     }
 

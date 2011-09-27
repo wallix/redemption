@@ -56,7 +56,7 @@ struct null_mod : public client_mod {
         return;
     }
 
-    virtual void invalidate(const Rect & r)
+    virtual void rdp_input_invalidate(const Rect & r)
     {
         return;
     }

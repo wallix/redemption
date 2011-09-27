@@ -206,7 +206,7 @@ struct window_login : public window
             }
         } else if (msg == CB_ITEMCHANGE) { /* combo box change */
             this->login_window_show_edits();
-            this->refresh(this->rect.wh()); /* invalidate the whole dialog for now */
+            this->refresh(this->rect.wh()); /* rdp_input_invalidate the whole dialog for now */
         }
         return;
     }
