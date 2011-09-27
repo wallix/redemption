@@ -250,10 +250,6 @@ class SessionManager {
         default:
             LOG(LOG_INFO, "Default Mod State\n");
             next_state = this->ask_next_module_remote(auth_host, auth_port);
-            if (next_state == MCTX_STATUS_CLOSE){
-                next_state = MCTX_STATUS_TRANSITORY;
-                this->context.mod_state = MOD_STATE_RECEIVED_CREDENTIALS;
-            }
         break;
         case MOD_STATE_RECEIVED_CREDENTIALS:
         LOG(LOG_INFO, "Received Credentials\n");
@@ -305,7 +301,8 @@ class SessionManager {
                     delete this->auth_trans_t;
                     this->auth_trans_t = 0;
                 }
-                next_state = MCTX_STATUS_CLOSE;
+                next_state = MCTX_STATUS_INTERNAL;
+                this->context.nextmod = ModContext::INTERNAL_CLOSE;
             }
         }
         break;
@@ -317,7 +314,8 @@ class SessionManager {
         case MOD_STATE_CONNECTED_RDP:
 //        LOG(LOG_INFO, "CONNECTED RDP\n");
         this->context.mod_state = MOD_STATE_CLOSE;
-        next_state = MCTX_STATUS_CLOSE;
+        next_state = MCTX_STATUS_INTERNAL;
+
         break;
         case MOD_STATE_CLOSE:
 //        LOG(LOG_INFO, "CLOSE\n");
