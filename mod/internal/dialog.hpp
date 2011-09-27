@@ -214,10 +214,7 @@ struct dialog_mod : public internal_mod {
     }
 
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
-        if (ki != 0) {
-            int msg = (device_flags & KBD_FLAG_UP)?WM_KEYUP:WM_KEYDOWN;
-            this->input_event(msg, ki->chr, ki->sym, param1, device_flags, key_flags, keys);
-        }
+        #warning dialog does not support keyboard any more, fix that
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
@@ -230,33 +227,6 @@ struct dialog_mod : public internal_mod {
     {
         LOG(LOG_INFO, "dialog input_event(%d, %ld, %ld, %ld %ld)", msg, x, y, param4, param5);
         switch (msg){
-        case WM_KEYUP:
-        {
-            int scan_code = param4 & 0x7F;
-            const char * message = NULL;
-            switch (scan_code) {
-                case 1: /* cancel button */
-                    message = "False";
-                break;
-                case 28: /* ok button */
-                    message = "True";
-                break;
-                default:
-                    message = NULL;
-                break;
-            }
-            if (message){
-                strcpy(this->close_window->context->get(
-                        (this->close_window->esc_button)?STRAUTHID_ACCEPT_MESSAGE
-                                                        :STRAUTHID_DISPLAY_MESSAGE),
-                                            message);
-                this->event->set();
-                this->signal = 1;
-            }
-        }
-        break;
-        case WM_KEYDOWN:
-        break;
         case WM_MOUSEMOVE:
             if (this->dragging) {
                 long dragx = (x < 0)                         ? 0
