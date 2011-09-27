@@ -477,11 +477,7 @@ struct login_mod : public internal_mod {
         if (!rect.isempty()) {
             this->server_begin_update();
             Rect & r = this->screen.rect;
-            this->input_event(WM_INVALIDATE,
-                ((r.x & 0xffff) << 16) | (r.y & 0xffff),
-                ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
-                0, 0, this->key_flags, this->keys);
-
+            this->screen.fill_rect(0xCC, r, this->screen.bg_color, r);
             /* draw any child windows in the area */
             for (size_t i = 0; i < this->nb_windows(); i++) {
                 Widget *b = this->window(i);
@@ -527,9 +523,10 @@ struct login_mod : public internal_mod {
         }
     }
 
-    virtual void rdp_input_scancode(int msg, long param1, long param2, long param3, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
+    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
         if (ki != 0) {
-            this->input_event(msg, ki->chr, ki->sym, param1, param3, key_flags, keys);
+            int msg = (device_flags & KBD_FLAG_UP)?WM_KEYUP:WM_KEYDOWN;
+            this->input_event(msg, ki->chr, ki->sym, param1, device_flags, key_flags, keys);
         }
     }
 
@@ -554,9 +551,6 @@ struct login_mod : public internal_mod {
                 this->clear_popup();
             }
         break;
-        case WM_INVALIDATE:
-            this->screen.fill_rect(0xCC, this->screen.rect, this->screen.bg_color, this->screen.rect);
-            break;
         case WM_MOUSEMOVE:
 //            LOG(LOG_INFO, "dragging = %d\n", this->dragging);
             if (this->dragging) {

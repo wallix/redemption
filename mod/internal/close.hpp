@@ -341,13 +341,14 @@ struct close_mod : public internal_mod {
         // No other button are used in redemption interface
     }
 
-    virtual void rdp_input_scancode(int msg, long param1, long param2, long param3, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
+    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
         LOG(LOG_INFO, "scan code");
         if (ki != 0) {
+            int msg = (device_flags & KBD_FLAG_UP)?WM_KEYUP:WM_KEYDOWN;
             switch (msg){
             case WM_KEYUP:
                 if (this->close_window->has_focus) {
-                    this->close_window->def_proc(msg, param1, param3, key_flags, keys);
+                    this->close_window->def_proc(msg, param1, device_flags, key_flags, keys);
                     this->signal = 4;
                     this->event->set();
                 } else {
@@ -356,7 +357,7 @@ struct close_mod : public internal_mod {
             break;
             case WM_KEYDOWN:
                 if (this->close_window->has_focus) {
-                    this->close_window->def_proc(msg, param1, param3, key_flags, keys);
+                    this->close_window->def_proc(msg, param1, device_flags, key_flags, keys);
                 }
             break;
             }

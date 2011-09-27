@@ -598,7 +598,7 @@ struct mod_rdp : public client_mod {
         delete this->trans;
     }
 
-    virtual void rdp_input_scancode(int msg, long param1, long param2, long device_flags, long time, const int key_flags, const int (& keys)[256], struct key_info* ki){
+    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long time, const int key_flags, const int (& keys)[256], struct key_info* ki){
         if (this->up_and_running) {
 //            LOG(LOG_INFO, "Direct parameter transmission \n");
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
