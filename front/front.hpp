@@ -1886,6 +1886,8 @@ public:
                         }
                         break;
                     case RDP_INPUT_MOUSE:
+                        this->mouse_x = param1;
+                        this->mouse_y = param2;
                         cb.rdp_input_mouse(device_flags, param1, param2);
                         break;
                     default:

@@ -68,78 +68,26 @@ struct bouncer2_mod : public internal_mod {
 
     virtual void rdp_input_invalidate(const Rect & rect)
     {
-        if (!rect.isempty()) {
-            this->server_begin_update();
-            Rect & r = this->screen.rect;
-            this->input_event(WM_INVALIDATE,
-                ((r.x & 0xffff) << 16) | (r.y & 0xffff),
-                ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
-                0, 0, this->key_flags, this->keys);
-
-            /* draw any child windows in the area */
-            for (size_t i = 0; i < this->nb_windows(); i++) {
-                Widget *b = this->window(i);
-                Rect r2 = rect.intersect(b->rect.wh());
-                if (!r2.isempty()) {
-                    b->refresh_clip(r2);
-                }
-            }
-            this->server_end_update();
-        }
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y)
     {
-        LOG(LOG_INFO, "input mouse");
-
-        if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
-            this->input_event(WM_MOUSEMOVE, x, y, 0, 0, this->key_flags, this->keys);
-            this->front.mouse_x = x;
-            this->front.mouse_y = y;
-
-        }
-        if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
-            this->input_event(
-                WM_LBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0, this->key_flags, this->keys);
-        }
-        if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
-            this->input_event(
-                WM_RBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0, this->key_flags, this->keys);
-        }
-        if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
-            this->input_event(
-                WM_BUTTON3UP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
-                x, y, 0, 0, this->key_flags, this->keys);
-        }
-        if (device_flags == MOUSE_FLAG_BUTTON4 || /* 0x0280 */ device_flags == 0x0278) {
-            this->input_event(WM_BUTTON4DOWN, x, y, 0, 0, this->key_flags, this->keys);
-            this->input_event(WM_BUTTON4UP, x, y, 0, 0, this->key_flags, this->keys);
-        }
-        if (device_flags == MOUSE_FLAG_BUTTON5 || /* 0x0380 */ device_flags == 0x0388) {
-            this->input_event(WM_BUTTON5DOWN, x, y, 0, 0, this->key_flags, this->keys);
-            this->input_event(WM_BUTTON5UP, x, y, 0, 0, this->key_flags, this->keys);
-        }
     }
 
-    virtual void rdp_input_scancode(int msg, long param1, long param2, long param3, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
-        LOG(LOG_INFO, "scan code");
-        if (ki != 0) {
-            this->input_event(msg, ki->chr, ki->sym, param1, param3, key_flags, keys);
-        }
+    virtual void rdp_input_scancode(int msg, long param1, long param2, long param3, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki)
+    {
+        this->interaction();
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     {
-        LOG(LOG_INFO, "overloaded by subclasses");
-        return;
     }
 
-    // This should come from FRONT!
-    int input_event(const int msg, const long x, const long y, const long param4, const long param5, const int key_flags, const int (& keys)[256])
+    int interaction()
     {
         // Get x% of the screen cx and cy
+        long x = this->front.mouse_x;
+        long y = this->front.mouse_y;
         int scarex = this->screen.rect.cx / 5;
         int scarey = this->screen.rect.cx / 5;
         Rect scareZone(this->dancing_rect->getCenteredX() - (scarex / 2),this->dancing_rect->getCenteredY() - (scarey / 2),scarex,scarey);
@@ -170,6 +118,7 @@ struct bouncer2_mod : public internal_mod {
         //RDPOpaqueRect white_rect(Rect(0, 0, 10, 10), 0xFFFFFF);
         //RDPOpaqueRect black_rect(Rect(0, 0, 10, 10), 0x000000);
 
+        this->interaction();
         // Calculating new speedx and speedy
         if (this->dancing_rect->x <= 0 && this->speedx < 0) {
             this->speedx = -this->speedx;
