@@ -46,7 +46,7 @@ struct transitory_mod : public client_mod {
     {
     }
 
-    virtual void rdp_input_scancode(int msg, long param1, long param2, long param3, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki)
+    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki)
     {
     }
 

@@ -1855,11 +1855,9 @@ public:
                     case RDP_INPUT_SCANCODE:
                         {
                             long p1 = param1 % 128;
-                            int msg = WM_KEYUP;
                             this->keys[p1] = 1 | device_flags;
                             if ((device_flags & KBD_FLAG_UP) == 0) { /* 0x8000 */
                                 /* key down */
-                                msg = WM_KEYDOWN;
                                 switch (p1) {
                                 case 58:
                                     this->key_flags ^= 4;
@@ -1879,8 +1877,8 @@ public:
                                 param1,
                                 this->keys,
                                 this->key_flags);
-                            cb.rdp_input_scancode(msg, param1, param2, device_flags, time, this->key_flags, this->keys, ki);
-                            if (msg == WM_KEYUP){
+                            cb.rdp_input_scancode(param1, param2, device_flags, time, this->key_flags, this->keys, ki);
+                            if (device_flags & KBD_FLAG_UP){
                                 this->keys[p1] = 0;
                             }
                         }
