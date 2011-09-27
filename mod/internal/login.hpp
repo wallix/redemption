@@ -524,9 +524,15 @@ struct login_mod : public internal_mod {
     }
 
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
-        if (ki != 0) {
-            int msg = (device_flags & KBD_FLAG_UP)?WM_KEYUP:WM_KEYDOWN;
-            this->input_event(msg, ki->chr, ki->sym, param1, device_flags, key_flags, keys);
+        if (device_flags & KBD_FLAG_UP){
+            if (this->popup_wnd != 0) {
+                this->clear_popup();
+            }
+        }
+        else {
+            if (!this->popup_wnd && this->login_window->has_focus) {
+                this->login_window->def_proc(WM_KEYDOWN, param1, device_flags, this->key_flags, this->keys);
+            }
         }
     }
 
@@ -541,16 +547,6 @@ struct login_mod : public internal_mod {
     {
         LOG(LOG_INFO, "login input_event(%d, %ld, %ld, %ld %ld)", msg, x, y, param3, param4);
         switch (msg){
-        case WM_KEYDOWN:
-            if (!this->popup_wnd && this->login_window->has_focus) {
-                this->login_window->def_proc(msg, param3, param4, this->key_flags, this->keys);
-            }
-        break;
-        case WM_KEYUP:
-            if (this->popup_wnd != 0) {
-                this->clear_popup();
-            }
-        break;
         case WM_MOUSEMOVE:
 //            LOG(LOG_INFO, "dragging = %d\n", this->dragging);
             if (this->dragging) {
