@@ -269,12 +269,16 @@ class SessionManager {
                 this->context.mod_state = MOD_STATE_INIT;
             }
             else if (this->context.is_asked(STRAUTHID_DISPLAY_MESSAGE)){
+                next_state = MCTX_STATUS_INTERNAL;
+                this->context.nextmod = ModContext::INTERNAL_DIALOG;
                 this->context.mod_state = MOD_STATE_DISPLAY_MESSAGE;
-                next_state = MCTX_STATUS_DIALOG;
+
+
             }
             else if (this->context.is_asked(STRAUTHID_ACCEPT_MESSAGE)){
+                next_state = MCTX_STATUS_INTERNAL;
+                this->context.nextmod = ModContext::INTERNAL_DIALOG;
                 this->context.mod_state = MOD_STATE_VALID_MESSAGE;
-                next_state = MCTX_STATUS_DIALOG;
             }
 
             else if (this->context.get_bool(STRAUTHID_AUTHENTICATED)){

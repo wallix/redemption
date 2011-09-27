@@ -642,30 +642,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
             break;
 
             case MCTX_STATUS_DIALOG:
-            {
-                #warning change that to two different dialog modules
-                const char * message = NULL;
-                const char * button = NULL;
-                if (this->context->mod_state == MOD_STATE_DISPLAY_MESSAGE){
-                    message = this->context->get(STRAUTHID_MESSAGE);
-                    button = NULL;
-                }
-                else {
-                    message = this->context->get(STRAUTHID_MESSAGE);
-                    button = this->context->get(STRAUTHID_TRANS_BUTTON_REFUSED);
-                }
-
-                this->back_event = new wait_obj(-1);
-                this->mod = new dialog_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), message, button, this->ini);
-                // force a WM_INVALIDATE on all screen
-                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
-                LOG(LOG_INFO, "Creation of new mod 'STATUS DIALOG' suceeded\n");
-                Inifile ini(CFG_PATH "/" RDPPROXY_INI);
-                if (htons(ini.globals.autovalidate)) {
-                    LOG(LOG_INFO, "dialog autovalidated");
-                    #warning : find a better way
-                }
-            }
             break;
             case MCTX_STATUS_INTERNAL:
             {
@@ -708,6 +684,32 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                 pointer_item.mask,
                                 pointer_item.x,
                                 pointer_item.y);
+                    }
+                    break;
+                    case ModContext::INTERNAL_DIALOG:
+                    {
+                        const char * message = NULL;
+                        const char * button = NULL;
+                        if (this->context->mod_state == MOD_STATE_DISPLAY_MESSAGE){
+                            LOG(LOG_INFO, "Creation of internal module 'Dialog Display Message'");
+                            message = this->context->get(STRAUTHID_MESSAGE);
+                            button = NULL;
+                        }
+                        else {
+                            LOG(LOG_INFO, "Creation of internal module 'Dialog Accept Message'");
+                            message = this->context->get(STRAUTHID_MESSAGE);
+                            button = this->context->get(STRAUTHID_TRANS_BUTTON_REFUSED);
+                        }
+                        this->mod = new dialog_mod(
+                                        this->back_event,
+                                        this->keys,
+                                        this->key_flags,
+                                        this->keymap,
+                                        *this->context,
+                                        *this->front,
+                                        message,
+                                        button,
+                                        this->ini);
                     }
                     break;
                     case ModContext::INTERNAL_LOGIN:
