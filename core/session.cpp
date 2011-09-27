@@ -467,7 +467,8 @@ int Session::step_STATE_RUNNING(const struct timeval & time_mark)
     if (this->sesman->close_on_timestamp(timestamp)
     || !this->sesman->keep_alive_or_inactivity(this->keep_alive_time, timestamp, this->trans)){
         this->internal_state = SESSION_STATE_STOP;
-        if (this->session_setup_mod(MCTX_STATUS_CLOSE, this->context)){
+        this->context->nextmod = ModContext::INTERNAL_CLOSE;
+        if (this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context)){
             this->keep_alive_time = 0;
             #warning move that to sesman (to hide implementation details)
             if (this->sesman->auth_event){
@@ -666,55 +667,49 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 }
             }
             break;
-
-            case MCTX_STATUS_CLOSE:
-            {
-                if (this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
-                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection to server failed");
-                }
-                this->back_event = new wait_obj(-1);
-                this->mod = new close_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *this->front, this->ini);
-
-                struct pointer_item pointer_item;
-
-                memset(&pointer_item, 0, sizeof(pointer_item));
-                load_pointer(SHARE_PATH "/" CURSOR0,
-                        pointer_item.data,
-                        pointer_item.mask,
-                        &pointer_item.x,
-                        &pointer_item.y);
-
-                this->front->cache.add_pointer_static(&pointer_item, 0);
-                this->front->send_pointer(0,
-                        pointer_item.data,
-                        pointer_item.mask,
-                        pointer_item.x,
-                        pointer_item.y);
-
-                memset(&pointer_item, 0, sizeof(pointer_item));
-                load_pointer(SHARE_PATH "/" CURSOR1,
-                        pointer_item.data,
-                        pointer_item.mask,
-                        &pointer_item.x,
-                        &pointer_item.y);
-                this->front->cache.add_pointer_static(&pointer_item, 1);
-
-                this->front->send_pointer(1,
-                        pointer_item.data,
-                        pointer_item.mask,
-                        pointer_item.x,
-                        pointer_item.y);
-
-                // force a WM_INVALIDATE on all screen
-                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
-                LOG(LOG_INFO, "Creation of new mod 'CLOSE DIALOG' suceeded\n");
-            }
-            break;
-
             case MCTX_STATUS_INTERNAL:
             {
                 this->back_event = new wait_obj(-1);
                 switch (this->context->nextmod){
+                    case ModContext::INTERNAL_CLOSE:
+                    {
+                        if (this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
+                            this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection to server failed");
+                        }
+                        this->mod = new close_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *this->front, this->ini);
+
+                        #warning we should probably send mouse pointers before any internal module connection
+                        struct pointer_item pointer_item;
+
+                        memset(&pointer_item, 0, sizeof(pointer_item));
+                        load_pointer(SHARE_PATH "/" CURSOR0,
+                                pointer_item.data,
+                                pointer_item.mask,
+                                &pointer_item.x,
+                                &pointer_item.y);
+
+                        this->front->cache.add_pointer_static(&pointer_item, 0);
+                        this->front->send_pointer(0,
+                                pointer_item.data,
+                                pointer_item.mask,
+                                pointer_item.x,
+                                pointer_item.y);
+
+                        memset(&pointer_item, 0, sizeof(pointer_item));
+                        load_pointer(SHARE_PATH "/" CURSOR1,
+                                pointer_item.data,
+                                pointer_item.mask,
+                                &pointer_item.x,
+                                &pointer_item.y);
+                        this->front->cache.add_pointer_static(&pointer_item, 1);
+
+                        this->front->send_pointer(1,
+                                pointer_item.data,
+                                pointer_item.mask,
+                                pointer_item.x,
+                                pointer_item.y);
+                    }
+                    break;
                     case ModContext::INTERNAL_LOGIN:
                         LOG(LOG_INFO, "Creation of internal module 'Login'");
                         this->mod = new login_mod(
