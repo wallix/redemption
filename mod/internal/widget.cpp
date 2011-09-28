@@ -328,13 +328,15 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
 
 void window::draw(const Rect & clip)
 {
-    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), this->bg_color, clip);
-    this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 2, 1), WHITE, clip);
-    this->fill_rect(0xCC, Rect(1, 1, 1, this->rect.cy - 2), WHITE, clip);
-    this->fill_rect(0xCC, Rect(1, this->rect.cy - 2, this->rect.cx - 2, 1), DARK_GREY, clip);
-    this->fill_rect(0xCC, Rect(this->rect.cx - 2, 1, 1, this->rect.cy - 2), DARK_GREY, clip);
-    this->fill_rect(0xCC, Rect(0, this->rect.cy - 1, this->rect.cx, 1), BLACK, clip);
-    this->fill_rect(0xCC, Rect(this->rect.cx - 1, 0, 1, this->rect.cy), BLACK, clip);
+    Rect r(0, 0, this->rect.cx, this->rect.cy);
+    const Rect scr_r = this->to_screen_rect(r);
+
+    const Region region = this->get_visible_region(this, &this->parent, scr_r);
+
+    for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+        this->mod->draw_window(scr_r, this->bg_color);
+    }
 
     if (has_focus) {
         this->draw_title_bar(WABGREEN, WHITE, clip);
