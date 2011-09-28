@@ -348,23 +348,17 @@ void window::draw(const Rect & clip)
 
 void widget_edit::draw(const Rect & clip)
 {
-    // LOG(LOG_INFO, "widget_edit::draw\n");
-    /* draw gray box */
-    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), GREY, clip);
-    /* main WHITE background */
-    this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 3, this->rect.cy - 3), WHITE, clip);
-    /* dark GREY top line */
-    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, 1), DARK_GREY, clip);
-    /* dark GREY left line */
-    this->fill_rect(0xCC, Rect(0, 0, 1, this->rect.cy), DARK_GREY, clip);
-    /* WHITE bottom line */
-    this->fill_rect(0xCC, Rect(0, this->rect.cy- 1, this->rect.cx, 1), WHITE, clip);
-    /* WHITE right line */
-    this->fill_rect(0xCC, Rect(this->rect.cx - 1, 0, 1, this->rect.cy), WHITE, clip);
-    /* BLACK left line */
-    this->fill_rect(0xCC, Rect(1, 1, 1, this->rect.cy - 2), BLACK, clip);
-    /* BLACK top line */
-    this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 2, 1), BLACK, clip);
+
+    Rect r(0, 0, this->rect.cx, this->rect.cy);
+    const Rect scr_r = this->to_screen_rect(r);
+
+    const Region region = this->get_visible_region(this, &this->parent, scr_r);
+
+    for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+        this->mod->draw_edit(scr_r);
+    }
+
     /* draw text */
     char text[255];
     wchar_t wtext[255];

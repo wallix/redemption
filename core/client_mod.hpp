@@ -270,15 +270,23 @@ struct client_mod : public Callback {
             RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), BLACK));
     }
 
-    void draw_edit(const Rect & rect, uint32_t bgcolor){
-        this->opaque_rect(RDPOpaqueRect(rect, bgcolor));
-        this->opaque_rect(RDPOpaqueRect(Rect(rect.x+1, rect.y+1, rect.cx - 3, rect.cy - 3), WHITE));
-        this->opaque_rect(RDPOpaqueRect(Rect(rect.x, rect.y, rect.cx, 1), DARK_GREY));
-        this->opaque_rect(RDPOpaqueRect(Rect(rect.x, rect.y, 1, rect.cy), DARK_GREY));
-        this->opaque_rect(RDPOpaqueRect(Rect(rect.x, rect.y + rect.cy - 1, rect.cx, 1), WHITE));
-        this->opaque_rect(RDPOpaqueRect(Rect(rect.x + rect.cx - 1, rect.y, 1, rect.cy), WHITE));
-        this->opaque_rect(RDPOpaqueRect(Rect(rect.x + 1, rect.y + 1, 1, rect.cy - 2), BLACK));
-        this->opaque_rect(RDPOpaqueRect(Rect(rect.x + 1, rect.y + 1, rect.cx - 2, 1), BLACK));
+    void draw_edit(const Rect & rect){
+        this->opaque_rect(
+            RDPOpaqueRect(rect, GREY));
+        this->opaque_rect(
+            RDPOpaqueRect(Rect(rect.x+1, rect.y+1, rect.cx - 3, rect.cy - 3), WHITE));
+        this->opaque_rect(
+            RDPOpaqueRect(Rect(rect.x, rect.y, rect.cx, 1), DARK_GREY));
+        this->opaque_rect(
+            RDPOpaqueRect(Rect(rect.x, rect.y, 1, rect.cy), DARK_GREY));
+        this->opaque_rect(
+            RDPOpaqueRect(Rect(rect.x, rect.y + rect.cy - 1, rect.cx, 1), WHITE));
+        this->opaque_rect(
+            RDPOpaqueRect(Rect(rect.x + rect.cx - 1, rect.y, 1, rect.cy), WHITE));
+        this->opaque_rect(
+            RDPOpaqueRect(Rect(rect.x + 1, rect.y + 1, 1, rect.cy - 2), BLACK));
+        this->opaque_rect(
+            RDPOpaqueRect(Rect(rect.x + 1, rect.y + 1, rect.cx - 2, 1), BLACK));
     }
 
     #warning this function is written in a quite insane way, so don't use it, and rewrite it in a saner way.
