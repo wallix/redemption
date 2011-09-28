@@ -308,7 +308,7 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
                 0x03, // fl_accel
                 0x00, // ui_charinc
                 0, // f_op_redundant,
-                color_encode(BLACK, this->mod->mod_bpp), // bgcolor
+                BLACK, // bgcolor
                 fgcolor, // fgcolor
                 rect, // bk
                 Rect(), // op
@@ -328,33 +328,19 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
 
 void window::draw(const Rect & clip)
 {
-    /* draw color_encode(GREY, this->mod->mod_bpp) background */
-
     this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), this->bg_color, clip);
-    /* top color_encode(WHITE, this->mod->mod_bpp) line */
-
-    this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 2, 1), color_encode(WHITE, this->mod->mod_bpp), clip);
-
-    /* left color_encode(WHITE, this->mod->mod_bpp) line */
-    this->fill_rect(0xCC, Rect(1, 1, 1, this->rect.cy - 2), color_encode(WHITE, this->mod->mod_bpp), clip);
-
-    /* bottom dark color_encode(GREY, this->mod->mod_bpp) line */
-    this->fill_rect(0xCC, Rect(1, this->rect.cy - 2, this->rect.cx - 2, 1), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-
-    /* right dark color_encode(GREY, this->mod->mod_bpp) line */
-    this->fill_rect(0xCC, Rect(this->rect.cx - 2, 1, 1, this->rect.cy - 2), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-
-    /* bottom color_encode(BLACK, this->mod->mod_bpp) line */
-    this->fill_rect(0xCC, Rect(0, this->rect.cy - 1, this->rect.cx, 1), color_encode(BLACK, this->mod->mod_bpp), clip);
-
-    /* right color_encode(BLACK, this->mod->mod_bpp) line */
-    this->fill_rect(0xCC, Rect(this->rect.cx - 1, 0, 1, this->rect.cy), color_encode(BLACK, this->mod->mod_bpp), clip);
+    this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 2, 1), WHITE, clip);
+    this->fill_rect(0xCC, Rect(1, 1, 1, this->rect.cy - 2), WHITE, clip);
+    this->fill_rect(0xCC, Rect(1, this->rect.cy - 2, this->rect.cx - 2, 1), DARK_GREY, clip);
+    this->fill_rect(0xCC, Rect(this->rect.cx - 2, 1, 1, this->rect.cy - 2), DARK_GREY, clip);
+    this->fill_rect(0xCC, Rect(0, this->rect.cy - 1, this->rect.cx, 1), BLACK, clip);
+    this->fill_rect(0xCC, Rect(this->rect.cx - 1, 0, 1, this->rect.cy), BLACK, clip);
 
     if (has_focus) {
-        this->draw_title_bar(color_encode(WABGREEN, this->mod->mod_bpp), color_encode(WHITE, this->mod->mod_bpp), clip);
+        this->draw_title_bar(WABGREEN, WHITE, clip);
     }
     else {
-        this->draw_title_bar(color_encode(DARK_GREY, this->mod->mod_bpp), color_encode(BLACK, this->mod->mod_bpp), clip);
+        this->draw_title_bar(DARK_GREY, BLACK, clip);
     }
 }
 
@@ -362,21 +348,21 @@ void widget_edit::draw(const Rect & clip)
 {
     // LOG(LOG_INFO, "widget_edit::draw\n");
     /* draw gray box */
-    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), color_encode(GREY, this->mod->mod_bpp), clip);
-    /* main color_encode(WHITE, this->mod->mod_bpp) background */
-    this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 3, this->rect.cy - 3), color_encode(WHITE, this->mod->mod_bpp), clip);
-    /* dark color_encode(GREY, this->mod->mod_bpp) top line */
-    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, 1), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-    /* dark color_encode(GREY, this->mod->mod_bpp) left line */
-    this->fill_rect(0xCC, Rect(0, 0, 1, this->rect.cy), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-    /* color_encode(WHITE, this->mod->mod_bpp) bottom line */
-    this->fill_rect(0xCC, Rect(0, this->rect.cy- 1, this->rect.cx, 1), color_encode(WHITE, this->mod->mod_bpp), clip);
-    /* color_encode(WHITE, this->mod->mod_bpp) right line */
-    this->fill_rect(0xCC, Rect(this->rect.cx - 1, 0, 1, this->rect.cy), color_encode(WHITE, this->mod->mod_bpp), clip);
-    /* color_encode(BLACK, this->mod->mod_bpp) left line */
-    this->fill_rect(0xCC, Rect(1, 1, 1, this->rect.cy - 2), color_encode(BLACK, this->mod->mod_bpp), clip);
-    /* color_encode(BLACK, this->mod->mod_bpp) top line */
-    this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 2, 1), color_encode(BLACK, this->mod->mod_bpp), clip);
+    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), GREY, clip);
+    /* main WHITE background */
+    this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 3, this->rect.cy - 3), WHITE, clip);
+    /* dark GREY top line */
+    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, 1), DARK_GREY, clip);
+    /* dark GREY left line */
+    this->fill_rect(0xCC, Rect(0, 0, 1, this->rect.cy), DARK_GREY, clip);
+    /* WHITE bottom line */
+    this->fill_rect(0xCC, Rect(0, this->rect.cy- 1, this->rect.cx, 1), WHITE, clip);
+    /* WHITE right line */
+    this->fill_rect(0xCC, Rect(this->rect.cx - 1, 0, 1, this->rect.cy), WHITE, clip);
+    /* BLACK left line */
+    this->fill_rect(0xCC, Rect(1, 1, 1, this->rect.cy - 2), BLACK, clip);
+    /* BLACK top line */
+    this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 2, 1), BLACK, clip);
     /* draw text */
     char text[255];
     wchar_t wtext[255];
@@ -385,10 +371,10 @@ void widget_edit::draw(const Rect & clip)
         int i = mbstowcs(0, this->buffer, 0);
         memset(text, this->password_char, i);
         text[i] = 0;
-        this->server_draw_text(this, 4, 2, text, color_encode(BLACK, this->mod->mod_bpp), clip);
+        this->server_draw_text(this, 4, 2, text, BLACK, clip);
     }
     else {
-        this->server_draw_text(this, 4, 2, this->buffer, color_encode(BLACK, this->mod->mod_bpp), clip);
+        this->server_draw_text(this, 4, 2, this->buffer, BLACK, clip);
     }
     /* draw xor box(cursor) */
     if (has_focus) {
@@ -402,7 +388,7 @@ void widget_edit::draw(const Rect & clip)
             wcstombs(text, wtext, 255);
         }
         Rect r(4 + this->text_width(text), 3, 2, this->rect.cy - 6);
-        this->fill_cursor_rect(r, color_encode(WHITE, this->mod->mod_bpp), clip);
+        this->fill_cursor_rect(r, WHITE, clip);
     }
 }
 
@@ -431,7 +417,7 @@ void Widget::fill_cursor_rect(const Rect & r, int fg_color, const Rect & clip)
         Rect draw_rect = region.rects[ir].intersect(this->to_screen_rect(clip));
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
-            this->mod->pat_blt(RDPPatBlt(scr_r, 0x5A, fg_color, color_encode(BLACK, this->mod->mod_bpp), this->mod->brush));
+            this->mod->pat_blt(RDPPatBlt(scr_r, 0x5A, fg_color, BLACK, this->mod->brush));
         }
     }
 }
@@ -448,7 +434,7 @@ void Widget::basic_fill_rect(int rop, const Rect & r, int fg_color, const Rect &
         Rect draw_rect = region.rects[ir].intersect(this->to_screen_rect(clip));
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
-            this->mod->pat_blt(RDPPatBlt(scr_r, rop, fg_color, color_encode(BLACK, this->mod->mod_bpp), this->mod->brush));
+            this->mod->pat_blt(RDPPatBlt(scr_r, rop, fg_color, BLACK, this->mod->brush));
         }
     }
 
@@ -458,66 +444,66 @@ void Widget::basic_fill_rect(int rop, const Rect & r, int fg_color, const Rect &
 void widget_combo::draw(const Rect & clip)
 {
     /* draw gray box */
-    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), color_encode(GREY, this->mod->mod_bpp), clip);
-    /* color_encode(WHITE, this->mod->mod_bpp) background */
-    this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 3, this->rect.cy - 3), color_encode(WHITE, this->mod->mod_bpp), clip);
+    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), GREY, clip);
+    /* WHITE background */
+    this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 3, this->rect.cy - 3), WHITE, clip);
     if (has_focus) {
-        this->fill_rect(0xCC, Rect(3, 3, (this->rect.cx - 6) - 18, this->rect.cy - 5), color_encode(DARK_WABGREEN, this->mod->mod_bpp), clip);
+        this->fill_rect(0xCC, Rect(3, 3, (this->rect.cx - 6) - 18, this->rect.cy - 5), DARK_WABGREEN, clip);
     }
 
-    /* dark color_encode(GREY, this->mod->mod_bpp) top line */
-    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, 1), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-    /* dark color_encode(GREY, this->mod->mod_bpp) left line */
-    this->fill_rect(0xCC, Rect(0, 0, 1, this->rect.cy), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-    /* color_encode(WHITE, this->mod->mod_bpp) bottom line */
-    this->fill_rect(0xCC, Rect(0, this->rect.cy- 1, this->rect.cx, 1), color_encode(WHITE, this->mod->mod_bpp), clip);
-    /* color_encode(WHITE, this->mod->mod_bpp) right line */
-    this->fill_rect(0xCC, Rect(this->rect.cx - 1, 0, 1, this->rect.cy), color_encode(WHITE, this->mod->mod_bpp), clip);
-    /* color_encode(BLACK, this->mod->mod_bpp) left line */
-    this->fill_rect(0xCC, Rect(1, 1, 1, this->rect.cy - 2), color_encode(BLACK, this->mod->mod_bpp), clip);
-    /* color_encode(BLACK, this->mod->mod_bpp) top line */
-    this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 2, 1), color_encode(BLACK, this->mod->mod_bpp), clip);
+    /* dark GREY top line */
+    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, 1), DARK_GREY, clip);
+    /* dark GREY left line */
+    this->fill_rect(0xCC, Rect(0, 0, 1, this->rect.cy), DARK_GREY, clip);
+    /* WHITE bottom line */
+    this->fill_rect(0xCC, Rect(0, this->rect.cy- 1, this->rect.cx, 1), WHITE, clip);
+    /* WHITE right line */
+    this->fill_rect(0xCC, Rect(this->rect.cx - 1, 0, 1, this->rect.cy), WHITE, clip);
+    /* BLACK left line */
+    this->fill_rect(0xCC, Rect(1, 1, 1, this->rect.cy - 2), BLACK, clip);
+    /* BLACK top line */
+    this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 2, 1), BLACK, clip);
 
     /* draw text */
-    const uint32_t fg_color = has_focus?color_encode(WHITE, this->mod->mod_bpp):color_encode(BLACK, this->mod->mod_bpp);
+    const uint32_t fg_color = has_focus?WHITE:BLACK;
     this->server_draw_text(this, 4, 2, this->string_list[this->item_index], fg_color, clip);
     /* draw button on right */
     Rect r(this->rect.cx - 20, 2, 18, this->rect.cy - 4);
     if (this->state == BUTTON_STATE_UP) { /* 0 */
         /* gray box */
-        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, r.cy), color_encode(GREY, this->mod->mod_bpp), clip);
-        /* color_encode(WHITE, this->mod->mod_bpp) top line */
-        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), color_encode(WHITE, this->mod->mod_bpp), clip);
-        /* color_encode(WHITE, this->mod->mod_bpp) left line */
-        this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), color_encode(WHITE, this->mod->mod_bpp), clip);
-        /* dark color_encode(GREY, this->mod->mod_bpp) bottom line */
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-        /* dark color_encode(GREY, this->mod->mod_bpp) right line */
-        this->fill_rect(0xCC, Rect((r.x + r.cx) - 2, r.y + 1, 1, r.cy - 1), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-        /* color_encode(BLACK, this->mod->mod_bpp) bottom line */
-        this->fill_rect(0xCC, Rect(r.x, r.y + (r.cy - 1), r.cx, 1), color_encode(BLACK, this->mod->mod_bpp), clip);
-        /* color_encode(BLACK, this->mod->mod_bpp) right line */
-        this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), color_encode(BLACK, this->mod->mod_bpp), clip);
+        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, r.cy), GREY, clip);
+        /* WHITE top line */
+        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), WHITE, clip);
+        /* WHITE left line */
+        this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), WHITE, clip);
+        /* dark GREY bottom line */
+        this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), DARK_GREY, clip);
+        /* dark GREY right line */
+        this->fill_rect(0xCC, Rect((r.x + r.cx) - 2, r.y + 1, 1, r.cy - 1), DARK_GREY, clip);
+        /* BLACK bottom line */
+        this->fill_rect(0xCC, Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK, clip);
+        /* BLACK right line */
+        this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK, clip);
     }
     else {
         /* gray box */
-        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, r.cy), color_encode(GREY, this->mod->mod_bpp), clip);
-        /* color_encode(BLACK, this->mod->mod_bpp) top line */
-        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), color_encode(BLACK, this->mod->mod_bpp), clip);
-        /* color_encode(BLACK, this->mod->mod_bpp) left line */
-        this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), color_encode(BLACK, this->mod->mod_bpp), clip);
-        /* dark color_encode(GREY, this->mod->mod_bpp) top line */
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, r.cx - 2, 1), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-        /* dark color_encode(GREY, this->mod->mod_bpp) left line */
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, 1, r.cy - 2), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-        /* dark color_encode(GREY, this->mod->mod_bpp) bottom line */
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cx - 2), r.cy - 1, 1), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-        /* dark color_encode(GREY, this->mod->mod_bpp) right line */
-        this->fill_rect(0xCC, Rect(r.x + (r.cx - 2), r.y + 1, 1, r.cy - 1), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-        /* color_encode(BLACK, this->mod->mod_bpp) bottom line */
-        this->fill_rect(0xCC, Rect(r.x, r.y + (r.cx - 1), r.cy, 1), color_encode(BLACK, this->mod->mod_bpp), clip);
-        /* color_encode(BLACK, this->mod->mod_bpp) right line */
-        this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), color_encode(BLACK, this->mod->mod_bpp), clip);
+        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, r.cy), GREY, clip);
+        /* BLACK top line */
+        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), BLACK, clip);
+        /* BLACK left line */
+        this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), BLACK, clip);
+        /* dark GREY top line */
+        this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, r.cx - 2, 1), DARK_GREY, clip);
+        /* dark GREY left line */
+        this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, 1, r.cy - 2), DARK_GREY, clip);
+        /* dark GREY bottom line */
+        this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cx - 2), r.cy - 1, 1), DARK_GREY, clip);
+        /* dark GREY right line */
+        this->fill_rect(0xCC, Rect(r.x + (r.cx - 2), r.y + 1, 1, r.cy - 1), DARK_GREY, clip);
+        /* BLACK bottom line */
+        this->fill_rect(0xCC, Rect(r.x, r.y + (r.cx - 1), r.cy, 1), BLACK, clip);
+        /* BLACK right line */
+        this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK, clip);
     }
 }
 
@@ -553,7 +539,7 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
         Rect draw_rect = region0.rects[ir].intersect(clip);
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
-            this->mod->pat_blt(RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, color_encode(BLACK, this->mod->mod_bpp), brush));
+            this->mod->pat_blt(RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, BLACK, brush));
         }
     }
 
@@ -570,7 +556,7 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
             this->mod->pat_blt(
-                RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, color_encode(BLACK, this->mod->mod_bpp), this->mod->brush));
+                RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, BLACK, this->mod->brush));
         }
     }
 
@@ -585,7 +571,7 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
             this->mod->pat_blt(
-                RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, color_encode(BLACK, this->mod->mod_bpp), this->mod->brush));
+                RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, BLACK, this->mod->brush));
         }
     }
 
@@ -601,7 +587,7 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
         if (!draw_rect.isempty()) {
             this->mod->server_set_clip(draw_rect);
             this->mod->pat_blt(
-                RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, color_encode(BLACK, this->mod->mod_bpp), this->mod->brush));
+                RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, BLACK, this->mod->brush));
         }
     }
 }
@@ -616,43 +602,43 @@ void widget_button::draw(const Rect & clip)
     Rect r(0, 0, this->rect.cx, this->rect.cy);
     if (this->state == BUTTON_STATE_DOWN) {
         /* gray box */
-        this->fill_rect(0xCC, r, color_encode(GREY, this->mod->mod_bpp), clip);
-        /* color_encode(BLACK, this->mod->mod_bpp) top line */
-        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), color_encode(BLACK, this->mod->mod_bpp), clip);
-        /* color_encode(BLACK, this->mod->mod_bpp) left line */
-        this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), color_encode(BLACK, this->mod->mod_bpp), clip);
-        /* dark color_encode(GREY, this->mod->mod_bpp) top line */
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, r.cx - 2, 1), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-        /* dark color_encode(GREY, this->mod->mod_bpp) left line */
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, 1, r.cy - 2), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-        /* dark color_encode(GREY, this->mod->mod_bpp) bottom line */
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cx - 2), r.cy - 1, 1), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-        /* dark color_encode(GREY, this->mod->mod_bpp) right line */
-        this->fill_rect(0xCC, Rect(r.x + (r.cx - 2), r.y + 1, 1, r.cy - 1), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-        /* color_encode(BLACK, this->mod->mod_bpp) bottom line */
-        this->fill_rect(0xCC, Rect(r.x, r.y + (r.cx - 1), r.cy, 1), color_encode(BLACK, this->mod->mod_bpp), clip);
-        /* color_encode(BLACK, this->mod->mod_bpp) right line */
-        this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), color_encode(BLACK, this->mod->mod_bpp), clip);
+        this->fill_rect(0xCC, r, GREY, clip);
+        /* BLACK top line */
+        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), BLACK, clip);
+        /* BLACK left line */
+        this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), BLACK, clip);
+        /* dark GREY top line */
+        this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, r.cx - 2, 1), DARK_GREY, clip);
+        /* dark GREY left line */
+        this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, 1, r.cy - 2), DARK_GREY, clip);
+        /* dark GREY bottom line */
+        this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cx - 2), r.cy - 1, 1), DARK_GREY, clip);
+        /* dark GREY right line */
+        this->fill_rect(0xCC, Rect(r.x + (r.cx - 2), r.y + 1, 1, r.cy - 1), DARK_GREY, clip);
+        /* BLACK bottom line */
+        this->fill_rect(0xCC, Rect(r.x, r.y + (r.cx - 1), r.cy, 1), BLACK, clip);
+        /* BLACK right line */
+        this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK, clip);
     } else {
         /* gray box */
-        this->fill_rect(0xCC, r, color_encode(GREY, this->mod->mod_bpp), clip);
-        /* color_encode(WHITE, this->mod->mod_bpp) top line */
-        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), color_encode(WHITE, this->mod->mod_bpp), clip);
-        /* color_encode(WHITE, this->mod->mod_bpp) left line */
-        this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), color_encode(WHITE, this->mod->mod_bpp), clip);
-        /* dark color_encode(GREY, this->mod->mod_bpp) bottom line */
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-        /* dark color_encode(GREY, this->mod->mod_bpp) right line */
-        this->fill_rect(0xCC, Rect((r.x + r.cx) - 2, r.y + 1, 1, r.cy - 1), color_encode(DARK_GREY, this->mod->mod_bpp), clip);
-        /* color_encode(BLACK, this->mod->mod_bpp) bottom line */
-        this->fill_rect(0xCC, Rect(r.x, r.y + (r.cy - 1), r.cx, 1), color_encode(BLACK, this->mod->mod_bpp), clip);
-        /* color_encode(BLACK, this->mod->mod_bpp) right line */
-        this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), color_encode(BLACK, this->mod->mod_bpp), clip);
+        this->fill_rect(0xCC, r, GREY, clip);
+        /* WHITE top line */
+        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), WHITE, clip);
+        /* WHITE left line */
+        this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), WHITE, clip);
+        /* dark GREY bottom line */
+        this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), DARK_GREY, clip);
+        /* dark GREY right line */
+        this->fill_rect(0xCC, Rect((r.x + r.cx) - 2, r.y + 1, 1, r.cy - 1), DARK_GREY, clip);
+        /* BLACK bottom line */
+        this->fill_rect(0xCC, Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK, clip);
+        /* BLACK right line */
+        this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK, clip);
     }
 
     this->server_draw_text(this,
         this->rect.cx / 2 - w / 2 + bevel,
-        this->rect.cy / 2 - h / 2 + bevel, this->caption1, color_encode(BLACK, this->mod->mod_bpp), clip);
+        this->rect.cy / 2 - h / 2 + bevel, this->caption1, BLACK, clip);
 
     if (has_focus) {
         this->draw_focus_rect(this,
@@ -663,7 +649,7 @@ void widget_button::draw(const Rect & clip)
 
 void widget_popup::draw(const Rect & clip)
 {
-    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), color_encode(WHITE, this->mod->mod_bpp), clip);
+    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), WHITE, clip);
 
     /* draw the list items */
     if (this->popped_from != 0) {
@@ -674,9 +660,9 @@ void widget_popup::draw(const Rect & clip)
             int h = this->text_height(p);
             this->item_height = h;
             if (i == this->item_index) { // deleted item
-                this->fill_rect(0xCC, Rect(0, y, this->rect.cx, h), color_encode(WABGREEN, this->mod->mod_bpp), clip);
+                this->fill_rect(0xCC, Rect(0, y, this->rect.cx, h), WABGREEN, clip);
             }
-            this->server_draw_text(this, 2, y, p, (i == this->item_index)?color_encode(WHITE, this->mod->mod_bpp):color_encode(BLACK, this->mod->mod_bpp), clip);
+            this->server_draw_text(this, 2, y, p, (i == this->item_index)?WHITE:BLACK, clip);
             y = y + h;
         }
     }
@@ -688,7 +674,7 @@ void Widget::draw(const Rect & clip)
 
 void widget_label::draw(const Rect & clip)
 {
-    this->server_draw_text(this, 0, 0, this->caption1, color_encode(BLACK, this->mod->mod_bpp), clip);
+    this->server_draw_text(this, 0, 0, this->caption1, BLACK, clip);
 }
 
 // transform a rectangle relative to current widget to rectangle relative to screen
