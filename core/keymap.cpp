@@ -89,8 +89,14 @@ Keymap::Keymap(istream & Keymap_stream){
 }
 
 /* map for rdp to x11 scancodes code1 is regular scancode, code2 is extended scancode */
+#warning rewrite that without using boost.po. The simplest thing to do at that point is probably to inline content of supported keyboard mappings in source code and completely rewrite fyboard configuration file format at some future time. The current format is much too obscure anyway.
+
 
 void Keymap::keymap_init(istream & Keymap_stream){
+    /* keyboard info */
+    memset(this->keys, 0, 256 * sizeof(int)); /* key states 0 up 1 down*/
+    // scrool_lock = 1, num_lock = 2, caps_lock = 4
+    this->key_flags = 0;
 #warning find a more generic way to read this struct
     po::options_description Keymap_desc("Keymap_file.ini configuration file:");
     Keymap_desc.add_options()

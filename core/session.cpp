@@ -142,13 +142,8 @@ Session::Session(int sck, const char * ip_source, Inifile * ini) {
         throw 2;
     }
 
-    /* keyboard info */
-    memset(this->keys, 0, 256 * sizeof(int)); /* key states 0 up 1 down*/
-    // scrool_lock = 1, num_lock = 2, caps_lock = 4
-    this->key_flags = 0;
-
-    this->front = new Front(this->trans, ini, this->keys, this->key_flags, this->keymap);
-    this->no_mod = new null_mod(this->keys, this->key_flags, this->keymap, *this->context, *(this->front));
+    this->front = new Front(this->trans, ini, this->keymap);
+    this->no_mod = new null_mod(*this->context, *(this->front));
     this->mod = this->no_mod;
 
     this->context->cpy(STRAUTHID_HOST, ip_source);
@@ -625,7 +620,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
             case MCTX_STATUS_CLI:
             {
                 this->back_event = new wait_obj(-1);
-                this->mod = new cli_mod(this->keys, this->key_flags, this->keymap, *this->context, *(this->front));
+                this->mod = new cli_mod(*this->context, *(this->front));
                 this->back_event->set();
                 LOG(LOG_INFO, "Creation of new mod 'CLI parse' suceeded\n");
             }
@@ -634,7 +629,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
             case MCTX_STATUS_TRANSITORY:
             {
                 this->back_event = new wait_obj(-1);
-                this->mod = new transitory_mod(this->keys, this->key_flags, this->keymap, *this->context, *(this->front));
+                this->mod = new transitory_mod(*this->context, *(this->front));
                 // Transitory finish immediately
                 this->back_event->set();
                 LOG(LOG_INFO, "Creation of new mod 'TRANSITORY' suceeded\n");
@@ -652,7 +647,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                         if (this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                             this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection to server failed");
                         }
-                        this->mod = new close_mod(this->back_event, this->keys, this->key_flags, this->keymap, *this->context, *this->front, this->ini);
+                        this->mod = new close_mod(this->back_event, *this->context, *this->front, this->ini);
 
                         #warning we should probably send mouse pointers before any internal module connection
                         struct pointer_item pointer_item;
@@ -703,9 +698,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                         }
                         this->mod = new dialog_mod(
                                         this->back_event,
-                                        this->keys,
-                                        this->key_flags,
-                                        this->keymap,
                                         *this->context,
                                         *this->front,
                                         message,
@@ -718,9 +710,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                         LOG(LOG_INFO, "Creation of internal module 'Login'");
                         this->mod = new login_mod(
                                         this->back_event,
-                                        this->keys,
-                                        this->key_flags,
-                                        this->keymap,
                                          *this->context,
                                          *this->front,
                                          this->ini);
@@ -728,21 +717,13 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                     break;
                     case ModContext::INTERNAL_BOUNCER2:
                         LOG(LOG_INFO, "Creation of internal module 'bouncer2'");
-                        this->mod = new bouncer2_mod(
-                                        this->back_event,
-                                        this->keys,
-                                        this->key_flags,
-                                        this->keymap,
-                                        *this->front);
+                        this->mod = new bouncer2_mod(this->back_event, *this->front);
                         LOG(LOG_INFO, "internal module 'bouncer2' ready");
                     break;
                     case ModContext::INTERNAL_TEST:
                         LOG(LOG_INFO, "Creation of internal module 'test'");
                         this->mod = new test_internal_mod(
                                         this->back_event,
-                                        this->keys,
-                                        this->key_flags,
-                                        this->keymap,
                                         *this->context,
                                         *this->front);
                         LOG(LOG_INFO, "internal module 'test' ready");
@@ -751,9 +732,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                         LOG(LOG_INFO, "Creation of internal module 'test_card'");
                         this->mod = new test_card_mod(
                                         this->back_event,
-                                        this->keys,
-                                        this->key_flags,
-                                        this->keymap,
                                         *this->context,
                                         *this->front);
                         LOG(LOG_INFO, "internal module 'test_card' ready");
@@ -775,7 +753,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                             atoi(this->context->get(STRAUTHID_TARGET_PORT)),
                                             4, 2500000));
                 this->back_event = new wait_obj(t->sck);
-                this->mod = new xup_mod(t, this->keys, this->key_flags, this->keymap, *this->context, *(this->front));
+                this->mod = new xup_mod(t, *this->context, *(this->front));
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 LOG(LOG_INFO, "Creation of new mod 'XUP' suceeded\n");
             }
@@ -797,9 +775,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 this->back_event = new wait_obj(t->sck);
                 this->mod = new mod_rdp(t,
                                     *this->back_event,
-                                    this->keys,
-                                    this->key_flags,
-                                    this->keymap,
                                     *this->context,
                                     *(this->front),
                                     hostname,
@@ -817,7 +792,7 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                 SocketTransport *t = new SocketTransport(
                     connect(this->context->get(STRAUTHID_TARGET_DEVICE), atoi(this->context->get(STRAUTHID_TARGET_PORT))));
                 this->back_event = new wait_obj(t->sck);
-                this->mod = new mod_vnc(t, this->keys, this->key_flags, this->keymap, *this->context, *(this->front), this->front->get_client_info().keylayout);
+                this->mod = new mod_vnc(t, *this->context, *(this->front), this->front->get_client_info().keylayout);
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                 LOG(LOG_INFO, "Creation of new mod 'VNC' suceeded\n");
             }
@@ -832,10 +807,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
     catch (...) {
         return false;
     };
-
-    /* sync modifiers */
-    this->key_flags = 0;
-    this->mod->rdp_input_synchronize(0, 0, 0, 0);
 
     return true;
 }

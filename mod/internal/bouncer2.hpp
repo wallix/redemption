@@ -50,8 +50,8 @@ struct bouncer2_mod : public internal_mod {
         Rect * dancing_rect;
     public:
 
-    bouncer2_mod(wait_obj * back_event, int (& keys)[256], int & key_flags, Keymap * &keymap, Front & front) :
-        internal_mod(keys, key_flags, keymap, front), event(back_event), speedx(10), speedy(10), dancing_rect(NULL)
+    bouncer2_mod(wait_obj * back_event, Front & front) :
+        internal_mod(front), event(back_event), speedx(10), speedy(10), dancing_rect(NULL)
     {
         this->server_begin_update();
         this->opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00));
@@ -70,11 +70,11 @@ struct bouncer2_mod : public internal_mod {
     {
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const int key_flags, const int (& keys)[256])
+    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
     {
     }
 
-    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki)
+    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, const Keymap * keymap, const key_info* ki)
     {
         this->interaction();
     }

@@ -49,6 +49,10 @@ struct key_info {
 };
 
 struct Keymap {
+    /* keyboard info */
+    int keys[256]; /* key states 0 up 1 down*/
+    int key_flags; // scrool_lock = 1, num_lock = 2, caps_lock = 4
+
     struct key_info keys_noshift[128];
     struct key_info keys_shift[128];
     struct key_info keys_altgr[128];
@@ -61,8 +65,8 @@ struct Keymap {
     }
 
     /*****************************************************************************/
-    struct key_info*
-        get_key_info_from_scan_code(int device_flags, int scan_code, int* keys, int key_flags) {
+    const key_info*
+        get_key_info_from_scan_code(int device_flags, int scan_code) const {
         /* map for rdp to x11 scancodes
            code1 is regular scancode, code2 is extended scancode */
         static struct codepair {
@@ -97,30 +101,30 @@ struct Keymap {
             { 133, 0 }, { 134, 0 }, { 135, 0 } /* 125 - 127 */
         };
 
-        struct key_info* rv = 0;
+        const key_info* rv = 0;
         int ext = device_flags & KBD_FLAG_EXT; /* 0x0100 */
-        int shift = keys[42] || keys[54];
-        int altgr = (keys[56] & KBD_FLAG_EXT) || (keys[29] && keys[56]); /* right alt or ctrl + alt */
+        int shift = this->keys[42] || this->keys[54];
+        int altgr = (this->keys[56] & KBD_FLAG_EXT) || (this->keys[29] && this->keys[56]); /* right alt or ctrl + alt */
 
         scan_code = scan_code & 0x7f;
         int index = ext ? map[scan_code].code2 : map[scan_code].code1;
 
         /* keymap file is created with numlock off so we have to do this */
         if ((index >= 79) && (index <= 91)) {
-            if ((key_flags & 2)) {
+            if ((this->key_flags & 2)) {
                 rv = &(this->keys_shift[index]);
                 //LOG(LOG_INFO, "shiftnumpad scancode=%d index=%d keyvalue=%d:%d\n", scan_code, index, rv->chr, rv->sym);
             } else {
                 rv = &(this->keys_noshift[index]);
                 //LOG(LOG_INFO, "plainnumpad scancode=%d index=%d keyvalue=%d:%d\n", scan_code, index, rv->chr, rv->sym);
             }
-        } else if (shift && (key_flags & 4)) {
+        } else if (shift && (this->key_flags & 4)) {
             rv = &(this->keys_shiftcapslock[index]);
             //LOG(LOG_INFO, "shiftcapslock scancode=%d index=%d keyvalue=%d;%d\n", scan_code, index, rv->chr, rv->sym);
         } else if (shift) {
             rv = &(this->keys_shift[index]);
             //LOG(LOG_INFO, "shift scancode=%d index=%d keyvalue=%d:%d\n", scan_code, index, rv->chr, rv->sym);
-        } else if (key_flags & 4) {
+        } else if (this->key_flags & 4) {
             rv = &(this->keys_capslock[index]);
             //LOG(LOG_INFO, "capslock scancode=%d index=%d keyvalue=%d:%d\n", scan_code, index, rv->chr, rv->sym);
         } else if (altgr) {

@@ -41,9 +41,6 @@
 #include "callback.hpp"
 
 struct client_mod : public Callback {
-    int (& keys)[256];
-    int & key_flags;
-    Keymap * &keymap;
     Rect clip;
     int current_pointer;
     RDPPen pen;
@@ -68,11 +65,8 @@ struct client_mod : public Callback {
     bool palette_memblt_sent[6];
     struct Capture * capture;
 
-    client_mod(int (& keys)[256], int & key_flags, Keymap * &keymap, Front & front)
-        : keys(keys),
-          key_flags(key_flags),
-          keymap(keymap),
-          front(front),
+    client_mod(Front & front)
+        : front(front),
           mod_palette_setted(0),
           mod_bpp(24),
           signal(0),
@@ -95,12 +89,6 @@ struct client_mod : public Callback {
             delete this->capture;
         }
     }
-
-    virtual void set_key_flags(int key_flags) { this->key_flags = key_flags; }
-    virtual int get_key_flags() { return this->key_flags; }
-    virtual const Keymap * get_keymap() { return keymap; }
-    virtual const int  (& get_keys())[256] { return keys; };
-
 
     void set_mod_palette(const BGRPalette & palette)
     {
@@ -709,8 +697,8 @@ struct client_mod : public Callback {
 
     virtual void rdp_input_invalidate(const Rect & r) = 0;
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
-    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki) = 0;
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const int key_flags, const int (& keys)[256]) = 0;
+    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, const Keymap * keymap, const key_info* ki) = 0;
+    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap) = 0;
 
 };
 

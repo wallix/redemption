@@ -28,9 +28,8 @@
 struct cli_mod : public transitory_mod {
 
     cli_mod(
-        int (& keys)[256], int & key_flags, Keymap * &keymap,
         struct ModContext & context, Front & front)
-            : transitory_mod(keys, key_flags, keymap, context, front)
+            : transitory_mod(context, front)
     {
 
     }

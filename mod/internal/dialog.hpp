@@ -116,12 +116,11 @@ struct dialog_mod : public internal_mod {
     Widget* button_down;
 
     dialog_mod(wait_obj * event,
-               int (& keys)[256], int & key_flags, Keymap * &keymap,
-               ModContext & context,
+              ModContext & context,
                Front & front,
                const char *message, const char * refuse, Inifile * ini)
             :
-            internal_mod(keys, key_flags, keymap, front)
+            internal_mod(front)
     {
         this->event = event;
         this->button_down = 0;
@@ -179,7 +178,7 @@ struct dialog_mod : public internal_mod {
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const int key_flags, const int (& keys)[256])
+    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
     {
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
             if (this->dragging) {
@@ -208,7 +207,7 @@ struct dialog_mod : public internal_mod {
                 if (b->pointer != this->current_pointer) {
                     this->set_pointer(b->pointer);
                 }
-                b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), key_flags, keys);
+                b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), keymap);
                 if (this->button_down) {
                     this->button_down->state = (b == this->button_down);
                     this->button_down->refresh(this->button_down->rect.wh());
@@ -334,7 +333,7 @@ struct dialog_mod : public internal_mod {
         }
     }
 
-    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
+    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const Keymap * keymap, const key_info* ki){
         #warning dialog does not support keyboard any more, fix that
     }
 

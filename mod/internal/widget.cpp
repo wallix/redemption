@@ -795,7 +795,7 @@ static inline bool switch_focus(Widget * old_focus, Widget * new_focus) {
     return res;
 }
 
-void window::def_proc(const int msg, const int param1, const int param2, const int key_flags, const int (& keys)[256])
+void window::def_proc(const int msg, const int param1, const int param2, const Keymap * keymap)
 {
     if (msg == WM_KEYDOWN) {
 
@@ -816,7 +816,7 @@ void window::def_proc(const int msg, const int param1, const int param2, const i
         case 15:
         { /* tab */
             /* move to next tab stop */
-            int shift = keys[42] || keys[54];
+            int shift = keymap->keys[42] || keymap->keys[54];
             // find the next tab_stop
             if (shift) {
                 for (size_t i = (size+i_focus-1) % size ; i != i_focus ; i = (i+size-1) % size) {
@@ -845,13 +845,13 @@ void window::def_proc(const int msg, const int param1, const int param2, const i
         break;
         default:
             if (control_with_focus){
-                control_with_focus->def_proc(msg, param1, param2, key_flags, keys);
+                control_with_focus->def_proc(msg, param1, param2, keymap);
             }
         }
     }
 }
 
-void widget_edit::def_proc(const int msg, int const param1, int const param2, const int key_flags, const int (& keys)[256])
+void widget_edit::def_proc(const int msg, int const param1, int const param2, const Keymap * keymap)
 {
     wchar_t c;
     int n;
@@ -865,7 +865,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
         ext = param2 & 0x0100;
         /* left or up arrow */
         if ((scan_code == 75 || scan_code == 72)
-        && (ext || key_flags & 5)) // numlock = 0
+        && (ext || keymap->key_flags & 5)) // numlock = 0
         {
             if (this->edit_pos > 0) {
                 this->edit_pos--;
@@ -874,7 +874,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
         }
         /* right or down arrow */
         else if ((scan_code == 77 || scan_code == 80)
-        && (ext || key_flags & 5)) // numlock = 0
+        && (ext || keymap->key_flags & 5)) // numlock = 0
         {
             if (this->edit_pos < (int)mbstowcs(0, this->buffer, 0)) {
                 this->edit_pos++;
@@ -894,7 +894,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
             }
         }
         /* delete */
-        else if (scan_code == 83  && (ext || key_flags & 5)) // numlock = 0
+        else if (scan_code == 83  && (ext || keymap->key_flags & 5)) // numlock = 0
         {
             n = mbstowcs(0, this->buffer, 0);
             if (n > 0) {
@@ -905,7 +905,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
             }
         }
         /* end */
-        else if (scan_code == 79  && (ext || key_flags & 5)) {
+        else if (scan_code == 79  && (ext || keymap->key_flags & 5)) {
             n = mbstowcs(0, this->buffer, 0);
             if (this->edit_pos < n) {
                 this->edit_pos = n;
@@ -914,20 +914,14 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
         }
         /* home */
         else if ((scan_code == 71)  &&
-                 (ext || (key_flags & 5))) {
+                 (ext || (keymap->key_flags & 5))) {
             if (this->edit_pos > 0) {
                 this->edit_pos = 0;
                 this->refresh(this->rect.wh());
             }
         }
         else {
-            c = (wchar_t)(this->mod->keymap
-                            ->get_key_info_from_scan_code(
-                                                param2, scan_code,
-                                                this->mod->keys,
-                                                key_flags)->chr);
-
-
+            c = (wchar_t)(keymap->get_key_info_from_scan_code(param2, scan_code)->chr);
             num_chars = mbstowcs(0, this->buffer, 0);
             num_bytes = strlen(this->buffer);
 
@@ -963,7 +957,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
     }
 }
 
-void widget_combo::def_proc(const int msg, const int param1, const int param2, const int key_flags, const int (& keys)[256])
+void widget_combo::def_proc(const int msg, const int param1, const int param2, const Keymap * keymap)
 {
     int ext;
     int scan_code;
@@ -972,7 +966,7 @@ void widget_combo::def_proc(const int msg, const int param1, const int param2, c
         scan_code = param1 % 128;
         ext = param2 & 0x0100;
         /* left or up arrow */
-        if (((scan_code == 75) || (scan_code == 72)) && (ext || (key_flags & 5))) {
+        if (((scan_code == 75) || (scan_code == 72)) && (ext || (keymap->key_flags & 5))) {
             if (this->item_index > 0) {
                 this->item_index--;
                 this->refresh(this->rect.wh());
@@ -980,7 +974,7 @@ void widget_combo::def_proc(const int msg, const int param1, const int param2, c
             }
         }
         /* right or down arrow */
-        else if ((scan_code == 77 || scan_code == 80) && (ext || (key_flags & 5))) {
+        else if ((scan_code == 77 || scan_code == 80) && (ext || (keymap->key_flags & 5))) {
                     size_t count = this->string_list.size();
             if ((this->item_index + 1) < count) {
                 this->item_index++;
@@ -992,7 +986,7 @@ void widget_combo::def_proc(const int msg, const int param1, const int param2, c
 }
 
 
-void widget_popup::def_proc(const int msg, const int param1, const int param2, const int key_flags, const int (& keys)[256])
+void widget_popup::def_proc(const int msg, const int param1, const int param2, const Keymap * keymap)
 {
     if (msg == WM_MOUSEMOVE) {
         if (this->item_height > 0 && this->popped_from != 0) {
@@ -1013,6 +1007,6 @@ void widget_popup::def_proc(const int msg, const int param1, const int param2, c
     }
 }
 
-void Widget::def_proc(const int msg, const int param1, const int param2, const int key_flags, const int (& keys)[256])
+void Widget::def_proc(const int msg, const int param1, const int param2, const Keymap * keymap)
 {
 }

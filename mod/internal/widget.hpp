@@ -121,7 +121,7 @@ struct Widget {
     virtual int refresh(const Rect & clip);
     virtual int refresh_clip(const Rect & clip);
 
-    virtual void def_proc(const int msg, const int param1, const int param2, const int key_flags, const int (& keys)[256]);
+    virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap);
     virtual void draw(const Rect & clip);
 
     Rect const to_screen_rect(const Rect & r);
@@ -240,7 +240,7 @@ struct widget_edit : public Widget {
     }
 
     virtual void draw(const Rect & clip);
-    virtual void def_proc(const int msg, const int param1, const int param2, const int key_flags, const int (& keys)[256]);
+    virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap);
 
 
 };
@@ -272,7 +272,7 @@ struct window : public Widget
     }
 
     virtual void draw(const Rect & clip);
-    virtual void def_proc(const int msg, const int param1, const int param2, const int key_flags, const int (& keys)[256]);
+    virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap);
     virtual void focus(const Rect & clip);
     virtual void blur(const Rect & clip);
 
@@ -348,7 +348,7 @@ struct widget_popup : public Widget
     ~widget_popup() {}
 
     virtual void draw(const Rect & clip);
-    virtual void def_proc(const int msg, const int param1, const int param2, const int key_flags, const int (& keys)[256]);
+    virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap);
 
 };
 
@@ -367,7 +367,7 @@ struct widget_combo : public Widget
     ~widget_combo() {}
 
     virtual void draw(const Rect & clip);
-    virtual void def_proc(const int msg, const int param1, const int param2, const int key_flags, const int (& keys)[256]);
+    virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap);
 
 };
 
