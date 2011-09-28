@@ -113,13 +113,6 @@ Widget::~Widget(){
 
 }
 
-void Widget::draw_title_bar(int bg_color, int fg_color, const Rect & clip)
-{
-    assert(this->type == WND_TYPE_WND);
-    this->fill_rect(0xCC, Rect(3, 3, this->rect.cx - 5, 18), bg_color, clip);
-    this->server_draw_text(this, 4, 4, this->caption1, fg_color, clip);
-}
-
 void window::focus(const Rect & clip)
 {
     this->has_focus = true;
