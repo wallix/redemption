@@ -251,6 +251,7 @@ void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text
         return;
     }
     const Rect & clip_rect = wdg->to_screen_rect(clip);
+
     /* convert to wide char */
     wchar_t* wstr = new wchar_t[len + 2];
     #warning use mbsrtowcs instead

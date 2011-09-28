@@ -303,7 +303,7 @@ struct dialog_mod : public internal_mod {
 
                     Widget * control = wnd->widget_at_pos(x, y);
 
-                    if (wnd == this->get_screen_wdg() 
+                    if (wnd == this->get_screen_wdg()
                     || (wnd->modal_dialog == 0)) {
 
                         if (wnd != this->get_screen_wdg()) {

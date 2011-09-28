@@ -25,12 +25,16 @@
 #if !defined(__SELECTOR_HPP__)
 #define __SELECTOR_HPP__
 
+#include <stdio.h>
+
 struct selector_mod : public internal_mod {
     int signal;
     size_t focus_line;
+    size_t showed;
+    size_t total;
     uint32_t color[3];
     selector_mod(wait_obj * event, ModContext & context, Front & front):
-            internal_mod(front), signal(0), focus_line(0)
+            internal_mod(front), signal(0), focus_line(0), showed(100), total(1000)
     {
         this->color[0] = RED;
         this->color[1] = GREEN;
@@ -95,8 +99,24 @@ struct selector_mod : public internal_mod {
         this->server_draw_text(30, 30, "Current user: cgr@10.10.4.13", WHITE, BLACK);
     }
 
+    void draw_edit(const Rect & rect){
+        this->opaque_rect(RDPOpaqueRect(rect, GREY));
+        this->opaque_rect(RDPOpaqueRect(Rect(rect.x+1, rect.y+1, rect.cx - 3, rect.cy - 3), WHITE));
+        this->opaque_rect(RDPOpaqueRect(Rect(rect.x, rect.y, rect.cx, 1), DARK_GREY));
+        this->opaque_rect(RDPOpaqueRect(Rect(rect.x, rect.y, 1, rect.cy), DARK_GREY));
+        this->opaque_rect(RDPOpaqueRect(Rect(rect.x, rect.y + rect.cy - 1, rect.cx, 1), WHITE));
+        this->opaque_rect(RDPOpaqueRect(Rect(rect.x + rect.cx - 1, rect.y, 1, rect.cy), WHITE));
+        this->opaque_rect(RDPOpaqueRect(Rect(rect.x + 1, rect.y + 1, 1, rect.cy - 2), BLACK));
+        this->opaque_rect(RDPOpaqueRect(Rect(rect.x + 1, rect.y + 1, rect.cx - 2, 1), BLACK));
+    }
+
+
     void draw_filter(){
-        this->server_draw_text(30, 60, "Filter: *       Results: 100/100", WHITE, BLACK);
+        this->server_draw_text(30, 60, "Filter:", WHITE, BLACK);
+        this->draw_edit(Rect(70, 60, 200, 20));
+        char buffer[256];
+        sprintf(buffer, "Results: %u/%u", this->showed, this->total);
+        this->server_draw_text(280, 60,  buffer, WHITE, BLACK);
     }
 
     void draw_array(){
