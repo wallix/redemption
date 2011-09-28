@@ -253,6 +253,33 @@ struct client_mod : public Callback {
         this->server_reset_clip();
     }
 
+    void draw_window(const Rect & r, uint32_t bgcolor){
+        this->opaque_rect(
+            RDPOpaqueRect(r, bgcolor));
+        this->opaque_rect(
+            RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), WHITE));
+        this->opaque_rect(
+            RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), WHITE));
+        this->opaque_rect(
+            RDPOpaqueRect(Rect(r.x + 1, r.y + r.cy - 2, r.cx - 2, 1), DARK_GREY));
+        this->opaque_rect(
+            RDPOpaqueRect(Rect(r.x+r.cx-2, r.y + 1, 1, r.cy), DARK_GREY));
+        this->opaque_rect(
+            RDPOpaqueRect(Rect(r.x, r.y + r.cy - 1, r.cx, 1), BLACK));
+        this->opaque_rect(
+            RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), BLACK));
+    }
+
+    void draw_edit(const Rect & rect, uint32_t bgcolor){
+        this->opaque_rect(RDPOpaqueRect(rect, bgcolor));
+        this->opaque_rect(RDPOpaqueRect(Rect(rect.x+1, rect.y+1, rect.cx - 3, rect.cy - 3), WHITE));
+        this->opaque_rect(RDPOpaqueRect(Rect(rect.x, rect.y, rect.cx, 1), DARK_GREY));
+        this->opaque_rect(RDPOpaqueRect(Rect(rect.x, rect.y, 1, rect.cy), DARK_GREY));
+        this->opaque_rect(RDPOpaqueRect(Rect(rect.x, rect.y + rect.cy - 1, rect.cx, 1), WHITE));
+        this->opaque_rect(RDPOpaqueRect(Rect(rect.x + rect.cx - 1, rect.y, 1, rect.cy), WHITE));
+        this->opaque_rect(RDPOpaqueRect(Rect(rect.x + 1, rect.y + 1, 1, rect.cy - 2), BLACK));
+        this->opaque_rect(RDPOpaqueRect(Rect(rect.x + 1, rect.y + 1, rect.cx - 2, 1), BLACK));
+    }
 
     #warning this function is written in a quite insane way, so don't use it, and rewrite it in a saner way.
     #warning also merge with the similar code in widget.
@@ -321,7 +348,7 @@ struct client_mod : public Callback {
 
     void opaque_rect(const RDPOpaqueRect & cmd)
     {
-        if (!clip.isempty() 
+        if (!clip.isempty()
         && !clip.intersect(cmd.rect).isempty()){
 
             this->send_global_palette();
@@ -363,7 +390,7 @@ struct client_mod : public Callback {
 
     void pat_blt(const RDPPatBlt & cmd)
     {
-        if (!this->clip.isempty() 
+        if (!this->clip.isempty()
         && !this->clip.intersect(cmd.rect).isempty()){
 
             this->send_global_palette();
