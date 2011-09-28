@@ -18,7 +18,7 @@
    Author(s): Christophe Grosjean, Javier Caverni
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
-   Use (implemented) basic RDP orders to draw some known test pattern
+   RDP Secondary Connection Device Selector
 
 */
 
@@ -26,10 +26,11 @@
 #define __SELECTOR_HPP__
 
 struct selector_mod : public internal_mod {
+    int signal;
     size_t focus_line;
     uint32_t color[3];
     selector_mod(wait_obj * event, ModContext & context, Front & front):
-            internal_mod(front), focus_line(0)
+            internal_mod(front), signal(0), focus_line(0)
     {
         this->color[0] = RED;
         this->color[1] = GREEN;
@@ -80,20 +81,25 @@ struct selector_mod : public internal_mod {
     // non 0 if it wants to stop (to run another module)
     virtual int draw_event()
     {
-        this->draw();
+        this->draw(this->screen.rect);
         this->event->reset();
-        return 0;
+        return this->signal;
     }
 
 
-    void draw()
-    {
-        this->server_begin_update();
-        this->server_set_clip(this->screen.rect);
-
+    void draw_background(){
         this->opaque_rect(RDPOpaqueRect(this->screen.rect, WHITE));
-        this->server_draw_text(30, 30, "Current user: cgr@10.10.4.13", WHITE, BLACK);
+    }
 
+    void draw_login(){
+        this->server_draw_text(30, 30, "Current user: cgr@10.10.4.13", WHITE, BLACK);
+    }
+
+    void draw_filter(){
+        this->server_draw_text(30, 60, "Filter: *       Results: 100/100", WHITE, BLACK);
+    }
+
+    void draw_array(){
         for (size_t line = 0 ; line < 10 ; line++){
             Rect rect(20, 100 + line * 20, this->screen.rect.cx-40, 19);
             uint32_t c = this->color[line%2];
@@ -103,6 +109,24 @@ struct selector_mod : public internal_mod {
             this->opaque_rect(RDPOpaqueRect(rect, c));
             this->server_draw_text(rect.x + 10, rect.y + 2, "account@device", c, BLACK);
         }
+        this->server_draw_text(this->screen.rect.cx-240, 320, "|<<   <   1/10   >  >>|", WHITE, BLACK);
+    }
+
+    void draw_buttons(){
+        this->server_draw_text(this->screen.rect.cx-240, 350, "Logout   Cancel   Connect", WHITE, BLACK);
+    }
+
+
+    void draw(const Rect & clip)
+    {
+        this->server_begin_update();
+        this->server_set_clip(clip);
+
+        this->draw_background();
+        this->draw_login();
+        this->draw_filter();
+        this->draw_array();
+        this->draw_buttons();
 
         this->server_end_update();
     }
