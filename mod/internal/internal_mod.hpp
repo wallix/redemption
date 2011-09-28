@@ -36,8 +36,8 @@ struct internal_mod : public client_mod {
     struct Widget* dragging_window;
     RDPBrush brush;
 
-    internal_mod(int (& keys)[256], int & key_flags, Keymap * &keymap, Front & front)
-            : client_mod(keys, key_flags, keymap, front),
+    internal_mod(Front & front)
+            : client_mod(front),
                 screen(this,
                  this->get_client_info().width,
                  this->get_client_info().height,
@@ -104,8 +104,8 @@ struct internal_mod : public client_mod {
     }
 
     virtual void rdp_input_invalidate(const Rect & rect) = 0;
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const int key_flags, const int (& keys)[256]) = 0;
-    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki) = 0;
+    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap) = 0;
+    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const Keymap * keymap, const key_info* ki) = 0;
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     {

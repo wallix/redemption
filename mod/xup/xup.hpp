@@ -43,9 +43,8 @@ struct xup_mod : public client_mod {
     int rop;
     int fgcolor;
 
-    xup_mod(Transport * t, int (& keys)[256], int & key_flags, Keymap * &keymap,
-                struct ModContext & context, struct Front & front)
-        : client_mod(keys, key_flags, keymap, front)
+    xup_mod(Transport * t, struct ModContext & context, struct Front & front)
+        : client_mod(front)
     {
         this->width = atoi(context.get(STRAUTHID_OPT_WIDTH));
         this->height = atoi(context.get(STRAUTHID_OPT_HEIGHT));
@@ -88,7 +87,7 @@ struct xup_mod : public client_mod {
         WM_INVALIDATE = 200,
     };
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const int key_flags, const int (& keys)[256])
+    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
     {
         LOG(LOG_INFO, "input mouse");
 
@@ -120,7 +119,7 @@ struct xup_mod : public client_mod {
         }
     }
 
-    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
+    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const Keymap * keymap, const key_info* ki){
         LOG(LOG_INFO, "scan code");
         if (ki != 0) {
             int msg = (device_flags & KBD_FLAG_UP)?WM_KEYUP:WM_KEYDOWN;

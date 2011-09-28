@@ -68,11 +68,9 @@ struct mod_vnc : public client_mod {
     uint8_t green_shift;
     uint8_t blue_shift;
 
-    mod_vnc(Transport * t,
-            int (& keys)[256], int & key_flags, Keymap * &keymap,
-            struct ModContext & context, struct Front & front, int keylayout)
+    mod_vnc(Transport * t, struct ModContext & context, struct Front & front, int keylayout)
         :
-        client_mod(keys, key_flags, keymap, front)
+        client_mod(front)
     {
         const char * password = context.get(STRAUTHID_TARGET_PASSWORD);
         const char * username = context.get(STRAUTHID_TARGET_USER);
@@ -436,7 +434,7 @@ struct mod_vnc : public client_mod {
     }
 
     #warning optimize this, much duplicated code and several send at once when not necessary
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const int key_flags, const int (& keys)[256])
+    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
     {
         Stream stream(8192);
 
@@ -552,7 +550,7 @@ struct mod_vnc : public client_mod {
         }
     }
 
-    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
+    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const Keymap * keymap, const key_info* ki){
         if (ki) {
             int msg = (device_flags & KBD_FLAG_UP)?WM_KEYUP:WM_KEYDOWN;
             int key = ki->sym;

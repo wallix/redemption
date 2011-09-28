@@ -133,9 +133,8 @@ struct close_mod : public internal_mod {
 
     close_mod(
         wait_obj * event,
-        int (& keys)[256], int & key_flags, Keymap * &keymap,
         ModContext & context, Front & front, Inifile * ini)
-            : internal_mod(keys, key_flags, keymap, front), signal(0), ini(ini), closing(false)
+            : internal_mod(front), signal(0), ini(ini), closing(false)
     {
         this->event = event;
         this->event->set();
@@ -224,7 +223,7 @@ struct close_mod : public internal_mod {
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const int key_flags, const int (& keys)[256])
+    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
     {
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
             if (this->dragging) {
@@ -253,7 +252,7 @@ struct close_mod : public internal_mod {
                 if (b->pointer != this->current_pointer) {
                     this->set_pointer(b->pointer);
                 }
-                b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), key_flags, keys);
+                b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), keymap);
                 if (this->button_down) {
                     this->button_down->state = (b == this->button_down);
                     this->button_down->refresh(this->button_down->rect.wh());
@@ -341,14 +340,14 @@ struct close_mod : public internal_mod {
         // No other button are used in redemption interface
     }
 
-    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const int key_flags, const int (& keys)[256], struct key_info* ki){
+    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const Keymap * keymap, const key_info* ki){
         LOG(LOG_INFO, "scan code");
         if (ki != 0) {
             int msg = (device_flags & KBD_FLAG_UP)?WM_KEYUP:WM_KEYDOWN;
             switch (msg){
             case WM_KEYUP:
                 if (this->close_window->has_focus) {
-                    this->close_window->def_proc(msg, param1, device_flags, key_flags, keys);
+                    this->close_window->def_proc(msg, param1, device_flags, keymap);
                     this->signal = 4;
                     this->event->set();
                 } else {
@@ -357,7 +356,7 @@ struct close_mod : public internal_mod {
             break;
             case WM_KEYDOWN:
                 if (this->close_window->has_focus) {
-                    this->close_window->def_proc(msg, param1, device_flags, key_flags, keys);
+                    this->close_window->def_proc(msg, param1, device_flags, keymap);
                 }
             break;
             }

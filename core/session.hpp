@@ -93,10 +93,6 @@ struct Session {
     int mouse_x;
     int mouse_y;
 
-    #warning move this to screen
-    /* keyboard info */
-    int keys[256]; /* key states 0 up 1 down*/
-    int key_flags; // scrool_lock = 1, num_lock = 2, caps_lock = 4
     struct Keymap * keymap;
 
     SessionManager * sesman;

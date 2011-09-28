@@ -362,8 +362,6 @@ struct GraphicsUpdatePDU
 #warning front is becoming an empty shell and should disappear soon
 class Front {
 public:
-    int (& keys)[256];
-    int & key_flags;
     Keymap * &keymap;
 
     Cache cache;
@@ -393,9 +391,7 @@ public:
 
 public:
 
-    Front(SocketTransport * trans, Inifile * ini, int (& keys)[256], int & key_flags, Keymap * &keymap) :
-        keys(keys),
-        key_flags(key_flags),
+    Front(SocketTransport * trans, Inifile * ini, Keymap * &keymap) :
         keymap(keymap),
         cache(),
         bmp_cache(0),
@@ -1849,44 +1845,43 @@ public:
                     switch (msg_type) {
                     case RDP_INPUT_SYNCHRONIZE:
                         /* happens when client gets focus and sends key modifier info */
-                        cb.set_key_flags(param1);
+                        this->keymap->key_flags = param1;
                         cb.rdp_input_synchronize(time, device_flags, param1, param2);
                         break;
                     case RDP_INPUT_SCANCODE:
                         {
+                            #warning move that to Keymap
                             long p1 = param1 % 128;
-                            this->keys[p1] = 1 | device_flags;
+                            this->keymap->keys[p1] = 1 | device_flags;
                             if ((device_flags & KBD_FLAG_UP) == 0) { /* 0x8000 */
                                 /* key down */
                                 switch (p1) {
                                 case 58:
-                                    this->key_flags ^= 4;
+                                    this->keymap->key_flags ^= 4;
                                     break; /* caps lock */
                                 case 69:
-                                    this->key_flags ^= 2;
+                                    this->keymap->key_flags ^= 2;
                                     break; /* num lock */
                                 case 70:
-                                    this->key_flags ^= 1;
+                                    this->keymap->key_flags ^= 1;
                                     break; /* scroll lock */
                                 default:
                                     ;
                                 }
                             }
-                            struct key_info* ki = this->keymap->get_key_info_from_scan_code(
+                            const key_info* ki = this->keymap->get_key_info_from_scan_code(
                                 device_flags,
-                                param1,
-                                this->keys,
-                                this->key_flags);
-                            cb.rdp_input_scancode(param1, param2, device_flags, time, this->key_flags, this->keys, ki);
+                                param1);
+                            cb.rdp_input_scancode(param1, param2, device_flags, time, this->keymap, ki);
                             if (device_flags & KBD_FLAG_UP){
-                                this->keys[p1] = 0;
+                                this->keymap->keys[p1] = 0;
                             }
                         }
                         break;
                     case RDP_INPUT_MOUSE:
                         this->mouse_x = param1;
                         this->mouse_y = param2;
-                        cb.rdp_input_mouse(device_flags, param1, param2, this->key_flags, this->keys);
+                        cb.rdp_input_mouse(device_flags, param1, param2, this->keymap);
                         break;
                     default:
                         LOG(LOG_INFO, "unsupported PDUTYPE2_INPUT msg %u", msg_type);
