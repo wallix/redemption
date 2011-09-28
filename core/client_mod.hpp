@@ -341,6 +341,7 @@ struct client_mod : public Callback {
 
     void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor)
     {
+        setlocale(LC_CTYPE, "fr_FR.UTF-8");
         this->send_global_palette();
 
         // add text to glyph cache
