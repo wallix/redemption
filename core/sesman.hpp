@@ -231,6 +231,9 @@ class SessionManager {
                 else if (0 == strncmp(target, "test", 5)){
                     this->context.nextmod = ModContext::INTERNAL_TEST;
                 }
+                else if (0 == strncmp(target, "selector", 9)){
+                    this->context.nextmod = ModContext::INTERNAL_SELECTOR;
+                }
                 else {
                     this->context.nextmod = ModContext::INTERNAL_CARD;
                 }

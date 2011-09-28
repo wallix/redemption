@@ -30,6 +30,7 @@
 #include "../mod/internal/dialog.hpp"
 #include "../mod/internal/test_card.hpp"
 #include "../mod/internal/test_internal.hpp"
+#include "../mod/internal/selector.hpp"
 #include "../mod/null/null.hpp"
 #include "../mod/rdp/rdp.hpp"
 #include "../mod/vnc/vnc.hpp"
@@ -636,8 +637,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
             }
             break;
 
-            case MCTX_STATUS_DIALOG:
-            break;
             case MCTX_STATUS_INTERNAL:
             {
                 this->back_event = new wait_obj(-1);
@@ -735,6 +734,14 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                         *this->context,
                                         *this->front);
                         LOG(LOG_INFO, "internal module 'test_card' ready");
+                    break;
+                    case ModContext::INTERNAL_SELECTOR:
+                        LOG(LOG_INFO, "Creation of internal module 'selector'");
+                        this->mod = new selector_mod(
+                                        this->back_event,
+                                        *this->context,
+                                        *this->front);
+                        LOG(LOG_INFO, "internal module 'selector' ready");
                     break;
                     default:
                     break;

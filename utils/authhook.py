@@ -29,6 +29,7 @@ class Authentifier(object):
         'message' : 'message',
         'card' : 'card',
         'loop' : 'loop',
+        'selector' : 'selector',
         'looop' : 'looop',
         'error_invalid' : 'error_invalid'
     }
@@ -95,6 +96,11 @@ class Authentifier(object):
             'proto_dest': 'INTERNAL',
             'is_rec':'True',
             'rec_path':'/tmp/test_card.cpp',
+        },
+        'selector' : {
+            'proxy_type': 'RDP',
+            'target_device' : 'selector',
+            'proto_dest': 'INTERNAL'
         },
         'n' : {
             'proxy_type': 'RDP',
