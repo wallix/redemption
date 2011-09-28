@@ -101,7 +101,7 @@ struct selector_mod : public internal_mod {
 
     void draw_filter(){
         this->server_draw_text(30, 60, "Filter:", WHITE, BLACK);
-        this->draw_edit(Rect(70, 60, 200, 20));
+        this->draw_edit(Rect(70, 60, 200, 20), 0, "*", 1, false);
         char buffer[256];
         sprintf(buffer, "Results: %u/%u", this->showed, this->total);
         this->server_draw_text(280, 60,  buffer, WHITE, BLACK);

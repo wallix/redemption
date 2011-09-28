@@ -57,17 +57,6 @@ static void remove_char_at(char* text, int text_size, int index)
     wcstombs(text, wstr, text_size);
 }
 
-static void wchar_repeat(wchar_t* dest, int dest_size_in_wchars, wchar_t ch, int repeat)
-{
-    for (int index = 0; index < repeat; index++) {
-        if (index >= dest_size_in_wchars) {
-            break;
-        }
-        dest[index] = ch;
-    }
-}
-
-
 Widget::Widget(internal_mod * mod, int width, int height, Widget & parent, int type) : parent(parent) {
     this->mod = mod;
     /* for all but bitmap */
@@ -346,35 +335,7 @@ void widget_edit::draw(const Rect & clip)
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->draw_edit(scr_r);
-    }
-
-    /* draw text */
-    char text[255];
-    wchar_t wtext[255];
-
-    if (this->password_char != 0) {
-        int i = mbstowcs(0, this->buffer, 0);
-        memset(text, this->password_char, i);
-        text[i] = 0;
-        this->server_draw_text(this, 4, 2, text, BLACK, clip);
-    }
-    else {
-        this->server_draw_text(this, 4, 2, this->buffer, BLACK, clip);
-    }
-    /* draw xor box(cursor) */
-    if (has_focus) {
-        if (this->password_char != 0) {
-            wchar_repeat(wtext, 255, this->password_char, this->edit_pos);
-            wtext[this->edit_pos] = 0;
-            wcstombs(text, wtext, 255);
-        } else {
-            mbstowcs(wtext, this->buffer, 255);
-            wtext[this->edit_pos] = 0;
-            wcstombs(text, wtext, 255);
-        }
-        Rect r(4 + this->text_width(text), 3, 2, this->rect.cy - 6);
-        this->fill_cursor_rect(r, WHITE, clip);
+        this->mod->draw_edit(scr_r, this->password_char, this->buffer, this->edit_pos, this->has_focus);
     }
 }
 

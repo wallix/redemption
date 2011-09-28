@@ -281,23 +281,58 @@ struct client_mod : public Callback {
                 has_focus?WHITE:BLACK);
     }
 
-    void draw_edit(const Rect & rect){
+    void draw_edit(const Rect & r, char password_char, char * buffer, size_t edit_pos, bool has_focus){
         this->opaque_rect(
-            RDPOpaqueRect(rect, GREY));
+            RDPOpaqueRect(r, GREY));
         this->opaque_rect(
-            RDPOpaqueRect(Rect(rect.x+1, rect.y+1, rect.cx - 3, rect.cy - 3), WHITE));
+            RDPOpaqueRect(Rect(r.x+1, r.y+1, r.cx - 3, r.cy - 3), WHITE));
         this->opaque_rect(
-            RDPOpaqueRect(Rect(rect.x, rect.y, rect.cx, 1), DARK_GREY));
+            RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), DARK_GREY));
         this->opaque_rect(
-            RDPOpaqueRect(Rect(rect.x, rect.y, 1, rect.cy), DARK_GREY));
+            RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), DARK_GREY));
         this->opaque_rect(
-            RDPOpaqueRect(Rect(rect.x, rect.y + rect.cy - 1, rect.cx, 1), WHITE));
+            RDPOpaqueRect(Rect(r.x, r.y + r.cy - 1, r.cx, 1), WHITE));
         this->opaque_rect(
-            RDPOpaqueRect(Rect(rect.x + rect.cx - 1, rect.y, 1, rect.cy), WHITE));
+            RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), WHITE));
         this->opaque_rect(
-            RDPOpaqueRect(Rect(rect.x + 1, rect.y + 1, 1, rect.cy - 2), BLACK));
+            RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), BLACK));
         this->opaque_rect(
-            RDPOpaqueRect(Rect(rect.x + 1, rect.y + 1, rect.cx - 2, 1), BLACK));
+            RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), BLACK));
+
+        /* draw text */
+        char text[255];
+        wchar_t wtext[255];
+
+        if (password_char != 0) {
+            int i = mbstowcs(0, buffer, 0);
+            memset(text, password_char, i);
+            text[i] = 0;
+            this->server_draw_text(r.x + 4, r.y + 2, text, WHITE, BLACK);
+        }
+        else {
+            this->server_draw_text(r.x + 4, r.y + 2, buffer, WHITE, BLACK);
+        }
+        /* draw xor box(cursor) */
+        if (has_focus) {
+            if (password_char != 0) {
+                for (int index = 0; index < edit_pos; index++) {
+                    if (index >= 255) {
+                        break;
+                    }
+                    wtext[index] = password_char;
+                }
+                wtext[edit_pos] = 0;
+                wcstombs(text, wtext, 255);
+            } else {
+                mbstowcs(wtext, buffer, 255);
+                wtext[edit_pos] = 0;
+                wcstombs(text, wtext, 255);
+            }
+    //        Rect r(4 + this->text_width(text), 3, 2, this->rect.cy - 6);
+    //        this->fill_cursor_rect(r, WHITE, clip);
+        }
+
+
     }
 
     #warning this function is written in a quite insane way, so don't use it, and rewrite it in a saner way.
