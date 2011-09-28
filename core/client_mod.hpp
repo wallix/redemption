@@ -253,7 +253,9 @@ struct client_mod : public Callback {
         this->server_reset_clip();
     }
 
-    void draw_window(const Rect & r, uint32_t bgcolor){
+    void draw_window(const Rect & r, uint32_t bgcolor, const char * caption, bool has_focus){
+
+        // Window surface and border
         this->opaque_rect(
             RDPOpaqueRect(r, bgcolor));
         this->opaque_rect(
@@ -268,6 +270,15 @@ struct client_mod : public Callback {
             RDPOpaqueRect(Rect(r.x, r.y + r.cy - 1, r.cx, 1), BLACK));
         this->opaque_rect(
             RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), BLACK));
+
+        // Title bar
+        this->opaque_rect(
+            RDPOpaqueRect(Rect(r.x + 3, r.y + 3, r.cx - 5, 18),
+                          has_focus?WABGREEN:DARK_GREY));
+
+        this->server_draw_text(r.x + 4, r.y + 4, caption,
+                has_focus?WABGREEN:DARK_GREY,
+                has_focus?WHITE:BLACK);
     }
 
     void draw_edit(const Rect & rect){

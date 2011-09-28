@@ -127,10 +127,8 @@ Widget::~Widget(){
 void Widget::draw_title_bar(int bg_color, int fg_color, const Rect & clip)
 {
     assert(this->type == WND_TYPE_WND);
-    this->mod->server_begin_update();
     this->fill_rect(0xCC, Rect(3, 3, this->rect.cx - 5, 18), bg_color, clip);
     this->server_draw_text(this, 4, 4, this->caption1, fg_color, clip);
-    this->mod->server_end_update();
 }
 
 void window::focus(const Rect & clip)
@@ -330,19 +328,11 @@ void window::draw(const Rect & clip)
 {
     Rect r(0, 0, this->rect.cx, this->rect.cy);
     const Rect scr_r = this->to_screen_rect(r);
-
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->draw_window(scr_r, this->bg_color);
-    }
-
-    if (has_focus) {
-        this->draw_title_bar(WABGREEN, WHITE, clip);
-    }
-    else {
-        this->draw_title_bar(DARK_GREY, BLACK, clip);
+        this->mod->draw_window(scr_r, this->bg_color, this->caption1, this->has_focus);
     }
 }
 
