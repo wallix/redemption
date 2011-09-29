@@ -310,7 +310,7 @@ Rect const Widget::to_screen_rect()
 
 void widget_image::draw(const Rect & clip)
 {
-    mod->server_begin_update();
+//    mod->server_begin_update();
 
     Rect image_screen_rect = this->to_screen_rect();
     Rect intersection = image_screen_rect.intersect(this->to_screen_rect(clip));
@@ -320,15 +320,13 @@ void widget_image::draw(const Rect & clip)
         this->mod->server_set_clip(region.rects[ir]);
         this->mod->bitmap_update(this->bmp, image_screen_rect, 0, 0);
     }
-    mod->server_end_update();
+//    mod->server_end_update();
 
 }
 
 int Widget::refresh_clip(const Rect & clip)
 {
     if (!clip.isempty()) {
-
-        this->mod->server_begin_update();
         this->draw(clip);
 
         /* notify */
@@ -344,17 +342,12 @@ int Widget::refresh_clip(const Rect & clip)
                 b->refresh_clip(r2);
             }
         }
-        this->mod->server_end_update();
     }
     return 0;
 }
 
 int Widget::refresh(const Rect & clip)
 {
-    struct Widget* b;
-    struct Rect r1;
-    struct Rect r2;
-
     this->mod->server_begin_update();
 
     this->draw(clip);
@@ -362,9 +355,9 @@ int Widget::refresh(const Rect & clip)
     this->notify(this, WM_PAINT, 0, 0); /* 3 */
 
     /* draw any child windows in the area */
-    int count = this->child_list.size();
-    for (int i = 0; i < count; i++) {
-        b = this->child_list[i];
+    size_t count = this->child_list.size();
+    for (size_t i = 0; i < count; i++) {
+        Widget * b = this->child_list[i];
         b->refresh(b->rect.wh());
     }
     this->mod->server_end_update();
