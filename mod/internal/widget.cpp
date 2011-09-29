@@ -380,33 +380,29 @@ void Widget::basic_fill_rect(int rop, const Rect & r, int fg_color, const Rect &
 void widget_combo::draw(const Rect & clip)
 {
     /* draw gray box */
-    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), GREY, clip);
-    /* WHITE background */
-    this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 3, this->rect.cy - 3), WHITE, clip);
-    if (has_focus) {
-        this->fill_rect(0xCC, Rect(3, 3, (this->rect.cx - 6) - 18, this->rect.cy - 5), DARK_WABGREEN, clip);
-    }
-
-    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, 1), DARK_GREY, clip);
-    this->fill_rect(0xCC, Rect(0, 0, 1, this->rect.cy), DARK_GREY, clip);
-    this->fill_rect(0xCC, Rect(0, this->rect.cy- 1, this->rect.cx, 1), WHITE, clip);
-    this->fill_rect(0xCC, Rect(this->rect.cx - 1, 0, 1, this->rect.cy), WHITE, clip);
-    this->fill_rect(0xCC, Rect(1, 1, 1, this->rect.cy - 2), BLACK, clip);
-    this->fill_rect(0xCC, Rect(1, 1, this->rect.cx - 2, 1), BLACK, clip);
 
     {
-        Rect r(0, 0, this->rect.cx, this->rect.cy);
-        const Rect scr_r = this->to_screen_rect(r);
+        const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
         const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
         for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
             this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+
+            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 0, scr_r.y + 0, scr_r.cx, scr_r.cy), GREY));
+            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 1, scr_r.y + 1, scr_r.cx - 3, scr_r.cy - 3), WHITE));
+            if (has_focus) {
+                this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 3, scr_r.y + 3, (scr_r.cx - 6) - 18, scr_r.cy - 5), DARK_WABGREEN));
+            }
+            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 0, scr_r.y + 0, scr_r.cx, 1), DARK_GREY));
+            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 0, scr_r.y + 0, 1, scr_r.cy), DARK_GREY));
+            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 0, scr_r.y + scr_r.cy- 1, scr_r.cx, 1), WHITE));
+            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + scr_r.y + scr_r.cx - 1, 0, 1, scr_r.cy), WHITE));
+            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 1, scr_r.y + 1, 1, scr_r.cy - 2), BLACK));
+            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 1, scr_r.y + 1, scr_r.cx - 2, 1), BLACK));
             this->mod->server_draw_text(scr_r.x + 4, scr_r.y + 2, this->string_list[this->item_index],
                 has_focus?DARK_WABGREEN:WHITE, has_focus?WHITE:BLACK);
         }
     }
-
-
 
     Rect r(this->rect.cx - 20, 2, 18, this->rect.cy - 4);
     if (this->state == BUTTON_STATE_UP) { /* 0 */
@@ -519,31 +515,41 @@ void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & c
 
 void widget_button::draw(const Rect & clip)
 {
+
+
+
     int bevel = (this->state == BUTTON_STATE_DOWN)?1:0;
 
     int w = this->text_width(this->caption1);
     int h = this->text_height(this->caption1);
     Rect r(0, 0, this->rect.cx, this->rect.cy);
-    if (this->state == BUTTON_STATE_DOWN) {
-        this->fill_rect(0xCC, r, GREY, clip);
-        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), BLACK, clip);
-        this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), BLACK, clip);
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, r.cx - 2, 1), DARK_GREY, clip);
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, 1, r.cy - 2), DARK_GREY, clip);
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cx - 2), r.cy - 1, 1), DARK_GREY, clip);
-        this->fill_rect(0xCC, Rect(r.x + (r.cx - 2), r.y + 1, 1, r.cy - 1), DARK_GREY, clip);
-        this->fill_rect(0xCC, Rect(r.x, r.y + (r.cx - 1), r.cy, 1), BLACK, clip);
-        this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK, clip);
-    } else {
-        this->fill_rect(0xCC, r, GREY, clip);
-        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), WHITE, clip);
-        this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), WHITE, clip);
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), DARK_GREY, clip);
-        this->fill_rect(0xCC, Rect((r.x + r.cx) - 2, r.y + 1, 1, r.cy - 1), DARK_GREY, clip);
-        this->fill_rect(0xCC, Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK, clip);
-        this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK, clip);
-    }
 
+    const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
+    const Region region = this->get_visible_region(this, &this->parent, scr_r);
+
+    for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+        this->mod->draw_button(scr_r, "", this->state);
+//        if (this->state == BUTTON_STATE_DOWN) {
+//            this->fill_rect(0xCC, r, GREY, clip);
+//            this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), BLACK, clip);
+//            this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), BLACK, clip);
+//            this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, r.cx - 2, 1), DARK_GREY, clip);
+//            this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, 1, r.cy - 2), DARK_GREY, clip);
+//            this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cx - 2), r.cy - 1, 1), DARK_GREY, clip);
+//            this->fill_rect(0xCC, Rect(r.x + (r.cx - 2), r.y + 1, 1, r.cy - 1), DARK_GREY, clip);
+//            this->fill_rect(0xCC, Rect(r.x, r.y + (r.cx - 1), r.cy, 1), BLACK, clip);
+//            this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK, clip);
+//        } else {
+//            this->fill_rect(0xCC, r, GREY, clip);
+//            this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), WHITE, clip);
+//            this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), WHITE, clip);
+//            this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), DARK_GREY, clip);
+//            this->fill_rect(0xCC, Rect((r.x + r.cx) - 2, r.y + 1, 1, r.cy - 1), DARK_GREY, clip);
+//            this->fill_rect(0xCC, Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK, clip);
+//            this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK, clip);
+//        }
+    }
     this->server_draw_text(this,
         this->rect.cx / 2 - w / 2 + bevel,
         this->rect.cy / 2 - h / 2 + bevel, this->caption1, BLACK, clip);
