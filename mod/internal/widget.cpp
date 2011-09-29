@@ -191,92 +191,6 @@ const Region Widget::get_visible_region(Widget * window, Widget * widget, const 
     return region;
 }
 
-#warning implementation of the server_draw_text function below is totally broken, especially data. MS-RDPEGDI See 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
-
-void Widget::server_draw_text(struct Widget* wdg, int x, int y, const char* text, const uint32_t fgcolor, const Rect & clip){
-    setlocale(LC_CTYPE, "fr_FR.UTF-8");
-    assert(wdg->type != WND_TYPE_BITMAP);
-
-    int len = mbstowcs(0, text, 0);
-    if (len < 1) {
-        return;
-    }
-    const Rect & clip_rect = wdg->to_screen_rect(clip);
-
-    /* convert to wide char */
-    wchar_t* wstr = new wchar_t[len + 2];
-    #warning use mbsrtowcs instead
-    mbstowcs(wstr, text, len + 1);
-    int total_width = 0;
-    int total_height = 0;
-    uint8_t *data = new uint8_t[len * 4];
-    memset(data, 0, len * 4);
-    int f = 0;
-    int c = 0;
-    int distance_from_previous_fragment = 0;
-    for (int index = 0; index < len; index++) {
-        FontChar* font_item = this->mod->front.font.font_items[wstr[index]];
-        #warning avoid passing parameters by reference to get results
-        switch (this->mod->front.cache.add_glyph(font_item, f, c))
-        {
-            case Cache::GLYPH_ADDED_TO_CACHE:
-                this->mod->glyph_cache(*font_item, f, c);
-            break;
-            default:
-            break;
-        }
-        data[index * 2] = c;
-        data[index * 2 + 1] = distance_from_previous_fragment;
-        distance_from_previous_fragment = font_item->incby;
-        total_width += font_item->incby;
-        total_height = std::max(total_height, font_item->height);
-    }
-
-    Rect initial_region = wdg->to_screen_rect(Rect(x, y, total_width, total_height));
-
-    struct Region region;
-    region.rects.push_back(initial_region);
-    /* loop through all windows in z order */
-    for (size_t i = 0; i < this->mod->nb_windows(); i++) {
-        Widget *p = this->mod->window(i);
-        if (p == wdg || p == &wdg->parent) {
-            break;
-        }
-        region.subtract_rect(p->rect);
-    }
-    x += wdg->to_screenx();
-    y += wdg->to_screeny();
-
-    for (size_t ir = 0 ; ir < region.rects.size(); ir++){
-        Rect draw_rect = region.rects[ir].intersect(clip_rect);
-        if (!draw_rect.isempty()) {
-            const Rect rect(x, y, total_width, total_height);
-            /* 0x03 0x73; TEXT2_IMPLICIT_X and something else */
-
-            this->mod->server_set_clip(clip_rect);
-            RDPGlyphIndex text(
-                f, // cache_id
-                0x03, // fl_accel
-                0x00, // ui_charinc
-                0, // f_op_redundant,
-                BLACK, // bgcolor
-                fgcolor, // fgcolor
-                rect, // bk
-                Rect(), // op
-                this->mod->brush, // brush
-                x,  // glyph_x
-                y + total_height, // glyph_y
-                len * 2, // data_len in bytes
-                data // data (utf16)
-            );
-            this->mod->glyph_index(text);
-        }
-    }
-    delete [] data;
-    delete [] wstr;
-}
-
-
 void window::draw(const Rect & clip)
 {
     Rect r(0, 0, this->rect.cx, this->rect.cy);
@@ -375,22 +289,33 @@ void widget_button::draw(const Rect & clip)
 
 void widget_popup::draw(const Rect & clip)
 {
-    this->fill_rect(0xCC, Rect(0, 0, this->rect.cx, this->rect.cy), WHITE, clip);
+    const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
+    const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
-    /* draw the list items */
-    if (this->popped_from != 0) {
-        int y = 0;
-        size_t list_count = this->popped_from->string_list.size();
-        for (unsigned i = 0; i < list_count; i++) {
-            char * p = this->popped_from->string_list[i];
-            int h = this->mod->text_height(p);
-            this->item_height = h;
-            if (i == this->item_index) { // deleted item
-                this->fill_rect(0xCC, Rect(0, y, this->rect.cx, h), WABGREEN, clip);
+    for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+        this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x, scr_r.y, this->rect.cx, this->rect.cy), WHITE));
+
+        #warning this should be a two stages process, first prepare drop box data, then call draw_xxx that use that data to draw. For now everything is mixed up, (and that is not good)
+        /* draw the list items */
+        if (this->popped_from != 0) {
+            int y = 0;
+            size_t list_count = this->popped_from->string_list.size();
+            for (unsigned i = 0; i < list_count; i++) {
+                char * p = this->popped_from->string_list[i];
+                int h = this->mod->text_height(p);
+                this->item_height = h;
+                if (i == this->item_index) { // deleted item
+                    this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x, scr_r.y + y, this->rect.cx, h), WABGREEN));
+                    this->mod->server_draw_text(scr_r.x + 2, scr_r.y + y, p, WABGREEN, WHITE);
+                }
+                else {
+                    this->mod->server_draw_text(scr_r.x + 2, scr_r.y + y, p, WHITE, BLACK);
+                }
+                y = y + h;
             }
-            this->server_draw_text(this, 2, y, p, (i == this->item_index)?WHITE:BLACK, clip);
-            y = y + h;
         }
+
     }
 }
 

@@ -178,7 +178,6 @@ struct Widget {
     int text_width(char* text);
     int text_height(char* text);
     const Region get_visible_region(Widget * window, Widget * widget, const Rect & rect);
-    void server_draw_text(struct Widget* wdg, int x, int y, const char* text, const uint32_t fgcolor, const Rect & clip);
     void fill_rect(int rop, const Rect & r, int fg_color, const Rect & clip);
     void basic_fill_rect(int rop, const Rect & r, int fg_color, const Rect & clip);
     void fill_cursor_rect(const Rect & r, int fg_color, const Rect & clip);
