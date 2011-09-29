@@ -35,6 +35,15 @@
 #include "region.hpp"
 #include "bitmap.hpp"
 #include "client_mod.hpp"
+#include "region.hpp"
+#include "keymap.hpp"
+#include <string.h>
+#include "file_loc.hpp"
+#include "constants.hpp"
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "keymap.hpp"
 
