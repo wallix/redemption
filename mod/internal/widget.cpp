@@ -27,28 +27,23 @@
 #include "widget.hpp"
 #include "../mod/internal/internal_mod.hpp"
 
+//struct GraphicalContext : public internal_mod
+//{
+//    nb_windows();
+//    window(i);
+//    server_set_clip()
+//    draw_window();
+//    draw_edit();
+//    draw_combo();
+//    opaque_rect()
+//    server_draw_text()
+//    text_height();
+//    bitmap_update()
+//    server_begin_update()
+//    server_end_update();
+//};
 
-/*****************************************************************************/
-/* remove a ch at index position in text, index starts at 0 */
-/* if index = -1 remove it from the end */
-static void remove_char_at(char* text, int text_size, int index)
-{
-    int len = mbstowcs(0, text, 0);
-    if (len <= 0) {
-        return;
-    }
-    wchar_t wstr[len + 16];
-    mbstowcs(wstr, text, len + 1);
-    if ((index < (len - 1)) && (index >= 0)) {
-        for (int i = index; i < (len - 1); i++) {
-            wstr[i] = wstr[i + 1];
-        }
-    }
-    wstr[len - 1] = 0;
-    wcstombs(text, wstr, text_size);
-}
-
-Widget::Widget(internal_mod * mod, int width, int height, Widget & parent, int type) : parent(parent) {
+Widget::Widget(GraphicalContext * mod, int width, int height, Widget & parent, int type) : parent(parent) {
     this->mod = mod;
     /* for all but bitmap */
     this->pointer = 0;
@@ -88,7 +83,7 @@ Widget::Widget(internal_mod * mod, int width, int height, Widget & parent, int t
 }
 
 Widget::~Widget(){
-    if (this != &this->mod->screen){
+    if (this->type != WND_TYPE_SCREEN){
         vector<Widget*>::iterator it;
         for (it = this->child_list.begin(); it != this->child_list.end(); it++){
             if (*it == this){
@@ -209,7 +204,13 @@ void widget_edit::draw(const Rect & clip)
 
 void widget_screen::draw(const Rect & clip)
 {
-    this->mod->opaque_rect(RDPOpaqueRect(this->rect, this->bg_color));
+    const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
+    const Region region = this->get_visible_region(this, &this->parent, scr_r);
+
+    for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+        this->mod->opaque_rect(RDPOpaqueRect(scr_r, this->bg_color));
+    }
 }
 
 void widget_combo::draw(const Rect & clip)
@@ -289,20 +290,22 @@ void widget_label::draw(const Rect & clip)
 Rect const Widget::to_screen_rect(const Rect & r)
 {
         Rect a = r;
-        for (Widget *b = this; WND_TYPE_SCREEN != b->type ; b = &b->parent) {
+        Widget *b = this;
+        for (; WND_TYPE_SCREEN != b->type ; b = &b->parent) {
             a = a.offset(b->rect.x, b->rect.y);
         }
-        return a.intersect(this->mod->screen.rect);
+        return a.intersect(b->rect);
 }
 
 // get current widget rectangle relative to screen
 Rect const Widget::to_screen_rect()
 {
         Rect a = Rect(0, 0, this->rect.cx, this->rect.cy);
-        for (Widget *b = this; WND_TYPE_SCREEN != b->type ; b = &b->parent) {
+        Widget *b = this;
+        for (; WND_TYPE_SCREEN != b->type ; b = &b->parent) {
             a = a.offset(b->rect.x, b->rect.y);
         }
-        return a.intersect(this->mod->screen.rect);
+        return a.intersect(b->rect);
 }
 
 void widget_image::draw(const Rect & clip)
