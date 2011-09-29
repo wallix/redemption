@@ -281,6 +281,28 @@ struct client_mod : public Callback {
                 has_focus?WHITE:BLACK);
     }
 
+    void draw_button(const Rect & r, const char * text, int state){
+        if (state == BUTTON_STATE_DOWN) {
+            this->opaque_rect(RDPOpaqueRect(r, GREY));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), BLACK));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), BLACK));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), DARK_GREY));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), DARK_GREY));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + (r.cx - 2), r.cy - 1, 1), DARK_GREY));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + (r.cx - 2), r.y + 1, 1, r.cy - 1), DARK_GREY));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y + (r.cx - 1), r.cy, 1), BLACK));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK));
+        } else {
+            this->opaque_rect(RDPOpaqueRect(r, GREY));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), WHITE));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), WHITE));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), DARK_GREY));
+            this->opaque_rect(RDPOpaqueRect(Rect((r.x + r.cx) - 2, r.y + 1, 1, r.cy - 1), DARK_GREY));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK));
+        }
+    }
+
     void draw_edit(const Rect & r, char password_char, char * buffer, size_t edit_pos, bool has_focus){
         this->opaque_rect(
             RDPOpaqueRect(r, GREY));
