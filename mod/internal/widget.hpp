@@ -50,8 +50,30 @@
 #include <iostream>
 #include <list>
 
+/*****************************************************************************/
+/* remove a ch at index position in text, index starts at 0 */
+/* if index = -1 remove it from the end */
+static inline void remove_char_at(char* text, int text_size, int index)
+{
+    int len = mbstowcs(0, text, 0);
+    if (len <= 0) {
+        return;
+    }
+    wchar_t wstr[len + 16];
+    mbstowcs(wstr, text, len + 1);
+    if ((index < (len - 1)) && (index >= 0)) {
+        for (int i = index; i < (len - 1); i++) {
+            wstr[i] = wstr[i + 1];
+        }
+    }
+    wstr[len - 1] = 0;
+    wcstombs(text, wstr, text_size);
+}
+
+#define GraphicalContext internal_mod
+
 struct Widget {
-    class internal_mod * mod;
+    struct GraphicalContext * mod;
     bool has_focus;
 
     /* 0 = bitmap 1 = window 2 = screen 3 = button 4 = image 5 = edit
@@ -96,7 +118,7 @@ struct Widget {
     public:
 
 
-    Widget(internal_mod * mod, int width, int height, Widget & parent, int type);
+    Widget(GraphicalContext * mod, int width, int height, Widget & parent, int type);
 
     ~Widget();
 
@@ -190,7 +212,7 @@ struct Widget {
 
 struct widget_button : public Widget
 {
-    widget_button(internal_mod * mod, const Rect & r, Widget & parent, int id, int tab_stop, const char * caption)
+    widget_button(GraphicalContext * mod, const Rect & r, Widget & parent, int id, int tab_stop, const char * caption)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_BUTTON) {
 
         assert(type == WND_TYPE_BUTTON);
@@ -219,7 +241,7 @@ struct widget_edit : public Widget {
 
     char buffer[256];
 
-    widget_edit(internal_mod * mod, const Rect & r, Widget & parent, int id, int tab_stop, const char * caption, int pointer, int edit_pos)
+    widget_edit(GraphicalContext * mod, const Rect & r, Widget & parent, int id, int tab_stop, const char * caption, int pointer, int edit_pos)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_EDIT) {
 
         assert(type == WND_TYPE_EDIT);
@@ -249,7 +271,7 @@ struct widget_edit : public Widget {
 
 struct window : public Widget
 {
-    window(internal_mod * mod, const Rect & r, Widget & parent, int bg_color, const char * title)
+    window(GraphicalContext * mod, const Rect & r, Widget & parent, int bg_color, const char * title)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_WND) {
 
         assert(type == WND_TYPE_WND);
@@ -285,7 +307,7 @@ struct window : public Widget
 struct widget_screen : public Widget {
     uint8_t bpp;
 
-    widget_screen(internal_mod * mod, int width, int height, uint8_t bpp)
+    widget_screen(GraphicalContext * mod, int width, int height, uint8_t bpp)
     : Widget(mod, width, height, *this, WND_TYPE_SCREEN), bpp(bpp) {
         assert(type == WND_TYPE_SCREEN);
     }
@@ -312,7 +334,7 @@ struct widget_screen : public Widget {
 
 struct widget_label : public Widget {
 
-    widget_label(internal_mod * mod, const Rect & r, Widget & parent, const char * title)
+    widget_label(GraphicalContext * mod, const Rect & r, Widget & parent, const char * title)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_LABEL) {
 
         assert(type == WND_TYPE_LABEL);
@@ -333,7 +355,7 @@ struct widget_label : public Widget {
 struct widget_popup : public Widget
 {
 
-    widget_popup(internal_mod * mod, const Rect & r,
+    widget_popup(GraphicalContext * mod, const Rect & r,
          Widget * popped_from,
          Widget & parent,
          int item_index)
@@ -353,7 +375,7 @@ struct widget_popup : public Widget
 
 struct widget_combo : public Widget
 {
-    widget_combo(internal_mod * mod, const Rect & r,
+    widget_combo(GraphicalContext * mod, const Rect & r,
                 Widget & parent, int id, int tab_stop)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_COMBO){
         this->rect.x = r.x;
@@ -373,7 +395,7 @@ struct widget_combo : public Widget
 struct widget_image : public Widget {
     Bitmap bmp;
 
-    widget_image(internal_mod * mod, int width, int height, int type, Widget & parent, int x, int y, const char* filename, uint8_t bpp)
+    widget_image(GraphicalContext * mod, int width, int height, int type, Widget & parent, int x, int y, const char* filename, uint8_t bpp)
     : Widget(mod, width, height, parent, type), bmp(filename) {
 
         assert(type == WND_TYPE_IMAGE);
