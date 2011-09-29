@@ -253,6 +253,36 @@ struct client_mod : public Callback {
         this->server_reset_clip();
     }
 
+    int text_width(const char * text){
+        int rv = 0;
+        if (text) {
+            size_t len = mbstowcs(0, text, 0);
+            wchar_t wstr[len + 2];
+            mbstowcs(wstr, text, len + 1);
+            for (size_t index = 0; index < len; index++) {
+                FontChar *font_item = this->front.font.font_items[wstr[index]];
+                rv = rv + font_item->incby;
+            }
+        }
+        return rv;
+    }
+
+    int text_height(const char * text){
+        int rv = 0;
+        if (text) {
+            int len = mbstowcs(0, text, 0);
+            wchar_t *wstr = new wchar_t[len + 2];
+            mbstowcs(wstr, text, len + 1);
+            for (int index = 0; index < len; index++) {
+                FontChar *font_item = this->front.font.font_items[wstr[index]];
+                rv = std::max(rv, font_item->height);
+            }
+            delete [] wstr;
+        }
+        return rv;
+    }
+
+
     void draw_window(const Rect & r, uint32_t bgcolor, const char * caption, bool has_focus){
 
         // Window surface and border
@@ -281,9 +311,29 @@ struct client_mod : public Callback {
                 has_focus?WHITE:BLACK);
     }
 
-    void draw_button(const Rect & r, const char * text, int state){
+    void draw_combo(const Rect & r, const char * caption, int state, bool has_focus)
+    {
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, r.cy), GREY));
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 3, r.cy - 3), WHITE));
+        if (has_focus) {
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 3, r.y + 3, (r.cx - 6) - 18, r.cy - 5), DARK_WABGREEN));
+        }
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), DARK_GREY));
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), DARK_GREY));
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y + r.cy- 1, r.cx, 1), WHITE));
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), WHITE));
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), BLACK));
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), BLACK));
+        this->server_draw_text(r.x + 4, r.y + 3, caption, has_focus?DARK_WABGREEN:WHITE, has_focus?WHITE:BLACK);
+        this->draw_button(Rect(r.x + r.cx - 20, r.y + 2, 18, r.cy - 4), "", state, false);
+    }
+
+    void draw_button(const Rect & r, const char * caption, int state, bool has_focus){
+
+        int bevel = (state == BUTTON_STATE_DOWN)?1:0;
+
+        this->opaque_rect(RDPOpaqueRect(r, GREY));
         if (state == BUTTON_STATE_DOWN) {
-            this->opaque_rect(RDPOpaqueRect(r, GREY));
             this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), BLACK));
             this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), BLACK));
             this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), DARK_GREY));
@@ -293,13 +343,37 @@ struct client_mod : public Callback {
             this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y + (r.cx - 1), r.cy, 1), BLACK));
             this->opaque_rect(RDPOpaqueRect(Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK));
         } else {
-            this->opaque_rect(RDPOpaqueRect(r, GREY));
             this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), WHITE));
             this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), WHITE));
             this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), DARK_GREY));
             this->opaque_rect(RDPOpaqueRect(Rect((r.x + r.cx) - 2, r.y + 1, 1, r.cy - 1), DARK_GREY));
             this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK));
             this->opaque_rect(RDPOpaqueRect(Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK));
+        }
+        int w = this->text_width(caption);
+        int h = this->text_height(caption);
+        this->server_draw_text(
+            r.x + r.cx / 2 - w / 2 + bevel,
+            r.y + r.cy / 2 - h / 2 + bevel,
+            caption, GREY, BLACK);
+        // focus rect
+        if (has_focus) {
+            this->pat_blt(
+                RDPPatBlt(Rect(r.x + 3, r.y + 3, r.cx - 8, 2),
+                    0xF0, GREY, BLACK,
+                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")));
+            this->pat_blt(
+                RDPPatBlt(Rect(r.x + 3, r.y + 3, 2, r.cy - 8),
+                    0xF0, GREY, BLACK,
+                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")));
+            this->pat_blt(
+                RDPPatBlt(Rect(r.x + r.cx - 6, r.y + 3, 2, r.cy - 8),
+                    0xF0, GREY, BLACK,
+                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")));
+            this->pat_blt(
+                RDPPatBlt(Rect(r.x + 3, r.y + r.cy - 6, r.cx - 8, 2),
+                    0xF0, GREY, BLACK,
+                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")));
         }
     }
 
@@ -396,8 +470,7 @@ struct client_mod : public Callback {
             total_height = std::max(total_height, font_item->height);
         }
 
-        #warning there seems to be some strange behavior with bk rect (and op ?). Same problem as usual, we have a rectangle but we don't know if boundaries (right, bottom) are included or not. Check actual behavior with rdesktop and with mstsc client. Nevertheless we shouldn't have to add 1 here.
-        const Rect bk(x, y, total_width, total_height);
+        const Rect bk(x, y, total_width + 1, total_height);
 
          RDPGlyphIndex glyphindex(
             f, // cache_id
@@ -411,6 +484,7 @@ struct client_mod : public Callback {
             // brush
             RDPBrush(0, 0, 3, 0xaa,
                 (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
+//            this->brush,
             x,  // glyph_x
             y + total_height, // glyph_y
             len * 2, // data_len in bytes

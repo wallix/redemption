@@ -175,35 +175,6 @@ struct Widget* Widget::widget_at_pos(int x, int y) {
     return this;
 }
 
-int Widget::text_width(char* text){
-    int rv = 0;
-    if (text) {
-        size_t len = mbstowcs(0, text, 0);
-        wchar_t wstr[len + 2];
-        mbstowcs(wstr, text, len + 1);
-        for (size_t index = 0; index < len; index++) {
-            FontChar *font_item = this->mod->front.font.font_items[wstr[index]];
-            rv = rv + font_item->incby;
-        }
-    }
-    return rv;
-}
-
-int Widget::text_height(char* text){
-    int rv = 0;
-    if (text) {
-        int len = mbstowcs(0, text, 0);
-        wchar_t *wstr = new wchar_t[len + 2];
-        mbstowcs(wstr, text, len + 1);
-        for (int index = 0; index < len; index++) {
-            FontChar *font_item = this->mod->front.font.font_items[wstr[index]];
-            rv = std::max(rv, font_item->height);
-        }
-        delete [] wstr;
-    }
-    return rv;
-}
-
     #warning we should be able to pass only one pointer, either window if we are dealing with a window or this->parent if we are dealing with any other kind of widget
 const Region Widget::get_visible_region(Widget * window, Widget * widget, const Rect & rect)
 {
@@ -379,149 +350,17 @@ void Widget::basic_fill_rect(int rop, const Rect & r, int fg_color, const Rect &
 
 void widget_combo::draw(const Rect & clip)
 {
-    /* draw gray box */
+    const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
+    const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
-    {
-        const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
-        const Region region = this->get_visible_region(this, &this->parent, scr_r);
-
-        for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-            this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-
-            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 0, scr_r.y + 0, scr_r.cx, scr_r.cy), GREY));
-            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 1, scr_r.y + 1, scr_r.cx - 3, scr_r.cy - 3), WHITE));
-            if (has_focus) {
-                this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 3, scr_r.y + 3, (scr_r.cx - 6) - 18, scr_r.cy - 5), DARK_WABGREEN));
-            }
-            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 0, scr_r.y + 0, scr_r.cx, 1), DARK_GREY));
-            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 0, scr_r.y + 0, 1, scr_r.cy), DARK_GREY));
-            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 0, scr_r.y + scr_r.cy- 1, scr_r.cx, 1), WHITE));
-            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + scr_r.y + scr_r.cx - 1, 0, 1, scr_r.cy), WHITE));
-            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 1, scr_r.y + 1, 1, scr_r.cy - 2), BLACK));
-            this->mod->opaque_rect(RDPOpaqueRect(Rect(scr_r.x + 1, scr_r.y + 1, scr_r.cx - 2, 1), BLACK));
-            this->mod->server_draw_text(scr_r.x + 4, scr_r.y + 2, this->string_list[this->item_index],
-                has_focus?DARK_WABGREEN:WHITE, has_focus?WHITE:BLACK);
-        }
-    }
-
-    Rect r(this->rect.cx - 20, 2, 18, this->rect.cy - 4);
-    if (this->state == BUTTON_STATE_UP) { /* 0 */
-        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, r.cy), GREY, clip);
-        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), WHITE, clip);
-        this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), WHITE, clip);
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), DARK_GREY, clip);
-        this->fill_rect(0xCC, Rect((r.x + r.cx) - 2, r.y + 1, 1, r.cy - 1), DARK_GREY, clip);
-        this->fill_rect(0xCC, Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK, clip);
-        this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK, clip);
-    }
-    else {
-        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, r.cy), GREY, clip);
-        this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), BLACK, clip);
-        this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), BLACK, clip);
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, r.cx - 2, 1), DARK_GREY, clip);
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, 1, r.cy - 2), DARK_GREY, clip);
-        this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cx - 2), r.cy - 1, 1), DARK_GREY, clip);
-        this->fill_rect(0xCC, Rect(r.x + (r.cx - 2), r.y + 1, 1, r.cy - 1), DARK_GREY, clip);
-        this->fill_rect(0xCC, Rect(r.x, r.y + (r.cx - 1), r.cy, 1), BLACK, clip);
-        this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK, clip);
+    for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+        this->mod->draw_combo(scr_r, this->string_list[this->item_index], this->state, this->has_focus);
     }
 }
-
-void widget_button::draw_focus_rect(Widget * wdg, const Rect & r, const Rect & clip)
-{
-//    LOG(LOG_INFO, "widget::draw_focus_rect");
-    #warning is passing r.x, r.y necessary here for drawing pattern ?
-    RDPBrush brush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55");
-
-    #warning all coordinates provided to front functions should be screen coordinates, converting window relative coordinates to screen coordinates should be responsibility of caller.
-    #warning pass in scr_r in screen coordinates instead or r
-    Rect scr_r = wdg->to_screen_rect(r);
-
-    Region covering_windows;
-    for (size_t i = 0; i < this->mod->nb_windows(); i++) {
-        Widget * p = this->mod->window(i);
-        if (p == wdg || p == &wdg->parent) {
-            break;
-        }
-        covering_windows.rects.push_back(p->rect);
-    }
-
-    #warning use difference iterator in rect to avoid repeating four nearly identical blocks as below
-
-    /* top */
-    struct Region region0;
-    region0.rects.push_back(Rect(scr_r.x, scr_r.y, scr_r.cx, 1));
-    /* loop through all windows in z order */
-    for (size_t ir = 0; ir < covering_windows.rects.size(); ir++) {
-        region0.subtract_rect(covering_windows.rects[ir]);
-    }
-    for (size_t ir = 0 ; ir != region0.rects.size(); ir++){
-        Rect draw_rect = region0.rects[ir].intersect(clip);
-        if (!draw_rect.isempty()) {
-            this->mod->server_set_clip(draw_rect);
-            this->mod->pat_blt(RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, BLACK, brush));
-        }
-    }
-
-
-
-    /* bottom */
-    struct Region region1;
-    region1.rects.push_back(Rect(scr_r.x, scr_r.y + (scr_r.cy - 1), scr_r.cx, 1));
-    for (size_t ir = 0; ir < covering_windows.rects.size(); ir++) {
-        region1.subtract_rect(covering_windows.rects[ir]);
-    }
-    for (size_t ir = 0 ; ir != region1.rects.size(); ir++){
-        Rect draw_rect = region1.rects[ir].intersect(clip);
-        if (!draw_rect.isempty()) {
-            this->mod->server_set_clip(draw_rect);
-            this->mod->pat_blt(
-                RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, BLACK, this->mod->brush));
-        }
-    }
-
-    /* left */
-    struct Region region2;
-    region2.rects.push_back(Rect(scr_r.x, scr_r.y + 1, 1, scr_r.cy - 2));
-    for (size_t ir = 0; ir < covering_windows.rects.size(); ir++) {
-        region2.subtract_rect(covering_windows.rects[ir]);
-    }
-    for (size_t ir = 0 ; ir != region2.rects.size(); ir++){
-        Rect draw_rect = region2.rects[ir].intersect(clip);
-        if (!draw_rect.isempty()) {
-            this->mod->server_set_clip(draw_rect);
-            this->mod->pat_blt(
-                RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, BLACK, this->mod->brush));
-        }
-    }
-
-
-    /* right */
-    struct Region region3;
-    region3.rects.push_back(Rect(scr_r.x + (scr_r.cx - 1), scr_r.y + 1, 1, scr_r.cy - 2));
-    for (size_t ir = 0; ir < covering_windows.rects.size(); ir++) {
-        region3.subtract_rect(covering_windows.rects[ir]);
-    }
-    for (size_t ir = 0 ; ir != region3.rects.size(); ir++){
-        Rect draw_rect = region3.rects[ir].intersect(clip);
-        if (!draw_rect.isempty()) {
-            this->mod->server_set_clip(draw_rect);
-            this->mod->pat_blt(
-                RDPPatBlt(r.offset(clip.x, clip.y), 0xF0, wdg->parent.bg_color, BLACK, this->mod->brush));
-        }
-    }
-}
-
 
 void widget_button::draw(const Rect & clip)
 {
-
-
-
-    int bevel = (this->state == BUTTON_STATE_DOWN)?1:0;
-
-    int w = this->text_width(this->caption1);
-    int h = this->text_height(this->caption1);
     Rect r(0, 0, this->rect.cx, this->rect.cy);
 
     const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
@@ -529,34 +368,7 @@ void widget_button::draw(const Rect & clip)
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->draw_button(scr_r, "", this->state);
-//        if (this->state == BUTTON_STATE_DOWN) {
-//            this->fill_rect(0xCC, r, GREY, clip);
-//            this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), BLACK, clip);
-//            this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), BLACK, clip);
-//            this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, r.cx - 2, 1), DARK_GREY, clip);
-//            this->fill_rect(0xCC, Rect(r.x + 1, r.y + 1, 1, r.cy - 2), DARK_GREY, clip);
-//            this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cx - 2), r.cy - 1, 1), DARK_GREY, clip);
-//            this->fill_rect(0xCC, Rect(r.x + (r.cx - 2), r.y + 1, 1, r.cy - 1), DARK_GREY, clip);
-//            this->fill_rect(0xCC, Rect(r.x, r.y + (r.cx - 1), r.cy, 1), BLACK, clip);
-//            this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK, clip);
-//        } else {
-//            this->fill_rect(0xCC, r, GREY, clip);
-//            this->fill_rect(0xCC, Rect(r.x, r.y, r.cx, 1), WHITE, clip);
-//            this->fill_rect(0xCC, Rect(r.x, r.y, 1, r.cy), WHITE, clip);
-//            this->fill_rect(0xCC, Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), DARK_GREY, clip);
-//            this->fill_rect(0xCC, Rect((r.x + r.cx) - 2, r.y + 1, 1, r.cy - 1), DARK_GREY, clip);
-//            this->fill_rect(0xCC, Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK, clip);
-//            this->fill_rect(0xCC, Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK, clip);
-//        }
-    }
-    this->server_draw_text(this,
-        this->rect.cx / 2 - w / 2 + bevel,
-        this->rect.cy / 2 - h / 2 + bevel, this->caption1, BLACK, clip);
-
-    if (has_focus) {
-        this->draw_focus_rect(this,
-            Rect(4, 4, this->rect.cx - 8, this->rect.cy - 8), this->to_screen_rect(clip));
+        this->mod->draw_button(scr_r, this->caption1, this->state, this->has_focus);
     }
 }
 
@@ -571,7 +383,7 @@ void widget_popup::draw(const Rect & clip)
         size_t list_count = this->popped_from->string_list.size();
         for (unsigned i = 0; i < list_count; i++) {
             char * p = this->popped_from->string_list[i];
-            int h = this->text_height(p);
+            int h = this->mod->text_height(p);
             this->item_height = h;
             if (i == this->item_index) { // deleted item
                 this->fill_rect(0xCC, Rect(0, y, this->rect.cx, h), WABGREEN, clip);
@@ -588,7 +400,14 @@ void Widget::draw(const Rect & clip)
 
 void widget_label::draw(const Rect & clip)
 {
-    this->server_draw_text(this, 0, 0, this->caption1, BLACK, clip);
+    const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
+    const Region region = this->get_visible_region(this, &this->parent, scr_r);
+
+    for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+        this->mod->server_draw_text(scr_r.x, scr_r.y, this->caption1, GREY, BLACK);
+    }
+
 }
 
 // transform a rectangle relative to current widget to rectangle relative to screen
