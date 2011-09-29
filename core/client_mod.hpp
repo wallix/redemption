@@ -432,10 +432,7 @@ struct client_mod : public Callback {
         }
     }
 
-    #warning this function is written in a quite insane way, so don't use it, and rewrite it in a saner way.
-    #warning also merge with the similar code in widget.
-    #warning implementation of the server_draw_text function below is totally broken, especially data. MS-RDPEGDI See 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
-
+    #warning implementation of the server_draw_text function below is quite broken (a small subset of possibilities is implemented, especially for data). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
     void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor)
     {
         setlocale(LC_CTYPE, "fr_FR.UTF-8");

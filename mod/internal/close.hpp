@@ -25,107 +25,10 @@
 #if !defined(__CLOSE_HPP__)
 #define __CLOSE_HPP__
 
-#warning merge with dialog.hpp
-
-#include "widget_window_login.hpp"
-
-struct wab_close : public window_login
-{
-    wab_close(internal_mod * mod, const Rect & r, ModContext & context, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
-    : window_login(mod, r, context, parent, notify_to, bg_color, title, ini, regular)
-    {
-        struct Widget* but;
-
-        if (regular) {
-            widget_image * but = new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE,
-                *this, 10, 30, SHARE_PATH "/" LOGIN_LOGO24, this->mod->screen.bpp);
-            #warning bitmap load below should probably be done before call
-            this->child_list.push_back(but);
-        }
-
-        struct Widget* b;
-        int count = 0;
-        /* label */
-        b = new widget_label(this->mod,
-            Rect(10 + ((this->rect.cx >= 400) ? 155 : 5), 60 + 25 * count, 70, 20),
-            *this, "Username:");
-
-        this->child_list.push_back(b);
-        b = new widget_label(this->mod,
-            Rect(10 + ((this->rect.cx >= 400) ?  230 : 70), 60 + 25 * count, 350, 20),
-            *this, context.get(STRAUTHID_AUTH_USER));
-
-        b->id = 100 + 2 * count;
-        this->child_list.push_back(b);
-        count ++;
-
-        char target[255];
-        snprintf(target, 255, "%s@%s", context.get(STRAUTHID_TARGET_USER), context.get(STRAUTHID_TARGET_DEVICE));
-
-        b = new widget_label(this->mod,
-            Rect(10+((this->rect.cx >= 400) ? 155 : 5), 60 + 25 * count, 70, 20),
-            *this, "Target:");
-
-        this->child_list.push_back(b);
-        b = new widget_label(this->mod,
-            Rect(10 + ((this->rect.cx >= 400) ?  230 : 70), 60 + 25 * count, 350, 20),
-            *this, target);
-
-        b->id = 100 + 2 * count;
-        this->child_list.push_back(b);
-        count ++;
-
-        b = new widget_label(this->mod,
-            Rect(150 + ((this->rect.cx >= 400) ? 155 : 5), 60 + 25 * count, 130, 20),
-            *this, "Connection closed");
-
-        this->child_list.push_back(b);
-        count ++;
-
-        b = new widget_label(this->mod,
-            Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 20),
-            *this, "Diagnostic:");
-
-        this->child_list.push_back(b);
-
-        bool done = false;
-        int line = 0;
-        const char * message;
-        message = context.get(STRAUTHID_AUTH_ERROR_MESSAGE);
-        while (!done) {
-            const char * str = strstr(message, "<br>");
-            char tmp[256];
-            tmp[0] = 0;
-            strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
-            tmp[255] = 0;
-            b = new widget_label(this->mod, Rect((this->rect.cx >= 400) ?  230 : 70, 60 + 25 * count + 16 * line, 350, 20), *this, tmp);
-            this->child_list.push_back(b);
-            line++;
-            if (!str){
-                done = true;
-            }
-            else {
-                message = str + 4;
-            }
-        }
-
-        /* label */
-        but = new widget_button(this->mod,
-              Rect(50 + (regular ? 250 : ((r.cx - 30) - 60)), 150 + 16 * line, 60, 25),
-              *this, 2, 1, "Close");
-        this->child_list.push_back(but);
-        this->esc_button = but;
-        this->default_button = but;
-
-    }
-
-    ~wab_close(){
-    }
-
-};
+#include "widget_window_close.hpp"
 
 struct close_mod : public internal_mod {
-    struct window_login * close_window;
+    struct window * close_window;
     Widget* button_down;
     int signal;
     Inifile * ini;

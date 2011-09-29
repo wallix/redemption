@@ -25,6 +25,7 @@
 
 #ifndef __CALLBACK_HPP__
 #define __CALLBACK_HPP__
+#include "keymap.hpp"
 #include "channel_list.hpp"
 
 struct Callback
