@@ -62,7 +62,16 @@ struct wab_help : public window
                 tmp[0] = 0;
                 strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
                 tmp[255] = 0;
-                this->server_draw_text(this, 10, 30 + 16 * count, tmp, BLACK, this->rect.wh());
+
+                Rect r(0, 0, this->rect.cx, this->rect.cy);
+                const Rect scr_r = this->to_screen_rect(r);
+                const Region region = this->get_visible_region(this, &this->parent, scr_r);
+
+                for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+                    this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
+                    this->mod->server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK);
+                }
+
                 count++;
                 if (!str){
                     done = true;
@@ -236,7 +245,16 @@ struct combo_help : public window
                 tmp[0] = 0;
                 strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
                 tmp[255] = 0;
-                this->server_draw_text(this, 10, 30 + 16 * count, tmp, BLACK, this->rect.wh());
+
+                Rect r(0, 0, this->rect.cx, this->rect.cy);
+                const Rect scr_r = this->to_screen_rect(r);
+                const Region region = this->get_visible_region(this, &this->parent, scr_r);
+
+                for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+                    this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
+                    this->mod->server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK);
+                }
+
                 count++;
                 if (!str){
                     done = true;
