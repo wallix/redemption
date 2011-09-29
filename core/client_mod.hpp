@@ -424,11 +424,12 @@ struct client_mod : public Callback {
                 wtext[edit_pos] = 0;
                 wcstombs(text, wtext, 255);
             }
-    //        Rect r(4 + this->text_width(text), 3, 2, this->rect.cy - 6);
-    //        this->fill_cursor_rect(r, WHITE, clip);
+
+            this->opaque_rect(
+                RDPOpaqueRect(
+                    Rect(r.x + 4 + this->text_width(text), r.y + 3, 2, r.cy - 6),
+                    DARK_GREY));
         }
-
-
     }
 
     #warning this function is written in a quite insane way, so don't use it, and rewrite it in a saner way.

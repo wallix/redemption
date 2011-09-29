@@ -493,8 +493,7 @@ struct login_mod : public internal_mod {
     {
         if (!rect.isempty()) {
             this->server_begin_update();
-            Rect & r = this->screen.rect;
-            this->screen.fill_rect(0xCC, r, this->screen.bg_color, r);
+            this->screen.draw(rect);
             /* draw any child windows in the area */
             for (size_t i = 0; i < this->nb_windows(); i++) {
                 Widget *b = this->window(i);
