@@ -197,9 +197,10 @@ struct window_login : public window
             {
                 Widget * b = this->mod->screen.child_list[i];
                 if (b == sender){
-                    this->mod->screen.child_list.erase(
-                        this->mod->screen.child_list.begin()+i);
+                    this->mod->screen.child_list.erase(this->mod->screen.child_list.begin()+i);
+                    this->mod->server_begin_update();
                     this->mod->screen.refresh_clip(this->mod->screen.rect);
+                    this->mod->server_end_update();
                     this->modal_dialog = 0;
                     break;
                 }

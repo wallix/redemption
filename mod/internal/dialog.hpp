@@ -204,8 +204,10 @@ struct dialog_mod : public internal_mod {
                     Rect r = this->dragging_window->rect;
                     this->dragging_window->rect.x = this->dragging_rect.x;
                     this->dragging_window->rect.y = this->dragging_rect.y;
+                    this->server_begin_update();
                     this->dragging_window->refresh_clip(r);
                     this->screen.refresh(this->screen.rect.wh());
+                    this->server_end_update();
                     this->dragging_window = 0;
                     this->dragging = 0;
                 }
