@@ -175,18 +175,11 @@ struct Widget {
         return this->parent.find_window();
     }
 
-    int text_width(char* text);
-    int text_height(char* text);
     const Region get_visible_region(Widget * window, Widget * widget, const Rect & rect);
-    void fill_rect(int rop, const Rect & r, int fg_color, const Rect & clip);
-    void basic_fill_rect(int rop, const Rect & r, int fg_color, const Rect & clip);
-    void fill_cursor_rect(const Rect & r, int fg_color, const Rect & clip);
 };
-
 
 struct widget_button : public Widget
 {
-
     widget_button(internal_mod * mod, const Rect & r, Widget & parent, int id, int tab_stop, const char * caption)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_BUTTON) {
 
@@ -302,10 +295,7 @@ struct widget_screen : public Widget {
         return this;
     }
 
-    virtual void draw(const Rect & clip)
-    {
-        this->fill_rect(0xCC, this->rect, this->bg_color, clip);
-    }
+    virtual void draw(const Rect & clip);
 
 };
 

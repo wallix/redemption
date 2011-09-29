@@ -216,51 +216,10 @@ void widget_edit::draw(const Rect & clip)
     }
 }
 
-void Widget::fill_rect(int rop, const Rect & r, int fg_color, const Rect & clip)
+void widget_screen::draw(const Rect & clip)
 {
-    const Rect scr_r = this->to_screen_rect(r);
-    const Region region = this->get_visible_region(this, &this->parent, scr_r);
-    for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        const RDPOpaqueRect orect(scr_r, fg_color);
-        this->mod->opaque_rect(orect);
-    }
+    this->mod->opaque_rect(RDPOpaqueRect(this->rect, this->bg_color));
 }
-
-#warning should merge with basic_fill_rect (and probably with fill_rect but there is some rop transposition code to change on the fly if we want to do this)
-void Widget::fill_cursor_rect(const Rect & r, int fg_color, const Rect & clip)
-{
-    assert(this->type != WND_TYPE_BITMAP);
-    const Rect scr_r = this->to_screen_rect(r);
-    const Region region = this->get_visible_region(this, &this->parent, scr_r);
-
-    for (size_t ir = 0 ; ir != region.rects.size(); ir++){
-        Rect draw_rect = region.rects[ir].intersect(this->to_screen_rect(clip));
-        if (!draw_rect.isempty()) {
-            this->mod->server_set_clip(draw_rect);
-            this->mod->pat_blt(RDPPatBlt(scr_r, 0x5A, fg_color, BLACK, this->mod->brush));
-        }
-    }
-}
-
-
-void Widget::basic_fill_rect(int rop, const Rect & r, int fg_color, const Rect & clip)
-{
-    assert(this->type != WND_TYPE_BITMAP);
-
-    const Rect scr_r = this->to_screen_rect(r);
-    const Region region = this->get_visible_region(this, &this->parent, scr_r);
-
-    for (size_t ir = 0 ; ir != region.rects.size(); ir++){
-        Rect draw_rect = region.rects[ir].intersect(this->to_screen_rect(clip));
-        if (!draw_rect.isempty()) {
-            this->mod->server_set_clip(draw_rect);
-            this->mod->pat_blt(RDPPatBlt(scr_r, rop, fg_color, BLACK, this->mod->brush));
-        }
-    }
-
-}
-
 
 void widget_combo::draw(const Rect & clip)
 {
