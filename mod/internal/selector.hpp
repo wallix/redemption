@@ -30,11 +30,24 @@
 struct selector_mod : public internal_mod {
     int signal;
     size_t focus_line;
+    enum {
+        FOCUS_ON_FILTER = 0,
+        FOCUS_ON_GRID = 1,
+        FOCUS_ON_LOGOUT = 2,
+        FOCUS_ON_CANCEL = 3,
+        FOCUS_ON_CONNECT = 4,
+        MAX_FOCUS_ITEM = 5
+    };
+    unsigned focus_item;
+    unsigned state;
     size_t showed;
     size_t total;
     uint32_t color[3];
     selector_mod(wait_obj * event, ModContext & context, Front & front):
-            internal_mod(front), signal(0), focus_line(0), showed(100), total(1000)
+            internal_mod(front), signal(0), focus_line(0), 
+            focus_item(FOCUS_ON_LOGOUT), 
+            state(BUTTON_STATE_UP),
+            showed(100), total(1000)
     {
         this->color[0] = RED;
         this->color[1] = GREEN;
@@ -58,16 +71,34 @@ struct selector_mod : public internal_mod {
     virtual void rdp_input_scancode(long param1, long param2, long flags, long time, const Keymap * keymap, const key_info* ki)
     {
         LOG(LOG_INFO, "param1=%u param2=%u flags=%x time=%u", param1, param2, flags, time);
-        if (flags & 0xC000){ // UP
-        }
-        else { // DOWN
+        if (flags & 0xC000){ // KEYUP
             switch (param1){
-            case 80:
+                case 15:
+                    this->focus_item = (this->focus_item + 1) % MAX_FOCUS_ITEM;
+                    this->event->set();
+                break;
+                case 57: // SPACE
+                case 28: // ENTER
+                    this->state = BUTTON_STATE_UP;
+                    this->event->set();
+                break;
+                default:
+                break;
+            }
+        }
+        else { // KEYPRESSED
+            switch (param1){
+            case 80: // ARROW_DOWN
                 this->focus_line = (this->focus_line + 1) % 10;
                 this->event->set();
             break;
-            case 72:
+            case 72: // ARROW_UP
                 this->focus_line = (this->focus_line + 9) % 10;
+                this->event->set();
+            break;
+            case 57: // SPACE
+            case 28: // ENTER
+                this->state = BUTTON_STATE_DOWN;
                 this->event->set();
             break;
             default:
@@ -121,7 +152,16 @@ struct selector_mod : public internal_mod {
     }
 
     void draw_buttons(){
-        this->server_draw_text(this->screen.rect.cx-240, 350, "Logout   Cancel   Connect", WHITE, BLACK);
+        Rect r(this->screen.rect.cx-240, this->screen.rect.cy- 100, 60, 25);
+        this->draw_button(r, "Logout", 
+            (this->focus_item == FOCUS_ON_LOGOUT)?this->state:BUTTON_STATE_UP,
+            this->focus_item == FOCUS_ON_LOGOUT);
+        this->draw_button(r.offset(70,0), "Cancel", 
+            (this->focus_item == FOCUS_ON_CANCEL)?this->state:BUTTON_STATE_UP,
+            this->focus_item == FOCUS_ON_CANCEL);
+        this->draw_button(r.offset(140,0), "Connect", 
+            (this->focus_item == FOCUS_ON_CONNECT)?this->state:BUTTON_STATE_UP,
+            this->focus_item == FOCUS_ON_CONNECT);
     }
 
 
