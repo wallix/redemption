@@ -452,7 +452,6 @@ int Session::step_STATE_RUNNING(const struct timeval & time_mark)
 
     if (this->front_event->is_set()) { /* incoming client data */
         try {
-        #warning it should be possible to remove the while hidden in activate_and_process_data and work only with the external loop (need to understand well the next_packet working)
             this->front->activate_and_process_data(*this->mod);
         }
         catch(...){
@@ -493,6 +492,7 @@ int Session::step_STATE_RUNNING(const struct timeval & time_mark)
             snprintf(this->context->get(STRAUTHID_OPT_BPP), 10, "%d", this->front->get_client_info().bpp);
             bool record_video = false;
             bool keep_alive = false;
+            LOG(LOG_INFO, "ask next module");
             int next_state = this->sesman->ask_next_module(
                                                 this->keep_alive_time,
                                                 this->ini->globals.authip,
@@ -521,7 +521,6 @@ int Session::step_STATE_RUNNING(const struct timeval & time_mark)
                 }
             }
             else {
-                // this->back_event->reset();
                 this->internal_state = SESSION_STATE_WAITING_FOR_NEXT_MODULE;
             }
         }

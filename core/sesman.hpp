@@ -251,7 +251,7 @@ class SessionManager {
         int next_state = MCTX_STATUS_EXIT;
         switch (this->context.mod_state){
         default:
-            LOG(LOG_INFO, "Default Mod State\n");
+            LOG(LOG_INFO, "Default Mod State : ask next module %s %u\n", auth_host, auth_port);
             next_state = this->ask_next_module_remote(auth_host, auth_port);
         break;
         case MOD_STATE_RECEIVED_CREDENTIALS:
@@ -314,18 +314,18 @@ class SessionManager {
         }
         break;
         case MOD_STATE_MESSAGE_CONNEXION_CLOSE_AT_LIMIT:
-//        LOG(LOG_INFO, "MESSAGE CONNEXION CLOSE AT LIMIT\n");
+        LOG(LOG_INFO, "MESSAGE CONNEXION CLOSE AT LIMIT\n");
         {
         }
         break;
         case MOD_STATE_CONNECTED_RDP:
-//        LOG(LOG_INFO, "CONNECTED RDP\n");
+        LOG(LOG_INFO, "CONNECTED RDP\n");
         this->context.mod_state = MOD_STATE_CLOSE;
         next_state = MCTX_STATUS_INTERNAL;
 
         break;
         case MOD_STATE_CLOSE:
-//        LOG(LOG_INFO, "CLOSE\n");
+        LOG(LOG_INFO, "CLOSE\n");
         {
             this->context.mod_state = MOD_STATE_CLOSE;
             next_state = MCTX_STATUS_EXIT;
