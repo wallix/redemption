@@ -338,9 +338,9 @@ struct client_mod : public Callback {
             this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), BLACK));
             this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), DARK_GREY));
             this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), DARK_GREY));
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + (r.cx - 2), r.cy - 1, 1), DARK_GREY));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), DARK_GREY));
             this->opaque_rect(RDPOpaqueRect(Rect(r.x + (r.cx - 2), r.y + 1, 1, r.cy - 1), DARK_GREY));
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y + (r.cx - 1), r.cy, 1), BLACK));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK));
             this->opaque_rect(RDPOpaqueRect(Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK));
         } else {
             this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), WHITE));
@@ -359,19 +359,19 @@ struct client_mod : public Callback {
         // focus rect
         if (has_focus) {
             this->pat_blt(
-                RDPPatBlt(Rect(r.x + 3, r.y + 3, r.cx - 8, 2),
+                RDPPatBlt(Rect(r.x + 3 + bevel, r.y + 3 + bevel, r.cx - 8, 2),
                     0xF0, GREY, BLACK,
                     RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")));
             this->pat_blt(
-                RDPPatBlt(Rect(r.x + 3, r.y + 3, 2, r.cy - 8),
+                RDPPatBlt(Rect(r.x + 3 + bevel, r.y + 3 + bevel, 2, r.cy - 8),
                     0xF0, GREY, BLACK,
                     RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")));
             this->pat_blt(
-                RDPPatBlt(Rect(r.x + r.cx - 6, r.y + 3, 2, r.cy - 8),
+                RDPPatBlt(Rect(r.x + r.cx - 6 + bevel, r.y + 3 + bevel, 2, r.cy - 8),
                     0xF0, GREY, BLACK,
                     RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")));
             this->pat_blt(
-                RDPPatBlt(Rect(r.x + 3, r.y + r.cy - 6, r.cx - 8, 2),
+                RDPPatBlt(Rect(r.x + 3 + bevel, r.y + r.cy - 6 + bevel, r.cx - 8, 2),
                     0xF0, GREY, BLACK,
                     RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")));
         }
