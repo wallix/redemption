@@ -477,7 +477,7 @@ struct login_mod : public internal_mod {
                 Rect r2 = this->popup_wnd->rect.intersect(b->rect);
                 if (!r2.isempty()) {
                     r2 = r2.offset(-(b->rect.x), -(b->rect.y));
-                    b->refresh_clip(r2);
+                    b->refresh(r2);
                 }
             }
 
@@ -499,7 +499,7 @@ struct login_mod : public internal_mod {
                 Widget *b = this->window(i);
                 Rect r2 = rect.intersect(b->rect.wh());
                 if (!r2.isempty()) {
-                    b->refresh_clip(r2);
+                    b->refresh(r2);
                 }
             }
             this->server_end_update();
@@ -633,7 +633,7 @@ struct login_mod : public internal_mod {
                     this->dragging_window->rect.x = this->dragging_rect.x;
                     this->dragging_window->rect.y = this->dragging_rect.y;
                     this->server_begin_update();
-                    this->dragging_window->refresh_clip(r);
+                    this->dragging_window->refresh(r);
                     this->screen.refresh(this->screen.rect.wh());
                     this->server_end_update();
                     this->dragging_window = 0;
