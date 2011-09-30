@@ -32,21 +32,29 @@ struct selector_mod : public internal_mod {
     size_t focus_line;
     enum {
         FOCUS_ON_FILTER = 0,
-        FOCUS_ON_GRID = 1,
-        FOCUS_ON_LOGOUT = 2,
-        FOCUS_ON_CANCEL = 3,
-        FOCUS_ON_CONNECT = 4,
-        MAX_FOCUS_ITEM = 5
+        FOCUS_ON_GRID,
+        FOCUS_ON_FIRSTPAGE,
+        FOCUS_ON_PREVPAGE,
+        FOCUS_ON_NEXTPAGE,
+        FOCUS_ON_LASTPAGE,
+        FOCUS_ON_LOGOUT,
+        FOCUS_ON_CANCEL,
+        FOCUS_ON_CONNECT,
+        MAX_FOCUS_ITEM
     };
     unsigned focus_item;
     unsigned state;
+
+    size_t showed_page;
+    size_t total_page;
     size_t showed;
     size_t total;
     uint32_t color[3];
     selector_mod(wait_obj * event, ModContext & context, Front & front):
-            internal_mod(front), signal(0), focus_line(0), 
-            focus_item(FOCUS_ON_LOGOUT), 
+            internal_mod(front), signal(0), focus_line(0),
+            focus_item(FOCUS_ON_LOGOUT),
             state(BUTTON_STATE_UP),
+            showed_page(1), total_page(10),
             showed(100), total(1000)
     {
         this->color[0] = RED;
@@ -89,11 +97,11 @@ struct selector_mod : public internal_mod {
         else { // KEYPRESSED
             switch (param1){
             case 80: // ARROW_DOWN
-                this->focus_line = (this->focus_line + 1) % 10;
+                this->focus_line = (this->focus_line + 1) % this->nblines();
                 this->event->set();
             break;
             case 72: // ARROW_UP
-                this->focus_line = (this->focus_line + 9) % 10;
+                this->focus_line = (this->focus_line + this->nblines() - 1) % this->nblines();
                 this->event->set();
             break;
             case 57: // SPACE
@@ -131,35 +139,73 @@ struct selector_mod : public internal_mod {
     }
 
     void draw_filter(){
-        this->server_draw_text(30, 60, "Filter:", WHITE, BLACK);
-        this->draw_edit(Rect(70, 60, 200, 20), 0, "*", 1, false);
-        char buffer[256];
-        sprintf(buffer, "Results: %u/%u", this->showed, this->total);
-        this->server_draw_text(280, 60,  buffer, WHITE, BLACK);
+//        this->server_draw_text(30, 60, "Filter:", WHITE, BLACK);
+//        this->draw_edit(Rect(70, 60, 200, 20), 0, "*", 1, false);
+//        char buffer[256];
+//        sprintf(buffer, "Results: %u/%u", this->showed, this->total);
+//        this->server_draw_text(280, 60,  buffer, WHITE, BLACK);
+    }
+
+    size_t nblines(){
+        return (this->screen.rect.cy - 230) / 20;
     }
 
     void draw_array(){
-        for (size_t line = 0 ; line < 10 ; line++){
+
+        uint32_t w = (this->screen.rect.cx - 40) / 20;
+
+        this->server_draw_text(30       , 60,  "Device Group", GREY, BLACK);
+        this->draw_edit(Rect(30, 80, 3*w - 15, 16), 0, "*", 1, false);
+        this->server_draw_text(30 +  3*w, 60,  "Account Device", GREY, BLACK);
+        this->draw_edit(Rect(30 + 3*w, 80, 10*w - 15, 16), 0, "*", 1, false);
+        this->server_draw_text(30 + 13*w, 60,  "Protocol", GREY, BLACK);
+        this->server_draw_text(30 + 16*w, 60,  "Deconnexion Time", GREY, BLACK);
+
+        for (size_t line = 0 ; line < this->nblines() ; line++){
             Rect rect(20, 100 + line * 20, this->screen.rect.cx-40, 19);
             uint32_t c = this->color[line%2];
             if (line == this->focus_line){
                 c = this->color[2];
             }
             this->opaque_rect(RDPOpaqueRect(rect, c));
-            this->server_draw_text(rect.x + 10, rect.y + 2, "account@device", c, BLACK);
+            this->server_draw_text(35       , rect.y + 2,  "windows", c, BLACK);
+            this->server_draw_text(35 +  3*w, rect.y + 2,  "qa\\administrateur@xp", c, BLACK);
+            this->server_draw_text(35 + 13*w, rect.y + 2,  "RDP", c, BLACK);
+            this->server_draw_text(35 + 16*w, rect.y + 2,  "23:59 12-10-2011", c, BLACK);
+
         }
-        this->server_draw_text(this->screen.rect.cx-240, 320, "|<<   <   1/10   >  >>|", WHITE, BLACK);
+        Rect r(this->screen.rect.cx - 240, this->screen.rect.cy - 130, 30, 20);
+        this->draw_button(r, "|<<",
+            (this->focus_item == FOCUS_ON_FIRSTPAGE)?this->state:BUTTON_STATE_UP,
+            this->focus_item == FOCUS_ON_FIRSTPAGE);
+        this->draw_button(r.offset(40,0), "<",
+            (this->focus_item == FOCUS_ON_PREVPAGE)?this->state:BUTTON_STATE_UP,
+            this->focus_item == FOCUS_ON_PREVPAGE);
+
+
+        char buffer[256];
+        sprintf(buffer, " %u/%u ", this->showed_page, this->total_page);
+        this->server_draw_text(r.x + 80, r.y + 2, buffer, GREY, BLACK);
+
+        this->draw_button(r.offset(130,0), ">",
+            (this->focus_item == FOCUS_ON_NEXTPAGE)?this->state:BUTTON_STATE_UP,
+            this->focus_item == FOCUS_ON_NEXTPAGE);
+        this->draw_button(r.offset(170,0), ">>|",
+            (this->focus_item == FOCUS_ON_LASTPAGE)?this->state:BUTTON_STATE_UP,
+            this->focus_item == FOCUS_ON_LASTPAGE);
+
+
     }
 
     void draw_buttons(){
         Rect r(this->screen.rect.cx-240, this->screen.rect.cy- 100, 60, 25);
-        this->draw_button(r, "Logout", 
+        this->draw_button(r, "Logout",
             (this->focus_item == FOCUS_ON_LOGOUT)?this->state:BUTTON_STATE_UP,
             this->focus_item == FOCUS_ON_LOGOUT);
-        this->draw_button(r.offset(70,0), "Cancel", 
+        this->draw_button(r.offset(70,0), "Cancel",
             (this->focus_item == FOCUS_ON_CANCEL)?this->state:BUTTON_STATE_UP,
             this->focus_item == FOCUS_ON_CANCEL);
-        this->draw_button(r.offset(140,0), "Connect", 
+        this->draw_button(r.offset(140,0), "Connect",
             (this->focus_item == FOCUS_ON_CONNECT)?this->state:BUTTON_STATE_UP,
             this->focus_item == FOCUS_ON_CONNECT);
     }
