@@ -310,8 +310,6 @@ Rect const Widget::to_screen_rect()
 
 void widget_image::draw(const Rect & clip)
 {
-//    mod->server_begin_update();
-
     Rect image_screen_rect = this->to_screen_rect();
     Rect intersection = image_screen_rect.intersect(this->to_screen_rect(clip));
     const Region region = this->get_visible_region(this, &this->parent, intersection);
@@ -320,11 +318,9 @@ void widget_image::draw(const Rect & clip)
         this->mod->server_set_clip(region.rects[ir]);
         this->mod->bitmap_update(this->bmp, image_screen_rect, 0, 0);
     }
-//    mod->server_end_update();
-
 }
 
-int Widget::refresh_clip(const Rect & clip)
+void Widget::refresh_clip(const Rect & clip)
 {
     if (!clip.isempty()) {
         this->draw(clip);
@@ -343,10 +339,9 @@ int Widget::refresh_clip(const Rect & clip)
             }
         }
     }
-    return 0;
 }
 
-int Widget::refresh(const Rect & clip)
+void Widget::refresh(const Rect & clip)
 {
     this->mod->server_begin_update();
 
@@ -361,7 +356,6 @@ int Widget::refresh(const Rect & clip)
         b->refresh(b->rect.wh());
     }
     this->mod->server_end_update();
-    return 0;
 }
 
 /* all login screen events go here */

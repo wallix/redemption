@@ -147,11 +147,8 @@ struct Widget {
     /* returns true if they are the same, else returns false */
     int Widget_compare_with_crc(struct Widget* other_bitmap);
 
-    /******************************************************************/
-    /* nil for rect means the whole thing */
-    /* returns error */
-    virtual int refresh(const Rect & clip);
-    virtual int refresh_clip(const Rect & clip);
+    virtual void refresh(const Rect & clip);
+    virtual void refresh_clip(const Rect & clip);
 
     virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap);
     virtual void draw(const Rect & clip);
