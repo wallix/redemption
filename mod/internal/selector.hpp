@@ -28,10 +28,31 @@
 #include <stdio.h>
 
 struct selector_mod : public internal_mod {
+    struct TargetDevice {
+        char group[256];
+        char account[256];
+        char device[256];
+        char password[256];
+        char protocol[256];
+        char endtime[256];
+        TargetDevice(){
+            this->group[0] = 0;
+            this->account[0] = 0;
+            this->device[0] = 0;
+            this->password[0] = 0;
+            this->protocol[0] = 0;
+            this->endtime[0] = 0;
+        }
+    } grid[50];
+
+    char filter_group[256];
+    char filter[256];
+
     int signal;
     size_t focus_line;
     enum {
-        FOCUS_ON_FILTER = 0,
+        FOCUS_ON_FILTER_GROUP = 0,
+        FOCUS_ON_FILTER_DEVICE,
         FOCUS_ON_GRID,
         FOCUS_ON_FIRSTPAGE,
         FOCUS_ON_PREVPAGE,
@@ -49,17 +70,37 @@ struct selector_mod : public internal_mod {
     size_t total_page;
     size_t showed;
     size_t total;
+
+    ModContext & context;
+
     uint32_t color[3];
     selector_mod(wait_obj * event, ModContext & context, Front & front):
             internal_mod(front), signal(0), focus_line(0),
             focus_item(FOCUS_ON_LOGOUT),
             state(BUTTON_STATE_UP),
             showed_page(1), total_page(10),
-            showed(100), total(1000)
+            showed(100), total(1000),
+            context(context)
     {
+        this->filter[0] = 0;
+        this->filter_group[0] = 0;
         this->color[0] = RED;
         this->color[1] = GREEN;
         this->color[2] = BLUE;
+        strcpy(this->grid[0].group, "windows");
+        strcpy(this->grid[0].account, "qa\\administrateur");
+        strcpy(this->grid[0].device, "10.10.14.78");
+        strcpy(this->grid[0].password, "S3cur3!1nux");
+        strcpy(this->grid[0].protocol, "RDP");
+        strcpy(this->grid[0].endtime, "-");
+
+        strcpy(this->grid[1].group, "windows");
+        strcpy(this->grid[1].account, "administrateur");
+        strcpy(this->grid[1].device, "10.10.14.64");
+        strcpy(this->grid[1].password, "SecureLinux");
+        strcpy(this->grid[1].protocol, "RDP");
+        strcpy(this->grid[1].endtime, "-");
+
         this->event = event;
         this->event->set();
     }
@@ -87,7 +128,21 @@ struct selector_mod : public internal_mod {
                 break;
                 case 57: // SPACE
                 case 28: // ENTER
+                    LOG(LOG_INFO, "button up");
                     this->state = BUTTON_STATE_UP;
+                    if (this->focus_item == FOCUS_ON_CONNECT){
+                        LOG(LOG_INFO, "Connect");
+                        this->context.cpy(STRAUTHID_AUTH_USER, "w2008");
+                        this->context.cpy(STRAUTHID_PASSWORD, "w2008");
+                        this->context.cpy(STRAUTHID_TARGET_DEVICE, this->grid[0].device);
+                        this->context.cpy(STRAUTHID_TARGET_USER, this->grid[0].account);
+                        this->context.cpy(STRAUTHID_TARGET_PASSWORD, "S3cur3!1nux");
+                        this->context.cpy(STRAUTHID_TARGET_PROTOCOL, this->grid[0].protocol);
+                        this->context.cpy(STRAUTHID_TARGET_PORT, "3389");
+
+                        this->context.mod_state = MOD_STATE_RECEIVED_CREDENTIALS;
+                        this->signal = 2;
+                    }
                     this->event->set();
                 break;
                 default:
@@ -106,6 +161,7 @@ struct selector_mod : public internal_mod {
             break;
             case 57: // SPACE
             case 28: // ENTER
+                LOG(LOG_INFO, "button down");
                 this->state = BUTTON_STATE_DOWN;
                 this->event->set();
             break;
@@ -126,40 +182,37 @@ struct selector_mod : public internal_mod {
     {
         this->draw(this->screen.rect);
         this->event->reset();
+        LOG(LOG_INFO, "draw_event : signal = %u", this->signal);
         return this->signal;
     }
 
 
     void draw_background(){
-        this->opaque_rect(RDPOpaqueRect(this->screen.rect, WHITE));
+        this->opaque_rect(RDPOpaqueRect(this->screen.rect, GREY));
     }
 
     void draw_login(){
-        this->server_draw_text(30, 30, "Current user: cgr@10.10.4.13", WHITE, BLACK);
-    }
-
-    void draw_filter(){
-//        this->server_draw_text(30, 60, "Filter:", WHITE, BLACK);
-//        this->draw_edit(Rect(70, 60, 200, 20), 0, "*", 1, false);
-//        char buffer[256];
-//        sprintf(buffer, "Results: %u/%u", this->showed, this->total);
-//        this->server_draw_text(280, 60,  buffer, WHITE, BLACK);
+        this->server_draw_text(30, 30, "Current user: cgr@10.10.4.13", GREY, BLACK);
     }
 
     size_t nblines(){
-        return (this->screen.rect.cy - 230) / 20;
+        uint32_t nb = (this->screen.rect.cy - 230) / 20;
+        return (nb > 50)?50:nb;
     }
 
     void draw_array(){
+        LOG(LOG_INFO, "drawing array");
 
         uint32_t w = (this->screen.rect.cx - 40) / 20;
 
-        this->server_draw_text(30       , 60,  "Device Group", GREY, BLACK);
-        this->draw_edit(Rect(30, 80, 3*w - 15, 16), 0, "*", 1, false);
-        this->server_draw_text(30 +  3*w, 60,  "Account Device", GREY, BLACK);
-        this->draw_edit(Rect(30 + 3*w, 80, 10*w - 15, 16), 0, "*", 1, false);
-        this->server_draw_text(30 + 13*w, 60,  "Protocol", GREY, BLACK);
-        this->server_draw_text(30 + 16*w, 60,  "Deconnexion Time", GREY, BLACK);
+        this->server_draw_text(30       , 50,  "Device Group", GREY, BLACK);
+        this->draw_edit(Rect(30, 70, 3*w - 15, 20), 0, "*", 1,
+            this->focus_item == FOCUS_ON_FILTER_GROUP);
+        this->server_draw_text(30 +  3*w, 50,  "Account Device", GREY, BLACK);
+        this->draw_edit(Rect(30 + 3*w, 70, 10*w - 15, 20), 0, "*", 1,
+            this->focus_item == FOCUS_ON_FILTER_GROUP);
+        this->server_draw_text(30 + 13*w, 50,  "Protocol", GREY, BLACK);
+        this->server_draw_text(30 + 16*w, 50,  "Deconnexion Time", GREY, BLACK);
 
         for (size_t line = 0 ; line < this->nblines() ; line++){
             Rect rect(20, 100 + line * 20, this->screen.rect.cx-40, 19);
@@ -168,11 +221,15 @@ struct selector_mod : public internal_mod {
                 c = this->color[2];
             }
             this->opaque_rect(RDPOpaqueRect(rect, c));
-            this->server_draw_text(35       , rect.y + 2,  "windows", c, BLACK);
-            this->server_draw_text(35 +  3*w, rect.y + 2,  "qa\\administrateur@xp", c, BLACK);
-            this->server_draw_text(35 + 13*w, rect.y + 2,  "RDP", c, BLACK);
-            this->server_draw_text(35 + 16*w, rect.y + 2,  "23:59 12-10-2011", c, BLACK);
-
+            this->server_draw_text(35       , rect.y + 2,  this->grid[line].group, c, BLACK);
+            char buffer[256];
+            buffer[0] = 0;
+            if (this->grid[line].account[0] && this->grid[line].device[0]){
+                sprintf(buffer, "%s@%s", this->grid[line].account, this->grid[line].device );
+            }
+            this->server_draw_text(35 +  3*w, rect.y + 2,  buffer, c, BLACK);
+            this->server_draw_text(35 + 13*w, rect.y + 2,  this->grid[line].protocol, c, BLACK);
+            this->server_draw_text(35 + 16*w, rect.y + 2,  this->grid[line].endtime, c, BLACK);
         }
         Rect r(this->screen.rect.cx - 240, this->screen.rect.cy - 130, 30, 20);
         this->draw_button(r, "|<<",
@@ -218,7 +275,6 @@ struct selector_mod : public internal_mod {
 
         this->draw_background();
         this->draw_login();
-        this->draw_filter();
         this->draw_array();
         this->draw_buttons();
 

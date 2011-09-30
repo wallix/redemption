@@ -45,6 +45,7 @@ struct wab_help : public window
                     this->notify_to.notify(this, 100, 1, 0); /* ok */
             }
         } else if (msg == WM_PAINT) { /* 3 */
+            #warning should be done on refresh in window_login_widget not on paint
             // "Enter target device and login as login@server"
             // "Enter a valid allowed authentication user"
             // "in the username edit box."
@@ -710,10 +711,10 @@ struct login_mod : public internal_mod {
         return;
     }
 
-    // module got an internal event (like incoming data) and want to sent it outside
     virtual int draw_event()
     {
-        return signal;
+        // after refreshing button, return module status that may have changed
+        return this->signal;
     }
 
 };
