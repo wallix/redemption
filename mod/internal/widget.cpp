@@ -320,36 +320,13 @@ void widget_image::draw(const Rect & clip)
     }
 }
 
-void Widget::refresh_clip(const Rect & clip)
-{
-    if (!clip.isempty()) {
-        this->draw(clip);
-
-        /* notify */
-        this->notify(this, WM_PAINT, 0, 0); /* 3 */
-
-        /* draw any child windows in the area */
-        int count = this->child_list.size();
-        for (int i = 0; i < count; i++) {
-            struct Widget* b = this->child_list.at(i);
-            struct Rect r2 = clip.intersect(b->rect);
-            if (!r2.isempty()) {
-                r2 = r2.offset(-(b->rect.x), -(b->rect.y));
-                b->refresh_clip(r2);
-            }
-        }
-    }
-}
-
 void Widget::refresh(const Rect & clip)
 {
     this->mod->server_begin_update();
 
     this->draw(clip);
+    this->notify(this, WM_PAINT, 0, 0);
 
-    this->notify(this, WM_PAINT, 0, 0); /* 3 */
-
-    /* draw any child windows in the area */
     size_t count = this->child_list.size();
     for (size_t i = 0; i < count; i++) {
         Widget * b = this->child_list[i];
@@ -358,7 +335,6 @@ void Widget::refresh(const Rect & clip)
     this->mod->server_end_update();
 }
 
-/* all login screen events go here */
 void Widget::notify(struct Widget* sender, int msg, long param1, long param2)
 {
     this->parent.notify(sender, msg, param1, param2);
