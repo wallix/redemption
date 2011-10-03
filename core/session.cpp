@@ -310,7 +310,7 @@ int Session::step_STATE_ENTRY(const struct timeval & time_mark)
             // hence width and height and colors and keymap are availables
             /* resize the main window */
             this->mod->front_resize();
-            this->mod->server_reset_clip();
+            this->mod->gd.server_reset_clip();
             this->front->reset();
 
             /* initialising keymap */

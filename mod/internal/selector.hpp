@@ -271,7 +271,7 @@ struct selector_mod : public internal_mod {
     void draw(const Rect & clip)
     {
         this->gd.server_begin_update();
-        this->server_set_clip(clip);
+        this->gd.server_set_clip(clip);
 
         this->draw_background();
         this->draw_login();

@@ -47,6 +47,8 @@
 
 struct GraphicDevice
 {
+    virtual void server_set_clip(const Rect & rect) = 0;
+    virtual void server_reset_clip() = 0;
     virtual int text_width(const char * text) = 0;
     virtual int text_height(const char * text) = 0;
     virtual int server_begin_update() = 0;

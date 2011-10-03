@@ -58,10 +58,10 @@ struct GraphicDeviceMod : public GraphicDevice
 
 
     GraphicDeviceMod(Front & front)
-    : front(front), 
-      capture(NULL), 
-      clip(clip), 
-      palette_sent(false), 
+    : front(front),
+      capture(NULL),
+      clip(clip),
+      palette_sent(false),
       mod_palette_setted(0),
       mod_bpp(24)
 
@@ -73,6 +73,18 @@ struct GraphicDeviceMod : public GraphicDevice
         init_palette332(this->palette332);
         this->clip = Rect(0,0,4096,2048);
     }
+
+
+    virtual void server_set_clip(const Rect & rect)
+    {
+        this->clip = rect;
+    }
+
+    virtual void server_reset_clip()
+    {
+        this->clip = this->get_front_rect();
+    }
+
 
     virtual int text_width(const char * text){
         int rv = 0;
@@ -837,22 +849,12 @@ struct client_mod : public Callback {
             this->gd.front.reset();
         }
 
-        this->server_reset_clip();
+        this->gd.server_reset_clip();
     }
 
     int server_is_term()
     {
         return g_is_term();
-    }
-
-    void server_set_clip(const Rect & rect)
-    {
-        this->gd.clip = rect;
-    }
-
-    void server_reset_clip()
-    {
-        this->gd.clip = this->gd.get_front_rect();
     }
 
     void server_add_char(int font, int character,

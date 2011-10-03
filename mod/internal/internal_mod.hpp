@@ -64,7 +64,7 @@ struct internal_mod : public client_mod {
         // 0xCC = copy -> pat_blt( ... 0xF0 ...
         // 0x88 = and -> pat_blt( ...  0xC0 ...
 
-        this->server_set_clip(clip);
+        this->gd.server_set_clip(clip);
         this->gd.pat_blt(
             RDPPatBlt(Rect(r.x, r.y, r.cx, 5), 0x5A, BLACK, WHITE, this->brush));
         this->gd.pat_blt(

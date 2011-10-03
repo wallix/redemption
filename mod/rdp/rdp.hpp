@@ -398,10 +398,10 @@ struct rdp_orders {
             else {
                 RDPPrimaryOrderHeader header = this->common.receive(stream, control);
                 if (control & BOUNDS) {
-                    mod->server_set_clip(this->common.clip);
+                    mod->gd.server_set_clip(this->common.clip);
                 }
                 else {
-                    mod->server_reset_clip();
+                    mod->gd.server_reset_clip();
                 }
 //                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
@@ -461,7 +461,7 @@ struct rdp_orders {
                     break;
                 }
                 if (header.control & BOUNDS) {
-                    mod->server_reset_clip();
+                    mod->gd.server_reset_clip();
                 }
             }
             processed++;
