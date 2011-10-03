@@ -67,41 +67,41 @@ struct test_card_mod : public internal_mod {
 
     void draw()
     {
-        this->server_begin_update();
+        this->gd.server_begin_update();
 
         this->server_set_clip(this->screen.rect);
 
-        this->opaque_rect(RDPOpaqueRect(this->screen.rect, WHITE));
-        this->opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(5), RED));
-        this->opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(10), GREEN));
-        this->opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(15), BLUE));
-        this->opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(20), BLACK));
+        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect, WHITE));
+        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(5), RED));
+        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(10), GREEN));
+        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(15), BLUE));
+        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(20), BLACK));
 
         Rect winrect = this->screen.rect.shrink(30);
-        this->opaque_rect(RDPOpaqueRect(winrect, WINBLUE));
+        this->gd.opaque_rect(RDPOpaqueRect(winrect, WINBLUE));
 
         Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.bmp");
-        this->bitmap_update(bitmap,
+        this->gd.bitmap_update(bitmap,
             Rect(winrect.x + (winrect.cx - bitmap.cx)/2,
                  winrect.y + (winrect.cy - bitmap.cy)/2,
                  bitmap.cx, bitmap.cy),
              0, 0);
 
 
-        this->server_draw_text(30, 30, "White", BLACK, WHITE);
-        this->server_draw_text(30, 50, "Red  ", BLACK, RED);
-        this->server_draw_text(30, 70, "Green", BLACK, GREEN);
-        this->server_draw_text(30, 90, "Blue ", BLACK, BLUE);
-        this->server_draw_text(30, 110, "Black", WHITE, BLACK);
+        this->gd.server_draw_text(30, 30, "White", BLACK, WHITE);
+        this->gd.server_draw_text(30, 50, "Red  ", BLACK, RED);
+        this->gd.server_draw_text(30, 70, "Green", BLACK, GREEN);
+        this->gd.server_draw_text(30, 90, "Blue ", BLACK, BLUE);
+        this->gd.server_draw_text(30, 110, "Black", WHITE, BLACK);
 
 
         Bitmap card(SHARE_PATH "/" REDEMPTION_LOGO24);
-        this->bitmap_update(card,
+        this->gd.bitmap_update(card,
             Rect(this->screen.rect.cx - card.cx - 30,
                  this->screen.rect.cy - card.cy - 30, card.cx, card.cy),
              0, 0);
 
-        this->server_end_update();
+        this->gd.server_end_update();
     }
 
 };

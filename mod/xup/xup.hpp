@@ -178,10 +178,10 @@ struct xup_mod : public client_mod {
                     type = stream.in_uint16_le();
                     switch (type) {
                     case 1: /* server_begin_update */
-                        rv = this->server_begin_update();
+                        rv = this->gd.server_begin_update();
                         break;
                     case 2: /* server_end_update */
-                        rv = this->server_end_update();
+                        rv = this->gd.server_end_update();
                         break;
                     case 3:
                     {
@@ -190,7 +190,7 @@ struct xup_mod : public client_mod {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                         this->pat_blt(RDPPatBlt(r, this->rop, BLACK, WHITE,
+                         this->gd.pat_blt(RDPPatBlt(r, this->rop, BLACK, WHITE,
                             RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")
                             ));
                     }
@@ -205,7 +205,7 @@ struct xup_mod : public client_mod {
                         const int srcx = stream.in_sint16_le();
                         const int srcy = stream.in_sint16_le();
                         const RDPScrBlt scrblt(r, 0xCC, srcx, srcy);
-                        this->scr_blt(scrblt);
+                        this->gd.scr_blt(scrblt);
                     }
                     break;
                     case 5:
@@ -221,8 +221,8 @@ struct xup_mod : public client_mod {
                         int height = stream.in_uint16_le();
                         int srcx = stream.in_sint16_le();
                         int srcy = stream.in_sint16_le();
-                        Bitmap bmp(bpp, &this->palette332, width, height, bmpdata, sizeof(bmpdata));
-                        this->bitmap_update(bmp, r, srcx, srcy);
+                        Bitmap bmp(bpp, &this->gd.palette332, width, height, bmpdata, sizeof(bmpdata));
+                        this->gd.bitmap_update(bmp, r, srcx, srcy);
                     }
                     break;
                     case 10: /* server_set_clip */
@@ -250,7 +250,7 @@ struct xup_mod : public client_mod {
                     {
                         int style = stream.in_uint16_le();
                         int width = stream.in_uint16_le();
-                        this->server_set_pen(style, width);
+                        this->gd.server_set_pen(style, width);
                     }
                     break;
                     case 18:
@@ -261,8 +261,8 @@ struct xup_mod : public client_mod {
                         int y2 = stream.in_sint16_le();
                         const RDPLineTo lineto(1, x1, y1, x2, y2, WHITE,
                                                this->rop,
-                                               RDPPen(this->pen.style, this->pen.width, this->fgcolor));
-                        this->line_to(lineto);
+                                               RDPPen(this->gd.pen.style, this->gd.pen.width, this->fgcolor));
+                        this->gd.line_to(lineto);
                     }
                     break;
                     case 19:
@@ -274,7 +274,7 @@ struct xup_mod : public client_mod {
                         uint8_t cur_mask[32 * (32 / 8)];
                         memcpy(cur_data, stream.in_uint8p(32 * (32 * 3)), 32 * (32 * 3));
                         memcpy(cur_mask, stream.in_uint8p(32 * (32 / 8)), 32 * (32 / 8));
-                        this->server_set_pointer(x, y, cur_data, cur_mask);
+                        this->gd.server_set_pointer(x, y, cur_data, cur_mask);
                     }
                     break;
                     default:

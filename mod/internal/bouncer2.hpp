@@ -53,9 +53,9 @@ struct bouncer2_mod : public internal_mod {
     bouncer2_mod(wait_obj * back_event, Front & front) :
         internal_mod(front), event(back_event), speedx(10), speedy(10), dancing_rect(NULL)
     {
-        this->server_begin_update();
-        this->opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00));
-        this->server_end_update();
+        this->gd.server_begin_update();
+        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00));
+        this->gd.server_end_update();
 
         this->dancing_rect = new Rect(0,0,100,100);
 
@@ -86,8 +86,8 @@ struct bouncer2_mod : public internal_mod {
     int interaction()
     {
         // Get x% of the screen cx and cy
-        long x = this->front.mouse_x;
-        long y = this->front.mouse_y;
+        long x = this->gd.front.mouse_x;
+        long y = this->gd.front.mouse_y;
         int scarex = this->screen.rect.cx / 5;
         int scarey = this->screen.rect.cx / 5;
         Rect scareZone(this->dancing_rect->getCenteredX() - (scarex / 2),this->dancing_rect->getCenteredY() - (scarey / 2),scarex,scarey);
@@ -111,9 +111,9 @@ struct bouncer2_mod : public internal_mod {
     // This should come from BACK!
     virtual int draw_event()
     {
-//        this->server_begin_update();
-//        this->opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00));
-//        this->server_end_update();
+//        this->gd.server_begin_update();
+//        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00));
+//        this->gd.server_end_update();
         // Creating a new RDP Order: OpaqueRect
         //RDPOpaqueRect white_rect(Rect(0, 0, 10, 10), 0xFFFFFF);
         //RDPOpaqueRect black_rect(Rect(0, 0, 10, 10), 0x000000);
@@ -139,14 +139,14 @@ struct bouncer2_mod : public internal_mod {
         this->dancing_rect->y += this->speedy;
 
         // Drawing the RECT
-        this->server_begin_update();
-        this->opaque_rect(RDPOpaqueRect(*this->dancing_rect, 0x0000FF));
-        this->server_end_update();
+        this->gd.server_begin_update();
+        this->gd.opaque_rect(RDPOpaqueRect(*this->dancing_rect, 0x0000FF));
+        this->gd.server_end_update();
 
         // And erase
-        this->server_begin_update();
+        this->gd.server_begin_update();
         this->wipe(oldrect, *this->dancing_rect, 0x00FF00);
-        this->server_end_update();
+        this->gd.server_end_update();
 
         // Final with setting next idle time
         this->event->set(33333); // 0.3s is 30fps
@@ -163,7 +163,7 @@ struct bouncer2_mod : public internal_mod {
             {}
 
             void callback(const Rect & a) {
-                b.opaque_rect(RDPOpaqueRect(a, color));
+                b.gd.opaque_rect(RDPOpaqueRect(a, color));
             }
         } it(color, *this);
 

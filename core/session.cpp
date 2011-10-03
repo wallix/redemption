@@ -21,6 +21,7 @@
    Session object, in charge of session
 
 */
+#include "graphic_device.hpp"
 
 #include "colors.hpp"
 #include "rect.hpp"
@@ -321,7 +322,7 @@ int Session::step_STATE_ENTRY(const struct timeval & time_mark)
             BGRPalette palette;
             init_palette332(palette);
 
-            this->mod->color_cache(palette, 0);
+            this->mod->gd.color_cache(palette, 0);
 
             struct pointer_item pointer_item;
 
@@ -503,8 +504,8 @@ int Session::step_STATE_RUNNING(const struct timeval & time_mark)
                 if (this->session_setup_mod(next_state, this->context)){
                     if (record_video) {
                         this->mod->start_capture(
-                            this->mod->get_front_width(),
-                            this->mod->get_front_height(),
+                            this->mod->gd.get_front_width(),
+                            this->mod->gd.get_front_height(),
                             this->context->get_bool(STRAUTHID_OPT_MOVIE),
                             this->context->get(STRAUTHID_OPT_MOVIE_PATH),
                             this->context->get(STRAUTHID_OPT_CODEC_ID),

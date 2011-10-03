@@ -382,7 +382,7 @@ struct mod_vnc : public client_mod {
                     this->t->send((char*)stream.data, 4 + 3 * 4);
                 }
 
-                this->server_resize(this->width, this->height, this->get_front_bpp());
+                this->server_resize(this->width, this->height, this->gd.get_front_bpp());
 
                 {
                     /* FrambufferUpdateRequest */
@@ -408,7 +408,7 @@ struct mod_vnc : public client_mod {
                 memset(rdp_cursor_data + (32 * (32 * 3) - 2 * 32 * 3), 0xff, 9);
                 memset(rdp_cursor_data + (32 * (32 * 3) - 3 * 32 * 3), 0xff, 9);
                 memset(rdp_cursor_mask, 0xff, 32 * (32 / 8));
-                this->server_set_pointer(3, 3, rdp_cursor_data, rdp_cursor_mask);
+                this->gd.server_set_pointer(3, 3, rdp_cursor_data, rdp_cursor_mask);
             } catch(int i) {
                 error = i;
             } catch(...) {
@@ -446,8 +446,8 @@ struct mod_vnc : public client_mod {
             stream.out_uint16_be(y);
             this->t->send((char*)stream.data, 6);
             #warning this should not be here!!! Move it to front
-            this->front.mouse_x = x;
-            this->front.mouse_y = y;
+            this->gd.front.mouse_x = x;
+            this->gd.front.mouse_y = y;
         }
         if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
             if (device_flags & MOUSE_FLAG_DOWN){
@@ -697,7 +697,7 @@ struct mod_vnc : public client_mod {
             num_recs = stream.in_uint16_be();
         }
 
-        this->server_begin_update();
+        this->gd.server_begin_update();
 
         for (size_t i = 0; i < num_recs; i++) {
             Stream stream(8192);
@@ -721,9 +721,9 @@ struct mod_vnc : public client_mod {
                 this->t->recv((char**)&tmp, need_size);
 
                 #warning there is still an alignement issue in bitmaps, fixed, but my fix is quite evil.
-                Bitmap bmp(this->bpp, &this->palette332, cx, cy, raw, need_size, false, true);
+                Bitmap bmp(this->bpp, &this->gd.palette332, cx, cy, raw, need_size, false, true);
                 free(raw);
-                this->bitmap_update(bmp, Rect(x, y, cx, cy), 0, 0);
+                this->gd.bitmap_update(bmp, Rect(x, y, cx, cy), 0, 0);
             }
             break;
             case 1: /* copy rect */
@@ -736,7 +736,7 @@ struct mod_vnc : public client_mod {
 //                    LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
                 #warning should we not set clip rectangle ?
                 const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
-                this->scr_blt(scrblt);
+                this->gd.scr_blt(scrblt);
             }
             break;
             case 0xffffff11: /* cursor */
@@ -812,7 +812,7 @@ struct mod_vnc : public client_mod {
                 if (x > 31) { x = 31; }
                 if (y > 31) { y = 31; }
 #warning we should manage cursors bigger then 32 x 32, this is not an RDP protocol limitation
-                this->server_set_pointer(x, y, rdp_cursor_data, rdp_cursor_mask);
+                this->gd.server_set_pointer(x, y, rdp_cursor_data, rdp_cursor_mask);
             }
             break;
             default:
@@ -821,7 +821,7 @@ struct mod_vnc : public client_mod {
                 break;
             }
         }
-        this->server_end_update();
+        this->gd.server_end_update();
 
         {
 //                LOG(LOG_INFO, "Frame buffer Update");
@@ -832,8 +832,8 @@ struct mod_vnc : public client_mod {
             stream.out_uint16_be(0);
             stream.out_uint16_be(0);
 
-            stream.out_uint16_be(this->clip.cx);
-            stream.out_uint16_be(this->clip.cy);
+            stream.out_uint16_be(this->gd.clip.cx);
+            stream.out_uint16_be(this->gd.clip.cy);
             this->t->send((char*)stream.data, 10);
         }
     }
@@ -890,11 +890,11 @@ struct mod_vnc : public client_mod {
         else {
             LOG(LOG_ERR, "VNC: number of palette colors too large: %d\n", num_colors);
         }
-        memcpy(this->mod_palette, this->palette, sizeof(BGRPalette));
-        this->send_global_palette();
-        this->server_begin_update();
-        this->color_cache(this->palette, 0);
-        this->server_end_update();
+        memcpy(this->gd.mod_palette, this->palette, sizeof(BGRPalette));
+        this->gd.send_global_palette();
+        this->gd.server_begin_update();
+        this->gd.color_cache(this->palette, 0);
+        this->gd.server_end_update();
     }
 
     /******************************************************************************/
