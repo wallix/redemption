@@ -61,6 +61,7 @@ typedef enum{
     AUTHID_AUTH_ERROR_MESSAGE,
     AUTHID_PROXY_TYPE,
     AUTHID_AUTHENTICATED,
+    AUTHID_SELECTOR,
     AUTHID_KEEPALIVE,
     // Translation Text
     AUTHID_TRANS_BUTTON_OK,
@@ -109,6 +110,7 @@ typedef enum{
 #define STRAUTHID_AUTH_ERROR_MESSAGE "error_message"
 #define STRAUTHID_PROXY_TYPE        "proxy_type"
 #define STRAUTHID_AUTHENTICATED     "authenticated"
+#define STRAUTHID_SELECTOR         "selector"
 #define STRAUTHID_KEEPALIVE         "keepalive"
 #define STRAUTHID_TRANS_BUTTON_OK   "trans_ok"
 #define STRAUTHID_TRANS_BUTTON_CANCEL "trans_cancel"

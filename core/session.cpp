@@ -82,7 +82,8 @@ static ProtocolKeyword KeywordsDefinitions[] = {
     {STRAUTHID_OPT_HEIGHT, TYPE_INTEGER, "!600"},
     {STRAUTHID_OPT_BPP, TYPE_INTEGER, "!24"},
     {STRAUTHID_PROXY_TYPE, TYPE_TEXT, "!RDP"},
-    {STRAUTHID_AUTHENTICATED, TYPE_BOOLEAN, "!True"},
+    {STRAUTHID_AUTHENTICATED, TYPE_BOOLEAN, "!False"},
+    {STRAUTHID_SELECTOR, TYPE_BOOLEAN, "!False"},
     {STRAUTHID_KEEPALIVE, TYPE_BOOLEAN, "ASK"},
     {STRAUTHID_END_DATE_CNX, TYPE_INTEGER, "!0"},
     {STRAUTHID_OPT_BITRATE, TYPE_INTEGER, "!40000"},
@@ -363,7 +364,6 @@ int Session::step_STATE_ENTRY(const struct timeval & time_mark)
             }
 
             this->internal_state = SESSION_STATE_RUNNING;
-            this->context->mod_state = MOD_STATE_INIT;
             this->session_setup_mod(MCTX_STATUS_CLI, this->context);
         }
     }
@@ -422,7 +422,6 @@ int Session::step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time_mark
 
     if (this->sesman->event()){
         this->sesman->receive_next_module();
-        this->context->mod_state = MOD_STATE_RECEIVED_CREDENTIALS;
         if (this->session_setup_mod(MCTX_STATUS_TRANSITORY, this->context)){
                 this->internal_state = SESSION_STATE_RUNNING;
         }
@@ -681,20 +680,13 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                     }
                     LOG(LOG_INFO, "internal module Close ready");
                     break;
-                    case ModContext::INTERNAL_DIALOG:
+                    case ModContext::INTERNAL_DIALOG_VALID_MESSAGE:
                     {
                         const char * message = NULL;
                         const char * button = NULL;
-                        if (this->context->mod_state == MOD_STATE_DISPLAY_MESSAGE){
-                            LOG(LOG_INFO, "Creation of internal module 'Dialog Display Message'");
-                            message = this->context->get(STRAUTHID_MESSAGE);
-                            button = NULL;
-                        }
-                        else {
-                            LOG(LOG_INFO, "Creation of internal module 'Dialog Accept Message'");
-                            message = this->context->get(STRAUTHID_MESSAGE);
-                            button = this->context->get(STRAUTHID_TRANS_BUTTON_REFUSED);
-                        }
+                        LOG(LOG_INFO, "Creation of internal module 'Dialog Accept Message'");
+                        message = this->context->get(STRAUTHID_MESSAGE);
+                        button = this->context->get(STRAUTHID_TRANS_BUTTON_REFUSED);
                         this->mod = new dialog_mod(
                                         this->back_event,
                                         *this->context,
@@ -703,7 +695,25 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                                         button,
                                         this->ini);
                     }
-                        LOG(LOG_INFO, "internal module Dialog ready");
+                    LOG(LOG_INFO, "internal module Dialog Valid Message ready");
+                    break;
+
+                    case ModContext::INTERNAL_DIALOG_DISPLAY_MESSAGE:
+                    {
+                        const char * message = NULL;
+                        const char * button = NULL;
+                        LOG(LOG_INFO, "Creation of internal module 'Dialog Display Message'");
+                        message = this->context->get(STRAUTHID_MESSAGE);
+                        button = NULL;
+                        this->mod = new dialog_mod(
+                                        this->back_event,
+                                        *this->context,
+                                        *this->front,
+                                        message,
+                                        button,
+                                        this->ini);
+                    }
+                    LOG(LOG_INFO, "internal module Dialog Display Message ready");
                     break;
                     case ModContext::INTERNAL_LOGIN:
                         LOG(LOG_INFO, "Creation of internal module 'Login'");

@@ -134,13 +134,8 @@ struct selector_mod : public internal_mod {
                         LOG(LOG_INFO, "Connect");
                         this->context.cpy(STRAUTHID_AUTH_USER, "w2008");
                         this->context.cpy(STRAUTHID_PASSWORD, "w2008");
-                        this->context.cpy(STRAUTHID_TARGET_DEVICE, this->grid[0].device);
-                        this->context.cpy(STRAUTHID_TARGET_USER, this->grid[0].account);
-                        this->context.cpy(STRAUTHID_TARGET_PASSWORD, "S3cur3!1nux");
-                        this->context.cpy(STRAUTHID_TARGET_PROTOCOL, this->grid[0].protocol);
-                        this->context.cpy(STRAUTHID_TARGET_PORT, "3389");
-
-                        this->context.mod_state = MOD_STATE_RECEIVED_CREDENTIALS;
+                        this->context.cpy(STRAUTHID_TARGET_DEVICE, "10.10.14.78");
+                        this->context.cpy(STRAUTHID_TARGET_USER, "qa\\administrateur");
                         this->signal = 2;
                     }
                     this->event->set();

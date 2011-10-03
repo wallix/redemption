@@ -43,6 +43,7 @@ class Authentifier(object):
             'target_port':'3389',
             'is_rec' : 'true',
             'rec_path':'/tmp/trace2008.cpp',
+            'authenticated':'true'
         },
         'w7' : {
             'proxy_type': 'RDP',
@@ -53,6 +54,7 @@ class Authentifier(object):
             'target_port':'3389',
             'is_rec' : 'true',
             'rec_path':'/tmp/tracew7.cpp',
+            'authenticated':'true',
         },
         'w2000' : {
             'proxy_type': 'RDP',
@@ -60,7 +62,8 @@ class Authentifier(object):
             'target_device' : '10.10.14.64',
             'target_password' : 'SecureLinux',
             'proto_dest': 'RDP',
-            'target_port':'3389'
+            'target_port':'3389',
+            'authenticated':'true'
         },
         'xp' : {
             'proxy_type': 'RDP',
@@ -71,16 +74,19 @@ class Authentifier(object):
             'target_port':'3389',
             'is_rec':'True',
             'rec_path':'/tmp/tracexp.cpp',
+            'authenticated':'true'
         },
         'bouncer' : {
             'proxy_type': 'RDP',
             'target_device' : 'bouncer2',
-            'proto_dest': 'INTERNAL'
+            'proto_dest': 'INTERNAL',
+            'authenticated':'true'
         },
         'test' : {
             'proxy_type': 'RDP',
             'target_device' : 'test',
-            'proto_dest': 'INTERNAL'
+            'proto_dest': 'INTERNAL',
+            'authenticated':'true',
         },
         'message' : {
             'proxy_type': 'RDP',
@@ -89,6 +95,7 @@ class Authentifier(object):
             'message' : 'Hello, World',
             'proto_dest': 'INTERNAL',
             'is_rec':'False',
+            'authenticated':'true'
         },
         'card' : {
             'proxy_type': 'RDP',
@@ -100,7 +107,9 @@ class Authentifier(object):
         'selector' : {
             'proxy_type': 'RDP',
             'target_device' : 'selector',
-            'proto_dest': 'INTERNAL'
+            'proto_dest': 'INTERNAL',
+            'authenticated':'true',
+
         },
         'n' : {
             'proxy_type': 'RDP',

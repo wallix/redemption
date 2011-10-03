@@ -44,19 +44,6 @@ enum {
     MCTX_STATUS_CLI,
 };
 
-enum {
-    MOD_STATE_INIT,
-    MOD_STATE_RECEIVED_CREDENTIALS,
-    MOD_STATE_DISPLAY_MESSAGE,
-    MOD_STATE_VALID_MESSAGE,
-    MOD_STATE_LOGIN_BOX,
-    MOD_STATE_PASSWORD_BOX,
-    MOD_STATE_CONNECTED_RDP,
-    MOD_STATE_CONNECTED_VNC,
-    MOD_STATE_CLOSE,
-    MOD_STATE_MESSAGE_CONNEXION_CLOSE_AT_LIMIT
-};
-
 // ModContext structure is used for modules to communicate with each other
 
 // status tell to session what should be done when a module terminates
@@ -72,12 +59,12 @@ enum {
 // to simplify further session code)
 
 struct ModContext : public Dico {
-    int mod_state;
     int wab_auth;
     enum {
         INTERNAL_NONE,
         INTERNAL_LOGIN,
-        INTERNAL_DIALOG,
+        INTERNAL_DIALOG_DISPLAY_MESSAGE,
+        INTERNAL_DIALOG_VALID_MESSAGE,
         INTERNAL_CLOSE,
         INTERNAL_SELECTOR,
         INTERNAL_BOUNCER2,
