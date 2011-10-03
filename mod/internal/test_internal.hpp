@@ -32,7 +32,7 @@ struct test_internal_mod : public internal_mod {
         ModContext & context, Front & front):
             internal_mod(front)
     {
-      this->mod_bpp = this->get_front_bpp();
+      this->gd.mod_bpp = this->gd.get_front_bpp();
         this->event = event;
         this->event->set();
     }
@@ -54,7 +54,6 @@ struct test_internal_mod : public internal_mod {
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     {
-        LOG(LOG_INFO, "overloaded by subclasses");
         return;
     }
 
@@ -70,13 +69,13 @@ struct test_internal_mod : public internal_mod {
 
     void draw()
     {
-        this->front.send_global_palette(this->palette332);
-        this->server_begin_update();
+        this->gd.front.send_global_palette(this->gd.palette332);
+        this->gd.server_begin_update();
 
         RDPOpaqueRect cmd(Rect(10, 10, 100, 100), 0xffffff);
-        this->front.orders->send(cmd, Rect(0, 0, 1280, 800));
+        this->gd.front.orders->send(cmd, Rect(0, 0, 1280, 800));
 
-        this->server_end_update();
+        this->gd.server_end_update();
     }
 
 };

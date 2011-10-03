@@ -188,11 +188,11 @@ struct selector_mod : public internal_mod {
 
 
     void draw_background(){
-        this->opaque_rect(RDPOpaqueRect(this->screen.rect, GREY));
+        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect, GREY));
     }
 
     void draw_login(){
-        this->server_draw_text(30, 30, "Current user: cgr@10.10.4.13", GREY, BLACK);
+        this->gd.server_draw_text(30, 30, "Current user: cgr@10.10.4.13", GREY, BLACK);
     }
 
     size_t nblines(){
@@ -205,14 +205,14 @@ struct selector_mod : public internal_mod {
 
         uint32_t w = (this->screen.rect.cx - 40) / 20;
 
-        this->server_draw_text(30       , 50,  "Device Group", GREY, BLACK);
-        this->draw_edit(Rect(30, 70, 3*w - 15, 20), 0, "*", 1,
+        this->gd.server_draw_text(30       , 50,  "Device Group", GREY, BLACK);
+        this->gd.draw_edit(Rect(30, 70, 3*w - 15, 20), 0, "*", 1,
             this->focus_item == FOCUS_ON_FILTER_GROUP);
-        this->server_draw_text(30 +  3*w, 50,  "Account Device", GREY, BLACK);
-        this->draw_edit(Rect(30 + 3*w, 70, 10*w - 15, 20), 0, "*", 1,
+        this->gd.server_draw_text(30 +  3*w, 50,  "Account Device", GREY, BLACK);
+        this->gd.draw_edit(Rect(30 + 3*w, 70, 10*w - 15, 20), 0, "*", 1,
             this->focus_item == FOCUS_ON_FILTER_GROUP);
-        this->server_draw_text(30 + 13*w, 50,  "Protocol", GREY, BLACK);
-        this->server_draw_text(30 + 16*w, 50,  "Deconnexion Time", GREY, BLACK);
+        this->gd.server_draw_text(30 + 13*w, 50,  "Protocol", GREY, BLACK);
+        this->gd.server_draw_text(30 + 16*w, 50,  "Deconnexion Time", GREY, BLACK);
 
         for (size_t line = 0 ; line < this->nblines() ; line++){
             Rect rect(20, 100 + line * 20, this->screen.rect.cx-40, 19);
@@ -220,34 +220,34 @@ struct selector_mod : public internal_mod {
             if (line == this->focus_line){
                 c = this->color[2];
             }
-            this->opaque_rect(RDPOpaqueRect(rect, c));
-            this->server_draw_text(35       , rect.y + 2,  this->grid[line].group, c, BLACK);
+            this->gd.opaque_rect(RDPOpaqueRect(rect, c));
+            this->gd.server_draw_text(35       , rect.y + 2,  this->grid[line].group, c, BLACK);
             char buffer[256];
             buffer[0] = 0;
             if (this->grid[line].account[0] && this->grid[line].device[0]){
                 sprintf(buffer, "%s@%s", this->grid[line].account, this->grid[line].device );
             }
-            this->server_draw_text(35 +  3*w, rect.y + 2,  buffer, c, BLACK);
-            this->server_draw_text(35 + 13*w, rect.y + 2,  this->grid[line].protocol, c, BLACK);
-            this->server_draw_text(35 + 16*w, rect.y + 2,  this->grid[line].endtime, c, BLACK);
+            this->gd.server_draw_text(35 +  3*w, rect.y + 2,  buffer, c, BLACK);
+            this->gd.server_draw_text(35 + 13*w, rect.y + 2,  this->grid[line].protocol, c, BLACK);
+            this->gd.server_draw_text(35 + 16*w, rect.y + 2,  this->grid[line].endtime, c, BLACK);
         }
         Rect r(this->screen.rect.cx - 240, this->screen.rect.cy - 130, 30, 20);
-        this->draw_button(r, "|<<",
+        this->gd.draw_button(r, "|<<",
             (this->focus_item == FOCUS_ON_FIRSTPAGE)?this->state:BUTTON_STATE_UP,
             this->focus_item == FOCUS_ON_FIRSTPAGE);
-        this->draw_button(r.offset(40,0), "<",
+        this->gd.draw_button(r.offset(40,0), "<",
             (this->focus_item == FOCUS_ON_PREVPAGE)?this->state:BUTTON_STATE_UP,
             this->focus_item == FOCUS_ON_PREVPAGE);
 
 
         char buffer[256];
         sprintf(buffer, " %u/%u ", this->showed_page, this->total_page);
-        this->server_draw_text(r.x + 80, r.y + 2, buffer, GREY, BLACK);
+        this->gd.server_draw_text(r.x + 80, r.y + 2, buffer, GREY, BLACK);
 
-        this->draw_button(r.offset(130,0), ">",
+        this->gd.draw_button(r.offset(130,0), ">",
             (this->focus_item == FOCUS_ON_NEXTPAGE)?this->state:BUTTON_STATE_UP,
             this->focus_item == FOCUS_ON_NEXTPAGE);
-        this->draw_button(r.offset(170,0), ">>|",
+        this->gd.draw_button(r.offset(170,0), ">>|",
             (this->focus_item == FOCUS_ON_LASTPAGE)?this->state:BUTTON_STATE_UP,
             this->focus_item == FOCUS_ON_LASTPAGE);
 
@@ -256,13 +256,13 @@ struct selector_mod : public internal_mod {
 
     void draw_buttons(){
         Rect r(this->screen.rect.cx-240, this->screen.rect.cy- 100, 60, 25);
-        this->draw_button(r, "Logout",
+        this->gd.draw_button(r, "Logout",
             (this->focus_item == FOCUS_ON_LOGOUT)?this->state:BUTTON_STATE_UP,
             this->focus_item == FOCUS_ON_LOGOUT);
-        this->draw_button(r.offset(70,0), "Cancel",
+        this->gd.draw_button(r.offset(70,0), "Cancel",
             (this->focus_item == FOCUS_ON_CANCEL)?this->state:BUTTON_STATE_UP,
             this->focus_item == FOCUS_ON_CANCEL);
-        this->draw_button(r.offset(140,0), "Connect",
+        this->gd.draw_button(r.offset(140,0), "Connect",
             (this->focus_item == FOCUS_ON_CONNECT)?this->state:BUTTON_STATE_UP,
             this->focus_item == FOCUS_ON_CONNECT);
     }
@@ -270,7 +270,7 @@ struct selector_mod : public internal_mod {
 
     void draw(const Rect & clip)
     {
-        this->server_begin_update();
+        this->gd.server_begin_update();
         this->server_set_clip(clip);
 
         this->draw_background();
@@ -278,7 +278,7 @@ struct selector_mod : public internal_mod {
         this->draw_array();
         this->draw_buttons();
 
-        this->server_end_update();
+        this->gd.server_end_update();
     }
 
 };

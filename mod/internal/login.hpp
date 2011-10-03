@@ -70,7 +70,7 @@ struct wab_help : public window
 
                 for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
                     this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
-                    this->mod->server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK);
+                    this->mod->gd.server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK);
                 }
 
                 count++;
@@ -122,9 +122,9 @@ struct wab_login : public window_login
         /* label */
 
         #warning WTF isn't strtok first parameter a const char * ?
-        char username[sizeof(this->mod->get_client_info().username)];
-        memcpy(username, this->mod->get_client_info().username,
-                        sizeof(this->mod->get_client_info().username));
+        char username[sizeof(this->mod->gd.get_client_info().username)];
+        memcpy(username, this->mod->gd.get_client_info().username,
+                        sizeof(this->mod->gd.get_client_info().username));
         const char * target = strtok(username, ":" );
         if (!target){
             target = "";
@@ -253,7 +253,7 @@ struct combo_help : public window
 
                 for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
                     this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
-                    this->mod->server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK);
+                    this->mod->gd.server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK);
                 }
 
                 count++;
@@ -465,7 +465,7 @@ struct login_mod : public internal_mod {
             this->screen.child_list.erase(to_erase);
 
             #warning below inlining of bogus rdp_input_invalidate_clip
-            this->server_begin_update();
+            this->gd.server_begin_update();
             this->screen.draw(this->popup_wnd->rect);
 
             /* notify */
@@ -482,7 +482,7 @@ struct login_mod : public internal_mod {
                 }
             }
 
-            this->server_end_update();
+            this->gd.server_end_update();
 
             delete this->popup_wnd;
             this->popup_wnd = 0;
@@ -493,7 +493,7 @@ struct login_mod : public internal_mod {
     virtual void rdp_input_invalidate(const Rect & rect)
     {
         if (!rect.isempty()) {
-            this->server_begin_update();
+            this->gd.server_begin_update();
             this->screen.draw(rect);
             /* draw any child windows in the area */
             for (size_t i = 0; i < this->nb_windows(); i++) {
@@ -503,7 +503,7 @@ struct login_mod : public internal_mod {
                     b->refresh(r2);
                 }
             }
-            this->server_end_update();
+            this->gd.server_end_update();
         }
     }
 
@@ -521,20 +521,20 @@ struct login_mod : public internal_mod {
                            : this->screen.rect.cy
                            ;
 
-                this->server_begin_update();
+                this->gd.server_begin_update();
                 this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
                 this->dragging_rect.x = dragx - this->draggingdx ;
                 this->dragging_rect.y = dragy - this->draggingdy;
                 this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
-                this->server_end_update();
+                this->gd.server_end_update();
             }
             else {
                 struct Widget *b = this->screen.widget_at_pos(x, y);
                 if (b == 0) { /* if b is null, the movement must be over the screen */
                     b = this->get_screen_wdg();
                 }
-                if (b->pointer != this->current_pointer) {
-                    this->set_pointer(b->pointer);
+                if (b->pointer != this->gd.current_pointer) {
+                    this->gd.set_pointer(b->pointer);
                 }
                 b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), keymap);
                 if (this->button_down) {
@@ -633,10 +633,10 @@ struct login_mod : public internal_mod {
                     Rect r = this->dragging_window->rect;
                     this->dragging_window->rect.x = this->dragging_rect.x;
                     this->dragging_window->rect.y = this->dragging_rect.y;
-                    this->server_begin_update();
+                    this->gd.server_begin_update();
                     this->dragging_window->refresh(r);
                     this->screen.refresh(this->screen.rect.wh());
-                    this->server_end_update();
+                    this->gd.server_end_update();
                     this->dragging_window = 0;
                     this->dragging = 0;
                 }

@@ -39,9 +39,9 @@ struct internal_mod : public client_mod {
     internal_mod(Front & front)
             : client_mod(front),
                 screen(this,
-                 this->get_client_info().width,
-                 this->get_client_info().height,
-                 this->get_client_info().bpp)
+                 this->gd.get_client_info().width,
+                 this->gd.get_client_info().height,
+                 this->gd.get_client_info().bpp)
     {
         /* dragging info */
         this->dragging = 0;
@@ -54,7 +54,7 @@ struct internal_mod : public client_mod {
 
     void server_draw_dragging_rect(const Rect & r, const Rect & clip)
     {
-        this->server_begin_update();
+        this->gd.server_begin_update();
 
         RDPBrush brush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55");
 
@@ -65,15 +65,15 @@ struct internal_mod : public client_mod {
         // 0x88 = and -> pat_blt( ...  0xC0 ...
 
         this->server_set_clip(clip);
-        this->pat_blt(
+        this->gd.pat_blt(
             RDPPatBlt(Rect(r.x, r.y, r.cx, 5), 0x5A, BLACK, WHITE, this->brush));
-        this->pat_blt(
+        this->gd.pat_blt(
             RDPPatBlt(Rect(r.x, r.y + (r.cy - 5), r.cx, 5), 0x5A, BLACK, WHITE, this->brush));
-        this->pat_blt(
+        this->gd.pat_blt(
             RDPPatBlt(Rect(r.x, r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush));
-        this->pat_blt(
+        this->gd.pat_blt(
             RDPPatBlt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush));
-        this->server_end_update();
+        this->gd.server_end_update();
     }
 
 
@@ -89,9 +89,9 @@ struct internal_mod : public client_mod {
 
 
     virtual void front_resize() {
-        this->screen.rect.cx = this->get_client_info().width;
-        this->screen.rect.cy = this->get_client_info().height;
-        this->screen.bpp     = this->get_client_info().bpp;
+        this->screen.rect.cx = this->gd.get_client_info().width;
+        this->screen.rect.cy = this->gd.get_client_info().height;
+        this->screen.bpp     = this->gd.get_client_info().bpp;
     }
 
     Widget * window(int i)

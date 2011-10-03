@@ -39,221 +39,42 @@
 #include "wait_obj.hpp"
 #include "keymap.hpp"
 #include "callback.hpp"
+#include "graphic_device.hpp"
 
-struct client_mod : public Callback {
-    Rect clip;
-    int current_pointer;
-    RDPPen pen;
-    bool clipboard_enable;
-    bool pointer_displayed;
+struct GraphicDeviceMod : public GraphicDevice
+{
     Front & front;
-    int sck;
-    char ip_source[256];
-    int rdp_compression;
-    int bitmap_cache_persist_enable;
+    Capture * capture;
+    Rect clip;
+    RDPPen pen;
+    bool palette_sent;
+    bool palette_memblt_sent[6];
     BGRPalette palette332;
     BGRPalette mod_palette;
+    int current_pointer;
+    uint8_t mod_bpp;
     BGRPalette memblt_mod_palette;
     bool mod_palette_setted;
 
-    uint8_t mod_bpp;
-    uint8_t socket;
 
-    wait_obj * event;
-    int signal;
-    bool palette_sent;
-    bool palette_memblt_sent[6];
-    struct Capture * capture;
+    GraphicDeviceMod(Front & front)
+    : front(front), 
+      capture(NULL), 
+      clip(clip), 
+      palette_sent(false), 
+      mod_palette_setted(0),
+      mod_bpp(24)
 
-    client_mod(Front & front)
-        : front(front),
-          mod_palette_setted(0),
-          mod_bpp(24),
-          signal(0),
-          palette_sent(false),
-          capture(0)
     {
         for (size_t i = 0; i < 6 ; i++){
             this->palette_memblt_sent[i] = false;
         }
         this->current_pointer = 0;
-        this->clip = Rect(0,0,4096,2048);
-        this->pointer_displayed = false;
-
         init_palette332(this->palette332);
+        this->clip = Rect(0,0,4096,2048);
     }
 
-    virtual ~client_mod()
-    {
-        if (this->capture){
-            delete this->capture;
-        }
-    }
-
-    void set_mod_palette(const BGRPalette & palette)
-    {
-        this->mod_palette_setted = true;
-        for (unsigned i = 0; i < 256 ; i++){
-            this->mod_palette[i] = palette[i];
-            this->memblt_mod_palette[i] = RGBtoBGR(palette[i]);
-        }
-    }
-
-    const BGRColor convert(const BGRColor color) const
-    {
-        if (this->get_front_bpp() == 8 && this->mod_bpp == 8){
-//            return ((color >> 5) & 7) |((color << 1) & 0x31)|((color<<6)&0xc0);
-//            this->mod_palette[color]
-            return color;
-        }
-        else{
-            const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
-            return color_encode(color24, this->get_front_bpp());
-        }
-    }
-
-    const BGRColor convert_opaque(const BGRColor color) const
-    {
-        if (this->get_front_bpp() == 8 && this->mod_bpp == 8){
-//            LOG(LOG_INFO, "convert_opaque: front=%u back=%u setted=%u color=%u palette=%.06x", this->get_front_bpp(), this->mod_bpp, this->mod_palette_setted, color, this->mod_palette[color]);
-//            return ((color >> 5) & 7) |((color << 1) & 0x31)|((color<<6)&0xc0);
-//            this->mod_palette[color]
-            return color;
-        }
-        else
-        if (this->mod_bpp == 16 || this->mod_bpp == 15 || this->mod_bpp == 8){
-            const BGRColor color24 = color_decode_opaquerect(
-                        color, this->mod_bpp, this->mod_palette);
-            return  color_encode(color24, this->get_front_bpp());
-        }
-        else {
-            const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
-            return color_encode(color24, this->get_front_bpp());
-        }
-    }
-
-    const BGRColor convert24_opaque(const BGRColor color) const
-    {
-        if (this->mod_bpp == 16 || this->mod_bpp == 15){
-            const BGRColor color24 = color_decode_opaquerect(
-                        color, this->mod_bpp, this->mod_palette);
-            return  color_encode(color24, 24);
-        }
-        else if (this->mod_bpp == 8) {
-            const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
-            return RGBtoBGR(color_encode(color24, 24));
-        }
-        else {
-            const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
-            return color_encode(color24, 24);
-        }
-    }
-
-    const BGRColor convert24(const BGRColor color) const
-    {
-        const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
-        return color_encode(color24, 24);
-    }
-
-    uint32_t convert_to_black(uint32_t color)
-    {
-        return 0; // convert(color);
-    }
-
-    void start_capture(int width, int height, bool flag, char * path,
-                const char * codec_id, const char * quality, int timezone)
-    {
-        this->front.timezone = timezone;
-        if (flag){
-            this->stop_capture();
-            this->capture = new Capture(width, height, 24, path, codec_id, quality);
-        }
-    }
-
-    void stop_capture()
-    {
-        if (this->capture){
-            delete this->capture;
-            this->capture = 0;
-        }
-    }
-
-    void periodic_snapshot(bool pointer_is_displayed)
-    {
-        if (this->capture){
-            this->capture->snapshot(this->front.mouse_x, this->front.mouse_y,
-                    pointer_is_displayed|this->front.nomouse, this->front.notimestamp, this->front.timezone);
-        }
-    }
-
-    // draw_event is run when mod socket received some data (drawing order),
-    // these order could also be auto-generated, say to comply to some refresh.
-
-    // draw_event returns not 0 (return status) when the module finished
-    // (connection to remote or internal server closed)
-    // and returns 0 as long as the connection with server is still active.
-    virtual int draw_event(void) = 0;
-
-    int server_begin_update() {
-        this->front.begin_update();
-        return 0;
-    }
-
-    int server_end_update(){
-        this->front.end_update();
-        return 0;
-    }
-
-    const ClientInfo & get_client_info() const {
-        return this->front.get_client_info();
-    }
-
-    int get_front_bpp() const {
-        return this->get_client_info().bpp;
-    }
-
-    int get_front_width() const {
-        return this->get_client_info().width;
-    }
-
-    int get_front_height() const {
-        return this->get_client_info().height;
-    }
-
-    virtual void front_resize() {
-    }
-
-    const Rect get_front_rect(){
-        return Rect(0, 0, this->get_front_width(), get_front_height());
-    }
-
-    void server_resize(int width, int height, int bpp)
-    {
-        const ClientInfo & client_info = this->get_client_info();
-
-        if (client_info.width != width
-        || client_info.height != height
-        || client_info.bpp != bpp) {
-            /* older client can't resize */
-            if (client_info.build <= 419) {
-                LOG(LOG_ERR, "Resizing is not available on older RDP clients");
-                return;
-            }
-            this->palette_sent = false;
-            for (size_t i = 0; i < 6 ; i++){
-                this->palette_memblt_sent[i] = false;
-            }
-            LOG(LOG_INFO, "// Resizing client to : %d x %d x %d\n", width, height, bpp);
-
-            this->front.set_client_info(width, height, bpp);
-            this->front_resize();
-            this->front.reset();
-        }
-
-        this->server_reset_clip();
-    }
-
-    int text_width(const char * text){
+    virtual int text_width(const char * text){
         int rv = 0;
         if (text) {
             size_t len = mbstowcs(0, text, 0);
@@ -267,7 +88,7 @@ struct client_mod : public Callback {
         return rv;
     }
 
-    int text_height(const char * text){
+    virtual int text_height(const char * text){
         int rv = 0;
         if (text) {
             int len = mbstowcs(0, text, 0);
@@ -282,8 +103,37 @@ struct client_mod : public Callback {
         return rv;
     }
 
+    virtual int server_begin_update() {
+        this->front.begin_update();
+        return 0;
+    }
 
-    void draw_window(const Rect & r, uint32_t bgcolor, const char * caption, bool has_focus){
+    virtual int server_end_update(){
+        this->front.end_update();
+        return 0;
+    }
+
+    virtual const ClientInfo & get_client_info() const {
+        return this->front.get_client_info();
+    }
+
+    virtual int get_front_bpp() const {
+        return this->get_client_info().bpp;
+    }
+
+    virtual int get_front_width() const {
+        return this->get_client_info().width;
+    }
+
+    virtual int get_front_height() const {
+        return this->get_client_info().height;
+    }
+
+    virtual const Rect get_front_rect(){
+        return Rect(0, 0, this->get_front_width(), get_front_height());
+    }
+
+    virtual void draw_window(const Rect & r, uint32_t bgcolor, const char * caption, bool has_focus){
 
         // Window surface and border
         this->opaque_rect(
@@ -311,7 +161,7 @@ struct client_mod : public Callback {
                 has_focus?WHITE:BLACK);
     }
 
-    void draw_combo(const Rect & r, const char * caption, int state, bool has_focus)
+    virtual void draw_combo(const Rect & r, const char * caption, int state, bool has_focus)
     {
         this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, r.cy), GREY));
         this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 3, r.cy - 3), WHITE));
@@ -328,7 +178,7 @@ struct client_mod : public Callback {
         this->draw_button(Rect(r.x + r.cx - 20, r.y + 2, 18, r.cy - 4), "", state, false);
     }
 
-    void draw_button(const Rect & r, const char * caption, int state, bool has_focus){
+    virtual void draw_button(const Rect & r, const char * caption, int state, bool has_focus){
 
         int bevel = (state == BUTTON_STATE_DOWN)?1:0;
 
@@ -377,7 +227,7 @@ struct client_mod : public Callback {
         }
     }
 
-    void draw_edit(const Rect & r, char password_char, char * buffer, size_t edit_pos, bool has_focus){
+    virtual void draw_edit(const Rect & r, char password_char, char * buffer, size_t edit_pos, bool has_focus){
         this->opaque_rect(
             RDPOpaqueRect(r, GREY));
         this->opaque_rect(
@@ -433,7 +283,7 @@ struct client_mod : public Callback {
     }
 
     #warning implementation of the server_draw_text function below is quite broken (a small subset of possibilities is implemented, especially for data). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
-    void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor)
+    virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor)
     {
         setlocale(LC_CTYPE, "fr_FR.UTF-8");
         this->send_global_palette();
@@ -495,7 +345,7 @@ struct client_mod : public Callback {
         delete [] data;
     }
 
-    void opaque_rect(const RDPOpaqueRect & cmd)
+    virtual void opaque_rect(const RDPOpaqueRect & cmd)
     {
         if (!clip.isempty()
         && !clip.intersect(cmd.rect).isempty()){
@@ -514,7 +364,7 @@ struct client_mod : public Callback {
         }
     }
 
-    void scr_blt(const RDPScrBlt & cmd)
+    virtual void scr_blt(const RDPScrBlt & cmd)
     {
         if (!this->clip.isempty()
         && !this->clip.intersect(cmd.rect).isempty()){
@@ -526,7 +376,7 @@ struct client_mod : public Callback {
         }
     }
 
-    void dest_blt(const RDPDestBlt & cmd)
+    virtual void dest_blt(const RDPDestBlt & cmd)
     {
         if (!this->clip.isempty()
         && !this->clip.intersect(cmd.rect).isempty()){
@@ -537,7 +387,7 @@ struct client_mod : public Callback {
         }
     }
 
-    void pat_blt(const RDPPatBlt & cmd)
+    virtual void pat_blt(const RDPPatBlt & cmd)
     {
         if (!this->clip.isempty()
         && !this->clip.intersect(cmd.rect).isempty()){
@@ -573,7 +423,7 @@ struct client_mod : public Callback {
         }
     }
 
-    void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const BGRPalette & palette)
+    virtual void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const BGRPalette & palette)
     {
         uint8_t palette_id = ((memblt.cache_id >> 4) >= 6)?0:(memblt.cache_id >> 4);
 
@@ -635,15 +485,13 @@ struct client_mod : public Callback {
         }
     }
 
-    #warning move out server_set_pen
-    int server_set_pen(int style, int width)
+    virtual void server_set_pen(int style, int width)
     {
         this->pen.style = style;
         this->pen.width = width;
-        return 0;
     }
 
-    void line_to(const RDPLineTo & cmd)
+    virtual void line_to(const RDPLineTo & cmd)
     {
         const uint16_t minx = std::min(cmd.startx, cmd.endx);
         const uint16_t miny = std::min(cmd.starty, cmd.endy);
@@ -669,7 +517,7 @@ struct client_mod : public Callback {
         }
     }
 
-    void glyph_index(const RDPGlyphIndex & cmd)
+    virtual void glyph_index(const RDPGlyphIndex & cmd)
     {
         if (!this->clip.isempty() && !this->clip.intersect(cmd.bk).isempty()){
             this->send_global_palette();
@@ -704,7 +552,7 @@ struct client_mod : public Callback {
         }
     }
 
-    void brush_cache(const int index)
+    virtual void brush_cache(const int index)
     {
         RDPBrushCache cmd(index, 1, 8, 8, 0x81,
             sizeof(this->front.cache.brush_items[index].pattern),
@@ -713,13 +561,13 @@ struct client_mod : public Callback {
     }
 
 
-    void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
+    virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
     {
         RDPColCache cmd(cacheIndex, palette);
         this->front.orders->send(cmd);
     }
 
-    void bitmap_cache(const uint8_t cache_id, const uint16_t cache_idx)
+    virtual void bitmap_cache(const uint8_t cache_id, const uint16_t cache_idx)
     {
         BitmapCacheItem * entry =  this->front.bmp_cache->get_item(cache_id, cache_idx);
 
@@ -732,13 +580,13 @@ struct client_mod : public Callback {
 
     }
 
-    void glyph_cache(const FontChar & font_char, int font_index, int char_index)
+    virtual void glyph_cache(const FontChar & font_char, int font_index, int char_index)
     {
         RDPGlyphCache cmd(font_index, 1, char_index, font_char.offset, font_char.baseline, font_char.width, font_char.height, font_char.data);
         this->front.orders->send(cmd);
     }
 
-    void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy)
+    virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy)
     {
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
@@ -794,13 +642,13 @@ struct client_mod : public Callback {
         }
     }
 
-    void set_pointer(int cache_idx)
+    virtual void set_pointer(int cache_idx)
     {
         this->front.set_pointer(cache_idx);
         this->current_pointer = cache_idx;
     }
 
-    void send_global_palette()
+    virtual void send_global_palette()
     {
         if (!this->palette_sent && (this->get_front_bpp() == 8)){
             if (this->mod_bpp == 8){
@@ -813,7 +661,7 @@ struct client_mod : public Callback {
         }
     }
 
-    void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
+    virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
     {
         int cacheidx = 0;
         switch (this->front.cache.add_pointer(data, mask, x, y, cacheidx)){
@@ -827,6 +675,171 @@ struct client_mod : public Callback {
         }
     }
 
+    virtual void set_mod_palette(const BGRPalette & palette)
+    {
+        this->mod_palette_setted = true;
+        for (unsigned i = 0; i < 256 ; i++){
+            this->mod_palette[i] = palette[i];
+            this->memblt_mod_palette[i] = RGBtoBGR(palette[i]);
+        }
+    }
+
+    virtual const BGRColor convert(const BGRColor color) const
+    {
+        if (this->get_front_bpp() == 8 && this->mod_bpp == 8){
+//            return ((color >> 5) & 7) |((color << 1) & 0x31)|((color<<6)&0xc0);
+//            this->mod_palette[color]
+            return color;
+        }
+        else{
+            const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
+            return color_encode(color24, this->get_front_bpp());
+        }
+    }
+
+    virtual const BGRColor convert_opaque(const BGRColor color) const
+    {
+        if (this->get_front_bpp() == 8 && this->mod_bpp == 8){
+//            LOG(LOG_INFO, "convert_opaque: front=%u back=%u setted=%u color=%u palette=%.06x", this->get_front_bpp(), this->mod_bpp, this->mod_palette_setted, color, this->mod_palette[color]);
+//            return ((color >> 5) & 7) |((color << 1) & 0x31)|((color<<6)&0xc0);
+//            this->mod_palette[color]
+            return color;
+        }
+        else
+        if (this->mod_bpp == 16 || this->mod_bpp == 15 || this->mod_bpp == 8){
+            const BGRColor color24 = color_decode_opaquerect(
+                        color, this->mod_bpp, this->mod_palette);
+            return  color_encode(color24, this->get_front_bpp());
+        }
+        else {
+            const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
+            return color_encode(color24, this->get_front_bpp());
+        }
+    }
+
+    virtual const BGRColor convert24_opaque(const BGRColor color) const
+    {
+        if (this->mod_bpp == 16 || this->mod_bpp == 15){
+            const BGRColor color24 = color_decode_opaquerect(
+                        color, this->mod_bpp, this->mod_palette);
+            return  color_encode(color24, 24);
+        }
+        else if (this->mod_bpp == 8) {
+            const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
+            return RGBtoBGR(color_encode(color24, 24));
+        }
+        else {
+            const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
+            return color_encode(color24, 24);
+        }
+    }
+
+    virtual const BGRColor convert24(const BGRColor color) const
+    {
+        const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
+        return color_encode(color24, 24);
+    }
+
+    virtual uint32_t convert_to_black(uint32_t color)
+    {
+        return 0; // convert(color);
+    }
+
+
+};
+
+
+struct client_mod : public Callback {
+    GraphicDeviceMod gd;
+
+    bool clipboard_enable;
+    bool pointer_displayed;
+    int sck;
+    char ip_source[256];
+    int rdp_compression;
+    int bitmap_cache_persist_enable;
+    uint8_t socket;
+
+    wait_obj * event;
+    int signal;
+
+    client_mod(Front & front)
+        : gd(front),
+          signal(0)    {
+        this->pointer_displayed = false;
+
+    }
+
+    virtual ~client_mod()
+    {
+        if (this->gd.capture){
+            delete this->gd.capture;
+        }
+    }
+
+    void start_capture(int width, int height, bool flag, char * path,
+                const char * codec_id, const char * quality, int timezone)
+    {
+        this->gd.front.timezone = timezone;
+        if (flag){
+            this->stop_capture();
+            this->gd.capture = new Capture(width, height, 24, path, codec_id, quality);
+        }
+    }
+
+    void stop_capture()
+    {
+        if (this->gd.capture){
+            delete this->gd.capture;
+            this->gd.capture = 0;
+        }
+    }
+
+    void periodic_snapshot(bool pointer_is_displayed)
+    {
+        if (this->gd.capture){
+            this->gd.capture->snapshot(this->gd.front.mouse_x, this->gd.front.mouse_y,
+                    pointer_is_displayed|this->gd.front.nomouse, this->gd.front.notimestamp, this->gd.front.timezone);
+        }
+    }
+
+    // draw_event is run when mod socket received some data (drawing order),
+    // these order could also be auto-generated, say to comply to some refresh.
+
+    // draw_event returns not 0 (return status) when the module finished
+    // (connection to remote or internal server closed)
+    // and returns 0 as long as the connection with server is still active.
+    virtual int draw_event(void) = 0;
+
+    virtual void front_resize() {
+    }
+
+    void server_resize(int width, int height, int bpp)
+    {
+        const ClientInfo & client_info = this->gd.get_client_info();
+
+        if (client_info.width != width
+        || client_info.height != height
+        || client_info.bpp != bpp) {
+            /* older client can't resize */
+            if (client_info.build <= 419) {
+                LOG(LOG_ERR, "Resizing is not available on older RDP clients");
+                return;
+            }
+            this->gd.palette_sent = false;
+            for (size_t i = 0; i < 6 ; i++){
+                this->gd.palette_memblt_sent[i] = false;
+            }
+            LOG(LOG_INFO, "// Resizing client to : %d x %d x %d\n", width, height, bpp);
+
+            this->gd.front.set_client_info(width, height, bpp);
+            this->front_resize();
+            this->gd.front.reset();
+        }
+
+        this->server_reset_clip();
+    }
+
     int server_is_term()
     {
         return g_is_term();
@@ -834,12 +847,12 @@ struct client_mod : public Callback {
 
     void server_set_clip(const Rect & rect)
     {
-        this->clip = rect;
+        this->gd.clip = rect;
     }
 
     void server_reset_clip()
     {
-        this->clip = this->get_front_rect();
+        this->gd.clip = this->gd.get_front_rect();
     }
 
     void server_add_char(int font, int character,
@@ -848,16 +861,16 @@ struct client_mod : public Callback {
     {
         struct FontChar fi(offset, baseline, width, height, 0);
         memcpy(fi.data, data, fi.datasize());
-        this->glyph_cache(fi, font, character);
+        this->gd.glyph_cache(fi, font, character);
     }
 
     void server_send_to_channel_mod(const McsChannelItem & channel, uint8_t* data, int length, int flags)
     {
-        for (size_t index = 0; index < this->front.get_channel_list().size(); index++){
-            const McsChannelItem & front_channel_item = this->front.get_channel_list()[index];
+        for (size_t index = 0; index < this->gd.front.get_channel_list().size(); index++){
+            const McsChannelItem & front_channel_item = this->gd.front.get_channel_list()[index];
             if (strcmp(channel.name, front_channel_item.name) == 0){
 //                LOG(LOG_INFO, "found front channel chanid=%u flags=%x [channel_flags=%x] name=%s", front_channel_item.chanid, flags, front_channel_item.flags, front_channel_item.name);
-                this->front.send_to_channel(front_channel_item, data, length, flags);
+                this->gd.front.send_to_channel(front_channel_item, data, length, flags);
                 break;
             }
         }

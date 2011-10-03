@@ -110,7 +110,7 @@ struct close_mod : public internal_mod {
     virtual void rdp_input_invalidate(const Rect & rect)
     {
         if (!rect.isempty()) {
-            this->server_begin_update();
+            this->gd.server_begin_update();
             Rect & r = this->screen.rect;
             this->screen.draw(r);
 
@@ -119,12 +119,12 @@ struct close_mod : public internal_mod {
                 Widget *b = this->window(i);
                 Rect r2 = rect.intersect(b->rect.wh());
                 if (!r2.isempty()) {
-                    this->server_begin_update();
+                    this->gd.server_begin_update();
                     b->refresh(r2);
-                    this->server_end_update();
+                    this->gd.server_end_update();
                 }
             }
-            this->server_end_update();
+            this->gd.server_end_update();
         }
     }
 
@@ -142,20 +142,20 @@ struct close_mod : public internal_mod {
                            : this->screen.rect.cy
                            ;
 
-                this->server_begin_update();
+                this->gd.server_begin_update();
                 this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
                 this->dragging_rect.x = dragx - this->draggingdx ;
                 this->dragging_rect.y = dragy - this->draggingdy;
                 this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
-                this->server_end_update();
+                this->gd.server_end_update();
             }
             else {
                 struct Widget *b = this->screen.widget_at_pos(x, y);
                 if (b == 0) { /* if b is null, the movement must be over the screen */
                     b = this->get_screen_wdg();
                 }
-                if (b->pointer != this->current_pointer) {
-                    this->set_pointer(b->pointer);
+                if (b->pointer != this->gd.current_pointer) {
+                    this->gd.set_pointer(b->pointer);
                 }
                 b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), keymap);
                 if (this->button_down) {
@@ -166,8 +166,8 @@ struct close_mod : public internal_mod {
                     b->notify(&b->parent, 2, x, y);
                 }
             }
-            this->front.mouse_x = x;
-            this->front.mouse_y = y;
+            this->gd.front.mouse_x = x;
+            this->gd.front.mouse_y = y;
 
         }
 
@@ -226,9 +226,9 @@ struct close_mod : public internal_mod {
                     Rect r = this->dragging_window->rect;
                     this->dragging_window->rect.x = this->dragging_rect.x;
                     this->dragging_window->rect.y = this->dragging_rect.y;
-                    this->server_begin_update();
+                    this->gd.server_begin_update();
                     this->dragging_window->refresh(r);
-                    this->server_end_update();
+                    this->gd.server_end_update();
                     this->screen.refresh(this->screen.rect.wh());
                     this->dragging_window = 0;
                     this->dragging = 0;
