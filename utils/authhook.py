@@ -6,7 +6,60 @@ from socket import error
 from struct    import unpack
 from struct    import pack
 
+class User(object):
+    def __init__(self, name, password, services = None, messages = None, rec_path = None):
+        self.name = name
+        self.password = password
+        if messages is None:
+            self.messages = []
+        self.rec_path = rec_path
+        self.services = services if services else []
 
+    def add(self, service):
+        self.services.append(service)
+
+    def get_service(self, dic):
+        answer = {}
+        if len(self.services) == 1:
+            # Authenticated user only has access to one service, connect to it immediately
+            service = self.services[0]
+            answer['target_device'] = service.device
+            answer['proto_login'] = service.login
+            answer['target_password'] = service.password
+            answer['proto_dest'] = service.protocol
+            answer['target_port'] = service.port
+        else:
+            _device = dic.get('target_device')
+            _login = dic.get('target_login')
+            _selector = dic.get('selector')
+            if (_device and _device[:3] != 'ASK' and _login and _login[:3] != 'ASK'):
+                for service in self.services:
+                    print("Testing target %s@%s in %s@%s" % (_login, _device, service.login, service.device))
+                    if (service.login == _login and service.device == _device):
+                        print("Target found %s@%s" % (_login, _device))
+                        answer['target_password'] = service.password
+                        answer['proto_dest'] = service.protocol
+                        answer['target_port'] = service.port
+                        break
+                else:
+                    if (_selector == 'ASK'):
+                        answer['proto_dest'] = 'INTERNAL'
+                        answer['target_device'] = 'selector'
+                    else:
+                        answer['login'] = 'ASK'
+                        answer['password'] = 'ASK'
+                        answer['target_device'] = 'ASK'
+                        answer['target_login'] = 'ASK'
+        return answer
+
+class Service(object):
+    def __init__(self, name, device, login, password, protocol, port):
+        self.name = name
+        self.device = device
+        self.login = login
+        self.password = password
+        self.protocol = protocol
+        self.port = port
 
 class Authentifier(object):
     # we should just transmit some kind of salted hash to get something
@@ -14,174 +67,120 @@ class Authentifier(object):
     # protocol is just supposed to be used locally on a secure system.
     # It will certainly change to something stronger to avoid storing passwords
     # at all. Comparing hashes is enough anyway.
-    passwords = {
-        'w2008': 'w2008',
-        'w7': 'w7',
-        'w2000': 'w2000',
-        'xp': 'xp',
-        'v' : 'v',
-        'vnc' : 'vnc',
-        'vnc2' : 'vnc2',
-        'n' : 'n',
-        'cgr' : 'cgr',
-        'bouncer' : 'bouncer',
-        'test' : 'test',
-        'message' : 'message',
-        'card' : 'card',
-        'loop' : 'loop',
-        'selector' : 'selector',
-        'looop' : 'looop',
-        'error_invalid' : 'error_invalid'
-    }
-    targets = {
-        'w2008' : {
-            'proxy_type': 'RDP',
-            'target_login' : r'qa\administrateur',
-            'target_device' : '10.10.14.78',
-            'target_password' : 'S3cur3!1nux',
-            'proto_dest': 'RDP',
-            'target_port':'3389',
-            'is_rec' : 'true',
-            'rec_path':'/tmp/trace2008.cpp',
-            'authenticated':'true'
-        },
-        'w7' : {
-            'proxy_type': 'RDP',
-            'target_login' : r'qa\administrateur',
-            'target_device' : '10.10.14.77',
-            'target_password' : 'S3cur3!1nux',
-            'proto_dest': 'RDP',
-            'target_port':'3389',
-            'is_rec' : 'true',
-            'rec_path':'/tmp/tracew7.cpp',
-            'authenticated':'true',
-        },
-        'w2000' : {
-            'proxy_type': 'RDP',
-            'target_login' : r'administrateur',
-            'target_device' : '10.10.14.64',
-            'target_password' : 'SecureLinux',
-            'proto_dest': 'RDP',
-            'target_port':'3389',
-            'authenticated':'true'
-        },
-        'xp' : {
-            'proxy_type': 'RDP',
-            'target_login' : r'qa\administrateur',
-            'target_device' : '10.10.14.111',
-            'target_password' : 'S3cur3!1nux',
-            'proto_dest': 'RDP',
-            'target_port':'3389',
-            'is_rec':'True',
-            'rec_path':'/tmp/tracexp.cpp',
-            'authenticated':'true'
-        },
-        'bouncer' : {
-            'proxy_type': 'RDP',
-            'target_device' : 'bouncer2',
-            'proto_dest': 'INTERNAL',
-            'authenticated':'true'
-        },
-        'test' : {
-            'proxy_type': 'RDP',
-            'target_device' : 'test',
-            'proto_dest': 'INTERNAL',
-            'authenticated':'true',
-        },
-        'message' : {
-            'proxy_type': 'RDP',
-            'target_device' : 'test_card',
-            'display_message' : 'ASK',
-            'message' : 'Hello, World',
-            'proto_dest': 'INTERNAL',
-            'is_rec':'False',
-            'authenticated':'true'
-        },
-        'card' : {
-            'proxy_type': 'RDP',
-            'target_device' : 'test_card',
-            'proto_dest': 'INTERNAL',
-            'is_rec':'True',
-            'rec_path':'/tmp/test_card.cpp',
-        },
-        'selector' : {
-            'proxy_type': 'RDP',
-            'target_device' : 'selector',
-            'proto_dest': 'INTERNAL',
-            'authenticated':'true',
-
-        },
-        'n' : {
-            'proxy_type': 'RDP',
-            'target_login' : r'vnc',
-            'target_device' : '10.10.4.13',
-            'target_password' : 'silver',
-            'target_port':'5901',
-            'proto_dest': 'VNC',
-            'is_rec':'True',
-            'rec_path':'/tmp/vnctest.cpp',
-        },
-        'vnc' : {
-            'proxy_type': 'RDP',
-            'target_login' : r'vnc',
-            'target_device' : '10.10.3.141',
-            'target_password' : 'SecureLinux',
-            'target_port':'5900',
-            'proto_dest': 'VNC',
-            'is_rec':'True',
-            'rec_path':'/tmp/vnctest.cpp',
-        },
-        'vnc2' : {
-            'proxy_type': 'RDP',
-            'target_login' : r'vnc',
-            'target_device' : '10.10.3.103',
-            'target_password' : 'SecureLinux',
-            'target_port':'5900',
-            'proto_dest': 'VNC',
-            'is_rec':'True',
-            'rec_path':'/tmp/vnctest.cpp',
-        },
-        'v' : {
-            'proxy_type': 'RDP',
-            'target_login' : r'vnc',
-            'target_device' : '192.168.1.28',
-            'target_password' : 'secure',
-            'target_port':'5900',
-            'proto_dest': 'VNC'
-        },
-        'cgr' : {
-            'proxy_type': 'RDP',
-            'target_login' : r'vnc',
-            'target_device' : '10.10.4.13',
-            'target_password' : 'secure',
-            'target_port':'5901',
-            'proto_dest': 'VNC'
-        },
-        'loop' : {
-            'proxy_type': 'RDP',
-            'target_login' : r'card',
-            'target_device' : '127.0.0.1',
-            'target_password' : 'card',
-            'target_port':'3389',
-            'proto_dest': 'RDP'
-        },
-        'looop' : {
-            'proxy_type': 'RDP',
-            'target_login' : r'loop',
-            'target_device' : '127.0.0.1',
-            'target_password' : 'loop',
-            'target_port':'3389',
-            'proto_dest': 'RDP'
-        },
-        'error_invalid' : {
-            'target_device': "10.10.3.54" ,
-            'target_login': "administrateur",
-            'authenticated': 'False',
-            'rejected':"Invalid IP Source"}
-    }
-
-    def __init__(self, sck):
+    def __init__(self, sck, users):
         self.sck = sck
+        self.users = users
+        self.dic = {'login':'ASK', 'password':'ASK'}
+
+#    passwords = {
+#        'v' : 'v',
+#        'vnc' : 'vnc',
+#        'vnc2' : 'vnc2',
+#        'n' : 'n',
+#        'cgr' : 'cgr',
+#        'bouncer' : 'bouncer',
+#        'test' : 'test',
+#        'message' : 'message',
+#        'card' : 'card',
+#        'loop' : 'loop',
+#        'selector' : 'selector',
+#        'looop' : 'looop',
+#        'error_invalid' : 'error_invalid'
+#    }
+#        'message' : {
+#            'proxy_type': 'RDP',
+#            'target_device' : 'test_card',
+#            'display_message' : 'ASK',
+#            'message' : 'Hello, World',
+#            'proto_dest': 'INTERNAL',
+#            'is_rec':'False',
+#            'authenticated':'true'
+#        },
+#        'card' : {
+#            'proxy_type': 'RDP',
+#            'target_device' : 'test_card',
+#            'proto_dest': 'INTERNAL',
+#            'is_rec':'True',
+#            'rec_path':'/tmp/test_card.cpp',
+#        },
+#        'selector' : {
+#            'proxy_type': 'RDP',
+#            'target_device' : 'selector',
+#            'proto_dest': 'INTERNAL',
+#            'authenticated':'true',
+
+#        },
+#        'n' : {
+#            'proxy_type': 'RDP',
+#            'target_login' : r'vnc',
+#            'target_device' : '10.10.4.13',
+#            'target_password' : 'silver',
+#            'target_port':'5901',
+#            'proto_dest': 'VNC',
+#            'is_rec':'True',
+#            'rec_path':'/tmp/vnctest.cpp',
+#        },
+#        'vnc' : {
+#            'proxy_type': 'RDP',
+#            'target_login' : r'vnc',
+#            'target_device' : '10.10.3.141',
+#            'target_password' : 'SecureLinux',
+#            'target_port':'5900',
+#            'proto_dest': 'VNC',
+#            'is_rec':'True',
+#            'rec_path':'/tmp/vnctest.cpp',
+#        },
+#        'vnc2' : {
+#            'proxy_type': 'RDP',
+#            'target_login' : r'vnc',
+#            'target_device' : '10.10.3.103',
+#            'target_password' : 'SecureLinux',
+#            'target_port':'5900',
+#            'proto_dest': 'VNC',
+#            'is_rec':'True',
+#            'rec_path':'/tmp/vnctest.cpp',
+#        },
+#        'v' : {
+#            'proxy_type': 'RDP',
+#            'target_login' : r'vnc',
+#            'target_device' : '192.168.1.28',
+#            'target_password' : 'secure',
+#            'target_port':'5900',
+#            'proto_dest': 'VNC'
+#        },
+#        'cgr' : {
+#            'proxy_type': 'RDP',
+#            'target_login' : r'vnc',
+#            'target_device' : '10.10.4.13',
+#            'target_password' : 'secure',
+#            'target_port':'5901',
+#            'proto_dest': 'VNC'
+#        },
+#        'loop' : {
+#            'proxy_type': 'RDP',
+#            'target_login' : r'card',
+#            'target_device' : '127.0.0.1',
+#            'target_password' : 'card',
+#            'target_port':'3389',
+#            'proto_dest': 'RDP'
+#        },
+#        'looop' : {
+#            'proxy_type': 'RDP',
+#            'target_login' : r'loop',
+#            'target_device' : '127.0.0.1',
+#            'target_password' : 'loop',
+#            'target_port':'3389',
+#            'proto_dest': 'RDP'
+#        },
+#        'error_invalid' : {
+#            'target_device': "10.10.3.54" ,
+#            'target_login': "administrateur",
+#            'authenticated': 'False',
+#            'rejected':"Invalid IP Source"}
+#    }
+
+#    def __init__(self, sck):
+#        self.sck = sck
 
     def read(self):
         print("Reading")
@@ -195,28 +194,29 @@ class Authentifier(object):
             return False
 
         p = iter(_data.split('\n'))
-        self.dic = dict((x, y) for x, y in zip(p, p) if (x[:6] != 'trans_'))
-
+        self.dic.update(dict((x, y) for x, y in zip(p, p) if (x[:6] != 'trans_')))
         print(self.dic)
-        _login = self.dic.get('login')
-        if _login:
-            _password = self.dic.get('password')
-            if _password and self.passwords.get(_login) == _password:
-                print("Password OK")
-                if _login[:5] == 'error':
-                    self.dic = self.targets.get(_login, {})
-                else:
-                    d = self.targets.get(_login, {})
-                    print "---------- %s" % d
-                    if self.dic.get('display_message', 'ASK') == 'True':
-                        self.dic.update(d)
-                        self.dic['display_message'] = 'True'
 
-                    else:
-                        self.dic.update(d)
-            else:
-                print("Wrong Password")
-                self.dic = {'login' : 'ASK' }
+
+        answer = {'authenticated': 'false'}
+        _login = self.dic.get('login')
+        for user in self.users:
+            if user.name == _login:
+                _password = self.dic.get('password')
+                if _password and user.password == _password:
+                    answer['authenticated'] = 'true'
+                    print("Password OK for user %s" % user.name)
+                else:
+                    answer['authenticated'] = 'false'
+                    answer['login'] = 'ASK'
+                    answer['password'] = 'ASK'
+                    print("Wrong Password for user %s" % user.name)
+                break
+
+        if answer['authenticated'] == 'true':
+            answer.update(user.get_service(self.dic))
+
+        self.dic.update(answer)
         self.send()
         return True
 
@@ -235,6 +235,23 @@ server.listen(5)
 wsockets = []
 manager ={}
 
+users = [
+    User('x', 'x', [
+        Service('xp', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
+        Service('w2008', '10.10.14.78', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
+        Service('w7', '10.10.14.77', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
+        Service('w2000', '10.10.14.64', r'administrateur', 'SecureLinux', 'RDP', '3389'),
+        Service('Bouncer', 'bouncer2', 'internal', 'internal', 'INTERNAL', ''),
+        Service('Card', 'test_card', 'internal', 'internal', 'INTERNAL', '')]),
+    User('bouncer', 'bouncer', [
+        Service('Bouncer', 'bouncer2', 'internal', 'internal', 'INTERNAL', '')]),
+    User('selector', 'selector', [
+        Service('Selector', 'selector', 'internal', 'internal', 'INTERNAL', '')])
+]
+
+#            'is_rec' : 'true',
+#            'rec_path':'/tmp/trace2008.cpp',
+
 while 1:
     rsockets = [server]+manager.keys()
     rfds, wfds, xfds = select.select(rsockets, [], [], 1)
@@ -243,8 +260,8 @@ while 1:
         if s == server:
             (sck, address) = server.accept()
             rsockets.append(sck)
-            manager[sck] = Authentifier(sck)
             print("Accepting connection\n")
+            manager[sck] = Authentifier(sck, users)
         else:
             if not manager[s].read():
                 del manager[s]
