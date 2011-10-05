@@ -30,16 +30,12 @@
 struct selector_mod : public internal_mod {
     struct TargetDevice {
         char group[256];
-        char account[256];
-        char device[256];
-        char password[256];
+        char target[256];
         char protocol[256];
         char endtime[256];
         TargetDevice(){
             this->group[0] = 0;
-            this->account[0] = 0;
-            this->device[0] = 0;
-            this->password[0] = 0;
+            this->target[0] = 0;
             this->protocol[0] = 0;
             this->endtime[0] = 0;
         }
@@ -87,19 +83,45 @@ struct selector_mod : public internal_mod {
         this->color[0] = RED;
         this->color[1] = GREEN;
         this->color[2] = BLUE;
-        strcpy(this->grid[0].group, "windows");
-        strcpy(this->grid[0].account, "qa\\administrateur");
-        strcpy(this->grid[0].device, "10.10.14.78");
-        strcpy(this->grid[0].password, "S3cur3!1nux");
-        strcpy(this->grid[0].protocol, "RDP");
-        strcpy(this->grid[0].endtime, "-");
 
-        strcpy(this->grid[1].group, "windows");
-        strcpy(this->grid[1].account, "administrateur");
-        strcpy(this->grid[1].device, "10.10.14.64");
-        strcpy(this->grid[1].password, "SecureLinux");
-        strcpy(this->grid[1].protocol, "RDP");
-        strcpy(this->grid[1].endtime, "-");
+        const char * groups = context.get(STRAUTHID_TARGET_USER);
+        const char * targets = context.get(STRAUTHID_TARGET_DEVICE);
+        for (size_t index = 0 ; index < 50 ; index++){
+            this->grid[index].group[0] = 0;
+            this->grid[index].target[0] = 0;
+            this->grid[index].protocol[0] = 0;
+            this->grid[index].endtime[0] = 0;
+        }
+
+        for (size_t index = 0 ; index < 50 ; index++){
+            const char * pg = groups;
+            while (*pg != ' ' && *pg != '\n' && *pg){
+                pg++;
+            }
+            memcpy(this->grid[index].group, groups, pg-groups);
+            this->grid[index].group[pg-groups] = 0;
+            groups = pg;
+
+            const char * pd = targets;
+            while (*pd != ' ' && *pd != '\n' && *pd){
+                pd++;
+            }
+            memcpy(this->grid[index].target, targets, pd-targets);
+            this->grid[index].target[pd-targets] = 0;
+            targets = pd;
+
+            strcpy(this->grid[index].protocol, "RDP");
+            strcpy(this->grid[index].endtime, "-");
+
+            LOG(LOG_INFO, "%u: group=%s target=%s", index, this->grid[index].group, this->grid[index].target);
+
+            if (*pd == '\n' || !*pd ||*pg == '\n' || !*pg){
+                break;
+            }
+
+            groups++;
+            targets++;
+        }
 
         this->event = event;
         this->event->set();
@@ -132,10 +154,11 @@ struct selector_mod : public internal_mod {
                     this->state = BUTTON_STATE_UP;
                     if (this->focus_item == FOCUS_ON_CONNECT){
                         LOG(LOG_INFO, "Connect");
-                        this->context.cpy(STRAUTHID_AUTH_USER, "w2008");
-                        this->context.cpy(STRAUTHID_PASSWORD, "w2008");
-                        this->context.cpy(STRAUTHID_TARGET_DEVICE, "10.10.14.78");
-                        this->context.cpy(STRAUTHID_TARGET_USER, "qa\\administrateur");
+                        char buffer[1024];
+                        sprintf(buffer, "%s:%s",
+                            this->grid[this->focus_line].target,
+                            this->context.get(STRAUTHID_AUTH_USER));
+                        this->context.parse_username(buffer);
                         this->signal = 2;
                     }
                     this->event->set();
@@ -187,7 +210,10 @@ struct selector_mod : public internal_mod {
     }
 
     void draw_login(){
-        this->gd.server_draw_text(30, 30, "Current user: cgr@10.10.4.13", GREY, BLACK);
+        char buffer[256];
+        buffer[0] = 0;
+        sprintf(buffer, "%s@%s", this->context.get(STRAUTHID_AUTH_USER), this->context.get(STRAUTHID_HOST));
+        this->gd.server_draw_text(30, 30, buffer, GREY, BLACK);
     }
 
     size_t nblines(){
@@ -216,13 +242,9 @@ struct selector_mod : public internal_mod {
                 c = this->color[2];
             }
             this->gd.opaque_rect(RDPOpaqueRect(rect, c));
+            LOG(LOG_INFO, "line=%u group=%s target=%s", line, this->grid[line].group, this->grid[line].target);
             this->gd.server_draw_text(35       , rect.y + 2,  this->grid[line].group, c, BLACK);
-            char buffer[256];
-            buffer[0] = 0;
-            if (this->grid[line].account[0] && this->grid[line].device[0]){
-                sprintf(buffer, "%s@%s", this->grid[line].account, this->grid[line].device );
-            }
-            this->gd.server_draw_text(35 +  3*w, rect.y + 2,  buffer, c, BLACK);
+            this->gd.server_draw_text(35 +  3*w, rect.y + 2,  this->grid[line].target, c, BLACK);
             this->gd.server_draw_text(35 + 13*w, rect.y + 2,  this->grid[line].protocol, c, BLACK);
             this->gd.server_draw_text(35 + 16*w, rect.y + 2,  this->grid[line].endtime, c, BLACK);
         }

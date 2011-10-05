@@ -29,27 +29,56 @@ class User(object):
             answer['proto_dest'] = service.protocol
             answer['target_port'] = service.port
         else:
+            _selector = dic.get('selector')
             _device = dic.get('target_device')
             _login = dic.get('target_login')
-            _selector = dic.get('selector')
             if (_device and _device[:3] != 'ASK' and _login and _login[:3] != 'ASK'):
                 for service in self.services:
                     print("Testing target %s@%s in %s@%s" % (_login, _device, service.login, service.device))
                     if (service.login == _login and service.device == _device):
                         print("Target found %s@%s" % (_login, _device))
+                        answer['selector'] = 'false'
                         answer['target_password'] = service.password
                         answer['proto_dest'] = service.protocol
                         answer['target_port'] = service.port
                         break
                 else:
                     if (_selector == 'ASK'):
-                        answer['proto_dest'] = 'INTERNAL'
-                        answer['target_device'] = 'selector'
+                        answer['selector'] = 'true'
+                        all_services = []
+                        all_groups = []
+                        all_protos = []
+                        all_endtimes = []
+                        for service in self.services:
+                            all_services.append("%s@%s" %(service.login, service.device))
+                            all_groups.append(service.protocol.lower())
+                            all_protos.append(service.protocol)
+                            all_endtimes.append("-")
+                        answer['proto_dest'] = " ".join(all_protos)
+                        answer['endtime'] = " ".join(all_endtimes)
+                        answer['target_login'] = " ".join(all_groups)
+                        answer['target_device'] = " ".join(all_services)
                     else:
                         answer['login'] = 'ASK'
                         answer['password'] = 'ASK'
                         answer['target_device'] = 'ASK'
                         answer['target_login'] = 'ASK'
+            else:
+                answer['selector'] = 'true'
+                all_services = []
+                all_groups = []
+                all_protos = []
+                all_endtimes = []
+                for service in self.services:
+                    all_services.append("%s@%s" %(service.login, service.device))
+                    all_groups.append(service.protocol.lower())
+                    all_protos.append(service.protocol)
+                    all_endtimes.append("-")
+                answer['proto_dest'] = " ".join(all_protos)
+                answer['endtime'] = " ".join(all_endtimes)
+                answer['target_login'] = " ".join(all_groups)
+                answer['target_device'] = " ".join(all_services)
+
         return answer
 
 class Service(object):

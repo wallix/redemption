@@ -284,6 +284,7 @@ class SessionManager {
         default:
             LOG(LOG_INFO, "Entry, ask first credentials");
             next_state = this->ask_next_module_remote(auth_host, auth_port);
+        break;
         case MOD_STATE_DONE_SELECTOR:
             LOG(LOG_INFO, "return from selector\n");
             next_state = this->ask_next_module_remote(auth_host, auth_port);
@@ -328,17 +329,19 @@ class SessionManager {
                 this->context.nextmod = ModContext::INTERNAL_LOGIN;
                 this->mod_state = MOD_STATE_DONE_LOGIN;
             }
-            else if (this->context.is_asked(STRAUTHID_TARGET_DEVICE)
-            || this->context.is_asked(STRAUTHID_TARGET_USER)){
+            else if (!this->context.is_asked(STRAUTHID_SELECTOR)
+                 &&   this->context.get_bool(STRAUTHID_SELECTOR)
+                 &&  !this->context.is_asked(STRAUTHID_TARGET_DEVICE)
+                 &&  !this->context.is_asked(STRAUTHID_TARGET_USER)){
                 next_state = MCTX_STATUS_INTERNAL;
-                if (this->context.get_bool(STRAUTHID_SELECTOR)){
-                    this->context.nextmod = ModContext::INTERNAL_SELECTOR;
-                    this->mod_state = MOD_STATE_DONE_SELECTOR;
-                }
-                else {
+                this->context.nextmod = ModContext::INTERNAL_SELECTOR;
+                this->mod_state = MOD_STATE_DONE_SELECTOR;
+            }
+            else if (this->context.is_asked(STRAUTHID_TARGET_DEVICE)
+                 ||  this->context.is_asked(STRAUTHID_TARGET_USER)){
+                    next_state = MCTX_STATUS_INTERNAL;
                     this->context.nextmod = ModContext::INTERNAL_LOGIN;
                     this->mod_state = MOD_STATE_DONE_LOGIN;
-                }
             }
             else if (this->context.is_asked(STRAUTHID_DISPLAY_MESSAGE)){
                 next_state = MCTX_STATUS_INTERNAL;

@@ -105,6 +105,9 @@ struct ModContext : public Dico {
             char * target_user = this->get(STRAUTHID_TARGET_USER);
             char * target_device = this->get(STRAUTHID_TARGET_DEVICE);
             char * auth_user = this->get(STRAUTHID_AUTH_USER);
+            char * selector = this->get(STRAUTHID_SELECTOR);
+            #warning we should not perform direct copy to protocol layer, but use dico API. Here and for parsing target and user name, not doing it could cause strange behaviors (because of the ASK special case)
+            strcpy(selector, "ASK");
 
             for (unsigned i = 0; i < 255 && (c = username[i]); i++){
                 switch (state) {
