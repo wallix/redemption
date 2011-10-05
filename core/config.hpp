@@ -42,6 +42,7 @@ typedef enum{
     AUTHID_TARGET_DEVICE,   // target_device
     AUTHID_TARGET_PORT,     // target_port
     AUTHID_TARGET_PROTOCOL, // proto_dest
+    AUTHID_END_TIME, // end time as text
     AUTHID_REJECTED,        // rejected
     AUTHID_OPT_MOVIE,       // is_rec
     AUTHID_OPT_MOVIE_PATH,  // rec_path
@@ -91,6 +92,7 @@ typedef enum{
 #define STRAUTHID_TARGET_DEVICE    "target_device"
 #define STRAUTHID_TARGET_PORT      "target_port"
 #define STRAUTHID_TARGET_PROTOCOL  "proto_dest"
+#define STRAUTHID_END_TIME         "end_time"
 #define STRAUTHID_REJECTED         "rejected"
 #define STRAUTHID_OPT_MOVIE        "is_rec"
 #define STRAUTHID_OPT_MOVIE_PATH   "rec_path"

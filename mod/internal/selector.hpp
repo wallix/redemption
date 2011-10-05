@@ -94,6 +94,9 @@ struct selector_mod : public internal_mod {
 
         const char * groups = context.get(STRAUTHID_TARGET_USER);
         const char * targets = context.get(STRAUTHID_TARGET_DEVICE);
+        const char * protocols = context.get(STRAUTHID_TARGET_PROTOCOL);
+        const char * endtimes = context.get(STRAUTHID_END_TIME);
+
         for (size_t index = 0 ; index < 50 ; index++){
             this->grid[index].group[0] = 0;
             this->grid[index].target[0] = 0;
@@ -102,33 +105,29 @@ struct selector_mod : public internal_mod {
         }
 
         for (size_t index = 0 ; index < 50 ; index++){
-            const char * pg = groups;
-            while (*pg != ' ' && *pg != '\n' && *pg){
-                pg++;
-            }
-            memcpy(this->grid[index].group, groups, pg-groups);
-            this->grid[index].group[pg-groups] = 0;
-            groups = pg;
+            groups = proceed_item(groups, this->grid[index].group);
+            targets = proceed_item(targets, this->grid[index].target);
+            protocols = proceed_item(protocols, this->grid[index].protocol);
+            endtimes = proceed_item(endtimes, this->grid[index].endtime);
 
-            const char * pd = targets;
-            while (*pd != ' ' && *pd != '\n' && *pd){
-                pd++;
-            }
-            memcpy(this->grid[index].target, targets, pd-targets);
-            this->grid[index].target[pd-targets] = 0;
-            targets = pd;
+            LOG(LOG_INFO, "%s %s %s %s",
+                this->grid[index].group,
+                this->grid[index].target,
+                this->grid[index].protocol,
+                this->grid[index].endtime);
 
-            strcpy(this->grid[index].protocol, "RDP");
-            strcpy(this->grid[index].endtime, "-");
-
-            LOG(LOG_INFO, "%u: group=%s target=%s", index, this->grid[index].group, this->grid[index].target);
-
-            if (*pd == '\n' || !*pd ||*pg == '\n' || !*pg){
+            if (*groups    == '\n' || !*groups
+            ||  *targets   == '\n' || !*targets
+            ||  *protocols == '\n' || !*protocols
+            ||  *endtimes  == '\n' || !*endtimes
+            ){
                 break;
             }
 
             groups++;
             targets++;
+            protocols++;
+            endtimes++;
         }
 
         this->event = event;
@@ -138,6 +137,19 @@ struct selector_mod : public internal_mod {
     virtual ~selector_mod()
     {
     }
+
+
+    static inline const char * proceed_item(const char * list, char * grid_item)
+    {
+        const char * p = list;
+        while (*p != ' ' && *p != '\n' && *p){
+            p++;
+        }
+        memcpy(grid_item, list, p-list);
+        grid_item[p-list] = 0;
+        return p;
+    }
+
 
     virtual void rdp_input_invalidate(const Rect & rect)
     {

@@ -55,7 +55,7 @@ class User(object):
                             all_protos.append(service.protocol)
                             all_endtimes.append("-")
                         answer['proto_dest'] = " ".join(all_protos)
-                        answer['endtime'] = " ".join(all_endtimes)
+                        answer['end_time'] = " ".join(all_endtimes)
                         answer['target_login'] = " ".join(all_groups)
                         answer['target_device'] = " ".join(all_services)
                     else:
@@ -75,7 +75,7 @@ class User(object):
                     all_protos.append(service.protocol)
                     all_endtimes.append("-")
                 answer['proto_dest'] = " ".join(all_protos)
-                answer['endtime'] = " ".join(all_endtimes)
+                answer['end_time'] = " ".join(all_endtimes)
                 answer['target_login'] = " ".join(all_groups)
                 answer['target_device'] = " ".join(all_services)
 
