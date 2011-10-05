@@ -61,6 +61,10 @@ struct selector_mod : public internal_mod {
     };
     unsigned focus_item;
     unsigned state;
+    unsigned filter_group_edit_pos;
+    char filter_group_text[256];
+    unsigned filter_device_edit_pos;
+    char filter_device_text[256];
 
     size_t showed_page;
     size_t total_page;
@@ -73,11 +77,15 @@ struct selector_mod : public internal_mod {
     selector_mod(wait_obj * event, ModContext & context, Front & front):
             internal_mod(front), signal(0), focus_line(0),
             focus_item(FOCUS_ON_LOGOUT),
+            filter_group_edit_pos(0),
+            filter_device_edit_pos(0),
             state(BUTTON_STATE_UP),
             showed_page(1), total_page(10),
             showed(100), total(1000),
             context(context)
     {
+        this->filter_device_text[0] = 0;
+        this->filter_group_text[0] = 0;
         this->filter[0] = 0;
         this->filter_group[0] = 0;
         this->color[0] = RED;
@@ -143,6 +151,38 @@ struct selector_mod : public internal_mod {
     {
         LOG(LOG_INFO, "param1=%u param2=%u flags=%x time=%u", param1, param2, flags, time);
         if (flags & 0xC000){ // KEYUP
+            switch (this->focus_item){
+                case FOCUS_ON_FILTER_DEVICE:
+                {
+                    LOG(LOG_INFO, "focus on filter device chr=%u", ki?ki->chr:0);
+                    size_t lg_dev_text = strlen(this->filter_device_text);
+                    if (ki && (ki->chr > 32) && (ki->chr <= 127) && lg_dev_text < 20){
+                        memcpy(this->filter_device_text + this->filter_device_edit_pos + 1,
+                               this->filter_device_text + this->filter_device_edit_pos,
+                               lg_dev_text - this->filter_device_edit_pos + 1);
+                        *(this->filter_device_text + this->filter_device_edit_pos) = ki->chr;
+                        this->filter_device_edit_pos++;
+                    }
+                }
+                this->event->set();
+                break;
+                case FOCUS_ON_FILTER_GROUP:
+                {
+                    LOG(LOG_INFO, "focus on filter group chr=%u", ki?ki->chr:0);
+                    size_t lg_group_text = strlen(this->filter_group_text);
+                    if (ki && (ki->chr > 32) && (ki->chr <= 127) && lg_group_text < 10){
+                        memcpy(this->filter_group_text + this->filter_group_edit_pos + 1,
+                               this->filter_group_text + this->filter_group_edit_pos,
+                               lg_group_text - this->filter_group_edit_pos + 1);
+                        *(this->filter_group_text + this->filter_group_edit_pos) = ki->chr;
+                        this->filter_group_edit_pos++;
+                    }
+                }
+                this->event->set();
+                break;
+                default:
+                break;
+            }
             switch (param1){
                 case 15:
                     this->focus_item = (this->focus_item + 1) % MAX_FOCUS_ITEM;
@@ -175,6 +215,34 @@ struct selector_mod : public internal_mod {
             break;
             case 72: // ARROW_UP
                 this->focus_line = (this->focus_line + this->nblines() - 1) % this->nblines();
+                this->event->set();
+            break;
+            case 75: // ARROW_LEFT
+                if (this->focus_item == FOCUS_ON_FILTER_GROUP){
+                    if (this->filter_group_edit_pos > 0) {
+                        this->filter_group_edit_pos--;
+                    }
+                }
+                else if (this->focus_item == FOCUS_ON_FILTER_DEVICE){
+                    if (this->filter_device_edit_pos > 0) {
+                        this->filter_device_edit_pos--;
+                    }
+                }
+                this->event->set();
+            break;
+            case 77: // ARROW_RIGHT
+                if (this->focus_item == FOCUS_ON_FILTER_GROUP){
+                    if (this->filter_group_edit_pos < strlen(this->filter_group_text)
+                    && this->filter_group_edit_pos < 10) {
+                        this->filter_group_edit_pos++;
+                    }
+                }
+                else if (this->focus_item == FOCUS_ON_FILTER_DEVICE){
+                    if (this->filter_device_edit_pos < strlen(this->filter_device_text)
+                    && this->filter_device_edit_pos < 20) {
+                        this->filter_device_edit_pos++;
+                    }
+                }
                 this->event->set();
             break;
             case 57: // SPACE
@@ -227,11 +295,15 @@ struct selector_mod : public internal_mod {
         uint32_t w = (this->screen.rect.cx - 40) / 20;
 
         this->gd.server_draw_text(30       , 50,  "Device Group", GREY, BLACK);
-        this->gd.draw_edit(Rect(30, 70, 3*w - 15, 20), 0, "*", 1,
+
+        LOG(LOG_INFO, "filter_group_text=%s", this->filter_group_text);
+        this->gd.draw_edit(Rect(30, 70, 3*w - 15, 20), 0, this->filter_group_text, this->filter_group_edit_pos,
             this->focus_item == FOCUS_ON_FILTER_GROUP);
         this->gd.server_draw_text(30 +  3*w, 50,  "Account Device", GREY, BLACK);
-        this->gd.draw_edit(Rect(30 + 3*w, 70, 10*w - 15, 20), 0, "*", 1,
-            this->focus_item == FOCUS_ON_FILTER_GROUP);
+
+        LOG(LOG_INFO, "filter_device_text=%s", this->filter_device_text);
+        this->gd.draw_edit(Rect(30 + 3*w, 70, 10*w - 15, 20), 0, this->filter_device_text, this->filter_device_edit_pos,
+            this->focus_item == FOCUS_ON_FILTER_DEVICE);
         this->gd.server_draw_text(30 + 13*w, 50,  "Protocol", GREY, BLACK);
         this->gd.server_draw_text(30 + 16*w, 50,  "Deconnexion Time", GREY, BLACK);
 
@@ -242,7 +314,6 @@ struct selector_mod : public internal_mod {
                 c = this->color[2];
             }
             this->gd.opaque_rect(RDPOpaqueRect(rect, c));
-            LOG(LOG_INFO, "line=%u group=%s target=%s", line, this->grid[line].group, this->grid[line].target);
             this->gd.server_draw_text(35       , rect.y + 2,  this->grid[line].group, c, BLACK);
             this->gd.server_draw_text(35 +  3*w, rect.y + 2,  this->grid[line].target, c, BLACK);
             this->gd.server_draw_text(35 + 13*w, rect.y + 2,  this->grid[line].protocol, c, BLACK);
