@@ -168,12 +168,20 @@ struct selector_mod : public internal_mod {
                 {
                     LOG(LOG_INFO, "focus on filter device chr=%u", ki?ki->chr:0);
                     size_t lg_dev_text = strlen(this->filter_device_text);
-                    if (ki && (ki->chr > 32) && (ki->chr <= 127) && lg_dev_text < 20){
-                        memcpy(this->filter_device_text + this->filter_device_edit_pos + 1,
-                               this->filter_device_text + this->filter_device_edit_pos,
-                               lg_dev_text - this->filter_device_edit_pos + 1);
-                        *(this->filter_device_text + this->filter_device_edit_pos) = ki->chr;
-                        this->filter_device_edit_pos++;
+                    if (ki){
+                        if (8 == ki->chr && this->filter_device_edit_pos > 0){
+                            memcpy(this->filter_device_text + this->filter_device_edit_pos - 1,
+                                   this->filter_device_text + this->filter_device_edit_pos,
+                                   lg_dev_text - this->filter_device_edit_pos + 1);
+                            this->filter_device_edit_pos--;
+                        }
+                        else if ((ki->chr > 32) && (ki->chr <= 127) && lg_dev_text < 20){
+                            memcpy(this->filter_device_text + this->filter_device_edit_pos + 1,
+                                   this->filter_device_text + this->filter_device_edit_pos,
+                                   lg_dev_text - this->filter_device_edit_pos + 1);
+                            *(this->filter_device_text + this->filter_device_edit_pos) = ki->chr;
+                            this->filter_device_edit_pos++;
+                        }
                     }
                 }
                 this->event->set();
@@ -182,12 +190,20 @@ struct selector_mod : public internal_mod {
                 {
                     LOG(LOG_INFO, "focus on filter group chr=%u", ki?ki->chr:0);
                     size_t lg_group_text = strlen(this->filter_group_text);
-                    if (ki && (ki->chr > 32) && (ki->chr <= 127) && lg_group_text < 10){
-                        memcpy(this->filter_group_text + this->filter_group_edit_pos + 1,
-                               this->filter_group_text + this->filter_group_edit_pos,
-                               lg_group_text - this->filter_group_edit_pos + 1);
-                        *(this->filter_group_text + this->filter_group_edit_pos) = ki->chr;
-                        this->filter_group_edit_pos++;
+                    if (ki){
+                        if (8 == ki->chr && this->filter_group_edit_pos > 0){
+                            memcpy(this->filter_group_text + this->filter_group_edit_pos - 1,
+                                   this->filter_group_text + this->filter_group_edit_pos,
+                                   lg_group_text - this->filter_group_edit_pos + 1);
+                            this->filter_group_edit_pos--;
+                        }
+                        else if ((ki->chr > 32) && (ki->chr <= 127) && lg_group_text < 10){
+                            memcpy(this->filter_group_text + this->filter_group_edit_pos + 1,
+                                   this->filter_group_text + this->filter_group_edit_pos,
+                                   lg_group_text - this->filter_group_edit_pos + 1);
+                            *(this->filter_group_text + this->filter_group_edit_pos) = ki->chr;
+                            this->filter_group_edit_pos++;
+                        }
                     }
                 }
                 this->event->set();
