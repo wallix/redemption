@@ -175,7 +175,12 @@ struct selector_mod : public internal_mod {
                                    lg_dev_text - this->filter_device_edit_pos + 1);
                             this->filter_device_edit_pos--;
                         }
-                        else if ((ki->chr > 32) && (ki->chr <= 127) && lg_dev_text < 20){
+                        else if (127 == ki->chr && (lg_dev_text - this->filter_device_edit_pos) > 0){
+                            memcpy(this->filter_device_text + this->filter_device_edit_pos,
+                                   this->filter_device_text + this->filter_device_edit_pos + 1,
+                                   lg_dev_text - this->filter_device_edit_pos);
+                        }
+                        else if ((ki->chr > 32) && (ki->chr < 127) && lg_dev_text < 20){
                             memcpy(this->filter_device_text + this->filter_device_edit_pos + 1,
                                    this->filter_device_text + this->filter_device_edit_pos,
                                    lg_dev_text - this->filter_device_edit_pos + 1);
@@ -197,7 +202,12 @@ struct selector_mod : public internal_mod {
                                    lg_group_text - this->filter_group_edit_pos + 1);
                             this->filter_group_edit_pos--;
                         }
-                        else if ((ki->chr > 32) && (ki->chr <= 127) && lg_group_text < 10){
+                        else if (127 == ki->chr && lg_group_text - this->filter_group_edit_pos > 0){
+                            memcpy(this->filter_group_text + this->filter_group_edit_pos,
+                                   this->filter_group_text + this->filter_group_edit_pos + 1,
+                                   lg_group_text - this->filter_group_edit_pos);
+                        }
+                        else if ((ki->chr > 32) && (ki->chr < 127) && lg_group_text < 10){
                             memcpy(this->filter_group_text + this->filter_group_edit_pos + 1,
                                    this->filter_group_text + this->filter_group_edit_pos,
                                    lg_group_text - this->filter_group_edit_pos + 1);
