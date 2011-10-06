@@ -161,7 +161,7 @@ struct selector_mod : public internal_mod {
 
     virtual void rdp_input_scancode(long param1, long param2, long flags, long time, const Keymap * keymap, const key_info* ki)
     {
-        LOG(LOG_INFO, "param1=%u param2=%u flags=%x time=%u", param1, param2, flags, time);
+        LOG(LOG_INFO, "param1=%u param2=%u flags=%x time=%u chr=%u sym=%u key_flags=%u", param1, param2, flags, time, ki?ki->chr:0, ki?ki->sym:0, keymap->key_flags);
         if (flags & 0xC000){ // KEYUP
             switch (this->focus_item){
                 case FOCUS_ON_FILTER_DEVICE:
@@ -197,7 +197,12 @@ struct selector_mod : public internal_mod {
             }
             switch (param1){
                 case 15:
-                    this->focus_item = (this->focus_item + 1) % MAX_FOCUS_ITEM;
+                    if (keymap->shift_pressed()){
+                        this->focus_item = (this->focus_item - 1 + MAX_FOCUS_ITEM) % MAX_FOCUS_ITEM;
+                    }
+                    else {
+                        this->focus_item = (this->focus_item + 1) % MAX_FOCUS_ITEM;
+                    }
                     this->event->set();
                 break;
                 case 57: // SPACE
