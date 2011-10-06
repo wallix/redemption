@@ -374,6 +374,14 @@ struct login_mod : public internal_mod {
             ModContext & context, Front & front, Inifile * ini)
             : internal_mod(front)
     {
+
+        uint32_t nb = (this->screen.rect.cy - 230) / 20;
+        nb = (nb > 50)?50:nb;
+        char buffer[128];
+        sprintf(buffer, "%u", nb);
+
+        context.cpy(STRAUTHID_SELECTOR_LINES_PER_PAGE, buffer);
+
         this->event = event;
         this->signal = 0;
         this->button_down = 0;

@@ -56,6 +56,22 @@ class User(object):
         return answer
 
     def prepare_selector(self, answer, dic):
+        try:
+            _x = dic.get('selector_current_page', '1')
+            if _x.startswith('!'):
+                _x = _x[1:]
+            _current_page = int(_x) - 1
+        except:
+            _current_page = 1
+
+        try:
+            _x = dic.get('selector_lines_per_page', '10')
+            if _x.startswith('!'):
+                _x = _x[1:]
+            _lines_per_page = int(_x)
+        except:
+            _lines_per_page = 10
+
         _group_filter = dic.get('selector_group_filter', '')
         if _group_filter.startswith('!'):
             _group_filter = _group_filter[1:]
@@ -73,14 +89,25 @@ class User(object):
                 continue
             if service.protocol.lower().find(_group_filter) == -1:
                 continue
-            all_services.append(target)
-            all_groups.append(service.protocol.lower())
-            all_protos.append(service.protocol)
-            all_endtimes.append("-")
-        answer['proto_dest'] = " ".join(all_protos)
-        answer['end_time'] = " ".join(all_endtimes)
-        answer['target_login'] = " ".join(all_groups)
-        answer['target_device'] = " ".join(all_services)
+            # multiply number of entries by 15 to test pagination
+            for x in range(15):
+                all_services.append(target)
+                all_groups.append(service.protocol.lower())
+                all_protos.append(service.protocol)
+                all_endtimes.append("-")
+        _number_of_pages = 1 + len(all_protos) / _lines_per_page
+        if _current_page >= _number_of_pages:
+            _current_page = _number_of_pages - 1
+        if _current_page < 0:
+            _current_page = 0
+        print "lines per page = ",_lines_per_page
+        _start_of_page = _current_page * _lines_per_page
+        _end_of_page = _start_of_page + _lines_per_page
+        answer['proto_dest'] = " ".join(all_protos[_start_of_page:_end_of_page])
+        answer['end_time'] = " ".join(all_endtimes[_start_of_page:_end_of_page])
+        answer['target_login'] = " ".join(all_groups[_start_of_page:_end_of_page])
+        answer['target_device'] = " ".join(all_services[_start_of_page:_end_of_page])
+        answer['selector_number_of_pages'] = _number_of_pages
 
 
 class Service(object):

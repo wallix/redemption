@@ -241,33 +241,30 @@ class SessionManager {
         }
         else if (strncasecmp(protocol, "INTERNAL", 8) == 0){
             res = MCTX_STATUS_INTERNAL;
-            #warning : check, as far as I remember context->get returns a status buffer, checking if return is not null looks pretty useless
             char * target = this->context.get(STRAUTHID_TARGET_DEVICE);
-            if (target){
-                if (target && 0 == strcmp(target, "bouncer2")){
-                    this->context.nextmod = ModContext::INTERNAL_BOUNCER2;
-                    this->mod_state = MOD_STATE_DONE_CONNECTED;
-                }
-                else if (0 == strcmp(target, "test")){
-                    this->context.nextmod = ModContext::INTERNAL_TEST;
-                    this->mod_state = MOD_STATE_DONE_CONNECTED;
-                }
-                else if (0 == strcmp(target, "selector")){
-                    this->context.nextmod = ModContext::INTERNAL_SELECTOR;
-                    this->mod_state = MOD_STATE_DONE_SELECTOR;
-                }
-                else if (0 == strcmp(target, "login")){
-                    this->context.nextmod = ModContext::INTERNAL_LOGIN;
-                    this->mod_state = MOD_STATE_DONE_CLOSE;
-                }
-                else if (0 == strcmp(target, "close")){
-                    this->context.nextmod = ModContext::INTERNAL_CLOSE;
-                    this->mod_state = MOD_STATE_DONE_CLOSE;
-                }
-                else {
-                    this->context.nextmod = ModContext::INTERNAL_CARD;
-                    this->mod_state = MOD_STATE_DONE_CONNECTED;
-                }
+            if (0 == strcmp(target, "bouncer2")){
+                this->context.nextmod = ModContext::INTERNAL_BOUNCER2;
+                this->mod_state = MOD_STATE_DONE_CONNECTED;
+            }
+            else if (0 == strcmp(target, "test")){
+                this->context.nextmod = ModContext::INTERNAL_TEST;
+                this->mod_state = MOD_STATE_DONE_CONNECTED;
+            }
+            else if (0 == strcmp(target, "selector")){
+                this->context.nextmod = ModContext::INTERNAL_SELECTOR;
+                this->mod_state = MOD_STATE_DONE_CONNECTED;
+            }
+            else if (0 == strcmp(target, "login")){
+                this->context.nextmod = ModContext::INTERNAL_LOGIN;
+                this->mod_state = MOD_STATE_DONE_CONNECTED;
+            }
+            else if (0 == strcmp(target, "close")){
+                this->context.nextmod = ModContext::INTERNAL_CLOSE;
+                this->mod_state = MOD_STATE_DONE_CONNECTED;
+            }
+            else {
+                this->context.nextmod = ModContext::INTERNAL_CARD;
+                this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
         }
         else {
@@ -463,6 +460,8 @@ class SessionManager {
             this->out_item(stream, STRAUTHID_SELECTOR);
             this->out_item(stream, STRAUTHID_SELECTOR_GROUP_FILTER);
             this->out_item(stream, STRAUTHID_SELECTOR_DEVICE_FILTER);
+            this->out_item(stream, STRAUTHID_SELECTOR_LINES_PER_PAGE);
+            this->out_item(stream, STRAUTHID_SELECTOR_CURRENT_PAGE);
             this->out_ask_item(stream, STRAUTHID_TARGET_PASSWORD);
             this->out_item(stream, STRAUTHID_OPT_WIDTH);
             this->out_item(stream, STRAUTHID_OPT_HEIGHT);

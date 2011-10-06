@@ -80,7 +80,8 @@ struct selector_mod : public internal_mod {
             filter_group_edit_pos(0),
             filter_device_edit_pos(0),
             state(BUTTON_STATE_UP),
-            showed_page(1), total_page(10),
+            showed_page(atoi(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE))),
+            total_page(atoi(context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES))),
             showed(100), total(1000),
             context(context)
     {
@@ -236,6 +237,70 @@ struct selector_mod : public internal_mod {
                     LOG(LOG_INFO, "button up");
                     this->state = BUTTON_STATE_UP;
                     switch (this->focus_item){
+                    case FOCUS_ON_FIRSTPAGE:
+                    {
+                        LOG(LOG_INFO, "Filter Group");
+                        strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
+                        this->showed_page = 0;
+                        char buffer[64];
+                        sprintf(buffer, "%u", this->showed_page);
+                        strcpy(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE), buffer);
+                        *this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER) = '!';
+                        strcpy(this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER)+1, this->filter_group_text);
+                        *this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER) = '!';
+                        strcpy(this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER)+1, this->filter_device_text);
+                        this->signal = 2;
+                        this->event->set();
+                    }
+                    break;
+                    case FOCUS_ON_PREVPAGE:
+                    {
+                        LOG(LOG_INFO, "Filter Group");
+                        strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
+                        this->showed_page--;
+                        char buffer[64];
+                        sprintf(buffer, "%u", this->showed_page);
+                        strcpy(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE), buffer);
+                        *this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER) = '!';
+                        strcpy(this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER)+1, this->filter_group_text);
+                        *this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER) = '!';
+                        strcpy(this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER)+1, this->filter_device_text);
+                        this->signal = 2;
+                        this->event->set();
+                    }
+                    break;
+                    case FOCUS_ON_NEXTPAGE:
+                    {
+                        LOG(LOG_INFO, "Filter Group");
+                        strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
+                        this->showed_page++;
+                        char buffer[64];
+                        sprintf(buffer, "%u", this->showed_page);
+                        strcpy(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE), buffer);
+                        *this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER) = '!';
+                        strcpy(this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER)+1, this->filter_group_text);
+                        *this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER) = '!';
+                        strcpy(this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER)+1, this->filter_device_text);
+                        this->signal = 2;
+                        this->event->set();
+                    }
+                    break;
+                    case FOCUS_ON_LASTPAGE:
+                    {
+                        LOG(LOG_INFO, "Filter Group");
+                        strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
+                        this->showed_page = 10000;
+                        char buffer[64];
+                        sprintf(buffer, "%u", this->showed_page);
+                        strcpy(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE), buffer);
+                        *this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER) = '!';
+                        strcpy(this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER)+1, this->filter_group_text);
+                        *this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER) = '!';
+                        strcpy(this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER)+1, this->filter_device_text);
+                        this->signal = 2;
+                        this->event->set();
+                    }
+                    break;
                     case FOCUS_ON_CONNECT:
                     {
                         LOG(LOG_INFO, "Connect");
