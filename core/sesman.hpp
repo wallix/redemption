@@ -414,10 +414,6 @@ class SessionManager {
             }
             stream.out_copy_bytes(key, strlen(key));
             stream.out_uint8('\n');
-            if ('!' == tmp[0]
-            || (0 == strncasecmp(tmp, "ask", 3))){
-                stream.out_uint8('!');
-            }
             stream.out_copy_bytes(tmp, strlen(tmp));
             stream.out_uint8('\n');
         }
@@ -464,6 +460,9 @@ class SessionManager {
             this->out_item(stream, STRAUTHID_PASSWORD);
             this->out_item(stream, STRAUTHID_TARGET_USER);
             this->out_item(stream, STRAUTHID_TARGET_DEVICE);
+            this->out_item(stream, STRAUTHID_SELECTOR);
+            this->out_item(stream, STRAUTHID_SELECTOR_GROUP_FILTER);
+            this->out_item(stream, STRAUTHID_SELECTOR_DEVICE_FILTER);
             this->out_ask_item(stream, STRAUTHID_TARGET_PASSWORD);
             this->out_item(stream, STRAUTHID_OPT_WIDTH);
             this->out_item(stream, STRAUTHID_OPT_HEIGHT);

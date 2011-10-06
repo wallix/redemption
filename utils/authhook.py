@@ -44,42 +44,44 @@ class User(object):
                         break
                 else:
                     if (_selector == 'ASK'):
-                        answer['selector'] = 'true'
-                        all_services = []
-                        all_groups = []
-                        all_protos = []
-                        all_endtimes = []
-                        for service in self.services:
-                            all_services.append("%s@%s" %(service.login, service.device))
-                            all_groups.append(service.protocol.lower())
-                            all_protos.append(service.protocol)
-                            all_endtimes.append("-")
-                        answer['proto_dest'] = " ".join(all_protos)
-                        answer['end_time'] = " ".join(all_endtimes)
-                        answer['target_login'] = " ".join(all_groups)
-                        answer['target_device'] = " ".join(all_services)
+                        self.prepare_selector(answer, dic)
                     else:
                         answer['login'] = 'ASK'
                         answer['password'] = 'ASK'
                         answer['target_device'] = 'ASK'
                         answer['target_login'] = 'ASK'
             else:
-                answer['selector'] = 'true'
-                all_services = []
-                all_groups = []
-                all_protos = []
-                all_endtimes = []
-                for service in self.services:
-                    all_services.append("%s@%s" %(service.login, service.device))
-                    all_groups.append(service.protocol.lower())
-                    all_protos.append(service.protocol)
-                    all_endtimes.append("-")
-                answer['proto_dest'] = " ".join(all_protos)
-                answer['end_time'] = " ".join(all_endtimes)
-                answer['target_login'] = " ".join(all_groups)
-                answer['target_device'] = " ".join(all_services)
+                self.prepare_selector(answer, dic)
 
         return answer
+
+    def prepare_selector(self, answer, dic):
+        _group_filter = dic.get('selector_group_filter', '')
+        if _group_filter.startswith('!'):
+            _group_filter = _group_filter[1:]
+        _device_filter = dic.get('selector_device_filter', '')
+        if _device_filter.startswith('!'):
+            _device_filter = _device_filter[1:]
+        answer['selector'] = 'true'
+        all_services = []
+        all_groups = []
+        all_protos = []
+        all_endtimes = []
+        for service in self.services:
+            target = "%s@%s" %(service.login, service.device)
+            if target.find(_device_filter) == -1:
+                continue
+            if service.protocol.lower().find(_group_filter) == -1:
+                continue
+            all_services.append(target)
+            all_groups.append(service.protocol.lower())
+            all_protos.append(service.protocol)
+            all_endtimes.append("-")
+        answer['proto_dest'] = " ".join(all_protos)
+        answer['end_time'] = " ".join(all_endtimes)
+        answer['target_login'] = " ".join(all_groups)
+        answer['target_device'] = " ".join(all_services)
+
 
 class Service(object):
     def __init__(self, name, device, login, password, protocol, port):

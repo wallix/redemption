@@ -204,7 +204,9 @@ struct selector_mod : public internal_mod {
                 case 28: // ENTER
                     LOG(LOG_INFO, "button up");
                     this->state = BUTTON_STATE_UP;
-                    if (this->focus_item == FOCUS_ON_CONNECT){
+                    switch (this->focus_item){
+                    case FOCUS_ON_CONNECT:
+                    {
                         LOG(LOG_INFO, "Connect");
                         char buffer[1024];
                         sprintf(buffer, "%s:%s",
@@ -212,8 +214,25 @@ struct selector_mod : public internal_mod {
                             this->context.get(STRAUTHID_AUTH_USER));
                         this->context.parse_username(buffer);
                         this->signal = 2;
+                        this->event->set();
                     }
-                    this->event->set();
+                    break;
+                    case FOCUS_ON_FILTER_GROUP:
+                    case FOCUS_ON_FILTER_DEVICE:
+                    {
+                        LOG(LOG_INFO, "Filter Group");
+                        strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
+                        *this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER) = '!';
+                        strcpy(this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER)+1, this->filter_group_text);
+                        *this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER) = '!';
+                        strcpy(this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER)+1, this->filter_device_text);
+                        this->signal = 2;
+                        this->event->set();
+                    }
+                    break;
+                    default:
+                    break;
+                    }
                 break;
                 default:
                 break;
