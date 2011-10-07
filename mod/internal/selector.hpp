@@ -2989,6 +2989,22 @@ struct selector_mod : public internal_mod {
             this->event->set();
         }
         break;
+        case FOCUS_ON_LOGOUT:
+        {
+            LOG(LOG_INFO, "Logout");
+            strcpy(this->context.get(STRAUTHID_PASSWORD), "ASK");
+            this->signal = 2;
+            this->event->set();
+        }
+        break;
+        case FOCUS_ON_CANCEL:
+        {
+            LOG(LOG_INFO, "Cancel");
+            strcpy(this->context.get(STRAUTHID_PASSWORD), "ASK");
+            this->signal = 2;
+            this->event->set();
+        }
+        break;
         case FOCUS_ON_FILTER_GROUP:
         case FOCUS_ON_FILTER_DEVICE:
         {
