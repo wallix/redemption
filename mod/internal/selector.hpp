@@ -70,7 +70,9 @@ struct selector_mod : public internal_mod {
     Rect rect_button_prec;
     Rect rect_button_next;
     Rect rect_button_last;
-
+    Rect rect_group_filter;
+    Rect rect_device_filter;
+    Rect rect_grid;
 
     unsigned state;
     unsigned filter_group_edit_pos;
@@ -135,6 +137,11 @@ struct selector_mod : public internal_mod {
         this->rect_button_prec = this->rect_button_first.offset(40, 0);
         this->rect_button_next = this->rect_button_prec.offset(40 + 50, 0);
         this->rect_button_last = this->rect_button_next.offset(40, 0);
+
+        uint32_t w = (this->screen.rect.cx - 40) / 20;
+        this->rect_group_filter = Rect(30, 70, 3*w - 15, 20);
+        this->rect_device_filter = Rect(30 + 3*w, 70, 10*w - 15, 20);
+        this->rect_grid = Rect(20, 100, this->screen.rect.cx-40, this->nblines() * 20);
 
 
     // cx=60 cy=26
@@ -2871,6 +2878,19 @@ struct selector_mod : public internal_mod {
                     this->click_focus = this->focus_item = FOCUS_ON_LASTPAGE;
                     this->event->set();
                 }
+                else if (this->rect_group_filter.contains_pt(x, y)){
+                    this->click_focus = this->focus_item = FOCUS_ON_FILTER_GROUP;
+                    this->event->set();
+                }
+                else if (this->rect_device_filter.contains_pt(x, y)){
+                    this->click_focus = this->focus_item = FOCUS_ON_FILTER_DEVICE;
+                    this->event->set();
+                }
+                else if (this->rect_grid.contains_pt(x, y)){
+                    this->click_focus = this->focus_item = FOCUS_ON_GRID;
+                    this->focus_line = (y - this->rect_grid.y) / 20;
+                    this->event->set();
+                }
                 else {
                     this->click_focus = NO_FOCUS;
                     this->event->set();
@@ -2878,22 +2898,14 @@ struct selector_mod : public internal_mod {
             }
             else {
                 if (this->click_focus == this->focus_item){
-                    this->click_focus = NO_FOCUS;
-                    this->click(this->focus_item);
-                    this->event->set();
+                    if (this->focus_item != FOCUS_ON_FILTER_GROUP
+                    && this->focus_item != FOCUS_ON_FILTER_DEVICE){
+                        this->click(this->focus_item);
+                        this->event->set();
+                    }
                 }
             }
         }
-
-//            enum {
-//        FOCUS_ON_FILTER_GROUP = 0,
-//        FOCUS_ON_FILTER_DEVICE,
-//        FOCUS_ON_GRID,
-//        FOCUS_ON_LASTPAGE,
-//    };
-//    unsigned focus_item;
-
-//    Rect rect_button_last;
 
 
     }
@@ -3165,18 +3177,18 @@ struct selector_mod : public internal_mod {
         this->gd.server_draw_text(30       , 50,  "Device Group", GREY, BLACK);
 
         LOG(LOG_INFO, "filter_group_text=%s", this->filter_group_text);
-        this->gd.draw_edit(Rect(30, 70, 3*w - 15, 20), 0, this->filter_group_text, this->filter_group_edit_pos,
+        this->gd.draw_edit(this->rect_group_filter, 0, this->filter_group_text, this->filter_group_edit_pos,
             this->focus_item == FOCUS_ON_FILTER_GROUP);
         this->gd.server_draw_text(30 +  3*w, 50,  "Account Device", GREY, BLACK);
 
         LOG(LOG_INFO, "filter_device_text=%s", this->filter_device_text);
-        this->gd.draw_edit(Rect(30 + 3*w, 70, 10*w - 15, 20), 0, this->filter_device_text, this->filter_device_edit_pos,
+        this->gd.draw_edit(this->rect_device_filter, 0, this->filter_device_text, this->filter_device_edit_pos,
             this->focus_item == FOCUS_ON_FILTER_DEVICE);
         this->gd.server_draw_text(30 + 13*w, 50,  "Protocol", GREY, BLACK);
         this->gd.server_draw_text(30 + 16*w, 50,  "Deconnexion Time", GREY, BLACK);
 
         for (size_t line = 0 ; line < this->nblines() ; line++){
-            Rect rect(20, 100 + line * 20, this->screen.rect.cx-40, 19);
+            Rect rect(this->rect_grid.x, this->rect_grid.y + line * 20, this->screen.rect.cx-40, 19);
             uint32_t bc = this->back_color[line%2+2*(line == this->focus_line)];
             uint32_t fc = this->fore_color[line%2+2*(line == this->focus_line)];
 
