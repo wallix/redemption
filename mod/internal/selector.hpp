@@ -89,8 +89,6 @@ struct selector_mod : public internal_mod {
 
     size_t showed_page;
     size_t total_page;
-    size_t showed;
-    size_t total;
 
     ModContext & context;
 
@@ -119,14 +117,25 @@ struct selector_mod : public internal_mod {
             state(BUTTON_STATE_UP),
             showed_page(atoi(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE))),
             total_page(atoi(context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES))),
-            showed(100), total(1000),
             context(context)
     {
         this->signal = 0;
-        this->filter_device_text[0] = 0;
-        this->filter_group_text[0] = 0;
-        this->filter[0] = 0;
-        this->filter_group[0] = 0;
+
+        const char * df = context.get(STRAUTHID_SELECTOR_DEVICE_FILTER);
+        if (0 == strncasecmp(df, "ASK", 3)){
+            this->filter_device_text[0] = 0;
+        }
+        else{
+            strcpy(this->filter_device_text, df + ((*df == '!')?1:0));
+        }
+        const char * gf = context.get(STRAUTHID_SELECTOR_GROUP_FILTER);
+        if (0 == strncasecmp(gf, "ASK", 3)){
+            this->filter_group_text[0] = 0;
+        }
+        else{
+            strcpy(this->filter_group_text, gf + ((*gf == '!')?1:0));
+        }
+
         this->back_color[0] = PALE_GREEN;
         this->back_color[1] = MEDIUM_GREEN;
         this->back_color[2] = 0x44FFAC;
@@ -2919,71 +2928,48 @@ struct selector_mod : public internal_mod {
 
     }
 
+    void ask_page(void){
+        strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
+        char buffer[64];
+        sprintf(buffer, "%u", this->showed_page);
+        strcpy(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE), buffer);
+        *this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER) = '!';
+        strcpy(this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER)+1, this->filter_group_text);
+        *this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER) = '!';
+        strcpy(this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER)+1, this->filter_device_text);
+        this->signal = 2;
+        this->event->set();
+    }
+
     void click(unsigned focus){
         this->state = BUTTON_STATE_UP;
         switch (focus){
         case FOCUS_ON_FIRSTPAGE:
         {
-            LOG(LOG_INFO, "Filter Group");
-            strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
-            this->showed_page = 0;
-            char buffer[64];
-            sprintf(buffer, "%u", this->showed_page);
-            strcpy(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE), buffer);
-            *this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER) = '!';
-            strcpy(this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER)+1, this->filter_group_text);
-            *this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER) = '!';
-            strcpy(this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER)+1, this->filter_device_text);
-            this->signal = 2;
-            this->event->set();
+            this->showed_page = 1;
+            this->ask_page();
         }
         break;
         case FOCUS_ON_PREVPAGE:
         {
-            LOG(LOG_INFO, "Filter Group");
-            strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
-            this->showed_page--;
-            char buffer[64];
-            sprintf(buffer, "%u", this->showed_page);
-            strcpy(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE), buffer);
-            *this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER) = '!';
-            strcpy(this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER)+1, this->filter_group_text);
-            *this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER) = '!';
-            strcpy(this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER)+1, this->filter_device_text);
-            this->signal = 2;
-            this->event->set();
+            if (this->showed_page > 2){
+                this->showed_page--;
+            }
+            this->ask_page();
         }
         break;
         case FOCUS_ON_NEXTPAGE:
         {
-            LOG(LOG_INFO, "Filter Group");
-            strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
-            this->showed_page++;
-            char buffer[64];
-            sprintf(buffer, "%u", this->showed_page);
-            strcpy(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE), buffer);
-            *this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER) = '!';
-            strcpy(this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER)+1, this->filter_group_text);
-            *this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER) = '!';
-            strcpy(this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER)+1, this->filter_device_text);
-            this->signal = 2;
-            this->event->set();
+            if (this->showed_page < this->total_page){
+                this->showed_page++;
+            }
+            this->ask_page();
         }
         break;
         case FOCUS_ON_LASTPAGE:
         {
-            LOG(LOG_INFO, "Filter Group");
-            strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
-            this->showed_page = 10000;
-            char buffer[64];
-            sprintf(buffer, "%u", this->showed_page);
-            strcpy(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE), buffer);
-            *this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER) = '!';
-            strcpy(this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER)+1, this->filter_group_text);
-            *this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER) = '!';
-            strcpy(this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER)+1, this->filter_device_text);
-            this->signal = 2;
-            this->event->set();
+            this->showed_page = this->total_page;
+            this->ask_page();
         }
         break;
         case FOCUS_ON_CONNECT:
@@ -3006,25 +2992,12 @@ struct selector_mod : public internal_mod {
             this->event->set();
         }
         break;
-        case FOCUS_ON_APPLY:
-        {
-            LOG(LOG_INFO, "Cancel");
-            strcpy(this->context.get(STRAUTHID_PASSWORD), "ASK");
-            this->signal = 2;
-            this->event->set();
-        }
-        break;
         case FOCUS_ON_FILTER_GROUP:
         case FOCUS_ON_FILTER_DEVICE:
+        case FOCUS_ON_APPLY:
         {
-            LOG(LOG_INFO, "Filter Group");
-            strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
-            *this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER) = '!';
-            strcpy(this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER)+1, this->filter_group_text);
-            *this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER) = '!';
-            strcpy(this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER)+1, this->filter_device_text);
-            this->signal = 2;
-            this->event->set();
+            LOG(LOG_INFO, "Apply");
+            this->ask_page();
         }
         break;
         default:
@@ -3232,7 +3205,13 @@ struct selector_mod : public internal_mod {
         this->gd.bitmap_update(*this->last_page, this->rect_button_last, 0, 0);
 
         char buffer[256];
-        sprintf(buffer, " %u/%u ", this->showed_page, this->total_page);
+        if (this->showed_page < 1){
+            this->showed_page = 1;
+        }
+        if (this->showed_page > this->total_page){
+            this->showed_page = this->total_page;
+        }
+        sprintf(buffer, "%u/%u", this->showed_page, this->total_page);
         Rect rect_num_pages = this->rect_button_prec.offset(50, 2);
         this->gd.server_draw_text(rect_num_pages.x, rect_num_pages.y, buffer, GREY, BLACK);
 
