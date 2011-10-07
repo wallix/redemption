@@ -241,21 +241,15 @@ struct GraphicDeviceMod : public GraphicDevice
 
     virtual void draw_edit(const Rect & r, char password_char, char * buffer, size_t edit_pos, bool has_focus){
         this->opaque_rect(
-            RDPOpaqueRect(r, GREY));
+            RDPOpaqueRect(Rect(r.x+1, r.y+1, r.cx - 3, r.cy - 3), DARK_GREEN));
         this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x+1, r.y+1, r.cx - 3, r.cy - 3), WHITE));
+            RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), BLACK));
         this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), DARK_GREY));
-        this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), DARK_GREY));
+            RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), BLACK));
         this->opaque_rect(
             RDPOpaqueRect(Rect(r.x, r.y + r.cy - 1, r.cx, 1), WHITE));
         this->opaque_rect(
             RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), WHITE));
-        this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), BLACK));
-        this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), BLACK));
 
         /* draw text */
         char text[255];
@@ -265,10 +259,10 @@ struct GraphicDeviceMod : public GraphicDevice
             int i = mbstowcs(0, buffer, 0);
             memset(text, password_char, i);
             text[i] = 0;
-            this->server_draw_text(r.x + 4, r.y + 2, text, WHITE, BLACK);
+            this->server_draw_text(r.x + 4, r.y + 2, text, DARK_GREEN, LIGHT_GREEN);
         }
         else {
-            this->server_draw_text(r.x + 4, r.y + 2, buffer, WHITE, BLACK);
+            this->server_draw_text(r.x + 4, r.y + 2, buffer, DARK_GREEN, LIGHT_GREEN);
         }
         /* draw xor box(cursor) */
         if (has_focus) {
@@ -290,7 +284,7 @@ struct GraphicDeviceMod : public GraphicDevice
             this->opaque_rect(
                 RDPOpaqueRect(
                     Rect(r.x + 4 + this->text_width(text), r.y + 3, 2, r.cy - 6),
-                    DARK_GREY));
+                    PALE_GREEN));
         }
     }
 
