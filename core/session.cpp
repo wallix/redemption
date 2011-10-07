@@ -405,6 +405,7 @@ int Session::step_STATE_CLOSE_CONNECTION()
 
 int Session::step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time_mark)
 {
+    LOG(LOG_INFO, "waiting for next module");
     unsigned max = 0;
     fd_set rfds;
     fd_set wfds;
@@ -422,6 +423,7 @@ int Session::step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time_mark
             this->front->activate_and_process_data(*this->mod);
         }
         catch(...){
+            LOG(LOG_INFO, "waiting for next module : exception, return stop");
             return SESSION_STATE_STOP;
         };
     }
@@ -429,9 +431,11 @@ int Session::step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time_mark
     if (this->sesman->event()){
         this->sesman->receive_next_module();
         if (this->session_setup_mod(MCTX_STATUS_TRANSITORY, this->context)){
+                LOG(LOG_INFO, "waiting for next module : return state running");
                 this->internal_state = SESSION_STATE_RUNNING;
         }
     }
+    LOG(LOG_INFO, "waiting for next module : return state");
     return this->internal_state;
 }
 
@@ -550,30 +554,30 @@ int Session::session_main_loop()
             {
                 case SESSION_STATE_RSA_KEY_HANDSHAKE:
                     if (this->internal_state != previous_state)
-                        LOG(LOG_DEBUG, "RSA Key Handshake\n");
+                        LOG(LOG_DEBUG, "-------------- RSA Key Handshake\n");
                     this->internal_state = this->step_STATE_KEY_HANDSHAKE(time_mark);
                 break;
                 case SESSION_STATE_ENTRY:
                     if (this->internal_state != previous_state)
-                        LOG(LOG_DEBUG, "Initializing client session\n");
+                        LOG(LOG_DEBUG, "-------------- Initializing client session\n");
                     previous_state = this->internal_state;
                     this->internal_state = this->step_STATE_ENTRY(time_mark);
                 break;
                 case SESSION_STATE_WAITING_FOR_NEXT_MODULE:
                     if (this->internal_state != previous_state)
-                        LOG(LOG_DEBUG, "Waiting for authentifier\n");
+                        LOG(LOG_DEBUG, "-------------- Waiting for authentifier\n");
                     previous_state = this->internal_state;
                     this->internal_state = this->step_STATE_WAITING_FOR_NEXT_MODULE(time_mark);
                 break;
                 case SESSION_STATE_RUNNING:
                     if (this->internal_state != previous_state)
-                        LOG(LOG_DEBUG, "Running\n");
+                        LOG(LOG_DEBUG, "-------------- Running\n");
                     previous_state = this->internal_state;
                     this->internal_state = this->step_STATE_RUNNING(time_mark);
                 break;
                 case SESSION_STATE_CLOSE_CONNECTION:
                     if (this->internal_state != previous_state)
-                        LOG(LOG_DEBUG, "Close connection");
+                        LOG(LOG_DEBUG, "-------------- Close connection");
                     previous_state = this->internal_state;
                     this->internal_state = this->step_STATE_CLOSE_CONNECTION();
                 break;
@@ -762,10 +766,6 @@ bool Session::session_setup_mod(int status, const ModContext * context)
                     default:
                     break;
                 }
-
-                // force a WM_INVALIDATE on all screen
-                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
-                LOG(LOG_INFO, "Creation of new mod 'CLOSE DIALOG' suceeded\n");
             }
             break;
 

@@ -60,7 +60,14 @@ struct selector_mod : public internal_mod {
         MAX_FOCUS_ITEM,
         NO_FOCUS
     };
-    unsigned focus_item;
+
+    #warning this is hideous, find another way
+    // the real goal is to allow a module to dialogate with acl provider
+    // (manage changes of context) without stopping it. This should not be so
+    // hard. We just have to provide a signal meaning to send context without
+    // stopping module and some entry point to signal to module that context
+    // has changed. It really looks something simple to do.
+    unsigned & focus_item;
     unsigned click_focus;
 
     Rect rect_button_logout;
@@ -105,7 +112,7 @@ struct selector_mod : public internal_mod {
 
     selector_mod(wait_obj * event, ModContext & context, Front & front):
             internal_mod(front), signal(0), focus_line(0),
-            focus_item(FOCUS_ON_LOGOUT),
+            focus_item(context.selector_focus),
             click_focus(NO_FOCUS),
             filter_group_edit_pos(0),
             filter_device_edit_pos(0),
@@ -115,6 +122,7 @@ struct selector_mod : public internal_mod {
             showed(100), total(1000),
             context(context)
     {
+        this->signal = 0;
         this->filter_device_text[0] = 0;
         this->filter_group_text[0] = 0;
         this->filter[0] = 0;
@@ -2799,11 +2807,11 @@ struct selector_mod : public internal_mod {
             protocols = proceed_item(protocols, this->grid[index].protocol);
             endtimes = proceed_item(endtimes, this->grid[index].endtime);
 
-            LOG(LOG_INFO, "%s %s %s %s",
-                this->grid[index].group,
-                this->grid[index].target,
-                this->grid[index].protocol,
-                this->grid[index].endtime);
+//            LOG(LOG_INFO, "%s %s %s %s",
+//                this->grid[index].group,
+//                this->grid[index].target,
+//                this->grid[index].protocol,
+//                this->grid[index].endtime);
 
             if (*groups    == '\n' || !*groups
             ||  *targets   == '\n' || !*targets
@@ -2819,6 +2827,7 @@ struct selector_mod : public internal_mod {
             endtimes++;
         }
 
+        LOG(LOG_INFO, "selector init done : signal = %u", this->signal);
         this->event = event;
         this->event->set();
     }
@@ -2846,7 +2855,7 @@ struct selector_mod : public internal_mod {
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
     {
-        LOG(LOG_INFO, "x=%u y=%u flags=%x", x, y, device_flags);
+//        LOG(LOG_INFO, "x=%u y=%u flags=%x", x, y, device_flags);
 
         if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
             if (device_flags & MOUSE_FLAG_DOWN){
@@ -3097,7 +3106,11 @@ struct selector_mod : public internal_mod {
                     this->event->set();
                 break;
                 case 28: // ENTER
-                    this->click(this->focus_item);
+                    LOG(LOG_INFO, "----------------------------------------> key up");
+                    if (this->click_focus == this->focus_item){
+                        this->click(this->focus_item);
+                        this->click_focus = NO_FOCUS;
+                    }
                 break;
                 default:
                 break;
@@ -3141,9 +3154,8 @@ struct selector_mod : public internal_mod {
                 }
                 this->event->set();
             break;
-            case 57: // SPACE
             case 28: // ENTER
-                LOG(LOG_INFO, "button down");
+                LOG(LOG_INFO, "----------------------------------------> key down");
                 this->click_focus = this->focus_item;
                 this->event->set();
             break;

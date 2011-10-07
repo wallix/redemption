@@ -59,6 +59,7 @@ enum {
 // to simplify further session code)
 
 struct ModContext : public Dico {
+    unsigned selector_focus;
     int wab_auth;
     enum {
         INTERNAL_NONE,
@@ -76,6 +77,7 @@ struct ModContext : public Dico {
     ModContext(ProtocolKeyword * KeywordsDefinitions, unsigned nbkeywords) :
         Dico(KeywordsDefinitions, nbkeywords), nextmod(INTERNAL_NONE)
     {
+        this->selector_focus = 0;
     }
 
     ~ModContext(){
