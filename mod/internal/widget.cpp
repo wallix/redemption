@@ -153,7 +153,7 @@ struct Widget* Widget::widget_at_pos(int x, int y) {
     /* If a widget contains overlapping subwidgets */
     /* consider the right one is the first one found in child_list */
     for (size_t i = 0; i < this->child_list.size(); i++) {
-        if (this->child_list[i]->rect.rect_contains_pt(x, y)) {
+        if (this->child_list[i]->rect.contains_pt(x, y)) {
             Widget * res =  this->child_list[i]->widget_at_pos(x, y);
             return res;
         }

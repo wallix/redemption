@@ -181,7 +181,7 @@ struct close_mod : public internal_mod {
                     /* loop on surface widgets on screen to find active window */
                     Widget* wnd = this->get_screen_wdg();
                     for (size_t i = 0; i < wnd->child_list.size(); i++) {
-                        if (wnd->child_list[i]->rect.rect_contains_pt(x, y)) {
+                        if (wnd->child_list[i]->rect.contains_pt(x, y)) {
                             wnd = this->screen.child_list[i];
                             break;
                         }

@@ -60,6 +60,16 @@ struct selector_mod : public internal_mod {
         MAX_FOCUS_ITEM
     };
     unsigned focus_item;
+
+    Rect rect_button_logout;
+    Rect rect_button_cancel;
+    Rect rect_button_connect;
+    Rect rect_button_first;
+    Rect rect_button_prec;
+    Rect rect_button_next;
+    Rect rect_button_last;
+
+
     unsigned state;
     unsigned filter_group_edit_pos;
     char filter_group_text[256];
@@ -88,13 +98,6 @@ struct selector_mod : public internal_mod {
     Bitmap * next_page;
     Bitmap * last_page;
 
-    Rect rect_button_logout;
-    Rect rect_button_cancel;
-    Rect rect_button_connect;
-    Rect rect_button_first;
-    Rect rect_button_prec;
-    Rect rect_button_next;
-    Rect rect_button_last;
 
     selector_mod(wait_obj * event, ModContext & context, Front & front):
             internal_mod(front), signal(0), focus_line(0),
@@ -2833,6 +2836,48 @@ struct selector_mod : public internal_mod {
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
     {
+        LOG(LOG_INFO, "x=%u y=%u flags=%x", x, y, device_flags);
+
+        if (this->rect_button_logout.contains_pt(x, y)){
+            this->focus_item = FOCUS_ON_LOGOUT;
+            this->event->set();
+        }
+        else if (this->rect_button_cancel.contains_pt(x, y)){
+            this->focus_item = FOCUS_ON_CANCEL;
+            this->event->set();
+        }
+        else if (this->rect_button_connect.contains_pt(x, y)){
+            this->focus_item = FOCUS_ON_CONNECT;
+            this->event->set();
+        }
+        else if (this->rect_button_first.contains_pt(x, y)){
+            this->focus_item = FOCUS_ON_FIRSTPAGE;
+            this->event->set();
+        }
+        else if (this->rect_button_prec.contains_pt(x, y)){
+            this->focus_item = FOCUS_ON_PREVPAGE;
+            this->event->set();
+        }
+        else if (this->rect_button_next.contains_pt(x, y)){
+            this->focus_item = FOCUS_ON_NEXTPAGE;
+            this->event->set();
+        }
+        else if (this->rect_button_last.contains_pt(x, y)){
+            this->focus_item = FOCUS_ON_LASTPAGE;
+            this->event->set();
+        }
+
+//            enum {
+//        FOCUS_ON_FILTER_GROUP = 0,
+//        FOCUS_ON_FILTER_DEVICE,
+//        FOCUS_ON_GRID,
+//        FOCUS_ON_LASTPAGE,
+//    };
+//    unsigned focus_item;
+
+//    Rect rect_button_last;
+
+
     }
 
     virtual void rdp_input_scancode(long param1, long param2, long flags, long time, const Keymap * keymap, const key_info* ki)
