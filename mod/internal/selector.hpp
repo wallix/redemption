@@ -55,7 +55,7 @@ struct selector_mod : public internal_mod {
         FOCUS_ON_NEXTPAGE,
         FOCUS_ON_LASTPAGE,
         FOCUS_ON_LOGOUT,
-        FOCUS_ON_CANCEL,
+        FOCUS_ON_APPLY,
         FOCUS_ON_CONNECT,
         MAX_FOCUS_ITEM,
         NO_FOCUS
@@ -64,7 +64,7 @@ struct selector_mod : public internal_mod {
     unsigned click_focus;
 
     Rect rect_button_logout;
-    Rect rect_button_cancel;
+    Rect rect_button_apply;
     Rect rect_button_connect;
     Rect rect_button_first;
     Rect rect_button_prec;
@@ -121,8 +121,8 @@ struct selector_mod : public internal_mod {
         this->filter_group[0] = 0;
         this->back_color[0] = PALE_GREEN;
         this->back_color[1] = MEDIUM_GREEN;
-        this->back_color[2] = 0x5CAEE7;
-        this->back_color[3] = 0x5CAEE7;
+        this->back_color[2] = 0x44FFAC;
+        this->back_color[3] = 0x44FFAC;
 
         this->fore_color[0] = BLACK;
         this->fore_color[1] = BLACK;
@@ -130,8 +130,8 @@ struct selector_mod : public internal_mod {
         this->fore_color[3] = WINBLUE;
 
         this->rect_button_logout = Rect(this->screen.rect.cx-240, this->screen.rect.cy- 100, 60, 26);
-        this->rect_button_cancel = this->rect_button_logout.offset(70,0);
-        this->rect_button_connect = this->rect_button_cancel.offset(70,0);
+        this->rect_button_apply = this->rect_button_logout.offset(70,0);
+        this->rect_button_connect = this->rect_button_apply.offset(70,0);
 
         this->rect_button_first = Rect(this->screen.rect.cx - 240, this->screen.rect.cy - 130, 30, 20);
         this->rect_button_prec = this->rect_button_first.offset(40, 0);
@@ -145,7 +145,7 @@ struct selector_mod : public internal_mod {
 
 
     // cx=60 cy=26
-    static uint8_t raw_cancel_active[] = {    /* line 25 */
+    static uint8_t raw_apply_active[] = {    /* line 25 */
 0x8c, 0xd3, 0xa0, 0x8b, 0xd5, 0xa1, 0x8e, 0xd7, 0xa4, 0x8d, 0xd7, 0xa4, 0x8c, 0xd6, 0xa3, 0x8d,
 0xd7, 0xa4, 0x8d, 0xd6, 0xa3, 0x8c, 0xd6, 0xa2, 0x8d, 0xd7, 0xa3, 0x8d, 0xd6, 0xa4, 0x8d, 0xd5,
 0xa2, 0x8b, 0xd5, 0xa1, 0x8d, 0xd7, 0xa4, 0x8e, 0xd7, 0xa4, 0x8d, 0xd7, 0xa3, 0x8d, 0xd6, 0xa2,
@@ -486,11 +486,11 @@ struct selector_mod : public internal_mod {
     }; /* 0x7fff4a1b7930 */
     this->cancel_active = new Bitmap(24,
                                      NULL, 60, 26,
-                                     raw_cancel_active,
-                                     sizeof(raw_cancel_active));
+                                     raw_apply_active,
+                                     sizeof(raw_apply_active));
 
     // cx=60 cy=26
-    static uint8_t raw_cancel_inactive[] = {    /* line 25 */
+    static uint8_t raw_apply_inactive[] = {    /* line 25 */
 0xa9, 0xb2, 0xab, 0xac, 0xb2, 0xae, 0xae, 0xb4, 0xb0, 0xad, 0xb3, 0xaf, 0xac, 0xb2, 0xae, 0xad,
 0xb3, 0xaf, 0xad, 0xb3, 0xaf, 0xac, 0xb2, 0xae, 0xad, 0xb3, 0xaf, 0xad, 0xb3, 0xaf, 0xac, 0xb2,
 0xae, 0xab, 0xb1, 0xad, 0xad, 0xb3, 0xaf, 0xae, 0xb4, 0xb0, 0xad, 0xb3, 0xaf, 0xad, 0xb3, 0xaf,
@@ -829,7 +829,7 @@ struct selector_mod : public internal_mod {
 0x85, 0x84, 0x82, 0x84, 0x83, 0x82, 0x84, 0x83, 0x83, 0x85, 0x84, 0x83, 0x85, 0x84, 0x83, 0x85,
 0x84, 0x82, 0x87, 0x83,
     };
-    this->cancel_inactive = new Bitmap(24, NULL, 60, 26, raw_cancel_inactive, sizeof(raw_cancel_inactive));
+    this->cancel_inactive = new Bitmap(24, NULL, 60, 26, raw_apply_inactive, sizeof(raw_apply_inactive));
 
     // cx=60 cy=26
     static uint8_t raw_logout_inactive[] = {    /* line 25 */
@@ -2854,8 +2854,8 @@ struct selector_mod : public internal_mod {
                     this->click_focus = this->focus_item = FOCUS_ON_LOGOUT;
                     this->event->set();
                 }
-                else if (this->rect_button_cancel.contains_pt(x, y)){
-                    this->click_focus = this->focus_item = FOCUS_ON_CANCEL;
+                else if (this->rect_button_apply.contains_pt(x, y)){
+                    this->click_focus = this->focus_item = FOCUS_ON_APPLY;
                     this->event->set();
                 }
                 else if (this->rect_button_connect.contains_pt(x, y)){
@@ -2997,7 +2997,7 @@ struct selector_mod : public internal_mod {
             this->event->set();
         }
         break;
-        case FOCUS_ON_CANCEL:
+        case FOCUS_ON_APPLY:
         {
             LOG(LOG_INFO, "Cancel");
             strcpy(this->context.get(STRAUTHID_PASSWORD), "ASK");
@@ -3234,11 +3234,11 @@ struct selector_mod : public internal_mod {
             this->gd.bitmap_update(*this->logout_inactive, this->rect_button_logout, 0, 0);
         }
 
-        if (this->focus_item == FOCUS_ON_CANCEL){
-            this->gd.bitmap_update(*this->cancel_active, this->rect_button_cancel, 0, 0);
+        if (this->focus_item == FOCUS_ON_APPLY){
+            this->gd.bitmap_update(*this->cancel_active, this->rect_button_apply, 0, 0);
         }
         else {
-            this->gd.bitmap_update(*this->cancel_inactive, this->rect_button_cancel, 0, 0);
+            this->gd.bitmap_update(*this->cancel_inactive, this->rect_button_apply, 0, 0);
         }
 
         if (this->focus_item == FOCUS_ON_CONNECT){

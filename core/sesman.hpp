@@ -297,22 +297,26 @@ class SessionManager {
         case MOD_STATE_DONE_RECEIVED_CREDENTIALS:
         LOG(LOG_INFO, "Received Credentials\n");
         {
-         LOG(LOG_INFO, "STRAUTHID_AUTH_USER=%s",
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_AUTH_USER,
             this->context.is_asked(STRAUTHID_AUTH_USER)?"ask"
             :this->context.get(STRAUTHID_AUTH_USER));
-         LOG(LOG_INFO, "STRAUTHID_PASSWORD=%s",
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_PASSWORD,
             this->context.is_asked(STRAUTHID_PASSWORD)?"ask"
             :this->context.get(STRAUTHID_PASSWORD));
-         LOG(LOG_INFO, "STRAUTHID_TARGET_DEVICE=%s",
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_TARGET_DEVICE,
             this->context.is_asked(STRAUTHID_TARGET_DEVICE)?"ask"
             :this->context.get(STRAUTHID_TARGET_DEVICE));
-         LOG(LOG_INFO, "STRAUTHID_TARGET_USER=%s",
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_TARGET_USER,
             this->context.is_asked(STRAUTHID_TARGET_USER)?"ask"
             :this->context.get(STRAUTHID_TARGET_USER));
-         LOG(LOG_INFO, "STRAUTHID_SELECTOR=%s",
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_SELECTOR,
             this->context.get_bool(STRAUTHID_SELECTOR)?"true":"false");
-         LOG(LOG_INFO, "STRAUTHID_AUTHENTICATED=%s",
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_AUTHENTICATED,
             this->context.get_bool(STRAUTHID_AUTHENTICATED)?"true":"false");
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_SELECTOR_DEVICE_FILTER,
+            this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER));
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_SELECTOR_GROUP_FILTER,
+            this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER));
 
             if (this->context.is_asked(STRAUTHID_AUTH_USER)){
                 this->context.wab_auth = 0;
