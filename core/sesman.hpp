@@ -319,13 +319,11 @@ class SessionManager {
             this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER));
 
             if (this->context.is_asked(STRAUTHID_AUTH_USER)){
-                this->context.wab_auth = 0;
                 next_state = MCTX_STATUS_INTERNAL;
                 this->context.nextmod = ModContext::INTERNAL_LOGIN;
                 this->mod_state = MOD_STATE_DONE_LOGIN;
             }
             else if (this->context.is_asked(STRAUTHID_PASSWORD)){
-                this->context.wab_auth = 1;
                 next_state = MCTX_STATUS_INTERNAL;
                 this->context.nextmod = ModContext::INTERNAL_LOGIN;
                 this->mod_state = MOD_STATE_DONE_LOGIN;

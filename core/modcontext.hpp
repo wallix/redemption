@@ -60,7 +60,6 @@ enum {
 
 struct ModContext : public Dico {
     unsigned selector_focus;
-    int wab_auth;
     enum {
         INTERNAL_NONE,
         INTERNAL_LOGIN,

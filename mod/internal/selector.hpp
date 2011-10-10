@@ -3571,6 +3571,7 @@ struct selector_mod : public internal_mod {
         case FOCUS_ON_LOGOUT:
         {
             LOG(LOG_INFO, "Logout");
+            strcpy(this->context.get(STRAUTHID_AUTH_USER), "");
             strcpy(this->context.get(STRAUTHID_PASSWORD), "ASK");
             this->signal = 2;
             this->event->set();
