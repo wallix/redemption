@@ -104,7 +104,7 @@ class User(object):
         _start_of_page = _current_page * _lines_per_page
         _end_of_page = _start_of_page + _lines_per_page
         answer['proto_dest'] = " ".join(all_protos[_start_of_page:_end_of_page])
-        answer['end_time'] = " ".join(all_endtimes[_start_of_page:_end_of_page])
+        answer['end_time'] = ";".join(all_endtimes[_start_of_page:_end_of_page])
         answer['target_login'] = " ".join(all_groups[_start_of_page:_end_of_page])
         answer['target_device'] = " ".join(all_services[_start_of_page:_end_of_page])
         answer['selector_number_of_pages'] = _number_of_pages
