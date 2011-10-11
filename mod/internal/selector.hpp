@@ -3419,7 +3419,7 @@ struct selector_mod : public internal_mod {
             endtimes++;
         }
 
-        LOG(LOG_INFO, "selector init done : signal = %u", this->signal);
+//        LOG(LOG_INFO, "selector init done : signal = %u", this->signal);
         this->event = event;
         this->event->set();
     }
@@ -3521,6 +3521,9 @@ struct selector_mod : public internal_mod {
         strcpy(this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER)+1, this->filter_group_text);
         *this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER) = '!';
         strcpy(this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER)+1, this->filter_device_text);
+        strcpy(this->context.get(STRAUTHID_TARGET_USER), "ASK");
+        strcpy(this->context.get(STRAUTHID_TARGET_DEVICE), "ASK");
+        strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
         this->signal = 2;
         this->event->set();
     }
@@ -3571,8 +3574,11 @@ struct selector_mod : public internal_mod {
         case FOCUS_ON_LOGOUT:
         {
             LOG(LOG_INFO, "Logout");
-            strcpy(this->context.get(STRAUTHID_AUTH_USER), "");
+            strcpy(this->context.get(STRAUTHID_AUTH_USER), "ASK");
             strcpy(this->context.get(STRAUTHID_PASSWORD), "ASK");
+            strcpy(this->context.get(STRAUTHID_TARGET_USER), "ASK");
+            strcpy(this->context.get(STRAUTHID_TARGET_DEVICE), "ASK");
+            strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
             this->signal = 2;
             this->event->set();
         }
@@ -3593,12 +3599,12 @@ struct selector_mod : public internal_mod {
 
     virtual void rdp_input_scancode(long param1, long param2, long flags, long time, const Keymap * keymap, const key_info* ki)
     {
-        LOG(LOG_INFO, "param1=%u param2=%u flags=%x time=%u chr=%u sym=%u key_flags=%u", param1, param2, flags, time, ki?ki->chr:0, ki?ki->sym:0, keymap->key_flags);
+//        LOG(LOG_INFO, "param1=%u param2=%u flags=%x time=%u chr=%u sym=%u key_flags=%u", param1, param2, flags, time, ki?ki->chr:0, ki?ki->sym:0, keymap->key_flags);
         if (flags & 0xC000){ // KEYUP
             switch (this->focus_item){
                 case FOCUS_ON_FILTER_DEVICE:
                 {
-                    LOG(LOG_INFO, "focus on filter device chr=%u", ki?ki->chr:0);
+//                    LOG(LOG_INFO, "focus on filter device chr=%u", ki?ki->chr:0);
                     size_t lg_dev_text = strlen(this->filter_device_text);
                     if (ki){
                         if (8 == ki->chr && this->filter_device_edit_pos > 0){
@@ -3625,7 +3631,7 @@ struct selector_mod : public internal_mod {
                 break;
                 case FOCUS_ON_FILTER_GROUP:
                 {
-                    LOG(LOG_INFO, "focus on filter group chr=%u", ki?ki->chr:0);
+//                    LOG(LOG_INFO, "focus on filter group chr=%u", ki?ki->chr:0);
                     size_t lg_group_text = strlen(this->filter_group_text);
                     if (ki){
                         if (8 == ki->chr && this->filter_group_edit_pos > 0){
@@ -3664,7 +3670,7 @@ struct selector_mod : public internal_mod {
                     this->event->set();
                 break;
                 case 28: // ENTER
-                    LOG(LOG_INFO, "----------------------------------------> key up");
+//                    LOG(LOG_INFO, "----------------------------------------> key up");
                     if (this->click_focus == this->focus_item){
                         this->click(this->focus_item);
                         this->click_focus = NO_FOCUS;
@@ -3713,7 +3719,7 @@ struct selector_mod : public internal_mod {
                 this->event->set();
             break;
             case 28: // ENTER
-                LOG(LOG_INFO, "----------------------------------------> key down");
+//                LOG(LOG_INFO, "----------------------------------------> key down");
                 this->click_focus = this->focus_item;
                 this->event->set();
             break;
@@ -3734,7 +3740,7 @@ struct selector_mod : public internal_mod {
     {
         this->draw(this->screen.rect);
         this->event->reset();
-        LOG(LOG_INFO, "draw_event : signal = %u", this->signal);
+//        LOG(LOG_INFO, "draw_event : signal = %u", this->signal);
         return this->signal;
     }
 
@@ -3756,18 +3762,18 @@ struct selector_mod : public internal_mod {
     }
 
     void draw_array(){
-        LOG(LOG_INFO, "drawing array");
+//        LOG(LOG_INFO, "drawing array");
 
         uint32_t w = (this->screen.rect.cx - 40) / 20;
 
         this->gd.server_draw_text(30       , 50,  "Device Group", GREY, BLACK);
 
-        LOG(LOG_INFO, "filter_group_text=%s", this->filter_group_text);
+//        LOG(LOG_INFO, "filter_group_text=%s", this->filter_group_text);
         this->gd.draw_edit(this->rect_group_filter, 0, this->filter_group_text, this->filter_group_edit_pos,
             this->focus_item == FOCUS_ON_FILTER_GROUP);
         this->gd.server_draw_text(30 +  3*w, 50,  "Account Device", GREY, BLACK);
 
-        LOG(LOG_INFO, "filter_device_text=%s", this->filter_device_text);
+//        LOG(LOG_INFO, "filter_device_text=%s", this->filter_device_text);
         this->gd.draw_edit(this->rect_device_filter, 0, this->filter_device_text, this->filter_device_edit_pos,
             this->focus_item == FOCUS_ON_FILTER_DEVICE);
         this->gd.server_draw_text(30 + 13*w, 50,  "Protocol", GREY, BLACK);

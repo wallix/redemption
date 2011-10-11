@@ -405,7 +405,6 @@ int Session::step_STATE_CLOSE_CONNECTION()
 
 int Session::step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time_mark)
 {
-    LOG(LOG_INFO, "waiting for next module");
     unsigned max = 0;
     fd_set rfds;
     fd_set wfds;
@@ -423,7 +422,7 @@ int Session::step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time_mark
             this->front->activate_and_process_data(*this->mod);
         }
         catch(...){
-            LOG(LOG_INFO, "waiting for next module : exception, return stop");
+            LOG(LOG_INFO, "Forced stop from client side");
             return SESSION_STATE_STOP;
         };
     }
@@ -431,11 +430,9 @@ int Session::step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time_mark
     if (this->sesman->event()){
         this->sesman->receive_next_module();
         if (this->session_setup_mod(MCTX_STATUS_TRANSITORY, this->context)){
-                LOG(LOG_INFO, "waiting for next module : return state running");
                 this->internal_state = SESSION_STATE_RUNNING;
         }
     }
-    LOG(LOG_INFO, "waiting for next module : return state");
     return this->internal_state;
 }
 
