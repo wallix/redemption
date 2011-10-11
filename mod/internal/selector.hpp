@@ -49,7 +49,6 @@ struct selector_mod : public internal_mod {
     enum {
         FOCUS_ON_FILTER_GROUP = 0,
         FOCUS_ON_FILTER_DEVICE,
-        FOCUS_ON_GRID, // this focus is probably useless
         FOCUS_ON_FIRSTPAGE,
         FOCUS_ON_PREVPAGE,
         FOCUS_ON_NEXTPAGE,
@@ -3489,7 +3488,8 @@ struct selector_mod : public internal_mod {
                     this->event->set();
                 }
                 else if (this->rect_grid.contains_pt(x, y)){
-                    this->click_focus = this->focus_item = FOCUS_ON_GRID;
+                    this->click_focus = NO_FOCUS;
+                    this->focus_item = FOCUS_ON_CONNECT;
                     this->focus_line = (y - this->rect_grid.y) / 20;
                     this->event->set();
                 }
