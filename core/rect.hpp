@@ -54,7 +54,7 @@ struct Rect {
         this->cy = height;
     }
 
-    bool rect_contains_pt(int x, int y) const {
+    bool contains_pt(int x, int y) const {
         return    x  >= this->x
                && y  >= this->y
                && x < (this->x + this->cx)

@@ -91,8 +91,8 @@ class RDPLineTo {
         using namespace RDP;
         RDPPrimaryOrderHeader header(STANDARD, 0);
 
-        if (!(common.clip.rect_contains_pt(this->startx, this->starty)
-           && common.clip.rect_contains_pt(this->endx, this->endy))){
+        if (!(common.clip.contains_pt(this->startx, this->starty)
+           && common.clip.contains_pt(this->endx, this->endy))){
            header.control |= BOUNDS;
         }
 

@@ -621,7 +621,7 @@ class StaticCapture
         for (int j = 0; j < rect.cy ; j++){
             for (int i = 0; i < rect.cx ; i++){
                 #warning: it would be nicer to manage clipping earlier and not test every pixel
-                if (!(clip.rect_contains_pt(i + rect.x, j + rect.y))) {
+                if (!(clip.contains_pt(i + rect.x, j + rect.y))) {
                   continue;
                 }
                 #warning this should not be done here, implement bitmap color conversion and use it here

@@ -2005,7 +2005,7 @@ static inline void send_mcs_connect_response_pdu_with_gcc_conference_create_resp
     send_sec_tag_sig(stream, pub_sig);
     /* end certificate */
 
-    assert(offset_len_mcs_connect_response - offset_len_mcs_data == 38);
+    assert(offset_len_mcs_data - offset_len_mcs_connect_response  == 38);
 
     #warning create a function in stream that sets differed ber_len_offsets
     // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)

@@ -69,7 +69,7 @@ struct test_card_mod : public internal_mod {
     {
         this->gd.server_begin_update();
 
-        this->server_set_clip(this->screen.rect);
+        this->gd.server_set_clip(this->screen.rect);
 
         this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect, WHITE));
         this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(5), RED));

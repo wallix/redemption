@@ -74,18 +74,18 @@ BOOST_AUTO_TEST_CASE(TestRect)
     /* test if a point is inside rect */
     /* lower bounds are included, upper bounds are excluded */
 
-    BOOST_CHECK_EQUAL(true, r.rect_contains_pt(15,115));
-    BOOST_CHECK_EQUAL(true, r.rect_contains_pt(19,119));
-    BOOST_CHECK_EQUAL(true, r.rect_contains_pt(10,110));
-    BOOST_CHECK_EQUAL(true, r.rect_contains_pt(10,119));
+    BOOST_CHECK_EQUAL(true, r.contains_pt(15,115));
+    BOOST_CHECK_EQUAL(true, r.contains_pt(19,119));
+    BOOST_CHECK_EQUAL(true, r.contains_pt(10,110));
+    BOOST_CHECK_EQUAL(true, r.contains_pt(10,119));
 
-    BOOST_CHECK_EQUAL(false, r.rect_contains_pt(0,100));
-    BOOST_CHECK_EQUAL(false, r.rect_contains_pt(0,115));
-    BOOST_CHECK_EQUAL(false, r.rect_contains_pt(15,100));
-    BOOST_CHECK_EQUAL(false, r.rect_contains_pt(15,121));
-    BOOST_CHECK_EQUAL(false, r.rect_contains_pt(21,115));
-    BOOST_CHECK_EQUAL(false, r.rect_contains_pt(20,120));
-    BOOST_CHECK_EQUAL(false,  r.rect_contains_pt(19,120));
+    BOOST_CHECK_EQUAL(false, r.contains_pt(0,100));
+    BOOST_CHECK_EQUAL(false, r.contains_pt(0,115));
+    BOOST_CHECK_EQUAL(false, r.contains_pt(15,100));
+    BOOST_CHECK_EQUAL(false, r.contains_pt(15,121));
+    BOOST_CHECK_EQUAL(false, r.contains_pt(21,115));
+    BOOST_CHECK_EQUAL(false, r.contains_pt(20,120));
+    BOOST_CHECK_EQUAL(false,  r.contains_pt(19,120));
 
     /* we can build the intersection of two rect */
     {

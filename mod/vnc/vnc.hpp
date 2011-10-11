@@ -239,7 +239,7 @@ struct mod_vnc : public client_mod {
 
                     LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
 
-                    this->server_set_clip(Rect(0, 0, width, height));
+                    this->gd.server_set_clip(Rect(0, 0, width, height));
 
                     int lg = stream.in_uint32_be();
 

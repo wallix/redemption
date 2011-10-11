@@ -27,187 +27,6 @@
 
 #include "widget_window_login.hpp"
 
-struct wab_help : public window
-{
-    Widget & notify_to;
-    char help_message[1024];
-
-    wab_help(internal_mod * mod, const Rect & r, Widget & parent, Widget & notify_to, int bg_color, const char * title, const char * help_message)
-    : window(mod, r, parent, bg_color, title), notify_to(notify_to)
-    {
-        strcpy(this->help_message, help_message);
-    }
-
-    virtual void notify(struct Widget* sender, int msg, long param1, long param2)
-    {
-        if (msg == 1) { /* click */
-            if (sender->id == 1) { /* ok button */
-                    this->notify_to.notify(this, 100, 1, 0); /* ok */
-            }
-        } else if (msg == WM_PAINT) { /* 3 */
-            #warning should be done on refresh in window_login_widget not on paint
-            // "Enter target device and login as login@server"
-            // "Enter a valid allowed authentication user"
-            // "in the username edit box."
-            // "Enter the password in the password edit box."
-            // "Both the username and password are case"
-            // "sensitive."
-            // "Contact your system administrator if you are"
-            // "having problems logging on.", this->rect.wh());
-            char * message = this->help_message;
-            int count = 0;
-            bool done = false;
-            while (!done) {
-                char * str = strstr(message, "<br>");
-                char tmp[256];
-                tmp[0] = 0;
-                strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
-                tmp[255] = 0;
-
-                Rect r(0, 0, this->rect.cx, this->rect.cy);
-                const Rect scr_r = this->to_screen_rect(r);
-                const Region region = this->get_visible_region(this, &this->parent, scr_r);
-
-                for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-                    this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
-                    this->mod->gd.server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK);
-                }
-
-                count++;
-                if (!str){
-                    done = true;
-                }
-                else {
-                    message = str + 4;
-                }
-            }
-        }
-        return;
-    }
-
-};
-
-
-struct wab_login : public window_login
-{
-    wab_login(internal_mod * mod, const Rect & r, ModContext & context, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
-    : window_login(mod, r, context, parent, notify_to, bg_color, title, ini, regular)
-    {
-        context.get(STRAUTHID_PASSWORD)[0] = 0;
-
-        this->ini = ini;
-        struct Widget* but;
-
-        uint32_t grey = 0xc0c0c0;
-        /* create help screen */
-        this->help = new wab_help(this->mod,
-            Rect(this->mod->screen.rect.cx / 2 - 340 / 2,
-                this->mod->screen.rect.cy / 2 - 300 / 2,
-                340,
-                300),
-            mod->screen, // parent
-            *this, // notify_to
-            grey,
-            "Login help",
-            context.get(STRAUTHID_TRANS_HELP_MESSAGE));
-
-        if (regular) {
-            widget_image * but = new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE,
-                *this, 10, 30,
-                SHARE_PATH "/" LOGIN_LOGO24,
-                this->mod->screen.bpp);
-            this->child_list.push_back(but);
-        }
-
-        /* label */
-
-        #warning WTF isn't strtok first parameter a const char * ?
-        char username[sizeof(this->mod->gd.get_client_info().username)];
-        memcpy(username, this->mod->gd.get_client_info().username,
-                        sizeof(this->mod->gd.get_client_info().username));
-        const char * target = strtok(username, ":" );
-        if (!target){
-            target = "";
-        }
-
-        but = new widget_button(this->mod,
-            Rect(regular ? 180 : 30, 160, 60, 25),
-            *this, 3, 1, context.get(STRAUTHID_TRANS_BUTTON_OK));
-        this->child_list.push_back(but);
-        this->default_button = but;
-
-        but = new widget_button(this->mod,
-              Rect(regular ? 250 : ((r.cx - 30) - 60), 160, 60, 25),
-              *this, 2, 1, context.get(STRAUTHID_TRANS_BUTTON_CANCEL));
-        this->child_list.push_back(but);
-        this->esc_button = but;
-
-        if (regular) {
-            but = new widget_button(this->mod,
-                  Rect(320, 160, 60, 25), *this, 1, 1, context.get(STRAUTHID_TRANS_BUTTON_HELP));
-            this->child_list.push_back(but);
-        }
-
-        struct Widget* b;
-        int count = 0;
-        /* label */
-        b = new widget_label(this->mod,
-            Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 20),
-            *this, context.get(STRAUTHID_TRANS_USERNAME));
-        this->child_list.push_back(b);
-
-        b = new widget_label(this->mod,
-            Rect((this->rect.cx >= 400) ?  230 : 70, 60 + 25 * count, 350, 20),
-            *this, context.get(STRAUTHID_AUTH_USER));
-        b->id = 100 + 2 * count;
-        this->child_list.push_back(b);
-        count ++;
-
-        b = new widget_label(this->mod,
-            Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 20),
-            *this, context.get(STRAUTHID_TRANS_TARGET));
-        this->child_list.push_back(b);
-
-        b = new widget_label(this->mod,
-            Rect((this->rect.cx >= 400) ?  230 : 70, 60 + 25 * count, 350, 20),
-            *this, target);
-        b->id = 100 + 2 * count;
-        this->child_list.push_back(b);
-        count ++;
-
-        b = new widget_label(this->mod,
-            Rect(this->rect.cx >= 400 ? 155 : 5, 60 + 25 * count, 70, 20),
-            *this, context.get(STRAUTHID_TRANS_PASSWORD));
-        b->id = 100 + 2 * count;
-        this->child_list.push_back(b);
-
-        /* edit */
-        b = new widget_edit(this->mod,
-                Rect((this->rect.cx) >= 400 ? 230 : 70, 60 + 25 * count, 350, 20),
-                *this,
-                100 + 2 * count + 1, /* id */
-                1, /* tab stop */
-                context.get(STRAUTHID_PASSWORD),
-                1, /* pointer */
-                0 /* edit pos */);
-
-        #warning integrate that in widget_edit
-        b->password_char = '*';
-
-        this->child_list.push_back(b);
-        this->focused_control = b;
-        b->has_focus = true;
-        count++;
-    }
-
-    ~wab_login(){
-        #warning here destroy all widgets from screen.child_list
-        delete this->help;
-    }
-
-};
-
-
 struct combo_help : public window
 {
     Widget & notify_to;
@@ -252,7 +71,7 @@ struct combo_help : public window
                 const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
                 for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-                    this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
+                    this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
                     this->mod->gd.server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK);
                 }
 
@@ -315,6 +134,7 @@ struct combo_login : public window_login
         for (int i = 0; i < 6 ; i++){
             if (ini->account[i].accountdefined){
                 this->combo->item_index = i;
+                strcpy(ini->account[i].username, context.get(STRAUTHID_AUTH_USER));
                 break;
             }
         }
@@ -374,6 +194,14 @@ struct login_mod : public internal_mod {
             ModContext & context, Front & front, Inifile * ini)
             : internal_mod(front)
     {
+
+        uint32_t nb = (this->screen.rect.cy - 230) / 20;
+        nb = (nb > 50)?50:nb;
+        char buffer[128];
+        sprintf(buffer, "%u", nb);
+
+        context.cpy(STRAUTHID_SELECTOR_LINES_PER_PAGE, buffer);
+
         this->event = event;
         this->signal = 0;
         this->button_down = 0;
@@ -395,27 +223,14 @@ struct login_mod : public internal_mod {
             log_width,
             log_height);
 
-        #warning having two completely different LOGIN modules one with password only, the other one with full behavior would probably be much more clean than passing around that wab_auth. See that.
-        if (context.wab_auth){
-            this->login_window = new wab_login(this,
-                r, context,
-                this->screen, // parent
-                this->screen, // notify_to
-                GREY,
-                "Login",
-                ini,
-                regular);
-        }
-        else {
-            this->login_window = new combo_login(this,
-                r, context,
-                this->screen, // parent
-                this->screen, // notify_to
-                GREY,
-                "Login",
-                ini,
-                regular);
-        }
+        this->login_window = new combo_login(this,
+            r, context,
+            this->screen, // parent
+            this->screen, // notify_to
+            GREY,
+            "Login",
+            ini,
+            regular);
 
         this->screen.child_list.push_back(this->login_window);
         assert(this->login_window->mod == this);
@@ -553,7 +368,7 @@ struct login_mod : public internal_mod {
                 /* loop on surface widgets on screen to find active window */
                 Widget* wnd = this->get_screen_wdg();
                 for (size_t i = 0; i < wnd->child_list.size(); i++) {
-                    if (wnd->child_list[i]->rect.rect_contains_pt(x, y)) {
+                    if (wnd->child_list[i]->rect.contains_pt(x, y)) {
                         wnd = this->screen.child_list[i];
                         break;
                     }
@@ -644,7 +459,7 @@ struct login_mod : public internal_mod {
                     /* loop on surface widgets on screen to find active window */
                     Widget* wnd = this->get_screen_wdg();
                     for (size_t i = 0; i < wnd->child_list.size(); i++) {
-                        if (wnd->child_list[i]->rect.rect_contains_pt(x, y)) {
+                        if (wnd->child_list[i]->rect.contains_pt(x, y)) {
                             wnd = this->screen.child_list[i];
                             break;
                         }

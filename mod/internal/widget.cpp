@@ -153,7 +153,7 @@ struct Widget* Widget::widget_at_pos(int x, int y) {
     /* If a widget contains overlapping subwidgets */
     /* consider the right one is the first one found in child_list */
     for (size_t i = 0; i < this->child_list.size(); i++) {
-        if (this->child_list[i]->rect.rect_contains_pt(x, y)) {
+        if (this->child_list[i]->rect.contains_pt(x, y)) {
             Widget * res =  this->child_list[i]->widget_at_pos(x, y);
             return res;
         }
@@ -184,7 +184,7 @@ void window::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
         this->mod->gd.draw_window(scr_r, this->bg_color, this->caption1, this->has_focus);
     }
 }
@@ -197,7 +197,7 @@ void widget_edit::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
         this->mod->gd.draw_edit(scr_r, this->password_char, this->buffer, this->edit_pos, this->has_focus);
     }
 }
@@ -208,7 +208,7 @@ void widget_screen::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
         this->mod->gd.opaque_rect(RDPOpaqueRect(scr_r, this->bg_color));
     }
 }
@@ -219,7 +219,7 @@ void widget_combo::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
         this->mod->gd.draw_combo(scr_r, this->string_list[this->item_index], this->state, this->has_focus);
     }
 }
@@ -232,7 +232,7 @@ void widget_button::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
         this->mod->gd.draw_button(scr_r, this->caption1, this->state, this->has_focus);
     }
 }
@@ -244,7 +244,7 @@ void widget_popup::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
         this->mod->gd.opaque_rect(RDPOpaqueRect(Rect(scr_r.x, scr_r.y, this->rect.cx, this->rect.cy), WHITE));
 
         #warning this should be a two stages process, first prepare drop box data, then call draw_xxx that use that data to draw. For now everything is mixed up, (and that is not good)
@@ -280,7 +280,7 @@ void widget_label::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
+        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
         this->mod->gd.server_draw_text(scr_r.x, scr_r.y, this->caption1, GREY, BLACK);
     }
 
@@ -315,7 +315,7 @@ void widget_image::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, intersection);
 
     for (size_t ir = 0; ir < region.rects.size(); ir++){
-        this->mod->server_set_clip(region.rects[ir]);
+        this->mod->gd.server_set_clip(region.rects[ir]);
         this->mod->gd.bitmap_update(this->bmp, image_screen_rect, 0, 0);
     }
 }

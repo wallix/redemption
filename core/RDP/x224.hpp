@@ -560,7 +560,7 @@ struct X224Out : public X224Packet
                 stream.out_uint8(0x00);
                 stream.out_uint8(0x00); // 11 bytes
                 stream.out_uint8(0x0B); //
-                // CR_TPDU
+                // CC_TPDU
                 stream.out_uint8(0x06); // LI
                 stream.out_uint8(CC_TPDU); // CC_TPDU code
                 stream.out_uint8(0x00); // DST-REF
@@ -576,7 +576,7 @@ struct X224Out : public X224Packet
                 stream.out_uint8(0x00);
                 stream.out_uint8(0x00); // 11 bytes
                 stream.out_uint8(0x0B); //
-                // CR_TPDU
+                // DR_TPDU
                 stream.out_uint8(0x06); // LI
                 stream.out_uint8(DR_TPDU); // DR_TPDU code
                 stream.out_uint8(0x00); // DST-REF

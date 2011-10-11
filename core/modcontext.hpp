@@ -44,19 +44,6 @@ enum {
     MCTX_STATUS_CLI,
 };
 
-enum {
-    MOD_STATE_INIT,
-    MOD_STATE_RECEIVED_CREDENTIALS,
-    MOD_STATE_DISPLAY_MESSAGE,
-    MOD_STATE_VALID_MESSAGE,
-    MOD_STATE_LOGIN_BOX,
-    MOD_STATE_PASSWORD_BOX,
-    MOD_STATE_CONNECTED_RDP,
-    MOD_STATE_CONNECTED_VNC,
-    MOD_STATE_CLOSE,
-    MOD_STATE_MESSAGE_CONNEXION_CLOSE_AT_LIMIT
-};
-
 // ModContext structure is used for modules to communicate with each other
 
 // status tell to session what should be done when a module terminates
@@ -72,12 +59,12 @@ enum {
 // to simplify further session code)
 
 struct ModContext : public Dico {
-    int mod_state;
-    int wab_auth;
+    unsigned selector_focus;
     enum {
         INTERNAL_NONE,
         INTERNAL_LOGIN,
-        INTERNAL_DIALOG,
+        INTERNAL_DIALOG_DISPLAY_MESSAGE,
+        INTERNAL_DIALOG_VALID_MESSAGE,
         INTERNAL_CLOSE,
         INTERNAL_SELECTOR,
         INTERNAL_BOUNCER2,
@@ -89,6 +76,7 @@ struct ModContext : public Dico {
     ModContext(ProtocolKeyword * KeywordsDefinitions, unsigned nbkeywords) :
         Dico(KeywordsDefinitions, nbkeywords), nextmod(INTERNAL_NONE)
     {
+        this->selector_focus = 0;
     }
 
     ~ModContext(){
@@ -118,6 +106,9 @@ struct ModContext : public Dico {
             char * target_user = this->get(STRAUTHID_TARGET_USER);
             char * target_device = this->get(STRAUTHID_TARGET_DEVICE);
             char * auth_user = this->get(STRAUTHID_AUTH_USER);
+            char * selector = this->get(STRAUTHID_SELECTOR);
+            #warning we should not perform direct copy to protocol layer, but use dico API. Here and for parsing target and user name, not doing it could cause strange behaviors (because of the ASK special case)
+            strcpy(selector, "ASK");
 
             for (unsigned i = 0; i < 255 && (c = username[i]); i++){
                 switch (state) {

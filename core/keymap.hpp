@@ -51,7 +51,7 @@ struct key_info {
 struct Keymap {
     /* keyboard info */
     int keys[256]; /* key states 0 up 1 down*/
-    int key_flags; // scrool_lock = 1, num_lock = 2, caps_lock = 4
+    int key_flags; // scrool_lock = 1, num_lock = 2, caps_lock = 4, shift = 8, ctrl = 0x10, ALT = 0x20, Windows = 0x40, AlrGr = 0x80
 
     struct key_info keys_noshift[128];
     struct key_info keys_shift[128];
@@ -62,6 +62,10 @@ struct Keymap {
     Keymap(const char * filename);
     Keymap(std::istream & Keymap_stream);
     Keymap(){
+    }
+
+    bool shift_pressed() const {
+        return (this->keys[42] != 0) || (this->keys[54] != 0);
     }
 
     /*****************************************************************************/

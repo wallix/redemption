@@ -42,6 +42,12 @@ typedef enum{
     AUTHID_TARGET_DEVICE,   // target_device
     AUTHID_TARGET_PORT,     // target_port
     AUTHID_TARGET_PROTOCOL, // proto_dest
+    AUTHID_END_TIME,        // end time as text
+    AUTHID_SELECTOR_GROUP_FILTER, // group filter text
+    AUTHID_SELECTOR_DEVICE_FILTER, // device filter text
+    AUTHID_SELECTOR_LINES_PER_PAGE, // number of lines per page
+    AUTHID_SELECTOR_NUMBER_OF_PAGES, // number of pages
+    AUTHID_SELECTOR_CURRENT_PAGE, // current page
     AUTHID_REJECTED,        // rejected
     AUTHID_OPT_MOVIE,       // is_rec
     AUTHID_OPT_MOVIE_PATH,  // rec_path
@@ -61,6 +67,7 @@ typedef enum{
     AUTHID_AUTH_ERROR_MESSAGE,
     AUTHID_PROXY_TYPE,
     AUTHID_AUTHENTICATED,
+    AUTHID_SELECTOR,
     AUTHID_KEEPALIVE,
     // Translation Text
     AUTHID_TRANS_BUTTON_OK,
@@ -90,6 +97,12 @@ typedef enum{
 #define STRAUTHID_TARGET_DEVICE    "target_device"
 #define STRAUTHID_TARGET_PORT      "target_port"
 #define STRAUTHID_TARGET_PROTOCOL  "proto_dest"
+#define STRAUTHID_END_TIME         "end_time"
+#define STRAUTHID_SELECTOR_GROUP_FILTER "selector_group_filter"
+#define STRAUTHID_SELECTOR_DEVICE_FILTER "selector_device_filter"
+#define STRAUTHID_SELECTOR_LINES_PER_PAGE "selector_lines_per_page"
+#define STRAUTHID_SELECTOR_NUMBER_OF_PAGES "selector_number_of_pages"
+#define STRAUTHID_SELECTOR_CURRENT_PAGE "selector_current_page"
 #define STRAUTHID_REJECTED         "rejected"
 #define STRAUTHID_OPT_MOVIE        "is_rec"
 #define STRAUTHID_OPT_MOVIE_PATH   "rec_path"
@@ -109,6 +122,7 @@ typedef enum{
 #define STRAUTHID_AUTH_ERROR_MESSAGE "error_message"
 #define STRAUTHID_PROXY_TYPE        "proxy_type"
 #define STRAUTHID_AUTHENTICATED     "authenticated"
+#define STRAUTHID_SELECTOR         "selector"
 #define STRAUTHID_KEEPALIVE         "keepalive"
 #define STRAUTHID_TRANS_BUTTON_OK   "trans_ok"
 #define STRAUTHID_TRANS_BUTTON_CANCEL "trans_cancel"

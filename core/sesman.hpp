@@ -30,6 +30,20 @@
 
 class SessionManager {
 
+    enum {
+        MOD_STATE_INIT,
+        MOD_STATE_DONE_RECEIVED_CREDENTIALS,
+        MOD_STATE_DONE_DISPLAY_MESSAGE,
+        MOD_STATE_DONE_VALID_MESSAGE,
+        MOD_STATE_DONE_LOGIN,
+        MOD_STATE_DONE_SELECTOR,
+        MOD_STATE_DONE_PASSWORD,
+        MOD_STATE_DONE_CONNECTED,
+        MOD_STATE_DONE_CLOSE,
+        MOD_STATE_DONE_EXIT,
+    } mod_state;
+
+
     ModContext & context;
     int tick_count;
     public:
@@ -37,7 +51,9 @@ class SessionManager {
     struct SocketTransport * auth_trans_t;
     wait_obj * auth_event;
 
-    SessionManager(ModContext & context) : context(context), tick_count(0) {
+    SessionManager(ModContext & context)
+        : mod_state(MOD_STATE_INIT), context(context), tick_count(0)
+    {
         this->auth_trans_t = NULL;
         this->auth_event = 0;
     }
@@ -136,15 +152,15 @@ class SessionManager {
 
     bool close_on_timestamp(long & timestamp)
     {
-        if (MOD_STATE_CONNECTED_RDP == this->context.mod_state){
+        bool res = false;
+        if (MOD_STATE_DONE_CONNECTED == this->mod_state){
             long enddate = atol(this->context.get(STRAUTHID_END_DATE_CNX));
             if (enddate != 0 && (timestamp > enddate)) {
                 LOG(LOG_INFO, "Session is out of allowed timeframe : stopping");
-                this->context.mod_state = MOD_STATE_MESSAGE_CONNEXION_CLOSE_AT_LIMIT;
-                return true;
+                res = true;
             }
         }
-        return false;
+        return res;
     }
 
     bool keep_alive_or_inactivity(long & keepalive_time, long & now, Transport * trans)
@@ -213,30 +229,42 @@ class SessionManager {
         int res = MCTX_STATUS_EXIT;
         if (strncasecmp(protocol, "RDP", 4) == 0){
             res = MCTX_STATUS_RDP;
+            this->mod_state = MOD_STATE_DONE_CONNECTED;
         }
         else if (strncasecmp(protocol, "VNC", 4) == 0){
             res = MCTX_STATUS_VNC;
+            this->mod_state = MOD_STATE_DONE_CONNECTED;
         }
         else if (strncasecmp(protocol, "XUP", 4) == 0){
             res = MCTX_STATUS_XUP;
+            this->mod_state = MOD_STATE_DONE_CONNECTED;
         }
         else if (strncasecmp(protocol, "INTERNAL", 8) == 0){
             res = MCTX_STATUS_INTERNAL;
-            #warning : check, as far as I remember context->get returns a status buffer, checking if return is not null looks pretty useless
             char * target = this->context.get(STRAUTHID_TARGET_DEVICE);
-            if (target){
-                if (target && 0 == strncmp(target, "bouncer2", 9)){
-                    this->context.nextmod = ModContext::INTERNAL_BOUNCER2;
-                }
-                else if (0 == strncmp(target, "test", 5)){
-                    this->context.nextmod = ModContext::INTERNAL_TEST;
-                }
-                else if (0 == strncmp(target, "selector", 9)){
-                    this->context.nextmod = ModContext::INTERNAL_SELECTOR;
-                }
-                else {
-                    this->context.nextmod = ModContext::INTERNAL_CARD;
-                }
+            if (0 == strcmp(target, "bouncer2")){
+                this->context.nextmod = ModContext::INTERNAL_BOUNCER2;
+                this->mod_state = MOD_STATE_DONE_CONNECTED;
+            }
+            else if (0 == strcmp(target, "test")){
+                this->context.nextmod = ModContext::INTERNAL_TEST;
+                this->mod_state = MOD_STATE_DONE_CONNECTED;
+            }
+            else if (0 == strcmp(target, "selector")){
+                this->context.nextmod = ModContext::INTERNAL_SELECTOR;
+                this->mod_state = MOD_STATE_DONE_CONNECTED;
+            }
+            else if (0 == strcmp(target, "login")){
+                this->context.nextmod = ModContext::INTERNAL_LOGIN;
+                this->mod_state = MOD_STATE_DONE_CONNECTED;
+            }
+            else if (0 == strcmp(target, "close")){
+                this->context.nextmod = ModContext::INTERNAL_CLOSE;
+                this->mod_state = MOD_STATE_DONE_CONNECTED;
+            }
+            else {
+                this->context.nextmod = ModContext::INTERNAL_CARD;
+                this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
         }
         else {
@@ -249,48 +277,85 @@ class SessionManager {
     int ask_next_module(long & keepalive_time, const char * auth_host, int auth_port, bool & record_video, bool & keep_alive)
     {
         int next_state = MCTX_STATUS_EXIT;
-        switch (this->context.mod_state){
+        switch (this->mod_state){
         default:
-            LOG(LOG_INFO, "Default Mod State : ask next module %s %u\n", auth_host, auth_port);
+            LOG(LOG_INFO, "Entry, ask first credentials");
             next_state = this->ask_next_module_remote(auth_host, auth_port);
         break;
-        case MOD_STATE_RECEIVED_CREDENTIALS:
+        case MOD_STATE_DONE_SELECTOR:
+            LOG(LOG_INFO, "return from selector\n");
+            next_state = this->ask_next_module_remote(auth_host, auth_port);
+        break;
+        case MOD_STATE_DONE_LOGIN:
+            LOG(LOG_INFO, "return from login");
+            next_state = this->ask_next_module_remote(auth_host, auth_port);
+        break;
+        case MOD_STATE_DONE_PASSWORD:
+            LOG(LOG_INFO, "return from password");
+            next_state = this->ask_next_module_remote(auth_host, auth_port);
+        break;
+        case MOD_STATE_DONE_RECEIVED_CREDENTIALS:
         LOG(LOG_INFO, "Received Credentials\n");
         {
-            if (this->context.is_asked(STRAUTHID_AUTH_USER)
-            || this->context.is_asked(STRAUTHID_TARGET_DEVICE)
-            || this->context.is_asked(STRAUTHID_TARGET_USER)){
-                this->context.wab_auth = 0;
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_AUTH_USER,
+            this->context.is_asked(STRAUTHID_AUTH_USER)?"ask"
+            :this->context.get(STRAUTHID_AUTH_USER));
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_PASSWORD,
+            this->context.is_asked(STRAUTHID_PASSWORD)?"ask"
+            :this->context.get(STRAUTHID_PASSWORD));
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_TARGET_DEVICE,
+            this->context.is_asked(STRAUTHID_TARGET_DEVICE)?"ask"
+            :this->context.get(STRAUTHID_TARGET_DEVICE));
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_TARGET_USER,
+            this->context.is_asked(STRAUTHID_TARGET_USER)?"ask"
+            :this->context.get(STRAUTHID_TARGET_USER));
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_SELECTOR,
+            this->context.get_bool(STRAUTHID_SELECTOR)?"true":"false");
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_AUTHENTICATED,
+            this->context.get_bool(STRAUTHID_AUTHENTICATED)?"true":"false");
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_SELECTOR_DEVICE_FILTER,
+            this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER));
+         LOG(LOG_INFO, "%s=%s",STRAUTHID_SELECTOR_GROUP_FILTER,
+            this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER));
+
+            if (this->context.is_asked(STRAUTHID_AUTH_USER)){
                 next_state = MCTX_STATUS_INTERNAL;
                 this->context.nextmod = ModContext::INTERNAL_LOGIN;
-                this->context.mod_state = MOD_STATE_INIT;
+                this->mod_state = MOD_STATE_DONE_LOGIN;
             }
             else if (this->context.is_asked(STRAUTHID_PASSWORD)){
-                this->context.wab_auth = 1;
                 next_state = MCTX_STATUS_INTERNAL;
                 this->context.nextmod = ModContext::INTERNAL_LOGIN;
-                this->context.mod_state = MOD_STATE_INIT;
+                this->mod_state = MOD_STATE_DONE_LOGIN;
+            }
+            else if (!this->context.is_asked(STRAUTHID_SELECTOR)
+                 &&   this->context.get_bool(STRAUTHID_SELECTOR)
+                 &&  !this->context.is_asked(STRAUTHID_TARGET_DEVICE)
+                 &&  !this->context.is_asked(STRAUTHID_TARGET_USER)){
+                next_state = MCTX_STATUS_INTERNAL;
+                this->context.nextmod = ModContext::INTERNAL_SELECTOR;
+                this->mod_state = MOD_STATE_DONE_SELECTOR;
+            }
+            else if (this->context.is_asked(STRAUTHID_TARGET_DEVICE)
+                 ||  this->context.is_asked(STRAUTHID_TARGET_USER)){
+                    next_state = MCTX_STATUS_INTERNAL;
+                    this->context.nextmod = ModContext::INTERNAL_LOGIN;
+                    this->mod_state = MOD_STATE_DONE_LOGIN;
             }
             else if (this->context.is_asked(STRAUTHID_DISPLAY_MESSAGE)){
                 next_state = MCTX_STATUS_INTERNAL;
-                this->context.nextmod = ModContext::INTERNAL_DIALOG;
-                this->context.mod_state = MOD_STATE_DISPLAY_MESSAGE;
-
-
+                this->context.nextmod = ModContext::INTERNAL_DIALOG_DISPLAY_MESSAGE;
+                this->mod_state = MOD_STATE_DONE_DISPLAY_MESSAGE;
             }
             else if (this->context.is_asked(STRAUTHID_ACCEPT_MESSAGE)){
                 next_state = MCTX_STATUS_INTERNAL;
-                this->context.nextmod = ModContext::INTERNAL_DIALOG;
-                this->context.mod_state = MOD_STATE_VALID_MESSAGE;
+                this->context.nextmod = ModContext::INTERNAL_DIALOG_VALID_MESSAGE;
+                this->mod_state = MOD_STATE_DONE_VALID_MESSAGE;
             }
-
             else if (this->context.get_bool(STRAUTHID_AUTHENTICATED)){
-
                 next_state = this->get_mod_from_protocol();
-                this->context.mod_state = MOD_STATE_CONNECTED_RDP;
                 record_video = this->context.get_bool(STRAUTHID_OPT_MOVIE);
                 keep_alive = true;
-
                 if (context.get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                     context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "End of connection");
                 }
@@ -302,7 +367,6 @@ class SessionManager {
                 if (context.get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                     context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Authentifier service failed");
                 }
-                this->context.mod_state = MOD_STATE_CONNECTED_RDP;
                 #warning check life cycle of auth_trans_t
                 if (this->auth_trans_t){
                     delete this->auth_trans_t;
@@ -310,26 +374,24 @@ class SessionManager {
                 }
                 next_state = MCTX_STATUS_INTERNAL;
                 this->context.nextmod = ModContext::INTERNAL_CLOSE;
+                this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
         }
         break;
-        case MOD_STATE_MESSAGE_CONNEXION_CLOSE_AT_LIMIT:
-        LOG(LOG_INFO, "MESSAGE CONNEXION CLOSE AT LIMIT\n");
-        {
-        }
+        case MOD_STATE_DONE_CONNECTED:
+            LOG(LOG_INFO, "return from CONNECTED\n");
+            this->context.nextmod = ModContext::INTERNAL_CLOSE;
+            next_state = MCTX_STATUS_INTERNAL;
+            this->mod_state = MOD_STATE_DONE_CLOSE;
         break;
-        case MOD_STATE_CONNECTED_RDP:
-        LOG(LOG_INFO, "CONNECTED RDP\n");
-        this->context.mod_state = MOD_STATE_CLOSE;
-        next_state = MCTX_STATUS_INTERNAL;
-
-        break;
-        case MOD_STATE_CLOSE:
-        LOG(LOG_INFO, "CLOSE\n");
-        {
-            this->context.mod_state = MOD_STATE_CLOSE;
+        case MOD_STATE_DONE_CLOSE:
+            LOG(LOG_INFO, "return from CLOSE\n");
+            this->mod_state = MOD_STATE_DONE_EXIT;
             next_state = MCTX_STATUS_EXIT;
-        }
+        break;
+        case MOD_STATE_DONE_EXIT:
+            // we should never goes here, the main loop should have stopped before
+            LOG(LOG_WARNING, "unexpected forced exit");
         break;
         }
         return next_state;
@@ -351,10 +413,6 @@ class SessionManager {
             }
             stream.out_copy_bytes(key, strlen(key));
             stream.out_uint8('\n');
-            if ('!' == tmp[0]
-            || (0 == strncasecmp(tmp, "ask", 3))){
-                stream.out_uint8('!');
-            }
             stream.out_copy_bytes(tmp, strlen(tmp));
             stream.out_uint8('\n');
         }
@@ -401,6 +459,11 @@ class SessionManager {
             this->out_item(stream, STRAUTHID_PASSWORD);
             this->out_item(stream, STRAUTHID_TARGET_USER);
             this->out_item(stream, STRAUTHID_TARGET_DEVICE);
+            this->out_item(stream, STRAUTHID_SELECTOR);
+            this->out_item(stream, STRAUTHID_SELECTOR_GROUP_FILTER);
+            this->out_item(stream, STRAUTHID_SELECTOR_DEVICE_FILTER);
+            this->out_item(stream, STRAUTHID_SELECTOR_LINES_PER_PAGE);
+            this->out_item(stream, STRAUTHID_SELECTOR_CURRENT_PAGE);
             this->out_ask_item(stream, STRAUTHID_TARGET_PASSWORD);
             this->out_item(stream, STRAUTHID_OPT_WIDTH);
             this->out_item(stream, STRAUTHID_OPT_HEIGHT);
@@ -447,6 +510,7 @@ class SessionManager {
             delete this->auth_trans_t;
             this->auth_trans_t = NULL;
         }
+        this->mod_state = MOD_STATE_DONE_RECEIVED_CREDENTIALS;
         return MCTX_STATUS_TRANSITORY;
     }
 

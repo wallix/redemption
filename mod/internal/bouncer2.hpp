@@ -93,7 +93,7 @@ struct bouncer2_mod : public internal_mod {
         Rect scareZone(this->dancing_rect->getCenteredX() - (scarex / 2),this->dancing_rect->getCenteredY() - (scarey / 2),scarex,scarey);
 
         // Calculating new speedx and speedy, if cube encounters a moving mouse pointer, it flees
-        if (scareZone.rect_contains_pt(x,y)) {
+        if (scareZone.contains_pt(x,y)) {
             if (((this->dancing_rect->getCenteredX() - x) < scarex) && this->dancing_rect->getCenteredX() > x) {
                 this->speedx = 2;
             } else if (((x - this->dancing_rect->getCenteredX()) < scarex) && x > this->dancing_rect->getCenteredX()) {
