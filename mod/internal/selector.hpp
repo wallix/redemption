@@ -3397,7 +3397,7 @@ struct selector_mod : public internal_mod {
             groups = proceed_item(groups, this->grid[index].group);
             targets = proceed_item(targets, this->grid[index].target);
             protocols = proceed_item(protocols, this->grid[index].protocol);
-            endtimes = proceed_item(endtimes, this->grid[index].endtime);
+            endtimes = proceed_item(endtimes, this->grid[index].endtime, ';');
 
 //            LOG(LOG_INFO, "%s %s %s %s",
 //                this->grid[index].group,
@@ -3429,10 +3429,10 @@ struct selector_mod : public internal_mod {
     }
 
 
-    static inline const char * proceed_item(const char * list, char * grid_item)
+    static inline const char * proceed_item(const char * list, char * grid_item, char sep = ' ')
     {
         const char * p = list;
-        while (*p != ' ' && *p != '\n' && *p){
+        while (*p != sep && *p != '\n' && *p){
             p++;
         }
         memcpy(grid_item, list, p-list);
@@ -3788,7 +3788,7 @@ struct selector_mod : public internal_mod {
             this->gd.server_draw_text(35       , rect.y + 2,  this->grid[line].group, bc, fc);
             this->gd.server_draw_text(35 +  3*w, rect.y + 2,  this->grid[line].target, bc, fc);
             this->gd.server_draw_text(35 + 13*w, rect.y + 2,  this->grid[line].protocol, bc, fc);
-            this->gd.server_draw_text(35 + 16*w, rect.y + 2,  this->grid[line].endtime, bc, fc);
+            this->gd.server_draw_text(35 + 15*w, rect.y + 2,  this->grid[line].endtime, bc, fc);
         }
 
         if (this->focus_item == FOCUS_ON_FIRSTPAGE){
