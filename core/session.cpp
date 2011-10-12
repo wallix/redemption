@@ -54,64 +54,8 @@
 
 
 
-int Session::step_STATE_CLOSE_CONNECTION()
-{
-    unsigned max = 0;
-    fd_set rfds;
-
-    FD_ZERO(&rfds);
-
-    this->front_event->add_to_fd_set(rfds, max);
-    this->back_event->add_to_fd_set(rfds, max);
-
-    if (this->back_event->is_set()) {
-        return SESSION_STATE_STOP;
-    }
-    if (this->front_event->is_set()) {
-        try {
-            this->front->activate_and_process_data(*this->mod);
-        }
-        catch(...){
-            return SESSION_STATE_STOP;
-        };
-    }
-
-    return this->internal_state;
-}
 
 
-int Session::step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time_mark)
-{
-    unsigned max = 0;
-    fd_set rfds;
-    fd_set wfds;
-
-    FD_ZERO(&rfds);
-    FD_ZERO(&wfds);
-
-    struct timeval timeout = time_mark;
-
-    this->front_event->add_to_fd_set(rfds, max);
-    this->sesman->add_to_fd_set(rfds, max);
-    select(max + 1, &rfds, &wfds, 0, &timeout);
-    if (this->front_event->is_set()) { /* incoming client data */
-        try {
-            this->front->activate_and_process_data(*this->mod);
-        }
-        catch(...){
-            LOG(LOG_INFO, "Forced stop from client side");
-            return SESSION_STATE_STOP;
-        };
-    }
-
-    if (this->sesman->event()){
-        this->sesman->receive_next_module();
-        if (this->session_setup_mod(MCTX_STATUS_TRANSITORY, this->context)){
-                this->internal_state = SESSION_STATE_RUNNING;
-        }
-    }
-    return this->internal_state;
-}
 
 
 int Session::step_STATE_RUNNING(const struct timeval & time_mark)
