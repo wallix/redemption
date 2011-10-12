@@ -3777,7 +3777,7 @@ struct selector_mod : public internal_mod {
         this->gd.draw_edit(this->rect_device_filter, 0, this->filter_device_text, this->filter_device_edit_pos,
             this->focus_item == FOCUS_ON_FILTER_DEVICE);
         this->gd.server_draw_text(30 + 13*w, 50,  "Protocol", GREY, BLACK);
-        this->gd.server_draw_text(30 + 16*w, 50,  "Deconnexion Time", GREY, BLACK);
+        this->gd.server_draw_text(30 + 16*w, 50,  "Deconnection Time", GREY, BLACK);
 
         for (size_t line = 0 ; line < this->nblines() ; line++){
             Rect rect(this->rect_grid.x, this->rect_grid.y + line * 20, this->screen.rect.cx-40, 19);
