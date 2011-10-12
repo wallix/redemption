@@ -131,6 +131,26 @@ enum {
     SESSION_STATE_STOP,
 };
 
+static int get_pixel(uint8_t* data, int x, int y, int width, int bpp)
+{
+    int pixels_per_byte = 8/bpp;
+    int real_width = (width + pixels_per_byte-1) / pixels_per_byte;
+    int start = y * real_width + x / pixels_per_byte;
+    int shift = x & (pixels_per_byte-1);
+
+    #warning this need some cleanup, but we should define unit tests before correcting it, because mistaking is easy in these kind of things.
+    if (bpp == 1) {
+        return (data[start] & (0x80 >> shift)) != 0;
+    } else if (bpp == 4) {
+        if (shift == 0) {
+            return (data[start] & 0xf0) >> 4;
+        } else {
+            return data[start] & 0x0f;
+        }
+    }
+    return 0;
+}
+
 struct Session {
 
     ModContext * context;
