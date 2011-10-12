@@ -58,11 +58,6 @@
 #include "constants.hpp"
 
 
-int Session::step_STATE_KEY_HANDSHAKE(const struct timeval & time_mark)
-{
-    this->front->incoming();
-    return SESSION_STATE_ENTRY;
-}
 
 
 int Session::step_STATE_ENTRY(const struct timeval & time_mark)

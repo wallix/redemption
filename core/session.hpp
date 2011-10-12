@@ -324,7 +324,13 @@ struct Session {
 
     int session_main_loop();
 
-    int step_STATE_KEY_HANDSHAKE(const struct timeval & time);
+    int step_STATE_KEY_HANDSHAKE(const struct timeval & time)
+    {
+        this->front->incoming();
+        return SESSION_STATE_ENTRY;
+    }
+
+    ;
     int step_STATE_ENTRY(const struct timeval & time);
     int step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time);
     int step_STATE_RUNNING(const struct timeval & time);
