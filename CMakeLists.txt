@@ -18,7 +18,7 @@ add_library(localobjects STATIC
     core/d3des.cpp
 )
 
-add_definitions(-DFIXTURES_PATH="${CMAKE_SOURCE_DIR}/tests/fixtures" 
+add_definitions(-DFIXTURES_PATH="${CMAKE_SOURCE_DIR}/tests/fixtures"
                 -DSHARE_PATH="${CMAKE_INSTALL_PREFIX}/share/rdpproxy"
                 -DCFG_PATH="${CMAKE_INSTALL_PREFIX}/etc/rdpproxy"
 )
@@ -38,17 +38,17 @@ if (CRYPTO)
 endif (CRYPTO)
 if (DL)
     message("-- Found libdl     (${DL})")
-endif (DL) 
+endif (DL)
 if (X11)
     message("-- Found libX11    (${X11})")
-endif (X11) 
+endif (X11)
 if (PNG)
     message("-- Found libpng    (${PNG})")
-endif (PNG) 
+endif (PNG)
 
 
 # FIND boost
-set(Boost_USE_STATIC_LIBS        ON)
+set(Boost_USE_STATIC_LIBS        OFF)
 set(Boost_USE_MULTITHREADED      ON)
 set(Boost_USE_STATIC_RUNTIME    OFF)
 find_package( Boost COMPONENTS program_options unit_test_framework)
@@ -93,10 +93,10 @@ target_link_libraries (xrdp-keygen
 )
 
 # INSTALL stuff
-install (TARGETS 
+install (TARGETS
             rdpproxy
             xrdp-genkeymap
-            xrdp-keygen 
+            xrdp-keygen
          DESTINATION bin)
 install (DIRECTORY
             sys/etc
@@ -139,4 +139,3 @@ foreach(unitname IN ITEMS
 endforeach(unitname)
 
 enable_testing()
-
