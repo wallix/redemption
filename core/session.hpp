@@ -203,7 +203,26 @@ struct Session {
     }
 
 
-    ~Session();
+    ~Session()
+    {
+        if (this->keymap){
+            delete this->keymap;
+        }
+        delete this->front;
+        delete this->front_event;
+        delete this->trans;
+        if (this->back_event){
+            delete this->back_event;
+        }
+        if (this->mod != this->no_mod){
+            delete this->mod;
+            this->mod = this->no_mod;
+        }
+        delete this->no_mod;
+        delete this->sesman;
+        delete this->context;
+    }
+
     int pointer(char* data, char* mask, int x, int y);
     void rdp_input_invalidate(const Rect & rect);
 
