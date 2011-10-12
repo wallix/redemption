@@ -452,7 +452,103 @@ struct Session {
         return this->internal_state;
     }
 
-    int step_STATE_RUNNING(const struct timeval & time);
+    int step_STATE_RUNNING(const struct timeval & time_mark)
+    {
+        unsigned max = 0;
+        fd_set rfds;
+        fd_set wfds;
+
+        FD_ZERO(&rfds);
+        FD_ZERO(&wfds);
+
+        struct timeval timeout = time_mark;
+
+        this->front_event->add_to_fd_set(rfds, max);
+        this->back_event->add_to_fd_set(rfds, max);
+        this->sesman->add_to_fd_set(rfds, max);
+
+        select(max + 1, &rfds, &wfds, 0, &timeout);
+
+        time_t timestamp = time(NULL);
+        this->mod->periodic_snapshot(this->mod->get_pointer_displayed());
+
+        if (this->front_event->is_set()) { /* incoming client data */
+            try {
+                this->front->activate_and_process_data(*this->mod);
+            }
+            catch(...){
+                return SESSION_STATE_STOP;
+            };
+        }
+
+        if (this->sesman->close_on_timestamp(timestamp)
+        || !this->sesman->keep_alive_or_inactivity(this->keep_alive_time, timestamp, this->trans)){
+            this->internal_state = SESSION_STATE_STOP;
+            this->context->nextmod = ModContext::INTERNAL_CLOSE;
+            if (this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context)){
+                this->keep_alive_time = 0;
+                #warning move that to sesman (to hide implementation details)
+                if (this->sesman->auth_event){
+                    delete this->sesman->auth_event;
+                    this->sesman->auth_event = 0;
+                }
+                this->internal_state = SESSION_STATE_RUNNING;
+            }
+            this->mod->stop_capture();
+        }
+
+        if (this->back_event->is_set()){ // data incoming from server module
+    //        LOG(LOG_INFO, "back_event fired");
+            int signal = this->mod->draw_event();
+            if (signal){ // signal is the return status from module
+                         // (used only for internal modules)
+                if (signal == 4){
+                    return SESSION_STATE_STOP;
+                }
+                if (this->mod != this->no_mod){
+                    delete this->mod;
+                    this->mod = this->no_mod;
+                }
+                snprintf(this->context->get(STRAUTHID_OPT_WIDTH), 10, "%d", this->front->get_client_info().width);
+                snprintf(this->context->get(STRAUTHID_OPT_HEIGHT), 10, "%d", this->front->get_client_info().height);
+                snprintf(this->context->get(STRAUTHID_OPT_BPP), 10, "%d", this->front->get_client_info().bpp);
+                bool record_video = false;
+                bool keep_alive = false;
+                LOG(LOG_INFO, "ask next module");
+                int next_state = this->sesman->ask_next_module(
+                                                    this->keep_alive_time,
+                                                    this->ini->globals.authip,
+                                                    this->ini->globals.authport,
+                                                    record_video, keep_alive);
+                if (next_state != MCTX_STATUS_WAITING){
+                    this->internal_state = SESSION_STATE_STOP;
+                    if (this->session_setup_mod(next_state, this->context)){
+                        if (record_video) {
+                            this->mod->start_capture(
+                                this->mod->gd.get_front_width(),
+                                this->mod->gd.get_front_height(),
+                                this->context->get_bool(STRAUTHID_OPT_MOVIE),
+                                this->context->get(STRAUTHID_OPT_MOVIE_PATH),
+                                this->context->get(STRAUTHID_OPT_CODEC_ID),
+                                this->context->get(STRAUTHID_VIDEO_QUALITY),
+                                atoi(this->context->get(STRAUTHID_TIMEZONE)));
+                        }
+                        else {
+                            this->mod->stop_capture();
+                        }
+                        if (keep_alive){
+                            this->sesman->start_keep_alive(keep_alive_time);
+                        }
+                        this->internal_state = SESSION_STATE_RUNNING;
+                    }
+                }
+                else {
+                    this->internal_state = SESSION_STATE_WAITING_FOR_NEXT_MODULE;
+                }
+            }
+        }
+        return this->internal_state;
+    }
 
     int step_STATE_CLOSE_CONNECTION()
     {
