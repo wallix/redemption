@@ -59,67 +59,6 @@
 
 
 
-int Session::session_main_loop()
-{
-    int rv = 0;
-    try {
-        int previous_state = SESSION_STATE_STOP;
-        while (1) {
-            int timeout = 50;
-            static struct timeval time_mark = { 0, 0 };
-            if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500){
-                time_mark.tv_sec = timeout / 1000;
-                time_mark.tv_usec = (timeout % 1000) * 1000;
-            }
-            switch (this->internal_state)
-            {
-                case SESSION_STATE_RSA_KEY_HANDSHAKE:
-                    if (this->internal_state != previous_state)
-                        LOG(LOG_DEBUG, "-------------- RSA Key Handshake\n");
-                    this->internal_state = this->step_STATE_KEY_HANDSHAKE(time_mark);
-                break;
-                case SESSION_STATE_ENTRY:
-                    if (this->internal_state != previous_state)
-                        LOG(LOG_DEBUG, "-------------- Initializing client session\n");
-                    previous_state = this->internal_state;
-                    this->internal_state = this->step_STATE_ENTRY(time_mark);
-                break;
-                case SESSION_STATE_WAITING_FOR_NEXT_MODULE:
-                    if (this->internal_state != previous_state)
-                        LOG(LOG_DEBUG, "-------------- Waiting for authentifier\n");
-                    previous_state = this->internal_state;
-                    this->internal_state = this->step_STATE_WAITING_FOR_NEXT_MODULE(time_mark);
-                break;
-                case SESSION_STATE_RUNNING:
-                    if (this->internal_state != previous_state)
-                        LOG(LOG_DEBUG, "-------------- Running\n");
-                    previous_state = this->internal_state;
-                    this->internal_state = this->step_STATE_RUNNING(time_mark);
-                break;
-                case SESSION_STATE_CLOSE_CONNECTION:
-                    if (this->internal_state != previous_state)
-                        LOG(LOG_DEBUG, "-------------- Close connection");
-                    previous_state = this->internal_state;
-                    this->internal_state = this->step_STATE_CLOSE_CONNECTION();
-                break;
-            }
-            if (this->internal_state == SESSION_STATE_STOP){
-                break;
-            }
-        }
-        this->front->disconnect();
-    }
-    catch(...){
-        rv = 1;
-    };
-    LOG(LOG_INFO, "Client Session Disconnected\n");
-    this->mod->stop_capture();
-    if (this->sck){
-        shutdown(this->sck, 2);
-        close(this->sck);
-    }
-   return rv;
-}
 
 bool Session::session_setup_mod(int status, const ModContext * context)
 {
