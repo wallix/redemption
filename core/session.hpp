@@ -33,6 +33,8 @@
 #include <netinet/tcp.h>
 #include <errno.h>
 #include <string.h>
+#include <assert.h>
+#include <sys/time.h>
 
 #include "colors.hpp"
 #include "stream.hpp"
@@ -330,8 +332,93 @@ struct Session {
         return SESSION_STATE_ENTRY;
     }
 
-    ;
-    int step_STATE_ENTRY(const struct timeval & time);
+    int step_STATE_ENTRY(const struct timeval & time_mark)
+    {
+        unsigned max = 0;
+        fd_set rfds;
+        fd_set wfds;
+
+        FD_ZERO(&rfds);
+        FD_ZERO(&wfds);
+        struct timeval timeout = time_mark;
+
+        this->front_event->add_to_fd_set(rfds, max);
+        select(max + 1, &rfds, &wfds, 0, &timeout);
+        if (this->front_event->is_set()) {
+            try {
+                this->front->activate_and_process_data(*this->mod);
+            }
+            catch(...){
+                return SESSION_STATE_STOP;
+            };
+
+            if (this->front->up_and_running){
+                // if we reach this point we are up_and_running,
+                // hence width and height and colors and keymap are availables
+                /* resize the main window */
+                this->mod->front_resize();
+                this->mod->gd.server_reset_clip();
+                this->front->reset();
+
+                /* initialising keymap */
+                char filename[256];
+                snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->front->get_client_info().keylayout);
+                LOG(LOG_DEBUG, "loading keymap %s\n", filename);
+                this->keymap = new Keymap(filename);
+
+                BGRPalette palette;
+                init_palette332(palette);
+
+                this->mod->gd.color_cache(palette, 0);
+
+                struct pointer_item pointer_item;
+
+                memset(&pointer_item, 0, sizeof(pointer_item));
+                load_pointer(SHARE_PATH "/" CURSOR0,
+                    pointer_item.data,
+                    pointer_item.mask,
+                    &pointer_item.x,
+                    &pointer_item.y);
+
+                this->front->cache.add_pointer_static(&pointer_item, 0);
+                this->front->send_pointer(0,
+                                 pointer_item.data,
+                                 pointer_item.mask,
+                                 pointer_item.x,
+                                 pointer_item.y);
+
+                memset(&pointer_item, 0, sizeof(pointer_item));
+                load_pointer(SHARE_PATH "/" CURSOR1,
+                    pointer_item.data,
+                    pointer_item.mask,
+                    &pointer_item.x,
+                    &pointer_item.y);
+                this->front->cache.add_pointer_static(&pointer_item, 1);
+
+                this->front->send_pointer(1,
+                                 pointer_item.data,
+                                 pointer_item.mask,
+                                 pointer_item.x,
+                                 pointer_item.y);
+
+                if (this->front->get_client_info().username[0]){
+                    this->context->parse_username(this->front->get_client_info().username);
+                }
+
+                if (this->front->get_client_info().password[0]){
+                    this->context->cpy(STRAUTHID_PASSWORD, this->front->get_client_info().password);
+                }
+
+                this->internal_state = SESSION_STATE_RUNNING;
+                this->session_setup_mod(MCTX_STATUS_CLI, this->context);
+            }
+        }
+
+        return this->internal_state;
+    }
+
+
+
     int step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time);
     int step_STATE_RUNNING(const struct timeval & time);
     int step_STATE_CLOSE_CONNECTION();
