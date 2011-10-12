@@ -321,9 +321,6 @@ struct Session {
         delete this->context;
     }
 
-    int pointer(char* data, char* mask, int x, int y);
-    void rdp_input_invalidate(const Rect & rect);
-
     int session_main_loop()
     {
         int rv = 0;
