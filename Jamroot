@@ -98,7 +98,6 @@ lib png : : <name>png <link>static ;
 
 obj widget : mod/internal/widget.cpp ;
 obj mainloop : core/mainloop.cpp ;
-obj session : core/session.cpp ;
 obj keymap : core/keymap.cpp ;
 obj d3des : core/d3des.cpp ;
 obj ssl_calls : core/ssl_calls.cpp ;
@@ -114,7 +113,6 @@ exe rdpproxy
         core/main.cpp
 
         widget
-        session
         mainloop
         ini_config
         keymap
@@ -167,7 +165,7 @@ exe xrdp-keygen
 
 import testing ;
 
-unit-test test_widget : tests/test_widget.cpp libboost_unit_test ini_config keymap rsa_keys widget mainloop session ssl_calls d3des libboost_program_options openssl crypto png z dl ;
+unit-test test_widget : tests/test_widget.cpp libboost_unit_test ini_config keymap rsa_keys widget mainloop ssl_calls d3des libboost_program_options openssl crypto png z dl ;
 unit-test test_bitmap : tests/test_bitmap.cpp libboost_unit_test ini_config libboost_program_options ;
 unit-test test_bitmap_cache : tests/test_bitmap_cache.cpp libboost_unit_test ini_config libboost_program_options ;
 unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp libboost_unit_test ini_config libboost_program_options ;

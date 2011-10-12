@@ -9,7 +9,6 @@ project (ReDemPtion)
 
 add_library(localobjects STATIC
     mod/internal/widget.cpp
-    core/session.cpp
     core/mainloop.cpp
     core/config.cpp
     core/keymap.cpp
