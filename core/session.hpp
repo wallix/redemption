@@ -50,6 +50,9 @@
 
 #include "keymap.hpp"
 #include "sesman.hpp"
+#include "front.hpp"
+#include "../mod/null/null.hpp"
+
 
 using namespace std;
 
@@ -153,7 +156,53 @@ struct Session {
 
     SessionManager * sesman;
 
-    Session(int sck, const char * ip_source, Inifile * ini);
+    Session(int sck, const char * ip_source, Inifile * ini)
+    {
+        this->context = new ModContext(
+                KeywordsDefinitions,
+                sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword));
+        this->sesman = new SessionManager(*this->context);
+        this->sesman->auth_trans_t = 0;
+
+        this->mod = 0;
+
+        this->internal_state = SESSION_STATE_RSA_KEY_HANDSHAKE;
+        this->ini = ini;
+        this->sck = sck;
+        this->front_event = new wait_obj(sck);
+
+        /* create these when up and running */
+        this->trans = new SocketTransport(sck);
+
+        /* set non blocking */
+        int rv = 0;
+    //    rv = fcntl(this->sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
+    //    if (rv < 0){
+    //        /* 1 session_main_loop fnctl socket error */
+    //        throw 1;
+    //    }
+        int nodelay = 1;
+
+        /* SOL_TCP IPPROTO_TCP */
+        rv = setsockopt(this->sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay));
+        if (rv < 0){
+            /* 2 session_main_loop fnctl socket error */
+            throw 2;
+        }
+
+        this->front = new Front(this->trans, ini, this->keymap);
+        this->no_mod = new null_mod(*this->context, *(this->front));
+        this->mod = this->no_mod;
+
+        this->context->cpy(STRAUTHID_HOST, ip_source);
+
+        /* module interface */
+        this->back_event = 0;
+        this->keymap = 0;
+        this->keep_alive_time = 0;
+    }
+
+
     ~Session();
     int pointer(char* data, char* mask, int x, int y);
     void rdp_input_invalidate(const Rect & rect);
