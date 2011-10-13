@@ -124,19 +124,17 @@ struct selector_mod : public internal_mod {
     {
         this->signal = 0;
 
-        const char * df = context.get(STRAUTHID_SELECTOR_DEVICE_FILTER);
-        if (0 == strncasecmp(df, "ASK", 3)){
+        if (context.is_asked(STRAUTHID_SELECTOR_DEVICE_FILTER)){
             this->filter_device_text[0] = 0;
         }
         else{
-            strcpy(this->filter_device_text, df + ((*df == '!')?1:0));
+            strcpy(this->filter_device_text, context.get(STRAUTHID_SELECTOR_DEVICE_FILTER));
         }
-        const char * gf = context.get(STRAUTHID_SELECTOR_GROUP_FILTER);
-        if (0 == strncasecmp(gf, "ASK", 3)){
+        if (context.is_asked(STRAUTHID_SELECTOR_GROUP_FILTER)){
             this->filter_group_text[0] = 0;
         }
         else{
-            strcpy(this->filter_group_text, gf + ((*gf == '!')?1:0));
+            strcpy(this->filter_group_text, context.get(STRAUTHID_SELECTOR_GROUP_FILTER));
         }
 
         this->back_color[0] = PALE_GREEN;
@@ -3513,17 +3511,15 @@ struct selector_mod : public internal_mod {
     }
 
     void ask_page(void){
-        strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
+        this->context.ask(STRAUTHID_SELECTOR);
         char buffer[64];
         sprintf(buffer, "%u", this->showed_page);
-        strcpy(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE), buffer);
-        *this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER) = '!';
-        strcpy(this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER)+1, this->filter_group_text);
-        *this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER) = '!';
-        strcpy(this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER)+1, this->filter_device_text);
-        strcpy(this->context.get(STRAUTHID_TARGET_USER), "ASK");
-        strcpy(this->context.get(STRAUTHID_TARGET_DEVICE), "ASK");
-        strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
+        this->context.cpy(STRAUTHID_SELECTOR_CURRENT_PAGE, buffer);
+        this->context.cpy(STRAUTHID_SELECTOR_GROUP_FILTER, this->filter_group_text);
+        this->context.cpy(STRAUTHID_SELECTOR_DEVICE_FILTER, this->filter_device_text);
+        this->context.ask(STRAUTHID_TARGET_USER);
+        this->context.ask(STRAUTHID_TARGET_DEVICE);
+        this->context.ask(STRAUTHID_SELECTOR);
         this->signal = 2;
         this->event->set();
     }
@@ -3574,11 +3570,11 @@ struct selector_mod : public internal_mod {
         case FOCUS_ON_LOGOUT:
         {
             LOG(LOG_INFO, "Logout");
-            strcpy(this->context.get(STRAUTHID_AUTH_USER), "ASK");
-            strcpy(this->context.get(STRAUTHID_PASSWORD), "ASK");
-            strcpy(this->context.get(STRAUTHID_TARGET_USER), "ASK");
-            strcpy(this->context.get(STRAUTHID_TARGET_DEVICE), "ASK");
-            strcpy(this->context.get(STRAUTHID_SELECTOR), "ASK");
+            this->context.ask(STRAUTHID_AUTH_USER);
+            this->context.ask(STRAUTHID_PASSWORD);
+            this->context.ask(STRAUTHID_TARGET_USER);
+            this->context.ask(STRAUTHID_TARGET_DEVICE);
+            this->context.ask(STRAUTHID_SELECTOR);
             this->signal = 2;
             this->event->set();
         }

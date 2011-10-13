@@ -65,13 +65,26 @@ class Dico {
     typedef std::map<const char *, KeywordValue *, KeyComp> t_kmap;
     t_kmap map;
 
+    #warning get should return a non modifiable string (const char * const) and return "" if ASK to avoid showing it
     char * get(const char * key) {
-        #warning be be raisng an exception would be better
+        #warning be be raising an exception would be better
         if (this->map.find(key) == this->map.end()){
             LOG(LOG_DEBUG, "'%s' Not found in context\n", key);
             return NULL;
         }
-        return this->map[key]->value+1;
+        char * v = this->map[key]->value;
+        if (v[0] == '!'){
+            return v + 1;
+        }
+        else if ((v[0] == 'A'||v[0] == 'a')
+              && (v[1] == 'S'||v[1] == 's')
+              && (v[2] == 'K'||v[2] == 'k')
+              && (v[3] == 0)){
+            return v+3;
+        }
+        else {
+            return v;
+        }
     }
 
     bool get_bool(const char * key) {
@@ -106,8 +119,9 @@ class Dico {
         if (it == this->map.end()){
             return false; // if key not found we say value if greater
         }
-        const char * found = it->second->value+1;
-        return 0 == strncmp(found, value, 1023);
+        const char * found = it->second->value;
+
+        return 0 == strncmp((*found=='!')?found+1:found, value, 1023);
     }
 
     void cpy(const char * key, int value) {
@@ -128,8 +142,9 @@ class Dico {
         if (it == this->map.end()){
             return;
         }
-        char * found = it->second->value+1;
-        strncpy(found, value, 1023);
+        char * found = it->second->value;
+        found[0] = '!';
+        strncpy(found+1, value, 1023);
     }
 
     void ask(const char * key) {

@@ -99,12 +99,12 @@ BOOST_AUTO_TEST_CASE(TestDicoBasicAccess)
     test_dico.ask("un");
     BOOST_CHECK_EQUAL(true, test_dico.is_asked("un"));
 
-    strcpy(test_dico.get("un"), "!AskXXX");
+    test_dico.cpy("un", "!AskXXX");
     BOOST_CHECK_EQUAL(false, test_dico.is_asked("un"));
     BOOST_CHECK_EQUAL(false, test_dico.cmp("un", "AskXXX"));
     BOOST_CHECK_EQUAL(true, test_dico.cmp("un", "!AskXXX"));
 
-    strcpy(test_dico.get("un"), "AskXXX");
+    test_dico.cpy("un", "AskXXX");
     BOOST_CHECK_EQUAL(false, test_dico.is_asked("un"));
     BOOST_CHECK_EQUAL(true, test_dico.cmp("un", "AskXXX"));
 

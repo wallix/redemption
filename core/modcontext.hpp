@@ -86,13 +86,14 @@ struct ModContext : public Dico {
     void parse_username(const char * username)
     {
 //        LOG(LOG_INFO, "parse_username(%s)", username);
-        char * target_user = this->get(STRAUTHID_TARGET_USER);
-        char * target_device = this->get(STRAUTHID_TARGET_DEVICE);
-        char * auth_user = this->get(STRAUTHID_AUTH_USER);
-        char * selector = this->get(STRAUTHID_SELECTOR);
+        char target_user[256];
+        char target_device[256];
+        char auth_user[256];
+        target_user[0] = 0;
+        target_device[0] = 0;
+        auth_user[0] = 0;
 
-        #warning we should not perform direct copy to protocol layer, but use dico API. Here and for parsing target and user name, not doing it could cause strange behaviors (because of the ASK special case)
-        strcpy(selector, "ASK");
+        this->ask(STRAUTHID_SELECTOR);
 
         if (username[0]){
             unsigned iusername = 0;
@@ -153,9 +154,25 @@ struct ModContext : public Dico {
                 target_user[0] = 0;
             }
         }
-        if (!*target_user) { strcpy(target_user, "ASK"); }
-        if (!*target_device) { strcpy(target_device, "ASK"); }
-//        LOG(LOG_INFO, "parse_username(%s) -> %s %s %s", username, target_user, target_device, auth_user);
+        if (!*target_user)
+        {
+            this->ask(STRAUTHID_TARGET_USER);
+        }
+        else {
+            this->cpy(STRAUTHID_TARGET_USER, target_user);
+        }
+        if (!*target_device) {
+            this->ask(STRAUTHID_TARGET_DEVICE);
+        }
+        else {
+            this->cpy(STRAUTHID_TARGET_DEVICE, target_device);
+        }
+        if (!*auth_user) {
+            this->ask(STRAUTHID_AUTH_USER);
+        }
+        else {
+            this->cpy(STRAUTHID_AUTH_USER, auth_user);
+        }
     }
 };
 

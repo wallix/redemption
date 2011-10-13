@@ -133,29 +133,25 @@ struct combo_login : public window_login
         for (int i = 0; i < 6 ; i++){
             if (ini->account[i].accountdefined){
                 this->combo->item_index = i;
-                const char * target_user = context.get(STRAUTHID_TARGET_USER);
-                const char * target_device = context.get(STRAUTHID_TARGET_DEVICE);
-                const char * wab_user = context.get(STRAUTHID_AUTH_USER);
 
-                if ((0 == strncasecmp(target_user, "ASK", 3))
-                ||  (0 == strncasecmp(target_device, "ASK", 3))){
-                    if (0 == strncasecmp(target_user, "ASK", 3)){
+                if (context.is_asked(STRAUTHID_TARGET_USER)
+                ||  context.is_asked(STRAUTHID_TARGET_DEVICE)){
+                    if (context.is_asked(STRAUTHID_AUTH_USER)){
                         ini->account[i].username[0] = 0;
                     }
                     else {
-                        if (wab_user[0] == '!') { wab_user++; }
-                        strcpy(ini->account[i].username, wab_user);
+                        strcpy(ini->account[i].username, context.get(STRAUTHID_AUTH_USER));
                     }
                 }
-                else if (0 == strncasecmp(target_user, "ASK", 3)) {
+                else if (context.is_asked(STRAUTHID_AUTH_USER)) {
                     ini->account[i].username[0] = 0;
                 }
                 else {
                     char buffer[256];
-                    if (target_user[0] == '!') { target_user++; }
-                    if (target_device[0] == '!') { target_device++; }
-                    if (wab_user[0] == '!') { wab_user++; }
-                    snprintf(buffer, 256, "%s@%s:%s", target_user, target_device, wab_user);
+                    snprintf(buffer, 256, "%s@%s:%s",
+                        context.get(STRAUTHID_TARGET_USER),
+                        context.get(STRAUTHID_TARGET_DEVICE),
+                        context.get(STRAUTHID_AUTH_USER));
                     strcpy(ini->account[i].username, buffer);
                 }
                 break;
