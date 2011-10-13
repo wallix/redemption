@@ -173,11 +173,9 @@ struct close_mod : public internal_mod {
 
         // ---------------------------------------------------------------
         if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
-            LOG(LOG_INFO, "button 1 clicked");
             // LBUTTON DOWN
             if (device_flags & MOUSE_FLAG_DOWN){
                 if (!this->dragging){
-                    LOG(LOG_INFO, "button down");
                     /* loop on surface widgets on screen to find active window */
                     Widget* wnd = this->get_screen_wdg();
                     for (size_t i = 0; i < wnd->child_list.size(); i++) {
@@ -248,7 +246,6 @@ struct close_mod : public internal_mod {
     }
 
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const Keymap * keymap, const key_info* ki){
-        LOG(LOG_INFO, "scan code");
         if (ki != 0) {
             int msg = (device_flags & KBD_FLAG_UP)?WM_KEYUP:WM_KEYDOWN;
             switch (msg){
@@ -272,7 +269,6 @@ struct close_mod : public internal_mod {
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     {
-        LOG(LOG_INFO, "overloaded by subclasses");
         return;
     }
 

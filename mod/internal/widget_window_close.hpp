@@ -56,16 +56,33 @@ struct wab_close : public window
             *this, "Username:");
 
         this->child_list.push_back(b);
+        const char * wab_user = context.get(STRAUTHID_AUTH_USER);
+        if (0 == strncasecmp(wab_user, "ASK", 3)){
+            wab_user = "";
+        }
+        if (wab_user[0] == '!'){wab_user++;}
         b = new widget_label(this->mod,
             Rect(10 + ((this->rect.cx >= 400) ?  230 : 70), 60 + 25 * count, 350, 20),
-            *this, context.get(STRAUTHID_AUTH_USER));
+            *this, wab_user);
 
         b->id = 100 + 2 * count;
         this->child_list.push_back(b);
         count ++;
 
+        const char * target_user = context.get(STRAUTHID_TARGET_USER);
+        if (0 == strncasecmp(target_user, "ASK", 3)){
+            target_user = "";
+        }
+        else if (target_user[0] == '!'){target_user++;}
+
+        const char * target_device = context.get(STRAUTHID_TARGET_DEVICE);
+        if (0 == strncasecmp(target_device, "ASK", 3)){
+            target_device = "";
+        }
+        else if (target_device[0] == '!'){target_device++;}
+
         char target[255];
-        snprintf(target, 255, "%s@%s", context.get(STRAUTHID_TARGET_USER), context.get(STRAUTHID_TARGET_DEVICE));
+        snprintf(target, 255, "%s@%s", target_user, target_device);
 
         b = new widget_label(this->mod,
             Rect(10+((this->rect.cx >= 400) ? 155 : 5), 60 + 25 * count, 70, 20),

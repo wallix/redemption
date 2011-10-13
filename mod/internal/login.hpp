@@ -130,11 +130,34 @@ struct combo_login : public window_login
             }
         }
 
-        #warning select the index of the first account
         for (int i = 0; i < 6 ; i++){
             if (ini->account[i].accountdefined){
                 this->combo->item_index = i;
-                strcpy(ini->account[i].username, context.get(STRAUTHID_AUTH_USER));
+                const char * target_user = context.get(STRAUTHID_TARGET_USER);
+                const char * target_device = context.get(STRAUTHID_TARGET_DEVICE);
+                const char * wab_user = context.get(STRAUTHID_AUTH_USER);
+
+                if ((0 == strncasecmp(target_user, "ASK", 3))
+                ||  (0 == strncasecmp(target_device, "ASK", 3))){
+                    if (0 == strncasecmp(target_user, "ASK", 3)){
+                        ini->account[i].username[0] = 0;
+                    }
+                    else {
+                        if (wab_user[0] == '!') { wab_user++; }
+                        strcpy(ini->account[i].username, wab_user);
+                    }
+                }
+                else if (0 == strncasecmp(target_user, "ASK", 3)) {
+                    ini->account[i].username[0] = 0;
+                }
+                else {
+                    char buffer[256];
+                    if (target_user[0] == '!') { target_user++; }
+                    if (target_device[0] == '!') { target_device++; }
+                    if (wab_user[0] == '!') { wab_user++; }
+                    snprintf(buffer, 256, "%s@%s:%s", target_user, target_device, wab_user);
+                    strcpy(ini->account[i].username, buffer);
+                }
                 break;
             }
         }
