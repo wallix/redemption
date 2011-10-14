@@ -188,16 +188,6 @@ class Authentifier(object):
 #            'is_rec':'True',
 #            'rec_path':'/tmp/vnctest.cpp',
 #        },
-#        'vnc2' : {
-#            'proxy_type': 'RDP',
-#            'target_login' : r'vnc',
-#            'target_device' : '10.10.3.103',
-#            'target_password' : 'SecureLinux',
-#            'target_port':'5900',
-#            'proto_dest': 'VNC',
-#            'is_rec':'True',
-#            'rec_path':'/tmp/vnctest.cpp',
-#        },
 #        'v' : {
 #            'proxy_type': 'RDP',
 #            'target_login' : r'vnc',
@@ -300,7 +290,10 @@ users = [
         Service('w7', '10.10.14.77', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
         Service('w2000', '10.10.14.64', r'administrateur', 'SecureLinux', 'RDP', '3389'),
         Service('Bouncer', 'bouncer2', 'internal', 'internal', 'INTERNAL', ''),
-        Service('Card', 'test_card', 'internal', 'internal', 'INTERNAL', '')]),
+        Service('Card', 'test_card', 'internal', 'internal', 'INTERNAL', ''),
+        Service('Vnc', '10.10.3.103', 'any', 'SecureLinux', 'VNC', '5900'),
+        Service('Vnc', '10.10.4.13', 'any', 'SecureLinux', 'VNC', '5900')]),
+
     User('bouncer', 'bouncer', [
         Service('Bouncer', 'bouncer2', 'internal', 'internal', 'INTERNAL', '')]),
     User('selector', 'selector', [

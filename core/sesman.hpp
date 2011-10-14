@@ -81,7 +81,8 @@ class SessionManager {
             Stream stream(8192);
 
             stream.skip_uint8(4); // skip length
-            this->out_ask_item(stream, STRAUTHID_KEEPALIVE);
+            this->context.ask(STRAUTHID_KEEPALIVE);
+            this->out_item(stream, STRAUTHID_KEEPALIVE);
             // now set length
             int total_length = stream.p - stream.data;
             stream.p = stream.data;
@@ -211,7 +212,8 @@ class SessionManager {
                 // skip length
                 stream.skip_uint8(4);
                 // set data
-                this->out_ask_item(stream, STRAUTHID_KEEPALIVE);
+                this->context.ask(STRAUTHID_KEEPALIVE);
+                this->out_item(stream, STRAUTHID_KEEPALIVE);
                 // now set length in header
                 int total_length = stream.p - stream.data;
                 stream.p = stream.data;
@@ -279,45 +281,19 @@ class SessionManager {
         int next_state = MCTX_STATUS_EXIT;
         switch (this->mod_state){
         default:
-            LOG(LOG_INFO, "Entry, ask first credentials");
             next_state = this->ask_next_module_remote(auth_host, auth_port);
         break;
         case MOD_STATE_DONE_SELECTOR:
-            LOG(LOG_INFO, "return from selector\n");
             next_state = this->ask_next_module_remote(auth_host, auth_port);
         break;
         case MOD_STATE_DONE_LOGIN:
-            LOG(LOG_INFO, "return from login");
             next_state = this->ask_next_module_remote(auth_host, auth_port);
         break;
         case MOD_STATE_DONE_PASSWORD:
-            LOG(LOG_INFO, "return from password");
             next_state = this->ask_next_module_remote(auth_host, auth_port);
         break;
         case MOD_STATE_DONE_RECEIVED_CREDENTIALS:
-        LOG(LOG_INFO, "Received Credentials\n");
         {
-         LOG(LOG_INFO, "%s=%s",STRAUTHID_AUTH_USER,
-            this->context.is_asked(STRAUTHID_AUTH_USER)?"ask"
-            :this->context.get(STRAUTHID_AUTH_USER));
-         LOG(LOG_INFO, "%s=%s",STRAUTHID_PASSWORD,
-            this->context.is_asked(STRAUTHID_PASSWORD)?"ask"
-            :this->context.get(STRAUTHID_PASSWORD));
-         LOG(LOG_INFO, "%s=%s",STRAUTHID_TARGET_DEVICE,
-            this->context.is_asked(STRAUTHID_TARGET_DEVICE)?"ask"
-            :this->context.get(STRAUTHID_TARGET_DEVICE));
-         LOG(LOG_INFO, "%s=%s",STRAUTHID_TARGET_USER,
-            this->context.is_asked(STRAUTHID_TARGET_USER)?"ask"
-            :this->context.get(STRAUTHID_TARGET_USER));
-         LOG(LOG_INFO, "%s=%s",STRAUTHID_SELECTOR,
-            this->context.get_bool(STRAUTHID_SELECTOR)?"true":"false");
-         LOG(LOG_INFO, "%s=%s",STRAUTHID_AUTHENTICATED,
-            this->context.get_bool(STRAUTHID_AUTHENTICATED)?"true":"false");
-         LOG(LOG_INFO, "%s=%s",STRAUTHID_SELECTOR_DEVICE_FILTER,
-            this->context.get(STRAUTHID_SELECTOR_DEVICE_FILTER));
-         LOG(LOG_INFO, "%s=%s",STRAUTHID_SELECTOR_GROUP_FILTER,
-            this->context.get(STRAUTHID_SELECTOR_GROUP_FILTER));
-
             if (this->context.is_asked(STRAUTHID_AUTH_USER)){
                 next_state = MCTX_STATUS_INTERNAL;
                 this->context.nextmod = ModContext::INTERNAL_LOGIN;
@@ -379,13 +355,11 @@ class SessionManager {
         }
         break;
         case MOD_STATE_DONE_CONNECTED:
-            LOG(LOG_INFO, "return from CONNECTED\n");
             this->context.nextmod = ModContext::INTERNAL_CLOSE;
             next_state = MCTX_STATUS_INTERNAL;
             this->mod_state = MOD_STATE_DONE_CLOSE;
         break;
         case MOD_STATE_DONE_CLOSE:
-            LOG(LOG_INFO, "return from CLOSE\n");
             this->mod_state = MOD_STATE_DONE_EXIT;
             next_state = MCTX_STATUS_EXIT;
         break;
@@ -400,30 +374,28 @@ class SessionManager {
 #warning move that function to ModContext, create specialized stream object ModContextStream
     void out_item(Stream & stream, const char * key)
     {
-        const char * tmp = this->context.get(key);
-        // do not send empty values
-        if (tmp[0] != 0){
-            if (strncasecmp(tmp, "ask", 3) != 0
-            &&((strncasecmp("password", (char*)key, 8) == 0)
-            ||(strncasecmp("target_password", (char*)key, 15) == 0))){
-                LOG(LOG_INFO, "sending %s=<hidden>\n", key);
-            }
-            else {
-                LOG(LOG_INFO, "sending %s=%s\n", key, tmp);
-            }
+        if (this->context.is_asked(key)){
+            LOG(LOG_INFO, "sending %s=ASK\n", key);
             stream.out_copy_bytes(key, strlen(key));
-            stream.out_uint8('\n');
-            stream.out_copy_bytes(tmp, strlen(tmp));
-            stream.out_uint8('\n');
+            stream.out_copy_bytes("\nASK\n",5);
         }
-    }
-
-    void out_ask_item(Stream & stream, const char * key)
-    {
-        this->context.ask(key);
-        LOG(LOG_INFO, "sending %s=ASK\n", key);
-        stream.out_copy_bytes(key, strlen(key));
-        stream.out_copy_bytes("\nASK\n",5);
+        else {
+            const char * tmp = this->context.get(key);
+            // do not send empty values
+            if (tmp[0] != 0){
+                if ((strncasecmp("password", (char*)key, 8) == 0)
+                ||(strncasecmp("target_password", (char*)key, 15) == 0)){
+                    LOG(LOG_INFO, "sending %s=<hidden>\n", key);
+                }
+                else {
+                    LOG(LOG_INFO, "sending %s=%s\n", key, tmp);
+                }
+                stream.out_copy_bytes(key, strlen(key));
+                stream.out_uint8('\n');
+                stream.out_copy_bytes(tmp, strlen(tmp));
+                stream.out_uint8('\n');
+            }
+        }
     }
 
     void add_to_fd_set(fd_set & rfds, unsigned & max)
@@ -464,7 +436,7 @@ class SessionManager {
             this->out_item(stream, STRAUTHID_SELECTOR_DEVICE_FILTER);
             this->out_item(stream, STRAUTHID_SELECTOR_LINES_PER_PAGE);
             this->out_item(stream, STRAUTHID_SELECTOR_CURRENT_PAGE);
-            this->out_ask_item(stream, STRAUTHID_TARGET_PASSWORD);
+            this->out_item(stream, STRAUTHID_TARGET_PASSWORD);
             this->out_item(stream, STRAUTHID_OPT_WIDTH);
             this->out_item(stream, STRAUTHID_OPT_HEIGHT);
             this->out_item(stream, STRAUTHID_OPT_BPP);

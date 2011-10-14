@@ -24,7 +24,7 @@
 
 */
 
-#define VERSION "0.7.5"
+#define VERSION "0.7.6"
 
 #include <unistd.h>
 #include <locale.h>

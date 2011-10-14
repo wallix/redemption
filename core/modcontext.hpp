@@ -94,6 +94,7 @@ struct ModContext : public Dico {
         auth_user[0] = 0;
 
         this->ask(STRAUTHID_SELECTOR);
+        LOG(LOG_INFO, "asking for selector");
 
         if (username[0]){
             unsigned iusername = 0;
