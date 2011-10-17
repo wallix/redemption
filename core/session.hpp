@@ -568,10 +568,10 @@ struct Session {
 
         if (this->back_event->is_set()){ // data incoming from server module
     //        LOG(LOG_INFO, "back_event fired");
-            int signal = this->mod->draw_event();
+            BackEvent_t signal = this->mod->draw_event();
             if (signal){ // signal is the return status from module
                          // (used only for internal modules)
-                if (signal == 4){
+                if (signal == BACK_EVENT_STOP){
                     return SESSION_STATE_STOP;
                 }
                 if (this->mod != this->no_mod){

@@ -160,9 +160,9 @@ struct xup_mod : public client_mod {
         this->t->send((char*)stream.data, len);
     }
 
-    virtual int draw_event(void)
+    virtual BackEvent_t draw_event(void)
     {
-        int rv = 0;
+        BackEvent_t rv = BACK_EVENT_NONE;
 
         try{
             Stream stream(8192);
@@ -178,10 +178,14 @@ struct xup_mod : public client_mod {
                     type = stream.in_uint16_le();
                     switch (type) {
                     case 1: /* server_begin_update */
-                        rv = this->gd.server_begin_update();
+                        if (this->gd.server_begin_update()){
+                            rv = BACK_EVENT_1;
+                        }
                         break;
                     case 2: /* server_end_update */
-                        rv = this->gd.server_end_update();
+                        if (this->gd.server_end_update()){
+                            rv = BACK_EVENT_1;
+                        }
                         break;
                     case 3:
                     {
@@ -280,14 +284,14 @@ struct xup_mod : public client_mod {
                     default:
                         throw 1;
                     }
-                    if (rv != 0) {
+                    if (rv != BACK_EVENT_NONE) {
                         break;
                     }
                 }
             }
         }
         catch(...){
-            rv = 1;
+            rv = BACK_EVENT_1;
         }
         return rv;
     }

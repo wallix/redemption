@@ -44,7 +44,6 @@ struct selector_mod : public internal_mod {
     char filter_group[256];
     char filter[256];
 
-    int signal;
     size_t focus_line;
     enum {
         FOCUS_ON_FILTER_GROUP = 0,
@@ -112,7 +111,7 @@ struct selector_mod : public internal_mod {
 
 
     selector_mod(wait_obj * event, ModContext & context, Front & front):
-            internal_mod(front), signal(0), focus_line(0),
+            internal_mod(front), focus_line(0),
             focus_item(context.selector_focus),
             click_focus(NO_FOCUS),
             filter_group_edit_pos(0),
@@ -122,8 +121,6 @@ struct selector_mod : public internal_mod {
             total_page(atoi(context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES))),
             context(context)
     {
-        this->signal = 0;
-
         if (context.is_asked(STRAUTHID_SELECTOR_DEVICE_FILTER)){
             this->filter_device_text[0] = 0;
         }
@@ -3520,7 +3517,7 @@ struct selector_mod : public internal_mod {
         this->context.ask(STRAUTHID_TARGET_USER);
         this->context.ask(STRAUTHID_TARGET_DEVICE);
         this->context.ask(STRAUTHID_SELECTOR);
-        this->signal = 2;
+        this->signal = BACK_EVENT_2;
         this->event->set();
     }
 
@@ -3563,7 +3560,7 @@ struct selector_mod : public internal_mod {
                 this->grid[this->focus_line].target,
                 this->context.get(STRAUTHID_AUTH_USER));
             this->context.parse_username(buffer);
-            this->signal = 2;
+            this->signal = BACK_EVENT_2;
             this->event->set();
         }
         break;
@@ -3575,7 +3572,7 @@ struct selector_mod : public internal_mod {
             this->context.ask(STRAUTHID_TARGET_USER);
             this->context.ask(STRAUTHID_TARGET_DEVICE);
             this->context.ask(STRAUTHID_SELECTOR);
-            this->signal = 2;
+            this->signal = BACK_EVENT_2;
             this->event->set();
         }
         break;
@@ -3732,8 +3729,9 @@ struct selector_mod : public internal_mod {
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
     // non 0 if it wants to stop (to run another module)
-    virtual int draw_event()
+    virtual BackEvent_t draw_event()
     {
+        LOG(LOG_INFO, "selector::draw_event");
         this->draw(this->screen.rect);
         this->event->reset();
 //        LOG(LOG_INFO, "draw_event : signal = %u", this->signal);

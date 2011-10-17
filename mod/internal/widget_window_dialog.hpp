@@ -87,7 +87,7 @@ struct window_dialog : public window
                                           :STRAUTHID_DISPLAY_MESSAGE,
                         "False");
                 this->mod->event->set();
-                this->mod->signal = 1;
+                this->mod->signal = BACK_EVENT_1;
             break;
             case 3: /* ok button -> Enter */
                 this->context->cpy(
@@ -95,7 +95,7 @@ struct window_dialog : public window
                                           :STRAUTHID_DISPLAY_MESSAGE,
                         "True");
                 this->mod->event->set();
-                this->mod->signal = 1;
+                this->mod->signal = BACK_EVENT_1;
             break;
             default:
             break;

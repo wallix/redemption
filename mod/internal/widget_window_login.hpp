@@ -287,7 +287,7 @@ struct window_login : public window
                     }
                     i += 2;
                 }
-                this->mod->signal = 2;
+                this->mod->signal = BACK_EVENT_2;
                 this->mod->event->set();
             }
         }
@@ -308,7 +308,7 @@ struct window_login : public window
                 }
                 i += 2;
             }
-            this->mod->signal = 3;
+            this->mod->signal = BACK_EVENT_3;
             this->mod->event->set();
         }
         return 0;
@@ -317,7 +317,7 @@ struct window_login : public window
 
     int cancel_clicked()
     {
-        this->mod->signal = 4;
+        this->mod->signal = BACK_EVENT_STOP;
         this->mod->event->set();
         return 0;
     }

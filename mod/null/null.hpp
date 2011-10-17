@@ -63,9 +63,9 @@ struct null_mod : public client_mod {
     // management of module originated event ("data received from server")
     // return non zero if module is "finished", 0 if it's still running
     // the null module never finish and accept any incoming event
-    virtual int draw_event()
+    virtual BackEvent_t draw_event()
     {
-        return 0;
+        return BACK_EVENT_NONE;
     }
 
 };

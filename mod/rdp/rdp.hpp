@@ -668,7 +668,7 @@ struct mod_rdp : public client_mod {
         }
     }
 
-    virtual int draw_event(void)
+    virtual BackEvent_t draw_event(void)
     {
         try{
 
@@ -1245,11 +1245,11 @@ struct mod_rdp : public client_mod {
                 tpdu.send(this->trans);
             }
             catch(Error e){
-                return (e.id == ERR_SOCKET_CLOSED)?2:1;
+                return (e.id == ERR_SOCKET_CLOSED)?BACK_EVENT_2:BACK_EVENT_1;
             };
-            return 1;
+            return BACK_EVENT_1;
         }
-        return 0;
+        return BACK_EVENT_NONE;
     }
 
 

@@ -222,7 +222,7 @@ struct login_mod : public internal_mod {
         context.cpy(STRAUTHID_SELECTOR_LINES_PER_PAGE, buffer);
 
         this->event = event;
-        this->signal = 0;
+        this->signal = BACK_EVENT_NONE;
         this->button_down = 0;
 
         int log_width = 600;
@@ -545,7 +545,7 @@ struct login_mod : public internal_mod {
         return;
     }
 
-    virtual int draw_event()
+    virtual BackEvent_t draw_event()
     {
         // after refreshing button, return module status that may have changed
         return this->signal;

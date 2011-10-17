@@ -755,6 +755,16 @@ struct GraphicDeviceMod : public GraphicDevice
 };
 
 
+enum BackEvent_t {
+    BACK_EVENT_NONE = 0,
+    BACK_EVENT_1,
+    BACK_EVENT_2,
+    BACK_EVENT_3,
+    BACK_EVENT_STOP = 4,
+    BACK_EVENT_5
+};
+
+
 struct client_mod : public Callback {
     GraphicDeviceMod gd;
 
@@ -767,11 +777,11 @@ struct client_mod : public Callback {
     uint8_t socket;
 
     wait_obj * event;
-    int signal;
+    BackEvent_t signal;
 
     client_mod(Front & front)
         : gd(front),
-          signal(0)    {
+          signal(BACK_EVENT_NONE)    {
         this->pointer_displayed = false;
 
     }
@@ -815,7 +825,7 @@ struct client_mod : public Callback {
     // draw_event returns not 0 (return status) when the module finished
     // (connection to remote or internal server closed)
     // and returns 0 as long as the connection with server is still active.
-    virtual int draw_event(void) = 0;
+    virtual BackEvent_t draw_event(void) = 0;
 
     virtual void front_resize() {
     }

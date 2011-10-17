@@ -586,10 +586,10 @@ struct mod_vnc : public client_mod {
         }
     }
 
-    virtual int draw_event(void)
+    virtual BackEvent_t draw_event(void)
     {
         Stream stream(1);
-        int rv = 0;
+        BackEvent_t rv = BACK_EVENT_NONE;
 
         try {
             this->t->recv((char**)&stream.end, 1);
@@ -610,12 +610,12 @@ struct mod_vnc : public client_mod {
             }
         }
         catch(const Error & e) {
-            LOG(LOG_INFO, "exception raised id=%u", e.id);
-            rv = 1;
+            LOG(LOG_INFO, "VNC Stopped id=%u", e.id);
+            rv = BACK_EVENT_1;
         }
         catch(...) {
             LOG(LOG_INFO, "exception raised");
-            rv = 1;
+            rv = BACK_EVENT_1;
         }
         return rv;
     }

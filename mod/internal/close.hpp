@@ -30,14 +30,13 @@
 struct close_mod : public internal_mod {
     struct window * close_window;
     Widget* button_down;
-    int signal;
     Inifile * ini;
     bool closing;
 
     close_mod(
         wait_obj * event,
         ModContext & context, Front & front, Inifile * ini)
-            : internal_mod(front), signal(0), ini(ini), closing(false)
+            : internal_mod(front), ini(ini), closing(false)
     {
         this->event = event;
         this->event->set();
@@ -235,7 +234,7 @@ struct close_mod : public internal_mod {
                     if (this->button_down && this->closing){
                         this->button_down->state = 0;
                         this->button_down->refresh(this->button_down->rect.wh());
-                        this->signal = 4;
+                        this->signal = BACK_EVENT_STOP;
                         this->event->set();
                     }
                 }
@@ -252,7 +251,7 @@ struct close_mod : public internal_mod {
             case WM_KEYUP:
                 if (this->close_window->has_focus) {
                     this->close_window->def_proc(msg, param1, device_flags, keymap);
-                    this->signal = 4;
+                    this->signal = BACK_EVENT_STOP;
                     this->event->set();
                 } else {
                     this->close_window->has_focus = 1;
@@ -273,7 +272,7 @@ struct close_mod : public internal_mod {
     }
 
     // module got an internal event (like incoming data) and want to sent it outside
-    virtual int draw_event()
+    virtual BackEvent_t draw_event()
     {
         this->event->reset();
         return signal;

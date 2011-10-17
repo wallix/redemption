@@ -109,7 +109,7 @@ struct bouncer2_mod : public internal_mod {
     }
 
     // This should come from BACK!
-    virtual int draw_event()
+    virtual BackEvent_t draw_event()
     {
 //        this->gd.server_begin_update();
 //        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00));
@@ -150,7 +150,7 @@ struct bouncer2_mod : public internal_mod {
 
         // Final with setting next idle time
         this->event->set(33333); // 0.3s is 30fps
-        return 0;
+        return BACK_EVENT_NONE;
     }
 
     void wipe(Rect oldrect, Rect newrect, int color) {

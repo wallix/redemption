@@ -114,9 +114,9 @@ struct internal_mod : public client_mod {
     }
 
     // module got an internal event (like incoming data) and want to sent it outside
-    virtual int draw_event()
+    virtual BackEvent_t draw_event()
     {
-        return 0;
+        return BACK_EVENT_NONE;
     }
 };
 

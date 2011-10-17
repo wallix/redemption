@@ -47,7 +47,7 @@ struct dialog_mod : public internal_mod {
         int log_height = 200;
         int regular = 1;
 
-        this->signal = 0;
+        this->signal = BACK_EVENT_NONE;
 
         /* draw login window */
         Rect r(
@@ -263,7 +263,7 @@ struct dialog_mod : public internal_mod {
     }
 
     // module got an internal event (like incoming data) and want to sent it outside
-    virtual int draw_event()
+    virtual BackEvent_t draw_event()
     {
         return this->signal;
     }
