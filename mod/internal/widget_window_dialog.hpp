@@ -79,20 +79,21 @@ struct window_dialog : public window
         }
         #warning use symbolic button ids instead of constants 2 and 3
         if (msg == 1) { /* click */
+            LOG(LOG_INFO, "windget_window_dialog::notify %d sender->id=%d", msg, sender->id);
             switch (sender->id) {
             case 2: /* cancel button -> Esc */
-                strcpy(this->context->get(
-                    (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
-                                                    :STRAUTHID_DISPLAY_MESSAGE),
-                                            "False");
+                this->context->cpy(
+                        (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
+                                          :STRAUTHID_DISPLAY_MESSAGE,
+                        "False");
                 this->mod->event->set();
                 this->mod->signal = 1;
             break;
             case 3: /* ok button -> Enter */
-                strcpy(this->context->get(
-                    (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
-                                                    :STRAUTHID_DISPLAY_MESSAGE),
-                                            "True");
+                this->context->cpy(
+                        (this->esc_button)?STRAUTHID_ACCEPT_MESSAGE
+                                          :STRAUTHID_DISPLAY_MESSAGE,
+                        "True");
                 this->mod->event->set();
                 this->mod->signal = 1;
             break;

@@ -287,6 +287,7 @@ users = [
     User('x', 'x', [
         Service('xp', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
         Service('w2008', '10.10.14.78', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
+        Service('w2008-2', '10.10.14.78', r'administrateur@qa', 'S3cur3!1nux', 'RDP', '3389'),
         Service('w7', '10.10.14.77', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
         Service('w2000', '10.10.14.64', r'administrateur', 'SecureLinux', 'RDP', '3389'),
         Service('Bouncer', 'bouncer2', 'internal', 'internal', 'INTERNAL', ''),
