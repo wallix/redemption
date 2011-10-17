@@ -117,23 +117,10 @@ struct selector_mod : public internal_mod {
             filter_group_edit_pos(0),
             filter_device_edit_pos(0),
             state(BUTTON_STATE_UP),
-            showed_page(atoi(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE))),
-            total_page(atoi(context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES))),
+            showed_page(0),
+            total_page(1),
             context(context)
     {
-        if (context.is_asked(STRAUTHID_SELECTOR_DEVICE_FILTER)){
-            this->filter_device_text[0] = 0;
-        }
-        else{
-            strcpy(this->filter_device_text, context.get(STRAUTHID_SELECTOR_DEVICE_FILTER));
-        }
-        if (context.is_asked(STRAUTHID_SELECTOR_GROUP_FILTER)){
-            this->filter_group_text[0] = 0;
-        }
-        else{
-            strcpy(this->filter_group_text, context.get(STRAUTHID_SELECTOR_GROUP_FILTER));
-        }
-
         this->back_color[0] = PALE_GREEN;
         this->back_color[1] = MEDIUM_GREEN;
         this->back_color[2] = 0x44FFAC;
@@ -144,19 +131,6 @@ struct selector_mod : public internal_mod {
         this->fore_color[2] = WINBLUE;
         this->fore_color[3] = WINBLUE;
 
-        this->rect_button_logout = Rect(this->screen.rect.cx-240, this->screen.rect.cy- 100, 60, 26);
-        this->rect_button_apply = this->rect_button_logout.offset(70,0);
-        this->rect_button_connect = this->rect_button_apply.offset(70,0);
-
-        this->rect_button_first = Rect(this->screen.rect.cx - 240, this->screen.rect.cy - 130, 30, 20);
-        this->rect_button_prec = this->rect_button_first.offset(40, 0);
-        this->rect_button_next = this->rect_button_prec.offset(40 + 50, 0);
-        this->rect_button_last = this->rect_button_next.offset(40, 0);
-
-        uint32_t w = (this->screen.rect.cx - 40) / 20;
-        this->rect_group_filter = Rect(30, 70, 3*w - 15, 20);
-        this->rect_device_filter = Rect(30 + 3*w, 70, 10*w - 15, 20);
-        this->rect_grid = Rect(20, 100, this->screen.rect.cx-40, this->nblines() * 20);
 
     // cx=60 cy=26
     static uint8_t raw_apply_active[] = {    /* line 25 */
@@ -3375,6 +3349,48 @@ struct selector_mod : public internal_mod {
     };
     this->last_page = new Bitmap(24, NULL, 32, 20, raw_last_page, sizeof(raw_last_page));
 
+    this->refresh_context(context);
+//        LOG(LOG_INFO, "selector init done : signal = %u", this->signal);
+        this->event = event;
+        this->event->set();
+    }
+
+    virtual ~selector_mod()
+    {
+    }
+
+    virtual void refresh_context(ModContext & context)
+    {
+        this->showed_page = atoi(context.get(STRAUTHID_SELECTOR_CURRENT_PAGE));
+        this->total_page = atoi(context.get(STRAUTHID_SELECTOR_NUMBER_OF_PAGES));
+
+        if (context.is_asked(STRAUTHID_SELECTOR_DEVICE_FILTER)){
+            this->filter_device_text[0] = 0;
+        }
+        else{
+            strcpy(this->filter_device_text, context.get(STRAUTHID_SELECTOR_DEVICE_FILTER));
+        }
+        if (context.is_asked(STRAUTHID_SELECTOR_GROUP_FILTER)){
+            this->filter_group_text[0] = 0;
+        }
+        else{
+            strcpy(this->filter_group_text, context.get(STRAUTHID_SELECTOR_GROUP_FILTER));
+        }
+
+        this->rect_button_logout = Rect(this->screen.rect.cx-240, this->screen.rect.cy- 100, 60, 26);
+        this->rect_button_apply = this->rect_button_logout.offset(70,0);
+        this->rect_button_connect = this->rect_button_apply.offset(70,0);
+
+        this->rect_button_first = Rect(this->screen.rect.cx - 240, this->screen.rect.cy - 130, 30, 20);
+        this->rect_button_prec = this->rect_button_first.offset(40, 0);
+        this->rect_button_next = this->rect_button_prec.offset(40 + 50, 0);
+        this->rect_button_last = this->rect_button_next.offset(40, 0);
+
+        uint32_t w = (this->screen.rect.cx - 40) / 20;
+        this->rect_group_filter = Rect(30, 70, 3*w - 15, 20);
+        this->rect_device_filter = Rect(30 + 3*w, 70, 10*w - 15, 20);
+        this->rect_grid = Rect(20, 100, this->screen.rect.cx-40, this->nblines() * 20);
+
 
         const char * groups = context.get(STRAUTHID_TARGET_USER);
         const char * targets = context.get(STRAUTHID_TARGET_DEVICE);
@@ -3413,14 +3429,6 @@ struct selector_mod : public internal_mod {
             protocols++;
             endtimes++;
         }
-
-//        LOG(LOG_INFO, "selector init done : signal = %u", this->signal);
-        this->event = event;
-        this->event->set();
-    }
-
-    virtual ~selector_mod()
-    {
     }
 
 

@@ -40,6 +40,8 @@
 #include "keymap.hpp"
 #include "callback.hpp"
 #include "graphic_device.hpp"
+#include "modcontext.hpp"
+
 
 struct GraphicDeviceMod : public GraphicDevice
 {
@@ -826,6 +828,11 @@ struct client_mod : public Callback {
     // (connection to remote or internal server closed)
     // and returns 0 as long as the connection with server is still active.
     virtual BackEvent_t draw_event(void) = 0;
+
+    virtual void refresh_context(ModContext & context)
+    {
+        return; // used when context changed to avoid creating a new module
+    }
 
     virtual void front_resize() {
     }
