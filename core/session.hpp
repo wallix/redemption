@@ -569,11 +569,17 @@ struct Session {
         if (this->back_event->is_set()){ // data incoming from server module
     //        LOG(LOG_INFO, "back_event fired");
             BackEvent_t signal = this->mod->draw_event();
-            if (signal){ // signal is the return status from module
-                         // (used only for internal modules)
-                if (signal == BACK_EVENT_STOP){
-                    return SESSION_STATE_STOP;
-                }
+            switch (signal){
+            case BACK_EVENT_NONE:
+                // continue with same module
+            break;
+            case BACK_EVENT_STOP:
+                // current module finished for some serious reason implying immediate exit
+                // without going to close box.
+                // the typical case (and only one used for now) is... we are coming from CLOSE_BOX
+                return SESSION_STATE_STOP;
+            default:
+                // end the current module and switch to new one
                 if (this->mod != this->no_mod){
                     delete this->mod;
                     this->mod = this->no_mod;
@@ -614,6 +620,7 @@ struct Session {
                 else {
                     this->internal_state = SESSION_STATE_WAITING_FOR_NEXT_MODULE;
                 }
+            break;
             }
         }
         return this->internal_state;
