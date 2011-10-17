@@ -137,6 +137,9 @@ enum {
     // user clicked on OK to run module  or provided connection info on cmd line
     // but did not received credentials yet
     SESSION_STATE_WAITING_FOR_NEXT_MODULE,
+    // a module is loaded and active but required some action
+    // involving requesting remote context
+    SESSION_STATE_WAITING_FOR_CONTEXT,
     // init_done, module loaded and running
     SESSION_STATE_RUNNING,
     // display dialog when connection is closed
@@ -364,6 +367,12 @@ struct Session {
                         previous_state = this->internal_state;
                         this->internal_state = this->step_STATE_WAITING_FOR_NEXT_MODULE(time_mark);
                     break;
+                    case SESSION_STATE_WAITING_FOR_CONTEXT:
+                        if (this->internal_state != previous_state)
+                            LOG(LOG_DEBUG, "-------------- Waiting for authentifier (context refresh required)\n");
+                        previous_state = this->internal_state;
+                        this->internal_state = this->step_STATE_WAITING_FOR_CONTEXT();
+                    break;
                     case SESSION_STATE_RUNNING:
                         if (this->internal_state != previous_state)
                             LOG(LOG_DEBUG, "-------------- Running\n");
@@ -521,6 +530,45 @@ struct Session {
         return this->internal_state;
     }
 
+    int step_STATE_WAITING_FOR_CONTEXT()
+    {
+        struct timeval time_mark = { 1, 0 };
+        unsigned max = 0;
+        fd_set rfds;
+        fd_set wfds;
+
+        FD_ZERO(&rfds);
+        FD_ZERO(&wfds);
+
+        #warning we should manage some **real** timeout here, if context didn't answered in time, then we should close session.
+        struct timeval timeout = time_mark;
+
+        this->front_event->add_to_fd_set(rfds, max);
+        this->sesman->add_to_fd_set(rfds, max);
+        select(max + 1, &rfds, &wfds, 0, &timeout);
+
+        LOG(LOG_INFO, "Event");
+
+        if (this->front_event->is_set()) { /* incoming client data */
+            LOG(LOG_INFO, "Front Event");
+            try {
+                this->front->activate_and_process_data(*this->mod);
+            }
+            catch(...){
+                LOG(LOG_INFO, "Forced stop from client side");
+                return SESSION_STATE_STOP;
+            };
+        }
+
+        if (this->sesman->event()){
+            LOG(LOG_INFO, "Auth Event");
+            this->sesman->receive_next_module();
+            this->mod->refresh_context(*this->context);
+            this->internal_state = SESSION_STATE_RUNNING;
+        }
+        return this->internal_state;
+    }
+
     int step_STATE_RUNNING(const struct timeval & time_mark)
     {
         unsigned max = 0;
@@ -550,6 +598,8 @@ struct Session {
             };
         }
 
+        // incoming data from context
+        #warning this should use the WAIT_FOR_CONTEXT state or some race conditon may cause mayhem
         if (this->sesman->close_on_timestamp(timestamp)
         || !this->sesman->keep_alive_or_inactivity(this->keep_alive_time, timestamp, this->trans)){
             this->internal_state = SESSION_STATE_STOP;
@@ -578,15 +628,44 @@ struct Session {
                 // without going to close box.
                 // the typical case (and only one used for now) is... we are coming from CLOSE_BOX
                 return SESSION_STATE_STOP;
+            case BACK_EVENT_REFRESH:
+            LOG(LOG_INFO, "back event refresh");
+            {
+                bool record_video = false;
+                bool keep_alive = false;
+                int next_state = this->sesman->ask_next_module(
+                                                    this->keep_alive_time,
+                                                    this->ini->globals.authip,
+                                                    this->ini->globals.authport,
+                                                    record_video, keep_alive);
+                if (next_state != MCTX_STATUS_WAITING){
+                    this->internal_state = SESSION_STATE_STOP;
+                    delete this->mod;
+                    this->mod = this->no_mod;
+                    if (this->session_setup_mod(next_state, this->context)){
+                        this->internal_state = SESSION_STATE_RUNNING;
+                    }
+                }
+                else {
+                    this->internal_state = SESSION_STATE_WAITING_FOR_CONTEXT;
+                }
+            }
+            break;
+            case BACK_EVENT_1:
+            case BACK_EVENT_2:
+            case BACK_EVENT_3:
+            case BACK_EVENT_5:
             default:
+            {
+                LOG(LOG_INFO, "back event end");
                 // end the current module and switch to new one
                 if (this->mod != this->no_mod){
                     delete this->mod;
                     this->mod = this->no_mod;
                 }
-                snprintf(this->context->get(STRAUTHID_OPT_WIDTH), 10, "%d", this->front->get_client_info().width);
-                snprintf(this->context->get(STRAUTHID_OPT_HEIGHT), 10, "%d", this->front->get_client_info().height);
-                snprintf(this->context->get(STRAUTHID_OPT_BPP), 10, "%d", this->front->get_client_info().bpp);
+                this->context->cpy(STRAUTHID_OPT_WIDTH, this->front->get_client_info().width);
+                this->context->cpy(STRAUTHID_OPT_HEIGHT, this->front->get_client_info().height);
+                this->context->cpy(STRAUTHID_OPT_BPP, this->front->get_client_info().bpp);
                 bool record_video = false;
                 bool keep_alive = false;
                 LOG(LOG_INFO, "ask next module");
@@ -620,6 +699,7 @@ struct Session {
                 else {
                     this->internal_state = SESSION_STATE_WAITING_FOR_NEXT_MODULE;
                 }
+            }
             break;
             }
         }

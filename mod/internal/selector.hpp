@@ -3525,7 +3525,7 @@ struct selector_mod : public internal_mod {
         this->context.ask(STRAUTHID_TARGET_USER);
         this->context.ask(STRAUTHID_TARGET_DEVICE);
         this->context.ask(STRAUTHID_SELECTOR);
-        this->signal = BACK_EVENT_2;
+        this->signal = BACK_EVENT_REFRESH;
         this->event->set();
     }
 

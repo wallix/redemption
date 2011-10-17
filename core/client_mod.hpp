@@ -763,7 +763,8 @@ enum BackEvent_t {
     BACK_EVENT_2,
     BACK_EVENT_3,
     BACK_EVENT_STOP = 4,
-    BACK_EVENT_5
+    BACK_EVENT_5,
+    BACK_EVENT_REFRESH,
 };
 
 

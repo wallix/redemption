@@ -171,13 +171,7 @@ class SessionManager {
             if (this->auth_event?this->auth_event->is_set():false) {
 
                 try {
-                    Stream stream(8192);
-
-                    this->auth_trans_t->recv((char**)&(stream.end), 4);
-                    #warning check if size is < 8192
-                    int size = stream.in_uint32_be();
-                    this->auth_trans_t->recv((char**)&(stream.end), size-4);
-                    this->in_items(stream);
+                    this->incoming();
                     keepalive_time = now + 30;
                 }
                 catch (...){
@@ -467,15 +461,22 @@ class SessionManager {
         return MCTX_STATUS_WAITING;
     }
 
+    void incoming()
+    {
+        Stream stream;
+        this->auth_trans_t->recv((char**)&(stream.end), 4);
+        int size = stream.in_uint32_be();
+        if (size > stream.capacity){
+            stream.init(size);
+        }
+        this->auth_trans_t->recv((char**)&(stream.end), size-4);
+        this->in_items(stream);
+    }
+
     int receive_next_module()
     {
-        Stream stream(8192);
-
         try {
-            this->auth_trans_t->recv((char**)&(stream.end), 4);
-            int size = stream.in_uint32_be();
-            this->auth_trans_t->recv((char**)&(stream.end), size-4);
-            this->in_items(stream);
+            this->incoming();
         } catch (...) {
             this->context.cpy(STRAUTHID_AUTHENTICATED, false);
             this->context.cpy(STRAUTHID_REJECTED, "Authentifier service failed");
