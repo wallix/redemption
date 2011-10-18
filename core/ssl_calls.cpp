@@ -33,21 +33,6 @@
 #define OLD_RSA_GEN1
 #endif
 
-/* sha1 stuff */
-
-/*****************************************************************************/
-uint8_t* ssl_sha1_info_create(void)
-{
-    #warning we should manage what happen when we have an allocation error
-    return (uint8_t*)calloc(1, sizeof(SHA_CTX));
-}
-
-/*****************************************************************************/
-void ssl_sha1_info_delete(uint8_t* sha1_info)
-{
-    free(sha1_info);
-}
-
 /* md5 stuff */
 
 /*****************************************************************************/

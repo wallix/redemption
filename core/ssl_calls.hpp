@@ -154,8 +154,6 @@ class ssllib
 
 };
 
-uint8_t* ssl_sha1_info_create(void);
-void ssl_sha1_info_delete(uint8_t* sha1_info);
 uint8_t* ssl_md5_info_create(void);
 void ssl_md5_info_delete(uint8_t* md5_info);
 int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len,
