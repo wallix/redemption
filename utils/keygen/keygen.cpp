@@ -54,6 +54,112 @@ using namespace std;
 #include <iostream>
 #include <iomanip>
 
+#if defined(OPENSSL_VERSION_NUMBER) && (OPENSSL_VERSION_NUMBER >= 0x0090800f)
+#undef OLD_RSA_GEN1
+#else
+#define OLD_RSA_GEN1
+#endif
+
+#if defined(OLD_RSA_GEN1)
+/*****************************************************************************/
+/* returns error
+   generates a new rsa key
+   exp is passed in and mod and pri are passed out */
+int ssl_gen_key_xrdp1(int key_size_in_bits, uint8_t* exp, int exp_len,
+                  uint8_t* mod, int mod_len, uint8_t* pri, int pri_len)
+{
+
+    if ((exp_len != 4) || (mod_len != 64) || (pri_len != 64)) {
+        return 1;
+    }
+    uint8_t *lmod = malloc(mod_len * sizeof(char));
+    uint8_t *lpri = malloc(pri_len * sizeof(char));
+    uint8_t *lexp = (uint8_t*)exp;
+    int my_e = lexp[0];
+    my_e |= lexp[1] << 8;
+    my_e |= lexp[2] << 16;
+    my_e |= lexp[3] << 24;
+    /* srand is in stdlib.h */
+    srand(time(0));
+    RSA *my_key = RSA_generate_key(key_size_in_bits, my_e, 0, 0);
+    int error = (my_key == 0);
+    int len = 0;
+    if (error == 0) {
+        len = BN_num_bytes(my_key->n);
+        error = len != mod_len;
+    }
+    if (error == 0) {
+        BN_bn2bin(my_key->n, (uint8_t*)lmod);
+        ssl_reverse_it(lmod, mod_len);
+    }
+    if (error == 0) {
+        len = BN_num_bytes(my_key->d);
+        error = len != pri_len;
+    }
+    if (error == 0) {
+        BN_bn2bin(my_key->d, (uint8_t*)lpri);
+        ssl_reverse_it(lpri, pri_len);
+    }
+    if (error == 0) {
+        memcpy(mod, lmod, mod_len);
+        memcpy(pri, lpri, pri_len);
+    }
+    RSA_free(my_key);
+    free(lmod);
+    free(lpri);
+    return error;
+}
+#else
+/*****************************************************************************/
+/* returns error
+   generates a new rsa key
+   exp is passed in and mod and pri are passed out */
+int ssl_gen_key_xrdp1(int key_size_in_bits, uint8_t* exp, int exp_len,
+                  uint8_t* mod, int mod_len, uint8_t* pri, int pri_len)
+{
+    if ((exp_len != 4) || (mod_len != 64) || (pri_len != 64)) {
+        return 1;
+    }
+    uint8_t *lexp = (uint8_t *)malloc(exp_len * sizeof(uint8_t));
+    uint8_t *lmod = (uint8_t *)malloc(mod_len * sizeof(uint8_t));
+    uint8_t *lpri = (uint8_t *)malloc(pri_len * sizeof(uint8_t));
+    memcpy(lexp, exp, exp_len);
+    ssl_reverse_it(lexp, exp_len);
+    BIGNUM *my_e = BN_new();
+    BN_bin2bn((uint8_t*)lexp, exp_len, my_e);
+    RSA* my_key = RSA_new();
+    int error = RSA_generate_key_ex(my_key, key_size_in_bits, my_e, 0) == 0;
+    int len = 0;
+    if (error == 0) {
+        len = BN_num_bytes(my_key->n);
+        error = len != mod_len;
+    }
+    if (error == 0) {
+        BN_bn2bin(my_key->n, (uint8_t*)lmod);
+        ssl_reverse_it(lmod, mod_len);
+    }
+    if (error == 0) {
+        len = BN_num_bytes(my_key->d);
+        error = len != pri_len;
+    }
+    if (error == 0) {
+        BN_bn2bin(my_key->d, (uint8_t*)lpri);
+        ssl_reverse_it(lpri, pri_len);
+    }
+    if (error == 0) {
+        memcpy(mod, lmod, mod_len);
+        memcpy(pri, lpri, pri_len);
+    }
+    BN_free(my_e);
+    RSA_free(my_key);
+    free(lexp);
+    free(lmod);
+    free(lpri);
+    return error;
+}
+#endif
+
+
 using namespace std;
 
 /* fix for solaris 10 with gcc 3.3.2 problem */
