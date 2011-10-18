@@ -33,33 +33,6 @@
 #define OLD_RSA_GEN1
 #endif
 
-/* rc4 stuff */
-
-/*****************************************************************************/
-uint8_t* ssl_rc4_info_create(void)
-{
-    #warning we should manage what happen when we have an allocation error
-    return (uint8_t*)calloc(1, sizeof(RC4_KEY));
-}
-
-/*****************************************************************************/
-void ssl_rc4_info_delete(uint8_t* rc4_info)
-{
-    free(rc4_info);
-}
-
-/*****************************************************************************/
-void ssl_rc4_set_key(uint8_t* rc4_info, uint8_t* key, int len)
-{
-    RC4_set_key((RC4_KEY*)rc4_info, len, key);
-}
-
-/*****************************************************************************/
-void ssl_rc4_crypt(uint8_t* rc4_info, uint8_t* data, int len)
-{
-    RC4((RC4_KEY*)rc4_info, len, data, data);
-}
-
 /* sha1 stuff */
 
 /*****************************************************************************/
