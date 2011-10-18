@@ -3562,7 +3562,7 @@ struct selector_mod : public internal_mod {
         break;
         case FOCUS_ON_CONNECT:
         {
-            LOG(LOG_INFO, "Connect");
+//            LOG(LOG_INFO, "Connect");
             char buffer[1024];
             sprintf(buffer, "%s:%s",
                 this->grid[this->focus_line].target,
@@ -3574,7 +3574,7 @@ struct selector_mod : public internal_mod {
         break;
         case FOCUS_ON_LOGOUT:
         {
-            LOG(LOG_INFO, "Logout");
+//            LOG(LOG_INFO, "Logout");
             this->context.ask(STRAUTHID_AUTH_USER);
             this->context.ask(STRAUTHID_PASSWORD);
             this->context.ask(STRAUTHID_TARGET_USER);
@@ -3588,7 +3588,7 @@ struct selector_mod : public internal_mod {
         case FOCUS_ON_FILTER_DEVICE:
         case FOCUS_ON_APPLY:
         {
-            LOG(LOG_INFO, "Apply");
+//            LOG(LOG_INFO, "Apply");
             this->ask_page();
         }
         break;
@@ -3739,7 +3739,7 @@ struct selector_mod : public internal_mod {
     // non 0 if it wants to stop (to run another module)
     virtual BackEvent_t draw_event()
     {
-        LOG(LOG_INFO, "selector::draw_event");
+//        LOG(LOG_INFO, "selector::draw_event");
         this->draw(this->screen.rect);
         this->event->reset();
 //        LOG(LOG_INFO, "draw_event : signal = %u", this->signal);
