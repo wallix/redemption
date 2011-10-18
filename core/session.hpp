@@ -564,6 +564,7 @@ struct Session {
             LOG(LOG_INFO, "Auth Event");
             this->sesman->receive_next_module();
             this->mod->refresh_context(*this->context);
+            this->back_event->set();
             this->internal_state = SESSION_STATE_RUNNING;
         }
         return this->internal_state;
