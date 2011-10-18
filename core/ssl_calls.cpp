@@ -33,21 +33,6 @@
 #define OLD_RSA_GEN1
 #endif
 
-/* md5 stuff */
-
-/*****************************************************************************/
-uint8_t* ssl_md5_info_create(void)
-{
-    #warning we should manage what happen when we have an allocation error
-    return (uint8_t*)calloc(1, sizeof(MD5_CTX));
-}
-
-/*****************************************************************************/
-void ssl_md5_info_delete(uint8_t* md5_info)
-{
-    free(md5_info);
-}
-
 /*****************************************************************************/
 static void ssl_reverse_it(uint8_t* p, int len)
 {

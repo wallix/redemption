@@ -154,8 +154,6 @@ class ssllib
 
 };
 
-uint8_t* ssl_md5_info_create(void);
-void ssl_md5_info_delete(uint8_t* md5_info);
 int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len,
             uint8_t* mod, int mod_len, uint8_t* exp, int exp_len);
 int ssl_gen_key_xrdp1(int key_size_in_bits, uint8_t* exp, int exp_len,
