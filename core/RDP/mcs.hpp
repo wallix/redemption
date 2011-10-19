@@ -353,31 +353,31 @@ static inline void parse_mcs_data_cs_core(Stream & stream, ClientInfo * client_i
     stream.skip_uint8(64);
 
     client_info->bpp = 8;
-    int i = stream.in_uint16_le();
+    uint16_t i = stream.in_uint16_le();
     switch (i) {
     case 0xca01:
     {
         uint16_t clientProductId = stream.in_uint16_le();
+        LOG(LOG_INFO, "core_data: clientProductId = %x", clientProductId);
         uint32_t serialNumber = stream.in_uint32_le();
+        LOG(LOG_INFO, "core_data: serialNumber = %x", serialNumber);
         uint16_t rdp_bpp = stream.in_uint16_le();
+        LOG(LOG_INFO, "core_data: rdp_bpp = %u", rdp_bpp);
         uint16_t supportedColorDepths = stream.in_uint16_le();
-        if (rdp_bpp <= 24){
-            client_info->bpp = rdp_bpp;
-        }
-        else {
-            client_info->bpp = 24;
-        }
+        LOG(LOG_INFO, "core_data: supportedColorDepths = %u", supportedColorDepths);
+
+        client_info->bpp = (rdp_bpp <= 24)?rdp_bpp:24;
     }
-        break;
+    break;
     case 0xca02:
         client_info->bpp = 15;
-        break;
+    break;
     case 0xca03:
         client_info->bpp = 16;
-        break;
+    break;
     case 0xca04:
         client_info->bpp = 24;
-        break;
+    break;
     }
     LOG(LOG_INFO, "core_data: bpp = %u\n", client_info->bpp);
 }

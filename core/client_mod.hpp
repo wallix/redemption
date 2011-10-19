@@ -64,8 +64,8 @@ struct GraphicDeviceMod : public GraphicDevice
       capture(NULL),
       clip(clip),
       palette_sent(false),
-      mod_palette_setted(0),
-      mod_bpp(24)
+      mod_bpp(24),
+      mod_palette_setted(0)
 
     {
         for (size_t i = 0; i < 6 ; i++){
@@ -269,7 +269,7 @@ struct GraphicDeviceMod : public GraphicDevice
         /* draw xor box(cursor) */
         if (has_focus) {
             if (password_char != 0) {
-                for (int index = 0; index < edit_pos; index++) {
+                for (size_t index = 0; index < edit_pos; index++) {
                     if (index >= 255) {
                         break;
                     }

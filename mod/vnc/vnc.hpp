@@ -54,7 +54,7 @@ struct mod_vnc : public client_mod {
     int keylayout;
     int clip_chanid;
     Stream clip_data;
-    int clip_data_size;
+    size_t clip_data_size;
     uint16_t width;
     uint16_t height;
     uint8_t bpp;
@@ -621,7 +621,7 @@ struct mod_vnc : public client_mod {
     }
 
     private:
-    #warning use it for copy/paste
+    #warning use it for copy/paste, it is not called now
     int lib_process_channel_data(int chanid, int flags, int size, Stream & stream, int total_size)
     {
         if (chanid == this->clip_chanid) {
@@ -636,9 +636,7 @@ struct mod_vnc : public client_mod {
                 out_s.out_uint16_le(1);
                 out_s.out_uint32_le(0);
                 out_s.out_clear_bytes(4); /* pad */
-                out_s.mark_end();
-                length = (int)(out_s.end - out_s.data);
-//                this->server_send_to_channel_mod(this->clip_chanid, out_s.data, length, length, 3);
+//                this->server_send_to_channel_mod(this->clip_chanid, out_s.data, out_s.p - out_s.data, out_s.p - out_s.data, 3);
             }
             break;
             case 3: /* CLIPRDR_FORMAT_ACK */
@@ -657,7 +655,7 @@ struct mod_vnc : public client_mod {
                 out_s.out_uint16_le(5);
                 out_s.out_uint16_le(1);
                 if (format == 13) { /* CF_UNICODETEXT */
-                    out_s.out_uint32_le( this->clip_data_size * 2 + 2);
+                    out_s.out_uint32_le(this->clip_data_size * 2 + 2);
                     for (size_t index = 0; index < this->clip_data_size; index++) {
                         out_s.out_uint8(this->clip_data.data[index]);
                         out_s.out_uint8(0);
@@ -671,15 +669,13 @@ struct mod_vnc : public client_mod {
                     }
                     out_s.out_clear_bytes( 1);
                 }
-                out_s.out_clear_bytes( 4); /* pad */
-                out_s.mark_end();
-                length = (int)(out_s.end - out_s.data);
-//                this->server_send_to_channel_mod(this->clip_chanid, out_s.data, length, length, 3);
+                out_s.out_clear_bytes(4); /* pad */
+//                this->server_send_to_channel_mod(this->clip_chanid, out_s.data, out_s.p - out_s.data, out_s.p - out_s.data, 3);
             }
             break;
             }
         } else {
-            printf("lib_process_channel_data: unknown chanid %d"
+            LOG(LOG_INFO, "lib_process_channel_data: unknown chanid %d"
                    " this->clip_chanid %d\n",
                       chanid, this->clip_chanid);
         }
@@ -902,7 +898,7 @@ struct mod_vnc : public client_mod {
     {
         #warning not working, see why
         return;
-        uint8_t init_data[12] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+//        uint8_t init_data[12] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 //        this->clip_chanid = this->server_get_channel_id((char*)"cliprdr");
 
