@@ -2369,17 +2369,7 @@ static inline void recv_mcs_connect_response_pdu_with_gcc_conference_create_resp
         #warning check for the true size
         memset(server_random, 0, SEC_RANDOM_SIZE);
 
-        uint32_t random_len;
-        uint32_t rsa_info_len;
-        uint32_t cacert_len;
-        uint32_t cert_len;
-        uint32_t flags;
-        SSL_CERT *cacert;
-        SSL_CERT *server_cert;
-        SSL_RKEY *server_public_key;
-        uint16_t tag;
         uint16_t length;
-        uint8_t* next_tag;
         uint8_t* end;
 
         rc4_key_size = cr_stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
@@ -2388,8 +2378,8 @@ static inline void recv_mcs_connect_response_pdu_with_gcc_conference_create_resp
             LOG(LOG_INFO, "No encryption");
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_ENCRYPTION_REQUIRED);
         }
-        random_len = cr_stream.in_uint32_le();
-        rsa_info_len = cr_stream.in_uint32_le();
+        uint32_t random_len = cr_stream.in_uint32_le();
+        uint32_t rsa_info_len = cr_stream.in_uint32_le();
         if (random_len != SEC_RANDOM_SIZE) {
             LOG(LOG_ERR,
                 "parse_crypt_info_error: random len %d, expected %d\n",
@@ -2404,7 +2394,7 @@ static inline void recv_mcs_connect_response_pdu_with_gcc_conference_create_resp
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RSA_LEN);
         }
 
-        flags = cr_stream.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
+        uint32_t flags = cr_stream.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
         LOG(LOG_INFO, "crypt flags %x\n", flags);
         if (flags & 1) {
 
@@ -2412,10 +2402,10 @@ static inline void recv_mcs_connect_response_pdu_with_gcc_conference_create_resp
             cr_stream.skip_uint8(8); /* unknown */
 
             while (cr_stream.p < end) {
-                tag = cr_stream.in_uint16_le();
+                uint16_t tag = cr_stream.in_uint16_le();
                 length = cr_stream.in_uint16_le();
                 #warning this should not be necessary any more as received tag are fully decoded (but we should check length does not lead accessing data out of buffer)
-                next_tag = cr_stream.p + length;
+                uint8_t * next_tag = cr_stream.p + length;
 
                 switch (tag) {
                 case SEC_TAG_PUBKEY:
@@ -2465,9 +2455,9 @@ static inline void recv_mcs_connect_response_pdu_with_gcc_conference_create_resp
            */
 
             /* Loading CA_Certificate from server*/
-            cacert_len = cr_stream.in_uint32_le();
+            uint32_t cacert_len = cr_stream.in_uint32_le();
             LOG(LOG_DEBUG, "CA Certificate length is %d\n", cacert_len);
-            cacert = ssl_cert_read(cr_stream.p, cacert_len);
+            SSL_CERT *cacert = ssl_cert_read(cr_stream.p, cacert_len);
             cr_stream.skip_uint8(cacert_len);
             if (NULL == cacert){
                 LOG(LOG_DEBUG, "Couldn't load CA Certificate from server\n");
@@ -2477,9 +2467,9 @@ static inline void recv_mcs_connect_response_pdu_with_gcc_conference_create_resp
             ssllib ssl;
 
             /* Loading Certificate from server*/
-            cert_len = cr_stream.in_uint32_le();
+            uint32_t cert_len = cr_stream.in_uint32_le();
             LOG(LOG_DEBUG, "Certificate length is %d\n", cert_len);
-            server_cert = ssl_cert_read(cr_stream.p, cert_len);
+            SSL_CERT *server_cert = ssl_cert_read(cr_stream.p, cert_len);
             cr_stream.skip_uint8(cert_len);
             if (NULL == server_cert){
                 ssl_cert_free(cacert);
@@ -2495,7 +2485,7 @@ static inline void recv_mcs_connect_response_pdu_with_gcc_conference_create_resp
             }
             ssl_cert_free(cacert);
             cr_stream.skip_uint8(16); /* Padding */
-            server_public_key = ssl_cert_to_rkey(server_cert, server_public_key_len);
+            SSL_RKEY *server_public_key = ssl_cert_to_rkey(server_cert, server_public_key_len);
             if (NULL == server_public_key){
                 LOG(LOG_DEBUG, "Didn't parse X509 correctly\n");
                 ssl_cert_free(server_cert);
