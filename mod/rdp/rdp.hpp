@@ -590,7 +590,7 @@ struct mod_rdp : public client_mod {
         to client communication. This is allowed by default */
         this->clipboard_enable = clipboard_enable;
         this->dev_redirection_enable = dev_redirection_enable;
-        this->draw_event();
+//        this->draw_event();
     }
 
     virtual ~mod_rdp() {
@@ -670,6 +670,7 @@ struct mod_rdp : public client_mod {
 
     virtual BackEvent_t draw_event(void)
     {
+        LOG(LOG_INFO, "entering draw event");
         try{
 
         int width = this->gd.get_front_width();
@@ -697,6 +698,7 @@ struct mod_rdp : public client_mod {
             //    | <----------X224 Connection Confirm PDU----------------- |
 
             this->send_x224_connection_request_pdu(trans);
+            LOG(LOG_INFO, "x224 connection request PDU sent");
             this->state = MOD_RDP_CONNECTION_INITIATION;
         break;
 
@@ -1249,6 +1251,7 @@ struct mod_rdp : public client_mod {
             };
             return BACK_EVENT_1;
         }
+        LOG(LOG_INFO, "returned back_event NONE");
         return BACK_EVENT_NONE;
     }
 
@@ -2120,28 +2123,30 @@ struct mod_rdp : public client_mod {
 
         virtual void rdp_input_invalidate(const Rect & r)
         {
-            LOG(LOG_INFO, "rdp_input_invalidate");
-            if (!r.isempty()){
-                Stream stream(8192);
-                X224Out tpdu(X224Packet::DT_TPDU, stream);
-                McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-                SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
-                ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-                ShareDataOut rdp_data_out(stream, PDUTYPE2_REFRESH_RECT, this->share_id);
+            if (this->up_and_running) {
+                LOG(LOG_INFO, "rdp_input_invalidate");
+                if (!r.isempty()){
+                    Stream stream(8192);
+                    X224Out tpdu(X224Packet::DT_TPDU, stream);
+                    McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
+                    SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
+                    ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
+                    ShareDataOut rdp_data_out(stream, PDUTYPE2_REFRESH_RECT, this->share_id);
 
-                stream.out_uint32_le(1);
-                stream.out_uint16_le(r.x);
-                stream.out_uint16_le(r.y);
-                #warning check this -1 (difference between rect and clip)
-                stream.out_uint16_le(r.cx - 1);
-                stream.out_uint16_le(r.cy - 1);
+                    stream.out_uint32_le(1);
+                    stream.out_uint16_le(r.x);
+                    stream.out_uint16_le(r.y);
+                    #warning check this -1 (difference between rect and clip)
+                    stream.out_uint16_le(r.cx - 1);
+                    stream.out_uint16_le(r.cy - 1);
 
-                rdp_data_out.end();
-                rdp_control_out.end();
-                sec_out.end();
-                sdrq_out.end();
-                tpdu.end();
-                tpdu.send(this->trans);
+                    rdp_data_out.end();
+                    rdp_control_out.end();
+                    sec_out.end();
+                    sdrq_out.end();
+                    tpdu.end();
+                    tpdu.send(this->trans);
+                }
             }
         }
 

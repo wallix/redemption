@@ -24,7 +24,7 @@ class User(object):
             # Authenticated user only has access to one service, connect to it immediately
             service = self.services[0]
             answer['target_device'] = service.device
-            answer['proto_login'] = service.login
+            answer['target_login'] = service.login
             answer['target_password'] = service.password
             answer['proto_dest'] = service.protocol
             answer['target_port'] = service.port
@@ -161,13 +161,6 @@ class Authentifier(object):
 #            'is_rec':'True',
 #            'rec_path':'/tmp/test_card.cpp',
 #        },
-#        'selector' : {
-#            'proxy_type': 'RDP',
-#            'target_device' : 'selector',
-#            'proto_dest': 'INTERNAL',
-#            'authenticated':'true',
-
-#        },
 #        'n' : {
 #            'proxy_type': 'RDP',
 #            'target_login' : r'vnc',
@@ -295,6 +288,13 @@ users = [
         Service('Vnc', '10.10.3.103', 'any', 'SecureLinux', 'VNC', '5900'),
         Service('Vnc', '10.10.4.13', 'any', 'SecureLinux', 'VNC', '5900')]),
 
+    User('xp', 'xp', [
+        Service('xp', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389')]),
+
+    User('card', 'card', [
+        Service('Card', 'test_card', 'internal', 'internal', 'INTERNAL', '')]),
+    User('loop', 'loop', [
+        Service('Card', '127.0.0.1', 'card', 'card', 'RDP', '3389')]),
     User('bouncer', 'bouncer', [
         Service('Bouncer', 'bouncer2', 'internal', 'internal', 'INTERNAL', '')]),
     User('selector', 'selector', [

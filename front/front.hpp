@@ -439,11 +439,13 @@ public:
         break;
         }
 
+        LOG(LOG_INFO, "Preparing GraphicsUpdatePDU");
         this->orders = new GraphicsUpdatePDU(trans,
                             this->userid,
                             this->share_id,
                             this->client_info.crypt_level,
                             this->encrypt);
+        LOG(LOG_INFO, "Done Preparing GraphicsUpdatePDU");
     }
 
     ~Front(){
@@ -893,8 +895,12 @@ public:
         //    |------------X224 Connection Request PDU----------------> |
         //    | <----------X224 Connection Confirm PDU----------------- |
 
+        LOG(LOG_INFO, "receiving x224 connection request PDU");
         recv_x224_connection_request_pdu(this->trans);
+        LOG(LOG_INFO, "receiving x224 connection request PDU OK");
+        LOG(LOG_INFO, "sending x224 connection confirm PDU");
         send_x224_connection_confirm_pdu(this->trans);
+        LOG(LOG_INFO, "x224 connection confirm PDU sent");
 
         // Basic Settings Exchange
         // -----------------------

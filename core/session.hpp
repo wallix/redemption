@@ -271,6 +271,8 @@ struct Session {
 
     Session(int sck, const char * ip_source, Inifile * ini)
     {
+        LOG(LOG_INFO, "session constructor");
+
         this->context = new ModContext(
                 KeywordsDefinitions,
                 sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword));
@@ -303,7 +305,9 @@ struct Session {
             throw 2;
         }
 
+        LOG(LOG_INFO, "Constructing front");
         this->front = new Front(this->trans, ini, this->keymap);
+        LOG(LOG_INFO, "Front done");
         this->no_mod = new null_mod(*this->context, *(this->front));
         this->mod = this->no_mod;
 
@@ -313,6 +317,7 @@ struct Session {
         this->back_event = 0;
         this->keymap = 0;
         this->keep_alive_time = 0;
+        LOG(LOG_INFO, "end of session constructor");
     }
 
 
@@ -338,6 +343,7 @@ struct Session {
 
     int session_main_loop()
     {
+        LOG(LOG_INFO, "Entering session_main_loop");
         int rv = 0;
         try {
             int previous_state = SESSION_STATE_STOP;
@@ -735,6 +741,8 @@ struct Session {
 
     bool session_setup_mod(int status, const ModContext * context)
     {
+        LOG(LOG_INFO, "session_setup_mod(%u)", status);
+
         try {
             if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"force")==0){
                 this->front->set_console_session(true);
@@ -910,7 +918,8 @@ struct Session {
                                                 4, 2500000));
                     this->back_event = new wait_obj(t->sck);
                     this->mod = new xup_mod(t, *this->context, *(this->front));
-                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
+                    this->mod->draw_event();
+//                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                     LOG(LOG_INFO, "Creation of new mod 'XUP' suceeded\n");
                 }
                 break;
@@ -938,7 +947,8 @@ struct Session {
                                         this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
                                         this->context->get_bool(STRAUTHID_OPT_DEVICEREDIRECTION));
                     this->back_event->set();
-                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
+                    this->mod->draw_event();
+//                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                     LOG(LOG_INFO, "Creation of new mod 'RDP' suceeded\n");
                 }
                 break;
@@ -949,7 +959,8 @@ struct Session {
                         connect(this->context->get(STRAUTHID_TARGET_DEVICE), atoi(this->context->get(STRAUTHID_TARGET_PORT))));
                     this->back_event = new wait_obj(t->sck);
                     this->mod = new mod_vnc(t, *this->context, *(this->front), this->front->get_client_info().keylayout);
-                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
+                    this->mod->draw_event();
+//                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                     LOG(LOG_INFO, "Creation of new mod 'VNC' suceeded\n");
                 }
                 break;

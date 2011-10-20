@@ -318,25 +318,40 @@ struct X224In : public X224Packet
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
 
+        LOG(LOG_INFO, "recv payload_len %u", payload_len);
         t->recv((char**)(&(stream.end)), payload_len);
         this->tpdu_hdr.LI = stream.in_uint8();
         this->tpdu_hdr.code = stream.in_uint8() & 0xF0;
         switch (this->tpdu_hdr.code){
             case DT_TPDU:
+                LOG(LOG_INFO, "recv DT_TPDU");
                 this->tpdu_hdr.eot = stream.in_uint8();
                 stream.skip_uint8(this->tpdu_hdr.LI-2);
             break;
             case DR_TPDU:
+                LOG(LOG_INFO, "recv DR_TPDU");
                 stream.skip_uint8(4);
                 this->tpdu_hdr.reason = stream.in_uint8();
                 stream.skip_uint8(this->tpdu_hdr.LI-6);
             break;
             case ER_TPDU:
+                LOG(LOG_INFO, "recv ER_TPDU");
                 stream.skip_uint8(2);
                 this->tpdu_hdr.reject_cause = stream.in_uint8();
                 stream.skip_uint8(this->tpdu_hdr.LI-4);
             break;
+            case CC_TPDU:
+                LOG(LOG_INFO, "recv CC_TPDU");
+                // just skip remaining TPDU header content
+                stream.skip_uint8(this->tpdu_hdr.LI-1);
+            break;
+            case CR_TPDU:
+                LOG(LOG_INFO, "recv CR_TPDU");
+                // just skip remaining TPDU header content
+                stream.skip_uint8(this->tpdu_hdr.LI-1);
+            break;
             default:
+                LOG(LOG_INFO, "recv OTHER_TPDU %u", this->tpdu_hdr.code);
                 // just skip remaining TPDU header content
                 stream.skip_uint8(this->tpdu_hdr.LI-1);
         }
@@ -524,12 +539,14 @@ struct X224In : public X224Packet
 struct X224Out : public X224Packet
 {
     Stream & stream;
+    uint8_t * bop;
 
-    X224Out(uint8_t tpdutype, Stream & stream) : stream(stream)
+    X224Out(uint8_t tpdutype, Stream & stream) : stream(stream), bop(stream.p)
     // Prepare a X224 TPDU in buffer for writing
     {
         switch (tpdutype){
             case CR_TPDU: // Connection Request 1110 xxxx
+                LOG(LOG_INFO, "X224 OUT CR_TPDU");
                 // we can write the header, there must not be any data afterward
                 // tpkt
                 stream.out_uint8(0x03); // version 3
@@ -554,6 +571,7 @@ struct X224Out : public X224Packet
 
             break;
             case CC_TPDU: // Connection Confirm 1101 xxxx
+                LOG(LOG_INFO, "X224 OUT CC_TPDU");
                 // we can write the header, there must not be any data
                 // tpkt
                 stream.out_uint8(0x03); // version 3
@@ -570,6 +588,7 @@ struct X224Out : public X224Packet
                 stream.out_uint8(0x00); // CLASS OPTION
             break;
             case DR_TPDU: // Disconnect Request 1000 0000
+                LOG(LOG_INFO, "X224 OUT DR_TPDU");
                 // we can write the header, there must not be any data
                 // tpkt
                 stream.out_uint8(0x03); // version 3
@@ -586,6 +605,8 @@ struct X224Out : public X224Packet
                 stream.out_uint8(0x00); // CLASS OPTION
             break;
             case DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
+                LOG(LOG_INFO, "X224 OUT DT_TPDU");
+
                 // we can't write the full header yet,
                 // we will know the length later
                 // tpkt
@@ -599,6 +620,7 @@ struct X224Out : public X224Packet
                 stream.out_uint8(0x80); // EOT
             break;
             case ER_TPDU:  // TPDU Error         0111 0000
+                LOG(LOG_INFO, "X224 OUT ER_TPDU");
                 // we can write the header, there must not be any data
                 // tpkt
                 stream.out_uint8(0x03); // version 3
@@ -625,15 +647,16 @@ struct X224Out : public X224Packet
     // Not at all part of x224, but RDP uses it to transmit username!!!
     // appending a string "Cookie: mstshash=username\r\n" to tpdu header.
     {
-        this->stream.set_out_uint8(this->stream.p-this->stream.data-5, 4); // LI
+        this->stream.set_out_uint8(this->stream.p-bop-5, 4); // LI
     }
 
     void end()
     // This function update header informations of TPDU before it is sent
     // on the wires.
     {
-        stream.mark_end();
-        size_t len = stream.end - stream.data;
+        LOG(LOG_INFO, "X224 OUT TPDU end");
+
+        size_t len = stream.p - bop;
         stream.set_out_uint8(len >> 8, 2);
         stream.set_out_uint8(len & 0xFF, 3);
 //        LOG(LOG_INFO, "2) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", stream.data[0], stream.data[1], stream.data[2], stream.data[3], stream.data[4], stream.data[5], stream.data[6], stream.data[7]);
@@ -643,27 +666,56 @@ struct X224Out : public X224Packet
     {
 //        LOG(LOG_INFO, "3) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", stream.data[0], stream.data[1], stream.data[2], stream.data[3], stream.data[4], stream.data[5], stream.data[6], stream.data[7]);
 
-        t->send((char*)stream.data, stream.end - stream.data);
+        t->send((char*)stream.data, stream.p - this->bop);
+
+        uint8_t tpdutype = bop[5];
+        switch (tpdutype){
+            case CR_TPDU: // Connection Request 1110 xxxx
+                LOG(LOG_INFO, "----> sent X224 OUT CR_TPDU");
+            break;
+            case CC_TPDU: // Connection Confirm 1101 xxxx
+                LOG(LOG_INFO, "----> sent X224 OUT CC_TPDU");
+            break;
+            case DR_TPDU: // Disconnect Request 1000 0000
+                LOG(LOG_INFO, "----> sent X224 OUT DR_TPDU");
+            break;
+            case DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
+                LOG(LOG_INFO, "----> sent X224 OUT DT_TPDU");
+            break;
+            case ER_TPDU:  // TPDU Error         0111 0000
+                LOG(LOG_INFO, "----> sent X224 OUT ER_TPDU");
+            break;
+            default:
+                LOG(LOG_ERR, "----> sent Trying to send unknown TPDU Type %u", tpdutype);
+        }
+
     }
 };
 
 static inline void recv_x224_connection_request_pdu(Transport * trans)
 {
     Stream in(8192);
+    LOG(LOG_INFO, "recv_x224 CR_TPDU 1");
     X224In crtpdu(trans, in);
+    LOG(LOG_INFO, "recv_x224 2");
     if (crtpdu.tpdu_hdr.code != ISO_PDU_CR) {
+        LOG(LOG_INFO, "recv_x224 3 code=%u", crtpdu.tpdu_hdr.code);
         throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
     }
+    LOG(LOG_INFO, "recv_x224 4");
     crtpdu.end();
+    LOG(LOG_INFO, "recv_x224 5");
 }
 
 
 static inline void send_x224_connection_confirm_pdu(Transport * trans)
 {
+    LOG(LOG_INFO, "send_x224 CC_TPDU");
     Stream out(11);
     X224Out cctpdu(X224Packet::CC_TPDU, out);
     cctpdu.end();
     cctpdu.send(trans);
+    LOG(LOG_INFO, "send_x224 CC_TPDU OK");
 }
 
 

@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU)
     GeneratorTransport t("", 0); // used as /dev/null
     X224Out tpdu(X224Packet::CR_TPDU, stream);
     tpdu.end();
-    BOOST_CHECK_EQUAL(stream.end - stream.data, stream.data[2]*256+stream.data[3]);
+    BOOST_CHECK_EQUAL(stream.p - stream.data, stream.data[2]*256+stream.data[3]);
     // tpkt header
     BOOST_CHECK_EQUAL(0x03, stream.data[0]); // version 3
     BOOST_CHECK_EQUAL(0x00, stream.data[1]);
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU)
     GeneratorTransport t("", 0); // used as /dev/null
     X224Out tpdu(X224Packet::CC_TPDU, stream);
     tpdu.end();
-    BOOST_CHECK_EQUAL(stream.end - stream.data, stream.data[2]*256+stream.data[3]);
+    BOOST_CHECK_EQUAL(stream.p - stream.data, stream.data[2]*256+stream.data[3]);
     // tpkt header
     BOOST_CHECK_EQUAL(0x03, stream.data[0]); // version 3
     BOOST_CHECK_EQUAL(0x00, stream.data[1]);
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(TestSend_DR_TPDU)
     GeneratorTransport t("", 0); // used as /dev/null
     X224Out tpdu(X224Packet::DR_TPDU, stream);
     tpdu.end();
-    BOOST_CHECK_EQUAL(stream.end - stream.data, stream.data[2]*256+stream.data[3]);
+    BOOST_CHECK_EQUAL(stream.p - stream.data, stream.data[2]*256+stream.data[3]);
     // tpkt header
     BOOST_CHECK_EQUAL(0x03, stream.data[0]); // version 3
     BOOST_CHECK_EQUAL(0x00, stream.data[1]);
@@ -204,7 +204,7 @@ BOOST_AUTO_TEST_CASE(TestSend_ER_TPDU)
     GeneratorTransport t("", 0); // used as /dev/null
     X224Out tpdu(X224Packet::ER_TPDU, stream);
     tpdu.end();
-    BOOST_CHECK_EQUAL(stream.end - stream.data, stream.data[2]*256+stream.data[3]);
+    BOOST_CHECK_EQUAL(stream.p - stream.data, stream.data[2]*256+stream.data[3]);
     // tpkt header
     BOOST_CHECK_EQUAL(0x03, stream.data[0]); // version 3
     BOOST_CHECK_EQUAL(0x00, stream.data[1]);
@@ -234,7 +234,7 @@ BOOST_AUTO_TEST_CASE(TestSend_DT_TPDU)
     stream.out_uint8(0x56);
     stream.out_uint8(0x78);
     tpdu.end();
-    BOOST_CHECK_EQUAL(stream.end - stream.data, stream.data[2]*256+stream.data[3]);
+    BOOST_CHECK_EQUAL(stream.p - stream.data, stream.data[2]*256+stream.data[3]);
     // tpkt header
     BOOST_CHECK_EQUAL(0x03, stream.data[0]); // version 3
     BOOST_CHECK_EQUAL(0x00, stream.data[1]);
