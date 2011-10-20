@@ -57,36 +57,30 @@ class StaticCapture
         ts_height =  11
     };
 
+    int width;
+    int height;
+    int bpp;
     unsigned long pix_len;
-    int real_time;
     uint8_t * data;
-    int count;
     int framenb;
-    char * path;
+    uint64_t inter_frame_interval;
 
+    char * path;
     char timestamp_data[ts_width * ts_height * 3];
     char previous_timestamp[50];
     struct timeval start;
 
     public:
-    uint64_t inter_frame_interval;
-    int width;
-    int height;
-    int bpp;
     BGRPalette palette;
 
-    StaticCapture(int width, int height, int bpp, char * path, const char * codec_id, const char * video_quality) {
+    StaticCapture(int width, int height, int bpp, char * path, const char * codec_id, const char * video_quality)
+        : width(width), height(height), bpp(bpp), pix_len(width * height * 3),
+          data(0), framenb(0)
+    {
         gettimeofday(&this->start, NULL);
-        this->framenb = 0;
-        this->bpp = bpp;
-        this->pix_len = 0;
-        this->count = 0;
         this->inter_frame_interval = 1000000; // 1 000 000 us is 1 sec (default)
         init_palette332(this->palette);
 
-        this->width = width;
-        this->height = height;
-        this->pix_len = width * height * 3;
         if (!this->pix_len) {
             throw Error(ERR_RECORDER_EMPTY_IMAGE);
         }
@@ -738,12 +732,12 @@ class StaticCapture
     void line(const int mix_mode, const int startx, const int starty, const int endx, const int endy, const int rop2,
               const int bg_color, const RDPPen & pen, const Rect & clip)
     {
-        int minx = std::min(startx, endx);
-        int miny = std::min(starty, endy);
+//        int minx = std::min(startx, endx);
+//        int miny = std::min(starty, endy);
 
-        Rect drect = Rect(minx, miny, abs(endx - startx), abs(endy - starty));
+//        Rect drect = Rect(minx, miny, abs(endx - startx), abs(endy - starty));
         #warning clip should be managed
-        const Rect trect = clip.intersect(drect);
+//        const Rect trect = clip.intersect(drect);
 
         // Color handling
         const uint32_t color = color_decode(pen.color, this->bpp, this->palette);
