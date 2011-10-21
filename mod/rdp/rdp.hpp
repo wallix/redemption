@@ -1257,7 +1257,6 @@ struct mod_rdp : public client_mod {
             };
             return BACK_EVENT_1;
         }
-        LOG(LOG_INFO, "returned back_event NONE");
         return BACK_EVENT_NONE;
     }
 
