@@ -590,7 +590,14 @@ struct mod_rdp : public client_mod {
         to client communication. This is allowed by default */
         this->clipboard_enable = clipboard_enable;
         this->dev_redirection_enable = dev_redirection_enable;
-//        this->draw_event();
+
+        while (!this->up_and_running){
+            BackEvent_t res = this->draw_event();
+            if (res != BACK_EVENT_NONE){
+                LOG(LOG_INFO, "Creation of new mod 'RDP' failed\n");
+                throw Error(ERR_SESSION_UNKNOWN_BACKEND);
+            }
+        }
     }
 
     virtual ~mod_rdp() {
@@ -670,7 +677,6 @@ struct mod_rdp : public client_mod {
 
     virtual BackEvent_t draw_event(void)
     {
-        LOG(LOG_INFO, "entering draw event");
         try{
 
         int width = this->gd.get_front_width();
@@ -684,7 +690,7 @@ struct mod_rdp : public client_mod {
 
         switch (this->state){
         case MOD_RDP_CONNECTING:
-            LOG(LOG_INFO, "MOD_RDP_CONNECTING");
+            LOG(LOG_INFO, "Connection Initiation");
             // Connection Initiation
             // ---------------------
 
@@ -703,7 +709,7 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_CONNECTION_INITIATION:
-            LOG(LOG_INFO, "MOD_RDP_CONNECTION_INITIATION");
+            LOG(LOG_INFO, "Basic Settings Exchange");
             this->recv_x224_connection_confirm_pdu(this->trans);
 
             // Basic Settings Exchange
@@ -732,7 +738,7 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
-            LOG(LOG_INFO, "MOD_RDP_BASIC_SETTINGS_EXCHANGE");
+            LOG(LOG_INFO, "Channel Connection");
             recv_mcs_connect_response_pdu_with_gcc_conference_create_response(
                     this->trans, this->mod_channel_list, this->gd.front.get_channel_list(),
                     this->encrypt,
@@ -784,10 +790,10 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
-        LOG(LOG_INFO, "MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER");
+        LOG(LOG_INFO, "RDP Security Commencement");
         {
             recv_mcs_attach_user_confirm_pdu(this->trans, this->userid);
-            LOG(LOG_INFO, "send_mcs_channel_join_request_and_recv_confirm_pdu");
+            LOG(LOG_INFO, "send mcs channel join request and recv confirm pdu");
             send_mcs_channel_join_request_and_recv_confirm_pdu(this->trans, this->userid, this->mod_channel_list);
 
             // RDP Security Commencement
@@ -820,7 +826,7 @@ struct mod_rdp : public client_mod {
             // Client                                                     Server
             //    |------Security Exchange PDU ---------------------------> |
 
-            LOG(LOG_INFO, "security_exchange_PDU");
+            LOG(LOG_INFO, "security exchange_PDU");
             send_security_exchange_PDU(trans,
                 this->userid,
                 this->server_public_key_len,
@@ -836,7 +842,7 @@ struct mod_rdp : public client_mod {
             // Client                                                     Server
             //    |------ Client Info PDU      ---------------------------> |
 
-            LOG(LOG_INFO, "send_client_info_pdu");
+            LOG(LOG_INFO, "Secure Settings Exchange");
             int rdp5_performanceflags = this->gd.get_client_info().rdp5_performanceflags;
             rdp5_performanceflags = RDP5_NO_WALLPAPER;
 
@@ -852,7 +858,7 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_GET_LICENSE:
-        LOG(LOG_INFO, "MOD_RDP_GET_LICENSE");
+        LOG(LOG_INFO, "Licensing");
             // Licensing
             // ---------
 
@@ -932,7 +938,6 @@ struct mod_rdp : public client_mod {
             const char * username = this->username;
             const int userid = this->userid;
             int & licence_issued = this->lic_layer.licence_issued;
-            LOG(LOG_INFO, "rdp lic process");
             int res = 0;
             Stream stream(65535);
             // read tpktHeader (4 bytes = 3 0 len)
@@ -1040,12 +1045,12 @@ struct mod_rdp : public client_mod {
             X224In(this->trans, stream);
             McsIn mcs_in(stream);
             if ((mcs_in.opcode >> 2) != MCS_SDIN) {
-                LOG(LOG_INFO, "Error: MCS_SDIN TPDU expected");
+                LOG(LOG_ERR, "Error: MCS_SDIN TPDU expected");
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
             SecIn sec(stream, this->decrypt);
             if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
-                LOG(LOG_INFO, "Error: unexpected licence negotiation sec packet");
+                LOG(LOG_ERR, "Error: unexpected licence negotiation sec packet");
                 throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
             }
 
@@ -1224,6 +1229,7 @@ struct mod_rdp : public client_mod {
                         }
                         break;
                     case PDUTYPE_DEACTIVATEALLPDU:
+                        LOG(LOG_INFO, "Deactivate All PDU");
                         this->up_and_running = 0;
                         break;
                     #warning this PDUTYPE is undocumented and seems to mean the same as type 10

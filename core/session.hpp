@@ -271,8 +271,6 @@ struct Session {
 
     Session(int sck, const char * ip_source, Inifile * ini)
     {
-        LOG(LOG_INFO, "session constructor");
-
         this->context = new ModContext(
                 KeywordsDefinitions,
                 sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword));
@@ -305,9 +303,7 @@ struct Session {
             throw 2;
         }
 
-        LOG(LOG_INFO, "Constructing front");
         this->front = new Front(this->trans, ini, this->keymap);
-        LOG(LOG_INFO, "Front done");
         this->no_mod = new null_mod(*this->context, *(this->front));
         this->mod = this->no_mod;
 
@@ -317,7 +313,6 @@ struct Session {
         this->back_event = 0;
         this->keymap = 0;
         this->keep_alive_time = 0;
-        LOG(LOG_INFO, "end of session constructor");
     }
 
 
@@ -343,7 +338,6 @@ struct Session {
 
     int session_main_loop()
     {
-        LOG(LOG_INFO, "Entering session_main_loop");
         int rv = 0;
         try {
             int previous_state = SESSION_STATE_STOP;
@@ -447,7 +441,7 @@ struct Session {
                 /* initialising keymap */
                 char filename[256];
                 snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->front->get_client_info().keylayout);
-                LOG(LOG_DEBUG, "loading keymap %s\n", filename);
+                LOG(LOG_INFO, "loading keymap %s\n", filename);
                 this->keymap = new Keymap(filename);
 
                 BGRPalette palette;
@@ -553,15 +547,11 @@ struct Session {
         this->sesman->add_to_fd_set(rfds, max);
         select(max + 1, &rfds, &wfds, 0, &timeout);
 
-        LOG(LOG_INFO, "Event");
-
         if (this->front_event->is_set()) { /* incoming client data */
-            LOG(LOG_INFO, "Front Event");
             try {
                 this->front->activate_and_process_data(*this->mod);
             }
             catch(...){
-                LOG(LOG_INFO, "Forced stop from client side");
                 return SESSION_STATE_STOP;
             };
         }
@@ -664,7 +654,6 @@ struct Session {
             case BACK_EVENT_5:
             default:
             {
-                LOG(LOG_INFO, "back event end");
                 // end the current module and switch to new one
                 if (this->mod != this->no_mod){
                     delete this->mod;
@@ -675,7 +664,7 @@ struct Session {
                 this->context->cpy(STRAUTHID_OPT_BPP, this->front->get_client_info().bpp);
                 bool record_video = false;
                 bool keep_alive = false;
-                LOG(LOG_INFO, "ask next module");
+                LOG(LOG_INFO, "asking next module");
                 int next_state = this->sesman->ask_next_module(
                                                     this->keep_alive_time,
                                                     this->ini->globals.authip,
@@ -741,8 +730,6 @@ struct Session {
 
     bool session_setup_mod(int status, const ModContext * context)
     {
-        LOG(LOG_INFO, "session_setup_mod(%u)", status);
-
         try {
             if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"force")==0){
                 this->front->set_console_session(true);
@@ -846,7 +833,7 @@ struct Session {
                                             button,
                                             this->ini);
                         }
-                        LOG(LOG_INFO, "internal module Dialog Valid Message ready");
+                        LOG(LOG_INFO, "internal module 'Dialog Accept Message' ready");
                         break;
 
                         case ModContext::INTERNAL_DIALOG_DISPLAY_MESSAGE:
@@ -864,7 +851,7 @@ struct Session {
                                             button,
                                             this->ini);
                         }
-                        LOG(LOG_INFO, "internal module Dialog Display Message ready");
+                        LOG(LOG_INFO, "internal module 'Dialog Display Message' ready");
                         break;
                         case ModContext::INTERNAL_LOGIN:
                             LOG(LOG_INFO, "Creation of internal module 'Login'");
@@ -946,9 +933,8 @@ struct Session {
                                         this->front->get_client_info().keylayout,
                                         this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
                                         this->context->get_bool(STRAUTHID_OPT_DEVICEREDIRECTION));
-                    this->back_event->set();
-                    this->mod->draw_event();
-//                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
+//                    this->back_event->set();
+                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                     LOG(LOG_INFO, "Creation of new mod 'RDP' suceeded\n");
                 }
                 break;
