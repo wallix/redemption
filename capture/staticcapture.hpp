@@ -28,6 +28,7 @@
 #include "bitmap.hpp"
 #include "rect.hpp"
 #include "constants.hpp"
+#include <sys/time.h>
 #include <time.h>
 #include <png.h>
 
@@ -65,7 +66,6 @@ class StaticCapture
     int framenb;
     uint64_t inter_frame_interval;
 
-    char * path;
     char timestamp_data[ts_width * ts_height * 3];
     char previous_timestamp[50];
     struct timeval start;
@@ -93,8 +93,6 @@ class StaticCapture
         if (this->data == 0){
             throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
         }
-
-        LOG(LOG_INFO, "video_path is :%s\n", path);
     }
 
     ~StaticCapture(){
@@ -415,7 +413,41 @@ class StaticCapture
                 }
             }
 
-            // HERE WE CAN CAPTURE RAW FRAMES
+            this->dump_png();
+
+            // Time to restore mouse/timestamp for the next frame (otherwise it piles up)
+            if (!pointer_already_displayed){
+                if ((x > 0)
+                        && (x < this->width - 12)
+                        && (y > 0)
+                        && (y < this->height - mouse_height)){
+                    uint8_t * psave = mouse_save;
+                    for (size_t i = 0 ; i < 20 ; i++){
+                        unsigned yy = mouse_cursor[i].y;
+                        unsigned xx = mouse_cursor[i].x;
+                        unsigned lg = mouse_cursor[i].lg;
+                        char * pixel_start = (char*)this->data + ((yy+y)*this->width+x+xx)*3;
+                        memcpy(pixel_start, psave, lg);
+                        psave += lg;
+                    }
+                }
+            }
+            if (!no_timestamp){
+                uint8_t * tsave = timestamp_save;
+                for (size_t y = 0; y < ts_height ; ++y){
+                    memcpy((char*)data+y*width*3, tsave, ts_width*3);
+                    tsave += ts_width*3;
+                }
+            }
+        } catch (Error e){
+            throw;
+        } catch (...){ // used to catch any unexpected exception
+            LOG(LOG_WARNING, "exception caught in snapshot\n");
+            throw Error(ERR_RECORDER_SNAPSHOT_FAILED);
+        };
+    }
+
+    void dump_png(void){
             char rawImagePath[256]     = {0};
             char rawImageMetaPath[256] = {0};
             snprintf(rawImagePath,     254, "/dev/shm/%d-%d.png", getpid(), this->framenb++);
@@ -450,37 +482,6 @@ class StaticCapture
                 // fwrite(this->data, 3, this->width * this->height, fd);
             }
             fclose(fd);
-
-            // Time to restore mouse/timestamp for the next frame (otherwise it piles up)
-            if (!pointer_already_displayed){
-                if ((x > 0)
-                        && (x < this->width - 12)
-                        && (y > 0)
-                        && (y < this->height - mouse_height)){
-                    uint8_t * psave = mouse_save;
-                    for (size_t i = 0 ; i < 20 ; i++){
-                        unsigned yy = mouse_cursor[i].y;
-                        unsigned xx = mouse_cursor[i].x;
-                        unsigned lg = mouse_cursor[i].lg;
-                        char * pixel_start = (char*)this->data + ((yy+y)*this->width+x+xx)*3;
-                        memcpy(pixel_start, psave, lg);
-                        psave += lg;
-                    }
-                }
-            }
-            if (!no_timestamp){
-                uint8_t * tsave = timestamp_save;
-                for (size_t y = 0; y < ts_height ; ++y){
-                    memcpy((char*)data+y*width*3, tsave, ts_width*3);
-                    tsave += ts_width*3;
-                }
-            }
-        } catch (Error e){
-            throw;
-        } catch (...){ // used to catch any unexpected exception
-            LOG(LOG_WARNING, "exception caught in snapshot\n");
-            throw Error(ERR_RECORDER_SNAPSHOT_FAILED);
-        };
     }
 
     void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
@@ -724,7 +725,7 @@ class StaticCapture
         }
         else {
             line(lineto.back_mode,
-                 lineto.endx, lineto.starty, lineto.startx, lineto.endy,
+                 lineto.endx, lineto.endy, lineto.startx, lineto.starty,
                  lineto.rop2, lineto.back_color, lineto.pen, clip);
         }
     }
