@@ -136,8 +136,10 @@ struct window_login : public window
 
             list.push_back(b);
 
-            this->focused_control = b;
-            b->has_focus = true;
+            if (acc.username[0] == 0){
+                this->focused_control = b;
+                b->has_focus = true;
+            }
             count++;
         }
 
@@ -159,9 +161,14 @@ struct window_login : public window
                     1, /* pointer */
                     0 /* edit pos */);
 
-            #warning integrate that in widget_edit
+            #warning move that into widget_edit
             b->password_char = '*';
             list.push_back(b);
+
+            if (acc.username[0]){
+                this->focused_control = b;
+                b->has_focus = true;
+            }
             count++;
         }
 
