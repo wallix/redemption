@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <constants.hpp>
 #include <log.hpp>
+#include <string.h>
 
 typedef enum{
     ID_UNKNOWN,
@@ -59,9 +60,10 @@ struct Keymap {
     struct key_info keys_capslock[128];
     struct key_info keys_shiftcapslock[128];
 
-    Keymap(const char * filename);
-    Keymap(std::istream & Keymap_stream);
     Keymap(){
+        memset(this->keys, 0, 256 * sizeof(int)); /* key states 0 up 1 down*/
+        // scrool_lock = 1, num_lock = 2, caps_lock = 4
+        this->key_flags = 0;
     }
 
     bool shift_pressed() const {
@@ -141,8 +143,8 @@ struct Keymap {
         return rv;
     }
 
-    private:
-        void keymap_init(std::istream & Keymap_stream);
+    void keymap_init(const char * filename);
+    void keymap_init(std::istream & Keymap_stream);
 };
 
 #endif

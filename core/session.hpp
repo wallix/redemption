@@ -50,7 +50,6 @@
 #include "bitmap.hpp"
 #include "modcontext.hpp"
 
-#include "keymap.hpp"
 #include "sesman.hpp"
 #include "front.hpp"
 #include "../mod/null/null.hpp"
@@ -265,8 +264,6 @@ struct Session {
     int mouse_x;
     int mouse_y;
 
-    struct Keymap * keymap;
-
     SessionManager * sesman;
 
     Session(int sck, const char * ip_source, Inifile * ini)
@@ -303,7 +300,7 @@ struct Session {
             throw 2;
         }
 
-        this->front = new Front(this->trans, ini, this->keymap);
+        this->front = new Front(this->trans, ini);
         this->no_mod = new null_mod(*this->context, *(this->front));
         this->mod = this->no_mod;
 
@@ -311,16 +308,12 @@ struct Session {
 
         /* module interface */
         this->back_event = 0;
-        this->keymap = 0;
         this->keep_alive_time = 0;
     }
 
 
     ~Session()
     {
-        if (this->keymap){
-            delete this->keymap;
-        }
         delete this->front;
         delete this->front_event;
         delete this->trans;
@@ -437,12 +430,7 @@ struct Session {
                 this->mod->front_resize();
                 this->mod->gd.server_reset_clip();
                 this->front->reset();
-
-                /* initialising keymap */
-                char filename[256];
-                snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->front->get_client_info().keylayout);
-                LOG(LOG_INFO, "loading keymap %s\n", filename);
-                this->keymap = new Keymap(filename);
+                this->front->set_keyboard_layout();
 
                 BGRPalette palette;
                 init_palette332(palette);

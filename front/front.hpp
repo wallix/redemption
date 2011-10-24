@@ -392,10 +392,9 @@ struct GraphicsUpdatePDU
 
 };
 
-#warning front is becoming an empty shell and should disappear soon
 class Front {
 public:
-    Keymap * &keymap;
+    Keymap keymap;
 
     Cache cache;
     struct BitmapCache *bmp_cache;
@@ -425,8 +424,7 @@ public:
 
 public:
 
-    Front(SocketTransport * trans, Inifile * ini, Keymap * &keymap) :
-        keymap(keymap),
+    Front(SocketTransport * trans, Inifile * ini) :
         cache(),
         bmp_cache(0),
         font(SHARE_PATH "/" DEFAULT_FONT_NAME),
@@ -530,6 +528,16 @@ public:
         }
         this->bmp_cache = new BitmapCache(&(this->client_info));
         this->cache.reset(this->client_info);
+    }
+
+    void set_keyboard_layout()
+    {
+        /* initialising keymap */
+        #warning I should move that to client_info, this is the place where I'm really sure the bitmap is known
+        char filename[256];
+        snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->get_client_info().keylayout);
+        LOG(LOG_INFO, "loading keymap %s\n", filename);
+        this->keymap.keymap_init(filename);
     }
 
     void begin_update()
@@ -1975,28 +1983,28 @@ public:
                             LOG(LOG_INFO, "RDP_INPUT_SYNCHRONIZE");
                         }
                         /* happens when client gets focus and sends key modifier info */
-                        this->keymap->key_flags = param1;
+                        this->keymap.key_flags = param1;
                         cb.rdp_input_synchronize(time, device_flags, param1, param2);
                         break;
                     case RDP_INPUT_SCANCODE:
                         if (this->ini->globals.debug.front){
-                            LOG(LOG_INFO, "RDP_INPUT_SCANCODE keymap=%p", this->keymap);
+                            LOG(LOG_INFO, "RDP_INPUT_SCANCODE");
                         }
                         {
                             #warning move that to Keymap
                             long p1 = param1 % 128;
-                            this->keymap->keys[p1] = 1 | device_flags;
+                            this->keymap.keys[p1] = 1 | device_flags;
                             if ((device_flags & KBD_FLAG_UP) == 0) { /* 0x8000 */
                                 /* key down */
                                 switch (p1) {
                                 case 58:
-                                    this->keymap->key_flags ^= 4;
+                                    this->keymap.key_flags ^= 4;
                                     break; /* caps lock */
                                 case 69:
-                                    this->keymap->key_flags ^= 2;
+                                    this->keymap.key_flags ^= 2;
                                     break; /* num lock */
                                 case 70:
-                                    this->keymap->key_flags ^= 1;
+                                    this->keymap.key_flags ^= 1;
                                     break; /* scroll lock */
                                 default:
                                     ;
@@ -2005,12 +2013,12 @@ public:
                             if (this->ini->globals.debug.front){
                                 LOG(LOG_INFO, "get_key_info(device_flags=%u, param1=%u)", device_flags, param1);
                             }
-                            const key_info* ki = this->keymap->get_key_info_from_scan_code(
+                            const key_info* ki = this->keymap.get_key_info_from_scan_code(
                                 device_flags,
                                 param1);
-                            cb.rdp_input_scancode(param1, param2, device_flags, time, this->keymap, ki);
+                            cb.rdp_input_scancode(param1, param2, device_flags, time, &this->keymap, ki);
                             if (device_flags & KBD_FLAG_UP){
-                                this->keymap->keys[p1] = 0;
+                                this->keymap.keys[p1] = 0;
                             }
                         }
                         break;
@@ -2020,7 +2028,7 @@ public:
                         }
                         this->mouse_x = param1;
                         this->mouse_y = param2;
-                        cb.rdp_input_mouse(device_flags, param1, param2, this->keymap);
+                        cb.rdp_input_mouse(device_flags, param1, param2, &this->keymap);
                         break;
                     default:
                         LOG(LOG_INFO, "unsupported PDUTYPE2_INPUT msg %u", msg_type);

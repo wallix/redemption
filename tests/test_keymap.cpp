@@ -39,7 +39,8 @@
 BOOST_AUTO_TEST_CASE(TestKeymapFromFile)
 {
     // test we can read from a file (and not only from a stream)
-    Keymap test_keymap(FIXTURES_PATH "/km-0409.ini");
+    Keymap test_keymap;
+    test_keymap.keymap_init(FIXTURES_PATH "/km-0409.ini");
 }
 
 BOOST_AUTO_TEST_CASE(TestKeymapFromLine)
@@ -76,7 +77,8 @@ BOOST_AUTO_TEST_CASE(TestKeymapFromLine)
     "Key12=34:34\n"
     );
 
-    Keymap keymap(test_stream);
+    Keymap keymap;
+    keymap.keymap_init(test_stream);
 }
 
 
@@ -101,7 +103,8 @@ BOOST_AUTO_TEST_CASE(TestKeymapConfig1)
     "Key12=34:34\n"
     );
 
-    Keymap test_keymap(test_stream);
+    Keymap test_keymap;
+    test_keymap.keymap_init(test_stream);
 
     BOOST_CHECK_EQUAL(0, test_keymap.keys_shift[8].chr);
     BOOST_CHECK_EQUAL(0, test_keymap.keys_shift[8].sym);
@@ -144,7 +147,8 @@ BOOST_AUTO_TEST_CASE(TestKeymapConfig2)
     "Key12=34:34\n"
     );
 
-    Keymap test_keymap(test_stream);
+    Keymap test_keymap;
+    test_keymap.keymap_init(test_stream);
 
     BOOST_CHECK_EQUAL(0, test_keymap.keys_noshift[8].chr);
     BOOST_CHECK_EQUAL(0, test_keymap.keys_noshift[8].sym);
