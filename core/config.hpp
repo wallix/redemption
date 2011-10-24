@@ -30,7 +30,7 @@
 
 #include <string>
 #include <string.h>
-
+#include <stdint.h>
 
 typedef enum{
     AUTHID_UNKNOWN = 0,
@@ -244,6 +244,26 @@ struct Inifile {
         int h_height;
         int h_width;
         int h_qscale;
+        
+        struct {
+            uint32_t x224;
+            uint32_t mcs;
+            uint32_t sec;
+            uint32_t rdp;
+            uint32_t primary_orders;
+            uint32_t secondary_orders;
+            uint32_t bitmap;
+            uint32_t capture;
+            uint32_t auth;
+            uint32_t session;
+            uint32_t mod_rdp;
+            uint32_t mod_vnc;
+            uint32_t mod_int;
+            uint32_t mod_xup;
+            uint32_t widget;
+            uint32_t input;
+        } debug;
+        
     } globals;
 
     struct IniAccounts account[6];

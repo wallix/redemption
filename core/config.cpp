@@ -239,6 +239,23 @@ void Inifile::init(istream & Inifile_stream){
     ("globals.h_width", po::value<int>()->default_value(1280), "")
     ("globals.h_qscale", po::value<int>()->default_value(15), "")
 
+    ("globals.debug_x224", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_mcs", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_sec", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_rdp", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_primary_orders", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_secondary_orders", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_bitmap", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_capture", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_auth", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_session", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_mod_rdp", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_mod_vnc", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_mod_int", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_mod_xup", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_widget", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_input", po::value<uint32_t>()->default_value(0), "")
+
     ("xrdp1.name", po::value<string>()->default_value(""), "Entry name in the account select box")
     ("xrdp1.lib", po::value<string>()->default_value("unknown"), "back-end module : vnc, rdp, xup, mc")
     ("xrdp1.port", po::value<string>()->default_value(""), "")
@@ -333,6 +350,23 @@ void Inifile::init(istream & Inifile_stream){
         this->globals.h_height    = vm["globals.h_height"].as<int>();
         this->globals.h_width     = vm["globals.h_width"].as<int>();
         this->globals.h_qscale    = vm["globals.h_qscale"].as<int>();
+
+        this->globals.debug.x224              = vm["globals.debug_x224"].as<uint32_t>();
+        this->globals.debug.mcs               = vm["globals.debug_mcs"].as<uint32_t>();
+        this->globals.debug.sec               = vm["globals.debug_sec"].as<uint32_t>();
+        this->globals.debug.rdp               = vm["globals.debug_rdp"].as<uint32_t>();
+        this->globals.debug.primary_orders    = vm["globals.debug_primary_orders"].as<uint32_t>();
+        this->globals.debug.secondary_orders  = vm["globals.debug_secondary_orders"].as<uint32_t>();
+        this->globals.debug.bitmap            = vm["globals.debug_bitmap"].as<uint32_t>();
+        this->globals.debug.capture           = vm["globals.debug_capture"].as<uint32_t>();
+        this->globals.debug.auth              = vm["globals.debug_auth"].as<uint32_t>();
+        this->globals.debug.session           = vm["globals.debug_session"].as<uint32_t>();
+        this->globals.debug.mod_rdp           = vm["globals.debug_mod_rdp"].as<uint32_t>();
+        this->globals.debug.mod_vnc           = vm["globals.debug_mod_vnc"].as<uint32_t>();
+        this->globals.debug.mod_int           = vm["globals.debug_mod_int"].as<uint32_t>();
+        this->globals.debug.mod_xup           = vm["globals.debug_mod_xup"].as<uint32_t>();
+        this->globals.debug.widget            = vm["globals.debug_widget"].as<uint32_t>();
+        this->globals.debug.input             = vm["globals.debug_input"].as<uint32_t>();
 
         string keylib("xrdp1.lib");
         string keyname("xrdp1.name");

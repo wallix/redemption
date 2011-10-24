@@ -40,13 +40,11 @@ BOOST_AUTO_TEST_CASE(TestCreateCapture)
     gd.opaque_rect(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect);
     uint16_t y = screen_rect.cy - 1;
     for (uint16_t x = 0 ; x < screen_rect.cx ; x++){
-        printf("x=%u y=%u\n", x, y);
         gd.line_to(RDPLineTo(0, 0, 0, x, y, BLUE, 0xCC, RDPPen(0, 1, GREEN)), screen_rect);
         gd.line_to(RDPLineTo(0, x, y, 0, 0, WHITE, 0xCC, RDPPen(0, 1, BLACK)), screen_rect);
     }
     y = screen_rect.cy - 1;
     for (uint16_t x = 0 ; x < screen_rect.cx ; x++){
-        printf("x=%u y=%u\n", x, y);
         gd.line_to(RDPLineTo(0, screen_rect.cx - 1, 0, x, y, BLUE, 0xCC, RDPPen(0, 1, RED)), screen_rect);
         gd.line_to(RDPLineTo(0, x, y, screen_rect.cx - 1, 0, WHITE, 0xCC, RDPPen(0, 1, BLACK)), screen_rect);
     }
