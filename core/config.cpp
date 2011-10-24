@@ -249,6 +249,7 @@ void Inifile::init(istream & Inifile_stream){
     ("globals.debug_capture", po::value<uint32_t>()->default_value(0), "")
     ("globals.debug_auth", po::value<uint32_t>()->default_value(0), "")
     ("globals.debug_session", po::value<uint32_t>()->default_value(0), "")
+    ("globals.debug_front", po::value<uint32_t>()->default_value(0), "")
     ("globals.debug_mod_rdp", po::value<uint32_t>()->default_value(0), "")
     ("globals.debug_mod_vnc", po::value<uint32_t>()->default_value(0), "")
     ("globals.debug_mod_int", po::value<uint32_t>()->default_value(0), "")
@@ -361,6 +362,7 @@ void Inifile::init(istream & Inifile_stream){
         this->globals.debug.capture           = vm["globals.debug_capture"].as<uint32_t>();
         this->globals.debug.auth              = vm["globals.debug_auth"].as<uint32_t>();
         this->globals.debug.session           = vm["globals.debug_session"].as<uint32_t>();
+        this->globals.debug.front             = vm["globals.debug_front"].as<uint32_t>();
         this->globals.debug.mod_rdp           = vm["globals.debug_mod_rdp"].as<uint32_t>();
         this->globals.debug.mod_vnc           = vm["globals.debug_mod_vnc"].as<uint32_t>();
         this->globals.debug.mod_int           = vm["globals.debug_mod_int"].as<uint32_t>();

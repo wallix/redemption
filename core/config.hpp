@@ -256,6 +256,7 @@ struct Inifile {
             uint32_t capture;
             uint32_t auth;
             uint32_t session;
+            uint32_t front;
             uint32_t mod_rdp;
             uint32_t mod_vnc;
             uint32_t mod_int;
