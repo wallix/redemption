@@ -349,7 +349,8 @@ struct GraphicsUpdatePDU
         this->common = newcommon;
         this->glyphindex = cmd;
         if (this->ini->globals.debug.primary_orders){
-            cmd.log(LOG_INFO, common.clip);
+            LOG(LOG_INFO, "glyphIndex");
+//            cmd.log(LOG_INFO, common.clip);
         }
     }
 
