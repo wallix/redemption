@@ -90,11 +90,10 @@ class User(object):
             if service.protocol.lower().find(_group_filter) == -1:
                 continue
             # multiply number of entries by 15 to test pagination
-            for x in range(15):
-                all_services.append(target)
-                all_groups.append(service.protocol.lower())
-                all_protos.append(service.protocol)
-                all_endtimes.append("-")
+            all_services.append(target)
+            all_groups.append(service.protocol.lower())
+            all_protos.append(service.protocol)
+            all_endtimes.append("-")
         _number_of_pages = 1 + len(all_protos) / _lines_per_page
         if _current_page >= _number_of_pages:
             _current_page = _number_of_pages - 1

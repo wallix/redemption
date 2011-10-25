@@ -648,31 +648,44 @@ struct mod_rdp : public client_mod {
     }
 
     virtual void send_to_mod_channel(
-                const McsChannelItem & front_channel,
+                const char * const front_channel_name,
                 uint8_t * data,
                 size_t length,
                 size_t chunk_size,
                 uint32_t flags)
     {
-        size_t index = mod_channel_list.size();
-        for (size_t index = 0; index < mod_channel_list.size(); index++){
-            if (strcmp(front_channel.name, mod_channel_list[index].name) == 0){
-                const McsChannelItem & mod_channel = mod_channel_list[index];
-                Stream stream(65536);
-                X224Out tpdu(X224Packet::DT_TPDU, stream);
-                McsOut sdrq_out(stream, MCS_SDRQ, this->userid, mod_channel.chanid);
-                SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
-                stream.out_uint32_le(length);
-                stream.out_uint32_le(flags);
-                memcpy(stream.p, data, chunk_size);
-                stream.p += chunk_size;
-                sec_out.end();
-                sdrq_out.end();
-                tpdu.end();
-                tpdu.send(this->trans);
-                break;
-            }
+        const McsChannelItem * mod_channel = this->mod_channel_list.get(front_channel_name);
+        // send it if module has a matching channel, if no matching channel is found just forget it
+        if (mod_channel){
+            this->send_to_channel(*mod_channel, data, length, chunk_size, flags);
         }
+
+    }
+    
+    void send_to_channel(
+                const McsChannelItem & channel,
+                uint8_t * data,
+                size_t length,
+                size_t chunk_size,
+                uint32_t flags)
+    {
+        Stream stream(65536);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        McsOut sdrq_out(stream, MCS_SDRQ, this->userid, channel.chanid);
+
+        #warning merge with Front::send_to_channel, the only difference now is the crypt level, that is set to 2 here and is as client_info says on front side
+        SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
+        
+        stream.out_uint32_le(length);
+        stream.out_uint32_le(flags);
+        if (channel.flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
+            flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
+        }
+        stream.out_copy_bytes(data, chunk_size);
+        sec_out.end();
+        sdrq_out.end();
+        tpdu.end();
+        tpdu.send(this->trans);
     }
 
     virtual BackEvent_t draw_event(void)
@@ -1080,7 +1093,29 @@ struct mod_rdp : public client_mod {
             }
 
             if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL){
-                this->recv_virtual_channel(stream, mcs_in.chan_id);
+                size_t num_channel_src = this->mod_channel_list.size();
+                for (size_t index = 0; index < num_channel_src; index++){
+                    const McsChannelItem & mod_channel_item = this->mod_channel_list[index];
+                    if (mcs_in.chan_id == mod_channel_item.chanid){
+                        num_channel_src = index;
+                        break;
+                    }
+                }
+
+                if (num_channel_src >= this->mod_channel_list.size()) {
+                    LOG(LOG_ERR, "mod::rdp::MOD_RDP_CONNECTED::Unknown Channel");
+                    throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
+                }
+
+                const McsChannelItem & mod_channel = this->mod_channel_list[num_channel_src];
+
+                uint32_t length = stream.in_uint32_le();
+                int flags = stream.in_uint32_le();
+                size_t chunk_size = stream.end - stream.p;
+               
+                this->send_to_front_channel(mod_channel.name, stream.p, length, chunk_size, flags);
+                
+                stream.p = stream.end;
             }
             else {
                 uint8_t * next_packet = stream.p;
@@ -1259,31 +1294,6 @@ struct mod_rdp : public client_mod {
         }
         return BACK_EVENT_NONE;
     }
-
-
-    // redirect_pdu
-    void recv_virtual_channel(Stream & stream, int chan)
-    {
-      uint32_t length = stream.in_uint32_le();
-      int channel_flags = stream.in_uint32_le();
-
-//      LOG(LOG_INFO, "recv virtual channel %u length=%u flags=%x", chan, length, channel_flags);
-
-        /* We need to recover the name of the channel linked with this
-         channel_id in order to match it with the same channel on the
-         first channel_list created by the RDP client at initialization
-         process*/
-
-        int num_channels_src = (int) this->mod_channel_list.size();
-        for (int index = 0; index < num_channels_src; index++){
-            const McsChannelItem & mod_channel_item = this->mod_channel_list[index];
-            if (chan == mod_channel_item.chanid){
-                this->server_send_to_channel_mod(mod_channel_item, stream.p, length, channel_flags);
-                break;
-            }
-        }
-    }
-
 
 
 // 1.3.1.3 Deactivation-Reactivation Sequence

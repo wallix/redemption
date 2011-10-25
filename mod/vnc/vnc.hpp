@@ -636,7 +636,7 @@ struct mod_vnc : public client_mod {
                 out_s.out_uint16_le(1);
                 out_s.out_uint32_le(0);
                 out_s.out_clear_bytes(4); /* pad */
-//                this->server_send_to_channel_mod(this->clip_chanid, out_s.data, out_s.p - out_s.data, out_s.p - out_s.data, 3);
+                // this->send_to_front_channel(
             }
             break;
             case 3: /* CLIPRDR_FORMAT_ACK */
@@ -667,10 +667,10 @@ struct mod_vnc : public client_mod {
                     for (size_t index = 0; index < this->clip_data_size; index++) {
                         out_s.out_uint8(this->clip_data.data[index]);
                     }
-                    out_s.out_clear_bytes( 1);
+                    out_s.out_clear_bytes(1);
                 }
                 out_s.out_clear_bytes(4); /* pad */
-//                this->server_send_to_channel_mod(this->clip_chanid, out_s.data, out_s.p - out_s.data, out_s.p - out_s.data, 3);
+                // this->send_to_front_channel(
             }
             break;
             }
@@ -860,7 +860,7 @@ struct mod_vnc : public client_mod {
         out_s.out_clear_bytes(4);
         out_s.mark_end();
         size = (int)(out_s.end - out_s.data);
-//        this->server_send_to_channel_mod(this->clip_chanid, out_s.data, size, size, 3);
+        // this->send_to_front_channel(
     }
 
     /******************************************************************************/
@@ -903,7 +903,7 @@ struct mod_vnc : public client_mod {
 //        this->clip_chanid = this->server_get_channel_id((char*)"cliprdr");
 
 //        if (this->clip_chanid >= 0) {
-//            this->server_send_to_channel_mod(this->clip_chanid, init_data, 12, 12, 3);
+            // this->send_to_front_channel(
 //        }
     }
 

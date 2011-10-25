@@ -878,15 +878,11 @@ struct client_mod : public Callback {
         this->gd.glyph_cache(fi, font, character);
     }
 
-    void server_send_to_channel_mod(const McsChannelItem & channel, uint8_t* data, int length, int flags)
+    void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags)
     {
-        for (size_t index = 0; index < this->gd.front.get_channel_list().size(); index++){
-            const McsChannelItem & front_channel_item = this->gd.front.get_channel_list()[index];
-            if (strcmp(channel.name, front_channel_item.name) == 0){
-//                LOG(LOG_INFO, "found front channel chanid=%u flags=%x [channel_flags=%x] name=%s", front_channel_item.chanid, flags, front_channel_item.flags, front_channel_item.name);
-                this->gd.front.send_to_channel(front_channel_item, data, length, flags);
-                break;
-            }
+        const McsChannelItem * front_channel = this->gd.front.get_channel_list().get(mod_channel_name);
+        if (front_channel){
+            this->gd.front.send_to_channel(*front_channel, data, length, chunk_size, flags);
         }
     }
 

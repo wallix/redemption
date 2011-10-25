@@ -26,6 +26,14 @@
 #if !defined(CORE_CHANNEL_LIST_HPP__)
 #define CORE_CHANNEL_LIST_HPP__
 
+enum {
+    CHANNEL_CHUNK_LENGTH = 8192,
+    CHANNEL_FLAG_FIRST = 0x01,
+    CHANNEL_FLAG_LAST = 0x02,
+    CHANNEL_FLAG_SHOW_PROTOCOL = 0x10,
+};
+
+
 struct McsChannelItem {
     char name[16];
     int flags;
@@ -60,6 +68,19 @@ public:
     void push_back(const McsChannelItem & item){
         this->items[this->num] = item;
         this->num++;
+    }
+
+    const McsChannelItem * get(const char * const name) const
+    {
+        const McsChannelItem * channel = NULL;
+        for (size_t index = 0; index < this->size(); index++){
+            const McsChannelItem & item = this->items[index];
+            if (strcmp(name, item.name) == 0){
+                channel = &item;
+                break;
+            }
+        }
+        return channel;
     }
 
     ChannelList() : num(0) {}

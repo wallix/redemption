@@ -487,13 +487,6 @@ public:
         }
     }
 
-    enum {
-        CHANNEL_CHUNK_LENGTH = 8192,
-        CHANNEL_FLAG_FIRST = 0x01,
-        CHANNEL_FLAG_LAST = 0x02,
-        CHANNEL_FLAG_SHOW_PROTOCOL = 0x10,
-    };
-
     const ClientInfo & get_client_info() const {
         return this->client_info;
     }
@@ -588,10 +581,15 @@ public:
         return this->channel_list;
     }
 
-    void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, int flags)
+    void send_to_channel(
+        const McsChannelItem & channel,
+        uint8_t* data,
+        size_t length,
+        size_t chunk_size,
+        int flags)
     {
         if (this->ini->globals.debug.front){
-            LOG(LOG_INFO, "Front::send_to_channel(channel, data=%p, length=%u, flags=%x)", data, length, flags);
+            LOG(LOG_INFO, "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)", data, length, chunk_size, flags);
         }
         Stream stream(65536);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -603,8 +601,7 @@ public:
             flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
         }
         stream.out_uint32_le(flags);
-        stream.out_copy_bytes(data, length);
-
+        stream.out_copy_bytes(data, chunk_size);
         sec_out.end();
         sdin_out.end();
         tpdu.end();
@@ -1290,55 +1287,55 @@ public:
 
         SecIn sec(stream, this->decrypt);
 
+        if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
+            if (this->ini->globals.debug.front){
+                LOG(LOG_INFO, "Front::activate_and_process_data::SEC_REDIRECT_ENCRYPT");
+            }
+            /* Check for a redirect packet, starts with 00 04 */
+            if (stream.p[0] == 0 && stream.p[1] == 4){
+            /* for some reason the PDU and the length seem to be swapped.
+               This isn't good, but we're going to do a byte for byte
+               swap.  So the first four value appear as: 00 04 XX YY,
+               where XX YY is the little endian length. We're going to
+               use 04 00 as the PDU type, so after our swap this will look
+               like: XX YY 04 00 */
+
+                uint8_t swapbyte1 = stream.p[0];
+                stream.p[0] = stream.p[2];
+                stream.p[2] = swapbyte1;
+
+                uint8_t swapbyte2 = stream.p[1];
+                stream.p[1] = stream.p[3];
+                stream.p[3] = swapbyte2;
+
+                uint8_t swapbyte3 = stream.p[2];
+                stream.p[2] = stream.p[3];
+                stream.p[3] = swapbyte3;
+            }
+        }
+
         if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL) {
-
-            if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
-                if (this->ini->globals.debug.front){
-                    LOG(LOG_INFO, "Front::activate_and_process_data::SEC_REDIRECT_ENCRYPT");
-                }
-                /* Check for a redirect packet, starts with 00 04 */
-                if (stream.p[0] == 0 && stream.p[1] == 4){
-                /* for some reason the PDU and the length seem to be swapped.
-                   This isn't good, but we're going to do a byte for byte
-                   swap.  So the first four value appear as: 00 04 XX YY,
-                   where XX YY is the little endian length. We're going to
-                   use 04 00 as the PDU type, so after our swap this will look
-                   like: XX YY 04 00 */
-
-                    uint8_t swapbyte1 = stream.p[0];
-                    stream.p[0] = stream.p[2];
-                    stream.p[2] = swapbyte1;
-
-                    uint8_t swapbyte2 = stream.p[1];
-                    stream.p[1] = stream.p[3];
-                    stream.p[3] = swapbyte2;
-
-                    uint8_t swapbyte3 = stream.p[2];
-                    stream.p[2] = stream.p[3];
-                    stream.p[3] = swapbyte3;
+            size_t num_channel_src = channel_list.size();
+            for (size_t index = 0; index < channel_list.size(); index++){
+                if (channel_list[index].chanid == mcs_in.chan_id){
+                    num_channel_src = index;
+                    break;
                 }
             }
 
-            size_t index = channel_list.size();
-            for (size_t i = 0; i < channel_list.size(); i++){
-                if (channel_list[i].chanid == mcs_in.chan_id){
-                    index = i;
-                }
-            }
-
-            if (index >= channel_list.size()) {
+            if (num_channel_src >= channel_list.size()) {
                 LOG(LOG_ERR, "Front::activate_and_process_data::Unknown Channel");
                 throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
             }
 
-            const McsChannelItem & channel = channel_list[index];
+            const McsChannelItem & channel = channel_list[num_channel_src];
 
             int length = stream.in_uint32_le();
             int flags = stream.in_uint32_le();
 
             size_t chunk_size = stream.end - stream.p;
-
-            cb.send_to_mod_channel(channel, stream.p, length, chunk_size, flags);
+            
+            cb.send_to_mod_channel(channel.name, stream.p, length, chunk_size, flags);
             stream.p += chunk_size;
         }
         else {
