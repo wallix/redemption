@@ -5,6 +5,7 @@ import httplib, socket
 from socket import error
 from struct    import unpack
 from struct    import pack
+import datetime
 
 class User(object):
     def __init__(self, name, password, services = None, messages = None, rec_path = None):
@@ -28,6 +29,7 @@ class User(object):
             answer['target_password'] = service.password
             answer['proto_dest'] = service.protocol
             answer['target_port'] = service.port
+            answer['timeclose'] = str(service.timeclose)
         else:
             _selector = dic.get('selector')
             _device = dic.get('target_device')
@@ -41,6 +43,7 @@ class User(object):
                         answer['target_password'] = service.password
                         answer['proto_dest'] = service.protocol
                         answer['target_port'] = service.port
+                        answer['timeclose'] = str(service.timeclose)
                         break
                 else:
                     if (_selector == 'ASK'):
@@ -93,7 +96,7 @@ class User(object):
             all_services.append(target)
             all_groups.append(service.protocol.lower())
             all_protos.append(service.protocol)
-            all_endtimes.append("-")
+            all_endtimes.append(service.endtime)
         _number_of_pages = 1 + len(all_protos) / _lines_per_page
         if _current_page >= _number_of_pages:
             _current_page = _number_of_pages - 1
@@ -110,13 +113,17 @@ class User(object):
 
 
 class Service(object):
-    def __init__(self, name, device, login, password, protocol, port):
+    def __init__(self, name, device, login, password, protocol, port, alive=7200):
+        import time
+        import datetime
         self.name = name
         self.device = device
         self.login = login
         self.password = password
         self.protocol = protocol
         self.port = port
+        self.timeclose = int(time.time()+alive)
+        self.endtime = datetime.datetime.strftime(datetime.datetime.fromtimestamp(self.timeclose), "%Y-%m-%d %H:%M:%S")
 
 class Authentifier(object):
     # we should just transmit some kind of salted hash to get something
@@ -278,6 +285,7 @@ manager ={}
 users = [
     User('x', 'x', [
         Service('xp', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
+        Service('xp2m', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389', alive=120),
         Service('w2008', '10.10.14.78', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
         Service('w2008-2', '10.10.14.78', r'administrateur@qa', 'S3cur3!1nux', 'RDP', '3389'),
         Service('w7', '10.10.14.77', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
