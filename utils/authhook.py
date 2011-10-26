@@ -284,7 +284,7 @@ manager ={}
 
 users = [
     User('x', 'x', [
-        Service('xp', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
+#        Service('xp', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
         Service('xp2m', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389', alive=120),
         Service('w2008', '10.10.14.78', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
         Service('w2008-2', '10.10.14.78', r'administrateur@qa', 'S3cur3!1nux', 'RDP', '3389'),

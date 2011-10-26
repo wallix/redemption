@@ -525,21 +525,21 @@ class RDPBmpCache {
         case 0:
         case 1:
             if (this->client_info->use_bitmap_comp){
-//                LOG(LOG_INFO, "/* BMP Cache compressed V1 */");
+                LOG(LOG_INFO, "/* BMP Cache compressed V1 */");
                 this->emit_v1_compressed(stream);
             }
             else {
-//                LOG(LOG_INFO, "/* BMP Cache raw V1 */");
+                LOG(LOG_INFO, "/* BMP Cache raw V1 */");
                 this->emit_raw_v1(stream);
             }
         break;
         default:
             if (this->client_info->use_bitmap_comp){
-//                LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
+                LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
                 this->emit_v2_compressed(stream);
             }
             else {
-//                LOG(LOG_INFO, "/* BMP Cache raw V2 */");
+                LOG(LOG_INFO, "/* BMP Cache raw V2 */");
                 this->emit_raw_v2(stream);
             }
         }
@@ -550,16 +550,14 @@ class RDPBmpCache {
         using namespace RDP;
 
         bool small_headers = this->client_info->op2;
-        Stream tmp(16384);
-        this->bmp->compress(this->bpp, tmp);
-        size_t bufsize = tmp.p - tmp.data;
 
 //        LOG(LOG_INFO, "bufsize=%u [%u]", bufsize, tmp.data[0]);
 
         int order_flags = STANDARD | SECONDARY;
         stream.out_uint8(order_flags);
         /* length after type minus 7 */
-        stream.out_uint16_le(bufsize + (small_headers?2:10));
+        uint32_t offset_header = stream.p - stream.data; 
+        stream.out_uint16_le(0); // placeholder for size after type - 7
         stream.out_uint16_le(small_headers?1024:8); /* flags */
         stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); /* type */
 
@@ -569,18 +567,30 @@ class RDPBmpCache {
         stream.out_uint8(align4(this->bmp->cx));
         stream.out_uint8(this->bmp->cy);
         stream.out_uint8(this->bpp);
-        stream.out_uint16_le(bufsize/* + 8*/);
+        uint32_t offset = stream.p - stream.data; 
+        stream.out_uint16_le(0); // placeholder for bufsize
         stream.out_uint16_le(this->cache_idx);
 
         if (!small_headers){
             stream.out_clear_bytes(2); /* pad */
-            stream.out_uint16_le(bufsize);
+            uint32_t offset_long_header = stream.p - stream.data; 
+            stream.out_uint16_le(0); // placeholder for bufsize
             stream.out_uint16_le(this->bmp->line_size(this->bpp));
-            stream.out_uint16_le(this->bmp->bmp_size(this->bpp)); /* final size */
+            stream.out_uint16_le(this->bmp->bmp_size(this->bpp)); // final size
+            uint32_t offset_buf_start = stream.p - stream.data;
+            this->bmp->compress(this->bpp, stream);
+            uint32_t bufsize = (stream.p - stream.data) - offset_buf_start;
+            stream.set_out_uint16_le(bufsize + 10, offset_header);
+            stream.set_out_uint16_le(bufsize + 8, offset);
+            stream.set_out_uint16_le(bufsize, offset_long_header);
         }
-
-        stream.out_copy_bytes(tmp.data, bufsize);
-
+        else {
+            uint32_t offset_buf_start = stream.p - stream.data;
+            this->bmp->compress(this->bpp, stream);
+            uint32_t bufsize = (stream.p - stream.data) - offset_buf_start;
+            stream.set_out_uint16_le(bufsize + 2, offset_header);
+            stream.set_out_uint16_le(bufsize, offset);
+        }
     }
 
     void emit_v2_compressed(Stream & stream) const
@@ -592,7 +602,9 @@ class RDPBmpCache {
         stream.out_uint8(STANDARD | SECONDARY);
         uint32_t offset_header = stream.p - stream.data;
         stream.out_uint16_le(0); // placeholder for length after type minus 7
-        stream.out_uint16_le(0x400 | (((Bpp + 2) << 3) & 0x38) | (cache_id & 7));
+        uint16_t cbr2_flags = (CBR2_NO_BITMAP_COMPRESSION_HEADER << 7) & 0xFF80;
+        uint16_t cbr2_bpp = (((Bpp + 2) << 3) & 0x78);
+        stream.out_uint16_le(cbr2_flags | cbr2_bpp | (cache_id & 7));
         stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED_REV2); // type
         stream.out_uint8(align4(this->bmp->cx));
         stream.out_uint8(this->bmp->cy);
@@ -701,6 +713,21 @@ class RDPBmpCache {
             stream.out_copy_bytes(this->bmp->data_co(this->bpp) + y * row_size, row_size);
         }
     }
+
+    enum {
+        CBR2_8BPP = 0x03,
+        CBR2_16BPP = 0x04,
+        CBR2_24BPP = 0x05,
+        CBR2_32BPP = 0x06,
+    };
+
+    enum {
+        CBR2_HEIGHT_SAME_AS_WIDTH = 0x01,
+        CBR2_PERSISTENT_KEY_PRESENT = 0x02,
+        CBR2_NO_BITMAP_COMPRESSION_HEADER = 0x08,
+        CBR2_DO_NOT_CACHE = 0x10
+    };
+
 
     // MS-RDPEGDI 2.2.2.2.1.2.3
     // ========================
@@ -997,11 +1024,12 @@ class RDPBmpCache {
     {
         size_t lg;
         if (client_info){
-              lg = snprintf(buffer, sz, "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u cx=%u cy=%u cache_version=%u compression=%u)",
+              lg = snprintf(buffer, sz, "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u cx=%u cy=%u cache_version=%u compression=%u small_header=%u)",
                 this->cache_id, this->cache_idx, this->bpp, 
                 this->bmp->cx, this->bmp->cy,
                 this->client_info->bitmap_cache_version,
-                this->client_info->use_bitmap_comp);
+                this->client_info->use_bitmap_comp,
+                this->client_info->op2);
         }
         else {
               lg = snprintf(buffer, sz, "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u cx=%u cy=%u cache_version=? compression=?)",

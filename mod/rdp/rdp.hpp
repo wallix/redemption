@@ -2350,8 +2350,14 @@ struct mod_rdp : public client_mod {
 //                Bitmap bitmap(bpp, &this->orders.cache_colormap[0], width, height, data, size, true);
                 Bitmap bitmap(bpp, &this->orders.global_palette, width, height, data, size, true);
 
-                assert(line_size == bitmap.line_size(bpp));
-                assert(final_size == bitmap.bmp_size(bpp));
+                if (line_size == bitmap.line_size(bpp)){
+                    LOG(LOG_WARNING, "Unexpected line_size in bitmap received [%u != %u] width=%u height=%u bpp=%u", 
+                        line_size, bitmap.line_size(bpp), width, height, bpp);
+                }
+                if (line_size == bitmap.line_size(bpp)){
+                    LOG(LOG_WARNING, "Unexpected final_size in bitmap received [%u != %u] width=%u height=%u bpp=%u", 
+                        final_size, bitmap.bmp_size(bpp), width, height, bpp);
+                }
 
                 mod->gd.clip = boundary;
                 mod->gd.bitmap_update(bitmap, boundary, 0, 0);
@@ -2361,7 +2367,10 @@ struct mod_rdp : public client_mod {
 //                Bitmap bitmap(bpp, &this->orders.cache_colormap[0], width, height, data, bufsize);
                 Bitmap bitmap(bpp, &this->orders.global_palette, width, height, data, bufsize);
 
-                assert(bufsize == bitmap.bmp_size(bpp));
+                if (bufsize == bitmap.bmp_size(bpp)){
+                    LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u", 
+                        bufsize, bitmap.bmp_size(bpp), width, height, bpp);
+                }
 
                 mod->gd.clip = boundary;
                 mod->gd.bitmap_update(bitmap, boundary, 0, 0);
