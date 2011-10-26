@@ -520,26 +520,27 @@ class RDPBmpCache {
 
     void emit(Stream & stream) const
     {
+        #warning logs below should be dependant on debug flags
         using namespace RDP;
         switch (this->client_info->bitmap_cache_version){
         case 0:
         case 1:
             if (this->client_info->use_bitmap_comp){
-                LOG(LOG_INFO, "/* BMP Cache compressed V1 */");
+//                LOG(LOG_INFO, "/* BMP Cache compressed V1 */");
                 this->emit_v1_compressed(stream);
             }
             else {
-                LOG(LOG_INFO, "/* BMP Cache raw V1 */");
+//                LOG(LOG_INFO, "/* BMP Cache raw V1 */");
                 this->emit_raw_v1(stream);
             }
         break;
         default:
             if (this->client_info->use_bitmap_comp){
-                LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
+//                LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
                 this->emit_v2_compressed(stream);
             }
             else {
-                LOG(LOG_INFO, "/* BMP Cache raw V2 */");
+//                LOG(LOG_INFO, "/* BMP Cache raw V2 */");
                 this->emit_raw_v2(stream);
             }
         }
