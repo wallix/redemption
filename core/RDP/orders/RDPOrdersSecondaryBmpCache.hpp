@@ -521,7 +521,9 @@ class RDPBmpCache {
     void emit(Stream & stream) const
     {
         using namespace RDP;
-        if (0 == this->client_info->bitmap_cache_version){
+        switch (this->client_info->bitmap_cache_version){
+        case 0:
+        case 1:
             if (this->client_info->use_bitmap_comp){
 //                LOG(LOG_INFO, "/* BMP Cache compressed V1 */");
                 this->emit_v1_compressed(stream);
@@ -530,8 +532,8 @@ class RDPBmpCache {
 //                LOG(LOG_INFO, "/* BMP Cache raw V1 */");
                 this->emit_raw_v1(stream);
             }
-        }
-        else {
+        break;
+        default:
             if (this->client_info->use_bitmap_comp){
 //                LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
                 this->emit_v2_compressed(stream);
@@ -585,24 +587,25 @@ class RDPBmpCache {
     {
         using namespace RDP;
 
-        Stream tmp(16384);
-        this->bmp->compress(bpp, tmp);
-        size_t bufsize = tmp.p - tmp.data;
-
         int Bpp = nbbytes(this->bpp);
 
         stream.out_uint8(STANDARD | SECONDARY);
-
-        stream.out_uint16_le(bufsize - 1); /* length after type minus 7 */
-        stream.out_uint16_le(0x400 | (((Bpp + 2) << 3) & 0x38) | (cache_id & 7)); /* flags */
-        stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED_REV2); /* type */
+        uint32_t offset_header = stream.p - stream.data;
+        stream.out_uint16_le(0); // placeholder for length after type minus 7
+        stream.out_uint16_le(0x400 | (((Bpp + 2) << 3) & 0x38) | (cache_id & 7));
+        stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED_REV2); // type
         stream.out_uint8(align4(this->bmp->cx));
         stream.out_uint8(this->bmp->cy);
-        stream.out_uint16_be(bufsize | 0x4000);
+        uint32_t offset = stream.p - stream.data;
+        stream.out_uint16_be(0); // place holder for image buffer size
         stream.out_uint8(((this->cache_idx >> 8) & 0xff) | 0x80);
         stream.out_uint8(this->cache_idx);
-        stream.out_copy_bytes(tmp.data, bufsize);
+        this->bmp->compress(this->bpp, stream);
+        size_t bufsize = stream.p - stream.data - offset + 4;
+        stream.set_out_uint16_be(bufsize | 0x4000, offset); // set the actual size
+        stream.set_out_uint16_le(bufsize + 6 - 7, offset_header); // length after type minus 7
     }
+
 
     void emit_raw_v1(Stream & stream) const
     {

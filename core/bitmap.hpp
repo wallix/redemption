@@ -1210,7 +1210,7 @@ struct Bitmap {
     }
 
     #warning simplify and enhance compression using 1 pixel orders BLACK or WHITE.
-    #warning get allready compressed bitmaps in cache to avoid useless computations
+    #warning keep allready compressed bitmaps in cache to avoid useless computations
     void compress(int bpp, Stream & out)
     {
         const uint8_t Bpp = nbbytes(bpp);
