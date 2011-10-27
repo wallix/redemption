@@ -245,17 +245,18 @@ static inline int load_pointer(const char* file_name, uint8_t* data, uint8_t* ma
 
 struct Session {
 
+    int sck;
+    Inifile * ini;
+
     ModContext * context;
     int internal_state;
     long id;
     struct SocketTransport * trans;
     time_t keep_alive_time;
 
-    int sck;
     wait_obj * front_event;
     wait_obj * back_event;
 
-    Inifile * ini;
 
     struct client_mod * mod; /* module interface */
     struct client_mod * no_mod;
@@ -266,19 +267,23 @@ struct Session {
 
     SessionManager * sesman;
 
-    Session(int sck, const char * ip_source, Inifile * ini)
+    Session(int sck, const char * ip_source, Inifile * ini) 
+        : sck(sck), ini(ini)
     {
+        if (this->ini->globals.debug.session){
+            LOG(LOG_INFO, "new Session(%u)", sck);
+        }
         this->context = new ModContext(
                 KeywordsDefinitions,
                 sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword));
+        this->context->cpy(STRAUTHID_HOST, ip_source);
+
         this->sesman = new SessionManager(*this->context);
         this->sesman->auth_trans_t = 0;
 
         this->mod = 0;
 
         this->internal_state = SESSION_STATE_RSA_KEY_HANDSHAKE;
-        this->ini = ini;
-        this->sck = sck;
         this->front_event = new wait_obj(sck);
 
         /* create these when up and running */
@@ -304,8 +309,6 @@ struct Session {
         this->no_mod = new null_mod(*this->context, *(this->front));
         this->mod = this->no_mod;
 
-        this->context->cpy(STRAUTHID_HOST, ip_source);
-
         /* module interface */
         this->back_event = 0;
         this->keep_alive_time = 0;
@@ -314,6 +317,9 @@ struct Session {
 
     ~Session()
     {
+        if (this->ini->globals.debug.session){
+            LOG(LOG_INFO, "end of Session(%u)", sck);
+        }
         delete this->front;
         delete this->front_event;
         delete this->trans;
@@ -331,6 +337,9 @@ struct Session {
 
     int session_main_loop()
     {
+        if (this->ini->globals.debug.session){
+            LOG(LOG_INFO, "Session::session_main_loop()");
+        }
         int rv = 0;
         try {
             int previous_state = SESSION_STATE_STOP;
@@ -364,7 +373,7 @@ struct Session {
                         if (this->internal_state != previous_state)
                             LOG(LOG_DEBUG, "-------------- Waiting for authentifier (context refresh required)\n");
                         previous_state = this->internal_state;
-                        this->internal_state = this->step_STATE_WAITING_FOR_CONTEXT();
+                        this->internal_state = this->step_STATE_WAITING_FOR_CONTEXT(time_mark);
                     break;
                     case SESSION_STATE_RUNNING:
                         if (this->internal_state != previous_state)
@@ -376,10 +385,13 @@ struct Session {
                         if (this->internal_state != previous_state)
                             LOG(LOG_DEBUG, "-------------- Close connection");
                         previous_state = this->internal_state;
-                        this->internal_state = this->step_STATE_CLOSE_CONNECTION();
+                        this->internal_state = this->step_STATE_CLOSE_CONNECTION(time_mark);
                     break;
                 }
                 if (this->internal_state == SESSION_STATE_STOP){
+                    if (this->ini->globals.debug.session){
+                        LOG(LOG_INFO, "Session::session_main_loop::stop required()");
+                    }
                     break;
                 }
             }
@@ -399,12 +411,21 @@ struct Session {
 
     int step_STATE_KEY_HANDSHAKE(const struct timeval & time)
     {
+        if (this->ini->globals.debug.session){
+            LOG(LOG_INFO, "step_STATE_KEY_HANDSHAKE(%u.%0.6u)", time.tv_sec, time.tv_usec);
+        }
         this->front->incoming();
+        if (this->ini->globals.debug.session){
+            LOG(LOG_INFO, "step_STATE_KEY_HANDSHAKE Done");
+        }
         return SESSION_STATE_ENTRY;
     }
 
     int step_STATE_ENTRY(const struct timeval & time_mark)
     {
+        if (this->ini->globals.debug.session){
+            LOG(LOG_INFO, "Session::step_STATE_ENTRY(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
+        }
         unsigned max = 0;
         fd_set rfds;
         fd_set wfds;
@@ -415,6 +436,9 @@ struct Session {
 
         this->front_event->add_to_fd_set(rfds, max);
         select(max + 1, &rfds, &wfds, 0, &timeout);
+        if (this->ini->globals.debug.session){
+            LOG(LOG_INFO, "Session::step_STATE_ENTRY::timeout=%u.%0.6u", timeout.tv_sec, timeout.tv_usec);
+        }
         if (this->front_event->is_set()) {
             try {
                 this->front->activate_and_process_data(*this->mod);
@@ -424,6 +448,10 @@ struct Session {
             };
 
             if (this->front->up_and_running){
+                if (this->ini->globals.debug.session){
+                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running");
+                }
+
                 // if we reach this point we are up_and_running,
                 // hence width and height and colors and keymap are availables
                 /* resize the main window */
@@ -487,6 +515,9 @@ struct Session {
 
     int step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time_mark)
     {
+        if (this->ini->globals.debug.session){
+            LOG(LOG_INFO, "Session::step_STATE_WAITING_FOR_NEXT_MODULE(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
+        }
         unsigned max = 0;
         fd_set rfds;
         fd_set wfds;
@@ -518,9 +549,11 @@ struct Session {
         return this->internal_state;
     }
 
-    int step_STATE_WAITING_FOR_CONTEXT()
+    int step_STATE_WAITING_FOR_CONTEXT(const struct timeval & time_mark)
     {
-        struct timeval time_mark = { 1, 0 };
+        if (this->ini->globals.debug.session){
+            LOG(LOG_INFO, "Session::step_STATE_WAITING_FOR_CONTEXT(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
+        }
         unsigned max = 0;
         fd_set rfds;
         fd_set wfds;
@@ -529,7 +562,7 @@ struct Session {
         FD_ZERO(&wfds);
 
         #warning we should manage some **real** timeout here, if context didn't answered in time, then we should close session.
-        struct timeval timeout = time_mark;
+        struct timeval timeout = { 1, 0 };
 
         this->front_event->add_to_fd_set(rfds, max);
         this->sesman->add_to_fd_set(rfds, max);
@@ -556,6 +589,9 @@ struct Session {
 
     int step_STATE_RUNNING(const struct timeval & time_mark)
     {
+        if (this->ini->globals.debug.session > 1000){
+            LOG(LOG_INFO, "Session::step_STATE_RUNNING(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
+        }
         unsigned max = 0;
         fd_set rfds;
         fd_set wfds;
@@ -690,15 +726,25 @@ struct Session {
         return this->internal_state;
     }
 
-    int step_STATE_CLOSE_CONNECTION()
+    int step_STATE_CLOSE_CONNECTION(const struct timeval & time_mark)
     {
+        if (this->ini->globals.debug.session){
+            LOG(LOG_INFO, "Session::step_STATE_CLOSE_CONNECTION(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
+        }
+        
+        struct timeval timeout = time_mark;     
+        
         unsigned max = 0;
         fd_set rfds;
+        fd_set wfds;
 
         FD_ZERO(&rfds);
+        FD_ZERO(&wfds);
 
         this->front_event->add_to_fd_set(rfds, max);
         this->back_event->add_to_fd_set(rfds, max);
+
+        select(max + 1, &rfds, &wfds, 0, &timeout);
 
         if (this->back_event->is_set()) {
             return SESSION_STATE_STOP;
@@ -715,9 +761,12 @@ struct Session {
         return this->internal_state;
     }
 
-
+    #warning use exception to return error status instead of boolean
     bool session_setup_mod(int status, const ModContext * context)
     {
+        if (this->ini->globals.debug.session){
+            LOG(LOG_INFO, "Session::session_setup_mod(status=%u)", status);
+        }
         try {
             if (strcmp(this->context->get(STRAUTHID_MODE_CONSOLE),"force")==0){
                 this->front->set_console_session(true);
@@ -748,7 +797,9 @@ struct Session {
                     this->back_event = new wait_obj(-1);
                     this->mod = new cli_mod(*this->context, *(this->front));
                     this->back_event->set();
-                    LOG(LOG_INFO, "Creation of new mod 'CLI parse' suceeded\n");
+                    if (this->ini->globals.debug.session){
+                        LOG(LOG_INFO, "Creation of new mod 'CLI parse' suceeded\n");
+                    }
                 }
                 break;
 
@@ -758,7 +809,9 @@ struct Session {
                     this->mod = new transitory_mod(*this->context, *(this->front));
                     // Transitory finish immediately
                     this->back_event->set();
-                    LOG(LOG_INFO, "Creation of new mod 'TRANSITORY' suceeded\n");
+                    if (this->ini->globals.debug.session){
+                        LOG(LOG_INFO, "Creation of new mod 'TRANSITORY' suceeded\n");
+                    }
                 }
                 break;
 
@@ -804,7 +857,9 @@ struct Session {
                                     pointer_item.x,
                                     pointer_item.y);
                         }
-                        LOG(LOG_INFO, "internal module Close ready");
+                        if (this->ini->globals.debug.session){
+                            LOG(LOG_INFO, "internal module Close ready");
+                        }
                         break;
                         case ModContext::INTERNAL_DIALOG_VALID_MESSAGE:
                         {
@@ -821,14 +876,18 @@ struct Session {
                                             button,
                                             this->ini);
                         }
-                        LOG(LOG_INFO, "internal module 'Dialog Accept Message' ready");
+                        if (this->ini->globals.debug.session){
+                            LOG(LOG_INFO, "internal module 'Dialog Accept Message' ready");
+                        }
                         break;
 
                         case ModContext::INTERNAL_DIALOG_DISPLAY_MESSAGE:
                         {
                             const char * message = NULL;
                             const char * button = NULL;
-                            LOG(LOG_INFO, "Creation of internal module 'Dialog Display Message'");
+                            if (this->ini->globals.debug.session){
+                                LOG(LOG_INFO, "Creation of internal module 'Dialog Display Message'");
+                            }
                             message = this->context->get(STRAUTHID_MESSAGE);
                             button = NULL;
                             this->mod = new dialog_mod(
@@ -839,45 +898,67 @@ struct Session {
                                             button,
                                             this->ini);
                         }
-                        LOG(LOG_INFO, "internal module 'Dialog Display Message' ready");
+                        if (this->ini->globals.debug.session){
+                            LOG(LOG_INFO, "internal module 'Dialog Display Message' ready");
+                        }
                         break;
                         case ModContext::INTERNAL_LOGIN:
-                            LOG(LOG_INFO, "Creation of internal module 'Login'");
+                            if (this->ini->globals.debug.session){
+                                LOG(LOG_INFO, "Creation of internal module 'Login'");
+                            }
                             this->mod = new login_mod(
                                             this->back_event,
                                              *this->context,
                                              *this->front,
                                              this->ini);
-                            LOG(LOG_INFO, "internal module Login ready");
+                            if (this->ini->globals.debug.session){
+                                LOG(LOG_INFO, "internal module Login ready");
+                            }
                         break;
                         case ModContext::INTERNAL_BOUNCER2:
-                            LOG(LOG_INFO, "Creation of internal module 'bouncer2'");
+                            if (this->ini->globals.debug.session){
+                                LOG(LOG_INFO, "Creation of internal module 'bouncer2'");
+                            }
                             this->mod = new bouncer2_mod(this->back_event, *this->front);
-                            LOG(LOG_INFO, "internal module 'bouncer2' ready");
+                            if (this->ini->globals.debug.session){
+                                LOG(LOG_INFO, "internal module 'bouncer2' ready");
+                            }
                         break;
                         case ModContext::INTERNAL_TEST:
-                            LOG(LOG_INFO, "Creation of internal module 'test'");
+                            if (this->ini->globals.debug.session){
+                                LOG(LOG_INFO, "Creation of internal module 'test'");
+                            }
                             this->mod = new test_internal_mod(
                                             this->back_event,
                                             *this->context,
                                             *this->front);
-                            LOG(LOG_INFO, "internal module 'test' ready");
+                            if (this->ini->globals.debug.session){
+                                LOG(LOG_INFO, "internal module 'test' ready");
+                            }
                         break;
                         case ModContext::INTERNAL_CARD:
-                            LOG(LOG_INFO, "Creation of internal module 'test_card'");
+                            if (this->ini->globals.debug.session){
+                                LOG(LOG_INFO, "Creation of internal module 'test_card'");
+                            }
                             this->mod = new test_card_mod(
                                             this->back_event,
                                             *this->context,
                                             *this->front);
-                            LOG(LOG_INFO, "internal module 'test_card' ready");
+                            if (this->ini->globals.debug.session){
+                                LOG(LOG_INFO, "internal module 'test_card' ready");
+                            }
                         break;
                         case ModContext::INTERNAL_SELECTOR:
-                            LOG(LOG_INFO, "Creation of internal module 'selector'");
+                            if (this->ini->globals.debug.session){
+                                LOG(LOG_INFO, "Creation of internal module 'selector'");
+                            }
                             this->mod = new selector_mod(
                                             this->back_event,
                                             *this->context,
                                             *this->front);
-                            LOG(LOG_INFO, "internal module 'selector' ready");
+                            if (this->ini->globals.debug.session){
+                                LOG(LOG_INFO, "internal module 'selector' ready");
+                            }
                         break;
                         default:
                         break;
@@ -895,7 +976,9 @@ struct Session {
                     this->mod = new xup_mod(t, *this->context, *(this->front));
                     this->mod->draw_event();
 //                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
-                    LOG(LOG_INFO, "Creation of new mod 'XUP' suceeded\n");
+                    if (this->ini->globals.debug.session){
+                        LOG(LOG_INFO, "Creation of new mod 'XUP' suceeded\n");
+                    }
                 }
                 break;
 
@@ -923,7 +1006,9 @@ struct Session {
                                         this->context->get_bool(STRAUTHID_OPT_DEVICEREDIRECTION));
 //                    this->back_event->set();
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
-                    LOG(LOG_INFO, "Creation of new mod 'RDP' suceeded\n");
+                    if (this->ini->globals.debug.session){
+                        LOG(LOG_INFO, "Creation of new mod 'RDP' suceeded\n");
+                    }
                 }
                 break;
 
@@ -935,12 +1020,17 @@ struct Session {
                     this->mod = new mod_vnc(t, *this->context, *(this->front), this->front->get_client_info().keylayout);
                     this->mod->draw_event();
 //                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
-                    LOG(LOG_INFO, "Creation of new mod 'VNC' suceeded\n");
+                    if (this->ini->globals.debug.session){
+                        LOG(LOG_INFO, "Creation of new mod 'VNC' suceeded\n");
+                    }
                 }
                 break;
 
                 default:
                 {
+                    if (this->ini->globals.debug.session){
+                        LOG(LOG_INFO, "Unknown backend exception\n");
+                    }
                     throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                 }
             }

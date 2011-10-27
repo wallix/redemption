@@ -158,6 +158,7 @@ class SessionManager {
             long enddate = atol(this->context.get(STRAUTHID_END_DATE_CNX));
             if (enddate != 0 && (timestamp > enddate)) {
                 LOG(LOG_INFO, "Session is out of allowed timeframe : stopping");
+                this->mod_state = MOD_STATE_DONE_CLOSE;
                 res = true;
             }
         }
