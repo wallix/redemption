@@ -65,6 +65,8 @@ struct Bitmap {
     bool crc_computed;
 
     public:
+
+    #warning there is way too many constructors, doing things much too complicated. We should split that in two stages. First prepare minimal context for bitmap (but keep a flag or something to mark it as non ready), then load actual data into bitmap.
     Bitmap(int bpp, const BGRPalette * palette, int cx, int cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
         : data_co24(0), data_co16(0), data_co15(0), data_co8(0),
           original_bpp(bpp), cx(cx), cy(cy),

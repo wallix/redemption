@@ -134,6 +134,7 @@ struct GraphicsFile
     void rdp_orders_process_bmpcache(int bpp, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
 //        LOG(LOG_INFO, "rdp_orders_process_bmpcache");
+        BGRPalette palette;
         struct Bitmap* bitmap = NULL;
         uint8_t cache_id = 0;
         uint16_t cache_idx = 0;
@@ -142,7 +143,7 @@ struct GraphicsFile
             {
                 #warning RDPBmpCache is used to create bitmap
                 RDPBmpCache bmp(bpp);
-                bmp.receive_raw_v1(stream, control, header);
+                bmp.receive_raw_v1(stream, control, header, palette);
 
                 //                bmp.print();
                 cache_id = bmp.cache_id;

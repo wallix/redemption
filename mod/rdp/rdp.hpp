@@ -161,64 +161,24 @@ struct rdp_orders {
     void rdp_orders_process_bmpcache(int bpp, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
 //        LOG(LOG_INFO, "rdp_orders_process_bmpcache");
-        struct Bitmap* bitmap = NULL;
-        uint8_t cache_id = 0;
-        uint16_t cache_idx = 0;
+        RDPBmpCache bmp_cache_item(bpp);
         switch (header.type){
         case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
-            {
-                #warning RDPBmpCache is used to create bitmap
-                RDPBmpCache bmp(bpp);
-                bmp.receive(stream, control, header);
-                cache_id = bmp.cache_id;
-                cache_idx = bmp.cache_idx;
-                bitmap = bmp.bmp;
-            }
+            bmp_cache_item.receive_raw_v1(stream, control, header, this->global_palette);
         break;
         case RDP::TS_CACHE_BITMAP_COMPRESSED:
-            {
-                #warning move that to RDPBmpCache -> receive
-                int flags = header.flags;
-                int size = 0;
-                int pad2 = 0;
-                size_t row_size = 0;
-                int final_size = 0;
-
-                cache_id = stream.in_uint8();
-                int pad1 = stream.in_uint8();
-                pad1 = pad1; // just to remove warning, will be optimized away
-                uint8_t width = stream.in_uint8();
-                uint8_t height = stream.in_uint8();
-                uint8_t bpp = stream.in_uint8();
-                int bufsize = stream.in_uint16_le();
-                cache_idx = stream.in_uint16_le();
-                if (flags & 0x400) {
-                    size = bufsize;
-                }
-                else {
-                    pad2 = stream.in_uint16_le();
-                    size = stream.in_uint16_le();
-                    row_size = stream.in_uint16_le();
-                    final_size = stream.in_uint16_le();
-                }
-
-                const uint8_t* data = stream.in_uint8p(size);
-
-                bitmap = new Bitmap(bpp, &this->global_palette, width, height, data, size, true);
-                assert(row_size == bitmap->line_size(bpp));
-
-            }
+            bmp_cache_item.receive_compressed_v1(stream, control, header, this->global_palette);
         break;
         default:
-            assert(false);
+            // can't happen, ensured by caller
+            LOG(LOG_ERR, "Unexpected header type %u in rdp_orders_bmp_cache", header.type);
         }
-
-        assert(bitmap);
-
-        if (this->cache_bitmap[cache_id][cache_idx]) {
-            delete this->cache_bitmap[cache_id][cache_idx];
+        
+        #warning add cache_id, cache_idx range check, and also size check based on cache size by type and uncompressed bitmap size
+        if (this->cache_bitmap[bmp_cache_item.cache_id][bmp_cache_item.cache_idx]) {
+            delete this->cache_bitmap[bmp_cache_item.cache_id][bmp_cache_item.cache_idx];
         }
-        this->cache_bitmap[cache_id][cache_idx] = bitmap;
+        this->cache_bitmap[bmp_cache_item.cache_id][bmp_cache_item.cache_idx] = bmp_cache_item.bmp;
     }
 
     void rdp_orders_process_fontcache(Stream & stream, int flags, client_mod * mod)
