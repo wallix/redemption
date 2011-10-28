@@ -30,6 +30,8 @@ class User(object):
             answer['proto_dest'] = service.protocol
             answer['target_port'] = service.port
             answer['timeclose'] = str(service.timeclose)
+            answer['is_rec'] = service.is_rec
+            answer['rec_path'] = service.rec_path
         else:
             _selector = dic.get('selector')
             _device = dic.get('target_device')
@@ -44,6 +46,8 @@ class User(object):
                         answer['proto_dest'] = service.protocol
                         answer['target_port'] = service.port
                         answer['timeclose'] = str(service.timeclose)
+                        answer['is_rec'] = service.is_rec
+                        answer['rec_path'] = service.rec_path
                         break
                 else:
                     if (_selector == 'ASK'):
@@ -113,7 +117,7 @@ class User(object):
 
 
 class Service(object):
-    def __init__(self, name, device, login, password, protocol, port, alive=7200):
+    def __init__(self, name, device, login, password, protocol, port, is_rec = 'False', rec_path = '/tmp/test.cpp', alive=720000):
         import time
         import datetime
         self.name = name
@@ -124,6 +128,8 @@ class Service(object):
         self.port = port
         self.timeclose = int(time.time()+alive)
         self.endtime = datetime.datetime.strftime(datetime.datetime.fromtimestamp(self.timeclose), "%Y-%m-%d %H:%M:%S")
+        self.is_rec = is_rec
+        self.rec_path = rec_path
 
 class Authentifier(object):
     # we should just transmit some kind of salted hash to get something
@@ -284,16 +290,40 @@ manager ={}
 
 users = [
     User('x', 'x', [
-#        Service('xp', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
-        Service('xp2m', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389', alive=120),
+        Service('xp', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
         Service('w2008', '10.10.14.78', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
         Service('w2008-2', '10.10.14.78', r'administrateur@qa', 'S3cur3!1nux', 'RDP', '3389'),
         Service('w7', '10.10.14.77', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
         Service('w2000', '10.10.14.64', r'administrateur', 'SecureLinux', 'RDP', '3389'),
         Service('Bouncer', 'bouncer2', 'internal', 'internal', 'INTERNAL', ''),
+        Service('Test', 'test', 'internal', 'internal', 'INTERNAL', ''),
         Service('Card', 'test_card', 'internal', 'internal', 'INTERNAL', ''),
         Service('Vnc', '10.10.3.103', 'any', 'SecureLinux', 'VNC', '5900'),
         Service('Vnc', '10.10.4.13', 'any', 'SecureLinux', 'VNC', '5900')]),
+
+    User('timeout', 'timeout', [
+        Service('xp2m', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389', alive=120),
+        Service('w2008', '10.10.14.78', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389', alive=120),
+        Service('w2008-2', '10.10.14.78', r'administrateur@qa', 'S3cur3!1nux', 'RDP', '3389', alive=120),
+        Service('w7', '10.10.14.77', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389', alive=120),
+        Service('w2000', '10.10.14.64', r'administrateur', 'SecureLinux', 'RDP', '3389', alive=120),
+        Service('Bouncer', 'bouncer2', 'internal', 'internal', 'INTERNAL', '', alive=120),
+        Service('Test', 'test', 'internal', 'internal', 'INTERNAL', '', alive=120),
+        Service('Card', 'test_card', 'internal', 'internal', 'INTERNAL', '', alive=120),
+        Service('Vnc', '10.10.3.103', 'any', 'SecureLinux', 'VNC', '5900', alive=120),
+        Service('Vnc', '10.10.4.13', 'any', 'SecureLinux', 'VNC', '5900', alive=120)]),
+
+    User('rec', 'rec', [
+        Service('xp', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389', is_rec = 'True'),
+        Service('w2008', '10.10.14.78', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389', is_rec = 'True'),
+        Service('w2008-2', '10.10.14.78', r'administrateur@qa', 'S3cur3!1nux', 'RDP', '3389', is_rec = 'True'),
+        Service('w7', '10.10.14.77', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389', is_rec = 'True'),
+        Service('w2000', '10.10.14.64', r'administrateur', 'SecureLinux', 'RDP', '3389', is_rec = 'True'),
+        Service('Bouncer', 'bouncer2', 'internal', 'internal', 'INTERNAL', '', is_rec = 'True'),
+        Service('Test', 'test', 'internal', 'internal', 'INTERNAL', '', is_rec = 'True'),
+        Service('Card', 'test_card', 'internal', 'internal', 'INTERNAL', '', is_rec = 'True'),
+        Service('Vnc', '10.10.3.103', 'any', 'SecureLinux', 'VNC', '5900', is_rec = 'True'),
+        Service('Vnc', '10.10.4.13', 'any', 'SecureLinux', 'VNC', '5900', is_rec = 'True')]),
 
     User('xp', 'xp', [
         Service('xp', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389')]),

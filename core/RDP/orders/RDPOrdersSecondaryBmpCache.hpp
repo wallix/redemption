@@ -1067,9 +1067,34 @@ class RDPBmpCache {
         uint16_t bufsize = stream.in_uint16_le();
         this->cache_idx = stream.in_uint16_le();
 
+//        LOG(LOG_ERR, "received_compressed_v1: width=%u height=%u bpp=%u bufsize=%u cache_idx=%u cache_id=%u", width, height, bpp, bufsize, cache_idx, cache_id);
+
         if (flags & NO_BITMAP_COMPRESSION_HDR) {
+//            LOG(LOG_ERR, "received_compressed_v1: NO_COMPRESSION_HDR");
             const uint8_t* data = stream.in_uint8p(bufsize);
+
+//            LOG(LOG_INFO, "1) uint8_t raw[] = {");
+//            for (size_t j = 0 ; j < bufsize ; j+=16){
+//                char buffer[2048];
+//                char * line = buffer;
+//                buffer[0] = 0;
+//                for (size_t i = 0; (i < 16) && (j+i < bufsize); i++){
+//                    line += snprintf(line, 1024, "0x%.2x, ", data[j*16+i]);
+//                    if (i % 16 == 15){
+//                        LOG(LOG_INFO, buffer);
+//                        line = buffer;
+//                        buffer[0] = 0;
+//                    }
+//                }
+//                if (line != buffer){
+//                    LOG(LOG_INFO, buffer);
+//                }
+//            }
+//            LOG(LOG_INFO, "};");
+
             this->bmp = new Bitmap(bpp, &palette, width, height, data, bufsize, true);
+
+
         }
         else {
             stream.in_uint16_le(); // skip padding
@@ -1077,6 +1102,27 @@ class RDPBmpCache {
             uint16_t row_size = stream.in_uint16_le();   // size of a row
             uint16_t final_size = stream.in_uint16_le(); // size of bitmap after decompression
             const uint8_t* data = stream.in_uint8p(size);
+//            LOG(LOG_ERR, "received_compressed_v1: width=%u height=%u bpp=%u bufsize=%u cache_idx=%u cache_id=%u size=%u row_size=%u final_size=%u", width, height, bpp, bufsize, cache_idx, cache_id, size, row_size, final_size);
+//            
+//            LOG(LOG_INFO, "2) uint8_t raw[] = {");
+//            for (size_t j = 0 ; j < size ; j+=16){
+//                char buffer[2048];
+//                char * line = buffer;
+//                buffer[0] = 0;
+//                for (size_t i = 0; (i < 16) && (j+i < size); i++){
+//                    line += snprintf(line, 1024, "0x%.2x, ", data[j*16+i]);
+//                    if (i % 16 == 15){
+//                        LOG(LOG_INFO, buffer);
+//                        line = buffer;
+//                        buffer[0] = 0;
+//                    }
+//                }
+//                if (line != buffer){
+//                    LOG(LOG_INFO, buffer);
+//                }
+//            }
+//            LOG(LOG_INFO, "};");
+
             this->bmp = new Bitmap(bpp, &palette, width, height, data, size, true);
             if (row_size != this->bmp->line_size(bpp)){
                 LOG(LOG_WARNING, "broadcasted row_size should be the same as line size computed from cx, bpp and alignment rules");

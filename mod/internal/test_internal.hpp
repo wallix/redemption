@@ -72,6 +72,7 @@ struct test_internal_mod : public internal_mod {
         this->gd.front.send_global_palette(this->gd.palette332);
         this->gd.server_begin_update();
 
+    //        #include "../../bogus3.cpp"
         RDPOpaqueRect cmd(Rect(10, 10, 100, 100), 0xffffff);
         this->gd.front.orders->send(cmd, Rect(0, 0, 1280, 800));
 

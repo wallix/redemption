@@ -67,11 +67,12 @@ struct Bitmap {
     public:
 
     #warning there is way too many constructors, doing things much too complicated. We should split that in two stages. First prepare minimal context for bitmap (but keep a flag or something to mark it as non ready), then load actual data into bitmap.
-    Bitmap(int bpp, const BGRPalette * palette, int cx, int cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
+    Bitmap(int bpp, const BGRPalette * palette, unsigned cx, unsigned cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
         : data_co24(0), data_co16(0), data_co15(0), data_co8(0),
           original_bpp(bpp), cx(cx), cy(cy),
           crc(0), crc_computed(false)
     {
+//        LOG(LOG_ERR, "Creating bitmap cx=%u cy=%u size=%u bpp=%u", cx, cy, size, bpp);
         if (bpp == 8){
             if (palette){
                 memcpy(&this->original_palette, palette, sizeof(BGRPalette));
@@ -90,6 +91,9 @@ struct Bitmap {
             assert(size == this->bmp_size(bpp));
             memcpy(this->data_co(bpp), data, size);
         }
+        if (this->cx <= 0 || this->cy <= 0){
+            LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u size=%u bpp=%u", this->cx, this->cy, size, this->original_bpp);
+        }
     }
 
 
@@ -97,6 +101,8 @@ struct Bitmap {
         : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(bpp),
         cx(0), cy(0), crc(0), crc_computed(false)
     {
+//        LOG(LOG_ERR, "Creating bitmap (2) src_cx=%u src_cy=%u cx=%u cy=%u bpp=%u r(%u, %u, %u, %u)", src_cx, src_cy, cx, cy, bpp, r.x, r.y, r.cx, r.cy);
+
         if (bpp == 8){
             if (palette){
                 memcpy(&this->original_palette, palette, sizeof(BGRPalette));
@@ -105,7 +111,7 @@ struct Bitmap {
                 init_palette332(this->original_palette);
             }
         }
-        int cx = std::min(r.cx, src_cx - r.x);
+        unsigned cx = std::min(r.cx, src_cx - r.x);
         #warning there is both cx and this->cx and both can't be interchanged. this is intended to always store bitmaps that are multiple of 4 pixels to override a compatibility problem with rdesktop. This is not necessary for Microsoft clients. See MSRDP-CGR MS-RDPBCGR: 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)
         // bitmapDataStream (variable): A variable-sized array of bytes.
         //  Uncompressed bitmap data represents a bitmap as a bottom-up,
@@ -114,7 +120,8 @@ struct Bitmap {
         // (including up to three bytes of padding, as necessary).
 
         this->cx = align4(cx);
-        this->cy = std::min(r.cy, src_cy - r.y);
+        unsigned cy = std::min(r.cy, src_cy - r.y);
+        this->cy = cy;
 
         // Important and only once
         this->set_data_co(bpp);
@@ -138,6 +145,10 @@ struct Bitmap {
             s8 += src_row_size;
             d8 += this->line_size(bpp);
         }
+        if (this->cx <= 0 || this->cy <= 0){
+            LOG(LOG_ERR, "Bogus empty bitmap (2)!!! cx=%u cy=%u bpp=%u src_cx=%u, src_cy=%u r(%u, %u, %u, %u)", this->cx, this->cy, this->original_bpp, src_cx, src_cy, r.x, r.y, r.cx, r.cy);
+        }
+
     }
 
 

@@ -460,7 +460,10 @@ struct GraphicDeviceMod : public GraphicDevice
             for (int x = 0; x < dst.cx ; x += 32) {
                 int cx = std::min(32, dst.cx - x);
                 const Rect tile(x, y, cx, cy);
-                if (!this->clip.intersect(tile.offset(dst.x, dst.y)).isempty()){
+                #warning simplify this code and add unit tests. It is much too complicated and that introduce subtile bugs
+                if (!this->clip.intersect(tile.offset(dst.x, dst.y)).isempty()
+                && (src_r.cx > src_r.x + x)
+                && (src_r.cy > src_r.y + y)){
                     #warning transmit a bitmap to add_bitmap instead of individual components
                      uint32_t cache_ref = this->front.bmp_cache->add_bitmap(
                                                 src_r.cx, src_r.cy,
@@ -608,7 +611,10 @@ struct GraphicDeviceMod : public GraphicDevice
             for (int x = 0; x < dst.cx ; x += 32) {
                 int cx = std::min(32, dst.cx - x);
                 const Rect tile(x, y, cx, cy);
-                if (!this->clip.intersect(tile.offset(dst.x, dst.y)).isempty()){
+                #warning simplify this code and add unit tests. It is much too complicated and that introduce subtile bugs
+                if (!this->clip.intersect(tile.offset(dst.x, dst.y)).isempty()
+                && (src_r.cx > src_r.x + x)
+                && (src_r.cy > src_r.y + y)){
                      uint32_t cache_ref = this->front.bmp_cache->add_bitmap(
                                                 src_r.cx, src_r.cy,
                                                 src_data,

@@ -179,6 +179,7 @@ struct rdp_orders {
             delete this->cache_bitmap[bmp_cache_item.cache_id][bmp_cache_item.cache_idx];
         }
         this->cache_bitmap[bmp_cache_item.cache_id][bmp_cache_item.cache_idx] = bmp_cache_item.bmp;
+//        LOG(LOG_ERR, "rdp_orders_process_bmpcache bitmap id=%u idx=%u cx=%u cy=%u bpp=%u bmp_size=%u", bmp_cache_item.cache_id, bmp_cache_item.cache_idx, bmp_cache_item.bmp->cx, bmp_cache_item.bmp->cy, bmp_cache_item.bmp->bmp_size(bpp), bpp);
     }
 
     void rdp_orders_process_fontcache(Stream & stream, int flags, client_mod * mod)
@@ -396,11 +397,12 @@ struct rdp_orders {
                     {
                         assert((this->memblt.cache_id >> 4) < 6);
                         struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xF][this->memblt.cache_idx];
-                        assert(bitmap);
                         if (bitmap) {
-//                            memcpy(bitmap->original_palette,
-//                                   this->cache_colormap[this->memblt.cache_id >> 4],
-//                                   sizeof(BGRPalette));
+                            #warning : check that
+                            memcpy(bitmap->original_palette,
+                                   this->cache_colormap[this->memblt.cache_id >> 4],
+                                   sizeof(BGRPalette));
+//                            LOG(LOG_ERR, "sending mem_blt this->memblt.cache_id=%u this->memblt.cache_idx=%u", this->memblt.cache_id, this->memblt.cache_idx);
                             mod->gd.mem_blt(
                                 this->memblt,
                                 *bitmap,
@@ -2252,6 +2254,8 @@ struct mod_rdp : public client_mod {
             // data in bits-per-pixel.
             uint8_t bpp = stream.in_uint16_le();
 
+//            LOG(LOG_ERR, "left=%u top=%u right=%u bottom=%u width=%u height=%u bpp=%u", left, top, right, bottom, width, height, bpp);
+
             assert(bpp == 24 || bpp == 16 || bpp == 8 || bpp == 15);
 
             // A 16-bit, unsigned integer. The flags describing the format
@@ -2306,6 +2310,10 @@ struct mod_rdp : public client_mod {
                 }
 
                 const uint8_t * data = stream.in_uint8p(size);
+                if (width <= 0 || height <= 0){
+                    LOG(LOG_ERR, "unexpected bitmap size : width=%u height=%u size=%u left=%u, top=%u, right=%u, bottom=%u", width, height, size, left, top, right, bottom);
+                }
+
 //                Bitmap bitmap(bpp, &this->orders.cache_colormap[0], width, height, data, size, true);
                 Bitmap bitmap(bpp, &this->orders.global_palette, width, height, data, size, true);
 
