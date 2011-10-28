@@ -513,9 +513,12 @@ class RDPBmpCache {
     {
     }
 
-    #warning we should not provide client_info, but only what is necessary (compression_type, cache type 1 or type 1), if we provide right data here, then we could use a generic receive that use the right receive version, instead of performing that choice outside depending on type found in the secondary header.
+    #warning we should not provide client_info, but only what is necessary (compression_type, cache type 1 or type 1), if we provide right data here, then we could use a generic receive that use the right receive version, instead of performing that choice outside depending on type found in the secondary header. 
     RDPBmpCache(int bpp) :
+                    cache_id(0),
+                    bmp(NULL),
                     bpp(bpp),
+                    cache_idx(0),
                     client_info(NULL)
     {
     }
@@ -566,8 +569,8 @@ class RDPBmpCache {
         /* length after type minus 7 */
         uint32_t offset_header = stream.p - stream.data; 
         stream.out_uint16_le(0); // placeholder for size after type - 7
-        stream.out_uint16_le(NO_BITMAP_COMPRESSION_HDR); /* flags */
-        stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); /* type */
+        stream.out_uint16_le(NO_BITMAP_COMPRESSION_HDR); // flags
+        stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); // type
 
         stream.out_uint8(cache_id);
         stream.out_clear_bytes(1); /* pad */
@@ -596,8 +599,8 @@ class RDPBmpCache {
         /* length after type minus 7 */
         uint32_t offset_header = stream.p - stream.data; 
         stream.out_uint16_le(0); // placeholder for size after type - 7
-        stream.out_uint16_le(8); /* flags : why do we put 8 ? Any value should be ok except NO_BITMAP_COMPRESSION_HDR
-        stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); /* type */
+        stream.out_uint16_le(8); // flags : why do we put 8 ? Any value should be ok except NO_BITMAP_COMPRESSION_HDR
+        stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); // type
 
         stream.out_uint8(cache_id);
         stream.out_clear_bytes(1); /* pad */

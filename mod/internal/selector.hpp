@@ -114,9 +114,9 @@ struct selector_mod : public internal_mod {
             internal_mod(front), focus_line(0),
             focus_item(context.selector_focus),
             click_focus(NO_FOCUS),
+            state(BUTTON_STATE_UP),
             filter_group_edit_pos(0),
             filter_device_edit_pos(0),
-            state(BUTTON_STATE_UP),
             showed_page(0),
             total_page(1),
             context(context)
@@ -3518,7 +3518,7 @@ struct selector_mod : public internal_mod {
     void ask_page(void){
         this->context.ask(STRAUTHID_SELECTOR);
         char buffer[64];
-        sprintf(buffer, "%u", this->showed_page);
+        sprintf(buffer, "%u", (unsigned int)this->showed_page);
         this->context.cpy(STRAUTHID_SELECTOR_CURRENT_PAGE, buffer);
         this->context.cpy(STRAUTHID_SELECTOR_GROUP_FILTER, this->filter_group_text);
         this->context.cpy(STRAUTHID_SELECTOR_DEVICE_FILTER, this->filter_device_text);
@@ -3828,7 +3828,7 @@ struct selector_mod : public internal_mod {
         if (this->showed_page > this->total_page){
             this->showed_page = this->total_page;
         }
-        sprintf(buffer, "%u/%u", this->showed_page, this->total_page);
+        sprintf(buffer, "%u/%u", (unsigned int)this->showed_page, (unsigned int)this->total_page);
         Rect rect_num_pages = this->rect_button_prec.offset(50, 2);
         this->gd.server_draw_text(rect_num_pages.x, rect_num_pages.y, buffer, GREY, BLACK);
 

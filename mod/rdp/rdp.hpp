@@ -211,9 +211,6 @@ struct rdp_orders {
     void rdp_orders_process_desksave(Stream & stream, int present, int delta, client_mod * mod)
     {
 //        LOG(LOG_INFO, "rdp_orders_process_desksave");
-        int width;
-        int height;
-
         if (present & 0x01) {
             this->state.desksave_offset = stream.in_uint32_le();
         }
@@ -252,17 +249,19 @@ struct rdp_orders {
         if (present & 0x20) {
             this->state.desksave_action = stream.in_uint8();
         }
-        width = (this->state.desksave_right - this->state.desksave_left) + 1;
-        height = (this->state.desksave_bottom - this->state.desksave_top) + 1;
+        unsigned width = (this->state.desksave_right - this->state.desksave_left) + 1;
+        unsigned height = (this->state.desksave_bottom - this->state.desksave_top) + 1;
+        #warning implement this
         if (this->state.desksave_action == 0) {
-    //		ui_desktop_save(ostream.offset, ostream.left, ostream.top, width, height);
+            LOG(LOG_INFO, "ui_desktop_save(offset=%u, left=%u, top=%u, width=%u, height=%u);",this->state.desksave_offset, this->state.desksave_left, this->state.desksave_top, width, height);
         } else {
-    //		ui_desktop_restore(ostream.offset, ostream.left, ostream.top, width, height);
+            LOG(LOG_INFO, "ui_desktop_restore(offset=%u, left=%u, top=%u, width=%u, height=%u);",this->state.desksave_offset, this->state.desksave_left, this->state.desksave_top, width, height);
         }
     }
 
     /*****************************************************************************/
     /* Process a 3-way blt order */
+    #warning implement this
     static void rdp_orders_process_triblt(struct rdp_orders* self, Stream & stream, int present, int delta, client_mod * mod)
     {
 //        LOG(LOG_INFO, "rdp_orders_process_triblt");
@@ -920,7 +919,6 @@ struct mod_rdp : public client_mod {
             if ((mcs_in.opcode >> 2) != MCS_SDIN) {
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
-            int len = mcs_in.len;
             SecIn sec(stream, this->decrypt);
 
             if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
@@ -1121,6 +1119,7 @@ struct mod_rdp : public client_mod {
                         break;
                         case UP_AND_RUNNING:
                         {
+                            #warning I should use shareid, streamid, len, compressedType, compressedLen
                             uint32_t shareid = stream.in_uint32_le();
                             uint8_t pad1 = stream.in_uint8();
                             uint8_t streamid = stream.in_uint8();

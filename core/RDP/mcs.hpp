@@ -1880,7 +1880,7 @@ static inline void send_mcs_connect_response_pdu_with_gcc_conference_create_resp
 
     // 0x14:
     // 0 - extension bit (ConnectGCCPDU)
-    // 0 - --\
+    // 0 - --\ ...
     // 0 -   | CHOICE: From ConnectGCCPDU select conferenceCreateResponse (1)
     // 1 - --/ of type ConferenceCreateResponse
     // 0 - extension bit (ConferenceCreateResponse)
@@ -1902,7 +1902,7 @@ static inline void send_mcs_connect_response_pdu_with_gcc_conference_create_resp
 
     // 0x00:
     // 0 - extension bit (Result)
-    // 0 - --\
+    // 0 - --\ ...
     // 0 -   | ConferenceCreateResponse::result = success (0)
     // 0 - --/
     // 0 - padding
