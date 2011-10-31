@@ -146,15 +146,6 @@ class Authentifier(object):
 #        'v' : 'v',
 #        'vnc' : 'vnc',
 #        'vnc2' : 'vnc2',
-#        'n' : 'n',
-#        'cgr' : 'cgr',
-#        'bouncer' : 'bouncer',
-#        'test' : 'test',
-#        'message' : 'message',
-#        'card' : 'card',
-#        'loop' : 'loop',
-#        'selector' : 'selector',
-#        'looop' : 'looop',
 #        'error_invalid' : 'error_invalid'
 #    }
 #        'message' : {
@@ -172,16 +163,6 @@ class Authentifier(object):
 #            'proto_dest': 'INTERNAL',
 #            'is_rec':'True',
 #            'rec_path':'/tmp/test_card.cpp',
-#        },
-#        'n' : {
-#            'proxy_type': 'RDP',
-#            'target_login' : r'vnc',
-#            'target_device' : '10.10.4.13',
-#            'target_password' : 'silver',
-#            'target_port':'5901',
-#            'proto_dest': 'VNC',
-#            'is_rec':'True',
-#            'rec_path':'/tmp/vnctest.cpp',
 #        },
 #        'vnc' : {
 #            'proxy_type': 'RDP',
@@ -201,39 +182,12 @@ class Authentifier(object):
 #            'target_port':'5900',
 #            'proto_dest': 'VNC'
 #        },
-#        'cgr' : {
-#            'proxy_type': 'RDP',
-#            'target_login' : r'vnc',
-#            'target_device' : '10.10.4.13',
-#            'target_password' : 'secure',
-#            'target_port':'5901',
-#            'proto_dest': 'VNC'
-#        },
-#        'loop' : {
-#            'proxy_type': 'RDP',
-#            'target_login' : r'card',
-#            'target_device' : '127.0.0.1',
-#            'target_password' : 'card',
-#            'target_port':'3389',
-#            'proto_dest': 'RDP'
-#        },
-#        'looop' : {
-#            'proxy_type': 'RDP',
-#            'target_login' : r'loop',
-#            'target_device' : '127.0.0.1',
-#            'target_password' : 'loop',
-#            'target_port':'3389',
-#            'proto_dest': 'RDP'
-#        },
 #        'error_invalid' : {
 #            'target_device': "10.10.3.54" ,
 #            'target_login': "administrateur",
 #            'authenticated': 'False',
 #            'rejected':"Invalid IP Source"}
 #    }
-
-#    def __init__(self, sck):
-#        self.sck = sck
 
     def read(self):
         print("Reading")
@@ -291,8 +245,8 @@ manager ={}
 users = [
     User('x', 'x', [
         Service('xp', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
-        Service('w2008', '10.10.14.78', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
-        Service('w2008-2', '10.10.14.78', r'administrateur@qa', 'S3cur3!1nux', 'RDP', '3389'),
+        Service('w2008', '10.10.14.78', r'administrateur@qa', 'S3cur3!1nux', 'RDP', '3389'),
+        Service('w2000', '10.10.14.64', r'administrateur', 'S3cur3!1nux', 'RDP', '3389'),
         Service('w7', '10.10.14.77', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
         Service('w2000', '10.10.14.64', r'administrateur', 'SecureLinux', 'RDP', '3389'),
         Service('Bouncer', 'bouncer2', 'internal', 'internal', 'INTERNAL', ''),

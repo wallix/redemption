@@ -398,11 +398,6 @@ struct rdp_orders {
                         assert((this->memblt.cache_id >> 4) < 6);
                         struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xF][this->memblt.cache_idx];
                         if (bitmap) {
-                            #warning : check that
-                            memcpy(bitmap->original_palette,
-                                   this->cache_colormap[this->memblt.cache_id >> 4],
-                                   sizeof(BGRPalette));
-//                            LOG(LOG_ERR, "sending mem_blt this->memblt.cache_id=%u this->memblt.cache_idx=%u", this->memblt.cache_id, this->memblt.cache_idx);
                             mod->gd.mem_blt(
                                 this->memblt,
                                 *bitmap,
