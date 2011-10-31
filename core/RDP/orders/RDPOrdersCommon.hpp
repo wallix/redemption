@@ -229,7 +229,7 @@ namespace RDP {
         TEXT2      = 27,
     };
 
-    enum {
+    enum SecondaryOrderType {
      // TS_CACHE_BITMAP_UNCOMPRESSED - Cache Bitmap - Revision 1
      // (MS-RDPEGDI section 2.2.2.2.1.2.2)
         TS_CACHE_BITMAP_UNCOMPRESSED  = 0,

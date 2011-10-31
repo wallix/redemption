@@ -527,6 +527,29 @@ class RDPBmpCache {
     {
     }
 
+    const enum RDP::SecondaryOrderType get_cache_bitmap_type(const ClientInfo * client_info)
+    {
+        switch (this->client_info->bitmap_cache_version){
+        case 0:
+        case 1:
+            if (this->client_info->use_bitmap_comp){
+                return RDP::TS_CACHE_BITMAP_COMPRESSED;
+            }
+            else {
+                return RDP::TS_CACHE_BITMAP_UNCOMPRESSED;
+            }
+        break;
+        default:
+            if (this->client_info->use_bitmap_comp){
+                return RDP::TS_CACHE_BITMAP_COMPRESSED_REV2;
+            }
+            else {
+                return RDP::TS_CACHE_BITMAP_UNCOMPRESSED_REV2;
+            }
+        }
+    
+    }
+
     void emit(Stream & stream) const
     {
         #warning logs below should be dependant on debug flags

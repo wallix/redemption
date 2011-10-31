@@ -1385,6 +1385,16 @@ struct mod_rdp : public client_mod {
         {
             LOG(LOG_INFO, "Sending order caps to server\n");
 
+            stream.out_uint16_le(RDP_CAPSET_ORDER);
+            stream.out_uint16_le(RDP_CAPLEN_ORDER);
+            stream.out_clear_bytes(20); /* Terminal desc, pad */
+            stream.out_uint16_le(1); /* Cache X granularity */
+            stream.out_uint16_le(20); /* Cache Y granularity */
+            stream.out_uint16_le(0); /* Pad */
+            stream.out_uint16_le(1); /* Max order level */
+            stream.out_uint16_le(0x147); /* Number of fonts */
+            stream.out_uint16_le(0x2a); /* Capability flags */
+
             char order_caps[32];
 
             memset(order_caps, 0, 32);
@@ -1406,16 +1416,8 @@ struct mod_rdp : public client_mod {
             order_caps[25] = 0; /* todo ellipse */
             order_caps[26] = 0; /* todo ellipse2 */
             order_caps[27] = 1; /* text2 */
-            stream.out_uint16_le(RDP_CAPSET_ORDER);
-            stream.out_uint16_le(RDP_CAPLEN_ORDER);
-            stream.out_clear_bytes(20); /* Terminal desc, pad */
-            stream.out_uint16_le(1); /* Cache X granularity */
-            stream.out_uint16_le(20); /* Cache Y granularity */
-            stream.out_uint16_le(0); /* Pad */
-            stream.out_uint16_le(1); /* Max order level */
-            stream.out_uint16_le(0x147); /* Number of fonts */
-            stream.out_uint16_le(0x2a); /* Capability flags */
             stream.out_copy_bytes(order_caps, 32); /* Orders supported */
+
             stream.out_uint16_le(0x6a1); /* Text capability flags */
             stream.out_clear_bytes(6); /* Pad */
             stream.out_uint32_le(0 * 0x38400); /* Desktop cache size, for desktop_save */
@@ -2360,7 +2362,7 @@ struct mod_rdp : public client_mod {
         stream.out_uint32_le(std::min(client_info.cache1_entries, (uint32_t)2000));
         stream.out_uint32_le(std::min(client_info.cache2_entries, (uint32_t)2000));
         stream.out_uint32_le(std::min(client_info.cache3_entries, (uint32_t)2000));
-
+ 
         stream.out_clear_bytes(20);	/* other bitmap caches not used */
     }
 
