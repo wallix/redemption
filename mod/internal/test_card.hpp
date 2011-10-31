@@ -101,6 +101,19 @@ struct test_card_mod : public internal_mod {
                  this->screen.rect.cy - card.cy - 30, card.cx, card.cy),
              0, 0);
 
+        // Bogus square generating zero width/height tiles if not properly guarded
+        #warning find a better fix than the current one in bitmap_update and mem_blt for the case occuring when drawing square below or similar.
+        uint8_t comp64x64RED[] = {
+            0xc0, 0x30, 0x00, 0x00, 0xFF,
+            0xf0, 0xc0, 0x0f, 
+        };
+
+        Bitmap bloc64x64(24, &this->gd.palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
+        this->gd.bitmap_update(bloc64x64,
+            Rect(0, this->screen.rect.cy - 64, bloc64x64.cx, bloc64x64.cy),
+             32, 32);
+
+
         this->gd.server_end_update();
     }
 

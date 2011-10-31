@@ -612,43 +612,46 @@ struct GraphicDeviceMod : public GraphicDevice
                 int cx = std::min(32, dst.cx - x);
                 const Rect tile(x, y, cx, cy);
                 #warning simplify this code and add unit tests. It is much too complicated and that introduce subtile bugs
-                if (!this->clip.intersect(tile.offset(dst.x, dst.y)).isempty()
-                && (src_r.cx > src_r.x + x)
-                && (src_r.cy > src_r.y + y)){
-                     uint32_t cache_ref = this->front.bmp_cache->add_bitmap(
-                                                src_r.cx, src_r.cy,
-                                                src_data,
-                                                tile.offset(src_r.x, src_r.y),
-                                                this->get_front_bpp(),
-                                                bitmap.original_palette);
+//                LOG(LOG_INFO, "tile at dst = tile(%u, %u %u, %u) dst(%u, %u) src(%u, %u, %u, %u) clip(%u, %u, %u, %u)",
+//                    tile.x, tile.y, tile.cx, tile.cy, dst.x, dst.y, src_r.x, src_r.y, src_r.cx, src_r.cy,
+//                    this->clip.x, this->clip.y, this->clip.cx, this->clip.cy);  
+                if (!this->clip.intersect(tile.offset(dst.x, dst.y)).isempty()) { 
+                    if ((src_r.cx > src_r.x + x) && (src_r.cy > src_r.y + y)) {
+                         uint32_t cache_ref = this->front.bmp_cache->add_bitmap(
+                                                    src_r.cx, src_r.cy,
+                                                    src_data,
+                                                    tile.offset(src_r.x, src_r.y),
+                                                    this->get_front_bpp(),
+                                                    bitmap.original_palette);
 
-                    uint8_t send_type = (cache_ref >> 24);
-                    uint8_t cache_id  = (cache_ref >> 16);
-                    uint16_t cache_idx = (cache_ref & 0xFFFF);
+                        uint8_t send_type = (cache_ref >> 24);
+                        uint8_t cache_id  = (cache_ref >> 16);
+                        uint16_t cache_idx = (cache_ref & 0xFFFF);
 
-                    if (send_type == BITMAP_ADDED_TO_CACHE){
-                        this->bitmap_cache(cache_id, cache_idx);
-                    }
-
-                    const RDPMemBlt cmd(cache_id, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
-                    if (!this->clip.isempty()
-                    && !this->clip.intersect(cmd.rect).isempty()){
-                        if (this->get_front_bpp() == 8){
-                            if (!this->palette_memblt_sent[palette_id]) {
-                                if (bitmap.original_bpp == 8){
-                                    this->color_cache(this->mod_palette, palette_id);
-                                }
-                                else {
-                                    this->color_cache(this->palette332, palette_id);
-                                }
-                                this->palette_memblt_sent[palette_id] = true;
-                            }
-                            this->palette_sent = false;
+                        if (send_type == BITMAP_ADDED_TO_CACHE){
+                            this->bitmap_cache(cache_id, cache_idx);
                         }
-                        this->front.orders->send(cmd, this->clip);
-                        #warning capture should have it's own reference to bmp_cache
-                        if (this->capture){
-                            this->capture->mem_blt(cmd, *this->front.bmp_cache, this->clip);
+
+                        const RDPMemBlt cmd(cache_id, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
+                        if (!this->clip.isempty()
+                        && !this->clip.intersect(cmd.rect).isempty()){
+                            if (this->get_front_bpp() == 8){
+                                if (!this->palette_memblt_sent[palette_id]) {
+                                    if (bitmap.original_bpp == 8){
+                                        this->color_cache(this->mod_palette, palette_id);
+                                    }
+                                    else {
+                                        this->color_cache(this->palette332, palette_id);
+                                    }
+                                    this->palette_memblt_sent[palette_id] = true;
+                                }
+                                this->palette_sent = false;
+                            }
+                            this->front.orders->send(cmd, this->clip);
+                            #warning capture should have it's own reference to bmp_cache
+                            if (this->capture){
+                                this->capture->mem_blt(cmd, *this->front.bmp_cache, this->clip);
+                            }
                         }
                     }
                 }
