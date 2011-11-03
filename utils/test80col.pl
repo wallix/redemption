@@ -66,3 +66,19 @@ my $r4 = c80($v4);
 is $r4, $e4, "Lines not begining as comment are ignored";
 
 
+my $v5 = <<HERE
+// pad4octetsB (4 bytes): A 32-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+
+// desktopSaveSize (4 bytes): A 32-bit, unsigned integer. The maximum usable size of bitmap space for bitmap packing in the SaveBitmap Primary Drawing Order (see [MS-RDPEGDI] section 2.2.2.2.1.1.2.12). This field is ignored by the client and assumed to be 230400 bytes (480 * 480).
+
+// pad2octetsC (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+
+// pad2octetsD (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+
+// textANSICodePage (2 bytes): A 16-bit, unsigned integer. ANSI code page descriptor being used by the client (for a list of code pages, see [MSDN-CP]). This field is ignored by the client and SHOULD be set to 0 by the server.
+
+// pad2octetsE (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+HERE
+;
+
+print c80($v5);

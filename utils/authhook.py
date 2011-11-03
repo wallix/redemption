@@ -207,18 +207,20 @@ class Authentifier(object):
 
         answer = {'authenticated': 'false'}
         _login = self.dic.get('login')
-        for user in self.users:
-            if user.name == _login:
-                _password = self.dic.get('password')
-                if _password and user.password == _password:
-                    answer['authenticated'] = 'true'
-                    print("Password OK for user %s" % user.name)
-                else:
-                    answer['authenticated'] = 'false'
-                    answer['login'] = 'ASK'
-                    answer['password'] = 'ASK'
-                    print("Wrong Password for user %s" % user.name)
-                break
+        if _login[:3] != 'ASK':
+            if _login.startswith('!'):
+                _login = _login[1:]
+            for user in self.users:
+                if user.name == _login:
+                    _password = self.dic.get('password')
+                    if _password and user.password == _password:
+                        answer['authenticated'] = 'true'
+                        print("Password OK for user %s" % user.name)
+                    else:
+                        answer['authenticated'] = 'false'
+                        answer['password'] = 'ASK'
+                        print("Wrong Password for user %s" % user.name)
+                    break
 
         if answer['authenticated'] == 'true':
             answer.update(user.get_service(self.dic))
