@@ -1176,7 +1176,7 @@ public:
 // pad4octetsA (4 bytes): A 32-bit, unsigned integer. Padding. Values in this
 // field MUST be ignored.
 
-// desktopSaveXGranularity (2 bytes): A 16-bit, unsigned integer. X granularity
+// desktopSaveXGranularity (2 bytes): A 16-bit, unsigned i46028714a40ade0e9a85f88c942dd9431fb21d44nteger. X granularity
 // used in conjunction with the SaveBitmap Primary Drawing Order (see
 // [MS-RDPEGDI] section 2.2.2.2.1.1.2.12). This value is ignored and assumed to
 // be 1.
@@ -1293,7 +1293,7 @@ public:
 // |                              | [MS-RDPEGDI] section 2.2.2.2.1.1.2.14).    |
 // +------------------------------+--------------------------------------------+
 // | 0x14 TS_NEG_POLYGON_SC_INDEX | PolygonSC Primary Drawing Order (see       |
-// |                              | [MS-RDPEGDI] section 2.2.2.2.1.1.2.16) and |
+// |                              | [MS-RDPEGDI] section 246028714a40ade0e9a85f88c942dd9431fb21d44.2.2.2.1.1.2.16) and |
 // |                              | PolygonCB Primary Drawing Order (see       |
 // |                              | [MS-RDPEGDI] section 2.2.2.2.1.1.2.17).    |
 // +------------------------------+--------------------------------------------+

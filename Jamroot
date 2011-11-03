@@ -1,29 +1,6 @@
 
 import os ;
 
-# Returns environment value if it exists or default otherwise.
-# Allow us to customize install path with shell variables like $PREFIX...
-# (this is bad practice and should be replaced by a site configuration file)
-rule setvar ( env : default )
-{
-    if [ os.environ $(env) ]
-    {
-        return [ os.environ $(env) ] ;
-    }
-    else
-    {
-        return $(default) ;
-    }
-}
-
-local PREFIX = [ setvar PREFIX : /usr/local ] ;
-local BIN_PREFIX = [ setvar BIN_PREFIX : $(PREFIX)/bin ] ;
-local LIB_PREFIX = [ setvar LIB_PREFIX : $(PREFIX)/lib ] ;
-local SHARE_PREFIX = [ setvar SHARE_PREFIX : $(PREFIX)/share/rdpproxy ] ;
-local ETC_PREFIX = [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
-
-local FIXTURES_PATH = [ setvar FIXTURES_PATH : ./tests/fixtures ] ;
-
 # below feature rule come from http://www.boost.org/doc/tools/build/doc/html/bbv2/extending/features.html
 
 import feature : feature ;
@@ -35,6 +12,17 @@ import feature : feature ;
 # No need to make it a new variant after all
 #variant lenny : release ;
 
+path-constant TOP : . ;
+
+
+rule defines ( properties * )
+{
+    local defs ;
+    defs += <define>SHARE_PATH='\"/usr/local/share/rdpproxy\"' ;
+    defs += <define>CFG_PATH='\"/etc/rdpproxy\"' ;
+    defs += <define>FIXTURES_PATH='\"./tests/fixtures\"' ;
+    return $(defs) ;
+}
 
 project redemption
     : requirements
@@ -43,10 +31,9 @@ project redemption
     <include>tests
     <include>capture
     <include>/usr/include
-    <define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
-    <define>CFG_PATH='\"$(ETC_PREFIX)\"'
-    <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
+    <conditional>@defines
     : default-build release
+
 ;
 
 explicit install instexe install-bin install-test install-etc install-share install-keymaps ;
@@ -55,23 +42,27 @@ alias instexe : install-bin install-test ;
 alias install : install-bin install-etc install-share install-keymaps ;
 
 install install-bin
-    : rdpproxy :  <install-type>EXE <location>$(BIN_PREFIX)
-#    <install-dependencies>on
+    : rdpproxy 
+    : <install-type>EXE <install-dependencies>on 
+    : <location>/usr/local/bin
     ;
 
 install install-share
     : [ glob sys/share/rdpproxy/[^.k]* ]
-    : <location>$(SHARE_PREFIX)
+    : 
+    : <location>/usr/local/share/rdpproxy
     ;
 
 install install-keymaps
     : [ glob sys/share/rdpproxy/keymaps/[^.]* ]
-    : <location>$(SHARE_PREFIX)/keymaps
+    : 
+    : <location>/usr/local/share/rdpproxy/keymaps
     ;
 
 install install-etc
     : [ glob sys/etc/rdpproxy/*ini ]
-    : <location>$(ETC_PREFIX)
+    : 
+    : <location>/etc/rdpproxy
     ;
 
 lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
