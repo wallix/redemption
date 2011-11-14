@@ -138,7 +138,10 @@ public:
     }
 
     virtual void recv(char ** pbuffer, size_t len) throw (Error) = 0;
-    virtual void send(const char * buffer, int len) throw (Error) = 0;
+    virtual void send(const char * const buffer, int len) throw (Error) = 0;
+    virtual void send(const uint8_t * const buffer, int len) {
+        this->send(reinterpret_cast<const char * const>(buffer), len);
+    }
     virtual void disconnect() = 0;
 };
 
