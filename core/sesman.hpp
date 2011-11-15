@@ -88,7 +88,7 @@ class SessionManager {
             stream.p = stream.data;
             stream.out_uint32_be(total_length);
             // and send
-            this->auth_trans_t->send((char*)stream.data, total_length);
+            this->auth_trans_t->send(stream.data, total_length);
             keepalive_time = ::time(NULL) + 30;
         }
     }
@@ -214,7 +214,7 @@ class SessionManager {
                 stream.p = stream.data;
                 stream.out_uint32_be(total_length); /* size */
                 // and send
-                this->auth_trans_t->send((char*)stream.data, total_length);
+                this->auth_trans_t->send(stream.data, total_length);
             }
         }
         return true;
@@ -451,7 +451,7 @@ class SessionManager {
             int total_length = stream.p - stream.data;
             stream.p = stream.data;
             stream.out_uint32_be(total_length); /* size */
-            this->auth_trans_t->send((char*)stream.data, total_length);
+            this->auth_trans_t->send(stream.data, total_length);
 
         } catch (Error e) {
             this->context.cpy(STRAUTHID_AUTHENTICATED, false);

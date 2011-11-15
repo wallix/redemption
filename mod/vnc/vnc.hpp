@@ -117,7 +117,7 @@ struct mod_vnc : public client_mod {
                         stream.init(8192);
                         this->t->recv((char**)&stream.end, 16);
                         this->rfbEncryptBytes(stream.data, this->password);
-                        this->t->send((char*)stream.data, 16);
+                        this->t->send(stream.data, 16);
 
                         /* sec result */
                         stream.init(8192);
@@ -139,7 +139,7 @@ struct mod_vnc : public client_mod {
                     stream.data[0] = 1;
                     #warning send and recv should be stream aware
                     #warning we should always send at stream.p, not stream.data
-                    this->t->send((char*)stream.data, 1); /* share flag */
+                    this->t->send(stream.data, 1); /* share flag */
                 }
 
                 // 7.3.2   ServerInit
@@ -337,7 +337,7 @@ struct mod_vnc : public client_mod {
                         "\x00" // blue shift      : 1 bytes =  0
                         "\0\0\0"; // padding      : 3 bytes
                     stream.out_copy_bytes(pixel_format, 16);
-                    this->t->send((char*)stream.data, 20);
+                    this->t->send(stream.data, 20);
 
                     this->bpp = 16;
                     this->depth  = 16;
@@ -379,7 +379,7 @@ struct mod_vnc : public client_mod {
                     stream.out_uint32_be(1); /* copy rect */
                     stream.out_uint32_be(0xffffff11); /* cursor */
 
-                    this->t->send((char*)stream.data, 4 + 3 * 4);
+                    this->t->send(stream.data, 4 + 3 * 4);
                 }
 
                 this->server_resize(this->width, this->height, this->gd.get_front_bpp());
@@ -396,7 +396,7 @@ struct mod_vnc : public client_mod {
                     stream.out_uint16_be(height);
 
                     // sending framebuffer update request
-                    this->t->send((char*)stream.data, 10);
+                    this->t->send(stream.data, 10);
                 }
 
                 #warning define some constants, not need to use dynamic data
@@ -444,7 +444,7 @@ struct mod_vnc : public client_mod {
             stream.out_uint8(this->mod_mouse_state);
             stream.out_uint16_be(x);
             stream.out_uint16_be(y);
-            this->t->send((char*)stream.data, 6);
+            this->t->send(stream.data, 6);
             #warning this should not be here!!! Move it to front
             this->gd.front.mouse_x = x;
             this->gd.front.mouse_y = y;
@@ -457,7 +457,7 @@ struct mod_vnc : public client_mod {
                 stream.out_uint8(this->mod_mouse_state);
                 stream.out_uint16_be(x);
                 stream.out_uint16_be(y);
-                this->t->send((char*)stream.data, 6);
+                this->t->send(stream.data, 6);
             }
             else {
                 stream.init(8192);
@@ -466,7 +466,7 @@ struct mod_vnc : public client_mod {
                 stream.out_uint8(this->mod_mouse_state);
                 stream.out_uint16_be(x);
                 stream.out_uint16_be(y);
-                this->t->send((char*)stream.data, 6);
+                this->t->send(stream.data, 6);
             }
         }
         if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
@@ -477,7 +477,7 @@ struct mod_vnc : public client_mod {
                 stream.out_uint8(this->mod_mouse_state);
                 stream.out_uint16_be(x);
                 stream.out_uint16_be(y);
-                this->t->send((char*)stream.data, 6);
+                this->t->send(stream.data, 6);
             }
             else {
                 stream.init(8192);
@@ -486,7 +486,7 @@ struct mod_vnc : public client_mod {
                 stream.out_uint8(this->mod_mouse_state);
                 stream.out_uint16_be(x);
                 stream.out_uint16_be(y);
-                this->t->send((char*)stream.data, 6);
+                this->t->send(stream.data, 6);
             }
         }
         if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
@@ -497,7 +497,7 @@ struct mod_vnc : public client_mod {
                 stream.out_uint8(this->mod_mouse_state);
                 stream.out_uint16_be(x);
                 stream.out_uint16_be(y);
-                this->t->send((char*)stream.data, 6);
+                this->t->send(stream.data, 6);
             }
             else {
                 stream.init(8192);
@@ -506,7 +506,7 @@ struct mod_vnc : public client_mod {
                 stream.out_uint8(this->mod_mouse_state);
                 stream.out_uint16_be(x);
                 stream.out_uint16_be(y);
-                this->t->send((char*)stream.data, 6);
+                this->t->send(stream.data, 6);
             }
         }
 
@@ -520,7 +520,7 @@ struct mod_vnc : public client_mod {
             stream.out_uint8(this->mod_mouse_state);
             stream.out_uint16_be(x);
             stream.out_uint16_be(y);
-            this->t->send((char*)stream.data, 6);
+            this->t->send(stream.data, 6);
             // UP
             stream.init(8192);
             this->mod_mouse_state &= ~8; // clear bit 3
@@ -528,7 +528,7 @@ struct mod_vnc : public client_mod {
             stream.out_uint8(this->mod_mouse_state);
             stream.out_uint16_be(x);
             stream.out_uint16_be(y);
-            this->t->send((char*)stream.data, 6);
+            this->t->send(stream.data, 6);
         }
         if (device_flags == MOUSE_FLAG_BUTTON5 /* 0x0380 */
         ||  device_flags == 0x0388) {
@@ -538,7 +538,7 @@ struct mod_vnc : public client_mod {
             stream.out_uint8(this->mod_mouse_state);
             stream.out_uint16_be(x);
             stream.out_uint16_be(y);
-            this->t->send((char*)stream.data, 6);
+            this->t->send(stream.data, 6);
             // UP
             stream.init(8192);
             this->mod_mouse_state &= ~16; // clear bit 4
@@ -546,7 +546,7 @@ struct mod_vnc : public client_mod {
             stream.out_uint8(this->mod_mouse_state);
             stream.out_uint16_be(x);
             stream.out_uint16_be(y);
-            this->t->send((char*)stream.data, 6);
+            this->t->send(stream.data, 6);
         }
     }
 
@@ -560,7 +560,7 @@ struct mod_vnc : public client_mod {
                 stream.out_uint8(msg == WM_KEYDOWN); /* down/up flag */
                 stream.out_clear_bytes(2);
                 stream.out_uint32_be(key);
-                this->t->send((char*)stream.data, 8);
+                this->t->send(stream.data, 8);
             }
         }
     }
@@ -582,7 +582,7 @@ struct mod_vnc : public client_mod {
             stream.out_uint16_be(r.y);
             stream.out_uint16_be(r.cx);
             stream.out_uint16_be(r.cy);
-            this->t->send((char*)stream.data, 10);
+            this->t->send(stream.data, 10);
         }
     }
 
@@ -830,7 +830,7 @@ struct mod_vnc : public client_mod {
 
             stream.out_uint16_be(this->gd.clip.cx);
             stream.out_uint16_be(this->gd.clip.cy);
-            this->t->send((char*)stream.data, 10);
+            this->t->send(stream.data, 10);
         }
     }
 

@@ -69,7 +69,7 @@ struct xup_mod : public client_mod {
             int len = (int)(stream.end - stream.data);
             stream.p = hdr;
             stream.out_uint32_le(len);
-            this->t->send((char*)stream.data, len);
+            this->t->send(stream.data, len);
 
         }
         catch(...){
@@ -157,7 +157,7 @@ struct xup_mod : public client_mod {
         stream.out_uint32_le(param4);
         uint32_t len = stream.p - stream.data;
         stream.set_out_uint32_le(len, 0);
-        this->t->send((char*)stream.data, len);
+        this->t->send(stream.data, len);
     }
 
     virtual BackEvent_t draw_event(void)

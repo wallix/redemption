@@ -139,7 +139,7 @@ public:
 
     virtual void recv(char ** pbuffer, size_t len) throw (Error) = 0;
     virtual void send(const char * const buffer, int len) throw (Error) = 0;
-    virtual void send(const uint8_t * const buffer, int len) {
+    virtual void send(const uint8_t * const buffer, int len) throw (Error) {
         this->send(reinterpret_cast<const char * const>(buffer), len);
     }
     virtual void disconnect() = 0;
@@ -169,7 +169,7 @@ class GeneratorTransport : public Transport {
         current += len;
     }
 
-    virtual void send(const char * buffer, int len) throw (Error) {
+    virtual void send(const char * const buffer, int len) throw (Error) {
         // send perform like a /dev/null and does nothing in generator transport
     }
 
@@ -182,7 +182,7 @@ class LoopTransport : public Transport {
 
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
     }
-    virtual void send(const char * buffer, int len) throw (Error) {
+    virtual void send(const char * const buffer, int len) throw (Error) {
     }
     virtual void disconnect() {
     }
@@ -320,7 +320,12 @@ class SocketTransport : public Transport {
 //            bb[12], bb[13], bb[14], bb[15], bb[16]);
     }
 
-    virtual void send(const char * buffer, int len) throw (Error)
+    virtual void send(const uint8_t * const buffer, int len) throw (Error)
+    {
+        this->send(reinterpret_cast<const char * const>(buffer), len);
+    }
+
+    virtual void send(const char * const buffer, int len) throw (Error)
     {
 //        LOG(LOG_INFO, "send on socket %u : len=%u buffer=%p"
 //            " [%0.2X %0.2X %0.2X %0.2X]"

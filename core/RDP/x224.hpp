@@ -691,7 +691,7 @@ struct X224Out : public X224Packet
     {
 //        LOG(LOG_INFO, "3) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", this->stream.data[0], this->stream.data[1], this->stream.data[2], this->stream.data[3], this->stream.data[4], this->stream.data[5], this->stream.data[6], this->stream.data[7]);
 
-        t->send((char*)this->begin(), this->stream.p - this->begin());
+        t->send(this->begin(), this->stream.p - this->begin());
     }
 };
 
