@@ -25,7 +25,8 @@
 #define BOOST_TEST_MODULE TestTransport
 
 #include <boost/test/auto_unit_test.hpp>
-
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "transport.hpp"
 #include "error.hpp"
@@ -118,6 +119,18 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport2)
 
 BOOST_AUTO_TEST_CASE(TestFileTransport)
 {
-    // test we can read from a TransportGenerator;
+    {
+        char buffer[128];
+        sprintf(buffer, "/tmp/test_transportXXXXXX");
+        int fd = ::mkostemp(buffer, O_WRONLY|O_CREAT);
+        {
+            OutFileTransport ft(fd);
+            ft.send("We write, ", 10);
+            ft.send("and again, ", 11);
+            ft.send("and so on.", 10);
+        }
+        ::close(fd);
+        ::unlink(buffer);
+    }
 }
 

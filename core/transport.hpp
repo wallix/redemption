@@ -139,7 +139,7 @@ public:
 
     virtual void recv(char ** pbuffer, size_t len) throw (Error) = 0;
     virtual void send(const char * const buffer, int len) throw (Error) = 0;
-    virtual void send(const uint8_t * const buffer, int len) throw (Error) {
+    void send(const uint8_t * const buffer, int len) throw (Error) {
         this->send(reinterpret_cast<const char * const>(buffer), len);
     }
 };
@@ -173,24 +173,47 @@ class GeneratorTransport : public Transport {
         current += len;
     }
 
+    using Transport::send;
     virtual void send(const char * const buffer, int len) throw (Error) {
         // send perform like a /dev/null and does nothing in generator transport
     }
 };
 
-class FileTransport : public Transport {
+class OutFileTransport : public Transport {
 
     public:
+    int fd;
 
-    FileTransport(const char * path)
-        : Transport()
+    OutFileTransport(int fd)
+        : Transport(), fd(fd)
     {
     }
 
-    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+    ~OutFileTransport()
+    {
     }
 
+    // recv is not implemented for OutFileTransport
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+        // recv perform like a /dev/null and does nothing in generator transport
+    }
+
+    using Transport::send;
     virtual void send(const char * const buffer, int len) throw (Error) {
+        int status = 0;
+        size_t remaining_len = len;
+        while (remaining_len) {
+            status = ::write(this->fd, buffer, remaining_len);
+            if (status > 0){
+                remaining_len -= status;
+            }
+            else {
+                if (errno == EINTR){
+                    continue;
+                }
+                throw Error(ERR_SOCKET_ERROR, 0);
+            }
+        }
     }
 
 };
@@ -199,6 +222,7 @@ class LoopTransport : public Transport {
     public:
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
     }
+    using Transport::send;
     virtual void send(const char * const buffer, int len) throw (Error) {
     }
 };
@@ -335,11 +359,7 @@ class SocketTransport : public Transport {
 //            bb[12], bb[13], bb[14], bb[15], bb[16]);
     }
 
-    #warning why do I have to provide this one, the base function defined above in Transport should be enough.
-    virtual void send(const uint8_t * const buffer, int len) throw (Error)
-    {
-        this->send(reinterpret_cast<const char * const>(buffer), len);
-    }
+    using Transport::send;
 
     virtual void send(const char * const buffer, int len) throw (Error)
     {
