@@ -142,7 +142,6 @@ public:
     virtual void send(const uint8_t * const buffer, int len) throw (Error) {
         this->send(reinterpret_cast<const char * const>(buffer), len);
     }
-    virtual void disconnect() = 0;
 };
 
 class GeneratorTransport : public Transport {
@@ -172,19 +171,30 @@ class GeneratorTransport : public Transport {
     virtual void send(const char * const buffer, int len) throw (Error) {
         // send perform like a /dev/null and does nothing in generator transport
     }
-
-    virtual void disconnect() {
-    }
 };
 
+class FileTransport : public Transport {
 
-class LoopTransport : public Transport {
+    public:
+
+    FileTransport(const char * path)
+        : Transport()
+    {
+    }
 
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
     }
+
     virtual void send(const char * const buffer, int len) throw (Error) {
     }
-    virtual void disconnect() {
+
+};
+
+class LoopTransport : public Transport {
+    public:
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+    }
+    virtual void send(const char * const buffer, int len) throw (Error) {
     }
 };
 
@@ -221,7 +231,7 @@ class SocketTransport : public Transport {
         return res;
     }
 
-    virtual void disconnect(){
+    void disconnect(){
         LOG(LOG_INFO, "Socket %d : closing connection\n", this->sck);
         if (this->sck != 0) {
             shutdown(this->sck, 2);
@@ -320,6 +330,7 @@ class SocketTransport : public Transport {
 //            bb[12], bb[13], bb[14], bb[15], bb[16]);
     }
 
+    #warning why do I have to provide this one, the base function defined above in Transport should be enough.
     virtual void send(const uint8_t * const buffer, int len) throw (Error)
     {
         this->send(reinterpret_cast<const char * const>(buffer), len);
