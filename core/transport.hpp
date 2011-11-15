@@ -160,7 +160,12 @@ class GeneratorTransport : public Transport {
     }
 
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        if (current > len){
+        if (current + len > this->len){
+            size_t available_len = this->len - this->current;
+            memcpy(*pbuffer, (const char *)(&this->data[this->current]), 
+                                            available_len);
+            *pbuffer += available_len;
+            this->current += available_len;
             throw Error(ERR_SOCKET_ERROR, 0);
         }
         memcpy(*pbuffer, (const char *)(&this->data[current]), len);
