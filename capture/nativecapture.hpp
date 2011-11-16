@@ -54,13 +54,13 @@
 class NativeCapture
 {
     public:
+    GraphicsToFile recorder;
     long inter_frame_interval;
     int width;
     int height;
     int bpp;
     BGRPalette palette;
     FILE * f;
-    GraphicsToFile recorder;
 
     NativeCapture(int width, int height, int bpp, char * path) 
         : recorder(NULL, NULL, path),

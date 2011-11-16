@@ -195,7 +195,7 @@ class OutFileTransport : public Transport {
 
     // recv is not implemented for OutFileTransport
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        // recv perform like a /dev/null and does nothing in generator transport
+        #warning OutFileTransport should raise an exception if we try to use it for recv
     }
 
     using Transport::send;
@@ -214,6 +214,50 @@ class OutFileTransport : public Transport {
                 throw Error(ERR_SOCKET_ERROR, 0);
             }
         }
+    }
+
+};
+
+class InFileTransport : public Transport {
+
+    public:
+    int fd;
+
+    InFileTransport(int fd)
+        : Transport(), fd(fd)
+    {
+    }
+
+    ~InFileTransport()
+    {
+    }
+
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+        #warning OutFileTransport should raise an exception if we try to use it for recv
+        int status = 0;
+        size_t remaining_len = len;
+        char * buffer = *pbuffer;
+        while (remaining_len) {
+            status = ::read(this->fd, buffer, remaining_len);
+            if (status > 0){
+                remaining_len -= status;
+                buffer += status;
+            }
+            else {
+                if (errno == EINTR){
+                    continue;
+                }
+                *pbuffer = buffer;
+                throw Error(ERR_SOCKET_ERROR, 0);
+            }
+        }
+        *pbuffer = buffer;
+    }
+
+    // send is not implemented for InFileTransport
+    using Transport::send;
+    virtual void send(const char * const buffer, int len) throw (Error) {
+        #warning InFileTransport should raise an exception if we try to use it for sending
     }
 
 };

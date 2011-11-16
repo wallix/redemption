@@ -120,9 +120,9 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport2)
 BOOST_AUTO_TEST_CASE(TestFileTransport)
 {
     {
-        char buffer[128];
-        sprintf(buffer, "/tmp/test_transportXXXXXX");
-        int fd = ::mkostemp(buffer, O_WRONLY|O_CREAT);
+        char tmpname[128];
+        sprintf(tmpname, "/tmp/test_transportXXXXXX");
+        int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
         {
             OutFileTransport ft(fd);
             ft.send("We write, ", 10);
@@ -130,7 +130,18 @@ BOOST_AUTO_TEST_CASE(TestFileTransport)
             ft.send("and so on.", 10);
         }
         ::close(fd);
-        ::unlink(buffer);
+        fd = ::open(tmpname, O_RDONLY);
+        {
+            char buf[128];
+            char * pbuf = buf;
+            InFileTransport ft(fd);
+            ft.recv(&pbuf, 10);
+            ft.recv(&pbuf, 11);
+            ft.recv(&pbuf, 10);
+            BOOST_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
+        }
+        ::close(fd);
+        ::unlink(tmpname);
     }
 }
 
