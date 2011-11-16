@@ -54,30 +54,29 @@
 class NativeCapture
 {
     public:
-    GraphicsToFile recorder;
     long inter_frame_interval;
     int width;
     int height;
     int bpp;
     BGRPalette palette;
-    FILE * f;
+    int f;
+    OutFileTransport trans;
+    GraphicsToFile recorder;
 
     NativeCapture(int width, int height, int bpp, char * path) 
-        : recorder(NULL, NULL, path),
-        width(width),
-        height(height),
-        bpp(bpp) {
+        : width(width), height(height), bpp(bpp),
+        f(open(path, O_WRONLY)),
+        trans(this->f),
+        recorder(&this->trans, NULL) {
         this->inter_frame_interval = 1000000; // 1 000 000 us is 1 sec (default)
-        f = fopen(path, "w");
     }
 
     ~NativeCapture(){
-        fclose(this->f);
+        close(this->f);
     }
 
     void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp, int timezone)
     {
-        fflush(this->f);
     }
 
     void scr_blt(const RDPScrBlt & cmd, const Rect & clip)

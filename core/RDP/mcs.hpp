@@ -25,6 +25,7 @@
 #if !defined(__CORE_RDP_MCS_HPP__)
 #define __CORE_RDP_MCS_HPP__
 
+#include "client_info.hpp"
 #include "RDP/x224.hpp"
 #include "channel_list.hpp"
 

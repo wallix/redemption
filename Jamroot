@@ -167,7 +167,7 @@ unit-test test_strings : tests/test_strings.cpp libboost_unit_test ;
 unit-test test_keymap : tests/test_keymap.cpp keymap libboost_unit_test libboost_program_options ;
 unit-test test_rsa_keys : tests/test_rsa_keys.cpp rsa_keys libboost_unit_test libboost_program_options ;
 unit-test test_transport : tests/test_transport.cpp libboost_unit_test ;
-
+unit-test test_RDP_graphic_to_file : tests/test_RDP_graphic_to_file.cpp libboost_unit_test ;
 
 unit-test test_primary_order_opaque_rect : tests/test_primary_order_opaque_rect.cpp libboost_unit_test ;
 unit-test test_primary_order_scr_blt : tests/test_primary_order_scr_blt.cpp libboost_unit_test ;

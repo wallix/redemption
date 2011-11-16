@@ -100,7 +100,9 @@
 
 struct GraphicsToFile : public RDPSerializer
 {
-    GraphicsToFile(Transport * trans, const Inifile * ini, const char * path)
+    uint16_t offset_chunk_size;
+
+    GraphicsToFile(Transport * trans, const Inifile * ini)
         : RDPSerializer(trans, ini)
     {
         this->init();
@@ -110,12 +112,14 @@ struct GraphicsToFile : public RDPSerializer
     }
 
     void init(){
-        if (this->ini->globals.debug.primary_orders){
+        if (this->ini && this->ini->globals.debug.primary_orders){
             LOG(LOG_INFO, "GraphicsToFile::init::Initializing orders batch");
         }
+        this->order_count = 0;
         this->stream.init(4096);
         this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
-        this->stream.out_clear_bytes(2); /* pad */
+        this->offset_chunk_size = this->stream.get_offset(0);
+        this->stream.out_clear_bytes(2); // 16 bits chunk size (stored in padding reserved zone)
         this->offset_order_count = this->stream.get_offset(0);
         this->stream.out_clear_bytes(2); /* number of orders, set later */
         this->stream.out_clear_bytes(2); /* pad */
@@ -124,13 +128,13 @@ struct GraphicsToFile : public RDPSerializer
     virtual void flush()
     {
         if (this->order_count > 0){
-            if (this->ini->globals.debug.primary_orders){
+            if (this->ini && this->ini->globals.debug.primary_orders){
                 LOG(LOG_INFO, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             }
+            uint16_t chunk_size = this->stream.p - this->stream.data;
+            this->stream.set_out_uint16_le(chunk_size, this->offset_chunk_size);
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
-            this->order_count = 0;
-
-//            this->end();
+            this->trans->send(this->stream.data, chunk_size);
             this->init();
         }
     }

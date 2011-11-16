@@ -232,6 +232,10 @@ class InFileTransport : public Transport {
     {
     }
 
+    void recv(uint8_t ** pbuffer, size_t len) throw (Error) {
+        this->recv(reinterpret_cast<char**>(pbuffer), len);
+    }
+    
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         #warning OutFileTransport should raise an exception if we try to use it for recv
         int status = 0;

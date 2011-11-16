@@ -110,7 +110,7 @@ struct RDPSerializer
     #warning is it necessary for reserve_order to be virtual ? I believe not.
     virtual void reserve_order(size_t asked_size)
     {
-        if (this->ini->globals.debug.primary_orders){
+        if (this->ini && this->ini->globals.debug.primary_orders){
             LOG(LOG_INFO, "GraphicsUpdatePDU::reserve_order[%u](%u) remains=%u", this->order_count, asked_size, std::min(this->stream.capacity, (size_t)4096) - this->stream.get_offset(0));
         }
         size_t max_packet_size = std::min(this->stream.capacity, (size_t)4096);
@@ -130,7 +130,7 @@ struct RDPSerializer
         cmd.emit(this->stream, newcommon, this->common, this->opaquerect);
         this->common = newcommon;
         this->opaquerect = cmd;
-        if (this->ini->globals.debug.primary_orders){
+        if (this->ini && this->ini->globals.debug.primary_orders){
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -142,7 +142,7 @@ struct RDPSerializer
         cmd.emit(this->stream, newcommon, this->common, this->scrblt);
         this->common = newcommon;
         this->scrblt = cmd;
-        if (this->ini->globals.debug.primary_orders){
+        if (this->ini && this->ini->globals.debug.primary_orders){
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -154,7 +154,7 @@ struct RDPSerializer
         cmd.emit(this->stream, newcommon, this->common, this->destblt);
         this->common = newcommon;
         this->destblt = cmd;
-        if (this->ini->globals.debug.primary_orders){
+        if (this->ini && this->ini->globals.debug.primary_orders){
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -167,7 +167,7 @@ struct RDPSerializer
         cmd.emit(this->stream, newcommon, this->common, this->patblt);
         this->common = newcommon;
         this->patblt = cmd;
-        if (this->ini->globals.debug.primary_orders){
+        if (this->ini && this->ini->globals.debug.primary_orders){
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -180,7 +180,7 @@ struct RDPSerializer
         cmd.emit(this->stream, newcommon, this->common, this->memblt);
         this->common = newcommon;
         this->memblt = cmd;
-        if (this->ini->globals.debug.primary_orders){
+        if (this->ini && this->ini->globals.debug.primary_orders){
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -192,7 +192,7 @@ struct RDPSerializer
         cmd.emit(this->stream, newcommon, this->common, this->lineto);
         this->common = newcommon;
         this->lineto = cmd;
-        if (this->ini->globals.debug.primary_orders){
+        if (this->ini && this->ini->globals.debug.primary_orders){
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -204,7 +204,7 @@ struct RDPSerializer
         cmd.emit(this->stream, newcommon, this->common, this->glyphindex);
         this->common = newcommon;
         this->glyphindex = cmd;
-        if (this->ini->globals.debug.primary_orders){
+        if (this->ini && this->ini->globals.debug.primary_orders){
             LOG(LOG_INFO, "glyphIndex");
 //            cmd.log(LOG_INFO, common.clip);
         }
@@ -214,7 +214,7 @@ struct RDPSerializer
     {
         this->reserve_order(cmd.size + 12);
         cmd.emit(this->stream);
-        if (this->ini->globals.debug.secondary_orders){
+        if (this->ini && this->ini->globals.debug.secondary_orders){
             cmd.log(LOG_INFO);
         }
     }
@@ -223,7 +223,7 @@ struct RDPSerializer
     {
         this->reserve_order(2000);
         cmd.emit(this->stream);
-        if (this->ini->globals.debug.secondary_orders){
+        if (this->ini && this->ini->globals.debug.secondary_orders){
             cmd.log(LOG_INFO);
         }
     }
@@ -232,7 +232,7 @@ struct RDPSerializer
     {
         this->reserve_order(cmd.bmp->bmp_size(cmd.bpp) + 16);
         cmd.emit(this->stream);
-        if (this->ini->globals.debug.secondary_orders){
+        if (this->ini && this->ini->globals.debug.secondary_orders){
             cmd.log(LOG_INFO);
         }
     }
@@ -242,7 +242,7 @@ struct RDPSerializer
         #warning compute actual size, instead of a majoration as below
         this->reserve_order(1000);
         cmd.emit(this->stream);
-        if (this->ini->globals.debug.secondary_orders){
+        if (this->ini && this->ini->globals.debug.secondary_orders){
             cmd.log(LOG_INFO);
         }
     }

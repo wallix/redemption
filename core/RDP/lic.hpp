@@ -25,6 +25,10 @@
 #if !defined(__CORE_RDP_LIC_HPP__)
 #define __CORE_RDP_LIC_HPP__
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include "RDP/sec.hpp"
 
 static inline void send_lic_initial(Transport * trans, int userid) throw (Error)

@@ -82,13 +82,12 @@ BOOST_AUTO_TEST_CASE(TestX224SendShareControlData)
     Stream stream(65536);
     memset(stream.data, 0, 65536);
 
-    stream.skip_uint8(2);
     X224Out tpdu(X224Packet::DT_TPDU, stream);
     ShareControlAndDataOut out_control(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, 1, 0x12345678);
     out_control.end();
     tpdu.end();
 
-    uint8_t * data = stream.data + 9;
+    uint8_t * data = stream.data + 7;
     BOOST_CHECK_EQUAL(0x12, data[0] + data[1]*256);
     BOOST_CHECK_EQUAL(0x10 | PDUTYPE_DATAPDU, data[2] + data[3]*256);
     BOOST_CHECK_EQUAL(1, data[4] + data[5]*256);
@@ -107,7 +106,6 @@ BOOST_AUTO_TEST_CASE(TestX224SendShareControlAndData)
     Stream stream(65536);
     memset(stream.data, 0, 65536);
 
-    stream.skip_uint8(2);
     X224Out tpdu(X224Packet::DT_TPDU, stream);
     ShareControlOut out_control(stream, PDUTYPE_DATAPDU, 1);
     ShareDataOut out_data(stream, PDUTYPE2_UPDATE, 0x12345678);
@@ -115,7 +113,7 @@ BOOST_AUTO_TEST_CASE(TestX224SendShareControlAndData)
     out_control.end();
     tpdu.end();
 
-    uint8_t * data = stream.data + 9;
+    uint8_t * data = stream.data + 7;
     BOOST_CHECK_EQUAL(0x12, data[0] + data[1]*256);
     BOOST_CHECK_EQUAL(0x10 | PDUTYPE_DATAPDU, data[2] + data[3]*256);
     BOOST_CHECK_EQUAL(1, data[4] + data[5]*256);
