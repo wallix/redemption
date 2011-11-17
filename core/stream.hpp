@@ -41,7 +41,7 @@
 
 #warning using a template for default size of stream would make sense instead of always using the large buffer below
 enum {
-     AUTOSIZE = 65536
+     AUTOSIZE = 4096
 };
 
 /* parser state */

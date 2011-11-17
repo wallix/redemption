@@ -138,7 +138,7 @@ public:
     }
 
     void recv(uint8_t ** pbuffer, size_t len) throw (Error) {
-        this->recv(reinterpret_cast<uint8_t **>(pbuffer), len);
+        this->recv(reinterpret_cast<char **>(pbuffer), len);
     }
     virtual void recv(char ** pbuffer, size_t len) throw (Error) = 0;
     virtual void send(const char * const buffer, int len) throw (Error) = 0;
