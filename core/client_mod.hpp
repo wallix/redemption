@@ -362,7 +362,7 @@ struct GraphicDeviceMod : public GraphicDevice
 
             RDPOpaqueRect new_cmd = cmd;
             new_cmd.color = this->convert_opaque(cmd.color);
-            this->front.orders->send(new_cmd, this->clip);
+            this->front.orders->draw(new_cmd, this->clip);
 
             if (this->capture){
                 RDPOpaqueRect new_cmd24 = cmd;
@@ -376,7 +376,7 @@ struct GraphicDeviceMod : public GraphicDevice
     {
         if (!this->clip.isempty()
         && !this->clip.intersect(cmd.rect).isempty()){
-            this->front.orders->send(cmd, clip);
+            this->front.orders->draw(cmd, clip);
 
             if (this->capture){
                 this->capture->scr_blt(cmd, clip);
@@ -388,7 +388,7 @@ struct GraphicDeviceMod : public GraphicDevice
     {
         if (!this->clip.isempty()
         && !this->clip.intersect(cmd.rect).isempty()){
-            this->front.orders->send(cmd, this->clip);
+            this->front.orders->draw(cmd, this->clip);
             if (this->capture){
                 this->capture->dest_blt(cmd, this->clip);
             }
@@ -419,7 +419,7 @@ struct GraphicDeviceMod : public GraphicDevice
                     new_cmd.brush.style = 0x81;
                 }
             }
-            this->front.orders->send(new_cmd, this->clip);
+            this->front.orders->draw(new_cmd, this->clip);
 
             if (this->capture){
                 RDPPatBlt new_cmd24 = cmd;
@@ -485,7 +485,7 @@ struct GraphicDeviceMod : public GraphicDevice
 
                     if (!this->clip.isempty()
                     && !this->clip.intersect(cmd.rect).isempty()){
-                        this->front.orders->send(cmd, this->clip);
+                        this->front.orders->draw(cmd, this->clip);
                         #warning capture should have it's own reference to bmp_cache
                         if (this->capture){
                             this->capture->mem_blt(cmd, *this->front.bmp_cache, this->clip);
@@ -516,7 +516,7 @@ struct GraphicDeviceMod : public GraphicDevice
             new_cmd.back_color = this->convert(cmd.back_color);
             new_cmd.pen.color = this->convert(cmd.pen.color);
 
-            this->front.orders->send(new_cmd, clip);
+            this->front.orders->draw(new_cmd, clip);
 
             if (this->capture){
                 RDPLineTo new_cmd24 = cmd;
@@ -551,7 +551,7 @@ struct GraphicDeviceMod : public GraphicDevice
                 }
             }
 
-            this->front.orders->send(new_cmd, this->clip);
+            this->front.orders->draw(new_cmd, this->clip);
 
             if (this->capture){
                 RDPGlyphIndex new_cmd24 = cmd;
@@ -568,14 +568,14 @@ struct GraphicDeviceMod : public GraphicDevice
         RDPBrushCache cmd(index, 1, 8, 8, 0x81,
             sizeof(this->front.cache.brush_items[index].pattern),
             this->front.cache.brush_items[index].pattern);
-        this->front.orders->send(cmd);
+        this->front.orders->draw(cmd);
     }
 
 
     virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
     {
         RDPColCache cmd(cacheIndex, palette);
-        this->front.orders->send(cmd);
+        this->front.orders->draw(cmd);
     }
 
     virtual void bitmap_cache(const uint8_t cache_id, const uint16_t cache_idx)
@@ -583,7 +583,7 @@ struct GraphicDeviceMod : public GraphicDevice
         BitmapCacheItem * entry =  this->front.bmp_cache->get_item(cache_id, cache_idx);
 
         RDPBmpCache cmd(this->get_front_bpp(), entry->pbmp, cache_id, cache_idx, &(this->get_client_info()));
-        this->front.orders->send(cmd);
+        this->front.orders->draw(cmd);
 
         if (this->capture){
             this->capture->bitmap_cache(cmd);
@@ -594,7 +594,7 @@ struct GraphicDeviceMod : public GraphicDevice
     virtual void glyph_cache(const FontChar & font_char, int font_index, int char_index)
     {
         RDPGlyphCache cmd(font_index, 1, char_index, font_char.offset, font_char.baseline, font_char.width, font_char.height, font_char.data);
-        this->front.orders->send(cmd);
+        this->front.orders->draw(cmd);
     }
 
     virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy)
@@ -647,7 +647,7 @@ struct GraphicDeviceMod : public GraphicDevice
                                 }
                                 this->palette_sent = false;
                             }
-                            this->front.orders->send(cmd, this->clip);
+                            this->front.orders->draw(cmd, this->clip);
                             #warning capture should have it's own reference to bmp_cache
                             if (this->capture){
                                 this->capture->mem_blt(cmd, *this->front.bmp_cache, this->clip);

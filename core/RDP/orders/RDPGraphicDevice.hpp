@@ -49,17 +49,17 @@
 struct RDPGraphicDevice
 {
     virtual void flush() = 0;
-    virtual void send(const RDPOpaqueRect & cmd, const Rect & clip) = 0;
-    virtual void send(const RDPScrBlt & cmd, const Rect &clip) = 0;
-    virtual void send(const RDPDestBlt & cmd, const Rect &clip) = 0;
-    virtual void send(const RDPPatBlt & cmd, const Rect &clip) = 0;
-    virtual void send(const RDPMemBlt & cmd, const Rect & clip) = 0;
-    virtual void send(const RDPLineTo& cmd, const Rect & clip) = 0;
-    virtual void send(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
-    virtual void send(const RDPBrushCache & cmd) = 0;
-    virtual void send(const RDPColCache & cmd) = 0;
-    virtual void send(const RDPBmpCache & cmd) = 0;
-    virtual void send(const RDPGlyphCache & cmd) = 0;
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPScrBlt & cmd, const Rect &clip) = 0;
+    virtual void draw(const RDPDestBlt & cmd, const Rect &clip) = 0;
+    virtual void draw(const RDPPatBlt & cmd, const Rect &clip) = 0;
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPLineTo& cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPBrushCache & cmd) = 0;
+    virtual void draw(const RDPColCache & cmd) = 0;
+    virtual void draw(const RDPBmpCache & cmd) = 0;
+    virtual void draw(const RDPGlyphCache & cmd) = 0;
 
 protected:
     // this to avoid calling constructor or destructor of base abstract class
@@ -127,7 +127,7 @@ struct RDPSerializer : public RDPGraphicDevice
         this->order_count++;
     }
 
-    virtual void send(const RDPOpaqueRect & cmd, const Rect & clip)
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         this->reserve_order(23);
         RDPOrderCommon newcommon(RDP::RECT, clip);
@@ -139,7 +139,7 @@ struct RDPSerializer : public RDPGraphicDevice
         }
     }
 
-    virtual void send(const RDPScrBlt & cmd, const Rect &clip)
+    virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
     {
         this->reserve_order(25);
         RDPOrderCommon newcommon(RDP::SCREENBLT, clip);
@@ -151,7 +151,7 @@ struct RDPSerializer : public RDPGraphicDevice
         }
     }
 
-    virtual void send(const RDPDestBlt & cmd, const Rect &clip)
+    virtual void draw(const RDPDestBlt & cmd, const Rect &clip)
     {
         this->reserve_order(21);
         RDPOrderCommon newcommon(RDP::DESTBLT, clip);
@@ -163,7 +163,7 @@ struct RDPSerializer : public RDPGraphicDevice
         }
     }
 
-    virtual void send(const RDPPatBlt & cmd, const Rect &clip)
+    virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
         this->reserve_order(29);
         using namespace RDP;
@@ -177,7 +177,7 @@ struct RDPSerializer : public RDPGraphicDevice
     }
 
 
-    virtual void send(const RDPMemBlt & cmd, const Rect & clip)
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip)
     {
         this->reserve_order(30);
         RDPOrderCommon newcommon(RDP::MEMBLT, clip);
@@ -189,7 +189,7 @@ struct RDPSerializer : public RDPGraphicDevice
         }
     }
 
-    virtual void send(const RDPLineTo& cmd, const Rect & clip)
+    virtual void draw(const RDPLineTo& cmd, const Rect & clip)
     {
         this->reserve_order(32);
         RDPOrderCommon newcommon(RDP::LINE, clip);
@@ -201,7 +201,7 @@ struct RDPSerializer : public RDPGraphicDevice
         }
     }
 
-    virtual void send(const RDPGlyphIndex & cmd, const Rect & clip)
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
         this->reserve_order(297);
         RDPOrderCommon newcommon(RDP::GLYPHINDEX, clip);
@@ -214,7 +214,7 @@ struct RDPSerializer : public RDPGraphicDevice
         }
     }
 
-    virtual void send(const RDPBrushCache & cmd)
+    virtual void draw(const RDPBrushCache & cmd)
     {
         this->reserve_order(cmd.size + 12);
         cmd.emit(this->stream);
@@ -223,7 +223,7 @@ struct RDPSerializer : public RDPGraphicDevice
         }
     }
 
-    virtual void send(const RDPColCache & cmd)
+    virtual void draw(const RDPColCache & cmd)
     {
         this->reserve_order(2000);
         cmd.emit(this->stream);
@@ -232,7 +232,7 @@ struct RDPSerializer : public RDPGraphicDevice
         }
     }
 
-    virtual void send(const RDPBmpCache & cmd)
+    virtual void draw(const RDPBmpCache & cmd)
     {
         this->reserve_order(cmd.bmp->bmp_size(cmd.bpp) + 16);
         cmd.emit(this->stream);
@@ -241,7 +241,7 @@ struct RDPSerializer : public RDPGraphicDevice
         }
     }
 
-    virtual void send(const RDPGlyphCache & cmd)
+    virtual void draw(const RDPGlyphCache & cmd)
     {
         #warning compute actual size, instead of a majoration as below
         this->reserve_order(1000);

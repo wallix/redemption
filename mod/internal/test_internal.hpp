@@ -74,7 +74,7 @@ struct test_internal_mod : public internal_mod {
 
     //        #include "../../bogus3.cpp"
         RDPOpaqueRect cmd(Rect(10, 10, 100, 100), 0xffffff);
-        this->gd.front.orders->send(cmd, Rect(0, 0, 1280, 800));
+        this->gd.front.orders->draw(cmd, Rect(0, 0, 1280, 800));
 
         this->gd.server_end_update();
     }

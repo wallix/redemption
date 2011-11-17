@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
         OutFileTransport trans(fd);
         GraphicsToFile gtf(&trans, NULL);
         RDPOpaqueRect cmd(Rect(0, 0, 800, 600), 0);
-        gtf.send(cmd, clip);
+        gtf.draw(cmd, clip);
         gtf.flush();
         ::close(fd);
     }

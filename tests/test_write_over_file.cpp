@@ -370,7 +370,7 @@ struct GraphicsFile
         this->order_count++;
     }
 
-    void send(const RDPOpaqueRect & cmd, const Rect & clip)
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         this->reserve_order(23);
         RDPOrderCommon newcommon(RDP::RECT, clip);
@@ -379,7 +379,7 @@ struct GraphicsFile
         this->opaquerect = cmd;
     }
 
-    void send(const RDPScrBlt & cmd, const Rect &clip)
+    void draw(const RDPScrBlt & cmd, const Rect &clip)
     {
         this->reserve_order(25);
         RDPOrderCommon newcommon(RDP::SCREENBLT, clip);
@@ -388,7 +388,7 @@ struct GraphicsFile
         this->scrblt = cmd;
     }
 
-    void send(const RDPDestBlt & cmd, const Rect &clip)
+    void draw(const RDPDestBlt & cmd, const Rect &clip)
     {
         this->reserve_order(21);
         RDPOrderCommon newcommon(RDP::DESTBLT, clip);
@@ -398,7 +398,7 @@ struct GraphicsFile
     }
 
 
-    void send(const RDPPatBlt & cmd, const Rect &clip)
+    void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
         this->reserve_order(29);
         using namespace RDP;
@@ -409,7 +409,7 @@ struct GraphicsFile
     }
 
 
-    void send(const RDPMemBlt & cmd, const Rect & clip)
+    void draw(const RDPMemBlt & cmd, const Rect & clip)
     {
         this->reserve_order(30);
         RDPOrderCommon newcommon(RDP::MEMBLT, clip);
@@ -418,7 +418,7 @@ struct GraphicsFile
         this->memblt = cmd;
     }
 
-    void send(const RDPLineTo& cmd, const Rect & clip)
+    void draw(const RDPLineTo& cmd, const Rect & clip)
     {
         this->reserve_order(32);
         RDPOrderCommon newcommon(RDP::LINE, clip);
@@ -427,7 +427,7 @@ struct GraphicsFile
         this->lineto = cmd;
     }
 
-    void send(const RDPGlyphIndex & cmd, const Rect & clip)
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
         this->reserve_order(297);
         RDPOrderCommon newcommon(RDP::GLYPHINDEX, clip);
@@ -436,25 +436,25 @@ struct GraphicsFile
         this->glyphindex = cmd;
     }
 
-    void send(const RDPBrushCache & cmd)
+    void draw(const RDPBrushCache & cmd)
     {
         this->reserve_order(cmd.size + 12);
         cmd.emit(this->stream);
     }
 
-    void send(const RDPColCache & cmd)
+    void draw(const RDPColCache & cmd)
     {
         this->reserve_order(2000);
         cmd.emit(this->stream);
     }
 
-    void send(const RDPBmpCache & cmd)
+    void draw(const RDPBmpCache & cmd)
     {
         this->reserve_order(cmd.bmp->bmp_size(cmd.bpp) + 16);
         cmd.emit_raw_v1(this->stream); // There are no client_info
     }
 
-    void send(const RDPGlyphCache & cmd)
+    void draw(const RDPGlyphCache & cmd)
     {
         #warning compute actual size, instead of a majoration as below
         this->reserve_order(1000);
@@ -472,12 +472,12 @@ BOOST_AUTO_TEST_CASE(TestWriteOverFile)
     {
         GraphicsFile gf(false);
 
-        gf.send(RDPOpaqueRect(Rect(0, 0, 800, 600), 0xffffff), Rect(0, 0, 800, 600));
-        gf.send(RDPOpaqueRect(Rect(5, 5, 790, 590), 0x0000ff), Rect(0, 0, 800, 600));
-        gf.send(RDPOpaqueRect(Rect(10, 10, 780, 580), 0x00ff00), Rect(0, 0, 800, 600));
-        gf.send(RDPOpaqueRect(Rect(15, 15, 770, 570), 0xff0000), Rect(0, 0, 800, 600));
-        gf.send(RDPOpaqueRect(Rect(20, 20, 760, 560), 0x000000), Rect(0, 0, 800, 600));
-        gf.send(RDPOpaqueRect(Rect(30, 30, 740, 540), 0x9c4d00), Rect(0, 0, 800, 600));
+        gf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0xffffff), Rect(0, 0, 800, 600));
+        gf.draw(RDPOpaqueRect(Rect(5, 5, 790, 590), 0x0000ff), Rect(0, 0, 800, 600));
+        gf.draw(RDPOpaqueRect(Rect(10, 10, 780, 580), 0x00ff00), Rect(0, 0, 800, 600));
+        gf.draw(RDPOpaqueRect(Rect(15, 15, 770, 570), 0xff0000), Rect(0, 0, 800, 600));
+        gf.draw(RDPOpaqueRect(Rect(20, 20, 760, 560), 0x000000), Rect(0, 0, 800, 600));
+        gf.draw(RDPOpaqueRect(Rect(30, 30, 740, 540), 0x9c4d00), Rect(0, 0, 800, 600));
 
         // ------- Dumping bitmap RAW data [0x1a10470]---------
         // cx=32 cy=32
@@ -708,9 +708,9 @@ BOOST_AUTO_TEST_CASE(TestWriteOverFile)
         }; /* 0x1a10470 */
 
         Bitmap bmp0x1a10470(24, &palette332, 32, 32, raw0x1a10470, sizeof(raw0x1a10470));
-        gf.send(RDPBmpCache(24, &bmp0x1a10470, 1, 0, NULL));
+        gf.draw(RDPBmpCache(24, &bmp0x1a10470, 1, 0, NULL));
 
-        gf.send(RDPMemBlt(1, Rect(80, 60, 32, 32), 204, 0, 0, 0), Rect(0, 0, 800, 600));
+        gf.draw(RDPMemBlt(1, Rect(80, 60, 32, 32), 204, 0, 0, 0), Rect(0, 0, 800, 600));
 
         gf.flush();
     }
