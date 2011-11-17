@@ -69,6 +69,130 @@ protected:
     ~RDPGraphicDevice() {}
 };
 
+struct RDPUnserializer
+{
+    Stream stream;
+    RDPGraphicDevice * consumer;
+    Transport * trans;
+    
+    // Internal state of orders
+    RDPOrderCommon common;
+    RDPDestBlt destblt;
+    RDPPatBlt patblt;
+    RDPScrBlt scrblt;
+    RDPOpaqueRect opaquerect;
+    RDPMemBlt memblt;
+    RDPLineTo lineto;
+    RDPGlyphIndex glyphindex;
+    
+    uint16_t chunk_num;
+    uint16_t chunk_size;
+    uint16_t chunk_type;
+    uint16_t remaining_order_count;
+    uint16_t order_count;
+
+    RDPUnserializer(Transport * trans, RDPGraphicDevice * consumer) 
+     : stream(4096), consumer(consumer), trans(trans),
+     // Internal state of orders
+    common(RDP::PATBLT, Rect(0, 0, 1, 1)),
+    destblt(Rect(), 0),
+    patblt(Rect(), 0, 0, 0, RDPBrush()),
+    scrblt(Rect(), 0, 0, 0),
+    opaquerect(Rect(), 0),
+    memblt(0, Rect(), 0, 0, 0, 0),
+    lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
+    glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"")
+
+    {
+    }
+    
+    uint8_t next(){
+        if (((stream.p == stream.end) && (this->remaining_order_count))
+        ||  ((stream.p != stream.end) && (this->remaining_order_count == 0))){
+            LOG(LOG_ERR, "Incomplete order batch at chunk %u "
+                         "order [%u/%u] "
+                         "remaining [%u/%u]", 
+                         this->chunk_num,
+                         (this->order_count-this->remaining_order_count), this->order_count,
+                         (stream.end - stream.p), this->chunk_size);
+        }
+        if (!this->remaining_order_count){
+            try {
+                stream.init(4096);
+                this->trans->recv(&stream.end, 8);
+                this->chunk_type = stream.in_uint16_le();
+                this->chunk_size = stream.in_uint16_le();
+                this->remaining_order_count = this->order_count = stream.in_uint16_le();
+                uint16_t pad = stream.in_uint16_le(); (void)pad;
+            }
+            catch (Error & e){
+                #warning check specific error and return 0 only if actual EOF is reached or rethrow the error
+                return 0;
+            }
+            this->trans->recv(&stream.end, this->chunk_size - 8);
+        }
+        uint8_t control = stream.in_uint8();
+        if (!control & RDP::STANDARD){
+            /* error, this should always be set */
+            LOG(LOG_ERR, "Non standard order detected : protocol error");
+        }
+        else if (control & RDP::SECONDARY) {
+            using namespace RDP;
+            RDPSecondaryOrderHeader header(stream);
+        }
+        else {
+            RDPPrimaryOrderHeader header = this->common.receive(stream, control);
+//                if (control & BOUNDS) {
+//                    mod->gd.server_set_clip(this->common.clip);
+//                }
+//                else {
+//                    mod->gd.server_reset_clip();
+//                }
+//                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
+            switch (this->common.order) {
+            case RDP::TEXT2:
+                this->glyphindex.receive(stream, header);
+                consumer->draw(this->glyphindex, this->common.clip);
+                break;
+            case RDP::DESTBLT:
+                this->destblt.receive(stream, header);
+                consumer->draw(this->destblt, this->common.clip);
+                break;
+            case RDP::PATBLT:
+                this->patblt.receive(stream, header);
+                consumer->draw(this->patblt, this->common.clip);
+                break;
+            case RDP::SCREENBLT:
+                this->scrblt.receive(stream, header);
+                consumer->draw(this->scrblt, this->common.clip);
+                break;
+            case RDP::LINE:
+                this->lineto.receive(stream, header);
+                consumer->draw(this->lineto, this->common.clip);
+                break;
+            case RDP::RECT:
+                this->opaquerect.receive(stream, header);
+                consumer->draw(this->opaquerect, this->common.clip);
+                break;
+            case RDP::DESKSAVE:
+                break;
+            case RDP::MEMBLT:
+                this->memblt.receive(stream, header);
+                this->consumer->draw(this->memblt, this->common.clip);
+                break;
+            default:
+                /* error unknown order */
+                LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->common.order);
+                break;
+            }
+//                if (header.control & BOUNDS) {
+//                    mod->gd.server_reset_clip();
+//                }
+        }
+        return 0;
+    }
+};
+
 struct RDPSerializer : public RDPGraphicDevice
 {
     Stream stream;

@@ -137,6 +137,9 @@ public:
         last_quantum_sent = 0;
     }
 
+    void recv(uint8_t ** pbuffer, size_t len) throw (Error) {
+        this->recv(reinterpret_cast<uint8_t **>(pbuffer), len);
+    }
     virtual void recv(char ** pbuffer, size_t len) throw (Error) = 0;
     virtual void send(const char * const buffer, int len) throw (Error) = 0;
     void send(const uint8_t * const buffer, int len) throw (Error) {
@@ -159,6 +162,7 @@ class GeneratorTransport : public Transport {
         memcpy(this->data, data, len);
     }
 
+    using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         if (current + len > this->len){
             size_t available_len = this->len - this->current;
@@ -194,6 +198,7 @@ class OutFileTransport : public Transport {
     }
 
     // recv is not implemented for OutFileTransport
+    using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         #warning OutFileTransport should raise an exception if we try to use it for recv
     }
@@ -232,10 +237,7 @@ class InFileTransport : public Transport {
     {
     }
 
-    void recv(uint8_t ** pbuffer, size_t len) throw (Error) {
-        this->recv(reinterpret_cast<char**>(pbuffer), len);
-    }
-    
+    using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         #warning OutFileTransport should raise an exception if we try to use it for recv
         int status = 0;
@@ -268,6 +270,7 @@ class InFileTransport : public Transport {
 
 class LoopTransport : public Transport {
     public:
+    using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
     }
     using Transport::send;
@@ -359,7 +362,8 @@ class SocketTransport : public Transport {
 
         }
     }
-
+    
+    using Transport::recv;
     virtual void recv(char ** input_buffer, size_t total_len) throw (Error)
     {
 //        uint8_t * start = (uint8_t*)(*input_buffer);
