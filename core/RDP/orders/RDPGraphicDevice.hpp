@@ -48,8 +48,6 @@
 
 struct RDPGraphicDevice
 {
-    RDPGraphicDevice() {}
-    ~RDPGraphicDevice() {}
     virtual void flush() = 0;
     virtual void send(const RDPOpaqueRect & cmd, const Rect & clip) = 0;
     virtual void send(const RDPScrBlt & cmd, const Rect &clip) = 0;
@@ -62,9 +60,16 @@ struct RDPGraphicDevice
     virtual void send(const RDPColCache & cmd) = 0;
     virtual void send(const RDPBmpCache & cmd) = 0;
     virtual void send(const RDPGlyphCache & cmd) = 0;
+
+protected:
+    // this to avoid calling constructor or destructor of base abstract class
+    RDPGraphicDevice() {}
+    // if necessary (need to destroy object through pointer of base class) 
+    // we may also chose to make destructor virtual
+    ~RDPGraphicDevice() {}
 };
 
-struct RDPSerializer
+struct RDPSerializer : public RDPGraphicDevice
 {
     Stream stream;
     Transport * trans;
@@ -107,8 +112,7 @@ struct RDPSerializer
     /*****************************************************************************/
     // check if the next order will fit in available packet size
     // if not send previous orders we got and init a new packet
-    #warning is it necessary for reserve_order to be virtual ? I believe not.
-    virtual void reserve_order(size_t asked_size)
+    void reserve_order(size_t asked_size)
     {
         if (this->ini && this->ini->globals.debug.primary_orders){
             LOG(LOG_INFO, "GraphicsUpdatePDU::reserve_order[%u](%u) remains=%u", this->order_count, asked_size, std::min(this->stream.capacity, (size_t)4096) - this->stream.get_offset(0));

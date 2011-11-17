@@ -26,6 +26,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestGraphicsToFile
 #include <boost/test/auto_unit_test.hpp>
+#include "./test_orders.hpp"
 
 #include "../capture/GraphicToFile.hpp"
 #include "../core/constants.hpp"
@@ -35,41 +36,57 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
     Rect clip(0, 0, 800, 600);
 
     char tmpname[128];
-    sprintf(tmpname, "/tmp/test_transportXXXXXX");
-    int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
-    OutFileTransport trans(fd);
-    GraphicsToFile gtf(&trans, NULL);
-    RDPOpaqueRect cmd(Rect(0, 0, 800, 600), 0);
-    gtf.send(cmd, clip);
-    gtf.flush();
-    ::close(fd);
+    {
+        sprintf(tmpname, "/tmp/test_gtf_chunk1XXXXXX");
+        int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
+        OutFileTransport trans(fd);
+        GraphicsToFile gtf(&trans, NULL);
+        RDPOpaqueRect cmd(Rect(0, 0, 800, 600), 0);
+        gtf.send(cmd, clip);
+        gtf.flush();
+        ::close(fd);
+    }
     
-    // reread data from file
-    fd = ::open(tmpname, O_RDONLY);
-    Stream stream(4096);
-    InFileTransport in_trans(fd);
-    in_trans.recv(&stream.end, 8);
-    BOOST_CHECK_EQUAL(stream.end - stream.p, 8); 
-    uint16_t chunk_type = stream.in_uint16_le();
-    BOOST_CHECK_EQUAL(chunk_type, (uint16_t)RDP_UPDATE_ORDERS); 
-    uint16_t chunk_size = stream.in_uint16_le();
-    BOOST_CHECK_EQUAL(chunk_size, (uint16_t)15); 
-    uint16_t order_count = stream.in_uint16_le();
-    BOOST_CHECK_EQUAL(order_count, (uint16_t)1); 
-    uint16_t pad = stream.in_uint16_le();
-    BOOST_CHECK_EQUAL(pad, (uint16_t)0); // really we don't care
+    {    
+        // reread data from file
+        int fd = ::open(tmpname, O_RDONLY);
+        Stream stream(4096);
+        InFileTransport in_trans(fd);
+        in_trans.recv(&stream.end, 8);
+        BOOST_CHECK_EQUAL(stream.end - stream.p, 8); 
+        uint16_t chunk_type = stream.in_uint16_le();
+        BOOST_CHECK_EQUAL(chunk_type, (uint16_t)RDP_UPDATE_ORDERS); 
+        uint16_t chunk_size = stream.in_uint16_le();
+        BOOST_CHECK_EQUAL(chunk_size, (uint16_t)15); 
+        uint16_t order_count = stream.in_uint16_le();
+        BOOST_CHECK_EQUAL(order_count, (uint16_t)1); 
+        uint16_t pad = stream.in_uint16_le();
+        BOOST_CHECK_EQUAL(pad, (uint16_t)0); // really we don't care
 
-    in_trans.recv(&stream.end, chunk_size - 8);
+        in_trans.recv(&stream.end, chunk_size - 8);
 
-    // initial order and clip
-    RDPOrderCommon common(RDP::PATBLT, Rect(0, 0, 1, 1));
-    uint8_t control = stream.in_uint8();
-    BOOST_CHECK_EQUAL(control, (uint8_t)(RDP::STANDARD|RDP::CHANGE)); 
-    RDPPrimaryOrderHeader header = common.receive(stream, control);
-    BOOST_CHECK_EQUAL((uint8_t)RDP::RECT, common.order);
-    // the clip was not changed as encoded opaquerect was fully inside it
-    // => no need to clip
-    BOOST_CHECK_EQUAL(Rect(0, 0, 1, 1), common.clip);
+        // initial order and clip
+        RDPOrderCommon common(RDP::PATBLT, Rect(0, 0, 1, 1));
+        // initial rect state
+        RDPOpaqueRect cache_rect(Rect(), 0);
 
-    ::close(fd);
+        uint8_t control = stream.in_uint8();
+        BOOST_CHECK_EQUAL(control, (uint8_t)(RDP::STANDARD|RDP::CHANGE)); 
+
+        RDPPrimaryOrderHeader header = common.receive(stream, control);
+        RDPOpaqueRect cmd = cache_rect;
+        cmd.receive(stream, header);
+
+        check<RDPOpaqueRect>(common, cmd,
+            // the clip was not changed as encoded opaquerect was fully inside it
+            // => no need to clip, we still have initial clipping
+            RDPOrderCommon(RDP::RECT, Rect(0, 0, 1, 1)),
+            RDPOpaqueRect(Rect(0, 0, 800, 600), 0),
+            "Reading back Rect 1");
+        // check we have read everything
+        BOOST_CHECK_EQUAL(stream.end - stream.p, 0); 
+        ::close(fd);
+    }
+    ::unlink(tmpname);
+
 }
