@@ -150,7 +150,7 @@ struct RDPUnserializer
 //                }
 //                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
             switch (this->common.order) {
-            case RDP::TEXT2:
+            case RDP::GLYPHINDEX:
                 this->glyphindex.receive(stream, header);
                 consumer->draw(this->glyphindex, this->common.clip);
                 break;

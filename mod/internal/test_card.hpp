@@ -69,37 +69,37 @@ struct test_card_mod : public internal_mod {
     {
         this->gd.server_begin_update();
 
-        this->gd.server_set_clip(this->screen.rect);
+        const Rect & clip = this->screen.rect;
 
-        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect, WHITE));
-        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(5), RED));
-        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(10), GREEN));
-        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(15), BLUE));
-        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(20), BLACK));
+        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect, WHITE), clip);
+        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(5), RED), clip);
+        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(10), GREEN), clip);
+        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(15), BLUE), clip);
+        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(20), BLACK), clip);
 
         Rect winrect = this->screen.rect.shrink(30);
-        this->gd.opaque_rect(RDPOpaqueRect(winrect, WINBLUE));
+        this->gd.opaque_rect(RDPOpaqueRect(winrect, WINBLUE), clip);
 
         Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.bmp");
         this->gd.bitmap_update(bitmap,
             Rect(winrect.x + (winrect.cx - bitmap.cx)/2,
                  winrect.y + (winrect.cy - bitmap.cy)/2,
                  bitmap.cx, bitmap.cy),
-             0, 0);
+             0, 0, clip);
 
 
-        this->gd.server_draw_text(30, 30, "White", BLACK, WHITE);
-        this->gd.server_draw_text(30, 50, "Red  ", BLACK, RED);
-        this->gd.server_draw_text(30, 70, "Green", BLACK, GREEN);
-        this->gd.server_draw_text(30, 90, "Blue ", BLACK, BLUE);
-        this->gd.server_draw_text(30, 110, "Black", WHITE, BLACK);
+        this->gd.server_draw_text(30, 30, "White", BLACK, WHITE, clip);
+        this->gd.server_draw_text(30, 50, "Red  ", BLACK, RED, clip);
+        this->gd.server_draw_text(30, 70, "Green", BLACK, GREEN, clip);
+        this->gd.server_draw_text(30, 90, "Blue ", BLACK, BLUE, clip);
+        this->gd.server_draw_text(30, 110, "Black", WHITE, BLACK, clip);
 
 
         Bitmap card(SHARE_PATH "/" REDEMPTION_LOGO24);
         this->gd.bitmap_update(card,
             Rect(this->screen.rect.cx - card.cx - 30,
                  this->screen.rect.cy - card.cy - 30, card.cx, card.cy),
-             0, 0);
+             0, 0, clip);
 
         // Bogus square generating zero width/height tiles if not properly guarded
         #warning find a better fix than the current one in bitmap_update and mem_blt for the case occuring when drawing square below or similar.
@@ -111,7 +111,7 @@ struct test_card_mod : public internal_mod {
         Bitmap bloc64x64(24, &this->gd.palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
         this->gd.bitmap_update(bloc64x64,
             Rect(0, this->screen.rect.cy - 64, bloc64x64.cx, bloc64x64.cy),
-             32, 32);
+             32, 32, clip);
 
 
         this->gd.server_end_update();

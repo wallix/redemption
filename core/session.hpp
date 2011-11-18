@@ -456,7 +456,6 @@ struct Session {
                 // hence width and height and colors and keymap are availables
                 /* resize the main window */
                 this->mod->front_resize();
-                this->mod->gd.server_reset_clip();
                 this->front->reset();
                 this->front->set_keyboard_layout();
 

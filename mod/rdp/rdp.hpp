@@ -77,45 +77,6 @@ struct rdp_cursor {
     }
 };
 
-struct rdp_orders_state {
-    /* desksave order state */
-    int desksave_offset;
-    int desksave_left;
-    int desksave_top;
-    int desksave_right;
-    int desksave_bottom;
-    int desksave_action;
-    /* polyline order state */
-    int polyline_x;
-    int polyline_y;
-    int polyline_opcode;
-    int polyline_fgcolor;
-    int polyline_lines;
-    int polyline_datasize;
-    char polyline_data[256];
-
-    rdp_orders_state()
-
-    {
-        /* desksave order state */
-        this->desksave_offset = 0;
-        this->desksave_left = 0;
-        this->desksave_top = 0;
-        this->desksave_right = 0;
-        this->desksave_bottom = 0;
-        this->desksave_action = 0;
-        /* polyline order state */
-        this->polyline_x = 0;
-        this->polyline_y = 0;
-        this->polyline_opcode = 0;
-        this->polyline_fgcolor = 0;
-        this->polyline_lines = 0;
-        this->polyline_datasize = 0;
-        memset(this->polyline_data, 0, 256);
-    }
-};
-
-
 /* orders */
 struct rdp_orders {
     // State
@@ -127,9 +88,6 @@ struct rdp_orders {
     RDPPatBlt patblt;
     RDPLineTo lineto;
     RDPGlyphIndex glyph_index;
-
-    /* order state */
-    struct rdp_orders_state state;
 
     BGRPalette cache_colormap[6];
     BGRPalette global_palette;
@@ -209,106 +167,6 @@ struct rdp_orders {
         mod->gd.color_cache(colormap.palette, colormap.cacheIndex);
     }
 
-    void rdp_orders_process_desksave(Stream & stream, int present, int delta, client_mod * mod)
-    {
-//        LOG(LOG_INFO, "rdp_orders_process_desksave");
-        if (present & 0x01) {
-            this->state.desksave_offset = stream.in_uint32_le();
-        }
-        if (present & 0x02) {
-            if (delta){
-                this->state.desksave_left += stream.in_sint8();
-            }
-            else {
-                this->state.desksave_left = stream.in_sint16_le();
-            }
-        }
-        if (present & 0x04) {
-            if (delta){
-                this->state.desksave_top += stream.in_sint8();
-            }
-            else {
-                this->state.desksave_top = stream.in_sint16_le();
-            }
-        }
-        if (present & 0x08) {
-            if (delta){
-                this->state.desksave_right += stream.in_sint8();
-            }
-            else {
-                this->state.desksave_right = stream.in_sint16_le();
-            }
-        }
-        if (present & 0x10) {
-            if (delta){
-                this->state.desksave_bottom += stream.in_sint8();
-            }
-            else {
-                this->state.desksave_bottom = stream.in_sint16_le();
-            }
-        }
-        if (present & 0x20) {
-            this->state.desksave_action = stream.in_uint8();
-        }
-        unsigned width = (this->state.desksave_right - this->state.desksave_left) + 1;
-        unsigned height = (this->state.desksave_bottom - this->state.desksave_top) + 1;
-        #warning implement this
-        if (this->state.desksave_action == 0) {
-            LOG(LOG_INFO, "ui_desktop_save(offset=%u, left=%u, top=%u, width=%u, height=%u);",this->state.desksave_offset, this->state.desksave_left, this->state.desksave_top, width, height);
-        } else {
-            LOG(LOG_INFO, "ui_desktop_restore(offset=%u, left=%u, top=%u, width=%u, height=%u);",this->state.desksave_offset, this->state.desksave_left, this->state.desksave_top, width, height);
-        }
-    }
-
-    /*****************************************************************************/
-    /* Process a 3-way blt order */
-    #warning implement this
-    static void rdp_orders_process_triblt(struct rdp_orders* self, Stream & stream, int present, int delta, client_mod * mod)
-    {
-//        LOG(LOG_INFO, "rdp_orders_process_triblt");
-        /* not used */
-    }
-
-    /*****************************************************************************/
-    /* Process a polyline order */
-    void rdp_orders_process_polyline(Stream & stream, int present, int delta, client_mod * mod)
-    {
-//        LOG(LOG_INFO, "rdp_orders_process_polyline");
-        if (present & 0x01) {
-            if (delta){
-                this->state.polyline_x += stream.in_sint8();
-            }
-            else {
-                this->state.polyline_x = stream.in_sint16_le();
-            }
-        }
-        if (present & 0x02) {
-            if (delta){
-                this->state.polyline_y += stream.in_sint8();
-            }
-            else {
-                this->state.polyline_y = stream.in_sint16_le();
-            }
-        }
-        if (present & 0x04) {
-            this->state.polyline_opcode = stream.in_uint8();
-        }
-        if (present & 0x10) {
-            uint8_t r = stream.in_uint8();
-            uint8_t g = stream.in_uint8();
-            uint8_t b = stream.in_uint8();
-            this->state.polyline_fgcolor = (r << 16) | (g << 8) | b;
-        }
-        if (present & 0x20) {
-            this->state.polyline_lines = stream.in_uint8();
-        }
-        if (present & 0x40) {
-            this->state.polyline_datasize = stream.in_uint8();
-            memcpy( this->state.polyline_data, stream.in_uint8p( this->state.polyline_datasize), this->state.polyline_datasize);
-        }
-        /* todo */
-    }
-
     /*****************************************************************************/
     int process_orders(int bpp, Stream & stream, int num_orders, client_mod * mod)
     {
@@ -357,40 +215,32 @@ struct rdp_orders {
             }
             else {
                 RDPPrimaryOrderHeader header = this->common.receive(stream, control);
-                if (control & BOUNDS) {
-                    mod->gd.server_set_clip(this->common.clip);
-                }
-                else {
-                    mod->gd.server_reset_clip();
-                }
+                const Rect & cmd_clip = ((control & BOUNDS)?this->common.clip:mod->gd.get_front_rect());
 //                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
-                case TEXT2:
+                case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
-                    mod->gd.glyph_index(this->glyph_index);
+                    mod->gd.glyph_index(this->glyph_index, cmd_clip);
                     break;
                 case DESTBLT:
                     this->destblt.receive(stream, header);
-                    mod->gd.dest_blt(this->destblt);
+                    mod->gd.dest_blt(this->destblt, cmd_clip);
                     break;
                 case PATBLT:
                     this->patblt.receive(stream, header);
-                    mod->gd.pat_blt(this->patblt);
+                    mod->gd.pat_blt(this->patblt, cmd_clip);
                     break;
                 case SCREENBLT:
                     this->scrblt.receive(stream, header);
-                    mod->gd.scr_blt(this->scrblt);
+                    mod->gd.scr_blt(this->scrblt, cmd_clip);
                     break;
                 case LINE:
                     this->lineto.receive(stream, header);
-                    mod->gd.line_to(this->lineto);
+                    mod->gd.line_to(this->lineto, cmd_clip);
                     break;
                 case RECT:
                     this->opaquerect.receive(stream, header);
-                    mod->gd.opaque_rect(this->opaquerect);
-                    break;
-                case DESKSAVE:
-                    this->rdp_orders_process_desksave(stream, header.fields, header.control & DELTA, mod);
+                    mod->gd.opaque_rect(this->opaquerect, cmd_clip);
                     break;
                 case MEMBLT:
                     this->memblt.receive(stream, header);
@@ -401,24 +251,19 @@ struct rdp_orders {
                             mod->gd.mem_blt(
                                 this->memblt,
                                 *bitmap,
-                                this->cache_colormap[this->memblt.cache_id >> 4]);
+                                this->cache_colormap[this->memblt.cache_id >> 4],
+                                cmd_clip);
                         }
                     }
-                    break;
-                case TRIBLT:
-                    rdp_orders_process_triblt(this, stream, header.fields, header.control & DELTA, mod);
-                    break;
-                case POLYLINE:
-                    this->rdp_orders_process_polyline(stream, header.fields, header.control & DELTA, mod);
                     break;
                 default:
                     /* error unknown order */
                     LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->common.order);
                     break;
                 }
-                if (header.control & BOUNDS) {
-                    mod->gd.server_reset_clip();
-                }
+//                if (header.control & BOUNDS) {
+//                    mod->gd.server_reset_clip();
+//                }
             }
             processed++;
         }
@@ -1394,23 +1239,23 @@ struct mod_rdp : public client_mod {
 
             memset(order_caps, 0, 32);
             #warning use symbolic constants for order numerotation
-            order_caps[0] = 1; /* dest blt */
-            order_caps[1] = 1; /* pat blt */
-            order_caps[2] = 1; /* screen blt */
+            order_caps[RDP::DESTBLT] = 1; /* dest blt */
+            order_caps[RDP::PATBLT] = 1; /* pat blt */
+            order_caps[RDP::SCREENBLT] = 1; /* screen blt */
             order_caps[3] = 1; /* memblt */
-            order_caps[4] = 0; /* triblt */
+            order_caps[4] = 0; /* todo triblt */
             order_caps[8] = 1; /* line */
             order_caps[9] = 1; /* line */
             order_caps[10] = 1; /* rect */
             order_caps[11] = 0; /* todo desksave */
-            order_caps[13] = 1; /* memblt another above */
-            order_caps[14] = 1; /* triblt another above */
+            order_caps[RDP::MEMBLT] = 1; /* memblt another above */
+            order_caps[RDP::TRIBLT] = 0; /* triblt another above */
             order_caps[20] = 0; /* todo polygon */
             order_caps[21] = 0; /* todo polygon2 */
-            order_caps[22] = 0; /* todo polyline */
+            order_caps[RDP::POLYLINE] = 0; /* todo polyline */
             order_caps[25] = 0; /* todo ellipse */
             order_caps[26] = 0; /* todo ellipse2 */
-            order_caps[27] = 1; /* text2 */
+            order_caps[RDP::GLYPHINDEX] = 1; /* text2 */
             stream.out_copy_bytes(order_caps, 32); /* Orders supported */
 
             stream.out_uint16_le(0x6a1); /* Text capability flags */
@@ -2323,8 +2168,7 @@ struct mod_rdp : public client_mod {
                         final_size, bitmap.bmp_size(bpp), width, height, bpp);
                 }
 
-                mod->gd.clip = boundary;
-                mod->gd.bitmap_update(bitmap, boundary, 0, 0);
+                mod->gd.bitmap_update(bitmap, boundary, 0, 0, boundary);
             }
             else {
                 const uint8_t * data = stream.in_uint8p(bufsize);
@@ -2336,8 +2180,7 @@ struct mod_rdp : public client_mod {
                         bufsize, bitmap.bmp_size(bpp), width, height, bpp);
                 }
 
-                mod->gd.clip = boundary;
-                mod->gd.bitmap_update(bitmap, boundary, 0, 0);
+                mod->gd.bitmap_update(bitmap, boundary, 0, 0, boundary);
             }
         }
         mod->gd.server_end_update();

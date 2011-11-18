@@ -73,18 +73,6 @@ struct GraphicDeviceMod : public GraphicDevice
         }
         this->current_pointer = 0;
         init_palette332(this->palette332);
-        this->clip = Rect(0,0,4096,2048);
-    }
-
-
-    virtual void server_set_clip(const Rect & rect)
-    {
-        this->clip = rect;
-    }
-
-    virtual void server_reset_clip()
-    {
-        this->clip = this->get_front_rect();
     }
 
 
@@ -147,111 +135,111 @@ struct GraphicDeviceMod : public GraphicDevice
         return Rect(0, 0, this->get_front_width(), get_front_height());
     }
 
-    virtual void draw_window(const Rect & r, uint32_t bgcolor, const char * caption, bool has_focus){
+    virtual void draw_window(const Rect & r, uint32_t bgcolor, const char * caption, bool has_focus, const Rect & clip){
 
         // Window surface and border
         this->opaque_rect(
-            RDPOpaqueRect(r, bgcolor));
+            RDPOpaqueRect(r, bgcolor), clip);
         this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), WHITE));
+            RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), WHITE), clip);
         this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), WHITE));
+            RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), WHITE), clip);
         this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x + 1, r.y + r.cy - 2, r.cx - 2, 1), DARK_GREY));
+            RDPOpaqueRect(Rect(r.x + 1, r.y + r.cy - 2, r.cx - 2, 1), DARK_GREY), clip);
         this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x+r.cx-2, r.y + 1, 1, r.cy), DARK_GREY));
+            RDPOpaqueRect(Rect(r.x+r.cx-2, r.y + 1, 1, r.cy), DARK_GREY), clip);
         this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x, r.y + r.cy - 1, r.cx, 1), BLACK));
+            RDPOpaqueRect(Rect(r.x, r.y + r.cy - 1, r.cx, 1), BLACK), clip);
         this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), BLACK));
+            RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), BLACK), clip);
 
         // Title bar
         this->opaque_rect(
             RDPOpaqueRect(Rect(r.x + 3, r.y + 3, r.cx - 5, 18),
-                          has_focus?WABGREEN:DARK_GREY));
+                          has_focus?WABGREEN:DARK_GREY), clip);
 
         this->server_draw_text(r.x + 4, r.y + 4, caption,
                 has_focus?WABGREEN:DARK_GREY,
-                has_focus?WHITE:BLACK);
+                has_focus?WHITE:BLACK, clip);
     }
 
-    virtual void draw_combo(const Rect & r, const char * caption, int state, bool has_focus)
+    virtual void draw_combo(const Rect & r, const char * caption, int state, bool has_focus, const Rect & clip)
     {
-        this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, r.cy), GREY));
-        this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 3, r.cy - 3), WHITE));
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, r.cy), GREY), clip);
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 3, r.cy - 3), WHITE), clip);
         if (has_focus) {
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 3, r.y + 3, (r.cx - 6) - 18, r.cy - 5), DARK_WABGREEN));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 3, r.y + 3, (r.cx - 6) - 18, r.cy - 5), DARK_WABGREEN), clip);
         }
-        this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), DARK_GREY));
-        this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), DARK_GREY));
-        this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y + r.cy- 1, r.cx, 1), WHITE));
-        this->opaque_rect(RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), WHITE));
-        this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), BLACK));
-        this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), BLACK));
-        this->server_draw_text(r.x + 4, r.y + 3, caption, has_focus?DARK_WABGREEN:WHITE, has_focus?WHITE:BLACK);
-        this->draw_button(Rect(r.x + r.cx - 20, r.y + 2, 18, r.cy - 4), "", state, false);
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), DARK_GREY), clip);
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), DARK_GREY), clip);
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y + r.cy- 1, r.cx, 1), WHITE), clip);
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), WHITE), clip);
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), BLACK), clip);
+        this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), BLACK), clip);
+        this->server_draw_text(r.x + 4, r.y + 3, caption, has_focus?DARK_WABGREEN:WHITE, has_focus?WHITE:BLACK, clip);
+        this->draw_button(Rect(r.x + r.cx - 20, r.y + 2, 18, r.cy - 4), "", state, false, clip);
     }
 
-    virtual void draw_button(const Rect & r, const char * caption, int state, bool has_focus){
+    virtual void draw_button(const Rect & r, const char * caption, int state, bool has_focus, const Rect & clip){
 
         int bevel = (state == BUTTON_STATE_DOWN)?1:0;
 
-        this->opaque_rect(RDPOpaqueRect(r, GREY));
+        this->opaque_rect(RDPOpaqueRect(r, GREY), clip);
         if (state == BUTTON_STATE_DOWN) {
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), BLACK));
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), BLACK));
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), DARK_GREY));
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), DARK_GREY));
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), DARK_GREY));
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x + (r.cx - 2), r.y + 1, 1, r.cy - 1), DARK_GREY));
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK));
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), BLACK), clip);
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), BLACK), clip);
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), DARK_GREY), clip);
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), DARK_GREY), clip);
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), DARK_GREY), clip);
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + (r.cx - 2), r.y + 1, 1, r.cy - 1), DARK_GREY), clip);
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK), clip);
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK), clip);
         } else {
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), WHITE));
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), WHITE));
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), DARK_GREY));
-            this->opaque_rect(RDPOpaqueRect(Rect((r.x + r.cx) - 2, r.y + 1, 1, r.cy - 1), DARK_GREY));
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK));
-            this->opaque_rect(RDPOpaqueRect(Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK));
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), WHITE), clip);
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), WHITE), clip);
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + 1, r.y + (r.cy - 2), r.cx - 1, 1), DARK_GREY), clip);
+            this->opaque_rect(RDPOpaqueRect(Rect((r.x + r.cx) - 2, r.y + 1, 1, r.cy - 1), DARK_GREY), clip);
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK), clip);
+            this->opaque_rect(RDPOpaqueRect(Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK), clip);
         }
         int w = this->text_width(caption);
         int h = this->text_height(caption);
         this->server_draw_text(
             r.x + r.cx / 2 - w / 2 + bevel,
             r.y + r.cy / 2 - h / 2 + bevel,
-            caption, GREY, BLACK);
+            caption, GREY, BLACK, clip);
         // focus rect
         if (has_focus) {
             this->pat_blt(
                 RDPPatBlt(Rect(r.x + 3 + bevel, r.y + 3 + bevel, r.cx - 8, 2),
                     0xF0, GREY, BLACK,
-                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")));
+                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")), clip);
             this->pat_blt(
                 RDPPatBlt(Rect(r.x + 3 + bevel, r.y + 3 + bevel, 2, r.cy - 8),
                     0xF0, GREY, BLACK,
-                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")));
+                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")), clip);
             this->pat_blt(
                 RDPPatBlt(Rect(r.x + r.cx - 6 + bevel, r.y + 3 + bevel, 2, r.cy - 8),
                     0xF0, GREY, BLACK,
-                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")));
+                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")), clip);
             this->pat_blt(
                 RDPPatBlt(Rect(r.x + 3 + bevel, r.y + r.cy - 6 + bevel, r.cx - 8, 2),
                     0xF0, GREY, BLACK,
-                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")));
+                    RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")), clip);
         }
     }
 
-    virtual void draw_edit(const Rect & r, char password_char, char * buffer, size_t edit_pos, bool has_focus){
+    virtual void draw_edit(const Rect & r, char password_char, char * buffer, size_t edit_pos, bool has_focus, const Rect & clip){
         this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x+1, r.y+1, r.cx - 3, r.cy - 3), DARK_GREEN));
+            RDPOpaqueRect(Rect(r.x+1, r.y+1, r.cx - 3, r.cy - 3), DARK_GREEN), clip);
         this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), BLACK));
+            RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), BLACK), clip);
         this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), BLACK));
+            RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), BLACK), clip);
         this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x, r.y + r.cy - 1, r.cx, 1), WHITE));
+            RDPOpaqueRect(Rect(r.x, r.y + r.cy - 1, r.cx, 1), WHITE), clip);
         this->opaque_rect(
-            RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), WHITE));
+            RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), WHITE), clip);
 
         /* draw text */
         char text[255];
@@ -261,10 +249,10 @@ struct GraphicDeviceMod : public GraphicDevice
             int i = mbstowcs(0, buffer, 0);
             memset(text, password_char, i);
             text[i] = 0;
-            this->server_draw_text(r.x + 4, r.y + 2, text, DARK_GREEN, LIGHT_GREEN);
+            this->server_draw_text(r.x + 4, r.y + 2, text, DARK_GREEN, LIGHT_GREEN, clip);
         }
         else {
-            this->server_draw_text(r.x + 4, r.y + 2, buffer, DARK_GREEN, LIGHT_GREEN);
+            this->server_draw_text(r.x + 4, r.y + 2, buffer, DARK_GREEN, LIGHT_GREEN, clip);
         }
         /* draw xor box(cursor) */
         if (has_focus) {
@@ -286,12 +274,12 @@ struct GraphicDeviceMod : public GraphicDevice
             this->opaque_rect(
                 RDPOpaqueRect(
                     Rect(r.x + 4 + this->text_width(text), r.y + 3, 2, r.cy - 6),
-                    PALE_GREEN));
+                    PALE_GREEN), clip);
         }
     }
 
     #warning implementation of the server_draw_text function below is quite broken (a small subset of possibilities is implemented, especially for data). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
-    virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor)
+    virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
         setlocale(LC_CTYPE, "fr_FR.UTF-8");
         this->send_global_palette();
@@ -347,13 +335,13 @@ struct GraphicDeviceMod : public GraphicDevice
             data // data
         );
 
-        this->glyph_index(glyphindex);
+        this->glyph_index(glyphindex, clip);
 
         delete [] wstr;
         delete [] data;
     }
 
-    virtual void opaque_rect(const RDPOpaqueRect & cmd)
+    virtual void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         if (!clip.isempty()
         && !clip.intersect(cmd.rect).isempty()){
@@ -362,20 +350,20 @@ struct GraphicDeviceMod : public GraphicDevice
 
             RDPOpaqueRect new_cmd = cmd;
             new_cmd.color = this->convert_opaque(cmd.color);
-            this->front.orders->draw(new_cmd, this->clip);
+            this->front.orders->draw(new_cmd, clip);
 
             if (this->capture){
                 RDPOpaqueRect new_cmd24 = cmd;
                 new_cmd24.color = this->convert24_opaque(cmd.color);
-                this->capture->opaque_rect(new_cmd24, this->clip);
+                this->capture->opaque_rect(new_cmd24, clip);
             }
         }
     }
 
-    virtual void scr_blt(const RDPScrBlt & cmd)
+    virtual void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
     {
-        if (!this->clip.isempty()
-        && !this->clip.intersect(cmd.rect).isempty()){
+        if (!clip.isempty()
+        && !clip.intersect(cmd.rect).isempty()){
             this->front.orders->draw(cmd, clip);
 
             if (this->capture){
@@ -384,21 +372,21 @@ struct GraphicDeviceMod : public GraphicDevice
         }
     }
 
-    virtual void dest_blt(const RDPDestBlt & cmd)
+    virtual void dest_blt(const RDPDestBlt & cmd, const Rect & clip)
     {
-        if (!this->clip.isempty()
-        && !this->clip.intersect(cmd.rect).isempty()){
-            this->front.orders->draw(cmd, this->clip);
+        if (!clip.isempty()
+        && !clip.intersect(cmd.rect).isempty()){
+            this->front.orders->draw(cmd, clip);
             if (this->capture){
-                this->capture->dest_blt(cmd, this->clip);
+                this->capture->dest_blt(cmd, clip);
             }
         }
     }
 
-    virtual void pat_blt(const RDPPatBlt & cmd)
+    virtual void pat_blt(const RDPPatBlt & cmd, const Rect & clip)
     {
-        if (!this->clip.isempty()
-        && !this->clip.intersect(cmd.rect).isempty()){
+        if (!clip.isempty()
+        && !clip.intersect(cmd.rect).isempty()){
 
             this->send_global_palette();
 
@@ -419,19 +407,19 @@ struct GraphicDeviceMod : public GraphicDevice
                     new_cmd.brush.style = 0x81;
                 }
             }
-            this->front.orders->draw(new_cmd, this->clip);
+            this->front.orders->draw(new_cmd, clip);
 
             if (this->capture){
                 RDPPatBlt new_cmd24 = cmd;
                 new_cmd24.back_color = this->convert24(cmd.back_color);
                 new_cmd24.fore_color = this->convert24(cmd.fore_color);
 
-                this->capture->pat_blt(new_cmd24, this->clip);
+                this->capture->pat_blt(new_cmd24, clip);
             }
         }
     }
 
-    virtual void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const BGRPalette & palette)
+    virtual void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const BGRPalette & palette, const Rect & clip)
     {
         uint8_t palette_id = ((memblt.cache_id >> 4) >= 6)?0:(memblt.cache_id >> 4);
 
@@ -461,7 +449,7 @@ struct GraphicDeviceMod : public GraphicDevice
                 int cx = std::min(32, dst.cx - x);
                 const Rect tile(x, y, cx, cy);
                 #warning simplify this code and add unit tests. It is much too complicated and that introduce subtile bugs
-                if (!this->clip.intersect(tile.offset(dst.x, dst.y)).isempty()
+                if (!clip.intersect(tile.offset(dst.x, dst.y)).isempty()
                 && (src_r.cx > src_r.x + x)
                 && (src_r.cy > src_r.y + y)){
                     #warning transmit a bitmap to add_bitmap instead of individual components
@@ -481,14 +469,14 @@ struct GraphicDeviceMod : public GraphicDevice
                     }
 
                     const RDPMemBlt cmd(cache_id + palette_id*16, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
-//                    cmd.log(LOG_INFO, this->clip);
+//                    cmd.log(LOG_INFO, clip);
 
-                    if (!this->clip.isempty()
-                    && !this->clip.intersect(cmd.rect).isempty()){
-                        this->front.orders->draw(cmd, this->clip);
+                    if (!clip.isempty()
+                    && !clip.intersect(cmd.rect).isempty()){
+                        this->front.orders->draw(cmd, clip);
                         #warning capture should have it's own reference to bmp_cache
                         if (this->capture){
-                            this->capture->mem_blt(cmd, *this->front.bmp_cache, this->clip);
+                            this->capture->mem_blt(cmd, *this->front.bmp_cache, clip);
                         }
                     }
                 }
@@ -502,7 +490,7 @@ struct GraphicDeviceMod : public GraphicDevice
         this->pen.width = width;
     }
 
-    virtual void line_to(const RDPLineTo & cmd)
+    virtual void line_to(const RDPLineTo & cmd, const Rect & clip)
     {
         const uint16_t minx = std::min(cmd.startx, cmd.endx);
         const uint16_t miny = std::min(cmd.starty, cmd.endy);
@@ -510,7 +498,7 @@ struct GraphicDeviceMod : public GraphicDevice
                         std::max(cmd.startx, cmd.endx)-minx+1,
                         std::max(cmd.starty, cmd.endy)-miny+1);
 
-        if (!this->clip.isempty() && !this->clip.intersect(rect).isempty()){
+        if (!clip.isempty() && !clip.intersect(rect).isempty()){
 
             RDPLineTo new_cmd = cmd;
             new_cmd.back_color = this->convert(cmd.back_color);
@@ -528,9 +516,9 @@ struct GraphicDeviceMod : public GraphicDevice
         }
     }
 
-    virtual void glyph_index(const RDPGlyphIndex & cmd)
+    virtual void glyph_index(const RDPGlyphIndex & cmd, const Rect & clip)
     {
-        if (!this->clip.isempty() && !this->clip.intersect(cmd.bk).isempty()){
+        if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()){
             this->send_global_palette();
 
             RDPGlyphIndex new_cmd = cmd;
@@ -551,14 +539,14 @@ struct GraphicDeviceMod : public GraphicDevice
                 }
             }
 
-            this->front.orders->draw(new_cmd, this->clip);
+            this->front.orders->draw(new_cmd, clip);
 
             if (this->capture){
                 RDPGlyphIndex new_cmd24 = cmd;
                 new_cmd24.back_color = this->convert24_opaque(cmd.back_color);
                 new_cmd24.fore_color = this->convert24_opaque(cmd.fore_color);
 
-                this->capture->glyph_index(new_cmd24, this->clip);
+                this->capture->glyph_index(new_cmd24, clip);
             }
         }
     }
@@ -597,7 +585,7 @@ struct GraphicDeviceMod : public GraphicDevice
         this->front.orders->draw(cmd);
     }
 
-    virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy)
+    virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const Rect & clip)
     {
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
@@ -614,8 +602,8 @@ struct GraphicDeviceMod : public GraphicDevice
                 #warning simplify this code and add unit tests. It is much too complicated and that introduce subtile bugs
 //                LOG(LOG_INFO, "tile at dst = tile(%u, %u %u, %u) dst(%u, %u) src(%u, %u, %u, %u) clip(%u, %u, %u, %u)",
 //                    tile.x, tile.y, tile.cx, tile.cy, dst.x, dst.y, src_r.x, src_r.y, src_r.cx, src_r.cy,
-//                    this->clip.x, this->clip.y, this->clip.cx, this->clip.cy);  
-                if (!this->clip.intersect(tile.offset(dst.x, dst.y)).isempty()) { 
+//                    clip.x, clip.y, clip.cx, clip.cy);  
+                if (!clip.intersect(tile.offset(dst.x, dst.y)).isempty()) { 
                     if ((src_r.cx > src_r.x + x) && (src_r.cy > src_r.y + y)) {
                          uint32_t cache_ref = this->front.bmp_cache->add_bitmap(
                                                     src_r.cx, src_r.cy,
@@ -633,8 +621,8 @@ struct GraphicDeviceMod : public GraphicDevice
                         }
 
                         const RDPMemBlt cmd(cache_id, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
-                        if (!this->clip.isempty()
-                        && !this->clip.intersect(cmd.rect).isempty()){
+                        if (!clip.isempty()
+                        && !clip.intersect(cmd.rect).isempty()){
                             if (this->get_front_bpp() == 8){
                                 if (!this->palette_memblt_sent[palette_id]) {
                                     if (bitmap.original_bpp == 8){
@@ -647,10 +635,10 @@ struct GraphicDeviceMod : public GraphicDevice
                                 }
                                 this->palette_sent = false;
                             }
-                            this->front.orders->draw(cmd, this->clip);
+                            this->front.orders->draw(cmd, clip);
                             #warning capture should have it's own reference to bmp_cache
                             if (this->capture){
-                                this->capture->mem_blt(cmd, *this->front.bmp_cache, this->clip);
+                                this->capture->mem_blt(cmd, *this->front.bmp_cache, clip);
                             }
                         }
                     }
@@ -869,8 +857,6 @@ struct client_mod : public Callback {
             this->front_resize();
             this->gd.front.reset();
         }
-
-        this->gd.server_reset_clip();
     }
 
     int server_is_term()

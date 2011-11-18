@@ -28,7 +28,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdlib.h>
-#include <stdint.h>"
+#include <stdint.h>
 
 #include "colors.hpp"
 
@@ -238,8 +238,6 @@ struct mod_vnc : public client_mod {
                     stream.skip_uint8(3); // skip padding
 
                     LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
-
-                    this->gd.server_set_clip(Rect(0, 0, width, height));
 
                     int lg = stream.in_uint32_be();
 
@@ -719,7 +717,7 @@ struct mod_vnc : public client_mod {
                 #warning there is still an alignement issue in bitmaps, fixed, but my fix is quite evil.
                 Bitmap bmp(this->bpp, &this->gd.palette332, cx, cy, raw, need_size, false, true);
                 free(raw);
-                this->gd.bitmap_update(bmp, Rect(x, y, cx, cy), 0, 0);
+                this->gd.bitmap_update(bmp, Rect(x, y, cx, cy), 0, 0, this->gd.get_front_rect());
             }
             break;
             case 1: /* copy rect */
@@ -730,9 +728,8 @@ struct mod_vnc : public client_mod {
                 const int srcx = stream.in_uint16_be();
                 const int srcy = stream.in_uint16_be();
 //                    LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
-                #warning should we not set clip rectangle ?
                 const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
-                this->gd.scr_blt(scrblt);
+                this->gd.scr_blt(scrblt, this->gd.get_front_rect());
             }
             break;
             case 0xffffff11: /* cursor */

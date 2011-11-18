@@ -31,7 +31,6 @@
 //{
 //    nb_windows();
 //    window(i);
-//    server_set_clip()
 //    draw_window();
 //    draw_edit();
 //    draw_combo();
@@ -184,8 +183,10 @@ void window::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->gd.draw_window(scr_r, this->bg_color, this->caption1, this->has_focus);
+        this->mod->gd.draw_window(scr_r, 
+            this->bg_color, this->caption1, 
+            this->has_focus, 
+            region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 }
 
@@ -197,8 +198,12 @@ void widget_edit::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->gd.draw_edit(scr_r, this->password_char, this->buffer, this->edit_pos, this->has_focus);
+        this->mod->gd.draw_edit(scr_r, 
+            this->password_char, 
+            this->buffer, 
+            this->edit_pos, 
+            this->has_focus, 
+            region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 }
 
@@ -208,8 +213,9 @@ void widget_screen::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->gd.opaque_rect(RDPOpaqueRect(scr_r, this->bg_color));
+        this->mod->gd.opaque_rect(
+            RDPOpaqueRect(scr_r, this->bg_color),
+            region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 }
 
@@ -219,8 +225,11 @@ void widget_combo::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->gd.draw_combo(scr_r, this->string_list[this->item_index], this->state, this->has_focus);
+        this->mod->gd.draw_combo(scr_r,
+            this->string_list[this->item_index],
+            this->state,
+            this->has_focus,
+            region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 }
 
@@ -232,8 +241,11 @@ void widget_button::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->gd.draw_button(scr_r, this->caption1, this->state, this->has_focus);
+        this->mod->gd.draw_button(scr_r,
+            this->caption1,
+            this->state,
+            this->has_focus,
+            region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 }
 
@@ -244,8 +256,9 @@ void widget_popup::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->gd.opaque_rect(RDPOpaqueRect(Rect(scr_r.x, scr_r.y, this->rect.cx, this->rect.cy), WHITE));
+        this->mod->gd.opaque_rect(
+            RDPOpaqueRect(Rect(scr_r.x, scr_r.y, this->rect.cx, this->rect.cy), WHITE),
+            region.rects[ir].intersect(this->to_screen_rect(clip)));
 
         #warning this should be a two stages process, first prepare drop box data, then call draw_xxx that use that data to draw. For now everything is mixed up, (and that is not good)
         /* draw the list items */
@@ -257,11 +270,11 @@ void widget_popup::draw(const Rect & clip)
                 int h = this->mod->gd.text_height(p);
                 this->item_height = h;
                 if (i == this->item_index) { // deleted item
-                    this->mod->gd.opaque_rect(RDPOpaqueRect(Rect(scr_r.x, scr_r.y + y, this->rect.cx, h), WABGREEN));
-                    this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + y, p, WABGREEN, WHITE);
+                    this->mod->gd.opaque_rect(RDPOpaqueRect(Rect(scr_r.x, scr_r.y + y, this->rect.cx, h), WABGREEN), region.rects[ir].intersect(this->to_screen_rect(clip)));
+                    this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + y, p, WABGREEN, WHITE, region.rects[ir].intersect(this->to_screen_rect(clip)));
                 }
                 else {
-                    this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + y, p, WHITE, BLACK);
+                    this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + y, p, WHITE, BLACK, region.rects[ir].intersect(this->to_screen_rect(clip)));
                 }
                 y = y + h;
             }
@@ -280,8 +293,8 @@ void widget_label::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->gd.server_draw_text(scr_r.x, scr_r.y, this->caption1, GREY, BLACK);
+        this->mod->gd.server_draw_text(scr_r.x, scr_r.y, this->caption1, GREY, BLACK, 
+            region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 
 }
@@ -315,8 +328,7 @@ void widget_image::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, intersection);
 
     for (size_t ir = 0; ir < region.rects.size(); ir++){
-        this->mod->gd.server_set_clip(region.rects[ir]);
-        this->mod->gd.bitmap_update(this->bmp, image_screen_rect, 0, 0);
+        this->mod->gd.bitmap_update(this->bmp, image_screen_rect, 0, 0, region.rects[ir]);
     }
 }
 

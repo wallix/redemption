@@ -196,7 +196,7 @@ struct xup_mod : public client_mod {
                             stream.in_uint16_le());
                          this->gd.pat_blt(RDPPatBlt(r, this->rop, BLACK, WHITE,
                             RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")
-                            ));
+                            ), r);
                     }
                     break;
                     case 4:
@@ -209,7 +209,7 @@ struct xup_mod : public client_mod {
                         const int srcx = stream.in_sint16_le();
                         const int srcy = stream.in_sint16_le();
                         const RDPScrBlt scrblt(r, 0xCC, srcx, srcy);
-                        this->gd.scr_blt(scrblt);
+                        this->gd.scr_blt(scrblt, r);
                     }
                     break;
                     case 5:
@@ -226,7 +226,7 @@ struct xup_mod : public client_mod {
                         int srcx = stream.in_sint16_le();
                         int srcy = stream.in_sint16_le();
                         Bitmap bmp(bpp, &this->gd.palette332, width, height, bmpdata, sizeof(bmpdata));
-                        this->gd.bitmap_update(bmp, r, srcx, srcy);
+                        this->gd.bitmap_update(bmp, r, srcx, srcy, r);
                     }
                     break;
                     case 10: /* server_set_clip */
@@ -236,11 +236,13 @@ struct xup_mod : public client_mod {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                        this->gd.server_set_clip(r);
+                          #warning see clip management
+//                        this->gd.server_set_clip(r);
                     }
                     break;
                     case 11: /* server_reset_clip */
-                        this->gd.server_reset_clip();
+                          #warning see clip management
+//                        this->gd.server_reset_clip();
                     break;
                     case 12: /* server_set_fgcolor */
                     {
@@ -266,7 +268,7 @@ struct xup_mod : public client_mod {
                         const RDPLineTo lineto(1, x1, y1, x2, y2, WHITE,
                                                this->rop,
                                                RDPPen(this->gd.pen.style, this->gd.pen.width, this->fgcolor));
-                        this->gd.line_to(lineto);
+                        this->gd.line_to(lineto, Rect(0,0,1,1));
                     }
                     break;
                     case 19:

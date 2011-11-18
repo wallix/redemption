@@ -264,7 +264,7 @@ struct GraphicsFile
                     }
                     //                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
                     switch (this->common.order) {
-                        case TEXT2://
+                        case GLYPHINDEX://
                             //this->glyph_index.receive(this->stream, header);
                             //mod->glyph_index(this->glyph_index);
                             break;
