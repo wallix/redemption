@@ -1389,43 +1389,83 @@ struct mod_rdp : public client_mod {
             this->out_unknown_caps(stream, 0x10, 0x34, caps_glyphcache); /* glyph cache? */
         }
 
+        // 2.2.1.13.1.1 Demand Active PDU Data (TS_DEMAND_ACTIVE_PDU)
+        // ==========================================================
+        // The TS_DEMAND_ACTIVE_PDU structure is a standard T.128 Demand Active PDU (see [T128] section 8.4.1).
+
+        // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1) containing information about the packet. The type subfield of the pduType field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
+
+        // shareId (4 bytes): A 32-bit, unsigned integer. The share identifier for the packet (see [T128] section 8.4.2 for more information regarding share IDs).
+
+        // lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The size in bytes of the sourceDescriptor field.
+
+        // lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer. The combined size in bytes of the numberCapabilities, pad2Octets, and capabilitySets fields.
+        
+        // sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see [T128] section 8.4.1 for more information regarding source descriptors).
+        
+        // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the Demand Active PDU.
+        
+        // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+
+        // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number of capability sets is specified by the numberCapabilities field.
+
+        // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
+
 
         void send_confirm_active(client_mod * mod, int use_rdp5) throw(Error)
         {
             LOG(LOG_INFO, "Sending confirm active to server\n");
 
-            int caplen = RDP_CAPLEN_GENERAL
-                       + RDP_CAPLEN_BITMAP
-                       + RDP_CAPLEN_ORDER
-                       + RDP_CAPLEN_BMPCACHE
-                       + RDP_CAPLEN_COLCACHE
-                       + RDP_CAPLEN_ACTIVATE
-                       + RDP_CAPLEN_CONTROL
-                       + RDP_CAPLEN_POINTER_MONO
-                       + RDP_CAPLEN_SHARE
-                        /* unknown caps */
-                       + 0x58
-                       + 0x08
-                       + 0x08
-                       + 0x34
-                       + 4 /* w2k fix, why? */ ;
+//            int caplen = RDP_CAPLEN_GENERAL
+//                       + RDP_CAPLEN_BITMAP
+//                       + RDP_CAPLEN_ORDER
+//                       + RDP_CAPLEN_BMPCACHE
+//                       + RDP_CAPLEN_COLCACHE
+//                       + RDP_CAPLEN_ACTIVATE
+//                       + RDP_CAPLEN_CONTROL
+//                       + RDP_CAPLEN_POINTER_MONO
+//                       + RDP_CAPLEN_SHARE
+//                        /* unknown caps */
+//                       + 0x58
+//                       + 0x08
+//                       + 0x08
+//                       + 0x34
+//                       + 4 /* w2k fix, why? */ ;
 
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
+
+        // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1) containing information about the packet. The type subfield of the pduType field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
+
             ShareControlOut rdp_control_out(stream, PDUTYPE_CONFIRMACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
 
+        // shareId (4 bytes): A 32-bit, unsigned integer. The share identifier for the packet (see [T128] section 8.4.2 for more information regarding share IDs).
 
             stream.out_uint32_le(this->share_id);
-            stream.out_uint16_le(1002); /* userid */
+//            stream.out_uint16_le(1002); /* userid */
+            stream.out_uint16_le(1002); /* userid : this parameter seems not to be documented ? */
+
+        // lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The size in bytes of the sourceDescriptor field.
             stream.out_uint16_le(5);
+
+        // lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer. The combined size in bytes of the numberCapabilities, pad2Octets, and capabilitySets fields.
+        
             uint16_t offset_caplen = stream.p - stream.data; 
             stream.out_uint16_le(0); // caplen
+            
+        // sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see [T128] section 8.4.1 for more information regarding source descriptors).
             stream.out_copy_bytes("MSTSC", 5);
 
-            stream.out_uint16_le(0xd); /* num_caps */
+        // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the Demand Active PDU.
+            stream.out_uint16_le(13); /* num_caps */
+
+        // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be ignored.
             stream.out_clear_bytes(2); /* pad */
+
+        // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number of capability sets is specified by the numberCapabilities field.
+            uint16_t total_caplen = stream.p - stream.data;
 
             uint16_t caplen_general = stream.p - stream.data;
             this->out_general_caps(stream, use_rdp5); // RDP_CAPLEN_GENERAL = 24
@@ -1447,7 +1487,6 @@ struct mod_rdp : public client_mod {
             this->out_bmpcache_caps(stream);         // RDP_CAPLEN_BMPCACHE   = 40
             caplen_bmp_cache = stream.p - stream.data - caplen_bmp_cache;
             LOG(LOG_INFO, "caplen_bmp_cache==%u", caplen_bmp_cache);
-
 
             if(use_rdp5 == 0){
                 uint16_t caplen_bmp_cache = stream.p - stream.data;
@@ -1502,15 +1541,23 @@ struct mod_rdp : public client_mod {
             caplen_font = stream.p - stream.data - caplen_font;
             LOG(LOG_INFO, "caplen_font==%u", caplen_font);
 
-            uint16_t caplen_glyphcache = stream.p - stream.data;
-            this->out_glyphcache_caps(stream);
-            caplen_glyphcache = stream.p - stream.data - caplen_glyphcache;   // RDP_CAPLEN_0x10 52
-            LOG(LOG_INFO, "caplen_glyphcache==%u", caplen_glyphcache);
+//            uint16_t caplen_glyphcache = stream.p - stream.data;
+//            this->out_glyphcache_caps(stream);
+//            caplen_glyphcache = stream.p - stream.data - caplen_glyphcache;   // RDP_CAPLEN_0x10 52
+//            LOG(LOG_INFO, "caplen_glyphcache==%u", caplen_glyphcache);
 
-            stream.set_out_uint16_le(stream.p - stream.data - offset_caplen - 47, offset_caplen); // caplen
+            total_caplen = stream.p - stream.data - total_caplen;
+
+            // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
+            stream.out_uint32_le(0);
+
+
+//            stream.set_out_uint16_le(stream.p - stream.data - offset_caplen - 47, offset_caplen); // caplen
 //            stream.set_out_uint16_le(caplen, offset_caplen); // caplen
-            LOG(LOG_INFO, "caplen=%u computed caplen=%u offset_here = %u offset_caplen=%u", caplen, stream.p - stream.data - offset_caplen, stream.p - stream.data, offset_caplen);
+            stream.set_out_uint16_le(total_caplen + 4, offset_caplen); // caplen
+            LOG(LOG_INFO, "total_caplen = %u, caplen=%u computed caplen=%u offset_here = %u offset_caplen=%u", total_caplen, 388, stream.p - stream.data - offset_caplen, stream.p - stream.data, offset_caplen);
 
+            
             rdp_control_out.end();
             sec_out.end();
             sdrq_out.end();
