@@ -1193,7 +1193,8 @@ struct mod_rdp : public client_mod {
         void out_general_caps(Stream & stream, int use_rdp5)
         {
             stream.out_uint16_le(RDP_CAPSET_GENERAL);
-            stream.out_uint16_le(RDP_CAPLEN_GENERAL);
+            const uint16_t offset_len = stream.p - stream.data;
+            stream.out_uint16_le(0);
             stream.out_uint16_le(1); /* OS major type */
             stream.out_uint16_le(3); /* OS minor type */
             stream.out_uint16_le(0x200); /* Protocol version */
@@ -1204,6 +1205,7 @@ struct mod_rdp : public client_mod {
             stream.out_uint16_le(0); /* Remote unshare capability */
             stream.out_uint16_le(0); /* Compression level */
             stream.out_uint16_le(0); /* Pad */
+            stream.set_out_uint16_le(RDP_CAPLEN_GENERAL, offset_len);
         }
 
         void out_bitmap_caps(Stream & stream)
@@ -1343,12 +1345,16 @@ struct mod_rdp : public client_mod {
             stream.out_uint16_le(0); /* pad */
         }
 
-
-        void send_confirm_active(client_mod * mod, int use_rdp5) throw(Error)
+        void out_sound_caps(Stream & stream)
         {
-            LOG(LOG_INFO, "Sending confirm active to server\n");
+            const char caps_sound[] = { 0x01, 0x00, 0x00, 0x00 };
+            this->out_unknown_caps(stream, 0x0c, 0x08, caps_sound);
+        }
 
-            char caps_0x0d[] = {
+
+        void out_input_caps(Stream & stream)
+        {
+            const char caps_input[] = {
             0x01, 0x00, 0x00, 0x00, 0x09, 0x04, 0x00, 0x00,
             0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1361,12 +1367,18 @@ struct mod_rdp : public client_mod {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00
             };
+            this->out_unknown_caps(stream, 0x0d, 0x58, caps_input); /* international? */   // RDP_CAPLEN_0x0D 88
+        }
 
-            char caps_0x0c[] = { 0x01, 0x00, 0x00, 0x00 };
+        void out_font_caps(Stream & stream)
+        {
+            const char caps_font[] = { 0x01, 0x00, 0x00, 0x00 };
+            this->out_unknown_caps(stream, 0x0e, 0x08, caps_font);   // RDP_CAPLEN_0x0E 8
+        }
 
-            char caps_0x0e[] = { 0x01, 0x00, 0x00, 0x00 };
-
-            char caps_0x10[] = {
+        void out_glyphcache_caps(Stream & stream)
+        {
+            const char caps_glyphcache[] = {
             0xFE, 0x00, 0x04, 0x00, 0xFE, 0x00, 0x04, 0x00,
             0xFE, 0x00, 0x08, 0x00, 0xFE, 0x00, 0x08, 0x00,
             0xFE, 0x00, 0x10, 0x00, 0xFE, 0x00, 0x20, 0x00,
@@ -1374,6 +1386,13 @@ struct mod_rdp : public client_mod {
             0xFE, 0x00, 0x00, 0x01, 0x40, 0x00, 0x00, 0x08,
             0x00, 0x01, 0x00, 0x01, 0x02, 0x00, 0x00, 0x00
             };
+            this->out_unknown_caps(stream, 0x10, 0x34, caps_glyphcache); /* glyph cache? */
+        }
+
+
+        void send_confirm_active(client_mod * mod, int use_rdp5) throw(Error)
+        {
+            LOG(LOG_INFO, "Sending confirm active to server\n");
 
             int caplen = RDP_CAPLEN_GENERAL
                        + RDP_CAPLEN_BITMAP
@@ -1395,42 +1414,104 @@ struct mod_rdp : public client_mod {
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
+            ShareControlOut rdp_control_out(stream, PDUTYPE_CONFIRMACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
 
-            stream.out_uint16_le(2 + 14 + caplen + sizeof(RDP_SOURCE));
-            stream.out_uint16_le((PDUTYPE_CONFIRMACTIVEPDU | 0x10)); /* Version 1 */
-            LOG(LOG_INFO, "send confirm active %u", this->userid + MCS_USERCHANNEL_BASE);
-            stream.out_uint16_le(this->userid + MCS_USERCHANNEL_BASE); // channel
+
             stream.out_uint32_le(this->share_id);
             stream.out_uint16_le(1002); /* userid */
-            stream.out_uint16_le(sizeof(RDP_SOURCE));
-            stream.out_uint16_le(caplen);
+            stream.out_uint16_le(5);
+            uint16_t offset_caplen = stream.p - stream.data; 
+            stream.out_uint16_le(0); // caplen
+            stream.out_copy_bytes("MSTSC", 5);
 
-            stream.out_copy_bytes(RDP_SOURCE, sizeof(RDP_SOURCE));
             stream.out_uint16_le(0xd); /* num_caps */
             stream.out_clear_bytes(2); /* pad */
 
-            this->out_general_caps(stream, use_rdp5);
-            this->out_bitmap_caps(stream);
-            this->out_order_caps(stream);
+            uint16_t caplen_general = stream.p - stream.data;
+            this->out_general_caps(stream, use_rdp5); // RDP_CAPLEN_GENERAL = 24
+            caplen_general = stream.p - stream.data - caplen_general;
+            LOG(LOG_INFO, "caplen_general==%u", caplen_general);
+
+            uint16_t caplen_bitmap = stream.p - stream.data;
+            this->out_bitmap_caps(stream);            // RDP_CAPLEN_BITMAP  = 28
+            caplen_bitmap = stream.p - stream.data - caplen_bitmap;
+            LOG(LOG_INFO, "caplen_bitmap==%u", caplen_bitmap);
+
+            uint16_t caplen_order = stream.p - stream.data;
+            this->out_order_caps(stream);             // RDP_CAPLEN_ORDER   = 88
+            caplen_order = stream.p - stream.data - caplen_order;
+            LOG(LOG_INFO, "caplen_order==%u", caplen_order);
 
             #warning two identical calls in a row, this is strange, check documentation
-            this->out_bmpcache_caps(stream);
+            uint16_t caplen_bmp_cache = stream.p - stream.data;
+            this->out_bmpcache_caps(stream);         // RDP_CAPLEN_BMPCACHE   = 40
+            caplen_bmp_cache = stream.p - stream.data - caplen_bmp_cache;
+            LOG(LOG_INFO, "caplen_bmp_cache==%u", caplen_bmp_cache);
+
+
             if(use_rdp5 == 0){
-                this->out_bmpcache_caps(stream);
+                uint16_t caplen_bmp_cache = stream.p - stream.data;
+                this->out_bmpcache_caps(stream);     // RDP_CAPLEN_BMPCACHE   = 40
+                caplen_bmp_cache = stream.p - stream.data - caplen_bmp_cache;
+                LOG(LOG_INFO, "caplen_bmp_cache==%u", caplen_bmp_cache);
             }
             else {
+                uint16_t caplen_bmp_cache2 = stream.p - stream.data;
                 this->out_bmpcache2_caps(stream, mod->gd.get_client_info());
+                caplen_bmp_cache2 = stream.p - stream.data - caplen_bmp_cache2;
+                LOG(LOG_INFO, "caplen_bmp_cache2==%u", caplen_bmp_cache2);
             }
-            this->out_colcache_caps(stream);
-            this->out_activate_caps(stream);
-            this->out_control_caps(stream);
-            this->out_pointer_caps(stream);
-            this->out_share_caps(stream);
-            this->out_unknown_caps(stream, 0x0d, 0x58, caps_0x0d); /* international? */
-            this->out_unknown_caps(stream, 0x0c, 0x08, caps_0x0c);
-            this->out_unknown_caps(stream, 0x0e, 0x08, caps_0x0e);
-            this->out_unknown_caps(stream, 0x10, 0x34, caps_0x10); /* glyph cache? */
 
+            uint16_t caplen_colcache = stream.p - stream.data;
+            this->out_colcache_caps(stream); // RDP_CAPLEN_COLCACHE 8
+            caplen_colcache = stream.p - stream.data - caplen_colcache;
+            LOG(LOG_INFO, "caplen_colcache==%u", caplen_colcache);
+
+            uint16_t caplen_activate = stream.p - stream.data;
+            this->out_activate_caps(stream);  // RDP_CAPLEN_ACTIVATE 12
+            caplen_activate = stream.p - stream.data - caplen_activate;
+            LOG(LOG_INFO, "caplen_activate==%u", caplen_activate);
+
+            uint16_t caplen_control = stream.p - stream.data;
+            this->out_control_caps(stream);   // RDP_CAPLEN_CONTROL 12
+            caplen_control = stream.p - stream.data - caplen_control;
+            LOG(LOG_INFO, "caplen_control==%u", caplen_control);
+
+            uint16_t caplen_pointer = stream.p - stream.data;
+            this->out_pointer_caps(stream);   // RDP_CAPLEN_POINTER 8
+            caplen_pointer = stream.p - stream.data - caplen_pointer;
+            LOG(LOG_INFO, "caplen_pointer==%u", caplen_pointer);
+
+            uint16_t caplen_share = stream.p - stream.data;
+            this->out_share_caps(stream);   // RDP_CAPLEN_SHARE 8
+            caplen_share = stream.p - stream.data - caplen_share;
+            LOG(LOG_INFO, "caplen_share==%u", caplen_share);
+
+            uint16_t caplen_input = stream.p - stream.data;
+            this->out_input_caps(stream);
+            caplen_input = stream.p - stream.data - caplen_input;
+            LOG(LOG_INFO, "caplen_input==%u", caplen_input);
+
+            uint16_t caplen_sound = stream.p - stream.data;
+            this->out_sound_caps(stream);    // RDP_CAPLEN_0x0C 8
+            caplen_sound = stream.p - stream.data - caplen_sound;
+            LOG(LOG_INFO, "caplen_sound==%u", caplen_sound);
+
+            uint16_t caplen_font = stream.p - stream.data;
+            this->out_font_caps(stream);
+            caplen_font = stream.p - stream.data - caplen_font;
+            LOG(LOG_INFO, "caplen_font==%u", caplen_font);
+
+            uint16_t caplen_glyphcache = stream.p - stream.data;
+            this->out_glyphcache_caps(stream);
+            caplen_glyphcache = stream.p - stream.data - caplen_glyphcache;   // RDP_CAPLEN_0x10 52
+            LOG(LOG_INFO, "caplen_glyphcache==%u", caplen_glyphcache);
+
+            stream.set_out_uint16_le(stream.p - stream.data - offset_caplen - 47, offset_caplen); // caplen
+//            stream.set_out_uint16_le(caplen, offset_caplen); // caplen
+            LOG(LOG_INFO, "caplen=%u computed caplen=%u offset_here = %u offset_caplen=%u", caplen, stream.p - stream.data - offset_caplen, stream.p - stream.data, offset_caplen);
+
+            rdp_control_out.end();
             sec_out.end();
             sdrq_out.end();
             tpdu.end();
@@ -1440,7 +1521,7 @@ struct mod_rdp : public client_mod {
         }
 
 
-        void out_unknown_caps(Stream & stream, int id, int length, char* caps)
+        void out_unknown_caps(Stream & stream, int id, int length, const char * caps)
         {
 //            LOG(LOG_INFO, "Sending unknown caps to server\n");
             stream.out_uint16_le(id);

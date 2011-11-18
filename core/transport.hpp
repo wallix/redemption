@@ -356,6 +356,7 @@ class SocketTransport : public Transport {
     using Transport::recv;
     virtual void recv(char ** input_buffer, size_t total_len) throw (Error)
     {
+        LOG(LOG_INFO, "Socket %u receiving %u bytes", this->sck, total_len);
 //        uint8_t * start = (uint8_t*)(*input_buffer);
         int len = total_len;
         char * pbuffer = *input_buffer;
@@ -399,12 +400,14 @@ class SocketTransport : public Transport {
 //            bb[4], bb[5], bb[6],
 //            bb[7], bb[8], bb[9], bb[10], bb[11],
 //            bb[12], bb[13], bb[14], bb[15], bb[16]);
+        LOG(LOG_INFO, "Recv done");
     }
 
     using Transport::send;
 
     virtual void send(const char * const buffer, int len) throw (Error)
     {
+        LOG(LOG_INFO, "Socket %u sending %u bytes", this->sck, len);
 //        LOG(LOG_INFO, "send on socket %u : len=%u buffer=%p"
 //            " [%0.2X %0.2X %0.2X %0.2X]"
 //            " [%0.2X %0.2X %0.2X]"
@@ -439,6 +442,7 @@ class SocketTransport : public Transport {
         }
         total_sent += len;
         last_quantum_sent += len;
+        LOG(LOG_INFO, "Send done");
     }
 
     private:
