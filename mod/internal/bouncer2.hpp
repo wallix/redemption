@@ -55,7 +55,7 @@ struct bouncer2_mod : public internal_mod {
     {
         
         this->gd.server_begin_update();
-        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00), this->gd.get_front_rect());
+        this->gd.draw(RDPOpaqueRect(this->screen.rect, 0x00FF00), this->gd.get_front_rect());
         this->gd.server_end_update();
 
         this->dancing_rect = new Rect(0,0,100,100);
@@ -141,7 +141,7 @@ struct bouncer2_mod : public internal_mod {
 
         // Drawing the RECT
         this->gd.server_begin_update();
-        this->gd.opaque_rect(RDPOpaqueRect(*this->dancing_rect, 0x0000FF), this->gd.get_front_rect());
+        this->gd.draw(RDPOpaqueRect(*this->dancing_rect, 0x0000FF), this->gd.get_front_rect());
         this->gd.server_end_update();
 
         // And erase
@@ -166,7 +166,7 @@ struct bouncer2_mod : public internal_mod {
             {}
 
             void callback(const Rect & a) {
-                b.gd.opaque_rect(RDPOpaqueRect(a, color), this->clip);
+                b.gd.draw(RDPOpaqueRect(a, color), this->clip);
             }
         } it(color, *this, clip);
 

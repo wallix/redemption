@@ -61,19 +61,24 @@ struct GraphicDevice
     virtual void draw_button(const Rect & r, const char * caption, int state, bool has_focus, const Rect & clip) = 0;
     virtual void draw_edit(const Rect & r, char password_char, char * buffer, size_t edit_pos, bool has_focus, const Rect & clip) = 0;
     virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) = 0;
-    virtual void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip) = 0;
-    virtual void scr_blt(const RDPScrBlt & cmd, const Rect & clip) = 0;
-    virtual void dest_blt(const RDPDestBlt & cmd, const Rect & clip) = 0;
-    virtual void pat_blt(const RDPPatBlt & cmd, const Rect & clip) = 0;
-    virtual void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const BGRPalette & palette, const Rect & clip) = 0;
-    virtual void server_set_pen(int style, int width) = 0;
 
-    virtual void line_to(const RDPLineTo & cmd, const Rect & clip) = 0;
-    virtual void glyph_index(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPScrBlt & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPDestBlt & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPPatBlt & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPLineTo & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
+
     virtual void brush_cache(const int index) = 0;
     virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex) = 0;
     virtual void bitmap_cache(const uint8_t cache_id, const uint16_t cache_idx) = 0;
     virtual void glyph_cache(const FontChar & font_char, int font_index, int char_index) = 0;
+
+
+    virtual void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const BGRPalette & palette, const Rect & clip) = 0;
+
+    virtual void server_set_pen(int style, int width) = 0;
     virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const Rect & clip) = 0;
     virtual void set_pointer(int cache_idx) = 0;
     virtual void send_global_palette() = 0;

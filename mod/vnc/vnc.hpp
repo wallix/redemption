@@ -729,7 +729,7 @@ struct mod_vnc : public client_mod {
                 const int srcy = stream.in_uint16_be();
 //                    LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
                 const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
-                this->gd.scr_blt(scrblt, this->gd.get_front_rect());
+                this->gd.draw(scrblt, this->gd.get_front_rect());
             }
             break;
             case 0xffffff11: /* cursor */

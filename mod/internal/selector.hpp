@@ -3748,7 +3748,7 @@ struct selector_mod : public internal_mod {
 
 
     void draw_background(const Rect & clip){
-        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect, GREY), clip);
+        this->gd.draw(RDPOpaqueRect(this->screen.rect, GREY), clip);
     }
 
     void draw_login(const Rect & clip){
@@ -3786,7 +3786,7 @@ struct selector_mod : public internal_mod {
             uint32_t bc = this->back_color[line%2+2*(line == this->focus_line)];
             uint32_t fc = this->fore_color[line%2+2*(line == this->focus_line)];
 
-            this->gd.opaque_rect(RDPOpaqueRect(rect, bc), clip);
+            this->gd.draw(RDPOpaqueRect(rect, bc), clip);
             this->gd.server_draw_text(35       , rect.y + 2,  this->grid[line].group, bc, fc, clip);
             this->gd.server_draw_text(35 +  3*w, rect.y + 2,  this->grid[line].target, bc, fc, clip);
             this->gd.server_draw_text(35 + 13*w, rect.y + 2,  this->grid[line].protocol, bc, fc, clip);

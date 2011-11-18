@@ -170,6 +170,7 @@ struct rdp_orders {
     /*****************************************************************************/
     int process_orders(int bpp, Stream & stream, int num_orders, client_mod * mod)
     {
+//        RDPGraphicDevice & consumer = mod->gd;
         using namespace RDP;
         int processed = 0;
         while (processed < num_orders) {
@@ -220,27 +221,27 @@ struct rdp_orders {
                 switch (this->common.order) {
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
-                    mod->gd.glyph_index(this->glyph_index, cmd_clip);
+                    mod->gd.draw(this->glyph_index, cmd_clip);
                     break;
                 case DESTBLT:
                     this->destblt.receive(stream, header);
-                    mod->gd.dest_blt(this->destblt, cmd_clip);
+                    mod->gd.draw(this->destblt, cmd_clip);
                     break;
                 case PATBLT:
                     this->patblt.receive(stream, header);
-                    mod->gd.pat_blt(this->patblt, cmd_clip);
+                    mod->gd.draw(this->patblt, cmd_clip);
                     break;
                 case SCREENBLT:
                     this->scrblt.receive(stream, header);
-                    mod->gd.scr_blt(this->scrblt, cmd_clip);
+                    mod->gd.draw(this->scrblt, cmd_clip);
                     break;
                 case LINE:
                     this->lineto.receive(stream, header);
-                    mod->gd.line_to(this->lineto, cmd_clip);
+                    mod->gd.draw(this->lineto, cmd_clip);
                     break;
                 case RECT:
                     this->opaquerect.receive(stream, header);
-                    mod->gd.opaque_rect(this->opaquerect, cmd_clip);
+                    mod->gd.draw(this->opaquerect, cmd_clip);
                     break;
                 case MEMBLT:
                     this->memblt.receive(stream, header);
@@ -924,6 +925,7 @@ struct mod_rdp : public client_mod {
                     int len = stream.in_uint16_le();
                     if (len == 0x8000) {
                         next_packet += 8;
+                        LOG(LOG_INFO, "Packet len == 0x8000");
                         continue;
                     }
 
@@ -935,6 +937,7 @@ struct mod_rdp : public client_mod {
                     case PDUTYPE_DATAPDU:
                         switch (this->connection_finalization_state){
                         case EARLY:
+                            LOG(LOG_INFO, "EARLY");
                         break;
                         case WAITING_SYNCHRONIZE:
                             LOG(LOG_INFO, "Receiving Synchronize");
@@ -961,6 +964,7 @@ struct mod_rdp : public client_mod {
                         break;
                         case UP_AND_RUNNING:
                         {
+                            LOG(LOG_INFO, "Up and running");
                             #warning I should use shareid, streamid, len, compressedType, compressedLen
                             uint32_t shareid = stream.in_uint32_le();
                             uint8_t pad1 = stream.in_uint8();
@@ -1015,10 +1019,10 @@ struct mod_rdp : public client_mod {
                             case PDUTYPE2_PLAY_SOUND:
                             break;
                             case PDUTYPE2_SAVE_SESSION_INFO:
-                //                LOG(LOG_INFO, "DATA PDU LOGON\n");
+                                LOG(LOG_INFO, "DATA PDU LOGON\n");
                             break;
                             case PDUTYPE2_SET_ERROR_INFO_PDU:
-                //                LOG(LOG_INFO, "DATA PDU DISCONNECT\n");
+                                LOG(LOG_INFO, "DATA PDU DISCONNECT\n");
                                 this->process_disconnect_pdu(stream);
                             break;
                             default:
@@ -1054,10 +1058,12 @@ struct mod_rdp : public client_mod {
                             LOG(LOG_INFO, "Sending font List");
                             /* Including RDP 5.0 capabilities */
                             if (this->use_rdp5 != 0){
+                                LOG(LOG_INFO, "use rdp5");
                                 this->enum_bmpcache2();
                                 this->send_fonts(stream, 3);
                             }
                             else{
+                                LOG(LOG_INFO, "not using rdp5");
                                 this->send_fonts(stream, 1);
                                 this->send_fonts(stream, 2);
                             }

@@ -64,14 +64,10 @@ struct internal_mod : public client_mod {
         // 0xCC = copy -> pat_blt( ... 0xF0 ...
         // 0x88 = and -> pat_blt( ...  0xC0 ...
 
-        this->gd.pat_blt(
-            RDPPatBlt(Rect(r.x, r.y, r.cx, 5), 0x5A, BLACK, WHITE, this->brush), clip);
-        this->gd.pat_blt(
-            RDPPatBlt(Rect(r.x, r.y + (r.cy - 5), r.cx, 5), 0x5A, BLACK, WHITE, this->brush), clip);
-        this->gd.pat_blt(
-            RDPPatBlt(Rect(r.x, r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush), clip);
-        this->gd.pat_blt(
-            RDPPatBlt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush), clip);
+        this->gd.draw(RDPPatBlt(Rect(r.x, r.y, r.cx, 5), 0x5A, BLACK, WHITE, this->brush), clip);
+        this->gd.draw(RDPPatBlt(Rect(r.x, r.y + (r.cy - 5), r.cx, 5), 0x5A, BLACK, WHITE, this->brush), clip);
+        this->gd.draw(RDPPatBlt(Rect(r.x, r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush), clip);
+        this->gd.draw(RDPPatBlt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush), clip);
         this->gd.server_end_update();
     }
 

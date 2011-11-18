@@ -71,14 +71,14 @@ struct test_card_mod : public internal_mod {
 
         const Rect & clip = this->screen.rect;
 
-        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect, WHITE), clip);
-        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(5), RED), clip);
-        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(10), GREEN), clip);
-        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(15), BLUE), clip);
-        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect.shrink(20), BLACK), clip);
+        this->gd.draw(RDPOpaqueRect(this->screen.rect, WHITE), clip);
+        this->gd.draw(RDPOpaqueRect(this->screen.rect.shrink(5), RED), clip);
+        this->gd.draw(RDPOpaqueRect(this->screen.rect.shrink(10), GREEN), clip);
+        this->gd.draw(RDPOpaqueRect(this->screen.rect.shrink(15), BLUE), clip);
+        this->gd.draw(RDPOpaqueRect(this->screen.rect.shrink(20), BLACK), clip);
 
         Rect winrect = this->screen.rect.shrink(30);
-        this->gd.opaque_rect(RDPOpaqueRect(winrect, WINBLUE), clip);
+        this->gd.draw(RDPOpaqueRect(winrect, WINBLUE), clip);
 
         Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.bmp");
         this->gd.bitmap_update(bitmap,

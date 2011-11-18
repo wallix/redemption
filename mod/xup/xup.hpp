@@ -194,7 +194,7 @@ struct xup_mod : public client_mod {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                         this->gd.pat_blt(RDPPatBlt(r, this->rop, BLACK, WHITE,
+                         this->gd.draw(RDPPatBlt(r, this->rop, BLACK, WHITE,
                             RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")
                             ), r);
                     }
@@ -209,7 +209,7 @@ struct xup_mod : public client_mod {
                         const int srcx = stream.in_sint16_le();
                         const int srcy = stream.in_sint16_le();
                         const RDPScrBlt scrblt(r, 0xCC, srcx, srcy);
-                        this->gd.scr_blt(scrblt, r);
+                        this->gd.draw(scrblt, r);
                     }
                     break;
                     case 5:
@@ -268,7 +268,7 @@ struct xup_mod : public client_mod {
                         const RDPLineTo lineto(1, x1, y1, x2, y2, WHITE,
                                                this->rop,
                                                RDPPen(this->gd.pen.style, this->gd.pen.width, this->fgcolor));
-                        this->gd.line_to(lineto, Rect(0,0,1,1));
+                        this->gd.draw(lineto, Rect(0,0,1,1));
                     }
                     break;
                     case 19:

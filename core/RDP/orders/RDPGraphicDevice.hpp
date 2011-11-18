@@ -56,6 +56,7 @@ struct RDPGraphicDevice
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPLineTo& cmd, const Rect & clip) = 0;
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
+
     virtual void draw(const RDPBrushCache & cmd) = 0;
     virtual void draw(const RDPColCache & cmd) = 0;
     virtual void draw(const RDPBmpCache & cmd) = 0;
@@ -142,52 +143,42 @@ struct RDPUnserializer
         }
         else {
             RDPPrimaryOrderHeader header = this->common.receive(stream, control);
-//                if (control & BOUNDS) {
-//                    mod->gd.server_set_clip(this->common.clip);
-//                }
-//                else {
-//                    mod->gd.server_reset_clip();
-//                }
-//                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
+//            const Rect & clip = ((control & RDP::BOUNDS)?this->common.clip:mod->gd.get_front_rect());
+            const Rect & clip = this->common.clip;
             switch (this->common.order) {
             case RDP::GLYPHINDEX:
                 this->glyphindex.receive(stream, header);
-                consumer->draw(this->glyphindex, this->common.clip);
+                consumer->draw(this->glyphindex, clip);
                 break;
             case RDP::DESTBLT:
                 this->destblt.receive(stream, header);
-                consumer->draw(this->destblt, this->common.clip);
+                consumer->draw(this->destblt, clip);
                 break;
             case RDP::PATBLT:
                 this->patblt.receive(stream, header);
-                consumer->draw(this->patblt, this->common.clip);
+                consumer->draw(this->patblt, clip);
                 break;
             case RDP::SCREENBLT:
                 this->scrblt.receive(stream, header);
-                consumer->draw(this->scrblt, this->common.clip);
+                consumer->draw(this->scrblt, clip);
                 break;
             case RDP::LINE:
                 this->lineto.receive(stream, header);
-                consumer->draw(this->lineto, this->common.clip);
+                consumer->draw(this->lineto, clip);
                 break;
             case RDP::RECT:
                 this->opaquerect.receive(stream, header);
-                consumer->draw(this->opaquerect, this->common.clip);
-                break;
-            case RDP::DESKSAVE:
+                consumer->draw(this->opaquerect, clip);
                 break;
             case RDP::MEMBLT:
                 this->memblt.receive(stream, header);
-                this->consumer->draw(this->memblt, this->common.clip);
+                this->consumer->draw(this->memblt, clip);
                 break;
             default:
                 /* error unknown order */
                 LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->common.order);
                 break;
             }
-//                if (header.control & BOUNDS) {
-//                    mod->gd.server_reset_clip();
-//                }
         }
         return 0;
     }

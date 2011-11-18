@@ -213,8 +213,7 @@ void widget_screen::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.opaque_rect(
-            RDPOpaqueRect(scr_r, this->bg_color),
+        this->mod->gd.draw(RDPOpaqueRect(scr_r, this->bg_color),
             region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 }
@@ -256,7 +255,7 @@ void widget_popup::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.opaque_rect(
+        this->mod->gd.draw(
             RDPOpaqueRect(Rect(scr_r.x, scr_r.y, this->rect.cx, this->rect.cy), WHITE),
             region.rects[ir].intersect(this->to_screen_rect(clip)));
 
@@ -270,7 +269,7 @@ void widget_popup::draw(const Rect & clip)
                 int h = this->mod->gd.text_height(p);
                 this->item_height = h;
                 if (i == this->item_index) { // deleted item
-                    this->mod->gd.opaque_rect(RDPOpaqueRect(Rect(scr_r.x, scr_r.y + y, this->rect.cx, h), WABGREEN), region.rects[ir].intersect(this->to_screen_rect(clip)));
+                    this->mod->gd.draw(RDPOpaqueRect(Rect(scr_r.x, scr_r.y + y, this->rect.cx, h), WABGREEN), region.rects[ir].intersect(this->to_screen_rect(clip)));
                     this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + y, p, WABGREEN, WHITE, region.rects[ir].intersect(this->to_screen_rect(clip)));
                 }
                 else {
