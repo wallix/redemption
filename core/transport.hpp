@@ -327,16 +327,6 @@ class SocketTransport : public Transport {
         SEND = 2
     };
 
-    void wait_recv_ready(int delay_ms) throw (Error)
-    {
-        this->wait_ready(RECV, delay_ms);
-    }
-
-    void wait_send_ready(int delay_ms) throw (Error)
-    {
-        this->wait_ready(SEND, delay_ms);
-    }
-
     void wait_ready(direction_t d, int delay_ms) throw (Error)
     {
         fd_set fds;
