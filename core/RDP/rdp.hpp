@@ -309,17 +309,20 @@ class ShareDataIn
     public:
     uint32_t share_id;
     uint8_t streamid;
-    uint8_t pdu_type2;
     uint16_t len;
+    uint8_t pdutype2;
+    uint8_t compressedType;
+    uint16_t compressedLen;
 
     ShareDataIn(Stream & stream)
     {
         this->share_id = stream.in_uint32_le();
         stream.in_uint8();
         this->streamid = stream.in_uint8();
-        this->pdu_type2 = stream.in_uint8();
-        stream.in_uint8();
         this->len = stream.in_uint16_le();
+        this->pdutype2 = stream.in_uint8();
+        this->compressedType = stream.in_uint8();
+        this->compressedLen = stream.in_uint16_le();
     }
 
     void end(){

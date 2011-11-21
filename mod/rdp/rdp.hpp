@@ -964,16 +964,9 @@ struct mod_rdp : public client_mod {
                         break;
                         case UP_AND_RUNNING:
                         {
+                            ShareDataIn share_data_in(stream);
 //                            LOG(LOG_INFO, "Up and running");
-                            #warning I should use shareid, streamid, len, compressedType, compressedLen
-                            uint32_t shareid = stream.in_uint32_le();
-                            uint8_t pad1 = stream.in_uint8();
-                            uint8_t streamid = stream.in_uint8();
-                            uint16_t len = stream.in_uint16_le();
-                            uint8_t pdutype2 = stream.in_uint8();
-                            uint8_t compressedType = stream.in_uint8();
-                            uint8_t compressedLen = stream.in_uint16_le();
-                            switch (pdutype2) {
+                            switch (share_data_in.pdutype2) {
                             case PDUTYPE2_UPDATE:
                             {
     // MS-RDPBCGR: 1.3.6
