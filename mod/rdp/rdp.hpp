@@ -1060,12 +1060,12 @@ struct mod_rdp : public client_mod {
                             if (this->use_rdp5 != 0){
                                 LOG(LOG_INFO, "use rdp5");
                                 this->enum_bmpcache2();
-                                this->send_fonts(stream, 3);
+                                this->send_fonts(3);
                             }
                             else{
                                 LOG(LOG_INFO, "not using rdp5");
-                                this->send_fonts(stream, 1);
-                                this->send_fonts(stream, 2);
+                                this->send_fonts(1);
+                                this->send_fonts(2);
                             }
                             this->connection_finalization_state = WAITING_SYNCHRONIZE;
                         }
@@ -1376,17 +1376,82 @@ struct mod_rdp : public client_mod {
             this->out_unknown_caps(stream, 0x0e, 0x08, caps_font);   // RDP_CAPLEN_0x0E 8
         }
 
+// 2.2.7.1.8 Glyph Cache Capability Set (TS_GLYPHCACHE_CAPABILITYSET)
+// ==================================================================
+
+// The TS_GLYPHCACHE_CAPABILITYSET structure advertises the glyph support level
+// and associated cache sizes. This capability is only sent from client to 
+// server.
+
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the 
+// capability set. This field MUST be set to CAPSTYPE_GLYPHCACHE (16).
+
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes 
+// of the capability data, including the size of the capabilitySetType and 
+// lengthCapability fields.
+
+// GlyphCache (40 bytes): An array of 10 TS_CACHE_DEFINITION structures. An 
+// ordered specification of the layout of each of the glyph caches with IDs 0 
+// through to 9 ([MS-RDPEGDI] section 3.1.1.1.2).
+
+// FragCache (4 bytes): Fragment cache data. The maximum number of entries 
+// allowed in the cache is 256, and the largest allowed maximum size of an 
+// element is 256 bytes.
+
+// GlyphSupportLevel (2 bytes): A 16-bit, unsigned integer. The level of glyph 
+// support.
+
+// +-------------------------------+-------------------------------------------+
+// |         Value                 |                    Meaning                |
+// +-------------------------------+-------------------------------------------+
+// | 0x0000 GLYPH_SUPPORT_NONE     | The client does not support glyph caching.|
+// |                               | All text output will be sent to the client|
+// |                               | as expensive Bitmap Updates (see sections |
+// |                               | 2.2.9.1.1.3.1.2 and 2.2.9.1.2.1.2).       |
+// +-------------------------------+-------------------------------------------+
+// | 0x0001 GLYPH_SUPPORT_PARTIAL  | Indicates support for Revision 1 Cache    |
+// |                               | Glyph Secondary Drawing Orders (see       |
+// |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.5).      |
+// +-------------------------------+-------------------------------------------+
+// | 0x0002 GLYPH_SUPPORT_FULL     | Indicates support for Revision 1 Cache    |
+// |                               | Glyph Secondary Drawing Orders (see       |
+// |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.5).      |
+// +-------------------------------+-------------------------------------------+
+// | 0x0003 GLYPH_SUPPORT_ENCODE   | Indicates support for Revision 2 Cache    |
+// |                               | Glyph Secondary Drawing Orders (see       |
+// |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.6).      |
+// +-------------------------------+-------------------------------------------+
+
+//If the GlyphSupportLevel is greater than GLYPH_SUPPORT_NONE (0), the client 
+//  MUST support the GlyphIndex Primary Drawing Order (see [MS-RDPEGDI] section 
+//  2.2.2.2.1.1.2.13) or the FastIndex Primary Drawing Order (see [MS-RDPEGDI] 
+//  section 2.2.2.2.1.1.2.14). If the FastIndex Primary Drawing Order is not 
+//  supported, then support for the GlyphIndex Primary Drawing Order is assumed 
+//  by the server (order support is specified in the Order Capability Set, as
+//  described in section 2.2.7.1.3).
+
+// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this   
+//   field MUST be ignored.
+
         void out_glyphcache_caps(Stream & stream)
         {
-            const char caps_glyphcache[] = {
+            static const char glyphcache[] = {
             0xFE, 0x00, 0x04, 0x00, 0xFE, 0x00, 0x04, 0x00,
             0xFE, 0x00, 0x08, 0x00, 0xFE, 0x00, 0x08, 0x00,
             0xFE, 0x00, 0x10, 0x00, 0xFE, 0x00, 0x20, 0x00,
             0xFE, 0x00, 0x40, 0x00, 0xFE, 0x00, 0x80, 0x00,
-            0xFE, 0x00, 0x00, 0x01, 0x40, 0x00, 0x00, 0x08,
-            0x00, 0x01, 0x00, 0x01, 0x02, 0x00, 0x00, 0x00
-            };
-            this->out_unknown_caps(stream, 0x10, 0x34, caps_glyphcache); /* glyph cache? */
+            0xFE, 0x00, 0x00, 0x01, 0x40, 0x00, 0x00, 0x08};
+            stream.out_uint16_le(RDP_CAPSET_GLYPHCACHE);
+            uint16_t offset_length = stream.p - stream.data;
+            stream.out_uint16_le(0);
+            uint16_t length = stream.p - stream.data;
+            stream.out_copy_bytes(glyphcache, 40);
+            stream.out_uint32_le(0x01000100);
+            stream.out_uint16_le(0x0000);
+            stream.out_uint16_le(0);
+            length = stream.p - stream.data - length;
+            stream.set_out_uint16_le(length, offset_length);
+            
         }
 
         // 2.2.1.13.1.1 Demand Active PDU Data (TS_DEMAND_ACTIVE_PDU)
@@ -1416,22 +1481,6 @@ struct mod_rdp : public client_mod {
         {
             LOG(LOG_INFO, "Sending confirm active to server\n");
 
-//            int caplen = RDP_CAPLEN_GENERAL
-//                       + RDP_CAPLEN_BITMAP
-//                       + RDP_CAPLEN_ORDER
-//                       + RDP_CAPLEN_BMPCACHE
-//                       + RDP_CAPLEN_COLCACHE
-//                       + RDP_CAPLEN_ACTIVATE
-//                       + RDP_CAPLEN_CONTROL
-//                       + RDP_CAPLEN_POINTER_MONO
-//                       + RDP_CAPLEN_SHARE
-//                        /* unknown caps */
-//                       + 0x58
-//                       + 0x08
-//                       + 0x08
-//                       + 0x34
-//                       + 4 /* w2k fix, why? */ ;
-
             Stream stream(8192);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
@@ -1459,7 +1508,9 @@ struct mod_rdp : public client_mod {
             stream.out_copy_bytes("MSTSC", 5);
 
         // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the Demand Active PDU.
-            stream.out_uint16_le(13); /* num_caps */
+            uint16_t offset_capscount = stream.p - stream.data; 
+            uint16_t capscount = 0;
+            stream.out_uint16_le(0); /* num_caps */
 
         // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be ignored.
             stream.out_clear_bytes(2); /* pad */
@@ -1468,96 +1519,110 @@ struct mod_rdp : public client_mod {
             uint16_t total_caplen = stream.p - stream.data;
 
             uint16_t caplen_general = stream.p - stream.data;
+            capscount++;
             this->out_general_caps(stream, use_rdp5); // RDP_CAPLEN_GENERAL = 24
             caplen_general = stream.p - stream.data - caplen_general;
             LOG(LOG_INFO, "caplen_general==%u", caplen_general);
 
             uint16_t caplen_bitmap = stream.p - stream.data;
+            capscount++;
             this->out_bitmap_caps(stream);            // RDP_CAPLEN_BITMAP  = 28
             caplen_bitmap = stream.p - stream.data - caplen_bitmap;
             LOG(LOG_INFO, "caplen_bitmap==%u", caplen_bitmap);
 
             uint16_t caplen_order = stream.p - stream.data;
+            capscount++;
             this->out_order_caps(stream);             // RDP_CAPLEN_ORDER   = 88
             caplen_order = stream.p - stream.data - caplen_order;
             LOG(LOG_INFO, "caplen_order==%u", caplen_order);
 
             #warning two identical calls in a row, this is strange, check documentation
             uint16_t caplen_bmp_cache = stream.p - stream.data;
+            capscount++;
             this->out_bmpcache_caps(stream);         // RDP_CAPLEN_BMPCACHE   = 40
             caplen_bmp_cache = stream.p - stream.data - caplen_bmp_cache;
             LOG(LOG_INFO, "caplen_bmp_cache==%u", caplen_bmp_cache);
 
             if(use_rdp5 == 0){
                 uint16_t caplen_bmp_cache = stream.p - stream.data;
+                capscount++;
                 this->out_bmpcache_caps(stream);     // RDP_CAPLEN_BMPCACHE   = 40
                 caplen_bmp_cache = stream.p - stream.data - caplen_bmp_cache;
                 LOG(LOG_INFO, "caplen_bmp_cache==%u", caplen_bmp_cache);
             }
             else {
                 uint16_t caplen_bmp_cache2 = stream.p - stream.data;
+                capscount++;
                 this->out_bmpcache2_caps(stream, mod->gd.get_client_info());
                 caplen_bmp_cache2 = stream.p - stream.data - caplen_bmp_cache2;
                 LOG(LOG_INFO, "caplen_bmp_cache2==%u", caplen_bmp_cache2);
             }
 
             uint16_t caplen_colcache = stream.p - stream.data;
+            capscount++;
             this->out_colcache_caps(stream); // RDP_CAPLEN_COLCACHE 8
             caplen_colcache = stream.p - stream.data - caplen_colcache;
             LOG(LOG_INFO, "caplen_colcache==%u", caplen_colcache);
 
             uint16_t caplen_activate = stream.p - stream.data;
+            capscount++;
             this->out_activate_caps(stream);  // RDP_CAPLEN_ACTIVATE 12
             caplen_activate = stream.p - stream.data - caplen_activate;
             LOG(LOG_INFO, "caplen_activate==%u", caplen_activate);
 
             uint16_t caplen_control = stream.p - stream.data;
+            capscount++;
             this->out_control_caps(stream);   // RDP_CAPLEN_CONTROL 12
             caplen_control = stream.p - stream.data - caplen_control;
             LOG(LOG_INFO, "caplen_control==%u", caplen_control);
 
             uint16_t caplen_pointer = stream.p - stream.data;
+            capscount++;
             this->out_pointer_caps(stream);   // RDP_CAPLEN_POINTER 8
             caplen_pointer = stream.p - stream.data - caplen_pointer;
             LOG(LOG_INFO, "caplen_pointer==%u", caplen_pointer);
 
             uint16_t caplen_share = stream.p - stream.data;
+            capscount++;
             this->out_share_caps(stream);   // RDP_CAPLEN_SHARE 8
             caplen_share = stream.p - stream.data - caplen_share;
             LOG(LOG_INFO, "caplen_share==%u", caplen_share);
 
             uint16_t caplen_input = stream.p - stream.data;
+            capscount++;
             this->out_input_caps(stream);
             caplen_input = stream.p - stream.data - caplen_input;
             LOG(LOG_INFO, "caplen_input==%u", caplen_input);
 
             uint16_t caplen_sound = stream.p - stream.data;
+            capscount++;
             this->out_sound_caps(stream);    // RDP_CAPLEN_0x0C 8
             caplen_sound = stream.p - stream.data - caplen_sound;
             LOG(LOG_INFO, "caplen_sound==%u", caplen_sound);
 
             uint16_t caplen_font = stream.p - stream.data;
+            capscount++;
             this->out_font_caps(stream);
             caplen_font = stream.p - stream.data - caplen_font;
             LOG(LOG_INFO, "caplen_font==%u", caplen_font);
 
-//            uint16_t caplen_glyphcache = stream.p - stream.data;
-//            this->out_glyphcache_caps(stream);
-//            caplen_glyphcache = stream.p - stream.data - caplen_glyphcache;   // RDP_CAPLEN_0x10 52
-//            LOG(LOG_INFO, "caplen_glyphcache==%u", caplen_glyphcache);
+            uint16_t caplen_glyphcache = stream.p - stream.data;
+            capscount++;
+            this->out_glyphcache_caps(stream);
+            caplen_glyphcache = stream.p - stream.data - caplen_glyphcache;   // RDP_CAPLEN_0x10 52
+            LOG(LOG_INFO, "caplen_glyphcache==%u", caplen_glyphcache);
 
             total_caplen = stream.p - stream.data - total_caplen;
 
             // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
             stream.out_uint32_le(0);
 
-
 //            stream.set_out_uint16_le(stream.p - stream.data - offset_caplen - 47, offset_caplen); // caplen
 //            stream.set_out_uint16_le(caplen, offset_caplen); // caplen
             stream.set_out_uint16_le(total_caplen + 4, offset_caplen); // caplen
             LOG(LOG_INFO, "total_caplen = %u, caplen=%u computed caplen=%u offset_here = %u offset_caplen=%u", total_caplen, 388, stream.p - stream.data - offset_caplen, stream.p - stream.data, offset_caplen);
+            stream.set_out_uint16_le(capscount, offset_capscount); // caplen
 
-            
             rdp_control_out.end();
             sec_out.end();
             sdrq_out.end();
@@ -2008,9 +2073,9 @@ struct mod_rdp : public client_mod {
             tpdu.send(this->trans);
         }
 
-        void send_fonts(Stream & stream, int seq) throw(Error)
+        void send_fonts(int seq) throw(Error)
         {
-            stream.init(65536);
+            Stream stream(65536);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
