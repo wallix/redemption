@@ -153,7 +153,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
         this->mcs_sdin = new McsOut(this->stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         this->sec_out = new SecOut(this->stream, this->crypt_level, SEC_ENCRYPT, this->encrypt);
         this->out_control = new ShareControlOut(this->stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        this->out_data = new ShareDataOut(this->stream, PDUTYPE2_UPDATE, this->shareid);
+        this->out_data = new ShareDataOut(this->stream, PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
 
         this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
         this->stream.out_clear_bytes(2); /* pad */

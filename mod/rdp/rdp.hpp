@@ -1963,7 +1963,7 @@ struct mod_rdp : public client_mod {
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-            ShareDataOut rdp_data_out(stream, PDUTYPE2_CONTROL, this->share_id);
+            ShareDataOut rdp_data_out(stream, PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
             stream.out_uint16_le(action);
             stream.out_uint16_le(0); /* userid */
@@ -1985,7 +1985,7 @@ struct mod_rdp : public client_mod {
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-            ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id);
+            ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
             stream.out_uint16_le(1); /* type */
             stream.out_uint16_le(1002);
@@ -2005,7 +2005,7 @@ struct mod_rdp : public client_mod {
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-            ShareDataOut rdp_data_out(stream, PDUTYPE2_FONTLIST, this->share_id);
+            ShareDataOut rdp_data_out(stream, PDUTYPE2_FONTLIST, this->share_id, RDP::STREAM_MED);
 
             stream.out_uint16_le(0); /* number of fonts */
             stream.out_uint16_le(0); /* pad? */
@@ -2045,7 +2045,7 @@ struct mod_rdp : public client_mod {
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-            ShareDataOut rdp_data_out(stream, PDUTYPE2_INPUT, this->share_id);
+            ShareDataOut rdp_data_out(stream, PDUTYPE2_INPUT, this->share_id, RDP::STREAM_HI);
 
             stream.out_uint16_le(1); /* number of events */
             stream.out_uint16_le(0);
@@ -2073,7 +2073,7 @@ struct mod_rdp : public client_mod {
                     McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
                     SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
                     ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-                    ShareDataOut rdp_data_out(stream, PDUTYPE2_REFRESH_RECT, this->share_id);
+                    ShareDataOut rdp_data_out(stream, PDUTYPE2_REFRESH_RECT, this->share_id, RDP::STREAM_MED);
 
                     stream.out_uint32_le(1);
                     stream.out_uint16_le(r.x);

@@ -293,7 +293,7 @@ public:
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id);
+        ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
         stream.out_uint16_le(RDP_UPDATE_PALETTE);
         stream.out_uint16_le(0);
@@ -436,7 +436,7 @@ public:
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id);
+        ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
         stream.out_uint16_le(RDP_POINTER_COLOR);
         stream.out_uint16_le(0); /* pad */
@@ -553,7 +553,7 @@ public:
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id);
+        ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
         stream.out_uint16_le(RDP_POINTER_CACHED);
         stream.out_uint16_le(0); /* pad */
@@ -1069,7 +1069,7 @@ public:
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id);
+        ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
         stream.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
         stream.out_clear_bytes(2);
@@ -1723,7 +1723,7 @@ public:
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id);
+        ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
         stream.out_uint16_le(1); /* messageType */
         stream.out_uint16_le(1002); /* control id */
@@ -1768,7 +1768,7 @@ public:
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_CONTROL, this->share_id);
+        ShareDataOut rdp_data_out(stream, PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
         stream.out_uint16_le(action);
         stream.out_uint16_le(0); /* userid */
@@ -1820,7 +1820,7 @@ public:
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_FONTMAP, this->share_id);
+        ShareDataOut rdp_data_out(stream, PDUTYPE2_FONTMAP, this->share_id, RDP::STREAM_MED);
 
         stream.out_copy_bytes((char*)g_fontmap, 172);
 
@@ -1993,7 +1993,7 @@ public:
                 McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
                 SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
                 ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-                ShareDataOut rdp_data_out(stream, PDUTYPE2_SHUTDOWN_DENIED, this->share_id);
+                ShareDataOut rdp_data_out(stream, PDUTYPE2_SHUTDOWN_DENIED, this->share_id, RDP::STREAM_MED);
                 rdp_data_out.end();
                 rdp_control_out.end();
                 sec_out.end();

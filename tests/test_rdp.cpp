@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(TestSendShareControlData)
     memset(stream.data, 0, 65536);
 
     ShareControlOut out_control(stream, PDUTYPE_DATAPDU, 1);
-    ShareDataOut out_data(stream, PDUTYPE2_UPDATE, 0x12345678);
+    ShareDataOut out_data(stream, PDUTYPE2_UPDATE, 0x12345678, RDP::STREAM_MED);
     out_data.end();
     out_control.end();
 
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(TestX224SendShareControlAndData)
 
     X224Out tpdu(X224Packet::DT_TPDU, stream);
     ShareControlOut out_control(stream, PDUTYPE_DATAPDU, 1);
-    ShareDataOut out_data(stream, PDUTYPE2_UPDATE, 0x12345678);
+    ShareDataOut out_data(stream, PDUTYPE2_UPDATE, 0x12345678, RDP::STREAM_MED);
     out_data.end();
     out_control.end();
     tpdu.end();
