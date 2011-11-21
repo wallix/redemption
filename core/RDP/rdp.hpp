@@ -99,6 +99,15 @@
 // | 0x04 STREAM_HI         | High-priority stream.                            |
 // +------------------------+--------------------------------------------------+
 
+namespace RDP {
+    enum {
+        STREAM_UNDEFINED = 0,
+        STREAM_LOW = 1,
+        STREAM_MED = 2,
+        STREAM_HI = 4
+    };
+};
+
 // uncompressedLength (2 bytes): A 16-bit, unsigned integer. The uncompressed
 //   length of the packet in bytes.
 
@@ -281,12 +290,12 @@ class ShareDataOut
         : stream(stream), offlen(stream.p - stream.data)
     {
         stream.out_uint32_le(share_id);
-        stream.out_uint8(0);
-        stream.out_uint8(1);
-        stream.skip_uint8(2);
-        stream.out_uint8(pdu_type2);
-        stream.out_uint8(0);
-        stream.out_uint16_le(0);
+        stream.out_uint8(0); // pad1
+        stream.out_uint8(2); // streamid
+        stream.skip_uint8(2); // len
+        stream.out_uint8(pdu_type2); // pdutype2
+        stream.out_uint8(0); // compressedType
+        stream.out_uint16_le(0); // compressedLen
     }
 
     void end(){
@@ -299,6 +308,7 @@ class ShareDataIn
 {
     public:
     uint32_t share_id;
+    uint8_t streamid;
     uint8_t pdu_type2;
     uint16_t len;
 
@@ -306,7 +316,7 @@ class ShareDataIn
     {
         this->share_id = stream.in_uint32_le();
         stream.in_uint8();
-        stream.in_uint8();
+        this->streamid = stream.in_uint8();
         this->pdu_type2 = stream.in_uint8();
         stream.in_uint8();
         this->len = stream.in_uint16_le();

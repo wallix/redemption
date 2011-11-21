@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TestSendShareControlData)
     BOOST_CHECK_EQUAL(0x12345678, 
             ((data[9]*256 + data[8])*256 + data[7])*256 + data[6]);
     BOOST_CHECK_EQUAL(0, data[10]);
-    BOOST_CHECK_EQUAL(1, data[11]);
+    BOOST_CHECK_EQUAL(2, data[11]);
     BOOST_CHECK_EQUAL(4, data[12] + data[13]*256);
     BOOST_CHECK_EQUAL((uint8_t)PDUTYPE2_UPDATE, data[14]);
     BOOST_CHECK_EQUAL(0, data[15]);
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(TestX224SendShareControlAndData)
     BOOST_CHECK_EQUAL(0x12345678, 
             ((data[9]*256 + data[8])*256 + data[7])*256 + data[6]);
     BOOST_CHECK_EQUAL(0, data[10]);
-    BOOST_CHECK_EQUAL(1, data[11]);
+    BOOST_CHECK_EQUAL(2, data[11]);
     BOOST_CHECK_EQUAL(4, data[12] + data[13]*256);
     BOOST_CHECK_EQUAL((uint8_t)PDUTYPE2_UPDATE, data[14]);
     BOOST_CHECK_EQUAL(0, data[15]);
