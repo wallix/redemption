@@ -1435,16 +1435,16 @@ struct mod_rdp : public client_mod {
 
         void out_glyphcache_caps(Stream & stream)
         {
+            stream.out_uint16_le(RDP_CAPSET_GLYPHCACHE);
+            uint16_t offset_length = stream.p - stream.data;
+            stream.out_uint16_le(0);
+            uint16_t length = stream.p - stream.data;
             static const char glyphcache[] = {
             0xFE, 0x00, 0x04, 0x00, 0xFE, 0x00, 0x04, 0x00,
             0xFE, 0x00, 0x08, 0x00, 0xFE, 0x00, 0x08, 0x00,
             0xFE, 0x00, 0x10, 0x00, 0xFE, 0x00, 0x20, 0x00,
             0xFE, 0x00, 0x40, 0x00, 0xFE, 0x00, 0x80, 0x00,
             0xFE, 0x00, 0x00, 0x01, 0x40, 0x00, 0x00, 0x08};
-            stream.out_uint16_le(RDP_CAPSET_GLYPHCACHE);
-            uint16_t offset_length = stream.p - stream.data;
-            stream.out_uint16_le(0);
-            uint16_t length = stream.p - stream.data;
             stream.out_copy_bytes(glyphcache, 40);
             stream.out_uint32_le(0x01000100);
             stream.out_uint16_le(0x0000);
@@ -1518,99 +1518,24 @@ struct mod_rdp : public client_mod {
         // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number of capability sets is specified by the numberCapabilities field.
             uint16_t total_caplen = stream.p - stream.data;
 
-            uint16_t caplen_general = stream.p - stream.data;
-            capscount++;
-            this->out_general_caps(stream, use_rdp5); // RDP_CAPLEN_GENERAL = 24
-            caplen_general = stream.p - stream.data - caplen_general;
-            LOG(LOG_INFO, "caplen_general==%u", caplen_general);
+            capscount++; this->out_general_caps(stream, use_rdp5);
+            capscount++; this->out_bitmap_caps(stream);
+            capscount++; this->out_order_caps(stream);
+            capscount++; this->out_bmpcache_caps(stream);
 
-            uint16_t caplen_bitmap = stream.p - stream.data;
-            capscount++;
-            this->out_bitmap_caps(stream);            // RDP_CAPLEN_BITMAP  = 28
-            caplen_bitmap = stream.p - stream.data - caplen_bitmap;
-            LOG(LOG_INFO, "caplen_bitmap==%u", caplen_bitmap);
-
-            uint16_t caplen_order = stream.p - stream.data;
-            capscount++;
-            this->out_order_caps(stream);             // RDP_CAPLEN_ORDER   = 88
-            caplen_order = stream.p - stream.data - caplen_order;
-            LOG(LOG_INFO, "caplen_order==%u", caplen_order);
-
-            #warning two identical calls in a row, this is strange, check documentation
-            uint16_t caplen_bmp_cache = stream.p - stream.data;
-            capscount++;
-            this->out_bmpcache_caps(stream);         // RDP_CAPLEN_BMPCACHE   = 40
-            caplen_bmp_cache = stream.p - stream.data - caplen_bmp_cache;
-            LOG(LOG_INFO, "caplen_bmp_cache==%u", caplen_bmp_cache);
-
-            if(use_rdp5 == 0){
-                uint16_t caplen_bmp_cache = stream.p - stream.data;
-                capscount++;
-                this->out_bmpcache_caps(stream);     // RDP_CAPLEN_BMPCACHE   = 40
-                caplen_bmp_cache = stream.p - stream.data - caplen_bmp_cache;
-                LOG(LOG_INFO, "caplen_bmp_cache==%u", caplen_bmp_cache);
-            }
-            else {
-                uint16_t caplen_bmp_cache2 = stream.p - stream.data;
+            if(use_rdp5){
                 capscount++;
                 this->out_bmpcache2_caps(stream, mod->gd.get_client_info());
-                caplen_bmp_cache2 = stream.p - stream.data - caplen_bmp_cache2;
-                LOG(LOG_INFO, "caplen_bmp_cache2==%u", caplen_bmp_cache2);
             }
-
-            uint16_t caplen_colcache = stream.p - stream.data;
-            capscount++;
-            this->out_colcache_caps(stream); // RDP_CAPLEN_COLCACHE 8
-            caplen_colcache = stream.p - stream.data - caplen_colcache;
-            LOG(LOG_INFO, "caplen_colcache==%u", caplen_colcache);
-
-            uint16_t caplen_activate = stream.p - stream.data;
-            capscount++;
-            this->out_activate_caps(stream);  // RDP_CAPLEN_ACTIVATE 12
-            caplen_activate = stream.p - stream.data - caplen_activate;
-            LOG(LOG_INFO, "caplen_activate==%u", caplen_activate);
-
-            uint16_t caplen_control = stream.p - stream.data;
-            capscount++;
-            this->out_control_caps(stream);   // RDP_CAPLEN_CONTROL 12
-            caplen_control = stream.p - stream.data - caplen_control;
-            LOG(LOG_INFO, "caplen_control==%u", caplen_control);
-
-            uint16_t caplen_pointer = stream.p - stream.data;
-            capscount++;
-            this->out_pointer_caps(stream);   // RDP_CAPLEN_POINTER 8
-            caplen_pointer = stream.p - stream.data - caplen_pointer;
-            LOG(LOG_INFO, "caplen_pointer==%u", caplen_pointer);
-
-            uint16_t caplen_share = stream.p - stream.data;
-            capscount++;
-            this->out_share_caps(stream);   // RDP_CAPLEN_SHARE 8
-            caplen_share = stream.p - stream.data - caplen_share;
-            LOG(LOG_INFO, "caplen_share==%u", caplen_share);
-
-            uint16_t caplen_input = stream.p - stream.data;
-            capscount++;
-            this->out_input_caps(stream);
-            caplen_input = stream.p - stream.data - caplen_input;
-            LOG(LOG_INFO, "caplen_input==%u", caplen_input);
-
-            uint16_t caplen_sound = stream.p - stream.data;
-            capscount++;
-            this->out_sound_caps(stream);    // RDP_CAPLEN_0x0C 8
-            caplen_sound = stream.p - stream.data - caplen_sound;
-            LOG(LOG_INFO, "caplen_sound==%u", caplen_sound);
-
-            uint16_t caplen_font = stream.p - stream.data;
-            capscount++;
-            this->out_font_caps(stream);
-            caplen_font = stream.p - stream.data - caplen_font;
-            LOG(LOG_INFO, "caplen_font==%u", caplen_font);
-
-            uint16_t caplen_glyphcache = stream.p - stream.data;
-            capscount++;
-            this->out_glyphcache_caps(stream);
-            caplen_glyphcache = stream.p - stream.data - caplen_glyphcache;   // RDP_CAPLEN_0x10 52
-            LOG(LOG_INFO, "caplen_glyphcache==%u", caplen_glyphcache);
+            capscount++; this->out_colcache_caps(stream);
+            capscount++; this->out_activate_caps(stream);
+            capscount++; this->out_control_caps(stream);
+            capscount++; this->out_pointer_caps(stream);
+            capscount++; this->out_share_caps(stream);
+            capscount++; this->out_input_caps(stream);
+            capscount++; this->out_sound_caps(stream);
+            capscount++; this->out_font_caps(stream);
+            capscount++; this->out_glyphcache_caps(stream);
 
             total_caplen = stream.p - stream.data - total_caplen;
 
