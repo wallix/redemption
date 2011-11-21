@@ -75,7 +75,7 @@ struct GraphicsFile
     BGRPalette memblt_palette;
 
     GraphicsFile(bool read)
-        :    stream(4096),
+        :    stream(65536),
         // Internal state of orders
         common(RDP::PATBLT, Rect(0, 0, 1, 1)),
         destblt(Rect(), 0),
@@ -117,7 +117,7 @@ struct GraphicsFile
     }
 
     void init_write(){
-        this->stream.init(1024);
+        this->stream.init(65536);
         /* size (2 bytes)
          * nb of orders (1 byte)
          * type of batch (1 byte)
@@ -177,7 +177,7 @@ struct GraphicsFile
              * 0 is not a legal value in the header
              * the maximum size is 64kbytes according to the first field.
              */
-            this->stream.init(4);
+            this->stream.init(std::max(4, 65536));
             // Start reading simple header
             if (read ( this->pFile, this->stream.data, 4 ) == 0) {
                 return;
@@ -188,7 +188,7 @@ struct GraphicsFile
             uint8_t  type = stream.in_uint8();       // What type ?
 
             // How long is my init ?
-            this->stream.init(length - 4); // The header have already been read
+            this->stream.init(std::max(65536,length - 4)); // The header have already been read
             #warning use transport object to hide this, define some kind of FileTransport ? Very similar to socketTRansport
             int readlen = 0;
             while ( readlen < length - 4 ) {

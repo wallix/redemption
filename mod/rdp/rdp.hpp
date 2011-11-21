@@ -337,7 +337,7 @@ struct mod_rdp : public client_mod {
             bool clipboard_enable, bool dev_redirection_enable)
             :
                 client_mod(front),
-                    in_stream(8192),
+                    in_stream(65536),
                     trans(trans),
                     context(context),
                     event(event),
@@ -754,7 +754,7 @@ struct mod_rdp : public client_mod {
             const int userid = this->userid;
             int & licence_issued = this->lic_layer.licence_issued;
             int res = 0;
-            Stream stream(65535);
+            Stream stream(65536);
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
             X224In in_tpdu(trans, stream);
@@ -2010,7 +2010,7 @@ struct mod_rdp : public client_mod {
 
         void send_fonts(Stream & stream, int seq) throw(Error)
         {
-            stream.init(8192);
+            stream.init(65536);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
