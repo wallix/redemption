@@ -1839,15 +1839,9 @@ public:
         if (this->ini->globals.debug.front){
             LOG(LOG_INFO, "process_data");
         }
-//        ShareDataIn share_data_in(stream);
+        ShareDataIn share_data_in(stream);
 
-        stream.skip_uint8(6);
-        stream.in_uint16_le(); // len
-        int data_type = stream.in_uint8();
-        stream.in_uint8(); // ctype
-        stream.in_uint16_le(); // clen
-
-        switch (data_type) {
+        switch (share_data_in.pdutype2) {
         case PDUTYPE2_POINTER: /* 27(0x1b) */
             if (this->ini->globals.debug.front){
                 LOG(LOG_INFO, "PDUTYPE2_POINTER");
@@ -2024,7 +2018,7 @@ public:
             }
             break;
         default:
-            LOG(LOG_WARNING, "unsupported PDUTYPE in process_data %d\n", data_type);
+            LOG(LOG_WARNING, "unsupported PDUTYPE in process_data %d\n", share_data_in.pdutype2);
             break;
         }
     }
