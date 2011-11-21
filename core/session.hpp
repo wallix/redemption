@@ -287,7 +287,7 @@ struct Session {
         this->front_event = new wait_obj(sck);
 
         /* create these when up and running */
-        this->trans = new SocketTransport(sck);
+        this->trans = new SocketTransport("RDP Client", sck);
 
         /* set non blocking */
         int rv = 0;
@@ -967,10 +967,12 @@ struct Session {
 
                 case MCTX_STATUS_XUP:
                 {
-                    SocketTransport * t = new SocketTransport(
-                                                connect(this->context->get(STRAUTHID_TARGET_DEVICE),
-                                                atoi(this->context->get(STRAUTHID_TARGET_PORT)),
-                                                4, 2500000));
+                    const char * name = "XUP Target";
+                    int sck = connect(this->context->get(STRAUTHID_TARGET_DEVICE),
+                                    atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                                    name,
+                                    4, 2500000);
+                    SocketTransport * t = new SocketTransport(name, sck);
                     this->back_event = new wait_obj(t->sck);
                     this->mod = new xup_mod(t, *this->context, *(this->front));
                     this->mod->draw_event();
@@ -991,9 +993,12 @@ struct Session {
                         memcpy(hostname, this->front->get_client_info().hostname, 31);
                         hostname[31] = 0;
                     }
-                    SocketTransport * t = new SocketTransport(
-                                            connect(this->context->get(STRAUTHID_TARGET_DEVICE),
-                                                atoi(this->context->get(STRAUTHID_TARGET_PORT))));
+                    static const char * name = "RDP Target";
+                    int sck = connect(
+                        this->context->get(STRAUTHID_TARGET_DEVICE),
+                        atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                        name);
+                    SocketTransport * t = new SocketTransport(name, sck);
                     this->back_event = new wait_obj(t->sck);
                     this->mod = new mod_rdp(t,
                                         *this->back_event,
@@ -1013,8 +1018,11 @@ struct Session {
 
                 case MCTX_STATUS_VNC:
                 {
-                    SocketTransport *t = new SocketTransport(
-                        connect(this->context->get(STRAUTHID_TARGET_DEVICE), atoi(this->context->get(STRAUTHID_TARGET_PORT))));
+                    static const char * name = "VNC Target";
+                    int sck = connect(this->context->get(STRAUTHID_TARGET_DEVICE),
+                                atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                                name);
+                    SocketTransport *t = new SocketTransport(name, sck);
                     this->back_event = new wait_obj(t->sck);
                     this->mod = new mod_vnc(t, *this->context, *(this->front), this->front->get_client_info().keylayout);
                     this->mod->draw_event();

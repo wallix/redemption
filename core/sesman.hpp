@@ -411,7 +411,9 @@ class SessionManager {
             stream.skip_uint8(4);
             #warning is there a way to make auth_event RAII ? (initialized in sesman constructor)
             if (!this->auth_trans_t){
-                this->auth_trans_t = new SocketTransport(connect(auth_host, authport, 4, 1000000));
+                static const char * name = "Authentifier";
+                int sck = connect(auth_host, authport, name, 4, 1000000);
+                this->auth_trans_t = new SocketTransport(name, sck);
                 #warning create a realloc method
                 if (this->auth_event){
                     delete this->auth_event;

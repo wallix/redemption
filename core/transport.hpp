@@ -39,11 +39,11 @@
 #include "log.hpp"
 
 
-static inline int connect(const char* ip, int port,
+static inline int connect(const char* ip, int port, const char * name,
              int nbretry = 2, int retry_delai_ms = 1000) throw (Error)
 {
     int sck = 0;
-    LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
+    LOG(LOG_INFO, "connecting to %s (%s:%d)\n", name, ip, port);
     // we will try connection several time
     // the trial process include socket opening, hostname resolution, etc
     // because some problems can come from the local endpoint,
@@ -282,8 +282,10 @@ class SocketTransport : public Transport {
     public:
         int sck;
         int sck_closed;
+        const char * name;
 
-    SocketTransport(int sck) : Transport()
+    SocketTransport(const char * name, int sck) 
+        : Transport(), name(name)
     {
         this->sck = sck;
         this->sck_closed = 0;
@@ -312,7 +314,7 @@ class SocketTransport : public Transport {
     }
 
     void disconnect(){
-        LOG(LOG_INFO, "Socket %d : closing connection\n", this->sck);
+        LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
         if (this->sck != 0) {
             shutdown(this->sck, 2);
             close(this->sck);
@@ -346,7 +348,7 @@ class SocketTransport : public Transport {
             // Test if we got a socket error
 
             if (opt) {
-                LOG(LOG_INFO, "Socket error detected");
+                LOG(LOG_INFO, "Socket error detected on %s", this->name);
                 throw Error(ERR_SESSION_TERMINATED);
             }
 
@@ -356,13 +358,13 @@ class SocketTransport : public Transport {
     using Transport::recv;
     virtual void recv(char ** input_buffer, size_t total_len) throw (Error)
     {
-        LOG(LOG_INFO, "Socket %u receiving %u bytes", this->sck, total_len);
+        LOG(LOG_INFO, "Socket %s (%u) receiving %u bytes", this->name, this->sck, total_len);
 //        uint8_t * start = (uint8_t*)(*input_buffer);
         int len = total_len;
         char * pbuffer = *input_buffer;
 
         if (this->sck_closed) {
-            LOG(LOG_INFO, "socket allready closed\n");
+            LOG(LOG_INFO, "Socket %s (%u) already closed", this->name, this->sck);
             throw Error(ERR_SOCKET_ALLREADY_CLOSED);
         }
 
@@ -371,14 +373,14 @@ class SocketTransport : public Transport {
             switch (rcvd) {
                 case -1: /* error, maybe EAGAIN */
                     if (!this->try_again(errno)) {
-                        LOG(LOG_INFO, "closing socket on recv\n");
+                        LOG(LOG_INFO, "Closing socket %s (%u) on recv", this->name, this->sck);
                         this->sck_closed = 1;
                         throw Error(ERR_SOCKET_ERROR, errno);
                     }
                     this->wait_ready(RECV, 10);
                     break;
                 case 0: /* no data received, socket closed */
-                    LOG(LOG_INFO, "no data received socket %d closed on recv\n", this->sck);
+                    LOG(LOG_INFO, "No data received. Socket %s (%u) closed on recv", this->name, this->sck);
                     this->sck_closed = 1;
                     throw Error(ERR_SOCKET_CLOSED);
                 default: /* some data received */
@@ -400,14 +402,14 @@ class SocketTransport : public Transport {
 //            bb[4], bb[5], bb[6],
 //            bb[7], bb[8], bb[9], bb[10], bb[11],
 //            bb[12], bb[13], bb[14], bb[15], bb[16]);
-        LOG(LOG_INFO, "Recv done");
+        LOG(LOG_INFO, "Recv done on %s (%u)", this->name, this->sck);
     }
 
     using Transport::send;
 
     virtual void send(const char * const buffer, int len) throw (Error)
     {
-        LOG(LOG_INFO, "Socket %u sending %u bytes", this->sck, len);
+        LOG(LOG_INFO, "Socket %s (%u) sending %u bytes", this->name, this->sck, len);
 //        LOG(LOG_INFO, "send on socket %u : len=%u buffer=%p"
 //            " [%0.2X %0.2X %0.2X %0.2X]"
 //            " [%0.2X %0.2X %0.2X]"
@@ -426,14 +428,16 @@ class SocketTransport : public Transport {
             switch (sent){
             case -1:
                 if (!this->try_again(errno)) {
-                    LOG(LOG_INFO, "%s sck=%d\n", strerror(errno), this->sck);
+                    LOG(LOG_INFO, "Socket %s (%u) : %s", 
+                        this->name, this->sck, strerror(errno));
                     this->sck_closed = 1;
                     throw Error(ERR_SOCKET_ERROR, errno);
                 }
                 this->wait_ready(SEND, 10);
                 break;
             case 0:
-                LOG(LOG_INFO, "socket closed on sending %s sck=%d\n", strerror(errno), this->sck);
+                LOG(LOG_INFO, "Socket %s (%u) closed on sending : %s", 
+                    this->name, this->sck, strerror(errno));
                 this->sck_closed = 1;
                 throw Error(ERR_SOCKET_CLOSED, errno);
             default:
@@ -442,7 +446,7 @@ class SocketTransport : public Transport {
         }
         total_sent += len;
         last_quantum_sent += len;
-        LOG(LOG_INFO, "Send done");
+        LOG(LOG_INFO, "Send done on %s (%u)", this->name, this->sck);
     }
 
     private:
