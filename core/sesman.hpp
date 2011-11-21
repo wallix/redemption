@@ -50,9 +50,10 @@ class SessionManager {
 
     struct SocketTransport * auth_trans_t;
     wait_obj * auth_event;
+    uint32_t verbose;
 
-    SessionManager(ModContext & context)
-        : mod_state(MOD_STATE_INIT), context(context), tick_count(0)
+    SessionManager(ModContext & context, uint32_t verbose)
+        : mod_state(MOD_STATE_INIT), context(context), tick_count(0), verbose(verbose)
     {
         this->auth_trans_t = NULL;
         this->auth_event = 0;
@@ -413,7 +414,7 @@ class SessionManager {
             if (!this->auth_trans_t){
                 static const char * name = "Authentifier";
                 int sck = connect(auth_host, authport, name, 4, 1000000);
-                this->auth_trans_t = new SocketTransport(name, sck);
+                this->auth_trans_t = new SocketTransport(name, sck, this->verbose);
                 #warning create a realloc method
                 if (this->auth_event){
                     delete this->auth_event;

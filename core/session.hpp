@@ -278,7 +278,7 @@ struct Session {
                 sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword));
         this->context->cpy(STRAUTHID_HOST, ip_source);
 
-        this->sesman = new SessionManager(*this->context);
+        this->sesman = new SessionManager(*this->context, this->ini->globals.debug.auth);
         this->sesman->auth_trans_t = 0;
 
         this->mod = 0;
@@ -287,7 +287,7 @@ struct Session {
         this->front_event = new wait_obj(sck);
 
         /* create these when up and running */
-        this->trans = new SocketTransport("RDP Client", sck);
+        this->trans = new SocketTransport("RDP Client", sck, this->ini->globals.debug.front);
 
         /* set non blocking */
         int rv = 0;
@@ -972,7 +972,7 @@ struct Session {
                                     atoi(this->context->get(STRAUTHID_TARGET_PORT)),
                                     name,
                                     4, 2500000);
-                    SocketTransport * t = new SocketTransport(name, sck);
+                    SocketTransport * t = new SocketTransport(name, sck, this->ini->globals.debug.mod_xup);
                     this->back_event = new wait_obj(t->sck);
                     this->mod = new xup_mod(t, *this->context, *(this->front));
                     this->mod->draw_event();
@@ -998,7 +998,7 @@ struct Session {
                         this->context->get(STRAUTHID_TARGET_DEVICE),
                         atoi(this->context->get(STRAUTHID_TARGET_PORT)),
                         name);
-                    SocketTransport * t = new SocketTransport(name, sck);
+                    SocketTransport * t = new SocketTransport(name, sck, this->ini->globals.debug.mod_rdp);
                     this->back_event = new wait_obj(t->sck);
                     this->mod = new mod_rdp(t,
                                         *this->back_event,
@@ -1022,7 +1022,7 @@ struct Session {
                     int sck = connect(this->context->get(STRAUTHID_TARGET_DEVICE),
                                 atoi(this->context->get(STRAUTHID_TARGET_PORT)),
                                 name);
-                    SocketTransport *t = new SocketTransport(name, sck);
+                    SocketTransport *t = new SocketTransport(name, sck, this->ini->globals.debug.mod_vnc);
                     this->back_event = new wait_obj(t->sck);
                     this->mod = new mod_vnc(t, *this->context, *(this->front), this->front->get_client_info().keylayout);
                     this->mod->draw_event();

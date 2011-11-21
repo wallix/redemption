@@ -964,7 +964,7 @@ struct mod_rdp : public client_mod {
                         break;
                         case UP_AND_RUNNING:
                         {
-                            LOG(LOG_INFO, "Up and running");
+//                            LOG(LOG_INFO, "Up and running");
                             #warning I should use shareid, streamid, len, compressedType, compressedLen
                             uint32_t shareid = stream.in_uint32_le();
                             uint8_t pad1 = stream.in_uint8();
@@ -2066,7 +2066,7 @@ struct mod_rdp : public client_mod {
         virtual void rdp_input_invalidate(const Rect & r)
         {
             if (this->up_and_running) {
-                LOG(LOG_INFO, "rdp_input_invalidate");
+//                LOG(LOG_INFO, "rdp_input_invalidate");
                 if (!r.isempty()){
                     Stream stream(8192);
                     X224Out tpdu(X224Packet::DT_TPDU, stream);
