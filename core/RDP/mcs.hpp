@@ -1667,7 +1667,7 @@ static inline void recv_sec_tag_pubkey(Stream & stream, uint32_t & server_public
     memcpy(modulus, stream.in_uint8p(server_public_key_len), server_public_key_len);
     stream.skip_uint8(SEC_PADDING_SIZE);
 
-    if (!stream.check()){
+    if (stream.p > stream.end){
         throw Error(ERR_SEC_PARSE_PUB_KEY_ERROR_CHECKING_STREAM);
     }
     LOG(LOG_DEBUG, "Got Public key, RDP4-style\n");

@@ -59,7 +59,6 @@ static inline unsigned in_bytes_le(const uint8_t nb, const uint8_t * ptr)
     return res;
 }
 
-
 static inline uint32_t row_size(int width, uint8_t bpp)
 {
     return align4(width * nbbytes(bpp));

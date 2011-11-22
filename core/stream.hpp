@@ -39,7 +39,7 @@
 #include "altoco.hpp"
 #include <stdio.h>
 
-#warning using a template for default size of stream would make sense instead of always using the large buffer below
+// using a template for default size of stream would make sense instead of always using the large buffer below
 enum {
      AUTOSIZE = 8192
 };
@@ -96,15 +96,6 @@ class Stream {
         return (this->end - this->data + n) <= this->capacity;
     }
 
-
-//    /* Buffer underflow, false if read after the end of the buffer
-//       (a previous read accessed after buffer end)
-//    */
-#warning:CGR: replace buffer underflow condition by checking if there is enough data in buffer before reading using check_rem(), should be easy to do as there is not many calls to check remaining
-    bool check(void) {
-        return this->p <= this->end;
-    }
-
     void set_length(int offset, uint8_t * const length_ptr){
         uint16_t length = this->p - length_ptr + offset;
         length_ptr[0] = length;
@@ -141,6 +132,11 @@ class Stream {
         return (v > 32767)?v - 65536:v;
     }
 
+    unsigned in_bytes_le(const uint8_t nb){
+        this->p += nb;
+        return ::in_bytes_le(nb, this->p - nb);
+    }
+
     unsigned int in_uint16_le(void) {
         this->p += 2;
         return ((unsigned char*)this->p)[-2] + ((unsigned char*)this->p)[-1] * 256;
@@ -151,29 +147,22 @@ class Stream {
         return ((unsigned char*)this->p)[-1] + ((unsigned char*)this->p)[-2] * 256;
     }
 
-    #warning use in_bytes_le whenever possible
     unsigned int in_uint32_le(void) {
         this->p += 4;
-        return this->p[-4]
+        return  this->p[-4]
              | (this->p[-3] << 8)
              | (this->p[-2] << 16)
              | (this->p[-1] << 24)
              ;
     }
 
-    unsigned in_bytes_le(const uint8_t nb){
-        this->p += nb;
-        return ::in_bytes_le(nb, this->p - nb);
-    }
-
-
     unsigned int in_uint32_be(void) {
         this->p += 4;
-        return ((unsigned char*)this->p)[-1]
-               + ((unsigned char*)this->p)[-2] * 0x100
-               + ((unsigned char*)this->p)[-3] * 0x10000
-               + ((unsigned char*)this->p)[-4] * 0x1000000
-               ;
+        return  this->p[-1]
+             | (this->p[-2] << 8)
+             | (this->p[-3] << 16)
+             | (this->p[-4] << 24)
+             ;
     }
 
     const uint8_t *in_uint8p(unsigned int n) {
@@ -339,7 +328,7 @@ class Stream {
 
     void out_ber_len(unsigned int v){
         if (v >= 0x80) {
-            #warning works only for 2 bytes (16 bits) ber length
+            assert(v < 65536);
             this->out_uint8(0x82);
             this->out_uint16_be(v);
         }
@@ -376,7 +365,7 @@ class Stream {
 
     void set_out_ber_len(unsigned int v, size_t offset){
         if (v>= 0x80){
-            #warning works only for 2 bytes (16 bits) ber length
+            assert(v < 65536);
             this->data[offset+0] = 0x82;
             this->set_out_uint16_be(v, offset+1);
         }
