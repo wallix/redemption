@@ -727,11 +727,18 @@ class StaticCapture
                  lineto.endx, lineto.endy, lineto.startx, lineto.starty,
                  lineto.rop2, lineto.back_color, lineto.pen, clip);
         }
+        LOG(LOG_INFO, "line done"); 
+
     }
 
     void line(const int mix_mode, const int startx, const int starty, const int endx, const int endy, const int rop2,
               const int bg_color, const RDPPen & pen, const Rect & clip)
     {
+        LOG(LOG_INFO, "mix_mode=%d startx=%d starty=%d endx=%d endy=%d rop2=%d bg_color=%d clip=(%u, %u, %u, %u)",
+            mix_mode, startx, starty, endx, endy, rop2, bg_color, clip.x, clip.y, clip.cx, clip.cy); 
+            if (starty > 480){
+                return;
+            }
 //        int minx = std::min(startx, endx);
 //        int miny = std::min(starty, endy);
 
