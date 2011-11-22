@@ -315,7 +315,7 @@ class StaticCapture
       return sec;
     }
 
-    void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp, int timezone)
+    void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
         struct timeval now;
         gettimeofday(&now, NULL);
@@ -396,8 +396,7 @@ class StaticCapture
             if (!no_timestamp){
                 time_t rawtime;
                 time(&rawtime);
-                rawtime -= timezone;
-                tm *ptm = gmtime(&rawtime);
+                tm *ptm = localtime(&rawtime);
                 char rawdate[50];
                 snprintf(rawdate, 50, "%4d-%02d-%02d %02d:%02d:%02d",
                         ptm->tm_year+1900, ptm->tm_mon+1, ptm->tm_mday,

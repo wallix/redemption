@@ -66,7 +66,6 @@ public:
     int mouse_y;
     bool nomouse;
     bool notimestamp;
-    int timezone;
     ChannelList channel_list;
     int up_and_running;
     int share_id;
@@ -95,7 +94,6 @@ public:
         mouse_y(0),
         nomouse(ini->globals.nomouse),
         notimestamp(ini->globals.notimestamp),
-        timezone(0),
         up_and_running(0),
         share_id(65538),
         client_info(ini),

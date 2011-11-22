@@ -42,10 +42,10 @@ class Capture
     }
 
     #warning fat interface : ugly, find another way
-    void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp, int timezone)
+    void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
-        this->sc.snapshot(x, y, pointer_already_displayed, no_timestamp, timezone);
-        this->nc.snapshot(x, y, pointer_already_displayed, no_timestamp, timezone);
+        this->sc.snapshot(x, y, pointer_already_displayed, no_timestamp);
+        this->nc.snapshot(x, y, pointer_already_displayed, no_timestamp);
     }
 
     void bitmap_cache(const RDPBmpCache & cmd)

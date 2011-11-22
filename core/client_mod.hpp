@@ -784,9 +784,8 @@ struct client_mod : public Callback {
     }
 
     void start_capture(int width, int height, bool flag, char * path,
-                const char * codec_id, const char * quality, int timezone)
+                const char * codec_id, const char * quality)
     {
-        this->gd.front.timezone = timezone;
         if (flag){
             this->stop_capture();
             this->gd.capture = new Capture(width, height, 24, path, codec_id, quality);
@@ -805,7 +804,7 @@ struct client_mod : public Callback {
     {
         if (this->gd.capture){
             this->gd.capture->snapshot(this->gd.front.mouse_x, this->gd.front.mouse_y,
-                    pointer_is_displayed|this->gd.front.nomouse, this->gd.front.notimestamp, this->gd.front.timezone);
+                    pointer_is_displayed|this->gd.front.nomouse, this->gd.front.notimestamp);
         }
     }
 

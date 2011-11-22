@@ -75,7 +75,7 @@ class NativeCapture
         close(this->f);
     }
 
-    void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp, int timezone)
+    void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
     }
 
