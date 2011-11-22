@@ -214,36 +214,6 @@ namespace RDP {
 //   of the packet in bytes.
 
 
-class ShareControlAndDataOut
-{
-    Stream & stream;
-    uint8_t offlen;
-    public:
-    ShareControlAndDataOut(Stream & stream, uint8_t pdu_type1, uint8_t pdu_type2, uint16_t mcs_channel, uint32_t share_id)
-        : stream(stream), offlen(stream.p - stream.data)
-    {
-        // share control
-        stream.skip_uint8(2); // len
-        stream.out_uint16_le(0x10 | pdu_type1);
-        stream.out_uint16_le(mcs_channel);
-        // share data
-        stream.out_uint32_le(share_id);
-        stream.out_uint8(0);
-        stream.out_uint8(1);
-        stream.skip_uint8(2); // len - 14
-        stream.out_uint8(pdu_type2);
-        stream.out_uint8(0);
-        stream.out_uint16_le(0);
-    }
-
-    void end(){
-        int len = stream.p - &(stream.data[this->offlen]);
-        stream.set_out_uint16_le(len, this->offlen);
-        stream.set_out_uint16_le(len - 14, this->offlen + 12);
-    }
-};
-
-
 class ShareControlOut
 {
     Stream & stream;
