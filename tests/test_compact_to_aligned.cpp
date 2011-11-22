@@ -37,26 +37,6 @@
 
 BOOST_AUTO_TEST_CASE(TestCompactToAlignedSizeComputing)
 {
-    BOOST_CHECK_EQUAL(480000, aligned_size(800, 600, 8));
-    BOOST_CHECK_EQUAL(960000, aligned_size(800, 600, 16));
-    BOOST_CHECK_EQUAL(1920000, aligned_size(800, 600, 24));
-
-    BOOST_CHECK_EQUAL(480000, aligned_size(799, 600, 8));
-    BOOST_CHECK_EQUAL(960000, aligned_size(799, 600, 16));
-    BOOST_CHECK_EQUAL(1920000, aligned_size(799, 600, 24));
-
-    BOOST_CHECK_EQUAL(480000, aligned_size(798, 600, 8));
-    BOOST_CHECK_EQUAL(960000, aligned_size(798, 600, 16));
-    BOOST_CHECK_EQUAL(1920000, aligned_size(798, 600, 24));
-
-    BOOST_CHECK_EQUAL(480000, aligned_size(797, 600, 8));
-    BOOST_CHECK_EQUAL(960000, aligned_size(797, 600, 16));
-    BOOST_CHECK_EQUAL(1920000, aligned_size(797, 600, 24));
-
-    BOOST_CHECK_EQUAL(477600, aligned_size(796, 600, 8));
-    BOOST_CHECK_EQUAL(955200, aligned_size(796, 600, 16));
-    BOOST_CHECK_EQUAL(1910400, aligned_size(796, 600, 24));
-
     BOOST_CHECK_EQUAL(800, row_size(800, 8));
     BOOST_CHECK_EQUAL(1600, row_size(800, 16));
     BOOST_CHECK_EQUAL(2400, row_size(800, 24));
