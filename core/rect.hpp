@@ -107,7 +107,7 @@ struct Rect {
             const int y0 = std::min(this->y, y);
             const int x1 = std::max(this->x + this->cx - 1, x);
             const int y1 = std::max(this->y + this->cy - 1, y);
-            return Rect(x0, y0, x0 - x1 + 1, y0 - y1 + 1);
+            return Rect(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
         }
     }
 

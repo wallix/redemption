@@ -309,4 +309,9 @@ BOOST_AUTO_TEST_CASE(TestRect)
     }
     
     BOOST_CHECK_EQUAL(Rect(10, 10, 1, 1), Rect().enlarge_to(10, 10));
+    BOOST_CHECK_EQUAL(Rect(200, 145, 1, 1054), Rect(200, 1198, 1, 1).enlarge_to(200, 145));
+    BOOST_CHECK_EQUAL(Rect(145, 200, 1054, 1), Rect(1198, 200, 1, 1).enlarge_to(145, 200));
+    BOOST_CHECK_EQUAL(Rect(10, 10, 91, 91), Rect(10, 10, 1, 1).enlarge_to(100, 100));
+    BOOST_CHECK_EQUAL(Rect(10, 10, 91, 91), Rect(100, 100, 1, 1).enlarge_to(10, 10));
+
 }

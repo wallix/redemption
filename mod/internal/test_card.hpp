@@ -87,12 +87,46 @@ struct test_card_mod : public internal_mod {
                  bitmap.cx, bitmap.cy),
              0, 0, clip);
 
+        //  lineTo mix_mode=1 startx=200 starty=1198 endx=200 endy=145 bg_color=0 rop2=13 clip=(200, 145, 1, 110)
+        this->gd.draw(
+            RDPLineTo(1, 200, 1198, 200, 145, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            Rect(200, 145, 1, 110));
+
+        this->gd.draw(
+            RDPLineTo(1, 200, 145, 200, 1198, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            Rect(200, 145, 1, 110));
+
+        this->gd.draw(
+            RDPLineTo(1, 201, 1198, 200, 145, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            Rect(200, 145, 1, 110));
+
+        this->gd.draw(
+            RDPLineTo(1, 200, 145, 201, 1198, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            Rect(200, 145, 1, 110));
+
+        this->gd.draw(
+            RDPLineTo(1, 1198, 200, 145, 200, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            Rect(145, 200, 110, 1));
+
+        this->gd.draw(
+            RDPLineTo(1, 145, 200, 1198, 200, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            Rect(145, 200, 110, 1));
+
+        this->gd.draw(
+            RDPLineTo(1, 1198, 201, 145, 200, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            Rect(145, 200, 110, 1));
+
+        this->gd.draw(
+            RDPLineTo(1, 145, 200, 1198, 201, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            Rect(145, 200, 110, 1));
 
         this->gd.server_draw_text(30, 30, "White", BLACK, WHITE, clip);
         this->gd.server_draw_text(30, 50, "Red  ", BLACK, RED, clip);
         this->gd.server_draw_text(30, 70, "Green", BLACK, GREEN, clip);
         this->gd.server_draw_text(30, 90, "Blue ", BLACK, BLUE, clip);
         this->gd.server_draw_text(30, 110, "Black", WHITE, BLACK, clip);
+
+
 
 
         Bitmap card(SHARE_PATH "/" REDEMPTION_LOGO24);

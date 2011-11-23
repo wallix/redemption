@@ -716,13 +716,14 @@ class StaticCapture
 
     void line_to(const RDPLineTo & lineto, const Rect & clip)
     {
-        LOG(LOG_INFO, "back_mode=%d (%d,%d) -> (%d, %d) rop2=%d bg_color=%d clip=(%u, %u, %u, %u)",
-            lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy,
-            lineto.rop2, lineto.back_color, clip.x, clip.y, clip.cx, clip.cy); 
+//        LOG(LOG_INFO, "back_mode=%d (%d,%d) -> (%d, %d) rop2=%d bg_color=%d clip=(%u, %u, %u, %u)",
+//            lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy,
+//            lineto.rop2, lineto.back_color, clip.x, clip.y, clip.cx, clip.cy); 
 
         // enlarge_to compute a new rect including old rect and added point
         const Rect & line_rect = Rect(lineto.startx, lineto.starty, 1, 1).enlarge_to(lineto.endx, lineto.endy);
         if (line_rect.intersect(clip).isempty()){
+//            LOG(LOG_INFO, "line_rect(%u, %u, %u, %u)", line_rect.x, line_rect.y, line_rect.cx, line_rect.cy);
             return;
         }
 
@@ -754,7 +755,6 @@ class StaticCapture
                  lineto.endx, lineto.endy, lineto.startx, lineto.starty,
                  lineto.rop2, lineto.back_color, lineto.pen, clip);
         }
-        LOG(LOG_INFO, "line done"); 
     }
 
     void line(const int mix_mode, const int startx, const int starty, const int endx, const int endy, const int rop2,
@@ -762,9 +762,6 @@ class StaticCapture
     {
         // Color handling
         const uint32_t color = color_decode(pen.color, this->bpp, this->palette);
-
-        // base adress (*3 because it has 3 color components) also base of the new coordinate system
-        uint8_t * base = this->data + (starty * this->width + startx) * 3;
 
         // Prep
         int x = startx;
@@ -777,7 +774,7 @@ class StaticCapture
         while (true){
             if (clip.contains_pt(x, y)){
                 // Pixel position
-                uint8_t * const p = base + (y * this->width + x) * 3;
+                uint8_t * const p = this->data + (y * this->width + x) * 3;
 
                 // Drawing of a pixel
                 p[0] = color >> 16; // r
