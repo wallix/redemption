@@ -97,6 +97,20 @@ struct Rect {
         return Rect(0, 0, this->cx, this->cy);
     }
 
+    // compute a new rect containing old rect and given point
+    const Rect enlarge_to(int x, int y) const {
+        if (this->isempty()){
+            return Rect(x, y, 1, 1);
+        }
+        else {
+            const int x0 = std::min(this->x, x);
+            const int y0 = std::min(this->y, y);
+            const int x1 = std::max(this->x + this->cx - 1, x);
+            const int y1 = std::max(this->y + this->cy - 1, y);
+            return Rect(x0, y0, x0 - x1 + 1, y0 - y1 + 1);
+        }
+    }
+
     const Rect offset(int dx, int dy) const {
         return Rect(this->x + dx, this->y + dy, this->cx, this->cy);
     }

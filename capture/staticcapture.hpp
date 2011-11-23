@@ -716,36 +716,50 @@ class StaticCapture
 
     void line_to(const RDPLineTo & lineto, const Rect & clip)
     {
+        LOG(LOG_INFO, "back_mode=%d (%d,%d) -> (%d, %d) rop2=%d bg_color=%d clip=(%u, %u, %u, %u)",
+            lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy,
+            lineto.rop2, lineto.back_color, clip.x, clip.y, clip.cx, clip.cy); 
 
-        if (lineto.startx <= lineto.endx){
-            line(lineto.back_mode,
+        // enlarge_to compute a new rect including old rect and added point
+        const Rect & line_rect = Rect(lineto.startx, lineto.starty, 1, 1).enlarge_to(lineto.endx, lineto.endy);
+        if (line_rect.intersect(clip).isempty()){
+            return;
+        }
+
+        if (lineto.startx == lineto.endx){
+            if (lineto.starty <= lineto.endy){
+                this->vertical_line(lineto.back_mode,
+                     lineto.startx, lineto.starty, lineto.endy,
+                     lineto.rop2, lineto.back_color, lineto.pen, clip);
+            }
+            else {
+                this->vertical_line(lineto.back_mode,
+                     lineto.startx, lineto.endy, lineto.starty,
+                     lineto.rop2, lineto.back_color, lineto.pen, clip);
+            }        
+        }
+        else if (lineto.starty == lineto.endy){
+            this->horizontal_line(lineto.back_mode,
+                 lineto.startx, lineto.starty, lineto.endx, 
+                 lineto.rop2, lineto.back_color, lineto.pen, clip);
+        
+        }
+        else if (lineto.startx <= lineto.endx){
+            this->line(lineto.back_mode,
                  lineto.startx, lineto.starty, lineto.endx, lineto.endy,
                  lineto.rop2, lineto.back_color, lineto.pen, clip);
         }
         else {
-            line(lineto.back_mode,
+            this->line(lineto.back_mode,
                  lineto.endx, lineto.endy, lineto.startx, lineto.starty,
                  lineto.rop2, lineto.back_color, lineto.pen, clip);
         }
         LOG(LOG_INFO, "line done"); 
-
     }
 
     void line(const int mix_mode, const int startx, const int starty, const int endx, const int endy, const int rop2,
               const int bg_color, const RDPPen & pen, const Rect & clip)
     {
-        LOG(LOG_INFO, "mix_mode=%d startx=%d starty=%d endx=%d endy=%d rop2=%d bg_color=%d clip=(%u, %u, %u, %u)",
-            mix_mode, startx, starty, endx, endy, rop2, bg_color, clip.x, clip.y, clip.cx, clip.cy); 
-            if (starty > 480){
-                return;
-            }
-//        int minx = std::min(startx, endx);
-//        int miny = std::min(starty, endy);
-
-//        Rect drect = Rect(minx, miny, abs(endx - startx), abs(endy - starty));
-        #warning clip should be managed
-//        const Rect trect = clip.intersect(drect);
-
         // Color handling
         const uint32_t color = color_decode(pen.color, this->bpp, this->palette);
 
@@ -753,34 +767,82 @@ class StaticCapture
         uint8_t * base = this->data + (starty * this->width + startx) * 3;
 
         // Prep
-        int x0, y0, x1, y1, err, dx, dy, sy;
-        x0 = 0; y0 = 0; x1 = endx - startx; y1 = endy - starty;
+        int x = startx;
+        int y = starty;
+        int dx = endx - startx;
+        int dy = (endy >= starty)?(endy - starty):(starty - endy);
+        int sy = (endy >= starty)?1:-1;
+        int err = dx - dy;
+        
+        while (true){
+            if (clip.contains_pt(x, y)){
+                // Pixel position
+                uint8_t * const p = base + (y * this->width + x) * 3;
 
-        dx = abs(x1-x0);
-        dy = abs(y1-y0);
-        if (y0 < y1) { sy = 1; } else { sy = -1; }
-        err = dx - dy;
+                // Drawing of a pixel
+                p[0] = color >> 16; // r
+                p[1] = color >> 8;  // g
+                p[2] = color;       // b
+            }
 
-        while (true) {
+            if ((x >= endx) && (y == endy)){
+                break;
+            }
+
+            // Calculating pixel position
+            int e2 = err * 2; //prevents use of floating point
+            if (e2 > -dy) {
+                err -= dy;
+                x++;
+            }
+            if (e2 < dx) {
+                err += dx;
+                y += sy;
+            }
+        }
+    }
+
+    void vertical_line(const int mix_mode, const int x, const int starty, const int endy, const int rop2,
+              const int bg_color, const RDPPen & pen, const Rect & clip)
+    {
+        // Color handling
+        const uint32_t color = color_decode(pen.color, this->bpp, this->palette);
+
+        // base adress (*3 because it has 3 color components) 
+        // also base of the new coordinate system
+        uint8_t * const base = this->data + (starty * this->width + x) * 3;
+        const unsigned y0 = std::max(starty, clip.y);
+        const unsigned y1 = std::min(endy, clip.y + clip.cy - 1);
+
+        for (unsigned y = y0; y <= y1 ; y++) {
             // Pixel position
-            uint8_t * p = base + (y0 * this->width + x0) * 3;
+            uint8_t * const p = base + y * this->width * 3;
 
             // Drawing of a pixel
             p[0] = color >> 16; // r
             p[1] = color >> 8;  // g
             p[2] = color;       // b
+        }
+    }
 
-            if ((x0 >= x1) && (y0 == y1)) { break; }
-            // Calculating pixel position
-            int e2 = err * 2; //prevents use of floating point
-            if (e2 > -dy) {
-                err -= dy;
-                x0++;
-            }
-            if (e2 < dx) {
-                err += dx;
-                y0 += sy;
-            }
+    void horizontal_line(const int mix_mode, const int startx, const int y, const int endx, const int rop2,
+              const int bg_color, const RDPPen & pen, const Rect & clip)
+    {
+        const unsigned x0 = std::max(startx, clip.x);
+        const unsigned x1 = std::min(endx, clip.x + clip.cx - 1);
+        // Color handling
+        const uint32_t color = color_decode(pen.color, this->bpp, this->palette);
+        // base adress (*3 because it has 3 color components) also base of the new coordinate system
+        uint8_t * const base = this->data + (y * this->width + startx) * 3;
+
+        // Prep
+        for (unsigned x = x0; x <= x1 ; x++) {
+            // Pixel position
+            uint8_t * const p = base + x * 3;
+            // Drawing of a pixel
+            p[0] = color >> 16; // r
+            p[1] = color >> 8;  // g
+            p[2] = color;       // b
         }
     }
 

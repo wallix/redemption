@@ -307,4 +307,6 @@ BOOST_AUTO_TEST_CASE(TestRect)
         RectI1 it;
         a.difference(b, it);
     }
+    
+    BOOST_CHECK_EQUAL(Rect(10, 10, 1, 1), Rect().enlarge_to(10, 10));
 }
