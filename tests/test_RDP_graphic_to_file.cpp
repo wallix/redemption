@@ -33,7 +33,7 @@
 
 BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
 {
-    Rect clip(0, 0, 800, 600);
+    Rect screen_rect(0, 0, 800, 600);
 
     char tmpname[128];
     {
@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
         OutFileTransport trans(fd);
         GraphicsToFile gtf(&trans, NULL);
         RDPOpaqueRect cmd(Rect(0, 0, 800, 600), 0);
-        gtf.draw(cmd, clip);
+        gtf.draw(cmd, screen_rect);
         gtf.flush();
         ::close(fd);
     }
@@ -80,9 +80,10 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
 
         check<RDPOpaqueRect>(common, cmd,
             // the clip was not changed as encoded opaquerect was fully inside it
-            // => no need to clip, we still have initial clipping
+            // => no need to clip, we still have initial clipping 
+            // (no BOUNDS in control above)
             RDPOrderCommon(RDP::RECT, Rect(0, 0, 1, 1)),
-            RDPOpaqueRect(Rect(0, 0, 800, 600), 0),
+            RDPOpaqueRect(screen_rect, 0),
             "Reading back Rect 1");
         // check we have read everything
         BOOST_CHECK_EQUAL(stream.end - stream.p, 0); 
@@ -91,3 +92,210 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
     ::unlink(tmpname);
 
 }
+
+
+BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk_reading_with_unserialize)
+{
+    Rect screen_rect(0, 0, 800, 600);
+
+    char tmpname[128];
+    {
+        sprintf(tmpname, "/tmp/test_gtf_chunk1XXXXXX");
+        int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
+        OutFileTransport trans(fd);
+        GraphicsToFile gtf(&trans, NULL);
+        RDPOpaqueRect cmd(Rect(0, 0, 800, 600), 0);
+        gtf.draw(cmd, screen_rect);
+        gtf.flush();
+        ::close(fd);
+    }
+    
+    {    
+        // reread data from file
+        int fd = ::open(tmpname, O_RDONLY);
+        BOOST_CHECK(fd > 0); 
+        Stream stream(4096);
+        InFileTransport in_trans(fd);
+        class Consumer : public RDPGraphicDevice {
+            const Rect screen_rect;
+        public:
+                Consumer(const Rect & screen_rect) 
+                : icount(0), screen_rect(screen_rect) 
+                {}
+                void check_end() 
+                {
+                    BOOST_CHECK_EQUAL(icount, 1);
+                }
+        private:
+            unsigned icount;
+            virtual void flush() {};
+            virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
+            {
+                icount++;
+                if (icount == 1){
+                    BOOST_CHECK(cmd == RDPOpaqueRect(Rect(0, 0, 800, 600), 0));
+                    BOOST_CHECK(this->screen_rect == clip);
+                }
+                else {
+                    BOOST_CHECK(false);
+                }
+            }
+            virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPDestBlt & cmd, const Rect &clip)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPMemBlt & cmd, const Rect & clip)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPLineTo& cmd, const Rect & clip)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPBrushCache & cmd)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPColCache & cmd)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPBmpCache & cmd)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPGlyphCache & cmd)
+            {
+                BOOST_CHECK(false);
+            }
+        } consumer(screen_rect);
+
+        RDPUnserializer reader(&in_trans, &consumer, screen_rect);
+        reader.next();
+        consumer.check_end();
+        // check we have read everything
+        BOOST_CHECK_EQUAL(stream.end - stream.p, 0); 
+        ::close(fd);
+    }
+    ::unlink(tmpname);
+
+}
+
+
+BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
+{
+    Rect screen_rect(0, 0, 800, 600);
+
+    char tmpname[128];
+    {
+        sprintf(tmpname, "/tmp/test_gtf_chunk1XXXXXX");
+        int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
+        OutFileTransport trans(fd);
+        GraphicsToFile gtf(&trans, NULL);
+        gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), screen_rect);
+        gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), Rect(10, 10, 100, 100));
+        gtf.flush();
+        ::close(fd);
+    }
+    
+    {    
+        // reread data from file
+        int fd = ::open(tmpname, O_RDONLY);
+        BOOST_CHECK(fd > 0); 
+        Stream stream(4096);
+        InFileTransport in_trans(fd);
+        class Consumer : public RDPGraphicDevice {
+            const Rect screen_rect;
+        public:
+                Consumer(const Rect & screen_rect) 
+                    : icount(0), screen_rect(screen_rect) {}
+                void check_end() 
+                {
+                    BOOST_CHECK_EQUAL(icount, 2);
+                }
+        private:
+            unsigned icount;
+
+            virtual void flush() {}
+            virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
+            {
+                icount++;
+                switch (icount){
+                case 1:
+                    BOOST_CHECK(cmd == RDPOpaqueRect(Rect(0, 0, 800, 600), 0));
+                    BOOST_CHECK(this->screen_rect == clip);
+                break;
+                case 2:
+                    BOOST_CHECK(cmd == RDPOpaqueRect(Rect(0, 0, 800, 600), 0));
+                    BOOST_CHECK(Rect(10, 10, 100, 100) == clip);
+                break;
+                default:
+                    BOOST_CHECK(false);
+                }
+            }
+            virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPDestBlt & cmd, const Rect &clip)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPMemBlt & cmd, const Rect & clip)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPLineTo& cmd, const Rect & clip)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPBrushCache & cmd)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPColCache & cmd)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPBmpCache & cmd)
+            {
+                BOOST_CHECK(false);
+            }
+            virtual void draw(const RDPGlyphCache & cmd)
+            {
+                BOOST_CHECK(false);
+            }
+        } consumer(screen_rect);
+
+        RDPUnserializer reader(&in_trans, &consumer, screen_rect);
+        reader.next();
+        reader.next();
+        consumer.check_end();
+        // check we have read everything
+        BOOST_CHECK_EQUAL(stream.end - stream.p, 0); 
+        ::close(fd);
+    }
+    ::unlink(tmpname);
+
+}
+

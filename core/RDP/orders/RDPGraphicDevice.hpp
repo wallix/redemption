@@ -75,6 +75,7 @@ struct RDPUnserializer
     Stream stream;
     RDPGraphicDevice * consumer;
     Transport * trans;
+    Rect screen_rect;
     
     // Internal state of orders
     RDPOrderCommon common;
@@ -86,14 +87,15 @@ struct RDPUnserializer
     RDPLineTo lineto;
     RDPGlyphIndex glyphindex;
     
+    // variables used to read batch of orders "chunks"
     uint16_t chunk_num;
     uint16_t chunk_size;
     uint16_t chunk_type;
     uint16_t remaining_order_count;
     uint16_t order_count;
 
-    RDPUnserializer(Transport * trans, RDPGraphicDevice * consumer) 
-     : stream(4096), consumer(consumer), trans(trans),
+    RDPUnserializer(Transport * trans, RDPGraphicDevice * consumer, const Rect screen_rect) 
+     : stream(4096), consumer(consumer), trans(trans), screen_rect(screen_rect),
      // Internal state of orders
     common(RDP::PATBLT, Rect(0, 0, 1, 1)),
     destblt(Rect(), 0),
@@ -102,8 +104,14 @@ struct RDPUnserializer
     opaquerect(Rect(), 0),
     memblt(0, Rect(), 0, 0, 0, 0),
     lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
-    glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"")
+    glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
 
+    // variables used to read batch of orders "chunks"
+    chunk_num(0),
+    chunk_size(0),
+    chunk_type(0),
+    remaining_order_count(0),
+    order_count(0)
     {
     }
     
@@ -143,8 +151,7 @@ struct RDPUnserializer
         }
         else {
             RDPPrimaryOrderHeader header = this->common.receive(stream, control);
-//            const Rect & clip = ((control & RDP::BOUNDS)?this->common.clip:mod->gd.get_front_rect());
-            const Rect & clip = this->common.clip;
+            const Rect & clip = (control & RDP::BOUNDS)?this->common.clip:this->screen_rect;
             switch (this->common.order) {
             case RDP::GLYPHINDEX:
                 this->glyphindex.receive(stream, header);
