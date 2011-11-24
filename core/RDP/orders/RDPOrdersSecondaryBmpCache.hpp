@@ -501,15 +501,19 @@ class RDPBmpCache {
     Bitmap * bmp;
     int bpp;
     int cache_idx;
-    const ClientInfo * client_info;
+    const int bitmap_cache_version;
+    const int use_bitmap_comp;
+    const int op2;
+    
 
-    #warning we should not provide client_info, but only what is necessary (compression_type, cache type 1 or type 1)
-    RDPBmpCache(int bpp, Bitmap * bmp, int cache_id, int cache_idx, const ClientInfo * client_info) :
+    RDPBmpCache(int bpp, Bitmap * bmp, int cache_id, int cache_idx, const int bitmap_cache_version, const int use_bitmap_comp, const int op2) :
                     cache_id(cache_id),
                     bmp(bmp),
                     bpp(bpp),
                     cache_idx(cache_idx),
-                    client_info(client_info)
+                    bitmap_cache_version(bitmap_cache_version),
+                    use_bitmap_comp(use_bitmap_comp),
+                    op2(op2)
     {
     }
 
@@ -519,7 +523,9 @@ class RDPBmpCache {
                     bmp(NULL),
                     bpp(bpp),
                     cache_idx(0),
-                    client_info(NULL)
+                    bitmap_cache_version(0),
+                    use_bitmap_comp(0),
+                    op2(0)
     {
     }
 
@@ -527,12 +533,12 @@ class RDPBmpCache {
     {
     }
 
-    const enum RDP::SecondaryOrderType get_cache_bitmap_type(const ClientInfo * client_info)
+    const enum RDP::SecondaryOrderType get_cache_bitmap_type()
     {
-        switch (this->client_info->bitmap_cache_version){
+        switch (this->bitmap_cache_version){
         case 0:
         case 1:
-            if (this->client_info->use_bitmap_comp){
+            if (this->use_bitmap_comp){
                 return RDP::TS_CACHE_BITMAP_COMPRESSED;
             }
             else {
@@ -540,7 +546,7 @@ class RDPBmpCache {
             }
         break;
         default:
-            if (this->client_info->use_bitmap_comp){
+            if (this->use_bitmap_comp){
                 return RDP::TS_CACHE_BITMAP_COMPRESSED_REV2;
             }
             else {
@@ -554,12 +560,12 @@ class RDPBmpCache {
     {
         #warning logs below should be dependant on debug flags
         using namespace RDP;
-        switch (this->client_info->bitmap_cache_version){
+        switch (this->bitmap_cache_version){
         case 0:
         case 1:
-            if (this->client_info->use_bitmap_comp){
+            if (this->use_bitmap_comp){
 //                LOG(LOG_INFO, "/* BMP Cache compressed V1 */");
-                if (this->client_info->op2){
+                if (this->op2){
                     this->emit_v1_compressed_small_headers(stream);
                 }
                 else {
@@ -572,7 +578,7 @@ class RDPBmpCache {
             }
         break;
         default:
-            if (this->client_info->use_bitmap_comp){
+            if (this->use_bitmap_comp){
 //                LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
                 this->emit_v2_compressed(stream);
             }
@@ -1164,19 +1170,20 @@ class RDPBmpCache {
 
     size_t str(char * buffer, size_t sz) const
     {
-        size_t lg;
-        if (client_info){
-              lg = snprintf(buffer, sz, "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u cx=%u cy=%u cache_version=%u compression=%u small_header=%u)",
-                this->cache_id, this->cache_idx, this->bpp, 
-                this->bmp->cx, this->bmp->cy,
-                this->client_info->bitmap_cache_version,
-                this->client_info->use_bitmap_comp,
-                this->client_info->op2);
-        }
-        else {
-              lg = snprintf(buffer, sz, "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u cx=%u cy=%u cache_version=? compression=?)",
-                this->cache_id, this->cache_idx, this->bpp, this->bmp->cx, this->bmp->cy);
-        }
+        size_t lg = snprintf(buffer, sz,
+            "RDPBmpCache(cache_id=%u"
+            " cache_idx=%u"
+            " bpp=%u"
+            " cx=%u"
+            " cy=%u"
+            " cache_version=%u"
+            " compression=%u"
+            " small_header=%u)",
+            this->cache_id, this->cache_idx, this->bpp, 
+            this->bmp->cx, this->bmp->cy,
+            this->bitmap_cache_version,
+            this->use_bitmap_comp,
+            this->op2);
         if (lg >= sz){
             return sz;
         }

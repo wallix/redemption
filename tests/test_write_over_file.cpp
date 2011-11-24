@@ -708,7 +708,10 @@ BOOST_AUTO_TEST_CASE(TestWriteOverFile)
         }; /* 0x1a10470 */
 
         Bitmap bmp0x1a10470(24, &palette332, 32, 32, raw0x1a10470, sizeof(raw0x1a10470));
-        gf.draw(RDPBmpCache(24, &bmp0x1a10470, 1, 0, NULL));
+        const int bitmap_cache_version = 1;
+        const int use_bitmap_comp = 0;
+        const int op2 = 0;
+        gf.draw(RDPBmpCache(24, &bmp0x1a10470, 1, 0, bitmap_cache_version, use_bitmap_comp, op2));
 
         gf.draw(RDPMemBlt(1, Rect(80, 60, 32, 32), 204, 0, 0, 0), Rect(0, 0, 800, 600));
 
