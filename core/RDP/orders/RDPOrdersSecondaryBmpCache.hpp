@@ -24,7 +24,7 @@
 #if !defined(__RDPORDERSSECONDARYBMPCACHE_HPP__)
 #define __RDPORDERSSECONDARYBMPCACHE_HPP__
 
-
+#warning RDPBmpCache works with a given item (id, idx) inside a given Bitmap cache, hence we should not provide it with the bitmap itself, but with the cache containing the said bitmap. That said we should also have both lowlevel bitmaps (bpp independant) and curryed bitmap with a fixed given bpp. RDPBmpCache relates to a cache containing curryed bitmaps, as the actual id to use depends off the bitmap size in bytes, itself depending from bpp. Alternatively, this bpp could be attached to the cache itself as bpp is unique for a given cache.
 class RDPBmpCache {
     // [MS-RDPGDI] 2.2.2.2.1.2.2 Cache Bitmap - Revision 1 (CACHE_BITMAP_ORDER)
     // ========================================================================
@@ -497,25 +497,22 @@ class RDPBmpCache {
     // +----------------------+------------------------------------------------+
 
     public:
-    int cache_id;
+    int id;
     Bitmap * bmp;
     int bpp;
-    int cache_idx;
+    int idx;
     
 
-    RDPBmpCache(int bpp, Bitmap * bmp, int cache_id, int cache_idx) :
-                    cache_id(cache_id),
-                    bmp(bmp),
-                    bpp(bpp),
-                    cache_idx(cache_idx)
+    RDPBmpCache(int bpp, Bitmap * bmp, int id, int idx) 
+        : id(id), bmp(bmp), bpp(bpp), idx(idx)
     {
     }
 
     RDPBmpCache(int bpp) :
-                    cache_id(0),
+                    id(0),
                     bmp(NULL),
                     bpp(bpp),
-                    cache_idx(0)
+                    idx(0)
     {
     }
 
@@ -568,7 +565,7 @@ class RDPBmpCache {
         stream.out_uint16_le(NO_BITMAP_COMPRESSION_HDR); // flags
         stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); // type
 
-        stream.out_uint8(cache_id);
+        stream.out_uint8(this->id);
         stream.out_clear_bytes(1); /* pad */
 
         stream.out_uint8(align4(this->bmp->cx));
@@ -576,7 +573,7 @@ class RDPBmpCache {
         stream.out_uint8(this->bpp);
         uint32_t offset = stream.p - stream.data; 
         stream.out_uint16_le(0); // placeholder for bufsize
-        stream.out_uint16_le(this->cache_idx);
+        stream.out_uint16_le(this->idx);
 
         uint32_t offset_buf_start = stream.p - stream.data;
         this->bmp->compress(this->bpp, stream);
@@ -598,7 +595,7 @@ class RDPBmpCache {
         stream.out_uint16_le(8); // flags : why do we put 8 ? Any value should be ok except NO_BITMAP_COMPRESSION_HDR
         stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); // type
 
-        stream.out_uint8(cache_id);
+        stream.out_uint8(this->id);
         stream.out_clear_bytes(1); /* pad */
 
         stream.out_uint8(align4(this->bmp->cx));
@@ -606,7 +603,7 @@ class RDPBmpCache {
         stream.out_uint8(this->bpp);
         uint32_t offset = stream.p - stream.data; 
         stream.out_uint16_le(0); // placeholder for bufsize
-        stream.out_uint16_le(this->cache_idx);
+        stream.out_uint16_le(this->idx);
 
         stream.out_clear_bytes(2); /* pad */
         uint32_t offset_compression_header = stream.p - stream.data; 
@@ -632,14 +629,14 @@ class RDPBmpCache {
         stream.out_uint16_le(0); // placeholder for length after type minus 7
         uint16_t cbr2_flags = (CBR2_NO_BITMAP_COMPRESSION_HEADER << 7) & 0xFF80;
         uint16_t cbr2_bpp = (((Bpp + 2) << 3) & 0x78);
-        stream.out_uint16_le(cbr2_flags | cbr2_bpp | (cache_id & 7));
+        stream.out_uint16_le(cbr2_flags | cbr2_bpp | (this->id & 7));
         stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED_REV2); // type
         stream.out_uint8(align4(this->bmp->cx));
         stream.out_uint8(this->bmp->cy);
         uint32_t offset = stream.p - stream.data;
         stream.out_uint16_be(0); // place holder for image buffer size
-        stream.out_uint8(((this->cache_idx >> 8) & 0xff) | 0x80);
-        stream.out_uint8(this->cache_idx);
+        stream.out_uint8(((this->idx >> 8) & 0xff) | 0x80);
+        stream.out_uint8(this->idx);
         this->bmp->compress(this->bpp, stream);
         size_t bufsize = stream.p - stream.data - offset + 4;
         stream.set_out_uint16_be(bufsize | 0x4000, offset); // set the actual size
@@ -649,8 +646,8 @@ class RDPBmpCache {
 
     void emit_raw_v1(Stream & stream) const
     {
-//        LOG(LOG_INFO, "emit_raw_v1(cache_id=%d, cache_idx=%d)\n",
-//                this->cache_id, this->cache_idx);
+//        LOG(LOG_INFO, "emit_raw_v1(id=%d, idx=%d)\n",
+//                this->id, this->idx);
 
         using namespace RDP;
         unsigned int row_size = align4(this->bmp->cx * nbbytes(this->bpp));
@@ -674,8 +671,8 @@ class RDPBmpCache {
         // range negotiated by the Bitmap Cache Capability Set (Revision 1)
         //  (see [MS-RDPBCGR] section 2.2.7.1.4.1).
 
-        stream.out_uint8(this->cache_id);
-//        LOG(LOG_INFO, "out_uint8::cache_id %d\n", this->cache_id);
+        stream.out_uint8(this->id);
+//        LOG(LOG_INFO, "out_uint8::id %d\n", this->id);
 
         // pad1Octet (1 byte): An 8-bit, unsigned integer. Padding. Values in
         // this field are arbitrary and MUST be ignored.
@@ -719,8 +716,8 @@ class RDPBmpCache {
         // the Bitmap Cache Capability Set (Revision 1) (see [MS-RDPBCGR]
         // section 2.2.7.1.4.1).
 
-        stream.out_uint16_le(this->cache_idx);
-//        LOG(LOG_INFO, "out_uint16::cache_idx=%d\n", this->cache_idx);
+        stream.out_uint16_le(this->idx);
+//        LOG(LOG_INFO, "out_uint16::idx=%d\n", this->idx);
 
         // bitmapDataStream (variable): A variable-length byte array containing
         //  bitmap data (the format of this data is defined in [MS-RDPBCGR]
@@ -904,7 +901,7 @@ class RDPBmpCache {
         // header::extraFlags : (flags:9, bitsPerPixelId:3, cacheId:3)
         stream.out_uint16_le((flags << 6)
             |((bitsPerPixelId << 3)& 0x38)
-            | (this->cache_id & 7));
+            | (this->id & 7));
 
         // header::orderType
         stream.out_uint8(TS_CACHE_BITMAP_UNCOMPRESSED_REV2);
@@ -945,7 +942,7 @@ class RDPBmpCache {
         //                        the CBR2_DO_NOT_CACHE flag is set, the cacheIndex
         //                        MUST be set to BITMAPCACHE_WAITING_LIST_INDEX
         //                        (32767).
-        stream.out_2BUE(this->cache_idx);
+        stream.out_2BUE(this->idx);
 
         // No compression header in our case
         // ---------------------------------
@@ -1001,7 +998,7 @@ class RDPBmpCache {
         // range negotiated by the Bitmap Cache Capability Set (Revision 1)
         //  (see [MS-RDPBCGR] section 2.2.7.1.4.1).
 
-        this->cache_id = stream.in_uint8();
+        this->id = stream.in_uint8();
 
         // pad1Octet (1 byte): An 8-bit, unsigned integer. Padding. Values in
         // this field are arbitrary and MUST be ignored.
@@ -1040,7 +1037,7 @@ class RDPBmpCache {
         // the Bitmap Cache Capability Set (Revision 1) (see [MS-RDPBCGR]
         // section 2.2.7.1.4.1).
 
-        this->cache_idx = stream.in_uint16_le();
+        this->idx = stream.in_uint16_le();
 
         // bitmapDataStream (variable): A variable-length byte array containing
         //  bitmap data (the format of this data is defined in [MS-RDPBCGR]
@@ -1065,13 +1062,13 @@ class RDPBmpCache {
         const BGRPalette & palette)
     {
         int flags = header.flags;
-        this->cache_id = stream.in_uint8();
+        this->id = stream.in_uint8();
         stream.in_uint8(); // skip pad1
         uint8_t width = stream.in_uint8();
         uint8_t height = stream.in_uint8();
         uint8_t bpp = stream.in_uint8();
         uint16_t bufsize = stream.in_uint16_le();
-        this->cache_idx = stream.in_uint16_le();
+        this->idx = stream.in_uint16_le();
 
         if (flags & NO_BITMAP_COMPRESSION_HDR) {
             const uint8_t* data = stream.in_uint8p(bufsize);
@@ -1102,8 +1099,8 @@ class RDPBmpCache {
     size_t str(char * buffer, size_t sz) const
     {
         size_t lg = snprintf(buffer, sz,
-            "RDPBmpCache(cache_id=%u cache_idx=%u bpp=%u cx=%u cy=%u)",
-            this->cache_id, this->cache_idx,
+            "RDPBmpCache(id=%u idx=%u bpp=%u cx=%u cy=%u)",
+            this->id, this->idx,
             this->bpp, this->bmp->cx, this->bmp->cy);
         if (lg >= sz){
             return sz;

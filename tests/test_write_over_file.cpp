@@ -136,19 +136,19 @@ struct GraphicsFile
 //        LOG(LOG_INFO, "rdp_orders_process_bmpcache");
         BGRPalette palette;
         struct Bitmap* bitmap = NULL;
-        uint8_t cache_id = 0;
-        uint16_t cache_idx = 0;
+        uint8_t id = 0;
+        uint16_t idx = 0;
         RDPBmpCache bmp(bpp);
         bmp.receive(stream, control, header, palette);
-        cache_id = bmp.cache_id;
-        cache_idx = bmp.cache_idx;
+        id = bmp.id;
+        idx = bmp.idx;
         bitmap = bmp.bmp;
         assert(bitmap);
 
-        if (this->cache_bitmap[cache_id][cache_idx]) {
-            delete this->cache_bitmap[cache_id][cache_idx];
+        if (this->cache_bitmap[id][idx]) {
+            delete this->cache_bitmap[id][idx];
         }
-        this->cache_bitmap[cache_id][cache_idx] = bitmap;
+        this->cache_bitmap[id][idx] = bitmap;
     }
 
     void receive(const Rect &clip) {

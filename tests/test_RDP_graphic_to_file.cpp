@@ -292,6 +292,38 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_SecondaryOrderCache)
         Stream stream(4096);
         InFileTransport in_trans(fd);
         class Consumer : public TestConsumer {
+            struct Cache {
+                class BitmapCache {
+                    Bitmap * cache[3][8192];
+                    public:
+                        BitmapCache(){
+                            for (uint8_t cid = 0; cid++; cid < 3){
+                                for (uint16_t cidx = 0; cidx++ ; cidx < 8192){
+                                    cache[cid][cidx] = NULL;
+                                }
+                            }
+                        }
+                        ~BitmapCache(){
+                            for (uint8_t cid = 0; cid++; cid < 3){
+                                for (uint16_t cidx = 0; cidx++ ; cidx < 8192){
+                                    if (cache[cid][cidx]){
+                                        delete cache[cid][cidx];
+                                        cache[cid][cidx] = NULL;
+                                    }
+                                }
+                            }
+                        }
+                        void put(uint8_t id, uint16_t idx, Bitmap * bmp){
+                            if (cache[id][idx]){
+                                delete cache[id][idx];
+                            }
+                            cache[id][idx] = bmp;
+                        }
+                        Bitmap * get(uint8_t id, uint16_t idx){
+                            return cache[id][idx];
+                        }
+                } bmp;
+            } cache;
         public:
             Consumer(const Rect & screen_rect) : TestConsumer(screen_rect){}
             void check_end() 
@@ -302,9 +334,18 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_SecondaryOrderCache)
             virtual void draw(const RDPBmpCache & cmd)
             {
                 icount++;
+                this->cache.bmp.put(cmd.id, cmd.idx, cmd.bmp);
                 switch (icount){
                 case 1:
-                    BOOST_CHECK(true);
+                {
+                    BOOST_CHECK_EQUAL((uint8_t)1, cmd.id);
+                    BOOST_CHECK_EQUAL((uint16_t)10, cmd.idx);
+                    Bitmap * bmp = this->cache.bmp.get(cmd.id, cmd.idx);
+                    BOOST_CHECK_EQUAL((uint16_t)64, bmp->cx);
+                    BOOST_CHECK_EQUAL((uint16_t)64, bmp->cy);
+                    BOOST_CHECK_EQUAL((uint8_t)24, bmp->original_bpp);
+                    BOOST_CHECK_EQUAL((uint32_t)2984132952, bmp->get_crc());
+                }
                 break;
                 default:
                     BOOST_CHECK(false);

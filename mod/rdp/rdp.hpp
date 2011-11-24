@@ -119,15 +119,15 @@ struct rdp_orders {
     void rdp_orders_process_bmpcache(int bpp, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
 //        LOG(LOG_INFO, "rdp_orders_process_bmpcache");
-        RDPBmpCache bmp_cache_item(bpp);
-        bmp_cache_item.receive(stream, control, header, this->global_palette);
+        RDPBmpCache bmp(bpp);
+        bmp.receive(stream, control, header, this->global_palette);
         
         #warning add cache_id, cache_idx range check, and also size check based on cache size by type and uncompressed bitmap size
-        if (this->cache_bitmap[bmp_cache_item.cache_id][bmp_cache_item.cache_idx]) {
-            delete this->cache_bitmap[bmp_cache_item.cache_id][bmp_cache_item.cache_idx];
+        if (this->cache_bitmap[bmp.id][bmp.idx]) {
+            delete this->cache_bitmap[bmp.id][bmp.idx];
         }
-        this->cache_bitmap[bmp_cache_item.cache_id][bmp_cache_item.cache_idx] = bmp_cache_item.bmp;
-//        LOG(LOG_ERR, "rdp_orders_process_bmpcache bitmap id=%u idx=%u cx=%u cy=%u bpp=%u bmp_size=%u", bmp_cache_item.cache_id, bmp_cache_item.cache_idx, bmp_cache_item.bmp->cx, bmp_cache_item.bmp->cy, bmp_cache_item.bmp->bmp_size(bpp), bpp);
+        this->cache_bitmap[bmp.id][bmp.idx] = bmp.bmp;
+//        LOG(LOG_ERR, "rdp_orders_process_bmpcache bitmap id=%u idx=%u cx=%u cy=%u bpp=%u bmp_size=%u", bmp.id, bmp.idx, bmp.bmp->cx, bmp.bmp->cy, bmp.bmp->bmp_size(bpp), bpp);
     }
 
     void rdp_orders_process_fontcache(Stream & stream, int flags, client_mod * mod)
