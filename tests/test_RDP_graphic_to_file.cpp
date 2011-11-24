@@ -279,10 +279,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_SecondaryOrderCache)
 //        BGRPalette palette332;
 //        init_palette332(palette332);
 //        Bitmap bloc64x64(24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
-//        const int bitmap_cache_version = 1;
-//        const int use_bitmap_comp = 0;
-//        const int op2 = 0;
-//        RDPBmpCache cmd(24, &bloc64x64, 1, 10, bitmap_cache_version, use_bitmap_comp, op2);
+//        RDPBmpCache cmd(24, &bloc64x64, 1, 10);
 //        gtf.draw(cmd);
         gtf.flush();
         ::close(fd);

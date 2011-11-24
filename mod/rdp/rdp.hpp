@@ -120,17 +120,7 @@ struct rdp_orders {
     {
 //        LOG(LOG_INFO, "rdp_orders_process_bmpcache");
         RDPBmpCache bmp_cache_item(bpp);
-        switch (header.type){
-        case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
-            bmp_cache_item.receive_raw_v1(stream, control, header, this->global_palette);
-        break;
-        case RDP::TS_CACHE_BITMAP_COMPRESSED:
-            bmp_cache_item.receive_compressed_v1(stream, control, header, this->global_palette);
-        break;
-        default:
-            // can't happen, ensured by caller
-            LOG(LOG_ERR, "Unexpected header type %u in rdp_orders_bmp_cache", header.type);
-        }
+        bmp_cache_item.receive(stream, control, header, this->global_palette);
         
         #warning add cache_id, cache_idx range check, and also size check based on cache size by type and uncompressed bitmap size
         if (this->cache_bitmap[bmp_cache_item.cache_id][bmp_cache_item.cache_idx]) {

@@ -138,7 +138,10 @@ public:
                             this->share_id,
                             this->client_info.crypt_level,
                             this->encrypt,
-                            ini);
+                            ini,
+                            this->client_info.bitmap_cache_version,
+                            this->client_info.use_bitmap_comp,
+                            this->client_info.op2);
     }
 
     ~Front(){
@@ -175,7 +178,15 @@ public:
         this->send_demand_active();
 
         delete this->orders;
-        this->orders = new GraphicsUpdatePDU(trans, this->userid, this->share_id, this->client_info.crypt_level, this->encrypt, this->ini);
+        this->orders = new GraphicsUpdatePDU(trans,
+                        this->userid,
+                        this->share_id,
+                        this->client_info.crypt_level,
+                        this->encrypt,
+                        this->ini,
+                        this->client_info.bitmap_cache_version,
+                        this->client_info.use_bitmap_comp,
+                        this->client_info.op2);
 
         if (this->bmp_cache){
             delete this->bmp_cache;

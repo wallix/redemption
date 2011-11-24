@@ -138,28 +138,11 @@ struct GraphicsFile
         struct Bitmap* bitmap = NULL;
         uint8_t cache_id = 0;
         uint16_t cache_idx = 0;
-        switch (header.type){
-        case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
-            {
-                #warning RDPBmpCache is used to create bitmap
-                RDPBmpCache bmp(bpp);
-                bmp.receive_raw_v1(stream, control, header, palette);
-
-                //                bmp.print();
-                cache_id = bmp.cache_id;
-                cache_idx = bmp.cache_idx;
-                bitmap = bmp.bmp;
-            }
-        break;
-        case RDP::TS_CACHE_BITMAP_COMPRESSED:
-            {
-                #warning move that to RDPBmpCache -> receive
-                // Not handling compressed bitmap for now
-            }
-        break;
-        default:
-            assert(false);
-        }
+        RDPBmpCache bmp(bpp);
+        bmp.receive(stream, control, header, palette);
+        cache_id = bmp.cache_id;
+        cache_idx = bmp.cache_idx;
+        bitmap = bmp.bmp;
         assert(bitmap);
 
         if (this->cache_bitmap[cache_id][cache_idx]) {
@@ -451,7 +434,7 @@ struct GraphicsFile
     void draw(const RDPBmpCache & cmd)
     {
         this->reserve_order(cmd.bmp->bmp_size(cmd.bpp) + 16);
-        cmd.emit_raw_v1(this->stream); // There are no client_info
+        cmd.emit(this->stream, 0, 0, 0);
     }
 
     void draw(const RDPGlyphCache & cmd)
@@ -708,11 +691,7 @@ BOOST_AUTO_TEST_CASE(TestWriteOverFile)
         }; /* 0x1a10470 */
 
         Bitmap bmp0x1a10470(24, &palette332, 32, 32, raw0x1a10470, sizeof(raw0x1a10470));
-        const int bitmap_cache_version = 1;
-        const int use_bitmap_comp = 0;
-        const int op2 = 0;
-        gf.draw(RDPBmpCache(24, &bmp0x1a10470, 1, 0, bitmap_cache_version, use_bitmap_comp, op2));
-
+        gf.draw(RDPBmpCache(24, &bmp0x1a10470, 1, 0));
         gf.draw(RDPMemBlt(1, Rect(80, 60, 32, 32), 204, 0, 0, 0), Rect(0, 0, 800, 600));
 
         gf.flush();

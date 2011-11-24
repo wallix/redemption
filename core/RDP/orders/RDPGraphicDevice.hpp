@@ -196,6 +196,9 @@ struct RDPSerializer : public RDPGraphicDevice
     Stream stream;
     Transport * trans;
     const Inifile * ini;
+    const int bitmap_cache_version;
+    const int use_bitmap_comp;
+    const int op2;
 
     // Internal state of orders
     RDPOrderCommon common;
@@ -211,10 +214,16 @@ struct RDPSerializer : public RDPGraphicDevice
     uint32_t offset_order_count;
 
 
-    RDPSerializer(Transport * trans, const Inifile * ini)
+    RDPSerializer(Transport * trans, const Inifile * ini,
+          const int bitmap_cache_version, 
+          const int use_bitmap_comp, 
+          const int op2)
         : stream(4096),
         trans(trans),
         ini(ini),
+        bitmap_cache_version(bitmap_cache_version), 
+        use_bitmap_comp(use_bitmap_comp), 
+        op2(op2),
         // Internal state of orders
         common(RDP::PATBLT, Rect(0, 0, 1, 1)),
         destblt(Rect(), 0),
@@ -357,7 +366,7 @@ struct RDPSerializer : public RDPGraphicDevice
     virtual void draw(const RDPBmpCache & cmd)
     {
         this->reserve_order(cmd.bmp->bmp_size(cmd.bpp) + 16);
-        cmd.emit(this->stream);
+        cmd.emit(this->stream, this->bitmap_cache_version, this->use_bitmap_comp, this->op2);
         if (this->ini && this->ini->globals.debug.secondary_orders){
             cmd.log(LOG_INFO);
         }

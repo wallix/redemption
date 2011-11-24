@@ -115,8 +115,14 @@ struct GraphicsUpdatePDU : public RDPSerializer
                       int & shareid,
                       int & crypt_level,
                       CryptContext & encrypt,
-                      const Inifile * ini)
-        : RDPSerializer(trans, ini),
+                      const Inifile * ini,
+                      const int bitmap_cache_version, 
+                      const int use_bitmap_comp, 
+                      const int op2)
+        : RDPSerializer(trans, ini, 
+              bitmap_cache_version, 
+              use_bitmap_comp, 
+              op2),
         tpdu(NULL),
         mcs_sdin(NULL),
         sec_out(NULL),

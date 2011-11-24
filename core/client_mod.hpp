@@ -560,8 +560,7 @@ struct GraphicDeviceMod : public GraphicDevice
     {
         BitmapCacheItem * entry =  this->front.bmp_cache->get_item(cache_id, cache_idx);
 
-        const ClientInfo & ci = this->get_client_info();
-        RDPBmpCache cmd(this->get_front_bpp(), entry->pbmp, cache_id, cache_idx, ci.bitmap_cache_version, ci.use_bitmap_comp, ci.op2);
+        RDPBmpCache cmd(this->get_front_bpp(), entry->pbmp, cache_id, cache_idx);
         this->front.orders->draw(cmd);
 
         if (this->capture){

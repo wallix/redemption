@@ -103,7 +103,10 @@ struct GraphicsToFile : public RDPSerializer
     uint16_t offset_chunk_size;
 
     GraphicsToFile(Transport * trans, const Inifile * ini)
-        : RDPSerializer(trans, ini)
+//        const int bitmap_cache_version, 
+//        const int use_bitmap_comp, 
+//        const int op2,
+        : RDPSerializer(trans, ini, 0, 1, 1)
     {
         this->init();
     }
