@@ -275,56 +275,50 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_SecondaryOrderCache)
         OutFileTransport trans(fd);
         GraphicsToFile gtf(&trans, NULL);
 
-//        uint8_t comp64x64RED[] = { 0xc0, 0x30, 0x00, 0x00, 0xFF, 0xf0, 0xc0, 0x0f, };
-//        BGRPalette palette332;
-//        init_palette332(palette332);
-//        Bitmap bloc64x64(24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
-//        RDPBmpCache cmd(24, &bloc64x64, 1, 10);
-//        gtf.draw(cmd);
+        uint8_t comp64x64RED[] = { 0xc0, 0x30, 0x00, 0x00, 0xFF, 0xf0, 0xc0, 0x0f, };
+        BGRPalette palette332;
+        init_palette332(palette332);
+        Bitmap bloc64x64(24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
+        RDPBmpCache cmd(24, &bloc64x64, 1, 10);
+        gtf.draw(cmd);
         gtf.flush();
         ::close(fd);
     }
-//    
-//    {    
-//        // reread data from file
-//        int fd = ::open(tmpname, O_RDONLY);
-//        BOOST_CHECK(fd > 0); 
-//        Stream stream(4096);
-//        InFileTransport in_trans(fd);
-//        class Consumer : public TestConsumer {
-//        public:
-//            Consumer(const Rect & screen_rect) : TestConsumer(screen_rect){}
-//            void check_end() 
-//            {
-//                BOOST_CHECK_EQUAL(icount, 2);
-//            }
-//        private:
-//            virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
-//            {
-//                icount++;
-//                switch (icount){
-//                case 1:
-//                    BOOST_CHECK(cmd == RDPOpaqueRect(Rect(0, 0, 800, 600), 0));
-//                    BOOST_CHECK(this->screen_rect == clip);
-//                break;
-//                case 2:
-//                    BOOST_CHECK(cmd == RDPOpaqueRect(Rect(0, 0, 800, 600), 0));
-//                    BOOST_CHECK(Rect(10, 10, 100, 100) == clip);
-//                break;
-//                default:
-//                    BOOST_CHECK(false);
-//                }
-//            }
-//        } consumer(screen_rect);
+    
+    {    
+        // reread data from file
+        int fd = ::open(tmpname, O_RDONLY);
+        BOOST_CHECK(fd > 0); 
+        Stream stream(4096);
+        InFileTransport in_trans(fd);
+        class Consumer : public TestConsumer {
+        public:
+            Consumer(const Rect & screen_rect) : TestConsumer(screen_rect){}
+            void check_end() 
+            {
+                BOOST_CHECK_EQUAL(icount, 1);
+            }
+        private:
+            virtual void draw(const RDPBmpCache & cmd)
+            {
+                icount++;
+                switch (icount){
+                case 1:
+                    BOOST_CHECK(true);
+                break;
+                default:
+                    BOOST_CHECK(false);
+                }
+            }
+        } consumer(screen_rect);
 
-//        RDPUnserializer reader(&in_trans, &consumer, screen_rect);
-//        reader.next();
-//        reader.next();
-//        consumer.check_end();
-//        // check we have read everything
-//        BOOST_CHECK_EQUAL(stream.end - stream.p, 0); 
-//        ::close(fd);
-//    }
+        RDPUnserializer reader(&in_trans, &consumer, screen_rect);
+        reader.next();
+        consumer.check_end();
+        // check we have read everything
+        BOOST_CHECK_EQUAL(stream.end - stream.p, 0); 
+        ::close(fd);
+    }
     ::unlink(tmpname);
 
 }

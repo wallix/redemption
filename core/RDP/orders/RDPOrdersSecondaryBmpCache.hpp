@@ -1092,7 +1092,6 @@ class RDPBmpCache {
                 LOG(LOG_WARNING, "broadcasted final_size should be the same as bmp size computed from cx, cy, bpp and alignment rules");
             }
         }
-
     }
 
 

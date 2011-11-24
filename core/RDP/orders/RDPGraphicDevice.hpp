@@ -116,69 +116,106 @@ struct RDPUnserializer
     }
     
     uint8_t next(){
-        if (((stream.p == stream.end) && (this->remaining_order_count))
-        ||  ((stream.p != stream.end) && (this->remaining_order_count == 0))){
+        if (((this->stream.p == this->stream.end) && (this->remaining_order_count))
+        ||  ((this->stream.p != this->stream.end) && (this->remaining_order_count == 0))){
             LOG(LOG_ERR, "Incomplete order batch at chunk %u "
                          "order [%u/%u] "
                          "remaining [%u/%u]", 
                          this->chunk_num,
                          (this->order_count-this->remaining_order_count), this->order_count,
-                         (stream.end - stream.p), this->chunk_size);
+                         (this->stream.end - this->stream.p), this->chunk_size);
         }
         if (!this->remaining_order_count){
             try {
-                stream.init(4096);
-                this->trans->recv(&stream.end, 8);
-                this->chunk_type = stream.in_uint16_le();
-                this->chunk_size = stream.in_uint16_le();
-                this->remaining_order_count = this->order_count = stream.in_uint16_le();
-                uint16_t pad = stream.in_uint16_le(); (void)pad;
+                this->stream.init(4096);
+                this->trans->recv(&this->stream.end, 8);
+                this->chunk_type = this->stream.in_uint16_le();
+                this->chunk_size = this->stream.in_uint16_le();
+                this->remaining_order_count = this->order_count = this->stream.in_uint16_le();
+                uint16_t pad = this->stream.in_uint16_le(); (void)pad;
             }
             catch (Error & e){
                 #warning check specific error and return 0 only if actual EOF is reached or rethrow the error
                 return 0;
             }
-            this->trans->recv(&stream.end, this->chunk_size - 8);
+            this->trans->recv(&this->stream.end, this->chunk_size - 8);
         }
-        uint8_t control = stream.in_uint8();
+        uint8_t control = this->stream.in_uint8();
         if (!control & RDP::STANDARD){
             /* error, this should always be set */
             LOG(LOG_ERR, "Non standard order detected : protocol error");
+            #warning throw some error
         }
         else if (control & RDP::SECONDARY) {
             using namespace RDP;
-            RDPSecondaryOrderHeader header(stream);
+            RDPSecondaryOrderHeader header(this->stream);
+                uint8_t *next_order = this->stream.p + header.length + 7;
+                switch (header.type) {
+                case TS_CACHE_BITMAP_COMPRESSED:
+                case TS_CACHE_BITMAP_UNCOMPRESSED:
+                {
+                    // we need color depth and palette
+                    RDPBmpCache cmd(24);
+                    BGRPalette palette;
+                    init_palette332(palette);
+                    cmd.receive(this->stream, control, header, palette);
+                    consumer->draw(cmd);
+                }
+                break;
+                case TS_CACHE_COLOR_TABLE:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_COLOR_TABLE (%d)", header.type);
+//                    this->process_colormap(this->stream, control, header, mod);
+                    break;
+                case TS_CACHE_GLYPH:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_GLYPH (%d)", header.type);
+//                    this->rdp_orders_process_fontcache(this->stream, header.flags, mod);
+                    break;
+                case TS_CACHE_BITMAP_COMPRESSED_REV2:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)", header.type);
+                  break;
+                case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_UNCOMPRESSED_REV2 (%d)", header.type);
+                  break;
+                case TS_CACHE_BITMAP_COMPRESSED_REV3:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV3 (%d)", header.type);
+                  break;
+                default:
+                    LOG(LOG_ERR, "unsupported SECONDARY ORDER (%d)", header.type);
+                    /* error, unknown order */
+                    break;
+                }
+                stream.p = next_order;
         }
         else {
-            RDPPrimaryOrderHeader header = this->common.receive(stream, control);
+            RDPPrimaryOrderHeader header = this->common.receive(this->stream, control);
             const Rect & clip = (control & RDP::BOUNDS)?this->common.clip:this->screen_rect;
             switch (this->common.order) {
             case RDP::GLYPHINDEX:
-                this->glyphindex.receive(stream, header);
+                this->glyphindex.receive(this->stream, header);
                 consumer->draw(this->glyphindex, clip);
                 break;
             case RDP::DESTBLT:
-                this->destblt.receive(stream, header);
+                this->destblt.receive(this->stream, header);
                 consumer->draw(this->destblt, clip);
                 break;
             case RDP::PATBLT:
-                this->patblt.receive(stream, header);
+                this->patblt.receive(this->stream, header);
                 consumer->draw(this->patblt, clip);
                 break;
             case RDP::SCREENBLT:
-                this->scrblt.receive(stream, header);
+                this->scrblt.receive(this->stream, header);
                 consumer->draw(this->scrblt, clip);
                 break;
             case RDP::LINE:
-                this->lineto.receive(stream, header);
+                this->lineto.receive(this->stream, header);
                 consumer->draw(this->lineto, clip);
                 break;
             case RDP::RECT:
-                this->opaquerect.receive(stream, header);
+                this->opaquerect.receive(this->stream, header);
                 consumer->draw(this->opaquerect, clip);
                 break;
             case RDP::MEMBLT:
-                this->memblt.receive(stream, header);
+                this->memblt.receive(this->stream, header);
                 this->consumer->draw(this->memblt, clip);
                 break;
             default:
