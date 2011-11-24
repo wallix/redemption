@@ -141,6 +141,7 @@ struct RDPUnserializer
             this->trans->recv(&this->stream.end, this->chunk_size - 8);
         }
         uint8_t control = this->stream.in_uint8();
+        this->remaining_order_count--;
         if (!control & RDP::STANDARD){
             /* error, this should always be set */
             LOG(LOG_ERR, "Non standard order detected : protocol error");
