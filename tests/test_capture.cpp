@@ -29,13 +29,16 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <algorithm>
 
+#include "../utils/png.hpp"
+
 #include <staticcapture.hpp>
+#include <drawable.hpp>
 
 BOOST_AUTO_TEST_CASE(TestCreateCapture)
 {
     // Create a simple capture image and dump it to file
     Rect screen_rect(0, 0, 640, 480);
-    StaticCapture gd(screen_rect.cx, screen_rect.cy, 24, NULL, NULL, NULL); 
+    StaticCapture gd(screen_rect.cx, screen_rect.cy, 24, NULL, NULL, NULL);
     gd.opaque_rect(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.opaque_rect(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect);
     uint16_t y = screen_rect.cy - 1;
@@ -50,4 +53,30 @@ BOOST_AUTO_TEST_CASE(TestCreateCapture)
         gd.line_to(RDPLineTo(0, x, y, screen_rect.cx - 1, 0, WHITE, 0xCC, RDPPen(0, 1, BLACK)), screen_rect);
     }
     gd.dump_png();
+}
+
+BOOST_AUTO_TEST_CASE(TestDrawable)
+{
+    // Create a simple capture image and dump it to file
+    uint16_t width = 640;
+    uint16_t height = 480;
+    uint8_t bpp = 24;
+    Rect screen_rect(0, 0, width, height);
+    BGRPalette palette;
+    init_palette332(palette);
+    Drawable gd(width, height, bpp, palette, false);
+    gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect);
+    gd.draw(RDPOpaqueRect(screen_rect, BLUE), Rect(100, 100, 100, 100));
+    gd.draw(RDPOpaqueRect(Rect(120, 120, 60, 60), PINK), Rect(100, 100, 100, 100));
+    gd.scrblt(90, 90, Rect(300, 300, 120, 120));
+    gd.scrblt(90, 90, Rect(90, 70, 120, 120));
+    char tmpname[128];
+    sprintf(tmpname, "/tmp/test_png_XXXXXX.png");
+    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
+    FILE * f = fdopen(fd, "wb");
+    ::dump_png24(f, gd.data, gd.screen.cx, gd.screen.cy, gd.rowsize);
+    ::fflush(f);
+    ::fclose(f);
+//    ::unlink(tmpname);
+
 }
