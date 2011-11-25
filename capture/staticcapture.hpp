@@ -488,81 +488,136 @@ class StaticCapture
         // Destination rectangle : drect
         const Rect & drect = cmd.rect.intersect(clip);
         if (drect.isempty()){ return; }
-
-        // Source rectangle : srect
-        const Rect srect((cmd.srcx + drect.x - cmd.rect.x), (cmd.srcy + drect.y - cmd.rect.y), drect.cx, drect.cy);
-
-        // If the destination area overlaps the source area, then the src
-        // is broken in three non overlapping zones
-        const Rect & overlap = srect.intersect(drect);
-        if(!overlap.isempty()) {
-            if(srect.equal(drect)) { return; }
-            /*
-             * There are many different cases, for instance the source rect can be broken
-             * like the following
-             *          +-------------------------+ \
-             *          |                         |  \
-             *          |           big           |   \
-             *          |                         |    > Source rectangle
-             *          +---------+---------------+   /
-             *          | brother | conflict_zone |  /
-             *          +---------+---------------+ /
-             */
-            int deltax = drect.x - srect.x; int deltay = drect.y - srect.y;
-
-            // Break in three non intersecting rectangles and call screen_blt again.
-            Rect conflict_zone = overlap.offset(-deltax, -deltay);
-             // The "big" one
-            Rect big(srect.x, srect.y, srect.cx, srect.cy - overlap.cy);
-             // The "little" one
-            Rect brother(srect.x, srect.y, srect.cx - overlap.cx, overlap.cy);
-
-            // Four cases:
-            // Conflict zone is in the upper left.  SE
-            if ((overlap.x == drect.x) && (overlap.y == drect.y)) {
-                big     = big.offset(0, overlap.cy);
-                brother = brother.offset(overlap.cx, 0);
-            }
-            // Conflict zone is in the lower left.  NE
-            else if ((overlap.x == drect.x) && (overlap.y == srect.y)) {
-                brother = brother.offset(overlap.cx, big.cy);
-            }
-            // Conflict zone is in the upper right. SW
-            else if ((overlap.x == srect.x) && (overlap.y == drect.y)) {
-                big     = big.offset(0, overlap.cy);
-            }
-            // Conflict zone is in the lower right. NW
-            else if ((overlap.x == srect.x) && (overlap.y == srect.y)) {
-                brother = brother.offset(0, big.cy);
-             }
-
-            this->scr_blt(RDPScrBlt(big.offset(deltax, deltay), cmd.rop, big.x, big.y), clip);
-            this->scr_blt(RDPScrBlt(brother.offset(deltax, deltay), cmd.rop, brother.x, brother.y), clip);
-
-            // Last thing to do : copy the conflict zone.
-            this->scr_blt(RDPScrBlt(overlap, cmd.rop, conflict_zone.x, conflict_zone.y), clip);
-            return;
-        }
-
-
-        // The source is copied to the target
-        // Where we draw -> target
-        uint8_t * target = this->data + (drect.y * this->width + drect.x) * 3;
-        // From where we read the source
-        uint8_t * source = this->data + (srect.y * this->width + srect.x) * 3;
-        this->scrblt(source, target, this->width, drect.cx, drect.cy);
-
+        // adding delta move dest to source
+        const signed int deltax = cmd.srcx - cmd.rect.x;
+        const signed int deltay = cmd.srcy - cmd.rect.y;
+        this->scrblt(drect.x + deltax, drect.y + deltay, drect);
     }
 
-    // low level copy of data from some place on screen to another
-    // source and target must not overlap, no clipping
-    // no protection (so be careful not to draw out of screen)
-    // width, cx, cy are numbers of en pixels
-    void scrblt(uint8_t * source, uint8_t * target, uint16_t width, uint16_t cx, uint16_t cy){
-        for (uint16_t j = 0; j < cy ; j++) {
-            uint16_t offset = j * width * 3;
-            memcpy(source + offset, target + offset, cx*3);
+    // low level scrblt, mostly avoid considering clipping 
+    // because we already took care of it
+    void scrblt(unsigned srcx, unsigned srcy, const Rect drect)
+    {
+        // adding delta move dest to source
+        const signed int deltax = srcx - drect.x;
+        const signed int deltay = srcy - drect.y;
+        const Rect srect = drect.offset(deltax, deltay);
+        if(!srect.equal(drect)){
+            const Rect & overlap = srect.intersect(drect);
+            if (overlap.isempty()){
+                uint8_t * target = this->data + (drect.y * this->width + drect.x) * 3;
+                uint8_t * source = this->data + (srect.y * this->width + srect.x) * 3;
+                int offset = 0;
+                size_t width_in_bytes = this->width * 3;
+                for (uint16_t j = 0; j < drect.cy ; j++) {
+                    memcpy(source + offset, target + offset, drect.cx * 3);
+                    offset += width_in_bytes;
+                }
+            }
+            else {
+                /*
+                 * OK, now let's consider what we should do with overlapping
+                 * source rectangle and destination rectangle.
+                 * There are many different cases, for instance the following ones
+                 * shown below:
+
+                 Case 1: source rectangle is above destination rectangle
+                 if we move overlap it does not intersect with target
+                 =======================================================
+                 *          +-------------------------+ \
+                 *          |                         |  \
+                 *          |           s_big         |   \
+                 *          |                         |    > Source rectangle
+                 *          +---------+---------------+---/-----+ \
+                 *          |    s_bro|ther  overlap  |  /      |  \
+                 *          +---------+---------------+ /       |   \
+                 *                    |         d_big           |    > Dest rectangle
+                 *                    +---------+---------------+   /
+                 *                    |       d_brother         |  /
+                 *                    +---------+---------------+ /
+
+                -> s_brother -> d_brother , s_big -> d_big
+
+                 Case 2: source rectangle is below destination rectangle
+                 if we move overlap it does not intersect with target
+                 =======================================================
+
+                 *          +-------------------------+ \
+                 *          |           d_brother     |  \
+                 *          +-------------------------+   \
+                 *          |                         |    > Dest rect
+                 *          +   d_big +---------------+---/-----+ \
+                 *          |         |  overlap  s_br|ot/her   |  \
+                 *          +---------+---------------+-/-------+   \
+                 *                    |                         |    > Source rect
+                 *                    |        s_big            |   /
+                 *                    |                         |  /
+                 *                    +-------------------------+ /
+                -> s_brother -> d_brother , s_big -> d_big
+
+                 Case 3: source rectangle is above destination rectangle
+                 if we move overlap it does intersect with it's target
+                 =======================================================
+
+                 *          +-------------------------+  \
+                 *          |                         |   \
+                 *          +----+--------------------+----\+ \
+                 *          |    |      Ov            |     >>>\>Source rectangle
+                 *          |    +----+---er----------+----/+   \
+                 *          |    |    |     lap       |   / |    >> Destination rect
+                 *          +----+----+---------------+  /  |   /
+                 *               |    |                     |  /
+                 *               +----+---------------------+ /
+
+                 Case 4: source rectangle and dest rectangle are on the same level
+                 ============================================
+
+                 *        +------------+------------+-\----------+ \
+                 *        |            |            |  \         |  \
+                 *        |            |            |   \        |   \
+                 *        |            |   Overlap  |    > Dest r|ect > Source Rect
+                 *        |            |            |   /        |   /
+                 *        |            |            |  /         |  /
+                 *        +------------|------------+-/----------+ /
+
+                 All those cases can be solved the same way.
+                 - first move intersection of source and target to target,
+                  if it still overlap it can be solved by a recursive call
+                 - then move the remaining parts. As they do not overlap, source
+                 won't be modified by the changes applied to intersection.
+                 
+                 We can still make that slightly simpler.
+                 - if both source and target are on the same level (like case 4)
+                 then we just have to split the rectangle in two parts 
+                 using a vertical cut.
+                 we move the overlaping part, then we move the remaining rectangle.
+                 - in all other cases we can cut rectangle in two using one horizontal cut
+
+                This algorith may need some levels of recursive calls, but it's still simple enough.
+                
+                If necessary we could also optimize it keeping some minimal buffer
+                that will be used if steps are too small.
+                 */
+
+                if (srect.y != drect.y){
+                    // horizontal cut, overlapping part
+                    this->scrblt(srect.x, drect.y,
+                        Rect(drect.x, drect.y - deltay, drect.cx, overlap.cy));
+                    // horizontal cut, non overlapping part
+                    this->scrblt(srect.x, srect.y,
+                        Rect(drect.x, drect.y, drect.cx, drect.cy - overlap.cy));
+                }
+                else {
+                    // vertical cut, overlapping part
+                    this->scrblt(drect.x, drect.y,
+                        Rect(drect.x - deltax, drect.y, overlap.cx, srect.cy));
+                    // vertical cut, non overlapping part
+                    this->scrblt(srect.x, srect.y,
+                        Rect(drect.x, drect.y, drect.cx - overlap.cx, srect.cy));
+                }
+            }
         }
+        // srect equals drect, nothing to do
     }
 
 
