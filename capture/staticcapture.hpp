@@ -544,19 +544,24 @@ class StaticCapture
             return;
         }
 
+
         // The source is copied to the target
         // Where we draw -> target
         uint8_t * target = this->data + (drect.y * this->width + drect.x) * 3;
         // From where we read the source
         uint8_t * source = this->data + (srect.y * this->width + srect.x) * 3;
-        for (int j = 0; j < drect.cy ; j++) {
-            for (int i = 0; i < drect.cx ; i++) {
-                uint8_t * pt = target + (j * this->width + i) * 3;
-                uint8_t * ps = source + (j * this->width + i) * 3;
-                pt[0] = ps[0];
-                pt[1] = ps[1];
-                pt[2] = ps[2];
-            }
+        this->scrblt(source, target, this->width, drect.cx, drect.cy);
+
+    }
+
+    // low level copy of data from some place on screen to another
+    // source and target must not overlap, no clipping
+    // no protection (so be careful not to draw out of screen)
+    // width, cx, cy are numbers of en pixels
+    void scrblt(uint8_t * source, uint8_t * target, uint16_t width, uint16_t cx, uint16_t cy){
+        for (uint16_t j = 0; j < cy ; j++) {
+            uint16_t offset = j * width * 3;
+            memcpy(source + offset, target + offset, cx*3);
         }
     }
 
