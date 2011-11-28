@@ -69,7 +69,13 @@ BOOST_AUTO_TEST_CASE(TestDrawable)
     gd.draw(RDPOpaqueRect(screen_rect, BLUE), Rect(100, 100, 100, 100));
     gd.draw(RDPOpaqueRect(Rect(120, 120, 60, 60), PINK), Rect(100, 100, 100, 100));
     gd.scrblt(90, 90, Rect(300, 300, 120, 120));
-    gd.scrblt(90, 90, Rect(90, 70, 120, 120));
+    gd.scrblt(90, 90, Rect(90, 110, 120, 120));
+ // this one should not change anything, hence we should test CRC on image
+//    gd.scrblt(300, 300, Rect(90, 110, 120, 120));
+
+//    gd.scrblt(90, 90, Rect(110, 90, 120, 120));
+//    gd.scrblt(90, 90, Rect(70, 90, 120, 120));
+//    gd.scrblt(90, 90, Rect(90, 70, 120, 120));
     char tmpname[128];
     sprintf(tmpname, "/tmp/test_png_XXXXXX.png");
     int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);

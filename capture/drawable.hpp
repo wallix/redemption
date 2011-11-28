@@ -73,6 +73,10 @@ public:
         return this->data + (rect.y * this->screen.cx + rect.x) * ::nbbytes(this->bpp);
     }
 
+    uint8_t * beginning_of_last_line(const Rect & rect){
+        return this->data + ((rect.y + rect.cy - 1) * this->screen.cx + rect.x) * ::nbbytes(this->bpp);
+    }
+
 
     void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
     {
@@ -85,9 +89,59 @@ public:
         this->scrblt(drect.x + deltax, drect.y + deltay, drect);
     }
 
+
     // low level scrblt, mostly avoid considering clipping
     // because we already took care of it
     void scrblt(unsigned srcx, unsigned srcy, const Rect drect)
+    {
+        const signed int deltax = srcx - drect.x;
+        const signed int deltay = srcy - drect.y;
+        const Rect srect = drect.offset(deltax, deltay);
+        if (!srect.equal(drect)){
+            const Rect & overlap = srect.intersect(drect);
+            if ((deltay > 0)||(overlap.isempty())){
+                uint8_t * target = this->first_pixel(drect);
+                uint8_t * source = this->first_pixel(srect);
+                int offset = 0;
+                size_t width_in_bytes = this->screen.cx * ::nbbytes(this->bpp);
+                for (uint16_t j = 0; j < drect.cy ; j++) {
+                    memcpy(target + offset,
+                           source + offset,
+                           drect.cx * ::nbbytes(this->bpp));
+                    offset += width_in_bytes;
+                }
+            }
+            else if (deltay < 0){
+                uint8_t * target = this->beginning_of_last_line(drect);
+                uint8_t * source = this->beginning_of_last_line(srect);
+                int offset = 0;
+                size_t width_in_bytes = this->screen.cx * ::nbbytes(this->bpp);
+                for (uint16_t j = 0; j < drect.cy ; j++) {
+                    memcpy(target + offset,
+                           source + offset,
+                           drect.cx * ::nbbytes(this->bpp));
+                    offset += - width_in_bytes;
+                 }
+            }
+            else {
+                uint8_t * target = this->first_pixel(drect);
+                uint8_t * source = this->first_pixel(srect);
+                int offset = 0;
+                size_t width_in_bytes = this->screen.cx * ::nbbytes(this->bpp);
+                for (uint16_t j = 0; j < drect.cy ; j++) {
+                    memmove(target + offset,
+                           source + offset,
+                           drect.cx * ::nbbytes(this->bpp));
+                    offset += width_in_bytes;
+                }
+            }
+        }
+    }
+
+
+    // low level scrblt, mostly avoid considering clipping
+    // because we already took care of it
+    void scrblt_v1(unsigned srcx, unsigned srcy, const Rect drect)
     {
         printf("(%u, %u) -> (%u, %u, %u, %u)\n", srcx, srcy, drect.x, drect.y, drect.cx, drect.cy);
         // adding delta move dest to source
