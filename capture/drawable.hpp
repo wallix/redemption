@@ -74,60 +74,8 @@ public:
     void draw(const RDPDestBlt & cmd, const Rect & clip)
     {
         const Rect trect = screen.intersect(clip).intersect(cmd.rect);
-
-        uint8_t * const base = this->data + trect.y * this->rowsize + trect.x * ::nbbytes(this->bpp);
-        uint8_t * p = base;
-
-        switch (cmd.rop){
-        case 0x00: // blackness
-            for (size_t y = 0; y < (size_t)trect.cy ; y++){
-                uint8_t * p = base  + (y * this->screen.cx * ::nbbytes(this->bpp));
-                for (size_t x = 0; x < (size_t)trect.cx ; x++){
-                    p[0] = 0;
-                    p[1] = 0;
-                    p[2] = 0;
-                    p += 3;
-                }
-            }
-        break;
-        case 0x55: // inversion
-            for (size_t y = 0; y < (size_t)trect.cy ; y++){
-                uint8_t * p = base  + (y * this->screen.cx * ::nbbytes(this->bpp));
-                for (size_t x = 0; x < (size_t)trect.cx ; x++){
-                    p[0] ^= 0xFF;
-                    p[1] ^= 0xFF;
-                    p[2] ^= 0xFF;
-                    p += 3;
-                }
-            }
-        break;
-        case 0xAA: // change nothing
-        break;
-        case 0xFF: // whiteness
-            for (size_t y = 0; y < (size_t)trect.cy ; y++){
-                uint8_t * p = base  + (y * this->screen.cx * ::nbbytes(this->bpp));
-                for (size_t x = 0; x < (size_t)trect.cx ; x++){
-                    p[0] = 0xFF;
-                    p[1] = 0xFF;
-                    p[2] = 0xFF;
-                    p += 3;
-                }
-            }
-        break;
-        default:
-            // should not happen
-        break;
-        }
+        this->destblt(trect, cmd.rop);
     }
-
-    uint8_t * first_pixel(const Rect & rect){
-        return this->data + (rect.y * this->screen.cx + rect.x) * ::nbbytes(this->bpp);
-    }
-
-    uint8_t * beginning_of_last_line(const Rect & rect){
-        return this->data + ((rect.y + rect.cy - 1) * this->screen.cx + rect.x) * ::nbbytes(this->bpp);
-    }
-
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
@@ -140,6 +88,55 @@ public:
         this->scrblt(drect.x + deltax, drect.y + deltay, drect);
     }
 
+
+    uint8_t * first_pixel(const Rect & rect){
+        return this->data + (rect.y * this->screen.cx + rect.x) * ::nbbytes(this->bpp);
+    }
+
+    uint8_t * beginning_of_last_line(const Rect & rect){
+        return this->data + ((rect.y + rect.cy - 1) * this->screen.cx + rect.x) * ::nbbytes(this->bpp);
+    }
+
+
+
+
+
+    // low level destblt,
+    // mostly avoid clipping because we already took care of it
+    void destblt(const Rect & rect, const uint8_t rop)
+    {
+        uint8_t * const base = first_pixel(rect);
+        uint8_t * p = base;
+
+        switch (rop){
+        case 0x00: // blackness
+            for (size_t y = 0; y < rect.cy ; y++){
+                memset(p, 0, rect.cx * ::nbbytes(this->bpp));
+                p += this->rowsize;
+            }
+        break;
+        case 0x55: // inversion
+            for (size_t y = 0; y < rect.cy ; y++){
+                p = base + this->rowsize * y;
+                for (size_t x = 0; x < rect.cx ; x++){
+                    p[0] ^= 0xFF; p[1] ^= 0xFF; p[2] ^= 0xFF;
+                    p += 3;
+                }
+            }
+        break;
+        case 0xAA: // change nothing
+        break;
+        case 0xFF: // whiteness
+            for (size_t y = 0; y < rect.cy ; y++){
+                memset(p, 0, rect.cx * ::nbbytes(this->bpp));
+                p += this->rowsize;
+            }
+        break;
+        default:
+            // should not happen
+        break;
+        }
+    }
 
     // low level scrblt, mostly avoid considering clipping
     // because we already took care of it
@@ -155,7 +152,7 @@ public:
                 uint8_t * source = this->first_pixel(srect);
                 int offset = 0;
                 size_t width_in_bytes = this->screen.cx * ::nbbytes(this->bpp);
-                for (uint16_t j = 0; j < drect.cy ; j++) {
+                for (size_t j = 0; j < drect.cy ; j++) {
                     memcpy(target + offset,
                            source + offset,
                            drect.cx * ::nbbytes(this->bpp));
@@ -167,7 +164,7 @@ public:
                 uint8_t * source = this->beginning_of_last_line(srect);
                 int offset = 0;
                 size_t width_in_bytes = this->screen.cx * ::nbbytes(this->bpp);
-                for (uint16_t j = 0; j < drect.cy ; j++) {
+                for (size_t j = 0; j < drect.cy ; j++) {
                     memcpy(target + offset,
                            source + offset,
                            drect.cx * ::nbbytes(this->bpp));
@@ -179,7 +176,7 @@ public:
                 uint8_t * source = this->first_pixel(srect);
                 int offset = 0;
                 size_t width_in_bytes = this->screen.cx * ::nbbytes(this->bpp);
-                for (uint16_t j = 0; j < drect.cy ; j++) {
+                for (size_t j = 0; j < drect.cy ; j++) {
                     memmove(target + offset,
                            source + offset,
                            drect.cx * ::nbbytes(this->bpp));
