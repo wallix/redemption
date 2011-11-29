@@ -25,6 +25,8 @@
 
 #include "colors.hpp"
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 
 class Drawable {
 public:
@@ -66,6 +68,55 @@ public:
         for (size_t y = 1; y < (size_t)trect.cy ; y++){
             target += this->rowsize;
             memcpy(target, base, line_size);
+        }
+    }
+
+    void draw(const RDPDestBlt & cmd, const Rect & clip)
+    {
+        const Rect trect = screen.intersect(clip).intersect(cmd.rect);
+
+        uint8_t * const base = this->data + trect.y * this->rowsize + trect.x * ::nbbytes(this->bpp);
+        uint8_t * p = base;
+
+        switch (cmd.rop){
+        case 0x00: // blackness
+            for (size_t y = 0; y < (size_t)trect.cy ; y++){
+                uint8_t * p = base  + (y * this->screen.cx * ::nbbytes(this->bpp));
+                for (size_t x = 0; x < (size_t)trect.cx ; x++){
+                    p[0] = 0;
+                    p[1] = 0;
+                    p[2] = 0;
+                    p += 3;
+                }
+            }
+        break;
+        case 0x55: // inversion
+            for (size_t y = 0; y < (size_t)trect.cy ; y++){
+                uint8_t * p = base  + (y * this->screen.cx * ::nbbytes(this->bpp));
+                for (size_t x = 0; x < (size_t)trect.cx ; x++){
+                    p[0] ^= 0xFF;
+                    p[1] ^= 0xFF;
+                    p[2] ^= 0xFF;
+                    p += 3;
+                }
+            }
+        break;
+        case 0xAA: // change nothing
+        break;
+        case 0xFF: // whiteness
+            for (size_t y = 0; y < (size_t)trect.cy ; y++){
+                uint8_t * p = base  + (y * this->screen.cx * ::nbbytes(this->bpp));
+                for (size_t x = 0; x < (size_t)trect.cx ; x++){
+                    p[0] = 0xFF;
+                    p[1] = 0xFF;
+                    p[2] = 0xFF;
+                    p += 3;
+                }
+            }
+        break;
+        default:
+            // should not happen
+        break;
         }
     }
 
