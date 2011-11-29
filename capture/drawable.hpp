@@ -129,7 +129,7 @@ public:
     }
 
 
-    void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
+    void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
         // Destination rectangle : drect
         const Rect & drect = cmd.rect.intersect(clip).intersect(screen);;
