@@ -27,6 +27,7 @@
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 
 class Drawable {
 public:
