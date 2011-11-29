@@ -30,6 +30,7 @@
 
 #include "../capture/GraphicToFile.hpp"
 #include "../core/constants.hpp"
+#include "../capture/bmpcache.hpp"
 #include <png.h>
 
 class TestConsumer : public RDPGraphicDevice {
@@ -37,7 +38,7 @@ protected:
     unsigned icount;
     const Rect screen_rect;
 public:
-        TestConsumer(const Rect & screen_rect) 
+        TestConsumer(const Rect & screen_rect)
         : icount(0), screen_rect(screen_rect) {}
         void check_end() { BOOST_CHECK(false); }
 private:
@@ -105,21 +106,21 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
         gtf.flush();
         ::close(fd);
     }
-    
-    {    
+
+    {
         // reread data from file
         int fd = ::open(tmpname, O_RDONLY);
-        BOOST_CHECK(fd > 0); 
+        BOOST_CHECK(fd > 0);
         Stream stream(4096);
         InFileTransport in_trans(fd);
         in_trans.recv(&stream.end, 8);
-        BOOST_CHECK_EQUAL(stream.end - stream.p, 8); 
+        BOOST_CHECK_EQUAL(stream.end - stream.p, 8);
         uint16_t chunk_type = stream.in_uint16_le();
-        BOOST_CHECK_EQUAL(chunk_type, (uint16_t)RDP_UPDATE_ORDERS); 
+        BOOST_CHECK_EQUAL(chunk_type, (uint16_t)RDP_UPDATE_ORDERS);
         uint16_t chunk_size = stream.in_uint16_le();
-        BOOST_CHECK_EQUAL(chunk_size, (uint16_t)15); 
+        BOOST_CHECK_EQUAL(chunk_size, (uint16_t)15);
         uint16_t order_count = stream.in_uint16_le();
-        BOOST_CHECK_EQUAL(order_count, (uint16_t)1); 
+        BOOST_CHECK_EQUAL(order_count, (uint16_t)1);
         uint16_t pad = stream.in_uint16_le();
         BOOST_CHECK_EQUAL(pad, (uint16_t)0); // really we don't care
 
@@ -131,7 +132,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
         RDPOpaqueRect cache_rect(Rect(), 0);
 
         uint8_t control = stream.in_uint8();
-        BOOST_CHECK_EQUAL(control, (uint8_t)(RDP::STANDARD|RDP::CHANGE)); 
+        BOOST_CHECK_EQUAL(control, (uint8_t)(RDP::STANDARD|RDP::CHANGE));
 
         RDPPrimaryOrderHeader header = common.receive(stream, control);
         RDPOpaqueRect cmd = cache_rect;
@@ -139,13 +140,13 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
 
         check<RDPOpaqueRect>(common, cmd,
             // the clip was not changed as encoded opaquerect was fully inside it
-            // => no need to clip, we still have initial clipping 
+            // => no need to clip, we still have initial clipping
             // (no BOUNDS in control above)
             RDPOrderCommon(RDP::RECT, Rect(0, 0, 1, 1)),
             RDPOpaqueRect(screen_rect, 0),
             "Reading back Rect 1");
         // check we have read everything
-        BOOST_CHECK_EQUAL(stream.end - stream.p, 0); 
+        BOOST_CHECK_EQUAL(stream.end - stream.p, 0);
         ::close(fd);
     }
     ::unlink(tmpname);
@@ -168,11 +169,11 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk_reading_with_unserializ
         gtf.flush();
         ::close(fd);
     }
-    
-    {    
+
+    {
         // reread data from file
         int fd = ::open(tmpname, O_RDONLY);
-        BOOST_CHECK(fd > 0); 
+        BOOST_CHECK(fd > 0);
         Stream stream(4096);
         InFileTransport in_trans(fd);
         class Consumer : public TestConsumer {
@@ -197,7 +198,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk_reading_with_unserializ
         reader.next();
         consumer.check_end();
         // check we have read everything
-        BOOST_CHECK_EQUAL(stream.end - stream.p, 0); 
+        BOOST_CHECK_EQUAL(stream.end - stream.p, 0);
         ::close(fd);
     }
     ::unlink(tmpname);
@@ -220,17 +221,17 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         gtf.flush();
         ::close(fd);
     }
-    
-    {    
+
+    {
         // reread data from file
         int fd = ::open(tmpname, O_RDONLY);
-        BOOST_CHECK(fd > 0); 
+        BOOST_CHECK(fd > 0);
         Stream stream(4096);
         InFileTransport in_trans(fd);
         class Consumer : public TestConsumer {
         public:
             Consumer(const Rect & screen_rect) : TestConsumer(screen_rect){}
-            void check_end() 
+            void check_end()
             {
                 BOOST_CHECK_EQUAL(icount, 2);
             }
@@ -258,7 +259,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         reader.next();
         consumer.check_end();
         // check we have read everything
-        BOOST_CHECK_EQUAL(stream.end - stream.p, 0); 
+        BOOST_CHECK_EQUAL(stream.end - stream.p, 0);
         ::close(fd);
     }
     ::unlink(tmpname);
@@ -285,49 +286,20 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_SecondaryOrderCache)
         gtf.flush();
         ::close(fd);
     }
-    
-    {    
+
+    {
         // reread data from file
         int fd = ::open(tmpname, O_RDONLY);
-        BOOST_CHECK(fd > 0); 
+        BOOST_CHECK(fd > 0);
         Stream stream(4096);
         InFileTransport in_trans(fd);
         class Consumer : public TestConsumer {
             struct Cache {
-                class BitmapCache {
-                    Bitmap * cache[3][8192];
-                    public:
-                        BitmapCache(){
-                            for (uint8_t cid = 0; cid < 3 ; cid++){
-                                for (uint16_t cidx = 0; cidx < 8192 ; cidx++){
-                                    cache[cid][cidx] = NULL;
-                                }
-                            }
-                        }
-                        ~BitmapCache(){
-                            for (uint8_t cid = 0; cid < 3; cid++){
-                                for (uint16_t cidx = 0 ; cidx < 8192; cidx++){
-                                    if (cache[cid][cidx]){
-                                        delete cache[cid][cidx];
-                                        cache[cid][cidx] = NULL;
-                                    }
-                                }
-                            }
-                        }
-                        void put(uint8_t id, uint16_t idx, Bitmap * bmp){
-                            if (cache[id][idx]){
-                                delete cache[id][idx];
-                            }
-                            cache[id][idx] = bmp;
-                        }
-                        Bitmap * get(uint8_t id, uint16_t idx){
-                            return cache[id][idx];
-                        }
-                } bmp;
+                class BmpCache bmp;
             } cache;
         public:
             Consumer(const Rect & screen_rect) : TestConsumer(screen_rect){}
-            void check_end() 
+            void check_end()
             {
                 BOOST_CHECK_EQUAL(icount, 1);
             }
@@ -358,7 +330,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_SecondaryOrderCache)
         reader.next();
         consumer.check_end();
         // check we have read everything
-        BOOST_CHECK_EQUAL(stream.end - stream.p, 0); 
+        BOOST_CHECK_EQUAL(stream.end - stream.p, 0);
         ::close(fd);
     }
     ::unlink(tmpname);
@@ -389,11 +361,11 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
         gtf.flush();
         ::close(fd);
     }
-    
-    {    
+
+    {
         // reread data from file
         int fd = ::open(tmpname, O_RDONLY);
-        BOOST_CHECK(fd > 0); 
+        BOOST_CHECK(fd > 0);
         Stream stream(4096);
         InFileTransport in_trans(fd);
         class Consumer : public TestConsumer {
@@ -403,7 +375,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
             unsigned long pix_len;
             uint8_t * data;
             BGRPalette palette;
-            
+
             struct Cache {
                 class BitmapCache {
                     Bitmap * cache[3][8192];
@@ -437,7 +409,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
                 } bmp;
             } cache;
         public:
-            Consumer(const Rect & screen_rect) 
+            Consumer(const Rect & screen_rect)
                 : TestConsumer(screen_rect),
                     width(800),
                     height(600),
@@ -561,10 +533,9 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
         reader.next();
         consumer.dump_png();
         // check we have read everything
-        BOOST_CHECK_EQUAL(stream.end - stream.p, 0); 
+        BOOST_CHECK_EQUAL(stream.end - stream.p, 0);
         ::close(fd);
     }
     ::unlink(tmpname);
 
 }
-

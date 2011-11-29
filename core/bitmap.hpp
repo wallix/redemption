@@ -47,6 +47,7 @@
 #include <inttypes.h>
 #include "rect.hpp"
 
+#warning at some point in the future drawable and Bitmap may be merged together (not really sure for now, as Bitmap object also perform conversions between color depths, hence maybe the current bitmap object should handle several Drawables, one for each color depth). However it looks like if a large part of bitmap code could move to Drawable. Or maybe they just have some common shared abstraction.
 struct Bitmap {
     public:
     // data_co is allocated on demand
