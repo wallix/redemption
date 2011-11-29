@@ -55,8 +55,7 @@ BOOST_AUTO_TEST_CASE(TestCreateCapture)
     gd.dump_png();
 }
 
-BOOST_AUTO_TEST_CASE(TestDrawable)
-{
+void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * name){
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
     uint16_t height = 480;
@@ -65,24 +64,69 @@ BOOST_AUTO_TEST_CASE(TestDrawable)
     BGRPalette palette;
     init_palette332(palette);
     Drawable gd(width, height, bpp, palette, false);
-    gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect);
+    gd.draw(RDPOpaqueRect(Rect(90, 90, 120, 120), RED), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect, BLUE), Rect(100, 100, 100, 100));
     gd.draw(RDPOpaqueRect(Rect(120, 120, 60, 60), PINK), Rect(100, 100, 100, 100));
-    gd.scrblt(90, 90, Rect(300, 300, 120, 120));
-    gd.scrblt(90, 90, Rect(90, 110, 120, 120));
+    gd.scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
+    gd.scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
  // this one should not change anything, hence we should test CRC on image
-//    gd.scrblt(300, 300, Rect(90, 110, 120, 120));
-
-//    gd.scrblt(90, 90, Rect(110, 90, 120, 120));
-//    gd.scrblt(90, 90, Rect(70, 90, 120, 120));
-//    gd.scrblt(90, 90, Rect(90, 70, 120, 120));
+//    gd.scrblt(300, 300, Rect(90, 110, 120, 120), 0xCC);
     char tmpname[128];
-    sprintf(tmpname, "/tmp/test_png_XXXXXX.png");
+    sprintf(tmpname, "/tmp/test_scrblt_%s_XXXXXX.png", name);
     int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
     FILE * f = fdopen(fd, "wb");
     ::dump_png24(f, gd.data, gd.screen.cx, gd.screen.cy, gd.rowsize);
     ::fflush(f);
     ::fclose(f);
 //    ::unlink(tmpname);
+}
 
+BOOST_AUTO_TEST_CASE(TestDrawableScrBltDown)
+{
+    test_scrblt(0x00, 0, 20, "down00");
+}
+
+BOOST_AUTO_TEST_CASE(TestDrawableScrBltRight)
+{
+    test_scrblt(0x00, 20, 0, "right00");
+}
+
+BOOST_AUTO_TEST_CASE(TestDrawableScrBltLeft)
+{
+    test_scrblt(0x00, -20, 0, "left00");
+}
+
+BOOST_AUTO_TEST_CASE(TestDrawableScrBltUp)
+{
+    test_scrblt(0x00, 0, -20, "up00");
+}
+
+BOOST_AUTO_TEST_CASE(TestDrawableScrBltLeftUp)
+{
+    test_scrblt(0x00, -20, -20, "left_up00");
+}
+
+BOOST_AUTO_TEST_CASE(TestDrawableScrBltDown11)
+{
+    test_scrblt(0x11, 0, 20, "down11");
+}
+
+BOOST_AUTO_TEST_CASE(TestDrawableScrBltRight11)
+{
+    test_scrblt(0x11, 20, 0, "right11");
+}
+
+BOOST_AUTO_TEST_CASE(TestDrawableScrBltLeft11)
+{
+    test_scrblt(0x11, -20, 0, "left11");
+}
+
+BOOST_AUTO_TEST_CASE(TestDrawableScrBltUp11)
+{
+    test_scrblt(0x11, 0, -20, "up11");
+}
+
+BOOST_AUTO_TEST_CASE(TestDrawableScrBltLeftUp11)
+{
+    test_scrblt(0x11, -20, -20, "left_up11");
 }
