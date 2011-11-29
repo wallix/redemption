@@ -75,7 +75,7 @@ void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * nam
     sprintf(tmpname, "/tmp/test_scrblt_%s_XXXXXX.png", name);
     int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
     FILE * f = fdopen(fd, "wb");
-    ::dump_png24(f, gd.data, gd.screen.cx, gd.screen.cy, gd.rowsize);
+    ::dump_png24(f, gd.data, gd.full.cx, gd.full.cy, gd.rowsize);
     ::fflush(f);
     ::fclose(f);
 //    ::unlink(tmpname);

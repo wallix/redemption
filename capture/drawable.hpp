@@ -31,7 +31,7 @@
 
 class Drawable {
 public:
-    const Rect screen;
+    const Rect full;
     const uint8_t bpp;
     const BGRPalette & palette;
     const size_t rowsize;
@@ -39,17 +39,17 @@ public:
     bool bgr;
 
     Drawable(const uint16_t width, const uint16_t height, const uint8_t bpp, const BGRPalette & palette, bool bgr=true)
-      : screen(Rect(0, 0, width, height)),
+      : full(Rect(0, 0, width, height)),
         bpp(bpp), palette(palette),
-        rowsize(this->screen.cx * ::nbbytes(this->bpp)),
-        data(new uint8_t [this->rowsize * this->screen.cy]),
+        rowsize(this->full.cx * ::nbbytes(this->bpp)),
+        data(new uint8_t [this->rowsize * this->full.cy]),
         bgr(bgr)
     {
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        const Rect & trect = screen.intersect(clip).intersect(cmd.rect);
+        const Rect & trect = this->full.intersect(clip).intersect(cmd.rect);
         uint32_t color = color_decode(cmd.color, this->bpp, this->palette);
         if (this->bgr){
             color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
@@ -59,13 +59,13 @@ public:
 
     void draw(const RDPDestBlt & cmd, const Rect & clip)
     {
-        const Rect trect = screen.intersect(clip).intersect(cmd.rect);
+        const Rect trect = this->full.intersect(clip).intersect(cmd.rect);
         this->destblt(trect, cmd.rop);
     }
 
     void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
-        const Rect trect = screen.intersect(clip).intersect(cmd.rect);
+        const Rect trect = this->full.intersect(clip).intersect(cmd.rect);
         #warning PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way, with stripes, etc.) and also there is quite a lot of possible ternary operators, and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then, work on correct computation of pattern and fix it.
         uint32_t color = color_decode(cmd.back_color, this->bpp, this->palette);
         if (this->bgr){
@@ -77,7 +77,7 @@ public:
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
         // Destination rectangle : drect
-        const Rect drect = screen.intersect(clip).intersect(cmd.rect);
+        const Rect drect = this->full.intersect(clip).intersect(cmd.rect);
         if (drect.isempty()){ return; }
         // adding delta move dest to source
         const signed int deltax = cmd.srcx - cmd.rect.x;
@@ -87,11 +87,11 @@ public:
 
 
     uint8_t * first_pixel(const Rect & rect){
-        return this->data + (rect.y * this->screen.cx + rect.x) * ::nbbytes(this->bpp);
+        return this->data + (rect.y * this->full.cx + rect.x) * ::nbbytes(this->bpp);
     }
 
     uint8_t * beginning_of_last_line(const Rect & rect){
-        return this->data + ((rect.y + rect.cy - 1) * this->screen.cx + rect.x) * ::nbbytes(this->bpp);
+        return this->data + ((rect.y + rect.cy - 1) * this->full.cx + rect.x) * ::nbbytes(this->bpp);
     }
 
     // low level opaquerect,
