@@ -42,26 +42,26 @@ alias instexe : install-bin install-test ;
 alias install : install-bin install-etc install-share install-keymaps ;
 
 install install-bin
-    : rdpproxy 
-    : <install-type>EXE <install-dependencies>on 
+    : rdpproxy
+    : <install-type>EXE <install-dependencies>on
     : <location>/usr/local/bin
     ;
 
 install install-share
     : [ glob sys/share/rdpproxy/[^.k]* ]
-    : 
+    :
     : <location>/usr/local/share/rdpproxy
     ;
 
 install install-keymaps
     : [ glob sys/share/rdpproxy/keymaps/[^.]* ]
-    : 
+    :
     : <location>/usr/local/share/rdpproxy/keymaps
     ;
 
 install install-etc
     : [ glob sys/etc/rdpproxy/*ini ]
-    : 
+    :
     : <location>/etc/rdpproxy
     ;
 
@@ -187,4 +187,4 @@ unit-test test_dico : tests/test_dico.cpp libboost_unit_test : ;
 unit-test test_colors : tests/test_colors.cpp libboost_unit_test : ;
 unit-test test_write_over_file : tests/test_write_over_file.cpp libboost_unit_test : ;
 unit-test test_libpng : tests/test_libpng.cpp libboost_unit_test png z : ;
-unit-test test_capture : tests/test_capture.cpp libboost_unit_test png z : ;
+unit-test test_capture : tests/test_capture.cpp libboost_unit_test png z d3des openssl crypto ;
