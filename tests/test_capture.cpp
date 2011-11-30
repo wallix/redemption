@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean, Martin Potier
 
-   Unit test to write / read a "movie" from a file
+   Unit test of Drawing primitive used to create snapshot/movies
    Using lib boost functions for testing
 */
 
@@ -33,7 +33,7 @@
 #include "../capture/staticcapture.hpp"
 #include "../capture/drawable.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCreateCapture)
+BOOST_AUTO_TEST_CASE(TestLineTo)
 {
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
@@ -210,4 +210,35 @@ BOOST_AUTO_TEST_CASE(TestDrawableScrBltLeftUp11)
 {
     test_scrblt(0x11, -20, -20, "left_up11",
     "\x7e\xb4\x25\xbd\xca\xf1\x82\xdb\x7e\xd4\x1f\x15\xc0\xe9\xd3\xe7\xa9\xe9\x93\x0c");
+}
+
+
+BOOST_AUTO_TEST_CASE(TestMemblt)
+{
+    // Create a simple capture image and dump it to file
+    uint16_t width = 640;
+    uint16_t height = 480;
+    uint8_t bpp = 24;
+    Rect screen_rect(0, 0, width, height);
+    BGRPalette palette;
+    init_palette332(palette);
+    Drawable gd(width, height, bpp, palette, false);
+    gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
+
+    uint8_t comp64x64RED[] = { 0xc0, 0x30, 0x00, 0x00, 0xFF, 0xf0, 0xc0, 0x0f, };
+    BGRPalette palette332;
+    init_palette332(palette332);
+    Bitmap bmp(24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
+    gd.draw(RDPBmpCache(bpp, &bmp, 1, 10));
+    gd.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect);
+
+    char tmpname[128];
+    sprintf(tmpname, "/tmp/test_memblt_XXXXXX.png");
+    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
+    FILE * f = fdopen(fd, "wb");
+    ::dump_png24(f, gd.data, gd.full.cx, gd.full.cy, gd.rowsize);
+    ::fflush(f);
+    ::fclose(f);
+    // remove this unlink to see what is drawn
+    ::unlink(tmpname);
 }

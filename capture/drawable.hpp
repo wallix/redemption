@@ -152,6 +152,14 @@ public:
         }
     }
 
+    void draw(const RDPBmpCache & cmd)
+    {
+    }
+
+    void draw(const RDPMemBlt & cmd, const Rect & clip)
+    {
+    }
+
     uint8_t * first_pixel(const Rect & rect){
         return this->data + (rect.y * this->full.cx + rect.x) * ::nbbytes(this->bpp);
     }
@@ -159,6 +167,9 @@ public:
     uint8_t * beginning_of_last_line(const Rect & rect){
         return this->data + ((rect.y + rect.cy - 1) * this->full.cx + rect.x) * ::nbbytes(this->bpp);
     }
+
+
+
 
     // low level opaquerect,
     // mostly avoid clipping because we already took care of it
