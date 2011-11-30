@@ -45,17 +45,60 @@ BOOST_AUTO_TEST_CASE(TestCreateCapture)
     Drawable gd(width, height, bpp, palette, false);
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect);
+
     uint16_t y = screen_rect.cy - 1;
-    for (uint16_t x = 0 ; x < screen_rect.cx ; x++){
+    for (uint16_t x = 0 ; x < screen_rect.cx ; x += 40){
         gd.draw(RDPLineTo(0, 0, 0, x, y, BLUE, 0xCC, RDPPen(0, 1, GREEN)), screen_rect);
-        gd.draw(RDPLineTo(0, x, y, 0, 0, WHITE, 0xCC, RDPPen(0, 1, BLACK)), screen_rect);
+        gd.draw(RDPLineTo(0, x + 10, y, 0, 0, BLUE, 0xCC, RDPPen(0, 1, RED)), screen_rect);
+        gd.draw(RDPLineTo(0, screen_rect.cx - 1, 0, screen_rect.cx - 1 - x, y, BLUE, 0xCC, RDPPen(0, 1, WHITE)), screen_rect);
+        gd.draw(RDPLineTo(0, screen_rect.cx - 1 - x + 10, y, screen_rect.cx - 1, 0, BLUE, 0xCC, RDPPen(0, 1, BLUE)), screen_rect);
+    }
+    gd.draw(RDPLineTo(0, 0, 0, 640, 480, BLUE, 0xCC, RDPPen(0, 1, GREEN)), screen_rect);
+
+    gd.draw(RDPLineTo(0, 0, 0, 1024, 0, BLUE, 0xCC, RDPPen(0, 1, PINK)), screen_rect);
+    gd.draw(RDPLineTo(0, 0, 0, 0, 768, BLUE, 0xCC, RDPPen(0, 1, PINK)), screen_rect);
+    gd.draw(RDPLineTo(0, 639, 0, 639, 768, BLUE, 0xCC, RDPPen(0, 1, PINK)), screen_rect);
+    gd.draw(RDPLineTo(0, 0, 479, 1024, 479, BLUE, 0xCC, RDPPen(0, 1, PINK)), screen_rect);
+
+    uint8_t shasig[20] = {
+        0x00, 0x51, 0xc0, 0x97, 0x54, 0x54, 0x48, 0x02, 0x68, 0x42,
+        0xb2, 0xaf, 0x32, 0xe7, 0xbf, 0xda, 0x07, 0x9c, 0x55, 0xc3
+    };
+
+    SSL_SHA1 sha1;
+    uint8_t sig[20];
+    ssllib ssl;
+    ssl.sha1_init(&sha1);
+    for (size_t y = 0; y < (size_t)gd.full.cy; y++){
+        ssl.sha1_update(&sha1, gd.data + y * gd.rowsize, gd.rowsize);
+    }
+    ssl.sha1_final(&sha1, sig);
+
+    if (memcmp(shasig, sig, 20)){
+        char buffer[1024];
+        sprintf(buffer, "Expected signature: \""
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
+        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
+        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
+        sig[ 8], sig[ 9], sig[10], sig[11],
+        sig[12], sig[13], sig[14], sig[15],
+        sig[16], sig[17], sig[18], sig[19]);
+        BOOST_CHECK_MESSAGE(false, buffer);
     }
 
-    y = screen_rect.cy - 1;
-    for (uint16_t x = 0 ; x < screen_rect.cx ; x++){
-        gd.draw(RDPLineTo(0, screen_rect.cx - 1, 0, x, y, BLUE, 0xCC, RDPPen(0, 1, RED)), screen_rect);
-        gd.draw(RDPLineTo(0, x, y, screen_rect.cx - 1, 0, WHITE, 0xCC, RDPPen(0, 1, BLACK)), screen_rect);
-    }
+    char tmpname[128];
+    sprintf(tmpname, "/tmp/test_line_%s_XXXXXX.png", "000");
+    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
+    FILE * f = fdopen(fd, "wb");
+    ::dump_png24(f, gd.data, gd.full.cx, gd.full.cy, gd.rowsize);
+    ::fflush(f);
+    ::fclose(f);
+    // remove this unlink to see what is drawn
+    ::unlink(tmpname);
 }
 
 void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * name, const char * shasig){
@@ -72,6 +115,7 @@ void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * nam
     gd.draw(RDPOpaqueRect(Rect(120, 120, 60, 60), PINK), Rect(100, 100, 100, 100));
     gd.scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
     gd.scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
+
     SSL_SHA1 sha1;
     uint8_t sig[20];
     ssllib ssl;
@@ -104,6 +148,7 @@ void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * nam
     ::dump_png24(f, gd.data, gd.full.cx, gd.full.cy, gd.rowsize);
     ::fflush(f);
     ::fclose(f);
+    // remove this unlink to see what is drawn
     ::unlink(tmpname);
 }
 

@@ -108,7 +108,7 @@ public:
     {
 //        LOG(LOG_INFO, "back_mode=%d (%d,%d) -> (%d, %d) rop2=%d bg_color=%d clip=(%u, %u, %u, %u)",
 //            lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy,
-//            lineto.rop2, lineto.back_color, clip.x, clip.y, clip.cx, clip.cy); 
+//            lineto.rop2, lineto.back_color, clip.x, clip.y, clip.cx, clip.cy);
 
         // enlarge_to compute a new rect including old rect and added point
         const Rect & line_rect = Rect(lineto.startx, lineto.starty, 1, 1).enlarge_to(lineto.endx, lineto.endy);
@@ -122,7 +122,6 @@ public:
             color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
         }
 
-
         if (lineto.startx == lineto.endx){
             if (lineto.starty <= lineto.endy){
                 this->vertical_line(lineto.back_mode,
@@ -133,13 +132,13 @@ public:
                 this->vertical_line(lineto.back_mode,
                      lineto.startx, lineto.endy, lineto.starty,
                      color, clip);
-            }        
+            }
         }
         else if (lineto.starty == lineto.endy){
             this->horizontal_line(lineto.back_mode,
-                 lineto.startx, lineto.starty, lineto.endx, 
+                 lineto.startx, lineto.starty, lineto.endx,
                  color, clip);
-        
+
         }
         else if (lineto.startx <= lineto.endx){
             this->line(lineto.back_mode,
@@ -928,6 +927,8 @@ public:
 
     void line(const int mix_mode, const int startx, const int starty, const int endx, const int endy, const uint32_t color, const Rect & clip)
     {
+//        printf("diagonal_line\n");
+
         // Color handling
         uint8_t col[3] = { color, color >> 8, color >> 16};
 
@@ -938,15 +939,15 @@ public:
         int dy = (endy >= starty)?(endy - starty):(starty - endy);
         int sy = (endy >= starty)?1:-1;
         int err = dx - dy;
-        
+
         while (true){
             if (clip.contains_pt(x, y)){
-                // Pixel position
-                uint8_t * const p = this->data + (y * this->full.cx + x) * 3;
                 const uint8_t Bpp = ::nbbytes(this->bpp);
+                uint8_t * const p = this->data + (y * this->full.cx + x) * Bpp;
                 for (uint8_t b = 0 ; b < Bpp; b++){
                     p[b] = col[b];
                 }
+//                printf("clip contains(%u, %u) Bpp=%u\n", x, y, Bpp);
             }
 
             if ((x >= endx) && (y == endy)){
@@ -968,10 +969,11 @@ public:
 
     void vertical_line(const int mix_mode, const int x, const int starty, const int endy, const uint32_t color, const Rect & clip)
     {
+//        printf("vertical_line\n");
         // Color handling
         uint8_t col[3] = { color, color >> 8, color >> 16};
 
-        // base adress (*3 because it has 3 color components) 
+        // base adress (*3 because it has 3 color components)
         // also base of the new coordinate system
         uint8_t * const base = this->data + (starty * this->full.cx + x) * 3;
         const unsigned y0 = std::max(starty, clip.y);
@@ -989,6 +991,7 @@ public:
 
     void horizontal_line(const int mix_mode, const int startx, const int y, const int endx, const uint32_t color, const Rect & clip)
     {
+//        printf("horizontal_line\n");
         const unsigned x0 = std::max(startx, clip.x);
         const unsigned x1 = std::min(endx, clip.x + clip.cx - 1);
         uint8_t col[3] = { color, color >> 8, color >> 16};
