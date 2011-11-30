@@ -56,19 +56,19 @@ class Capture
     void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
     {
         this->sc.draw(cmd, clip);
-//        this->nc.scr_blt(cmd, clip);
+        this->nc.draw(cmd, clip);
     }
 
     void dest_blt(const RDPDestBlt & cmd, const Rect &clip)
     {
         this->sc.draw(cmd, clip);
-//        this->nc.dest_blt(cmd, clip);
+        this->nc.draw(cmd, clip);
     }
 
     void pat_blt(const RDPPatBlt & cmd, const Rect &clip)
     {
         this->sc.draw(cmd, clip);
-//        this->nc.pat_blt(cmd, clip);
+        this->nc.draw(cmd, clip);
     }
 
     void mem_blt(const RDPMemBlt & cmd, const BitmapCache & bmp_cache, const Rect & clip)
@@ -80,7 +80,7 @@ class Capture
     void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         this->sc.draw(cmd, clip);
-//        this->nc.opaque_rect(cmd, clip);
+        this->nc.draw(cmd, clip);
     }
 
 

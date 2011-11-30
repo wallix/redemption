@@ -79,7 +79,7 @@ class NativeCapture
     {
     }
 
-    void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
+    void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
 //        fprintf(this->f, "{\n");
@@ -143,7 +143,7 @@ class NativeCapture
 //        fprintf(this->f, "}\n");
     }
 
-    void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
 //        fprintf(this->f, "{\n");
@@ -155,7 +155,7 @@ class NativeCapture
 //        fprintf(this->f, "}\n");
     }
 
-    void dest_blt(const RDPDestBlt & cmd, const Rect & clip)
+    void draw(const RDPDestBlt & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
 //        fprintf(this->f, "{\n");
@@ -167,7 +167,7 @@ class NativeCapture
 //        fprintf(this->f, "}\n");
     }
 
-    void pat_blt(const RDPPatBlt & cmd, const Rect & clip)
+    void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
 //        fprintf(this->f, "{\n");
@@ -185,7 +185,7 @@ class NativeCapture
 //        fprintf(this->f, "}\n");
     }
 
-    void line_to(const RDPLineTo & cmd, const Rect & clip)
+    void draw(const RDPLineTo & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
 //        fprintf(this->f, "{\n");
