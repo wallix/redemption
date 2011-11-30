@@ -28,6 +28,7 @@
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 
 class Drawable {
 public:
@@ -85,6 +86,72 @@ public:
         this->scrblt(drect.x + deltax, drect.y + deltay, drect, cmd.rop);
     }
 
+/*
+ *
+ *            +----+----+
+ *            |\   |   /|  4 cases.
+ *            | \  |  / |  > Case 1 is the normal case
+ *            |  \ | /  |  > Case 2 has a negative coeff
+ *            | 3 \|/ 2 |  > Case 3 and 4 are the same as
+ *            +----0---->x    Case 1 and 2 but one needs to
+ *            | 4 /|\ 1 |     exchange begin and end.
+ *            |  / | \  |
+ *            | /  |  \ |
+ *            |/   |   \|
+ *            +----v----+
+ *                 y
+ *  Anyway, we base the line drawing on bresenham's algorithm
+ */
+
+
+    void draw(const RDPLineTo & lineto, const Rect & clip)
+    {
+//        LOG(LOG_INFO, "back_mode=%d (%d,%d) -> (%d, %d) rop2=%d bg_color=%d clip=(%u, %u, %u, %u)",
+//            lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy,
+//            lineto.rop2, lineto.back_color, clip.x, clip.y, clip.cx, clip.cy); 
+
+        // enlarge_to compute a new rect including old rect and added point
+        const Rect & line_rect = Rect(lineto.startx, lineto.starty, 1, 1).enlarge_to(lineto.endx, lineto.endy);
+        if (line_rect.intersect(clip).isempty()){
+//            LOG(LOG_INFO, "line_rect(%u, %u, %u, %u)", line_rect.x, line_rect.y, line_rect.cx, line_rect.cy);
+            return;
+        }
+        // Color handling
+        uint32_t color = color_decode(lineto.pen.color, this->bpp, this->palette);
+        if (this->bgr){
+            color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
+        }
+
+
+        if (lineto.startx == lineto.endx){
+            if (lineto.starty <= lineto.endy){
+                this->vertical_line(lineto.back_mode,
+                     lineto.startx, lineto.starty, lineto.endy,
+                     color, clip);
+            }
+            else {
+                this->vertical_line(lineto.back_mode,
+                     lineto.startx, lineto.endy, lineto.starty,
+                     color, clip);
+            }        
+        }
+        else if (lineto.starty == lineto.endy){
+            this->horizontal_line(lineto.back_mode,
+                 lineto.startx, lineto.starty, lineto.endx, 
+                 color, clip);
+        
+        }
+        else if (lineto.startx <= lineto.endx){
+            this->line(lineto.back_mode,
+                 lineto.startx, lineto.starty, lineto.endx, lineto.endy,
+                 color, clip);
+        }
+        else {
+            this->line(lineto.back_mode,
+                 lineto.endx, lineto.endy, lineto.startx, lineto.starty,
+                 color, clip);
+        }
+    }
 
     uint8_t * first_pixel(const Rect & rect){
         return this->data + (rect.y * this->full.cx + rect.x) * ::nbbytes(this->bpp);
@@ -859,6 +926,85 @@ public:
         }
     }
 
+    void line(const int mix_mode, const int startx, const int starty, const int endx, const int endy, const uint32_t color, const Rect & clip)
+    {
+        // Color handling
+        uint8_t col[3] = { color, color >> 8, color >> 16};
+
+        // Prep
+        int x = startx;
+        int y = starty;
+        int dx = endx - startx;
+        int dy = (endy >= starty)?(endy - starty):(starty - endy);
+        int sy = (endy >= starty)?1:-1;
+        int err = dx - dy;
+        
+        while (true){
+            if (clip.contains_pt(x, y)){
+                // Pixel position
+                uint8_t * const p = this->data + (y * this->full.cx + x) * 3;
+                const uint8_t Bpp = ::nbbytes(this->bpp);
+                for (uint8_t b = 0 ; b < Bpp; b++){
+                    p[b] = col[b];
+                }
+            }
+
+            if ((x >= endx) && (y == endy)){
+                break;
+            }
+
+            // Calculating pixel position
+            int e2 = err * 2; //prevents use of floating point
+            if (e2 > -dy) {
+                err -= dy;
+                x++;
+            }
+            if (e2 < dx) {
+                err += dx;
+                y += sy;
+            }
+        }
+    }
+
+    void vertical_line(const int mix_mode, const int x, const int starty, const int endy, const uint32_t color, const Rect & clip)
+    {
+        // Color handling
+        uint8_t col[3] = { color, color >> 8, color >> 16};
+
+        // base adress (*3 because it has 3 color components) 
+        // also base of the new coordinate system
+        uint8_t * const base = this->data + (starty * this->full.cx + x) * 3;
+        const unsigned y0 = std::max(starty, clip.y);
+        const unsigned y1 = std::min(endy, clip.y + clip.cy - 1);
+
+        for (unsigned y = y0; y <= y1 ; y++) {
+            // Pixel position
+            uint8_t * const p = base + y * this->full.cx * 3;
+            const uint8_t Bpp = ::nbbytes(this->bpp);
+            for (uint8_t b = 0 ; b < Bpp; b++){
+                p[b] = col[b];
+            }
+        }
+    }
+
+    void horizontal_line(const int mix_mode, const int startx, const int y, const int endx, const uint32_t color, const Rect & clip)
+    {
+        const unsigned x0 = std::max(startx, clip.x);
+        const unsigned x1 = std::min(endx, clip.x + clip.cx - 1);
+        uint8_t col[3] = { color, color >> 8, color >> 16};
+        // base adress (*3 because it has 3 color components) also base of the new coordinate system
+        uint8_t * const base = this->data + (y * this->full.cx + startx) * 3;
+
+        // Prep
+        for (unsigned x = x0; x <= x1 ; x++) {
+            // Pixel position
+            uint8_t * const p = base + x * 3;
+            const uint8_t Bpp = ::nbbytes(this->bpp);
+            for (uint8_t b = 0 ; b < Bpp; b++){
+                p[b] = col[b];
+            }
+        }
+    }
 
 };
 

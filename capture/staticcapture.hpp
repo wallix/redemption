@@ -38,31 +38,25 @@
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 
 #include "RDP/orders/RDPOrdersPrimaryHeader.hpp"
-#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+
+#include "../utils/png.hpp"
 
 #include "error.hpp"
 #include "config.hpp"
 #include "bitmap_cache.hpp"
 #include "colors.hpp"
+#include "drawable.hpp"
 
-class StaticCapture
+
+class StaticCapture : public Drawable
 {
     enum {
         ts_width  = 133,
         ts_height =  11
     };
 
-    int width;
-    int height;
-    int bpp;
-    unsigned long pix_len;
-    uint8_t * data;
     int framenb;
     uint64_t inter_frame_interval;
 
@@ -73,32 +67,19 @@ class StaticCapture
     public:
     BGRPalette palette;
 
-    StaticCapture(int width, int height, int bpp, char * path, const char * codec_id, const char * video_quality)
-        : width(width), height(height), bpp(bpp), pix_len(width * height * 3),
-          data(0), framenb(0)
+    StaticCapture(int width, int height, int bpp, const BGRPalette & palette, char * path, const char * codec_id, const char * video_quality)
+        : Drawable(width, height, bpp, palette),
+          framenb(0)
     {
         gettimeofday(&this->start, NULL);
         this->inter_frame_interval = 1000000; // 1 000 000 us is 1 sec (default)
-        init_palette332(this->palette);
-
-        if (!this->pix_len) {
-            throw Error(ERR_RECORDER_EMPTY_IMAGE);
-        }
 
         this->draw_11x7_digits(this->timestamp_data, ts_width, 19,
         "                   ", "XXXXXXXXXXXXXXXXXXX");
         memcpy(this->previous_timestamp, "                   ", 20);
-
-        this->data = (uint8_t *)calloc(sizeof(char), this->pix_len);
-        if (this->data == 0){
-            throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
-        }
     }
 
     ~StaticCapture(){
-        if (this->data){
-            free(data);
-        }
     }
 
     static void draw_11x7_digits(char * rgbpixbuf, unsigned width, unsigned lg_message, const char * message, const char * old_message)
@@ -376,16 +357,16 @@ class StaticCapture
             // If pointer is drawn by the server (like in Windows Seven), no need to do anything.
             if (!pointer_already_displayed){
                 if ((x > 0)
-                        && (x < this->width - 12)
+                        && (x < this->full.cx - 12)
                         && (y > 0)
-                        && (y < this->height - mouse_height)){
+                        && (y < this->full.cy - mouse_height)){
                     uint8_t * psave = mouse_save;
                     for (size_t i = 0 ; i < 20 ; i++){
                         unsigned yy = mouse_cursor[i].y;
                         unsigned xx = mouse_cursor[i].x;
                         unsigned lg = mouse_cursor[i].lg;
                         const char * line = mouse_cursor[i].line;
-                        char * pixel_start = (char*)this->data + ((yy+y)*this->width+x+xx)*3;
+                        char * pixel_start = (char*)this->data + ((yy+y)*this->full.cx+x+xx)*3;
                         memcpy(psave, pixel_start, lg);
                         psave += lg;
                         memcpy(pixel_start, line, lg);
@@ -406,9 +387,10 @@ class StaticCapture
                 strncpy(this->previous_timestamp, rawdate, 19);
                 uint8_t * tsave = timestamp_save;
                 for (size_t y = 0; y < ts_height ; ++y){
-                    memcpy(tsave, (char*)data+y*width*3, ts_width*3);
+                    memcpy(tsave, (char*)data+y * this->full.cx * 3, ts_width*3);
                     tsave += ts_width*3;
-                    memcpy((char*)data+y*width*3, this->timestamp_data + y*ts_width*3, ts_width*3);
+                    memcpy((char*)data + y * this->full.cx * 3,
+                            this->timestamp_data + y*ts_width*3, ts_width*3);
                 }
             }
 
@@ -417,15 +399,15 @@ class StaticCapture
             // Time to restore mouse/timestamp for the next frame (otherwise it piles up)
             if (!pointer_already_displayed){
                 if ((x > 0)
-                        && (x < this->width - 12)
+                        && (x < this->full.cx - 12)
                         && (y > 0)
-                        && (y < this->height - mouse_height)){
+                        && (y < this->full.cy - mouse_height)){
                     uint8_t * psave = mouse_save;
                     for (size_t i = 0 ; i < 20 ; i++){
                         unsigned yy = mouse_cursor[i].y;
                         unsigned xx = mouse_cursor[i].x;
                         unsigned lg = mouse_cursor[i].lg;
-                        char * pixel_start = (char*)this->data + ((yy+y)*this->width+x+xx)*3;
+                        char * pixel_start = (char*)this->data + ((yy+y)*this->full.cx+x+xx)*3;
                         memcpy(pixel_start, psave, lg);
                         psave += lg;
                     }
@@ -434,7 +416,7 @@ class StaticCapture
             if (!no_timestamp){
                 uint8_t * tsave = timestamp_save;
                 for (size_t y = 0; y < ts_height ; ++y){
-                    memcpy((char*)data+y*width*3, tsave, ts_width*3);
+                    memcpy((char*)data+y * this->full.cx * 3, tsave, ts_width*3);
                     tsave += ts_width*3;
                 }
             }
@@ -447,207 +429,20 @@ class StaticCapture
     }
 
     void dump_png(void){
-            char rawImagePath[256]     = {0};
-            char rawImageMetaPath[256] = {0};
-            snprintf(rawImagePath,     254, "/dev/shm/%d-%d.png", getpid(), this->framenb++);
-            snprintf(rawImageMetaPath, 254, "%s.meta", rawImagePath);
-            FILE * fd = fopen(rawImageMetaPath, "w");
-            if (fd) {
-               fprintf(fd, "%d,%d,%s\n", this->width, this->height, this->previous_timestamp);
-            }
-            fclose(fd);
-            fd = fopen(rawImagePath, "w");
-            if (fd) {
-                const uint8_t Bpp = 3;
-                png_struct * ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-                png_info * pinfo = png_create_info_struct(ppng);
-
-                // prepare png header
-                png_init_io(ppng, fd);
-                png_set_IHDR(ppng, pinfo, this->width, this->height, 8,
-                             PNG_COLOR_TYPE_RGB,
-                             PNG_INTERLACE_NONE,
-                             PNG_COMPRESSION_TYPE_BASE,
-                             PNG_FILTER_TYPE_BASE);
-                png_write_info(ppng, pinfo);
-
-                // send image buffer to file, one pixel row at once
-                for (uint32_t k = 0; k < (uint32_t)this->height; ++k ) {
-                    png_write_row(ppng, this->data + k*width*Bpp);
-                }
-                png_write_end(ppng, pinfo);
-                png_destroy_write_struct(&ppng, &pinfo);
-                // commented line below it to create row capture
-                // fwrite(this->data, 3, this->width * this->height, fd);
-            }
-            fclose(fd);
-    }
-
-    void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
-    {
-        // Destination rectangle : drect
-        const Rect & drect = cmd.rect.intersect(clip);
-        if (drect.isempty()){ return; }
-        // adding delta move dest to source
-        const signed int deltax = cmd.srcx - cmd.rect.x;
-        const signed int deltay = cmd.srcy - cmd.rect.y;
-        this->scrblt(drect.x + deltax, drect.y + deltay, drect);
-    }
-
-    // low level scrblt, mostly avoid considering clipping 
-    // because we already took care of it
-    void scrblt(unsigned srcx, unsigned srcy, const Rect drect)
-    {
-        // adding delta move dest to source
-        const signed int deltax = srcx - drect.x;
-        const signed int deltay = srcy - drect.y;
-        const Rect srect = drect.offset(deltax, deltay);
-        if(!srect.equal(drect)){
-            const Rect & overlap = srect.intersect(drect);
-            if (overlap.isempty()){
-                uint8_t * target = this->data + (drect.y * this->width + drect.x) * 3;
-                uint8_t * source = this->data + (srect.y * this->width + srect.x) * 3;
-                int offset = 0;
-                size_t width_in_bytes = this->width * 3;
-                for (uint16_t j = 0; j < drect.cy ; j++) {
-                    memcpy(source + offset, target + offset, drect.cx * 3);
-                    offset += width_in_bytes;
-                }
-            }
-            else {
-                /*
-                 * OK, now let's consider what we should do with overlapping
-                 * source rectangle and destination rectangle.
-                 * There are many different cases, for instance the following ones
-                 * shown below:
-
-                 Case 1: source rectangle is above destination rectangle
-                 if we move overlap it does not intersect with target
-                 =======================================================
-                 *          +-------------------------+ \
-                 *          |                         |  \
-                 *          |           s_big         |   \
-                 *          |                         |    > Source rectangle
-                 *          +---------+---------------+---/-----+ \
-                 *          |    s_bro|ther  overlap  |  /      |  \
-                 *          +---------+---------------+ /       |   \
-                 *                    |         d_big           |    > Dest rectangle
-                 *                    +---------+---------------+   /
-                 *                    |       d_brother         |  /
-                 *                    +---------+---------------+ /
-
-                -> s_brother -> d_brother , s_big -> d_big
-
-                 Case 2: source rectangle is below destination rectangle
-                 if we move overlap it does not intersect with target
-                 =======================================================
-
-                 *          +-------------------------+ \
-                 *          |           d_brother     |  \
-                 *          +-------------------------+   \
-                 *          |                         |    > Dest rect
-                 *          +   d_big +---------------+---/-----+ \
-                 *          |         |  overlap  s_br|ot/her   |  \
-                 *          +---------+---------------+-/-------+   \
-                 *                    |                         |    > Source rect
-                 *                    |        s_big            |   /
-                 *                    |                         |  /
-                 *                    +-------------------------+ /
-                -> s_brother -> d_brother , s_big -> d_big
-
-                 Case 3: source rectangle is above destination rectangle
-                 if we move overlap it does intersect with it's target
-                 =======================================================
-
-                 *          +-------------------------+  \
-                 *          |                         |   \
-                 *          +----+--------------------+----\+ \
-                 *          |    |      Ov            |     >>>\>Source rectangle
-                 *          |    +----+---er----------+----/+   \
-                 *          |    |    |     lap       |   / |    >> Destination rect
-                 *          +----+----+---------------+  /  |   /
-                 *               |    |                     |  /
-                 *               +----+---------------------+ /
-
-                 Case 4: source rectangle and dest rectangle are on the same level
-                 ============================================
-
-                 *        +------------+------------+-\----------+ \
-                 *        |            |            |  \         |  \
-                 *        |            |            |   \        |   \
-                 *        |            |   Overlap  |    > Dest r|ect > Source Rect
-                 *        |            |            |   /        |   /
-                 *        |            |            |  /         |  /
-                 *        +------------|------------+-/----------+ /
-
-                 All those cases can be solved the same way.
-                 - first move intersection of source and target to target,
-                  if it still overlap it can be solved by a recursive call
-                 - then move the remaining parts. As they do not overlap, source
-                 won't be modified by the changes applied to intersection.
-                 
-                 We can still make that slightly simpler.
-                 - if both source and target are on the same level (like case 4)
-                 then we just have to split the rectangle in two parts 
-                 using a vertical cut.
-                 we move the overlaping part, then we move the remaining rectangle.
-                 - in all other cases we can cut rectangle in two using one horizontal cut
-
-                This algorith may need some levels of recursive calls, but it's still simple enough.
-                
-                If necessary we could also optimize it keeping some minimal buffer
-                that will be used if steps are too small.
-                 */
-
-                if (srect.y != drect.y){
-                    // horizontal cut, overlapping part
-                    this->scrblt(srect.x, drect.y,
-                        Rect(drect.x, drect.y - deltay, drect.cx, overlap.cy));
-                    // horizontal cut, non overlapping part
-                    this->scrblt(srect.x, srect.y,
-                        Rect(drect.x, drect.y, drect.cx, drect.cy - overlap.cy));
-                }
-                else {
-                    // vertical cut, overlapping part
-                    this->scrblt(drect.x, drect.y,
-                        Rect(drect.x - deltax, drect.y, overlap.cx, srect.cy));
-                    // vertical cut, non overlapping part
-                    this->scrblt(srect.x, srect.y,
-                        Rect(drect.x, drect.y, drect.cx - overlap.cx, srect.cy));
-                }
-            }
+        char rawImagePath[256]     = {0};
+        char rawImageMetaPath[256] = {0};
+        snprintf(rawImagePath,     254, "/dev/shm/%d-%d.png", getpid(), this->framenb++);
+        snprintf(rawImageMetaPath, 254, "%s.meta", rawImagePath);
+        FILE * fd = fopen(rawImageMetaPath, "w");
+        if (fd) {
+           fprintf(fd, "%d,%d,%s\n", this->full.cx, this->full.cy, this->previous_timestamp);
         }
-        // srect equals drect, nothing to do
-    }
-
-
-    void dest_blt(const RDPDestBlt & cmd, const Rect &clip)
-    {
-        // rop values:
-        // 0x0 : 0
-        // 0x1 : ~(src | dst)
-        // 0x2 : (~src) & dst
-        // 0x3 : ~src
-        // 0x4 : src & (~dst)
-        // 0x5 : ~(dst)
-        // 0x6 : src ^ dst
-        // 0x7 : ~(src & dst)
-        // 0x8 : src & dst
-        // 0x9 : ~(src) ^ dst
-        // 0xA : dst
-        // 0xB : (~src) | dst
-        // 0xC : src
-        // 0xD : src | (~dst)
-        // 0xE : src | dst
-        // 0xF : ~0
-        #warning missing code in capture, apply full dest_blt
-        this->opaque_rect(RDPOpaqueRect(cmd.rect, WHITE), clip);
-    }
-
-    void pat_blt(const RDPPatBlt & cmd, const Rect & clip)
-    {
-        #warning missing code in capture, apply full pat_blt
-        this->opaque_rect(RDPOpaqueRect(cmd.rect, cmd.fore_color), clip);
+        fclose(fd);
+        fd = fopen(rawImagePath, "w");
+        if (fd) {
+            ::dump_png24(fd, this->data, this->full.cx, this->full.cy, this->rowsize);
+        }
+        fclose(fd);
     }
 
     /*
@@ -671,7 +466,7 @@ class StaticCapture
         uint8_t r = 0;
         uint8_t g = 0;
         uint8_t b = 0;
-        uint8_t * target = this->data + (rect.y * this->width + rect.x) * 3;
+        uint8_t * target = this->data + (rect.y * this->full.cx + rect.x) * 3;
         for (int j = 0; j < rect.cy ; j++){
             for (int i = 0; i < rect.cx ; i++){
                 #warning: it would be nicer to manage clipping earlier and not test every pixel
@@ -730,7 +525,7 @@ class StaticCapture
                         break;
                 }
                 // Pixel assignment (!)
-                uint8_t * pt = target + (j * this->width + i) * 3;
+                uint8_t * pt = target + (j * this->full.cx + i) * 3;
                 pt[0] = b;
                 pt[1] = g;
                 pt[2] = r;
@@ -738,170 +533,6 @@ class StaticCapture
         }
     }
 
-    void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
-    {
-        const Rect trect = clip.intersect(cmd.rect);
-        uint32_t color = color_decode(cmd.color, this->bpp, this->palette);
-
-        // base adress (*3 because it has 3 color components)
-        uint8_t * base = this->data + (trect.y * this->width + trect.x) * 3;
-        for (int j = 0; j < trect.cy ; j++){
-            for (int i = 0; i < trect.cx ; i++){
-               uint8_t * p = base + (j * this->width + i) * 3;
-               p[0] = color >> 16; // r
-               p[1] = color >> 8;  // g
-               p[2] = color;       // b
-            }
-        }
-    }
-
-
-/*
- *
- *            +----+----+
- *            |\   |   /|  4 cases.
- *            | \  |  / |  > Case 1 is the normal case
- *            |  \ | /  |  > Case 2 has a negative coeff
- *            | 3 \|/ 2 |  > Case 3 and 4 are the same as
- *            +----0---->x    Case 1 and 2 but one needs to
- *            | 4 /|\ 1 |     exchange begin and end.
- *            |  / | \  |
- *            | /  |  \ |
- *            |/   |   \|
- *            +----v----+
- *                 y
- *  Anyway, we base the line drawing on bresenham's algorithm
- */
-
-
-    void line_to(const RDPLineTo & lineto, const Rect & clip)
-    {
-//        LOG(LOG_INFO, "back_mode=%d (%d,%d) -> (%d, %d) rop2=%d bg_color=%d clip=(%u, %u, %u, %u)",
-//            lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy,
-//            lineto.rop2, lineto.back_color, clip.x, clip.y, clip.cx, clip.cy); 
-
-        // enlarge_to compute a new rect including old rect and added point
-        const Rect & line_rect = Rect(lineto.startx, lineto.starty, 1, 1).enlarge_to(lineto.endx, lineto.endy);
-        if (line_rect.intersect(clip).isempty()){
-//            LOG(LOG_INFO, "line_rect(%u, %u, %u, %u)", line_rect.x, line_rect.y, line_rect.cx, line_rect.cy);
-            return;
-        }
-
-        if (lineto.startx == lineto.endx){
-            if (lineto.starty <= lineto.endy){
-                this->vertical_line(lineto.back_mode,
-                     lineto.startx, lineto.starty, lineto.endy,
-                     lineto.rop2, lineto.back_color, lineto.pen, clip);
-            }
-            else {
-                this->vertical_line(lineto.back_mode,
-                     lineto.startx, lineto.endy, lineto.starty,
-                     lineto.rop2, lineto.back_color, lineto.pen, clip);
-            }        
-        }
-        else if (lineto.starty == lineto.endy){
-            this->horizontal_line(lineto.back_mode,
-                 lineto.startx, lineto.starty, lineto.endx, 
-                 lineto.rop2, lineto.back_color, lineto.pen, clip);
-        
-        }
-        else if (lineto.startx <= lineto.endx){
-            this->line(lineto.back_mode,
-                 lineto.startx, lineto.starty, lineto.endx, lineto.endy,
-                 lineto.rop2, lineto.back_color, lineto.pen, clip);
-        }
-        else {
-            this->line(lineto.back_mode,
-                 lineto.endx, lineto.endy, lineto.startx, lineto.starty,
-                 lineto.rop2, lineto.back_color, lineto.pen, clip);
-        }
-    }
-
-    void line(const int mix_mode, const int startx, const int starty, const int endx, const int endy, const int rop2,
-              const int bg_color, const RDPPen & pen, const Rect & clip)
-    {
-        // Color handling
-        const uint32_t color = color_decode(pen.color, this->bpp, this->palette);
-
-        // Prep
-        int x = startx;
-        int y = starty;
-        int dx = endx - startx;
-        int dy = (endy >= starty)?(endy - starty):(starty - endy);
-        int sy = (endy >= starty)?1:-1;
-        int err = dx - dy;
-        
-        while (true){
-            if (clip.contains_pt(x, y)){
-                // Pixel position
-                uint8_t * const p = this->data + (y * this->width + x) * 3;
-
-                // Drawing of a pixel
-                p[0] = color >> 16; // r
-                p[1] = color >> 8;  // g
-                p[2] = color;       // b
-            }
-
-            if ((x >= endx) && (y == endy)){
-                break;
-            }
-
-            // Calculating pixel position
-            int e2 = err * 2; //prevents use of floating point
-            if (e2 > -dy) {
-                err -= dy;
-                x++;
-            }
-            if (e2 < dx) {
-                err += dx;
-                y += sy;
-            }
-        }
-    }
-
-    void vertical_line(const int mix_mode, const int x, const int starty, const int endy, const int rop2,
-              const int bg_color, const RDPPen & pen, const Rect & clip)
-    {
-        // Color handling
-        const uint32_t color = color_decode(pen.color, this->bpp, this->palette);
-
-        // base adress (*3 because it has 3 color components) 
-        // also base of the new coordinate system
-        uint8_t * const base = this->data + (starty * this->width + x) * 3;
-        const unsigned y0 = std::max(starty, clip.y);
-        const unsigned y1 = std::min(endy, clip.y + clip.cy - 1);
-
-        for (unsigned y = y0; y <= y1 ; y++) {
-            // Pixel position
-            uint8_t * const p = base + y * this->width * 3;
-
-            // Drawing of a pixel
-            p[0] = color >> 16; // r
-            p[1] = color >> 8;  // g
-            p[2] = color;       // b
-        }
-    }
-
-    void horizontal_line(const int mix_mode, const int startx, const int y, const int endx, const int rop2,
-              const int bg_color, const RDPPen & pen, const Rect & clip)
-    {
-        const unsigned x0 = std::max(startx, clip.x);
-        const unsigned x1 = std::min(endx, clip.x + clip.cx - 1);
-        // Color handling
-        const uint32_t color = color_decode(pen.color, this->bpp, this->palette);
-        // base adress (*3 because it has 3 color components) also base of the new coordinate system
-        uint8_t * const base = this->data + (y * this->width + startx) * 3;
-
-        // Prep
-        for (unsigned x = x0; x <= x1 ; x++) {
-            // Pixel position
-            uint8_t * const p = base + x * 3;
-            // Drawing of a pixel
-            p[0] = color >> 16; // r
-            p[1] = color >> 8;  // g
-            p[2] = color;       // b
-        }
-    }
 
     void glyph_index(const RDPGlyphIndex & glyph_index, const Rect & clip)
     {

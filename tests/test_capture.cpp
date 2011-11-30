@@ -36,22 +36,26 @@
 BOOST_AUTO_TEST_CASE(TestCreateCapture)
 {
     // Create a simple capture image and dump it to file
-    Rect screen_rect(0, 0, 640, 480);
-    StaticCapture gd(screen_rect.cx, screen_rect.cy, 24, NULL, NULL, NULL);
-    gd.opaque_rect(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
-    gd.opaque_rect(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect);
+    uint16_t width = 640;
+    uint16_t height = 480;
+    uint8_t bpp = 24;
+    Rect screen_rect(0, 0, width, height);
+    BGRPalette palette;
+    init_palette332(palette);
+    Drawable gd(width, height, bpp, palette, false);
+    gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect);
     uint16_t y = screen_rect.cy - 1;
     for (uint16_t x = 0 ; x < screen_rect.cx ; x++){
-        gd.line_to(RDPLineTo(0, 0, 0, x, y, BLUE, 0xCC, RDPPen(0, 1, GREEN)), screen_rect);
-        gd.line_to(RDPLineTo(0, x, y, 0, 0, WHITE, 0xCC, RDPPen(0, 1, BLACK)), screen_rect);
+        gd.draw(RDPLineTo(0, 0, 0, x, y, BLUE, 0xCC, RDPPen(0, 1, GREEN)), screen_rect);
+        gd.draw(RDPLineTo(0, x, y, 0, 0, WHITE, 0xCC, RDPPen(0, 1, BLACK)), screen_rect);
     }
 
     y = screen_rect.cy - 1;
     for (uint16_t x = 0 ; x < screen_rect.cx ; x++){
-        gd.line_to(RDPLineTo(0, screen_rect.cx - 1, 0, x, y, BLUE, 0xCC, RDPPen(0, 1, RED)), screen_rect);
-        gd.line_to(RDPLineTo(0, x, y, screen_rect.cx - 1, 0, WHITE, 0xCC, RDPPen(0, 1, BLACK)), screen_rect);
+        gd.draw(RDPLineTo(0, screen_rect.cx - 1, 0, x, y, BLUE, 0xCC, RDPPen(0, 1, RED)), screen_rect);
+        gd.draw(RDPLineTo(0, x, y, screen_rect.cx - 1, 0, WHITE, 0xCC, RDPPen(0, 1, BLACK)), screen_rect);
     }
-    gd.dump_png();
 }
 
 void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * name, const char * shasig){

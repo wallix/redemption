@@ -32,8 +32,8 @@ class Capture
     public:
 
     #warning fat interface : ugly, find another way
-    Capture(int width, int height, int bpp, char * path, const char * codec_id, const char * video_quality) :
-        sc(width, height, bpp, path, codec_id, video_quality),
+    Capture(int width, int height, int bpp, const BGRPalette & palette, char * path, const char * codec_id, const char * video_quality) :
+        sc(width, height, bpp, palette, path, codec_id, video_quality),
         nc(width, height, bpp, path)
     {
     }
@@ -55,19 +55,19 @@ class Capture
 
     void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
     {
-        this->sc.scr_blt(cmd, clip);
+        this->sc.draw(cmd, clip);
 //        this->nc.scr_blt(cmd, clip);
     }
 
     void dest_blt(const RDPDestBlt & cmd, const Rect &clip)
     {
-        this->sc.dest_blt(cmd, clip);
+        this->sc.draw(cmd, clip);
 //        this->nc.dest_blt(cmd, clip);
     }
 
     void pat_blt(const RDPPatBlt & cmd, const Rect &clip)
     {
-        this->sc.pat_blt(cmd, clip);
+        this->sc.draw(cmd, clip);
 //        this->nc.pat_blt(cmd, clip);
     }
 
@@ -79,14 +79,14 @@ class Capture
 
     void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        this->sc.opaque_rect(cmd, clip);
+        this->sc.draw(cmd, clip);
 //        this->nc.opaque_rect(cmd, clip);
     }
 
 
     void line_to(const RDPLineTo & cmd, const Rect & clip)
     {
-        this->sc.line_to(cmd, clip);
+        this->sc.draw(cmd, clip);
 //        this->nc.line_to(cmd, clip);
 
     }
