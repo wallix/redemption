@@ -160,6 +160,7 @@ public:
 
     void draw(const RDPBmpCache & cmd)
     {
+        this->bmpcache.put(cmd.id, cmd.idx, cmd.bmp);
     }
 
     void draw(const RDPMemBlt & memblt, const Rect & clip)
@@ -170,8 +171,8 @@ public:
         const uint16_t srcx = memblt.srcx;
         const uint16_t srcy = memblt.srcy;
         const uint16_t idx = memblt.cache_idx;
-        Bitmap * bmp =  this->bmpcache.get(id & 0xFF, idx);
-        const uint8_t * const bmp_data = bmp->data_co(this->bpp);
+        Bitmap * pbmp =  this->bmpcache.get(id, idx);
+        const uint8_t * const bmp_data = pbmp->data_co(this->bpp);
 
         // Where we draw -> target
         uint32_t px = 0;

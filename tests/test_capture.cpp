@@ -232,8 +232,8 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     BGRPalette palette332;
     init_palette332(palette332);
     Bitmap * bmp = new Bitmap(24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
-//    gd.draw(RDPBmpCache(bpp, bmp, 1, 10));
-//    gd.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect);
+    gd.draw(RDPBmpCache(bpp, bmp, 1, 10));
+    gd.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect);
 
     char tmpname[128];
     sprintf(tmpname, "/tmp/test_memblt_XXXXXX.png");

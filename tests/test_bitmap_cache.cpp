@@ -217,8 +217,6 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     uint8_t cache_id  = (cache_ref >> 16) & 0xFF;
     uint16_t cache_idx = (cache_ref & 0xFFFF);
 
-    printf("cache_id=%u cache_idx=%u\n", cache_id, cache_idx);
-
     Bitmap * pbmp =  cache.get(cache_id, cache_idx);
 
     BOOST_CHECK_EQUAL(2521917587U, cache.get(cache_id, cache_idx)->get_crc());
@@ -342,9 +340,6 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
         uint16_t cache_idx = (cache_ref & 0xFFFF);
 
         Bitmap * pbmp =  cache.get(cache_id, cache_idx);
-
-        printf("cache_id=%u cache_idx=%u pbmp=%p\n", cache_id, cache_idx, pbmp);
-
 
         BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_co(24)[0]+(pbmp->data_co(24)[1]<<8)+(pbmp->data_co(24)[2]<<16));
         BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_co(24)[315]+(pbmp->data_co(24)[316]<<8)+(pbmp->data_co(24)[317]<<16));
