@@ -19,7 +19,7 @@
 
    RDPGraphicDevice is an abstract class that describe a device able to
    proceed RDP Drawing Orders. How the drawing will be actually done
-   depends on the implementation. 
+   depends on the implementation.
    - It may be sent on the wire,
    - Used to draw on some internal bitmap,
    - etc.
@@ -65,7 +65,7 @@ struct RDPGraphicDevice
 protected:
     // this to avoid calling constructor or destructor of base abstract class
     RDPGraphicDevice() {}
-    // if necessary (need to destroy object through pointer of base class) 
+    // if necessary (need to destroy object through pointer of base class)
     // we may also chose to make destructor virtual
     ~RDPGraphicDevice() {}
 };
@@ -76,7 +76,7 @@ struct RDPUnserializer
     RDPGraphicDevice * consumer;
     Transport * trans;
     Rect screen_rect;
-    
+
     // Internal state of orders
     RDPOrderCommon common;
     RDPDestBlt destblt;
@@ -86,7 +86,7 @@ struct RDPUnserializer
     RDPMemBlt memblt;
     RDPLineTo lineto;
     RDPGlyphIndex glyphindex;
-    
+
     // variables used to read batch of orders "chunks"
     uint16_t chunk_num;
     uint16_t chunk_size;
@@ -94,7 +94,7 @@ struct RDPUnserializer
     uint16_t remaining_order_count;
     uint16_t order_count;
 
-    RDPUnserializer(Transport * trans, RDPGraphicDevice * consumer, const Rect screen_rect) 
+    RDPUnserializer(Transport * trans, RDPGraphicDevice * consumer, const Rect screen_rect)
      : stream(4096), consumer(consumer), trans(trans), screen_rect(screen_rect),
      // Internal state of orders
     common(RDP::PATBLT, Rect(0, 0, 1, 1)),
@@ -114,13 +114,13 @@ struct RDPUnserializer
     order_count(0)
     {
     }
-    
+
     uint8_t next(){
         if (((this->stream.p == this->stream.end) && (this->remaining_order_count))
         ||  ((this->stream.p != this->stream.end) && (this->remaining_order_count == 0))){
             LOG(LOG_ERR, "Incomplete order batch at chunk %u "
                          "order [%u/%u] "
-                         "remaining [%u/%u]", 
+                         "remaining [%u/%u]",
                          this->chunk_num,
                          (this->order_count-this->remaining_order_count), this->order_count,
                          (this->stream.end - this->stream.p), this->chunk_size);
@@ -253,14 +253,14 @@ struct RDPSerializer : public RDPGraphicDevice
 
 
     RDPSerializer(Transport * trans, const Inifile * ini,
-          const int bitmap_cache_version, 
-          const int use_bitmap_comp, 
+          const int bitmap_cache_version,
+          const int use_bitmap_comp,
           const int op2)
         : stream(4096),
         trans(trans),
         ini(ini),
-        bitmap_cache_version(bitmap_cache_version), 
-        use_bitmap_comp(use_bitmap_comp), 
+        bitmap_cache_version(bitmap_cache_version),
+        use_bitmap_comp(use_bitmap_comp),
         op2(op2),
         // Internal state of orders
         common(RDP::PATBLT, Rect(0, 0, 1, 1)),
@@ -277,7 +277,7 @@ struct RDPSerializer : public RDPGraphicDevice
      {}
     ~RDPSerializer() {}
     virtual void flush() = 0;
-    
+
     /*****************************************************************************/
     // check if the next order will fit in available packet size
     // if not send previous orders we got and init a new packet

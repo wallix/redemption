@@ -19,7 +19,7 @@
 
    RDPGraphicDevice is an abstract class that describe a device able to
    proceed RDP Drawing Orders. How the drawing will be actually done
-   depends on the implementation. 
+   depends on the implementation.
    - It may be sent on the wire,
    - Used to draw on some internal bitmap,
    - etc.
@@ -103,9 +103,6 @@ struct GraphicsToFile : public RDPSerializer
     uint16_t offset_chunk_size;
 
     GraphicsToFile(Transport * trans, const Inifile * ini)
-//        const int bitmap_cache_version, 
-//        const int use_bitmap_comp, 
-//        const int op2,
         : RDPSerializer(trans, ini, 0, 1, 1)
     {
         this->init();

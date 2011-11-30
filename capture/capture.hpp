@@ -34,7 +34,7 @@ class Capture
     #warning fat interface : ugly, find another way
     Capture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality) :
         sc(width, height, bpp, palette, bmpcache, path, codec_id, video_quality),
-        nc(width, height, bpp, path)
+        nc(width, height, bpp, palette, bmpcache, path)
     {
     }
 
@@ -45,12 +45,13 @@ class Capture
     void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
         this->sc.snapshot(x, y, pointer_already_displayed, no_timestamp);
-//        this->nc.snapshot(x, y, pointer_already_displayed, no_timestamp);
+        this->nc.snapshot(x, y, pointer_already_displayed, no_timestamp);
     }
 
     void bitmap_cache(const RDPBmpCache & cmd)
     {
-//        this->nc.bitmap_cache(cmd);
+        this->nc.draw(cmd);
+        this->sc.draw(cmd);
     }
 
     void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
@@ -74,7 +75,7 @@ class Capture
     void mem_blt(const RDPMemBlt & cmd, const Rect & clip)
     {
         this->sc.draw(cmd, clip);
-//        this->nc.mem_blt(cmd, bmp_cache, clip);
+        this->nc.draw(cmd, clip);
     }
 
     void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)

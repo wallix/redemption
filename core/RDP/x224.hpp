@@ -318,40 +318,41 @@ struct X224In : public X224Packet
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
 
-//        LOG(LOG_INFO, "recv payload_len %u", payload_len);
+        LOG(LOG_INFO, "recv payload_len %u", payload_len);
         t->recv((char**)(&(stream.end)), payload_len);
         this->tpdu_hdr.LI = stream.in_uint8();
         this->tpdu_hdr.code = stream.in_uint8() & 0xF0;
+        LOG(LOG_INFO, "tpdu_hdr.LI = %u", this->tpdu_hdr.LI);
         switch (this->tpdu_hdr.code){
             case DT_TPDU:
-//                LOG(LOG_INFO, "recv DT_TPDU");
+                LOG(LOG_INFO, "recv DT_TPDU");
                 this->tpdu_hdr.eot = stream.in_uint8();
                 stream.skip_uint8(this->tpdu_hdr.LI-2);
             break;
             case DR_TPDU:
-//                LOG(LOG_INFO, "recv DR_TPDU");
+                LOG(LOG_INFO, "recv DR_TPDU");
                 stream.skip_uint8(4);
                 this->tpdu_hdr.reason = stream.in_uint8();
                 stream.skip_uint8(this->tpdu_hdr.LI-6);
             break;
             case ER_TPDU:
-//                LOG(LOG_INFO, "recv ER_TPDU");
+                LOG(LOG_INFO, "recv ER_TPDU");
                 stream.skip_uint8(2);
                 this->tpdu_hdr.reject_cause = stream.in_uint8();
                 stream.skip_uint8(this->tpdu_hdr.LI-4);
             break;
             case CC_TPDU:
-//                LOG(LOG_INFO, "recv CC_TPDU");
+                LOG(LOG_INFO, "recv CC_TPDU");
                 // just skip remaining TPDU header content
                 stream.skip_uint8(this->tpdu_hdr.LI-1);
             break;
             case CR_TPDU:
-//                LOG(LOG_INFO, "recv CR_TPDU");
+                LOG(LOG_INFO, "recv CR_TPDU");
                 // just skip remaining TPDU header content
                 stream.skip_uint8(this->tpdu_hdr.LI-1);
             break;
             default:
-//                LOG(LOG_INFO, "recv OTHER_TPDU %u", this->tpdu_hdr.code);
+                LOG(LOG_INFO, "recv OTHER_TPDU %u", this->tpdu_hdr.code);
                 // just skip remaining TPDU header content
                 stream.skip_uint8(this->tpdu_hdr.LI-1);
         }

@@ -63,11 +63,16 @@ class NativeCapture
     OutFileTransport trans;
     GraphicsToFile recorder;
 
-    NativeCapture(int width, int height, int bpp, char * path) 
+    NativeCapture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path)
         : width(width), height(height), bpp(bpp),
-        f(open(path, O_WRONLY)),
+        f(-1),
         trans(this->f),
         recorder(&this->trans, NULL) {
+        LOG(LOG_INFO, "Recording to file :%s.wrm", path);
+        char tmppath[1024] = {};
+        sprintf(tmppath, "%s.wrm", path);
+        this->f = open(tmppath, O_WRONLY);
+        this->trans.fd = this->f;
         this->inter_frame_interval = 1000000; // 1 000 000 us is 1 sec (default)
     }
 
@@ -77,6 +82,7 @@ class NativeCapture
 
     void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
+        this->recorder.flush();
     }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)
@@ -91,7 +97,7 @@ class NativeCapture
 //        fprintf(this->f, "}\n");
     }
 
-    void bitmap_cache(const RDPBmpCache & cmd)
+    void draw(const RDPBmpCache & cmd)
     {
         this->recorder.draw(cmd);
 //        const uint8_t cache_id = cmd.cache_id;
@@ -131,7 +137,7 @@ class NativeCapture
 //        fprintf(this->f, "    this->front.orders->draw(cmd);\n");
 //        fprintf(this->f, "}\n");
     }
-    void mem_blt(const RDPMemBlt & cmd, const BitmapCache & bmp_cache, const Rect & clip)
+    void draw(const RDPMemBlt & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
 //        fprintf(this->f, "{\n");

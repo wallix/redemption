@@ -945,6 +945,8 @@ public:
         Stream stream(65535);
 
         X224In tpdu(this->trans, stream);
+
+        #warning before doing this we should check we got DT_TPDU, if we got a DR (Disconnect Request), we should not proceed
         McsIn mcs_in(stream);
 
         // Disconnect Provider Ultimatum datagram
@@ -1005,7 +1007,7 @@ public:
             int flags = stream.in_uint32_le();
 
             size_t chunk_size = stream.end - stream.p;
-            
+
             cb.send_to_mod_channel(channel.name, stream.p, length, chunk_size, flags);
             stream.p += chunk_size;
         }
@@ -1020,6 +1022,7 @@ public:
                 else {
                     int pdu_code = stream.in_uint16_le();
                     stream.skip_uint8(2); /* mcs user id */
+                #warning valgrind says: Conditional jump or move depends on uninitialised value(s)
                     switch (pdu_code & 0xf) {
 
                     case 0:
@@ -1047,7 +1050,7 @@ public:
                         break;
                     case PDUTYPE_DEACTIVATEALLPDU:
                         if (this->ini->globals.debug.front){
-                            LOG(LOG_INFO, "Front::activate_and_process_data::unsupported PDUTYPE DEACTIVATEALLPDU");                        
+                            LOG(LOG_INFO, "Front::activate_and_process_data::unsupported PDUTYPE DEACTIVATEALLPDU");
                         }
                         break;
                     case PDUTYPE_SERVER_REDIR_PKT:
@@ -1201,7 +1204,7 @@ public:
 // maximumOrderLevel (2 bytes): A 16-bit, unsigned integer. Maximum order level.
 // This value is ignored and SHOULD be set to ORD_LEVEL_1_ORDERS (1).
 
-// numberFonts (2 bytes): A 16-bit, unsigned integer. Number of fonts. This 
+// numberFonts (2 bytes): A 16-bit, unsigned integer. Number of fonts. This
 // value is ignored and SHOULD be set to 0.
 
 // orderFlags (2 bytes): A 16-bit, unsigned integer. A 16-bit unsigned integer.
@@ -1286,7 +1289,7 @@ public:
 // |                           | ignored.                                      |
 // +---------------------------+---+-------------------------------------------+
 // | 0x0F TS_NEG_MULTIDSTBLT_INDEX | MultiDstBlt Primary Drawing Order (see    |
-// |                               | [MS-RDPEGDI] section 2.2.2.2.1.1.2.2).    | 
+// |                               | [MS-RDPEGDI] section 2.2.2.2.1.1.2.2).    |
 // +-------------------------------+-------------------------------------------+
 // | 0x10 TS_NEG_MULTIPATBLT_INDEX |MultiPatBlt Primary Drawing Order (see     |
 // |                               | [MS-RDPEGDI] section 2.2.2.2.1.1.2.4).    |
@@ -1400,7 +1403,7 @@ public:
         stream.out_uint16_le(RDP_CAPLEN_ORDER); /* 88(0x58) */
         stream.out_clear_bytes(16);
         stream.out_uint32_be(0x40420f00);
-        stream.out_uint16_le(1); // desktopSaveXGranularity 
+        stream.out_uint16_le(1); // desktopSaveXGranularity
         stream.out_uint16_le(20); // desktopSaveYGranularity
         stream.out_uint16_le(0); /* Pad */
         stream.out_uint16_le(1); // maximumOrderLevel
@@ -1439,7 +1442,7 @@ public:
         stream.out_uint8(0); /* unused */
         stream.out_uint8(0); /* unused */
         stream.out_uint8(0); /* unused */
-        
+
         stream.out_uint16_le(0x6a1); // textFlags
         stream.out_clear_bytes(2); // orderSupportExFlags
         stream.out_uint32_le(0x0f4240); // pad4octetsB

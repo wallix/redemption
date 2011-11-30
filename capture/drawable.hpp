@@ -160,6 +160,7 @@ public:
 
     void draw(const RDPBmpCache & cmd)
     {
+        LOG(LOG_INFO, "Storing bitmap %p in cache at (id=%u idx=%u)", cmd.bmp, cmd.id, cmd.idx);
         this->bmpcache.put(cmd.id, cmd.idx, cmd.bmp);
     }
 
@@ -172,6 +173,11 @@ public:
         const uint16_t srcy = memblt.srcy;
         const uint16_t idx = memblt.cache_idx;
         Bitmap * pbmp =  this->bmpcache.get(id, idx);
+        LOG(LOG_INFO, "Reading bitmap %p from cache at (id=%u idx=%u)", pbmp, id, idx);
+        if (!pbmp){
+            LOG(LOG_INFO, "failed to get bitmap from cache id=%u idx=%u", id, idx);
+            exit(0);
+        }
         const uint8_t * const bmp_data = pbmp->data_co(this->bpp);
 
         // Where we draw -> target

@@ -66,6 +66,7 @@ class StaticCapture : public Drawable
 
     public:
     BGRPalette palette;
+    char path[1024];
 
     StaticCapture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality)
         : Drawable(width, height, bpp, palette, bmpcache),
@@ -77,6 +78,7 @@ class StaticCapture : public Drawable
         this->draw_11x7_digits(this->timestamp_data, ts_width, 19,
         "                   ", "XXXXXXXXXXXXXXXXXXX");
         memcpy(this->previous_timestamp, "                   ", 20);
+        strcpy(this->path, path);
     }
 
     ~StaticCapture(){
@@ -431,8 +433,9 @@ class StaticCapture : public Drawable
     void dump_png(void){
         char rawImagePath[256]     = {0};
         char rawImageMetaPath[256] = {0};
-        snprintf(rawImagePath,     254, "/dev/shm/%d-%d.png", getpid(), this->framenb++);
+        snprintf(rawImagePath,     254, "%s.%u.%u.png", this->path, getpid(), this->framenb++);
         snprintf(rawImageMetaPath, 254, "%s.meta", rawImagePath);
+        LOG(LOG_INFO, "Dumping to file %s", rawImagePath);
         FILE * fd = fopen(rawImageMetaPath, "w");
         if (fd) {
            fprintf(fd, "%d,%d,%s\n", this->full.cx, this->full.cy, this->previous_timestamp);

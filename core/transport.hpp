@@ -166,7 +166,7 @@ class GeneratorTransport : public Transport {
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         if (current + len > this->len){
             size_t available_len = this->len - this->current;
-            memcpy(*pbuffer, (const char *)(&this->data[this->current]), 
+            memcpy(*pbuffer, (const char *)(&this->data[this->current]),
                                             available_len);
             *pbuffer += available_len;
             this->current += available_len;
@@ -188,14 +188,9 @@ class OutFileTransport : public Transport {
     public:
     int fd;
 
-    OutFileTransport(int fd)
-        : Transport(), fd(fd)
-    {
-    }
+    OutFileTransport(int fd) : Transport(), fd(fd) {}
 
-    ~OutFileTransport()
-    {
-    }
+    ~OutFileTransport() {}
 
     // recv is not implemented for OutFileTransport
     using Transport::recv;
@@ -285,7 +280,7 @@ class SocketTransport : public Transport {
         const char * name;
         uint32_t verbose;
 
-    SocketTransport(const char * name, int sck, uint32_t verbose) 
+    SocketTransport(const char * name, int sck, uint32_t verbose)
         : Transport(), name(name), verbose(verbose)
     {
         this->sck = sck;
@@ -355,7 +350,7 @@ class SocketTransport : public Transport {
 
         }
     }
-    
+
     using Transport::recv;
     virtual void recv(char ** input_buffer, size_t total_len) throw (Error)
     {
@@ -435,7 +430,7 @@ class SocketTransport : public Transport {
             switch (sent){
             case -1:
                 if (!this->try_again(errno)) {
-                    LOG(LOG_INFO, "Socket %s (%u) : %s", 
+                    LOG(LOG_INFO, "Socket %s (%u) : %s",
                         this->name, this->sck, strerror(errno));
                     this->sck_closed = 1;
                     throw Error(ERR_SOCKET_ERROR, errno);
@@ -443,7 +438,7 @@ class SocketTransport : public Transport {
                 this->wait_ready(SEND, 10);
                 break;
             case 0:
-                LOG(LOG_INFO, "Socket %s (%u) closed on sending : %s", 
+                LOG(LOG_INFO, "Socket %s (%u) closed on sending : %s",
                     this->name, this->sck, strerror(errno));
                 this->sck_closed = 1;
                 throw Error(ERR_SOCKET_CLOSED, errno);
