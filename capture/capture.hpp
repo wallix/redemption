@@ -32,8 +32,8 @@ class Capture
     public:
 
     #warning fat interface : ugly, find another way
-    Capture(int width, int height, int bpp, const BGRPalette & palette, char * path, const char * codec_id, const char * video_quality) :
-        sc(width, height, bpp, palette, path, codec_id, video_quality),
+    Capture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality) :
+        sc(width, height, bpp, palette, bmpcache, path, codec_id, video_quality),
         nc(width, height, bpp, path)
     {
     }
@@ -71,9 +71,9 @@ class Capture
         this->nc.draw(cmd, clip);
     }
 
-    void mem_blt(const RDPMemBlt & cmd, const BitmapCache & bmp_cache, const Rect & clip)
+    void mem_blt(const RDPMemBlt & cmd, const Rect & clip)
     {
-        this->sc.mem_blt(cmd, bmp_cache, clip);
+        this->sc.draw(cmd, clip);
 //        this->nc.mem_blt(cmd, bmp_cache, clip);
     }
 

@@ -464,9 +464,8 @@ struct GraphicDeviceMod : public GraphicDevice
                     if (!clip.isempty()
                     && !clip.intersect(cmd.rect).isempty()){
                         this->front.orders->draw(cmd, clip);
-                        #warning capture should have it's own reference to bmp_cache
                         if (this->capture){
-                            this->capture->mem_blt(cmd, *this->front.bmp_cache, clip);
+                            this->capture->mem_blt(cmd, clip);
                         }
                     }
                 }
@@ -558,9 +557,9 @@ struct GraphicDeviceMod : public GraphicDevice
 
     virtual void bitmap_cache(const uint8_t cache_id, const uint16_t cache_idx)
     {
-        BitmapCacheItem * entry =  this->front.bmp_cache->get_item(cache_id, cache_idx);
+        Bitmap * pbmp =  this->front.bmp_cache->get(cache_id, cache_idx);
 
-        RDPBmpCache cmd(this->get_front_bpp(), entry->pbmp, cache_id, cache_idx);
+        RDPBmpCache cmd(this->get_front_bpp(), pbmp, cache_id, cache_idx);
         this->front.orders->draw(cmd);
 
         if (this->capture){
@@ -592,8 +591,8 @@ struct GraphicDeviceMod : public GraphicDevice
                 #warning simplify this code and add unit tests. It is much too complicated and that introduce subtile bugs
 //                LOG(LOG_INFO, "tile at dst = tile(%u, %u %u, %u) dst(%u, %u) src(%u, %u, %u, %u) clip(%u, %u, %u, %u)",
 //                    tile.x, tile.y, tile.cx, tile.cy, dst.x, dst.y, src_r.x, src_r.y, src_r.cx, src_r.cy,
-//                    clip.x, clip.y, clip.cx, clip.cy);  
-                if (!clip.intersect(tile.offset(dst.x, dst.y)).isempty()) { 
+//                    clip.x, clip.y, clip.cx, clip.cy);
+                if (!clip.intersect(tile.offset(dst.x, dst.y)).isempty()) {
                     if ((src_r.cx > src_r.x + x) && (src_r.cy > src_r.y + y)) {
                          uint32_t cache_ref = this->front.bmp_cache->add_bitmap(
                                                     src_r.cx, src_r.cy,
@@ -626,9 +625,8 @@ struct GraphicDeviceMod : public GraphicDevice
                                 this->palette_sent = false;
                             }
                             this->front.orders->draw(cmd, clip);
-                            #warning capture should have it's own reference to bmp_cache
                             if (this->capture){
-                                this->capture->mem_blt(cmd, *this->front.bmp_cache, clip);
+                                this->capture->mem_blt(cmd, clip);
                             }
                         }
                     }
@@ -788,7 +786,7 @@ struct client_mod : public Callback {
     {
         if (flag){
             this->stop_capture();
-            this->gd.capture = new Capture(width, height, 24, this->gd.palette332, path, codec_id, quality);
+            this->gd.capture = new Capture(width, height, 24, this->gd.palette332, *this->gd.front.bmp_cache, path, codec_id, quality);
         }
     }
 

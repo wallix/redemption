@@ -30,6 +30,8 @@
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 
+#include "bmpcache.hpp"
+
 class Drawable {
 public:
     const Rect full;
@@ -38,13 +40,17 @@ public:
     const size_t rowsize;
     uint8_t * data;
     bool bgr;
+    BmpCache & bmpcache;
 
-    Drawable(const uint16_t width, const uint16_t height, const uint8_t bpp, const BGRPalette & palette, bool bgr=true)
+    Drawable(const uint16_t width, const uint16_t height,
+             const uint8_t bpp, const BGRPalette & palette,
+             BmpCache & bmpcache, bool bgr=true)
       : full(Rect(0, 0, width, height)),
         bpp(bpp), palette(palette),
         rowsize(this->full.cx * ::nbbytes(this->bpp)),
         data(new uint8_t [this->rowsize * this->full.cy]),
-        bgr(bgr)
+        bgr(bgr),
+        bmpcache(bmpcache)
     {
     }
 
@@ -156,8 +162,87 @@ public:
     {
     }
 
-    void draw(const RDPMemBlt & cmd, const Rect & clip)
+    void draw(const RDPMemBlt & memblt, const Rect & clip)
     {
+        #warning we should use rop parameter to change mem_blt behavior and palette_id part of cache_id
+        const uint8_t id = memblt.cache_id & 0xFF;
+        const Rect & rect = memblt.rect;
+        const uint16_t srcx = memblt.srcx;
+        const uint16_t srcy = memblt.srcy;
+        const uint16_t idx = memblt.cache_idx;
+        Bitmap * bmp =  this->bmpcache.get(id & 0xFF, idx);
+        const uint8_t * const bmp_data = bmp->data_co(this->bpp);
+
+        // Where we draw -> target
+        uint32_t px = 0;
+        uint8_t r = 0;
+        uint8_t g = 0;
+        uint8_t b = 0;
+        uint8_t * target = this->data + (rect.y * this->full.cx + rect.x) * 3;
+        for (int j = 0; j < rect.cy ; j++){
+            for (int i = 0; i < rect.cx ; i++){
+                #warning: it would be nicer to manage clipping earlier and not test every pixel
+                if (!(clip.contains_pt(i + rect.x, j + rect.y))) {
+                  continue;
+                }
+                #warning this should not be done here, implement bitmap color conversion and use it here
+                uint32_t src_px_offset = ((rect.cy - j - srcy - 1) * align4(rect.cx) + i + srcx) * nbbytes(this->bpp);
+                switch (this->bpp){
+                    default:
+                    case 32:
+                        assert(false);
+                    break;
+                    case 24:
+                        {
+                            px = (bmp_data[src_px_offset+2]<<16)
+                               + (bmp_data[src_px_offset+1]<<8)
+                               + (bmp_data[src_px_offset+0]);
+
+                            r = (px >> 16) & 0xFF;
+                            g = (px >> 8)  & 0xFF;
+                            b =  px        & 0xFF;
+                        }
+                        break;
+                    case 16:
+                        {
+                            px = (bmp_data[src_px_offset+1]<<8)
+                               + (bmp_data[src_px_offset+0]);
+
+                            r = (((px >> 8) & 0xf8) | ((px >> 13) & 0x7));
+                            g = (((px >> 3) & 0xfc) | ((px >> 9) & 0x3));
+                            b = (((px << 3) & 0xf8) | ((px >> 2) & 0x7));
+                        }
+                        break;
+                    case 15:
+                        {
+                            px = (bmp_data[src_px_offset+1]<<8)
+                               + (bmp_data[src_px_offset+0]);
+
+                            r = ((px >> 7) & 0xf8) | ((px >> 12) & 0x7);
+                            g = ((px >> 2) & 0xf8) | ((px >> 8) & 0x7);
+                            b = ((px << 3) & 0xf8) | ((px >> 2) & 0x7);
+                        }
+                        break;
+                    case 8:
+                        {
+                            px = bmp_data[src_px_offset+0];
+
+                            r = px & 7;
+                            r = (r << 5) | (r << 2) | (r >> 1);
+                            g = (px >> 3) & 7;
+                            g = (g << 5) | (g << 2) | (g >> 1);
+                            b =  (px >> 6) & 3;
+                            b = (b << 6) | (b << 4) | (b << 2) | b;
+                        }
+                        break;
+                }
+                // Pixel assignment (!)
+                uint8_t * pt = target + (j * this->full.cx + i) * 3;
+                pt[0] = b;
+                pt[1] = g;
+                pt[2] = r;
+            }
+        }
     }
 
     uint8_t * first_pixel(const Rect & rect){

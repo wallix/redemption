@@ -24,32 +24,44 @@ class Bitmap;
 
 class BmpCache {
     Bitmap * cache[3][8192];
+    unsigned stamps[3][8192];
+    unsigned stamp;
     public:
         BmpCache(){
+            this->stamp = 0;
             for (size_t cid = 0; cid < 3 ; cid++){
                 for (size_t cidx = 0; cidx < 8192 ; cidx++){
-                    cache[cid][cidx] = NULL;
+                    this->cache[cid][cidx] = NULL;
+                    this->stamps[cid][cidx] = 0;
                 }
             }
         }
         ~BmpCache(){
             for (uint8_t cid = 0; cid < 3; cid++){
                 for (uint16_t cidx = 0 ; cidx < 8192; cidx++){
-                    if (cache[cid][cidx]){
-                        delete cache[cid][cidx];
-                        cache[cid][cidx] = NULL;
+                    if (this->cache[cid][cidx]){
+                        delete this->cache[cid][cidx];
                     }
                 }
             }
         }
         void put(uint8_t id, uint16_t idx, Bitmap * const bmp){
-            if (cache[id][idx]){
-                delete cache[id][idx];
+            if (this->cache[id][idx]){
+                delete this->cache[id][idx];
             }
-            cache[id][idx] = bmp;
+            this->cache[id][idx] = bmp;
+            this->stamps[id][idx] = ++stamp;
         }
+
+        void restamp(uint8_t id, uint16_t idx){
+            this->stamps[id][idx] = ++stamp;
+        }
+
         Bitmap * get(uint8_t id, uint16_t idx){
-            return cache[id][idx];
+            return this->cache[id][idx];
+        }
+        unsigned get_stamp(uint8_t id, uint16_t idx){
+            return this->stamps[id][idx];
         }
 };
 #endif

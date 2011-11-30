@@ -43,27 +43,15 @@
 #include <inttypes.h>
 #include "rect.hpp"
 
+#include "../capture/bmpcache.hpp"
+
 enum {
     BITMAP_FOUND_IN_CACHE,
     BITMAP_ADDED_TO_CACHE
 };
 
 
-struct BitmapCacheItem {
-    int stamp;
-    Bitmap * pbmp;
-
-    BitmapCacheItem() : stamp(0), pbmp(0) {
-    }
-
-    BitmapCacheItem(Bitmap * pbmp) : stamp(0), pbmp(pbmp) {
-    }
-
-    ~BitmapCacheItem(){
-    }
-};
-
-struct BitmapCache {
+struct BitmapCache : public BmpCache {
     /* client info */
     unsigned small_entries;
     unsigned small_size;
@@ -72,12 +60,6 @@ struct BitmapCache {
     unsigned big_entries;
     unsigned big_size;
 
-    /* bitmap */
-    int bitmap_stamp;
-    BitmapCacheItem * small_bitmaps;
-    BitmapCacheItem * medium_bitmaps;
-    BitmapCacheItem * big_bitmaps;
-
     BitmapCache(ClientInfo* client_info) {
         this->small_entries = client_info->cache1_entries;
         this->small_size = client_info->cache1_size;
@@ -85,131 +67,60 @@ struct BitmapCache {
         this->medium_size = client_info->cache2_size;
         this->big_entries = client_info->cache3_entries;
         this->big_size = client_info->cache3_size;
-
-//        LOG(LOG_INFO, "Allocation of bitmap caches");
-
-        this->small_bitmaps = new BitmapCacheItem[client_info->cache1_entries];
-        this->medium_bitmaps = new BitmapCacheItem[client_info->cache2_entries];
-        this->big_bitmaps = new BitmapCacheItem[client_info->cache3_entries];
-
-        this->bitmap_stamp = 0;
     }
 
     ~BitmapCache()
     {
-        for (size_t i = 0 ; i < this->small_entries ; i++){
-            if (this->small_bitmaps[i].pbmp){
-                delete this->small_bitmaps[i].pbmp;
-            }
-        }
-        for (size_t i = 0 ; i < this->medium_entries ; i++){
-            if (this->medium_bitmaps[i].pbmp){
-                delete this->medium_bitmaps[i].pbmp;
-            }
-        }
-        for (size_t i = 0 ; i < this->big_entries ; i++){
-            if (this->big_bitmaps[i].pbmp){
-                delete this->big_bitmaps[i].pbmp;
-            }
-        }
-        delete [] this->small_bitmaps;
-        delete [] this->medium_bitmaps;
-        delete [] this->big_bitmaps;
     }
 
-    BitmapCacheItem * get_item(const uint8_t cache_id, const uint16_t cache_idx) const
-    {
-        BitmapCacheItem * item = 0;
-        switch (cache_id){
-            case 0:
-                if (cache_idx < this->small_entries){
-                    item = &(this->small_bitmaps[cache_idx]);
-                }
-            break;
-            case 1:
-                if (cache_idx < this->medium_entries){
-                    item = &(this->medium_bitmaps[cache_idx]);
-                }
-            break;
-            case 2:
-                if (cache_idx < this->big_entries){
-                    item = &(this->big_bitmaps[cache_idx]);
-                }
-            break;
-        }
-
-        assert(item && item->stamp && item->pbmp);
-
-        return item;
-    }
-
-    /* returns cache id, cx, cy, bpp, data_co */
     #warning we should pass in src as a bitmap
     uint32_t add_bitmap(int src_cx, int src_cy, const uint8_t * src_data,
                     const Rect & tile, int src_bpp, BGRPalette & src_palette)
     {
-        int cache_idx = 0;
-        Bitmap * pbitmap = new Bitmap(src_bpp, &src_palette, tile, src_cx, src_cy, src_data);
-//        LOG(LOG_INFO, "new bitmap size = %u original_bpp=%u src_bpp=%u", pbitmap->bmp_size(src_bpp), pbitmap->original_bpp, src_bpp);
-        BitmapCacheItem cache_item(pbitmap);
-        this->bitmap_stamp++;
-        int entries = 0;
-        BitmapCacheItem * array = 0;
-        int cache_id = 0;
+        Bitmap * candidate_bmp = new Bitmap(src_bpp, &src_palette, tile, src_cx, src_cy, src_data);
 
-        if (cache_item.pbmp->bmp_size(src_bpp) <= this->small_size) {
-            array = this->small_bitmaps;
+        printf("candidate_bmp_size=%u small_size=%u medium_size=%u big_size=%u\n", candidate_bmp->bmp_size(src_bpp), this->small_size, this->medium_size, this->big_size);
+
+        unsigned id = 0;
+        unsigned entries = 0;
+        if (candidate_bmp->bmp_size(src_bpp) <= this->small_size) {
             entries = this->small_entries;
-            cache_id = 0;
-        } else if (cache_item.pbmp->bmp_size(src_bpp) <= this->medium_size) {
-            array = this->medium_bitmaps;
+            id = 0;
+        } else if (candidate_bmp->bmp_size(src_bpp) <= this->medium_size) {
             entries = this->medium_entries;
-            cache_id = 1;
-        } else if (cache_item.pbmp->bmp_size(src_bpp) <= this->big_size) {
-            array = this->big_bitmaps;
+            id = 1;
+        } else if (candidate_bmp->bmp_size(src_bpp) <= this->big_size) {
             entries = this->big_entries;
-            cache_id = 2;
+            id = 2;
         }
         else {
-            LOG(LOG_ERR, "bitmap size too big %d", cache_item.pbmp->bmp_size(src_bpp));
-            assert(false);
+            LOG(LOG_ERR, "bitmap size too big %d", candidate_bmp->bmp_size(src_bpp));
+            throw Error(ERR_BITMAP_CACHE_TOO_BIG);
         }
 
-        if (array){
-            cache_item.stamp = this->bitmap_stamp;
-            cache_idx = 0;
-            int oldest = 0x7fffffff;
-            for (int j = 0; j < entries; j++) {
-                if (array[j].stamp < oldest) {
-                    // Keep oldest
-                    oldest = array[j].stamp;
-                    cache_idx = j;
-                }
-
-                #warning create a comparizon function in bitmap_cache_item
-                if (array[j].pbmp
-                && array[j].pbmp->cx == cache_item.pbmp->cx
-                && array[j].pbmp->cy == cache_item.pbmp->cy
-                && array[j].pbmp->get_crc() == cache_item.pbmp->get_crc())
-                {
-                    delete pbitmap;
-                    array[j].stamp = this->bitmap_stamp;
-                    return (BITMAP_FOUND_IN_CACHE << 24)|(cache_id << 16)|j;
-                }
+        unsigned oldest_idx = 0;
+        unsigned oldest = 0x7fffffff;
+        for (unsigned idx = 0; idx < entries; idx++) {
+            unsigned stamp = this->get_stamp(id, idx);
+            if (stamp < oldest) {
+                // Keep oldest
+                oldest = stamp;
+                oldest_idx = idx;
             }
+            Bitmap * pbmp = this->get(id, idx);
 
-            // cache_idx contains oldest
-            if (array[cache_idx].pbmp){
-                delete array[cache_idx].pbmp;
+            if (pbmp
+            && pbmp->cx == candidate_bmp->cx
+            && pbmp->cy == candidate_bmp->cy
+            && pbmp->get_crc() == candidate_bmp->get_crc())
+            {
+                delete candidate_bmp;
+                this->restamp(id, idx); // refresh stamp
+                return (BITMAP_FOUND_IN_CACHE << 24)|(id << 16)|idx;
             }
-            array[cache_idx] = cache_item;
-            return (BITMAP_ADDED_TO_CACHE<<24)|(cache_id << 16)|cache_idx;
         }
-        else {
-            #warning bitmap should not be sent through cache if it is too big, should allready have been splitted by sender ?
-            LOG(LOG_ERR, "bitmap not added to cache, too big(%d = %d x %d x %d) [%d, %d, %d]\n", cache_item.pbmp->bmp_size(src_bpp), tile.cx, tile.cy, src_bpp, this->small_size, this->medium_size, this->big_size);
-        }
-        throw Error(ERR_BITMAP_CACHE_TOO_BIG);
+        this->put(id, oldest_idx, candidate_bmp);
+        return (BITMAP_ADDED_TO_CACHE<<24)|(id << 16)|oldest_idx;
     }
 };
 

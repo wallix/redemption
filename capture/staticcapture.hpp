@@ -67,8 +67,8 @@ class StaticCapture : public Drawable
     public:
     BGRPalette palette;
 
-    StaticCapture(int width, int height, int bpp, const BGRPalette & palette, char * path, const char * codec_id, const char * video_quality)
-        : Drawable(width, height, bpp, palette),
+    StaticCapture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality)
+        : Drawable(width, height, bpp, palette, bmpcache),
           framenb(0)
     {
         gettimeofday(&this->start, NULL);
@@ -444,95 +444,6 @@ class StaticCapture : public Drawable
         }
         fclose(fd);
     }
-
-    /*
-     * The name doesn't say it : mem_blt COPIES a decoded bitmap from
-     * a cache (data) and insert a subpart (srcx, srcy) to the local
-     * image cache (this->data) at the given position (rect).
-     */
-    void mem_blt(const RDPMemBlt & memblt, const BitmapCache & bmp_cache, const Rect & clip)
-    {
-        #warning we should use rop parameter to change mem_blt behavior and palette_id part of cache_id
-        const uint8_t cache_id = memblt.cache_id & 0xFF;
-        const Rect & rect = memblt.rect;
-        const uint16_t srcx = memblt.srcx;
-        const uint16_t srcy = memblt.srcy;
-        const uint16_t cache_idx = memblt.cache_idx;
-        const BitmapCacheItem * entry =  bmp_cache.get_item(cache_id & 0xFF, cache_idx);
-        const uint8_t * const bmp_data = entry->pbmp->data_co(this->bpp);
-
-        // Where we draw -> target
-        uint32_t px = 0;
-        uint8_t r = 0;
-        uint8_t g = 0;
-        uint8_t b = 0;
-        uint8_t * target = this->data + (rect.y * this->full.cx + rect.x) * 3;
-        for (int j = 0; j < rect.cy ; j++){
-            for (int i = 0; i < rect.cx ; i++){
-                #warning: it would be nicer to manage clipping earlier and not test every pixel
-                if (!(clip.contains_pt(i + rect.x, j + rect.y))) {
-                  continue;
-                }
-                #warning this should not be done here, implement bitmap color conversion and use it here
-                uint32_t src_px_offset = ((rect.cy - j - srcy - 1) * align4(rect.cx) + i + srcx) * nbbytes(this->bpp);
-                switch (this->bpp){
-                    default:
-                    case 32:
-                        assert(false);
-                    break;
-                    case 24:
-                        {
-                            px = (bmp_data[src_px_offset+2]<<16)
-                               + (bmp_data[src_px_offset+1]<<8)
-                               + (bmp_data[src_px_offset+0]);
-
-                            r = (px >> 16) & 0xFF;
-                            g = (px >> 8)  & 0xFF;
-                            b =  px        & 0xFF;
-                        }
-                        break;
-                    case 16:
-                        {
-                            px = (bmp_data[src_px_offset+1]<<8)
-                               + (bmp_data[src_px_offset+0]);
-
-                            r = (((px >> 8) & 0xf8) | ((px >> 13) & 0x7));
-                            g = (((px >> 3) & 0xfc) | ((px >> 9) & 0x3));
-                            b = (((px << 3) & 0xf8) | ((px >> 2) & 0x7));
-                        }
-                        break;
-                    case 15:
-                        {
-                            px = (bmp_data[src_px_offset+1]<<8)
-                               + (bmp_data[src_px_offset+0]);
-
-                            r = ((px >> 7) & 0xf8) | ((px >> 12) & 0x7);
-                            g = ((px >> 2) & 0xf8) | ((px >> 8) & 0x7);
-                            b = ((px << 3) & 0xf8) | ((px >> 2) & 0x7);
-                        }
-                        break;
-                    case 8:
-                        {
-                            px = bmp_data[src_px_offset+0];
-
-                            r = px & 7;
-                            r = (r << 5) | (r << 2) | (r >> 1);
-                            g = (px >> 3) & 7;
-                            g = (g << 5) | (g << 2) | (g >> 1);
-                            b =  (px >> 6) & 3;
-                            b = (b << 6) | (b << 4) | (b << 2) | b;
-                        }
-                        break;
-                }
-                // Pixel assignment (!)
-                uint8_t * pt = target + (j * this->full.cx + i) * 3;
-                pt[0] = b;
-                pt[1] = g;
-                pt[2] = r;
-            }
-        }
-    }
-
 
     void glyph_index(const RDPGlyphIndex & glyph_index, const Rect & clip)
     {
