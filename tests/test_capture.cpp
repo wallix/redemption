@@ -227,11 +227,13 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     BmpCache bmpcache;
     Drawable gd(width, height, bpp, palette, bmpcache, false);
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
+    gd.draw(RDPOpaqueRect(Rect(100,100,20, 20), BLUE), screen_rect);
 
     uint8_t comp64x64RED[] = { 0xc0, 0x30, 0x00, 0x00, 0xFF, 0xf0, 0xc0, 0x0f, };
     BGRPalette palette332;
     init_palette332(palette332);
     Bitmap * bmp = new Bitmap(24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
+    bmpcache.put(1, 10, bmp);
     gd.draw(RDPBmpCache(bpp, bmp, 1, 10));
     gd.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect);
 
@@ -243,5 +245,5 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     ::fflush(f);
     ::fclose(f);
     // remove this unlink to see what is drawn
-    ::unlink(tmpname);
+//    ::unlink(tmpname);
 }

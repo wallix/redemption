@@ -160,8 +160,7 @@ public:
 
     void draw(const RDPBmpCache & cmd)
     {
-        LOG(LOG_INFO, "Storing bitmap %p in cache at (id=%u idx=%u)", cmd.bmp, cmd.id, cmd.idx);
-        this->bmpcache.put(cmd.id, cmd.idx, cmd.bmp);
+        // nothing to do, cache management is performed outside Drawable
     }
 
     void draw(const RDPMemBlt & memblt, const Rect & clip)
@@ -174,81 +173,33 @@ public:
         const uint16_t idx = memblt.cache_idx;
         Bitmap * pbmp =  this->bmpcache.get(id, idx);
         LOG(LOG_INFO, "Reading bitmap %p from cache at (id=%u idx=%u)", pbmp, id, idx);
-        if (!pbmp){
-            LOG(LOG_INFO, "failed to get bitmap from cache id=%u idx=%u", id, idx);
-            exit(0);
-        }
-        const uint8_t * const bmp_data = pbmp->data_co(this->bpp);
-
-        // Where we draw -> target
-        uint32_t px = 0;
-        uint8_t r = 0;
-        uint8_t g = 0;
-        uint8_t b = 0;
-        uint8_t * target = this->data + (rect.y * this->full.cx + rect.x) * 3;
-        for (int j = 0; j < rect.cy ; j++){
-            for (int i = 0; i < rect.cx ; i++){
+        const uint8_t Bpp = ::nbbytes(this->bpp);
+        uint8_t * target = this->first_pixel(rect);
+        uint8_t * source = pbmp->data_co(this->bpp) + ((rect.cy - srcy - 1) * align4(rect.cx) + srcx) * Bpp;
+        for (int y = 0; y < rect.cy ; y++){
+            uint8_t * linetarget = target;
+            uint8_t * linesource = source;
+            for (int x = 0; x < rect.cx ; x++){
                 #warning: it would be nicer to manage clipping earlier and not test every pixel
-                if (!(clip.contains_pt(i + rect.x, j + rect.y))) {
+                if (!(clip.contains_pt(x + rect.x, y + rect.y))) {
                   continue;
                 }
-                #warning this should not be done here, implement bitmap color conversion and use it here
-                uint32_t src_px_offset = ((rect.cy - j - srcy - 1) * align4(rect.cx) + i + srcx) * nbbytes(this->bpp);
-                switch (this->bpp){
-                    default:
-                    case 32:
-                        assert(false);
-                    break;
-                    case 24:
-                        {
-                            px = (bmp_data[src_px_offset+2]<<16)
-                               + (bmp_data[src_px_offset+1]<<8)
-                               + (bmp_data[src_px_offset+0]);
-
-                            r = (px >> 16) & 0xFF;
-                            g = (px >> 8)  & 0xFF;
-                            b =  px        & 0xFF;
-                        }
-                        break;
-                    case 16:
-                        {
-                            px = (bmp_data[src_px_offset+1]<<8)
-                               + (bmp_data[src_px_offset+0]);
-
-                            r = (((px >> 8) & 0xf8) | ((px >> 13) & 0x7));
-                            g = (((px >> 3) & 0xfc) | ((px >> 9) & 0x3));
-                            b = (((px << 3) & 0xf8) | ((px >> 2) & 0x7));
-                        }
-                        break;
-                    case 15:
-                        {
-                            px = (bmp_data[src_px_offset+1]<<8)
-                               + (bmp_data[src_px_offset+0]);
-
-                            r = ((px >> 7) & 0xf8) | ((px >> 12) & 0x7);
-                            g = ((px >> 2) & 0xf8) | ((px >> 8) & 0x7);
-                            b = ((px << 3) & 0xf8) | ((px >> 2) & 0x7);
-                        }
-                        break;
-                    case 8:
-                        {
-                            px = bmp_data[src_px_offset+0];
-
-                            r = px & 7;
-                            r = (r << 5) | (r << 2) | (r >> 1);
-                            g = (px >> 3) & 7;
-                            g = (g << 5) | (g << 2) | (g >> 1);
-                            b =  (px >> 6) & 3;
-                            b = (b << 6) | (b << 4) | (b << 2) | b;
-                        }
-                        break;
+                uint32_t px = linesource[Bpp-1];
+                for (int b = 1 ; b < Bpp ; b++){
+                    px = (px << 8) + linesource[Bpp-1-b];
                 }
-                // Pixel assignment (!)
-                uint8_t * pt = target + (j * this->full.cx + i) * 3;
-                pt[0] = b;
-                pt[1] = g;
-                pt[2] = r;
+                linesource += Bpp;
+                uint32_t color = color_decode(px, this->bpp, this->palette);
+                if (this->bgr){
+                    color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
+                }
+                linetarget[0] = (color >> 16);
+                linetarget[1] = (color >> 8);
+                linetarget[2] = color;
+                linetarget += Bpp;
             }
+            target += this->full.cx * Bpp;
+            source += align4(rect.cx) * Bpp;
         }
     }
 

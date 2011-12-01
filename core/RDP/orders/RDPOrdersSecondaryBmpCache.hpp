@@ -983,7 +983,7 @@ class RDPBmpCache {
     void receive_raw_v2(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
         using namespace RDP;
-        #warning DO NOT USE : not implemented implementation, we do not know yet how to manage persistant bitmap storage
+        #warning DO NOT USE : not implemented, we do not know yet how to manage persistant bitmap storage
     }
 
     void receive_raw_v1(Stream & stream, const uint8_t control, 

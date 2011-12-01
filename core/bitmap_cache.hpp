@@ -79,7 +79,7 @@ struct BitmapCache : public BmpCache {
     {
         Bitmap * candidate_bmp = new Bitmap(src_bpp, &src_palette, tile, src_cx, src_cy, src_data);
 
-        printf("candidate_bmp_size=%u small_size=%u medium_size=%u big_size=%u\n", candidate_bmp->bmp_size(src_bpp), this->small_size, this->medium_size, this->big_size);
+        printf("candidate_bmp_size=%u small_size=%u medium_size=%u big_size=%u\n", (unsigned)(candidate_bmp->bmp_size(src_bpp)), this->small_size, this->medium_size, this->big_size);
 
         unsigned id = 0;
         unsigned entries = 0;
