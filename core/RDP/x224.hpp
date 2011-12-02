@@ -347,9 +347,39 @@ struct X224In : public X224Packet
                 stream.skip_uint8(this->tpdu_hdr.LI-1);
             break;
             case CR_TPDU:
+            {
                 LOG(LOG_INFO, "recv CR_TPDU");
                 // just skip remaining TPDU header content
+                uint8_t * end_of_header = stream.p + this->tpdu_hdr.LI-1;
+                if (this->tpdu_hdr.LI != 6){
+                    for (uint8_t * p = stream.p + 1 ; p < end_of_header ; p++){
+                        if (p[-1] == 0x0D && p[0] == 0x0A){
+                            p[-1] = 0;
+                            LOG(LOG_INFO, "cookie: %s", stream.p);
+                            p[-1] = 0x0D;
+                            p++;
+                            if (end_of_header - p == 8){
+                                LOG(LOG_INFO, "Found RDP Negotiation Request Structure");
+                                assert(p[0] == 1); // RDP_NEG_REQ
+                                assert(p[1] == 0); // flags
+                                assert(p[2] == 8 && p[3] == 0); // length = 8
+                                switch (p[4]){
+                                    case 0:
+                                        LOG(LOG_INFO, "PROTOCOL RDP");
+                                    break;
+                                    case 1:
+                                        LOG(LOG_INFO, "PROTOCOL TLS 1.0");
+                                    break;
+                                    case 2:
+                                        LOG(LOG_INFO, "PROTOCOL HYBRID");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
                 stream.skip_uint8(this->tpdu_hdr.LI-1);
+            }
             break;
             default:
                 LOG(LOG_INFO, "recv OTHER_TPDU %u", this->tpdu_hdr.code);
@@ -649,11 +679,7 @@ struct X224Out : public X224Packet
     // Not at all part of x224, but RDP uses it to transmit username!!!
     // appending a string "Cookie: mstshash=username\r\n" to tpdu header.
     {
-        this->stream.set_out_uint8(this->stream.p-this->begin()-5, 4); // LI
-    }
-
-    const uint8_t * const begin(){
-        return this->bop;
+        this->stream.set_out_uint8(this->stream.p-this->bop-5, 4); // LI
     }
 
     void end()
@@ -662,11 +688,11 @@ struct X224Out : public X224Packet
     {
 //        LOG(LOG_INFO, "X224 OUT TPDU end");
 
-        size_t len = this->stream.p - this->begin();
+        size_t len = this->stream.p - this->bop;
         this->stream.set_out_uint8(len >> 8, 2);
         this->stream.set_out_uint8(len & 0xFF, 3);
 //        LOG(LOG_INFO, "2) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", this->stream.data[0], this->stream.data[1], this->stream.data[2], this->stream.data[3], this->stream.data[4], this->stream.data[5], this->stream.data[6], this->stream.data[7]);
-        uint8_t tpdutype = this->begin()[5];
+        uint8_t tpdutype = this->bop[5];
         switch (tpdutype){
             case CR_TPDU: // Connection Request 1110 xxxx
 //                LOG(LOG_INFO, "----> sent X224 OUT CR_TPDU");
@@ -692,7 +718,8 @@ struct X224Out : public X224Packet
     {
 //        LOG(LOG_INFO, "3) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", this->stream.data[0], this->stream.data[1], this->stream.data[2], this->stream.data[3], this->stream.data[4], this->stream.data[5], this->stream.data[6], this->stream.data[7]);
 
-        t->send(this->begin(), this->stream.p - this->begin());
+        LOG(LOG_INFO, "iso X224 sending %u bytes", this->stream.p - this->bop);
+        t->send(this->bop, this->stream.p - this->bop);
     }
 };
 

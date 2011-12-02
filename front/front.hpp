@@ -891,9 +891,13 @@ public:
             LOG(LOG_INFO, "Front::incoming::licencing");
         }
         if (this->client_info.is_mce) {
+            LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
+            LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");
             send_media_lic_response(this->trans, this->userid);
         }
         else {
+            LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
+            LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
             send_lic_initial(this->trans, this->userid);
 
             Stream stream(65535);
@@ -914,6 +918,7 @@ public:
             if (!sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
                 throw Error(ERR_SEC_EXPECTED_LICENCE_NEG);
             }
+            LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
             send_lic_response(this->trans, this->userid);
         }
 
