@@ -57,6 +57,7 @@ class McsOut
 
 class McsIn
 {
+    Stream & stream;
     public:
     uint8_t opcode;
     uint16_t user_id;
@@ -64,7 +65,7 @@ class McsIn
     uint8_t magic_0x70; // some ber header ?
     uint16_t len;
 
-    McsIn(Stream & stream)
+    McsIn(Stream & stream) : stream(stream)
     {
         this->opcode = stream.in_uint8();
         this->user_id = stream.in_uint16_be();
@@ -77,7 +78,9 @@ class McsIn
     }
 
     void end(){
-        #warning put some assertion here to ensure all data has been consumed
+        if (this->stream.p != this->stream.end){
+            LOG(LOG_ERR, "all data should have been consumed : remains %d", stream.end - stream.p);
+        }
     }
 
 };

@@ -318,7 +318,7 @@ struct X224In : public X224Packet
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
 
-        LOG(LOG_INFO, "recv payload_len %u", payload_len);
+        LOG(LOG_INFO, "recv X224 len %u", this->tpkt.len);
         t->recv((char**)(&(stream.end)), payload_len);
         this->tpdu_hdr.LI = stream.in_uint8();
         this->tpdu_hdr.code = stream.in_uint8() & 0xF0;
