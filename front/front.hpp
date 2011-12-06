@@ -1066,6 +1066,7 @@ public:
                         break;
                     default:
                         LOG(LOG_WARNING, "unknown PDU type in session_data (%d)\n", pdu_code & 0xf);
+                        exit(0);
                         break;
                     }
                 }
