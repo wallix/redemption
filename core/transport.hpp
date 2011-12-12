@@ -149,15 +149,24 @@ public:
 
 class GeneratorTransport : public Transport {
 
+    public:
     size_t current;
     char * data;
     size_t len;
 
-    public:
 
     GeneratorTransport(const char * data, size_t len)
         : Transport(), current(0), data(0), len(len)
     {
+        this->data = (char *)malloc(len);
+        memcpy(this->data, data, len);
+    }
+
+    void reset(const char * data, size_t len)
+    {
+        delete this->data;
+        current = 0;
+        this->len = len;
         this->data = (char *)malloc(len);
         memcpy(this->data, data, len);
     }

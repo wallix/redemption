@@ -51,14 +51,14 @@ struct ClientInfo {
     int op2; /* use smaller bitmap header in bitmap cache */
     int desktop_cache;
     int use_compact_packets; /* rdp5 smaller packets */
-    char hostname[32];
+    char hostname[512];
     int build;
     int keylayout;
-    char username[256];
-    char password[256];
-    char domain[256];
-    char program[256];
-    char directory[256];
+    char username[512];
+    char password[512];
+    char domain[512];
+    char program[512];
+    char directory[512];
     int rdp_compression;
     int rdp_autologin;
     int crypt_level; /* 1, 2, 3 = low, medium, high */
@@ -92,14 +92,14 @@ struct ClientInfo {
         this->op2 = 0; /* use smaller bitmap header in bitmap cache */
         this->desktop_cache = 0;
         this->use_compact_packets = 0; /* rdp5 smaller packets */
-        memset(this->hostname, 0, 32);
+        memset(this->hostname, 0, sizeof(this->hostname));
         this->build = 0;
         this->keylayout = 0;
-        memset(this->username, 0, 256);
-        memset(this->password, 0, 256);
-        memset(this->domain, 0, 256);
-        memset(this->program, 0, 256);
-        memset(this->directory, 0, 256);
+        memset(this->username, 0, sizeof(this->username));
+        memset(this->password, 0, sizeof(this->password));
+        memset(this->domain, 0, sizeof(this->domain));
+        memset(this->program, 0, sizeof(this->program));
+        memset(this->directory, 0, sizeof(this->directory));
         this->rdp_compression = 0;
         this->rdp_autologin = 0;
         this->sound_code = 0; /* 1 = leave sound at server */
@@ -132,7 +132,7 @@ struct ClientInfo {
         int dst_index = 0;
         int src_index = 0;
         while (src_index < uni_len) {
-            if (dst_index >= dst_len || src_index > 512) {
+            if (dst_index >= dst_len) {
                 break;
             }
             dst[dst_index] = stream.in_uint8();
@@ -140,6 +140,7 @@ struct ClientInfo {
             dst_index++;
             src_index += 2;
         }
+        dst[dst_index] = 0;
         stream.skip_uint8(2);
     }
 
@@ -212,35 +213,77 @@ struct ClientInfo {
  
 // If a client supports compression package n then it MUST support packages 0...(n - 1).
 
-// cbDomain (2 bytes): A 16-bit, unsigned integer. The size in bytes of the character data in the Domain field. This size excludes the length of the mandatory null terminator.
+// cbDomain (2 bytes): A 16-bit, unsigned integer. The size in bytes of the 
+//  character data in the Domain field. This size excludes the length of the 
+//  mandatory null terminator.
 
-// cbUserName (2 bytes): A 16-bit, unsigned integer. The size in bytes of the character data in the UserName field. This size excludes the length of the mandatory null terminator.
+// cbUserName (2 bytes): A 16-bit, unsigned integer. The size in bytes of the 
+//  character data in the UserName field. This size excludes the length of the 
+//  mandatory null terminator.
 
-// cbPassword (2 bytes): A 16-bit, unsigned integer. The size in bytes of the character data in the Password field. This size excludes the length of the mandatory null terminator.
+// cbPassword (2 bytes): A 16-bit, unsigned integer. The size in bytes of the 
+//  character data in the Password field. This size excludes the length of the
+//  mandatory null terminator.
 
-// cbAlternateShell (2 bytes): A 16-bit, unsigned integer. The size in bytes of the character data in the AlternateShell field. This size excludes the length of the mandatory null terminator.
+// cbAlternateShell (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+//   the character data in the AlternateShell field. This size excludes the 
+//   length of the mandatory null terminator.
 
-// cbWorkingDir (2 bytes): A 16-bit, unsigned integer. The size in bytes of the character data in the WorkingDir field. This size excludes the length of the mandatory null terminator.
+// cbWorkingDir (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
+//   character data in the WorkingDir field. This size excludes the length of 
+//   the mandatory null terminator.
 
-// Domain (variable): Variable-length logon domain of the user (the length in bytes is given by the cbDomain field). The maximum length allowed by RDP 4.0 and RDP 5.0 servers is 52 bytes (including the mandatory null terminator). RDP 5.1, 5.2, 6.0, 6.1, and 7.0 allow a maximum length of 512 bytes (including the mandatory null terminator). The field MUST contain at least a null terminator character in Windows-1252 or Unicode format (depending on the presence of the INFO_UNICODE flag).
+// Domain (variable): Variable-length logon domain of the user (the length in
+//   bytes is given by the cbDomain field). The maximum length allowed by 
+//   RDP 4.0 and RDP 5.0 servers is 52 bytes (including the mandatory null 
+//   terminator). RDP 5.1, 5.2, 6.0, 6.1, and 7.0 allow a maximum length of 
+//   512 bytes (including the mandatory null terminator). The field MUST contain
+//   at least a null terminator character in Windows-1252 or Unicode format 
+//   (depending on the presence of the INFO_UNICODE flag).
 
-// UserName (variable): Variable-length logon user name of the user (the length in bytes is given by the cbUserName field). The maximum length allowed by RDP 4.0 servers is 44 bytes (including the mandatory null terminator). RDP 5.0, 5.1, 5.2, 6.0, 6.1, and 7.0 allow a maximum length of 512 bytes (including the mandatory null terminator). The field MUST contain at least a null terminator character in Windows-1252 or Unicode format (depending on the presence of the INFO_UNICODE flag).
+// UserName (variable): Variable-length logon user name of the user (the length
+//  in bytes is given by the cbUserName field). The maximum length allowed by 
+//  RDP 4.0 servers is 44 bytes (including the mandatory null terminator). 
+//  RDP 5.0, 5.1, 5.2, 6.0, 6.1, and 7.0 allow a maximum length of 512 bytes 
+//  (including the mandatory null terminator). The field MUST contain at least
+//  a null terminator character in Windows-1252 or Unicode format (depending on
+//  the presence of the INFO_UNICODE flag).
 
-// Password (variable): Variable-length logon password of the user (the length in bytes is given by the cbPassword field). The maximum length allowed by RDP 4.0 and RDP 5.0 servers is 32 bytes (including the mandatory null terminator). RDP 5.1, 5.2, 6.0, 6.1, and 7.0 allow a maximum length of 512 bytes (including the mandatory null terminator). The field MUST contain at least a null terminator character in Windows-1252 or Unicode format (depending on the presence of the INFO_UNICODE flag).
+// Password (variable): Variable-length logon password of the user (the length 
+//  in bytes is given by the cbPassword field). The maximum length allowed by 
+//  RDP 4.0 and RDP 5.0 servers is 32 bytes (including the mandatory null 
+//  terminator). RDP 5.1, 5.2, 6.0, 6.1, and 7.0 allow a maximum length of 
+//  512 bytes (including the mandatory null terminator). The field MUST contain
+//  at least a null terminator character in Windows-1252 or Unicode format 
+//  (depending on the presence of the INFO_UNICODE flag).
 
-// AlternateShell (variable): Variable-length path to the executable file of an alternate shell, e.g. "c:\dir\prog.exe" (the length in bytes is given by the cbAlternateShell field). The maximum allowed length is 512 bytes (including the mandatory null terminator). This field MUST only be initialized if the client is requesting a shell other than the default. The field MUST contain at  least a null terminator character in Windows-1252 or Unicode format (depending on the presence of the INFO_UNICODE flag).
+// AlternateShell (variable): Variable-length path to the executable file of an
+//   alternate shell, e.g. "c:\dir\prog.exe" (the length in bytes is given by
+//   the cbAlternateShell field). The maximum allowed length is 512 bytes 
+//   (including the mandatory null terminator). This field MUST only be 
+//   initialized if the client is requesting a shell other than the default.
+//   The field MUST contain at  least a null terminator character in 
+//   Windows-1252 or Unicode format (depending on the presence of the 
+//   INFO_UNICODE flag).
 
-// WorkingDir (variable): Variable-length directory that contains the executable file specified in the AlternateShell field or any related files (the length in bytes is given by the
+// WorkingDir (variable): Variable-length directory that contains the executable
+// file specified in the AlternateShell field or any related files (the length
+// in bytes is given by the cbWorkingDir field). The maximum allowed length is 
+// 512 bytes (including the mandatory null terminator). This field MAY be 
+// initialized if the client is requesting a shell other than the default. The
+// field MUST contain at least a null terminator character in Windows-1252 or
+// Unicode format (depending on the presence of the INFO_UNICODE flag).
 
-// cbWorkingDir field). The maximum allowed length is 512 bytes (including the mandatory null terminator). This field MAY be initialized if the client is requesting a shell other than the default. The field MUST contain at least a null terminator character in Windows-1252 or Unicode format (depending on the presence of the INFO_UNICODE flag).
-
-// extraInfo (variable): Optional and variable-length extended information used in RDP 5.0, 5.1, 5.2, 6.0, 6.1, and 7.0, and specified in section 2.2.1.11.1.1.1.
+// extraInfo (variable): Optional and variable-length extended information
+// used in RDP 5.0, 5.1, 5.2, 6.0, 6.1, and 7.0, and specified in section 
+// 2.2.1.11.1.1.1.
 
 // 2.2.1.11.1.1.1 Extended Info Packet (TS_EXTENDED_INFO_PACKET)
 // =============================================================
 // The TS_EXTENDED_INFO_PACKET structure contains user information specific to RDP 5.0, 5.1, 5.2, 6.0, 6.1, and 7.0.
 
-// clientAddressFamily (2 bytes): A 16-bit, unsigned integer. The numeric socket descriptor for the client address type.
+// clientAddressFamily (2 bytes): A 16-bit, unsigned integer. The numeric socket
+// descriptor for the client address type.
 
 
 // 0x00002 AF_INET The clientAddress field contains an IPv4 address.
@@ -428,8 +471,10 @@ struct ClientInfo {
     void process_logon_info(Stream & stream) throw (Error)
     {
         LOG(LOG_DEBUG, "server_sec_process_logon_info\n");
-        stream.skip_uint8(4);
-        int flags = stream.in_uint32_le();
+        uint32_t codepage = stream.in_uint32_le();
+        LOG(LOG_DEBUG, "codepage=%u", codepage);
+        uint32_t flags = stream.in_uint32_le();
+        LOG(LOG_DEBUG, "flags=%u", flags);
         /* this is the first test that the decrypt is working */
         if ((flags & RDP_LOGON_NORMAL) != RDP_LOGON_NORMAL) /* 0x33 */
         {                                                   /* must be or error */
@@ -451,10 +496,14 @@ struct ClientInfo {
         unsigned len_password = stream.in_uint16_le();
         unsigned len_program = stream.in_uint16_le();
         unsigned len_directory = stream.in_uint16_le();
+        LOG(LOG_DEBUG, "cbDomain=%u cbUser=%u cbPassword=%u cbProgram=%u cbDir=%u",
+            len_domain, len_user, len_password, len_program, len_directory);
+       
         /* todo, we should error out if any of the above lengths are > 512 */
         /* to avoid buffer overruns */
         #warning check for length overflow
         unicode_in(stream, len_domain, (uint8_t*)this->domain, 255);
+        LOG(LOG_DEBUG, "setting domain to %s\n", this->domain);
         unicode_in(stream, len_user, (uint8_t*)this->username, 255);
         LOG(LOG_DEBUG, "setting username to %s\n", this->username);
 
@@ -464,7 +513,10 @@ struct ClientInfo {
             stream.skip_uint8(len_password + 2);
         }
         unicode_in(stream, len_program, (uint8_t*)this->program, 255);
+        LOG(LOG_DEBUG, "setting program to %s\n", this->program);
         unicode_in(stream, len_directory, (uint8_t*)this->directory, 255);
+        LOG(LOG_DEBUG, "setting directory to %s\n", this->directory);
+  
         if (flags & RDP_LOGON_BLOB) {
             stream.skip_uint8(2);                                    /* unknown */
             unsigned len_ip = stream.in_uint16_le();

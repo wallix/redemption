@@ -188,3 +188,5 @@ unit-test test_colors : tests/test_colors.cpp libboost_unit_test : ;
 unit-test test_write_over_file : tests/test_write_over_file.cpp libboost_unit_test : ;
 unit-test test_libpng : tests/test_libpng.cpp libboost_unit_test png z : ;
 unit-test test_capture : tests/test_capture.cpp libboost_unit_test png z d3des openssl crypto ;
+
+unit-test test_rdesktop_invalid_pdu : tests/test_rdesktop_invalid_pdu.cpp libboost_unit_test openssl crypto ini_config keymap rsa_keys d3des libboost_program_options ;
