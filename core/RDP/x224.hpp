@@ -304,17 +304,20 @@ struct X224In : public X224Packet
     // Receive a X224 TPDU from the wires
     {
         if (!stream.has_room(TPKT_HEADER_LEN)){
+            LOG(LOG_INFO, "ERR_STREAM_MEMORY_TOO_SMALL");
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
         t->recv((char**)(&(stream.end)), TPKT_HEADER_LEN);
         this->tpkt.version = stream.in_uint8();
         if (3 != this->tpkt.version) {
+            LOG(LOG_INFO, "ERR_ISO_RECV_MSG_VER_NOT_3");
             throw Error(ERR_ISO_RECV_MSG_VER_NOT_3);
         }
         stream.skip_uint8(1);
         this->tpkt.len = stream.in_uint16_be();
         const size_t payload_len = this->tpkt.len - TPKT_HEADER_LEN;
         if (!stream.has_room(payload_len)){
+            LOG(LOG_INFO, "ERR_STREAM_MEMORY_TOO_SMALL (2)");
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
 

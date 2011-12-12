@@ -129,6 +129,7 @@ struct ClientInfo {
     #warning this is ugly, rewrite that
     void unicode_in(Stream & stream, int uni_len, uint8_t* dst, int dst_len) throw (Error)
     {
+        LOG(LOG_INFO, "uni_len=%d dst_len=%d", uni_len, dst_len);
         int dst_index = 0;
         int src_index = 0;
         while (src_index < uni_len) {
@@ -146,15 +147,15 @@ struct ClientInfo {
 
 // 2.2.1.11.1.1 Info Packet (TS_INFO_PACKET)
 // =========================================
-// The TS_INFO_PACKET structure contains sensitive information (such as 
+// The TS_INFO_PACKET structure contains sensitive information (such as
 // autologon password data) not passed to the server during the Basic Settings
-// Exchange phase of the RDP Connection Sequence (see section 1.3.1.1 for an 
+// Exchange phase of the RDP Connection Sequence (see section 1.3.1.1 for an
 // overview of the RDP Connection Sequence phases). The Info Packet is embedded
 // in a Client Info PDU Data structure (section 2.2.1.11.1) and SHOULD be
 // encrypted (see sections 5.3 and 5.4 for an overview of RDP security
 // mechanisms).
 
-// CodePage (4 bytes): A 32-bit, unsigned integer. If the flags field does not 
+// CodePage (4 bytes): A 32-bit, unsigned integer. If the flags field does not
 // contain the INFO_UNICODE flag (0x00000010), then this field MUST contain the
 // ANSI code page descriptor being used by the client (for a list of code pages,
 // see [MSDN-CP]) to encode the character fields in the Info Packet and Extended
@@ -167,7 +168,7 @@ struct ClientInfo {
 // flags (4 bytes): A 32-bit, unsigned integer. Option flags.
 
 // 0x00000001 INFO_MOUSE Indicates that the client machine has a mouse attached.
- 
+
 // 0x00000002 INFO_DISABLECTRLALTDEL Indicates that the CTRL+ALT+DEL (or the equivalent) secure access keyboard sequence is not required at the logon prompt.
 
 // 0x00000008 INFO_AUTOLOGON The client requests auto logon using the included user name, password and domain.
@@ -210,72 +211,72 @@ struct ClientInfo {
 // 0x1 PACKET_COMPR_TYPE_64K RDP 5.0 bulk compression (see section 3.1.8.4.2).
 // 0x2 PACKET_COMPR_TYPE_RDP6 RDP 6.0 bulk compression (see [MS-RDPEGDI] section 3.1.8.1).
 // 0x3 PACKET_COMPR_TYPE_RDP61 RDP 6.1 bulk compression (see [MS-RDPEGDI] section 3.1.8.2).
- 
+
 // If a client supports compression package n then it MUST support packages 0...(n - 1).
 
-// cbDomain (2 bytes): A 16-bit, unsigned integer. The size in bytes of the 
-//  character data in the Domain field. This size excludes the length of the 
+// cbDomain (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
+//  character data in the Domain field. This size excludes the length of the
 //  mandatory null terminator.
 
-// cbUserName (2 bytes): A 16-bit, unsigned integer. The size in bytes of the 
-//  character data in the UserName field. This size excludes the length of the 
+// cbUserName (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
+//  character data in the UserName field. This size excludes the length of the
 //  mandatory null terminator.
 
-// cbPassword (2 bytes): A 16-bit, unsigned integer. The size in bytes of the 
+// cbPassword (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
 //  character data in the Password field. This size excludes the length of the
 //  mandatory null terminator.
 
 // cbAlternateShell (2 bytes): A 16-bit, unsigned integer. The size in bytes of
-//   the character data in the AlternateShell field. This size excludes the 
+//   the character data in the AlternateShell field. This size excludes the
 //   length of the mandatory null terminator.
 
 // cbWorkingDir (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
-//   character data in the WorkingDir field. This size excludes the length of 
+//   character data in the WorkingDir field. This size excludes the length of
 //   the mandatory null terminator.
 
 // Domain (variable): Variable-length logon domain of the user (the length in
-//   bytes is given by the cbDomain field). The maximum length allowed by 
-//   RDP 4.0 and RDP 5.0 servers is 52 bytes (including the mandatory null 
-//   terminator). RDP 5.1, 5.2, 6.0, 6.1, and 7.0 allow a maximum length of 
+//   bytes is given by the cbDomain field). The maximum length allowed by
+//   RDP 4.0 and RDP 5.0 servers is 52 bytes (including the mandatory null
+//   terminator). RDP 5.1, 5.2, 6.0, 6.1, and 7.0 allow a maximum length of
 //   512 bytes (including the mandatory null terminator). The field MUST contain
-//   at least a null terminator character in Windows-1252 or Unicode format 
+//   at least a null terminator character in Windows-1252 or Unicode format
 //   (depending on the presence of the INFO_UNICODE flag).
 
 // UserName (variable): Variable-length logon user name of the user (the length
-//  in bytes is given by the cbUserName field). The maximum length allowed by 
-//  RDP 4.0 servers is 44 bytes (including the mandatory null terminator). 
-//  RDP 5.0, 5.1, 5.2, 6.0, 6.1, and 7.0 allow a maximum length of 512 bytes 
+//  in bytes is given by the cbUserName field). The maximum length allowed by
+//  RDP 4.0 servers is 44 bytes (including the mandatory null terminator).
+//  RDP 5.0, 5.1, 5.2, 6.0, 6.1, and 7.0 allow a maximum length of 512 bytes
 //  (including the mandatory null terminator). The field MUST contain at least
 //  a null terminator character in Windows-1252 or Unicode format (depending on
 //  the presence of the INFO_UNICODE flag).
 
-// Password (variable): Variable-length logon password of the user (the length 
-//  in bytes is given by the cbPassword field). The maximum length allowed by 
-//  RDP 4.0 and RDP 5.0 servers is 32 bytes (including the mandatory null 
-//  terminator). RDP 5.1, 5.2, 6.0, 6.1, and 7.0 allow a maximum length of 
+// Password (variable): Variable-length logon password of the user (the length
+//  in bytes is given by the cbPassword field). The maximum length allowed by
+//  RDP 4.0 and RDP 5.0 servers is 32 bytes (including the mandatory null
+//  terminator). RDP 5.1, 5.2, 6.0, 6.1, and 7.0 allow a maximum length of
 //  512 bytes (including the mandatory null terminator). The field MUST contain
-//  at least a null terminator character in Windows-1252 or Unicode format 
+//  at least a null terminator character in Windows-1252 or Unicode format
 //  (depending on the presence of the INFO_UNICODE flag).
 
 // AlternateShell (variable): Variable-length path to the executable file of an
 //   alternate shell, e.g. "c:\dir\prog.exe" (the length in bytes is given by
-//   the cbAlternateShell field). The maximum allowed length is 512 bytes 
-//   (including the mandatory null terminator). This field MUST only be 
+//   the cbAlternateShell field). The maximum allowed length is 512 bytes
+//   (including the mandatory null terminator). This field MUST only be
 //   initialized if the client is requesting a shell other than the default.
-//   The field MUST contain at  least a null terminator character in 
-//   Windows-1252 or Unicode format (depending on the presence of the 
+//   The field MUST contain at  least a null terminator character in
+//   Windows-1252 or Unicode format (depending on the presence of the
 //   INFO_UNICODE flag).
 
 // WorkingDir (variable): Variable-length directory that contains the executable
 // file specified in the AlternateShell field or any related files (the length
-// in bytes is given by the cbWorkingDir field). The maximum allowed length is 
-// 512 bytes (including the mandatory null terminator). This field MAY be 
+// in bytes is given by the cbWorkingDir field). The maximum allowed length is
+// 512 bytes (including the mandatory null terminator). This field MAY be
 // initialized if the client is requesting a shell other than the default. The
 // field MUST contain at least a null terminator character in Windows-1252 or
 // Unicode format (depending on the presence of the INFO_UNICODE flag).
 
 // extraInfo (variable): Optional and variable-length extended information
-// used in RDP 5.0, 5.1, 5.2, 6.0, 6.1, and 7.0, and specified in section 
+// used in RDP 5.0, 5.1, 5.2, 6.0, 6.1, and 7.0, and specified in section
 // 2.2.1.11.1.1.1.
 
 // 2.2.1.11.1.1.1 Extended Info Packet (TS_EXTENDED_INFO_PACKET)
@@ -287,44 +288,44 @@ struct ClientInfo {
 
 
 // 0x00002 AF_INET The clientAddress field contains an IPv4 address.
- 
-// 0x0017 AF_INET6 The clientAddress field contains an IPv6 address.
- 
 
-// cbClientAddress (2 bytes): A 16-bit, unsigned integer. The size in bytes of 
-// the character data in the clientAddress field. This size includes the length 
+// 0x0017 AF_INET6 The clientAddress field contains an IPv6 address.
+
+
+// cbClientAddress (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+// the character data in the clientAddress field. This size includes the length
 // of the mandatory null terminator.
 
-// clientAddress (variable): Variable-length textual representation of the 
-// client IPv4 or IPv6 address. The maximum allowed length (including the 
-// mandatory null terminator) is 64 bytes for RDP 5.0, 5.1, 5.2, and 6.0, and 
+// clientAddress (variable): Variable-length textual representation of the
+// client IPv4 or IPv6 address. The maximum allowed length (including the
+// mandatory null terminator) is 64 bytes for RDP 5.0, 5.1, 5.2, and 6.0, and
 // 80 bytes for RDP 6.1 and 7.0.
 
-// cbClientDir (2 bytes): A 16-bit, unsigned integer. The size in bytes of the 
+// cbClientDir (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
 // character data in the clientDir field. This size includes the length of the
 // mandatory null terminator.
 
 // clientDir (variable): Variable-length directory that contains either (a) the
 // folder path on the client machine from which the client software is being run
-//, or (b) the full path of the software module implementing the client (see 
-// section 4.1.10 for an example). The maximum allowed length is 512 bytes 
+//, or (b) the full path of the software module implementing the client (see
+// section 4.1.10 for an example). The maximum allowed length is 512 bytes
 // (including the mandatory null terminator).
 
 // clientTimeZone (172 bytes): A TS_TIME_ZONE_INFORMATION structure (section
-// 2.2.1.11.1.1.1.1) that contains time zone information for a client. This 
+// 2.2.1.11.1.1.1.1) that contains time zone information for a client. This
 // packet is used by RDP 5.2, 6.0, 6.1, and 7.0 servers.
 
-// clientSessionId (4 bytes): A 32-bit, unsigned integer. This field was added 
+// clientSessionId (4 bytes): A 32-bit, unsigned integer. This field was added
 // in RDP 5.1 and is currently ignored by the server. It SHOULD be set to 0.
 
-// performanceFlags (4 bytes): A 32-bit, unsigned integer. It specifies a list 
-// of server desktop shell features to enable or disable in the session (with 
-// the goal of optimizing bandwidth usage). It is used by RDP 5.1, 5.2, 6.0, 
+// performanceFlags (4 bytes): A 32-bit, unsigned integer. It specifies a list
+// of server desktop shell features to enable or disable in the session (with
+// the goal of optimizing bandwidth usage). It is used by RDP 5.1, 5.2, 6.0,
 // 6.1, and 7.0 servers.
 
 // +--------------------------------------------+------------------------------+
 // | 0x00000001 PERF_DISABLE_WALLPAPER          | Disable desktop wallpaper.   |
-// +--------------------------------------------+------------------------------+ 
+// +--------------------------------------------+------------------------------+
 // | 0x00000002 PERF_DISABLE_FULLWINDOWDRAG     | Disable full-window drag     |
 // |                                            |(only the window outline is   |
 // |                                            |displayed when the window is  |
@@ -333,37 +334,37 @@ struct ClientInfo {
 // | 0x00000004 PERF_DISABLE_MENUANIMATIONS     | Disable menu animations.     |
 // +--------------------------------------------+------------------------------+
 // | 0x00000008 PERF_DISABLE_THEMING            | Disable user interface theme.|
-// +--------------------------------------------+------------------------------+ 
+// +--------------------------------------------+------------------------------+
 // | 0x00000010 PERF_RESERVED1                  | Reserved for future use.     |
-// +--------------------------------------------+------------------------------+ 
+// +--------------------------------------------+------------------------------+
 // | 0x00000020 PERF_DISABLE_CURSOR_SHADOW      | Disable mouse cursor shadows.|
-// +--------------------------------------------+------------------------------+ 
+// +--------------------------------------------+------------------------------+
 // | 0x00000040 PERF_DISABLE_CURSORSETTINGS     | Disable cursor blinking.     |
-// +--------------------------------------------+------------------------------+ 
+// +--------------------------------------------+------------------------------+
 // | 0x00000080 PERF_ENABLE_FONT_SMOOTHING      | Enable font smoothing.       |
-// +--------------------------------------------+------------------------------+ 
+// +--------------------------------------------+------------------------------+
 // | 0x00000100 PERF_ENABLE_DESKTOP_COMPOSITION |Enable Desktop Composition.   |
-// +--------------------------------------------+------------------------------+ 
+// +--------------------------------------------+------------------------------+
 // | 0x80000000 PERF_RESERVED2                  | Reserved for future use.     |
-// +--------------------------------------------+------------------------------+ 
+// +--------------------------------------------+------------------------------+
 
-// cbAutoReconnectLen (2 bytes): A 16-bit, unsigned integer. The size in bytes 
-// of the cookie specified by the autoReconnectCookie field. This field is only 
+// cbAutoReconnectLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
+// of the cookie specified by the autoReconnectCookie field. This field is only
 // read by RDP 5.2, 6.0, 6.1, and 7.0 servers.
 
-// autoReconnectCookie (28 bytes): Buffer containing an ARC_CS_PRIVATE_PACKET 
-// structure (section 2.2.4.3). This buffer is a unique cookie that allows a 
-// disconnected client to seamlessly reconnect to a previously established 
+// autoReconnectCookie (28 bytes): Buffer containing an ARC_CS_PRIVATE_PACKET
+// structure (section 2.2.4.3). This buffer is a unique cookie that allows a
+// disconnected client to seamlessly reconnect to a previously established
 // session (see section 5.5 for more details). The autoReconnectCookie field is
-// only read by RDP 5.2, 6.0, 6.1, and 7.0 servers and the maximum allowed 
+// only read by RDP 5.2, 6.0, 6.1, and 7.0 servers and the maximum allowed
 // length is 128 bytes.
 
 // reserved1 (2 bytes): This field is reserved for future use and has no affect
 // on RDP wire traffic. If this field is present, the reserved2 field MUST
 // be present.
 
-// reserved2 (2 bytes): This field is reserved for future use and has no affect 
-// on RDP wire traffic. This field MUST be present if the reserved1 field 
+// reserved2 (2 bytes): This field is reserved for future use and has no affect
+// on RDP wire traffic. This field MUST be present if the reserved1 field
 // is present.
 
 // 2.2.1.11.1.1.1.1 Time Zone Information (TS_TIME_ZONE_INFORMATION)
@@ -372,57 +373,57 @@ struct ClientInfo {
 
 // Bias (4 bytes): A 32-bit, unsigned integer that contains the current bias for
 // local time translation on the client. The bias is the difference, in minutes,
-// between Coordinated Universal Time (UTC) and local time. All translations 
+// between Coordinated Universal Time (UTC) and local time. All translations
 // between UTC and local time are based on the following formula:
 // UTC = local time + bias
 
-// StandardName (64 bytes): An array of 32 Unicode characters. The descriptive 
+// StandardName (64 bytes): An array of 32 Unicode characters. The descriptive
 // name for standard time on the client.
 
-// StandardDate (16 bytes): A TS_SYSTEMTIME (section 2.2.1.11.1.1.1.1.1) 
-// structure that contains the date and local time when the transition from 
-// daylight saving time to standard time occurs on the client. If this field 
+// StandardDate (16 bytes): A TS_SYSTEMTIME (section 2.2.1.11.1.1.1.1.1)
+// structure that contains the date and local time when the transition from
+// daylight saving time to standard time occurs on the client. If this field
 // contains a valid date and time, then the DaylightDate field MUST also contain
-// a valid date and time. If the wYear, wMonth, wDayOfWeek, wDay, wHour, 
-// wMinute, wSecond, and wMilliseconds fields are all set to zero, then the 
+// a valid date and time. If the wYear, wMonth, wDayOfWeek, wDay, wHour,
+// wMinute, wSecond, and wMilliseconds fields are all set to zero, then the
 // client does not support daylight saving time.
 
-// StandardBias (4 bytes): A 32-bit, unsigned integer that contains the bias 
-// value to be used during local time translations that occur during standard 
-// time. This value is added to the value of the Bias field to form the bias 
-// used during standard time. This field MUST be ignored if a valid date and 
+// StandardBias (4 bytes): A 32-bit, unsigned integer that contains the bias
+// value to be used during local time translations that occur during standard
+// time. This value is added to the value of the Bias field to form the bias
+// used during standard time. This field MUST be ignored if a valid date and
 // time is not specified in the StandardDate field or the wYear, wMonth,
 // wDayOfWeek, wDay, wHour, wMinute, wSecond, and wMilliseconds fields of the
 // StandardDate field are all set to zero.
 
-// DaylightName (64 bytes): An array of 32 Unicode characters. The descriptive 
+// DaylightName (64 bytes): An array of 32 Unicode characters. The descriptive
 // name for daylight saving time on the client.
 
-// DaylightDate (16 bytes): A TS_SYSTEMTIME (section 2.2.1.11.1.1.1.1.1) 
-// structure that contains a date and local time when the transition from 
+// DaylightDate (16 bytes): A TS_SYSTEMTIME (section 2.2.1.11.1.1.1.1.1)
+// structure that contains a date and local time when the transition from
 // standard time to daylight saving time occurs on the client. If this field
 // contains a valid date and time, then the StandardDate field MUST also contain
-// a valid date and time. If the wYear, wMonth, wDayOfWeek, wDay, wHour, 
+// a valid date and time. If the wYear, wMonth, wDayOfWeek, wDay, wHour,
 // wMinute, wSecond, and wMilliseconds fields are all set to zero, then the
 // client does not support daylight saving time.
 
-// DaylightBias (4 bytes): A 32-bit, unsigned integer that contains the bias 
-// value to be used during local time translations that occur during daylight 
-// saving time. This value is added to the value of the Bias field to form the 
+// DaylightBias (4 bytes): A 32-bit, unsigned integer that contains the bias
+// value to be used during local time translations that occur during daylight
+// saving time. This value is added to the value of the Bias field to form the
 // bias used during daylight saving time. This field MUST be ignored if a valid
-// date and time is not specified in the DaylightDate field or the wYear, 
+// date and time is not specified in the DaylightDate field or the wYear,
 // wMonth, wDayOfWeek, wDay, wHour, wMinute, wSecond, and wMilliseconds fields
 // of the DaylightDate field are all set to zero.
 
 // 2.2.1.11.1.1.1.1.1 System Time (TS_SYSTEMTIME)
 // ==============================================
-// The TS_SYSTEMTIME structure contains a date and local time when the 
-// transition occurs between daylight saving time to standard time occurs or 
+// The TS_SYSTEMTIME structure contains a date and local time when the
+// transition occurs between daylight saving time to standard time occurs or
 // standard time to daylight saving time.
 
 // wYear (2 bytes): A 16-bit, unsigned integer. This field MUST be set to zero.
 
-// wMonth (2 bytes): A 16-bit, unsigned integer. The month when transition 
+// wMonth (2 bytes): A 16-bit, unsigned integer. The month when transition
 // occurs.
 
 // 1 January
@@ -438,7 +439,7 @@ struct ClientInfo {
 // 11 November
 // 12 December
 
-// wDayOfWeek (2 bytes): A 16-bit, unsigned integer. The day of the week when 
+// wDayOfWeek (2 bytes): A 16-bit, unsigned integer. The day of the week when
 // transition occurs.
 
 // 0 Sunday
@@ -449,7 +450,7 @@ struct ClientInfo {
 // 5 Friday
 // 6 Saturday
 
-// wDay (2 bytes): A 16-bit, unsigned integer. The occurrence of wDayOfWeek 
+// wDay (2 bytes): A 16-bit, unsigned integer. The occurrence of wDayOfWeek
 // within the month when the transition takes place.
 
 // 1 First occurrence of wDayOfWeek
@@ -474,7 +475,7 @@ struct ClientInfo {
         uint32_t codepage = stream.in_uint32_le();
         LOG(LOG_DEBUG, "codepage=%u", codepage);
         uint32_t flags = stream.in_uint32_le();
-        LOG(LOG_DEBUG, "flags=%u", flags);
+        LOG(LOG_DEBUG, "flags=%4x", flags);
         /* this is the first test that the decrypt is working */
         if ((flags & RDP_LOGON_NORMAL) != RDP_LOGON_NORMAL) /* 0x33 */
         {                                                   /* must be or error */
@@ -491,6 +492,14 @@ struct ClientInfo {
         if (flags & RDP_COMPRESSION) {
             this->rdp_compression = 1;
         }
+
+        if (flags & 0x00000010 /* INFO_UNICODE */){
+            LOG(LOG_DEBUG, "INFO UNICODE");
+        }
+        else {
+            LOG(LOG_DEBUG, "CP-1252");
+        }
+
         unsigned len_domain = stream.in_uint16_le();
         unsigned len_user = stream.in_uint16_le();
         unsigned len_password = stream.in_uint16_le();
@@ -498,7 +507,7 @@ struct ClientInfo {
         unsigned len_directory = stream.in_uint16_le();
         LOG(LOG_DEBUG, "cbDomain=%u cbUser=%u cbPassword=%u cbProgram=%u cbDir=%u",
             len_domain, len_user, len_password, len_program, len_directory);
-       
+
         /* todo, we should error out if any of the above lengths are > 512 */
         /* to avoid buffer overruns */
         #warning check for length overflow
@@ -516,7 +525,7 @@ struct ClientInfo {
         LOG(LOG_DEBUG, "setting program to %s\n", this->program);
         unicode_in(stream, len_directory, (uint8_t*)this->directory, 255);
         LOG(LOG_DEBUG, "setting directory to %s\n", this->directory);
-  
+
         if (flags & RDP_LOGON_BLOB) {
             stream.skip_uint8(2);                                    /* unknown */
             unsigned len_ip = stream.in_uint16_le();

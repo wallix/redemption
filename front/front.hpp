@@ -618,6 +618,8 @@ public:
 
     void incoming() throw (Error)
     {
+        Stream stream(65535);
+
         if (this->ini->globals.debug.front){
             LOG(LOG_INFO, "Front::incoming()");
         }
@@ -850,23 +852,24 @@ public:
             LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
         }
 
-        {
-            Stream stream(8192);
-            X224In tpdu(this->trans, stream);
-            McsIn mcs_in(stream);
+        X224In tpdu(this->trans, stream);
+        McsIn mcs_in(stream);
 
-            if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-            }
-
-            SecIn sec(stream, this->decrypt);
-
-            if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
-                throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
-            }
-
-            this->client_info.process_logon_info(stream);
+        if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
+            throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
         }
+
+        SecIn sec(stream, this->decrypt);
+
+        if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
+            throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
+        }
+
+        this->client_info.process_logon_info(stream);
+
+        sec.end();
+        mcs_in.end();
+        tpdu.end();
 
         // Licensing
         // ---------
@@ -890,6 +893,7 @@ public:
         if (this->ini->globals.debug.front){
             LOG(LOG_INFO, "Front::incoming::licencing");
         }
+
         if (this->client_info.is_mce) {
             LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
             LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");
@@ -898,26 +902,57 @@ public:
         else {
             LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
             LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
+
             send_lic_initial(this->trans, this->userid);
 
-            Stream stream(65535);
+            LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
             X224In tpdu(this->trans, stream);
+
+            LOG(LOG_INFO, "Front::incoming::tpdu(%u %u %u)", tpdu.tpkt.len, tpdu.tpdu_hdr.LI, tpdu.tpdu_hdr.code);
+
             McsIn mcs_in(stream);
 
             // Disconnect Provider Ultimatum datagram
             if ((mcs_in.opcode >> 2) == MCS_DPUM) {
+                LOG(LOG_INFO, "Front::ERR_MCS_APPID_IS_MCS_DPUM");
                 throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
             }
 
             if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
+                LOG(LOG_INFO, "Front::ERR_MCS_APPID_NOT_MCS_SDRQ");
                 throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
 
             SecIn sec(stream, this->decrypt);
 
             if (!sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
+                LOG(LOG_INFO, "Front::ERR_SEC_EXPECTED_LICENCE_NEG");
                 throw Error(ERR_SEC_EXPECTED_LICENCE_NEG);
             }
+
+            uint8_t tag = stream.in_uint8();
+            stream.skip_uint8(3); /* version, length */
+            switch (tag) {
+            case LICENCE_TAG_DEMAND:
+                LOG(LOG_INFO, "Front::LICENCE_TAG_DEMAND");
+                break;
+            case LICENCE_TAG_AUTHREQ:
+                LOG(LOG_INFO, "Front::LICENCE_TAG_AUTHREQ");
+                break;
+            case LICENCE_TAG_ISSUE:
+                LOG(LOG_INFO, "Front::LICENCE_TAG_ISSUE");
+                break;
+            case LICENCE_TAG_REISSUE:
+                LOG(LOG_INFO, "Front::LICENCE_TAG_REISSUE");
+                break;
+            case LICENCE_TAG_RESULT:
+                LOG(LOG_INFO, "Front::LICENCE_TAG_RESULT");
+                break;
+            default:
+                LOG(LOG_INFO, "Front::LICENCE_TAG_UNKNOWN %u", tag);
+                break;
+            }
+
             LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
             send_lic_response(this->trans, this->userid);
         }
