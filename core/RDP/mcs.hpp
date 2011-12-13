@@ -345,7 +345,8 @@ static inline void parse_mcs_data_cs_core(Stream & stream, ClientInfo * client_i
 
     /* get hostname (it is UTF16, windows flavored widechars) */
     /* Unicode name of client is padded to 32 bytes */
-    stream.in_uni_to_ascii_str(client_info->hostname, 32);
+    #warning check we are using the right byte order, why is it different in process_logon_info ?
+    stream.in_uni_to_ascii_str0(client_info->hostname, 32);
     LOG(LOG_INFO, "core_data: hostname = %s\n", client_info->hostname);
 
     uint32_t keyboard_type = stream.in_uint32_le();

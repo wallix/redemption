@@ -415,13 +415,25 @@ class Stream {
         int i = 0;
         int max = (sz>>1)-1;
         while (i < max) {
+            text[i++] = this->in_uint8();
+            this->skip_uint8(1);
+        }
+        text[i] = 0;
+        this->skip_uint8(2);
+    }
+
+    // sz utf16 bytes are translated to ascci, 00 terminated
+    void in_uni_to_ascii_str0(char* text, size_t sz)
+    {
+        int i = 0;
+        int max = (sz>>1)-1;
+        while (i < max) {
             this->skip_uint8(1);
             text[i++] = this->in_uint8();
         }
         text[i] = 0;
         this->skip_uint8(2);
     }
-
 
     void mark_end() {
         this->end = this->p;

@@ -126,24 +126,29 @@ struct ClientInfo {
         this->channel_code = ini->globals.channel_code;
     }
 
-    #warning this is ugly, rewrite that
-    void unicode_in(Stream & stream, int uni_len, uint8_t* dst, int dst_len) throw (Error)
-    {
-        LOG(LOG_INFO, "uni_len=%d dst_len=%d", uni_len, dst_len);
-        int dst_index = 0;
-        int src_index = 0;
-        while (src_index < uni_len) {
-            if (dst_index >= dst_len) {
-                break;
-            }
-            dst[dst_index] = stream.in_uint8();
-            stream.skip_uint8(1);
-            dst_index++;
-            src_index += 2;
-        }
-        dst[dst_index] = 0;
-        stream.skip_uint8(2);
-    }
+
+enum {
+    INFO_MOUSE                  = 0x00000001,
+    INFO_DISABLECTRLALTDEL      = 0x00000002,
+    INFO_AUTOLOGON              = 0x00000008,
+    INFO_UNICODE                = 0x00000010,
+    INFO_MAXIMIZESHELL          = 0x00000020,
+    INFO_LOGONNOTIFY            = 0x00000040,
+    INFO_COMPRESSION            = 0x00000080,
+    CompressionTypeMask         = 0x00001E00,
+#warning the value for INFO_ENABLEWINDOWSKEY is surprising also is CompressionTypeMask. Check if documentation is really accurate on real clients.
+    INFO_ENABLEWINDOWSKEY       = 0x00000100,
+    INFO_REMOTECONSOLEAUDIO     = 0x00002000,
+    INFO_FORCE_ENCRYPTED_CS_PDU = 0x00004000,
+    INFO_RAIL                   = 0x00008000,
+    INFO_LOGONERRORS            = 0x00010000,
+    INFO_MOUSE_HAS_WHEEL        = 0x00020000,
+    INFO_PASSWORD_IS_SC_PIN     = 0x00040000,
+    INFO_NOAUDIOPLAYBACK        = 0x00080000,
+    INFO_USING_SAVED_CREDS      = 0x00100000,
+    RNS_INFO_AUDIOCAPTURE       = 0x00200000,
+    RNS_INFO_VIDEO_DISABLE      = 0x00400000,
+};
 
 // 2.2.1.11.1.1 Info Packet (TS_INFO_PACKET)
 // =========================================
@@ -167,52 +172,160 @@ struct ClientInfo {
 
 // flags (4 bytes): A 32-bit, unsigned integer. Option flags.
 
-// 0x00000001 INFO_MOUSE Indicates that the client machine has a mouse attached.
+// +----------------------------------------+----------------------------------+
+// | 0x00000001 INFO_MOUSE                  | Indicates that the client machine|
+// |                                        | has a mouse attached.            |
+// +----------------------------------------+----------------------------------+
+// | 0x00000002 INFO_DISABLECTRLALTDEL      | Indicates that the CTRL+ALT+DEL  |
+// |                                        | (or the equivalent) secure access|
+// |                                        | keyboard sequence is not required|
+// |                                        | at the logon prompt.             |
+// +----------------------------------------+----------------------------------+
+// | 0x00000008 INFO_AUTOLOGON              | The client requests auto logon   |
+// |                                        | using the included user name,    |
+// |                                        | password and domain.             |
+// +----------------------------------------+----------------------------------+
+// | 0x00000010 INFO_UNICODE                | Indicates that the character set |
+// |                                        | for strings in the Info Packet   |
+// |                                        | and Extended Info Packet (section|
+// |                                        | 2.2.1.11.1.1.1) is Unicode. If   |
+// |                                        | this flag is absent, then the    |
+// |                                        | ANSI character set that is       |
+// |                                        | specified by the ANSI code page  |
+// |                                        | descriptor in the CodePage field |
+// |                                        | is used for strings in the Info  |
+// |                                        | Packet and Extended Info Packet. |
+// +----------------------------------------+----------------------------------+
+// | 0x00000020 INFO_MAXIMIZESHELL          | Indicates that the alternate     |
+// |                                        | shell   (specified in the        |
+// |                                        | AlternateShell field of the Info |
+// |                                        | Packet structure) MUST be started|
+// |                                        | in a maximized state.            |
+// +----------------------------------------+----------------------------------+
+// | 0x00000040 INFO_LOGONNOTIFY            | Indicates that the client wants  |
+// |                                        | to be informed of the user name  |
+// |                                        | and domain used to log on to the |
+// |                                        | server, as well as the ID of the |
+// |                                        | session to which the user        |
+// |                                        | connected. The Save Session Info |
+// |                                        | PDU (section 2.2.10.1) is sent   |
+// |                                        | from the server to notify the    |
+// |                                        | client of this information using |
+// |                                        | a Logon Info Version 1 (section  |
+// |                                        | 2.2.10.1.1.1) or Logon Info      |
+// |                                        | Version 2 (section 2.2.10.1.1.2) |
+// |                                        | structure.                       |
+// +----------------------------------------+----------------------------------+
+// | 0x00000080 INFO_COMPRESSION            | Indicates that the               |
+// |                                        | CompressionTypeMask is valid and |
+// |                                        | contains the highest compression |
+// |                                        | package type supported by the    |
+// |                                        | client.                          |
+// +----------------------------------------+----------------------------------+
+// | 0x00001E00 CompressionTypeMask         | Indicates the highest compression|
+// |                                        | package type supported. See the  |
+// |                                        | discussion which follows this    |
+// |                                        | table for more information.      |
+// +----------------------------------------+----------------------------------+
+// | 0x00000100 INFO_ENABLEWINDOWSKEY       | Indicates that the client uses   |
+// |                                        | the Windows key on               |
+// |                                        | Windows-compatible eyboards.     |
+// +----------------------------------------+----------------------------------+
+// | 0x00002000 INFO_REMOTECONSOLEAUDIO     | Requests that audio played in a  |
+// |                                        | session hosted on a remote server|
+// |                                        | be played on the server using the|
+// |                                        | protocol defined in [MS-RDPEA]   |
+// |                                        | sections 2 and 3.                |
+// +----------------------------------------+----------------------------------+
+// | 0x00004000 INFO_FORCE_ENCRYPTED_CS_PDU | Indicates that all               |
+// |                                        | client-to-server traffic is      |
+// |                                        | encrypted when encryption is in  |
+// |                                        | force. Setting this flag prevents|
+// |                                        | the server from processing       |
+// |                                        | unencrypted packets in           |
+// |                                        | man-in-the-middle attack         |
+// |                                        | scenarios. This flag is only     |
+// |                                        | understood by RDP 5.2, 6.0, 6.1, |
+// |                                        | and 7.0 servers.                 |
+// +----------------------------------------+----------------------------------+
+// | 0x00008000 INFO_RAIL                   | Indicates that the remote        |
+// |                                        | connection being established is  |
+// |                                        | for the purpose of launching     |
+// |                                        | remote programs using the        |
+// |                                        | protocol defined in [MS-RDPERP]  |
+// |                                        | sections 2 and 3. This flag is   |
+// |                                        | only understood by RDP 6.0, 6.1, |
+// |                                        | and 7.0 servers.                 |
+// +----------------------------------------+----------------------------------+
+// | 0x00010000 INFO_LOGONERRORS            | Indicates a request for logon    |
+// |                                        | error notifications using the    |
+// |                                        | Save Session Info PDU. This flag |
+// |                                        | is only understood by RDP 6.0,   |
+// |                                        | 6.1, and 7.0 servers.            |
+// +----------------------------------------+----------------------------------+
+// | 0x00020000 INFO_MOUSE_HAS_WHEEL        | Indicates that the mouse which is|
+// |                                        | connected to the client machine  |
+// |                                        | has a scroll wheel. This flag is |
+// |                                        | only understood by RDP 6.0, 6.1, |
+// |                                        | and 7.0 servers.                 |
+// +----------------------------------------+----------------------------------+
+// | 0x00040000 INFO_PASSWORD_IS_SC_PIN     | Indicates that the Password field|
+// |                                        | in the Info Packet contains a    |
+// |                                        | smart card personal              |
+// |                                        | identification number (PIN).     |
+// |                                        | This flag is only understood by  |
+// |                                        | RDP 6.0, 6.1, and 7.0 servers.   |
+// +----------------------------------------+----------------------------------+
+// | 0x00080000 INFO_NOAUDIOPLAYBACK        | Indicates that audio redirection |
+// |                                        | or playback (using the protocol  |
+// |                                        | defined in [MS-RDPEA] sections 2 |
+// |                                        | and 3) MUST NOT take place. This |
+// |                                        | flag is only understood by RDP   |
+// |                                        | 6.0, 6.1, and 7.0 servers.       |
+// +----------------------------------------+----------------------------------+
+// | 0x00100000 INFO_USING_SAVED_CREDS      | Any user credentials sent on the |
+// |                                        | wire during the RDP Connection   |
+// |                                        | Sequence (see sections 1.3.1.1   |
+// |                                        | and 1.3.1.2) have been retrieved |
+// |                                        | from a credential store and were |
+// |                                        | not obtained directly from the   |
+// |                                        | user.                            |
+// +----------------------------------------+----------------------------------+
+// | 0x00200000 RNS_INFO_AUDIOCAPTURE       | Indicates that the redirection   |
+// |                                        | of client-side audio input to a  |
+// |                                        | session hosted on a remote server|
+// |                                        | is supported using the protocol  |
+// |                                        | defined in [MS-RDPEAI] sections  |
+// |                                        | 2 and 3. This flag is only       |
+// |                                        | understood by RDP 7.0 servers.   |
+// +----------------------------------------+----------------------------------+
+// | 0x00400000 RNS_INFO_VIDEO_DISABLE      | Indicates that video redirection |
+// |                                        | or playback (using the protocol  |
+// |                                        | defined in [MS-RDPEV] sections 2 |
+// |                                        | and 3) MUST NOT take place. This |
+// |                                        | flag is only understood by RDP   |
+// |                                        | 7.0 servers.                     |
+// +----------------------------------------+----------------------------------+
 
-// 0x00000002 INFO_DISABLECTRLALTDEL Indicates that the CTRL+ALT+DEL (or the equivalent) secure access keyboard sequence is not required at the logon prompt.
+// The CompressionTypeMask is a 4-bit enumerated value containing the highest 
+// compression package support available on the client. The packages codes are:
 
-// 0x00000008 INFO_AUTOLOGON The client requests auto logon using the included user name, password and domain.
+// +-----------------------------+--------------------------------------------+
+// | 0x0 PACKET_COMPR_TYPE_8K    | RDP 4.0 bulk compression (see section      |
+// |                             | 3.1.8.4.1).                                |
+// +-----------------------------+--------------------------------------------+
+// | 0x1 PACKET_COMPR_TYPE_64K   | RDP 5.0 bulk compression (see section      |
+// |                             | 3.1.8.4.2).                                |
+// +-----------------------------+--------------------------------------------+
+// | 0x2 PACKET_COMPR_TYPE_RDP6  | RDP 6.0 bulk compression (see [MS-RDPEGDI] |
+// |                             | section 3.1.8.1).                          |
+// +-----------------------------+--------------------------------------------+
+// | 0x3 PACKET_COMPR_TYPE_RDP61 | RDP 6.1 bulk compression (see [MS-RDPEGDI] |
+// |                             | section 3.1.8.2).                          |
+// +-----------------------------+--------------------------------------------+
 
-// 0x00000010 INFO_UNICODE Indicates that the character set for strings in the Info Packet and Extended Info Packet (section 2.2.1.11.1.1.1) is Unicode. If this flag is absent, then the ANSI character set that is specified by the ANSI code page descriptor in the CodePage field is used for strings in the Info Packet and Extended Info Packet.
-
-// 0x00000020 INFO_MAXIMIZESHELL Indicates that the alternate shell (specified in the AlternateShell field of the Info Packet structure) MUST be started in a maximized state.
-
-// 0x00000040 INFO_LOGONNOTIFY Indicates that the client wants to be informed of the user name and domain used to log on to the server, as well as the ID of the session to which the user connected. The Save Session Info PDU (section 2.2.10.1) is sent from the server to notify the client of this information using a Logon Info Version 1 (section 2.2.10.1.1.1) or Logon Info Version 2 (section 2.2.10.1.1.2) structure.
-
-// 0x00000080 INFO_COMPRESSION Indicates that the CompressionTypeMask is valid and contains the highest compression package type supported by the client.
-
-// 0x00001E00 CompressionTypeMask Indicates the highest compression package type supported. See the discussion which follows this table for more information.
-
-// 0x00000100 INFO_ENABLEWINDOWSKEY Indicates that the client uses the Windows key on Windows-compatible eyboards.
-
-// 0x00002000 INFO_REMOTECONSOLEAUDIO Requests that audio played in a session hosted on a remote server be played on the server using the protocol defined in [MS-RDPEA] sections 2 and 3.
-
-// 0x00004000 INFO_FORCE_ENCRYPTED_CS_PDU Indicates that all client-to-server traffic is encrypted when encryption is in force. Setting this flag prevents the server from processing unencrypted packets in man-in-the-middle attack scenarios. This flag is only understood by RDP 5.2, 6.0, 6.1, and 7.0 servers.
-
-// 0x00008000 INFO_RAIL Indicates that the remote connection being established is for the purpose of launching remote programs using the protocol defined in [MS-RDPERP] sections 2 and 3. This flag is only understood by RDP 6.0, 6.1, and 7.0 servers.
-
-// 0x00010000 INFO_LOGONERRORS Indicates a request for logon error notifications using the Save Session Info PDU. This flag is only understood by RDP 6.0, 6.1, and 7.0 servers.
-
-// 0x00020000 INFO_MOUSE_HAS_WHEEL Indicates that the mouse which is connected to the client machine has a scroll wheel. This flag is only understood by RDP 6.0, 6.1, and 7.0 servers.
-
-// 0x00040000 INFO_PASSWORD_IS_SC_PIN Indicates that the Password field in the Info Packet contains a smart card personal identification number (PIN). This flag is only understood by RDP 6.0, 6.1, and 7.0 servers.
-
-// 0x00080000 INFO_NOAUDIOPLAYBACK Indicates that audio redirection or playback (using the protocol defined in [MS-RDPEA] sections 2 and 3) MUST NOT take place. This flag is only understood by RDP 6.0, 6.1, and 7.0 servers.
-
-// 0x00100000 INFO_USING_SAVED_CREDS Any user credentials sent on the wire during the RDP Connection Sequence (see sections 1.3.1.1 and 1.3.1.2) have been retrieved from a credential store and were not obtained directly from the user.
-
-// 0x00200000 RNS_INFO_AUDIOCAPTURE Indicates that the redirection of client-side audio input to a session hosted on a remote server is supported using the protocol defined in [MS-RDPEAI] sections 2 and 3. This flag is only understood by RDP 7.0 servers.
-
-// 0x00400000 RNS_INFO_VIDEO_DISABLE Indicates that video redirection or playback (using the protocol defined in [MS-RDPEV] sections 2 and 3) MUST NOT take place. This flag is only understood by RDP 7.0 servers.
-
-// The CompressionTypeMask is a 4-bit enumerated value containing the highest compression package support available on the client. The packages codes are:
-
-// 0x0 PACKET_COMPR_TYPE_8K RDP 4.0 bulk compression (see section 3.1.8.4.1).
-// 0x1 PACKET_COMPR_TYPE_64K RDP 5.0 bulk compression (see section 3.1.8.4.2).
-// 0x2 PACKET_COMPR_TYPE_RDP6 RDP 6.0 bulk compression (see [MS-RDPEGDI] section 3.1.8.1).
-// 0x3 PACKET_COMPR_TYPE_RDP61 RDP 6.1 bulk compression (see [MS-RDPEGDI] section 3.1.8.2).
-
-// If a client supports compression package n then it MUST support packages 0...(n - 1).
+// If a client supports compression package n then it MUST support packages 
+// 0...(n - 1).
 
 // cbDomain (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
 //  character data in the Domain field. This size excludes the length of the
@@ -281,16 +394,15 @@ struct ClientInfo {
 
 // 2.2.1.11.1.1.1 Extended Info Packet (TS_EXTENDED_INFO_PACKET)
 // =============================================================
-// The TS_EXTENDED_INFO_PACKET structure contains user information specific to RDP 5.0, 5.1, 5.2, 6.0, 6.1, and 7.0.
+// The TS_EXTENDED_INFO_PACKET structure contains user information specific to 
+// RDP 5.0, 5.1, 5.2, 6.0, 6.1, and 7.0.
 
 // clientAddressFamily (2 bytes): A 16-bit, unsigned integer. The numeric socket
 // descriptor for the client address type.
 
-
 // 0x00002 AF_INET The clientAddress field contains an IPv4 address.
 
 // 0x0017 AF_INET6 The clientAddress field contains an IPv6 address.
-
 
 // cbClientAddress (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 // the character data in the clientAddress field. This size includes the length
@@ -343,7 +455,7 @@ struct ClientInfo {
 // +--------------------------------------------+------------------------------+
 // | 0x00000080 PERF_ENABLE_FONT_SMOOTHING      | Enable font smoothing.       |
 // +--------------------------------------------+------------------------------+
-// | 0x00000100 PERF_ENABLE_DESKTOP_COMPOSITION |Enable Desktop Composition.   |
+// | 0x00000100 PERF_ENABLE_DESKTOP_COMPOSITION | Enable Desktop Composition.  |
 // +--------------------------------------------+------------------------------+
 // | 0x80000000 PERF_RESERVED2                  | Reserved for future use.     |
 // +--------------------------------------------+------------------------------+
@@ -426,29 +538,13 @@ struct ClientInfo {
 // wMonth (2 bytes): A 16-bit, unsigned integer. The month when transition
 // occurs.
 
-// 1 January
-// 2 February
-// 3 March
-// 4 April
-// 5 May
-// 6 June
-// 7 July
-// 8 August
-// 9 September
-// 10 October
-// 11 November
-// 12 December
+// 1=January, 2=February, 3=March, 4=April, 5=May, 6=June, 7=July, 8=August
+// 9=September, 10=October, 11=November, 12=December
 
 // wDayOfWeek (2 bytes): A 16-bit, unsigned integer. The day of the week when
 // transition occurs.
 
-// 0 Sunday
-// 1 Monday
-// 2 Tuesday
-// 3 Wednesday
-// 4 Thursday
-// 5 Friday
-// 6 Saturday
+// 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday
 
 // wDay (2 bytes): A 16-bit, unsigned integer. The occurrence of wDayOfWeek
 // within the month when the transition takes place.
@@ -459,14 +555,17 @@ struct ClientInfo {
 // 4 Fourth occurrence of wDayOfWeek
 // 5 Last occurrence of wDayOfWeek
 
-// wHour (2 bytes): A 16-bit, unsigned integer. The hour when transition occurs (0 to 23).
+// wHour (2 bytes): A 16-bit, unsigned integer. The hour when transition occurs
+// (0 to 23).
 
-// wMinute (2 bytes): A 16-bit, unsigned integer. The minute when transition occurs (0 to 59).
+// wMinute (2 bytes): A 16-bit, unsigned integer. The minute when transition 
+// occurs (0 to 59).
 
-// wSecond (2 bytes): A 16-bit, unsigned integer. The second when transition occurs (0 to 59).
+// wSecond (2 bytes): A 16-bit, unsigned integer. The second when transition 
+// occurs (0 to 59).
 
-// wMilliseconds (2 bytes): A 16-bit, unsigned integer. The millisecond when transition occurs (0 to 999).
-
+// wMilliseconds (2 bytes): A 16-bit, unsigned integer. The millisecond when 
+// transition occurs (0 to 999).
 
 
     void process_logon_info(Stream & stream) throw (Error)
@@ -476,7 +575,6 @@ struct ClientInfo {
         LOG(LOG_DEBUG, "codepage=%u", codepage);
         uint32_t flags = stream.in_uint32_le();
         LOG(LOG_DEBUG, "flags=%4x", flags);
-        /* this is the first test that the decrypt is working */
         if ((flags & RDP_LOGON_NORMAL) != RDP_LOGON_NORMAL) /* 0x33 */
         {                                                   /* must be or error */
             throw Error(ERR_SEC_PROCESS_LOGON_UNKNOWN_FLAGS);
@@ -500,46 +598,48 @@ struct ClientInfo {
             LOG(LOG_DEBUG, "CP-1252");
         }
 
-        unsigned len_domain = stream.in_uint16_le();
-        unsigned len_user = stream.in_uint16_le();
-        unsigned len_password = stream.in_uint16_le();
-        unsigned len_program = stream.in_uint16_le();
-        unsigned len_directory = stream.in_uint16_le();
+        unsigned len_domain = stream.in_uint16_le() + 2;
+        unsigned len_user = stream.in_uint16_le() + 2;
+        unsigned len_password = stream.in_uint16_le() + 2;
+        unsigned len_program = stream.in_uint16_le() + 2;
+        unsigned len_directory = stream.in_uint16_le() + 2;
         LOG(LOG_DEBUG, "cbDomain=%u cbUser=%u cbPassword=%u cbProgram=%u cbDir=%u",
             len_domain, len_user, len_password, len_program, len_directory);
 
-        /* todo, we should error out if any of the above lengths are > 512 */
-        /* to avoid buffer overruns */
-        #warning check for length overflow
-        unicode_in(stream, len_domain, (uint8_t*)this->domain, 255);
+        stream.in_uni_to_ascii_str(this->domain, len_domain);
         LOG(LOG_DEBUG, "setting domain to %s\n", this->domain);
-        unicode_in(stream, len_user, (uint8_t*)this->username, 255);
+        stream.in_uni_to_ascii_str(this->username, len_user);
         LOG(LOG_DEBUG, "setting username to %s\n", this->username);
 
         if (flags & RDP_LOGON_AUTO) {
-            unicode_in(stream, len_password, (uint8_t*)this->password, 255);
+            stream.in_uni_to_ascii_str(this->password, len_password);
         } else {
             stream.skip_uint8(len_password + 2);
         }
-        unicode_in(stream, len_program, (uint8_t*)this->program, 255);
+        stream.in_uni_to_ascii_str(this->program, len_program);
         LOG(LOG_DEBUG, "setting program to %s\n", this->program);
-        unicode_in(stream, len_directory, (uint8_t*)this->directory, 255);
+        stream.in_uni_to_ascii_str(this->directory, len_directory);
         LOG(LOG_DEBUG, "setting directory to %s\n", this->directory);
 
         if (flags & RDP_LOGON_BLOB) {
-            stream.skip_uint8(2);                                    /* unknown */
+            stream.skip_uint8(2);
             unsigned len_ip = stream.in_uint16_le();
-            uint8_t tmpdata[256];
-            unicode_in(stream, len_ip - 2, tmpdata, 255);
+            char tmpdata[256];
+            stream.in_uni_to_ascii_str(tmpdata, len_ip);
             unsigned len_dll = stream.in_uint16_le();
-            unicode_in(stream, len_dll - 2, tmpdata, 255);
+            stream.in_uni_to_ascii_str(tmpdata, len_dll);
+
             stream.in_uint32_le(); /* len of timezone */
             stream.skip_uint8(62); /* skip */
             stream.skip_uint8(22); /* skip misc. */
             stream.skip_uint8(62); /* skip */
             stream.skip_uint8(26); /* skip stuff */
             this->rdp5_performanceflags = stream.in_uint32_le();
+            // more data here
         }
+        // in some cases, not all data are consumed, skip remaining
+        stream.p = stream.end;
+
     }
 
 };

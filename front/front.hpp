@@ -865,6 +865,7 @@ public:
             throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
         }
 
+        /* this is the first test that the decrypt is working */
         this->client_info.process_logon_info(stream);
 
         sec.end();
@@ -906,6 +907,7 @@ public:
             send_lic_initial(this->trans, this->userid);
 
             LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
+            Stream stream(65536);
             X224In tpdu(this->trans, stream);
 
             LOG(LOG_INFO, "Front::incoming::tpdu(%u %u %u)", tpdu.tpkt.len, tpdu.tpdu_hdr.LI, tpdu.tpdu_hdr.code);
