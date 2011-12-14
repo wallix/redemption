@@ -1029,7 +1029,7 @@ public:
 
         // base adress (*3 because it has 3 color components)
         // also base of the new coordinate system
-        uint8_t * const base = this->data + (starty * this->full.cx + x) * 3;
+        uint8_t * const base = this->data + x * 3;
         const unsigned y0 = std::max(starty, clip.y);
         const unsigned y1 = std::min(endy, clip.y + clip.cy - 1);
 

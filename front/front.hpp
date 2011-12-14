@@ -852,25 +852,27 @@ public:
             LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
         }
 
-        X224In tpdu(this->trans, stream);
-        McsIn mcs_in(stream);
+        {
+            X224In tpdu(this->trans, stream);
+            McsIn mcs_in(stream);
 
-        if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
-            throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+            if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
+                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+            }
+
+            SecIn sec(stream, this->decrypt);
+
+            if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
+                throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
+            }
+
+            /* this is the first test that the decrypt is working */
+            this->client_info.process_logon_info(stream);
+
+            sec.end();
+            mcs_in.end();
+            tpdu.end();
         }
-
-        SecIn sec(stream, this->decrypt);
-
-        if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
-            throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
-        }
-
-        /* this is the first test that the decrypt is working */
-        this->client_info.process_logon_info(stream);
-
-        sec.end();
-        mcs_in.end();
-        tpdu.end();
 
         // Licensing
         // ---------
@@ -907,6 +909,7 @@ public:
             send_lic_initial(this->trans, this->userid);
 
             LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
+
             Stream stream(65536);
             X224In tpdu(this->trans, stream);
 
