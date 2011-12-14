@@ -486,7 +486,7 @@ struct GraphicDeviceMod : public GraphicDevice
                     if (!this->clip.isempty()
                     && !this->clip.intersect(cmd.rect).isempty()){
                         this->front.orders->send(cmd, this->clip);
-                        #warning capture should have it's own reference to bmp_cache
+                        #warning capture should have it's own reference to bmp_cache'
                         if (this->capture){
                             this->capture->mem_blt(cmd, *this->front.bmp_cache, this->clip);
                         }
@@ -648,7 +648,7 @@ struct GraphicDeviceMod : public GraphicDevice
                                 this->palette_sent = false;
                             }
                             this->front.orders->send(cmd, this->clip);
-                            #warning capture should have it's own reference to bmp_cache
+                            #warning capture should have it's own reference to bmp_cache'
                             if (this->capture){
                                 this->capture->mem_blt(cmd, *this->front.bmp_cache, this->clip);
                             }

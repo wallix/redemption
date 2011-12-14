@@ -192,7 +192,7 @@ class SecIn
     {
         this->flags = stream.in_uint32_le();
         if ((this->flags & SEC_ENCRYPT)  || (this->flags & 0x0400)){
-            #warning shouldn't we check signature ?
+            #warning shouldn't we check signature ?'
             stream.skip_uint8(8); /* signature */
             // decrypting to the end of tpdu
             crypt.decrypt(stream.p, stream.end - stream.p);

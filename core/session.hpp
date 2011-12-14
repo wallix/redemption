@@ -561,7 +561,7 @@ struct Session {
         FD_ZERO(&rfds);
         FD_ZERO(&wfds);
 
-        #warning we should manage some **real** timeout here, if context didn't answered in time, then we should close session.
+        #warning we should manage some **real** timeout here, if context didn't answered in time, then we should close session.'
         struct timeval timeout = { 1, 0 };
 
         this->front_event->add_to_fd_set(rfds, max);

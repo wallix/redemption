@@ -1069,7 +1069,7 @@ class RDPBmpCache {
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
-        #warning some error may occur inside bitmap (memory allocation, file load, decompression) we should catch thrown exception and emit some explicit log if that occurs (anyway that will lead to end of connection, as we can't do much to repair such problems).
+        #warning some error may occur inside bitmap (memory allocation, file load, decompression) we should catch thrown exception and emit some explicit log if that occurs (anyway that will lead to end of connection, as we can't do much to repair such problems).'
         this->bmp = new Bitmap(bpp, &palette, width, height, stream.in_uint8p(bufsize), bufsize);
         if (bufsize != this->bmp->bmp_size(bpp)){
             LOG(LOG_WARNING, "broadcasted bufsize should be the same as bmp size computed from cx, cy, bpp and alignment rules");

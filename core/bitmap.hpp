@@ -112,7 +112,7 @@ struct Bitmap {
             }
         }
         unsigned cx = std::min(r.cx, src_cx - r.x);
-        #warning there is both cx and this->cx and both can't be interchanged. this is intended to always store bitmaps that are multiple of 4 pixels to override a compatibility problem with rdesktop. This is not necessary for Microsoft clients. See MSRDP-CGR MS-RDPBCGR: 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)
+        #warning there is both cx and this->cx and both can't be interchanged. this is intended to always store bitmaps that are multiple of 4 pixels to override a compatibility problem with rdesktop. This is not necessary for Microsoft clients. See MSRDP-CGR MS-RDPBCGR: 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)'
         // bitmapDataStream (variable): A variable-sized array of bytes.
         //  Uncompressed bitmap data represents a bitmap as a bottom-up,
         //  left-to-right series of pixels. Each pixel is a whole
