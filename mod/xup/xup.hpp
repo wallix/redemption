@@ -52,7 +52,7 @@ struct xup_mod : public client_mod {
         this->rop = 0xCC;
         try {
             this->t = t;
-            Stream stream(8192);
+            Stream stream(32768);
             uint8_t * hdr = stream.p;
             stream.p += 4;
             stream.out_uint16_le(103);
@@ -147,7 +147,7 @@ struct xup_mod : public client_mod {
 
     void x_input_event(const int msg, const long param1, const long param2, const long param3, const long param4)
     {
-        Stream stream(8192);
+        Stream stream(32768);
         stream.out_uint32_le(0); // skip yet unknown len
         stream.out_uint16_le(103);
         stream.out_uint32_le(msg);
@@ -165,7 +165,7 @@ struct xup_mod : public client_mod {
         BackEvent_t rv = BACK_EVENT_NONE;
 
         try{
-            Stream stream(8192);
+            Stream stream(32768);
             this->t->recv((char**)&stream.end, 8);
             int type = stream.in_uint16_le();
             int num_orders = stream.in_uint16_le();

@@ -210,7 +210,7 @@ static inline void recv_security_exchange_PDU(
                         CryptContext & decrypt,
                         uint8_t * client_crypt_random)
 {
-    Stream stream(8192);
+    Stream stream(32768);
     X224In tpdu(trans, stream);
     McsIn mcs_in(stream);
 
@@ -241,7 +241,7 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     LOG(LOG_INFO, "Iso Layer : setting encryption\n");
     /* Send the client random to the server */
     //      if (this->encryption)
-    Stream sdrq_stream(8192);
+    Stream sdrq_stream(32768);
     X224Out sdrq_tpdu(X224Packet::DT_TPDU, sdrq_stream);
     McsOut sdrq_out(sdrq_stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
 

@@ -491,7 +491,7 @@ struct mod_rdp : public client_mod {
             bool clipboard_enable, bool dev_redirection_enable)
             :
                 client_mod(front),
-                    in_stream(8192),
+                    in_stream(32768),
                     trans(trans),
                     context(context),
                     event(event),
@@ -1540,7 +1540,7 @@ struct mod_rdp : public client_mod {
                        + 0x34
                        + 4 /* w2k fix, why? */ ;
 
-            Stream stream(8192);
+            Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
@@ -1989,7 +1989,7 @@ struct mod_rdp : public client_mod {
 
         void send_control(int action) throw (Error)
         {
-            Stream stream(8192);
+            Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
@@ -2011,7 +2011,7 @@ struct mod_rdp : public client_mod {
         #warning duplicated code in front
         void send_synchronise() throw (Error)
         {
-            Stream stream(8192);
+            Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
@@ -2071,7 +2071,7 @@ struct mod_rdp : public client_mod {
         {
 //            LOG(LOG_INFO, "send_input\n");
 
-            Stream stream(8192);
+            Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
@@ -2099,7 +2099,7 @@ struct mod_rdp : public client_mod {
             if (this->up_and_running) {
                 LOG(LOG_INFO, "rdp_input_invalidate");
                 if (!r.isempty()){
-                    Stream stream(8192);
+                    Stream stream(32768);
                     X224Out tpdu(X224Packet::DT_TPDU, stream);
                     McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
                     SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
@@ -2374,7 +2374,7 @@ struct mod_rdp : public client_mod {
         // The WAB does not send it's IP to server. Is it what we want ?
         const char * ip_source = "\0\0\0\0";
 
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out2(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, 2, SEC_LOGON_INFO | SEC_ENCRYPT, this->encrypt);
