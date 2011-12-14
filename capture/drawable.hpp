@@ -122,6 +122,7 @@ public:
 //            LOG(LOG_INFO, "line_rect(%u, %u, %u, %u)", line_rect.x, line_rect.y, line_rect.cx, line_rect.cy);
             return;
         }
+
         // Color handling
         uint32_t color = color_decode(lineto.pen.color, this->bpp, this->palette);
         if (this->bgr){
@@ -244,6 +245,8 @@ public:
         uint8_t p1 = (color >> 8) & 0xFF;
         uint8_t p2 = (color >> 16) & 0xFF;
 
+
+        #warning this switch contains much duplicated code, to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution, in this particular case I see no obvious better way.
         switch (rop){
 // +------+-------------------------------+
 // | 0x00 | ROP: 0x00000042 (BLACKNESS)   |
@@ -461,6 +464,7 @@ public:
         uint8_t * const base = first_pixel(rect);
         uint8_t * p = base;
 
+        #warning this switch contains much duplicated code, to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution, in this particular case I see no obvious better way.
         switch (rop){
         case 0x00: // blackness
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
@@ -495,6 +499,7 @@ public:
     // because we already took care of it
     void scrblt(unsigned srcx, unsigned srcy, const Rect drect, uint8_t rop)
     {
+        #warning this switch contains much duplicated code, to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution, in this particular case I see no obvious better way.
         switch (rop){
         // +------+-------------------------------+
         // | 0x00 | ROP: 0x00000042 (BLACKNESS)   |
@@ -979,10 +984,9 @@ public:
         }
     }
 
+    // nor horizontal nor vertical, use Bresenham
     void line(const int mix_mode, const int startx, const int starty, const int endx, const int endy, const uint32_t color, const Rect & clip)
     {
-//        printf("diagonal_line\n");
-
         // Color handling
         uint8_t col[3] = { color, color >> 8, color >> 16};
 
@@ -1001,7 +1005,6 @@ public:
                 for (uint8_t b = 0 ; b < Bpp; b++){
                     p[b] = col[b];
                 }
-//                printf("clip contains(%u, %u) Bpp=%u\n", x, y, Bpp);
             }
 
             if ((x >= endx) && (y == endy)){
@@ -1023,40 +1026,48 @@ public:
 
     void vertical_line(const int mix_mode, const int x, const int starty, const int endy, const uint32_t color, const Rect & clip)
     {
-//        printf("vertical_line\n");
         // Color handling
         uint8_t col[3] = { color, color >> 8, color >> 16};
 
-        // base adress (*3 because it has 3 color components)
         // also base of the new coordinate system
-        uint8_t * const base = this->data + x * 3;
         const unsigned y0 = std::max(starty, clip.y);
         const unsigned y1 = std::min(endy, clip.y + clip.cy - 1);
+        const uint16_t & height = this->full.cx;
+        const uint8_t Bpp = ::nbbytes(this->bpp);
 
-        for (unsigned y = y0; y <= y1 ; y++) {
-            // Pixel position
-            uint8_t * const p = base + y * this->full.cx * 3;
-            const uint8_t Bpp = ::nbbytes(this->bpp);
-            for (uint8_t b = 0 ; b < Bpp; b++){
-                p[b] = col[b];
+        // these tests are probably unnecessary if calling code is ok
+        if (y0 >= height){ return; }
+        if (y1 >= height){ return; }
+
+        if (y0 < y1){ // this test is probably unnecessary if calling code is ok
+            uint8_t * const base = this->data + (y0 * height + x) * 3;
+
+            for (unsigned dy = 0; dy <= (y1 - y0) ; dy++) {
+                uint8_t * const p = base + dy * height * 3;
+                for (uint8_t b = 0 ; b < Bpp; b++){
+                    p[b] = col[b];
+                }
             }
         }
     }
 
     void horizontal_line(const int mix_mode, const int startx, const int y, const int endx, const uint32_t color, const Rect & clip)
     {
-//        printf("horizontal_line\n");
         const unsigned x0 = std::max(startx, clip.x);
         const unsigned x1 = std::min(endx, clip.x + clip.cx - 1);
         uint8_t col[3] = { color, color >> 8, color >> 16};
-        // base adress (*3 because it has 3 color components) also base of the new coordinate system
-        uint8_t * const base = this->data + (y * this->full.cx + startx) * 3;
+        const uint16_t & height = this->full.cx;
+        const uint8_t Bpp = ::nbbytes(this->bpp);
 
-        // Prep
+        // this tests is probably unnecessary if calling code is ok
+        if (y >= height){ return; }
+
+        // base adress (*3 because 3 bytes per pixel)
+        uint8_t * const base = this->data + (y * height) * 3;
+
         for (unsigned x = x0; x <= x1 ; x++) {
             // Pixel position
             uint8_t * const p = base + x * 3;
-            const uint8_t Bpp = ::nbbytes(this->bpp);
             for (uint8_t b = 0 ; b < Bpp; b++){
                 p[b] = col[b];
             }
