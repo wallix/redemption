@@ -136,7 +136,7 @@ struct test_card_mod : public internal_mod {
              0, 0, clip);
 
         // Bogus square generating zero width/height tiles if not properly guarded
-        #warning find a better fix than the current one in bitmap_update and mem_blt for the case occuring when drawing square below or similar.
+        TODO(" find a better fix than the current one in bitmap_update and mem_blt for the case occuring when drawing square below or similar.")
         uint8_t comp64x64RED[] = {
             0xc0, 0x30, 0x00, 0x00, 0xFF,
             0xf0, 0xc0, 0x0f, 

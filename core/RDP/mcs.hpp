@@ -30,7 +30,7 @@
 #include "channel_list.hpp"
 
 #include "rsa_keys.hpp"
-#warning ssl calls introduce some dependency on ssl system library, injecting it in the sec object would be better.
+TODO(" ssl calls introduce some dependency on ssl system library  injecting it in the sec object would be better.")
 #include "ssl_calls.hpp"
 
 class McsOut
@@ -320,7 +320,7 @@ class McsIn
 //   2.2.1.1.1) was sent to the server. If this field is present,
 //   then all of the preceding fields MUST also be present.
 
-#warning use official field names from MS-RDPBCGR
+TODO(" use official field names from MS-RDPBCGR")
 static inline void parse_mcs_data_cs_core(Stream & stream, ClientInfo * client_info)
 {
     LOG(LOG_INFO, "PARSE CS_CORE\n");
@@ -345,7 +345,7 @@ static inline void parse_mcs_data_cs_core(Stream & stream, ClientInfo * client_i
 
     /* get hostname (it is UTF16, windows flavored widechars) */
     /* Unicode name of client is padded to 32 bytes */
-    #warning check we are using the right byte order, why is it different in process_logon_info ?
+    TODO(" check we are using the right byte order  why is it different in process_logon_info ?")
     stream.in_uni_to_ascii_str0(client_info->hostname, 32);
     LOG(LOG_INFO, "core_data: hostname = %s\n", client_info->hostname);
 
@@ -528,7 +528,7 @@ static inline void parse_mcs_data_cs_net(Stream & stream, ClientInfo * client_in
         memcpy(channel_item.name, stream.in_uint8p(8), 8);
         channel_item.flags = stream.in_uint32_be();
         channel_item.chanid = MCS_GLOBAL_CHANNEL + (index + 1);
-        #warning push_back is not the best choice here, as we have static space already available in channel_list, we could even let ChannelList manage parsing
+        TODO(" push_back is not the best choice here  as we have static space already available in channel_list  we could even let ChannelList manage parsing")
         channel_list.push_back(channel_item);
     }
 }
@@ -678,7 +678,7 @@ static inline void parse_mcs_data_sc_core(Stream & stream, int & use_rdp5)
     LOG(LOG_DEBUG, "Server RDP version is %d\n", rdp_version);
     if (1 == rdp_version){ // can't use rdp5
         use_rdp5 = 0;
-        #warning why caring of server_depth here ? Quite strange
+        TODO(" why caring of server_depth here ? Quite strange")
         //        this->server_depth = 8;
     }
 }
@@ -867,7 +867,7 @@ static inline void recv_mcs_connect_initial_pdu_with_gcc_conference_create_reque
 
         switch (tag){
             case CS_CORE:
-                #warning we should check length to call the two variants of core_data (or begin by reading the common part then the extended part)
+                TODO(" we should check length to call the two variants of core_data (or begin by reading the common part then the extended part)")
                 parse_mcs_data_cs_core(stream, client_info);
             break;
             case CS_SECURITY:
@@ -972,7 +972,7 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
 
     int length = 158 + 76 + 12 + 4;
 
-    #warning another option could be to emit channel list even if number of channel is zero. It looks more logical to me than not passing any channel information (what happens in this case ?)
+    TODO(" another option could be to emit channel list even if number of channel is zero. It looks more logical to me than not passing any channel information (what happens in this case ?)")
     if (channel_list.size() > 0){
         length += channel_list.size() * 12 + 8;
     }
@@ -1020,7 +1020,7 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
 
     /* See
     http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wceddk40/html/cxtsksupportingremotedesktopprotocol.asp */
-    #warning code should be updated to take care of keyboard type
+    TODO(" code should be updated to take care of keyboard type")
     stream.out_uint32_le(4); // g_keyboard_type
     LOG(LOG_INFO, "core::keyboardType = IBM enhanced (101- or 102-key) keyboard");
     stream.out_uint32_le(0); // g_keyboard_subtype
@@ -1051,7 +1051,7 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
 
     stream.out_uint16_le(CS_CLUSTER);
     stream.out_uint16_le(12);
-    #warning check that should depend on g_console_session
+    TODO(" check that should depend on g_console_session")
     stream.out_uint32_le(console_session ? 0xb : 9);
     stream.out_uint32_le(0);
 
@@ -1059,7 +1059,7 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
     stream.out_uint16_le(CS_SECURITY);
     stream.out_uint16_le(12); /* length */
 
-    #warning check that, should depend on g_encryption
+    TODO(" check that  should depend on g_encryption")
     /* encryption supported, 128-bit supported */
     stream.out_uint32_le(0x3);
     stream.out_uint32_le(0); /* Unknown */
@@ -1082,7 +1082,7 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
         }
     }
 
-    #warning create a function in stream that sets differed ber_len_offsets
+    TODO(" create a function in stream that sets differed ber_len_offsets")
     // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
     stream.set_out_ber_len_uint16(stream.p - stream.data - offset_data_len - 3, offset_data_len);
 
@@ -1155,7 +1155,7 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
 
 static inline void send_mcs_erect_domain_and_attach_user_request_pdu(Transport * trans)
 {
-    #warning there should be a way to merge both packets in the same stream to only perform one unique send
+    TODO(" there should be a way to merge both packets in the same stream to only perform one unique send")
     Stream edrq_stream(8192);
     X224Out edrq_tpdu(X224Packet::DT_TPDU, edrq_stream);
     edrq_stream.out_uint8((MCS_EDRQ << 2));
@@ -1173,7 +1173,7 @@ static inline void send_mcs_erect_domain_and_attach_user_request_pdu(Transport *
 
 static inline void recv_mcs_erect_domain_and_attach_user_request_pdu(Transport * trans, uint16_t & userid)
 {
-    #warning this code could lead to some problem if both MCS are combined in the same TPDU, we should manage this case
+    TODO(" this code could lead to some problem if both MCS are combined in the same TPDU  we should manage this case")
     {
         Stream stream(8192);
         X224In in(trans, stream);
@@ -1420,7 +1420,7 @@ static inline void send_mcs_channel_join_confirm_pdu(Transport * trans, uint16_t
     stream.out_uint8(0);
     stream.out_uint16_be(userid);
     stream.out_uint16_be(chanid);
-    #warning this should be sent only if different from requested chan_id
+    TODO(" this should be sent only if different from requested chan_id")
     stream.out_uint16_be(chanid);
     tpdu.end();
     tpdu.send(trans);
@@ -1429,7 +1429,7 @@ static inline void send_mcs_channel_join_confirm_pdu(Transport * trans, uint16_t
 static inline void send_mcs_channel_join_request_and_recv_confirm_pdu(Transport * trans,
                     uint16_t userid, ChannelList & channel_list)
 {
-    #warning the array size below is arbitrary, it should be checked to avoid buffer overflow
+    TODO(" the array size below is arbitrary  it should be checked to avoid buffer overflow")
 
     size_t num_channels = channel_list.size();
     uint16_t channels_id[100];
@@ -1624,8 +1624,8 @@ static inline void recv_sec_tag_sig(Stream & stream, uint16_t len)
 {
     stream.skip_uint8(len);
     /* Parse a public key structure */
-    #warning is padding always 8 bytes long, may signature length change ? Check in documentation
-    #warning we should check the signature is ok (using other provided parameters), this is not yet done today, signature is just dropped
+    TODO(" is padding always 8 bytes long  may signature length change ? Check in documentation")
+    TODO(" we should check the signature is ok (using other provided parameters)  this is not yet done today  signature is just dropped")
 }
 
 
@@ -2012,7 +2012,7 @@ static inline void send_mcs_connect_response_pdu_with_gcc_conference_create_resp
 
     assert(offset_len_mcs_data - offset_len_mcs_connect_response  == 38);
 
-    #warning create a function in stream that sets differed ber_len_offsets
+    TODO(" create a function in stream that sets differed ber_len_offsets")
     // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
     stream.set_out_ber_len_uint16(stream.p - stream.data - offset_len_mcs_data - 3, offset_len_mcs_data);
     // set BER_TAG_MCS_CONNECT_RESPONSE len
@@ -2371,7 +2371,7 @@ static inline void recv_mcs_connect_response_pdu_with_gcc_conference_create_resp
         memset(modulus, 0, sizeof(modulus));
         memset(exponent, 0, sizeof(exponent));
         memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
-        #warning check for the true size
+        TODO(" check for the true size")
         memset(server_random, 0, SEC_RANDOM_SIZE);
 
         uint16_t length;
@@ -2409,7 +2409,7 @@ static inline void recv_mcs_connect_response_pdu_with_gcc_conference_create_resp
             while (cr_stream.p < end) {
                 uint16_t tag = cr_stream.in_uint16_le();
                 length = cr_stream.in_uint16_le();
-                #warning this should not be necessary any more as received tag are fully decoded (but we should check length does not lead accessing data out of buffer)
+                TODO(" this should not be necessary any more as received tag are fully decoded (but we should check length does not lead accessing data out of buffer)")
                 uint8_t * next_tag = cr_stream.p + length;
 
                 switch (tag) {
@@ -2514,7 +2514,7 @@ static inline void recv_mcs_connect_response_pdu_with_gcc_conference_create_resp
 
             }
             ssl.rkey_free(server_public_key);
-            #warning find a way to correctly dispose of garbage at end of buffer
+            TODO(" find a way to correctly dispose of garbage at end of buffer")
             /* There's some garbage here we don't care about */
         }
 

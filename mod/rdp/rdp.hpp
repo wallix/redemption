@@ -93,7 +93,7 @@ struct rdp_orders {
     BGRPalette global_palette;
     BGRPalette memblt_palette;
 
-    #warning this cache_bitmap here looks strange. At least it's size should ne negotiated. And why is it not managed by the other cache management code ? This probably hide some kind of problem. See when working on cache secondary order primitives.
+    TODO(" this cache_bitmap here looks strange. At least it's size should ne negotiated. And why is it not managed by the other cache management code ? This probably hide some kind of problem. See when working on cache secondary order primitives.")
     Bitmap * cache_bitmap[3][10000];
 
     rdp_orders() :
@@ -122,7 +122,7 @@ struct rdp_orders {
         RDPBmpCache bmp(bpp);
         bmp.receive(stream, control, header, this->global_palette);
         
-        #warning add cache_id, cache_idx range check, and also size check based on cache size by type and uncompressed bitmap size
+        TODO(" add cache_id  cache_idx range check  and also size check based on cache size by type and uncompressed bitmap size")
         if (this->cache_bitmap[bmp.id][bmp.idx]) {
             delete this->cache_bitmap[bmp.id][bmp.idx];
         }
@@ -354,10 +354,10 @@ struct mod_rdp : public client_mod {
         this->decrypt.rc4_key_len = 16; /* 16 = 128 bit */
         this->encrypt.rc4_key_len = 16; /* 16 = 128 bit */
 
-        #warning and if hostname is really larger, what happens ? We should at least emit a warning log
+        TODO(" and if hostname is really larger  what happens ? We should at least emit a warning log")
         strncpy(this->hostname, hostname, 15);
         this->hostname[15] = 0;
-        #warning and if username is really larger, what happens ? We should at least emit a warning log
+        TODO(" and if username is really larger  what happens ? We should at least emit a warning log")
         strncpy(this->username, context.get(STRAUTHID_TARGET_USER), 127);
         this->username[127] = 0;
 
@@ -413,7 +413,7 @@ struct mod_rdp : public client_mod {
     virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
     {
         if (this->up_and_running) {
-            #warning is decoding and reencoding really necessary, a simple pass-through from front to back-end should be enough
+            TODO(" is decoding and reencoding really necessary  a simple pass-through from front to back-end should be enough")
             if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
                 this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_MOVE, x, y);
                 this->gd.front.mouse_x = x;
@@ -465,7 +465,7 @@ struct mod_rdp : public client_mod {
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, this->userid, channel.chanid);
 
-        #warning merge with Front::send_to_channel, the only difference now is the crypt level, that is set to 2 here and is as client_info says on front side
+        TODO(" merge with Front::send_to_channel  the only difference now is the crypt level  that is set to 2 here and is as client_info says on front side")
         SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
         
         stream.out_uint32_le(length);
@@ -786,7 +786,7 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_INFO, "ERR_SEC_EXPECTED_LICENCE_NEGOTIATION_PDU");
                 throw Error(ERR_SEC_EXPECTED_LICENCE_NEGOTIATION_PDU);
             }
-            #warning we haven't actually read all the actual data available, hence we can't check end. Implement full decoding and activate it.
+            TODO(" we haven't actually read all the actual data available  hence we can't check end. Implement full decoding and activate it.")
     //        in_tpdu.end();
             if (res){
                 this->state = MOD_RDP_CONNECTED;
@@ -1027,7 +1027,7 @@ struct mod_rdp : public client_mod {
                             len_combined_caps = stream.in_uint16_le();
                             stream.skip_uint8(len_src_descriptor);
                             this->process_server_caps(stream, len_combined_caps, this->use_rdp5);
-                            #warning we should be able to pack all the following sends to the same X224 TPDU, instead of creating a different one for each send
+                            TODO(" we should be able to pack all the following sends to the same X224 TPDU  instead of creating a different one for each send")
                             LOG(LOG_INFO, "Sending confirm active PDU");
                             this->send_confirm_active(mod, this->use_rdp5);
                             LOG(LOG_INFO, "Sending synchronize");
@@ -1057,7 +1057,7 @@ struct mod_rdp : public client_mod {
                         LOG(LOG_INFO, "Deactivate All PDU");
                         this->up_and_running = 0;
                         break;
-                    #warning this PDUTYPE is undocumented and seems to mean the same as type 10
+                    TODO(" this PDUTYPE is undocumented and seems to mean the same as type 10")
                     case RDP_PDU_REDIRECT:
                         break;
                     case 0:
@@ -1229,7 +1229,7 @@ struct mod_rdp : public client_mod {
             char order_caps[32];
 
             memset(order_caps, 0, 32);
-            #warning use symbolic constants for order numerotation
+            TODO(" use symbolic constants for order numerotation")
             order_caps[RDP::DESTBLT] = 1; /* dest blt */
             order_caps[RDP::PATBLT] = 1; /* pat blt */
             order_caps[RDP::SCREENBLT] = 1; /* screen blt */
@@ -1259,7 +1259,7 @@ struct mod_rdp : public client_mod {
         void out_bmpcache_caps(Stream & stream)
         {
             LOG(LOG_INFO, "Sending bmpcache caps to server\n");
-            #warning see details for bmpcache caps
+            TODO(" see details for bmpcache caps")
             stream.out_uint16_le(RDP_CAPSET_BMPCACHE);
             stream.out_uint16_le(RDP_CAPLEN_BMPCACHE);
             int Bpp = nbbytes(this->bpp);
@@ -1600,7 +1600,7 @@ struct mod_rdp : public client_mod {
             switch (message_type) {
             case RDP_POINTER_MOVE:
             {
-                #warning implement RDP_POINTER_MOVE
+                TODO(" implement RDP_POINTER_MOVE")
                 /* int x = */ stream.in_uint16_le();
                 /* int y = */ stream.in_uint16_le();
             }
@@ -1854,7 +1854,7 @@ struct mod_rdp : public client_mod {
             stream.skip_uint8(10);
             /* Receiving rdp_5 extra flags supported for RDP 5.0 and later versions*/
             int extraflags = stream.in_uint16_le();
-            #warning strange: causality seems inverted
+            TODO(" strange: causality seems inverted")
             if (extraflags == 0){
                 use_rdp5 = 0;
             }
@@ -2001,7 +2001,7 @@ struct mod_rdp : public client_mod {
             tpdu.send(this->trans);
         }
 
-        #warning duplicated code in front
+        TODO(" duplicated code in front")
         void send_synchronise() throw (Error)
         {
             Stream stream(8192);
@@ -2102,7 +2102,7 @@ struct mod_rdp : public client_mod {
                     stream.out_uint32_le(1);
                     stream.out_uint16_le(r.x);
                     stream.out_uint16_le(r.y);
-                    #warning check this -1 (difference between rect and clip)
+                    TODO(" check this -1 (difference between rect and clip)")
                     stream.out_uint16_le(r.cx - 1);
                     stream.out_uint16_le(r.cy - 1);
 
@@ -2167,7 +2167,7 @@ struct mod_rdp : public client_mod {
             {
                 struct rdp_cursor cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
-                #warning we should pass in a cursor to set_pointer instead of individual fields
+                TODO(" we should pass in a cursor to set_pointer instead of individual fields")
                 mod->gd.server_set_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);
                 mod->set_pointer_display();
             }
@@ -2344,7 +2344,7 @@ struct mod_rdp : public client_mod {
         stream.out_uint16_be(3);	/* number of caches in this set */
 
         /* Sending bitmap capabilities version 2 */
-        #warning no need any more to set a limit at 2000, use real figures
+        TODO(" no need any more to set a limit at 2000  use real figures")
         stream.out_uint32_le(std::min(client_info.cache1_entries, (uint32_t)2000));
         stream.out_uint32_le(std::min(client_info.cache2_entries, (uint32_t)2000));
         stream.out_uint32_le(std::min(client_info.cache3_entries, (uint32_t)2000));

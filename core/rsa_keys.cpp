@@ -96,7 +96,7 @@ void Rsakeys::init(istream & Rsakeys_stream){
         this->hex_str_to_bin(pri, this->pri_exp, 64);
 
     } catch (exception& e){
-#warning TODO some cleaner syntax error management. I could define a testconf target in command line and show errors. Catching all errors at once would also be handy.
+TODO(" TODO some cleaner syntax error management. I could define a testconf target in command line and show errors. Catching all errors at once would also be handy.")
         clog << "Exception raised " << e.what();
         _exit(1);
     };

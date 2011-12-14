@@ -21,6 +21,10 @@ rule defines ( properties * )
     defs += <define>SHARE_PATH='\"/usr/local/share/rdpproxy\"' ;
     defs += <define>CFG_PATH='\"/etc/rdpproxy\"' ;
     defs += <define>FIXTURES_PATH='\"./tests/fixtures\"' ;
+    if [ os.environ SILENT ]
+    {
+        defs += <define>SILENT ;
+    }
     return $(defs) ;
 }
 

@@ -59,7 +59,7 @@ struct selector_mod : public internal_mod {
         NO_FOCUS
     };
 
-    #warning this is hideous, find another way
+    TODO(" this is hideous  find another way")
     // the real goal is to allow a module to dialogate with acl provider
     // (manage changes of context) without stopping it. This should not be so
     // hard. We just have to provide a signal meaning to send context without

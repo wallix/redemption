@@ -73,7 +73,7 @@ struct BitmapCache : public BmpCache {
     {
     }
 
-    #warning we should pass in src as a bitmap
+    TODO(" we should pass in src as a bitmap")
     uint32_t add_bitmap(int src_cx, int src_cy, const uint8_t * src_data,
                     const Rect & tile, int src_bpp, BGRPalette & src_palette)
     {

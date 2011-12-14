@@ -24,7 +24,7 @@
 #if !defined(__RDPORDERSSECONDARYBMPCACHE_HPP__)
 #define __RDPORDERSSECONDARYBMPCACHE_HPP__
 
-#warning RDPBmpCache works with a given item (id, idx) inside a given Bitmap cache, hence we should not provide it with the bitmap itself, but with the cache containing the said bitmap. That said we should also have both lowlevel bitmaps (bpp independant) and curryed bitmap with a fixed given bpp. RDPBmpCache relates to a cache containing curryed bitmaps, as the actual id to use depends off the bitmap size in bytes, itself depending from bpp. Alternatively, this bpp could be attached to the cache itself as bpp is unique for a given cache.
+TODO(" RDPBmpCache works with a given item (id, idx) inside a given Bitmap cache, hence we should not provide it with the bitmap itself  but with the cache containing the said bitmap. That said we should also have both lowlevel bitmaps (bpp independant) and curryed bitmap with a fixed given bpp. RDPBmpCache relates to a cache containing curryed bitmaps  as the actual id to use depends off the bitmap size in bytes  itself depending from bpp. Alternatively  this bpp could be attached to the cache itself as bpp is unique for a given cache.")
 class RDPBmpCache {
     // [MS-RDPGDI] 2.2.2.2.1.2.2 Cache Bitmap - Revision 1 (CACHE_BITMAP_ORDER)
     // ========================================================================
@@ -522,7 +522,7 @@ class RDPBmpCache {
 
     void emit(Stream & stream, const int bitmap_cache_version, const int use_bitmap_comp, const int op2) const
     {
-        #warning logs below should be dependant on debug flags
+        TODO(" logs below should be dependant on debug flags")
         using namespace RDP;
         switch (bitmap_cache_version){
         case 0:
@@ -652,7 +652,7 @@ class RDPBmpCache {
         using namespace RDP;
         unsigned int row_size = align4(this->bmp->cx * nbbytes(this->bpp));
 
-        #warning this should become some kind of emit header
+        TODO(" this should become some kind of emit header")
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);
 //        LOG(LOG_INFO, "out_uint8::Standard and secondary");
@@ -885,7 +885,7 @@ class RDPBmpCache {
         using namespace RDP;
         unsigned int row_size = align4(this->bmp->cx * nbbytes(this->bpp));
 
-        #warning this should become some kind of emit header
+        TODO(" this should become some kind of emit header")
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);
 
@@ -895,7 +895,7 @@ class RDPBmpCache {
 
         int bitsPerPixelId = nbbytes(this->bpp)+2;
 
-        #warning some optimisations are possible here if we manage flags, but what will we do with persistant bitmaps ? We definitely do not want to save them on disk from here. There must be some kind of persistant structure where to save them and check if they exist.
+        TODO(" some optimisations are possible here if we manage flags  but what will we do with persistant bitmaps ? We definitely do not want to save them on disk from here. There must be some kind of persistant structure where to save them and check if they exist.")
         uint16_t flags = 0;
 
         // header::extraFlags : (flags:9, bitsPerPixelId:3, cacheId:3)
@@ -983,7 +983,7 @@ class RDPBmpCache {
     void receive_raw_v2(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
         using namespace RDP;
-        #warning DO NOT USE : not implemented, we do not know yet how to manage persistant bitmap storage
+        TODO(" DO NOT USE : not implemented  we do not know yet how to manage persistant bitmap storage")
     }
 
     void receive_raw_v1(Stream & stream, const uint8_t control, 
@@ -1049,7 +1049,7 @@ class RDPBmpCache {
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
-        #warning some error may occur inside bitmap (memory allocation, file load, decompression) we should catch thrown exception and emit some explicit log if that occurs (anyway that will lead to end of connection, as we can't do much to repair such problems).
+        TODO(" some error may occur inside bitmap (memory allocation  file load  decompression) we should catch thrown exception and emit some explicit log if that occurs (anyway that will lead to end of connection  as we can't do much to repair such problems).")
         this->bmp = new Bitmap(bpp, &palette, width, height, stream.in_uint8p(bufsize), bufsize);
         if (bufsize != this->bmp->bmp_size(bpp)){
             LOG(LOG_WARNING, "broadcasted bufsize should be the same as bmp size computed from cx, cy, bpp and alignment rules");

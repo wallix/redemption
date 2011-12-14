@@ -264,14 +264,14 @@ struct GraphicDeviceMod : public GraphicDevice
         }
     }
 
-    #warning implementation of the server_draw_text function below is quite broken (a small subset of possibilities is implemented, especially for data). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
+    TODO(" implementation of the server_draw_text function below is quite broken (a small subset of possibilities is implemented  especially for data). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
     virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
         setlocale(LC_CTYPE, "fr_FR.UTF-8");
         this->send_global_palette();
 
         // add text to glyph cache
-        #warning use mbsrtowcs instead
+        TODO(" use mbsrtowcs instead")
         int len = mbstowcs(0, text, 0);
         wchar_t* wstr = new wchar_t[len + 2];
         mbstowcs(wstr, text, len + 1);
@@ -284,7 +284,7 @@ struct GraphicDeviceMod : public GraphicDevice
         int distance_from_previous_fragment = 0;
         for (int index = 0; index < len; index++) {
             FontChar* font_item = this->front.font.font_items[wstr[index]];
-            #warning avoid passing parameters by reference to get results
+            TODO(" avoid passing parameters by reference to get results")
             switch (this->front.cache.add_glyph(font_item, f, c))
             {
                 case Cache::GLYPH_ADDED_TO_CACHE:
@@ -405,7 +405,7 @@ struct GraphicDeviceMod : public GraphicDevice
         }
     }
 
-    #warning we should replace mem_blt below by draw
+    TODO(" we should replace mem_blt below by draw")
     virtual void draw(const RDPMemBlt & memblt, const Rect & clip){
     }
 
@@ -414,7 +414,7 @@ struct GraphicDeviceMod : public GraphicDevice
         uint8_t palette_id = ((memblt.cache_id >> 4) >= 6)?0:(memblt.cache_id >> 4);
 
         if (this->get_front_bpp() == 8){
-            #warning there may be some performance issue when client is 8 bits, palette is sent way too often
+            TODO(" there may be some performance issue when client is 8 bits  palette is sent way too often")
             this->palette_sent = false;
             this->send_global_palette();
             if (!this->palette_memblt_sent[palette_id]) {
@@ -438,11 +438,11 @@ struct GraphicDeviceMod : public GraphicDevice
             for (int x = 0; x < dst.cx ; x += 32) {
                 int cx = std::min(32, dst.cx - x);
                 const Rect tile(x, y, cx, cy);
-                #warning simplify this code and add unit tests. It is much too complicated and that introduce subtile bugs
+                TODO(" simplify this code and add unit tests. It is much too complicated and that introduce subtile bugs")
                 if (!clip.intersect(tile.offset(dst.x, dst.y)).isempty()
                 && (src_r.cx > src_r.x + x)
                 && (src_r.cy > src_r.y + y)){
-                    #warning transmit a bitmap to add_bitmap instead of individual components
+                    TODO(" transmit a bitmap to add_bitmap instead of individual components")
                      uint32_t cache_ref = this->front.bmp_cache->add_bitmap(
                                                 src_r.cx, src_r.cy,
                                                 src_data,
@@ -588,7 +588,7 @@ struct GraphicDeviceMod : public GraphicDevice
             for (int x = 0; x < dst.cx ; x += 32) {
                 int cx = std::min(32, dst.cx - x);
                 const Rect tile(x, y, cx, cy);
-                #warning simplify this code and add unit tests. It is much too complicated and that introduce subtile bugs
+                TODO(" simplify this code and add unit tests. It is much too complicated and that introduce subtile bugs")
 //                LOG(LOG_INFO, "tile at dst = tile(%u, %u %u, %u) dst(%u, %u) src(%u, %u, %u, %u) clip(%u, %u, %u, %u)",
 //                    tile.x, tile.y, tile.cx, tile.cy, dst.x, dst.y, src_r.x, src_r.y, src_r.cx, src_r.cy,
 //                    clip.x, clip.y, clip.cx, clip.cy);

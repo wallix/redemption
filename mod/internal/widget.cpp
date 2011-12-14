@@ -71,7 +71,7 @@ Widget::Widget(GraphicalContext * mod, int width, int height, Widget & parent, i
 
     this->has_focus = false;
 
-#warning build the right type of bitmap = class hierarchy
+TODO(" build the right type of bitmap = class hierarchy")
     /* 0 = bitmap 1 = window 2 = screen 3 = button 4 = image 5 = edit
        6 = label 7 = combo 8 = special */
     this->type = type;
@@ -160,7 +160,7 @@ struct Widget* Widget::widget_at_pos(int x, int y) {
     return this;
 }
 
-    #warning we should be able to pass only one pointer, either window if we are dealing with a window or this->parent if we are dealing with any other kind of widget
+    TODO(" we should be able to pass only one pointer  either window if we are dealing with a window or this->parent if we are dealing with any other kind of widget")
 const Region Widget::get_visible_region(Widget * window, Widget * widget, const Rect & rect)
 {
     Region region;
@@ -259,7 +259,7 @@ void widget_popup::draw(const Rect & clip)
             RDPOpaqueRect(Rect(scr_r.x, scr_r.y, this->rect.cx, this->rect.cy), WHITE),
             region.rects[ir].intersect(this->to_screen_rect(clip)));
 
-        #warning this should be a two stages process, first prepare drop box data, then call draw_xxx that use that data to draw. For now everything is mixed up, (and that is not good)
+        TODO(" this should be a two stages process  first prepare drop box data  then call draw_xxx that use that data to draw. For now everything is mixed up  (and that is not good)")
         /* draw the list items */
         if (this->popped_from != 0) {
             int y = 0;
@@ -375,7 +375,7 @@ void window::def_proc(const int msg, const int param1, const int param2, const K
         // find control that has focus
         size_t size = this->child_list.size();
         size_t i_focus;
-        #warning we should iterate only on controls that have tabstop setted (or another attribute can_get_focus ?). Or we could also keep index of focused_control in child_list (but do not forget to reset it when we redefine controls).
+        TODO(" we should iterate only on controls that have tabstop setted (or another attribute can_get_focus ?). Or we could also keep index of focused_control in child_list (but do not forget to reset it when we redefine controls).")
         for (i_focus = 0; i_focus < size; i_focus++){
             if (this->child_list[i_focus]->has_focus && this->child_list[i_focus]->tab_stop){
                 control_with_focus = this->child_list[i_focus];
@@ -502,7 +502,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
                 strncpy(text, this->buffer, 255);
 
                 int index = this->edit_pos;
-                #warning why not always keep wcs instead of constantly converting back and from wcs ?
+                TODO(" why not always keep wcs instead of constantly converting back and from wcs ?")
                 int len = mbstowcs(0, text, 0);
                 wchar_t wstr[len + 16];
                 mbstowcs(wstr, text, len + 1);
@@ -510,7 +510,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
                     wstr[len] = c;
                 }
                 else{
-                #warning is backward loop necessary ? a memcpy could do the trick
+                TODO(" is backward loop necessary ? a memcpy could do the trick")
                     int i;
                     for (i = (len - 1); i >= index; i--) {
                         wstr[i + 1] = wstr[i];

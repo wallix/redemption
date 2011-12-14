@@ -236,12 +236,12 @@ struct xup_mod : public client_mod {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                          #warning see clip management
+                          TODO(" see clip management")
 //                        this->gd.server_set_clip(r);
                     }
                     break;
                     case 11: /* server_reset_clip */
-                          #warning see clip management
+                          TODO(" see clip management")
 //                        this->gd.server_reset_clip();
                     break;
                     case 12: /* server_set_fgcolor */
@@ -275,7 +275,7 @@ struct xup_mod : public client_mod {
                     {
                         int x = stream.in_sint16_le();
                         int y = stream.in_sint16_le();
-                        #warning copy seems useless here
+                        TODO(" copy seems useless here")
                         uint8_t cur_data[32 * (32 * 3)];
                         uint8_t cur_mask[32 * (32 / 8)];
                         memcpy(cur_data, stream.in_uint8p(32 * (32 * 3)), 32 * (32 * 3));

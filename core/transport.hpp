@@ -78,7 +78,7 @@ static inline int connect(const char* ip, int port, const char * name,
             s.sin_port = htons(port);
             s.sin_addr.s_addr = inet_addr(ip);
             if (s.sin_addr.s_addr == INADDR_NONE) {
-            #warning gethostbyname is obsolete use new function getnameinfo
+            TODO(" gethostbyname is obsolete use new function getnameinfo")
                 LOG(LOG_INFO, "Asking ip to DNS for %s\n", ip);
                 struct hostent *h = gethostbyname(ip);
                 if (!h) {
@@ -90,7 +90,7 @@ static inline int connect(const char* ip, int port, const char * name,
                 }
                 s.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
             }
-            #warning we should control and detect timeout instead of relying on default connect behavior. Maybe set O_NONBLOCK and use poll to manage timeouts ?
+            TODO(" we should control and detect timeout instead of relying on default connect behavior. Maybe set O_NONBLOCK and use poll to manage timeouts ?")
             if (-1 == ::connect(sck, (struct sockaddr*)&s, sizeof(s))){
                 LOG(LOG_INFO, "connection to %s failed"
                     " with errno = %d (%s)\n",
@@ -204,7 +204,7 @@ class OutFileTransport : public Transport {
     // recv is not implemented for OutFileTransport
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        #warning OutFileTransport should raise an exception if we try to use it for recv
+        TODO(" OutFileTransport should raise an exception if we try to use it for recv")
     }
 
     using Transport::send;
@@ -243,7 +243,7 @@ class InFileTransport : public Transport {
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        #warning OutFileTransport should raise an exception if we try to use it for recv
+        TODO(" OutFileTransport should raise an exception if we try to use it for recv")
         int status = 0;
         size_t remaining_len = len;
         char * buffer = *pbuffer;
@@ -267,7 +267,7 @@ class InFileTransport : public Transport {
     // send is not implemented for InFileTransport
     using Transport::send;
     virtual void send(const char * const buffer, int len) throw (Error) {
-        #warning InFileTransport should raise an exception if we try to use it for sending
+        TODO(" InFileTransport should raise an exception if we try to use it for sending")
     }
 
 };

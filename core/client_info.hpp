@@ -126,6 +126,7 @@ struct ClientInfo {
         this->channel_code = ini->globals.channel_code;
     }
 
+TODO(" the value for INFO_ENABLEWINDOWSKEY is surprising also is CompressionTypeMask. Check if documentation is really accurate on real clients.")
 
 enum {
     INFO_MOUSE                  = 0x00000001,
@@ -136,7 +137,6 @@ enum {
     INFO_LOGONNOTIFY            = 0x00000040,
     INFO_COMPRESSION            = 0x00000080,
     CompressionTypeMask         = 0x00001E00,
-#warning the value for INFO_ENABLEWINDOWSKEY is surprising also is CompressionTypeMask. Check if documentation is really accurate on real clients.
     INFO_ENABLEWINDOWSKEY       = 0x00000100,
     INFO_REMOTECONSOLEAUDIO     = 0x00002000,
     INFO_FORCE_ENCRYPTED_CS_PDU = 0x00004000,
@@ -307,7 +307,7 @@ enum {
 // |                                        | 7.0 servers.                     |
 // +----------------------------------------+----------------------------------+
 
-// The CompressionTypeMask is a 4-bit enumerated value containing the highest 
+// The CompressionTypeMask is a 4-bit enumerated value containing the highest
 // compression package support available on the client. The packages codes are:
 
 // +-----------------------------+--------------------------------------------+
@@ -324,7 +324,7 @@ enum {
 // |                             | section 3.1.8.2).                          |
 // +-----------------------------+--------------------------------------------+
 
-// If a client supports compression package n then it MUST support packages 
+// If a client supports compression package n then it MUST support packages
 // 0...(n - 1).
 
 // cbDomain (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
@@ -394,7 +394,7 @@ enum {
 
 // 2.2.1.11.1.1.1 Extended Info Packet (TS_EXTENDED_INFO_PACKET)
 // =============================================================
-// The TS_EXTENDED_INFO_PACKET structure contains user information specific to 
+// The TS_EXTENDED_INFO_PACKET structure contains user information specific to
 // RDP 5.0, 5.1, 5.2, 6.0, 6.1, and 7.0.
 
 // clientAddressFamily (2 bytes): A 16-bit, unsigned integer. The numeric socket
@@ -558,13 +558,13 @@ enum {
 // wHour (2 bytes): A 16-bit, unsigned integer. The hour when transition occurs
 // (0 to 23).
 
-// wMinute (2 bytes): A 16-bit, unsigned integer. The minute when transition 
+// wMinute (2 bytes): A 16-bit, unsigned integer. The minute when transition
 // occurs (0 to 59).
 
-// wSecond (2 bytes): A 16-bit, unsigned integer. The second when transition 
+// wSecond (2 bytes): A 16-bit, unsigned integer. The second when transition
 // occurs (0 to 59).
 
-// wMilliseconds (2 bytes): A 16-bit, unsigned integer. The millisecond when 
+// wMilliseconds (2 bytes): A 16-bit, unsigned integer. The millisecond when
 // transition occurs (0 to 999).
 
 

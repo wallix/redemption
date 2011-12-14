@@ -24,6 +24,14 @@
 #ifndef LOG_H
 #define LOG_H
 
+
+#ifdef SILENT
+#define TODO(x)
+#else
+#define DO_PRAGMA(x) _Pragma (#x)
+#define TODO(x) DO_PRAGMA(message ("TODO - " x))
+#endif
+
 #include <stdio.h>
 #include <syslog.h>
 #include <sys/types.h>

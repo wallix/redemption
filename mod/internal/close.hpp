@@ -103,7 +103,7 @@ struct close_mod : public internal_mod {
 
     virtual ~close_mod()
     {
-        #warning here delete all widgets from this->screen.child_list
+        TODO(" here delete all widgets from this->screen.child_list")
     }
 
     virtual void rdp_input_invalidate(const Rect & rect)

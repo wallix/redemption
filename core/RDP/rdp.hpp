@@ -247,7 +247,7 @@ class ShareControlIn
     }
 
     void end(){
-        #warning put some assertion here to ensure all data has been consumed
+        TODO(" put some assertion here to ensure all data has been consumed")
     }
 };
 
@@ -296,7 +296,7 @@ class ShareDataIn
     }
 
     void end(){
-        #warning put some assertion here to ensure all data has been consumed
+        TODO(" put some assertion here to ensure all data has been consumed")
     }
 };
 

@@ -65,9 +65,9 @@ class Dico {
     typedef std::map<const char *, KeywordValue *, KeyComp> t_kmap;
     t_kmap map;
 
-    #warning get should return a non modifiable string (const char * const) and return "" if ASK to avoid showing it
+    TODO(" get should return a non modifiable string (const char * const) and return "" if ASK to avoid showing it")
     char * get(const char * key) {
-        #warning be be raising an exception would be better
+        TODO(" be be raising an exception would be better")
         if (this->map.find(key) == this->map.end()){
             LOG(LOG_DEBUG, "'%s' Not found in context\n", key);
             return NULL;
@@ -88,13 +88,13 @@ class Dico {
     }
 
     bool get_bool(const char * key) {
-        #warning may be raising an exception would be better
+        TODO(" may be raising an exception would be better")
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
             return false;
         }
         const char * found = it->second->value+1;
-        #warning define a set of keywords and look if found is in this set
+        TODO(" define a set of keywords and look if found is in this set")
         return ((found[0] == 0)
         || (strncasecmp("1", found, 2) == 0)
         || (strncasecmp("on", found, 3) == 0)
@@ -103,7 +103,7 @@ class Dico {
     }
 
     bool is_asked(const char * key) {
-        #warning may be raising an exception would be better
+        TODO(" may be raising an exception would be better")
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
             return false; // if key not found we say value if greater
@@ -114,7 +114,7 @@ class Dico {
     }
 
     bool cmp(const char * key, const char * value) {
-        #warning may be raising an exception would be better
+        TODO(" may be raising an exception would be better")
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
             return false; // if key not found we say value if greater
@@ -125,7 +125,7 @@ class Dico {
     }
 
     void cpy(const char * key, int value) {
-        #warning may be raising an exception would be better
+        TODO(" may be raising an exception would be better")
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
             return;
@@ -137,7 +137,7 @@ class Dico {
     }
 
     void cpy(const char * key, const char * value) {
-        #warning may be raising an exception would be better
+        TODO(" may be raising an exception would be better")
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
             return;
@@ -148,7 +148,7 @@ class Dico {
     }
 
     void ask(const char * key) {
-        #warning may be raising an exception would be better
+        TODO(" may be raising an exception would be better")
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
             return;
@@ -159,7 +159,7 @@ class Dico {
 
     Dico(ProtocolKeyword * KeywordsDefinitions, unsigned nbkeywords)
     {
-        #warning check keywords are not duplicated, if it happens it will cause memory leak
+        TODO(" check keywords are not duplicated  if it happens it will cause memory leak")
         for (unsigned i = 0; i < nbkeywords; i++){
                 KeywordValue * item = new KeywordValue();
                 item->ask = V_DEFAULT;

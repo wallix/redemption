@@ -307,7 +307,7 @@ class StaticCapture : public Drawable
         }
         this->start = now;
 
-        #warning the mouse structure below should be created at run time from a simpler (more readable) format like the one used for digits above in timestamp.
+        TODO(" the mouse structure below should be created at run time from a simpler (more readable) format like the one used for digits above in timestamp.")
         static struct {
             uint8_t y;
             uint8_t x;

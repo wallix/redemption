@@ -154,7 +154,7 @@ static inline int get_pixel(uint8_t* data, int x, int y, int width, int bpp)
     int start = y * real_width + x / pixels_per_byte;
     int shift = x & (pixels_per_byte-1);
 
-    #warning this need some cleanup, but we should define unit tests before correcting it, because mistaking is easy in these kind of things.
+    TODO(" this need some cleanup  but we should define unit tests before correcting it  because mistaking is easy in these kind of things.")
     if (bpp == 1) {
         return (data[start] & (0x80 >> shift)) != 0;
     } else if (bpp == 4) {
@@ -189,7 +189,7 @@ static inline int load_pointer(const char* file_name, uint8_t* data, uint8_t* ma
         }
         close(fd);
 
-        #warning : the ways we do it now we have some risk of reading out of buffer (data that are not from file)
+        TODO(" : the ways we do it now we have some risk of reading out of buffer (data that are not from file)")
 
         stream.skip_uint8(6);
         int w = stream.in_uint8();
@@ -222,7 +222,7 @@ static inline int load_pointer(const char* file_name, uint8_t* data, uint8_t* ma
                 memcpy(palette, stream.in_uint8p(64), 64);
                 for (int i = 0; i < 32; i++) {
                     for (int j = 0; j < 32; j++) {
-            #warning probably bogus, we are in case bpp = 4 and we call get_pixel with 1 as bpp
+            TODO(" probably bogus  we are in case bpp = 4 and we call get_pixel with 1 as bpp")
                         int pixel = palette[get_pixel(stream.p, j, i, 32, 1)];
                         *data = pixel;
                         data++;
@@ -561,7 +561,7 @@ struct Session {
         FD_ZERO(&rfds);
         FD_ZERO(&wfds);
 
-        #warning we should manage some **real** timeout here, if context didn't answered in time, then we should close session.
+        TODO(" we should manage some **real** timeout here  if context didn't answered in time  then we should close session.")
         struct timeval timeout = { 1, 0 };
 
         this->front_event->add_to_fd_set(rfds, max);
@@ -620,14 +620,14 @@ struct Session {
         }
 
         // incoming data from context
-        #warning this should use the WAIT_FOR_CONTEXT state or some race conditon may cause mayhem
+        TODO(" this should use the WAIT_FOR_CONTEXT state or some race conditon may cause mayhem")
         if (this->sesman->close_on_timestamp(timestamp)
         || !this->sesman->keep_alive_or_inactivity(this->keep_alive_time, timestamp, this->trans)){
             this->internal_state = SESSION_STATE_STOP;
             this->context->nextmod = ModContext::INTERNAL_CLOSE;
             if (this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context)){
                 this->keep_alive_time = 0;
-                #warning move that to sesman (to hide implementation details)
+                TODO(" move that to sesman (to hide implementation details)")
                 if (this->sesman->auth_event){
                     delete this->sesman->auth_event;
                     this->sesman->auth_event = 0;
@@ -760,7 +760,7 @@ struct Session {
         return this->internal_state;
     }
 
-    #warning use exception to return error status instead of boolean
+    TODO(" use exception to return error status instead of boolean")
     bool session_setup_mod(int status, const ModContext * context)
     {
         if (this->verbose){
@@ -779,7 +779,7 @@ struct Session {
                 // default is "allow", do nothing special
             }
 
-            #warning wait_obj should become implementation details of modules, sesman and front end
+            TODO(" wait_obj should become implementation details of modules  sesman and front end")
             if (this->back_event) {
                 delete this->back_event;
                 this->back_event = 0;
@@ -834,7 +834,7 @@ struct Session {
                             }
                             this->mod = new close_mod(this->back_event, *this->context, *this->front, this->ini);
 
-                            #warning we should probably send mouse pointers before any internal module connection
+                            TODO(" we should probably send mouse pointers before any internal module connection")
                             struct pointer_item pointer_item;
 
                             memset(&pointer_item, 0, sizeof(pointer_item));

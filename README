@@ -119,16 +119,24 @@ providing a login and a password from command line.
  $ xfreerdp -u 'bouncer' -p 'bouncer' 127.0.0.1
 
 
-Q - Why are there so many warnings when compiling ReDemPtion ?
+Q - Why are there so many #pragma messages when compiling ReDemPtion ?
 -------------------------------------------------------------
 
-Mostly because we put them here using #warning directives.
-The final goal is to remove them to get a "no warning no error" code, but we
-strongly believe that potential problems or architecture defects should not go
-unnoticed, even if compiler can't detect them.
+Because we put them there to avoid forgetting foreseen troubles. It also
+avoid stopping current coding to fix every bit of suspicious code on the fly,
+but to keep some physical trace (and show to readers) that some parts of the
+code or of the design are indeed suspicious.
+The final goal is to remove them all, but we strongly believe that potential
+problems or architecture defects should not go unnoticed, even when compiler
+can't detect them.
 Our code contains more or less 250 of such warnings, inserted by hand.
 When compiling you see them several times as we choose a special "headers only"
 coding style. Why we did so is another question.
+
+If you want to silent these messages, just set environment variable SILENT,
+or compile using:
+
+ $ SILENT=1 bjam
 
 
 Q - Why did you choose this special "headers only" coding style ?

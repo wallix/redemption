@@ -168,7 +168,7 @@ public:
         if (this->ini->globals.debug.front){
             LOG(LOG_INFO, "Front::reset()");
         }
-        #warning is it necessary (or even useful) to send remaining drawing orders before resetting ?
+        TODO(" is it necessary (or even useful) to send remaining drawing orders before resetting ?")
         this->orders->flush();
 
         /* shut down the rdp client */
@@ -198,7 +198,7 @@ public:
     void set_keyboard_layout()
     {
         /* initialising keymap */
-        #warning I should move that to client_info, this is the place where I'm really sure the bitmap is known
+        TODO(" I should move that to client_info  this is the place where I'm really sure the bitmap is known")
         char filename[256];
         snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->get_client_info().keylayout);
         LOG(LOG_INFO, "loading keymap %s\n", filename);
@@ -827,8 +827,8 @@ public:
                     this->pri_exp, 64);
 
         // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
-        #warning looks like decrypt sign key is never used, if it's true remove it from CryptContext
-        #warning this methode should probably move to ssl_calls
+        TODO(" looks like decrypt sign key is never used  if it's true remove it from CryptContext")
+        TODO(" this methode should probably move to ssl_calls")
         rdp_sec_generate_keys(
             this->decrypt,
             this->encrypt,
@@ -991,7 +991,7 @@ public:
 
         X224In tpdu(this->trans, stream);
 
-        #warning before doing this we should check we got DT_TPDU, if we got a DR (Disconnect Request), we should not proceed
+        TODO(" before doing this we should check we got DT_TPDU  if we got a DR (Disconnect Request)  we should not proceed")
         McsIn mcs_in(stream);
 
         // Disconnect Provider Ultimatum datagram
@@ -1058,7 +1058,7 @@ public:
         }
         else {
             while (stream.p < stream.end) {
-                #warning here should be a ShareControlHeader/ShareDataHeader, check
+                TODO(" here should be a ShareControlHeader/ShareDataHeader  check")
                 int length = stream.in_uint16_le();
                 uint8_t * next_packet = stream.p + length;
                 if (length == 0x8000) {
@@ -1067,7 +1067,7 @@ public:
                 else {
                     int pdu_code = stream.in_uint16_le();
                     stream.skip_uint8(2); /* mcs user id */
-                #warning valgrind says: Conditional jump or move depends on uninitialised value(s)
+                TODO(" valgrind says: Conditional jump or move depends on uninitialised value(s)")
                     switch (pdu_code & 0xf) {
 
                     case 0:
@@ -1090,7 +1090,7 @@ public:
                         // this is rdp_process_data that will set up_and_running to 1
                         // when fonts have been received
                         // we will not exit this loop until we are in this state.
-                        #warning see what happen if we never receive up_and_running due to some error in client code ?
+                        TODO(" see what happen if we never receive up_and_running due to some error in client code ?")
                         this->process_data(stream, cb);
                         break;
                     case PDUTYPE_DEACTIVATEALLPDU:
@@ -1771,7 +1771,7 @@ public:
 // targetUser (2 bytes): A 16-bit, unsigned integer. The MCS channel ID of the
 //   target user.
 
-    #warning duplicated code in mod/rdp
+    TODO(" duplicated code in mod/rdp")
     void send_synchronize()
     {
         LOG(LOG_INFO, "send_synchronize");
@@ -1872,7 +1872,7 @@ public:
                                 0x2b, 0x00, 0x2a, 0x00
                               };
 
-        #warning we should create some RDPStream object created on init and sent before destruction
+        TODO(" we should create some RDPStream object created on init and sent before destruction")
         Stream stream(8192);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
@@ -1921,8 +1921,8 @@ public:
                     int16_t param1 = stream.in_sint16_le();
                     int16_t param2 = stream.in_sint16_le();
 
-                    #warning we should always call send_input with original data, if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it
-                    #warning with the scheme above, any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.
+                    TODO(" we should always call send_input with original data  if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it")
+                    TODO(" with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.")
                     switch (msg_type) {
                     case RDP_INPUT_SYNCHRONIZE:
                         if (this->ini->globals.debug.front){
@@ -1937,7 +1937,7 @@ public:
                             LOG(LOG_INFO, "RDP_INPUT_SCANCODE");
                         }
                         {
-                            #warning move that to Keymap
+                            TODO(" move that to Keymap")
                             long p1 = param1 % 128;
                             this->keymap.keys[p1] = 1 | device_flags;
                             if ((device_flags & KBD_FLAG_UP) == 0) { /* 0x8000 */

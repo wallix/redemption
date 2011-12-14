@@ -333,16 +333,16 @@ struct RdpLicence {
     RdpLicence(const char * hostname) : licence_issued(0) {
         memset(this->licence_key, 0, 16);
         memset(this->licence_sign_key, 0, 16);
-        #warning licence loading should be done before creating protocol layers
+        TODO(" licence loading should be done before creating protocol layers")
         struct stat st;
         char path[256];
         sprintf(path, "/etc/xrdp/.xrdp/licence.%s", hostname);
         int fd = open(path, O_RDONLY);
         if (fd != -1 && fstat(fd, &st) != 0){
             this->licence_data = (uint8_t *)malloc(this->licence_size);
-            #warning check error code here
+            TODO(" check error code here")
             if (((int)this->licence_size) != read(fd, this->licence_data, this->licence_size)){
-                #warning throwing an error would be better
+                TODO(" throwing an error would be better")
                 return;
             }
             close(fd);
@@ -507,7 +507,7 @@ struct RdpLicence {
         return 1;
     }
 
-    #warning this is not supported yet, but using rdp_save_licence we would keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Anyway the use of files to stoe licences should be abstracted.
+    TODO(" this is not supported yet  but using rdp_save_licence we would keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Anyway the use of files to stoe licences should be abstracted.")
     void rdp_save_licence(uint8_t *data, int length, const char * hostname)
     {
         int fd;

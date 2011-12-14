@@ -77,7 +77,7 @@ struct window_dialog : public window
         if (this->modal_dialog != 0 && msg != 100) {
             return;
         }
-        #warning use symbolic button ids instead of constants 2 and 3
+        TODO(" use symbolic button ids instead of constants 2 and 3")
         if (msg == 1) { /* click */
             LOG(LOG_INFO, "windget_window_dialog::notify %d sender->id=%d", msg, sender->id);
             switch (sender->id) {

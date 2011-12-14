@@ -38,7 +38,7 @@
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
 
-#warning remove this inheritance. Client_mod should be an interface object provided to mod_vnc (and other mods)
+TODO(" remove this inheritance. Client_mod should be an interface object provided to mod_vnc (and other mods)")
 struct mod_vnc : public client_mod {
     char dummy[1024];
     /* mod data */
@@ -137,8 +137,8 @@ struct mod_vnc : public client_mod {
                 {
                     Stream stream(8192);
                     stream.data[0] = 1;
-                    #warning send and recv should be stream aware
-                    #warning we should always send at stream.p, not stream.data
+                    TODO(" send and recv should be stream aware")
+                    TODO(" we should always send at stream.p  not stream.data")
                     this->t->send(stream.data, 1); /* share flag */
                 }
 
@@ -216,7 +216,7 @@ struct mod_vnc : public client_mod {
                 // The text encoding used for name-string is historically undefined but it is strongly recommended to use UTF-8 (see String Encodings for more details).
 
 
-                #warning not yet supported
+                TODO(" not yet supported")
                 // If the Tight Security Type is activated, the server init
                 // message is extended with an interaction capabilities section.
 
@@ -387,7 +387,7 @@ struct mod_vnc : public client_mod {
                     Stream stream(8192);
                     stream.out_uint8(3);
                     stream.out_uint8(0);
-                    #warning we could create some out_rect primitive at stream level
+                    TODO(" we could create some out_rect primitive at stream level")
                     stream.out_uint16_be(0);
                     stream.out_uint16_be(0);
                     stream.out_uint16_be(width);
@@ -397,7 +397,7 @@ struct mod_vnc : public client_mod {
                     this->t->send(stream.data, 10);
                 }
 
-                #warning define some constants, not need to use dynamic data
+                TODO(" define some constants  not need to use dynamic data")
                 /* set almost null cursor, this is the little dot cursor */
                 uint8_t rdp_cursor_data[32 * (32 * 3)];
                 uint8_t rdp_cursor_mask[32 * (32 / 8)];
@@ -431,7 +431,7 @@ struct mod_vnc : public client_mod {
         delete this->t;
     }
 
-    #warning optimize this, much duplicated code and several send at once when not necessary
+    TODO(" optimize this  much duplicated code and several send at once when not necessary")
     virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
     {
         Stream stream(8192);
@@ -443,7 +443,7 @@ struct mod_vnc : public client_mod {
             stream.out_uint16_be(x);
             stream.out_uint16_be(y);
             this->t->send(stream.data, 6);
-            #warning this should not be here!!! Move it to front
+            TODO(" this should not be here!!! Move it to front")
             this->gd.front.mouse_x = x;
             this->gd.front.mouse_y = y;
         }
@@ -619,7 +619,7 @@ struct mod_vnc : public client_mod {
     }
 
     private:
-    #warning use it for copy/paste, it is not called now
+    TODO(" use it for copy/paste  it is not called now")
     int lib_process_channel_data(int chanid, int flags, int size, Stream & stream, int total_size)
     {
         if (chanid == this->clip_chanid) {
@@ -714,7 +714,7 @@ struct mod_vnc : public client_mod {
                 uint8_t * tmp = raw;
                 this->t->recv((char**)&tmp, need_size);
 
-                #warning there is still an alignement issue in bitmaps, fixed, but my fix is quite evil.
+                TODO(" there is still an alignement issue in bitmaps  fixed  but my fix is quite evil.")
                 Bitmap bmp(this->bpp, &this->gd.palette332, cx, cy, raw, need_size, false, true);
                 free(raw);
                 this->gd.bitmap_update(bmp, Rect(x, y, cx, cy), 0, 0, this->gd.get_front_rect());
@@ -733,7 +733,7 @@ struct mod_vnc : public client_mod {
             }
             break;
             case 0xffffff11: /* cursor */
-            #warning see why we get these empty rects ?
+            TODO(" see why we get these empty rects ?")
             if (cx > 0 && cy > 0) {
                 // 7.7.2   Cursor Pseudo-encoding
                 // ------------------------------
@@ -804,7 +804,7 @@ struct mod_vnc : public client_mod {
                 /* (anyway hotspot is usually 0, 0)                   */
                 if (x > 31) { x = 31; }
                 if (y > 31) { y = 31; }
-#warning we should manage cursors bigger then 32 x 32, this is not an RDP protocol limitation
+TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation")
                 this->gd.server_set_pointer(x, y, rdp_cursor_data, rdp_cursor_mask);
             }
             break;
@@ -893,7 +893,7 @@ struct mod_vnc : public client_mod {
     /******************************************************************************/
     void lib_open_clip_channel(void)
     {
-        #warning not working, see why
+        TODO(" not working  see why")
         return;
 //        uint8_t init_data[12] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 

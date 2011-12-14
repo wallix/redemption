@@ -37,7 +37,7 @@
 #include "constants.hpp"
 
 
-#warning ssl calls introduce some dependency on ssl system library, injecting it in the sec object would be better.
+TODO(" ssl calls introduce some dependency on ssl system library  injecting it in the sec object would be better.")
 #include "ssl_calls.hpp"
 
 // 2.2.1.1.1   RDP Negotiation Request (RDP_NEG_REQ)
@@ -548,7 +548,7 @@ class SecIn
     {
         this->flags = stream.in_uint32_le();
         if ((this->flags & SEC_ENCRYPT)  || (this->flags & 0x0400)){
-            #warning shouldn't we check signature ?
+            TODO(" shouldn't we check signature ?")
             stream.skip_uint8(8); /* signature */
             // decrypting to the end of tpdu
             crypt.decrypt(stream.p, stream.end - stream.p);
@@ -556,7 +556,7 @@ class SecIn
     }
 
     void end(){
-        #warning put some assertion here to ensure all data has been consumed
+        TODO(" put some assertion here to ensure all data has been consumed")
     }
 
 };

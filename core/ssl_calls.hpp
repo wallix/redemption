@@ -171,7 +171,7 @@ inline static void buf_out_uint32(uint8_t* buffer, int value)
 }
 
 
-#warning method used by licence, common with basic crypto support code should be made common. pad are also common to several functions.
+TODO(" method used by licence  common with basic crypto support code should be made common. pad are also common to several functions.")
 /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
 inline static void sec_sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen, uint8_t* data, int datalen)
 {
@@ -371,7 +371,7 @@ static inline int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len
     uint8_t* l_mod;
     uint8_t* l_exp;
 
-    #warning replace these fucking new / delete by objects on stack
+    TODO(" replace these fucking new / delete by objects on stack")
     l_out = new uint8_t[out_len];
     memset(l_out, 0, out_len);
     l_in = new uint8_t[in_len];

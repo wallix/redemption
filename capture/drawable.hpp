@@ -73,7 +73,7 @@ public:
     void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
         const Rect trect = this->full.intersect(clip).intersect(cmd.rect);
-        #warning PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way, with stripes, etc.) and also there is quite a lot of possible ternary operators, and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then, work on correct computation of pattern and fix it.
+        TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.")
         uint32_t color = color_decode(cmd.back_color, this->bpp, this->palette);
         if (this->bgr){
             color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
@@ -166,7 +166,7 @@ public:
 
     void draw(const RDPMemBlt & memblt, const Rect & clip)
     {
-        #warning we should use rop parameter to change mem_blt behavior and palette_id part of cache_id
+        TODO(" we should use rop parameter to change mem_blt behavior and palette_id part of cache_id")
         const uint8_t id = memblt.cache_id & 0xFF;
         const Rect & rect = memblt.rect;
         const uint16_t srcx = memblt.srcx;
@@ -181,7 +181,7 @@ public:
             uint8_t * linetarget = target;
             uint8_t * linesource = source;
             for (int x = 0; x < rect.cx ; x++){
-                #warning: it would be nicer to manage clipping earlier and not test every pixel
+                TODO(": it would be nicer to manage clipping earlier and not test every pixel")
                 if (!(clip.contains_pt(x + rect.x, y + rect.y))) {
                   continue;
                 }
@@ -246,7 +246,7 @@ public:
         uint8_t p2 = (color >> 16) & 0xFF;
 
 
-        #warning this switch contains much duplicated code, to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution, in this particular case I see no obvious better way.
+        TODO(" this switch contains much duplicated code  to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution  in this particular case I see no obvious better way.")
         switch (rop){
 // +------+-------------------------------+
 // | 0x00 | ROP: 0x00000042 (BLACKNESS)   |
@@ -464,7 +464,7 @@ public:
         uint8_t * const base = first_pixel(rect);
         uint8_t * p = base;
 
-        #warning this switch contains much duplicated code, to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution, in this particular case I see no obvious better way.
+        TODO(" this switch contains much duplicated code  to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution  in this particular case I see no obvious better way.")
         switch (rop){
         case 0x00: // blackness
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
@@ -499,7 +499,7 @@ public:
     // because we already took care of it
     void scrblt(unsigned srcx, unsigned srcy, const Rect drect, uint8_t rop)
     {
-        #warning this switch contains much duplicated code, to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution, in this particular case I see no obvious better way.
+        TODO(" this switch contains much duplicated code  to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution  in this particular case I see no obvious better way.")
         switch (rop){
         // +------+-------------------------------+
         // | 0x00 | ROP: 0x00000042 (BLACKNESS)   |

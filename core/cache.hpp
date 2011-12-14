@@ -38,7 +38,7 @@ struct brush_item {
     int stamp;
     /* expand this to a structure to handle more complicated brushes
        for now its 8x8 1bpp brushes only */
-    #warning use RDPBrush
+    TODO(" use RDPBrush")
     uint8_t pattern[8];
     brush_item() {
         this->stamp = 0;
@@ -104,7 +104,7 @@ struct Cache {
 
     int load_static_pointers();
 
-    #warning much duplicated code with constructor and destructor, create some intermediate functions or object
+    TODO(" much duplicated code with constructor and destructor  create some intermediate functions or object")
     int reset(struct ClientInfo & client_info)
     {
         /* free all the cached font items */
@@ -116,7 +116,7 @@ struct Cache {
             }
         }
 
-        #warning why not just clear what should be (inner structs
+        TODO(" why not just clear what should be (inner structs")
         /* set whole struct to zero */
         memset(this, 0, sizeof(struct Cache));
         /* set some stuff back */
@@ -160,7 +160,7 @@ struct Cache {
             }
         }
         /* set, send char and return */
-        #warning define a copy constructor
+        TODO(" define a copy constructor")
         FontChar * fi = new FontChar(font_item->offset, font_item->baseline, font_item->width, font_item->height, font_item->incby);
         memcpy(fi->data, font_item->data, font_item->datasize());
         this->char_items[f][c].font_item = fi;
@@ -171,7 +171,7 @@ struct Cache {
     }
 
     int add_pointer(uint8_t* data, uint8_t* mask, int x, int y, int & cache_idx){
-    #warning see code below to avoid useless copy
+    TODO(" see code below to avoid useless copy")
         struct pointer_item pointer_item;
 
         pointer_item.x = x;

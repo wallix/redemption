@@ -25,6 +25,8 @@
 #if !defined(CONSTANTS_H)
 #define CONSTANTS_H
 
+#include "log.hpp"
+
 /* TCP port for Remote Desktop Protocol */
 #define TCP_PORT_RDP                   3389
 
@@ -612,7 +614,9 @@ BUTTON_STATE_DOWN = 1,
 };
 
 /* messages */
-#warning This messages have names of messages from winuser.h but values are completely different. See what it is about ? Looks like they are internal to proxy and value is irrelevant ?
+
+TODO(" This messages have names of messages from winuser.h but values are completely different. See what it is about ? Looks like they are internal to proxy and value is irrelevant ?")
+
 enum {
 WM_PAINT       = 3,
 WM_KEYDOWN     = 15,

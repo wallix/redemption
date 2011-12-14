@@ -39,16 +39,22 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <algorithm>
-#include "altoco.hpp"
+
 #include "log.hpp"
+#include "altoco.hpp"
 #include "client_info.hpp"
 #include "stream.hpp"
 #include "colors.hpp"
 #include <inttypes.h>
+
+
+
 #include "rect.hpp"
 
-#warning at some point in the future drawable and Bitmap may be merged together (not really sure for now, as Bitmap object also perform conversions between color depths, hence maybe the current bitmap object should handle several Drawables, one for each color depth). However it looks like if a large part of bitmap code could move to Drawable. Or maybe they just have some common shared abstraction.
 struct Bitmap {
+
+TODO(" at some point in the future drawable and Bitmap may be merged together not really sure for now  as Bitmap object also perform conversions between color depths  hence maybe the current bitmap object should handle several Drawables  one for each color depth. However it looks like if a large part of bitmap code could move to Drawable. Or maybe they just have some common shared abstraction.")
+
     public:
     // data_co is allocated on demand
     uint8_t *data_co24;
@@ -67,7 +73,8 @@ struct Bitmap {
 
     public:
 
-    #warning there is way too many constructors, doing things much too complicated. We should split that in two stages. First prepare minimal context for bitmap (but keep a flag or something to mark it as non ready), then load actual data into bitmap.
+    TODO("there is way too many constructors  doing things much too complicated. We should split that in two stages. First prepare minimal context for bitmap but keep a flag or something to mark it as non ready  then load actual data into bitmap.")
+
     Bitmap(int bpp, const BGRPalette * palette, unsigned cx, unsigned cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
         : data_co24(0), data_co16(0), data_co15(0), data_co8(0),
           original_bpp(bpp), cx(cx), cy(cy),
@@ -113,7 +120,7 @@ struct Bitmap {
             }
         }
         unsigned cx = std::min(r.cx, src_cx - r.x);
-        #warning there is both cx and this->cx and both can't be interchanged. this is intended to always store bitmaps that are multiple of 4 pixels to override a compatibility problem with rdesktop. This is not necessary for Microsoft clients. See MSRDP-CGR MS-RDPBCGR: 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)
+        TODO(" there is both cx and this->cx and both can't be interchanged. this is intended to always store bitmaps that are multiple of 4 pixels to override a compatibility problem with rdesktop. This is not necessary for Microsoft clients. See MSRDP-CGR MS-RDPBCGR: 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)")
         // bitmapDataStream (variable): A variable-sized array of bytes.
         //  Uncompressed bitmap data represents a bitmap as a bottom-up,
         //  left-to-right series of pixels. Each pixel is a whole
@@ -127,9 +134,9 @@ struct Bitmap {
         // Important and only once
         this->set_data_co(bpp);
 
-        #warning We could reserve statical space for caches thus avoiding many memory allocation. RDP sets maximum size for cache items anyway and we MUST check this size is never larger than allowed.
+        TODO(" We could reserve statical space for caches thus avoiding many memory allocation. RDP sets maximum size for cache items anyway and we MUST check this size is never larger than allowed.")
 
-        #warning case 32 bits is (certainly) not working
+        TODO(" case 32 bits is (certainly) not working")
         uint8_t *d8 = this->data_co(bpp);
         unsigned src_row_size = row_size(src_cx, bpp);
         unsigned int width = cx * nbbytes(bpp);
@@ -190,7 +197,7 @@ struct Bitmap {
             }
         } header;
 
-        #warning reading of file and bitmap decoding should be kept appart, putting both together makes testing hard. And what if I want to read a bitmap from some network socket instead of a disk file ?
+        TODO(" reading of file and bitmap decoding should be kept appart  putting both together makes testing hard. And what if I want to read a bitmap from some network socket instead of a disk file ?")
         /* Code related to g_file_open os_call */
         int fd =  open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
         if (fd == -1) {
@@ -230,7 +237,7 @@ struct Bitmap {
             LOG(LOG_ERR, "Widget_load: error read file size (2)\n");
             throw Error(ERR_BITMAP_LOAD_FAILED);
         }
-        #warning we should read header size and use it to read header instead of using magic constant 40
+        TODO(" we should read header size and use it to read header instead of using magic constant 40")
         header.size = stream.in_uint32_le();
         if (header.size != 40){
             LOG(LOG_INFO, "Wrong header size: expected 40, got %d", header.size);
@@ -253,7 +260,7 @@ struct Bitmap {
 
         // compute pixel size (in Quartet) and read palette if needed
         int file_Qpp = 1;
-        #warning add support for loading of 16 bits bmp from file
+        TODO(" add support for loading of 16 bits bmp from file")
         switch (header.bit_count){
         // Qpp = groups of 4 bytes per pixel
         case 24:
@@ -341,7 +348,7 @@ struct Bitmap {
                 break;
                 }
                 uint32_t px = color_decode(pixel, header.bit_count, palette1);
-                #warning extract constants from loop
+                TODO(" extract constants from loop")
                 ::out_bytes_le(dest + y * row_size + x * nbbytes_dest, nbbytes_dest, px);
             }
         }
@@ -402,7 +409,7 @@ struct Bitmap {
 
     void copy_upsidedown(int bpp, const uint8_t* input, uint16_t cx)
     {
-        #warning without this evil alnment we are expirimenting problems with VNC bitmaps, but there should be a better fix.
+        TODO(" without this evil alnment we are expirimenting problems with VNC bitmaps  but there should be a better fix.")
         this->cx = align4(cx);
         uint8_t * d8 = this->data_co(bpp) + (this->cy-1) * this->line_size(bpp);
         const uint8_t * s8 = input;
@@ -418,7 +425,7 @@ struct Bitmap {
         }
     }
 
-    #warning unifying with decompress, the decompress function should be able to do both. Need probably some decompressor object, that would be a factory that creates bitmap or dump decompression data. Compression should also probably go in the same object (from principale that opening and closing parenthesis should be kept together).
+    TODO(" unifying with decompress  the decompress function should be able to do both. Need probably some decompressor object  that would be a factory that creates bitmap or dump decompression data. Compression should also probably go in the same object (from principale that opening and closing parenthesis should be kept together).")
     void dump_decompress(int bpp, const uint8_t* input, size_t size)
     {
         unsigned yprev = 0;
@@ -1185,7 +1192,7 @@ struct Bitmap {
 
     }
 
-    #warning derecursive it
+    TODO(" derecursive it")
     unsigned get_fom_count_fill(int bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
     {
 
@@ -1207,7 +1214,7 @@ struct Bitmap {
     }
 
 
-    #warning derecursive it
+    TODO(" derecursive it")
     unsigned get_fom_count_mix(int bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
     {
         unsigned mix_count = get_mix_count(bpp, pmin, pmax, p, foreground);
@@ -1223,8 +1230,8 @@ struct Bitmap {
         return mix_count + this->get_fom_count_fill(bpp, pmin, pmax, p + mix_count * nbbytes(bpp), foreground);
     }
 
-    #warning simplify and enhance compression using 1 pixel orders BLACK or WHITE.
-    #warning keep allready compressed bitmaps in cache to avoid useless computations
+    TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.")
+    TODO(" keep allready compressed bitmaps in cache to avoid useless computations")
     void compress(int bpp, Stream & out)
     {
         const uint8_t Bpp = nbbytes(bpp);
@@ -1244,7 +1251,7 @@ struct Bitmap {
         uint32_t color = 0;
         uint32_t color2 = 0;
 
-        #warning we should also check out_size and truncate if it overflow buffer or find another to ensure out buffer is large enough
+        TODO(" we should also check out_size and truncate if it overflow buffer or find another to ensure out buffer is large enough")
         for (int part = 0 ; part < 2 ; part++){
             // As far as I can see the specs of bitmap RLE compressor is crap here
             // Fill orders between first scanline and all others must be splitted
@@ -1262,7 +1269,7 @@ struct Bitmap {
             }
             while (p < pmax)
             {
-                #warning remove this, not necessary any more
+                TODO(" remove this  not necessary any more")
                 if (oldp == p){
                     abort();
                 }
@@ -1336,7 +1343,7 @@ struct Bitmap {
                     copy_count = 0;
                 }
 
-                #warning use symbolic values for flags
+                TODO(" use symbolic values for flags")
                 switch (flags){
                     case 9:
                         out.out_bicolor_sequence(Bpp, bicolor_count, color, color2);
@@ -1395,7 +1402,7 @@ struct Bitmap {
         if (this->crc_computed){
             return this->crc;
         }
-        #warning is this memory table really necessary for crc computing ? I undersatnd some dispersion of values is a good thing, but other simpler signing scheme should be more efficient with less memory access (maybe even md5 or aes).
+        TODO(" is this memory table really necessary for crc computing ? I undersatnd some dispersion of values is a good thing  but other simpler signing scheme should be more efficient with less memory access (maybe even md5 or aes).")
 
         const static int crc_seed = 0xffffffff;
         const static int crc_table[256] = {
@@ -1511,16 +1518,16 @@ struct Bitmap {
 
         uint8_t * src = data_co(this->original_bpp);
 
-        #warning code below looks time consuming (applies to every pixels) and should probably be optimized
+        TODO(" code below looks time consuming (applies to every pixels) and should probably be optimized")
         // Color decode/encode
-        #warning heavy optimization is possible here
+        TODO(" heavy optimization is possible here")
         const uint8_t src_nbbytes = nbbytes(this->original_bpp);
         const uint8_t dest_nbbytes = nbbytes(out_bpp);
         for (size_t i = 0; i < this->cx * this->cy; i++) {
             uint32_t pixel = in_bytes_le(src_nbbytes, src);
 
             if (!(this->original_bpp == 8 && out_bpp == 8)){
-                #warning is it the same on actual 24 bits server ? It may be a color inversion in widget layer
+                TODO(" is it the same on actual 24 bits server ? It may be a color inversion in widget layer")
                 pixel = color_decode(pixel, this->original_bpp, this->original_palette);
                 if ((this->original_bpp == 24)
                 && (out_bpp == 16 || out_bpp == 15 || out_bpp == 8)){
@@ -1563,7 +1570,7 @@ struct Bitmap {
     }
 
     size_t bmp_size(const int bpp) const {
-        #warning without this evil alignment we are experimenting problems with VNC bitmaps, but there should be a better fix.
+        TODO(" without this evil alignment we are experimenting problems with VNC bitmaps but there should be a better fix.")
         return row_size(align4(this->cx), bpp) * cy;
     }
 };

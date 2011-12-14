@@ -89,7 +89,7 @@ class NativeCapture
     {
         this->recorder.draw(cmd, clip);
 //        fprintf(this->f, "{\n");
-//        #warning create a repr method in scr_blt
+//        TODO(" create a repr method in scr_blt")
 //        fprintf(this->f, "    RDPScrBlt cmd(Rect(%u, %u, %u, %u), %u, %u, %u);\n",
 //            cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
 //            cmd.rop, cmd.srcx, cmd.srcy);
@@ -141,7 +141,7 @@ class NativeCapture
     {
         this->recorder.draw(cmd, clip);
 //        fprintf(this->f, "{\n");
-//        #warning create a repr method in mem_blt
+//        TODO(" create a repr method in mem_blt")
 //        fprintf(this->f, "    RDPMemBlt cmd(%u, Rect(%u, %u, %u, %u), %u, %u, %u, %u);\n",
 //            cmd.cache_id, cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
 //            cmd.rop, cmd.srcx, cmd.srcy, cmd.cache_idx);
@@ -153,7 +153,7 @@ class NativeCapture
     {
         this->recorder.draw(cmd, clip);
 //        fprintf(this->f, "{\n");
-//        #warning create a repr method in opaque_rect
+//        TODO(" create a repr method in opaque_rect")
 //        fprintf(this->f, "    RDPOpaqueRect cmd(Rect(%u, %u, %u, %u), 0x%.6x);\n",
 //            cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
 //            cmd.color);
@@ -165,7 +165,7 @@ class NativeCapture
     {
         this->recorder.draw(cmd, clip);
 //        fprintf(this->f, "{\n");
-//        #warning create a repr method in dest_blt
+//        TODO(" create a repr method in dest_blt")
 //        fprintf(this->f, "    RDPDestBlt cmd(Rect(%u, %u, %u, %u), %u);\n",
 //            cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,
 //            cmd.rop);
@@ -177,7 +177,7 @@ class NativeCapture
     {
         this->recorder.draw(cmd, clip);
 //        fprintf(this->f, "{\n");
-//        #warning create a repr method in pat_blt
+//        TODO(" create a repr method in pat_blt")
 //        fprintf(this->f, "    RDPPatBlt cmd(Rect(%u, %u, %u, %u), %u, 0x%.6x, 0x%.6x,\n "
 //            "        RDPBrush(%u, %u, %u, %u,"
 //            "            (const uint8_t *)\"\\x%x\\x%x\\x%x\\x%x\\x%x\\x%x\\x%x\"));\n",
@@ -195,7 +195,7 @@ class NativeCapture
     {
         this->recorder.draw(cmd, clip);
 //        fprintf(this->f, "{\n");
-//        #warning create a repr method in line_to
+//        TODO(" create a repr method in line_to")
 //        fprintf(this->f, "    RDPLineTo cmd(%d, %d, %d, %d, %d, 0x%.6x, %u, "
 //            "        RDPPen(%u, %u, 0x%.6x));\n",
 //            cmd.back_mode,

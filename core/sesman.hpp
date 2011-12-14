@@ -19,7 +19,7 @@
 
 */
 
-#warning rename sesman to authentifier
+TODO(" rename sesman to authentifier")
 #if !defined(__SESMAN3_HPP__)
 #define __SESMAN3_HPP__
 
@@ -56,7 +56,7 @@ class SessionManager {
         : mod_state(MOD_STATE_INIT), context(context), tick_count(0), verbose(verbose)
     {
         if (this->verbose & 0x10){
-            LOG(LOG_INFO, "auth::SessionManager"); 
+            LOG(LOG_INFO, "auth::SessionManager");
         }
         this->auth_trans_t = NULL;
         this->auth_event = 0;
@@ -65,7 +65,7 @@ class SessionManager {
     ~SessionManager()
     {
         if (this->verbose & 0x10){
-            LOG(LOG_INFO, "auth::~SessionManager"); 
+            LOG(LOG_INFO, "auth::~SessionManager");
         }
         if (this->auth_trans_t) {
             delete this->auth_trans_t;
@@ -79,7 +79,7 @@ class SessionManager {
 
     bool event(){
         if (this->verbose & 0x40){
-            LOG(LOG_INFO, "auth::event?"); 
+            LOG(LOG_INFO, "auth::event?");
         }
         return this->auth_event?this->auth_event->is_set():false;
     }
@@ -87,7 +87,7 @@ class SessionManager {
     void start_keep_alive(long & keepalive_time)
     {
         if (this->verbose & 0x10){
-            LOG(LOG_INFO, "auth::start_keep_alive"); 
+            LOG(LOG_INFO, "auth::start_keep_alive");
         }
         this->tick_count = 1;
         if (this->auth_trans_t){
@@ -109,7 +109,7 @@ class SessionManager {
     void in_items(Stream & stream)
     {
         if (this->verbose & 0x40){
-            LOG(LOG_INFO, "auth::in_items"); 
+            LOG(LOG_INFO, "auth::in_items");
         }
         for (stream.p = stream.data + 4
             ; stream.p < stream.end
@@ -163,7 +163,7 @@ class SessionManager {
                 break;
             }
         }
-        #warning we should have stopped after fully getting the value, hence this case is an error, see how this exception should be qualified.
+        TODO(" we should have stopped after fully getting the value  hence this case is an error  see how this exception should be qualified.")
         throw 0;
     }
 
@@ -174,7 +174,7 @@ class SessionManager {
             long enddate = atol(this->context.get(STRAUTHID_END_DATE_CNX));
             if (enddate != 0 && (timestamp > enddate)) {
                 if (this->verbose & 0x10){
-                    LOG(LOG_INFO, "auth::close_on_timestamp"); 
+                    LOG(LOG_INFO, "auth::close_on_timestamp");
                 }
                 LOG(LOG_INFO, "Session is out of allowed timeframe : stopping");
                 this->mod_state = MOD_STATE_DONE_CLOSE;
@@ -190,7 +190,7 @@ class SessionManager {
         if (this->auth_trans_t){
             if (this->auth_event?this->auth_event->is_set():false) {
                 if (this->verbose & 0x10){
-                    LOG(LOG_INFO, "auth::keep_alive_or_inactivity"); 
+                    LOG(LOG_INFO, "auth::keep_alive_or_inactivity");
                 }
                 try {
                     this->incoming();
@@ -198,7 +198,7 @@ class SessionManager {
                 }
                 catch (...){
                     if (this->verbose & 0x10){
-                        LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager"); 
+                        LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager");
                     }
                     this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (socket closed)");
                     return false;
@@ -206,7 +206,7 @@ class SessionManager {
             }
             if (keepalive_time && (now > keepalive_time + 30)){
                 if (this->verbose & 0x10){
-                    LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)"); 
+                    LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
                 }
                 this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager");
                 return false;
@@ -252,83 +252,83 @@ class SessionManager {
     int get_mod_from_protocol()
     {
         if (this->verbose & 0x10){
-            LOG(LOG_INFO, "auth::get_mod_from_protocol"); 
+            LOG(LOG_INFO, "auth::get_mod_from_protocol");
         }
         const char * protocol = this->context.get(STRAUTHID_TARGET_PROTOCOL);
         int res = MCTX_STATUS_EXIT;
         if (strncasecmp(protocol, "RDP", 4) == 0){
             if (this->verbose & 0x4){
-                LOG(LOG_INFO, "auth::get_mod_from_protocol RDP"); 
+                LOG(LOG_INFO, "auth::get_mod_from_protocol RDP");
             }
             res = MCTX_STATUS_RDP;
             this->mod_state = MOD_STATE_DONE_CONNECTED;
         }
         else if (strncasecmp(protocol, "VNC", 4) == 0){
             if (this->verbose & 0x4){
-                LOG(LOG_INFO, "auth::get_mod_from_protocol VNC"); 
+                LOG(LOG_INFO, "auth::get_mod_from_protocol VNC");
             }
             res = MCTX_STATUS_VNC;
             this->mod_state = MOD_STATE_DONE_CONNECTED;
         }
         else if (strncasecmp(protocol, "XUP", 4) == 0){
             if (this->verbose & 0x4){
-                LOG(LOG_INFO, "auth::get_mod_from_protocol XUP"); 
+                LOG(LOG_INFO, "auth::get_mod_from_protocol XUP");
             }
             res = MCTX_STATUS_XUP;
             this->mod_state = MOD_STATE_DONE_CONNECTED;
         }
         else if (strncasecmp(protocol, "INTERNAL", 8) == 0){
             if (this->verbose & 0x4){
-                LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL"); 
+                LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL");
             }
             res = MCTX_STATUS_INTERNAL;
             char * target = this->context.get(STRAUTHID_TARGET_DEVICE);
             if (0 == strcmp(target, "bouncer2")){
                 if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL bouncer2"); 
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL bouncer2");
                 }
                 this->context.nextmod = ModContext::INTERNAL_BOUNCER2;
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
             else if (0 == strcmp(target, "test")){
                 if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL test"); 
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL test");
                 }
                 this->context.nextmod = ModContext::INTERNAL_TEST;
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
             else if (0 == strcmp(target, "selector")){
                 if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL selector"); 
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL selector");
                 }
                 this->context.nextmod = ModContext::INTERNAL_SELECTOR;
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
             else if (0 == strcmp(target, "login")){
                 if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login"); 
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
                 }
                 this->context.nextmod = ModContext::INTERNAL_LOGIN;
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
             else if (0 == strcmp(target, "close")){
                 if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close"); 
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
                 }
                 this->context.nextmod = ModContext::INTERNAL_CLOSE;
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
             else {
                 if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL card"); 
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL card");
                 }
                 this->context.nextmod = ModContext::INTERNAL_CARD;
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
             }
         }
         else {
-            LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c", 
-                protocol[0], protocol[1], protocol[2], protocol[3]); 
+            LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
+                protocol[0], protocol[1], protocol[2], protocol[3]);
             this->context.nextmod = ModContext::INTERNAL_CARD;
             this->mod_state = MOD_STATE_DONE_CONNECTED;
             assert(false);
@@ -340,37 +340,37 @@ class SessionManager {
     int ask_next_module(long & keepalive_time, const char * auth_host, int auth_port, bool & record_video, bool & keep_alive)
     {
         if (this->verbose & 0x10){
-            LOG(LOG_INFO, "auth::ask_next_module"); 
+            LOG(LOG_INFO, "auth::ask_next_module");
         }
         int next_state = MCTX_STATUS_EXIT;
         switch (this->mod_state){
         default:
             if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::ask_next_module default state"); 
+                LOG(LOG_INFO, "auth::ask_next_module default state");
             }
             next_state = this->ask_next_module_remote(auth_host, auth_port);
         break;
         case MOD_STATE_DONE_SELECTOR:
             if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_SELECTOR state"); 
+                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_SELECTOR state");
             }
             next_state = this->ask_next_module_remote(auth_host, auth_port);
         break;
         case MOD_STATE_DONE_LOGIN:
             if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_LOGIN state"); 
+                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_LOGIN state");
             }
             next_state = this->ask_next_module_remote(auth_host, auth_port);
         break;
         case MOD_STATE_DONE_PASSWORD:
             if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_PASSWORD state"); 
+                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_PASSWORD state");
             }
             next_state = this->ask_next_module_remote(auth_host, auth_port);
         break;
         case MOD_STATE_DONE_RECEIVED_CREDENTIALS:
         if (this->verbose & 0x10){
-            LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS state"); 
+            LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS state");
         }
         {
             if (this->context.is_asked(STRAUTHID_AUTH_USER)){
@@ -422,7 +422,7 @@ class SessionManager {
                 if (context.get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                     context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Authentifier service failed");
                 }
-                #warning check life cycle of auth_trans_t
+                TODO(" check life cycle of auth_trans_t")
                 if (this->auth_trans_t){
                     delete this->auth_trans_t;
                     this->auth_trans_t = 0;
@@ -435,7 +435,7 @@ class SessionManager {
         break;
         case MOD_STATE_DONE_CONNECTED:
             if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_CONNECTED state"); 
+                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_CONNECTED state");
             }
             this->context.nextmod = ModContext::INTERNAL_CLOSE;
             next_state = MCTX_STATUS_INTERNAL;
@@ -443,14 +443,14 @@ class SessionManager {
         break;
         case MOD_STATE_DONE_CLOSE:
             if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_CONNECTED state"); 
+                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_CONNECTED state");
             }
             this->mod_state = MOD_STATE_DONE_EXIT;
             next_state = MCTX_STATUS_EXIT;
         break;
         case MOD_STATE_DONE_EXIT:
             if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_EXIT state"); 
+                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_EXIT state");
             }
             // we should never goes here, the main loop should have stopped before
             LOG(LOG_WARNING, "unexpected forced exit");
@@ -459,7 +459,8 @@ class SessionManager {
         return next_state;
     }
 
-#warning move that function to ModContext, create specialized stream object ModContextStream
+    TODO(""move that function to ModContext  create specialized stream object ModContextStream"")
+
     void out_item(Stream & stream, const char * key)
     {
         if (this->context.is_asked(key)){
@@ -488,7 +489,7 @@ class SessionManager {
 
     void add_to_fd_set(fd_set & rfds, unsigned & max)
     {
-        #warning look at concept behind wait_obj
+        TODO(" look at concept behind wait_obj")
         if (this->auth_event){
             this->auth_event->add_to_fd_set(rfds, max);
         }
@@ -502,12 +503,12 @@ class SessionManager {
             Stream stream(8192);
 
             stream.skip_uint8(4);
-            #warning is there a way to make auth_event RAII ? (initialized in sesman constructor)
+            TODO(" is there a way to make auth_event RAII ? (initialized in sesman constructor)")
             if (!this->auth_trans_t){
                 static const char * name = "Authentifier";
                 int sck = connect(auth_host, authport, name, 4, 1000000);
                 this->auth_trans_t = new SocketTransport(name, sck, this->verbose);
-                #warning create a realloc method
+                TODO(" create a realloc method")
                 if (this->auth_event){
                     delete this->auth_event;
                 }
@@ -561,7 +562,7 @@ class SessionManager {
     {
         Stream stream;
         this->auth_trans_t->recv((char**)&(stream.end), 4);
-        int size = stream.in_uint32_be();
+        size_t size = stream.in_uint32_be();
         if (size > stream.capacity){
             stream.init(size);
         }

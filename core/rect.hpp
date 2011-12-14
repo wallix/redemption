@@ -27,7 +27,7 @@
 
 #include <algorithm>
 #include <ostream>
-
+#include "log.hpp"
 
 struct Rect {
     int x;
@@ -61,7 +61,7 @@ struct Rect {
                && y < (this->y + this->cy);
     }
 
-    #warning contains should work when inner rect is empty except if outer is empty
+    TODO(" contains should work when inner rect is empty except if outer is empty")
     bool contains(const Rect & inner) const {
         return (inner.x >= this->x
              && inner.y >= this->y
@@ -69,7 +69,7 @@ struct Rect {
              && inner.y + inner.cy <= this->y + this->cy);
     }
 
-    #warning equal should work when inner and outer rect are both empty
+    TODO(" equal should work when inner and outer rect are both empty")
     bool equal(const Rect & other) const {
         return (other.x == this->x
              && other.y == this->y

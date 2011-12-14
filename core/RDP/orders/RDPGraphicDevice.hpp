@@ -135,7 +135,7 @@ struct RDPUnserializer
                 uint16_t pad = this->stream.in_uint16_le(); (void)pad;
             }
             catch (Error & e){
-                #warning check specific error and return 0 only if actual EOF is reached or rethrow the error
+                TODO(" check specific error and return 0 only if actual EOF is reached or rethrow the error")
                 return 0;
             }
             this->trans->recv(&this->stream.end, this->chunk_size - 8);
@@ -145,7 +145,7 @@ struct RDPUnserializer
         if (!control & RDP::STANDARD){
             /* error, this should always be set */
             LOG(LOG_ERR, "Non standard order detected : protocol error");
-            #warning throw some error
+            TODO(" throw some error")
         }
         else if (control & RDP::SECONDARY) {
             using namespace RDP;
@@ -412,7 +412,7 @@ struct RDPSerializer : public RDPGraphicDevice
 
     virtual void draw(const RDPGlyphCache & cmd)
     {
-        #warning compute actual size, instead of a majoration as below
+        TODO(" compute actual size  instead of a majoration as below")
         this->reserve_order(1000);
         cmd.emit(this->stream);
         if (this->ini && this->ini->globals.debug.secondary_orders){

@@ -51,7 +51,7 @@
 
 // Write batch of orders to file
 // Reads batch of orders from file
-#warning merge with GraphicsUpdatePDU, needs defining some kind of Transport object for common parts
+TODO(" merge with GraphicsUpdatePDU  needs defining some kind of Transport object for common parts")
 struct GraphicsFile
 {
     Stream stream;
@@ -172,7 +172,7 @@ struct GraphicsFile
 
             // How long is my init ?
             this->stream.init(std::max(65536,length - 4)); // The header have already been read
-            #warning use transport object to hide this, define some kind of FileTransport ? Very similar to socketTRansport
+            TODO(" use transport object to hide this  define some kind of FileTransport ? Very similar to socketTRansport")
             int readlen = 0;
             while ( readlen < length - 4 ) {
                 int rcvd = ::read ( this->pFile, this->stream.data + readlen, length - 4 - readlen);
@@ -183,12 +183,12 @@ struct GraphicsFile
                             case EBUSY: case EINTR:
                                 break;
                             default:
-                                #warning define some error code
+                                TODO(" define some error code")
                                 throw Error(ERR_SOCKET_ERROR);
                         }
                         break;
                     case 0: // no data received EOF, but that should not happen here
-                        #warning define some error code
+                        TODO(" define some error code")
                         throw Error(ERR_SOCKET_CLOSED);
                     default: /* some data received */
                         readlen += rcvd;
@@ -253,17 +253,17 @@ struct GraphicsFile
                             break;
                         case DESTBLT://
                             this->destblt.receive(this->stream, header);
-                            this->destblt.print(clip);
+//                            this->destblt.print(clip);
                             //mod->dest_blt(this->destblt);
                             break;
                         case PATBLT://
                             this->patblt.receive(this->stream, header);
-                            this->patblt.print(clip);
+//                            this->patblt.print(clip);
                             //mod->pat_blt(this->patblt);
                             break;
                         case SCREENBLT://
                             this->scrblt.receive(this->stream, header);
-                            this->scrblt.print(clip);
+//                            this->scrblt.print(clip);
                             //mod->scr_blt(this->scrblt);
                             break;
                         case LINE://
@@ -272,14 +272,14 @@ struct GraphicsFile
                             break;
                         case RECT://
                             this->opaquerect.receive(this->stream, header);
-                            this->opaquerect.print(clip);
+//                            this->opaquerect.print(clip);
                             break;
                         case DESKSAVE:
                             //this->rdp_orders_process_desksave(this->stream, header.fields, header.control & DELTA, mod);
                             break;
                         case MEMBLT://
                             this->memblt.receive(this->stream, header);
-                            this->memblt.print(clip);
+//                            this->memblt.print(clip);
                             //{
                             //    struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xFF][this->memblt.cache_idx];
                             //    if (bitmap) {
@@ -318,7 +318,7 @@ struct GraphicsFile
             this->stream.set_out_uint8    (this->order_count, 2);                  // amout of orders on 1 byte
             this->stream.set_out_uint8    (1, 3);                                  // type of packet of order (1 is drawing)
 
-            #warning this var is directly linked to the init size of stream
+            TODO(" this var is directly linked to the init size of stream")
             uint16_t written = 0;
             while ( written < this->stream.p - this->stream.data ) {
                 int w = ::write  ( this->pFile, this->stream.data + written, this->stream.p - this->stream.data - written);
@@ -439,7 +439,7 @@ struct GraphicsFile
 
     void draw(const RDPGlyphCache & cmd)
     {
-        #warning compute actual size, instead of a majoration as below
+        TODO(" compute actual size  instead of a majoration as below")
         this->reserve_order(1000);
         cmd.emit(this->stream);
     }
