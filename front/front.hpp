@@ -618,8 +618,6 @@ public:
 
     void incoming() throw (Error)
     {
-        Stream stream(65535);
-
         if (this->ini->globals.debug.front){
             LOG(LOG_INFO, "Front::incoming()");
         }
@@ -852,131 +850,148 @@ public:
             LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
         }
 
-        {
+        enum {
+            WAITING_FOR_LOGON_INFO = 0,
+            WAITING_FOR_ANSWER_TO_LICENCE,
+            DEMAND_ACTIVE_TO_SEND,
+            WAITING_FOR_CONFIRM_ACTIVE,
+        } state = WAITING_FOR_LOGON_INFO;
+
+        while (state != WAITING_FOR_CONFIRM_ACTIVE) {
+            Stream stream(65535);
             X224In tpdu(this->trans, stream);
             McsIn mcs_in(stream);
-
-            if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-            }
-
             SecIn sec(stream, this->decrypt);
 
-            if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
-                throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
+
+
+            switch (state){
+            case WAITING_FOR_LOGON_INFO:
+                if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
+                    throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+                }
+
+                if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
+                    throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
+                }
+
+                /* this is the first test that the decrypt is working */
+                this->client_info.process_logon_info(stream);
+                if (this->client_info.is_mce) {
+                    LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
+                    LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");
+                    send_media_lic_response(this->trans, this->userid);
+                    state = DEMAND_ACTIVE_TO_SEND;
+                }
+                else {
+                    LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
+                    LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
+
+                    send_lic_initial(this->trans, this->userid);
+
+                    LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
+                    state = WAITING_FOR_ANSWER_TO_LICENCE;
+                }
+            break;
+
+            case WAITING_FOR_ANSWER_TO_LICENCE:
+                // Licensing
+                // ---------
+
+                // Licensing: The goal of the licensing exchange is to transfer a
+                // license from the server to the client.
+
+                // The client should store this license and on subsequent
+                // connections send the license to the server for validation.
+                // However, in some situations the client may not be issued a
+                // license to store. In effect, the packets exchanged during this
+                // phase of the protocol depend on the licensing mechanisms
+                // employed by the server. Within the context of this document
+                // we will assume that the client will not be issued a license to
+                // store. For details regarding more advanced licensing scenarios
+                // that take place during the Licensing Phase, see [MS-RDPELE].
+
+                // Client                                                     Server
+                //    | <------ Licence Error PDU Valid Client ---------------- |
+
+                // Disconnect Provider Ultimatum datagram
+                if ((mcs_in.opcode >> 2) == MCS_DPUM) {
+                    LOG(LOG_INFO, "Front::ERR_MCS_APPID_IS_MCS_DPUM");
+                    throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+                }
+
+                if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
+                    LOG(LOG_INFO, "Front::ERR_MCS_APPID_NOT_MCS_SDRQ");
+                    throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+                }
+
+                if (!sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
+                    LOG(LOG_INFO, "Front::ERR_SEC_EXPECTED_LICENCE_NEG");
+                    throw Error(ERR_SEC_EXPECTED_LICENCE_NEG);
+                }
+                {
+                    uint8_t tag = stream.in_uint8();
+                    uint8_t version = stream.in_uint8();
+                    uint16_t length = stream.in_uint16_le();
+                    TODO("currently we just skip data, we should consume them instead")
+                    stream.p = stream.end;
+                    LOG(LOG_INFO, "Front::WAITING_FOR_ANSWER_TO_LICENCE %u %u %u", tag, version, length);
+
+                    switch (tag) {
+                    case LICENCE_TAG_DEMAND:
+                        LOG(LOG_INFO, "Front::LICENCE_TAG_DEMAND");
+                        break;
+                    case LICENCE_TAG_PRESENT:
+                        LOG(LOG_INFO, "Front::LICENCE_TAG_PRESENT");
+                        break;
+                    case LICENCE_TAG_AUTHREQ:
+                        LOG(LOG_INFO, "Front::LICENCE_TAG_AUTHREQ");
+                        break;
+                    case LICENCE_TAG_ISSUE:
+                        LOG(LOG_INFO, "Front::LICENCE_TAG_ISSUE");
+                        break;
+                    case LICENCE_TAG_REISSUE:
+                        LOG(LOG_INFO, "Front::LICENCE_TAG_REISSUE");
+                        break;
+                    case LICENCE_TAG_RESULT:
+                        LOG(LOG_INFO, "Front::LICENCE_TAG_RESULT");
+                        break;
+                    default:
+                        LOG(LOG_INFO, "Front::LICENCE_TAG_UNKNOWN %u", tag);
+                        continue;
+                    }
+                }
+                LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
+                send_lic_response(this->trans, this->userid);
+
+                // Capabilities Exchange
+                // ---------------------
+
+                // Capabilities Negotiation: The server sends the set of capabilities it
+                // supports to the client in a Demand Active PDU. The client responds with its
+                // capabilities by sending a Confirm Active PDU.
+
+                // Client                                                     Server
+                //    | <------- Demand Active PDU ---------------------------- |
+                //    |--------- Confirm Active PDU --------------------------> |
+
+                if (this->ini->globals.debug.front){
+                    LOG(LOG_INFO, "Front::incoming::send_demand_active");
+                }
+                this->send_demand_active();
+
+                state = WAITING_FOR_CONFIRM_ACTIVE;
+            break;
+
+            case WAITING_FOR_CONFIRM_ACTIVE:
+            break;
+            default:
+            break;
             }
-
-            /* this is the first test that the decrypt is working */
-            this->client_info.process_logon_info(stream);
-
             sec.end();
             mcs_in.end();
             tpdu.end();
         }
-
-        // Licensing
-        // ---------
-
-        // Licensing: The goal of the licensing exchange is to transfer a
-        // license from the server to the client.
-
-        // The client should store this license and on subsequent
-        // connections send the license to the server for validation.
-        // However, in some situations the client may not be issued a
-        // license to store. In effect, the packets exchanged during this
-        // phase of the protocol depend on the licensing mechanisms
-        // employed by the server. Within the context of this document
-        // we will assume that the client will not be issued a license to
-        // store. For details regarding more advanced licensing scenarios
-        // that take place during the Licensing Phase, see [MS-RDPELE].
-
-        // Client                                                     Server
-        //    | <------ Licence Error PDU Valid Client ---------------- |
-
-        if (this->ini->globals.debug.front){
-            LOG(LOG_INFO, "Front::incoming::licencing");
-        }
-
-        if (this->client_info.is_mce) {
-            LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
-            LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");
-            send_media_lic_response(this->trans, this->userid);
-        }
-        else {
-            LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
-            LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
-
-            send_lic_initial(this->trans, this->userid);
-
-            LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
-
-            Stream stream(65536);
-            X224In tpdu(this->trans, stream);
-
-            LOG(LOG_INFO, "Front::incoming::tpdu(%u %u %u)", tpdu.tpkt.len, tpdu.tpdu_hdr.LI, tpdu.tpdu_hdr.code);
-
-            McsIn mcs_in(stream);
-
-            // Disconnect Provider Ultimatum datagram
-            if ((mcs_in.opcode >> 2) == MCS_DPUM) {
-                LOG(LOG_INFO, "Front::ERR_MCS_APPID_IS_MCS_DPUM");
-                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
-            }
-
-            if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
-                LOG(LOG_INFO, "Front::ERR_MCS_APPID_NOT_MCS_SDRQ");
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-            }
-
-            SecIn sec(stream, this->decrypt);
-
-            if (!sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
-                LOG(LOG_INFO, "Front::ERR_SEC_EXPECTED_LICENCE_NEG");
-                throw Error(ERR_SEC_EXPECTED_LICENCE_NEG);
-            }
-
-            uint8_t tag = stream.in_uint8();
-            stream.skip_uint8(3); /* version, length */
-            switch (tag) {
-            case LICENCE_TAG_DEMAND:
-                LOG(LOG_INFO, "Front::LICENCE_TAG_DEMAND");
-                break;
-            case LICENCE_TAG_AUTHREQ:
-                LOG(LOG_INFO, "Front::LICENCE_TAG_AUTHREQ");
-                break;
-            case LICENCE_TAG_ISSUE:
-                LOG(LOG_INFO, "Front::LICENCE_TAG_ISSUE");
-                break;
-            case LICENCE_TAG_REISSUE:
-                LOG(LOG_INFO, "Front::LICENCE_TAG_REISSUE");
-                break;
-            case LICENCE_TAG_RESULT:
-                LOG(LOG_INFO, "Front::LICENCE_TAG_RESULT");
-                break;
-            default:
-                LOG(LOG_INFO, "Front::LICENCE_TAG_UNKNOWN %u", tag);
-                break;
-            }
-
-            LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
-            send_lic_response(this->trans, this->userid);
-        }
-
-        // Capabilities Exchange
-        // ---------------------
-
-        // Capabilities Negotiation: The server sends the set of capabilities it
-        // supports to the client in a Demand Active PDU. The client responds with its
-        // capabilities by sending a Confirm Active PDU.
-
-        // Client                                                     Server
-        //    | <------- Demand Active PDU ---------------------------- |
-        //    |--------- Confirm Active PDU --------------------------> |
-
-        if (this->ini->globals.debug.front){
-            LOG(LOG_INFO, "Front::incoming::send_demand_active");
-        }
-        this->send_demand_active();
 
     }
 
@@ -987,6 +1002,7 @@ public:
             LOG(LOG_INFO, "Front::activate_and_process_data");
         }
         ChannelList & channel_list = this->channel_list;
+
         Stream stream(65535);
 
         X224In tpdu(this->trans, stream);
