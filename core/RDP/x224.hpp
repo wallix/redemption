@@ -317,7 +317,8 @@ struct X224In : public X224Packet
         this->tpkt.len = stream.in_uint16_be();
         const size_t payload_len = this->tpkt.len - TPKT_HEADER_LEN;
         if (!stream.has_room(payload_len)){
-            LOG(LOG_INFO, "ERR_STREAM_MEMORY_TOO_SMALL (2)");
+            LOG(LOG_INFO, "ERR_STREAM_MEMORY_TOO_SMALL (asked for %u, has %u, used=%u)",
+                payload_len, stream.capacity, stream.end-stream.data);
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
 

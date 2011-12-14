@@ -121,7 +121,7 @@ struct rdp_orders {
 //        LOG(LOG_INFO, "rdp_orders_process_bmpcache");
         RDPBmpCache bmp(bpp);
         bmp.receive(stream, control, header, this->global_palette);
-        
+
         TODO(" add cache_id  cache_idx range check  and also size check based on cache size by type and uncompressed bitmap size")
         if (this->cache_bitmap[bmp.id][bmp.idx]) {
             delete this->cache_bitmap[bmp.id][bmp.idx];
@@ -453,7 +453,7 @@ struct mod_rdp : public client_mod {
         }
 
     }
-    
+
     void send_to_channel(
                 const McsChannelItem & channel,
                 uint8_t * data,
@@ -467,7 +467,7 @@ struct mod_rdp : public client_mod {
 
         TODO(" merge with Front::send_to_channel  the only difference now is the crypt level  that is set to 2 here and is as client_info says on front side")
         SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
-        
+
         stream.out_uint32_le(length);
         stream.out_uint32_le(flags);
         if (channel.flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -747,12 +747,16 @@ struct mod_rdp : public client_mod {
             Stream stream(65536);
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+            LOG(LOG_INFO, "Reading TPDU");
             X224In in_tpdu(trans, stream);
+            LOG(LOG_INFO, "MCS layer");
             McsIn mcs_in(stream);
             if ((mcs_in.opcode >> 2) != MCS_SDIN) {
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
+            LOG(LOG_INFO, "Sec layer");
             SecIn sec(stream, this->decrypt);
+            LOG(LOG_INFO, "Licence layer");
 
             if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
                 uint8_t tag = stream.in_uint8();
@@ -778,8 +782,8 @@ struct mod_rdp : public client_mod {
                     res = 1;
                     break;
                 default:
+                    LOG(LOG_INFO, "LICENCE_TAG_OTHER %x", tag);
                     break;
-                    /* todo unimpl("licence tag 0x%x\n", tag); */
                 }
             }
             else {
@@ -787,7 +791,8 @@ struct mod_rdp : public client_mod {
                 throw Error(ERR_SEC_EXPECTED_LICENCE_NEGOTIATION_PDU);
             }
             TODO(" we haven't actually read all the actual data available  hence we can't check end. Implement full decoding and activate it.")
-    //        in_tpdu.end();
+            stream.p = stream.end;
+            in_tpdu.end();
             if (res){
                 this->state = MOD_RDP_CONNECTED;
             }
@@ -903,9 +908,9 @@ struct mod_rdp : public client_mod {
                 uint32_t length = stream.in_uint32_le();
                 int flags = stream.in_uint32_le();
                 size_t chunk_size = stream.end - stream.p;
-               
+
                 this->send_to_front_channel(mod_channel.name, stream.p, length, chunk_size, flags);
-                
+
                 stream.p = stream.end;
             }
             else {
@@ -1300,22 +1305,22 @@ struct mod_rdp : public client_mod {
 
 // 2.2.7.1.5 Pointer Capability Set (TS_POINTER_CAPABILITYSET)
 
-// The TS_POINTER_CAPABILITYSET structure advertises pointer cache sizes and 
-// flags and is based on the capability set specified in [T128] section 8.2.11. 
+// The TS_POINTER_CAPABILITYSET structure advertises pointer cache sizes and
+// flags and is based on the capability set specified in [T128] section 8.2.11.
 // This capability is sent by both client and server.
 
-// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the 
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
 // capability set. This field MUST be set to CAPSTYPE_POINTER (8).
 
-// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes 
-// of the capability data, including the size of the capabilitySetType and 
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
+// of the capability data, including the size of the capabilitySetType and
 // lengthCapability fields.
 
 // colorPointerFlag (2 bytes): A 16-bit, unsigned integer. Indicates support for
 // color pointers. Since RDP supports monochrome cursors by using Color Pointer
-// Updates and New Pointer Updates (sections 2.2.9.1.1.4.4 and 2.2.9.1.1.4.5 
+// Updates and New Pointer Updates (sections 2.2.9.1.1.4.4 and 2.2.9.1.1.4.5
 // respectively), the value of this field is ignored and is always assumed to be
-// TRUE (at a minimum the Color Pointer Update MUST be supported by an RDP 
+// TRUE (at a minimum the Color Pointer Update MUST be supported by an RDP
 // client).
 
 // +---------------+-----------------------------------------+
@@ -1326,16 +1331,16 @@ struct mod_rdp : public client_mod {
 // | 0x0001 TRUE   | Color mouse cursors are supported.      |
 // +---------------+-----------------------------------------+
 
-// colorPointerCacheSize (2 bytes): A 16-bit, unsigned integer. The number of 
+// colorPointerCacheSize (2 bytes): A 16-bit, unsigned integer. The number of
 // available slots in the 24 bpp color pointer cache used to store data received
 // in the Color Pointer Update (section 2.2.9.1.1.4.4).
 
-// pointerCacheSize (2 bytes): A 16-bit, unsigned integer. The number of 
-// available slots in the pointer cache used to store pointer data of arbitrary 
-// bit depth received in the New Pointer Update (section 2.2.9.1.1.4.5). 
+// pointerCacheSize (2 bytes): A 16-bit, unsigned integer. The number of
+// available slots in the pointer cache used to store pointer data of arbitrary
+// bit depth received in the New Pointer Update (section 2.2.9.1.1.4.5).
 
-// If the value contained in this field is zero or the Pointer Capability Set 
-// sent from the client does not include this field, the server will not use 
+// If the value contained in this field is zero or the Pointer Capability Set
+// sent from the client does not include this field, the server will not use
 // the New Pointer Update.
 
 
@@ -1404,25 +1409,25 @@ struct mod_rdp : public client_mod {
 // ==================================================================
 
 // The TS_GLYPHCACHE_CAPABILITYSET structure advertises the glyph support level
-// and associated cache sizes. This capability is only sent from client to 
+// and associated cache sizes. This capability is only sent from client to
 // server.
 
-// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the 
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
 // capability set. This field MUST be set to CAPSTYPE_GLYPHCACHE (16).
 
-// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes 
-// of the capability data, including the size of the capabilitySetType and 
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
+// of the capability data, including the size of the capabilitySetType and
 // lengthCapability fields.
 
-// GlyphCache (40 bytes): An array of 10 TS_CACHE_DEFINITION structures. An 
-// ordered specification of the layout of each of the glyph caches with IDs 0 
+// GlyphCache (40 bytes): An array of 10 TS_CACHE_DEFINITION structures. An
+// ordered specification of the layout of each of the glyph caches with IDs 0
 // through to 9 ([MS-RDPEGDI] section 3.1.1.1.2).
 
-// FragCache (4 bytes): Fragment cache data. The maximum number of entries 
-// allowed in the cache is 256, and the largest allowed maximum size of an 
+// FragCache (4 bytes): Fragment cache data. The maximum number of entries
+// allowed in the cache is 256, and the largest allowed maximum size of an
 // element is 256 bytes.
 
-// GlyphSupportLevel (2 bytes): A 16-bit, unsigned integer. The level of glyph 
+// GlyphSupportLevel (2 bytes): A 16-bit, unsigned integer. The level of glyph
 // support.
 
 // +-------------------------------+-------------------------------------------+
@@ -1446,15 +1451,15 @@ struct mod_rdp : public client_mod {
 // |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.6).      |
 // +-------------------------------+-------------------------------------------+
 
-//If the GlyphSupportLevel is greater than GLYPH_SUPPORT_NONE (0), the client 
-//  MUST support the GlyphIndex Primary Drawing Order (see [MS-RDPEGDI] section 
-//  2.2.2.2.1.1.2.13) or the FastIndex Primary Drawing Order (see [MS-RDPEGDI] 
-//  section 2.2.2.2.1.1.2.14). If the FastIndex Primary Drawing Order is not 
-//  supported, then support for the GlyphIndex Primary Drawing Order is assumed 
+//If the GlyphSupportLevel is greater than GLYPH_SUPPORT_NONE (0), the client
+//  MUST support the GlyphIndex Primary Drawing Order (see [MS-RDPEGDI] section
+//  2.2.2.2.1.1.2.13) or the FastIndex Primary Drawing Order (see [MS-RDPEGDI]
+//  section 2.2.2.2.1.1.2.14). If the FastIndex Primary Drawing Order is not
+//  supported, then support for the GlyphIndex Primary Drawing Order is assumed
 //  by the server (order support is specified in the Order Capability Set, as
 //  described in section 2.2.7.1.3).
 
-// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this   
+// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
 //   field MUST be ignored.
 
         void out_glyphcache_caps(Stream & stream)
@@ -1475,7 +1480,7 @@ struct mod_rdp : public client_mod {
             stream.out_uint16_le(0);
             length = stream.p - stream.data - length;
             stream.set_out_uint16_le(length, offset_length);
-            
+
         }
 
         // 2.2.1.13.1.1 Demand Active PDU Data (TS_DEMAND_ACTIVE_PDU)
@@ -1489,11 +1494,11 @@ struct mod_rdp : public client_mod {
         // lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The size in bytes of the sourceDescriptor field.
 
         // lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer. The combined size in bytes of the numberCapabilities, pad2Octets, and capabilitySets fields.
-        
+
         // sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see [T128] section 8.4.1 for more information regarding source descriptors).
-        
+
         // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the Demand Active PDU.
-        
+
         // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be ignored.
 
         // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number of capability sets is specified by the numberCapabilities field.
@@ -1505,7 +1510,7 @@ struct mod_rdp : public client_mod {
         {
             LOG(LOG_INFO, "Sending confirm active to server\n");
 
-            Stream stream(8192);
+            Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
@@ -1524,15 +1529,15 @@ struct mod_rdp : public client_mod {
             stream.out_uint16_le(5);
 
         // lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer. The combined size in bytes of the numberCapabilities, pad2Octets, and capabilitySets fields.
-        
-            uint16_t offset_caplen = stream.p - stream.data; 
+
+            uint16_t offset_caplen = stream.p - stream.data;
             stream.out_uint16_le(0); // caplen
-            
+
         // sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see [T128] section 8.4.1 for more information regarding source descriptors).
             stream.out_copy_bytes("MSTSC", 5);
 
         // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the Demand Active PDU.
-            uint16_t offset_capscount = stream.p - stream.data; 
+            uint16_t offset_capscount = stream.p - stream.data;
             uint16_t capscount = 0;
             stream.out_uint16_le(0); /* num_caps */
 
@@ -1982,7 +1987,7 @@ struct mod_rdp : public client_mod {
 
         void send_control(int action) throw (Error)
         {
-            Stream stream(8192);
+            Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
@@ -2004,7 +2009,7 @@ struct mod_rdp : public client_mod {
         TODO(" duplicated code in front")
         void send_synchronise() throw (Error)
         {
-            Stream stream(8192);
+            Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
@@ -2064,7 +2069,7 @@ struct mod_rdp : public client_mod {
         {
 //            LOG(LOG_INFO, "send_input\n");
 
-            Stream stream(8192);
+            Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
@@ -2092,7 +2097,7 @@ struct mod_rdp : public client_mod {
             if (this->up_and_running) {
 //                LOG(LOG_INFO, "rdp_input_invalidate");
                 if (!r.isempty()){
-                    Stream stream(8192);
+                    Stream stream(32768);
                     X224Out tpdu(X224Packet::DT_TPDU, stream);
                     McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
                     SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
@@ -2308,11 +2313,11 @@ struct mod_rdp : public client_mod {
                 Bitmap bitmap(bpp, &this->orders.global_palette, width, height, data, size, true);
 
                 if (line_size != bitmap.line_size(bpp)){
-                    LOG(LOG_WARNING, "Unexpected line_size in bitmap received [%u != %u] width=%u height=%u bpp=%u", 
+                    LOG(LOG_WARNING, "Unexpected line_size in bitmap received [%u != %u] width=%u height=%u bpp=%u",
                         line_size, bitmap.line_size(bpp), width, height, bpp);
                 }
                 if (line_size != bitmap.line_size(bpp)){
-                    LOG(LOG_WARNING, "Unexpected final_size in bitmap received [%u != %u] width=%u height=%u bpp=%u", 
+                    LOG(LOG_WARNING, "Unexpected final_size in bitmap received [%u != %u] width=%u height=%u bpp=%u",
                         final_size, bitmap.bmp_size(bpp), width, height, bpp);
                 }
 
@@ -2324,7 +2329,7 @@ struct mod_rdp : public client_mod {
                 Bitmap bitmap(bpp, &this->orders.global_palette, width, height, data, bufsize);
 
                 if (bufsize != bitmap.bmp_size(bpp)){
-                    LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u", 
+                    LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u",
                         bufsize, bitmap.bmp_size(bpp), width, height, bpp);
                 }
 
@@ -2348,7 +2353,7 @@ struct mod_rdp : public client_mod {
         stream.out_uint32_le(std::min(client_info.cache1_entries, (uint32_t)2000));
         stream.out_uint32_le(std::min(client_info.cache2_entries, (uint32_t)2000));
         stream.out_uint32_le(std::min(client_info.cache3_entries, (uint32_t)2000));
- 
+
         stream.out_clear_bytes(20);	/* other bitmap caches not used */
     }
 
@@ -2365,7 +2370,7 @@ struct mod_rdp : public client_mod {
         // The WAB does not send it's IP to server. Is it what we want ?
         const char * ip_source = "\0\0\0\0";
 
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out2(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, 2, SEC_LOGON_INFO | SEC_ENCRYPT, this->encrypt);

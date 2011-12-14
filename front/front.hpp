@@ -229,7 +229,7 @@ public:
         if (this->ini->globals.debug.front){
             LOG(LOG_INFO, "Front::disconnect()");
         }
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
         stream.out_uint8((MCS_DPUM << 2) | 1);
@@ -297,7 +297,7 @@ public:
         if (this->ini->globals.debug.front){
             LOG(LOG_INFO, "Front::send_global_palette()");
         }
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
@@ -440,7 +440,7 @@ public:
         if (this->ini->globals.debug.front){
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
         }
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
@@ -557,7 +557,7 @@ public:
         if (this->ini->globals.debug.front){
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
         }
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
@@ -1138,7 +1138,7 @@ public:
         if (this->ini->globals.debug.front){
             LOG(LOG_INFO, "send_data_update_sync");
         }
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
@@ -1163,7 +1163,7 @@ public:
     {
         LOG(LOG_INFO, "send_demand_active");
 
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
@@ -1792,7 +1792,7 @@ public:
     {
         LOG(LOG_INFO, "send_synchronize");
 
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
@@ -1837,7 +1837,7 @@ public:
     {
         LOG(LOG_INFO, "send_control action=%u", action);
 
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
@@ -1889,7 +1889,7 @@ public:
                               };
 
         TODO(" we should create some RDPStream object created on init and sent before destruction")
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
@@ -2058,7 +2058,7 @@ public:
                 // when this message comes, send a PDUTYPE2_SHUTDOWN_DENIED back
                 // so the client is sure the connection is alive and it can ask
                 // if user really wants to disconnect */
-                Stream stream(8192);
+                Stream stream(32768);
                 X224Out tpdu(X224Packet::DT_TPDU, stream);
                 McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
                 SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
@@ -2100,7 +2100,7 @@ public:
     void send_deactive() throw (Error)
     {
         LOG(LOG_INFO, "send_deactive");
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);

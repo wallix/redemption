@@ -98,7 +98,7 @@ struct mod_vnc : public client_mod {
 
             try {
                 /* protocol version */
-                Stream stream(8192);
+                Stream stream(32768);
                 this->t->recv((char**)&stream.end, 12);
                 this->t->send("RFB 003.003\n", 12);
 
@@ -135,7 +135,7 @@ struct mod_vnc : public client_mod {
                         throw 1;
                 }
                 {
-                    Stream stream(8192);
+                    Stream stream(32768);
                     stream.data[0] = 1;
                     TODO(" send and recv should be stream aware")
                     TODO(" we should always send at stream.p  not stream.data")
@@ -221,7 +221,7 @@ struct mod_vnc : public client_mod {
                 // message is extended with an interaction capabilities section.
 
                 {
-                    Stream stream(8192);
+                    Stream stream(32768);
                     this->t->recv((char**)&stream.end, 24); /* server init */
                     this->width = stream.in_uint16_be();
                     this->height = stream.in_uint16_be();
@@ -275,7 +275,7 @@ struct mod_vnc : public client_mod {
                 // FramebufferUpdate is using the new or the previous pixel
                 // format.
 
-                    Stream stream(8192);
+                    Stream stream(32768);
                     // Set Pixel format
                     stream.out_uint8(0);
 
@@ -369,7 +369,7 @@ struct mod_vnc : public client_mod {
                 // -specific confirmation from the server.
                 {
                     /* SetEncodings */
-                    Stream stream(8192);
+                    Stream stream(32768);
                     stream.out_uint8(2);
                     stream.out_uint8(0);
                     stream.out_uint16_be(3);
@@ -384,7 +384,7 @@ struct mod_vnc : public client_mod {
 
                 {
                     /* FrambufferUpdateRequest */
-                    Stream stream(8192);
+                    Stream stream(32768);
                     stream.out_uint8(3);
                     stream.out_uint8(0);
                     TODO(" we could create some out_rect primitive at stream level")
@@ -434,7 +434,7 @@ struct mod_vnc : public client_mod {
     TODO(" optimize this  much duplicated code and several send at once when not necessary")
     virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
     {
-        Stream stream(8192);
+        Stream stream(32768);
 
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
             stream.init(8192);
@@ -553,7 +553,7 @@ struct mod_vnc : public client_mod {
             int msg = (device_flags & KBD_FLAG_UP)?WM_KEYUP:WM_KEYDOWN;
             int key = ki->sym;
             if (key > 0) {
-                Stream stream(8192);
+                Stream stream(32768);
                 stream.out_uint8(4);
                 stream.out_uint8(msg == WM_KEYDOWN); /* down/up flag */
                 stream.out_clear_bytes(2);
@@ -572,7 +572,7 @@ struct mod_vnc : public client_mod {
     {
         LOG(LOG_INFO, "rdp_input_invalidate");
         if (!r.isempty()) {
-            Stream stream(8192);
+            Stream stream(32768);
             /* FrambufferUpdateRequest */
             stream.out_uint8(3);
             stream.out_uint8(0);
@@ -685,7 +685,7 @@ struct mod_vnc : public client_mod {
         size_t num_recs = 0;
         int Bpp = nbbytes(this->bpp);
         {
-            Stream stream(8192);
+            Stream stream(32768);
             this->t->recv((char**)&stream.end, 3);
             stream.skip_uint8(1);
             num_recs = stream.in_uint16_be();
@@ -694,7 +694,7 @@ struct mod_vnc : public client_mod {
         this->gd.server_begin_update();
 
         for (size_t i = 0; i < num_recs; i++) {
-            Stream stream(8192);
+            Stream stream(32768);
             this->t->recv((char**)&stream.end, 12);
             int x = stream.in_uint16_be();
             int y = stream.in_uint16_be();
@@ -819,7 +819,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         {
 //                LOG(LOG_INFO, "Frame buffer Update");
             /* FrambufferUpdateRequest */
-            Stream stream(8192);
+            Stream stream(32768);
             stream.out_uint8(3);
             stream.out_uint8(1);
             stream.out_uint16_be(0);
@@ -833,7 +833,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
     void lib_clip_data(void)
     {
-        Stream stream(8192);
+        Stream stream(32768);
         this->t->recv((char**)&stream.end, 7);
         stream.skip_uint8(3);
         int size = stream.in_uint32_be();
@@ -863,7 +863,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
     /******************************************************************************/
     void lib_palette_update(void)
     {
-        Stream stream(8192);
+        Stream stream(32768);
         this->t->recv((char**)&stream.end, 5);
         stream.skip_uint8(1);
         int first_color = stream.in_uint16_be();

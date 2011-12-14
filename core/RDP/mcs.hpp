@@ -770,7 +770,7 @@ static inline void recv_mcs_connect_initial_pdu_with_gcc_conference_create_reque
                 ClientInfo * client_info,
                 ChannelList & channel_list)
 {
-    Stream stream(8192);
+    Stream stream(32768);
     X224In(trans, stream);
 
     if (stream.in_uint16_be() != BER_TAG_MCS_CONNECT_INITIAL) {
@@ -908,7 +908,7 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
 //    int data_len = data.end - data.data;
 //    int len = 7 + 3 * 34 + 4 + data_len;
 
-    Stream stream(8192);
+    Stream stream(32768);
     X224Out ci_tpdu(X224Packet::DT_TPDU, stream);
 
     stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
@@ -1156,7 +1156,7 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
 static inline void send_mcs_erect_domain_and_attach_user_request_pdu(Transport * trans)
 {
     TODO(" there should be a way to merge both packets in the same stream to only perform one unique send")
-    Stream edrq_stream(8192);
+    Stream edrq_stream(32768);
     X224Out edrq_tpdu(X224Packet::DT_TPDU, edrq_stream);
     edrq_stream.out_uint8((MCS_EDRQ << 2));
     edrq_stream.out_uint16_be(0x100); /* height */
@@ -1164,7 +1164,7 @@ static inline void send_mcs_erect_domain_and_attach_user_request_pdu(Transport *
     edrq_tpdu.end();
     edrq_tpdu.send(trans);
 
-    Stream aurq_stream(8192);
+    Stream aurq_stream(32768);
     X224Out aurq_tpdu(X224Packet::DT_TPDU, aurq_stream);
     aurq_stream.out_uint8((MCS_AURQ << 2));
     aurq_tpdu.end();
@@ -1175,7 +1175,7 @@ static inline void recv_mcs_erect_domain_and_attach_user_request_pdu(Transport *
 {
     TODO(" this code could lead to some problem if both MCS are combined in the same TPDU  we should manage this case")
     {
-        Stream stream(8192);
+        Stream stream(32768);
         X224In in(trans, stream);
         uint8_t opcode = stream.in_uint8();
         if ((opcode >> 2) != MCS_EDRQ) {
@@ -1190,7 +1190,7 @@ static inline void recv_mcs_erect_domain_and_attach_user_request_pdu(Transport *
     }
 
     {
-        Stream stream(8192);
+        Stream stream(32768);
         X224In in(trans, stream);
         uint8_t opcode = stream.in_uint8();
         if ((opcode >> 2) != MCS_AURQ) {
@@ -1289,7 +1289,7 @@ static inline void recv_mcs_erect_domain_and_attach_user_request_pdu(Transport *
 
 static inline void send_mcs_channel_join_request_pdu(Transport * trans, int userid, int chanid)
 {
-    Stream cjrq_stream(8192);
+    Stream cjrq_stream(32768);
     X224Out cjrq_tpdu(X224Packet::DT_TPDU, cjrq_stream);
     cjrq_stream.out_uint8((MCS_CJRQ << 2));
     cjrq_stream.out_uint16_be(userid);
@@ -1299,7 +1299,7 @@ static inline void send_mcs_channel_join_request_pdu(Transport * trans, int user
 }
 
 static inline void recv_mcs_channel_join_request_pdu(Transport * trans, uint16_t & userid, uint16_t & chanid){
-    Stream stream(8192);
+    Stream stream(32768);
     // read tpktHeader (4 bytes = 3 0 len)
     // TPDU class 0    (3 bytes = LI F0 PDU_DT)
     X224In in(trans, stream);
@@ -1393,7 +1393,7 @@ static inline void recv_mcs_channel_join_request_pdu(Transport * trans, uint16_t
 
 static inline void recv_mcs_channel_join_confirm_pdu(Transport * trans, uint16_t & mcs_userid, uint16_t & req_chanid, uint16_t & join_chanid)
 {
-    Stream cjcf_stream(8192);
+    Stream cjcf_stream(32768);
     X224In cjcf_tpdu(trans, cjcf_stream);
     int opcode = cjcf_stream.in_uint8();
     if ((opcode >> 2) != MCS_CJCF) {
@@ -1414,7 +1414,7 @@ static inline void recv_mcs_channel_join_confirm_pdu(Transport * trans, uint16_t
 
 static inline void send_mcs_channel_join_confirm_pdu(Transport * trans, uint16_t userid, uint16_t chanid)
 {
-    Stream stream(8192);
+    Stream stream(32768);
     X224Out tpdu(X224Packet::DT_TPDU, stream);
     stream.out_uint8((MCS_CJCF << 2) | 2);
     stream.out_uint8(0);
@@ -1501,7 +1501,7 @@ static inline void send_mcs_channel_join_request_and_recv_confirm_pdu(Transport 
 
 static inline void recv_mcs_attach_user_confirm_pdu(Transport * trans, int & userid)
 {
-    Stream aucf_stream(8192);
+    Stream aucf_stream(32768);
     X224In aucf_tpdu(trans, aucf_stream);
     int opcode = aucf_stream.in_uint8();
     if ((opcode >> 2) != MCS_AUCF) {
@@ -1519,7 +1519,7 @@ static inline void recv_mcs_attach_user_confirm_pdu(Transport * trans, int & use
 
 static inline void send_mcs_attach_user_confirm_pdu(Transport * trans, uint16_t userid)
 {
-    Stream stream(8192);
+    Stream stream(32768);
     X224Out tpdu(X224Packet::DT_TPDU, stream);
     stream.out_uint8(((MCS_AUCF << 2) | 2));
     stream.out_uint8(0);
@@ -1707,7 +1707,7 @@ static inline void send_mcs_connect_response_pdu_with_gcc_conference_create_resp
     memcpy(pub_sig, rsa_keys.pub_sig, 64);
     memcpy(pri_exp, rsa_keys.pri_exp, 64);
 
-    Stream stream(8192);
+    Stream stream(32768);
 
     // TPKT Header (length = 337 bytes)
     // X.224 Data TPDU
@@ -2309,7 +2309,7 @@ static inline void recv_mcs_connect_response_pdu_with_gcc_conference_create_resp
                             int crypt_level,
                             int & use_rdp5)
 {
-    Stream cr_stream(8192);
+    Stream cr_stream(32768);
     X224In(trans, cr_stream);
     if (cr_stream.in_uint16_be() != BER_TAG_MCS_CONNECT_RESPONSE) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
