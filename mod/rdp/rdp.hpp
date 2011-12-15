@@ -93,7 +93,7 @@ struct rdp_orders {
     BGRPalette global_palette;
     BGRPalette memblt_palette;
 
-    TODO(" this cache_bitmap here looks strange. At least it's size should ne negotiated. And why is it not managed by the other cache management code ? This probably hide some kind of problem. See when working on cache secondary order primitives.")
+    TODO(" this cache_bitmap here looks strange. At least it's size should be negotiated. And why is it not managed by the other cache management code ? This probably hide some kind of problem. See when working on cache secondary order primitives.")
     Bitmap * cache_bitmap[3][10000];
 
     rdp_orders() :
@@ -122,7 +122,7 @@ struct rdp_orders {
         RDPBmpCache bmp(bpp);
         bmp.receive(stream, control, header, this->global_palette);
 
-        TODO(" add cache_id  cache_idx range check  and also size check based on cache size by type and uncompressed bitmap size")
+        TODO("add cache_id, cache_idx range check, and also size check based on cache size by type and uncompressed bitmap size")
         if (this->cache_bitmap[bmp.id][bmp.idx]) {
             delete this->cache_bitmap[bmp.id][bmp.idx];
         }
@@ -465,7 +465,8 @@ struct mod_rdp : public client_mod {
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, this->userid, channel.chanid);
 
-        TODO(" merge with Front::send_to_channel  the only difference now is the crypt level  that is set to 2 here and is as client_info says on front side")
+        TODO(" merge with Front::send_to_channel  the only difference now is the crypt level that is set to 2 here and is as client_info says on front side")
+
         SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
 
         stream.out_uint32_le(length);
@@ -1142,6 +1143,13 @@ struct mod_rdp : public client_mod {
     {
         Stream out;
         X224Out crtpdu(X224Packet::CR_TPDU, out);
+        crtpdu.stream.out_concat("Cookie: mstshash=");
+        crtpdu.stream.out_concat(this->username);
+        crtpdu.stream.out_concat("\r\n");
+//        crtpdu.stream.out_uint8(0x01);
+//        crtpdu.stream.out_uint8(0x00);
+//        crtpdu.stream.out_uint32_le(0x00);
+        crtpdu.extend_tpdu_hdr();
         crtpdu.end();
         crtpdu.send(trans);
     }

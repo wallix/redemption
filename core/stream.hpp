@@ -428,8 +428,9 @@ class Stream {
         int i = 0;
         int max = (sz>>1)-1;
         while (i < max) {
-            this->skip_uint8(1);
             text[i++] = this->in_uint8();
+            uint8_t tmp = this->in_uint8();
+//            LOG(LOG_INFO, "%u %u", tmp, text[i-1]);
         }
         text[i] = 0;
         this->skip_uint8(2);

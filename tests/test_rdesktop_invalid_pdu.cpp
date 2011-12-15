@@ -24,7 +24,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestGraphicsToFile
+#define BOOST_TEST_MODULE TestRdesktopInvalidPDU
 #include <boost/test/auto_unit_test.hpp>
 #include "./test_orders.hpp"
 

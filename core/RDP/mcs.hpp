@@ -916,9 +916,11 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
     stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
     stream.out_uint8(BER_TAG_OCTET_STRING);
-    stream.out_ber_len(0); /* calling domain */
+    stream.out_ber_len(1); /* calling domain */
+    stream.out_uint8(1);
     stream.out_uint8(BER_TAG_OCTET_STRING);
-    stream.out_ber_len(0); /* called domain */
+    stream.out_ber_len(1); /* called domain */
+    stream.out_uint8(1);
     stream.out_uint8(BER_TAG_BOOLEAN);
     stream.out_ber_len(1);
     stream.out_uint8(0xff); /* upward flag */
@@ -1059,7 +1061,7 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
     stream.out_uint16_le(CS_SECURITY);
     stream.out_uint16_le(12); /* length */
 
-    TODO(" check that  should depend on g_encryption")
+    TODO(" check that should depend on g_encryption")
     /* encryption supported, 128-bit supported */
     stream.out_uint32_le(0x3);
     stream.out_uint32_le(0); /* Unknown */

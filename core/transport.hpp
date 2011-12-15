@@ -395,22 +395,39 @@ class SocketTransport : public Transport {
                     len -= rcvd;
             }
         }
+
+        if (this->verbose & 0x100){
+            LOG(LOG_INFO, "Recv done on %s (%u)", this->name, this->sck);
+            this->hexdump(*input_buffer, total_len);
+        }
+
         *input_buffer = pbuffer;
         total_received += total_len;
         last_quantum_received += total_len;
+    }
 
-//        uint8_t * bb = start;
-//        LOG(LOG_INFO, "recv on socket %u : len=%u buffer=%p"
-//            " [%0.2X %0.2X %0.2X %0.2X]"
-//            " [%0.2X %0.2X %0.2X]"
-//            " [%0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X ...]",
-//            this->sck, total_len, *input_buffer,
-//            bb[0], bb[1], bb[2], bb[3],
-//            bb[4], bb[5], bb[6],
-//            bb[7], bb[8], bb[9], bb[10], bb[11],
-//            bb[12], bb[13], bb[14], bb[15], bb[16]);
-        if (this->verbose & 0x100){
-            LOG(LOG_INFO, "Recv done on %s (%u)", this->name, this->sck);
+    void hexdump(const char * data, size_t size){
+        for (size_t j = 0 ; j < size ; j += 16){
+            char buffer[2048];
+            char * line = buffer;
+            line += sprintf(line, "%.4x ", (unsigned)j);
+            size_t i = 0;
+            for (i = 0; i < 16; i++){
+                if (j+i >= size){ break; }
+                line += snprintf(line, 1024, "%0.2x ", (unsigned char)data[j+i]);
+            }
+            if (i < 16){
+                line += snprintf(line, 1024, "%*c", (unsigned)((16-i)*3), ' ');
+            }
+            for (i = 0; i < 16; i++){
+                if (j+i >= size){ break; }
+                line += snprintf(line, 1024, "%c", 
+                    ((data[j+i]<127) && (data[j+i]>32))?data[j+i]:'.');
+            }
+
+            if (line != buffer){
+                LOG(LOG_INFO, buffer);
+            }
         }
     }
 
@@ -420,6 +437,7 @@ class SocketTransport : public Transport {
     {
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Socket %s (%u) sending %u bytes", this->name, this->sck, len);
+            this->hexdump(buffer, len);
         }
 //        LOG(LOG_INFO, "send on socket %u : len=%u buffer=%p"
 //            " [%0.2X %0.2X %0.2X %0.2X]"

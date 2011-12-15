@@ -600,9 +600,9 @@ struct X224Out : public X224Packet
                 // Seems unecessary :
                 // see 2.2.1.1 Client X.224 Connection Request PDU
                 // USER DATA
-                // out.out_concat("Cookie: mstshash=");
-                // out.out_concat(this->username);
-                // out.out_concat("\r\n");
+//                this->stream.out_concat("Cookie: mstshash=");
+//                this->stream.out_concat(this->username);
+//                this->stream.out_concat("\r\n");
                 // crtpdu.extend_tpdu_hdr();
 
             break;
@@ -680,10 +680,12 @@ struct X224Out : public X224Packet
 
     void extend_tpdu_hdr()
     // include user data from end of tpdu header to stream.p inside tpdu header.
-    // Not at all part of x224, but RDP uses it to transmit username!!!
-    // appending a string "Cookie: mstshash=username\r\n" to tpdu header.
+    // Not really part of x224, but RDP uses it to transmit username
+    // and protocol negotiation appending a string "Cookie: mstshash=username\r\n"
+    // to tpdu header.
     {
-        this->stream.set_out_uint8(this->stream.p-this->bop-5, 4); // LI
+        this->stream.set_out_uint8(this->stream.p - this->bop - 5, 4); // LI
+        this->stream.set_out_uint16_le(this->stream.p-this->bop, 2);   // tpkt.len
     }
 
     void end()
