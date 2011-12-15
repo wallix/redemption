@@ -78,7 +78,10 @@ void daemonize(const char * pid_file)
             _exit(1);
         }
         lg = snprintf(text, 255, "%d", pid);
-        write(fd, text, lg);
+        if (write(fd, text, lg) == -1) {
+            LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/" LOCKFILE, strerror(errno));
+            _exit(1);
+        }
         close(fd);
         usleep(1000000);
         open("/dev/null", O_RDONLY, 0); // stdin  0
@@ -267,7 +270,10 @@ int main(int argc, char** argv)
     }
     pid = getpid();
     size_t lg = snprintf(text, 255, "%d", pid);
-    write(fd, text, lg);
+    if (write(fd, text, lg) == -1) {
+        LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/" LOCKFILE, strerror(errno));
+        _exit(1);
+    }
     close(fd);
 
     if (!options.count("nodaemon")) {
