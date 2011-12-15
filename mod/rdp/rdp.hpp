@@ -293,6 +293,7 @@ struct mod_rdp : public client_mod {
     bool console_session;
     int bpp;
 
+    int crypt_level;
     uint32_t server_public_key_len;
     uint8_t client_crypt_random[512];
     CryptContext encrypt, decrypt;
@@ -337,7 +338,8 @@ struct mod_rdp : public client_mod {
                     userid(0),
                     bpp(bpp),
                     connection_finalization_state(EARLY),
-                    state(MOD_RDP_CONNECTING)
+                    state(MOD_RDP_CONNECTING),
+                    crypt_level(0)
     {
 
         // from rdp_sec
@@ -551,7 +553,7 @@ struct mod_rdp : public client_mod {
                     this->decrypt,
                     this->server_public_key_len,
                     this->client_crypt_random,
-                    this->gd.get_client_info().crypt_level,
+                    this->crypt_level,
                     this->use_rdp5);
 
             // Channel Connection

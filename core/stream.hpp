@@ -115,39 +115,47 @@ class Stream {
     }
 
     signed char in_sint8(void) {
+        assert(check_rem(1));
         return *((signed char*)(this->p++));
     }
 
     unsigned char in_uint8(void) {
+        assert(check_rem(1));
         return *((unsigned char*)(this->p++));
     }
 
     signed int in_sint16_be(void) {
+        assert(check_rem(2));
         unsigned int v = this->in_uint16_be();
         return (v > 32767)?v - 65536:v;
     }
 
     signed int in_sint16_le(void) {
+        assert(check_rem(2));
         unsigned int v = this->in_uint16_le();
         return (v > 32767)?v - 65536:v;
     }
 
     unsigned in_bytes_le(const uint8_t nb){
+        assert(check_rem(nb));
         this->p += nb;
         return ::in_bytes_le(nb, this->p - nb);
     }
 
     unsigned int in_uint16_le(void) {
+        assert(check_rem(2));
         this->p += 2;
         return ((unsigned char*)this->p)[-2] + ((unsigned char*)this->p)[-1] * 256;
     }
 
     unsigned int in_uint16_be(void) {
+        assert(check_rem(2));
         this->p += 2;
         return ((unsigned char*)this->p)[-1] + ((unsigned char*)this->p)[-2] * 256;
     }
 
     unsigned int in_uint32_le(void) {
+        assert(check_rem(4));
         this->p += 4;
         return  this->p[-4]
              | (this->p[-3] << 8)
@@ -157,6 +165,7 @@ class Stream {
     }
 
     unsigned int in_uint32_be(void) {
+        assert(check_rem(4));
         this->p += 4;
         return  this->p[-1]
              | (this->p[-2] << 8)
@@ -166,11 +175,14 @@ class Stream {
     }
 
     const uint8_t *in_uint8p(unsigned int n) {
+        assert(check_rem(n));
         this->p+=n;
         return this->p - n;
     }
 
     void skip_uint8(unsigned int n) {
+        TODO("We can't put the assert below because end is not (yet) setted when we are performing output. To solve this we should have two different skip functions, one for output, the other for input")
+//        assert(check_rem(n));
         this->p+=n;
     }
 
@@ -430,6 +442,7 @@ class Stream {
         while (i < max) {
             text[i++] = this->in_uint8();
             uint8_t tmp = this->in_uint8();
+            (void)tmp;
 //            LOG(LOG_INFO, "%u %u", tmp, text[i-1]);
         }
         text[i] = 0;

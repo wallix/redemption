@@ -366,7 +366,7 @@ class SocketTransport : public Transport {
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Socket %s (%u) receiving %u bytes", this->name, this->sck, total_len);
         }
-//        uint8_t * start = (uint8_t*)(*input_buffer);
+        char * start = *input_buffer;
         int len = total_len;
         char * pbuffer = *input_buffer;
 
@@ -398,7 +398,8 @@ class SocketTransport : public Transport {
 
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Recv done on %s (%u)", this->name, this->sck);
-            this->hexdump(*input_buffer, total_len);
+            this->hexdump(start, total_len);
+            LOG(LOG_INFO, "Dump done on %s (%u)", this->name, this->sck);
         }
 
         *input_buffer = pbuffer;
@@ -407,26 +408,31 @@ class SocketTransport : public Transport {
     }
 
     void hexdump(const char * data, size_t size){
+        char buffer[2048];
         for (size_t j = 0 ; j < size ; j += 16){
-            char buffer[2048];
             char * line = buffer;
             line += sprintf(line, "%.4x ", (unsigned)j);
             size_t i = 0;
             for (i = 0; i < 16; i++){
                 if (j+i >= size){ break; }
-                line += snprintf(line, 1024, "%0.2x ", (unsigned char)data[j+i]);
+                line += sprintf(line, "%.2x ", (unsigned char)data[j+i]);
             }
             if (i < 16){
-                line += snprintf(line, 1024, "%*c", (unsigned)((16-i)*3), ' ');
+                line += sprintf(line, "%*c", (unsigned)((16-i)*3), ' ');
             }
             for (i = 0; i < 16; i++){
                 if (j+i >= size){ break; }
-                line += snprintf(line, 1024, "%c", 
-                    ((data[j+i]<127) && (data[j+i]>32))?data[j+i]:'.');
+                unsigned char tmp = (unsigned)(data[j+i]);
+                if ((tmp < ' ') || (tmp > '~')){
+                    tmp = '.';
+                }
+                line += sprintf(line, "%c", tmp);
             }
 
             if (line != buffer){
-                LOG(LOG_INFO, buffer);
+                line[0] = 0;
+                LOG(LOG_INFO, "%s", buffer);
+                buffer[0]=0;
             }
         }
     }
@@ -438,16 +444,8 @@ class SocketTransport : public Transport {
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Socket %s (%u) sending %u bytes", this->name, this->sck, len);
             this->hexdump(buffer, len);
+            LOG(LOG_INFO, "Dump done %s (%u) sending %u bytes", this->name, this->sck, len);
         }
-//        LOG(LOG_INFO, "send on socket %u : len=%u buffer=%p"
-//            " [%0.2X %0.2X %0.2X %0.2X]"
-//            " [%0.2X %0.2X %0.2X]"
-//            " [%0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X ...]",
-//            this->sck, len, buffer,
-//            (uint8_t)buffer[0], (uint8_t)buffer[1], (uint8_t)buffer[2], (uint8_t)buffer[3],
-//            (uint8_t)buffer[4], (uint8_t)buffer[5], (uint8_t)buffer[6],
-//            (uint8_t)buffer[7], (uint8_t)buffer[8], (uint8_t)buffer[9], (uint8_t)buffer[10], (uint8_t)buffer[11],
-//            (uint8_t)buffer[12], (uint8_t)buffer[13], (uint8_t)buffer[14], (uint8_t)buffer[15], (uint8_t)buffer[16]);
         if (this->sck_closed) {
             throw Error(ERR_SOCKET_ALLREADY_CLOSED);
         }

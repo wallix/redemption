@@ -256,7 +256,7 @@ struct RDPSerializer : public RDPGraphicDevice
           const int bitmap_cache_version,
           const int use_bitmap_comp,
           const int op2)
-        : stream(4096),
+        : stream(32768),
         trans(trans),
         ini(ini),
         bitmap_cache_version(bitmap_cache_version),

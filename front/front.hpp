@@ -133,6 +133,8 @@ public:
         break;
         }
 
+        LOG(LOG_INFO, "Front 1");
+
         this->orders = new GraphicsUpdatePDU(trans,
                             this->userid,
                             this->share_id,
@@ -142,6 +144,8 @@ public:
                             this->client_info.bitmap_cache_version,
                             this->client_info.use_bitmap_comp,
                             this->client_info.op2);
+
+        LOG(LOG_INFO, "Front 2");
     }
 
     ~Front(){
@@ -1007,7 +1011,12 @@ public:
 
         X224In tpdu(this->trans, stream);
 
-        TODO(" before doing this we should check we got DT_TPDU  if we got a DR (Disconnect Request)  we should not proceed")
+        if (tpdu.tpdu_hdr.code != X224Packet::DT_TPDU){
+            TODO("we can also get a DR (Disconnect Request), this a normal case that should be managed")
+            LOG(LOG_INFO, "Front::Unexpected non data PDU (got %u)", tpdu.tpdu_hdr.code);
+            throw Error(ERR_X224_EXPECTED_DATA_PDU);
+        }
+
         McsIn mcs_in(stream);
 
         // Disconnect Provider Ultimatum datagram
@@ -1075,22 +1084,30 @@ public:
         else {
             while (stream.p < stream.end) {
                 TODO(" here should be a ShareControlHeader/ShareDataHeader  check")
-                int length = stream.in_uint16_le();
+                assert(stream.check_rem(2));
+                uint16_t length = stream.in_uint16_le();
+                LOG(LOG_INFO, "length=%u", length);
                 uint8_t * next_packet = stream.p + length;
-                if (length == 0x8000) {
+                if (length < 4){
+                    TODO("Can't be a ShareControlHeader... should not happen but it does. We should try to understand why.")
+                    LOG(LOG_INFO, "PDU length (%u) too small for ShareControlHeader, remaining data :%u", length, stream.end - stream.p + 2);
+                }
+                else if (length == 0x8000) {
                     next_packet = next_packet - 0x8000 + 8;
                 }
+                else if (length > stream.end - stream.p + 2){
+                    TODO("Should not happen. It means PDU length is inconsistant with TPDU length. It should not happen but it does")
+                    LOG(LOG_INFO, "PDU length (%u) too large for remaining TPDU data (%u)", length, stream.end - stream.p + 2);
+                    next_packet = stream.end;
+                }
                 else {
+                    assert(stream.check_rem(2));
                     int pdu_code = stream.in_uint16_le();
+                    LOG(LOG_INFO, "pdu_code=%d", pdu_code);
+                    assert(stream.check_rem(2));
                     stream.skip_uint8(2); /* mcs user id */
-                TODO(" valgrind says: Conditional jump or move depends on uninitialised value(s)")
-                    switch (pdu_code & 0xf) {
 
-                    case 0:
-                        if (this->ini->globals.debug.front){
-                            LOG(LOG_INFO, "Front::activate_and_process_data::PDU_TYPE 0");
-                        }
-                        break;
+                    switch (pdu_code & 0xf) {
                     case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
                         if (this->ini->globals.debug.front){
                             LOG(LOG_INFO, "Front::activate_and_process_data::PDU_TYPE DEMANDACTIVEPDU");
@@ -1122,7 +1139,6 @@ public:
                         break;
                     default:
                         LOG(LOG_WARNING, "unknown PDU type in session_data (%d)\n", pdu_code & 0xf);
-                        exit(0);
                         break;
                     }
                 }

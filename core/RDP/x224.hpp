@@ -124,7 +124,7 @@ struct X224Packet
     // The field is contained in the first octet of the TPDUs. The length is
     // indicated by a binary number, with a maximum value of 254 (1111 1110).
     // The length indicated shall be the header length in octets including
-    // parameters, but excluding the length indicator field and user data, if
+    // parameters, but excluding the length indicator field anduni user data, if
     // any. The value 255 (1111 1111) is reserved for possible extensions.
     // If the length indicated exceeds or is equal to the size of the NS-user
     // data which is present, this is a protocol error.

@@ -24,6 +24,7 @@
 #ifndef LOG_H
 #define LOG_H
 
+#include <string.h>
 
 #ifdef SILENT
 #define TODO(x)
@@ -31,6 +32,8 @@
 #define DO_PRAGMA(x) _Pragma (#x)
 #define TODO(x) DO_PRAGMA(message ("TODO - " x))
 #endif
+
+#define BOOM (*(int*)0=1)
 
 #include <stdio.h>
 #include <syslog.h>
@@ -67,13 +70,11 @@ static inline void LOG(int priority, const char *format, ...)
         { NULL, -1 }
     };
     char message[8192];
-    char formated_message[8192];
     va_list vl;
     va_start (vl, format);
     vsnprintf(message, 8191, format, vl);
-    snprintf(formated_message, 8191, "%s (%d/%d) -- %s", prioritynames[priority].c_name, getpid(), getpid(), message);
     va_end(vl);
-    syslog(priority, "%s", formated_message);
+    syslog(priority, "%s (%d/%d) -- %s", prioritynames[priority].c_name, getpid(), getpid(), message);
 };
 
 #endif

@@ -183,13 +183,17 @@ static inline int load_pointer(const char* file_name, uint8_t* data, uint8_t* ma
             LOG(LOG_WARNING, "loading pointer from file [%s] failed\n", file_name);
             throw 1;
         }
+
+        TODO("We should define some kind of transport object to read into the stream")
+
         int lg = read(fd, stream.data, 8192);
         if (!lg){
             throw 1;
         }
         close(fd);
+        stream.end = stream.data + lg;
 
-        TODO(" : the ways we do it now we have some risk of reading out of buffer (data that are not from file)")
+        TODO("the ways we do it now we have some risk of reading out of buffer (data that are not from file)")
 
         stream.skip_uint8(6);
         int w = stream.in_uint8();
@@ -268,7 +272,7 @@ struct Session {
 
     SessionManager * sesman;
 
-    Session(int sck, const char * ip_source, Inifile * ini) 
+    Session(int sck, const char * ip_source, Inifile * ini)
         : sck(sck), ini(ini), verbose(this->ini->globals.debug.session)
     {
         if (this->verbose){
@@ -286,6 +290,8 @@ struct Session {
 
         this->internal_state = SESSION_STATE_RSA_KEY_HANDSHAKE;
         this->front_event = new wait_obj(sck);
+
+        LOG(LOG_INFO, "Session 1");
 
         /* create these when up and running */
         this->trans = new SocketTransport("RDP Client", sck, this->ini->globals.debug.front);
@@ -306,8 +312,16 @@ struct Session {
             throw 2;
         }
 
+        LOG(LOG_INFO, "Session 2");
+
         this->front = new Front(this->trans, ini);
+
+        LOG(LOG_INFO, "Session 3");
+
         this->no_mod = new null_mod(*this->context, *(this->front));
+
+        LOG(LOG_INFO, "Session 4");
+
         this->mod = this->no_mod;
 
         /* module interface */
@@ -463,8 +477,10 @@ struct Session {
                 BGRPalette palette;
                 init_palette332(palette);
 
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 2");
                 this->mod->gd.color_cache(palette, 0);
 
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 3");
                 struct pointer_item pointer_item;
 
                 memset(&pointer_item, 0, sizeof(pointer_item));
@@ -474,12 +490,16 @@ struct Session {
                     &pointer_item.x,
                     &pointer_item.y);
 
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 4");
+
                 this->front->cache.add_pointer_static(&pointer_item, 0);
                 this->front->send_pointer(0,
                                  pointer_item.data,
                                  pointer_item.mask,
                                  pointer_item.x,
                                  pointer_item.y);
+
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 5");
 
                 memset(&pointer_item, 0, sizeof(pointer_item));
                 load_pointer(SHARE_PATH "/" CURSOR1,
@@ -489,11 +509,15 @@ struct Session {
                     &pointer_item.y);
                 this->front->cache.add_pointer_static(&pointer_item, 1);
 
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 6");
+
                 this->front->send_pointer(1,
                                  pointer_item.data,
                                  pointer_item.mask,
                                  pointer_item.x,
                                  pointer_item.y);
+
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 7");
 
                 if (this->front->get_client_info().username[0]){
                     this->context->parse_username(this->front->get_client_info().username);
@@ -504,7 +528,12 @@ struct Session {
                 }
 
                 this->internal_state = SESSION_STATE_RUNNING;
+
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 8");
+
                 this->session_setup_mod(MCTX_STATUS_CLI, this->context);
+
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 5");
             }
         }
 
@@ -704,7 +733,7 @@ struct Session {
                                 this->context->get_bool(STRAUTHID_OPT_MOVIE),
                                 this->context->get(STRAUTHID_OPT_MOVIE_PATH),
                                 this->context->get(STRAUTHID_OPT_CODEC_ID),
-                                this->context->get(STRAUTHID_VIDEO_QUALITY)); 
+                                this->context->get(STRAUTHID_VIDEO_QUALITY));
                         }
                         else {
                             this->mod->stop_capture();
@@ -730,9 +759,9 @@ struct Session {
         if (this->verbose){
             LOG(LOG_INFO, "Session::step_STATE_CLOSE_CONNECTION(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
         }
-        
-        struct timeval timeout = time_mark;     
-        
+
+        struct timeval timeout = time_mark;
+
         unsigned max = 0;
         fd_set rfds;
         fd_set wfds;

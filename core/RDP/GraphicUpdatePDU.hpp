@@ -151,7 +151,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
         if (this->ini->globals.debug.primary_orders){
             LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
         }
-        this->stream.init(4096);
+        this->stream.init(32768);
         this->tpdu = new X224Out(X224Packet::DT_TPDU, this->stream);
         this->mcs_sdin = new McsOut(this->stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         this->sec_out = new SecOut(this->stream, this->crypt_level, SEC_ENCRYPT, this->encrypt);

@@ -330,7 +330,7 @@ struct RdpLicence {
     uint8_t * licence_data;
     size_t licence_size;
 
-    RdpLicence(const char * hostname) : licence_issued(0) {
+    RdpLicence(const char * hostname) : licence_issued(0), licence_size(0) {
         memset(this->licence_key, 0, 16);
         memset(this->licence_sign_key, 0, 16);
         TODO(" licence loading should be done before creating protocol layers")
