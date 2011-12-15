@@ -466,7 +466,7 @@ class SessionManager {
     {
         Stream stream;
         this->auth_trans_t->recv((char**)&(stream.end), 4);
-        int size = stream.in_uint32_be();
+        unsigned int size = stream.in_uint32_be();
         if (size > stream.capacity){
             stream.init(size);
         }
