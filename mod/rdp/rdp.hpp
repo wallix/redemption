@@ -337,9 +337,9 @@ struct mod_rdp : public client_mod {
                     lic_layer(hostname),
                     userid(0),
                     bpp(bpp),
+                    crypt_level(0),
                     connection_finalization_state(EARLY),
-                    state(MOD_RDP_CONNECTING),
-                    crypt_level(0)
+                    state(MOD_RDP_CONNECTING)
     {
 
         // from rdp_sec
