@@ -24,7 +24,33 @@
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
 
+
+
 class Capture
+{
+    public:
+
+    TODO(" fat interface : ugly  find another way")
+    Capture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality) {}
+
+    ~Capture(){
+    }
+
+    TODO(" fat interface : ugly  find another way")
+    void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp){}
+    void bitmap_cache(const RDPBmpCache & cmd){}
+    void scr_blt(const RDPScrBlt & cmd, const Rect & clip) {}
+    void dest_blt(const RDPDestBlt & cmd, const Rect &clip) {}
+    void pat_blt(const RDPPatBlt & cmd, const Rect &clip) {}
+    void mem_blt(const RDPMemBlt & cmd, const Rect & clip){}
+    void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip){}
+    void line_to(const RDPLineTo & cmd, const Rect & clip){}
+    void glyph_index(const RDPGlyphIndex & cmd, const Rect & clip) {}
+
+};
+
+
+class FutureCapture
 {
     StaticCapture sc;
     NativeCapture nc;
@@ -32,13 +58,13 @@ class Capture
     public:
 
     TODO(" fat interface : ugly  find another way")
-    Capture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality) :
+    FutureCapture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality) :
         sc(width, height, bpp, palette, bmpcache, path, codec_id, video_quality),
         nc(width, height, bpp, palette, bmpcache, path)
     {
     }
 
-    ~Capture(){
+    ~FutureCapture(){
     }
 
     TODO(" fat interface : ugly  find another way")
