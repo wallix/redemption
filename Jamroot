@@ -30,6 +30,8 @@ rule defines ( properties * )
 
 project redemption
     : requirements
+    <toolset>gcc:<cxxflags>-Wno-cpp
+    <toolset>gcc:<cxxflags>-Wno-unused-variable
     <include>core
     <include>front
     <include>tests

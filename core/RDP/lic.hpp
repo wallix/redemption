@@ -281,6 +281,12 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
    };
 
     stream.out_copy_bytes((char*)lic1, 314);
+
+//    Stream stream(32768);
+//    X224Out tpdu(X224Packet::DT_TPDU, stream);
+//    McsOut sdin_out(stream, MCS_SDIN, userid, MCS_GLOBAL_CHANNEL);
+//    stream.out_copy_bytes((char*)lic1, 322);
+
     sdin_out.end();
     tpdu.end();
     tpdu.send(trans);
