@@ -322,37 +322,65 @@ struct X224In : public X224Packet
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
 
-        LOG(LOG_INFO, "recv X224 len %u", this->tpkt.len);
         t->recv((char**)(&(stream.end)), payload_len);
         this->tpdu_hdr.LI = stream.in_uint8();
         this->tpdu_hdr.code = stream.in_uint8() & 0xF0;
-        LOG(LOG_INFO, "tpdu_hdr.LI = %u", this->tpdu_hdr.LI);
         switch (this->tpdu_hdr.code){
             case DT_TPDU:
-                LOG(LOG_INFO, "recv DT_TPDU");
+//                LOG(LOG_INFO, "recv DT_TPDU");
                 this->tpdu_hdr.eot = stream.in_uint8();
                 stream.skip_uint8(this->tpdu_hdr.LI-2);
             break;
             case DR_TPDU:
-                LOG(LOG_INFO, "recv DR_TPDU");
+//                LOG(LOG_INFO, "recv DR_TPDU");
                 stream.skip_uint8(4);
                 this->tpdu_hdr.reason = stream.in_uint8();
                 stream.skip_uint8(this->tpdu_hdr.LI-6);
             break;
             case ER_TPDU:
-                LOG(LOG_INFO, "recv ER_TPDU");
+//                LOG(LOG_INFO, "recv ER_TPDU");
                 stream.skip_uint8(2);
                 this->tpdu_hdr.reject_cause = stream.in_uint8();
                 stream.skip_uint8(this->tpdu_hdr.LI-4);
             break;
             case CC_TPDU:
-                LOG(LOG_INFO, "recv CC_TPDU");
-                // just skip remaining TPDU header content
-                stream.skip_uint8(this->tpdu_hdr.LI-1);
+                LOG(LOG_INFO, "recv CC_TPDU LI=%u",this->tpdu_hdr.LI);
+                stream.skip_uint8(5);
+                if (this->tpdu_hdr.LI == 13){
+
+                    enum {
+                        RDP_NEG_RESP = 2,
+                        RDP_NEG_FAILURE = 3
+                    };
+
+                    uint8_t type = stream.in_uint8();
+                    switch (type){
+                        case RDP_NEG_RESP:
+                        {
+                            uint8_t flags = stream.in_uint8();
+                            uint16_t length = stream.in_uint16_le();
+                            uint32_t code = stream.in_uint32_le();
+                            LOG(LOG_INFO, "RDP_NEG_RESP : flags=%x length=%u code=%u", flags, length, code);
+                        }
+                        break;
+                        case RDP_NEG_FAILURE:
+                        {
+                            uint8_t flags = stream.in_uint8();
+                            uint16_t length = stream.in_uint16_le();
+                            uint32_t code = stream.in_uint32_le();
+                            LOG(LOG_INFO, "RDP_NEG_FAILURE : flags=%x length=%u code=%u", flags, length, code);
+                        }
+                        break;
+                        default:
+                        break;
+                    }
+                }
+
+
             break;
             case CR_TPDU:
             {
-                LOG(LOG_INFO, "recv CR_TPDU");
+//                LOG(LOG_INFO, "recv CR_TPDU");
                 // just skip remaining TPDU header content
                 uint8_t * end_of_header = stream.p + this->tpdu_hdr.LI-1;
                 if (this->tpdu_hdr.LI != 6){
@@ -489,7 +517,9 @@ struct X224In : public X224Packet
 // client of the security protocol which it has selected to use for the
 // connection.
 
-// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This field MUST be set to 0x02 (TYPE_RDP_NEG_RSP) to indicate that the packet is a Negotiation Response.
+// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
+// field MUST be set to 0x02 (TYPE_RDP_NEG_RSP) to indicate that the packet is
+// a Negotiation Response.
 
 // flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags.
 

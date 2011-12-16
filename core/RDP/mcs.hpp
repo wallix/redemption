@@ -872,9 +872,9 @@ static inline void recv_sec_tag_pubkey(Stream & stream, uint32_t & server_public
 // |                                     | encrypt data (with RC4) and generate|
 // |                                     | MACs.                               |
 // +-------------------------------------+-------------------------------------+
-// | ENCRYPTION_METHOD_FIPS              | All encryption and Message          |
+// | 0x00000010 ENCRYPTION_METHOD_FIPS   | All encryption and Message          |
 // |                                     | Authentication Code                 |
-// |                                     | generation 0x00000010 routines will |
+// |                                     | generation routines will            |
 // |                                     | be FIPS 140-1 compliant.            |
 // +-------------------------------------+-------------------------------------+
 
@@ -1060,12 +1060,22 @@ TODO("below is what rdesktop do, we should implement it or we will greatly miss 
 
         rc4_key_size = cr_stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
         crypt_level = cr_stream.in_uint32_le(); /* 1 = low, 2 = medium, 3 = high */
+
         if (crypt_level == 0) { /* no encryption */
             LOG(LOG_INFO, "No encryption");
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_ENCRYPTION_REQUIRED);
         }
         uint32_t random_len = cr_stream.in_uint32_le();
         uint32_t rsa_info_len = cr_stream.in_uint32_le();
+
+        LOG(LOG_INFO, "random_len = %u", random_len);
+        LOG(LOG_INFO, "rsa_info_len = %u", rsa_info_len);
+
+// serverRandom (variable): The variable-length server random value used to
+// derive session keys (see sections 5.3.4 and 5.3.5). The length in bytes is
+// given by the serverRandomLen field. If the encryptionMethod and
+// encryptionLevel fields are both set to 0 then this field MUST NOT be present.
+
         if (random_len != SEC_RANDOM_SIZE) {
             LOG(LOG_ERR,
                 "parse_crypt_info_error: random len %d, expected %d\n",
@@ -1074,9 +1084,16 @@ TODO("below is what rdesktop do, we should implement it or we will greatly miss 
         }
         memcpy(server_random, cr_stream.in_uint8p(random_len), random_len);
 
+// serverCertificate (variable): The variable-length certificate containing the
+//  server's public key information. The length in bytes is given by the
+// serverCertLen field. If the encryptionMethod and encryptionLevel fields are
+// both set to 0 then this field MUST NOT be present.
+
         /* RSA info */
         end = cr_stream.p + rsa_info_len;
         if (end > cr_stream.end) {
+            LOG(LOG_ERR,
+                "rsa_info_len outside of buffer %u remains: %u", rsa_info_len, cr_stream.end - cr_stream.p);
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RSA_LEN);
         }
 

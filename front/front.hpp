@@ -933,13 +933,15 @@ public:
                     LOG(LOG_INFO, "Front::ERR_SEC_EXPECTED_LICENCE_NEG");
                     throw Error(ERR_SEC_EXPECTED_LICENCE_NEG);
                 }
+
+
                 {
                     uint8_t tag = stream.in_uint8();
                     uint8_t version = stream.in_uint8();
                     uint16_t length = stream.in_uint16_le();
                     TODO("currently we just skip data, we should consume them instead")
                     stream.p = stream.end;
-                    LOG(LOG_INFO, "Front::WAITING_FOR_ANSWER_TO_LICENCE %u %u %u", tag, version, length);
+                    LOG(LOG_INFO, "Front::WAITING_FOR_ANSWER_TO_LICENCE sec_flags=%x %u %u %u", sec.flags, tag, version, length);
 
                     switch (tag) {
                     case LICENCE_TAG_DEMAND:
