@@ -51,6 +51,7 @@
 
 // Write batch of orders to file
 // Reads batch of orders from file
+TODO("This test should probably be removed soon, the same feature is now performed by test_RDP_graphic_to_file")
 TODO(" merge with GraphicsUpdatePDU  needs defining some kind of Transport object for common parts")
 struct GraphicsFile
 {
@@ -165,10 +166,13 @@ struct GraphicsFile
             if (read ( this->pFile, this->stream.data, 4 ) == 0) {
                 return;
             }
+            this->stream.end = this->stream.data + 4;
+
 
             uint16_t length = stream.in_uint16_le(); // How long ?
             uint8_t  num_orders = stream.in_uint8(); // How many orders ?
             uint8_t  type = stream.in_uint8();       // What type ?
+            (void)type;
 
             // How long is my init ?
             this->stream.init(std::max(65536,length - 4)); // The header have already been read
@@ -192,6 +196,7 @@ struct GraphicsFile
                         throw Error(ERR_SOCKET_CLOSED);
                     default: /* some data received */
                         readlen += rcvd;
+                        this->stream.end = this->stream.data + readlen;
                 }
             }
 
