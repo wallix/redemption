@@ -220,13 +220,16 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
             close(fd);
             throw Error(ERR_BITMAP_LOAD_FAILED);
         }
+
         /* read file size */
+        TODO("define some stream aware function to read data from file (to update stream.end by itself). It should probably not be inside stream itself because read primitives are OS dependant, and there is not need to make stream OS dependant.")
         Stream stream(8192);
         if (read(fd, stream.data, 4) < 4){
             LOG(LOG_ERR, "Widget_load: error read file size\n");
             close(fd);
             throw Error(ERR_BITMAP_LOAD_FAILED);
         }
+        stream.end = stream.data + 4;
         size = stream.in_uint32_le();
 
         // skip some bytes to set file pointer to bmp header
@@ -237,6 +240,7 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
             LOG(LOG_ERR, "Widget_load: error read file size (2)\n");
             throw Error(ERR_BITMAP_LOAD_FAILED);
         }
+        stream.end = stream.data + 40;
         TODO(" we should read header size and use it to read header instead of using magic constant 40")
         header.size = stream.in_uint32_le();
         if (header.size != 40){
@@ -274,6 +278,7 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
                 close(fd);
                 throw Error(ERR_BITMAP_LOAD_FAILED);
             }
+            stream.end = stream.data + header.clr_used * 4;
             for (int i = 0; i < header.clr_used; i++) {
                 uint8_t r = stream.in_uint8();
                 uint8_t g = stream.in_uint8();
@@ -313,6 +318,7 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
             }
         }
         close(fd); // from now on all is in memory
+        stream.end = stream.data + size;
 
         this->original_bpp = 24;
         this->set_data_co(this->original_bpp);
