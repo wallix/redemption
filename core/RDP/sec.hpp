@@ -661,14 +661,18 @@ class SecIn
         this->flags = stream.in_uint32_le();
         if ((this->flags & SEC_ENCRYPT)  || (this->flags & 0x0400)){
             uint8_t * pdata = stream.p + 8;
-            uint16_t datalen = stream.end - pdata + 8;
+            uint16_t datalen = stream.end - pdata;
             TODO(" shouldn't we check signature ?")
             stream.skip_uint8(8); /* signature */
             // decrypting to the end of tpdu
+            LOG(LOG_DEBUG, "Receiving encrypted TPDU");
+//            hexdump((char*)stream.data, stream.end - stream.data);
+
+            LOG(LOG_DEBUG, "Crypt context is:");
+//            crypt.dump();
             crypt.decrypt(stream.p, stream.end - stream.p);
-            LOG(LOG_DEBUG, "Receiving encrypted packet");
             LOG(LOG_DEBUG, "Decrypted %u bytes", datalen);
-            hexdump((char*)pdata, datalen);
+//            hexdump((char*)pdata, datalen);
         }
     }
 

@@ -226,6 +226,11 @@ struct CryptContext
     CryptContext() : use_count(0)
     {
         memset(this->sign_key, 0, 16);
+        memset(this->key, 0, 16);
+        memset(this->update_key, 0, 16);
+        this->rc4_key_len = 0;
+        memset(&rc4_info, 0, sizeof(rc4_info));
+        this->rc4_key_size = 0;
     }
 
 
