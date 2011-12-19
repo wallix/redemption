@@ -851,6 +851,7 @@ struct mod_rdp : public client_mod {
 
         case MOD_RDP_CONNECTED:
         {
+            LOG(LOG_INFO, "MOD_RDP_CONNECTED");
             Stream stream(65536);
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
@@ -962,6 +963,8 @@ struct mod_rdp : public client_mod {
                         break;
                         case UP_AND_RUNNING:
                         {
+                            LOG(LOG_INFO, "Up and running\n");
+
                             ShareDataIn share_data_in(stream);
 //                            LOG(LOG_INFO, "Up and running");
                             switch (share_data_in.pdutype2) {
@@ -2555,6 +2558,7 @@ struct mod_rdp : public client_mod {
 
             stream.out_uint16_le(0);
             stream.out_uint16_le(0);
+            this->use_rdp5 = 0;
         }
 
         sec_out.end();

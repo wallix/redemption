@@ -309,12 +309,22 @@ struct X224In : public X224Packet
         }
         t->recv((char**)(&(stream.end)), TPKT_HEADER_LEN);
         this->tpkt.version = stream.in_uint8();
-        if (3 != this->tpkt.version) {
-            LOG(LOG_INFO, "ERR_ISO_RECV_MSG_VER_NOT_3");
-            throw Error(ERR_ISO_RECV_MSG_VER_NOT_3);
+
+        if (this->tpkt.version == 3) {
+            LOG(LOG_INFO, "Version 3");
+            stream.skip_uint8(1);
+            this->tpkt.len = stream.in_uint16_be();
         }
-        stream.skip_uint8(1);
-        this->tpkt.len = stream.in_uint16_be();
+        else {
+            LOG(LOG_INFO, "Version 0x80");
+            uint16_t length = stream.in_uint8();
+            if (length & 0x80){
+               length &= ~0x80;
+               length = (length << 8) + stream.in_uint8();
+            }
+            this->tpkt.len = length;
+        }
+
         const size_t payload_len = this->tpkt.len - TPKT_HEADER_LEN;
         if (!stream.has_room(payload_len)){
             LOG(LOG_INFO, "ERR_STREAM_MEMORY_TOO_SMALL (asked for %u, has %u, used=%u)",
