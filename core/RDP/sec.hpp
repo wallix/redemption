@@ -643,6 +643,8 @@ class SecOut
     void end(){
         if (crypt_level > 1){
             int datalen = this->stream.p - this->pdata;
+            // dump before encryption
+            hexdump((char*)this->pdata, datalen);
             this->crypt.sign(this->pdata - 8, 8, this->pdata, datalen);
             this->crypt.encrypt(this->pdata, datalen);
         }
@@ -658,10 +660,15 @@ class SecIn
     {
         this->flags = stream.in_uint32_le();
         if ((this->flags & SEC_ENCRYPT)  || (this->flags & 0x0400)){
+            uint8_t * pdata = stream.p + 8;
+            uint16_t datalen = stream.end - pdata + 8;
             TODO(" shouldn't we check signature ?")
             stream.skip_uint8(8); /* signature */
             // decrypting to the end of tpdu
             crypt.decrypt(stream.p, stream.end - stream.p);
+            LOG(LOG_DEBUG, "Receiving encrypted packet");
+            LOG(LOG_DEBUG, "Decrypted %u bytes", datalen);
+            hexdump((char*)pdata, datalen);
         }
     }
 

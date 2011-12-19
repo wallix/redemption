@@ -77,4 +77,34 @@ static inline void LOG(int priority, const char *format, ...)
     syslog(priority, "%s (%d/%d) -- %s", prioritynames[priority].c_name, getpid(), getpid(), message);
 };
 
+static inline void hexdump(const char * data, size_t size){
+    char buffer[2048];
+    for (size_t j = 0 ; j < size ; j += 16){
+        char * line = buffer;
+        line += sprintf(line, "%.4x ", (unsigned)j);
+        size_t i = 0;
+        for (i = 0; i < 16; i++){
+            if (j+i >= size){ break; }
+            line += sprintf(line, "%.2x ", (unsigned char)data[j+i]);
+        }
+        if (i < 16){
+            line += sprintf(line, "%*c", (unsigned)((16-i)*3), ' ');
+        }
+        for (i = 0; i < 16; i++){
+            if (j+i >= size){ break; }
+            unsigned char tmp = (unsigned)(data[j+i]);
+            if ((tmp < ' ') || (tmp > '~')){
+                tmp = '.';
+            }
+            line += sprintf(line, "%c", tmp);
+        }
+
+        if (line != buffer){
+            line[0] = 0;
+            LOG(LOG_INFO, "%s", buffer);
+            buffer[0]=0;
+        }
+    }
+}
+
 #endif

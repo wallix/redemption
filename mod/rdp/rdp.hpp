@@ -332,7 +332,7 @@ struct mod_rdp : public client_mod {
                     trans(trans),
                     context(context),
                     event(event),
-                    use_rdp5(0),
+                    use_rdp5(1),
                     keylayout(keylayout),
                     lic_layer(hostname),
                     userid(0),
@@ -1048,7 +1048,7 @@ struct mod_rdp : public client_mod {
                             this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
                             LOG(LOG_INFO, "Sending font List");
                             /* Including RDP 5.0 capabilities */
-                            if (this->use_rdp5 != 0){
+                            if (this->use_rdp5){
                                 LOG(LOG_INFO, "use rdp5");
                                 this->enum_bmpcache2();
                                 this->send_fonts(3);
@@ -1079,6 +1079,7 @@ struct mod_rdp : public client_mod {
         }
         }
         catch(Error e){
+            LOG(LOG_DEBUG, "catched error=%u", e.id);
             try {
                 Stream stream(11);
                 X224Out tpdu(X224Packet::DR_TPDU, stream);
@@ -1086,8 +1087,10 @@ struct mod_rdp : public client_mod {
                 tpdu.send(this->trans);
             }
             catch(Error e){
+                LOG(LOG_DEBUG, "catched error (2) =%u", e.id);
                 return (e.id == ERR_SOCKET_CLOSED)?BACK_EVENT_2:BACK_EVENT_1;
             };
+            exit(0);
             return BACK_EVENT_1;
         }
         return BACK_EVENT_NONE;
@@ -1959,14 +1962,21 @@ struct mod_rdp : public client_mod {
 
         void process_general_caps(Stream & stream, int & use_rdp5)
         {
-            stream.skip_uint8(10);
+            (void)stream.in_uint16_le();
+            uint16_t os_major = stream.in_uint16_le(); /* OS major type */
+            LOG(LOG_INFO, "General caps::major %u\n", os_major);
+            uint16_t os_minor = stream.in_uint16_le(); /* OS minor type */
+            LOG(LOG_INFO, "General caps::major %u\n", os_minor);
+            uint16_t protocolVersion = stream.in_uint16_le(); /* Protocol version */
+            LOG(LOG_INFO, "General caps::protocol %u\n", protocolVersion);
+            (void)stream.in_uint16_le(); /* Pad */
+            uint16_t compressionType = stream.in_uint16_le(); /* Compression types */
+            LOG(LOG_INFO, "General caps::compression types %x\n", compressionType);
             /* Receiving rdp_5 extra flags supported for RDP 5.0 and later versions*/
-            int extraflags = stream.in_uint16_le();
+            uint16_t extraflags = stream.in_uint16_le();
+            LOG(LOG_INFO, "General caps::extra flags %x\n", extraflags);
             TODO(" strange: causality seems inverted")
-            if (extraflags == 0){
-                use_rdp5 = 0;
-            }
-            LOG(LOG_INFO, "process general caps %d", extraflags);
+            if (extraflags == 0){ use_rdp5 = 0; }
         }
 
 // 2.2.7.1.2    Bitmap Capability Set (TS_BITMAP_CAPABILITYSET)
@@ -2461,6 +2471,8 @@ struct mod_rdp : public client_mod {
     }
 
 
+    TODO("Move send_client_info_pdu funcion to client_info.hpp")
+
     void send_client_info_pdu(Transport * trans, int userid, const char * password, int rdp5_performanceflags, int & use_rdp5)
     {
 
@@ -2470,74 +2482,44 @@ struct mod_rdp : public client_mod {
         time_t t = time(NULL);
         time_t tzone;
 
-        // The WAB does not send it's IP to server. Is it what we want ?
-        const char * ip_source = "\0\0\0\0";
-
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out2(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, 2, SEC_LOGON_INFO | SEC_ENCRYPT, this->encrypt);
 
-        if(this->use_rdp5){
-            LOG(LOG_INFO, "send login info (RDP4-style) %s:%s\n",this->domain, this->username);
-
-            stream.out_uint32_le(0);
-            stream.out_uint32_le(flags);
-            stream.out_uint16_le(2 * strlen(this->domain));
-            stream.out_uint16_le(2 * strlen(this->username));
-            stream.out_uint16_le(2 * strlen(password));
-            stream.out_uint16_le(2 * strlen(this->program));
-            stream.out_uint16_le(2 * strlen(this->directory));
-            stream.out_unistr(this->domain);
-            stream.out_unistr(this->username);
+        stream.out_uint32_le(0);
+        stream.out_uint32_le(flags);
+        stream.out_uint16_le(2 * strlen(this->domain));
+        stream.out_uint16_le(2 * strlen(this->username));
+        stream.out_uint16_le(2 * strlen(password));
+        stream.out_uint16_le(2 * strlen(this->program));
+        stream.out_uint16_le(2 * strlen(this->directory));
+        stream.out_unistr(this->domain);
+        stream.out_unistr(this->username);
+        if (flags & RDP_LOGON_AUTO){
             stream.out_unistr(password);
-            stream.out_unistr(this->program);
-            stream.out_unistr(this->directory);
+        }
+        else{
+            stream.out_uint16_le(0);
+        }
+        stream.out_unistr(this->program);
+        stream.out_unistr(this->directory);
+
+        this->use_rdp5 = 1;
+        if(!this->use_rdp5){
+            LOG(LOG_INFO, "send login info (RDP4-style) %s:%s\n",this->domain, this->username);
         }
         else {
-            LOG(LOG_INFO, "send login info (RDP5-style) %x %s:%s\n",flags,
+            LOG(LOG_INFO, "send extended login info (RDP5-style) %x %s:%s\n",flags,
                 this->domain,
                 this->username);
+        }
+        if (this->use_rdp5){
+            // The WAB does not send it's IP to server. Is it what we want ?
+            // rdesktop sends the faked IP below
+            const char * ip_source = "10.10.9.161";
 
-            flags |= RDP_LOGON_BLOB;
-            stream.out_uint32_le(0);
-            stream.out_uint32_le(flags);
-            stream.out_uint16_le(2 * strlen(this->domain));
-            stream.out_uint16_le(2 * strlen(this->username));
-            if (flags & RDP_LOGON_AUTO){
-                stream.out_uint16_le(2 * strlen(password));
-            }
-            if (flags & RDP_LOGON_BLOB && ! (flags & RDP_LOGON_AUTO)){
-                stream.out_uint16_le(0);
-            }
-            stream.out_uint16_le(2 * strlen(this->program));
-            stream.out_uint16_le(2 * strlen(this->directory));
-            if ( 0 < (2 * strlen(this->domain))){
-                stream.out_unistr(this->domain);
-            }
-            else {
-                stream.out_uint16_le(0);
-            }
-            stream.out_unistr(this->username);
-            if (flags & RDP_LOGON_AUTO){
-                stream.out_unistr(password);
-            }
-            else{
-                stream.out_uint16_le(0);
-            }
-            if (0 < 2 * strlen(this->program)){
-                stream.out_unistr(this->program);
-            }
-            else {
-                stream.out_uint16_le(0);
-            }
-            if (2 * strlen(this->directory) < 0){
-                stream.out_unistr(this->directory);
-            }
-            else{
-                stream.out_uint16_le(0);
-            }
-            stream.out_uint16_le(2);
+            stream.out_uint16_le(0x00002);
             stream.out_uint16_le(2 * strlen(ip_source) + 2);
             stream.out_unistr(ip_source);
             stream.out_uint16_le(2 * strlen("C:\\WINNT\\System32\\mstscax.dll") + 2);
@@ -2563,10 +2545,16 @@ struct mod_rdp : public client_mod {
             stream.out_uint32_le(2);
             stream.out_uint32_le(0);
             stream.out_uint32_le(0xffffffc4);
-            stream.out_uint32_le(0xfffffffe);
+
+
+            stream.out_uint32_le(0xfffffffe); // session id
+
             stream.out_uint32_le(rdp5_performanceflags);
+
             stream.out_uint16_le(0);
-            use_rdp5 = 0;
+
+            stream.out_uint16_le(0);
+            stream.out_uint16_le(0);
         }
 
         sec_out.end();

@@ -457,6 +457,8 @@ struct RdpLicence {
 
     void rdp_lic_send_request(Transport * trans, uint8_t* client_random, uint8_t* rsa_data, const char * hostname, const char * username, int userid, int licence_issued, CryptContext & encrypt)
     {
+        LOG(LOG_INFO, "rdp_lic_send_request");
+
         int userlen = strlen(username) + 1;
         int hostlen = strlen(hostname) + 1;
         int length = 128 + userlen + hostlen;
@@ -464,7 +466,7 @@ struct RdpLicence {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
-//        SecOut sec_out(stream, 2, SEC_LICENCE_NEG, encrypt);
+        SecOut sec_out(stream, 2, SEC_LICENCE_NEG, encrypt);
 
         stream.out_uint8(LICENCE_TAG_REQUEST);
         stream.out_uint8(2); /* version */
@@ -486,7 +488,7 @@ struct RdpLicence {
         stream.out_uint16_le(hostlen);
         stream.out_copy_bytes(hostname, hostlen);
 
-//        sec_out.end();
+        sec_out.end();
         sdrq_out.end();
         tpdu.end();
         tpdu.send(trans);

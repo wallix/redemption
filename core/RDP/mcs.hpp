@@ -1049,6 +1049,8 @@ TODO("below is what rdesktop do, we should implement it or we will greatly miss 
         uint8_t exponent[SEC_EXPONENT_SIZE];
         uint32_t rc4_key_size;
 
+        ssllib ssl;
+
         memset(modulus, 0, sizeof(modulus));
         memset(exponent, 0, sizeof(exponent));
         memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
@@ -1128,8 +1130,9 @@ TODO("below is what rdesktop do, we should implement it or we will greatly miss 
         }
         else {
             LOG(LOG_DEBUG, "We're going for the RDP5-style encryption\n");
-            LOG(LOG_DEBUG, "RDP5-style encryption with certificates not available\n");
             uint32_t certcount = cr_stream.in_uint32_le();
+            LOG(LOG_DEBUG, "Certcount = %u\n", certcount);
+
             if (certcount < 2){
                 LOG(LOG_DEBUG, "Server didn't send enough X509 certificates\n");
                 throw Error(ERR_SEC_PARSE_CRYPT_INFO_CERT_NOK);
@@ -1146,6 +1149,7 @@ TODO("below is what rdesktop do, we should implement it or we will greatly miss 
                         "got a bad cert: this will probably screw up"
                         " the rest of the communication\n");
                 }
+                LOG(LOG_WARNING, "cert #%d (ignored)", certcount);
             }
 
             /* Do da funky X.509 stuffy
@@ -1167,8 +1171,6 @@ TODO("below is what rdesktop do, we should implement it or we will greatly miss 
                 throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NULL);
             }
 
-            ssllib ssl;
-
             /* Loading Certificate from server*/
             uint32_t cert_len = cr_stream.in_uint32_le();
             LOG(LOG_DEBUG, "Certificate length is %d\n", cert_len);
@@ -1179,6 +1181,7 @@ TODO("below is what rdesktop do, we should implement it or we will greatly miss 
                 LOG(LOG_DEBUG, "Couldn't load Certificate from server\n");
                 throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_LOADED);
             }
+
             /* Matching certificates */
             if (!ssl_certs_ok(server_cert, cacert)){
                 ssl_cert_free(server_cert);
@@ -1189,6 +1192,8 @@ TODO("below is what rdesktop do, we should implement it or we will greatly miss 
             ssl_cert_free(cacert);
             cr_stream.skip_uint8(16); /* Padding */
             SSL_RKEY *server_public_key = ssl_cert_to_rkey(server_cert, server_public_key_len);
+            LOG(LOG_DEBUG, "Server public key length=%u\n", (unsigned)server_public_key_len);
+
             if (NULL == server_public_key){
                 LOG(LOG_DEBUG, "Didn't parse X509 correctly\n");
                 ssl_cert_free(server_cert);
@@ -1196,6 +1201,7 @@ TODO("below is what rdesktop do, we should implement it or we will greatly miss 
 
             }
             ssl_cert_free(server_cert);
+
             LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d\n", server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
             if ((server_public_key_len < SEC_MODULUS_SIZE) ||
                 (server_public_key_len > SEC_MAX_MODULUS_SIZE)){
@@ -1230,7 +1236,9 @@ TODO("below is what rdesktop do, we should implement it or we will greatly miss 
         else {
             LOG(LOG_WARNING, "random source failed to provide random data : couldn't open device\n");
         }
-        ssllib ssl;
+
+        memset(client_random, 0, SEC_RANDOM_SIZE);
+
         ssl.rsa_encrypt(client_crypt_random, client_random, SEC_RANDOM_SIZE, server_public_key_len, modulus, exponent);
         rdp_sec_generate_keys(encrypt, decrypt, encrypt.sign_key, client_random, server_random, rc4_key_size);
 }
@@ -1571,7 +1579,7 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
     LOG(LOG_INFO, "Sending Client Core Data to remote server\n");
     stream.out_uint16_le(212); /* length */
     LOG(LOG_INFO, "core::header::length = %u\n", 212);
-    stream.out_uint32_le(0x00080001); // RDP version. 1 == RDP4, 4 == RDP5.
+    stream.out_uint32_le(0x00080004); // RDP version. 1 == RDP4, 4 == RDP5.
     LOG(LOG_INFO, "core::header::version (0x00080004 = RDP 5.0, 5.1, 5.2, and 6.0 clients)");
     stream.out_uint16_le(width);
     LOG(LOG_INFO, "core::desktopWidth = %u\n", width);
@@ -1737,8 +1745,8 @@ static inline void send_mcs_erect_domain_and_attach_user_request_pdu(Transport *
     Stream edrq_stream(32768);
     X224Out edrq_tpdu(X224Packet::DT_TPDU, edrq_stream);
     edrq_stream.out_uint8((MCS_EDRQ << 2));
-    edrq_stream.out_uint16_be(0x100); /* height */
-    edrq_stream.out_uint16_be(0x100); /* interval */
+    edrq_stream.out_uint16_be(1); /* height */
+    edrq_stream.out_uint16_be(1); /* interval */
     edrq_tpdu.end();
     edrq_tpdu.send(trans);
 

@@ -956,7 +956,7 @@ public:
                         break;
                     default:
                         LOG(LOG_INFO, "Front::LICENCE_TAG_UNKNOWN %u", tag);
-                        exit(0);
+//                        exit(0);
                         continue;
                     }
                 }
@@ -1093,7 +1093,7 @@ public:
                 if (length < 4){
                     TODO("Can't be a ShareControlHeader... should not happen but it does. We should try to understand why.")
                     LOG(LOG_INFO, "PDU length (%u) too small for ShareControlHeader, remaining data :%u", length, stream.end - stream.p + 2);
-                    exit(0);
+//                    exit(0);
                 }
                 else if (length == 0x8000) {
                     next_packet = next_packet - 0x8000 + 8;
@@ -1101,7 +1101,7 @@ public:
                 else if (length > stream.end - stream.p + 2){
                     TODO("Should not happen. It means PDU length is inconsistant with TPDU length. It should not happen but it does")
                     LOG(LOG_INFO, "PDU length (%u) too large for remaining TPDU data (%u)", length, stream.end - stream.p + 2);
-                    exit(0);
+//                    exit(0);
                     next_packet = stream.end;
                 }
                 else {
