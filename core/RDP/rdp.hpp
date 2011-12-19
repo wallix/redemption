@@ -44,7 +44,7 @@
 //   protocol version information. The format of the pduType word is described
 //   by the following bitmask diagram:
 
-// type (4 bits): Least significant 4 bits of the least significant byte.
+// pduType::type (4 bits): Least significant 4 bits of the least significant byte.
 
 // +-----------------------------+---------------------------------------------+
 // | 1 PDUTYPE_DEMANDACTIVEPDU   | Demand Active PDU (section 2.2.1.13.1).     |
@@ -61,13 +61,51 @@
 // |                             | (see [MS-RDPEGDI] section 2.2.3.3.1).       |
 // +-----------------------------+---------------------------------------------+
 
-// versionLow (4 bits): Most significant 4 bits of the least significant byte.
+// pduType::versionLow (4 bits): Most significant 4 bits of the least significant byte.
 //   This field MUST be set to TS_PROTOCOL_VERSION (0x1).
 
-// versionHigh (1 byte): Most significant byte. This field MUST be set to 0x00.
+// pduType::versionHigh (1 byte): Most significant byte. This field MUST be set to 0x00.
 
 // PDUSource (2 bytes): A 16-bit, unsigned integer. The channel ID which is the
 //   transmission source of the PDU.
+
+
+class ShareControlOut
+{
+    Stream & stream;
+    uint8_t offlen;
+    public:
+    ShareControlOut(Stream & stream, uint8_t pdu_type1, uint16_t mcs_channel)
+        : stream(stream), offlen(stream.p - stream.data)
+    {
+        stream.skip_uint8(2); // len
+        stream.out_uint16_le(0x10 | pdu_type1);
+        stream.out_uint16_le(mcs_channel);
+    }
+
+    void end(){
+        int len = stream.p - stream.data - this->offlen;
+        stream.set_out_uint16_le(len, this->offlen);
+    }
+};
+
+class ShareControlIn
+{
+    public:
+    uint16_t len;
+    uint8_t pdu_type1;
+    uint32_t mcs_channel;
+    ShareControlIn(Stream & stream)
+    {
+        this->len = stream.in_uint16_le();
+        this->mcs_channel = stream.in_uint32_le();
+        this->pdu_type1 = stream.in_uint8();
+    }
+
+    void end(){
+        TODO(" put some assertion here to ensure all data has been consumed")
+    }
+};
 
 // [MS-RDPBCGR] 2.2.8.1.1.1.2 Share Data Header (TS_SHAREDATAHEADER)
 // =================================================================
@@ -214,42 +252,6 @@ namespace RDP {
 //   of the packet in bytes.
 
 
-class ShareControlOut
-{
-    Stream & stream;
-    uint8_t offlen;
-    public:
-    ShareControlOut(Stream & stream, uint8_t pdu_type1, uint16_t mcs_channel)
-        : stream(stream), offlen(stream.p - stream.data)
-    {
-        stream.skip_uint8(2); // len
-        stream.out_uint16_le(0x10 | pdu_type1);
-        stream.out_uint16_le(mcs_channel);
-    }
-
-    void end(){
-        int len = stream.p - stream.data - this->offlen;
-        stream.set_out_uint16_le(len, this->offlen);
-    }
-};
-
-class ShareControlIn
-{
-    public:
-    uint16_t len;
-    uint8_t pdu_type1;
-    uint32_t mcs_channel;
-    ShareControlIn(Stream & stream)
-    {
-        this->len = stream.in_uint16_le();
-        this->mcs_channel = stream.in_uint32_le();
-        this->pdu_type1 = stream.in_uint8();
-    }
-
-    void end(){
-        TODO(" put some assertion here to ensure all data has been consumed")
-    }
-};
 
 class ShareDataOut
 {
@@ -277,6 +279,7 @@ class ShareDataOut
 class ShareDataIn
 {
     public:
+    Stream & stream;
     uint32_t share_id;
     uint8_t streamid;
     uint16_t len;
@@ -284,7 +287,7 @@ class ShareDataIn
     uint8_t compressedType;
     uint16_t compressedLen;
 
-    ShareDataIn(Stream & stream)
+    ShareDataIn(Stream & stream) : stream(stream)
     {
         this->share_id = stream.in_uint32_le();
         stream.in_uint8();
@@ -296,7 +299,9 @@ class ShareDataIn
     }
 
     void end(){
-        TODO(" put some assertion here to ensure all data has been consumed")
+        if (stream.p != stream.end){
+            LOG(LOG_INFO, "some data were not consumed len=%u compressedLen=%u remains=%u", this->len, this->compressedLen, stream.end - stream.p);
+        }
     }
 };
 

@@ -865,15 +865,20 @@ public:
             Stream stream(65535);
             X224In tpdu(this->trans, stream);
             McsIn mcs_in(stream);
+            if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
+                TODO("We should make a special case for MCS_DPUM, as this one is a demand to end connection");
+                // mcs_in.opcode >> 2) == MCS_DPUM
+                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+            }
+
+            if (this->ini->globals.debug.front >= 256){
+                this->decrypt.dump();
+            }
+
             SecIn sec(stream, this->decrypt);
-
-
-
+            
             switch (state){
             case WAITING_FOR_LOGON_INFO:
-                if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
-                    throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-                }
 
                 if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
                     throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
@@ -919,23 +924,8 @@ public:
                 //    | <------ Licence Error PDU Valid Client ---------------- |
 
                 // Disconnect Provider Ultimatum datagram
-                if ((mcs_in.opcode >> 2) == MCS_DPUM) {
-                    LOG(LOG_INFO, "Front::ERR_MCS_APPID_IS_MCS_DPUM");
-                    throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
-                }
 
-                if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
-                    LOG(LOG_INFO, "Front::ERR_MCS_APPID_NOT_MCS_SDRQ");
-                    throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-                }
-
-                if (!sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
-                    LOG(LOG_INFO, "Front::ERR_SEC_EXPECTED_LICENCE_NEG");
-                    throw Error(ERR_SEC_EXPECTED_LICENCE_NEG);
-                }
-
-
-                {
+                if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
                     uint8_t tag = stream.in_uint8();
                     uint8_t version = stream.in_uint8();
                     uint16_t length = stream.in_uint16_le();
@@ -946,6 +936,8 @@ public:
                     switch (tag) {
                     case LICENCE_TAG_DEMAND:
                         LOG(LOG_INFO, "Front::LICENCE_TAG_DEMAND");
+                        LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
+                        send_lic_response(this->trans, this->userid);
                         break;
                     case LICENCE_TAG_PRESENT:
                         LOG(LOG_INFO, "Front::LICENCE_TAG_PRESENT");
@@ -964,11 +956,15 @@ public:
                         break;
                     default:
                         LOG(LOG_INFO, "Front::LICENCE_TAG_UNKNOWN %u", tag);
+                        exit(0);
                         continue;
                     }
                 }
-                LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
-                send_lic_response(this->trans, this->userid);
+                else {
+                    uint8_t length = stream.in_uint8();
+                    stream.p += length;
+                    continue;
+                }
 
                 // Capabilities Exchange
                 // ---------------------
@@ -1032,6 +1028,10 @@ public:
 
         SecIn sec(stream, this->decrypt);
 
+        if (this->ini->globals.debug.front){
+            LOG(LOG_INFO, "Front::activate_and_process_data::sec_flags=%x", sec.flags);
+        }
+
         if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
             if (this->ini->globals.debug.front){
                 LOG(LOG_INFO, "Front::activate_and_process_data::SEC_REDIRECT_ENCRYPT");
@@ -1093,6 +1093,7 @@ public:
                 if (length < 4){
                     TODO("Can't be a ShareControlHeader... should not happen but it does. We should try to understand why.")
                     LOG(LOG_INFO, "PDU length (%u) too small for ShareControlHeader, remaining data :%u", length, stream.end - stream.p + 2);
+                    exit(0);
                 }
                 else if (length == 0x8000) {
                     next_packet = next_packet - 0x8000 + 8;
@@ -1100,6 +1101,7 @@ public:
                 else if (length > stream.end - stream.p + 2){
                     TODO("Should not happen. It means PDU length is inconsistant with TPDU length. It should not happen but it does")
                     LOG(LOG_INFO, "PDU length (%u) too large for remaining TPDU data (%u)", length, stream.end - stream.p + 2);
+                    exit(0);
                     next_packet = stream.end;
                 }
                 else {
@@ -1932,6 +1934,14 @@ public:
             LOG(LOG_INFO, "process_data");
         }
         ShareDataIn share_data_in(stream);
+        LOG(LOG_INFO, "share_data_in.pdutype2=%u share_data_in.len=%u share_data_in.compressedLen=%u remains=%u", 
+            (unsigned)share_data_in.pdutype2,
+            (unsigned)share_data_in.len,
+            (unsigned)share_data_in.compressedLen,
+            stream.end - stream.p
+            );
+
+
 
         switch (share_data_in.pdutype2) {
         case PDUTYPE2_POINTER: /* 27(0x1b) */
@@ -2043,6 +2053,10 @@ public:
             }
             this->send_synchronize();
             this->up_and_running = 1;
+            {
+                uint16_t messageType = stream.in_uint16_le();
+                uint16_t controlId = stream.in_uint16_le();
+            }
             break;
         case PDUTYPE2_REFRESH_RECT:
             {
@@ -2090,12 +2104,39 @@ public:
                 tpdu.send(this->trans);
             }
             break;
+
+        // 2.2.1.18.1 Font List PDU Data (TS_FONT_LIST_PDU)
+        // ================================================
+        // The TS_FONT_LIST_PDU structure contains the contents of the Font 
+        // List PDU, which is a Share Data Header (section 2.2.8.1.1.1.2) and 
+        // four fields.
+
+        // shareDataHeader (18 bytes): Share Data Header (section 2.2.8.1.1.1.2)
+        // containing information about the packet. The type subfield of the 
+        // pduType field of the Share Control Header (section 2.2.8.1.1.1.1) 
+        // MUST be set to PDUTYPE_DATAPDU (7). The pduType2 field of the Share 
+        // Data Header MUST be set to PDUTYPE2_FONTLIST (39).
+
+        // numberFonts (2 bytes): A 16-bit, unsigned integer. The number of 
+        // fonts. This field SHOULD be set to 0.
+
+        // totalNumFonts (2 bytes): A 16-bit, unsigned integer. The total number
+        // of fonts. This field SHOULD be set to 0.
+
+        // listFlags (2 bytes): A 16-bit, unsigned integer. The sequence flags. 
+        // This field SHOULD be set to 0x0003, which is the logical OR'ed value
+        // of FONTLIST_FIRST (0x0001) and FONTLIST_LAST (0x0002).
+
+        // entrySize (2 bytes): A 16-bit, unsigned integer. The entry size. This
+        // field SHOULD be set to 0x0032 (50 bytes).
+
+
         case PDUTYPE2_FONTLIST: /* 39(0x27) */
             if (this->ini->globals.debug.front){
                 LOG(LOG_INFO, "PDUTYPE2_FONT_LIST");
             }
-            stream.skip_uint8(2); /* num of fonts */
-            stream.skip_uint8(2); /* unknown */
+            stream.in_uint16_le(); /* numberFont -> 0*/
+            stream.in_uint16_le(); /* totalNumFonts -> 0 */
             {
                 int seq = stream.in_uint16_le();
                 /* 419 client sends Seq 1, then 2 */
@@ -2108,11 +2149,13 @@ public:
                     this->send_data_update_sync();
                 }
             }
+            stream.in_uint16_le(); /* entrySize -> 50 */
             break;
         default:
             LOG(LOG_WARNING, "unsupported PDUTYPE in process_data %d\n", share_data_in.pdutype2);
             break;
         }
+        share_data_in.end();
     }
 
     void send_deactive() throw (Error)

@@ -40,6 +40,116 @@
 TODO(" ssl calls introduce some dependency on ssl system library  injecting it in the sec object would be better.")
 #include "ssl_calls.hpp"
 
+
+// 2.2.8.1.1.2 Security Headers
+// =============================
+// 2.2.8.1.1.2.1 Basic (TS_SECURITY_HEADER)
+// ----------------------------------------
+// The TS_SECURITY_HEADER structure is used to store security flags.
+
+// flags (2 bytes): A 16-bit, unsigned integer. Security flags.
+
+// +--------------------------------+------------------------------------------+
+// | 0x0001 SEC_EXCHANGE_PKT        | Indicates that the packet is a Security  |
+// |                                | Exchange PDU (section 2.2.1.10). This    |
+// |                                | packet type is sent from client to server|
+// |                                | only. The client only sends this packet  |
+// |                                | if it will be encrypting further         |
+// |                                | communication and Standard RDP Security  |
+// |                                | mechanisms (section 5.3) are in effect.  |
+// +--------------------------------+------------------------------------------+
+// | 0x0008 SEC_ENCRYPT             | Indicates that the packet is encrypted.  |
+// +--------------------------------+------------------------------------------+
+// | 0x0010 SEC_RESET_SEQNO         | This flag is not processed by any RDP    |
+// |                                | clients or servers and MUST be ignored.  |
+// +--------------------------------+------------------------------------------+
+// | 0x0020 SEC_IGNORE_SEQNO        | This flag is not processed by any RDP    |
+// |                                | clients or servers and MUST be ignored.  |
+// +--------------------------------+------------------------------------------+
+// | 0x0040 SEC_INFO_PKT            | Indicates that the packet is a Client    |
+// |                                | Info PDU (section 2.2.1.11). This packet |
+// |                                | type is sent from client to server only. |
+// |                                | If Standard RDP Security mechanisms are  |
+// |                                | in effect, then this packet MUST also be |
+// |                                | encrypted.                               |
+// +--------------------------------+------------------------------------------+
+// | 0x0080 SEC_LICENSE_PKT         | Indicates that the packet is a Licensing |
+// |                                | PDU (section 2.2.1.12).                  |
+// +--------------------------------+------------------------------------------+
+// | 0x0200 SEC_LICENSE_ENCRYPT_CS  | Indicates to the client that the server  |
+// |                                | is capable of processing encrypted       |
+// |                                | licensing packets. It is sent by the     |
+// |                                | server together with any licensing PDUs  |
+// |                                | (section 2.2.1.12).                      |
+// +--------------------------------+------------------------------------------+
+// | 0x0200 SEC_LICENSE_ENCRYPT_SC  | Indicates to the server that the client  |
+// |                                | is capable of processing encrypted       |
+// |                                | licensing packets. It is sent by the     |
+// |                                | client together with the SEC_EXCHANGE_PKT|
+// |                                | flag when sending a Security Exchange PDU|
+// |                                | (section 2.2.1.10).                      |
+// +--------------------------------+------------------------------------------+
+// | 0x0400 SEC_REDIRECTION_PKT     | Indicates that the packet is a Standard  |
+// |                                | Security Server Redirection PDU (section |
+// |                                | 2.2.13.2.1) and that the PDU is          |
+// |                                | encrypted.                               |
+// +--------------------------------+------------------------------------------+
+// | 0x0800 SEC_SECURE_CHECKSUM     | Indicates that the MAC for the PDU was   |
+// |                                | generated using the "salted MAC          |
+// |                                | generation" technique (see section       |
+// |                                | 5.3.6.1.1). If this flag is not present, |
+// |                                | then the standard technique was used     |
+// |                                | (sections 2.2.8.1.1.2.2 and              |
+// |                                | 2.2.8.1.1.2.3).                          |
+// +--------------------------------+------------------------------------------+
+// | 0x8000 SEC_FLAGSHI_VALID       | Indicates that the flagsHi field contains|
+// |                                | valid data. If this flag is not set, then|
+// |                                | the contents of the flagsHi field MUST be|
+// |                                | ignored.                                 |
+// +--------------------------------+------------------------------------------+
+
+// flagsHi (2 bytes): A 16-bit, unsigned integer. This field is reserved for
+// future RDP needs. It is currently unused and all values are ignored. This
+// field MUST contain valid data only if the SEC_FLAGSHI_VALID bit (0x8000) is
+// set in the flags field. If this bit is not set, the flagsHi field is
+// uninitialized and MAY contain random data.
+
+// 2.2.8.1.1.2.2 Non-FIPS (TS_SECURITY_HEADER1)
+// --------------------------------------------
+// The TS_SECURITY_HEADER1 structure extends the Basic Security Header (section
+// 2.2.8.1.1.2.1) and is used to store a 64-bit Message Authentication Code.
+
+// basicSecurityHeader (4 bytes): Basic Security Header, as specified in section
+//  2.2.8.1.1.2.1.
+
+// dataSignature (8 bytes): A 64-bit Message Authentication Code generated by
+// using one of the techniques described in section 5.3.6.1.
+
+// 2.2.8.1.1.2.3 FIPS (TS_SECURITY_HEADER2)
+// ----------------------------------------
+
+// The TS_SECURITY_HEADER2 structure extends the Basic Security Header (section
+// 2.2.8.1.1.2.1) and is used to store padding information and a 64-bit Message
+// Authentication Code.
+
+// basicSecurityHeader (4 bytes): Basic Security Header, as specified in section
+//  2.2.8.1.1.2.1.
+
+// length (2 bytes): A 16-bit, unsigned integer. The length of the FIPS security
+//  header. This field MUST be set to 0x0010 (16 bytes).
+
+// version (1 byte): An 8-bit, unsigned integer. The version of the FIPS header.
+//  This field SHOULD be set to TSFIPS_VERSION1 (0x01).
+
+// padlen (1 byte): An 8-bit, unsigned integer. The number of padding bytes of
+// padding appended to the end of the packet prior to encryption to make sure
+// that the data to be encrypted is a multiple of the 3DES block size (that is,
+// a multiple of 8 because the block size is 64 bits).
+
+// dataSignature (8 bytes): A 64-bit Message Authentication Code generated by
+// using the techniques specified in section 5.3.6.2.
+
+
 // 2.2.1.1.1   RDP Negotiation Request (RDP_NEG_REQ)
 // =================================================
 //  The RDP Negotiation Request structure is used by a client to advertise the

@@ -55,6 +55,7 @@ enum {
 };
 
 /* MCS PDU codes */
+TODO("MCS PDU codes definitions should move to core/RDP/mcs.hpp")
 enum {
     MCS_EDRQ =  1, /* Erect Domain Request */
     MCS_DPUM =  8, /* Disconnect Provider Ultimatum */

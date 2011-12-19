@@ -28,425 +28,350 @@
 #include <boost/test/auto_unit_test.hpp>
 #include "./test_orders.hpp"
 
-//iso send connexion request len=31
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 31 bytes
-//0000 03 00 00 1f 1a e0 00 00 00 00 00 43 6f 6f 6b 69 ...........Cooki
-//0010 65 3a 20 6d 73 74 73 68 61 73 68 3d 78 0d 0a    e: mstshash=x..
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso recv code=0 length=11
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//0000                                                 
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso send Data PDU len=418
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 418 bytes
-//0000 03 00 01 a2 02 f0 80 7f 65 82 01 96 04 01 01 04 ........e.......
-//0010 01 01 01 01 ff 30 20 02 02 00 22 02 02 00 02 02 .....0 ...".....
-//0020 02 00 00 02 02 00 01 02 02 00 00 02 02 00 01 02 ................
-//0030 02 ff ff 02 02 00 02 30 20 02 02 00 01 02 02 00 .......0 .......
-//0040 01 02 02 00 01 02 02 00 01 02 02 00 00 02 02 00 ................
-//0050 01 02 02 04 20 02 02 00 02 30 20 02 02 ff ff 02 .... ....0 .....
-//0060 02 fc 17 02 02 ff ff 02 02 00 01 02 02 00 00 02 ................
-//0070 02 00 01 02 02 ff ff 02 02 00 02 04 82 01 23 00 ..............#.
-//0080 05 00 14 7c 00 01 81 1a 00 08 00 10 00 01 c0 00 ...|............
-//0090 44 75 63 61 81 0c 01 c0 d4 00 04 00 08 00 20 03 Duca.......... .
-//00a0 58 02 01 ca 03 aa 0c 04 00 00 28 0a 00 00 31 00 X.........(...1.
-//00b0 39 00 35 00 2d 00 31 00 33 00 32 00 2d 00 32 00 9.5.-.1.3.2.-.2.
-//00c0 30 00 33 00 2d 00 32 00 31 00 32 00 00 00 04 00 0.3.-.2.1.2.....
-//00d0 00 00 00 00 00 00 0c 00 00 00 00 00 00 00 00 00 ................
-//00e0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-//00f0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-//0100 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-//0110 00 00 00 00 00 00 00 00 00 00 01 ca 01 00 00 00 ................
-//0120 00 00 18 00 07 00 01 00 00 00 00 00 00 00 00 00 ................
-//0130 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-//0140 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-//0150 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-//0160 00 00 00 00 00 00 00 00 00 00 04 c0 0c 00 09 00 ................
-//0170 00 00 00 00 00 00 02 c0 0c 00 03 00 00 00 00 00 ................
-//0180 00 00 03 c0 20 00 02 00 00 00 63 6c 69 70 72 64 .... .....cliprd
-//0190 72 00 c0 a0 00 00 72 64 70 64 72 00 00 00 80 80 r.....rdpdr.....
-//01a0 00 00                                           ..
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso recv code=0 length=329
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//0000                                                 
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//Generating client random
-//40-bit encryption enabled
-//iso send Data PDU len=12
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 12 bytes
-//0000 03 00 00 0c 02 f0 80 04 00 01 00 01             ............
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso send Data PDU len=8
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 8 bytes
-//0000 03 00 00 08 02 f0 80 28                         .......(
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso recv code=0 length=11
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//0000                                                 
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso send Data PDU len=12
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 12 bytes
-//0000 03 00 00 0c 02 f0 80 38 00 00 03 e9             .......8....
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso recv code=0 length=15
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//0000                                                 
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso send Data PDU len=12
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 12 bytes
-//0000 03 00 00 0c 02 f0 80 38 00 00 03 eb             .......8....
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso recv code=0 length=15
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//0000                                                 
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso send Data PDU len=12
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 12 bytes
-//0000 03 00 00 0c 02 f0 80 38 00 00 03 ec             .......8....
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso recv code=0 length=15
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//0000                                                 
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso send Data PDU len=12
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 12 bytes
-//0000 03 00 00 0c 02 f0 80 38 00 00 03 ed             .......8....
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso recv code=0 length=15
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//0000                                                 
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso send Data PDU len=95
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 95 bytes
-//0000 03 00 00 5f 02 f0 80 64 00 00 03 eb 70 80 50 01 ..._...d....p.P.
-//0010 00 00 00 48 00 00 00 bc d1 3a af eb b7 43 bf 1b ...H.....:...C..
-//0020 db f2 88 a9 44 be e2 42 f0 13 84 73 b0 38 34 ca ....D..B...s.84.
-//0030 38 1b 07 00 e1 25 b6 e0 28 34 df 66 b0 a8 45 9a 8....%..(4.f..E.
-//0040 84 a0 2f 42 60 96 69 92 91 2d 65 10 b3 b2 07 8b ../B`.i..-e.....
-//0050 8c 16 2d 7e e9 c5 1e 00 00 00 00 00 00 00 00    ..-~...........
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso send Data PDU len=327
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 327 bytes
-//0000 03 00 01 47 02 f0 80 64 00 00 03 eb 70 81 38 48 ...G...d....p.8H
-//0010 00 00 00 64 35 a0 97 5d 15 e8 78 ea 18 57 fa 93 ...d5..]..x..W..
-//0020 e7 a2 0f 75 e5 fa eb 90 89 5c 80 c3 08 25 2a 31 ...u.....\...%*1
-//0030 c3 45 6c 50 df cf 43 61 18 de 5d a8 05 f2 14 85 .ElP..Ca..].....
-//0040 a8 7b a5 2e 44 3a 96 e4 50 c1 a0 01 8d bf 18 1a .{..D:..P.......
-//0050 88 e1 9d 93 35 4d 85 81 e2 55 ed 46 ba 91 e4 4a ....5M...U.F...J
-//0060 47 9c 59 2c 4e e1 1d a0 00 d1 26 60 eb ea f8 d7 G.Y,N.....&`....
-//0070 4d 32 fe 59 06 b5 00 13 0a 63 44 5d 36 85 70 f4 M2.Y.....cD]6.p.
-//0080 b1 b3 7b ed 9d fd 74 7b 87 25 d9 80 2a f7 4a bb ..{...t{.%..*.J.
-//0090 ec ba e3 3e ee 03 2d 86 24 d6 35 76 e6 65 14 1c ...>..-.$.5v.e..
-//00a0 3d c1 85 fb 1c 0b e5 33 0f 66 d5 0f 50 75 4e b6 =......3.f..PuN.
-//00b0 32 f9 af 9a a5 73 97 a7 21 f9 31 7d 9d c5 7b 75 2....s..!.1}..{u
-//00c0 7b 37 88 8c 46 38 cf 1f ba f3 41 16 69 1e f8 db {7..F8....A.i...
-//00d0 cc a6 2d d1 d4 b0 f9 75 f8 c2 88 f6 77 25 4c ba ..-....u....w%L.
-//00e0 f6 da e4 34 72 45 cc 11 38 7b 3b d8 70 9c 67 a5 ...4rE..8{;.p.g.
-//00f0 44 b0 7f 4d b3 04 3e c1 5a da 9b cb 8b 54 a9 99 D..M..>.Z....T..
-//0100 5c 88 50 81 6e 3e 84 ef 4d ea 8a 45 00 2f be 43 \.P.n>..M..E./.C
-//0110 8b 52 e7 8a 57 38 41 13 55 ad 52 32 6e 9c f8 5a .R..W8A.U.R2n..Z
-//0120 06 5d c1 5b 0a 99 58 bf 1e af d9 7e 86 35 30 75 .].[..X....~.50u
-//0130 44 a6 08 96 b3 05 76 0c 87 b4 04 9e 41 81 d2 15 D.....v.....A...
-//0140 47 c8 4e f6 0f 7a cf                            G.N..z.
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//rdp_connect ok
-//Connection successful.
-//rdp_loop
-//rdp_loop receiving
-//rdp_recv
-//iso send Data PDU len=61
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 61 bytes
-//0000 03 00 00 3d 02 f0 80 64 00 00 03 eb 70 80 2e 08 ...=...d....p...
-//0010 00 00 00 c8 79 32 34 2a 6e ed 46 dd 3a 0a 7f 9b ....y24*n.F.:...
-//0020 20 98 c6 8b ae 49 e1 e4 aa f3 bf d3 c0 98 96 fe  ....I..........
-//0030 c9 d2 9b 46 b7 a4 00 47 fc 88 d1 1d c7          ...F...G.....
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso recv code=0 length=337
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//0000                                                 
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso send Data PDU len=165
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 165 bytes
-//0000 03 00 00 a5 02 f0 80 64 00 00 03 eb 70 80 96 80 .......d....p...
-//0010 00 00 00 13 02 92 00 01 00 00 00 00 00 01 ff 00 ................
-//0020 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-//0030 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-//0040 00 48 00 00 00 00 00 00 00 00 00 00 00 00 00 00 .H..............
-//0050 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-//0060 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-//0070 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-//0080 00 00 00 00 00 00 00 00 00 00 00 0f 00 02 00 78 ...............x
-//0090 00 10 00 10 00 31 39 35 2d 31 33 32 2d 32 30 33 .....195-132-203
-//00a0 2d 32 31 32 00                                  -212.
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso recv code=0 length=35
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//0000                                                 
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso recv code=0 length=303
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//receving: 0 bytes
-//0000                                                 
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//procees with ShareControl PDU
-//RDP packet #1, (type 1)
-//rdp_loop recv done
-//RDP_PDU_DEMAND_ACTIVE
-//DEMAND_ACTIVE(id=0x10002)
-//setting desktop size and depth to: 800x600x24
-//iso send Data PDU len=445
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 445 bytes
-//0000 03 00 01 bd 02 f0 80 64 00 00 03 eb 70 81 ae 38 .......d....p..8
-//0010 00 00 00 ce cb 24 fd 80 2c 97 02 4f ec 38 9b 40 .....$..,..O.8.@
-//0020 9d 27 51 17 45 59 9b 3e 65 4c f9 e7 71 2f f8 cd .'Q.EY.>eL..q/..
-//0030 f0 a6 8b 91 9f 52 88 ec d2 83 8e 86 df bc b3 e7 .....R..........
-//0040 f9 46 97 53 51 68 db 0b af 51 46 b8 01 7e 33 16 .F.SQh...QF..~3.
-//0050 ea 26 e5 c0 37 9c 99 47 c2 98 cb 14 02 9b cb 12 .&..7..G........
-//0060 ba b8 ef 82 df 73 1a b1 cc 60 92 54 f3 3a 0b ac .....s...`.T.:..
-//0070 3c f5 9d 0a 65 b2 45 e1 71 81 e7 76 6b c4 34 79 <...e.E.q..vk.4y
-//0080 df 75 f3 82 f5 47 af 58 35 6b 1a 2a c4 d6 10 62 .u...G.X5k.*...b
-//0090 e1 a1 9b 71 34 6b 5d a8 38 36 9a f5 c4 d3 b1 58 ...q4k].86.....X
-//00a0 fe d1 45 9a 5c 1f 11 1f 01 d5 61 12 a0 bc 89 a6 ..E.\.....a.....
-//00b0 86 51 96 78 54 9d 62 34 d5 4e 15 66 58 ff 30 a7 .Q.xT.b4.N.fX.0.
-//00c0 e7 65 0a 88 58 94 f3 5f 54 f3 de 56 bd eb 19 fc .e..X.._T..V....
-//00d0 48 1f 09 7a 29 ca 94 64 c8 0d 87 43 6e 37 ff c9 H..z)..d...Cn7..
-//00e0 e6 ba 95 01 7f a1 fb b8 e3 26 2d 65 e2 66 c3 89 .........&-e.f..
-//00f0 24 2b 50 3c 4c 92 ca 93 f7 38 82 f4 20 72 57 27 $+P<L....8.. rW'
-//0100 ed 89 3b 9f 70 26 ae 05 73 72 8c 38 f9 aa 94 c1 ..;.p&..sr.8....
-//0110 2e f8 7b 8b e8 bd e2 32 7f 4c ab b2 a0 be 2d ab ..{....2.L....-.
-//0120 72 b7 68 cc 43 25 ce 9a 5b 47 66 8c 9c 13 0c 3b r.h.C%..[Gf....;
-//0130 dc e0 a9 05 8f 90 36 2d ce 57 bc c6 8b 1f a4 46 ......6-.W.....F
-//0140 58 b9 35 7f ac 47 c8 e8 9f 0c ab 8d 84 6c 27 fa X.5..G.......l'.
-//0150 a2 87 97 6d 39 cc 03 8a 8c 35 f3 a9 b4 8c 9c 81 ...m9....5......
-//0160 46 ca 82 6c 1d 82 c3 99 9a dd 94 b9 76 f8 d2 ae F..l........v...
-//0170 06 9c 69 33 79 2f f3 3f 8c 41 f9 20 2c 97 3e 12 ..i3y/.?.A. ,.>.
-//0180 53 19 d0 66 77 b5 38 16 02 cf a5 a7 7c d1 11 29 S..fw.8.....|..)
-//0190 ab b3 f0 00 5d bb cb 5a 1c ed bc a0 d9 99 f1 6b ....]..Z.......k
-//01a0 8f 15 f9 ff 89 09 90 1a 21 15 d9 f2 d9 54 21 87 ........!....T!.
-//01b0 2a 9b b4 f3 7e 76 b3 41 ab b4 42 57 e5          *...~v.A..BW.
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso send Data PDU len=49
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 49 bytes
-//0000 03 00 00 31 02 f0 80 64 00 00 03 eb 70 80 22 08 ...1...d....p.".
-//0010 00 00 00 2c 4b 18 6f 85 3f 17 96 02 f2 5a 20 1c ...,K.o.?....Z .
-//0020 4c 21 a6 ba f2 14 22 44 51 44 1a 8c 8f f7 27 61 L!...."DQD....'a
-//0030 94                                              .
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso send Data PDU len=53
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 53 bytes
-//0000 03 00 00 35 02 f0 80 64 00 00 03 eb 70 80 26 08 ...5...d....p.&.
-//0010 00 00 00 a9 7d c3 a8 64 1d 99 f2 80 89 b5 23 0e ....}..d......#.
-//0020 6d 8d 62 9c 53 24 0c cf 35 d1 8b 34 d9 56 84 43 m.b.S$..5..4.V.C
-//0030 12 f2 c6 25 10                                  ...%.
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//iso send Data PDU len=53
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 53 bytes
-//0000 03 00 00 35 02 f0 80 64 00 00 03 eb 70 80 26 08 ...5...d....p.&.
-//0010 00 00 00 08 49 6d e4 6a ff 21 ad 3c 7a a1 5d ef ....Im.j.!.<z.].
-//0020 5c f5 db 47 57 d4 59 7f 91 2d fd 87 fe 35 32 72 \..GW.Y..-...52r
-//0030 fc 19 f7 37 a3                                  ...7.
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//rdp_recv
-//ERROR: recv: Connexion ré-initialisée par le correspondant
-//rdp_s == NULL
-//rdp_recv
-//ERROR: Connection closed
-//rdp_s == NULL
-//rdp_recv
-//ERROR: Connection closed
-//rdp_s == NULL
-//iso send Data PDU len=61
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 61 bytes
-//0000 03 00 00 3d 02 f0 80 64 00 00 03 eb 70 80 2e 08 ...=...d....p...
-//0010 00 00 00 f7 b7 7a 01 b2 17 d2 02 1b e2 b4 4c ac .....z........L.
-//0020 e3 87 3f 5f 14 4f 8a 46 b1 c9 c8 6b 22 3a 83 9c ..?_.O.F...k":..
-//0030 74 14 de b9 a0 58 bd 57 1d 84 48 84 9a          t....X.W..H..
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//ERROR: send: Relais brisé (pipe)
-//iso send Data PDU len=53
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 53 bytes
-//0000 03 00 00 35 02 f0 80 64 00 00 03 eb 70 80 26 08 ...5...d....p.&.
-//0010 00 00 00 d2 70 48 06 e4 41 bd d0 4f bc 2c 24 c4 ....pH..A..O.,$.
-//0020 cc 12 bc df d0 94 38 7c e2 f2 51 67 40 a6 53 e2 ......8|..Qg@.S.
-//0030 3e 10 50 0d 94                                  >.P..
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//ERROR: send: Relais brisé (pipe)
-//iso send Data PDU len=53
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 53 bytes
-//0000 03 00 00 35 02 f0 80 64 00 00 03 eb 70 80 26 08 ...5...d....p.&.
-//0010 00 00 00 99 ad 27 7b 92 51 31 9d 27 02 7a bb 1c .....'{.Q1.'.z..
-//0020 13 e2 ae 1e f3 29 0a ee 6f bd 2e 2a b5 0f 4b e8 .....)..o..*..K.
-//0030 25 54 ed 5e 3d                                  %T.^=
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//ERROR: send: Relais brisé (pipe)
-//rdp_recv
-//ERROR: Connection closed
-//rdp_s == NULL
-//rdp_loop
-//rdp_loop receiving
-//rdp_recv
-//ERROR: Connection closed
-//rdp_s == NULL
-//rdp_loop recv done
-//exit to external loop
-//Disconnecting...
-//iso send code=128 len=11
-//>>>>>>>>>>>>>>>>>>>>>>>>>>
-//sending: 11 bytes
-//0000 03 00 00 0b 06 80 00 00 00 00 00                ...........
+#include "stream.hpp"
+#include "transport.hpp"
+#include "constants.hpp"
+#include "RDP/x224.hpp"
+#include "RDP/mcs.hpp"
+#include "RDP/sec.hpp"
 
-//core/RDP/x224.hpp
-#include "../front/front.hpp"
-
-BOOST_AUTO_TEST_CASE(TestSendConnectionPacketsLikeRdesktopByHand)
+BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
-//sending: 31 bytes
-//0000 03 00 00 1f 1a e0 00 00 00 00 00 43 6f 6f 6b 69 ...........Cooki
-//0010 65 3a 20 6d 73 74 73 68 61 73 68 3d 78 0d 0a    e: mstshash=x..
-
-    Stream stream;
+    Stream stream(65536);
     GeneratorTransport t(
-        "\x03\x00\x00\x1F\x1A\xE0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69"
-        "\x65\x3A\x20\x6D\x73\x74\x73\x68\x61\x73\x68\x3D\x78\x0D\x0A", 31);
+        "\x03\x00\x00\x3d"
+        "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x80\x2e\x08\x00\x00\x00\x05"
+        "\xc2\x9f\x8f\x9c\x6a\xc1\xf0\x2e\x14\xba\x9f\x05\xd2\x72\xc7\xe9"
+        "\x63\x15\x71\xd5\x73\xb0\xfe\xe7\xba\x9e\x75\xa0\x68\x67\xa9\x3f"
+        "\x7b\xfa\x9a\x3b\x15\x9f\x89\x32\xd4"
+        , 61);
 
-    recv_x224_connection_request_pdu(&t);
+    X224In tpdu(&t, stream);
+    BOOST_CHECK_EQUAL(3, tpdu.tpkt.version);
+    BOOST_CHECK_EQUAL(61, tpdu.tpkt.len);
+    BOOST_CHECK_EQUAL(2, tpdu.tpdu_hdr.LI);
+    BOOST_CHECK_EQUAL(X224Packet::DT_TPDU, tpdu.tpdu_hdr.code);
 
-    BOOST_CHECK_EQUAL(t.current, t.len);
-    // send_x224_connection_confirm_pdu(this->trans);
+    McsIn mcs_in(stream);
+    BOOST_CHECK_EQUAL((uint8_t)MCS_SDRQ, mcs_in.opcode >> 2);
+    BOOST_CHECK_EQUAL(0, mcs_in.user_id);
+    BOOST_CHECK_EQUAL((uint16_t)MCS_GLOBAL_CHANNEL, (uint16_t)mcs_in.chan_id);
+    BOOST_CHECK_EQUAL(0x70, mcs_in.magic_0x70);
+    BOOST_CHECK_EQUAL(46, mcs_in.len);
+    
+    CryptContext decrypt;
+    decrypt.use_count=1;
+    memcpy(decrypt.sign_key, "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 16);
+    memcpy(decrypt.key,      "\xd1\x26\x9e\x80\x59\xa3\x09\x2e\x10\xf2\x8a\xf0\xf3\x41\xbe\xfc", 16);
+    decrypt.rc4_key_len=8;
+    memcpy((void*)(&decrypt.rc4_info), (void*)
+        "\x32\x00\x00\x00\x30\x00\x00\x00\x71\xf5\xf1\x61\x62\x7f\xa8\xc4\x47\x27\x48\xac\x30\x91\x5a\xaa\x92\x55\xe0\x66\x2b\x83\xdc\x0f\x53\xd4\xe6\xb7\xb5\xb9\x80\xe7\xfa\x98\x6a\xe2\x73\xe5\x1d\x04\xea\x05\xf4\xf6\x74\x6e\xc0\x69\x29\x10\x79\xb0\x7d\x16\x52\x95\x59\x00\xcc\x84\xc7\x07\xc3\xda\xcb\x0e\xba\xc8\xe3\x88\xec\xfd\xd6\x7e\xce\xd2\xfb\x19\xad\x4c\xbd\x3c\x8e\x8d\x64\x81\x28\x46\x5c\x72\xb1\xff\x58\x60\x5e\xeb\xe4\x1a\x50\xee\xbf\x90\xae\x86\x94\x65\x54\xf7\x31\x0a\x15\xd9\x33\xbe\x06\x38\xf2\x49\xb8\x03\x6d\x02\xde\xfc\x5d\x7c\x2a\x70\xa2\xcd\x36\x21\x13\x09\x41\x93\x7a\x51\x78\xaf\x2e\xdf\xb6\xd8\x9c\xe1\x85\x9b\x77\x3e\xa6\x8a\x12\xf3\x63\xcf\xab\x6f\xf0\x89\x9d\x1c\x4e\x76\x0b\xd0\xd7\xd5\x87\x43\x08\x23\x1e\x17\x2d\xfe\x3f\xf9\xc5\x68\x35\x3b\xb2\xa9\x8f\x99\x40\xc9\x5f\x45\x97\xbb\xa7\xd1\x2f\xc2\xdd\x96\x9e\x11\x24\x57\xd3\xa5\xa3\xe8\xa0\x82\x3a\x67\x9a\xed\x01\x8b\x18\xa4\x2c\x4a\x39\x5b\xf8\x14\x44\x20\x34\x8c\x0d\x25\x0c\xe9\x75\x6b\x9f\xb4\x1f\xef\xbc\xca\x3d\xc1\x22\x32\xb3\xa1\xc6\x4d\x6c\x7b\xdb\x4f\x37\x1b\x56\x4b\x26\x42\xff\xff\xff\xff\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 1032);
+    decrypt.rc4_key_size=1;
 
-    //sending: 418 bytes
-    //0000 03 00 01 a2 02 f0 80 7f 65 82 01 96 04 01 01 04 ........e.......
-    //0010 01 01 01 01 ff 30 20 02 02 00 22 02 02 00 02 02 .....0 ...".....
-    //0020 02 00 00 02 02 00 01 02 02 00 00 02 02 00 01 02 ................
-    //0030 02 ff ff 02 02 00 02 30 20 02 02 00 01 02 02 00 .......0 .......
-    //0040 01 02 02 00 01 02 02 00 01 02 02 00 00 02 02 00 ................
-    //0050 01 02 02 04 20 02 02 00 02 30 20 02 02 ff ff 02 .... ....0 .....
-    //0060 02 fc 17 02 02 ff ff 02 02 00 01 02 02 00 00 02 ................
-    //0070 02 00 01 02 02 ff ff 02 02 00 02 04 82 01 23 00 ..............#.
-    //0080 05 00 14 7c 00 01 81 1a 00 08 00 10 00 01 c0 00 ...|............
-    //0090 44 75 63 61 81 0c 01 c0 d4 00 04 00 08 00 20 03 Duca.......... .
-    //00a0 58 02 01 ca 03 aa 0c 04 00 00 28 0a 00 00 31 00 X.........(...1.
-    //00b0 39 00 35 00 2d 00 31 00 33 00 32 00 2d 00 32 00 9.5.-.1.3.2.-.2.
-    //00c0 30 00 33 00 2d 00 32 00 31 00 32 00 00 00 04 00 0.3.-.2.1.2.....
-    //00d0 00 00 00 00 00 00 0c 00 00 00 00 00 00 00 00 00 ................
-    //00e0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-    //00f0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-    //0100 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-    //0110 00 00 00 00 00 00 00 00 00 00 01 ca 01 00 00 00 ................
-    //0120 00 00 18 00 07 00 01 00 00 00 00 00 00 00 00 00 ................
-    //0130 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-    //0140 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-    //0150 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
-    //0160 00 00 00 00 00 00 00 00 00 00 04 c0 0c 00 09 00 ................
-    //0170 00 00 00 00 00 00 02 c0 0c 00 03 00 00 00 00 00 ................
-    //0180 00 00 03 c0 20 00 02 00 00 00 63 6c 69 70 72 64 .... .....cliprd
-    //0190 72 00 c0 a0 00 00 72 64 70 64 72 00 00 00 80 80 r.....rdpdr.....
-    //01a0 00 00                                           ..
-
-    t.reset(
-        "\x03\x00\x01\xa2\x02\xf0\x80\x7f\x65\x82\x01\x96\x04\x01\x01\x04"
-        "\x01\x01\x01\x01\xff\x30\x20\x02\x02\x00\x22\x02\x02\x00\x02\x02"
-        "\x02\x00\x00\x02\x02\x00\x01\x02\x02\x00\x00\x02\x02\x00\x01\x02"
-        "\x02\xff\xff\x02\x02\x00\x02\x30\x20\x02\x02\x00\x01\x02\x02\x00"
-        "\x01\x02\x02\x00\x01\x02\x02\x00\x01\x02\x02\x00\x00\x02\x02\x00"
-        "\x01\x02\x02\x04\x20\x02\x02\x00\x02\x30\x20\x02\x02\xff\xff\x02"
-        "\x02\xfc\x17\x02\x02\xff\xff\x02\x02\x00\x01\x02\x02\x00\x00\x02"
-        "\x02\x00\x01\x02\x02\xff\xff\x02\x02\x00\x02\x04\x82\x01\x23\x00"
-        "\x05\x00\x14\x7c\x00\x01\x81\x1a\x00\x08\x00\x10\x00\x01\xc0\x00"
-        "\x44\x75\x63\x61\x81\x0c\x01\xc0\xd4\x00\x04\x00\x08\x00\x20\x03"
-        "\x58\x02\x01\xca\x03\xaa\x0c\x04\x00\x00\x28\x0a\x00\x00\x31\x00"
-        "\x39\x00\x35\x00\x2d\x00\x31\x00\x33\x00\x32\x00\x2d\x00\x32\x00"
-        "\x30\x00\x33\x00\x2d\x00\x32\x00\x31\x00\x32\x00\x00\x00\x04\x00"
-        "\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xca\x01\x00\x00\x00"
-        "\x00\x00\x18\x00\x07\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\xc0\x0c\x00\x09\x00"
-        "\x00\x00\x00\x00\x00\x00\x02\xc0\x0c\x00\x03\x00\x00\x00\x00\x00"
-        "\x00\x00\x03\xc0\x20\x00\x02\x00\x00\x00\x63\x6c\x69\x70\x72\x64"
-        "\x72\x00\xc0\xa0\x00\x00\x72\x64\x70\x64\x72\x00\x00\x00\x80\x80"
-        "\x00\x00", 418);
-
-//        recv_mcs_connect_initial_pdu_with_gcc_conference_create_request(
-//            this->trans,
-//            &this->client_info,
-//            this->channel_list);
-
-//        send_mcs_connect_response_pdu_with_gcc_conference_create_response(
-//            this->trans,
-//            &this->client_info,
-//            this->channel_list,
-//            this->server_random,
-//            this->encrypt.rc4_key_size,
-//            this->pub_mod,
-//            this->pri_exp);
-
+    SecIn sec(stream, decrypt);
+    BOOST_CHECK_EQUAL((uint32_t)SEC_ENCRYPT, (uint32_t)sec.flags);
+    
+    uint16_t length = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)34, length);
 
 }
 
+// trace of process logon info
 
+//rdpproxy: WARNING (20016/20016) -- Reading performance flags
+//rdpproxy: core/stream.hpp:158: unsigned int Stream::in_uint32_le(): Assertion `check_rem(4)' failed.
+
+BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
+{
+    Stream stream(65536);
+    GeneratorTransport t(
+/* 0000 */"\x03\x00\x01\x4d"                                                 //...M
+// Socket RDP Client (5) receiving 329 bytes
+/* 0000 */"\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x81\x3e\x48\x00\x00\x00\x96" //...d....p.>H....
+/* 0010 */"\x4e\xca\x54\x28\x3c\x2d\xde\x83\x0a\xac\xbe\x8d\x20\x70\x25\x95" //N.T(<-...... p%.
+/* 0020 */"\xbb\x3a\x69\x4b\xfb\x52\x7f\x11\x3b\x9d\x40\xf9\x70\x8b\xfc\x0b" //.:iK.R..;.@.p...
+/* 0030 */"\xe1\xe4\x95\x3e\x48\x38\x89\xca\x37\x7b\xb8\x2a\x2a\x86\xb4\xca" //...>H8..7{.**...
+/* 0040 */"\xd3\xb3\x3b\x0e\x87\xd2\x9c\xd9\x1c\x5e\xb8\xa1\x0c\x53\xa3\x22" //..;......^...S."
+/* 0050 */"\x35\x67\x7e\x87\x88\x44\xa2\x32\x1c\x3d\xcc\x77\x47\xf2\x3a\xd6" //5g~..D.2.=.wG.:.
+/* 0060 */"\xfe\x8d\x7c\xb7\x12\xc4\x6a\x64\x22\x1b\x6d\x23\x8c\x05\x97\xd6" //..|...jd".m#....
+/* 0070 */"\x43\x9e\x46\x84\x41\xd1\x20\xf0\xfd\x5d\x11\x01\x67\xb9\xcb\x1a" //C.F.A. ..]..g...
+/* 0080 */"\xde\xb1\x49\x0a\xd2\x34\x76\x84\xc6\x62\xda\xdb\x82\x20\x68\xf5" //..I..4v..b... h.
+/* 0090 */"\x89\x89\x28\xbe\x9f\x61\xdb\x0b\x8b\x43\x10\xb5\xac\x15\x7a\x79" //..(..a...C....zy
+/* 00a0 */"\xcb\x00\x2c\xa2\x19\x19\xc4\x44\x9c\xa4\xea\xdf\x69\x7a\xb4\xbe" //..,....D....iz..
+/* 00b0 */"\x74\xeb\x39\xb0\xd5\x03\x2d\x81\x96\x25\x05\x7d\xc8\x8c\xa1\xe1" //t.9...-..%.}....
+/* 00c0 */"\x24\xdd\x76\x47\x00\x17\xf3\x0c\x5c\xd3\x22\xa1\x41\x6e\x54\x3c" //$.vG....\.".AnT<
+/* 00d0 */"\x28\xa2\x9f\x37\x2f\xb5\x64\x17\x54\x26\x97\xf5\x39\x83\xed\x3f" //(..7/.d.T&..9..?
+/* 00e0 */"\x1f\x3f\xf5\x8e\xab\xa7\x82\x8c\x77\x81\x7d\x80\xd0\x73\x0e\xb7" //.?......w.}..s..
+/* 00f0 */"\x6b\xc3\xd0\xc6\x51\x61\x29\x6a\x3d\x9d\x99\x22\x3e\x78\x7a\x77" //k...Qa)j=..">xzw
+/* 0100 */"\x63\x07\x01\xca\x14\x26\xcd\x6a\xc0\x0d\xa7\x91\x1c\x7f\x6d\xf4" //c....&.j......m.
+/* 0110 */"\xfa\x3d\x26\xe8\xf8\x4c\x5f\xe9\x78\xe6\xde\x09\x79\xb3\x50\x38" //.=&..L_.x...y.P8
+/* 0120 */"\x72\x52\x1f\x7f\x33\x2b\xc6\xbd\x55\x62\xf9\xe8\xae\xb1\xd8\xad" //rR..3+..Ub......
+/* 0130 */"\x6c\xac\x6b\xc4\xe7\x90\x73\x9b\xea\xc1\x53\xe2\x37\xd4\x67\x81" //l.k...s...S.7.g.
+/* 0140 */"\x39\x1b\xac\xe8\xf9\x4d\x67\x70\x44"                             //9....MgpD
+        , 333);
+
+    X224In tpdu(&t, stream);
+    BOOST_CHECK_EQUAL(3, tpdu.tpkt.version);
+    BOOST_CHECK_EQUAL(333, tpdu.tpkt.len);
+    BOOST_CHECK_EQUAL(2, tpdu.tpdu_hdr.LI);
+    BOOST_CHECK_EQUAL(X224Packet::DT_TPDU, tpdu.tpdu_hdr.code);
+
+    McsIn mcs_in(stream);
+    BOOST_CHECK_EQUAL((uint8_t)MCS_SDRQ, mcs_in.opcode >> 2);
+    BOOST_CHECK_EQUAL(0, mcs_in.user_id);
+    BOOST_CHECK_EQUAL((uint16_t)MCS_GLOBAL_CHANNEL, (uint16_t)mcs_in.chan_id);
+    BOOST_CHECK_EQUAL(0x70, mcs_in.magic_0x70);
+    BOOST_CHECK_EQUAL(318, mcs_in.len);
+    
+    CryptContext decrypt;
+    decrypt.use_count=0;
+    memcpy(decrypt.sign_key, "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 16);
+    memcpy(decrypt.key, "\xd1\x26\x9e\x77\x53\x54\x03\xd2\xaf\x3c\x95\xba\xd7\x48\xb3\xaa", 16);
+    decrypt.rc4_key_len=8;
+    memcpy((void*)(&decrypt.rc4_info), (void*)"\x00\x00\x00\x00\x00\x00\x00\x00\x64\x1f\x98\x12\xbc\x6d\xcb\xa4\x27\x47\x24\xe0\xab\x96\xf7\x0d\x4e\xa0\xb2\xdc\x32\x9b\x94\x90\x8d\xc5\x5a\x95\x2c\xef\x04\x3e\x9a\x39\x9f\xde\x0c\xc7\x09\xa5\x22\xed\xb5\x57\x67\x2b\x0f\x8f\x8a\xe1\x23\x2e\x87\x54\x5d\x8c\x6f\x81\x8e\x45\xb3\x56\x97\xce\x16\x7f\x03\xad\x6c\xb0\xf0\xac\x2d\xae\x79\x40\xda\x7b\xcc\x29\x44\xc1\x75\xa8\x78\x3a\x25\x7a\x8b\x48\x65\xec\x15\x83\x18\xb7\x60\x38\xfc\x73\x11\x68\xf3\x0b\xb9\x5c\xc0\x51\xa7\xc2\x0a\x13\x10\x82\x92\x7c\x77\xd0\x08\xaa\xb8\x9e\x6b\x17\x91\x00\x46\x28\x72\xb6\xf9\xe4\x84\x37\x49\x42\x2f\x3d\x4d\xa3\xc6\x80\x0e\x21\x9d\xdb\xf5\x89\xb4\xa6\x1b\xf8\x20\xa1\x52\xeb\xcd\x9c\xdd\x1c\xd2\xb1\xd9\xba\x02\x7d\x99\x62\xea\x5b\xa9\xc9\xbd\x74\xd3\xe9\xf6\x05\x1d\xfd\xfe\x1a\x4c\xd6\x33\xdf\xbf\xe2\x5e\xc4\x2a\xa2\xfa\x85\xff\xee\xc3\xd7\x66\x36\x4b\x35\xe5\x43\x1e\x76\xe6\xd4\xaf\x71\xd5\xf4\x30\x3f\x7e\x3c\x4f\xe7\x6a\xf1\x70\x26\xe3\x6e\x01\x61\xbb\x93\x34\x3b\x53\x14\xe8\xf2\xd8\xfb\xc8\xd1\x19\x41\x59\x69\x86\xbe\x63\x07\x55\x50\x5f\x4a\x58\x06\x31\xcf\xca\x88\xff\xff\xff\xff\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 1032);
+    decrypt.rc4_key_size=1;
+
+    SecIn sec(stream, decrypt);
+    BOOST_CHECK_EQUAL((uint32_t)(SEC_ENCRYPT|SEC_LOGON_INFO), (uint32_t)sec.flags);
+
+    uint8_t * start_of_logon_info = stream.p;    
+    uint32_t codepage = stream.in_uint32_le();
+    BOOST_CHECK_EQUAL((uint32_t)0, codepage);
+
+    // INFO_ENABLEWINDOWSKEY  = 0x00000100
+    // INFO_MAXIMIZESHELL     = 0x00000020
+    // INFO_UNICODE           = 0x00000010
+    // INFO_DISABLECTRLALTDEL = 0x00000002
+    // INFO_MOUSE             = 0x00000001
+    uint32_t flags = stream.in_uint32_le();
+    BOOST_CHECK_EQUAL((uint32_t)0x133, flags);
+
+    uint16_t cbDomain = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)0, cbDomain);
+    uint16_t cbUser = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)10, cbUser);
+    uint16_t cbPassword = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)0, cbPassword);
+    uint16_t cbAlternateShell = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)0, cbAlternateShell);
+    uint16_t cbWorkingDir = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)0, cbWorkingDir);
+    BOOST_CHECK(0 == memcmp("\x00\x00", stream.in_uint8p(cbDomain+2), cbDomain+2));
+    BOOST_CHECK(0 == memcmp("k\x00r\x00i\x00s\x00s\x00\x00\x00", stream.in_uint8p(cbUser+2), cbUser+2));
+    BOOST_CHECK(0 == memcmp("\x00\x00", stream.in_uint8p(cbPassword+2), cbPassword+2));
+    BOOST_CHECK(0 == memcmp("\x00\x00", stream.in_uint8p(cbAlternateShell+2), cbAlternateShell+2));
+    BOOST_CHECK(0 == memcmp("\x00\x00", stream.in_uint8p(cbWorkingDir+2), cbWorkingDir+2));
+
+    uint16_t clientAddressFamily = stream.in_uint16_le();
+    // 0x00002 AF_INET The clientAddress field contains an IPv4 address.
+    // 0x0017 AF_INET6 The clientAddress field contains an IPv6 address.
+    BOOST_CHECK_EQUAL((uint16_t)0x00002, clientAddressFamily);
+
+    uint16_t cbClientAddress = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)20, cbClientAddress);
+    char * p = (char*)stream.in_uint8p(cbClientAddress);
+    // 127.0.0.1
+    char expectedClientAddress[] = {
+        '1', 0, '2', 0, '7', 0, '.', 0, '0', 0, '.', 0, '0', 0, '.', 0, '1', 0, 0, 0};
+    BOOST_CHECK(0 == memcmp(expectedClientAddress, p , cbClientAddress));
+
+    uint16_t cbClientDir = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)60, cbClientDir);
+
+    char * p2 = (char*)stream.in_uint8p(cbClientDir);
+
+    // C:\WINNT\System32\mstscax.dll
+    char expectedClientDir[] = {
+        0x43, 0, 0x3A, 0, 0x5C, 0, 0x57, 0, 0x49, 0, 
+        0x4e, 0, 0x4e, 0, 0x54, 0, 0x5c, 0, 0x53, 0, 
+        0x79, 0, 0x73, 0, 0x74, 0, 0x65, 0, 0x6d, 0,
+        0x33, 0, 0x32, 0, 0x5C, 0, 0x6D, 0, 0x73, 0,
+        0x74, 0, 0x73, 0, 0x63, 0, 0x61, 0, 0x78, 0,
+        0x2E, 0, 0x64, 0, 0x6C, 0, 0x6C, 0, 0, 0,
+    };
+
+    BOOST_CHECK(0 == memcmp(expectedClientDir, p2 , cbClientDir));
+
+// Bias (4 bytes): A 32-bit, unsigned integer that contains the current bias for
+// local time translation on the client. The bias is the difference, in minutes,
+// between Coordinated Universal Time (UTC) and local time. All translations
+// between UTC and local time are based on the following formula:
+// UTC = local time + bias
+
+    // Note: really this is a signed integer as Bias can be negative!
+
+    uint32_t Bias = stream.in_uint32_le();
+    BOOST_CHECK_EQUAL((uint32_t)0xFFFFFFC4, Bias);
+    BOOST_CHECK_EQUAL((uint32_t)-60, Bias);
+
+// StandardName (64 bytes): An array of 32 Unicode characters. The descriptive
+// name for standard time on the client.
+    char * pStandardName = (char*)stream.in_uint8p(64);
+    char StandardName[] = {
+        'G', 0, 'T', 0, 'B', 0, ',', 0, ' ', 0,
+        'n', 0, 'o', 0, 'r', 0, 'm', 0, 'a', 0,
+        'l', 0, 't', 0, 'i', 0, 'd', 0,   0, 0,
+          0, 0,   0, 0,   0, 0,   0, 0,   0, 0,
+          0, 0,   0, 0,   0, 0,   0, 0,   0, 0,
+          0, 0,   0, 0,   0, 0,   0, 0,   0, 0,
+        0,   0, 0,   0,
+    };
+
+    BOOST_CHECK(0 == memcmp(StandardName, pStandardName, 64));
+
+// StandardDate (16 bytes): A TS_SYSTEMTIME (section 2.2.1.11.1.1.1.1.1)
+// structure that contains the date and local time when the transition from
+// daylight saving time to standard time occurs on the client. If this field
+// contains a valid date and time, then the DaylightDate field MUST also contain
+// a valid date and time. If the wYear, wMonth, wDayOfWeek, wDay, wHour,
+// wMinute, wSecond, and wMilliseconds fields are all set to zero, then the
+// client does not support daylight saving time.
+    uint16_t wYear = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)0, wYear); 
+    uint16_t wMonth = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)10, wMonth); 
+    uint16_t wDayOfWeek = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)0, wDayOfWeek); 
+    uint16_t wDay = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)5, wDay); 
+    uint16_t wHour = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)3, wHour); 
+    uint16_t wMinutes = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)0, wMinutes); 
+    uint16_t wSeconds = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)0, wSeconds); 
+    uint16_t wMilliseconds = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)0, wMilliseconds); 
+
+// StandardBias (4 bytes): A 32-bit, unsigned integer that contains the bias
+// value to be used during local time translations that occur during standard
+// time. This value is added to the value of the Bias field to form the bias
+// used during standard time. This field MUST be ignored if a valid date and
+// time is not specified in the StandardDate field or the wYear, wMonth,
+// wDayOfWeek, wDay, wHour, wMinute, wSecond, and wMilliseconds fields of the
+// StandardDate field are all set to zero.
+    uint32_t StandardBias = stream.in_uint32_le();
+    BOOST_CHECK_EQUAL((uint32_t)0, StandardBias);
+
+// DaylightName (64 bytes): An array of 32 Unicode characters. The descriptive
+// name for daylight saving time on the client.
+    char * pDaylightName = (char*)stream.in_uint8p(64);
+    char DaylightName[] = {
+        'G', 0, 'T', 0, 'B', 0, ',', 0, ' ', 0,
+        's', 0, 'o', 0, 'm', 0, 'm', 0, 'a', 0,
+        'r', 0, 't', 0, 'i', 0, 'd', 0,   0, 0,
+          0, 0,   0, 0,   0, 0,   0, 0,   0, 0,
+          0, 0,   0, 0,   0, 0,   0, 0,   0, 0,
+          0, 0,   0, 0,   0, 0,   0, 0,   0, 0,
+        0,   0, 0,   0,
+    };
+    BOOST_CHECK(0 == memcmp(DaylightName, pDaylightName, 64));
+
+// DaylightDate (16 bytes): A TS_SYSTEMTIME (section 2.2.1.11.1.1.1.1.1)
+// structure that contains a date and local time when the transition from
+// standard time to daylight saving time occurs on the client. If this field
+// contains a valid date and time, then the StandardDate field MUST also contain
+// a valid date and time. If the wYear, wMonth, wDayOfWeek, wDay, wHour,
+// wMinute, wSecond, and wMilliseconds fields are all set to zero, then the
+// client does not support daylight saving time.
+    uint16_t wYearDD = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)0, wYearDD); 
+    uint16_t wMonthDD = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)3, wMonthDD); 
+    uint16_t wDayOfWeekDD = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)0, wDayOfWeekDD); 
+    uint16_t wDayDD = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)5, wDayDD); 
+    uint16_t wHourDD = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)2, wHourDD); 
+    uint16_t wMinutesDD = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)0, wMinutesDD); 
+    uint16_t wSecondsDD = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)0, wSecondsDD); 
+    uint16_t wMillisecondsDD = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)0, wMillisecondsDD); 
+
+// DaylightBias (4 bytes): A 32-bit, unsigned integer that contains the bias
+// value to be used during local time translations that occur during daylight
+// saving time. This value is added to the value of the Bias field to form the
+// bias used during daylight saving time. This field MUST be ignored if a valid
+// date and time is not specified in the DaylightDate field or the wYear,
+// wMonth, wDayOfWeek, wDay, wHour, wMinute, wSecond, and wMilliseconds fields
+// of the DaylightDate field are all set to zero.
+    uint32_t DaylightBias = stream.in_uint32_le();
+    BOOST_CHECK_EQUAL((uint32_t)0xFFFFFFC4, DaylightBias);
+    BOOST_CHECK_EQUAL((uint32_t)-60, DaylightBias);
+
+// clientSessionId (4 bytes): A 32-bit, unsigned integer. This field was added
+// in RDP 5.1 and is currently ignored by the server. It SHOULD be set to 0.
+
+    uint32_t clientSessionId = stream.in_uint32_le();
+    BOOST_CHECK_EQUAL((uint32_t)0xFFFFFFFe, clientSessionId);
+
+
+// performanceFlags (4 bytes): A 32-bit, unsigned integer. It specifies a list
+// of server desktop shell features to enable or disable in the session (with
+// the goal of optimizing bandwidth usage). It is used by RDP 5.1, 5.2, 6.0,
+// 6.1, and 7.0 servers.
+
+// +--------------------------------------------+------------------------------+
+// | 0x00000001 PERF_DISABLE_WALLPAPER          | Disable desktop wallpaper.   |
+// +--------------------------------------------+------------------------------+
+// | 0x00000002 PERF_DISABLE_FULLWINDOWDRAG     | Disable full-window drag     |
+// |                                            |(only the window outline is   |
+// |                                            |displayed when the window is  |
+// |                                            | moved).                      |
+// +--------------------------------------------+------------------------------+
+// | 0x00000004 PERF_DISABLE_MENUANIMATIONS     | Disable menu animations.     |
+// +--------------------------------------------+------------------------------+
+// | 0x00000008 PERF_DISABLE_THEMING            | Disable user interface theme.|
+// +--------------------------------------------+------------------------------+
+// | 0x00000010 PERF_RESERVED1                  | Reserved for future use.     |
+// +--------------------------------------------+------------------------------+
+// | 0x00000020 PERF_DISABLE_CURSOR_SHADOW      | Disable mouse cursor shadows.|
+// +--------------------------------------------+------------------------------+
+// | 0x00000040 PERF_DISABLE_CURSORSETTINGS     | Disable cursor blinking.     |
+// +--------------------------------------------+------------------------------+
+// | 0x00000080 PERF_ENABLE_FONT_SMOOTHING      | Enable font smoothing.       |
+// +--------------------------------------------+------------------------------+
+// | 0x00000100 PERF_ENABLE_DESKTOP_COMPOSITION | Enable Desktop Composition.  |
+// +--------------------------------------------+------------------------------+
+// | 0x80000000 PERF_RESERVED2                  | Reserved for future use.     |
+// +--------------------------------------------+------------------------------+
+
+    // 0x00000001 PERF_DISABLE_WALLPAPER
+    // 0x00000002 PERF_DISABLE_FULLWINDOWDRAG
+    // 0x00000004 PERF_DISABLE_MENUANIMATIONS
+    uint32_t performanceFlags = stream.in_uint32_le();
+    BOOST_CHECK_EQUAL((uint32_t)7, performanceFlags);
+
+// cbAutoReconnectLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
+// of the cookie specified by the autoReconnectCookie field. This field is only
+// read by RDP 5.2, 6.0, 6.1, and 7.0 servers.
+
+    uint16_t cbAutoReconnectLen = stream.in_uint16_le();
+    BOOST_CHECK_EQUAL((uint16_t)0, cbAutoReconnectLen);
+
+// autoReconnectCookie (28 bytes): Buffer containing an ARC_CS_PRIVATE_PACKET
+// structure (section 2.2.4.3). This buffer is a unique cookie that allows a
+// disconnected client to seamlessly reconnect to a previously established
+// session (see section 5.5 for more details). The autoReconnectCookie field is
+// only read by RDP 5.2, 6.0, 6.1, and 7.0 servers and the maximum allowed
+// length is 128 bytes.
+    stream.skip_uint8(cbAutoReconnectLen);
+
+// reserved1 (2 bytes): This field is reserved for future use and has no affect
+// on RDP wire traffic. If this field is present, the reserved2 field MUST
+// be present.
+    stream.skip_uint8(2);
+
+// reserved2 (2 bytes): This field is reserved for future use and has no affect
+// on RDP wire traffic. This field MUST be present if the reserved1 field
+// is present.
+    stream.skip_uint8(2);
+
+// Rdesktop advertise an overly large buffer, but this is not a problem
+//    BOOST_CHECK_EQUAL((uint32_t)318, stream.p - start_of_logon_info);
+
+}
 
