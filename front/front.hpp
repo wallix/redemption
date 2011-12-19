@@ -876,7 +876,7 @@ public:
             }
 
             SecIn sec(stream, this->decrypt);
-            
+
             switch (state){
             case WAITING_FOR_LOGON_INFO:
 
@@ -953,6 +953,14 @@ public:
                         break;
                     case LICENCE_TAG_RESULT:
                         LOG(LOG_INFO, "Front::LICENCE_TAG_RESULT");
+                        break;
+                    case LICENCE_TAG_REQUEST:
+                        LOG(LOG_INFO, "Front::LICENCE_TAG_REQUEST");
+                        LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
+                        send_lic_response(this->trans, this->userid);
+                        break;
+                    case LICENCE_TAG_AUTHRESP:
+                        LOG(LOG_INFO, "Front::LICENCE_TAG_AUTHRESP");
                         break;
                     default:
                         LOG(LOG_INFO, "Front::LICENCE_TAG_UNKNOWN %u", tag);
@@ -1934,7 +1942,7 @@ public:
             LOG(LOG_INFO, "process_data");
         }
         ShareDataIn share_data_in(stream);
-        LOG(LOG_INFO, "share_data_in.pdutype2=%u share_data_in.len=%u share_data_in.compressedLen=%u remains=%u", 
+        LOG(LOG_INFO, "share_data_in.pdutype2=%u share_data_in.len=%u share_data_in.compressedLen=%u remains=%u",
             (unsigned)share_data_in.pdutype2,
             (unsigned)share_data_in.len,
             (unsigned)share_data_in.compressedLen,
@@ -2107,23 +2115,23 @@ public:
 
         // 2.2.1.18.1 Font List PDU Data (TS_FONT_LIST_PDU)
         // ================================================
-        // The TS_FONT_LIST_PDU structure contains the contents of the Font 
-        // List PDU, which is a Share Data Header (section 2.2.8.1.1.1.2) and 
+        // The TS_FONT_LIST_PDU structure contains the contents of the Font
+        // List PDU, which is a Share Data Header (section 2.2.8.1.1.1.2) and
         // four fields.
 
         // shareDataHeader (18 bytes): Share Data Header (section 2.2.8.1.1.1.2)
-        // containing information about the packet. The type subfield of the 
-        // pduType field of the Share Control Header (section 2.2.8.1.1.1.1) 
-        // MUST be set to PDUTYPE_DATAPDU (7). The pduType2 field of the Share 
+        // containing information about the packet. The type subfield of the
+        // pduType field of the Share Control Header (section 2.2.8.1.1.1.1)
+        // MUST be set to PDUTYPE_DATAPDU (7). The pduType2 field of the Share
         // Data Header MUST be set to PDUTYPE2_FONTLIST (39).
 
-        // numberFonts (2 bytes): A 16-bit, unsigned integer. The number of 
+        // numberFonts (2 bytes): A 16-bit, unsigned integer. The number of
         // fonts. This field SHOULD be set to 0.
 
         // totalNumFonts (2 bytes): A 16-bit, unsigned integer. The total number
         // of fonts. This field SHOULD be set to 0.
 
-        // listFlags (2 bytes): A 16-bit, unsigned integer. The sequence flags. 
+        // listFlags (2 bytes): A 16-bit, unsigned integer. The sequence flags.
         // This field SHOULD be set to 0x0003, which is the logical OR'ed value
         // of FONTLIST_FIRST (0x0001) and FONTLIST_LAST (0x0002).
 

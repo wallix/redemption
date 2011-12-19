@@ -666,13 +666,13 @@ class SecIn
             stream.skip_uint8(8); /* signature */
             // decrypting to the end of tpdu
             LOG(LOG_DEBUG, "Receiving encrypted TPDU");
-//            hexdump((char*)stream.data, stream.end - stream.data);
+            hexdump((char*)stream.data, stream.end - stream.data);
 
-            LOG(LOG_DEBUG, "Crypt context is:");
+//            LOG(LOG_DEBUG, "Crypt context is:");
 //            crypt.dump();
             crypt.decrypt(stream.p, stream.end - stream.p);
             LOG(LOG_DEBUG, "Decrypted %u bytes", datalen);
-//            hexdump((char*)pdata, datalen);
+            hexdump((char*)pdata, datalen);
         }
     }
 
