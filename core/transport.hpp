@@ -82,20 +82,16 @@ static inline int connect(const char* ip, int port, const char * name,
                 LOG(LOG_INFO, "Asking ip to DNS for %s\n", ip);
                 struct hostent *h = gethostbyname(ip);
                 if (!h) {
-                    LOG(LOG_ERR, "DNS resolution failed for %s"
-                        " with errno =%d (%s)\n",
-                        ip,
-                        errno, strerror(errno));
+                    LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n",
+                        ip, errno, strerror(errno));
                     throw Error(ERR_SOCKET_GETHOSTBYNAME_FAILED);
                 }
                 s.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
             }
             TODO(" we should control and detect timeout instead of relying on default connect behavior. Maybe set O_NONBLOCK and use poll to manage timeouts ?")
             if (-1 == ::connect(sck, (struct sockaddr*)&s, sizeof(s))){
-                LOG(LOG_INFO, "connection to %s failed"
-                    " with errno = %d (%s)\n",
-                    ip,
-                    errno, strerror(errno));
+                LOG(LOG_INFO, "Connection to %s failed with errno = %d (%s)",
+                    ip, errno, strerror(errno));
                 throw Error(ERR_SOCKET_CONNECT_FAILED);
             }
             fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
@@ -179,7 +175,8 @@ class GeneratorTransport : public Transport {
                                             available_len);
             *pbuffer += available_len;
             this->current += available_len;
-            throw Error(ERR_SOCKET_ERROR, 0);
+            LOG(LOG_INFO, "Generator transport has no more data");
+            throw Error(ERR_TRANSPORT_GENERATOR_NO_MORE_DATA, 0);
         }
         memcpy(*pbuffer, (const char *)(&this->data[current]), len);
         *pbuffer += len;
@@ -204,7 +201,8 @@ class OutFileTransport : public Transport {
     // recv is not implemented for OutFileTransport
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        TODO(" OutFileTransport should raise an exception if we try to use it for recv")
+        LOG(LOG_INFO, "OutFileTransport used for recv");
+        throw Error(ERR_TRANSPORT_OUTFILE_TRANSPORT_USED_FOR_RECV, 0);
     }
 
     using Transport::send;
@@ -220,7 +218,8 @@ class OutFileTransport : public Transport {
                 if (errno == EINTR){
                     continue;
                 }
-                throw Error(ERR_SOCKET_ERROR, 0);
+                LOG(LOG_INFO, "Outfile transport write failed with error %s", strerror(errno));
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
             }
         }
     }
@@ -243,7 +242,6 @@ class InFileTransport : public Transport {
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        TODO(" OutFileTransport should raise an exception if we try to use it for recv")
         int status = 0;
         size_t remaining_len = len;
         char * buffer = *pbuffer;
@@ -258,7 +256,8 @@ class InFileTransport : public Transport {
                     continue;
                 }
                 *pbuffer = buffer;
-                throw Error(ERR_SOCKET_ERROR, 0);
+                LOG(LOG_INFO, "Infile transport read failed with error %s", strerror(errno));
+                throw Error(ERR_TRANSPORT_READ_FAILED, 0);
             }
         }
         *pbuffer = buffer;
@@ -267,10 +266,13 @@ class InFileTransport : public Transport {
     // send is not implemented for InFileTransport
     using Transport::send;
     virtual void send(const char * const buffer, int len) throw (Error) {
-        TODO(" InFileTransport should raise an exception if we try to use it for sending")
+        LOG(LOG_INFO, "InFileTransport used for writing");
+        throw Error(ERR_TRANSPORT_OUTFILE_TRANSPORT_USED_FOR_SEND, 0);
     }
 
 };
+
+TODO("for now loop transport is not yet implemented, it's a null transport")
 
 class LoopTransport : public Transport {
     public:
@@ -353,7 +355,7 @@ class SocketTransport : public Transport {
             // Test if we got a socket error
 
             if (opt) {
-                LOG(LOG_INFO, "Socket error detected on %s", this->name);
+                LOG(LOG_INFO, "Socket error detected on %s : %s", this->name, strerror(errno));
                 throw Error(ERR_SESSION_TERMINATED);
             }
 
@@ -479,6 +481,7 @@ class SocketTransport : public Transport {
             LOG(LOG_INFO, "Dump done %s (%u) sending %u bytes", this->name, this->sck, len);
         }
         if (this->sck_closed) {
+            LOG(LOG_INFO, "Socket already closed on %s (%u)", this->name, this->sck);
             throw Error(ERR_SOCKET_ALLREADY_CLOSED);
         }
         int total = 0;
@@ -487,17 +490,15 @@ class SocketTransport : public Transport {
             switch (sent){
             case -1:
                 if (!this->try_again(errno)) {
-                    LOG(LOG_INFO, "Socket %s (%u) : %s",
-                        this->name, this->sck, strerror(errno));
                     this->sck_closed = 1;
+                    LOG(LOG_INFO, "Socket %s (%u) : %s", this->name, this->sck, strerror(errno));
                     throw Error(ERR_SOCKET_ERROR, errno);
                 }
                 this->wait_ready(SEND, 10);
                 break;
             case 0:
-                LOG(LOG_INFO, "Socket %s (%u) closed on sending : %s",
-                    this->name, this->sck, strerror(errno));
                 this->sck_closed = 1;
+                LOG(LOG_INFO, "Socket %s (%u) closed on sending : %s", this->name, this->sck, strerror(errno));
                 throw Error(ERR_SOCKET_CLOSED, errno);
             default:
                 total = total + sent;
