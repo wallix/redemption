@@ -332,7 +332,7 @@ struct mod_rdp : public client_mod {
                     trans(trans),
                     context(context),
                     event(event),
-                    use_rdp5(1),
+                    use_rdp5(0),
                     keylayout(keylayout),
                     lic_layer(hostname),
                     userid(0),
@@ -341,7 +341,7 @@ struct mod_rdp : public client_mod {
                     connection_finalization_state(EARLY),
                     state(MOD_RDP_CONNECTING)
     {
-
+        LOG(LOG_INFO, "Creation of new mod 'RDP'");
         // from rdp_sec
         memset(this->client_crypt_random, 0, 512);
         this->server_public_key_len = 0;
@@ -490,7 +490,6 @@ struct mod_rdp : public client_mod {
         int width = this->gd.get_front_width();
         int height = this->gd.get_front_height();
         int rdp_bpp = this->gd.get_front_bpp();
-        bool console_session = this->gd.get_client_info().console_session;
         char * hostname = this->hostname;
 
 
@@ -539,22 +538,21 @@ struct mod_rdp : public client_mod {
             //    | <------------MCS Connect Response PDU with------------- |
             //                   GCC conference Create Response
 
-            send_mcs_connect_initial_pdu_with_gcc_conference_create_request(
-                    this->trans, this->gd.front.get_channel_list(), width, height, rdp_bpp, keylayout, console_session, hostname);
+            this->send_mcs_connect_initial_pdu_with_gcc_conference_create_request(
+                    this->trans, this->gd.front.get_channel_list(), width, height, rdp_bpp, keylayout, hostname);
 
             this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
         break;
 
         case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
             LOG(LOG_INFO, "Channel Connection");
-            recv_mcs_connect_response_pdu_with_gcc_conference_create_response(
+            this->recv_mcs_connect_response_pdu_with_gcc_conference_create_response(
                     this->trans, this->mod_channel_list, this->gd.front.get_channel_list(),
                     this->encrypt,
                     this->decrypt,
                     this->server_public_key_len,
                     this->client_crypt_random,
-                    this->crypt_level,
-                    this->use_rdp5);
+                    this->crypt_level);
 
             // Channel Connection
             // ------------------
@@ -658,8 +656,7 @@ struct mod_rdp : public client_mod {
                                 this->trans,
                                 this->userid,
                                 context.get(STRAUTHID_TARGET_PASSWORD),
-                                rdp5_performanceflags,
-                                this->use_rdp5);
+                                rdp5_performanceflags);
 
             this->state = MOD_RDP_GET_LICENSE;
         }
@@ -1037,10 +1034,10 @@ struct mod_rdp : public client_mod {
                             len_src_descriptor = stream.in_uint16_le();
                             len_combined_caps = stream.in_uint16_le();
                             stream.skip_uint8(len_src_descriptor);
-                            this->process_server_caps(stream, len_combined_caps, this->use_rdp5);
+                            this->process_server_caps(stream, len_combined_caps);
                             TODO(" we should be able to pack all the following sends to the same X224 TPDU  instead of creating a different one for each send")
                             LOG(LOG_INFO, "Sending confirm active PDU");
-                            this->send_confirm_active(mod, this->use_rdp5);
+                            this->send_confirm_active(mod);
                             LOG(LOG_INFO, "Sending synchronize");
                             this->send_synchronise();
                             LOG(LOG_INFO, "Sending control cooperate");
@@ -1099,6 +1096,562 @@ struct mod_rdp : public client_mod {
         return BACK_EVENT_NONE;
     }
 
+
+
+
+// 2.2.1.4  Server MCS Connect Response PDU with GCC Conference Create Response
+// ----------------------------------------------------------------------------
+
+// From [MSRDPCGR]
+
+// The MCS Connect Response PDU is an RDP Connection Sequence PDU sent from
+// server to client during the Basic Settings Exchange phase (see section
+// 1.3.1.1). It is sent as a response to the MCS Connect Initial PDU (section
+// 2.2.1.3). The MCS Connect Response PDU encapsulates a GCC Conference Create
+// Response, which encapsulates concatenated blocks of settings data.
+
+// A basic high-level overview of the nested structure for the Server MCS
+// Connect Response PDU is illustrated in section 1.3.1.1, in the figure
+// specifying MCS Connect Response PDU. Note that the order of the settings
+// data blocks is allowed to vary from that shown in the previously mentioned
+// figure and the message syntax layout that follows. This is possible because
+// each data block is identified by a User Data Header structure (section
+// 2.2.1.4.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+// section 13.7.
+
+// mcsCrsp (variable): Variable-length BER-encoded MCS Connect Response
+//   structure (using definite-length encoding) as described in [T125]
+//   (the ASN.1 structure definition is detailed in [T125] section 7, part 2).
+//   The userData field of the MCS Connect Response encapsulates the GCC
+//   Conference Create Response data (contained in the gccCCrsp and subsequent
+//   fields).
+
+// gccCCrsp (variable): Variable-length PER-encoded GCC Connect Data structure
+//   which encapsulates a Connect GCC PDU that contains a GCC Conference Create
+//   Response structure as described in [T124] (the ASN.1 structure definitions
+//   are specified in [T124] section 8.7) appended as user data to the MCS
+//   Connect Response (using the format specified in [T124] sections 9.5 and
+//   9.6). The userData field of the GCC Conference Create Response contains
+//   one user data set consisting of concatenated server data blocks.
+
+// serverCoreData (12 bytes): Server Core Data structure (section 2.2.1.4.2).
+
+// serverSecurityData (variable): Variable-length Server Security Data structure
+//   (section 2.2.1.4.3).
+
+// serverNetworkData (variable): Variable-length Server Network Data structure
+//   (section 2.2.1.4.4).
+
+
+// 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
+// ------------------------------------------
+
+//The TS_UD_CS_CORE data block contains core client connection-related
+// information.
+
+//header (4 bytes): GCC user data block header, as specified in section
+//                  2.2.1.3.1. The User Data Header type field MUST be set to
+//                  CS_CORE (0xC001).
+
+// version (4 bytes): A 32-bit, unsigned integer. Client version number for the
+//                    RDP. The major version number is stored in the high 2
+//                    bytes, while the minor version number is stored in the
+//                    low 2 bytes.
+// +------------+------------------------------------+
+// |   Value    |    Meaning                         |
+// +------------+------------------------------------+
+// | 0x00080001 | RDP 4.0 clients                    |
+// +------------+------------------------------------+
+// | 0x00080004 | RDP 5.0, 5.1, 5.2, and 6.0 clients |
+// +------------+------------------------------------+
+
+// desktopWidth (2 bytes): A 16-bit, unsigned integer. The requested desktop
+//                         width in pixels (up to a maximum value of 4096
+//                         pixels).
+
+// desktopHeight (2 bytes): A 16-bit, unsigned integer. The requested desktop
+//                          height in pixels (up to a maximum value of 2048
+//                          pixels).
+
+// colorDepth (2 bytes): A 16-bit, unsigned integer. The requested color depth.
+//                       Values in this field MUST be ignored if the
+//                       postBeta2ColorDepth field is present.
+// +--------------------------+-------------------------+
+// |     Value                |        Meaning          |
+// +--------------------------+-------------------------+
+// | 0xCA00 RNS_UD_COLOR_4BPP | 4 bits-per-pixel (bpp)  |
+// +--------------------------+-------------------------+
+// | 0xCA01 RNS_UD_COLOR_8BPP | 8 bpp                   |
+// +--------------------------+-------------------------+
+
+// SASSequence (2 bytes): A 16-bit, unsigned integer. Secure access sequence.
+//                        This field SHOULD be set to RNS_UD_SAS_DEL (0xAA03).
+
+// keyboardLayout (4 bytes): A 32-bit, unsigned integer. Keyboard layout (active
+//                           input locale identifier). For a list of possible
+//                           input locales, see [MSDN-MUI].
+
+// clientBuild (4 bytes): A 32-bit, unsigned integer. The build number of the
+//                        client.
+
+// clientName (32 bytes): Name of the client computer. This field contains up to
+//                        15 Unicode characters plus a null terminator.
+
+// keyboardType (4 bytes): A 32-bit, unsigned integer. The keyboard type.
+// +-------+--------------------------------------------+
+// | Value |              Meaning                       |
+// +-------+--------------------------------------------+
+// |   1   | IBM PC/XT or compatible (83-key) keyboard  |
+// +-------+--------------------------------------------+
+// |   2   | Olivetti "ICO" (102-key) keyboard          |
+// +-------+--------------------------------------------+
+// |   3   | IBM PC/AT (84-key) and similar keyboards   |
+// +-------+--------------------------------------------+
+// |   4   | IBM enhanced (101- or 102-key) keyboard    |
+// +-------+--------------------------------------------+
+// |   5   | Nokia 1050 and similar keyboards           |
+// +-------+--------------------------------------------+
+// |   6   | Nokia 9140 and similar keyboards           |
+// +-------+--------------------------------------------+
+// |   7   | Japanese keyboard                          |
+// +-------+--------------------------------------------+
+
+// keyboardSubType (4 bytes): A 32-bit, unsigned integer. The keyboard subtype
+//                            (an original equipment manufacturer-dependent
+//                            value).
+
+// keyboardFunctionKey (4 bytes): A 32-bit, unsigned integer. The number of
+//                                function keys on the keyboard.
+
+// imeFileName (64 bytes): A 64-byte field. The Input Method Editor (IME) file
+//                         name associated with the input locale. This field
+//                         contains up to 31 Unicode characters plus a null
+//                         terminator.
+
+// postBeta2ColorDepth (2 bytes): A 16-bit, unsigned integer. The requested
+//                                color depth. Values in this field MUST be
+//                                ignored if the highColorDepth field is
+//                                present.
+// +--------------------------+-------------------------+
+// |      Value               |         Meaning         |
+// +--------------------------+-------------------------+
+// | 0xCA00 RNS_UD_COLOR_4BPP | 4 bits-per-pixel (bpp)  |
+// +--------------------------+-------------------------+
+// | 0xCA01 RNS_UD_COLOR_8BPP | 8 bpp                   |
+// +--------------------------+-------------------------+
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// clientProductId (2 bytes): A 16-bit, unsigned integer. The client product ID.
+//                            This field SHOULD be initialized to 1. If this
+//                            field is present, then all of the preceding fields
+//                            MUST also be present. If this field is not
+//                            present, then none of the subsequent fields MUST
+//                            be present.
+
+// serialNumber (4 bytes): A 32-bit, unsigned integer. Serial number. This field
+//                         SHOULD be initialized to 0. If this field is present,
+//                         then all of the preceding fields MUST also be
+//                         present. If this field is not present, then none of
+//                         the subsequent fields MUST be present.
+
+// highColorDepth (2 bytes): A 16-bit, unsigned integer. The requested color
+//                           depth.
+// +-------+-------------------------------------------------------------------+
+// | Value |                      Meaning                                      |
+// +-------+-------------------------------------------------------------------+
+// |     4 |   4 bpp                                                           |
+// +-------+-------------------------------------------------------------------+
+// |     8 |   8 bpp                                                           |
+// +-------+-------------------------------------------------------------------+
+// |    15 |  15-bit 555 RGB mask                                              |
+// |       |  (5 bits for red, 5 bits for green, and 5 bits for blue)          |
+// +-------+-------------------------------------------------------------------+
+// |    16 |  16-bit 565 RGB mask                                              |
+// |       |  (5 bits for red, 6 bits for green, and 5 bits for blue)          |
+// +-------+-------------------------------------------------------------------+
+// |    24 |  24-bit RGB mask                                                  |
+// |       |  (8 bits for red, 8 bits for green, and 8 bits for blue)          |
+// +-------+-------------------------------------------------------------------+
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// supportedColorDepths (2 bytes): A 16-bit, unsigned integer. Specifies the
+//                                 high color depths that the client is capable
+//                                 of supporting.
+// +-----------------------------+---------------------------------------------+
+// |          Flag               |                Meaning                      |
+// +-----------------------------+---------------------------------------------+
+// | 0x0001 RNS_UD_24BPP_SUPPORT | 24-bit RGB mask                             |
+// |                             | (8 bits for red, 8 bits for green,          |
+// |                             | and 8 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// | 0x0002 RNS_UD_16BPP_SUPPORT | 16-bit 565 RGB mask                         |
+// |                             | (5 bits for red, 6 bits for green,          |
+// |                             | and 5 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// | 0x0004 RNS_UD_15BPP_SUPPORT | 15-bit 555 RGB mask                         |
+// |                             | (5 bits for red, 5 bits for green,          |
+// |                             | and 5 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// | 0x0008 RNS_UD_32BPP_SUPPORT | 32-bit RGB mask                             |
+// |                             | (8 bits for the alpha channel,              |
+// |                             | 8 bits for red, 8 bits for green,           |
+// |                             | and 8 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// earlyCapabilityFlags (2 bytes): A 16-bit, unsigned integer. It specifies
+// capabilities early in the connection sequence.
+// +---------------------------------------------+-----------------------------|
+// |                Flag                         |              Meaning        |
+// +---------------------------------------------+-----------------------------|
+// | 0x0001 RNS_UD_CS_SUPPORT_ERRINFO_PDU        | Indicates that the client   |
+// |                                             | supports the Set Error Info |
+// |                                             | PDU (section 2.2.5.1).      |
+// +---------------------------------------------+-----------------------------|
+// | 0x0002 RNS_UD_CS_WANT_32BPP_SESSION         | Indicates that the client is|
+// |                                             | requesting a session color  |
+// |                                             | depth of 32 bpp. This flag  |
+// |                                             | is necessary because the    |
+// |                                             | highColorDepth field does   |
+// |                                             | not support a value of 32.  |
+// |                                             | If this flag is set, the    |
+// |                                             | highColorDepth field SHOULD |
+// |                                             | be set to 24 to provide an  |
+// |                                             | acceptable fallback for the |
+// |                                             | scenario where the server   |
+// |                                             | does not support 32 bpp     |
+// |                                             | color.                      |
+// +---------------------------------------------+-----------------------------|
+// | 0x0004 RNS_UD_CS_SUPPORT_STATUSINFO_PDU     | Indicates that the client   |
+// |                                             | supports the Server Status  |
+// |                                             | Info PDU (section 2.2.5.2). |
+// +---------------------------------------------+-----------------------------|
+// | 0x0008 RNS_UD_CS_STRONG_ASYMMETRIC_KEYS     | Indicates that the client   |
+// |                                             | supports asymmetric keys    |
+// |                                             | larger than 512 bits for use|
+// |                                             | with the Server Certificate |
+// |                                             | (section 2.2.1.4.3.1) sent  |
+// |                                             | in the Server Security Data |
+// |                                             | block (section 2.2.1.4.3).  |
+// +---------------------------------------------+-----------------------------|
+// | 0x0020 RNS_UD_CS_RESERVED1                  | Reserved for future use.    |
+// |                                             | This flag is ignored by the |
+// |                                             | server.                     |
+// +---------------------------------------------+-----------------------------+
+// | 0x0040 RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU | Indicates that the client   |
+// |                                             | supports the Monitor Layout |
+// |                                             | PDU (section 2.2.12.1).     |
+// +---------------------------------------------+-----------------------------|
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// clientDigProductId (64 bytes): Contains a value that uniquely identifies the
+//                                client. If this field is present, then all of
+//                                the preceding fields MUST also be present. If
+//                                this field is not present, then none of the
+//                                subsequent fields MUST be present.
+
+// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding to align the
+//   serverSelectedProtocol field on the correct byte boundary.
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// serverSelectedProtocol (4 bytes): A 32-bit, unsigned integer. It contains the value returned
+//   by the server in the selectedProtocol field of the RDP Negotiation Response structure
+//   (section 2.2.1.2.1). In the event that an RDP Negotiation Response structure was not sent,
+//   this field MUST be initialized to PROTOCOL_RDP (0). If this field is present, then all of the
+//   preceding fields MUST also be present.
+
+
+
+    void recv_mcs_connect_response_pdu_with_gcc_conference_create_response(
+                            Transport * trans,
+                            ChannelList & mod_channel_list,
+                            const ChannelList & front_channel_list,
+                            CryptContext & encrypt, CryptContext & decrypt,
+                            uint32_t & server_public_key_len,
+                            uint8_t (& client_crypt_random)[512],
+                            int & crypt_level)
+    {
+        Stream cr_stream(32768);
+        X224In(trans, cr_stream);
+        if (cr_stream.in_uint16_be() != BER_TAG_MCS_CONNECT_RESPONSE) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        int len = cr_stream.in_ber_len();
+
+        if (cr_stream.in_uint8() != BER_TAG_RESULT) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = cr_stream.in_ber_len();
+
+        int res = cr_stream.in_uint8();
+
+        if (res != 0) {
+            throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
+        }
+        if (cr_stream.in_uint8() != BER_TAG_INTEGER) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = cr_stream.in_ber_len();
+        cr_stream.skip_uint8(len); /* connect id */
+
+        if (cr_stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = cr_stream.in_ber_len();
+        cr_stream.skip_uint8(len);
+
+        if (cr_stream.in_uint8() != BER_TAG_OCTET_STRING) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = cr_stream.in_ber_len();
+
+        cr_stream.skip_uint8(21); /* header (T.124 ConferenceCreateResponse) */
+        len = cr_stream.in_uint8();
+
+        if (len & 0x80) {
+            len = cr_stream.in_uint8();
+        }
+        while (cr_stream.p < cr_stream.end) {
+            uint16_t tag = cr_stream.in_uint16_le();
+            uint16_t length = cr_stream.in_uint16_le();
+            if (length <= 4) {
+                throw Error(ERR_MCS_DATA_SHORT_HEADER);
+            }
+            uint8_t *next_tag = (cr_stream.p + length) - 4;
+            switch (tag) {
+            case SC_CORE:
+                parse_mcs_data_sc_core(cr_stream, this->use_rdp5);
+            break;
+            case SC_SECURITY:
+                parse_mcs_data_sc_security(cr_stream, encrypt, decrypt,
+                                           server_public_key_len, client_crypt_random,
+                                           crypt_level);
+            break;
+            case SC_NET:
+                parse_mcs_data_sc_net(cr_stream, front_channel_list, mod_channel_list);
+                break;
+            default:
+                LOG(LOG_WARNING, "response tag 0x%x\n", tag);
+                break;
+            }
+            cr_stream.p = next_tag;
+        }
+    }
+
+
+    void send_mcs_connect_initial_pdu_with_gcc_conference_create_request(
+            Transport * trans,
+            const ChannelList & channel_list,
+            int width,
+            int height,
+            int rdp_bpp,
+            int keylayout,
+            char * hostname){
+
+//    Stream data(8192);
+
+//    int data_len = data.end - data.data;
+//    int len = 7 + 3 * 34 + 4 + data_len;
+
+    Stream stream(32768);
+    X224Out ci_tpdu(X224Packet::DT_TPDU, stream);
+
+    stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
+    uint32_t offset_data_len_connect_initial = stream.p - stream.data;
+    stream.out_ber_len_uint16(0); // filled later, 3 bytes
+
+    stream.out_uint8(BER_TAG_OCTET_STRING);
+    stream.out_ber_len(1); /* calling domain */
+    stream.out_uint8(1);
+    stream.out_uint8(BER_TAG_OCTET_STRING);
+    stream.out_ber_len(1); /* called domain */
+    stream.out_uint8(1);
+    stream.out_uint8(BER_TAG_BOOLEAN);
+    stream.out_ber_len(1);
+    stream.out_uint8(0xff); /* upward flag */
+
+    // target params
+    stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+    stream.out_ber_len(32);
+    stream.out_ber_int16(34);     // max_channels
+    stream.out_ber_int16(2);      // max_users
+    stream.out_ber_int16(0);      // max_tokens
+    stream.out_ber_int16(1);
+    stream.out_ber_int16(0);
+    stream.out_ber_int16(1);
+    stream.out_ber_int16(0xffff); // max_pdu_size
+    stream.out_ber_int16(2);
+
+    // min params
+    stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+    stream.out_ber_len(32);
+    stream.out_ber_int16(1);     // max_channels
+    stream.out_ber_int16(1);     // max_users
+    stream.out_ber_int16(1);     // max_tokens
+    stream.out_ber_int16(1);
+    stream.out_ber_int16(0);
+    stream.out_ber_int16(1);
+    stream.out_ber_int16(0x420); // max_pdu_size
+    stream.out_ber_int16(2);
+
+    // max params
+    stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+    stream.out_ber_len(32);
+    stream.out_ber_int16(0xffff); // max_channels
+    stream.out_ber_int16(0xfc17); // max_users
+    stream.out_ber_int16(0xffff); // max_tokens
+    stream.out_ber_int16(1);
+    stream.out_ber_int16(0);
+    stream.out_ber_int16(1);
+    stream.out_ber_int16(0xffff); // max_pdu_size
+    stream.out_ber_int16(2);
+
+
+    stream.out_uint8(BER_TAG_OCTET_STRING);
+    uint32_t offset_data_len = stream.p - stream.data;
+    stream.out_ber_len_uint16(0); // filled later, 3 bytes
+
+    /* Generic Conference Control (T.124) ConferenceCreateRequest */
+    stream.out_uint16_be(5);
+    stream.out_uint16_be(0x14);
+    stream.out_uint8(0x7c);
+    stream.out_uint16_be(1);
+
+    int length = 158 + 76 + 12 + 4;
+
+    TODO(" another option could be to emit channel list even if number of channel is zero. It looks more logical to me than not passing any channel information (what happens in this case ?)")
+    if (channel_list.size() > 0){
+        length += channel_list.size() * 12 + 8;
+    }
+
+    stream.out_uint16_be((length | 0x8000)); /* remaining length */
+
+    stream.out_uint16_be(8); /* length? */
+    stream.out_uint16_be(16);
+    stream.out_uint8(0);
+    stream.out_uint16_le(0xc001);
+    stream.out_uint8(0);
+
+    stream.out_copy_bytes("Duca", 4); /* OEM ID: "Duca", as in Ducati. */
+    stream.out_uint16_be(((length - 14) | 0x8000)); /* remaining length */
+
+    /* Client information */
+    stream.out_uint16_le(CS_CORE);
+    LOG(LOG_INFO, "Sending Client Core Data to remote server\n");
+    stream.out_uint16_le(212); /* length */
+    LOG(LOG_INFO, "core::header::length = %u\n", 212);
+    stream.out_uint32_le(0x00080001); // RDP version. 1 == RDP4, 4 == RDP5.
+    LOG(LOG_INFO, "core::header::version RDP 4=0x00080001 (0x00080004 = RDP 5.0, 5.1, 5.2, and 6.0 clients)");
+    stream.out_uint16_le(width);
+    LOG(LOG_INFO, "core::desktopWidth = %u\n", width);
+    stream.out_uint16_le(height);
+    LOG(LOG_INFO, "core::desktopHeight = %u\n", height);
+    stream.out_uint16_le(0xca01);
+    LOG(LOG_INFO, "core::colorDepth = RNS_UD_COLOR_8BPP (superseded by postBeta2ColorDepth)");
+    stream.out_uint16_le(0xaa03);
+    LOG(LOG_INFO, "core::SASSequence = RNS_UD_SAS_DEL");
+    stream.out_uint32_le(keylayout);
+    LOG(LOG_INFO, "core::keyboardLayout = %x", keylayout);
+    stream.out_uint32_le(2600); /* Client build. We are now 2600 compatible :-) */
+    LOG(LOG_INFO, "core::clientBuild = 2600");
+    LOG(LOG_INFO, "core::clientName=%s\n", hostname);
+
+    /* Added in order to limit hostlen and hostname size */
+    int hostlen = 2 * strlen(hostname);
+    if (hostlen > 30){
+        hostlen = 30;
+    }
+    /* Unicode name of client, padded to 30 bytes */
+    stream.out_unistr(hostname);
+    stream.out_clear_bytes(30 - hostlen);
+
+    /* See
+    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wceddk40/html/cxtsksupportingremotedesktopprotocol.asp */
+    TODO(" code should be updated to take care of keyboard type")
+    stream.out_uint32_le(4); // g_keyboard_type
+    LOG(LOG_INFO, "core::keyboardType = IBM enhanced (101- or 102-key) keyboard");
+    stream.out_uint32_le(0); // g_keyboard_subtype
+    LOG(LOG_INFO, "core::keyboardSubType = 0");
+    stream.out_uint32_le(12); // g_keyboard_functionkeys
+    LOG(LOG_INFO, "core::keyboardFunctionKey = 12 function keys");
+    stream.out_clear_bytes(64); /* imeFileName */
+    LOG(LOG_INFO, "core::imeFileName = \"\"");
+    stream.out_uint16_le(0xca01); /* color depth 8bpp */
+    LOG(LOG_INFO, "core::postBeta2ColorDepth = RNS_UD_COLOR_8BPP (superseded by highColorDepth)");
+    stream.out_uint16_le(1);
+    LOG(LOG_INFO, "core::clientProductId = 1");
+    stream.out_uint32_le(0);
+    LOG(LOG_INFO, "core::serialNumber = 0");
+    stream.out_uint16_le(rdp_bpp);
+    LOG(LOG_INFO, "core::highColorDepth = %u", rdp_bpp);
+    stream.out_uint16_le(0x0007);
+    LOG(LOG_INFO, "core::supportedColorDepths = 24/16/15");
+    stream.out_uint16_le(1);
+    LOG(LOG_INFO, "core::earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU");
+    stream.out_clear_bytes(64);
+    LOG(LOG_INFO, "core::clientDigProductId = \"\"");
+    stream.out_clear_bytes(2);
+    LOG(LOG_INFO, "core::pad2octets");
+//        stream.out_uint32_le(0); // optional
+//        LOG(LOG_INFO, "core::serverSelectedProtocol = 0");
+    /* End of client info */
+
+    LOG(LOG_INFO, "Sending Client Cluster Settings to remote server [console=(%u)]", (unsigned)(this->console_session));
+    stream.out_uint16_le(CS_CLUSTER);
+    stream.out_uint16_le(12);
+    stream.out_uint32_le(this->console_session ? 0xb : 9);
+    stream.out_uint32_le(0);
+
+    /* Client encryption settings */
+    LOG(LOG_INFO, "Sending Client Encryption Settings to remote server [encryption=(%u)]", 3);
+    stream.out_uint16_le(CS_SECURITY);
+    stream.out_uint16_le(12); /* length */
+    /* 0x3 = encryption supported, 128-bit supported */
+    stream.out_uint32_le(0x3);
+    stream.out_uint32_le(0); /* Unknown */
+
+    /* Here we need to put channel information in order to redirect channel data
+    from client to server passing through the "proxy" */
+    size_t num_channels = channel_list.size();
+
+    if (num_channels > 0) {
+        LOG(LOG_INFO, "cs_net");
+        LOG(LOG_INFO, "Sending Channels Settings to remote server [num channels=%u]", num_channels);
+        stream.out_uint16_le(CS_NET);
+        LOG(LOG_INFO, "cs_net::len=%u", num_channels * 12 + 8);
+        stream.out_uint16_le(num_channels * 12 + 8); /* length */
+        LOG(LOG_INFO, "cs_net::nb_chan=%u", num_channels);
+        stream.out_uint32_le(num_channels); /* number of virtual channels */
+        for (size_t index = 0; index < num_channels; index++){
+            const McsChannelItem & channel_item = channel_list[index];
+            stream.out_copy_bytes(channel_item.name, 8);
+            stream.out_uint32_be(channel_item.flags);
+        }
+    }
+
+    // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
+    stream.set_out_ber_len_uint16(stream.p - stream.data - offset_data_len - 3, offset_data_len);
+
+    // set mcs_data len for BER_TAG_MCS_CONNECT_INITIAL
+    stream.set_out_ber_len_uint16(stream.p - stream.data - offset_data_len_connect_initial - 3, offset_data_len_connect_initial);
+
+    ci_tpdu.end();
+    ci_tpdu.send(trans);
+}
 
 // 1.3.1.3 Deactivation-Reactivation Sequence
 // ==========================================
@@ -1288,15 +1841,15 @@ struct mod_rdp : public client_mod {
 // 2.2.7.1.1 General Capability Set (TS_GENERAL_CAPABILITYSET)
 // ===========================================================
 
-// The TS_GENERAL_CAPABILITYSET structure is used to advertise general 
-// characteristics and is based on the capability set specified in [T128] 
+// The TS_GENERAL_CAPABILITYSET structure is used to advertise general
+// characteristics and is based on the capability set specified in [T128]
 // section 8.2.3. This capability is sent by both client and server.
 
-// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the 
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
 //  capability set. This field MUST be set to CAPSTYPE_GENERAL (1).
 
-// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes 
-//  of the capability data, including the size of the capabilitySetType and 
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
+//  of the capability data, including the size of the capabilitySetType and
 //  lengthCapability fields.
 
 // osMajorType (2 bytes): A 16-bit, unsigned integer. The type of platform.
@@ -1313,7 +1866,7 @@ struct mod_rdp : public client_mod {
 // | 0x0004 OSMAJORTYPE_UNIX        | UNIX platform        |
 // +--------------------------------+----------------------+
 
-// osMinorType (2 bytes): A 16-bit, unsigned integer. The version of the 
+// osMinorType (2 bytes): A 16-bit, unsigned integer. The version of the
 // platform specified in the osMajorType field.
 
 // +--------------------------------------+----------------------+
@@ -1339,13 +1892,13 @@ struct mod_rdp : public client_mod {
 // protocolVersion (2 bytes): A 16-bit, unsigned integer. The protocol version.
 // This field MUST be set to TS_CAPS_PROTOCOLVERSION (0x0200).
 
-// pad2octetsA (2 bytes): A 16-bit, unsigned integer. Padding. Values in this 
+// pad2octetsA (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
 // field MUST be ignored.
 
-// generalCompressionTypes (2 bytes): A 16-bit, unsigned integer. General 
-// compression types. This field MUST be set to 0. 
+// generalCompressionTypes (2 bytes): A 16-bit, unsigned integer. General
+// compression types. This field MUST be set to 0.
 
-// extraFlags (2 bytes): A 16-bit, unsigned integer. General capability 
+// extraFlags (2 bytes): A 16-bit, unsigned integer. General capability
 // information. Supported flags depends on RDP version.
 
 // +----------------------------------+-------------------------------+------+
@@ -1379,16 +1932,16 @@ struct mod_rdp : public client_mod {
 // |                                  | section 5.3.6.1.1).           |      |
 // +----------------------------------+-------------------------------+------+
 
-// updateCapabilityFlag (2 bytes): A 16-bit, unsigned integer. Support for 
+// updateCapabilityFlag (2 bytes): A 16-bit, unsigned integer. Support for
 //  update capability. This field MUST be set to 0.
 
 // remoteUnshareFlag (2 bytes): A 16-bit, unsigned integer. Support for remote
 //  unsharing. This field MUST be set to 0.
 
-// generalCompressionLevel (2 bytes): A 16-bit, unsigned integer. General 
+// generalCompressionLevel (2 bytes): A 16-bit, unsigned integer. General
 // compression level. This field MUST be set to 0.
 
-// refreshRectSupport (1 byte): An 8-bit, unsigned integer. Server-only flag 
+// refreshRectSupport (1 byte): An 8-bit, unsigned integer. Server-only flag
 // that indicates whether the Refresh Rect PDU (section 2.2.11.2) is supported.
 
 // +------------+------------------------------------------+
@@ -1398,7 +1951,7 @@ struct mod_rdp : public client_mod {
 // +------------+------------------------------------------+
 
 // suppressOutputSupport (1 byte): An 8-bit, unsigned integer. Server-only flag
-// that indicates whether the Suppress Output PDU (section 2.2.11.3) is 
+// that indicates whether the Suppress Output PDU (section 2.2.11.3) is
 // supported.
 
 // +------------+----------------------------------------------+
@@ -1408,7 +1961,7 @@ struct mod_rdp : public client_mod {
 // +------------+----------------------------------------------+
 
 
-        void out_general_caps(Stream & stream, int use_rdp5)
+        void out_general_caps(Stream & stream)
         {
             LOG(LOG_INFO, "Sending General caps to remote server");
 
@@ -1426,7 +1979,7 @@ struct mod_rdp : public client_mod {
             // 0x0008 AUTORECONNECT_SUPPORTED
             // 0x0004 LONG_CREDENTIALS_SUPPORTED
             // 0x0001 FASTPATH_OUTPUT_SUPPORTED
-            stream.out_uint16_le(0x40c);
+            stream.out_uint16_le(0); // 0 for RDP4
             stream.out_uint16_le(0); /* Update capability */
             stream.out_uint16_le(0); /* Remote unshare capability */
             stream.out_uint16_le(0); /* Compression level */
@@ -1434,7 +1987,7 @@ struct mod_rdp : public client_mod {
             stream.set_out_uint16_le(RDP_CAPLEN_GENERAL, offset_len);
         }
 
-        void process_general_caps(Stream & stream, int & use_rdp5)
+        void process_general_caps(Stream & stream)
         {
             LOG(LOG_INFO, "Received General caps from remote server");
 
@@ -1541,7 +2094,7 @@ struct mod_rdp : public client_mod {
 //   set to TRUE (0x0001). If it is not set to TRUE, the server MUST NOT
 //   continue with the connection.
 
-// pad2octetsB (2 bytes): A 16-bit, unsigned integer. Padding. Values in this 
+// pad2octetsB (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
 //   field are ignored.
 
         void out_bitmap_caps(Stream & stream)
@@ -1865,7 +2418,7 @@ struct mod_rdp : public client_mod {
         // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
 
 
-        void send_confirm_active(client_mod * mod, int use_rdp5) throw(Error)
+        void send_confirm_active(client_mod * mod) throw(Error)
         {
             LOG(LOG_INFO, "Sending confirm active to server\n");
 
@@ -1906,12 +2459,12 @@ struct mod_rdp : public client_mod {
         // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number of capability sets is specified by the numberCapabilities field.
             uint16_t total_caplen = stream.p - stream.data;
 
-            capscount++; this->out_general_caps(stream, use_rdp5);
+            capscount++; this->out_general_caps(stream);
             capscount++; this->out_bitmap_caps(stream);
             capscount++; this->out_order_caps(stream);
             capscount++; this->out_bmpcache_caps(stream);
 
-            if(use_rdp5){
+            if(this->use_rdp5){
                 capscount++;
                 this->out_bmpcache2_caps(stream, mod->gd.get_client_info());
             }
@@ -2214,7 +2767,7 @@ struct mod_rdp : public client_mod {
         }
 
 
-        void process_server_caps(Stream & stream, int len, int use_rdp5)
+        void process_server_caps(Stream & stream, int len)
         {
             int n;
             int ncapsets;
@@ -2235,7 +2788,7 @@ struct mod_rdp : public client_mod {
                 next = (stream.p + capset_length) - 4;
                 switch (capset_type) {
                 case RDP_CAPSET_GENERAL:
-                    this->process_general_caps(stream, use_rdp5);
+                    this->process_general_caps(stream);
                     break;
                 case RDP_CAPSET_BITMAP:
                     this->process_bitmap_caps(stream);
@@ -2623,7 +3176,7 @@ struct mod_rdp : public client_mod {
 
     TODO("Move send_client_info_pdu funcion to client_info.hpp")
 
-    void send_client_info_pdu(Transport * trans, int userid, const char * password, int rdp5_performanceflags, int & use_rdp5)
+    void send_client_info_pdu(Transport * trans, int userid, const char * password, int rdp5_performanceflags)
     {
 
         int flags = RDP_LOGON_NORMAL | ((strlen(password) > 0)?RDP_LOGON_AUTO:0);
@@ -2655,7 +3208,6 @@ struct mod_rdp : public client_mod {
         stream.out_unistr(this->program);
         stream.out_unistr(this->directory);
 
-        this->use_rdp5 = 1;
         if(!this->use_rdp5){
             LOG(LOG_INFO, "send login info (RDP4-style) %s:%s",this->domain, this->username);
         }
@@ -2696,7 +3248,6 @@ struct mod_rdp : public client_mod {
             stream.out_uint32_le(0);
             stream.out_uint32_le(0xffffffc4);
 
-
             stream.out_uint32_le(0xfffffffe); // session id
 
             stream.out_uint32_le(rdp5_performanceflags);
@@ -2705,7 +3256,7 @@ struct mod_rdp : public client_mod {
 
             stream.out_uint16_le(0);
             stream.out_uint16_le(0);
-//            this->use_rdp5 = 0;
+            this->use_rdp5 = 0;
         }
 
         sec_out.end();

@@ -291,8 +291,6 @@ struct Session {
         this->internal_state = SESSION_STATE_RSA_KEY_HANDSHAKE;
         this->front_event = new wait_obj(sck);
 
-        LOG(LOG_INFO, "Session 1");
-
         /* create these when up and running */
         this->trans = new SocketTransport("RDP Client", sck, this->ini->globals.debug.front);
 
@@ -312,16 +310,8 @@ struct Session {
             throw 2;
         }
 
-        LOG(LOG_INFO, "Session 2");
-
         this->front = new Front(this->trans, ini);
-
-        LOG(LOG_INFO, "Session 3");
-
         this->no_mod = new null_mod(*this->context, *(this->front));
-
-        LOG(LOG_INFO, "Session 4");
-
         this->mod = this->no_mod;
 
         /* module interface */

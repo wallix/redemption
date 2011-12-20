@@ -702,7 +702,9 @@ static inline void parse_mcs_data_sc_core(Stream & stream, int & use_rdp5)
 {
     LOG(LOG_INFO, "SC_CORE\n");
     uint16_t rdp_version = stream.in_uint16_le();
-    LOG(LOG_DEBUG, "Server RDP version is %d\n", rdp_version);
+    LOG(LOG_DEBUG, "Remote RDP server supports version %s (was %s)\n",
+            (rdp_version==1)?"RDP4":"RDP5",
+            (use_rdp5)?"RDP5":"RDP4");
     if (1 == rdp_version){ // can't use rdp5
         use_rdp5 = 0;
         TODO(" why caring of server_depth here ? Quite strange")
@@ -1022,224 +1024,208 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
 {
     LOG(LOG_INFO, "SC_SECURITY\n");
 
-TODO("below is what rdesktop do, we should implement it or we will greatly miss the keys to continue with encrypted datas on Windows 2008 servers")
+    uint8_t server_random[SEC_RANDOM_SIZE];
+    uint8_t client_random[SEC_RANDOM_SIZE];
+    uint8_t modulus[SEC_MAX_MODULUS_SIZE];
+    uint8_t exponent[SEC_EXPONENT_SIZE];
+    uint32_t rc4_key_size;
 
-//    uint8 *server_random = NULL;
-//    uint8 modulus[SEC_MAX_MODULUS_SIZE];
-//    uint8 exponent[SEC_EXPONENT_SIZE];
-//    uint32 rc4_key_size;
+    ssllib ssl;
 
-//    memset(modulus, 0, sizeof(modulus));
-//    memset(exponent, 0, sizeof(exponent));
-//    if (!sec_parse_crypt_info(s, &rc4_key_size, &server_random, modulus, exponent))
-//    {
-//        DEBUG(("Failed to parse crypt info\n"));
-//        return;
-//    }
-//    DEBUG(("Generating client random\n"));
-//    generate_random(g_client_random);
-//    sec_rsa_encrypt(g_sec_crypted_random, g_client_random, SEC_RANDOM_SIZE,
-//    g_server_public_key_len, modulus, exponent);
-//    sec_generate_keys(g_client_random, server_random, rc4_key_size);
+    memset(modulus, 0, sizeof(modulus));
+    memset(exponent, 0, sizeof(exponent));
+    memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
+    memset(server_random, 0, SEC_RANDOM_SIZE);
 
-        uint8_t server_random[SEC_RANDOM_SIZE];
-        uint8_t client_random[SEC_RANDOM_SIZE];
-        uint8_t modulus[SEC_MAX_MODULUS_SIZE];
-        uint8_t exponent[SEC_EXPONENT_SIZE];
-        uint32_t rc4_key_size;
+    uint16_t length;
+    uint8_t* end;
 
-        ssllib ssl;
+    rc4_key_size = cr_stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
+    LOG(LOG_INFO, "rc4_key_size = %u", rc4_key_size);
+    crypt_level = cr_stream.in_uint32_le(); /* 1 = low, 2 = medium, 3 = high */
+    LOG(LOG_INFO, "crypt_level = %u", crypt_level);
 
-        memset(modulus, 0, sizeof(modulus));
-        memset(exponent, 0, sizeof(exponent));
-        memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
-        TODO(" check for the true size")
-        memset(server_random, 0, SEC_RANDOM_SIZE);
+    if (crypt_level == 0) { /* no encryption */
+        LOG(LOG_INFO, "No encryption");
+        throw Error(ERR_SEC_PARSE_CRYPT_INFO_ENCRYPTION_REQUIRED);
+    }
+    uint32_t random_len = cr_stream.in_uint32_le();
+    uint32_t rsa_info_len = cr_stream.in_uint32_le();
 
-        uint16_t length;
-        uint8_t* end;
-
-        rc4_key_size = cr_stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
-        crypt_level = cr_stream.in_uint32_le(); /* 1 = low, 2 = medium, 3 = high */
-
-        if (crypt_level == 0) { /* no encryption */
-            LOG(LOG_INFO, "No encryption");
-            throw Error(ERR_SEC_PARSE_CRYPT_INFO_ENCRYPTION_REQUIRED);
-        }
-        uint32_t random_len = cr_stream.in_uint32_le();
-        uint32_t rsa_info_len = cr_stream.in_uint32_le();
-
-        LOG(LOG_INFO, "random_len = %u", random_len);
-        LOG(LOG_INFO, "rsa_info_len = %u", rsa_info_len);
+    LOG(LOG_INFO, "random_len = %u", random_len);
+    LOG(LOG_INFO, "rsa_info_len = %u", rsa_info_len);
 
 // serverRandom (variable): The variable-length server random value used to
 // derive session keys (see sections 5.3.4 and 5.3.5). The length in bytes is
 // given by the serverRandomLen field. If the encryptionMethod and
 // encryptionLevel fields are both set to 0 then this field MUST NOT be present.
 
-        if (random_len != SEC_RANDOM_SIZE) {
-            LOG(LOG_ERR,
-                "parse_crypt_info_error: random len %d, expected %d\n",
-                random_len, SEC_RANDOM_SIZE);
-            throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RANDOM_LEN);
-        }
-        memcpy(server_random, cr_stream.in_uint8p(random_len), random_len);
+    if (random_len != SEC_RANDOM_SIZE) {
+        LOG(LOG_ERR,
+            "parse_crypt_info_error: random len %d, expected %d\n",
+            random_len, SEC_RANDOM_SIZE);
+        throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RANDOM_LEN);
+    }
+    memcpy(server_random, cr_stream.in_uint8p(random_len), random_len);
 
 // serverCertificate (variable): The variable-length certificate containing the
 //  server's public key information. The length in bytes is given by the
 // serverCertLen field. If the encryptionMethod and encryptionLevel fields are
 // both set to 0 then this field MUST NOT be present.
 
-        /* RSA info */
-        end = cr_stream.p + rsa_info_len;
-        if (end > cr_stream.end) {
-            LOG(LOG_ERR,
-                "rsa_info_len outside of buffer %u remains: %u", rsa_info_len, cr_stream.end - cr_stream.p);
-            throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RSA_LEN);
-        }
+    /* RSA info */
+    end = cr_stream.p + rsa_info_len;
+    if (end > cr_stream.end) {
+        LOG(LOG_ERR,
+            "rsa_info_len outside of buffer %u remains: %u", rsa_info_len, cr_stream.end - cr_stream.p);
+        throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RSA_LEN);
+    }
 
-        uint32_t flags = cr_stream.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
-        LOG(LOG_INFO, "crypt flags %x\n", flags);
-        if (flags & 1) {
+    uint32_t flags = cr_stream.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
+    LOG(LOG_INFO, "crypt flags %x\n", flags);
+    if (flags & 1) {
 
-            LOG(LOG_DEBUG, "We're going for the RDP4-style encryption\n");
-            cr_stream.skip_uint8(8); /* unknown */
+        LOG(LOG_DEBUG, "We're going for the RDP4-style encryption\n");
+        cr_stream.skip_uint8(8); /* unknown */
 
-            while (cr_stream.p < end) {
-                uint16_t tag = cr_stream.in_uint16_le();
-                length = cr_stream.in_uint16_le();
-                TODO(" this should not be necessary any more as received tag are fully decoded (but we should check length does not lead accessing data out of buffer)")
-                uint8_t * next_tag = cr_stream.p + length;
+        while (cr_stream.p < end) {
+            uint16_t tag = cr_stream.in_uint16_le();
+            length = cr_stream.in_uint16_le();
+            TODO(" this should not be necessary any more as received tag are fully decoded (but we should check length does not lead accessing data out of buffer)")
+            uint8_t * next_tag = cr_stream.p + length;
 
-                switch (tag) {
-                case SEC_TAG_PUBKEY:
-                    recv_sec_tag_pubkey(cr_stream, server_public_key_len, modulus, exponent);
+            switch (tag) {
+            case SEC_TAG_PUBKEY:
+                LOG(LOG_DEBUG, "ReceivingPublic key, RDP4-style\n");
+                recv_sec_tag_pubkey(cr_stream, server_public_key_len, modulus, exponent);
+                LOG(LOG_DEBUG, "Got Public key, RDP4-style");
+            break;
+            case SEC_TAG_KEYSIG:
+                LOG(LOG_DEBUG, "Receiving key sig RDP4-style\n");
+                recv_sec_tag_sig(cr_stream, length);
+                LOG(LOG_DEBUG, "Got key sig RDP4-style\n");
                 break;
-                case SEC_TAG_KEYSIG:
-                    LOG(LOG_DEBUG, "SEC_TAG_KEYSIG RDP4-style\n");
-                    recv_sec_tag_sig(cr_stream, length);
-                    break;
-                default:
-                    LOG(LOG_DEBUG, "unimplemented: crypt tag 0x%x\n", tag);
-                    throw Error(ERR_SEC_PARSE_CRYPT_INFO_UNIMPLEMENTED_TAG);
-                    break;
-                }
-                cr_stream.p = next_tag;
+            default:
+                LOG(LOG_DEBUG, "unimplemented: crypt tag 0x%x\n", tag);
+                throw Error(ERR_SEC_PARSE_CRYPT_INFO_UNIMPLEMENTED_TAG);
+                break;
             }
+            cr_stream.p = next_tag;
         }
-        else {
-            LOG(LOG_DEBUG, "We're going for the RDP5-style encryption\n");
-            uint32_t certcount = cr_stream.in_uint32_le();
-            LOG(LOG_DEBUG, "Certcount = %u\n", certcount);
+    }
+    else {
+        LOG(LOG_DEBUG, "We're going for the RDP5-style encryption\n");
+        uint32_t certcount = cr_stream.in_uint32_le();
+        LOG(LOG_DEBUG, "Certcount = %u\n", certcount);
 
-            if (certcount < 2){
-                LOG(LOG_DEBUG, "Server didn't send enough X509 certificates\n");
-                throw Error(ERR_SEC_PARSE_CRYPT_INFO_CERT_NOK);
+        if (certcount < 2){
+            LOG(LOG_DEBUG, "Server didn't send enough X509 certificates\n");
+            throw Error(ERR_SEC_PARSE_CRYPT_INFO_CERT_NOK);
+        }
+        for (; certcount > 2; certcount--){
+            /* ignore all the certificates between the root and the signing CA */
+            LOG(LOG_WARNING, " Ignored certs left: %d\n", certcount);
+            uint32_t ignorelen = cr_stream.in_uint32_le();
+            LOG(LOG_WARNING, "Ignored Certificate length is %d\n", ignorelen);
+            SSL_CERT *ignorecert = ssl_cert_read(cr_stream.p, ignorelen);
+            cr_stream.skip_uint8(ignorelen);
+            if (ignorecert == NULL){
+                LOG(LOG_WARNING,
+                    "got a bad cert: this will probably screw up"
+                    " the rest of the communication\n");
             }
-            for (; certcount > 2; certcount--){
-                /* ignore all the certificates between the root and the signing CA */
-                LOG(LOG_WARNING, " Ignored certs left: %d\n", certcount);
-                uint32_t ignorelen = cr_stream.in_uint32_le();
-                LOG(LOG_WARNING, "Ignored Certificate length is %d\n", ignorelen);
-                SSL_CERT *ignorecert = ssl_cert_read(cr_stream.p, ignorelen);
-                cr_stream.skip_uint8(ignorelen);
-                if (ignorecert == NULL){
-                    LOG(LOG_WARNING,
-                        "got a bad cert: this will probably screw up"
-                        " the rest of the communication\n");
-                }
-                LOG(LOG_WARNING, "cert #%d (ignored)", certcount);
-            }
+            LOG(LOG_WARNING, "cert #%d (ignored)", certcount);
+        }
 
-            /* Do da funky X.509 stuffy
+        /* Do da funky X.509 stuffy
 
-           "How did I find out about this?  I looked up and saw a
-           bright light and when I came to I had a scar on my forehead
-           and knew about X.500"
-           - Peter Gutman in a early version of
-           http://www.cs.auckland.ac.nz/~pgut001/pubs/x509guide.txt
-           */
+       "How did I find out about this?  I looked up and saw a
+       bright light and when I came to I had a scar on my forehead
+       and knew about X.500"
+       - Peter Gutman in a early version of
+       http://www.cs.auckland.ac.nz/~pgut001/pubs/x509guide.txt
+       */
 
-            /* Loading CA_Certificate from server*/
-            uint32_t cacert_len = cr_stream.in_uint32_le();
-            LOG(LOG_DEBUG, "CA Certificate length is %d\n", cacert_len);
-            SSL_CERT *cacert = ssl_cert_read(cr_stream.p, cacert_len);
-            cr_stream.skip_uint8(cacert_len);
-            if (NULL == cacert){
-                LOG(LOG_DEBUG, "Couldn't load CA Certificate from server\n");
-                throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NULL);
-            }
+        /* Loading CA_Certificate from server*/
+        uint32_t cacert_len = cr_stream.in_uint32_le();
+        LOG(LOG_DEBUG, "CA Certificate length is %d\n", cacert_len);
+        SSL_CERT *cacert = ssl_cert_read(cr_stream.p, cacert_len);
+        cr_stream.skip_uint8(cacert_len);
+        if (NULL == cacert){
+            LOG(LOG_DEBUG, "Couldn't load CA Certificate from server\n");
+            throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NULL);
+        }
 
-            /* Loading Certificate from server*/
-            uint32_t cert_len = cr_stream.in_uint32_le();
-            LOG(LOG_DEBUG, "Certificate length is %d\n", cert_len);
-            SSL_CERT *server_cert = ssl_cert_read(cr_stream.p, cert_len);
-            cr_stream.skip_uint8(cert_len);
-            if (NULL == server_cert){
-                ssl_cert_free(cacert);
-                LOG(LOG_DEBUG, "Couldn't load Certificate from server\n");
-                throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_LOADED);
-            }
-
-            /* Matching certificates */
-            if (!ssl_certs_ok(server_cert, cacert)){
-                ssl_cert_free(server_cert);
-                ssl_cert_free(cacert);
-                LOG(LOG_DEBUG, "Security error CA Certificate invalid\n");
-                throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_MATCH);
-            }
+        /* Loading Certificate from server*/
+        uint32_t cert_len = cr_stream.in_uint32_le();
+        LOG(LOG_DEBUG, "Certificate length is %d\n", cert_len);
+        SSL_CERT *server_cert = ssl_cert_read(cr_stream.p, cert_len);
+        cr_stream.skip_uint8(cert_len);
+        if (NULL == server_cert){
             ssl_cert_free(cacert);
-            cr_stream.skip_uint8(16); /* Padding */
-            SSL_RKEY *server_public_key = ssl_cert_to_rkey(server_cert, server_public_key_len);
-            LOG(LOG_DEBUG, "Server public key length=%u\n", (unsigned)server_public_key_len);
+            LOG(LOG_DEBUG, "Couldn't load Certificate from server\n");
+            throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_LOADED);
+        }
 
-            if (NULL == server_public_key){
-                LOG(LOG_DEBUG, "Didn't parse X509 correctly\n");
-                ssl_cert_free(server_cert);
-                throw Error(ERR_SEC_PARSE_CRYPT_INFO_X509_NOT_PARSED);
-
-            }
+        /* Matching certificates */
+        if (!ssl_certs_ok(server_cert, cacert)){
             ssl_cert_free(server_cert);
+            ssl_cert_free(cacert);
+            LOG(LOG_DEBUG, "Security error CA Certificate invalid\n");
+            throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_MATCH);
+        }
+        ssl_cert_free(cacert);
+        cr_stream.skip_uint8(16); /* Padding */
+        SSL_RKEY *server_public_key = ssl_cert_to_rkey(server_cert, server_public_key_len);
+        LOG(LOG_DEBUG, "Server public key length=%u\n", (unsigned)server_public_key_len);
 
-            LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d\n", server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
-            if ((server_public_key_len < SEC_MODULUS_SIZE) ||
-                (server_public_key_len > SEC_MAX_MODULUS_SIZE)){
-                LOG(LOG_DEBUG, "Bad server public key size (%u bits)\n",
-                    server_public_key_len * 8);
-                ssl.rkey_free(server_public_key);
-                throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
-            }
-            if (ssl_rkey_get_exp_mod(server_public_key, exponent, SEC_EXPONENT_SIZE,
-                modulus, SEC_MAX_MODULUS_SIZE) != 0){
-                LOG(LOG_DEBUG, "Problem extracting RSA exponent, modulus");
-                ssl.rkey_free(server_public_key);
-                throw Error(ERR_SEC_PARSE_CRYPT_INFO_RSA_EXP_NOT_OK);
-            }
+        if (NULL == server_public_key){
+            LOG(LOG_DEBUG, "Didn't parse X509 correctly\n");
+            ssl_cert_free(server_cert);
+            throw Error(ERR_SEC_PARSE_CRYPT_INFO_X509_NOT_PARSED);
+
+        }
+        ssl_cert_free(server_cert);
+
+        LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d\n", server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
+        if ((server_public_key_len < SEC_MODULUS_SIZE) ||
+            (server_public_key_len > SEC_MAX_MODULUS_SIZE)){
+            LOG(LOG_DEBUG, "Bad server public key size (%u bits)\n",
+                server_public_key_len * 8);
             ssl.rkey_free(server_public_key);
-            TODO(" find a way to correctly dispose of garbage at end of buffer")
-            /* There's some garbage here we don't care about */
+            throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);
         }
+        if (ssl_rkey_get_exp_mod(server_public_key, exponent, SEC_EXPONENT_SIZE,
+            modulus, SEC_MAX_MODULUS_SIZE) != 0){
+            LOG(LOG_DEBUG, "Problem extracting RSA exponent, modulus");
+            ssl.rkey_free(server_public_key);
+            throw Error(ERR_SEC_PARSE_CRYPT_INFO_RSA_EXP_NOT_OK);
+        }
+        ssl.rkey_free(server_public_key);
+        TODO(" find a way to correctly dispose of garbage at end of buffer")
+        /* There's some garbage here we don't care about */
+    }
 
-        /* Generate a client random, and determine encryption keys */
-        memset(client_random, 0x44, SEC_RANDOM_SIZE);
-        int fd = open("/dev/urandom", O_RDONLY);
-        if (fd == -1) {
-            fd = open("/dev/random", O_RDONLY);
+    /* Generate a client random, and determine encryption keys */
+    memset(client_random, 0x44, SEC_RANDOM_SIZE);
+    int fd = open("/dev/urandom", O_RDONLY);
+    if (fd == -1) {
+        fd = open("/dev/random", O_RDONLY);
+    }
+    if (fd != -1) {
+        if (read(fd, client_random, SEC_RANDOM_SIZE) != SEC_RANDOM_SIZE) {
+            LOG(LOG_WARNING, "random source failed to provide random data\n");
         }
-        if (fd != -1) {
-            if (read(fd, client_random, SEC_RANDOM_SIZE) != SEC_RANDOM_SIZE) {
-                LOG(LOG_WARNING, "random source failed to provide random data\n");
-            }
-            close(fd);
-        }
-        else {
-            LOG(LOG_WARNING, "random source failed to provide random data : couldn't open device\n");
-        }
+        close(fd);
+    }
+    else {
+        LOG(LOG_WARNING, "random source failed to provide random data : couldn't open device\n");
+    }
 
-        memset(client_random, 0, SEC_RANDOM_SIZE);
+    memset(client_random, 0, SEC_RANDOM_SIZE);
 
-        ssl.rsa_encrypt(client_crypt_random, client_random, SEC_RANDOM_SIZE, server_public_key_len, modulus, exponent);
-        rdp_sec_generate_keys(encrypt, decrypt, encrypt.sign_key, client_random, server_random, rc4_key_size);
+    ssl.rsa_encrypt(client_crypt_random, client_random, SEC_RANDOM_SIZE, server_public_key_len, modulus, exponent);
+    rdp_sec_generate_keys(encrypt, decrypt, encrypt.sign_key, client_random, server_random, rc4_key_size);
 }
 
 // 2.2.1.4.4 Server Network Data (TS_UD_SC_NET)
@@ -1476,207 +1462,6 @@ static inline void recv_mcs_connect_initial_pdu_with_gcc_conference_create_reque
     }
 }
 
-static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_request(
-                Transport * trans,
-                const ChannelList & channel_list,
-                int width,
-                int height,
-                int rdp_bpp,
-                int keylayout,
-                bool console_session,
-                char * hostname){
-
-//    Stream data(8192);
-
-//    int data_len = data.end - data.data;
-//    int len = 7 + 3 * 34 + 4 + data_len;
-
-    Stream stream(32768);
-    X224Out ci_tpdu(X224Packet::DT_TPDU, stream);
-
-    stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
-    uint32_t offset_data_len_connect_initial = stream.p - stream.data;
-    stream.out_ber_len_uint16(0); // filled later, 3 bytes
-
-    stream.out_uint8(BER_TAG_OCTET_STRING);
-    stream.out_ber_len(1); /* calling domain */
-    stream.out_uint8(1);
-    stream.out_uint8(BER_TAG_OCTET_STRING);
-    stream.out_ber_len(1); /* called domain */
-    stream.out_uint8(1);
-    stream.out_uint8(BER_TAG_BOOLEAN);
-    stream.out_ber_len(1);
-    stream.out_uint8(0xff); /* upward flag */
-
-    // target params
-    stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-    stream.out_ber_len(32);
-    stream.out_ber_int16(34);     // max_channels
-    stream.out_ber_int16(2);      // max_users
-    stream.out_ber_int16(0);      // max_tokens
-    stream.out_ber_int16(1);
-    stream.out_ber_int16(0);
-    stream.out_ber_int16(1);
-    stream.out_ber_int16(0xffff); // max_pdu_size
-    stream.out_ber_int16(2);
-
-    // min params
-    stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-    stream.out_ber_len(32);
-    stream.out_ber_int16(1);     // max_channels
-    stream.out_ber_int16(1);     // max_users
-    stream.out_ber_int16(1);     // max_tokens
-    stream.out_ber_int16(1);
-    stream.out_ber_int16(0);
-    stream.out_ber_int16(1);
-    stream.out_ber_int16(0x420); // max_pdu_size
-    stream.out_ber_int16(2);
-
-    // max params
-    stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-    stream.out_ber_len(32);
-    stream.out_ber_int16(0xffff); // max_channels
-    stream.out_ber_int16(0xfc17); // max_users
-    stream.out_ber_int16(0xffff); // max_tokens
-    stream.out_ber_int16(1);
-    stream.out_ber_int16(0);
-    stream.out_ber_int16(1);
-    stream.out_ber_int16(0xffff); // max_pdu_size
-    stream.out_ber_int16(2);
-
-
-    stream.out_uint8(BER_TAG_OCTET_STRING);
-    uint32_t offset_data_len = stream.p - stream.data;
-    stream.out_ber_len_uint16(0); // filled later, 3 bytes
-
-    /* Generic Conference Control (T.124) ConferenceCreateRequest */
-    stream.out_uint16_be(5);
-    stream.out_uint16_be(0x14);
-    stream.out_uint8(0x7c);
-    stream.out_uint16_be(1);
-
-    int length = 158 + 76 + 12 + 4;
-
-    TODO(" another option could be to emit channel list even if number of channel is zero. It looks more logical to me than not passing any channel information (what happens in this case ?)")
-    if (channel_list.size() > 0){
-        length += channel_list.size() * 12 + 8;
-    }
-
-    stream.out_uint16_be((length | 0x8000)); /* remaining length */
-
-    stream.out_uint16_be(8); /* length? */
-    stream.out_uint16_be(16);
-    stream.out_uint8(0);
-    stream.out_uint16_le(0xc001);
-    stream.out_uint8(0);
-
-    stream.out_copy_bytes("Duca", 4); /* OEM ID: "Duca", as in Ducati. */
-    stream.out_uint16_be(((length - 14) | 0x8000)); /* remaining length */
-
-    /* Client information */
-    stream.out_uint16_le(CS_CORE);
-    LOG(LOG_INFO, "Sending Client Core Data to remote server\n");
-    stream.out_uint16_le(212); /* length */
-    LOG(LOG_INFO, "core::header::length = %u\n", 212);
-    stream.out_uint32_le(0x00080004); // RDP version. 1 == RDP4, 4 == RDP5.
-    LOG(LOG_INFO, "core::header::version (0x00080004 = RDP 5.0, 5.1, 5.2, and 6.0 clients)");
-    stream.out_uint16_le(width);
-    LOG(LOG_INFO, "core::desktopWidth = %u\n", width);
-    stream.out_uint16_le(height);
-    LOG(LOG_INFO, "core::desktopHeight = %u\n", height);
-    stream.out_uint16_le(0xca01);
-    LOG(LOG_INFO, "core::colorDepth = RNS_UD_COLOR_8BPP (superseded by postBeta2ColorDepth)");
-    stream.out_uint16_le(0xaa03);
-    LOG(LOG_INFO, "core::SASSequence = RNS_UD_SAS_DEL");
-    stream.out_uint32_le(keylayout);
-    LOG(LOG_INFO, "core::keyboardLayout = %x", keylayout);
-    stream.out_uint32_le(2600); /* Client build. We are now 2600 compatible :-) */
-    LOG(LOG_INFO, "core::clientBuild = 2600");
-    LOG(LOG_INFO, "core::clientName=%s\n", hostname);
-
-    /* Added in order to limit hostlen and hostname size */
-    int hostlen = 2 * strlen(hostname);
-    if (hostlen > 30){
-        hostlen = 30;
-    }
-    /* Unicode name of client, padded to 30 bytes */
-    stream.out_unistr(hostname);
-    stream.out_clear_bytes(30 - hostlen);
-
-    /* See
-    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wceddk40/html/cxtsksupportingremotedesktopprotocol.asp */
-    TODO(" code should be updated to take care of keyboard type")
-    stream.out_uint32_le(4); // g_keyboard_type
-    LOG(LOG_INFO, "core::keyboardType = IBM enhanced (101- or 102-key) keyboard");
-    stream.out_uint32_le(0); // g_keyboard_subtype
-    LOG(LOG_INFO, "core::keyboardSubType = 0");
-    stream.out_uint32_le(12); // g_keyboard_functionkeys
-    LOG(LOG_INFO, "core::keyboardFunctionKey = 12 function keys");
-    stream.out_clear_bytes(64); /* imeFileName */
-    LOG(LOG_INFO, "core::imeFileName = \"\"");
-    stream.out_uint16_le(0xca01); /* color depth 8bpp */
-    LOG(LOG_INFO, "core::postBeta2ColorDepth = RNS_UD_COLOR_8BPP (superseded by highColorDepth)");
-    stream.out_uint16_le(1);
-    LOG(LOG_INFO, "core::clientProductId = 1");
-    stream.out_uint32_le(0);
-    LOG(LOG_INFO, "core::serialNumber = 0");
-    stream.out_uint16_le(rdp_bpp);
-    LOG(LOG_INFO, "core::highColorDepth = %u", rdp_bpp);
-    stream.out_uint16_le(0x0007);
-    LOG(LOG_INFO, "core::supportedColorDepths = 24/16/15");
-    stream.out_uint16_le(1);
-    LOG(LOG_INFO, "core::earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU");
-    stream.out_clear_bytes(64);
-    LOG(LOG_INFO, "core::clientDigProductId = \"\"");
-    stream.out_clear_bytes(2);
-    LOG(LOG_INFO, "core::pad2octets");
-//        stream.out_uint32_le(0); // optional
-//        LOG(LOG_INFO, "core::serverSelectedProtocol = 0");
-    /* End of client info */
-
-    stream.out_uint16_le(CS_CLUSTER);
-    stream.out_uint16_le(12);
-    TODO(" check that should depend on g_console_session")
-    stream.out_uint32_le(console_session ? 0xb : 9);
-    stream.out_uint32_le(0);
-
-    /* Client encryption settings */
-    stream.out_uint16_le(CS_SECURITY);
-    stream.out_uint16_le(12); /* length */
-
-    TODO(" check that should depend on g_encryption")
-    /* encryption supported, 128-bit supported */
-    stream.out_uint32_le(0x3);
-    stream.out_uint32_le(0); /* Unknown */
-
-    /* Here we need to put channel information in order to redirect channel data
-    from client to server passing through the "proxy" */
-    size_t num_channels = channel_list.size();
-
-    if (num_channels > 0) {
-        LOG(LOG_INFO, "cs_net");
-        stream.out_uint16_le(CS_NET);
-        LOG(LOG_INFO, "cs_net::len=%u", num_channels * 12 + 8);
-        stream.out_uint16_le(num_channels * 12 + 8); /* length */
-        LOG(LOG_INFO, "cs_net::nb_chan=%u", num_channels);
-        stream.out_uint32_le(num_channels); /* number of virtual channels */
-        for (size_t index = 0; index < num_channels; index++){
-            const McsChannelItem & channel_item = channel_list[index];
-            stream.out_copy_bytes(channel_item.name, 8);
-            stream.out_uint32_be(channel_item.flags);
-        }
-    }
-
-    TODO(" create a function in stream that sets differed ber_len_offsets")
-    // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
-    stream.set_out_ber_len_uint16(stream.p - stream.data - offset_data_len - 3, offset_data_len);
-
-    // set mcs_data len for BER_TAG_MCS_CONNECT_INITIAL
-    stream.set_out_ber_len_uint16(stream.p - stream.data - offset_data_len_connect_initial - 3, offset_data_len_connect_initial);
-
-    ci_tpdu.end();
-    ci_tpdu.send(trans);
-}
 
 
 //   2.2.1.5 Client MCS Erect Domain Request PDU
@@ -2478,360 +2263,6 @@ static inline void send_mcs_connect_response_pdu_with_gcc_conference_create_resp
 
     tpdu.end();
     tpdu.send(trans);
-}
-
-// 2.2.1.4  Server MCS Connect Response PDU with GCC Conference Create Response
-// ----------------------------------------------------------------------------
-
-// From [MSRDPCGR]
-
-// The MCS Connect Response PDU is an RDP Connection Sequence PDU sent from
-// server to client during the Basic Settings Exchange phase (see section
-// 1.3.1.1). It is sent as a response to the MCS Connect Initial PDU (section
-// 2.2.1.3). The MCS Connect Response PDU encapsulates a GCC Conference Create
-// Response, which encapsulates concatenated blocks of settings data.
-
-// A basic high-level overview of the nested structure for the Server MCS
-// Connect Response PDU is illustrated in section 1.3.1.1, in the figure
-// specifying MCS Connect Response PDU. Note that the order of the settings
-// data blocks is allowed to vary from that shown in the previously mentioned
-// figure and the message syntax layout that follows. This is possible because
-// each data block is identified by a User Data Header structure (section
-// 2.2.1.4.1).
-
-// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
-// section 13.7.
-
-// mcsCrsp (variable): Variable-length BER-encoded MCS Connect Response
-//   structure (using definite-length encoding) as described in [T125]
-//   (the ASN.1 structure definition is detailed in [T125] section 7, part 2).
-//   The userData field of the MCS Connect Response encapsulates the GCC
-//   Conference Create Response data (contained in the gccCCrsp and subsequent
-//   fields).
-
-// gccCCrsp (variable): Variable-length PER-encoded GCC Connect Data structure
-//   which encapsulates a Connect GCC PDU that contains a GCC Conference Create
-//   Response structure as described in [T124] (the ASN.1 structure definitions
-//   are specified in [T124] section 8.7) appended as user data to the MCS
-//   Connect Response (using the format specified in [T124] sections 9.5 and
-//   9.6). The userData field of the GCC Conference Create Response contains
-//   one user data set consisting of concatenated server data blocks.
-
-// serverCoreData (12 bytes): Server Core Data structure (section 2.2.1.4.2).
-
-// serverSecurityData (variable): Variable-length Server Security Data structure
-//   (section 2.2.1.4.3).
-
-// serverNetworkData (variable): Variable-length Server Network Data structure
-//   (section 2.2.1.4.4).
-
-
-// 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
-// ------------------------------------------
-
-//The TS_UD_CS_CORE data block contains core client connection-related
-// information.
-
-//header (4 bytes): GCC user data block header, as specified in section
-//                  2.2.1.3.1. The User Data Header type field MUST be set to
-//                  CS_CORE (0xC001).
-
-// version (4 bytes): A 32-bit, unsigned integer. Client version number for the
-//                    RDP. The major version number is stored in the high 2
-//                    bytes, while the minor version number is stored in the
-//                    low 2 bytes.
-// +------------+------------------------------------+
-// |   Value    |    Meaning                         |
-// +------------+------------------------------------+
-// | 0x00080001 | RDP 4.0 clients                    |
-// +------------+------------------------------------+
-// | 0x00080004 | RDP 5.0, 5.1, 5.2, and 6.0 clients |
-// +------------+------------------------------------+
-
-// desktopWidth (2 bytes): A 16-bit, unsigned integer. The requested desktop
-//                         width in pixels (up to a maximum value of 4096
-//                         pixels).
-
-// desktopHeight (2 bytes): A 16-bit, unsigned integer. The requested desktop
-//                          height in pixels (up to a maximum value of 2048
-//                          pixels).
-
-// colorDepth (2 bytes): A 16-bit, unsigned integer. The requested color depth.
-//                       Values in this field MUST be ignored if the
-//                       postBeta2ColorDepth field is present.
-// +--------------------------+-------------------------+
-// |     Value                |        Meaning          |
-// +--------------------------+-------------------------+
-// | 0xCA00 RNS_UD_COLOR_4BPP | 4 bits-per-pixel (bpp)  |
-// +--------------------------+-------------------------+
-// | 0xCA01 RNS_UD_COLOR_8BPP | 8 bpp                   |
-// +--------------------------+-------------------------+
-
-// SASSequence (2 bytes): A 16-bit, unsigned integer. Secure access sequence.
-//                        This field SHOULD be set to RNS_UD_SAS_DEL (0xAA03).
-
-// keyboardLayout (4 bytes): A 32-bit, unsigned integer. Keyboard layout (active
-//                           input locale identifier). For a list of possible
-//                           input locales, see [MSDN-MUI].
-
-// clientBuild (4 bytes): A 32-bit, unsigned integer. The build number of the
-//                        client.
-
-// clientName (32 bytes): Name of the client computer. This field contains up to
-//                        15 Unicode characters plus a null terminator.
-
-// keyboardType (4 bytes): A 32-bit, unsigned integer. The keyboard type.
-// +-------+--------------------------------------------+
-// | Value |              Meaning                       |
-// +-------+--------------------------------------------+
-// |   1   | IBM PC/XT or compatible (83-key) keyboard  |
-// +-------+--------------------------------------------+
-// |   2   | Olivetti "ICO" (102-key) keyboard          |
-// +-------+--------------------------------------------+
-// |   3   | IBM PC/AT (84-key) and similar keyboards   |
-// +-------+--------------------------------------------+
-// |   4   | IBM enhanced (101- or 102-key) keyboard    |
-// +-------+--------------------------------------------+
-// |   5   | Nokia 1050 and similar keyboards           |
-// +-------+--------------------------------------------+
-// |   6   | Nokia 9140 and similar keyboards           |
-// +-------+--------------------------------------------+
-// |   7   | Japanese keyboard                          |
-// +-------+--------------------------------------------+
-
-// keyboardSubType (4 bytes): A 32-bit, unsigned integer. The keyboard subtype
-//                            (an original equipment manufacturer-dependent
-//                            value).
-
-// keyboardFunctionKey (4 bytes): A 32-bit, unsigned integer. The number of
-//                                function keys on the keyboard.
-
-// imeFileName (64 bytes): A 64-byte field. The Input Method Editor (IME) file
-//                         name associated with the input locale. This field
-//                         contains up to 31 Unicode characters plus a null
-//                         terminator.
-
-// postBeta2ColorDepth (2 bytes): A 16-bit, unsigned integer. The requested
-//                                color depth. Values in this field MUST be
-//                                ignored if the highColorDepth field is
-//                                present.
-// +--------------------------+-------------------------+
-// |      Value               |         Meaning         |
-// +--------------------------+-------------------------+
-// | 0xCA00 RNS_UD_COLOR_4BPP | 4 bits-per-pixel (bpp)  |
-// +--------------------------+-------------------------+
-// | 0xCA01 RNS_UD_COLOR_8BPP | 8 bpp                   |
-// +--------------------------+-------------------------+
-// If this field is present, then all of the preceding fields MUST also be
-// present. If this field is not present, then none of the subsequent fields
-// MUST be present.
-
-// clientProductId (2 bytes): A 16-bit, unsigned integer. The client product ID.
-//                            This field SHOULD be initialized to 1. If this
-//                            field is present, then all of the preceding fields
-//                            MUST also be present. If this field is not
-//                            present, then none of the subsequent fields MUST
-//                            be present.
-
-// serialNumber (4 bytes): A 32-bit, unsigned integer. Serial number. This field
-//                         SHOULD be initialized to 0. If this field is present,
-//                         then all of the preceding fields MUST also be
-//                         present. If this field is not present, then none of
-//                         the subsequent fields MUST be present.
-
-// highColorDepth (2 bytes): A 16-bit, unsigned integer. The requested color
-//                           depth.
-// +-------+-------------------------------------------------------------------+
-// | Value |                      Meaning                                      |
-// +-------+-------------------------------------------------------------------+
-// |     4 |   4 bpp                                                           |
-// +-------+-------------------------------------------------------------------+
-// |     8 |   8 bpp                                                           |
-// +-------+-------------------------------------------------------------------+
-// |    15 |  15-bit 555 RGB mask                                              |
-// |       |  (5 bits for red, 5 bits for green, and 5 bits for blue)          |
-// +-------+-------------------------------------------------------------------+
-// |    16 |  16-bit 565 RGB mask                                              |
-// |       |  (5 bits for red, 6 bits for green, and 5 bits for blue)          |
-// +-------+-------------------------------------------------------------------+
-// |    24 |  24-bit RGB mask                                                  |
-// |       |  (8 bits for red, 8 bits for green, and 8 bits for blue)          |
-// +-------+-------------------------------------------------------------------+
-// If this field is present, then all of the preceding fields MUST also be
-// present. If this field is not present, then none of the subsequent fields
-// MUST be present.
-
-// supportedColorDepths (2 bytes): A 16-bit, unsigned integer. Specifies the
-//                                 high color depths that the client is capable
-//                                 of supporting.
-// +-----------------------------+---------------------------------------------+
-// |          Flag               |                Meaning                      |
-// +-----------------------------+---------------------------------------------+
-// | 0x0001 RNS_UD_24BPP_SUPPORT | 24-bit RGB mask                             |
-// |                             | (8 bits for red, 8 bits for green,          |
-// |                             | and 8 bits for blue)                        |
-// +-----------------------------+---------------------------------------------+
-// | 0x0002 RNS_UD_16BPP_SUPPORT | 16-bit 565 RGB mask                         |
-// |                             | (5 bits for red, 6 bits for green,          |
-// |                             | and 5 bits for blue)                        |
-// +-----------------------------+---------------------------------------------+
-// | 0x0004 RNS_UD_15BPP_SUPPORT | 15-bit 555 RGB mask                         |
-// |                             | (5 bits for red, 5 bits for green,          |
-// |                             | and 5 bits for blue)                        |
-// +-----------------------------+---------------------------------------------+
-// | 0x0008 RNS_UD_32BPP_SUPPORT | 32-bit RGB mask                             |
-// |                             | (8 bits for the alpha channel,              |
-// |                             | 8 bits for red, 8 bits for green,           |
-// |                             | and 8 bits for blue)                        |
-// +-----------------------------+---------------------------------------------+
-// If this field is present, then all of the preceding fields MUST also be
-// present. If this field is not present, then none of the subsequent fields
-// MUST be present.
-
-// earlyCapabilityFlags (2 bytes): A 16-bit, unsigned integer. It specifies
-// capabilities early in the connection sequence.
-// +---------------------------------------------+-----------------------------|
-// |                Flag                         |              Meaning        |
-// +---------------------------------------------+-----------------------------|
-// | 0x0001 RNS_UD_CS_SUPPORT_ERRINFO_PDU        | Indicates that the client   |
-// |                                             | supports the Set Error Info |
-// |                                             | PDU (section 2.2.5.1).      |
-// +---------------------------------------------+-----------------------------|
-// | 0x0002 RNS_UD_CS_WANT_32BPP_SESSION         | Indicates that the client is|
-// |                                             | requesting a session color  |
-// |                                             | depth of 32 bpp. This flag  |
-// |                                             | is necessary because the    |
-// |                                             | highColorDepth field does   |
-// |                                             | not support a value of 32.  |
-// |                                             | If this flag is set, the    |
-// |                                             | highColorDepth field SHOULD |
-// |                                             | be set to 24 to provide an  |
-// |                                             | acceptable fallback for the |
-// |                                             | scenario where the server   |
-// |                                             | does not support 32 bpp     |
-// |                                             | color.                      |
-// +---------------------------------------------+-----------------------------|
-// | 0x0004 RNS_UD_CS_SUPPORT_STATUSINFO_PDU     | Indicates that the client   |
-// |                                             | supports the Server Status  |
-// |                                             | Info PDU (section 2.2.5.2). |
-// +---------------------------------------------+-----------------------------|
-// | 0x0008 RNS_UD_CS_STRONG_ASYMMETRIC_KEYS     | Indicates that the client   |
-// |                                             | supports asymmetric keys    |
-// |                                             | larger than 512 bits for use|
-// |                                             | with the Server Certificate |
-// |                                             | (section 2.2.1.4.3.1) sent  |
-// |                                             | in the Server Security Data |
-// |                                             | block (section 2.2.1.4.3).  |
-// +---------------------------------------------+-----------------------------|
-// | 0x0020 RNS_UD_CS_RESERVED1                  | Reserved for future use.    |
-// |                                             | This flag is ignored by the |
-// |                                             | server.                     |
-// +---------------------------------------------+-----------------------------+
-// | 0x0040 RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU | Indicates that the client   |
-// |                                             | supports the Monitor Layout |
-// |                                             | PDU (section 2.2.12.1).     |
-// +---------------------------------------------+-----------------------------|
-// If this field is present, then all of the preceding fields MUST also be
-// present. If this field is not present, then none of the subsequent fields
-// MUST be present.
-
-// clientDigProductId (64 bytes): Contains a value that uniquely identifies the
-//                                client. If this field is present, then all of
-//                                the preceding fields MUST also be present. If
-//                                this field is not present, then none of the
-//                                subsequent fields MUST be present.
-
-// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding to align the
-//   serverSelectedProtocol field on the correct byte boundary.
-// If this field is present, then all of the preceding fields MUST also be
-// present. If this field is not present, then none of the subsequent fields
-// MUST be present.
-
-// serverSelectedProtocol (4 bytes): A 32-bit, unsigned integer. It contains the value returned
-//   by the server in the selectedProtocol field of the RDP Negotiation Response structure
-//   (section 2.2.1.2.1). In the event that an RDP Negotiation Response structure was not sent,
-//   this field MUST be initialized to PROTOCOL_RDP (0). If this field is present, then all of the
-//   preceding fields MUST also be present.
-
-
-
-static inline void recv_mcs_connect_response_pdu_with_gcc_conference_create_response(
-                            Transport * trans,
-                            ChannelList & mod_channel_list,
-                            const ChannelList & front_channel_list,
-                            CryptContext & encrypt, CryptContext & decrypt,
-                            uint32_t & server_public_key_len,
-                            uint8_t (& client_crypt_random)[512],
-                            int & crypt_level,
-                            int & use_rdp5)
-{
-    Stream cr_stream(32768);
-    X224In(trans, cr_stream);
-    if (cr_stream.in_uint16_be() != BER_TAG_MCS_CONNECT_RESPONSE) {
-        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-    }
-    int len = cr_stream.in_ber_len();
-
-    if (cr_stream.in_uint8() != BER_TAG_RESULT) {
-        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-    }
-    len = cr_stream.in_ber_len();
-
-    int res = cr_stream.in_uint8();
-
-    if (res != 0) {
-        throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
-    }
-    if (cr_stream.in_uint8() != BER_TAG_INTEGER) {
-        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-    }
-    len = cr_stream.in_ber_len();
-    cr_stream.skip_uint8(len); /* connect id */
-
-    if (cr_stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
-        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-    }
-    len = cr_stream.in_ber_len();
-    cr_stream.skip_uint8(len);
-
-    if (cr_stream.in_uint8() != BER_TAG_OCTET_STRING) {
-        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-    }
-    len = cr_stream.in_ber_len();
-
-    cr_stream.skip_uint8(21); /* header (T.124 ConferenceCreateResponse) */
-    len = cr_stream.in_uint8();
-
-    if (len & 0x80) {
-        len = cr_stream.in_uint8();
-    }
-    while (cr_stream.p < cr_stream.end) {
-        uint16_t tag = cr_stream.in_uint16_le();
-        uint16_t length = cr_stream.in_uint16_le();
-        if (length <= 4) {
-            throw Error(ERR_MCS_DATA_SHORT_HEADER);
-        }
-        uint8_t *next_tag = (cr_stream.p + length) - 4;
-        switch (tag) {
-        case SC_CORE:
-            parse_mcs_data_sc_core(cr_stream, use_rdp5);
-        break;
-        case SC_SECURITY:
-            parse_mcs_data_sc_security(cr_stream, encrypt, decrypt,
-                                       server_public_key_len, client_crypt_random,
-                                       crypt_level);
-        break;
-        case SC_NET:
-            parse_mcs_data_sc_net(cr_stream, front_channel_list, mod_channel_list);
-            break;
-        default:
-            LOG(LOG_WARNING, "response tag 0x%x\n", tag);
-            break;
-        }
-        cr_stream.p = next_tag;
-    }
 }
 
 #endif

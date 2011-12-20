@@ -321,6 +321,8 @@ struct RdpLicence {
 
     void rdp_lic_process_demand(Transport * trans, Stream & stream, const char * hostname, const char * username, int userid, const int licence_issued, CryptContext & encrypt)
     {
+        LOG(LOG_DEBUG, "rdp_lic_process_demand");
+
         uint8_t null_data[SEC_MODULUS_SIZE];
         uint8_t signature[LICENCE_SIGNATURE_SIZE];
         uint8_t hwid[LICENCE_HWID_SIZE];
