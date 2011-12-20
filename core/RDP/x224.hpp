@@ -32,6 +32,97 @@
 #include "log.hpp"
 #include "error.hpp"
 
+// 2.2.9.1.2 Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+// ========================================================
+
+// Fast-path revises server output packets from the first byte with the goal of 
+// improving bandwidth.
+
+// The TPKT Header ([T123] section 8), X.224 Class 0 Data TPDU ([X224] section 
+//  13.7), and MCS Send Data Indication ([T125] section 11.33) are replaced; the
+//  Security Header (section 2.2.8.1.1.2) is collapsed into the fast-path output
+//  header; and the Share Data Header (section 2.2.8.1.1.1.2) is replaced by a 
+//  new fast-path format. The contents of the graphics and pointer updates (see
+//  sections 2.2.9.1.1.3 and 2.2.9.1.1.4) are also changed to reduce their size,
+//  particularly by removing or reducing headers. Support for fast-path output 
+//  is advertised in the General Capability Set (section 2.2.7.1.1).
+
+// fpOutputHeader (1 byte): An 8-bit, unsigned integer. One-byte, bit-packed
+//  header. This byte coincides with the first byte of the TPKT Header (see 
+// [T123] section 8). Two pieces of information are collapsed into this byte:
+// -Encryption data
+// - Action code
+
+// actionCode (2 bits): Code indicating whether the PDU is in fast-path or 
+// slow-path format.
+
+// +-------------------------------------+-----------------------------+
+// | 0x0 FASTPATH_OUTPUT_ACTION_FASTPATH | Indicates that the PDU is a |
+// |                                     | fast-path output PDU.       |
+// +-------------------------------------+-----------------------------+
+// | 0x3 FASTPATH_OUTPUT_ACTION_X224     | Indicates the presence of a |
+// |                                     | TPKT Header (see [T123]     |
+// |                                     | section 8) initial version  |
+// |                                     | byte which indicates that   |
+// |                                     | the PDU is a slow-path      |
+// |                                     | output PDU (in this case the|
+// |                                     | full value of the initial   |
+// |                                     | byte MUST be 0x03).         |
+// +-------------------------------------+-----------------------------+
+
+// reserved (4 bits): Unused bits reserved for future use. This bitfield MUST 
+//  be set to 0.
+
+// encryptionFlags (2 bits): Flags describing cryptographic parameters of the 
+//  PDU.
+
+// +-------------------------------------+-------------------------------------+
+// | 0x1 FASTPATH_OUTPUT_SECURE_CHECKSUM | Indicates that the MAC signature for|
+// |                                     | the PDU was generated using the     |
+// |                                     | "salted MAC generation" technique   |
+// |                                     | (see section 5.3.6.1.1). If this bit|
+// |                                     | is not set, then the standard       |
+// |                                     | technique was used (see sections    |
+// |                                     | 2.2.8.1.1.2.2 and 2.2.8.1.1.2.3).   |
+// +-------------------------------------+-------------------------------------+
+// | 0x2 FASTPATH_OUTPUT_ENCRYPTED       | Indicates that the PDU contains an  |
+// |                                     | 8-byte MAC signature after the      |
+// |                                     | optional length2 field (that is,    |
+// |                                     | the dataSignature field is present),|
+// |                                     | and the contents of the PDU are     |
+// |                                     | encrypted using the negotiated      |
+// |                                     | encryption package (see sections    |
+// |                                     | 5.3.2 and 5.3.6).                   |
+// +-------------------------------------+-------------------------------------+
+
+// length1 (1 byte): An 8-bit, unsigned integer. If the most significant bit of 
+//  the length1 field is not set, then the size of the PDU is in the range 1 to 
+//  127 bytes and the length1 field contains the overall PDU length (the length2 
+//  field is not present in this case). However, if the most significant bit of 
+//  the length1 field is set, then the overall PDU length is given by the low 
+//  7 bits of the length1 field concatenated with the 8 bits of the length2 
+//  field, in big-endian order (the length2 field contains the low-order bits).
+
+// length2 (1 byte): An 8-bit, unsigned integer. If the most significant bit of 
+// the length1 field is not set, then the length2 field is not present. If the 
+// most significant bit of the length1 field is set, then the overall PDU length
+// is given by the low 7 bits of the length1 field concatenated with the 8 bits 
+// of the length2 field, in big-endian order (the length2 field contains the 
+// low-order bits).
+
+// fipsInformation (4 bytes): Optional FIPS header information, present when the
+//  Encryption Method selected by the server (sections 5.3.2 and 2.2.1.4.3) is 
+//  ENCRYPTION_METHOD_FIPS (0x00000010). The Fast-Path FIPS Information 
+//  structure is specified in section 2.2.8.1.2.1.
+
+// dataSignature (8 bytes): MAC generated over the packet using one of the 
+// techniques specified in section 5.3.6 (the FASTPATH_OUTPUT_SECURE_CHECKSUM 
+// flag, which is set in the fpOutputHeader field, describes the method used to
+// generate the signature). This field MUST be present if the 
+//  FASTPATH_OUTPUT_ENCRYPTED flag is set in the fpOutputHeader field.
+
+// fpOutputUpdates (variable): An array of Fast-Path Update (section 
+// 2.2.9.1.2.1) structures to be processed by the client.
 
 struct X224Packet
 {
@@ -310,20 +401,12 @@ struct X224In : public X224Packet
         t->recv((char**)(&(stream.end)), TPKT_HEADER_LEN);
         this->tpkt.version = stream.in_uint8();
 
-        if (this->tpkt.version == 3) {
-            LOG(LOG_INFO, "Version 3");
-            stream.skip_uint8(1);
-            this->tpkt.len = stream.in_uint16_be();
+        if (this->tpkt.version != 3) {
+            LOG(LOG_INFO, "UNSUPPORTED FAST-PATH PDU");
+            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
         }
-        else {
-            LOG(LOG_INFO, "Version 0x80");
-            uint16_t length = stream.in_uint8();
-            if (length & 0x80){
-               length &= ~0x80;
-               length = (length << 8) + stream.in_uint8();
-            }
-            this->tpkt.len = length;
-        }
+        stream.skip_uint8(1);
+        this->tpkt.len = stream.in_uint16_be();
 
         const size_t payload_len = this->tpkt.len - TPKT_HEADER_LEN;
         if (!stream.has_room(payload_len)){

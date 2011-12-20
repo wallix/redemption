@@ -1285,10 +1285,133 @@ struct mod_rdp : public client_mod {
         }
     }
 
+// 2.2.7.1.1 General Capability Set (TS_GENERAL_CAPABILITYSET)
+// ===========================================================
+
+// The TS_GENERAL_CAPABILITYSET structure is used to advertise general 
+// characteristics and is based on the capability set specified in [T128] 
+// section 8.2.3. This capability is sent by both client and server.
+
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the 
+//  capability set. This field MUST be set to CAPSTYPE_GENERAL (1).
+
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes 
+//  of the capability data, including the size of the capabilitySetType and 
+//  lengthCapability fields.
+
+// osMajorType (2 bytes): A 16-bit, unsigned integer. The type of platform.
+
+// +--------------------------------+----------------------+
+// | 0x0000 OSMAJORTYPE_UNSPECIFIED | Unspecified platform |
+// +--------------------------------+----------------------+
+// | 0x0001 OSMAJORTYPE_WINDOWS     | Windows platform     |
+// +--------------------------------+----------------------+
+// | 0x0002 OSMAJORTYPE_OS2         | OS/2 platform        |
+// +--------------------------------+----------------------+
+// | 0x0003 OSMAJORTYPE_MACINTOSH   | Macintosh platform   |
+// +--------------------------------+----------------------+
+// | 0x0004 OSMAJORTYPE_UNIX        | UNIX platform        |
+// +--------------------------------+----------------------+
+
+// osMinorType (2 bytes): A 16-bit, unsigned integer. The version of the 
+// platform specified in the osMajorType field.
+
+// +--------------------------------------+----------------------+
+// | 0x0000 OSMINORTYPE_UNSPECIFIED       | Unspecified version  |
+// +--------------------------------------+----------------------+
+// | 0x0001 OSMINORTYPE_WINDOWS_31X       | Windows 3.1x         |
+// +--------------------------------------+----------------------+
+// | 0x0002 TS_OSMINORTYPE_WINDOWS_95     | Windows 95           |
+// +--------------------------------------+----------------------+
+// | 0x0003 TS_OSMINORTYPE_WINDOWS_NT     | Windows NT           |
+// +--------------------------------------+----------------------+
+// | 0x0004 TS_OSMINORTYPE_OS2_V21        | OS/2 2.1             |
+// +--------------------------------------+----------------------+
+// | 0x0005 TS_OSMINORTYPE_POWER_PC       | PowerPC              |
+// +--------------------------------------+----------------------+
+// | 0x0006 TS_OSMINORTYPE_MACINTOSH      | Macintosh            |
+// +--------------------------------------+----------------------+
+// | 0x0007 TS_OSMINORTYPE_NATIVE_XSERVER | Native X Server      |
+// +--------------------------------------+----------------------+
+// | 0x0008 TS_OSMINORTYPE_PSEUDO_XSERVER | Pseudo X Server      |
+// +--------------------------------------+----------------------+
+
+// protocolVersion (2 bytes): A 16-bit, unsigned integer. The protocol version.
+// This field MUST be set to TS_CAPS_PROTOCOLVERSION (0x0200).
+
+// pad2octetsA (2 bytes): A 16-bit, unsigned integer. Padding. Values in this 
+// field MUST be ignored.
+
+// generalCompressionTypes (2 bytes): A 16-bit, unsigned integer. General 
+// compression types. This field MUST be set to 0. 
+
+// extraFlags (2 bytes): A 16-bit, unsigned integer. General capability 
+// information. Supported flags depends on RDP version.
+
+// +----------------------------------+-------------------------------+------+
+// | 0x0001 FASTPATH_OUTPUT_SUPPORTED | Advertiser supports fast-path | 5.0+ |
+// |                                  | output.                       |      |
+// +----------------------------------+-------------------------------+------+
+// |                                  | Advertiser supports excluding |      |
+// |                                  | the 8-byte Compressed Data    |      |
+// |        0x0400                    | Header                        |      |
+// |                                  | (section 2.2.9.1.1.3.1.2.3)   |      |
+// |  NO_BITMAP_COMPRESSION_HDR       | from the Bitmap Data          | 5.0+ |
+// |                                  | (section 2.2.9.1.1.3.1.2.2)   |      |
+// |                                  | structure or the Cache Bitmap |      |
+// |                                  | (Revision 2) Secondary Drawing|      |
+// |                                  | Order ([MS-RDPEGDI] section   |      |
+// |                                  | 2.2.2.2.1.2.3).               |      |
+// +----------------------------------+-------------------------------+------+
+// | 0x0004 LONG_CREDENTIALS_SUPPORTED| Advertiser supports           |      |
+// |                                  | long-length credentials for   |      |
+// |                                  | the user name, password, or   | 5.1+ |
+// |                                  | domain name in the Save       |      |
+// |                                  | Session Info PDU              |      |
+// |                                  | (section 2.2.10.1).           |      |
+// +----------------------------------+-------------------------------+------+
+// | 0x0008 AUTORECONNECT_SUPPORTED   | Advertiser supports           |      |
+// |                                  | auto-reconnection             | 5.2+ |
+// |                                  | (section 5.5).                |      |
+// +----------------------------------+-------------------------------+------+
+// | 0x0010 ENC_SALTED_CHECKSUM       | Advertiser supports salted    |      |
+// |                                  | MAC generation (see           | 5.2+ |
+// |                                  | section 5.3.6.1.1).           |      |
+// +----------------------------------+-------------------------------+------+
+
+// updateCapabilityFlag (2 bytes): A 16-bit, unsigned integer. Support for 
+//  update capability. This field MUST be set to 0.
+
+// remoteUnshareFlag (2 bytes): A 16-bit, unsigned integer. Support for remote
+//  unsharing. This field MUST be set to 0.
+
+// generalCompressionLevel (2 bytes): A 16-bit, unsigned integer. General 
+// compression level. This field MUST be set to 0.
+
+// refreshRectSupport (1 byte): An 8-bit, unsigned integer. Server-only flag 
+// that indicates whether the Refresh Rect PDU (section 2.2.11.2) is supported.
+
+// +------------+------------------------------------------+
+// | 0x00 FALSE | Server does not support Refresh Rect PDU.|
+// +------------+------------------------------------------+
+// | 0x01 TRUE  | Server supports Refresh Rect PDU.        |
+// +------------+------------------------------------------+
+
+// suppressOutputSupport (1 byte): An 8-bit, unsigned integer. Server-only flag
+// that indicates whether the Suppress Output PDU (section 2.2.11.3) is 
+// supported.
+
+// +------------+----------------------------------------------+
+// | 0x00 FALSE | Server does not support Suppress Output PDU. |
+// +------------+----------------------------------------------+
+// | 0x01 TRUE  | Server supports Suppress Output PDU.         |
+// +------------+----------------------------------------------+
 
 
         void out_general_caps(Stream & stream, int use_rdp5)
         {
+            LOG(LOG_INFO, "Sending General caps to remote server");
+
             stream.out_uint16_le(RDP_CAPSET_GENERAL);
             const uint16_t offset_len = stream.p - stream.data;
             stream.out_uint16_le(0);
@@ -1297,7 +1420,13 @@ struct mod_rdp : public client_mod {
             stream.out_uint16_le(0x200); /* Protocol version */
             stream.out_uint16_le(0); /* Pad */
             stream.out_uint16_le(0); /* Compression types */
-            stream.out_uint16_le(use_rdp5 ? 0x40d : 0);
+            // 0x040D
+            // ------
+            // 0x0400 NO_BITMAP_COMPRESSION_HDR
+            // 0x0008 AUTORECONNECT_SUPPORTED
+            // 0x0004 LONG_CREDENTIALS_SUPPORTED
+            // 0x0001 FASTPATH_OUTPUT_SUPPORTED
+            stream.out_uint16_le(0x40c);
             stream.out_uint16_le(0); /* Update capability */
             stream.out_uint16_le(0); /* Remote unshare capability */
             stream.out_uint16_le(0); /* Compression level */
@@ -1305,9 +1434,119 @@ struct mod_rdp : public client_mod {
             stream.set_out_uint16_le(RDP_CAPLEN_GENERAL, offset_len);
         }
 
+        void process_general_caps(Stream & stream, int & use_rdp5)
+        {
+            LOG(LOG_INFO, "Received General caps from remote server");
+
+            (void)stream.in_uint16_le();
+            uint16_t os_major = stream.in_uint16_le(); /* OS major type */
+            LOG(LOG_INFO, "General caps::major %u\n", os_major);
+            uint16_t os_minor = stream.in_uint16_le(); /* OS minor type */
+            LOG(LOG_INFO, "General caps::minor %u\n", os_minor);
+            uint16_t protocolVersion = stream.in_uint16_le(); /* Protocol version */
+            LOG(LOG_INFO, "General caps::protocol %u\n", protocolVersion);
+            (void)stream.in_uint16_le(); /* Pad */
+            uint16_t compressionType = stream.in_uint16_le(); /* Compression types */
+            LOG(LOG_INFO, "General caps::compression types %x\n", compressionType);
+            /* Receiving rdp_5 extra flags supported for RDP 5.0 and later versions*/
+            uint16_t extraflags = stream.in_uint16_le();
+            LOG(LOG_INFO, "General caps::extra flags %x\n", extraflags);
+        }
+
+// 2.2.7.1.2    Bitmap Capability Set (TS_BITMAP_CAPABILITYSET)
+// ============================================================
+
+//  The TS_BITMAP_CAPABILITYSET structure is used to advertise bitmap-oriented
+//    characteristics and is based on the capability set specified in [T128]
+// section 8.2.4. This capability is sent by both client and server.
+
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
+//   capability set. This field MUST be set to CAPSTYPE_BITMAP (2).
+
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
+//   of the capability data, including the size of the capabilitySetType and
+//   lengthCapability fields.
+
+// preferredBitsPerPixel (2 bytes): A 16-bit, unsigned integer. Color depth of
+//   the remote session. In RDP 4.0 and 5.0, this field MUST be set to 8 (even
+//   for a 16-color session).
+
+// receive1BitPerPixel (2 bytes): A 16-bit, unsigned integer. Indicates whether
+//   the client can receive 1 bpp. This field is ignored and SHOULD be set to
+//   TRUE (0x0001).
+
+// receive4BitsPerPixel (2 bytes): A 16-bit, unsigned integer. Indicates whether
+//   the client can receive 4 bpp. This field is ignored and SHOULD be set to
+//   TRUE (0x0001).
+
+// receive8BitsPerPixel (2 bytes): A 16-bit, unsigned integer. Indicates whether
+//    the client can receive 8 bpp. This field is ignored and SHOULD be set to
+//    TRUE (0x0001).
+
+// desktopWidth (2 bytes): A 16-bit, unsigned integer. The width of the desktop
+//   in the remote session.
+
+// desktopHeight (2 bytes): A 16-bit, unsigned integer. The height of the
+//   desktop in the remote session.
+
+// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
+//   field are ignored.
+
+// desktopResizeFlag (2 bytes): A 16-bit, unsigned integer. Indicates whether
+//   desktop resizing is supported.
+//   0x0000 FALSE  Desktop resizing is not supported.
+//   0x0001 TRUE   Desktop resizing is supported.
+//   If a desktop resize occurs, the server will deactivate the session (see
+//   section 1.3.1.3), and on session reactivation will specify the new desktop
+//   size in the desktopWidth and desktopHeight fields in the Bitmap Capability
+//   Set, along with a value of TRUE for the desktopResizeFlag field. The client
+//   should check these sizes and, if different from the previous desktop size,
+//   resize any windows to support this size.
+
+// bitmapCompressionFlag (2 bytes): A 16-bit, unsigned integer. Indicates
+//   whether the client supports bitmap compression. RDP requires bitmap
+//   compression and hence this field MUST be set to TRUE (0x0001). If it is not
+//   set to TRUE, the server MUST NOT continue with the connection.
+
+// highColorFlags (1 byte): An 8-bit, unsigned integer. Client support for
+//   16 bpp color modes. This field is ignored and SHOULD be set to 0.
+
+// drawingFlags (1 byte): An 8-bit, unsigned integer. Flags describing support
+//   for 32 bpp bitmaps.
+
+// +----------------------------------------+----------------------------------+
+// | 0x02 DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY | Indicates support for lossy      |
+// |                                        | compression of 32 bpp bitmaps by |
+// |                                        | reducing color-fidelity on a     |
+// |                                        | per-pixel basis.                 |
+// +----------------------------------------+----------------------------------+
+// | 0x04 DRAW_ALLOW_COLOR_SUBSAMPLING      | Indicates support for chroma     |
+// |                                        | subsampling when compressing     |
+// |                                        | 32 bpp bitmaps.                  |
+// +----------------------------------------+----------------------------------+
+// | 0x08 DRAW_ALLOW_SKIP_ALPHA             | Indicates that the client        |
+// |                                        | supports the removal of the      |
+// |                                        | alpha-channel when compressing   |
+// |                                        | 32 bpp bitmaps. In this case the |
+// |                                        | alpha is assumed to be 0xFF,     |
+// |                                        | meaning the bitmap is opaque.    |
+// |                                        | Compression of 32 bpp bitmaps is |
+// |                                        | specified in [MS-RDPEGDI]        |
+// |                                        | section 3.1.9.                   |
+// +----------------------------------------+----------------------------------+
+
+// multipleRectangleSupport (2 bytes): A 16-bit, unsigned integer. Indicates
+//   whether the client supports the use of multiple bitmap rectangles. RDP
+//   requires the use of multiple bitmap rectangles and hence this field MUST be
+//   set to TRUE (0x0001). If it is not set to TRUE, the server MUST NOT
+//   continue with the connection.
+
+// pad2octetsB (2 bytes): A 16-bit, unsigned integer. Padding. Values in this 
+//   field are ignored.
+
         void out_bitmap_caps(Stream & stream)
         {
-            LOG(LOG_INFO, "Sending bitmap caps to server\n");
+            LOG(LOG_INFO, "Sending bitmap caps to remote server\n");
             stream.out_uint16_le(RDP_CAPSET_BITMAP);
             stream.out_uint16_le(RDP_CAPLEN_BITMAP);
             stream.out_uint16_le(this->bpp); /* Preferred bpp */
@@ -1322,6 +1561,17 @@ struct mod_rdp : public client_mod {
             stream.out_uint16_le(0); /* Unknown */
             stream.out_uint16_le(1); /* Unknown */
             stream.out_uint16_le(0); /* Pad */
+        }
+
+        /* Process a bitmap capability set */
+        void process_bitmap_caps(Stream & stream)
+        {
+            this->bpp = stream.in_uint16_le();
+            stream.skip_uint8(6);
+            int width = stream.in_uint16_le();
+            int height = stream.in_uint16_le();
+            /* todo, call reset if needed and use width and height */
+            LOG(LOG_INFO, "Server bitmap caps (%dx%dx%d) [bpp=%d] ok\n", width, height, bpp, this->bpp);
         }
 
 
@@ -1963,109 +2213,6 @@ struct mod_rdp : public client_mod {
             LOG(LOG_INFO, "process disconnect pdu : code = %8x\n", errorInfo);
         }
 
-        void process_general_caps(Stream & stream, int & use_rdp5)
-        {
-            (void)stream.in_uint16_le();
-            uint16_t os_major = stream.in_uint16_le(); /* OS major type */
-            LOG(LOG_INFO, "General caps::major %u\n", os_major);
-            uint16_t os_minor = stream.in_uint16_le(); /* OS minor type */
-            LOG(LOG_INFO, "General caps::major %u\n", os_minor);
-            uint16_t protocolVersion = stream.in_uint16_le(); /* Protocol version */
-            LOG(LOG_INFO, "General caps::protocol %u\n", protocolVersion);
-            (void)stream.in_uint16_le(); /* Pad */
-            uint16_t compressionType = stream.in_uint16_le(); /* Compression types */
-            LOG(LOG_INFO, "General caps::compression types %x\n", compressionType);
-            /* Receiving rdp_5 extra flags supported for RDP 5.0 and later versions*/
-            uint16_t extraflags = stream.in_uint16_le();
-            LOG(LOG_INFO, "General caps::extra flags %x\n", extraflags);
-            TODO(" strange: causality seems inverted")
-            if (extraflags == 0){ use_rdp5 = 0; }
-        }
-
-// 2.2.7.1.2    Bitmap Capability Set (TS_BITMAP_CAPABILITYSET)
-// ============================================================
-
-//  The TS_BITMAP_CAPABILITYSET structure is used to advertise bitmap-oriented
-//    characteristics and is based on the capability set specified in [T128]
-// section 8.2.4. This capability is sent by both client and server.
-
-// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
-//   capability set. This field MUST be set to CAPSTYPE_BITMAP (2).
-
-// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
-//   of the capability data, including the size of the capabilitySetType and
-//   lengthCapability fields.
-
-// preferredBitsPerPixel (2 bytes): A 16-bit, unsigned integer. Color depth of
-//   the remote session. In RDP 4.0 and 5.0, this field MUST be set to 8 (even
-//   for a 16-color session).
-
-// receive1BitPerPixel (2 bytes): A 16-bit, unsigned integer. Indicates whether
-//   the client can receive 1 bpp. This field is ignored and SHOULD be set to
-//   TRUE (0x0001).
-
-// receive4BitsPerPixel (2 bytes): A 16-bit, unsigned integer. Indicates whether
-//   the client can receive 4 bpp. This field is ignored and SHOULD be set to
-//   TRUE (0x0001).
-
-// receive8BitsPerPixel (2 bytes): A 16-bit, unsigned integer. Indicates whether
-//    the client can receive 8 bpp. This field is ignored and SHOULD be set to
-//    TRUE (0x0001).
-
-// desktopWidth (2 bytes): A 16-bit, unsigned integer. The width of the desktop
-//   in the remote session.
-
-// desktopHeight (2 bytes): A 16-bit, unsigned integer. The height of the
-//   desktop in the remote session.
-
-// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
-//   field are ignored.
-
-// desktopResizeFlag (2 bytes): A 16-bit, unsigned integer. Indicates whether
-//   desktop resizing is supported.
-//   0x0000 FALSE  Desktop resizing is not supported.
-//   0x0001 TRUE   Desktop resizing is supported.
-//   If a desktop resize occurs, the server will deactivate the session (see
-//   section 1.3.1.3), and on session reactivation will specify the new desktop
-//   size in the desktopWidth and desktopHeight fields in the Bitmap Capability
-//   Set, along with a value of TRUE for the desktopResizeFlag field. The client
-//   should check these sizes and, if different from the previous desktop size,
-//   resize any windows to support this size.
-
-// bitmapCompressionFlag (2 bytes): A 16-bit, unsigned integer. Indicates
-//   whether the client supports bitmap compression. RDP requires bitmap
-//   compression and hence this field MUST be set to TRUE (0x0001). If it is not
-//   set to TRUE, the server MUST NOT continue with the connection.
-
-// highColorFlags (1 byte): An 8-bit, unsigned integer. Client support for
-//   16 bpp color modes. This field is ignored and SHOULD be set to 0.
-
-// drawingFlags (1 byte): An 8-bit, unsigned integer. Flags describing support
-//   for 32 bpp bitmaps.
-// 0x02 DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY Indicates support for lossy compression of 32 bpp bitmaps by reducing color-fidelity on a per-pixel basis.
-// 0x04 DRAW_ALLOW_COLOR_SUBSAMPLING      Indicates support for chroma subsampling when compressing 32 bpp bitmaps.
-// 0x08 DRAW_ALLOW_SKIP_ALPHA             Indicates that the client supports the removal of the alpha-channel when compressing 32 bpp bitmaps. In this case the alpha is assumed to be 0xFF, meaning the bitmap is opaque.
-// Compression of 32 bpp bitmaps is specified in [MS-RDPEGDI] section 3.1.9.
-
-// multipleRectangleSupport (2 bytes): A 16-bit, unsigned integer. Indicates
-//   whether the client supports the use of multiple bitmap rectangles. RDP
-//   requires the use of multiple bitmap rectangles and hence this field MUST be
-//   set to TRUE (0x0001). If it is not set to TRUE, the server MUST NOT
-//   continue with the connection.
-
-// pad2octetsB (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field are ignored.
-
-        /* Process a bitmap capability set */
-        void process_bitmap_caps(Stream & stream)
-        {
-            this->bpp = stream.in_uint16_le();
-            stream.skip_uint8(6);
-            int width = stream.in_uint16_le();
-            int height = stream.in_uint16_le();
-            /* todo, call reset if needed and use width and height */
-            LOG(LOG_INFO, "Server bitmap caps (%dx%dx%d) [bpp=%d] ok\n", width, height, bpp, this->bpp);
-        }
-
 
         void process_server_caps(Stream & stream, int len, int use_rdp5)
         {
@@ -2510,7 +2657,7 @@ struct mod_rdp : public client_mod {
 
         this->use_rdp5 = 1;
         if(!this->use_rdp5){
-            LOG(LOG_INFO, "send login info (RDP4-style) %s:%s\n",this->domain, this->username);
+            LOG(LOG_INFO, "send login info (RDP4-style) %s:%s",this->domain, this->username);
         }
         else {
             LOG(LOG_INFO, "send extended login info (RDP5-style) %x %s:%s\n",flags,
@@ -2558,7 +2705,7 @@ struct mod_rdp : public client_mod {
 
             stream.out_uint16_le(0);
             stream.out_uint16_le(0);
-            this->use_rdp5 = 0;
+//            this->use_rdp5 = 0;
         }
 
         sec_out.end();
