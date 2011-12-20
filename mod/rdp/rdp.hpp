@@ -173,7 +173,7 @@ struct rdp_orders {
             // can't happen, ensured by caller
             LOG(LOG_ERR, "Unexpected header type %u in rdp_orders_bmp_cache", header.type);
         }
-        
+
         #warning add cache_id, cache_idx range check, and also size check based on cache size by type and uncompressed bitmap size
         if (this->cache_bitmap[bmp_cache_item.cache_id][bmp_cache_item.cache_idx]) {
             delete this->cache_bitmap[bmp_cache_item.cache_id][bmp_cache_item.cache_idx];
@@ -617,7 +617,7 @@ struct mod_rdp : public client_mod {
         }
 
     }
-    
+
     void send_to_channel(
                 const McsChannelItem & channel,
                 uint8_t * data,
@@ -631,7 +631,7 @@ struct mod_rdp : public client_mod {
 
         #warning merge with Front::send_to_channel, the only difference now is the crypt level, that is set to 2 here and is as client_info says on front side
         SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
-        
+
         stream.out_uint32_le(length);
         stream.out_uint32_le(flags);
         if (channel.flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -819,8 +819,7 @@ struct mod_rdp : public client_mod {
                                 this->trans,
                                 this->userid,
                                 context.get(STRAUTHID_TARGET_PASSWORD),
-                                rdp5_performanceflags,
-                                this->use_rdp5);
+                                rdp5_performanceflags);
 
             this->state = MOD_RDP_GET_LICENSE;
         }
@@ -916,7 +915,9 @@ struct mod_rdp : public client_mod {
             if ((mcs_in.opcode >> 2) != MCS_SDIN) {
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
+            LOG(LOG_INFO, "Sec layer");
             SecIn sec(stream, this->decrypt);
+            LOG(LOG_INFO, "Licence layer");
 
             if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
                 uint8_t tag = stream.in_uint8();
@@ -924,7 +925,7 @@ struct mod_rdp : public client_mod {
                 switch (tag) {
                 case LICENCE_TAG_DEMAND:
                     LOG(LOG_INFO, "LICENCE_TAG_DEMAND");
-                    this->lic_layer.rdp_lic_process_demand(trans, stream, hostname, username, userid, licence_issued);
+                    this->lic_layer.rdp_lic_process_demand(trans, stream, hostname, username, userid, licence_issued, this->encrypt);
                     break;
                 case LICENCE_TAG_AUTHREQ:
                     LOG(LOG_INFO, "LICENCE_TAG_AUTHREQ");
@@ -951,7 +952,8 @@ struct mod_rdp : public client_mod {
                 throw Error(ERR_SEC_EXPECTED_LICENCE_NEGOTIATION_PDU);
             }
             #warning we haven't actually read all the actual data available, hence we can't check end. Implement full decoding and activate it.
-    //        in_tpdu.end();
+            stream.p = stream.end;
+            in_tpdu.end();
             if (res){
                 this->state = MOD_RDP_CONNECTED;
             }
@@ -1067,9 +1069,9 @@ struct mod_rdp : public client_mod {
                 uint32_t length = stream.in_uint32_le();
                 int flags = stream.in_uint32_le();
                 size_t chunk_size = stream.end - stream.p;
-               
+
                 this->send_to_front_channel(mod_channel.name, stream.p, length, chunk_size, flags);
-                
+
                 stream.p = stream.end;
             }
             else {
@@ -1194,10 +1196,10 @@ struct mod_rdp : public client_mod {
                             len_src_descriptor = stream.in_uint16_le();
                             len_combined_caps = stream.in_uint16_le();
                             stream.skip_uint8(len_src_descriptor);
-                            this->process_server_caps(stream, len_combined_caps, this->use_rdp5);
+                            this->process_server_caps(stream, len_combined_caps);
                             #warning we should be able to pack all the following sends to the same X224 TPDU, instead of creating a different one for each send
                             LOG(LOG_INFO, "Sending confirm active PDU");
-                            this->send_confirm_active(mod, this->use_rdp5);
+                            this->send_confirm_active(mod);
                             LOG(LOG_INFO, "Sending synchronize");
                             this->send_synchronise();
                             LOG(LOG_INFO, "Sending control cooperate");
@@ -1339,7 +1341,7 @@ struct mod_rdp : public client_mod {
 
 
 
-        void out_general_caps(Stream & stream, int use_rdp5)
+        void out_general_caps(Stream & stream)
         {
             stream.out_uint16_le(RDP_CAPSET_GENERAL);
             stream.out_uint16_le(RDP_CAPLEN_GENERAL);
@@ -1348,7 +1350,7 @@ struct mod_rdp : public client_mod {
             stream.out_uint16_le(0x200); /* Protocol version */
             stream.out_uint16_le(0); /* Pad */
             stream.out_uint16_le(0); /* Compression types */
-            stream.out_uint16_le(use_rdp5 ? 0x40d : 0);
+            stream.out_uint16_le(this->use_rdp5 ? 0x40d : 0);
             stream.out_uint16_le(0); /* Update capability */
             stream.out_uint16_le(0); /* Remote unshare capability */
             stream.out_uint16_le(0); /* Compression level */
@@ -1493,7 +1495,7 @@ struct mod_rdp : public client_mod {
         }
 
 
-        void send_confirm_active(client_mod * mod, int use_rdp5) throw(Error)
+        void send_confirm_active(client_mod * mod) throw(Error)
         {
             LOG(LOG_INFO, "Sending confirm active to server\n");
 
@@ -1558,13 +1560,13 @@ struct mod_rdp : public client_mod {
             stream.out_uint16_le(0xd); /* num_caps */
             stream.out_clear_bytes(2); /* pad */
 
-            this->out_general_caps(stream, use_rdp5);
+            this->out_general_caps(stream);
             this->out_bitmap_caps(stream);
             this->out_order_caps(stream);
 
             #warning two identical calls in a row, this is strange, check documentation
             this->out_bmpcache_caps(stream);
-            if(use_rdp5 == 0){
+            if(this->use_rdp5 == 0){
                 this->out_bmpcache_caps(stream);
             }
             else {
@@ -1856,15 +1858,11 @@ struct mod_rdp : public client_mod {
             LOG(LOG_INFO, "process disconnect pdu : code = %8x\n", errorInfo);
         }
 
-        void process_general_caps(Stream & stream, int & use_rdp5)
+        void process_general_caps(Stream & stream)
         {
             stream.skip_uint8(10);
             /* Receiving rdp_5 extra flags supported for RDP 5.0 and later versions*/
             int extraflags = stream.in_uint16_le();
-            #warning strange: causality seems inverted
-            if (extraflags == 0){
-                use_rdp5 = 0;
-            }
             LOG(LOG_INFO, "process general caps %d", extraflags);
         }
 
@@ -1953,7 +1951,7 @@ struct mod_rdp : public client_mod {
         }
 
 
-        void process_server_caps(Stream & stream, int len, int use_rdp5)
+        void process_server_caps(Stream & stream, int len)
         {
             int n;
             int ncapsets;
@@ -1974,7 +1972,7 @@ struct mod_rdp : public client_mod {
                 next = (stream.p + capset_length) - 4;
                 switch (capset_type) {
                 case RDP_CAPSET_GENERAL:
-                    this->process_general_caps(stream, use_rdp5);
+                    this->process_general_caps(stream);
                     break;
                 case RDP_CAPSET_BITMAP:
                     this->process_bitmap_caps(stream);
@@ -2315,11 +2313,11 @@ struct mod_rdp : public client_mod {
                 Bitmap bitmap(bpp, &this->orders.global_palette, width, height, data, size, true);
 
                 if (line_size != bitmap.line_size(bpp)){
-                    LOG(LOG_WARNING, "Unexpected line_size in bitmap received [%u != %u] width=%u height=%u bpp=%u", 
+                    LOG(LOG_WARNING, "Unexpected line_size in bitmap received [%u != %u] width=%u height=%u bpp=%u",
                         line_size, bitmap.line_size(bpp), width, height, bpp);
                 }
                 if (line_size != bitmap.line_size(bpp)){
-                    LOG(LOG_WARNING, "Unexpected final_size in bitmap received [%u != %u] width=%u height=%u bpp=%u", 
+                    LOG(LOG_WARNING, "Unexpected final_size in bitmap received [%u != %u] width=%u height=%u bpp=%u",
                         final_size, bitmap.bmp_size(bpp), width, height, bpp);
                 }
 
@@ -2332,7 +2330,7 @@ struct mod_rdp : public client_mod {
                 Bitmap bitmap(bpp, &this->orders.global_palette, width, height, data, bufsize);
 
                 if (bufsize != bitmap.bmp_size(bpp)){
-                    LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u", 
+                    LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u",
                         bufsize, bitmap.bmp_size(bpp), width, height, bpp);
                 }
 
@@ -2357,12 +2355,12 @@ struct mod_rdp : public client_mod {
         stream.out_uint32_le(std::min(client_info.cache1_entries, (uint32_t)2000));
         stream.out_uint32_le(std::min(client_info.cache2_entries, (uint32_t)2000));
         stream.out_uint32_le(std::min(client_info.cache3_entries, (uint32_t)2000));
- 
+
         stream.out_clear_bytes(20);	/* other bitmap caches not used */
     }
 
 
-    void send_client_info_pdu(Transport * trans, int userid, const char * password, int rdp5_performanceflags, int & use_rdp5)
+    void send_client_info_pdu(Transport * trans, int userid, const char * password, int rdp5_performanceflags)
     {
 
         int flags = RDP_LOGON_NORMAL | ((strlen(password) > 0)?RDP_LOGON_AUTO:0);
@@ -2379,66 +2377,38 @@ struct mod_rdp : public client_mod {
         McsOut sdrq_out2(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, 2, SEC_LOGON_INFO | SEC_ENCRYPT, this->encrypt);
 
-        if(!use_rdp5){
-            LOG(LOG_INFO, "send login info (RDP4-style) %s:%s\n",this->domain, this->username);
-
-            stream.out_uint32_le(0);
-            stream.out_uint32_le(flags);
-            stream.out_uint16_le(2 * strlen(this->domain));
-            stream.out_uint16_le(2 * strlen(this->username));
-            stream.out_uint16_le(2 * strlen(password));
-            stream.out_uint16_le(2 * strlen(this->program));
-            stream.out_uint16_le(2 * strlen(this->directory));
-            stream.out_unistr(this->domain);
-            stream.out_unistr(this->username);
+        stream.out_uint32_le(0);
+        stream.out_uint32_le(flags);
+        stream.out_uint16_le(2 * strlen(this->domain));
+        stream.out_uint16_le(2 * strlen(this->username));
+        stream.out_uint16_le(2 * strlen(password));
+        stream.out_uint16_le(2 * strlen(this->program));
+        stream.out_uint16_le(2 * strlen(this->directory));
+        stream.out_unistr(this->domain);
+        stream.out_unistr(this->username);
+        if (flags & RDP_LOGON_AUTO){
             stream.out_unistr(password);
-            stream.out_unistr(this->program);
-            stream.out_unistr(this->directory);
+        }
+        else{
+            stream.out_uint16_le(0);
+        }
+        stream.out_unistr(this->program);
+        stream.out_unistr(this->directory);
+
+        if(!this->use_rdp5){
+            LOG(LOG_INFO, "send login info (RDP4-style) %s:%s",this->domain, this->username);
         }
         else {
-            LOG(LOG_INFO, "send login info (RDP5-style) %x %s:%s\n",flags,
+            LOG(LOG_INFO, "send extended login info (RDP5-style) %x %s:%s\n",flags,
                 this->domain,
                 this->username);
+        }
+        if (this->use_rdp5){
+            // The WAB does not send it's IP to server. Is it what we want ?
+            // rdesktop sends the faked IP below
+            const char * ip_source = "10.10.9.161";
 
-            flags |= RDP_LOGON_BLOB;
-            stream.out_uint32_le(0);
-            stream.out_uint32_le(flags);
-            stream.out_uint16_le(2 * strlen(this->domain));
-            stream.out_uint16_le(2 * strlen(this->username));
-            if (flags & RDP_LOGON_AUTO){
-                stream.out_uint16_le(2 * strlen(password));
-            }
-            if (flags & RDP_LOGON_BLOB && ! (flags & RDP_LOGON_AUTO)){
-                stream.out_uint16_le(0);
-            }
-            stream.out_uint16_le(2 * strlen(this->program));
-            stream.out_uint16_le(2 * strlen(this->directory));
-            if ( 0 < (2 * strlen(this->domain))){
-                stream.out_unistr(this->domain);
-            }
-            else {
-                stream.out_uint16_le(0);
-            }
-            stream.out_unistr(this->username);
-            if (flags & RDP_LOGON_AUTO){
-                stream.out_unistr(password);
-            }
-            else{
-                stream.out_uint16_le(0);
-            }
-            if (0 < 2 * strlen(this->program)){
-                stream.out_unistr(this->program);
-            }
-            else {
-                stream.out_uint16_le(0);
-            }
-            if (2 * strlen(this->directory) < 0){
-                stream.out_unistr(this->directory);
-            }
-            else{
-                stream.out_uint16_le(0);
-            }
-            stream.out_uint16_le(2);
+            stream.out_uint16_le(0x00002);
             stream.out_uint16_le(2 * strlen(ip_source) + 2);
             stream.out_unistr(ip_source);
             stream.out_uint16_le(2 * strlen("C:\\WINNT\\System32\\mstscax.dll") + 2);
@@ -2464,10 +2434,16 @@ struct mod_rdp : public client_mod {
             stream.out_uint32_le(2);
             stream.out_uint32_le(0);
             stream.out_uint32_le(0xffffffc4);
-            stream.out_uint32_le(0xfffffffe);
+
+            stream.out_uint32_le(0xfffffffe); // session id
+
             stream.out_uint32_le(rdp5_performanceflags);
+
             stream.out_uint16_le(0);
-            use_rdp5 = 0;
+
+            stream.out_uint16_le(0);
+            stream.out_uint16_le(0);
+            this->use_rdp5 = 0;
         }
 
         sec_out.end();

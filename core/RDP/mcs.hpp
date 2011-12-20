@@ -988,7 +988,7 @@ static inline void send_mcs_connect_initial_pdu_with_gcc_conference_create_reque
     LOG(LOG_INFO, "Sending Client Core Data to remote server\n");
     stream.out_uint16_le(212); /* length */
     LOG(LOG_INFO, "core::header::length = %u\n", 212);
-    stream.out_uint32_le(0x00080004); // RDP version. 1 == RDP4, 4 == RDP5.
+    stream.out_uint32_le(0x00080001); // RDP version. 1 == RDP4, 4 == RDP5.
     LOG(LOG_INFO, "core::header::version (0x00080004 = RDP 5.0, 5.1, 5.2, and 6.0 clients)");
     stream.out_uint16_le(width);
     LOG(LOG_INFO, "core::desktopWidth = %u\n", width);
