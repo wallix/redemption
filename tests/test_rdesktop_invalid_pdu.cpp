@@ -51,10 +51,10 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     BOOST_CHECK_EQUAL(3, tpdu.tpkt.version);
     BOOST_CHECK_EQUAL(61, tpdu.tpkt.len);
     BOOST_CHECK_EQUAL(2, tpdu.tpdu_hdr.LI);
-    BOOST_CHECK_EQUAL(X224Packet::DT_TPDU, tpdu.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL((uint8_t)X224Packet::DT_TPDU, (uint8_t)tpdu.tpdu_hdr.code);
 
     McsIn mcs_in(stream);
-    BOOST_CHECK_EQUAL((uint8_t)MCS_SDRQ, mcs_in.opcode >> 2);
+    BOOST_CHECK_EQUAL((uint8_t)MCS_SDRQ, (uint8_t)mcs_in.opcode >> 2);
     BOOST_CHECK_EQUAL(0, mcs_in.user_id);
     BOOST_CHECK_EQUAL((uint16_t)MCS_GLOBAL_CHANNEL, (uint16_t)mcs_in.chan_id);
     BOOST_CHECK_EQUAL(0x70, mcs_in.magic_0x70);
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
     BOOST_CHECK_EQUAL(3, tpdu.tpkt.version);
     BOOST_CHECK_EQUAL(333, tpdu.tpkt.len);
     BOOST_CHECK_EQUAL(2, tpdu.tpdu_hdr.LI);
-    BOOST_CHECK_EQUAL(X224Packet::DT_TPDU, tpdu.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL((uint8_t)X224Packet::DT_TPDU, (uint8_t)tpdu.tpdu_hdr.code);
 
     McsIn mcs_in(stream);
     BOOST_CHECK_EQUAL((uint8_t)MCS_SDRQ, mcs_in.opcode >> 2);
@@ -498,6 +498,6 @@ BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
     stream.skip_uint8(2);
 
 // Rdesktop advertise an overly large buffer, but this is not a problem
-//    BOOST_CHECK_EQUAL((uint32_t)318, stream.p - start_of_logon_info);
+    BOOST_CHECK((uint32_t)318 >= stream.p - start_of_logon_info);
 
 }

@@ -643,12 +643,9 @@ enum {
 
     void process_logon_info(Stream & stream) throw (Error)
     {
-        LOG(LOG_DEBUG, "server_sec_process_logon_info\n");
-        uint8_t * start_of_logon = stream.p;
         uint32_t codepage = stream.in_uint32_le();
-        LOG(LOG_DEBUG, "codepage=%u", codepage);
         uint32_t flags = stream.in_uint32_le();
-        LOG(LOG_DEBUG, "flags=%4x", flags);
+        LOG(LOG_DEBUG, "process logon info : codepage=%x flags=%4x", codepage, flags);
         if ((flags & RDP_LOGON_NORMAL) != RDP_LOGON_NORMAL) /* 0x33 */
         {                                                   /* must be or error */
             throw Error(ERR_SEC_PROCESS_LOGON_UNKNOWN_FLAGS);
@@ -677,13 +674,8 @@ enum {
         unsigned len_password = stream.in_uint16_le() + 2;
         unsigned len_program = stream.in_uint16_le() + 2;
         unsigned len_directory = stream.in_uint16_le() + 2;
-//        LOG(LOG_DEBUG, "cbDomain=%u cbUser=%u cbPassword=%u cbProgram=%u cbDir=%u",
-//            len_domain, len_user, len_password, len_program, len_directory);
-
         stream.in_uni_to_ascii_str(this->domain, len_domain);
-//        LOG(LOG_DEBUG, "setting domain to %s\n", this->domain);
         stream.in_uni_to_ascii_str(this->username, len_user);
-//        LOG(LOG_DEBUG, "setting username to %s\n", this->username);
 
         if (flags & RDP_LOGON_AUTO) {
             stream.in_uni_to_ascii_str(this->password, len_password);
@@ -691,38 +683,23 @@ enum {
             stream.skip_uint8(len_password);
         }
         stream.in_uni_to_ascii_str(this->program, len_program);
-//        LOG(LOG_DEBUG, "setting program to %s\n", this->program);
         stream.in_uni_to_ascii_str(this->directory, len_directory);
-//        LOG(LOG_DEBUG, "setting directory to %s\n", this->directory);
-
-//        LOG(LOG_DEBUG, "Extended Header, reading at: %u\n", (unsigned)(stream.p - start_of_logon));
 
         if (flags & RDP_LOGON_BLOB) {
             LOG(LOG_DEBUG, "RDP-5 Style logon");
             stream.skip_uint8(2);
             unsigned len_ip = stream.in_uint16_le();
             char tmpdata[256];
-//            LOG(LOG_DEBUG, "Extended Header, ip at: %u len_ip=%u\n", (unsigned)(stream.p - start_of_logon), len_ip);
             stream.in_uni_to_ascii_str(tmpdata, len_ip);
-//            LOG(LOG_DEBUG, "Extended Header, ip=%s\n", tmpdata);
-
             unsigned len_dll = stream.in_uint16_le();
-//            LOG(LOG_DEBUG, "Extended Header, dll at: %u lendll=%u\n", (unsigned)(stream.p - start_of_logon), len_dll);
             stream.in_uni_to_ascii_str(tmpdata, len_dll);
-
-//            LOG(LOG_DEBUG, "Extended Header, timeinfo at: %u\n", (unsigned)(stream.p - start_of_logon));
             stream.skip_uint8(172); /* skip time data */
-
-//            LOG(LOG_DEBUG, "Extended Header, performance flags at: %u\n", (unsigned)(stream.p - start_of_logon));
-//            LOG(LOG_DEBUG, "Reading at: %u\n", (unsigned)(stream.p - start_of_logon));
-            
-//            LOG(LOG_DEBUG, "Reading performance flags");
             this->rdp5_performanceflags = stream.in_uint32_le();
             // more data here
+            TODO("We should take care of remaining data")
         }
-        // in some cases, not all data are consumed, skip remaining
+        // not all data are consumed, skip remaining for now
         stream.p = stream.end;
-//        LOG(LOG_DEBUG, "server_sec_process_logon_info done\n");
     }
 
 };

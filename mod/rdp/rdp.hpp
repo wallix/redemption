@@ -492,9 +492,6 @@ struct mod_rdp : public client_mod {
         int rdp_bpp = this->gd.get_front_bpp();
         char * hostname = this->hostname;
 
-
-        int & userid = this->userid;
-
         switch (this->state){
         case MOD_RDP_CONNECTING:
             LOG(LOG_INFO, "Connection Initiation");

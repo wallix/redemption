@@ -626,6 +626,8 @@ struct mod_vnc : public client_mod {
             uint16_t type = stream.in_uint16_le();
             uint16_t status = stream.in_uint16_le();
             uint32_t length = stream.in_uint32_le();
+            LOG(LOG_DEBUG, "lib_process_channel_data: type=%u status=%u length=%u",
+                (unsigned)type, (unsigned)status, (unsigned)length);
             switch (type) {
             case 2:
             { /* CLIPRDR_FORMAT_ANNOUNCE */

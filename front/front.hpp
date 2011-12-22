@@ -2056,14 +2056,17 @@ public:
             }
             break;
         case PDUTYPE2_SYNCHRONIZE:
-            if (this->ini->globals.debug.front){
-                LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");
-            }
-            this->send_synchronize();
-            this->up_and_running = 1;
             {
                 uint16_t messageType = stream.in_uint16_le();
                 uint16_t controlId = stream.in_uint16_le();
+                if (this->ini->globals.debug.front){
+                    LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE"
+                                  " messageType=%u controlId=%u",
+                                  (unsigned)messageType,
+                                  (unsigned)controlId);
+                }
+                this->send_synchronize();
+                this->up_and_running = 1;
             }
             break;
         case PDUTYPE2_REFRESH_RECT:
@@ -2076,7 +2079,9 @@ public:
                 int cx = (right - left) + 1;
                 int cy = (bottom - top) + 1;
                 if (this->ini->globals.debug.front){
-                    LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT left=%u top=%u right=%u bottom=%u cx=%u cy=%u", left, top, right, bottom, cx, cy);
+                    LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT"
+                        " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",
+                        left, top, right, bottom, cx, cy);
                 }
                 cb.rdp_input_invalidate(Rect(left, top, cx, cy));
             }
