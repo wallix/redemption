@@ -1544,6 +1544,200 @@ public:
         tpdu.send(trans);
     }
 
+
+// 2.2.1.9 Server MCS Channel Join Confirm PDU
+// -------------------------------------------
+// The MCS Channel Join Confirm PDU is an RDP Connection Sequence
+// PDU sent from server to client during the Channel Connection
+// phase (see section 1.3.1.1). It is sent as a response to the MCS
+// Channel Join Request PDU (section 2.2.1.8).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+//   section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+//  [X224] section 13.7.
+
+// mcsCJcf (8 bytes): PER-encoded MCS Domain PDU which encapsulates
+//  an MCS Channel Join Confirm PDU structure, as specified in
+//  [T125] (the ASN.1 structure definitions are given in [T125]
+//  section 7, parts 6 and 10).
+
+// ChannelJoinConfirm ::= [APPLICATION 15] IMPLICIT SEQUENCE
+// {
+//   result Result,
+//   initiator UserId,
+//   requested ChannelId, -- may be zero
+//   channelId ChannelId OPTIONAL
+// }
+
+// 11.22 ChannelJoinConfirm
+// ------------------------
+
+// ChannelJoinConfirm is generated at a higher MCS provider upon receipt of
+// ChannelJoinRequest. Routed back to the requesting provider, it generates an
+// MCS-CHANNEL-JOIN confirm.
+
+// Table 11-22/T.125 – ChannelJoinConfirm MCSPDU
+// +-----------------------+------------------------+--------------------------+
+// | Contents              |       Source           |         Sink             |
+// +-----------------------+------------------------+--------------------------+
+// | Result                |   Higher provider      |        Confirm           |
+// +-----------------------+------------------------+--------------------------+
+// | Initiator             |   Higher provider      |        MCSPDU routing    |
+// +-----------------------+------------------------+--------------------------+
+// | Requested             |   Higher provider      |        Confirm           |
+// +-----------------------+------------------------+--------------------------+
+// | Channel Id (optional) |   Higher provider      |        Confirm           |
+// +-----------------------+------------------------+--------------------------+
+
+
+// ChannelJoinConfirm contains a joined channel id if and only if the result is
+// successful.
+
+
+// The channel id requested is the same as in ChannelJoinRequest. This helps
+// the initiating attachment relate MCS-CHANNEL-JOIN confirm to an antecedent
+// request. Since ChannelJoinRequest need not rise to the top provider,
+// confirms may occur out of order.
+
+// If the result is successful, ChannelJoinConfirm joins the receiving MCS
+// provider to the specified channel. Thereafter, higher providers shall route
+// to it any data that users send over the channel. A provider shall remain
+// joined to a channel as long as any of its attachments or subordinate
+// providers does. To leave the channel, a provider shall generate
+// ChannelLeaveRequest.
+
+// Providers that receive a successful ChannelJoinConfirm shall enter the
+// channel id into their information base. If not already there, the channel id
+// shall be given type static or assigned, depending on its range.
+
+// ChannelJoinConfirm shall be forwarded in the direction of the initiating user
+// id. If the user id is unreachable because an MCS connection no longer exists,
+// the provider shall decide whether it has reason to remain joined to the
+// channel. If not, it shall generate ChannelLeaveRequest.
+
+    void send_mcs_channel_join_confirm_pdu(Transport * trans, uint16_t userid, uint16_t chanid)
+    {
+        Stream stream(32768);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        stream.out_uint8((MCS_CJCF << 2) | 2);
+        stream.out_uint8(0);
+        stream.out_uint16_be(userid);
+        stream.out_uint16_be(chanid);
+        TODO("this should be sent only if different from requested chan_id")
+        stream.out_uint16_be(chanid);
+        tpdu.end();
+        tpdu.send(trans);
+    }
+
+
+// 2.2.1.8 Client MCS Channel Join Request PDU
+// -------------------------------------------
+// The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
+// from client to server during the Channel Connection phase (see section
+// 1.3.1.1). It is sent after receiving the MCS Attach User Confirm PDU
+// (section 2.2.1.7). The client uses the MCS Channel Join Request PDU to
+// join the user channel obtained from the Attach User Confirm PDU, the
+// I/O channel and all of the static virtual channels obtained from the
+// Server Network Data structure (section 2.2.1.4.4).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+//                     section 13.7.
+
+// mcsCJrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an
+//                    MCS Channel Join Request structure as specified in
+//                    [T125] sections 10.19 and I.3 (the ASN.1 structure
+//                    definitions are given in [T125] section 7, parts 6
+//                    and 10).
+
+// ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+// {
+//     initiator UserId
+//     channelId ChannelId
+//               -- may be zero
+// }
+
+
+// 11.21 ChannelJoinRequest
+// ------------------------
+
+// ChannelJoinRequest is generated by an MCS-CHANNEL-JOIN request. If valid, it
+// rises until it reaches an MCS provider with enough information to generate a
+// ChannelJoinConfirm reply. This may be the top MCS provider.
+
+// Table 11-21/T.125 – ChannelJoinRequest MCSPDU
+// +-----------------+-------------------------------+------------------------+
+// | Contents        |           Source              |           Sink         |
+// +-----------------+-------------------------------+------------------------+
+// | Initiator       |      Requesting Provider      |       Higher provider  |
+// +-----------------+-------------------------------+------------------------+
+// | Channel Id      |      Request                  |       Higher provider  |
+// +-----------------+-------------------------------+------------------------+
+
+
+// The user id of the initiating MCS attachment is supplied by the MCS provider
+// that receives the primitive request. Providers that receive
+// ChannelJoinRequest subsequently shall validate the user id to ensure that it
+// is legitimately assigned to the subtree of origin. If the user id is invalid,
+// the MCSPDU shall be ignored.
+
+// NOTE – This allows for the possibility that ChannelJoinRequest may be racing
+// upward against a purge of the initiating user id flowing down. A provider
+// that receives PurgeChannelsIndication first might receive a
+// ChannelJoinRequest soon thereafter that contains an invalid user id. This is
+// a normal occurrence and is not cause for rejecting the MCSPDU.
+
+// ChannelJoinRequest may rise to an MCS provider that has the requested channel
+// id in its information base. Any such provider, being consistent with the top
+// MCS provider, will agree whether the request should succeed. If the request
+// should fail, the provider shall generate an unsuccessful ChannelJoinConfirm.
+// If it should succeed and the provider is already joined to the same channel,
+// the provider shall generate a successful ChannelJoinConfirm. In these two
+// cases, MCS-CHANNEL-JOIN completes without necessarily visiting the top MCS
+// provider. Otherwise, if the request should succeed but the channel is not yet
+// joined, a provider shall forward ChannelJoinRequest upward.
+
+// If ChannelJoinRequest rises to the top MCS provider, the channel id
+// requested may be zero, which is in no information base because it is an
+// invalid id. If the domain limit on the number of channels in use allows,
+// a new assigned channel id shall be generated and returned in a successful
+// ChannelJoinConfirm. If the channel id requested is in the static range and
+// the domain limit on the number of channels in use allows, the channel id
+// shall be entered into the information base and shall likewise be returned
+// in a successful ChannelJoinConfirm.
+
+// Otherwise, the request will succeed only if the channel id is already in the
+// information base of the top MCS provider. A user id channel can only be
+// joined by the same user. A private channel id can be joined only by users
+// previously admitted by its manager. An assigned channel id can be joined
+// by any user.
+
+    void recv_mcs_channel_join_request_pdu(Transport * trans, uint16_t & userid, uint16_t & chanid){
+        Stream stream(32768);
+        // read tpktHeader (4 bytes = 3 0 len)
+        // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+        X224In in(trans, stream);
+
+        uint8_t opcode = stream.in_uint8();
+        if ((opcode >> 2) != MCS_CJRQ) {
+            LOG(LOG_INFO, "unexpected opcode = %u", opcode);
+            throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
+        }
+        userid = stream.in_uint16_be();
+        chanid = stream.in_uint16_be();
+
+        if (opcode & 2) {
+            stream.skip_uint8(2);
+        }
+
+        in.end();
+    }
+
+
+
     void incoming() throw (Error)
     {
         if (this->verbose){
@@ -1683,14 +1877,13 @@ public:
             if (this->verbose){
                 LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (G): user_id=%u chanid=%u", this->userid, tmp_chanid);
             }
-            send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
+            this->send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
         }
-
 
         {
             uint16_t tmp_userid;
             uint16_t tmp_chanid;
-            recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
+            this->recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
             if (tmp_userid != this->userid){
                 LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
                 throw Error(ERR_MCS_BAD_USERID);
@@ -1702,14 +1895,13 @@ public:
             if (this->verbose){
                 LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (IO): user_id=%u chanid=%u", this->userid, tmp_chanid);
             }
-            send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
+            this->send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
         }
-
 
         for (size_t i = 0 ; i < this->channel_list.size() ; i++){
                 uint16_t tmp_userid;
                 uint16_t tmp_chanid;
-                recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
+                this->recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
                 if (tmp_userid != this->userid){
                     LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
                     throw Error(ERR_MCS_BAD_USERID);
@@ -1721,9 +1913,10 @@ public:
                 if (this->verbose){
                     LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu : user_id=%u chanid=%u", this->userid, tmp_chanid);
                 }
-                send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
+                this->send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
                 this->channel_list.set_chanid(i, tmp_chanid);
         }
+
         if (this->verbose){
             LOG(LOG_INFO, "Front::incoming::RDP Security Commencement");
         }
