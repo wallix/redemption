@@ -761,25 +761,5 @@ struct X224Out : public X224Packet
     }
 };
 
-static inline void recv_x224_connection_request_pdu(Transport * trans)
-{
-    Stream in(8192);
-    X224In crtpdu(trans, in);
-    if (crtpdu.tpdu_hdr.code != ISO_PDU_CR) {
-        LOG(LOG_INFO, "recv x224 connection request PDU failed code=%u", crtpdu.tpdu_hdr.code);
-        throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
-    }
-    crtpdu.end();
-}
-
-
-static inline void send_x224_connection_confirm_pdu(Transport * trans)
-{
-    Stream out(11);
-    X224Out cctpdu(X224Packet::CC_TPDU, out);
-    cctpdu.end();
-    cctpdu.send(trans);
-}
-
 
 #endif
