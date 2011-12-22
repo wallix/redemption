@@ -69,7 +69,7 @@ class StaticCapture : public Drawable
     char path[1024];
 
     StaticCapture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality)
-        : Drawable(width, height, bpp, palette, bmpcache),
+        : Drawable(width, height, bpp, palette, bmpcache, false),
           framenb(0)
     {
         gettimeofday(&this->start, NULL);

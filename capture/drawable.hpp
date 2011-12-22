@@ -200,7 +200,7 @@ public:
                 linetarget += Bpp;
             }
             target += this->full.cx * Bpp;
-            source += align4(rect.cx) * Bpp;
+            source -= align4(rect.cx) * Bpp;
         }
     }
 

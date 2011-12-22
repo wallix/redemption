@@ -26,14 +26,14 @@
 
 
 
-class Capture
+class DummyCapture
 {
     public:
 
     TODO(" fat interface : ugly  find another way")
-    Capture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality) {}
+    DummyCapture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality) {}
 
-    ~Capture(){
+    ~DummyCapture(){
     }
 
     TODO(" fat interface : ugly  find another way")
@@ -50,7 +50,7 @@ class Capture
 };
 
 
-class FutureCapture
+class Capture
 {
     StaticCapture sc;
     NativeCapture nc;
@@ -58,16 +58,15 @@ class FutureCapture
     public:
 
     TODO(" fat interface : ugly  find another way")
-    FutureCapture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality) :
-        sc(width, height, bpp, palette, bmpcache, path, codec_id, video_quality),
-        nc(width, height, bpp, palette, bmpcache, path)
+    Capture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality) :
+        sc(width, height, 24, palette, bmpcache, path, codec_id, video_quality),
+        nc(width, height, 24, palette, bmpcache, path)
     {
     }
 
-    ~FutureCapture(){
+    ~Capture(){
     }
 
-    TODO(" fat interface : ugly  find another way")
     void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
         this->sc.snapshot(x, y, pointer_already_displayed, no_timestamp);

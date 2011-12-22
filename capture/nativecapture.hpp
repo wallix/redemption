@@ -68,10 +68,15 @@ class NativeCapture
         f(-1),
         trans(this->f),
         recorder(&this->trans, NULL) {
-        LOG(LOG_INFO, "Recording to file :%s.wrm", path);
         char tmppath[1024] = {};
-        sprintf(tmppath, "%s.wrm", path);
-        this->f = open(tmppath, O_WRONLY);
+        sprintf(tmppath, "%s.%u.wrm", path, getpid());
+        LOG(LOG_INFO, "Recording to file : %s", tmppath);
+        this->f = open(tmppath, O_WRONLY|O_CREAT, 0666);
+        if (this->f < 0){
+            LOG(LOG_INFO, "Error opening native capture file : %s", strerror(errno));
+            throw Error(ERR_RECORDER_NATIVE_CAPTURE_OPEN_FAILED);
+        }
+
         this->trans.fd = this->f;
         this->inter_frame_interval = 1000000; // 1 000 000 us is 1 sec (default)
     }
