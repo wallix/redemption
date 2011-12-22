@@ -125,18 +125,23 @@ Q - Why are there so many #pragma messages when compiling ReDemPtion ?
 Because we put them there to avoid forgetting foreseen troubles. It also
 avoid stopping current coding to fix every bit of suspicious code on the fly,
 but to keep some physical trace (and show to readers) that some parts of the
-code or of the design are indeed suspicious.
+code or of the design are indeed suspicious. 
+
 The final goal is to remove them all, but we strongly believe that potential
 problems or architecture defects should not go unnoticed, even when compiler
 can't detect them.
+
 Our code contains more or less 250 of such warnings, inserted by hand.
 When compiling you see them several times as we choose a special "headers only"
 coding style. Why we did so is another question.
 
-If you want to silent these messages, just set environment variable SILENT,
-or compile using:
+You only see those messages if environment variable VERBOSE is defined. If not,
+then the compiling process will be quite silent (default mode used to be the
+other way, but now that has changed).
 
- $ SILENT=1 bjam
+If you want to see internal warnings, just define VERBOSE or compile using:
+
+ $ VERBOSE=1 bjam
 
 
 Q - Why did you choose this special "headers only" coding style ?

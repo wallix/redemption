@@ -26,7 +26,7 @@
 
 #include <string.h>
 
-#ifdef SILENT
+#ifndef VERBOSE
 #define TODO(x)
 #else
 #define DO_PRAGMA(x) _Pragma (#x)
