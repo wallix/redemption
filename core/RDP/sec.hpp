@@ -626,9 +626,10 @@ class SecOut
     uint8_t * pdata;
     uint32_t flags;
     CryptContext & crypt;
+    uint32_t verbose;
     public:
-    SecOut(Stream & stream, uint32_t flags, CryptContext & crypt)
-        : stream(stream), pdata(stream.p+12), flags(flags), crypt(crypt)
+    SecOut(Stream & stream, uint32_t flags, CryptContext & crypt, uint32_t verbose = 0)
+        : stream(stream), pdata(stream.p+12), flags(flags), crypt(crypt), verbose(verbose)
     {
         LOG(LOG_INFO, "SecOut(flags=%u)", flags);
         if (this->flags){
@@ -642,8 +643,10 @@ class SecOut
     void end(){
         if ((this->flags & SEC_ENCRYPT)||(this->flags & 0x0400)){
             int datalen = this->stream.p - this->pdata;
-            // dump before encryption
-            hexdump((char*)this->pdata, datalen);
+            if (this->verbose >= 0x80){
+                LOG(LOG_INFO, "Encrypting %u bytes", datalen);
+                hexdump((char*)this->pdata, datalen);
+            }
             this->crypt.sign(this->pdata - 8, 8, this->pdata, datalen);
             this->crypt.encrypt(this->pdata, datalen);
         }
@@ -655,7 +658,9 @@ class SecIn
 {
     public:
     uint32_t flags;
-    SecIn(Stream & stream, CryptContext & crypt)
+    uint32_t verbose;
+    SecIn(Stream & stream, CryptContext & crypt, uint32_t verbose = 0)
+        : verbose(verbose)
     {
         this->flags = stream.in_uint32_le();
         if ((this->flags & SEC_ENCRYPT)  || (this->flags & 0x0400)){
@@ -664,14 +669,19 @@ class SecIn
             TODO(" shouldn't we check signature ?")
             stream.skip_uint8(8); /* signature */
             // decrypting to the end of tpdu
-            LOG(LOG_DEBUG, "Receiving encrypted TPDU");
-            hexdump((char*)stream.data, stream.end - stream.data);
-
-//            LOG(LOG_DEBUG, "Crypt context is:");
-//            crypt.dump();
+            if (this->verbose >= 0x200){
+                LOG(LOG_DEBUG, "Receiving encrypted TPDU");
+                hexdump((char*)stream.data, stream.end - stream.data);
+            }
+            if (this->verbose >= 0x100){
+                LOG(LOG_DEBUG, "Crypt context is:");
+                crypt.dump();
+            }
             crypt.decrypt(stream.p, stream.end - stream.p);
-            LOG(LOG_DEBUG, "Decrypted %u bytes", datalen);
-            hexdump((char*)pdata, datalen);
+            if (this->verbose >= 0x80){
+                LOG(LOG_DEBUG, "Decrypted %u bytes", datalen);
+                hexdump((char*)pdata, datalen);
+            }
         }
     }
 
