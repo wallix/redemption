@@ -624,17 +624,13 @@ class SecOut
 {
     Stream & stream;
     uint8_t * pdata;
-    uint8_t crypt_level;
     uint32_t flags;
     CryptContext & crypt;
     public:
-    SecOut(Stream & stream, uint8_t crypt_level, uint32_t flags, CryptContext & crypt)
-        : stream(stream), pdata(stream.p+12), crypt_level(crypt_level), flags(flags), crypt(crypt)
+    SecOut(Stream & stream, uint32_t flags, CryptContext & crypt)
+        : stream(stream), pdata(stream.p+12), flags(flags), crypt(crypt)
     {
-        LOG(LOG_INFO, "SecOut(crypt_level=%u, flags=%u)",crypt_level, flags);
-        if (crypt_level == 0){
-            this->flags = 0;
-        }
+        LOG(LOG_INFO, "SecOut(flags=%u)", flags);
         if (this->flags){
             this->stream.out_uint32_le(this->flags);
             if ((this->flags & SEC_ENCRYPT)||(this->flags & 0x0400)){

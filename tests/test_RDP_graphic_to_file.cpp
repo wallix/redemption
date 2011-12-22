@@ -317,7 +317,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_SecondaryOrderCache)
                     BOOST_CHECK_EQUAL((uint16_t)64, bmp->cx);
                     BOOST_CHECK_EQUAL((uint16_t)64, bmp->cy);
                     BOOST_CHECK_EQUAL((uint8_t)24, bmp->original_bpp);
-                    BOOST_CHECK_EQUAL((uint32_t)2984132952, bmp->get_crc());
+                    BOOST_CHECK_EQUAL((uint32_t)2984132952u, (uint32_t)bmp->get_crc());
                 }
                 break;
                 default:

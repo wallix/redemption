@@ -468,7 +468,7 @@ struct RdpLicence {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, 2, SEC_LICENCE_NEG, encrypt);
+        SecOut sec_out(stream, SEC_LICENCE_NEG, encrypt);
 
         stream.out_uint8(LICENCE_TAG_REQUEST);
         stream.out_uint8(2); /* version */

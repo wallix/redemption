@@ -467,9 +467,7 @@ struct mod_rdp : public client_mod {
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, this->userid, channel.chanid);
 
-        TODO(" merge with Front::send_to_channel  the only difference now is the crypt level that is set to 2 here and is as client_info says on front side")
-
-        SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
+        SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
 
         stream.out_uint32_le(length);
         stream.out_uint32_le(flags);
@@ -2422,7 +2420,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
 
         // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1) containing information about the packet. The type subfield of the pduType field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
 
@@ -2803,7 +2801,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
@@ -2825,7 +2823,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
@@ -2845,7 +2843,7 @@ struct mod_rdp : public client_mod {
             Stream stream(65536);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_FONTLIST, this->share_id, RDP::STREAM_MED);
 
@@ -2885,7 +2883,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_INPUT, this->share_id, RDP::STREAM_HI);
 
@@ -2913,7 +2911,7 @@ struct mod_rdp : public client_mod {
                     Stream stream(32768);
                     X224Out tpdu(X224Packet::DT_TPDU, stream);
                     McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-                    SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
+                    SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
                     ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
                     ShareDataOut rdp_data_out(stream, PDUTYPE2_REFRESH_RECT, this->share_id, RDP::STREAM_MED);
 
@@ -3185,7 +3183,7 @@ struct mod_rdp : public client_mod {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out2(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, 2, SEC_LOGON_INFO | SEC_ENCRYPT, this->encrypt);
+        SecOut sec_out(stream, SEC_LOGON_INFO | SEC_ENCRYPT, this->encrypt);
 
         stream.out_uint32_le(0);
         stream.out_uint32_le(flags);

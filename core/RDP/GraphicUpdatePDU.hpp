@@ -154,7 +154,8 @@ struct GraphicsUpdatePDU : public RDPSerializer
         this->stream.init(32768);
         this->tpdu = new X224Out(X224Packet::DT_TPDU, this->stream);
         this->mcs_sdin = new McsOut(this->stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        this->sec_out = new SecOut(this->stream, this->crypt_level, SEC_ENCRYPT, this->encrypt);
+        uint32_t sec_flags = this->crypt_level?SEC_ENCRYPT:0;
+        this->sec_out = new SecOut(this->stream, sec_flags, this->encrypt);
         this->out_control = new ShareControlOut(this->stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         this->out_data = new ShareDataOut(this->stream, PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
 

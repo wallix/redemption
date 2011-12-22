@@ -498,6 +498,6 @@ BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
     stream.skip_uint8(2);
 
 // Rdesktop advertise an overly large buffer, but this is not a problem
-    BOOST_CHECK((uint32_t)318 >= stream.p - start_of_logon_info);
+    BOOST_CHECK((uint32_t)318 >= (uint32_t)(stream.p - start_of_logon_info));
 
 }
