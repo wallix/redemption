@@ -27,8 +27,8 @@
 #define BOOST_TEST_MODULE TestBitmap
 #include <boost/test/auto_unit_test.hpp>
 
-#include "../mod/internal/internal_mod.hpp"
-#include "../mod/internal/widget.hpp"
+#include "internal/internal_mod.hpp"
+#include "internal/widget.hpp"
 #include "colors.hpp"
 #include <sstream>
 #include <iostream>

@@ -43,7 +43,7 @@
 #include <inttypes.h>
 #include "rect.hpp"
 
-#include "../capture/bmpcache.hpp"
+#include "bmpcache.hpp"
 
 enum {
     BITMAP_FOUND_IN_CACHE,

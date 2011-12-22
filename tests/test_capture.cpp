@@ -28,10 +28,10 @@
 #include <errno.h>
 #include <boost/test/auto_unit_test.hpp>
 #include <algorithm>
-#include "../core/ssl_calls.hpp"
-#include "../utils/png.hpp"
-#include "../capture/staticcapture.hpp"
-#include "../capture/drawable.hpp"
+#include "ssl_calls.hpp"
+#include "png.hpp"
+#include "staticcapture.hpp"
+#include "drawable.hpp"
 
 BOOST_AUTO_TEST_CASE(TestLineTo)
 {

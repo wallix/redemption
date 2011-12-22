@@ -41,7 +41,7 @@
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
-#include "../utils/png.hpp"
+#include "png.hpp"
 
 #include "error.hpp"
 #include "config.hpp"

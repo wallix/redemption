@@ -26,11 +26,11 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestGraphicsToFile
 #include <boost/test/auto_unit_test.hpp>
-#include "./test_orders.hpp"
+#include "test_orders.hpp"
 
-#include "../capture/GraphicToFile.hpp"
-#include "../core/constants.hpp"
-#include "../capture/bmpcache.hpp"
+#include "GraphicToFile.hpp"
+#include "constants.hpp"
+#include "bmpcache.hpp"
 #include <png.h>
 
 class TestConsumer : public RDPGraphicDevice {

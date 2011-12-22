@@ -49,7 +49,7 @@
 #include "bitmap_cache.hpp"
 #include "colors.hpp"
 
-#include "../capture/GraphicToFile.hpp"
+#include "GraphicToFile.hpp"
 
 class NativeCapture
 {

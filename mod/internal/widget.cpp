@@ -25,7 +25,7 @@
 */
 
 #include "widget.hpp"
-#include "../mod/internal/internal_mod.hpp"
+#include "internal/internal_mod.hpp"
 
 //struct GraphicalContext : public internal_mod
 //{

@@ -23,7 +23,7 @@
 #define __INTERNAL_MOD_HPP__
 
 #include "modcontext.hpp"
-#include "../mod/internal/widget.hpp"
+#include "internal/widget.hpp"
 #include "client_mod.hpp"
 
 struct internal_mod : public client_mod {

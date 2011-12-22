@@ -30,9 +30,11 @@ rule defines ( properties * )
 
 project redemption
     : requirements
+    <include>mod
     <include>core
     <include>front
     <include>tests
+    <include>utils
     <include>capture
     <include>/usr/include
     <conditional>@defines
