@@ -83,6 +83,7 @@ public:
     int order_level;
     GraphicsUpdatePDU * orders;
     Inifile * ini;
+    uint32_t verbose;
 
 public:
 
@@ -101,7 +102,8 @@ public:
         trans(trans),
         userid(0),
         order_level(0),
-        ini(ini)
+        ini(ini),
+        verbose(this->ini?this->ini->globals.debug.front:0)
     {
         // from server_sec
         // CGR: see if init has influence for the 3 following fields
@@ -160,7 +162,7 @@ public:
 
     void set_client_info(uint16_t width, uint16_t height, uint8_t bpp)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::set_client_info(%u, %u, %u)", width, height, bpp);
         }
         this->client_info.width = width;
@@ -169,7 +171,7 @@ public:
     }
 
     void reset(){
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::reset()");
         }
         TODO(" is it necessary (or even useful) to send remaining drawing orders before resetting ?")
@@ -211,7 +213,7 @@ public:
 
     void begin_update()
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::begin_update()");
         }
         this->order_level++;
@@ -219,7 +221,7 @@ public:
 
     void end_update()
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::end_update()");
         }
         this->order_level--;
@@ -230,7 +232,7 @@ public:
 
     void disconnect() throw (Error)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::disconnect()");
         }
         Stream stream(32768);
@@ -245,7 +247,7 @@ public:
 
     void set_console_session(bool b)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::set_console_session(%u)", b);
         }
         this->client_info.console_session = b;
@@ -263,7 +265,7 @@ public:
         size_t chunk_size,
         int flags)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)", data, length, chunk_size, flags);
         }
         Stream stream(65536);
@@ -298,7 +300,7 @@ public:
 
     void send_global_palette(const BGRPalette & palette) throw (Error)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::send_global_palette()");
         }
         Stream stream(32768);
@@ -441,7 +443,7 @@ public:
 
     void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
         }
         Stream stream(32768);
@@ -558,7 +560,7 @@ public:
 
     void set_pointer(int cache_idx) throw (Error)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
         }
         Stream stream(32768);
@@ -622,7 +624,7 @@ public:
 
     void incoming() throw (Error)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::incoming()");
         }
         // Connection Initiation
@@ -637,11 +639,11 @@ public:
         //    |------------X224 Connection Request PDU----------------> |
         //    | <----------X224 Connection Confirm PDU----------------- |
 
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::incoming::receiving x224 request PDU");
         }
         recv_x224_connection_request_pdu(this->trans);
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::incoming::sending x224 connection confirm PDU");
         }
         send_x224_connection_confirm_pdu(this->trans);
@@ -664,7 +666,7 @@ public:
         //    | <------------MCS Connect Response PDU with------------- |
         //                   GCC conference Create Response
 
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::incoming::Basic Settings Exchange");
             LOG(LOG_INFO, "Front::incoming::channel_list : %u", this->channel_list.size());
         }
@@ -719,13 +721,13 @@ public:
         //    |-------MCS Channel Join Request PDU--------------------> |
         //    | <-----MCS Channel Join Confirm PDU--------------------- |
 
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::incoming::Channel Connection");
             LOG(LOG_INFO, "Front::incoming::recv_mcs_erect_domain_and_attach_user_request_pdu : user_id=%u", this->userid);
         }
         recv_mcs_erect_domain_and_attach_user_request_pdu(this->trans, this->userid);
 
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::incoming::send_mcs_attach_user_confirm_pdu : user_id=%u", this->userid);
         }
         send_mcs_attach_user_confirm_pdu(this->trans, this->userid);
@@ -742,7 +744,7 @@ public:
                 LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->userid + MCS_USERCHANNEL_BASE, tmp_chanid);
                 throw Error(ERR_MCS_BAD_CHANID);
             }
-            if (this->ini->globals.debug.front){
+            if (this->verbose){
                 LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (G): user_id=%u chanid=%u", this->userid, tmp_chanid);
             }
             send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
@@ -761,7 +763,7 @@ public:
                 LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", MCS_GLOBAL_CHANNEL, tmp_chanid);
                 throw Error(ERR_MCS_BAD_CHANID);
             }
-            if (this->ini->globals.debug.front){
+            if (this->verbose){
                 LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (IO): user_id=%u chanid=%u", this->userid, tmp_chanid);
             }
             send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
@@ -780,13 +782,13 @@ public:
                     LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->channel_list[i].chanid, tmp_chanid);
                     throw Error(ERR_MCS_BAD_CHANID);
                 }
-                if (this->ini->globals.debug.front){
+                if (this->verbose){
                     LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu : user_id=%u chanid=%u", this->userid, tmp_chanid);
                 }
                 send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
                 this->channel_list.set_chanid(i, tmp_chanid);
         }
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::incoming::RDP Security Commencement");
         }
 
@@ -850,7 +852,7 @@ public:
         // Client                                                     Server
         //    |------ Client Info PDU      ---------------------------> |
 
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
         }
 
@@ -871,7 +873,7 @@ public:
                 throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
 
-            if (this->ini->globals.debug.front >= 256){
+            if (this->verbose >= 256){
                 this->decrypt.dump();
             }
 
@@ -985,7 +987,7 @@ public:
                 //    | <------- Demand Active PDU ---------------------------- |
                 //    |--------- Confirm Active PDU --------------------------> |
 
-                if (this->ini->globals.debug.front){
+                if (this->verbose){
                     LOG(LOG_INFO, "Front::incoming::send_demand_active");
                 }
                 this->send_demand_active();
@@ -1008,7 +1010,7 @@ public:
 
     void activate_and_process_data(Callback & cb)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::activate_and_process_data");
         }
         ChannelList & channel_list = this->channel_list;
@@ -1036,12 +1038,12 @@ public:
 
         SecIn sec(stream, this->decrypt);
 
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::activate_and_process_data::sec_flags=%x", sec.flags);
         }
 
         if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
-            if (this->ini->globals.debug.front){
+            if (this->verbose){
                 LOG(LOG_INFO, "Front::activate_and_process_data::SEC_REDIRECT_ENCRYPT");
             }
             /* Check for a redirect packet, starts with 00 04 */
@@ -1121,12 +1123,12 @@ public:
 
                     switch (pdu_code & 0xf) {
                     case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
-                        if (this->ini->globals.debug.front){
+                        if (this->verbose){
                             LOG(LOG_INFO, "Front::activate_and_process_data::PDU_TYPE DEMANDACTIVEPDU");
                         }
                         break;
                     case PDUTYPE_CONFIRMACTIVEPDU:
-                        if (this->ini->globals.debug.front){
+                        if (this->verbose){
                             LOG(LOG_INFO, "Front::activate_and_process_data::PDU_TYPE CONFIRMACTIVEPDU");
                         }
                         this->process_confirm_active(stream);
@@ -1139,12 +1141,12 @@ public:
                         this->process_data(stream, cb);
                         break;
                     case PDUTYPE_DEACTIVATEALLPDU:
-                        if (this->ini->globals.debug.front){
+                        if (this->verbose){
                             LOG(LOG_INFO, "Front::activate_and_process_data::unsupported PDUTYPE DEACTIVATEALLPDU");
                         }
                         break;
                     case PDUTYPE_SERVER_REDIR_PKT:
-                        if (this->ini->globals.debug.front){
+                        if (this->verbose){
                             LOG(LOG_INFO, "Front::activate_and_process_data::"
                                 "unsupported PDU SERVER_REDIR_PKT in session_data (%d)\n", pdu_code & 0xf);
                         }
@@ -1163,7 +1165,7 @@ public:
     /*****************************************************************************/
     void send_data_update_sync() throw (Error)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "send_data_update_sync");
         }
         Stream stream(32768);
@@ -1938,7 +1940,7 @@ public:
     /* PDUTYPE_DATAPDU */
     void process_data(Stream & stream, Callback & cb) throw (Error)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "process_data");
         }
         ShareDataIn share_data_in(stream);
@@ -1953,7 +1955,7 @@ public:
 
         switch (share_data_in.pdutype2) {
         case PDUTYPE2_POINTER: /* 27(0x1b) */
-            if (this->ini->globals.debug.front){
+            if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_POINTER");
             }
             break;
@@ -1961,7 +1963,7 @@ public:
             {
                 int num_events = stream.in_uint16_le();
 
-                if (this->ini->globals.debug.front){
+                if (this->verbose){
                     LOG(LOG_INFO, "PDUTYPE2_INPUT num_events=%u", num_events);
                 }
 
@@ -1977,7 +1979,7 @@ public:
                     TODO(" with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.")
                     switch (msg_type) {
                     case RDP_INPUT_SYNCHRONIZE:
-                        if (this->ini->globals.debug.front){
+                        if (this->verbose){
                             LOG(LOG_INFO, "RDP_INPUT_SYNCHRONIZE");
                         }
                         /* happens when client gets focus and sends key modifier info */
@@ -1985,7 +1987,7 @@ public:
                         cb.rdp_input_synchronize(time, device_flags, param1, param2);
                         break;
                     case RDP_INPUT_SCANCODE:
-                        if (this->ini->globals.debug.front){
+                        if (this->verbose){
                             LOG(LOG_INFO, "RDP_INPUT_SCANCODE");
                         }
                         {
@@ -2008,7 +2010,7 @@ public:
                                     ;
                                 }
                             }
-                            if (this->ini->globals.debug.front){
+                            if (this->verbose){
                                 LOG(LOG_INFO, "get_key_info(device_flags=%u, param1=%u)", device_flags, param1);
                             }
                             const key_info* ki = this->keymap.get_key_info_from_scan_code(
@@ -2021,7 +2023,7 @@ public:
                         }
                         break;
                     case RDP_INPUT_MOUSE:
-                        if (this->ini->globals.debug.front){
+                        if (this->verbose){
                             LOG(LOG_INFO, "RDP_INPUT_MOUSE(device_flags=%u, param1=%u, param2=%u)", device_flags, param1, param2);
                         }
                         this->mouse_x = param1;
@@ -2036,7 +2038,7 @@ public:
             }
             break;
         case PDUTYPE2_CONTROL: /* 20(0x14) */
-            if (this->ini->globals.debug.front){
+            if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_CONTROL");
             }
             {
@@ -2059,7 +2061,7 @@ public:
             {
                 uint16_t messageType = stream.in_uint16_le();
                 uint16_t controlId = stream.in_uint16_le();
-                if (this->ini->globals.debug.front){
+                if (this->verbose){
                     LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE"
                                   " messageType=%u controlId=%u",
                                   (unsigned)messageType,
@@ -2078,7 +2080,7 @@ public:
                 int bottom = stream.in_uint16_le();
                 int cx = (right - left) + 1;
                 int cy = (bottom - top) + 1;
-                if (this->ini->globals.debug.front){
+                if (this->verbose){
                     LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT"
                         " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",
                         left, top, right, bottom, cx, cy);
@@ -2087,7 +2089,7 @@ public:
             }
             break;
         case PDUTYPE2_SUPPRESS_OUTPUT:
-            if (this->ini->globals.debug.front){
+            if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_SUPPRESS_OUTPUT");
             }
             // PDUTYPE2_SUPPRESS_OUTPUT comes when minimizing a full screen
@@ -2096,7 +2098,7 @@ public:
             // to catch up so minimized apps don't take bandwidth
             break;
         case PDUTYPE2_SHUTDOWN_REQUEST:
-            if (this->ini->globals.debug.front){
+            if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_REQUEST");
             }
             {
@@ -2145,7 +2147,7 @@ public:
 
 
         case PDUTYPE2_FONTLIST: /* 39(0x27) */
-            if (this->ini->globals.debug.front){
+            if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_FONT_LIST");
             }
             stream.in_uint16_le(); /* numberFont -> 0*/
