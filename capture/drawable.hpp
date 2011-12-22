@@ -173,7 +173,7 @@ public:
         const uint16_t srcy = memblt.srcy;
         const uint16_t idx = memblt.cache_idx;
         Bitmap * pbmp =  this->bmpcache.get(id, idx);
-        LOG(LOG_INFO, "Reading bitmap %p from cache at (id=%u idx=%u)", pbmp, id, idx);
+//        LOG(LOG_INFO, "Reading bitmap %p from cache at (id=%u idx=%u)", pbmp, id, idx);
         const uint8_t Bpp = ::nbbytes(this->bpp);
         uint8_t * target = this->first_pixel(rect);
         uint8_t * source = pbmp->data_co(this->bpp) + ((rect.cy - srcy - 1) * align4(rect.cx) + srcx) * Bpp;
@@ -181,7 +181,7 @@ public:
             uint8_t * linetarget = target;
             uint8_t * linesource = source;
             for (int x = 0; x < rect.cx ; x++){
-                TODO(": it would be nicer to manage clipping earlier and not test every pixel")
+                TODO("it would be nicer to manage clipping earlier and not test every pixel")
                 if (!(clip.contains_pt(x + rect.x, y + rect.y))) {
                   continue;
                 }

@@ -631,7 +631,9 @@ class SecOut
     SecOut(Stream & stream, uint32_t flags, CryptContext & crypt, uint32_t verbose = 0)
         : stream(stream), pdata(stream.p+12), flags(flags), crypt(crypt), verbose(verbose)
     {
-        LOG(LOG_INFO, "SecOut(flags=%u)", flags);
+        if (this->verbose){
+            LOG(LOG_INFO, "SecOut(flags=%u)", flags);
+        }
         if (this->flags){
             this->stream.out_uint32_le(this->flags);
             if ((this->flags & SEC_ENCRYPT)||(this->flags & 0x0400)){

@@ -607,8 +607,10 @@ struct X224Out : public X224Packet
 {
     Stream & stream;
     uint8_t * bop;
+    uint32_t verbose;
 
-    X224Out(uint8_t tpdutype, Stream & stream) : stream(stream), bop(stream.p)
+    X224Out(uint8_t tpdutype, Stream & stream, uint32_t verbose = 0)
+        : stream(stream), bop(stream.p), verbose(verbose)
     // Prepare a X224 TPDU in buffer for writing
     {
         assert(stream.p == stream.data);
@@ -756,7 +758,9 @@ struct X224Out : public X224Packet
     {
 //        LOG(LOG_INFO, "3) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", this->stream.data[0], this->stream.data[1], this->stream.data[2], this->stream.data[3], this->stream.data[4], this->stream.data[5], this->stream.data[6], this->stream.data[7]);
 
-        LOG(LOG_INFO, "iso X224 sending %u bytes", this->stream.p - this->bop);
+        if (this->verbose){
+            LOG(LOG_INFO, "iso X224 sending %u bytes", this->stream.p - this->bop);
+        }
         t->send(this->bop, this->stream.p - this->bop);
     }
 };

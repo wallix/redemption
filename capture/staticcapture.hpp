@@ -435,7 +435,7 @@ class StaticCapture : public Drawable
         char rawImageMetaPath[256] = {0};
         snprintf(rawImagePath,     254, "%s.%u.%u.png", this->path, getpid(), this->framenb++);
         snprintf(rawImageMetaPath, 254, "%s.meta", rawImagePath);
-        LOG(LOG_INFO, "Dumping to file %s", rawImagePath);
+//        LOG(LOG_INFO, "Dumping to file %s", rawImagePath);
         FILE * fd = fopen(rawImageMetaPath, "w");
         if (fd) {
            fprintf(fd, "%d,%d,%s\n", this->full.cx, this->full.cy, this->previous_timestamp);

@@ -266,7 +266,6 @@ struct rdp_orders {
 struct mod_rdp : public client_mod {
 
     /* mod data */
-    int up_and_running;
     Stream in_stream;
     Transport *trans;
     ChannelList mod_channel_list;
@@ -379,13 +378,12 @@ struct mod_rdp : public client_mod {
         LOG(LOG_INFO, "Server key layout is %x\n", this->keylayout);
 
 
-        this->up_and_running = 0;
         /* clipboard allow us to deactivate copy/paste sequence from server
         to client communication. This is allowed by default */
         this->clipboard_enable = clipboard_enable;
         this->dev_redirection_enable = dev_redirection_enable;
 
-        while (!this->up_and_running){
+        while (UP_AND_RUNNING != this->connection_finalization_state){
             BackEvent_t res = this->draw_event();
             if (res != BACK_EVENT_NONE){
                 LOG(LOG_INFO, "Creation of new mod 'RDP' failed\n");
@@ -399,7 +397,7 @@ struct mod_rdp : public client_mod {
     }
 
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long time, const Keymap * keymap, const key_info* ki){
-        if (this->up_and_running) {
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
 //            LOG(LOG_INFO, "Direct parameter transmission \n");
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
         }
@@ -407,14 +405,14 @@ struct mod_rdp : public client_mod {
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     {
-        if (this->up_and_running) {
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_SYNCHRONIZE, device_flags, param1, 0);
         }
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
     {
-        if (this->up_and_running) {
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
             TODO(" is decoding and reencoding really necessary  a simple pass-through from front to back-end should be enough")
             if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
                 this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_MOVE, x, y);
@@ -1198,7 +1196,7 @@ struct mod_rdp : public client_mod {
 
         case MOD_RDP_CONNECTED:
         {
-            LOG(LOG_INFO, "MOD_RDP_CONNECTED");
+//            LOG(LOG_INFO, "MOD_RDP_CONNECTED");
             Stream stream(65536);
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
@@ -1305,12 +1303,11 @@ struct mod_rdp : public client_mod {
 //                            this->check_data_pdu(PDUTYPE2_FONTMAP);
                             LOG(LOG_INFO, "process demand active ok\n");
                             this->gd.mod_bpp = this->bpp;
-                            this->up_and_running = 1;
                             this->connection_finalization_state = UP_AND_RUNNING;
                         break;
                         case UP_AND_RUNNING:
                         {
-                            LOG(LOG_INFO, "Up and running\n");
+//                            LOG(LOG_INFO, "Up and running\n");
 
                             ShareDataIn share_data_in(stream);
 //                            LOG(LOG_INFO, "Up and running");
@@ -1413,10 +1410,11 @@ struct mod_rdp : public client_mod {
                         break;
                     case PDUTYPE_DEACTIVATEALLPDU:
                         LOG(LOG_INFO, "Deactivate All PDU");
-                        this->up_and_running = 0;
+                        TODO("Check we are indeed expecting Synchronize... dubious")
+                        this->connection_finalization_state = WAITING_SYNCHRONIZE;
                         break;
-                    TODO(" this PDUTYPE is undocumented and seems to mean the same as type 10")
                     case RDP_PDU_REDIRECT:
+                        TODO(" this PDUTYPE is undocumented and seems to mean the same as type 10")
                         break;
                     case 0:
                         break;
@@ -3316,7 +3314,7 @@ struct mod_rdp : public client_mod {
 
         virtual void rdp_input_invalidate(const Rect & r)
         {
-            if (this->up_and_running) {
+            if (UP_AND_RUNNING == this->connection_finalization_state) {
 //                LOG(LOG_INFO, "rdp_input_invalidate");
                 if (!r.isempty()){
                     Stream stream(32768);

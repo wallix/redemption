@@ -2263,7 +2263,6 @@ public:
                 TODO(" here should be a ShareControlHeader/ShareDataHeader  check")
                 assert(stream.check_rem(2));
                 uint16_t length = stream.in_uint16_le();
-                LOG(LOG_INFO, "length=%u", length);
                 uint8_t * next_packet = stream.p + length;
                 if (length < 4){
                     TODO("Can't be a ShareControlHeader... should not happen but it does. We should try to understand why.")
@@ -2282,7 +2281,9 @@ public:
                 else {
                     assert(stream.check_rem(2));
                     int pdu_code = stream.in_uint16_le();
-                    LOG(LOG_INFO, "pdu_code=%d", pdu_code);
+                    if (this->verbose){
+                        LOG(LOG_INFO, "front::activate_and_process_data::pdu_code=%d", pdu_code);
+                    }
                     assert(stream.check_rem(2));
                     stream.skip_uint8(2); /* mcs user id */
 
@@ -3114,14 +3115,17 @@ public:
             LOG(LOG_INFO, "process_data");
         }
         ShareDataIn share_data_in(stream);
-        LOG(LOG_INFO, "share_data_in.pdutype2=%u share_data_in.len=%u share_data_in.compressedLen=%u remains=%u",
-            (unsigned)share_data_in.pdutype2,
-            (unsigned)share_data_in.len,
-            (unsigned)share_data_in.compressedLen,
-            stream.end - stream.p
+        if (this->verbose > 0x80){
+            LOG(LOG_INFO, "share_data_in.pdutype2=%u"
+                          " share_data_in.len=%u"
+                          " share_data_in.compressedLen=%u"
+                          " remains=%u",
+                (unsigned)share_data_in.pdutype2,
+                (unsigned)share_data_in.len,
+                (unsigned)share_data_in.compressedLen,
+                (unsigned)(stream.end - stream.p)
             );
-
-
+        }
 
         switch (share_data_in.pdutype2) {
         case PDUTYPE2_POINTER: /* 27(0x1b) */
