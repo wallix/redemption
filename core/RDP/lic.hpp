@@ -146,7 +146,7 @@ struct RdpLicence {
         }
     }
 
-    void rdp_lic_process_authreq(Transport * trans, Stream & stream, const char * hostname, int userid, int licence_issued)
+    void rdp_lic_process_authreq(Transport * trans, Stream & stream, const char * hostname, int userid, int licence_issued, CryptContext & encrypt)
     {
 
         ssllib ssl;
@@ -189,16 +189,17 @@ struct RdpLicence {
         memcpy(crypt_hwid, hwid, LICENCE_HWID_SIZE);
         ssl.rc4_crypt(crypt_key, crypt_hwid, crypt_hwid, LICENCE_HWID_SIZE);
 
-        rdp_lic_send_authresp(trans, out_token, crypt_hwid, out_sig, userid, licence_issued);
+        rdp_lic_send_authresp(trans, out_token, crypt_hwid, out_sig, userid, licence_issued, encrypt);
     }
 
-    void rdp_lic_send_authresp(Transport * trans, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature, int userid, int licence_issued)
+    void rdp_lic_send_authresp(Transport * trans, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature, int userid, int licence_issued, CryptContext & encrypt)
     {
         int length = 58;
 
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
+        SecOut sec_out(stream, 2, SEC_LICENCE_NEG, encrypt);
 
         stream.out_uint8(LICENCE_TAG_AUTHRESP);
 
@@ -212,9 +213,9 @@ struct RdpLicence {
         stream.out_copy_bytes(crypt_hwid, LICENCE_HWID_SIZE);
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
+        sec_out.end();
         sdrq_out.end();
         tpdu.end();
-
         tpdu.send(trans);
     }
 

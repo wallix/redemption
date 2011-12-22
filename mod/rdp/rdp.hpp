@@ -495,7 +495,7 @@ struct mod_rdp : public client_mod {
                     trans(trans),
                     context(context),
                     event(event),
-                    use_rdp5(0),
+                    use_rdp5(1),
                     keylayout(keylayout),
                     lic_layer(hostname),
                     userid(0),
@@ -929,7 +929,7 @@ struct mod_rdp : public client_mod {
                     break;
                 case LICENCE_TAG_AUTHREQ:
                     LOG(LOG_INFO, "LICENCE_TAG_AUTHREQ");
-                    this->lic_layer.rdp_lic_process_authreq(trans, stream, hostname, userid, licence_issued);
+                    this->lic_layer.rdp_lic_process_authreq(trans, stream, hostname, userid, licence_issued, this->encrypt);
                     break;
                 case LICENCE_TAG_ISSUE:
                     LOG(LOG_INFO, "LICENCE_TAG_ISSUE");
@@ -1210,7 +1210,7 @@ struct mod_rdp : public client_mod {
                             this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
                             LOG(LOG_INFO, "Sending font List");
                             /* Including RDP 5.0 capabilities */
-                            if (this->use_rdp5 != 0){
+                            if (this->use_rdp5){
                                 this->enum_bmpcache2();
                                 this->send_fonts(stream, 3);
                             }
@@ -1350,7 +1350,7 @@ struct mod_rdp : public client_mod {
             stream.out_uint16_le(0x200); /* Protocol version */
             stream.out_uint16_le(0); /* Pad */
             stream.out_uint16_le(0); /* Compression types */
-            stream.out_uint16_le(this->use_rdp5 ? 0x40d : 0);
+            stream.out_uint16_le(this->use_rdp5 ? 0x40c : 0);
             stream.out_uint16_le(0); /* Update capability */
             stream.out_uint16_le(0); /* Remote unshare capability */
             stream.out_uint16_le(0); /* Compression level */
@@ -1499,7 +1499,92 @@ struct mod_rdp : public client_mod {
         {
             LOG(LOG_INFO, "Sending confirm active to server\n");
 
-            char caps_0x0d[] = {
+            Stream stream(32768);
+            X224Out tpdu(X224Packet::DT_TPDU, stream);
+            McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
+            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
+
+        // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1) containing information about the packet. The type subfield of the pduType field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
+
+            ShareControlOut rdp_control_out(stream, PDUTYPE_CONFIRMACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
+
+        // shareId (4 bytes): A 32-bit, unsigned integer. The share identifier for the packet (see [T128] section 8.4.2 for more information regarding share IDs).
+
+            stream.out_uint32_le(this->share_id);
+//            stream.out_uint16_le(1002); /* userid */
+            stream.out_uint16_le(1002); /* userid : this parameter seems not to be documented ? */
+
+        // lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The size in bytes of the sourceDescriptor field.
+            stream.out_uint16_le(5);
+
+        // lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer. The combined size in bytes of the numberCapabilities, pad2Octets, and capabilitySets fields.
+
+            uint16_t offset_caplen = stream.p - stream.data;
+            stream.out_uint16_le(0); // caplen
+
+        // sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see [T128] section 8.4.1 for more information regarding source descriptors).
+            stream.out_copy_bytes("MSTSC", 5);
+
+        // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the Demand Active PDU.
+            uint16_t offset_capscount = stream.p - stream.data;
+            uint16_t capscount = 0;
+            stream.out_uint16_le(0); /* num_caps */
+
+        // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+            stream.out_clear_bytes(2); /* pad */
+
+        // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number of capability sets is specified by the numberCapabilities field.
+            uint16_t total_caplen = stream.p - stream.data;
+
+            capscount++; this->out_general_caps(stream);
+            capscount++; this->out_bitmap_caps(stream);
+            capscount++; this->out_order_caps(stream);
+            capscount++; this->out_bmpcache_caps(stream);
+
+//            if(this->use_rdp5){
+//                capscount++;
+//                this->out_bmpcache2_caps(stream, mod->gd.get_client_info());
+//            }
+            capscount++; this->out_colcache_caps(stream);
+            capscount++; this->out_activate_caps(stream);
+            capscount++; this->out_control_caps(stream);
+            capscount++; this->out_pointer_caps(stream);
+            capscount++; this->out_share_caps(stream);
+            capscount++; this->out_input_caps(stream);
+            capscount++; this->out_sound_caps(stream);
+            capscount++; this->out_font_caps(stream);
+            capscount++; this->out_glyphcache_caps(stream);
+
+            total_caplen = stream.p - stream.data - total_caplen;
+
+            // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
+            stream.out_uint32_le(0);
+
+//            stream.set_out_uint16_le(stream.p - stream.data - offset_caplen - 47, offset_caplen); // caplen
+//            stream.set_out_uint16_le(caplen, offset_caplen); // caplen
+            stream.set_out_uint16_le(total_caplen + 4, offset_caplen); // caplen
+            LOG(LOG_INFO, "total_caplen = %u, caplen=%u computed caplen=%u offset_here = %u offset_caplen=%u", total_caplen, 388, stream.p - stream.data - offset_caplen, stream.p - stream.data, offset_caplen);
+            stream.set_out_uint16_le(capscount, offset_capscount); // caplen
+
+            rdp_control_out.end();
+            sec_out.end();
+            sdrq_out.end();
+            tpdu.end();
+            tpdu.send(this->trans);
+
+            LOG(LOG_INFO, "Waiting for answer to confirm active\n");
+        }
+
+        void out_sound_caps(Stream & stream)
+        {
+            const char caps_sound[] = { 0x01, 0x00, 0x00, 0x00 };
+            this->out_unknown_caps(stream, 0x0c, 0x08, caps_sound);
+        }
+
+
+        void out_input_caps(Stream & stream)
+        {
+            const char caps_input[] = {
             0x01, 0x00, 0x00, 0x00, 0x09, 0x04, 0x00, 0x00,
             0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1512,86 +1597,94 @@ struct mod_rdp : public client_mod {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00
             };
+            this->out_unknown_caps(stream, 0x0d, 0x58, caps_input); /* international? */   // RDP_CAPLEN_0x0D 88
+        }
 
-            char caps_0x0c[] = { 0x01, 0x00, 0x00, 0x00 };
+        void out_font_caps(Stream & stream)
+        {
+            const char caps_font[] = { 0x01, 0x00, 0x00, 0x00 };
+            this->out_unknown_caps(stream, 0x0e, 0x08, caps_font);   // RDP_CAPLEN_0x0E 8
+        }
 
-            char caps_0x0e[] = { 0x01, 0x00, 0x00, 0x00 };
+// 2.2.7.1.8 Glyph Cache Capability Set (TS_GLYPHCACHE_CAPABILITYSET)
+// ==================================================================
 
-            char caps_0x10[] = {
+// The TS_GLYPHCACHE_CAPABILITYSET structure advertises the glyph support level
+// and associated cache sizes. This capability is only sent from client to
+// server.
+
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
+// capability set. This field MUST be set to CAPSTYPE_GLYPHCACHE (16).
+
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
+// of the capability data, including the size of the capabilitySetType and
+// lengthCapability fields.
+
+// GlyphCache (40 bytes): An array of 10 TS_CACHE_DEFINITION structures. An
+// ordered specification of the layout of each of the glyph caches with IDs 0
+// through to 9 ([MS-RDPEGDI] section 3.1.1.1.2).
+
+// FragCache (4 bytes): Fragment cache data. The maximum number of entries
+// allowed in the cache is 256, and the largest allowed maximum size of an
+// element is 256 bytes.
+
+// GlyphSupportLevel (2 bytes): A 16-bit, unsigned integer. The level of glyph
+// support.
+
+// +-------------------------------+-------------------------------------------+
+// |         Value                 |                    Meaning                |
+// +-------------------------------+-------------------------------------------+
+// | 0x0000 GLYPH_SUPPORT_NONE     | The client does not support glyph caching.|
+// |                               | All text output will be sent to the client|
+// |                               | as expensive Bitmap Updates (see sections |
+// |                               | 2.2.9.1.1.3.1.2 and 2.2.9.1.2.1.2).       |
+// +-------------------------------+-------------------------------------------+
+// | 0x0001 GLYPH_SUPPORT_PARTIAL  | Indicates support for Revision 1 Cache    |
+// |                               | Glyph Secondary Drawing Orders (see       |
+// |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.5).      |
+// +-------------------------------+-------------------------------------------+
+// | 0x0002 GLYPH_SUPPORT_FULL     | Indicates support for Revision 1 Cache    |
+// |                               | Glyph Secondary Drawing Orders (see       |
+// |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.5).      |
+// +-------------------------------+-------------------------------------------+
+// | 0x0003 GLYPH_SUPPORT_ENCODE   | Indicates support for Revision 2 Cache    |
+// |                               | Glyph Secondary Drawing Orders (see       |
+// |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.6).      |
+// +-------------------------------+-------------------------------------------+
+
+//If the GlyphSupportLevel is greater than GLYPH_SUPPORT_NONE (0), the client
+//  MUST support the GlyphIndex Primary Drawing Order (see [MS-RDPEGDI] section
+//  2.2.2.2.1.1.2.13) or the FastIndex Primary Drawing Order (see [MS-RDPEGDI]
+//  section 2.2.2.2.1.1.2.14). If the FastIndex Primary Drawing Order is not
+//  supported, then support for the GlyphIndex Primary Drawing Order is assumed
+//  by the server (order support is specified in the Order Capability Set, as
+//  described in section 2.2.7.1.3).
+
+// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
+//   field MUST be ignored.
+
+        void out_glyphcache_caps(Stream & stream)
+        {
+            stream.out_uint16_le(RDP_CAPSET_GLYPHCACHE);
+            uint16_t offset_length = stream.p - stream.data;
+            stream.out_uint16_le(0);
+            uint16_t length = stream.p - stream.data;
+            static const char glyphcache[] = {
             0xFE, 0x00, 0x04, 0x00, 0xFE, 0x00, 0x04, 0x00,
             0xFE, 0x00, 0x08, 0x00, 0xFE, 0x00, 0x08, 0x00,
             0xFE, 0x00, 0x10, 0x00, 0xFE, 0x00, 0x20, 0x00,
             0xFE, 0x00, 0x40, 0x00, 0xFE, 0x00, 0x80, 0x00,
-            0xFE, 0x00, 0x00, 0x01, 0x40, 0x00, 0x00, 0x08,
-            0x00, 0x01, 0x00, 0x01, 0x02, 0x00, 0x00, 0x00
-            };
+            0xFE, 0x00, 0x00, 0x01, 0x40, 0x00, 0x00, 0x08};
+            stream.out_copy_bytes(glyphcache, 40);
+            stream.out_uint32_le(0x01000100);
+            stream.out_uint16_le(0x0000);
+            stream.out_uint16_le(0);
+            length = stream.p - stream.data - length;
+            stream.set_out_uint16_le(length, offset_length);
 
-            int caplen = RDP_CAPLEN_GENERAL
-                       + RDP_CAPLEN_BITMAP
-                       + RDP_CAPLEN_ORDER
-                       + RDP_CAPLEN_BMPCACHE
-                       + RDP_CAPLEN_COLCACHE
-                       + RDP_CAPLEN_ACTIVATE
-                       + RDP_CAPLEN_CONTROL
-                       + RDP_CAPLEN_POINTER_MONO
-                       + RDP_CAPLEN_SHARE
-                        /* unknown caps */
-                       + 0x58
-                       + 0x08
-                       + 0x08
-                       + 0x34
-                       + 4 /* w2k fix, why? */ ;
-
-            Stream stream(32768);
-            X224Out tpdu(X224Packet::DT_TPDU, stream);
-            McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, 2, SEC_ENCRYPT, this->encrypt);
-
-            stream.out_uint16_le(2 + 14 + caplen + sizeof(RDP_SOURCE));
-            stream.out_uint16_le((PDUTYPE_CONFIRMACTIVEPDU | 0x10)); /* Version 1 */
-            LOG(LOG_INFO, "send confirm active %u", this->userid + MCS_USERCHANNEL_BASE);
-            stream.out_uint16_le(this->userid + MCS_USERCHANNEL_BASE); // channel
-            stream.out_uint32_le(this->share_id);
-            stream.out_uint16_le(1002); /* userid */
-            stream.out_uint16_le(sizeof(RDP_SOURCE));
-            stream.out_uint16_le(caplen);
-
-            stream.out_copy_bytes(RDP_SOURCE, sizeof(RDP_SOURCE));
-            stream.out_uint16_le(0xd); /* num_caps */
-            stream.out_clear_bytes(2); /* pad */
-
-            this->out_general_caps(stream);
-            this->out_bitmap_caps(stream);
-            this->out_order_caps(stream);
-
-            #warning two identical calls in a row, this is strange, check documentation
-            this->out_bmpcache_caps(stream);
-            if(this->use_rdp5 == 0){
-                this->out_bmpcache_caps(stream);
-            }
-            else {
-                this->out_bmpcache2_caps(stream, mod->gd.get_client_info());
-            }
-            this->out_colcache_caps(stream);
-            this->out_activate_caps(stream);
-            this->out_control_caps(stream);
-            this->out_pointer_caps(stream);
-            this->out_share_caps(stream);
-            this->out_unknown_caps(stream, 0x0d, 0x58, caps_0x0d); /* international? */
-            this->out_unknown_caps(stream, 0x0c, 0x08, caps_0x0c);
-            this->out_unknown_caps(stream, 0x0e, 0x08, caps_0x0e);
-            this->out_unknown_caps(stream, 0x10, 0x34, caps_0x10); /* glyph cache? */
-
-            sec_out.end();
-            sdrq_out.end();
-            tpdu.end();
-            tpdu.send(this->trans);
-
-            LOG(LOG_INFO, "Waiting for answer to confirm active\n");
         }
 
-
-        void out_unknown_caps(Stream & stream, int id, int length, char* caps)
+        void out_unknown_caps(Stream & stream, int id, int length, const char* caps)
         {
 //            LOG(LOG_INFO, "Sending unknown caps to server\n");
             stream.out_uint16_le(id);
@@ -2443,7 +2536,6 @@ struct mod_rdp : public client_mod {
 
             stream.out_uint16_le(0);
             stream.out_uint16_le(0);
-            this->use_rdp5 = 0;
         }
 
         sec_out.end();
