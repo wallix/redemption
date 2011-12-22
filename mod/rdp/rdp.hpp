@@ -331,7 +331,7 @@ struct mod_rdp : public client_mod {
                     trans(trans),
                     context(context),
                     event(event),
-                    use_rdp5(0),
+                    use_rdp5(1),
                     keylayout(keylayout),
                     lic_layer(hostname),
                     userid(0),
@@ -1116,7 +1116,7 @@ struct mod_rdp : public client_mod {
                     break;
                 case LICENCE_TAG_AUTHREQ:
                     LOG(LOG_INFO, "LICENCE_TAG_AUTHREQ");
-                    this->lic_layer.rdp_lic_process_authreq(trans, stream, hostname, userid, licence_issued);
+                    this->lic_layer.rdp_lic_process_authreq(trans, stream, hostname, userid, licence_issued, this->encrypt);
                     break;
                 case LICENCE_TAG_ISSUE:
                     LOG(LOG_INFO, "LICENCE_TAG_ISSUE");
@@ -1958,7 +1958,7 @@ struct mod_rdp : public client_mod {
     LOG(LOG_INFO, "Sending Client Core Data to remote server\n");
     stream.out_uint16_le(212); /* length */
     LOG(LOG_INFO, "core::header::length = %u\n", 212);
-    stream.out_uint32_le(0x00080001); // RDP version. 1 == RDP4, 4 == RDP5.
+    stream.out_uint32_le(this->use_rdp5?0x00080004:0x00080001); // RDP version. 1 == RDP4, 4 == RDP5.
     LOG(LOG_INFO, "core::header::version RDP 4=0x00080001 (0x00080004 = RDP 5.0, 5.1, 5.2, and 6.0 clients)");
     stream.out_uint16_le(width);
     LOG(LOG_INFO, "core::desktopWidth = %u\n", width);
@@ -2383,7 +2383,7 @@ struct mod_rdp : public client_mod {
             // 0x0008 AUTORECONNECT_SUPPORTED
             // 0x0004 LONG_CREDENTIALS_SUPPORTED
             // 0x0001 FASTPATH_OUTPUT_SUPPORTED
-            stream.out_uint16_le(0); // 0 for RDP4
+            stream.out_uint16_le(this->use_rdp5?0x40C:0); // 0 for RDP4
             stream.out_uint16_le(0); /* Update capability */
             stream.out_uint16_le(0); /* Remote unshare capability */
             stream.out_uint16_le(0); /* Compression level */
@@ -2868,10 +2868,10 @@ struct mod_rdp : public client_mod {
             capscount++; this->out_order_caps(stream);
             capscount++; this->out_bmpcache_caps(stream);
 
-            if(this->use_rdp5){
-                capscount++;
-                this->out_bmpcache2_caps(stream, mod->gd.get_client_info());
-            }
+//            if(this->use_rdp5){
+//                capscount++;
+//                this->out_bmpcache2_caps(stream, mod->gd.get_client_info());
+//            }
             capscount++; this->out_colcache_caps(stream);
             capscount++; this->out_activate_caps(stream);
             capscount++; this->out_control_caps(stream);
@@ -3559,6 +3559,93 @@ struct mod_rdp : public client_mod {
         mod->gd.server_end_update();
     }
 
+// 2.2.7.1.4.2 Revision 2 (TS_BITMAPCACHE_CAPABILITYSET_REV2)
+// ==========================================================
+
+// The TS_BITMAPCACHE_CAPABILITYSET_REV2 structure is used to advertise support
+// for Revision 2 bitmap caches (see [MS-RDPEGDI] section 3.1.1.1.1). This
+// capability is only sent from client to server.
+
+// In addition to specifying bitmap caching parameters in the Revision 2 Bitmap
+// Cache Capability Set, a client MUST also support the MemBlt and Mem3Blt
+// Primary Drawing Orders (see [MS-RDPEGDI] sections 2.2.2.2.1.1.2.9 and
+// 2.2.2.2.1.1.2.10, respectively) in order to receive the Cache Bitmap
+// (Revision 2) Secondary Drawing Order (see [MS-RDPEGDI] section 2.2.2.2.1.2.3).
+
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
+//  capability set. This field MUST be set to CAPSTYPE_BITMAPCACHE_REV2 (19).
+
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
+//  of the capability data, including the size of the capabilitySetType and
+//  lengthCapability fields.
+
+// CacheFlags (2 bytes): A 16-bit, unsigned integer. Properties which apply to
+//   all the bitmap caches.
+
+// +--------------------------------------+------------------------------------+
+// | 0x0001 PERSISTENT_KEYS_EXPECTED_FLAG | Indicates that the client will send|
+// |                                      | a Persistent Key List PDU during   |
+// |                                      | the Connection Finalization phase  |
+// |                                      | of the RDP Connection Sequence     |
+// |                                      | (see section 1.3.1.1 for an        |
+// |                                      | overview of the RDP Connection     |
+// |                                      | Sequence phases).                  |
+// +--------------------------------------+------------------------------------+
+// | 0x0002 ALLOW_CACHE_WAITING_LIST_FLAG | Indicates that the client supports |
+// |                                      | a cache waiting list. If a waiting |
+// |                                      | list is supported, new bitmaps are |
+// |                                      | cached on the second hit rather    |
+// |                                      | than the first (that is, a bitmap  |
+// |                                      | is sent twice before it is cached).|
+// +--------------------------------------+------------------------------------+
+
+// pad2 (1 byte): An 8-bit, unsigned integer. Padding. Values in this field MUST
+//   be ignored.
+
+// NumCellCaches (1 byte): An 8-bit, unsigned integer. Number of bitmap caches
+//  (with a maximum allowed value of 5).
+
+// BitmapCache0CellInfo (4 bytes): A TS_BITMAPCACHE_CELL_CACHE_INFO structure.
+//  Contains information about the structure of Bitmap Cache 0. The maximum
+//  number of entries allowed in this cache is 600. This field is only valid if
+//  NumCellCaches is greater than or equal to 1.
+
+// BitmapCache1CellInfo (4 bytes): A TS_BITMAPCACHE_CELL_CACHE_INFO structure.
+//  Contains information about the structure of Bitmap Cache 1. The maximum
+//  number of entries allowed in this cache is 600. This field is only valid if
+//  NumCellCaches is greater than or equal to 2.
+
+// BitmapCache2CellInfo (4 bytes): A TS_BITMAPCACHE_CELL_CACHE_INFO structure.
+//  Contains information about the structure of Bitmap Cache 2. The maximum
+//  number of entries allowed in this cache is 65536. This field is only valid
+//  if NumCellCaches is greater than or equal to 3.
+
+// BitmapCache3CellInfo (4 bytes): A TS_BITMAPCACHE_CELL_CACHE_INFO structure.
+//  Contains information about the structure of Bitmap Cache 3. The maximum
+//  number of entries allowed in this cache is 4096. This field is only valid
+//  if NumCellCaches is greater than or equal to 4.
+
+// BitmapCache4CellInfo (4 bytes): A TS_BITMAPCACHE_CELL_CACHE_INFO structure.
+//  Contains information about the structure of Bitmap Cache 4. The maximum
+//  number of entries allowed in this cache is 2048. This field is only valid
+//  if NumCellCaches is equal to 5.
+
+// 2.2.7.1.4.2.1 Bitmap Cache Cell Info (TS_BITMAPCACHE_CELL_CACHE_INFO)
+// =====================================================================
+
+// The TS_BITMAPCACHE_CELL_CACHE_INFO structure contains information about a
+// bitmap cache on the client.
+
+// NumEntries (31 bits): A 31-bit, unsigned integer. Indicates the number of
+// entries in the cache.
+
+// k (1 bit): A 1-bit flag. Indicates that the bitmap cache is persistent across
+//  RDP connections and that the client expects to receive a unique 64-bit
+//  bitmap key in the Cache Bitmap (Revision 2) Secondary Drawing Order (see
+//  [MS-RDPEGDI] section 2.2.2.2.1.2.3) for every bitmap inserted into this
+//  cache. If this bit is set, 64-bit keys MUST be sent by the server.
+
+
     void out_bmpcache2_caps(Stream & stream, const ClientInfo & client_info)
     {
         stream.out_uint16_le(RDP_CAPSET_BMPCACHE2);
@@ -3660,7 +3747,6 @@ struct mod_rdp : public client_mod {
 
             stream.out_uint16_le(0);
             stream.out_uint16_le(0);
-            this->use_rdp5 = 0;
         }
 
         sec_out.end();

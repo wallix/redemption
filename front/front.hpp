@@ -1217,22 +1217,12 @@ public:
         uint16_t srv_channel_size = 8 + (channel_list.size() + padding) * 2;
         stream.out_2BUE(8 + srv_channel_size + 236); // len
 
-        stream.out_uint16_le(SC_CORE);
-        // length, including tag and length fields
-        stream.out_uint16_le(8); /* len */
-        stream.out_uint8(4); /* 4 = rdp5 1 = rdp4 */
-        stream.out_uint8(0);
-        stream.out_uint8(8);
-        stream.out_uint8(0);
+        bool use_rdp5 = 1;
+        out_mcs_data_sc_core(stream, use_rdp5);
 
         uint16_t num_channels = channel_list.size();
         uint16_t padchan = num_channels & 1;
 
-    //01 0c 0c 00 -> TS_UD_HEADER::type = SC_CORE (0x0c01), length = 12
-    //bytes
-
-    //04 00 08 00 -> TS_UD_SC_CORE::version = 0x0008004
-    //00 00 00 00 -> TS_UD_SC_CORE::clientRequestedProtocols = PROTOCOL_RDP
 
     //03 0c 10 00 -> TS_UD_HEADER::type = SC_NET (0x0c03), length = 16 bytes
 
@@ -1267,8 +1257,9 @@ public:
         stream.out_uint16_le(SC_SECURITY);
         stream.out_uint16_le(236); // length, including tag and length fields
         stream.out_uint32_le(rc4_key_size); // key len 1 = 40 bit 2 = 128 bit
-        stream.out_uint32_le(client_info->crypt_level); // crypt level 1 = low 2 = medium
-        /* 3 = high */
+        // crypt level 1 = low 2 = medium, 3 = high
+        stream.out_uint32_le(client_info->crypt_level);
+
         stream.out_uint32_le(32);  // random len
         stream.out_uint32_le(184); // len of rsa info(certificate)
         stream.out_copy_bytes(server_random, 32);
