@@ -127,13 +127,13 @@ int shutdown(const char * pid_file)
         pid = atoi(text);
         cout << "stopping process id " << pid << "\n";
         if (pid > 0) {
-TODO(" check that a process with this id is really running  if not we may consider removing pid file.")
+#warning check that a process with this id is really running, if not we may consider removing pid file.
             cout << "sending sigterm to " << pid << "\n";
             kill(pid, SIGKILL);
-TODO(" wait some decent time and check no such process is running any more")
+#warning wait some decent time and check no such process is running any more
         }
     }
-    TODO(" exit with a correct error status if something failed")
+    #warning exit with a correct error status if something failed
     close(fd);
     unlink(pid_file);
     return 0;
@@ -161,6 +161,9 @@ int main(int argc, char** argv)
     setlocale(LC_CTYPE, "C");
     Check_files cfc;
 
+    unsigned uid = getuid();
+    unsigned gid = getgid();
+
     po::options_description desc("Options");
     desc.add_options()
     // -help, --help, -h
@@ -171,6 +174,10 @@ int main(int argc, char** argv)
     ("kill,k", "shut down rdpproxy")
     // -nodaemon" -n
     ("nodaemon,n", "don't fork into background")
+
+    ("uid,u", po::value<unsigned>(&uid), "run with given uid")
+
+    ("gid,g", po::value<unsigned>(&gid), "run with given gid")
 
 //    ("trace,t", "trace behaviour")
 
@@ -193,7 +200,7 @@ int main(int argc, char** argv)
     if (options.count("kill")) {
         int status = shutdown(PID_PATH "/" LOCKFILE);
         if (status){
-            TODO(" check the real error that occured")
+            #warning check the real error that occured
             clog << "problem opening " << PID_PATH "/" LOCKFILE  << "."
             " Maybe rdpproxy is not running\n";
         }
@@ -279,6 +286,9 @@ int main(int argc, char** argv)
     if (!options.count("nodaemon")) {
         daemonize(PID_PATH "/" LOCKFILE);
     }
+
+    setuid(uid);
+    setuid(gid);
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
     redemption_main_loop();
