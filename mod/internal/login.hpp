@@ -25,6 +25,7 @@
 #if !defined(__LOGIN_HPP__)
 #define __LOGIN_HPP__
 
+#include "version.hpp"
 #include "widget_window_login.hpp"
 
 struct combo_help : public window
@@ -247,7 +248,7 @@ struct login_mod : public internal_mod {
             this->screen, // parent
             this->screen, // notify_to
             GREY,
-            "Login",
+            VERSION,
             ini,
             regular);
 

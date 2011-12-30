@@ -28,6 +28,7 @@ project redemption
     : requirements
     <toolset>gcc:<cxxflags>-Wno-cpp
     <toolset>gcc:<cxxflags>-Wno-unused-variable
+    <include>main
     <include>core
     <include>front
     <include>tests
@@ -44,26 +45,26 @@ alias instexe : install-bin install-test ;
 alias install : install-bin install-etc install-share install-keymaps ;
 
 install install-bin
-    : rdpproxy 
-    : <install-type>EXE <install-dependencies>on 
+    : rdpproxy
+    : <install-type>EXE <install-dependencies>on
     : <location>/usr/local/bin
     ;
 
 install install-share
     : [ glob sys/share/rdpproxy/[^.k]* ]
-    : 
+    :
     : <location>/usr/local/share/rdpproxy
     ;
 
 install install-keymaps
     : [ glob sys/share/rdpproxy/keymaps/[^.]* ]
-    : 
+    :
     : <location>/usr/local/share/rdpproxy/keymaps
     ;
 
 install install-etc
     : [ glob sys/etc/rdpproxy/*ini ]
-    : 
+    :
     : <location>/etc/rdpproxy
     ;
 
@@ -102,7 +103,7 @@ obj rsa_keys : core/rsa_keys.cpp  ;
 
 exe rdpproxy
     :
-        core/main.cpp
+        main/main.cpp
 
         widget
         mainloop
