@@ -30,6 +30,7 @@ rule defines ( properties * )
 
 project redemption
     : requirements
+    <include>main
     <include>mod
     <include>core
     <include>front
@@ -106,7 +107,7 @@ obj rsa_keys : core/rsa_keys.cpp  ;
 
 exe rdpproxy
     :
-        core/main.cpp
+        main/main.cpp
 
         widget
         mainloop

@@ -27,6 +27,8 @@
 
 #include "widget_window_login.hpp"
 
+#include "version.hpp"
+
 struct combo_help : public window
 {
     Widget & notify_to;
@@ -246,7 +248,7 @@ struct login_mod : public internal_mod {
             this->screen, // parent
             this->screen, // notify_to
             GREY,
-            "Login",
+            VERSION,
             ini,
             regular);
 
