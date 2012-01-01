@@ -60,6 +60,21 @@
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
+#include "RDP/capabilities/general.hpp"
+#include "RDP/capabilities/bitmap.hpp"
+#include "RDP/capabilities/sound.hpp"
+#include "RDP/capabilities/order.hpp"
+#include "RDP/capabilities/bmpcache.hpp"
+#include "RDP/capabilities/colcache.hpp"
+#include "RDP/capabilities/share.hpp"
+#include "RDP/capabilities/activate.hpp"
+#include "RDP/capabilities/control.hpp"
+#include "RDP/capabilities/pointer.hpp"
+#include "RDP/capabilities/input.hpp"
+#include "RDP/capabilities/glyphcache.hpp"
+#include "RDP/capabilities/font.hpp"
+
+
 struct rdp_cursor {
     int x;
     int y;
@@ -290,7 +305,7 @@ struct mod_rdp : public client_mod {
     char program[256];
     char directory[256];
     bool console_session;
-    int bpp;
+    uint16_t bpp;
 
     int crypt_level;
     uint32_t server_public_key_len;
@@ -2228,8 +2243,6 @@ struct mod_rdp : public client_mod {
 // +--------------------------------------+------------------------------------+
 
 
-
-
     void recv_x224_connection_confirm_pdu(Transport * trans)
     {
         Stream stream(8192);
@@ -2242,562 +2255,6 @@ struct mod_rdp : public client_mod {
         }
     }
 
-// 2.2.7.1.1 General Capability Set (TS_GENERAL_CAPABILITYSET)
-// ===========================================================
-
-// The TS_GENERAL_CAPABILITYSET structure is used to advertise general
-// characteristics and is based on the capability set specified in [T128]
-// section 8.2.3. This capability is sent by both client and server.
-
-// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
-//  capability set. This field MUST be set to CAPSTYPE_GENERAL (1).
-
-// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
-//  of the capability data, including the size of the capabilitySetType and
-//  lengthCapability fields.
-
-// osMajorType (2 bytes): A 16-bit, unsigned integer. The type of platform.
-
-// +--------------------------------+----------------------+
-// | 0x0000 OSMAJORTYPE_UNSPECIFIED | Unspecified platform |
-// +--------------------------------+----------------------+
-// | 0x0001 OSMAJORTYPE_WINDOWS     | Windows platform     |
-// +--------------------------------+----------------------+
-// | 0x0002 OSMAJORTYPE_OS2         | OS/2 platform        |
-// +--------------------------------+----------------------+
-// | 0x0003 OSMAJORTYPE_MACINTOSH   | Macintosh platform   |
-// +--------------------------------+----------------------+
-// | 0x0004 OSMAJORTYPE_UNIX        | UNIX platform        |
-// +--------------------------------+----------------------+
-
-// osMinorType (2 bytes): A 16-bit, unsigned integer. The version of the
-// platform specified in the osMajorType field.
-
-// +--------------------------------------+----------------------+
-// | 0x0000 OSMINORTYPE_UNSPECIFIED       | Unspecified version  |
-// +--------------------------------------+----------------------+
-// | 0x0001 OSMINORTYPE_WINDOWS_31X       | Windows 3.1x         |
-// +--------------------------------------+----------------------+
-// | 0x0002 TS_OSMINORTYPE_WINDOWS_95     | Windows 95           |
-// +--------------------------------------+----------------------+
-// | 0x0003 TS_OSMINORTYPE_WINDOWS_NT     | Windows NT           |
-// +--------------------------------------+----------------------+
-// | 0x0004 TS_OSMINORTYPE_OS2_V21        | OS/2 2.1             |
-// +--------------------------------------+----------------------+
-// | 0x0005 TS_OSMINORTYPE_POWER_PC       | PowerPC              |
-// +--------------------------------------+----------------------+
-// | 0x0006 TS_OSMINORTYPE_MACINTOSH      | Macintosh            |
-// +--------------------------------------+----------------------+
-// | 0x0007 TS_OSMINORTYPE_NATIVE_XSERVER | Native X Server      |
-// +--------------------------------------+----------------------+
-// | 0x0008 TS_OSMINORTYPE_PSEUDO_XSERVER | Pseudo X Server      |
-// +--------------------------------------+----------------------+
-
-// protocolVersion (2 bytes): A 16-bit, unsigned integer. The protocol version.
-// This field MUST be set to TS_CAPS_PROTOCOLVERSION (0x0200).
-
-// pad2octetsA (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
-// field MUST be ignored.
-
-// generalCompressionTypes (2 bytes): A 16-bit, unsigned integer. General
-// compression types. This field MUST be set to 0.
-
-// extraFlags (2 bytes): A 16-bit, unsigned integer. General capability
-// information. Supported flags depends on RDP version.
-
-// +----------------------------------+-------------------------------+------+
-// | 0x0001 FASTPATH_OUTPUT_SUPPORTED | Advertiser supports fast-path | 5.0+ |
-// |                                  | output.                       |      |
-// +----------------------------------+-------------------------------+------+
-// |                                  | Advertiser supports excluding |      |
-// |                                  | the 8-byte Compressed Data    |      |
-// |        0x0400                    | Header                        |      |
-// |                                  | (section 2.2.9.1.1.3.1.2.3)   |      |
-// |  NO_BITMAP_COMPRESSION_HDR       | from the Bitmap Data          | 5.0+ |
-// |                                  | (section 2.2.9.1.1.3.1.2.2)   |      |
-// |                                  | structure or the Cache Bitmap |      |
-// |                                  | (Revision 2) Secondary Drawing|      |
-// |                                  | Order ([MS-RDPEGDI] section   |      |
-// |                                  | 2.2.2.2.1.2.3).               |      |
-// +----------------------------------+-------------------------------+------+
-// | 0x0004 LONG_CREDENTIALS_SUPPORTED| Advertiser supports           |      |
-// |                                  | long-length credentials for   |      |
-// |                                  | the user name, password, or   | 5.1+ |
-// |                                  | domain name in the Save       |      |
-// |                                  | Session Info PDU              |      |
-// |                                  | (section 2.2.10.1).           |      |
-// +----------------------------------+-------------------------------+------+
-// | 0x0008 AUTORECONNECT_SUPPORTED   | Advertiser supports           |      |
-// |                                  | auto-reconnection             | 5.2+ |
-// |                                  | (section 5.5).                |      |
-// +----------------------------------+-------------------------------+------+
-// | 0x0010 ENC_SALTED_CHECKSUM       | Advertiser supports salted    |      |
-// |                                  | MAC generation (see           | 5.2+ |
-// |                                  | section 5.3.6.1.1).           |      |
-// +----------------------------------+-------------------------------+------+
-
-// updateCapabilityFlag (2 bytes): A 16-bit, unsigned integer. Support for
-//  update capability. This field MUST be set to 0.
-
-// remoteUnshareFlag (2 bytes): A 16-bit, unsigned integer. Support for remote
-//  unsharing. This field MUST be set to 0.
-
-// generalCompressionLevel (2 bytes): A 16-bit, unsigned integer. General
-// compression level. This field MUST be set to 0.
-
-// refreshRectSupport (1 byte): An 8-bit, unsigned integer. Server-only flag
-// that indicates whether the Refresh Rect PDU (section 2.2.11.2) is supported.
-
-// +------------+------------------------------------------+
-// | 0x00 FALSE | Server does not support Refresh Rect PDU.|
-// +------------+------------------------------------------+
-// | 0x01 TRUE  | Server supports Refresh Rect PDU.        |
-// +------------+------------------------------------------+
-
-// suppressOutputSupport (1 byte): An 8-bit, unsigned integer. Server-only flag
-// that indicates whether the Suppress Output PDU (section 2.2.11.3) is
-// supported.
-
-// +------------+----------------------------------------------+
-// | 0x00 FALSE | Server does not support Suppress Output PDU. |
-// +------------+----------------------------------------------+
-// | 0x01 TRUE  | Server supports Suppress Output PDU.         |
-// +------------+----------------------------------------------+
-
-
-        void out_general_caps(Stream & stream)
-        {
-            LOG(LOG_INFO, "Sending General caps to remote server");
-
-            stream.out_uint16_le(RDP_CAPSET_GENERAL);
-            const uint16_t offset_len = stream.p - stream.data;
-            stream.out_uint16_le(0);
-            stream.out_uint16_le(1); /* OS major type */
-            stream.out_uint16_le(3); /* OS minor type */
-            stream.out_uint16_le(0x200); /* Protocol version */
-            stream.out_uint16_le(0); /* Pad */
-            stream.out_uint16_le(0); /* Compression types */
-            // 0x040D
-            // ------
-            // 0x0400 NO_BITMAP_COMPRESSION_HDR
-            // 0x0008 AUTORECONNECT_SUPPORTED
-            // 0x0004 LONG_CREDENTIALS_SUPPORTED
-            // 0x0001 FASTPATH_OUTPUT_SUPPORTED
-            stream.out_uint16_le(this->use_rdp5?0x40C:0); // 0 for RDP4
-            stream.out_uint16_le(0); /* Update capability */
-            stream.out_uint16_le(0); /* Remote unshare capability */
-            stream.out_uint16_le(0); /* Compression level */
-            stream.out_uint16_le(0); /* Pad */
-            stream.set_out_uint16_le(RDP_CAPLEN_GENERAL, offset_len);
-        }
-
-        void process_general_caps(Stream & stream)
-        {
-            LOG(LOG_INFO, "Received General caps from remote server");
-
-            (void)stream.in_uint16_le();
-            uint16_t os_major = stream.in_uint16_le(); /* OS major type */
-            LOG(LOG_INFO, "General caps::major %u\n", os_major);
-            uint16_t os_minor = stream.in_uint16_le(); /* OS minor type */
-            LOG(LOG_INFO, "General caps::minor %u\n", os_minor);
-            uint16_t protocolVersion = stream.in_uint16_le(); /* Protocol version */
-            LOG(LOG_INFO, "General caps::protocol %u\n", protocolVersion);
-            (void)stream.in_uint16_le(); /* Pad */
-            uint16_t compressionType = stream.in_uint16_le(); /* Compression types */
-            LOG(LOG_INFO, "General caps::compression types %x\n", compressionType);
-            /* Receiving rdp_5 extra flags supported for RDP 5.0 and later versions*/
-            uint16_t extraflags = stream.in_uint16_le();
-            LOG(LOG_INFO, "General caps::extra flags %x\n", extraflags);
-        }
-
-// 2.2.7.1.2    Bitmap Capability Set (TS_BITMAP_CAPABILITYSET)
-// ============================================================
-
-//  The TS_BITMAP_CAPABILITYSET structure is used to advertise bitmap-oriented
-//    characteristics and is based on the capability set specified in [T128]
-// section 8.2.4. This capability is sent by both client and server.
-
-// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
-//   capability set. This field MUST be set to CAPSTYPE_BITMAP (2).
-
-// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
-//   of the capability data, including the size of the capabilitySetType and
-//   lengthCapability fields.
-
-// preferredBitsPerPixel (2 bytes): A 16-bit, unsigned integer. Color depth of
-//   the remote session. In RDP 4.0 and 5.0, this field MUST be set to 8 (even
-//   for a 16-color session).
-
-// receive1BitPerPixel (2 bytes): A 16-bit, unsigned integer. Indicates whether
-//   the client can receive 1 bpp. This field is ignored and SHOULD be set to
-//   TRUE (0x0001).
-
-// receive4BitsPerPixel (2 bytes): A 16-bit, unsigned integer. Indicates whether
-//   the client can receive 4 bpp. This field is ignored and SHOULD be set to
-//   TRUE (0x0001).
-
-// receive8BitsPerPixel (2 bytes): A 16-bit, unsigned integer. Indicates whether
-//    the client can receive 8 bpp. This field is ignored and SHOULD be set to
-//    TRUE (0x0001).
-
-// desktopWidth (2 bytes): A 16-bit, unsigned integer. The width of the desktop
-//   in the remote session.
-
-// desktopHeight (2 bytes): A 16-bit, unsigned integer. The height of the
-//   desktop in the remote session.
-
-// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
-//   field are ignored.
-
-// desktopResizeFlag (2 bytes): A 16-bit, unsigned integer. Indicates whether
-//   desktop resizing is supported.
-//   0x0000 FALSE  Desktop resizing is not supported.
-//   0x0001 TRUE   Desktop resizing is supported.
-//   If a desktop resize occurs, the server will deactivate the session (see
-//   section 1.3.1.3), and on session reactivation will specify the new desktop
-//   size in the desktopWidth and desktopHeight fields in the Bitmap Capability
-//   Set, along with a value of TRUE for the desktopResizeFlag field. The client
-//   should check these sizes and, if different from the previous desktop size,
-//   resize any windows to support this size.
-
-// bitmapCompressionFlag (2 bytes): A 16-bit, unsigned integer. Indicates
-//   whether the client supports bitmap compression. RDP requires bitmap
-//   compression and hence this field MUST be set to TRUE (0x0001). If it is not
-//   set to TRUE, the server MUST NOT continue with the connection.
-
-// highColorFlags (1 byte): An 8-bit, unsigned integer. Client support for
-//   16 bpp color modes. This field is ignored and SHOULD be set to 0.
-
-// drawingFlags (1 byte): An 8-bit, unsigned integer. Flags describing support
-//   for 32 bpp bitmaps.
-
-// +----------------------------------------+----------------------------------+
-// | 0x02 DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY | Indicates support for lossy      |
-// |                                        | compression of 32 bpp bitmaps by |
-// |                                        | reducing color-fidelity on a     |
-// |                                        | per-pixel basis.                 |
-// +----------------------------------------+----------------------------------+
-// | 0x04 DRAW_ALLOW_COLOR_SUBSAMPLING      | Indicates support for chroma     |
-// |                                        | subsampling when compressing     |
-// |                                        | 32 bpp bitmaps.                  |
-// +----------------------------------------+----------------------------------+
-// | 0x08 DRAW_ALLOW_SKIP_ALPHA             | Indicates that the client        |
-// |                                        | supports the removal of the      |
-// |                                        | alpha-channel when compressing   |
-// |                                        | 32 bpp bitmaps. In this case the |
-// |                                        | alpha is assumed to be 0xFF,     |
-// |                                        | meaning the bitmap is opaque.    |
-// |                                        | Compression of 32 bpp bitmaps is |
-// |                                        | specified in [MS-RDPEGDI]        |
-// |                                        | section 3.1.9.                   |
-// +----------------------------------------+----------------------------------+
-
-// multipleRectangleSupport (2 bytes): A 16-bit, unsigned integer. Indicates
-//   whether the client supports the use of multiple bitmap rectangles. RDP
-//   requires the use of multiple bitmap rectangles and hence this field MUST be
-//   set to TRUE (0x0001). If it is not set to TRUE, the server MUST NOT
-//   continue with the connection.
-
-// pad2octetsB (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
-//   field are ignored.
-
-        void out_bitmap_caps(Stream & stream)
-        {
-            LOG(LOG_INFO, "Sending bitmap caps to remote server\n");
-            stream.out_uint16_le(RDP_CAPSET_BITMAP);
-            stream.out_uint16_le(RDP_CAPLEN_BITMAP);
-            stream.out_uint16_le(this->bpp); /* Preferred bpp */
-            stream.out_uint16_le(1); /* Receive 1 BPP */
-            stream.out_uint16_le(1); /* Receive 4 BPP */
-            stream.out_uint16_le(1); /* Receive 8 BPP */
-            stream.out_uint16_le(800); /* Desktop width */
-            stream.out_uint16_le(600); /* Desktop height */
-            stream.out_uint16_le(0); /* Pad */
-            stream.out_uint16_le(1); /* Allow resize */
-            stream.out_uint16_le(this->bitmap_compression); /* Support compression */
-            stream.out_uint16_le(0); /* Unknown */
-            stream.out_uint16_le(1); /* Unknown */
-            stream.out_uint16_le(0); /* Pad */
-        }
-
-        /* Process a bitmap capability set */
-        void process_bitmap_caps(Stream & stream)
-        {
-            this->bpp = stream.in_uint16_le();
-            stream.skip_uint8(6);
-            int width = stream.in_uint16_le();
-            int height = stream.in_uint16_le();
-            /* todo, call reset if needed and use width and height */
-            LOG(LOG_INFO, "Server bitmap caps (%dx%dx%d) [bpp=%d] ok\n", width, height, bpp, this->bpp);
-        }
-
-
-
-        void out_order_caps(Stream & stream)
-        {
-            LOG(LOG_INFO, "Sending order caps to server\n");
-
-            stream.out_uint16_le(RDP_CAPSET_ORDER);
-            stream.out_uint16_le(RDP_CAPLEN_ORDER);
-            stream.out_clear_bytes(20); /* Terminal desc, pad */
-            stream.out_uint16_le(1); /* Cache X granularity */
-            stream.out_uint16_le(20); /* Cache Y granularity */
-            stream.out_uint16_le(0); /* Pad */
-            stream.out_uint16_le(1); /* Max order level */
-            stream.out_uint16_le(0x147); /* Number of fonts */
-            stream.out_uint16_le(0x2a); /* Capability flags */
-
-            char order_caps[32];
-
-            memset(order_caps, 0, 32);
-            TODO(" use symbolic constants for order numerotation")
-            order_caps[RDP::DESTBLT] = 1; /* dest blt */
-            order_caps[RDP::PATBLT] = 1; /* pat blt */
-            order_caps[RDP::SCREENBLT] = 1; /* screen blt */
-            order_caps[3] = 1; /* memblt */
-            order_caps[4] = 0; /* todo triblt */
-            order_caps[8] = 1; /* line */
-            order_caps[9] = 1; /* line */
-            order_caps[10] = 1; /* rect */
-            order_caps[11] = 0; /* todo desksave */
-            order_caps[RDP::MEMBLT] = 1; /* memblt another above */
-            order_caps[RDP::TRIBLT] = 0; /* triblt another above */
-            order_caps[20] = 0; /* todo polygon */
-            order_caps[21] = 0; /* todo polygon2 */
-            order_caps[RDP::POLYLINE] = 0; /* todo polyline */
-            order_caps[25] = 0; /* todo ellipse */
-            order_caps[26] = 0; /* todo ellipse2 */
-            order_caps[RDP::GLYPHINDEX] = 1; /* text2 */
-            stream.out_copy_bytes(order_caps, 32); /* Orders supported */
-
-            stream.out_uint16_le(0x6a1); /* Text capability flags */
-            stream.out_clear_bytes(6); /* Pad */
-            stream.out_uint32_le(0 * 0x38400); /* Desktop cache size, for desktop_save */
-            stream.out_uint32_le(0); /* Unknown */
-            stream.out_uint32_le(0x4e4); /* Unknown */
-        }
-
-        void out_bmpcache_caps(Stream & stream)
-        {
-            LOG(LOG_INFO, "Sending bmpcache caps to server\n");
-            TODO(" see details for bmpcache caps")
-            stream.out_uint16_le(RDP_CAPSET_BMPCACHE);
-            stream.out_uint16_le(RDP_CAPLEN_BMPCACHE);
-            int Bpp = nbbytes(this->bpp);
-            stream.out_clear_bytes(24); /* unused */
-            stream.out_uint16_le(0x258); /* entries */
-            stream.out_uint16_le(0x100 * Bpp); /* max cell size */
-            stream.out_uint16_le(0x12c); /* entries */
-            stream.out_uint16_le(0x400 * Bpp); /* max cell size */
-            stream.out_uint16_le(0x106); /* entries */
-            stream.out_uint16_le(0x1000 * Bpp); /* max cell size */
-        }
-
-
-        /* Output control capability set */
-        void out_control_caps(Stream & stream)
-        {
-            LOG(LOG_INFO, "Sending control caps to server\n");
-            stream.out_uint16_le(RDP_CAPSET_CONTROL);
-            stream.out_uint16_le(RDP_CAPLEN_CONTROL);
-            stream.out_uint16_le(0); /* Control capabilities */
-            stream.out_uint16_le(0); /* Remote detach */
-            stream.out_uint16_le(2); /* Control interest */
-            stream.out_uint16_le(2); /* Detach interest */
-        }
-
-
-        void out_activate_caps(Stream & stream)
-        {
-            LOG(LOG_INFO, "Sending Activate caps to server\n");
-
-            stream.out_uint16_le(RDP_CAPSET_ACTIVATE);
-            stream.out_uint16_le(RDP_CAPLEN_ACTIVATE);
-            stream.out_uint16_le(0); /* Help key */
-            stream.out_uint16_le(0); /* Help index key */
-            stream.out_uint16_le(0); /* Extended help key */
-            stream.out_uint16_le(0); /* Window activate */
-        }
-
-// 2.2.7.1.5 Pointer Capability Set (TS_POINTER_CAPABILITYSET)
-
-// The TS_POINTER_CAPABILITYSET structure advertises pointer cache sizes and
-// flags and is based on the capability set specified in [T128] section 8.2.11.
-// This capability is sent by both client and server.
-
-// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
-// capability set. This field MUST be set to CAPSTYPE_POINTER (8).
-
-// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
-// of the capability data, including the size of the capabilitySetType and
-// lengthCapability fields.
-
-// colorPointerFlag (2 bytes): A 16-bit, unsigned integer. Indicates support for
-// color pointers. Since RDP supports monochrome cursors by using Color Pointer
-// Updates and New Pointer Updates (sections 2.2.9.1.1.4.4 and 2.2.9.1.1.4.5
-// respectively), the value of this field is ignored and is always assumed to be
-// TRUE (at a minimum the Color Pointer Update MUST be supported by an RDP
-// client).
-
-// +---------------+-----------------------------------------+
-// |   Value       |            Meaning                      |
-// +---------------+-----------------------------------------+
-// | 0x0000 FALSE  | Monochrome mouse cursors are supported. |
-// +---------------+-----------------------------------------+
-// | 0x0001 TRUE   | Color mouse cursors are supported.      |
-// +---------------+-----------------------------------------+
-
-// colorPointerCacheSize (2 bytes): A 16-bit, unsigned integer. The number of
-// available slots in the 24 bpp color pointer cache used to store data received
-// in the Color Pointer Update (section 2.2.9.1.1.4.4).
-
-// pointerCacheSize (2 bytes): A 16-bit, unsigned integer. The number of
-// available slots in the pointer cache used to store pointer data of arbitrary
-// bit depth received in the New Pointer Update (section 2.2.9.1.1.4.5).
-
-// If the value contained in this field is zero or the Pointer Capability Set
-// sent from the client does not include this field, the server will not use
-// the New Pointer Update.
-
-
-        void out_pointer_caps(Stream & stream)
-        {
-            LOG(LOG_INFO, "Sending Pointer caps to server\n");
-
-            stream.out_uint16_le(RDP_CAPSET_POINTER);
-            stream.out_uint16_le(8); // total length of caps
-            stream.out_uint16_le(1); /* colorPointerFlag */
-            stream.out_uint16_le(20); /* colorPointerCacheSize */
-        }
-
-        void out_share_caps(Stream & stream)
-        {
-            LOG(LOG_INFO, "Sending share caps to server\n");
-
-            stream.out_uint16_le(RDP_CAPSET_SHARE);
-            stream.out_uint16_le(RDP_CAPLEN_SHARE);
-            stream.out_uint16_le(0); /* userid */
-            stream.out_uint16_le(0); /* pad */
-        }
-
-        void out_colcache_caps(Stream & stream)
-        {
-            LOG(LOG_INFO, "Sending colcache caps to server\n");
-
-            stream.out_uint16_le(RDP_CAPSET_COLCACHE);
-            stream.out_uint16_le(RDP_CAPLEN_COLCACHE);
-            stream.out_uint16_le(6); /* cache size */
-            stream.out_uint16_le(0); /* pad */
-        }
-
-        void out_sound_caps(Stream & stream)
-        {
-            const char caps_sound[] = { 0x01, 0x00, 0x00, 0x00 };
-            this->out_unknown_caps(stream, 0x0c, 0x08, caps_sound);
-        }
-
-
-        void out_input_caps(Stream & stream)
-        {
-            const char caps_input[] = {
-            0x01, 0x00, 0x00, 0x00, 0x09, 0x04, 0x00, 0x00,
-            0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00
-            };
-            this->out_unknown_caps(stream, 0x0d, 0x58, caps_input); /* international? */   // RDP_CAPLEN_0x0D 88
-        }
-
-        void out_font_caps(Stream & stream)
-        {
-            const char caps_font[] = { 0x01, 0x00, 0x00, 0x00 };
-            this->out_unknown_caps(stream, 0x0e, 0x08, caps_font);   // RDP_CAPLEN_0x0E 8
-        }
-
-// 2.2.7.1.8 Glyph Cache Capability Set (TS_GLYPHCACHE_CAPABILITYSET)
-// ==================================================================
-
-// The TS_GLYPHCACHE_CAPABILITYSET structure advertises the glyph support level
-// and associated cache sizes. This capability is only sent from client to
-// server.
-
-// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
-// capability set. This field MUST be set to CAPSTYPE_GLYPHCACHE (16).
-
-// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
-// of the capability data, including the size of the capabilitySetType and
-// lengthCapability fields.
-
-// GlyphCache (40 bytes): An array of 10 TS_CACHE_DEFINITION structures. An
-// ordered specification of the layout of each of the glyph caches with IDs 0
-// through to 9 ([MS-RDPEGDI] section 3.1.1.1.2).
-
-// FragCache (4 bytes): Fragment cache data. The maximum number of entries
-// allowed in the cache is 256, and the largest allowed maximum size of an
-// element is 256 bytes.
-
-// GlyphSupportLevel (2 bytes): A 16-bit, unsigned integer. The level of glyph
-// support.
-
-// +-------------------------------+-------------------------------------------+
-// |         Value                 |                    Meaning                |
-// +-------------------------------+-------------------------------------------+
-// | 0x0000 GLYPH_SUPPORT_NONE     | The client does not support glyph caching.|
-// |                               | All text output will be sent to the client|
-// |                               | as expensive Bitmap Updates (see sections |
-// |                               | 2.2.9.1.1.3.1.2 and 2.2.9.1.2.1.2).       |
-// +-------------------------------+-------------------------------------------+
-// | 0x0001 GLYPH_SUPPORT_PARTIAL  | Indicates support for Revision 1 Cache    |
-// |                               | Glyph Secondary Drawing Orders (see       |
-// |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.5).      |
-// +-------------------------------+-------------------------------------------+
-// | 0x0002 GLYPH_SUPPORT_FULL     | Indicates support for Revision 1 Cache    |
-// |                               | Glyph Secondary Drawing Orders (see       |
-// |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.5).      |
-// +-------------------------------+-------------------------------------------+
-// | 0x0003 GLYPH_SUPPORT_ENCODE   | Indicates support for Revision 2 Cache    |
-// |                               | Glyph Secondary Drawing Orders (see       |
-// |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.6).      |
-// +-------------------------------+-------------------------------------------+
-
-//If the GlyphSupportLevel is greater than GLYPH_SUPPORT_NONE (0), the client
-//  MUST support the GlyphIndex Primary Drawing Order (see [MS-RDPEGDI] section
-//  2.2.2.2.1.1.2.13) or the FastIndex Primary Drawing Order (see [MS-RDPEGDI]
-//  section 2.2.2.2.1.1.2.14). If the FastIndex Primary Drawing Order is not
-//  supported, then support for the GlyphIndex Primary Drawing Order is assumed
-//  by the server (order support is specified in the Order Capability Set, as
-//  described in section 2.2.7.1.3).
-
-// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
-//   field MUST be ignored.
-
-        void out_glyphcache_caps(Stream & stream)
-        {
-            stream.out_uint16_le(RDP_CAPSET_GLYPHCACHE);
-            uint16_t offset_length = stream.p - stream.data;
-            stream.out_uint16_le(0);
-            uint16_t length = stream.p - stream.data;
-            static const char glyphcache[] = {
-            0xFE, 0x00, 0x04, 0x00, 0xFE, 0x00, 0x04, 0x00,
-            0xFE, 0x00, 0x08, 0x00, 0xFE, 0x00, 0x08, 0x00,
-            0xFE, 0x00, 0x10, 0x00, 0xFE, 0x00, 0x20, 0x00,
-            0xFE, 0x00, 0x40, 0x00, 0xFE, 0x00, 0x80, 0x00,
-            0xFE, 0x00, 0x00, 0x01, 0x40, 0x00, 0x00, 0x08};
-            stream.out_copy_bytes(glyphcache, 40);
-            stream.out_uint32_le(0x01000100);
-            stream.out_uint16_le(0x0000);
-            stream.out_uint16_le(0);
-            length = stream.p - stream.data - length;
-            stream.set_out_uint16_le(length, offset_length);
-
-        }
 
         // 2.2.1.13.1.1 Demand Active PDU Data (TS_DEMAND_ACTIVE_PDU)
         // ==========================================================
@@ -2863,24 +2320,24 @@ struct mod_rdp : public client_mod {
         // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number of capability sets is specified by the numberCapabilities field.
             uint16_t total_caplen = stream.p - stream.data;
 
-            capscount++; this->out_general_caps(stream);
-            capscount++; this->out_bitmap_caps(stream);
-            capscount++; this->out_order_caps(stream);
-            capscount++; this->out_bmpcache_caps(stream);
+            capscount++; out_general_caps(stream, this->use_rdp5);
+            capscount++; out_bitmap_caps(stream, this->bpp, this->bitmap_compression);
+            capscount++; out_order_caps(stream);
+            capscount++; out_bmpcache_caps(stream, this->bpp);
 
 //            if(this->use_rdp5){
 //                capscount++;
-//                this->out_bmpcache2_caps(stream, mod->gd.get_client_info());
+//                out_bmpcache2_caps(stream);
 //            }
-            capscount++; this->out_colcache_caps(stream);
-            capscount++; this->out_activate_caps(stream);
-            capscount++; this->out_control_caps(stream);
-            capscount++; this->out_pointer_caps(stream);
-            capscount++; this->out_share_caps(stream);
-            capscount++; this->out_input_caps(stream);
-            capscount++; this->out_sound_caps(stream);
-            capscount++; this->out_font_caps(stream);
-            capscount++; this->out_glyphcache_caps(stream);
+            capscount++; out_colcache_caps(stream);
+            capscount++; out_activate_caps(stream);
+            capscount++; out_control_caps(stream);
+            capscount++; out_pointer_caps(stream);
+            capscount++; out_share_caps(stream);
+            capscount++; out_input_caps(stream);
+            capscount++; out_sound_caps(stream);
+            capscount++; out_font_caps(stream);
+            capscount++; out_glyphcache_caps(stream);
 
             total_caplen = stream.p - stream.data - total_caplen;
 
@@ -2967,202 +2424,257 @@ struct mod_rdp : public client_mod {
 
 // 2.2.5.1.1 Set Error Info PDU Data (TS_SET_ERROR_INFO_PDU)
 // =========================================================
-// The TS_SET_ERROR_INFO_PDU structure contains the contents of the Set Error Info PDU, which is a
-// Share Data Header (section 2.2.8.1.1.1.2) with an error value field.
+// The TS_SET_ERROR_INFO_PDU structure contains the contents of the Set Error 
+// Info PDU, which is a Share Data Header (section 2.2.8.1.1.1.2) with an error 
+// value field.
 
-// shareDataHeader (18 bytes): Share Data Header containing information about the packet.
-// The type subfield of the pduType field of the Share Control Header (section 2.2.8.1.1.1.1)
-// MUST be set to PDUTYPE_DATAPDU (7). The pduType2 field of the Share Data Header MUST
-// be set to PDUTYPE2_SET_ERROR_INFO_PDU (47), and the pduSource field MUST be set to 0.
+// shareDataHeader (18 bytes): Share Data Header containing information about 
+// the packet. The type subfield of the pduType field of the Share Control 
+// Header (section 2.2.8.1.1.1.1) MUST be set to PDUTYPE_DATAPDU (7). The 
+// pduType2 field of the Share Data Header MUST be set to 
+// PDUTYPE2_SET_ERROR_INFO_PDU (47), and the pduSource field MUST be set to 0.
 
 // errorInfo (4 bytes): A 32-bit, unsigned integer. Error code.
+
 // Protocol-independent codes:
-
-// 0x00000001 ERRINFO_RPC_INITIATED_DISCONNECT The disconnection was initiated by an administrative tool on the server in another session.
-
-// 0x00000002 ERRINFO_RPC_INITIATED_LOGOFF The disconnection was due to a forced logoff initiated by an administrative tool on the server in another session.
-
-// 0x00000003 ERRINFO_IDLE_TIMEOUT The idle session limit timer on the server has elapsed.
-
-// 0x00000004 ERRINFO_LOGON_TIMEOUT The active session limit timer on the server has elapsed.
-
-// 0x00000005 ERRINFO_DISCONNECTED_BY_OTHERCONNECTION Another user connected to the server, forcing the disconnection of the current connection.
-
-// 0x00000006 ERRINFO_OUT_OF_MEMORY The server ran out of available memory resources.
-
-// 0x00000007 ERRINFO_SERVER_DENIED_CONNECTION The server denied the connection.
-//
-// 0x00000009 ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES The user cannot connect to the server due to insufficient access privileges.
-
-// 0x0000000A ERRINFO_SERVER_FRESH_CREDENTIALS_REQUIRED The server does not accept saved user credentials and requires that the user enter their credentials for each connection.
-//
-// 0x0000000B ERRINFO_RPC_INITIATED_DISCONNECT_BYUSER The disconnection was initiated by an administrative tool on the server running in the user's session.
+// +---------------------------------------------+-----------------------------+
+// | 0x00000001 ERRINFO_RPC_INITIATED_DISCONNECT | The disconnection was       |
+// |                                             | initiated by an             |
+// |                                             | administrative tool on the  |
+// |                                             | server in another session.  |
+// +---------------------------------------------+-----------------------------+
+// | 0x00000002 ERRINFO_RPC_INITIATED_LOGOFF     | The disconnection was due   |
+// |                                             | to a forced logoff initiated|
+// |                                             | by an administrative tool   |
+// |                                             | on the server in another    |
+// |                                             | session.                    |
+// +---------------------------------------------+-----------------------------+
+// | 0x00000003 ERRINFO_IDLE_TIMEOUT             | The idle session limit timer|
+// |                                             | on the server has elapsed.  |
+// +---------------------------------------------+-----------------------------+
+// | 0x00000004 ERRINFO_LOGON_TIMEOUT            | The active session limit    |
+// |                                             | timer on the server has     |
+// |                                             | elapsed.                    |
+// +---------------------------------------------+------+----------------------+
+// | 0x00000005 ERRINFO_DISCONNECTED_BY_OTHERCONNECTION | Another user         |
+// |                                                    | connected to the     |
+// |                                                    | server, forcing the  |
+// |                                                    | disconnection of the |
+// |                                                    | current connection.  |
+// +----------------------------------+-----------------+----------------------+
+// | 0x00000006 ERRINFO_OUT_OF_MEMORY | The server ran out of available memory |
+// |                                  | resources.                             |
+// +----------------------------------+----------+-----------------------------+
+// | 0x00000007 ERRINFO_SERVER_DENIED_CONNECTION | The server denied the       |
+// |                                             | connection.                 |
+// +---------------------------------------------+-----+-----------------------+
+// | 0x00000009 ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES | The user cannot       |
+// |                                                   | connect to the server |
+// |                                                   | due to insufficient   |
+// |                                                   | access privileges.    |
+// +---------------------------------------------------+--+--------------------+
+// | 0x0000000A ERRINFO_SERVER_FRESH_CREDENTIALS_REQUIRED | The server does not|
+// |                                                      | accept saved user  |
+// |                                                      | credentials and    |
+// |                                                      | requires that the  |
+// |                                                      | user enter their   |
+// |                                                      | credentials for    |
+// |                                                      | each connection.   |
+// +----------------------------------------------------+-+--------------------+
+// | 0x0000000B ERRINFO_RPC_INITIATED_DISCONNECT_BYUSER | The disconnection was|
+// |                                                    | initiated by an      |
+// |                                                    | administrative tool  |
+// |                                                    | on the server running|
+// |                                                    | in the user's        |
+// |                                                    | session.             |
+// +----------------------------------------------------+----------------------+
 
 // Protocol-independent licensing codes:
 
+// +---------------------------------------------------------------------------+
 // 0x00000100 ERRINFO_LICENSE_INTERNAL An internal error has occurred in the Terminal Services licensing component.
-
+// +---------------------------------------------------------------------------+
 // 0x00000101 ERRINFO_LICENSE_NO_LICENSE_SERVER A Remote Desktop License Server ([MS-RDPELE] section 1.1) could not be found to provide a license.
-
+// +---------------------------------------------------------------------------+
 // 0x00000102 ERRINFO_LICENSE_NO_LICENSE There are no Client Access Licenses ([MS-RDPELE] section 1.1) available for the target remote computer.
-
+// +---------------------------------------------------------------------------+
 // 0x00000103 ERRINFO_LICENSE_BAD_CLIENT_MSG The remote computer received an invalid licensing message from the client.
-
+// +---------------------------------------------------------------------------+
 // 0x00000104 ERRINFO_LICENSE_HWID_DOESNT_MATCH_LICENSE The Client Access License ([MS-RDPELE] section 1.1) stored by the client has been modified.
-
+// +---------------------------------------------------------------------------+
 // 0x00000105 ERRINFO_LICENSE_BAD_CLIENT_LICENSE The Client Access License ([MS-RDPELE] section 1.1) stored by the client is in an invalid format
-
+// +---------------------------------------------------------------------------+
 // 0x00000106 ERRINFO_LICENSE_CANT_FINISH_PROTOCOL Network problems have caused the licensing protocol ([MS-RDPELE] section 1.3.3) to be terminated.
-
+// +---------------------------------------------------------------------------+
 // 0x00000107 ERRINFO_LICENSE_CLIENT_ENDED_PROTOCOL The client prematurely ended the licensing protocol ([MS-RDPELE] section 1.3.3).
-
+// +---------------------------------------------------------------------------+
 // 0x00000108 ERRINFO_LICENSE_BAD_CLIENT_ENCRYPTION A licensing message ([MS-RDPELE] sections 2.2 and 5.1) was incorrectly encrypted.
-
+// +---------------------------------------------------------------------------+
 // 0x00000109 ERRINFO_LICENSE_CANT_UPGRADE_LICENSE The Client Access License ([MS-RDPELE] section 1.1) stored by the client could not be upgraded or renewed.
-
+// +---------------------------------------------------------------------------+
 // 0x0000010A ERRINFO_LICENSE_NO_REMOTE_CONNECTIONS The remote computer is not licensed to accept remote connections
+// +---------------------------------------------------------------------------+
 
 // RDP specific codes:
-
-// 0x000010C9 ERRINFO_UNKNOWNPDUTYPE2 Unknown pduType2 field in a received Share Data Header (section 2.2.8.1.1.1.2).
-
-// 0x000010CA ERRINFO_UNKNOWNPDUTYPE Unknown pduType field in a received Share Control Header (section 2.2.8.1.1.1.1).
-
-// 0x000010CB ERRINFO_DATAPDUSEQUENCE An out-of-sequence Slow-Path Data PDU (section 2.2.8.1.1.1.1) has been received.
-
-// 0x000010CD ERRINFO_CONTROLPDUSEQUENCE An out-of-sequence Slow-Path Non-Data PDU (section 2.2.8.1.1.1.1) has been received.
-
-// 0x000010CE ERRINFO_INVALIDCONTROLPDUACTION A Control PDU (sections 2.2.1.15 and 2.2.1.16) has been received with an invalid action field.
-
-// 0x000010CF ERRINFO_INVALIDINPUTPDUTYPE (a) A Slow-Path Input Event (section 2.2.8.1.1.3.1.1) has been received with an invalid messageType field. (b) A Fast-Path Input Event (section 2.2.8.1.2.2) has been received with an invalid eventCode field.
-
-// 0x000010D0 ERRINFO_INVALIDINPUTPDUMOUSE (a) A Slow-Path Mouse Event (section 2.2.8.1.1.3.1.1.3) or Extended Mouse Event (section 2.2.8.1.1.3.1.1.4) has been received with an invalid pointerFlags field. (b) A Fast-Path Mouse Event (section 2.2.8.1.2.2.3) or Fast-Path Extended Mouse Event (section 2.2.8.1.2.2.4) has been received with an invalid pointerFlags field.
-
-// 0x000010D1 ERRINFO_INVALIDREFRESHRECTPDU An invalid Refresh Rect PDU (section 2.2.11.2) has been received.
-
-// 0x000010D2 ERRINFO_CREATEUSERDATAFAILED The server failed to construct the GCC Conference Create Response user data (section 2.2.1.4).
-
-// 0x000010D3 ERRINFO_CONNECTFAILED Processing during the Channel Connection phase of the RDP Connection Sequence (see section 1.3.1.1 for an overview of the RDP Connection Sequence phases) has failed.
-
-// 0x000010D4 ERRINFO_CONFIRMACTIVEWRONGSHAREID A Confirm Active PDU (section 2.2.1.13.2) was received from the client with an invalid shareId field.
-
-// 0x000010D5 ERRINFO_CONFIRMACTIVEWRONGORIGINATOR A Confirm Active PDU (section 2.2.1.13.2) was received from the client with an invalid originatorId field.
-
-// 0x000010DA ERRINFO_PERSISTENTKEYPDUBADLENGTH There is not enough data to process a Persistent Key List PDU (section 2.2.1.17).
-
-// 0x000010DB ERRINFO_PERSISTENTKEYPDUILLEGALFIRST A Persistent Key List PDU (section 2.2.1.17) marked as PERSIST_PDU_FIRST (0x01) was received after the reception of a prior Persistent Key List PDU also marked as PERSIST_PDU_FIRST.
-
-// 0x000010DC ERRINFO_PERSISTENTKEYPDUTOOMANYTOTALKEYS A Persistent Key List PDU (section 2.2.1.17) was received which specified a total number of bitmap cache entries larger than 262144.
-
-// 0x000010DD ERRINFO_PERSISTENTKEYPDUTOOMANYCACHEKEYS A Persistent Key List PDU (section 2.2.1.17) was received which specified an invalid total number of keys for a bitmap cache (the number of entries that can be stored within each bitmap cache is specified in the Revision 1 or 2 Bitmap Cache Capability Set (section 2.2.7.1.4) that is sent from client to server).
-
-// 0x000010DE ERRINFO_INPUTPDUBADLENGTH There is not enough data to process Input Event PDU Data (section 2.2.8.1.1.3. 2.2.8.1.2).
-
-// 0x000010DF ERRINFO_BITMAPCACHEERRORPDUBADLENGTH There is not enough data to process the shareDataHeader, NumInfoBlocks, Pad1, and Pad2 fields of the Bitmap Cache Error PDU Data ([MS-RDPEGDI] section 2.2.2.3.1.1).
-
-// 0x000010E0  ERRINFO_SECURITYDATATOOSHORT (a) The dataSignature field of the Fast-Path Input Event PDU (section 2.2.8.1.2) does not contain enough data. (b) The fipsInformation and dataSignature fields of the Fast-Path Input Event PDU (section 2.2.8.1.2) do not contain enough data.
-
-// 0x000010E1 ERRINFO_VCHANNELDATATOOSHORT (a) There is not enough data in the Client Network Data (section 2.2.1.3.4) to read the virtual channel configuration data. (b) There is not enough data to read a complete Channel PDU Header (section 2.2.6.1.1).
-
-// 0x000010E2 ERRINFO_SHAREDATATOOSHORT (a) There is not enough data to process Control PDU Data (section 2.2.1.15.1). (b) There is not enough data to read a complete Share Control Header (section 2.2.8.1.1.1.1). (c) There is not enough data to read a complete Share Data Header (section 2.2.8.1.1.1.2) of a Slow-Path Data PDU (section 2.2.8.1.1.1.1). (d) There is not enough data to process Font List PDU Data (section 2.2.1.18.1).
-
-// 0x000010E3 ERRINFO_BADSUPRESSOUTPUTPDU (a) There is not enough data to process Suppress Output PDU Data (section 2.2.11.3.1). (b) The allowDisplayUpdates field of the Suppress Output PDU Data (section 2.2.11.3.1) is invalid.
-
-// 0x000010E5 ERRINFO_CONFIRMACTIVEPDUTOOSHORT (a) There is not enough data to read the shareControlHeader, shareId, originatorId, lengthSourceDescriptor, and lengthCombinedCapabilities fields of the Confirm Active PDU Data (section 2.2.1.13.2.1). (b) There is not enough data to read the sourceDescriptor, numberCapabilities, pad2Octets, and capabilitySets fields of the Confirm Active PDU Data (section 2.2.1.13.2.1).
-
-// 0x000010E7 ERRINFO_CAPABILITYSETTOOSMALL There is not enough data to read the capabilitySetType and the lengthCapability fields in a received Capability Set (section 2.2.1.13.1.1.1).
-
-// 0x000010E8 ERRINFO_CAPABILITYSETTOOLARGE A Capability Set (section 2.2.1.13.1.1.1) has been received with a lengthCapability field that contains a value greater than the total length of the data received.
-
-// 0x000010E9 ERRINFO_NOCURSORCACHE (a) Both the colorPointerCacheSize and pointerCacheSize fields in the Pointer Capability Set (section 2.2.7.1.5) are set to zero. (b) The pointerCacheSize field in the Pointer Capability Set (section 2.2.7.1.5) is not present, and the colorPointerCacheSize field is set to zero.
-
-// 0x000010EA ERRINFO_BADCAPABILITIES The capabilities received from the client in the Confirm Active PDU (section 2.2.1.13.2) were not accepted by the server.
-
-// 0x000010EC ERRINFO_VIRTUALCHANNELDECOMPRESSIONERR An error occurred while using the bulk compressor (section 3.1.8 and [MS- RDPEGDI] section 3.1.8) to decompress a Virtual Channel PDU (section 2.2.6.1)
-
-// 0x000010ED ERRINFO_INVALIDVCCOMPRESSIONTYPE An invalid bulk compression package was specified in the flags field of the Channel PDU Header (section 2.2.6.1.1).
-
-// 0x000010EF ERRINFO_INVALIDCHANNELID An invalid MCS channel ID was specified in the mcsPdu field of the Virtual Channel PDU (section 2.2.6.1).
-
-// 0x000010F0 ERRINFO_VCHANNELSTOOMANY The client requested more than the maximum allowed 31 static virtual channels in the Client Network Data (section 2.2.1.3.4).
-
-// 0x000010F3 ERRINFO_REMOTEAPPSNOTENABLED The INFO_RAIL flag (0x00008000) MUST be set in the flags field of the Info Packet (section 2.2.1.11.1.1) as the session on the  remote server can only host remote applications.
-
-// 0x000010F4 ERRINFO_CACHECAPNOTSET The client sent a Persistent Key List PDU (section 2.2.1.17) without including the prerequisite Revision 2 Bitmap Cache Capability Set (section 2.2.7.1.4.2) in the Confirm Active PDU (section 2.2.1.13.2).
-
-// 0x000010F5 ERRINFO_BITMAPCACHEERRORPDUBADLENGTH2 The NumInfoBlocks field in the Bitmap Cache Error PDU Data is inconsistent with the amount of data in the Info field ([MS-RDPEGDI] section 2.2.2.3.1.1).
-
-// 0x000010F6 ERRINFO_OFFSCRCACHEERRORPDUBADLENGTH There is not enough data to process an Offscreen Bitmap Cache Error PDU ([MS-RDPEGDI] section 2.2.2.3.2).
-
-// 0x000010F7 ERRINFO_DNGCACHEERRORPDUBADLENGTH There is not enough data to process a DrawNineGrid Cache Error PDU ([MS-RDPEGDI] section 2.2.2.3.3).
-
-// 0x000010F8 ERRINFO_GDIPLUSPDUBADLENGTH There is not enough data to process a GDI+ Error PDU ([MS-RDPEGDI] section 2.2.2.3.4).
-
-// 0x00001111 ERRINFO_SECURITYDATATOOSHORT2 There is not enough data to read a Basic Security Header (section 2.2.8.1.1.2.1).
-
-// 0x00001112 ERRINFO_SECURITYDATATOOSHORT3 There is not enough data to read a Non- FIPS Security Header (section 2.2.8.1.1.2.2) or FIPS Security Header (section 2.2.8.1.1.2.3).
-
-// 0x00001113 ERRINFO_SECURITYDATATOOSHORT4 There is not enough data to read the basicSecurityHeader and length fields of the Security Exchange PDU Data (section 2.2.1.10.1).
-
-// 0x00001114 ERRINFO_SECURITYDATATOOSHORT5 There is not enough data to read the CodePage, flags, cbDomain, cbUserName, cbPassword, cbAlternateShell, cbWorkingDir, Domain, UserName, Password, AlternateShell, and WorkingDir fields in the Info Packet (section 2.2.1.11.1.1).
-
-// 0x00001115 ERRINFO_SECURITYDATATOOSHORT6 There is not enough data to read the CodePage, flags, cbDomain, cbUserName, cbPassword, cbAlternateShell, and cbWorkingDir fields in the Info Packet (section 2.2.1.11.1.1).
-
-// 0x00001116 ERRINFO_SECURITYDATATOOSHORT7 There is not enough data to read the clientAddressFamily and cbClientAddress fields in the Extended Info Packet (section 2.2.1.11.1.1.1).
-
-// 0x00001117 ERRINFO_SECURITYDATATOOSHORT8 There is not enough data to read the clientAddress field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-
-// 0x00001118 ERRINFO_SECURITYDATATOOSHORT9 There is not enough data to read the cbClientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-
-// 0x00001119 ERRINFO_SECURITYDATATOOSHORT10 There is not enough data to read the clientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-
-// 0x0000111A ERRINFO_SECURITYDATATOOSHORT11 There is not enough data to read the clientTimeZone field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-
-// 0x0000111B ERRINFO_SECURITYDATATOOSHORT12 There is not enough data to read the clientSessionId field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-
-// 0x0000111C ERRINFO_SECURITYDATATOOSHORT13 There is not enough data to read the performanceFlags field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-
-// 0x0000111D ERRINFO_SECURITYDATATOOSHORT14 There is not enough data to read the cbAutoReconnectLen field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-
-// 0x0000111E ERRINFO_SECURITYDATATOOSHORT15 There is not enough data to read the autoReconnectCookie field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-
-// 0x0000111F ERRINFO_SECURITYDATATOOSHORT16 The cbAutoReconnectLen field in the Extended Info Packet (section 2.2.1.11.1.1.1) contains a value which is larger than the maximum allowed length of 128 bytes.
-
-// 0x00001120 ERRINFO_SECURITYDATATOOSHORT17 There is not enough data to read the clientAddressFamily and cbClientAddress fields in the Extended Info Packet (section 2.2.1.11.1.1.1).
-
-// 0x00001121 ERRINFO_SECURITYDATATOOSHORT18 There is not enough data to read the clientAddress field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-
-// 0x00001122 ERRINFO_SECURITYDATATOOSHORT19 There is not enough data to read the cbClientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-
-// 0x00001123 ERRINFO_SECURITYDATATOOSHORT20 There is not enough data to read the clientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-
-// 0x00001124 ERRINFO_SECURITYDATATOOSHORT21 There is not enough data to read the clientTimeZone field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-
-// 0x00001125 ERRINFO_SECURITYDATATOOSHORT22 There is not enough data to read the clientSessionId field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-
-// 0x00001126 ERRINFO_SECURITYDATATOOSHORT23 There is not enough data to read the Client Info PDU Data (section 2.2.1.11.1).
-
-// 0x00001129 ERRINFO_BADMONITORDATA The monitorCount field in the Client Monitor Data (section 2.2.1.3.6) is invalid.
-
-// 0x0000112A ERRINFO_VCDECOMPRESSEDREASSEMBLEFAILED The server-side decompression buffer is invalid, or the size of the decompressed VC data exceeds the chunking size specified in the Virtual Channel Capability Set (section 2.2.7.1.10).
-
-// 0x0000112B ERRINFO_VCDATATOOLONG The size of a received Virtual Channel PDU (section 2.2.6.1) exceeds the chunking size specified in the Virtual Channel Capability Set (section 2.2.7.1.10).
-
-// 0x0000112C ERRINFO_RESERVED Reserved for future use.
-
-// 0x0000112D ERRINFO_GRAPHICSMODENOTSUPPORTED The graphics mode requested by the client is not supported by the server.
-
-// 0x0000112E ERRINFO_GRAPHICSSUBSYSTEMRESETFAILED The server-side graphics subsystem failed  to reset.
-
-// 0x00001191 ERRINFO_UPDATESESSIONKEYFAILED An attempt to update the session keys while using Standard RDP Security mechanisms (section 5.3.7) failed.
-
-// 0x00001192 ERRINFO_DECRYPTFAILED (a) Decryption using Standard RDP Security mechanisms (section 5.3.6) failed. (b) Session key creation using Standard RDP Security mechanisms (section 5.3.5) failed.
-
-// 0x00001193 ERRINFO_ENCRYPTFAILED Encryption using Standard RDP Security mechanisms (section 5.3.6) failed.
-
-// 0x00001194 ERRINFO_ENCPKGMISMATCH Failed to find a usable Encryption Method (section 5.3.2) in the encryptionMethods field of the Client Security Data (section 2.2.1.4.3).
-
-// 0x00001195 ERRINFO_DECRYPTFAILED2 2.2.5.2 Encryption using Standard RDP Security mechanisms (section 5.3.6) failed. Unencrypted data was encountered in a protocol stream which is meant to be encrypted with Standard RDP Security mechanisms (section 5.3.6).
+// +------------------------------------+--------------------------------------+
+// | 0x000010C9 ERRINFO_UNKNOWNPDUTYPE2 | Unknown pduType2 field in a received |
+// |                                    | Share Data Header (section           |
+// |                                    | 2.2.8.1.1.1.2).                      |
+// +------------------------------------+--------------------------------------+
+// | 0x000010CA ERRINFO_UNKNOWNPDUTYPE  | Unknown pduType field in a received  |
+// |                                    | Share Control Header (section        |
+// |                                    | 2.2.8.1.1.1.1).                      |
+// +------------------------------------+--------------------------------------+
+// | 0x000010CB ERRINFO_DATAPDUSEQUENCE | An out-of-sequence Slow-Path Data PDU|
+// |                                    | (section 2.2.8.1.1.1.1) has been     |
+// |                                    | received.                            |
+// +------------------------------------+--+-----------------------------------+
+// | 0x000010CD ERRINFO_CONTROLPDUSEQUENCE | An out-of-sequence Slow-Path      |
+// |                                       | Non-Data PDU (section             |
+// |                                       | 2.2.8.1.1.1.1) has been received. |
+// +---------------------------------------+----+------------------------------+
+// | 0x000010CE ERRINFO_INVALIDCONTROLPDUACTION | A Control PDU (sections      |
+// |                                            | 2.2.1.15 and 2.2.1.16) has   |
+// |                                            | been received with an        |
+// |                                            | invalid action field.        |
+// +----------------------------------------+---+------------------------------+
+// | 0x000010CF ERRINFO_INVALIDINPUTPDUTYPE | (a) A Slow-Path Input Event      |
+// |                                        | (section 2.2.8.1.1.3.1.1) has    |
+// |                                        | been received with an invalid    |
+// |                                        | messageType field.               |
+// |                                        | (b) A Fast-Path Input Event      |
+// |                                        | (section 2.2.8.1.2.2) has been   |
+// |                                        | received with an invalid         |
+// |                                        | eventCode field.                 |
+// +----------------------------------------+----------------------------------+
+// | 0x000010D0 ERRINFO_INVALIDINPUTPDUMOUSE (a) A Slow-Path Mouse Event (section 2.2.8.1.1.3.1.1.3) or Extended Mouse Event (section 2.2.8.1.1.3.1.1.4) has been received with an invalid pointerFlags field. (b) A Fast-Path Mouse Event (section 2.2.8.1.2.2.3) or Fast-Path Extended Mouse Event (section 2.2.8.1.2.2.4) has been received with an invalid pointerFlags field.
+// +---------------------------------------------------------------------------+
+// | 0x000010D1 ERRINFO_INVALIDREFRESHRECTPDU An invalid Refresh Rect PDU (section 2.2.11.2) has been received.
+// +---------------------------------------------------------------------------+
+// | 0x000010D2 ERRINFO_CREATEUSERDATAFAILED The server failed to construct the GCC Conference Create Response user data (section 2.2.1.4).
+// +---------------------------------------------------------------------------+
+// | 0x000010D3 ERRINFO_CONNECTFAILED Processing during the Channel Connection phase of the RDP Connection Sequence (see section 1.3.1.1 for an overview of the RDP Connection Sequence phases) has failed.
+// +---------------------------------------------------------------------------+
+// | 0x000010D4 ERRINFO_CONFIRMACTIVEWRONGSHAREID A Confirm Active PDU (section 2.2.1.13.2) was received from the client with an invalid shareId field.
+// +---------------------------------------------------------------------------+
+// | 0x000010D5 ERRINFO_CONFIRMACTIVEWRONGORIGINATOR A Confirm Active PDU (section 2.2.1.13.2) was received from the client with an invalid originatorId field.
+// +---------------------------------------------------------------------------+
+// | 0x000010DA ERRINFO_PERSISTENTKEYPDUBADLENGTH There is not enough data to process a Persistent Key List PDU (section 2.2.1.17).
+// +---------------------------------------------------------------------------+
+// | 0x000010DB ERRINFO_PERSISTENTKEYPDUILLEGALFIRST A Persistent Key List PDU (section 2.2.1.17) marked as PERSIST_PDU_FIRST (0x01) was received after the reception of a prior Persistent Key List PDU also marked as PERSIST_PDU_FIRST.
+// +---------------------------------------------------------------------------+
+// | 0x000010DC ERRINFO_PERSISTENTKEYPDUTOOMANYTOTALKEYS A Persistent Key List PDU (section 2.2.1.17) was received which specified a total number of bitmap cache entries larger than 262144.
+// +---------------------------------------------------------------------------+
+// | 0x000010DD ERRINFO_PERSISTENTKEYPDUTOOMANYCACHEKEYS A Persistent Key List PDU (section 2.2.1.17) was received which specified an invalid total number of keys for a bitmap cache (the number of entries that can be stored within each bitmap cache is specified in the Revision 1 or 2 Bitmap Cache Capability Set (section 2.2.7.1.4) that is sent from client to server).
+// +---------------------------------------------------------------------------+
+// | 0x000010DE ERRINFO_INPUTPDUBADLENGTH There is not enough data to process Input Event PDU Data (section 2.2.8.1.1.3. 2.2.8.1.2).
+// +---------------------------------------------------------------------------+
+// | 0x000010DF ERRINFO_BITMAPCACHEERRORPDUBADLENGTH There is not enough data to process the shareDataHeader, NumInfoBlocks, Pad1, and Pad2 fields of the Bitmap Cache Error PDU Data ([MS-RDPEGDI] section 2.2.2.3.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x000010E0  ERRINFO_SECURITYDATATOOSHORT (a) The dataSignature field of the Fast-Path Input Event PDU (section 2.2.8.1.2) does not contain enough data. (b) The fipsInformation and dataSignature fields of the Fast-Path Input Event PDU (section 2.2.8.1.2) do not contain enough data.
+// +---------------------------------------------------------------------------+
+// | 0x000010E1 ERRINFO_VCHANNELDATATOOSHORT (a) There is not enough data in the Client Network Data (section 2.2.1.3.4) to read the virtual channel configuration data. (b) There is not enough data to read a complete Channel PDU Header (section 2.2.6.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x000010E2 ERRINFO_SHAREDATATOOSHORT (a) There is not enough data to process Control PDU Data (section 2.2.1.15.1). (b) There is not enough data to read a complete Share Control Header (section 2.2.8.1.1.1.1). (c) There is not enough data to read a complete Share Data Header (section 2.2.8.1.1.1.2) of a Slow-Path Data PDU (section 2.2.8.1.1.1.1). (d) There is not enough data to process Font List PDU Data (section 2.2.1.18.1).
+// +---------------------------------------------------------------------------+
+// | 0x000010E3 ERRINFO_BADSUPRESSOUTPUTPDU (a) There is not enough data to process Suppress Output PDU Data (section 2.2.11.3.1). (b) The allowDisplayUpdates field of the Suppress Output PDU Data (section 2.2.11.3.1) is invalid.
+// +---------------------------------------------------------------------------+
+// | 0x000010E5 ERRINFO_CONFIRMACTIVEPDUTOOSHORT (a) There is not enough data to read the shareControlHeader, shareId, originatorId, lengthSourceDescriptor, and lengthCombinedCapabilities fields of the Confirm Active PDU Data (section 2.2.1.13.2.1). (b) There is not enough data to read the sourceDescriptor, numberCapabilities, pad2Octets, and capabilitySets fields of the Confirm Active PDU Data (section 2.2.1.13.2.1).
+// +---------------------------------------------------------------------------+
+// | 0x000010E7 ERRINFO_CAPABILITYSETTOOSMALL There is not enough data to read the capabilitySetType and the lengthCapability fields in a received Capability Set (section 2.2.1.13.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x000010E8 ERRINFO_CAPABILITYSETTOOLARGE A Capability Set (section 2.2.1.13.1.1.1) has been received with a lengthCapability field that contains a value greater than the total length of the data received.
+// +---------------------------------------------------------------------------+
+// | 0x000010E9 ERRINFO_NOCURSORCACHE (a) Both the colorPointerCacheSize and pointerCacheSize fields in the Pointer Capability Set (section 2.2.7.1.5) are set to zero. (b) The pointerCacheSize field in the Pointer Capability Set (section 2.2.7.1.5) is not present, and the colorPointerCacheSize field is set to zero.
+// +---------------------------------------------------------------------------+
+// | 0x000010EA ERRINFO_BADCAPABILITIES The capabilities received from the client in the Confirm Active PDU (section 2.2.1.13.2) were not accepted by the server.
+// +---------------------------------------------------------------------------+
+// | 0x000010EC ERRINFO_VIRTUALCHANNELDECOMPRESSIONERR An error occurred while using the bulk compressor (section 3.1.8 and [MS- RDPEGDI] section 3.1.8) to decompress a Virtual Channel PDU (section 2.2.6.1)
+// +---------------------------------------------------------------------------+
+// | 0x000010ED ERRINFO_INVALIDVCCOMPRESSIONTYPE An invalid bulk compression package was specified in the flags field of the Channel PDU Header (section 2.2.6.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x000010EF ERRINFO_INVALIDCHANNELID An invalid MCS channel ID was specified in the mcsPdu field of the Virtual Channel PDU (section 2.2.6.1).
+// +---------------------------------------------------------------------------+
+// | 0x000010F0 ERRINFO_VCHANNELSTOOMANY The client requested more than the maximum allowed 31 static virtual channels in the Client Network Data (section 2.2.1.3.4).
+// +---------------------------------------------------------------------------+
+// | 0x000010F3 ERRINFO_REMOTEAPPSNOTENABLED The INFO_RAIL flag (0x00008000) MUST be set in the flags field of the Info Packet (section 2.2.1.11.1.1) as the session on the  remote server can only host remote applications.
+// +---------------------------------------------------------------------------+
+// | 0x000010F4 ERRINFO_CACHECAPNOTSET The client sent a Persistent Key List PDU (section 2.2.1.17) without including the prerequisite Revision 2 Bitmap Cache Capability Set (section 2.2.7.1.4.2) in the Confirm Active PDU (section 2.2.1.13.2).
+// +---------------------------------------------------------------------------+
+// | 0x000010F5 ERRINFO_BITMAPCACHEERRORPDUBADLENGTH2 The NumInfoBlocks field in the Bitmap Cache Error PDU Data is inconsistent with the amount of data in the Info field ([MS-RDPEGDI] section 2.2.2.3.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x000010F6 ERRINFO_OFFSCRCACHEERRORPDUBADLENGTH There is not enough data to process an Offscreen Bitmap Cache Error PDU ([MS-RDPEGDI] section 2.2.2.3.2).
+// +---------------------------------------------------------------------------+
+// | 0x000010F7 ERRINFO_DNGCACHEERRORPDUBADLENGTH There is not enough data to process a DrawNineGrid Cache Error PDU ([MS-RDPEGDI] section 2.2.2.3.3).
+// +---------------------------------------------------------------------------+
+// | 0x000010F8 ERRINFO_GDIPLUSPDUBADLENGTH There is not enough data to process a GDI+ Error PDU ([MS-RDPEGDI] section 2.2.2.3.4).
+// +---------------------------------------------------------------------------+
+// | 0x00001111 ERRINFO_SECURITYDATATOOSHORT2 There is not enough data to read a Basic Security Header (section 2.2.8.1.1.2.1).
+// +---------------------------------------------------------------------------+
+// | 0x00001112 ERRINFO_SECURITYDATATOOSHORT3 There is not enough data to read a Non- FIPS Security Header (section 2.2.8.1.1.2.2) or FIPS Security Header (section 2.2.8.1.1.2.3).
+// +---------------------------------------------------------------------------+
+// | 0x00001113 ERRINFO_SECURITYDATATOOSHORT4 There is not enough data to read the basicSecurityHeader and length fields of the Security Exchange PDU Data (section 2.2.1.10.1).
+// +---------------------------------------------------------------------------+
+// | 0x00001114 ERRINFO_SECURITYDATATOOSHORT5 There is not enough data to read the CodePage, flags, cbDomain, cbUserName, cbPassword, cbAlternateShell, cbWorkingDir, Domain, UserName, Password, AlternateShell, and WorkingDir fields in the Info Packet (section 2.2.1.11.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x00001115 ERRINFO_SECURITYDATATOOSHORT6 There is not enough data to read the CodePage, flags, cbDomain, cbUserName, cbPassword, cbAlternateShell, and cbWorkingDir fields in the Info Packet (section 2.2.1.11.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x00001116 ERRINFO_SECURITYDATATOOSHORT7 There is not enough data to read the clientAddressFamily and cbClientAddress fields in the Extended Info Packet (section 2.2.1.11.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x00001117 ERRINFO_SECURITYDATATOOSHORT8 There is not enough data to read the clientAddress field in the Extended Info Packet (section 2.2.1.11.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x00001118 ERRINFO_SECURITYDATATOOSHORT9 There is not enough data to read the cbClientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x00001119 ERRINFO_SECURITYDATATOOSHORT10 There is not enough data to read the clientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x0000111A ERRINFO_SECURITYDATATOOSHORT11 There is not enough data to read the clientTimeZone field in the Extended Info Packet (section 2.2.1.11.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x0000111B ERRINFO_SECURITYDATATOOSHORT12 There is not enough data to read the clientSessionId field in the Extended Info Packet (section 2.2.1.11.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x0000111C ERRINFO_SECURITYDATATOOSHORT13 There is not enough data to read the performanceFlags field in the Extended Info Packet (section 2.2.1.11.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x0000111D ERRINFO_SECURITYDATATOOSHORT14 There is not enough data to read the cbAutoReconnectLen field in the Extended Info Packet (section 2.2.1.11.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x0000111E ERRINFO_SECURITYDATATOOSHORT15 There is not enough data to read the autoReconnectCookie field in the Extended Info Packet (section 2.2.1.11.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x0000111F ERRINFO_SECURITYDATATOOSHORT16 The cbAutoReconnectLen field in the Extended Info Packet (section 2.2.1.11.1.1.1) contains a value which is larger than the maximum allowed length of 128 bytes.
+// +---------------------------------------------------------------------------+
+// | 0x00001120 ERRINFO_SECURITYDATATOOSHORT17 There is not enough data to read the clientAddressFamily and cbClientAddress fields in the Extended Info Packet (section 2.2.1.11.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x00001121 ERRINFO_SECURITYDATATOOSHORT18 There is not enough data to read the clientAddress field in the Extended Info Packet (section 2.2.1.11.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x00001122 ERRINFO_SECURITYDATATOOSHORT19 There is not enough data to read the cbClientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x00001123 ERRINFO_SECURITYDATATOOSHORT20 There is not enough data to read the clientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x00001124 ERRINFO_SECURITYDATATOOSHORT21 There is not enough data to read the clientTimeZone field in the Extended Info Packet (section 2.2.1.11.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x00001125 ERRINFO_SECURITYDATATOOSHORT22 There is not enough data to read the clientSessionId field in the Extended Info Packet (section 2.2.1.11.1.1.1).
+// +---------------------------------------------------------------------------+
+// | 0x00001126 ERRINFO_SECURITYDATATOOSHORT23 There is not enough data to read the Client Info PDU Data (section 2.2.1.11.1).
+// +---------------------------------------------------------------------------+
+// | 0x00001129 ERRINFO_BADMONITORDATA The monitorCount field in the Client Monitor Data (section 2.2.1.3.6) is invalid.
+// +---------------------------------------------------------------------------+
+// | 0x0000112A ERRINFO_VCDECOMPRESSEDREASSEMBLEFAILED The server-side decompression buffer is invalid, or the size of the decompressed VC data exceeds the chunking size specified in the Virtual Channel Capability Set (section 2.2.7.1.10).
+// +---------------------------------------------------------------------------+
+// | 0x0000112B ERRINFO_VCDATATOOLONG The size of a received Virtual Channel PDU (section 2.2.6.1) exceeds the chunking size specified in the Virtual Channel Capability Set (section 2.2.7.1.10).
+// +---------------------------------------------------------------------------+
+// | 0x0000112C ERRINFO_RESERVED Reserved for future use.
+// +---------------------------------------------------------------------------+
+// | 0x0000112D ERRINFO_GRAPHICSMODENOTSUPPORTED The graphics mode requested by the client is not supported by the server.
+// +---------------------------------------------------------------------------+
+// | 0x0000112E ERRINFO_GRAPHICSSUBSYSTEMRESETFAILED The server-side graphics subsystem failed  to reset.
+// +---------------------------------------------------------------------------+
+// | 0x00001191 ERRINFO_UPDATESESSIONKEYFAILED An attempt to update the session keys while using Standard RDP Security mechanisms (section 5.3.7) failed.
+// +---------------------------------------------------------------------------+
+// | 0x00001192 ERRINFO_DECRYPTFAILED (a) Decryption using Standard RDP Security mechanisms (section 5.3.6) failed. (b) Session key creation using Standard RDP Security mechanisms (section 5.3.5) failed.
+// +---------------------------------------------------------------------------+
+// | 0x00001193 ERRINFO_ENCRYPTFAILED Encryption using Standard RDP Security mechanisms (section 5.3.6) failed.
+// +---------------------------------------------------------------------------+
+// | 0x00001194 ERRINFO_ENCPKGMISMATCH Failed to find a usable Encryption Method (section 5.3.2) in the encryptionMethods field of the Client Security Data (section 2.2.1.4.3).
+// +---------------------------------------------------------------------------+
+// | 0x00001195 ERRINFO_DECRYPTFAILED2 2.2.5.2 Encryption using Standard RDP Security mechanisms (section 5.3.6) failed. Unencrypted data was encountered in a protocol stream which is meant to be encrypted with Standard RDP Security mechanisms (section 5.3.6).
+// +---------------------------------------------------------------------------+
 
         void process_disconnect_pdu(Stream & stream)
         {
@@ -3192,10 +2704,10 @@ struct mod_rdp : public client_mod {
                 next = (stream.p + capset_length) - 4;
                 switch (capset_type) {
                 case RDP_CAPSET_GENERAL:
-                    this->process_general_caps(stream);
+                    process_general_caps(stream);
                     break;
                 case RDP_CAPSET_BITMAP:
-                    this->process_bitmap_caps(stream);
+                    process_bitmap_caps(stream, this->bpp);
                     break;
                 default:
                     break;
@@ -3559,110 +3071,6 @@ struct mod_rdp : public client_mod {
         mod->gd.server_end_update();
     }
 
-// 2.2.7.1.4.2 Revision 2 (TS_BITMAPCACHE_CAPABILITYSET_REV2)
-// ==========================================================
-
-// The TS_BITMAPCACHE_CAPABILITYSET_REV2 structure is used to advertise support
-// for Revision 2 bitmap caches (see [MS-RDPEGDI] section 3.1.1.1.1). This
-// capability is only sent from client to server.
-
-// In addition to specifying bitmap caching parameters in the Revision 2 Bitmap
-// Cache Capability Set, a client MUST also support the MemBlt and Mem3Blt
-// Primary Drawing Orders (see [MS-RDPEGDI] sections 2.2.2.2.1.1.2.9 and
-// 2.2.2.2.1.1.2.10, respectively) in order to receive the Cache Bitmap
-// (Revision 2) Secondary Drawing Order (see [MS-RDPEGDI] section 2.2.2.2.1.2.3).
-
-// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
-//  capability set. This field MUST be set to CAPSTYPE_BITMAPCACHE_REV2 (19).
-
-// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
-//  of the capability data, including the size of the capabilitySetType and
-//  lengthCapability fields.
-
-// CacheFlags (2 bytes): A 16-bit, unsigned integer. Properties which apply to
-//   all the bitmap caches.
-
-// +--------------------------------------+------------------------------------+
-// | 0x0001 PERSISTENT_KEYS_EXPECTED_FLAG | Indicates that the client will send|
-// |                                      | a Persistent Key List PDU during   |
-// |                                      | the Connection Finalization phase  |
-// |                                      | of the RDP Connection Sequence     |
-// |                                      | (see section 1.3.1.1 for an        |
-// |                                      | overview of the RDP Connection     |
-// |                                      | Sequence phases).                  |
-// +--------------------------------------+------------------------------------+
-// | 0x0002 ALLOW_CACHE_WAITING_LIST_FLAG | Indicates that the client supports |
-// |                                      | a cache waiting list. If a waiting |
-// |                                      | list is supported, new bitmaps are |
-// |                                      | cached on the second hit rather    |
-// |                                      | than the first (that is, a bitmap  |
-// |                                      | is sent twice before it is cached).|
-// +--------------------------------------+------------------------------------+
-
-// pad2 (1 byte): An 8-bit, unsigned integer. Padding. Values in this field MUST
-//   be ignored.
-
-// NumCellCaches (1 byte): An 8-bit, unsigned integer. Number of bitmap caches
-//  (with a maximum allowed value of 5).
-
-// BitmapCache0CellInfo (4 bytes): A TS_BITMAPCACHE_CELL_CACHE_INFO structure.
-//  Contains information about the structure of Bitmap Cache 0. The maximum
-//  number of entries allowed in this cache is 600. This field is only valid if
-//  NumCellCaches is greater than or equal to 1.
-
-// BitmapCache1CellInfo (4 bytes): A TS_BITMAPCACHE_CELL_CACHE_INFO structure.
-//  Contains information about the structure of Bitmap Cache 1. The maximum
-//  number of entries allowed in this cache is 600. This field is only valid if
-//  NumCellCaches is greater than or equal to 2.
-
-// BitmapCache2CellInfo (4 bytes): A TS_BITMAPCACHE_CELL_CACHE_INFO structure.
-//  Contains information about the structure of Bitmap Cache 2. The maximum
-//  number of entries allowed in this cache is 65536. This field is only valid
-//  if NumCellCaches is greater than or equal to 3.
-
-// BitmapCache3CellInfo (4 bytes): A TS_BITMAPCACHE_CELL_CACHE_INFO structure.
-//  Contains information about the structure of Bitmap Cache 3. The maximum
-//  number of entries allowed in this cache is 4096. This field is only valid
-//  if NumCellCaches is greater than or equal to 4.
-
-// BitmapCache4CellInfo (4 bytes): A TS_BITMAPCACHE_CELL_CACHE_INFO structure.
-//  Contains information about the structure of Bitmap Cache 4. The maximum
-//  number of entries allowed in this cache is 2048. This field is only valid
-//  if NumCellCaches is equal to 5.
-
-// 2.2.7.1.4.2.1 Bitmap Cache Cell Info (TS_BITMAPCACHE_CELL_CACHE_INFO)
-// =====================================================================
-
-// The TS_BITMAPCACHE_CELL_CACHE_INFO structure contains information about a
-// bitmap cache on the client.
-
-// NumEntries (31 bits): A 31-bit, unsigned integer. Indicates the number of
-// entries in the cache.
-
-// k (1 bit): A 1-bit flag. Indicates that the bitmap cache is persistent across
-//  RDP connections and that the client expects to receive a unique 64-bit
-//  bitmap key in the Cache Bitmap (Revision 2) Secondary Drawing Order (see
-//  [MS-RDPEGDI] section 2.2.2.2.1.2.3) for every bitmap inserted into this
-//  cache. If this bit is set, 64-bit keys MUST be sent by the server.
-
-
-    void out_bmpcache2_caps(Stream & stream, const ClientInfo & client_info)
-    {
-        stream.out_uint16_le(RDP_CAPSET_BMPCACHE2);
-        stream.out_uint16_le(RDP_CAPLEN_BMPCACHE2);
-
-        /* version */
-        stream.out_uint16_le(client_info.bitmap_cache_persist_enable ? 2 : 0);
-        stream.out_uint16_be(3);	/* number of caches in this set */
-
-        /* Sending bitmap capabilities version 2 */
-        TODO(" no need any more to set a limit at 2000  use real figures")
-        stream.out_uint32_le(std::min(client_info.cache1_entries, (uint32_t)2000));
-        stream.out_uint32_le(std::min(client_info.cache2_entries, (uint32_t)2000));
-        stream.out_uint32_le(std::min(client_info.cache3_entries, (uint32_t)2000));
-
-        stream.out_clear_bytes(20);	/* other bitmap caches not used */
-    }
 
 
     TODO("Move send_client_info_pdu funcion to client_info.hpp")
