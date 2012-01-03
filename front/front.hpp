@@ -63,6 +63,15 @@
 #include "RDP/capabilities/pointer.hpp"
 #include "RDP/capabilities/input.hpp"
 
+#include "RDP/gcc_conference_user_data/cs_core.hpp"
+#include "RDP/gcc_conference_user_data/cs_sec.hpp"
+#include "RDP/gcc_conference_user_data/cs_net.hpp"
+#include "RDP/gcc_conference_user_data/cs_cluster.hpp"
+#include "RDP/gcc_conference_user_data/cs_monitor.hpp"
+#include "RDP/gcc_conference_user_data/sc_sec1.hpp"
+#include "RDP/gcc_conference_user_data/sc_core.hpp"
+#include "RDP/gcc_conference_user_data/sc_net.hpp"
+
 class Front {
 public:
     Keymap keymap;
@@ -972,24 +981,6 @@ public:
                                         uint8_t (&pri_exp)[512]
                                     ) throw(Error)
     {
-        Rsakeys rsa_keys(CFG_PATH "/" RSAKEYS_INI);
-        memset(server_random, 0x44, 32);
-        int fd = open("/dev/urandom", O_RDONLY);
-        if (fd == -1) {
-            fd = open("/dev/random", O_RDONLY);
-        }
-        if (fd != -1) {
-            if (read(fd, server_random, 32) != 32) {
-            }
-            close(fd);
-        }
-
-        uint8_t pub_sig[512];
-
-        memcpy(pub_mod, rsa_keys.pub_mod, 64);
-        memcpy(pub_sig, rsa_keys.pub_sig, 64);
-        memcpy(pri_exp, rsa_keys.pri_exp, 64);
-
         Stream stream(32768);
 
         // TPKT Header (length = 337 bytes)
@@ -1262,27 +1253,7 @@ public:
             stream.out_uint16_le(0);
         }
 
-        stream.out_uint16_le(SC_SECURITY);
-        stream.out_uint16_le(236); // length, including tag and length fields
-        stream.out_uint32_le(rc4_key_size); // key len 1 = 40 bit 2 = 128 bit
-        // crypt level 1 = low 2 = medium, 3 = high
-        stream.out_uint32_le(client_info->crypt_level);
-
-        stream.out_uint32_le(32);  // random len
-        stream.out_uint32_le(184); // len of rsa info(certificate)
-        stream.out_copy_bytes(server_random, 32);
-        /* here to end is certificate */
-        /* HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ */
-        /* TermService\Parameters\Certificate */
-        stream.out_uint32_le(1);
-        stream.out_uint32_le(1);
-        stream.out_uint32_le(1);
-
-        // 96 bytes long of sec_tag pubkey
-        send_sec_tag_pubkey(stream, rsa_keys.pub_exp, pub_mod);
-        // 76 bytes long of sec_tag_pub_sig
-        send_sec_tag_sig(stream, pub_sig);
-        /* end certificate */
+        front_out_gcc_conference_user_data_sc_sec1(stream, client_info->crypt_level, server_random, rc4_key_size, pub_mod, pri_exp);
 
         assert(offset_len_mcs_data - offset_len_mcs_connect_response  == 38);
 
@@ -2384,7 +2355,7 @@ public:
         /* Output share capability set */
         caps_count++; front_out_share_caps(stream, this->userid + MCS_USERCHANNEL_BASE);
         caps_count++; front_out_general_caps(stream);
-        caps_count++; front_out_bitmap_caps(stream, 
+        caps_count++; front_out_bitmap_caps(stream,
                                             this->client_info.bpp,
                                             this->client_info.width,
                                             this->client_info.height);

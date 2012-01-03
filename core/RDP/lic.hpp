@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "sec_utils.hpp"
 #include "RDP/sec.hpp"
 
 // 2.2.1.12 Server License Error PDU - Valid Client
