@@ -74,6 +74,10 @@
 #include "RDP/capabilities/glyphcache.hpp"
 #include "RDP/capabilities/font.hpp"
 
+#include "RDP/gcc_conference_user_data/cs_core.hpp"
+#include "RDP/gcc_conference_user_data/cs_cluster.hpp"
+#include "RDP/gcc_conference_user_data/cs_sec.hpp"
+#include "RDP/gcc_conference_user_data/cs_net.hpp"
 
 struct rdp_cursor {
     int x;
@@ -1968,99 +1972,11 @@ struct mod_rdp : public client_mod {
     stream.out_copy_bytes("Duca", 4); /* OEM ID: "Duca", as in Ducati. */
     stream.out_uint16_be(((length - 14) | 0x8000)); /* remaining length */
 
-    /* Client information */
-    stream.out_uint16_le(CS_CORE);
-    LOG(LOG_INFO, "Sending Client Core Data to remote server\n");
-    stream.out_uint16_le(212); /* length */
-    LOG(LOG_INFO, "core::header::length = %u\n", 212);
-    stream.out_uint32_le(this->use_rdp5?0x00080004:0x00080001); // RDP version. 1 == RDP4, 4 == RDP5.
-    LOG(LOG_INFO, "core::header::version RDP 4=0x00080001 (0x00080004 = RDP 5.0, 5.1, 5.2, and 6.0 clients)");
-    stream.out_uint16_le(width);
-    LOG(LOG_INFO, "core::desktopWidth = %u\n", width);
-    stream.out_uint16_le(height);
-    LOG(LOG_INFO, "core::desktopHeight = %u\n", height);
-    stream.out_uint16_le(0xca01);
-    LOG(LOG_INFO, "core::colorDepth = RNS_UD_COLOR_8BPP (superseded by postBeta2ColorDepth)");
-    stream.out_uint16_le(0xaa03);
-    LOG(LOG_INFO, "core::SASSequence = RNS_UD_SAS_DEL");
-    stream.out_uint32_le(keylayout);
-    LOG(LOG_INFO, "core::keyboardLayout = %x", keylayout);
-    stream.out_uint32_le(2600); /* Client build. We are now 2600 compatible :-) */
-    LOG(LOG_INFO, "core::clientBuild = 2600");
-    LOG(LOG_INFO, "core::clientName=%s\n", hostname);
-
-    /* Added in order to limit hostlen and hostname size */
-    int hostlen = 2 * strlen(hostname);
-    if (hostlen > 30){
-        hostlen = 30;
-    }
-    /* Unicode name of client, padded to 30 bytes */
-    stream.out_unistr(hostname);
-    stream.out_clear_bytes(30 - hostlen);
-
-    /* See
-    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wceddk40/html/cxtsksupportingremotedesktopprotocol.asp */
-    TODO(" code should be updated to take care of keyboard type")
-    stream.out_uint32_le(4); // g_keyboard_type
-    LOG(LOG_INFO, "core::keyboardType = IBM enhanced (101- or 102-key) keyboard");
-    stream.out_uint32_le(0); // g_keyboard_subtype
-    LOG(LOG_INFO, "core::keyboardSubType = 0");
-    stream.out_uint32_le(12); // g_keyboard_functionkeys
-    LOG(LOG_INFO, "core::keyboardFunctionKey = 12 function keys");
-    stream.out_clear_bytes(64); /* imeFileName */
-    LOG(LOG_INFO, "core::imeFileName = \"\"");
-    stream.out_uint16_le(0xca01); /* color depth 8bpp */
-    LOG(LOG_INFO, "core::postBeta2ColorDepth = RNS_UD_COLOR_8BPP (superseded by highColorDepth)");
-    stream.out_uint16_le(1);
-    LOG(LOG_INFO, "core::clientProductId = 1");
-    stream.out_uint32_le(0);
-    LOG(LOG_INFO, "core::serialNumber = 0");
-    stream.out_uint16_le(rdp_bpp);
-    LOG(LOG_INFO, "core::highColorDepth = %u", rdp_bpp);
-    stream.out_uint16_le(0x0007);
-    LOG(LOG_INFO, "core::supportedColorDepths = 24/16/15");
-    stream.out_uint16_le(1);
-    LOG(LOG_INFO, "core::earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU");
-    stream.out_clear_bytes(64);
-    LOG(LOG_INFO, "core::clientDigProductId = \"\"");
-    stream.out_clear_bytes(2);
-    LOG(LOG_INFO, "core::pad2octets");
-//        stream.out_uint32_le(0); // optional
-//        LOG(LOG_INFO, "core::serverSelectedProtocol = 0");
-    /* End of client info */
-
-    LOG(LOG_INFO, "Sending Client Cluster Settings to remote server [console=(%u)]", (unsigned)(this->console_session));
-    stream.out_uint16_le(CS_CLUSTER);
-    stream.out_uint16_le(12);
-    stream.out_uint32_le(this->console_session ? 0xb : 9);
-    stream.out_uint32_le(0);
-
-    /* Client encryption settings */
-    LOG(LOG_INFO, "Sending Client Encryption Settings to remote server [encryption=(%u)]", 3);
-    stream.out_uint16_le(CS_SECURITY);
-    stream.out_uint16_le(12); /* length */
-    /* 0x3 = encryption supported, 128-bit supported */
-    stream.out_uint32_le(0x3);
-    stream.out_uint32_le(0); /* Unknown */
-
-    /* Here we need to put channel information in order to redirect channel data
-    from client to server passing through the "proxy" */
-    size_t num_channels = channel_list.size();
-
-    if (num_channels > 0) {
-        LOG(LOG_INFO, "cs_net");
-        LOG(LOG_INFO, "Sending Channels Settings to remote server [num channels=%u]", num_channels);
-        stream.out_uint16_le(CS_NET);
-        LOG(LOG_INFO, "cs_net::len=%u", num_channels * 12 + 8);
-        stream.out_uint16_le(num_channels * 12 + 8); /* length */
-        LOG(LOG_INFO, "cs_net::nb_chan=%u", num_channels);
-        stream.out_uint32_le(num_channels); /* number of virtual channels */
-        for (size_t index = 0; index < num_channels; index++){
-            const McsChannelItem & channel_item = channel_list[index];
-            stream.out_copy_bytes(channel_item.name, 8);
-            stream.out_uint32_be(channel_item.flags);
-        }
-    }
+    /* Client User Data */
+    mod_rdp_out_cs_core(stream, this->use_rdp5, width, height, rdp_bpp, keylayout, hostname);
+    mod_rdp_out_cs_cluster(stream, this->console_session);
+    mod_rdp_out_cs_sec(stream);
+    mod_rdp_out_cs_net(stream, channel_list);
 
     // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
     stream.set_out_ber_len_uint16(stream.p - stream.data - offset_data_len - 3, offset_data_len);
@@ -2084,9 +2000,6 @@ struct mod_rdp : public client_mod {
 // starting with the Demand Active PDU (the Capability Negotiation and
 // Connection Finalization phases as described in section 1.3.1.1) but excluding
 // the Persistent Key List PDU.
-
-
-
 
     // 2.2.1.1 Client X.224 Connection Request PDU
     // ===========================================
@@ -2676,105 +2589,308 @@ struct mod_rdp : public client_mod {
 // |                                          | (d) There is not enough data   |
 // |                                          | to process Font List PDU Data  |
 // |                                          | (section 2.2.1.18.1).          |
-// +---------------------------------------------------------------------------+
-// | 0x000010E3 ERRINFO_BADSUPRESSOUTPUTPDU (a) There is not enough data to process Suppress Output PDU Data (section 2.2.11.3.1). (b) The allowDisplayUpdates field of the Suppress Output PDU Data (section 2.2.11.3.1) is invalid.
-// +---------------------------------------------------------------------------+
-// | 0x000010E5 ERRINFO_CONFIRMACTIVEPDUTOOSHORT (a) There is not enough data to read the shareControlHeader, shareId, originatorId, lengthSourceDescriptor, and lengthCombinedCapabilities fields of the Confirm Active PDU Data (section 2.2.1.13.2.1). (b) There is not enough data to read the sourceDescriptor, numberCapabilities, pad2Octets, and capabilitySets fields of the Confirm Active PDU Data (section 2.2.1.13.2.1).
-// +---------------------------------------------------------------------------+
-// | 0x000010E7 ERRINFO_CAPABILITYSETTOOSMALL There is not enough data to read the capabilitySetType and the lengthCapability fields in a received Capability Set (section 2.2.1.13.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x000010E8 ERRINFO_CAPABILITYSETTOOLARGE A Capability Set (section 2.2.1.13.1.1.1) has been received with a lengthCapability field that contains a value greater than the total length of the data received.
-// +---------------------------------------------------------------------------+
-// | 0x000010E9 ERRINFO_NOCURSORCACHE (a) Both the colorPointerCacheSize and pointerCacheSize fields in the Pointer Capability Set (section 2.2.7.1.5) are set to zero. (b) The pointerCacheSize field in the Pointer Capability Set (section 2.2.7.1.5) is not present, and the colorPointerCacheSize field is set to zero.
-// +---------------------------------------------------------------------------+
-// | 0x000010EA ERRINFO_BADCAPABILITIES The capabilities received from the client in the Confirm Active PDU (section 2.2.1.13.2) were not accepted by the server.
-// +---------------------------------------------------------------------------+
-// | 0x000010EC ERRINFO_VIRTUALCHANNELDECOMPRESSIONERR An error occurred while using the bulk compressor (section 3.1.8 and [MS- RDPEGDI] section 3.1.8) to decompress a Virtual Channel PDU (section 2.2.6.1)
-// +---------------------------------------------------------------------------+
-// | 0x000010ED ERRINFO_INVALIDVCCOMPRESSIONTYPE An invalid bulk compression package was specified in the flags field of the Channel PDU Header (section 2.2.6.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x000010EF ERRINFO_INVALIDCHANNELID An invalid MCS channel ID was specified in the mcsPdu field of the Virtual Channel PDU (section 2.2.6.1).
-// +---------------------------------------------------------------------------+
-// | 0x000010F0 ERRINFO_VCHANNELSTOOMANY The client requested more than the maximum allowed 31 static virtual channels in the Client Network Data (section 2.2.1.3.4).
-// +---------------------------------------------------------------------------+
-// | 0x000010F3 ERRINFO_REMOTEAPPSNOTENABLED The INFO_RAIL flag (0x00008000) MUST be set in the flags field of the Info Packet (section 2.2.1.11.1.1) as the session on the  remote server can only host remote applications.
-// +---------------------------------------------------------------------------+
-// | 0x000010F4 ERRINFO_CACHECAPNOTSET The client sent a Persistent Key List PDU (section 2.2.1.17) without including the prerequisite Revision 2 Bitmap Cache Capability Set (section 2.2.7.1.4.2) in the Confirm Active PDU (section 2.2.1.13.2).
-// +---------------------------------------------------------------------------+
-// | 0x000010F5 ERRINFO_BITMAPCACHEERRORPDUBADLENGTH2 The NumInfoBlocks field in the Bitmap Cache Error PDU Data is inconsistent with the amount of data in the Info field ([MS-RDPEGDI] section 2.2.2.3.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x000010F6 ERRINFO_OFFSCRCACHEERRORPDUBADLENGTH There is not enough data to process an Offscreen Bitmap Cache Error PDU ([MS-RDPEGDI] section 2.2.2.3.2).
-// +---------------------------------------------------------------------------+
-// | 0x000010F7 ERRINFO_DNGCACHEERRORPDUBADLENGTH There is not enough data to process a DrawNineGrid Cache Error PDU ([MS-RDPEGDI] section 2.2.2.3.3).
-// +---------------------------------------------------------------------------+
-// | 0x000010F8 ERRINFO_GDIPLUSPDUBADLENGTH There is not enough data to process a GDI+ Error PDU ([MS-RDPEGDI] section 2.2.2.3.4).
-// +---------------------------------------------------------------------------+
-// | 0x00001111 ERRINFO_SECURITYDATATOOSHORT2 There is not enough data to read a Basic Security Header (section 2.2.8.1.1.2.1).
-// +---------------------------------------------------------------------------+
-// | 0x00001112 ERRINFO_SECURITYDATATOOSHORT3 There is not enough data to read a Non- FIPS Security Header (section 2.2.8.1.1.2.2) or FIPS Security Header (section 2.2.8.1.1.2.3).
-// +---------------------------------------------------------------------------+
-// | 0x00001113 ERRINFO_SECURITYDATATOOSHORT4 There is not enough data to read the basicSecurityHeader and length fields of the Security Exchange PDU Data (section 2.2.1.10.1).
-// +---------------------------------------------------------------------------+
-// | 0x00001114 ERRINFO_SECURITYDATATOOSHORT5 There is not enough data to read the CodePage, flags, cbDomain, cbUserName, cbPassword, cbAlternateShell, cbWorkingDir, Domain, UserName, Password, AlternateShell, and WorkingDir fields in the Info Packet (section 2.2.1.11.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x00001115 ERRINFO_SECURITYDATATOOSHORT6 There is not enough data to read the CodePage, flags, cbDomain, cbUserName, cbPassword, cbAlternateShell, and cbWorkingDir fields in the Info Packet (section 2.2.1.11.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x00001116 ERRINFO_SECURITYDATATOOSHORT7 There is not enough data to read the clientAddressFamily and cbClientAddress fields in the Extended Info Packet (section 2.2.1.11.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x00001117 ERRINFO_SECURITYDATATOOSHORT8 There is not enough data to read the clientAddress field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x00001118 ERRINFO_SECURITYDATATOOSHORT9 There is not enough data to read the cbClientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x00001119 ERRINFO_SECURITYDATATOOSHORT10 There is not enough data to read the clientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x0000111A ERRINFO_SECURITYDATATOOSHORT11 There is not enough data to read the clientTimeZone field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x0000111B ERRINFO_SECURITYDATATOOSHORT12 There is not enough data to read the clientSessionId field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x0000111C ERRINFO_SECURITYDATATOOSHORT13 There is not enough data to read the performanceFlags field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x0000111D ERRINFO_SECURITYDATATOOSHORT14 There is not enough data to read the cbAutoReconnectLen field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x0000111E ERRINFO_SECURITYDATATOOSHORT15 There is not enough data to read the autoReconnectCookie field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x0000111F ERRINFO_SECURITYDATATOOSHORT16 The cbAutoReconnectLen field in the Extended Info Packet (section 2.2.1.11.1.1.1) contains a value which is larger than the maximum allowed length of 128 bytes.
-// +---------------------------------------------------------------------------+
-// | 0x00001120 ERRINFO_SECURITYDATATOOSHORT17 There is not enough data to read the clientAddressFamily and cbClientAddress fields in the Extended Info Packet (section 2.2.1.11.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x00001121 ERRINFO_SECURITYDATATOOSHORT18 There is not enough data to read the clientAddress field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x00001122 ERRINFO_SECURITYDATATOOSHORT19 There is not enough data to read the cbClientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x00001123 ERRINFO_SECURITYDATATOOSHORT20 There is not enough data to read the clientDir field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x00001124 ERRINFO_SECURITYDATATOOSHORT21 There is not enough data to read the clientTimeZone field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x00001125 ERRINFO_SECURITYDATATOOSHORT22 There is not enough data to read the clientSessionId field in the Extended Info Packet (section 2.2.1.11.1.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x00001126 ERRINFO_SECURITYDATATOOSHORT23 There is not enough data to read the Client Info PDU Data (section 2.2.1.11.1).
-// +---------------------------------------------------------------------------+
-// | 0x00001129 ERRINFO_BADMONITORDATA The monitorCount field in the Client Monitor Data (section 2.2.1.3.6) is invalid.
-// +---------------------------------------------------------------------------+
-// | 0x0000112A ERRINFO_VCDECOMPRESSEDREASSEMBLEFAILED The server-side decompression buffer is invalid, or the size of the decompressed VC data exceeds the chunking size specified in the Virtual Channel Capability Set (section 2.2.7.1.10).
-// +---------------------------------------------------------------------------+
-// | 0x0000112B ERRINFO_VCDATATOOLONG The size of a received Virtual Channel PDU (section 2.2.6.1) exceeds the chunking size specified in the Virtual Channel Capability Set (section 2.2.7.1.10).
-// +---------------------------------------------------------------------------+
-// | 0x0000112C ERRINFO_RESERVED Reserved for future use.
-// +---------------------------------------------------------------------------+
-// | 0x0000112D ERRINFO_GRAPHICSMODENOTSUPPORTED The graphics mode requested by the client is not supported by the server.
-// +---------------------------------------------------------------------------+
-// | 0x0000112E ERRINFO_GRAPHICSSUBSYSTEMRESETFAILED The server-side graphics subsystem failed  to reset.
-// +---------------------------------------------------------------------------+
-// | 0x00001191 ERRINFO_UPDATESESSIONKEYFAILED An attempt to update the session keys while using Standard RDP Security mechanisms (section 5.3.7) failed.
-// +---------------------------------------------------------------------------+
-// | 0x00001192 ERRINFO_DECRYPTFAILED (a) Decryption using Standard RDP Security mechanisms (section 5.3.6) failed. (b) Session key creation using Standard RDP Security mechanisms (section 5.3.5) failed.
-// +---------------------------------------------------------------------------+
-// | 0x00001193 ERRINFO_ENCRYPTFAILED Encryption using Standard RDP Security mechanisms (section 5.3.6) failed.
-// +---------------------------------------------------------------------------+
-// | 0x00001194 ERRINFO_ENCPKGMISMATCH Failed to find a usable Encryption Method (section 5.3.2) in the encryptionMethods field of the Client Security Data (section 2.2.1.4.3).
-// +---------------------------------------------------------------------------+
-// | 0x00001195 ERRINFO_DECRYPTFAILED2 2.2.5.2 Encryption using Standard RDP Security mechanisms (section 5.3.6) failed. Unencrypted data was encountered in a protocol stream which is meant to be encrypted with Standard RDP Security mechanisms (section 5.3.6).
-// +---------------------------------------------------------------------------+
+// +------------------------------------------+--------------------------------+
+// | 0x000010E3 ERRINFO_BADSUPRESSOUTPUTPDU   | (a) There is not enough data   |
+// |                                          | to process Suppress Output PDU |
+// |                                          | Data (section 2.2.11.3.1).     |
+// |                                          | (b) The allowDisplayUpdates    |
+// |                                          | field of the Suppress Output   |
+// |                                          | PDU Data (section 2.2.11.3.1)  |
+// |                                          | is invalid.                    |
+// +------------------------------------------+--------------------------------+
+// | 0x000010E5                               | (a) There is not enough data   |
+// | ERRINFO_CONFIRMACTIVEPDUTOOSHORT         | to read the shareControlHeader,|
+// |                                          | shareId, originatorId,         |
+// |                                          | lengthSourceDescriptor, and    |
+// |                                          | lengthCombinedCapabilities     |
+// |                                          | fields of the Confirm Active   |
+// |                                          | PDU Data (section              |
+// |                                          | 2.2.1.13.2.1).                 |
+// |                                          | (b) There is not enough data   |
+// |                                          | to read the sourceDescriptor,  |
+// |                                          | numberCapabilities, pad2Octets,|
+// |                                          | and capabilitySets fields of   |
+// |                                          | the Confirm Active PDU Data    |
+// |                                          | (section 2.2.1.13.2.1).        |
+// +------------------------------------------+--------------------------------+
+// | 0x000010E7 ERRINFO_CAPABILITYSETTOOSMALL | There is not enough data to    |
+// |                                          | read the capabilitySetType and |
+// |                                          | the lengthCapability fields in |
+// |                                          | a received Capability Set      |
+// |                                          | (section 2.2.1.13.1.1.1).      |
+// +------------------------------------------+--------------------------------+
+// | 0x000010E8 ERRINFO_CAPABILITYSETTOOLARGE | A Capability Set (section      |
+// |                                          | 2.2.1.13.1.1.1) has been       |
+// |                                          | received with a                |
+// |                                          | lengthCapability field that    |
+// |                                          | contains a value greater than  |
+// |                                          | the total length of the data   |
+// |                                          | received.                      |
+// +------------------------------------------+--------------------------------+
+// | 0x000010E9 ERRINFO_NOCURSORCACHE         | (a) Both the                   |
+// |                                          | colorPointerCacheSize and      |
+// |                                          | pointerCacheSize fields in the |
+// |                                          | Pointer Capability Set         |
+// |                                          | (section 2.2.7.1.5) are set to |
+// |                                          | zero.                          |
+// |                                          | (b) The pointerCacheSize field |
+// |                                          | in the Pointer Capability Set  |
+// |                                          | (section 2.2.7.1.5) is not     |
+// |                                          | present, and the               |
+// |                                          | colorPointerCacheSize field is |
+// |                                          | set to zero.                   |
+// +------------------------------------------+--------------------------------+
+// | 0x000010EA ERRINFO_BADCAPABILITIES       | The capabilities received from |
+// |                                          | the client in the Confirm      |
+// |                                          | Active PDU (section 2.2.1.13.2)|
+// |                                          | were not accepted by the       |
+// |                                          | server.                        |
+// +------------------------------------------+--------------------------------+
+// | 0x000010EC                               | An error occurred while using  |
+// | ERRINFO_VIRTUALCHANNELDECOMPRESSIONERR   | the bulk compressor (section   |
+// |                                          | 3.1.8 and [MS- RDPEGDI] section|
+// |                                          | 3.1.8) to decompress a Virtual |
+// |                                          | Channel PDU (section 2.2.6.1). |
+// +------------------------------------------+--------------------------------+
+// | 0x000010ED                               | An invalid bulk compression    |
+// | ERRINFO_INVALIDVCCOMPRESSIONTYPE         | package was specified in the   |
+// |                                          | flags field of the Channel PDU |
+// |                                          | Header (section 2.2.6.1.1).    |
+// +------------------------------------------+--------------------------------+
+// | 0x000010EF ERRINFO_INVALIDCHANNELID      | An invalid MCS channel ID was  |
+// |                                          | specified in the mcsPdu field  |
+// |                                          | of the Virtual Channel PDU     |
+// |                                          | (section 2.2.6.1).             |
+// +------------------------------------------+--------------------------------+
+// | 0x000010F0 ERRINFO_VCHANNELSTOOMANY      | The client requested more than |
+// |                                          | the maximum allowed 31 static  |
+// |                                          | virtual channels in the Client |
+// |                                          | Network Data (section          |
+// |                                          | 2.2.1.3.4).                    |
+// +------------------------------------------+--------------------------------+
+// | 0x000010F3 ERRINFO_REMOTEAPPSNOTENABLED  | The INFO_RAIL flag (0x00008000)|
+// |                                          | MUST be set in the flags field |
+// |                                          | of the Info Packet (section    |
+// |                                          | 2.2.1.11.1.1) as the session   |
+// |                                          | on the remote server can only  |
+// |                                          | host remote applications.      |
+// +------------------------------------------+--------------------------------+
+// | 0x000010F4 ERRINFO_CACHECAPNOTSET        | The client sent a Persistent   |
+// |                                          | Key List PDU (section 2.2.1.17)|
+// |                                          | without including the          |
+// |                                          | prerequisite Revision 2 Bitmap |
+// |                                          | Cache Capability Set (section  |
+// |                                          | 2.2.7.1.4.2) in the Confirm    |
+// |                                          | Active PDU (section            |
+// |                                          | 2.2.1.13.2).                   |
+// +------------------------------------------+--------------------------------+
+// | 0x000010F5                               | The NumInfoBlocks field in the |
+// |ERRINFO_BITMAPCACHEERRORPDUBADLENGTH2     | Bitmap Cache Error PDU Data is |
+// |                                          | inconsistent with the amount   |
+// |                                          | of data in the Info field      |
+// |                                          | ([MS-RDPEGDI] section          |
+// |                                          | 2.2.2.3.1.1).                  |
+// +------------------------------------------+--------------------------------+
+// | 0x000010F6                               | There is not enough data to    |
+// | ERRINFO_OFFSCRCACHEERRORPDUBADLENGTH     | process an Offscreen Bitmap    |
+// |                                          | Cache Error PDU ([MS-RDPEGDI]  |
+// |                                          | section 2.2.2.3.2).            |
+// +------------------------------------------+--------------------------------+
+// | 0x000010F7                               | There is not enough data to    |
+// | ERRINFO_DNGCACHEERRORPDUBADLENGTH        | process a DrawNineGrid Cache   |
+// |                                          | Error PDU ([MS-RDPEGDI]        |
+// |                                          | section 2.2.2.3.3).            |
+// +------------------------------------------+--------------------------------+
+// | 0x000010F8 ERRINFO_GDIPLUSPDUBADLENGTH   | There is not enough data to    |
+// |                                          | process a GDI+ Error PDU       |
+// |                                          | ([MS-RDPEGDI] section          |
+// |                                          | 2.2.2.3.4).                    |
+// +------------------------------------------+--------------------------------+
+// | 0x00001111 ERRINFO_SECURITYDATATOOSHORT2 | There is not enough data to    |
+// |                                          | read a Basic Security Header   |
+// |                                          | (section 2.2.8.1.1.2.1).       |
+// +------------------------------------------+--------------------------------+
+// | 0x00001112 ERRINFO_SECURITYDATATOOSHORT3 | There is not enough data to    |
+// |                                          | read a Non- FIPS Security      |
+// |                                          | Header (section 2.2.8.1.1.2.2) |
+// |                                          | or FIPS Security Header        |
+// |                                          | (section 2.2.8.1.1.2.3).       |
+// +------------------------------------------+--------------------------------+
+// | 0x00001113 ERRINFO_SECURITYDATATOOSHORT4 | There is not enough data to    |
+// |                                          | read the basicSecurityHeader   |
+// |                                          | and length fields of the       |
+// |                                          | Security Exchange PDU Data     |
+// |                                          | (section 2.2.1.10.1).          |
+// +------------------------------------------+--------------------------------+
+// | 0x00001114 ERRINFO_SECURITYDATATOOSHORT5 | There is not enough data to    |
+// |                                          | read the CodePage, flags,      |
+// |                                          | cbDomain, cbUserName,          |
+// |                                          | cbPassword, cbAlternateShell,  |
+// |                                          | cbWorkingDir, Domain, UserName,|
+// |                                          | Password, AlternateShell, and  |
+// |                                          | WorkingDir fields in the Info  |
+// |                                          | Packet (section 2.2.1.11.1.1). |
+// +------------------------------------------+--------------------------------+
+// | 0x00001115 ERRINFO_SECURITYDATATOOSHORT6 | There is not enough data to    |
+// |                                          | read the CodePage, flags,      |
+// |                                          | cbDomain, cbUserName,          |
+// |                                          | cbPassword, cbAlternateShell,  |
+// |                                          | and cbWorkingDir fields in the |
+// |                                          | Info Packet (section           |
+// |                                          | 2.2.1.11.1.1).                 |
+// +------------------------------------------+--------------------------------+
+// | 0x00001116 ERRINFO_SECURITYDATATOOSHORT7 | There is not enough data to    |
+// |                                          | read the clientAddressFamily   |
+// |                                          | and cbClientAddress fields in  |
+// |                                          | the Extended Info Packet       |
+// |                                          | (section 2.2.1.11.1.1.1).      |
+// +------------------------------------------+--------------------------------+
+// | 0x00001117 ERRINFO_SECURITYDATATOOSHORT8 | There is not enough data to    |
+// |                                          | read the clientAddress field in|
+// |                                          | the Extended Info Packet       |
+// |                                          | (section 2.2.1.11.1.1.1).      |
+// +------------------------------------------+--------------------------------+
+// | 0x00001118 ERRINFO_SECURITYDATATOOSHORT9 | There is not enough data to    |
+// |                                          | read the cbClientDir field in  |
+// |                                          | the Extended Info Packet       |
+// |                                          | (section 2.2.1.11.1.1.1).      |
+// +------------------------------------------+--------------------------------+
+// | 0x00001119 ERRINFO_SECURITYDATATOOSHORT10| There is not enough data to    |
+// |                                          | read the clientDir field in the|
+// |                                          | Extended Info Packet (section  |
+// |                                          | 2.2.1.11.1.1.1).               |
+// +------------------------------------------+--------------------------------+
+// | 0x0000111A ERRINFO_SECURITYDATATOOSHORT11| There is not enough data to    |
+// |                                          | read the clientTimeZone field  |
+// |                                          | in the Extended Info Packet    |
+// |                                          | (section 2.2.1.11.1.1.1).      |
+// +------------------------------------------+--------------------------------+
+// | 0x0000111B ERRINFO_SECURITYDATATOOSHORT12| There is not enough data to    |
+// |                                          | read the clientSessionId field |
+// |                                          | in the Extended Info Packet    |
+// |                                          | (section 2.2.1.11.1.1.1).      |
+// +------------------------------------------+--------------------------------+
+// | 0x0000111C ERRINFO_SECURITYDATATOOSHORT13| There is not enough data to    |
+// |                                          | read the performanceFlags      |
+// |                                          | field in the Extended Info     |
+// |                                          | Packet (section                |
+// |                                          | 2.2.1.11.1.1.1).               |
+// +------------------------------------------+--------------------------------+
+// | 0x0000111D ERRINFO_SECURITYDATATOOSHORT14| There is not enough data to    |
+// |                                          | read the cbAutoReconnectLen    |
+// |                                          | field in the Extended Info     |
+// |                                          | Packet (section                |
+// |                                          | 2.2.1.11.1.1.1).               |
+// +------------------------------------------+--------------------------------+
+// | 0x0000111E ERRINFO_SECURITYDATATOOSHORT15| There is not enough data to    |
+// |                                          | read the autoReconnectCookie   |
+// |                                          | field in the Extended Info     |
+// |                                          | Packet (section                |
+// |                                          | 2.2.1.11.1.1.1).               |
+// +------------------------------------------+--------------------------------+
+// | 0x0000111F ERRINFO_SECURITYDATATOOSHORT16| The cbAutoReconnectLen field   |
+// |                                          | in the Extended Info Packet    |
+// |                                          | (section 2.2.1.11.1.1.1)       |
+// |                                          | contains a value which is      |
+// |                                          | larger than the maximum        |
+// |                                          | allowed length of 128 bytes.   |
+// +------------------------------------------+--------------------------------+
+// | 0x00001120 ERRINFO_SECURITYDATATOOSHORT17| There is not enough data to    |
+// |                                          | read the clientAddressFamily   |
+// |                                          | and cbClientAddress fields in  |
+// |                                          | the Extended Info Packet       |
+// |                                          | (section 2.2.1.11.1.1.1).      |
+// +------------------------------------------+--------------------------------+
+// | 0x00001121 ERRINFO_SECURITYDATATOOSHORT18| There is not enough data to    |
+// |                                          | read the clientAddress field in|
+// |                                          | the Extended Info Packet       |
+// |                                          | (section 2.2.1.11.1.1.1).      |
+// +------------------------------------------+--------------------------------+
+// | 0x00001122 ERRINFO_SECURITYDATATOOSHORT19| There is not enough data to    |
+// |                                          | read the cbClientDir field in  |
+// |                                          | the Extended Info Packet       |
+// |                                          | (section 2.2.1.11.1.1.1).      |
+// +------------------------------------------+--------------------------------+
+// | 0x00001123 ERRINFO_SECURITYDATATOOSHORT20| There is not enough data to    |
+// |                                          | read the clientDir field in    |
+// |                                          | the Extended Info Packet       |
+// |                                          | (section 2.2.1.11.1.1.1).      |
+// +------------------------------------------+--------------------------------+
+// | 0x00001124 ERRINFO_SECURITYDATATOOSHORT21| There is not enough data to    |
+// |                                          | read the clientTimeZone field  |
+// |                                          | in the Extended Info Packet    |
+// |                                          | (section 2.2.1.11.1.1.1).      |
+// +------------------------------------------+--------------------------------+
+// | 0x00001125 ERRINFO_SECURITYDATATOOSHORT22| There is not enough data to    |
+// |                                          | read the clientSessionId field |
+// |                                          | in the Extended Info Packet    |
+// |                                          | (section 2.2.1.11.1.1.1).      |
+// +------------------------------------------+--------------------------------+
+// | 0x00001126 ERRINFO_SECURITYDATATOOSHORT23| There is not enough data to    |
+// |                                          | read the Client Info PDU Data  |
+// |                                          | (section 2.2.1.11.1).          |
+// +------------------------------------------+--------------------------------+
+// | 0x00001129 ERRINFO_BADMONITORDATA        | The monitorCount field in the  |
+// |                                          | Client Monitor Data (section   |
+// |                                          | 2.2.1.3.6) is invalid.         |
+// +------------------------------------------+--------------------------------+
+// | 0x0000112A                               | The server-side decompression  |
+// | ERRINFO_VCDECOMPRESSEDREASSEMBLEFAILED   | buffer is invalid, or the size |
+// |                                          | of the decompressed VC data    |
+// |                                          | exceeds the chunking size      |
+// |                                          | specified in the Virtual       |
+// |                                          | Channel Capability Set         |
+// |                                          | (section 2.2.7.1.10).          |
+// +------------------------------------------+--------------------------------+
+// | 0x0000112B ERRINFO_VCDATATOOLONG         | The size of a received Virtual |
+// |                                          | Channel PDU (section 2.2.6.1)  |
+// |                                          | exceeds the chunking size      |
+// |                                          | specified in the Virtual       |
+// |                                          | Channel Capability Set         |
+// |                                          | (section 2.2.7.1.10).          |
+// +------------------------------------------+--------------------------------+
+// | 0x0000112C ERRINFO_RESERVED              | Reserved for future use.       |
+// +------------------------------------------+--------------------------------+
+// | 0x0000112D                               | The graphics mode requested by |
+// | ERRINFO_GRAPHICSMODENOTSUPPORTED         | the client is not supported by |
+// |                                          | the server.                    |
+// +------------------------------------------+--------------------------------+
+// | 0x0000112E                               | The server-side graphics       |
+// | ERRINFO_GRAPHICSSUBSYSTEMRESETFAILED     | subsystem failed to reset.     |
+// +------------------------------------------+--------------------------------+
+// | 0x00001191                               | An attempt to update the       |
+// | ERRINFO_UPDATESESSIONKEYFAILED           | session keys while using       |
+// |                                          | Standard RDP Security          |
+// |                                          | mechanisms (section 5.3.7)     |
+// |                                          | failed.                        |
+// +------------------------------------------+--------------------------------+
+// | 0x00001192 ERRINFO_DECRYPTFAILED         | (a) Decryption using Standard  |
+// |                                          | RDP Security mechanisms        |
+// |                                          | (section 5.3.6) failed.        |
+// |                                          | (b) Session key creation using |
+// |                                          | Standard RDP Security          |
+// |                                          | mechanisms (section 5.3.5)     |
+// |                                          | failed.                        |
+// +------------------------------------------+--------------------------------+
+// | 0x00001193 ERRINFO_ENCRYPTFAILED         | Encryption using Standard RDP  |
+// |                                          | Security mechanisms (section   |
+// |                                          | 5.3.6) failed.                 |
+// +------------------------------------------+--------------------------------+
+// | 0x00001194 ERRINFO_ENCPKGMISMATCH        | Failed to find a usable        |
+// |                                          | Encryption Method (section     |
+// |                                          | 5.3.2) in the encryptionMethods|
+// |                                          | field of the Client Security   |
+// |                                          | Data (section 2.2.1.4.3).      |
+// +------------------------------------------+--------------------------------+
+// | 0x00001195 ERRINFO_DECRYPTFAILED2        | Encryption using Standard RDP  |
+// |                                          | Security mechanisms (section   |
+// |                                          | 5.3.6) failed. Unencrypted     |
+// |                                          | data was encountered in a      |
+// |                                          | protocol stream which is meant |
+// |                                          | to be encrypted with Standard  |
+// |                                          | RDP Security mechanisms        |
+// |                                          | (section 5.3.6).               |
+// +------------------------------------------+--------------------------------+
 
         void process_disconnect_pdu(Stream & stream)
         {

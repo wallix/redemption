@@ -122,5 +122,26 @@ static inline void parse_mcs_data_cs_net(Stream & stream, ClientInfo * client_in
     }
 }
 
+static inline void mod_rdp_out_cs_net(Stream & stream, const ChannelList & channel_list)
+{
+    /* Here we need to put channel information in order to redirect channel data
+    from client to server passing through the "proxy" */
+    size_t num_channels = channel_list.size();
+
+    if (num_channels > 0) {
+        LOG(LOG_INFO, "cs_net");
+        LOG(LOG_INFO, "Sending Channels Settings to remote server [num channels=%u]", num_channels);
+        stream.out_uint16_le(CS_NET);
+        LOG(LOG_INFO, "cs_net::len=%u", num_channels * 12 + 8);
+        stream.out_uint16_le(num_channels * 12 + 8); /* length */
+        LOG(LOG_INFO, "cs_net::nb_chan=%u", num_channels);
+        stream.out_uint32_le(num_channels); /* number of virtual channels */
+        for (size_t index = 0; index < num_channels; index++){
+            const McsChannelItem & channel_item = channel_list[index];
+            stream.out_copy_bytes(channel_item.name, 8);
+            stream.out_uint32_be(channel_item.flags);
+        }
+    }
+}
 
 #endif

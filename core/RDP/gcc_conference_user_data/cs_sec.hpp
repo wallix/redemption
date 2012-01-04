@@ -78,5 +78,15 @@ static inline void parse_mcs_data_cs_security(Stream & stream)
     LOG(LOG_INFO, "CS_SECURITY\n");
 }
 
+static inline void mod_rdp_out_cs_sec(Stream & stream)
+{
+    /* Client encryption settings */
+    LOG(LOG_INFO, "Sending Client Encryption Settings to remote server [encryption=(%u)]", 3);
+    stream.out_uint16_le(CS_SECURITY);
+    stream.out_uint16_le(12); /* length */
+    /* 0x3 = encryption supported, 128-bit supported */
+    stream.out_uint32_le(0x3);
+    stream.out_uint32_le(0); /* Unknown */
+}
 
 #endif

@@ -102,4 +102,13 @@ static inline void parse_mcs_data_cs_cluster(Stream & stream, ClientInfo * clien
     client_info->console_session = (flags & 0x2) != 0;
 }
 
+static inline void mod_rdp_out_cs_cluster(Stream & stream, int console_session)
+{
+    LOG(LOG_INFO, "Sending Client Cluster Settings to remote server [console=(%u)]", (unsigned)(console_session));
+    stream.out_uint16_le(CS_CLUSTER);
+    stream.out_uint16_le(12);
+    stream.out_uint32_le(console_session ? 0xb : 9);
+    stream.out_uint32_le(0);
+}
+
 #endif

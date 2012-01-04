@@ -26,6 +26,7 @@
 #if !defined(__CORE_RDP_GCC_CONFERENCE_USER_DATA_CS_CORE_HPP__)
 #define __CORE_RDP_GCC_CONFERENCE_USER_DATA_CS_CORE_HPP__
 
+#include "stream.hpp"
 
 // 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
 // -------------------------------------
@@ -327,5 +328,66 @@ static inline void parse_mcs_data_cs_core(Stream & stream, ClientInfo * client_i
     LOG(LOG_INFO, "core_data: bpp = %u\n", client_info->bpp);
 }
 
+static inline void mod_rdp_out_cs_core(Stream & stream, int use_rdp5, int width, int height, int rdp_bpp, int keylayout, char * hostname)
+{
+        stream.out_uint16_le(CS_CORE);
+        LOG(LOG_INFO, "Sending Client Core Data to remote server\n");
+        stream.out_uint16_le(212); /* length */
+        LOG(LOG_INFO, "core::header::length = %u\n", 212);
+        stream.out_uint32_le(use_rdp5?0x00080004:0x00080001); // RDP version. 1 == RDP4, 4 == RDP5.
+        LOG(LOG_INFO, "core::header::version RDP 4=0x00080001 (0x00080004 = RDP 5.0, 5.1, 5.2, and 6.0 clients)");
+        stream.out_uint16_le(width);
+        LOG(LOG_INFO, "core::desktopWidth = %u\n", width);
+        stream.out_uint16_le(height);
+        LOG(LOG_INFO, "core::desktopHeight = %u\n", height);
+        stream.out_uint16_le(0xca01);
+        LOG(LOG_INFO, "core::colorDepth = RNS_UD_COLOR_8BPP (superseded by postBeta2ColorDepth)");
+        stream.out_uint16_le(0xaa03);
+        LOG(LOG_INFO, "core::SASSequence = RNS_UD_SAS_DEL");
+        stream.out_uint32_le(keylayout);
+        LOG(LOG_INFO, "core::keyboardLayout = %x", keylayout);
+        stream.out_uint32_le(2600); /* Client build. We are now 2600 compatible :-) */
+        LOG(LOG_INFO, "core::clientBuild = 2600");
+        LOG(LOG_INFO, "core::clientName=%s\n", hostname);
 
+        /* Added in order to limit hostlen and hostname size */
+        int hostlen = 2 * strlen(hostname);
+        if (hostlen > 30){
+            hostlen = 30;
+        }
+        /* Unicode name of client, padded to 30 bytes */
+        stream.out_unistr(hostname);
+        stream.out_clear_bytes(30 - hostlen);
+
+        /* See
+        http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wceddk40/html/cxtsksupportingremotedesktopprotocol.asp */
+        TODO(" code should be updated to take care of keyboard type")
+        stream.out_uint32_le(4); // g_keyboard_type
+        LOG(LOG_INFO, "core::keyboardType = IBM enhanced (101- or 102-key) keyboard");
+        stream.out_uint32_le(0); // g_keyboard_subtype
+        LOG(LOG_INFO, "core::keyboardSubType = 0");
+        stream.out_uint32_le(12); // g_keyboard_functionkeys
+        LOG(LOG_INFO, "core::keyboardFunctionKey = 12 function keys");
+        stream.out_clear_bytes(64); /* imeFileName */
+        LOG(LOG_INFO, "core::imeFileName = \"\"");
+        stream.out_uint16_le(0xca01); /* color depth 8bpp */
+        LOG(LOG_INFO, "core::postBeta2ColorDepth = RNS_UD_COLOR_8BPP (superseded by highColorDepth)");
+        stream.out_uint16_le(1);
+        LOG(LOG_INFO, "core::clientProductId = 1");
+        stream.out_uint32_le(0);
+        LOG(LOG_INFO, "core::serialNumber = 0");
+        stream.out_uint16_le(rdp_bpp);
+        LOG(LOG_INFO, "core::highColorDepth = %u", rdp_bpp);
+        stream.out_uint16_le(0x0007);
+        LOG(LOG_INFO, "core::supportedColorDepths = 24/16/15");
+        stream.out_uint16_le(1);
+        LOG(LOG_INFO, "core::earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU");
+        stream.out_clear_bytes(64);
+        LOG(LOG_INFO, "core::clientDigProductId = \"\"");
+        stream.out_clear_bytes(2);
+        LOG(LOG_INFO, "core::pad2octets");
+    //        stream.out_uint32_le(0); // optional
+    //        LOG(LOG_INFO, "core::serverSelectedProtocol = 0");
+        /* End of client info */
+}
 #endif
