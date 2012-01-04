@@ -2424,14 +2424,14 @@ struct mod_rdp : public client_mod {
 
 // 2.2.5.1.1 Set Error Info PDU Data (TS_SET_ERROR_INFO_PDU)
 // =========================================================
-// The TS_SET_ERROR_INFO_PDU structure contains the contents of the Set Error 
-// Info PDU, which is a Share Data Header (section 2.2.8.1.1.1.2) with an error 
+// The TS_SET_ERROR_INFO_PDU structure contains the contents of the Set Error
+// Info PDU, which is a Share Data Header (section 2.2.8.1.1.1.2) with an error
 // value field.
 
-// shareDataHeader (18 bytes): Share Data Header containing information about 
-// the packet. The type subfield of the pduType field of the Share Control 
-// Header (section 2.2.8.1.1.1.1) MUST be set to PDUTYPE_DATAPDU (7). The 
-// pduType2 field of the Share Data Header MUST be set to 
+// shareDataHeader (18 bytes): Share Data Header containing information about
+// the packet. The type subfield of the pduType field of the Share Control
+// Header (section 2.2.8.1.1.1.1) MUST be set to PDUTYPE_DATAPDU (7). The
+// pduType2 field of the Share Data Header MUST be set to
 // PDUTYPE2_SET_ERROR_INFO_PDU (47), and the pduSource field MUST be set to 0.
 
 // errorInfo (4 bytes): A 32-bit, unsigned integer. Error code.
@@ -2455,65 +2455,88 @@ struct mod_rdp : public client_mod {
 // | 0x00000004 ERRINFO_LOGON_TIMEOUT            | The active session limit    |
 // |                                             | timer on the server has     |
 // |                                             | elapsed.                    |
-// +---------------------------------------------+------+----------------------+
-// | 0x00000005 ERRINFO_DISCONNECTED_BY_OTHERCONNECTION | Another user         |
-// |                                                    | connected to the     |
-// |                                                    | server, forcing the  |
-// |                                                    | disconnection of the |
-// |                                                    | current connection.  |
-// +----------------------------------+-----------------+----------------------+
-// | 0x00000006 ERRINFO_OUT_OF_MEMORY | The server ran out of available memory |
-// |                                  | resources.                             |
-// +----------------------------------+----------+-----------------------------+
+// +---------------------------------------------+-----------------------------+
+// | 0x00000005                                  | Another user connected to   |
+// | ERRINFO_DISCONNECTED_BY_OTHERCONNECTION     | the server, forcing the     |
+// |                                             | disconnection of the current|
+// |                                             | connection.                 |
+// +---------------------------------------------+-----------------------------+
+// | 0x00000006 ERRINFO_OUT_OF_MEMORY            | The server ran out of       |
+// |                                             | available memory resources. |
+// +---------------------------------------------+-----------------------------+
 // | 0x00000007 ERRINFO_SERVER_DENIED_CONNECTION | The server denied the       |
 // |                                             | connection.                 |
 // +---------------------------------------------+-----+-----------------------+
-// | 0x00000009 ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES | The user cannot       |
-// |                                                   | connect to the server |
-// |                                                   | due to insufficient   |
-// |                                                   | access privileges.    |
-// +---------------------------------------------------+--+--------------------+
-// | 0x0000000A ERRINFO_SERVER_FRESH_CREDENTIALS_REQUIRED | The server does not|
-// |                                                      | accept saved user  |
-// |                                                      | credentials and    |
-// |                                                      | requires that the  |
-// |                                                      | user enter their   |
-// |                                                      | credentials for    |
-// |                                                      | each connection.   |
-// +----------------------------------------------------+-+--------------------+
-// | 0x0000000B ERRINFO_RPC_INITIATED_DISCONNECT_BYUSER | The disconnection was|
-// |                                                    | initiated by an      |
-// |                                                    | administrative tool  |
-// |                                                    | on the server running|
-// |                                                    | in the user's        |
-// |                                                    | session.             |
-// +----------------------------------------------------+----------------------+
+// | 0x00000009                                  | The user cannot connect to  |
+// | ERRINFO_SERVER_INSUFFICIENT_PRIVILEGES      | the server due to           |
+// |                                             | insufficient access         |
+// |                                             | privileges.                 |
+// +---------------------------------------------+-----------------------------+
+// | 0x0000000A                                  | The server does not accept  |
+// | ERRINFO_SERVER_FRESH_CREDENTIALS_REQUIRED   | saved user credentials and  |
+// |                                             | requires that the user enter|
+// |                                             | their credentials for each  |
+// |                                             | connection.                 |
+// +-----------------------------------------+---+-----------------------------+
+// | 0x0000000B                              | The disconnection was initiated |
+// | ERRINFO_RPC_INITIATED_DISCONNECT_BYUSER | by an administrative tool on    |
+// |                                         | the server running in the user's|
+// |                                         | session.                        |
+// +-----------------------------------------+---------------------------------+
 
 // Protocol-independent licensing codes:
 
-// +---------------------------------------------------------------------------+
-// 0x00000100 ERRINFO_LICENSE_INTERNAL An internal error has occurred in the Terminal Services licensing component.
-// +---------------------------------------------------------------------------+
-// 0x00000101 ERRINFO_LICENSE_NO_LICENSE_SERVER A Remote Desktop License Server ([MS-RDPELE] section 1.1) could not be found to provide a license.
-// +---------------------------------------------------------------------------+
-// 0x00000102 ERRINFO_LICENSE_NO_LICENSE There are no Client Access Licenses ([MS-RDPELE] section 1.1) available for the target remote computer.
-// +---------------------------------------------------------------------------+
-// 0x00000103 ERRINFO_LICENSE_BAD_CLIENT_MSG The remote computer received an invalid licensing message from the client.
-// +---------------------------------------------------------------------------+
-// 0x00000104 ERRINFO_LICENSE_HWID_DOESNT_MATCH_LICENSE The Client Access License ([MS-RDPELE] section 1.1) stored by the client has been modified.
-// +---------------------------------------------------------------------------+
-// 0x00000105 ERRINFO_LICENSE_BAD_CLIENT_LICENSE The Client Access License ([MS-RDPELE] section 1.1) stored by the client is in an invalid format
-// +---------------------------------------------------------------------------+
-// 0x00000106 ERRINFO_LICENSE_CANT_FINISH_PROTOCOL Network problems have caused the licensing protocol ([MS-RDPELE] section 1.3.3) to be terminated.
-// +---------------------------------------------------------------------------+
-// 0x00000107 ERRINFO_LICENSE_CLIENT_ENDED_PROTOCOL The client prematurely ended the licensing protocol ([MS-RDPELE] section 1.3.3).
-// +---------------------------------------------------------------------------+
-// 0x00000108 ERRINFO_LICENSE_BAD_CLIENT_ENCRYPTION A licensing message ([MS-RDPELE] sections 2.2 and 5.1) was incorrectly encrypted.
-// +---------------------------------------------------------------------------+
-// 0x00000109 ERRINFO_LICENSE_CANT_UPGRADE_LICENSE The Client Access License ([MS-RDPELE] section 1.1) stored by the client could not be upgraded or renewed.
-// +---------------------------------------------------------------------------+
-// 0x0000010A ERRINFO_LICENSE_NO_REMOTE_CONNECTIONS The remote computer is not licensed to accept remote connections
-// +---------------------------------------------------------------------------+
+// +-------------------------------------------+-------------------------------+
+// | 0x00000100 ERRINFO_LICENSE_INTERNAL       | An internal error has occurred|
+// |                                           | in the Terminal Services      |
+// |                                           | licensing component.          |
+// +-------------------------------------------+-------------------------------+
+// | 0x00000101                                | A Remote Desktop License      |
+// | ERRINFO_LICENSE_NO_LICENSE_SERVER         | Server ([MS-RDPELE] section   |
+// |                                           | 1.1) could not be found to    |
+// |                                           | provide a license.            |
+// +-------------------------------------------+-------------------------------+
+// | 0x00000102 ERRINFO_LICENSE_NO_LICENSE     | There are no Client Access    |
+// |                                           | Licenses ([MS-RDPELE] section |
+// |                                           | 1.1) available for the target |
+// |                                           | remote computer.              |
+// +-------------------------------------------+-------------------------------+
+// | 0x00000103 ERRINFO_LICENSE_BAD_CLIENT_MSG | The remote computer received  |
+// |                                           | an invalid licensing message  |
+// |                                           | from the client.              |
+// +-------------------------------------------+-------------------------------+
+// | 0x00000104                                | The Client Access License     |
+// | ERRINFO_LICENSE_HWID_DOESNT_MATCH_LICENSE | ([MS-RDPELE] section 1.1)     |
+// |                                           | stored by the client has been |
+// |                                           |  modified.                    |
+// +-------------------------------------------+-------------------------------+
+// | 0x00000105                                | The Client Access License     |
+// | ERRINFO_LICENSE_BAD_CLIENT_LICENSE        | ([MS-RDPELE] section 1.1)     |
+// |                                           | stored by the client is in an |
+// |                                           | invalid format.               |
+// +-------------------------------------------+-------------------------------+
+// | 0x00000106                                | Network problems have caused  |
+// | ERRINFO_LICENSE_CANT_FINISH_PROTOCOL      | the licensing protocol        |
+// |                                           | ([MS-RDPELE] section 1.3.3)   |
+// |                                           | to be terminated.             |
+// +-------------------------------------------+-------------------------------+
+// | 0x00000107                                | The client prematurely ended  |
+// | ERRINFO_LICENSE_CLIENT_ENDED_PROTOCOL     | the licensing protocol        |
+// |                                           | ([MS-RDPELE] section 1.3.3).  |
+// +---------------------------------------+---+-------------------------------+
+// | 0x00000108                            | A licensing message ([MS-RDPELE]  |
+// | ERRINFO_LICENSE_BAD_CLIENT_ENCRYPTION | sections 2.2 and 5.1) was         |
+// |                                       | incorrectly encrypted.            |
+// +---------------------------------------+-----------------------------------+
+// | 0x00000109                            | The Client Access License         |
+// | ERRINFO_LICENSE_CANT_UPGRADE_LICENSE  | ([MS-RDPELE] section 1.1) stored  |
+// |                                       | by the client could not be        |
+// |                                       | upgraded or renewed.              |
+// +---------------------------------------+-----------------------------------+
+// | 0x0000010A                            | The remote computer is not        |
+// | ERRINFO_LICENSE_NO_REMOTE_CONNECTIONS | licensed to accept remote         |
+// |                                       |  connections.                     |
+// +---------------------------------------+-----------------------------------+
 
 // RDP specific codes:
 // +------------------------------------+--------------------------------------+
@@ -2528,54 +2551,131 @@ struct mod_rdp : public client_mod {
 // | 0x000010CB ERRINFO_DATAPDUSEQUENCE | An out-of-sequence Slow-Path Data PDU|
 // |                                    | (section 2.2.8.1.1.1.1) has been     |
 // |                                    | received.                            |
-// +------------------------------------+--+-----------------------------------+
-// | 0x000010CD ERRINFO_CONTROLPDUSEQUENCE | An out-of-sequence Slow-Path      |
-// |                                       | Non-Data PDU (section             |
-// |                                       | 2.2.8.1.1.1.1) has been received. |
-// +---------------------------------------+----+------------------------------+
-// | 0x000010CE ERRINFO_INVALIDCONTROLPDUACTION | A Control PDU (sections      |
-// |                                            | 2.2.1.15 and 2.2.1.16) has   |
-// |                                            | been received with an        |
-// |                                            | invalid action field.        |
-// +----------------------------------------+---+------------------------------+
-// | 0x000010CF ERRINFO_INVALIDINPUTPDUTYPE | (a) A Slow-Path Input Event      |
-// |                                        | (section 2.2.8.1.1.3.1.1) has    |
-// |                                        | been received with an invalid    |
-// |                                        | messageType field.               |
-// |                                        | (b) A Fast-Path Input Event      |
-// |                                        | (section 2.2.8.1.2.2) has been   |
-// |                                        | received with an invalid         |
-// |                                        | eventCode field.                 |
-// +----------------------------------------+----------------------------------+
-// | 0x000010D0 ERRINFO_INVALIDINPUTPDUMOUSE (a) A Slow-Path Mouse Event (section 2.2.8.1.1.3.1.1.3) or Extended Mouse Event (section 2.2.8.1.1.3.1.1.4) has been received with an invalid pointerFlags field. (b) A Fast-Path Mouse Event (section 2.2.8.1.2.2.3) or Fast-Path Extended Mouse Event (section 2.2.8.1.2.2.4) has been received with an invalid pointerFlags field.
-// +---------------------------------------------------------------------------+
-// | 0x000010D1 ERRINFO_INVALIDREFRESHRECTPDU An invalid Refresh Rect PDU (section 2.2.11.2) has been received.
-// +---------------------------------------------------------------------------+
-// | 0x000010D2 ERRINFO_CREATEUSERDATAFAILED The server failed to construct the GCC Conference Create Response user data (section 2.2.1.4).
-// +---------------------------------------------------------------------------+
-// | 0x000010D3 ERRINFO_CONNECTFAILED Processing during the Channel Connection phase of the RDP Connection Sequence (see section 1.3.1.1 for an overview of the RDP Connection Sequence phases) has failed.
-// +---------------------------------------------------------------------------+
-// | 0x000010D4 ERRINFO_CONFIRMACTIVEWRONGSHAREID A Confirm Active PDU (section 2.2.1.13.2) was received from the client with an invalid shareId field.
-// +---------------------------------------------------------------------------+
-// | 0x000010D5 ERRINFO_CONFIRMACTIVEWRONGORIGINATOR A Confirm Active PDU (section 2.2.1.13.2) was received from the client with an invalid originatorId field.
-// +---------------------------------------------------------------------------+
-// | 0x000010DA ERRINFO_PERSISTENTKEYPDUBADLENGTH There is not enough data to process a Persistent Key List PDU (section 2.2.1.17).
-// +---------------------------------------------------------------------------+
-// | 0x000010DB ERRINFO_PERSISTENTKEYPDUILLEGALFIRST A Persistent Key List PDU (section 2.2.1.17) marked as PERSIST_PDU_FIRST (0x01) was received after the reception of a prior Persistent Key List PDU also marked as PERSIST_PDU_FIRST.
-// +---------------------------------------------------------------------------+
-// | 0x000010DC ERRINFO_PERSISTENTKEYPDUTOOMANYTOTALKEYS A Persistent Key List PDU (section 2.2.1.17) was received which specified a total number of bitmap cache entries larger than 262144.
-// +---------------------------------------------------------------------------+
-// | 0x000010DD ERRINFO_PERSISTENTKEYPDUTOOMANYCACHEKEYS A Persistent Key List PDU (section 2.2.1.17) was received which specified an invalid total number of keys for a bitmap cache (the number of entries that can be stored within each bitmap cache is specified in the Revision 1 or 2 Bitmap Cache Capability Set (section 2.2.7.1.4) that is sent from client to server).
-// +---------------------------------------------------------------------------+
-// | 0x000010DE ERRINFO_INPUTPDUBADLENGTH There is not enough data to process Input Event PDU Data (section 2.2.8.1.1.3. 2.2.8.1.2).
-// +---------------------------------------------------------------------------+
-// | 0x000010DF ERRINFO_BITMAPCACHEERRORPDUBADLENGTH There is not enough data to process the shareDataHeader, NumInfoBlocks, Pad1, and Pad2 fields of the Bitmap Cache Error PDU Data ([MS-RDPEGDI] section 2.2.2.3.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x000010E0  ERRINFO_SECURITYDATATOOSHORT (a) The dataSignature field of the Fast-Path Input Event PDU (section 2.2.8.1.2) does not contain enough data. (b) The fipsInformation and dataSignature fields of the Fast-Path Input Event PDU (section 2.2.8.1.2) do not contain enough data.
-// +---------------------------------------------------------------------------+
-// | 0x000010E1 ERRINFO_VCHANNELDATATOOSHORT (a) There is not enough data in the Client Network Data (section 2.2.1.3.4) to read the virtual channel configuration data. (b) There is not enough data to read a complete Channel PDU Header (section 2.2.6.1.1).
-// +---------------------------------------------------------------------------+
-// | 0x000010E2 ERRINFO_SHAREDATATOOSHORT (a) There is not enough data to process Control PDU Data (section 2.2.1.15.1). (b) There is not enough data to read a complete Share Control Header (section 2.2.8.1.1.1.1). (c) There is not enough data to read a complete Share Data Header (section 2.2.8.1.1.1.2) of a Slow-Path Data PDU (section 2.2.8.1.1.1.1). (d) There is not enough data to process Font List PDU Data (section 2.2.1.18.1).
+// +------------------------------------+--------------------------------------+
+// | 0x000010CD                         | An out-of-sequence Slow-Path Non-Data|
+// | ERRINFO_CONTROLPDUSEQUENCE         | PDU (section 2.2.8.1.1.1.1) has been |
+// |                                    | received.                            |
+// +------------------------------------+--------------------------------------+
+// | 0x000010CE                         | A Control PDU (sections 2.2.1.15 and |
+// | ERRINFO_INVALIDCONTROLPDUACTION    | 2.2.1.16) has been received with an  |
+// |                                    | invalid action field.                |
+// +------------------------------------+--------------------------------------+
+// | 0x000010CF                         | (a) A Slow-Path Input Event (section |
+// | ERRINFO_INVALIDINPUTPDUTYPE        | 2.2.8.1.1.3.1.1) has been received   |
+// |                                    | with an invalid messageType field.   |
+// |                                    | (b) A Fast-Path Input Event (section |
+// |                                    | 2.2.8.1.2.2) has been received with  |
+// |                                    | an invalid eventCode field.          |
+// +------------------------------------+--------------------------------------+
+// | 0x000010D0                         | (a) A Slow-Path Mouse Event (section |
+// | ERRINFO_INVALIDINPUTPDUMOUSE       | 2.2.8.1.1.3.1.1.3) or Extended Mouse |
+// |                                    | Event (section 2.2.8.1.1.3.1.1.4)    |
+// |                                    | has been received with an invalid    |
+// |                                    | pointerFlags field.                  |
+// |                                    | (b) A Fast-Path Mouse Event (section |
+// |                                    | 2.2.8.1.2.2.3) or Fast-Path Extended |
+// |                                    | Mouse Event (section 2.2.8.1.2.2.4)  |
+// |                                    | has been received with an invalid    |
+// |                                    | pointerFlags field.                  |
+// +------------------------------------+--------------------------------------+
+// | 0x000010D1                         | An invalid Refresh Rect PDU (section |
+// | ERRINFO_INVALIDREFRESHRECTPDU      | 2.2.11.2) has been received.         |
+// +------------------------------------+--------------------------------------+
+// | 0x000010D2                         | The server failed to construct the   |
+// | ERRINFO_CREATEUSERDATAFAILED       | GCC Conference Create Response user  |
+// |                                    | data (section 2.2.1.4).              |
+// +------------------------------------+--------------------------------------+
+// | 0x000010D3 ERRINFO_CONNECTFAILED   | Processing during the Channel        |
+// |                                    | Connection phase of the RDP          |
+// |                                    | Connection Sequence (see section     |
+// |                                    | 1.3.1.1 for an overview of the RDP   |
+// |                                    | Connection Sequence phases) has      |
+// |                                    | failed.                              |
+// +------------------------------------+--------------------------------------+
+// | 0x000010D4                         | A Confirm Active PDU (section        |
+// | ERRINFO_CONFIRMACTIVEWRONGSHAREID  | 2.2.1.13.2) was received from the    |
+// |                                    | client with an invalid shareId field.|
+// +------------------------------------+-+------------------------------------+
+// | 0x000010D5                           | A Confirm Active PDU (section      |
+// | ERRINFO_CONFIRMACTIVEWRONGORIGINATOR | 2.2.1.13.2) was received from the  |
+// |                                      | client with an invalid originatorId|
+// |                                      | field.                             |
+// +--------------------------------------+------------------------------------+
+// | 0x000010DA                           | There is not enough data to process|
+// | ERRINFO_PERSISTENTKEYPDUBADLENGTH    | a Persistent Key List PDU (section |
+// |                                      | 2.2.1.17).                         |
+// +--------------------------------------+------------------------------------+
+// | 0x000010DB                           | A Persistent Key List PDU (section |
+// | ERRINFO_PERSISTENTKEYPDUILLEGALFIRST | 2.2.1.17) marked as                |
+// |                                      | PERSIST_PDU_FIRST (0x01) was       |
+// |                                      | received after the reception of a  |
+// |                                      | prior Persistent Key List PDU also |
+// |                                      | marked as PERSIST_PDU_FIRST.       |
+// +--------------------------------------+---+--------------------------------+
+// | 0x000010DC                               | A Persistent Key List PDU      |
+// | ERRINFO_PERSISTENTKEYPDUTOOMANYTOTALKEYS | (section 2.2.1.17) was received|
+// |                                          | which specified a total number |
+// |                                          | of bitmap cache entries larger |
+// |                                          | than 262144.                   |
+// +------------------------------------------+--------------------------------+
+// | 0x000010DD                               | A Persistent Key List PDU      |
+// | ERRINFO_PERSISTENTKEYPDUTOOMANYCACHEKEYS | (section 2.2.1.17) was received|
+// |                                          | which specified an invalid     |
+// |                                          | total number of keys for a     |
+// |                                          | bitmap cache (the number of    |
+// |                                          | entries that can be stored     |
+// |                                          | within each bitmap cache is    |
+// |                                          | specified in the Revision 1 or |
+// |                                          | 2 Bitmap Cache Capability Set  |
+// |                                          | (section 2.2.7.1.4) that is    |
+// |                                          | sent from client to server).   |
+// +------------------------------------------+--------------------------------+
+// | 0x000010DE ERRINFO_INPUTPDUBADLENGTH     | There is not enough data to    |
+// |                                          | process Input Event PDU Data   |
+// |                                          | (section 2.2.8.1.1.3.          |
+// |                                          | 2.2.8.1.2).                    |
+// +------------------------------------------+--------------------------------+
+// | 0x000010DF                               | There is not enough data to    |
+// | ERRINFO_BITMAPCACHEERRORPDUBADLENGTH     | process the shareDataHeader,   |
+// |                                          | NumInfoBlocks, Pad1, and Pad2  |
+// |                                          | fields of the Bitmap Cache     |
+// |                                          | Error PDU Data ([MS-RDPEGDI]   |
+// |                                          | section 2.2.2.3.1.1).          |
+// +------------------------------------------+--------------------------------+
+// | 0x000010E0  ERRINFO_SECURITYDATATOOSHORT | (a) The dataSignature field of |
+// |                                          | the Fast-Path Input Event PDU  |
+// |                                          | (section 2.2.8.1.2) does not   |
+// |                                          | contain enough data.           |
+// |                                          | (b) The fipsInformation and    |
+// |                                          | dataSignature fields of the    |
+// |                                          | Fast-Path Input Event PDU      |
+// |                                          | (section 2.2.8.1.2) do not     |
+// |                                          | contain enough data.           |
+// +------------------------------------------+--------------------------------+
+// | 0x000010E1 ERRINFO_VCHANNELDATATOOSHORT  | (a) There is not enough data   |
+// |                                          | in the Client Network Data     |
+// |                                          | (section 2.2.1.3.4) to read the|
+// |                                          | virtual channel configuration  |
+// |                                          | data.                          |
+// |                                          | (b) There is not enough data   |
+// |                                          | to read a complete Channel     |
+// |                                          | PDU Header (section 2.2.6.1.1).|
+// +------------------------------------------+--------------------------------+
+// | 0x000010E2 ERRINFO_SHAREDATATOOSHORT     | (a) There is not enough data   |
+// |                                          | to process Control PDU Data    |
+// |                                          | (section 2.2.1.15.1).          |
+// |                                          | (b) There is not enough data   |
+// |                                          | to read a complete Share       |
+// |                                          | Control Header (section        |
+// |                                          | 2.2.8.1.1.1.1).                |
+// |                                          | (c) There is not enough data   |
+// |                                          | to read a complete Share Data  |
+// |                                          | Header (section 2.2.8.1.1.1.2) |
+// |                                          | of a Slow-Path Data PDU        |
+// |                                          | (section 2.2.8.1.1.1.1).       |
+// |                                          | (d) There is not enough data   |
+// |                                          | to process Font List PDU Data  |
+// |                                          | (section 2.2.1.18.1).          |
 // +---------------------------------------------------------------------------+
 // | 0x000010E3 ERRINFO_BADSUPRESSOUTPUTPDU (a) There is not enough data to process Suppress Output PDU Data (section 2.2.11.3.1). (b) The allowDisplayUpdates field of the Suppress Output PDU Data (section 2.2.11.3.1) is invalid.
 // +---------------------------------------------------------------------------+
