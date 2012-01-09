@@ -102,6 +102,11 @@ public:
     Inifile * ini;
     uint32_t verbose;
 
+    enum {
+        CONNECTION_INITIATION,
+        ACTIVATE_AND_PROCESS_DATA,
+    } state;
+
 public:
 
     Front(SocketTransport * trans, Inifile * ini) :
@@ -120,7 +125,8 @@ public:
         userid(0),
         order_level(0),
         ini(ini),
-        verbose(this->ini?this->ini->globals.debug.front:0)
+        verbose(this->ini?this->ini->globals.debug.front:0),
+        state(CONNECTION_INITIATION)
     {
         // from server_sec
         // CGR: see if init has influence for the 3 following fields
@@ -1707,168 +1713,153 @@ public:
     }
 
 
-
-    void incoming() throw (Error)
+    void incoming(Callback & cb) throw (Error)
     {
         if (this->verbose){
             LOG(LOG_INFO, "Front::incoming()");
         }
-        // Connection Initiation
-        // ---------------------
 
-        // The client initiates the connection by sending the server an X.224 Connection
-        //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
-        // PDU (class 0). From this point, all subsequent data sent between client and
-        // server is wrapped in an X.224 Data Protocol Data Unit (PDU).
-
-        // Client                                                     Server
-        //    |------------X224 Connection Request PDU----------------> |
-        //    | <----------X224 Connection Confirm PDU----------------- |
-
-        if (this->verbose){
-            LOG(LOG_INFO, "Front::incoming::receiving x224 request PDU");
-        }
-
+        switch (this->state){
+        case CONNECTION_INITIATION:
         {
-            Stream in(8192);
-            X224In crtpdu(this->trans, in);
-            if (crtpdu.tpdu_hdr.code != ISO_PDU_CR) {
-                LOG(LOG_INFO, "recv x224 connection request PDU failed code=%u", crtpdu.tpdu_hdr.code);
-                throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
-            }
-            crtpdu.end();
-        }
+            // Connection Initiation
+            // ---------------------
 
-        if (this->verbose){
-            LOG(LOG_INFO, "Front::incoming::sending x224 connection confirm PDU");
-        }
-        {
-            Stream out(128);
-            X224Out cctpdu(X224Packet::CC_TPDU, out);
-            cctpdu.end();
-            cctpdu.send(this->trans);
-        }
-        // Basic Settings Exchange
-        // -----------------------
+            // The client initiates the connection by sending the server an X.224 Connection
+            //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
+            // PDU (class 0). From this point, all subsequent data sent between client and
+            // server is wrapped in an X.224 Data Protocol Data Unit (PDU).
 
-        // Basic Settings Exchange: Basic settings are exchanged between the client and
-        // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
-        // Connect Initial PDU contains a GCC Conference Create Request, while the
-        // Connect Response PDU contains a GCC Conference Create Response.
+            // Client                                                     Server
+            //    |------------X224 Connection Request PDU----------------> |
+            //    | <----------X224 Connection Confirm PDU----------------- |
 
-        // These two Generic Conference Control (GCC) packets contain concatenated
-        // blocks of settings data (such as core data, security data and network data)
-        // which are read by client and server
-
-        // Client                                                     Server
-        //    |--------------MCS Connect Initial PDU with-------------> |
-        //                   GCC Conference Create Request
-        //    | <------------MCS Connect Response PDU with------------- |
-        //                   GCC conference Create Response
-
-        if (this->verbose){
-            LOG(LOG_INFO, "Front::incoming::Basic Settings Exchange");
-            LOG(LOG_INFO, "Front::incoming::channel_list : %u", this->channel_list.size());
-        }
-
-        this->recv_mcs_connect_initial_pdu_with_gcc_conference_create_request(
-            this->trans,
-            &this->client_info,
-            this->channel_list);
-
-        this->send_mcs_connect_response_pdu_with_gcc_conference_create_response(
-            this->trans,
-            &this->client_info,
-            this->channel_list,
-            this->server_random,
-            this->encrypt.rc4_key_size,
-            this->pub_mod,
-            this->pri_exp);
-
-        // Channel Connection
-        // ------------------
-
-        // Channel Connection: The client sends an MCS Erect Domain Request PDU,
-        // followed by an MCS Attach User Request PDU to attach the primary user
-        // identity to the MCS domain.
-
-        // The server responds with an MCS Attach User Response PDU containing the user
-        // channel ID.
-
-        // The client then proceeds to join the :
-        // - user channel,
-        // - the input/output (I/O) channel
-        // - and all of the static virtual channels
-
-        // (the I/O and static virtual channel IDs are obtained from the data embedded
-        //  in the GCC packets) by using multiple MCS Channel Join Request PDUs.
-
-        // The server confirms each channel with an MCS Channel Join Confirm PDU.
-        // (The client only sends a Channel Join Request after it has received the
-        // Channel Join Confirm for the previously sent request.)
-
-        // From this point, all subsequent data sent from the client to the server is
-        // wrapped in an MCS Send Data Request PDU, while data sent from the server to
-        //  the client is wrapped in an MCS Send Data Indication PDU. This is in
-        // addition to the data being wrapped by an X.224 Data PDU.
-
-        // Client                                                     Server
-        //    |-------MCS Erect Domain Request PDU--------------------> |
-        //    |-------MCS Attach User Request PDU---------------------> |
-
-        //    | <-----MCS Attach User Confirm PDU---------------------- |
-
-        //    |-------MCS Channel Join Request PDU--------------------> |
-        //    | <-----MCS Channel Join Confirm PDU--------------------- |
-
-        if (this->verbose){
-            LOG(LOG_INFO, "Front::incoming::Channel Connection");
-            LOG(LOG_INFO, "Front::incoming::recv_mcs_erect_domain_and_attach_user_request_pdu : user_id=%u", this->userid);
-        }
-        this->recv_mcs_erect_domain_and_attach_user_request_pdu(this->trans, this->userid);
-
-        if (this->verbose){
-            LOG(LOG_INFO, "Front::incoming::send_mcs_attach_user_confirm_pdu : user_id=%u", this->userid);
-        }
-        this->send_mcs_attach_user_confirm_pdu(this->trans, this->userid);
-
-        {
-            uint16_t tmp_userid;
-            uint16_t tmp_chanid;
-            recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
-            if (tmp_userid != this->userid){
-                LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
-                throw Error(ERR_MCS_BAD_USERID);
-            }
-            if (tmp_chanid != this->userid + MCS_USERCHANNEL_BASE){
-                LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->userid + MCS_USERCHANNEL_BASE, tmp_chanid);
-                throw Error(ERR_MCS_BAD_CHANID);
-            }
             if (this->verbose){
-                LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (G): user_id=%u chanid=%u", this->userid, tmp_chanid);
+                LOG(LOG_INFO, "Front::incoming::receiving x224 request PDU");
             }
-            this->send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
-        }
 
-        {
-            uint16_t tmp_userid;
-            uint16_t tmp_chanid;
-            this->recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
-            if (tmp_userid != this->userid){
-                LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
-                throw Error(ERR_MCS_BAD_USERID);
+            {
+                Stream in(8192);
+                X224In crtpdu(this->trans, in);
+                if (crtpdu.tpdu_hdr.code != ISO_PDU_CR) {
+                    LOG(LOG_INFO, "recv x224 connection request PDU failed code=%u", crtpdu.tpdu_hdr.code);
+                    throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
+                }
+                crtpdu.end();
             }
-            if (tmp_chanid != MCS_GLOBAL_CHANNEL){
-                LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", MCS_GLOBAL_CHANNEL, tmp_chanid);
-                throw Error(ERR_MCS_BAD_CHANID);
-            }
+
             if (this->verbose){
-                LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (IO): user_id=%u chanid=%u", this->userid, tmp_chanid);
+                LOG(LOG_INFO, "Front::incoming::sending x224 connection confirm PDU");
             }
-            this->send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
-        }
+            {
+                Stream out(128);
+                X224Out cctpdu(X224Packet::CC_TPDU, out);
+                cctpdu.end();
+                cctpdu.send(this->trans);
+            }
+            // Basic Settings Exchange
+            // -----------------------
 
-        for (size_t i = 0 ; i < this->channel_list.size() ; i++){
+            // Basic Settings Exchange: Basic settings are exchanged between the client and
+            // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
+            // Connect Initial PDU contains a GCC Conference Create Request, while the
+            // Connect Response PDU contains a GCC Conference Create Response.
+
+            // These two Generic Conference Control (GCC) packets contain concatenated
+            // blocks of settings data (such as core data, security data and network data)
+            // which are read by client and server
+
+            // Client                                                     Server
+            //    |--------------MCS Connect Initial PDU with-------------> |
+            //                   GCC Conference Create Request
+            //    | <------------MCS Connect Response PDU with------------- |
+            //                   GCC conference Create Response
+
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::Basic Settings Exchange");
+                LOG(LOG_INFO, "Front::incoming::channel_list : %u", this->channel_list.size());
+            }
+
+            this->recv_mcs_connect_initial_pdu_with_gcc_conference_create_request(
+                this->trans,
+                &this->client_info,
+                this->channel_list);
+
+            this->send_mcs_connect_response_pdu_with_gcc_conference_create_response(
+                this->trans,
+                &this->client_info,
+                this->channel_list,
+                this->server_random,
+                this->encrypt.rc4_key_size,
+                this->pub_mod,
+                this->pri_exp);
+
+            // Channel Connection
+            // ------------------
+
+            // Channel Connection: The client sends an MCS Erect Domain Request PDU,
+            // followed by an MCS Attach User Request PDU to attach the primary user
+            // identity to the MCS domain.
+
+            // The server responds with an MCS Attach User Response PDU containing the user
+            // channel ID.
+
+            // The client then proceeds to join the :
+            // - user channel,
+            // - the input/output (I/O) channel
+            // - and all of the static virtual channels
+
+            // (the I/O and static virtual channel IDs are obtained from the data embedded
+            //  in the GCC packets) by using multiple MCS Channel Join Request PDUs.
+
+            // The server confirms each channel with an MCS Channel Join Confirm PDU.
+            // (The client only sends a Channel Join Request after it has received the
+            // Channel Join Confirm for the previously sent request.)
+
+            // From this point, all subsequent data sent from the client to the server is
+            // wrapped in an MCS Send Data Request PDU, while data sent from the server to
+            //  the client is wrapped in an MCS Send Data Indication PDU. This is in
+            // addition to the data being wrapped by an X.224 Data PDU.
+
+            // Client                                                     Server
+            //    |-------MCS Erect Domain Request PDU--------------------> |
+            //    |-------MCS Attach User Request PDU---------------------> |
+
+            //    | <-----MCS Attach User Confirm PDU---------------------- |
+
+            //    |-------MCS Channel Join Request PDU--------------------> |
+            //    | <-----MCS Channel Join Confirm PDU--------------------- |
+
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::Channel Connection");
+                LOG(LOG_INFO, "Front::incoming::recv_mcs_erect_domain_and_attach_user_request_pdu : user_id=%u", this->userid);
+            }
+            this->recv_mcs_erect_domain_and_attach_user_request_pdu(this->trans, this->userid);
+
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::send_mcs_attach_user_confirm_pdu : user_id=%u", this->userid);
+            }
+            this->send_mcs_attach_user_confirm_pdu(this->trans, this->userid);
+
+            {
+                uint16_t tmp_userid;
+                uint16_t tmp_chanid;
+                recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
+                if (tmp_userid != this->userid){
+                    LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
+                    throw Error(ERR_MCS_BAD_USERID);
+                }
+                if (tmp_chanid != this->userid + MCS_USERCHANNEL_BASE){
+                    LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->userid + MCS_USERCHANNEL_BASE, tmp_chanid);
+                    throw Error(ERR_MCS_BAD_CHANID);
+                }
+                if (this->verbose){
+                    LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (G): user_id=%u chanid=%u", this->userid, tmp_chanid);
+                }
+                this->send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
+            }
+
+            {
                 uint16_t tmp_userid;
                 uint16_t tmp_chanid;
                 this->recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
@@ -1876,427 +1867,446 @@ public:
                     LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
                     throw Error(ERR_MCS_BAD_USERID);
                 }
-                if (tmp_chanid != this->channel_list[i].chanid){
-                    LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->channel_list[i].chanid, tmp_chanid);
+                if (tmp_chanid != MCS_GLOBAL_CHANNEL){
+                    LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", MCS_GLOBAL_CHANNEL, tmp_chanid);
                     throw Error(ERR_MCS_BAD_CHANID);
                 }
                 if (this->verbose){
-                    LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu : user_id=%u chanid=%u", this->userid, tmp_chanid);
+                    LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (IO): user_id=%u chanid=%u", this->userid, tmp_chanid);
                 }
                 this->send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
-                this->channel_list.set_chanid(i, tmp_chanid);
-        }
-
-        if (this->verbose){
-            LOG(LOG_INFO, "Front::incoming::RDP Security Commencement");
-        }
-
-        // RDP Security Commencement
-        // -------------------------
-
-        // RDP Security Commencement: If standard RDP security methods are being
-        // employed and encryption is in force (this is determined by examining the data
-        // embedded in the GCC Conference Create Response packet) then the client sends
-        // a Security Exchange PDU containing an encrypted 32-byte random number to the
-        // server. This random number is encrypted with the public key of the server
-        // (the server's public key, as well as a 32-byte server-generated random
-        // number, are both obtained from the data embedded in the GCC Conference Create
-        //  Response packet).
-
-        // The client and server then utilize the two 32-byte random numbers to generate
-        // session keys which are used to encrypt and validate the integrity of
-        // subsequent RDP traffic.
-
-        // From this point, all subsequent RDP traffic can be encrypted and a security
-        // header is included with the data if encryption is in force (the Client Info
-        // and licensing PDUs are an exception in that they always have a security
-        // header). The Security Header follows the X.224 and MCS Headers and indicates
-        // whether the attached data is encrypted.
-
-        // Even if encryption is in force server-to-client traffic may not always be
-        // encrypted, while client-to-server traffic will always be encrypted by
-        // Microsoft RDP implementations (encryption of licensing PDUs is optional,
-        // however).
-
-        // Client                                                     Server
-        //    |------Security Exchange PDU ---------------------------> |
-
-        recv_security_exchange_PDU(this->trans,
-            this->decrypt, this->client_crypt_random);
-
-        ssl_mod_exp(this->client_random, 64,
-                    this->client_crypt_random, 64,
-                    this->pub_mod, 64,
-                    this->pri_exp, 64);
-
-        // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
-        TODO(" looks like decrypt sign key is never used  if it's true remove it from CryptContext")
-        TODO(" this methode should probably move to ssl_calls")
-        rdp_sec_generate_keys(
-            this->decrypt,
-            this->encrypt,
-            this->encrypt.sign_key,
-            this->client_random,
-            this->server_random,
-            this->encrypt.rc4_key_size);
-
-
-        // Secure Settings Exchange
-        // ------------------------
-
-        // Secure Settings Exchange: Secure client data (such as the username,
-        // password and auto-reconnect cookie) is sent to the server using the Client
-        // Info PDU.
-
-        // Client                                                     Server
-        //    |------ Client Info PDU      ---------------------------> |
-
-        if (this->verbose){
-            LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
-        }
-
-        enum {
-            WAITING_FOR_LOGON_INFO = 0,
-            WAITING_FOR_ANSWER_TO_LICENCE,
-            DEMAND_ACTIVE_TO_SEND,
-            WAITING_FOR_CONFIRM_ACTIVE,
-        } state = WAITING_FOR_LOGON_INFO;
-
-        while (state != WAITING_FOR_CONFIRM_ACTIVE) {
-            Stream stream(65535);
-            X224In tpdu(this->trans, stream);
-            McsIn mcs_in(stream);
-            if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
-                TODO("We should make a special case for MCS_DPUM, as this one is a demand to end connection");
-                // mcs_in.opcode >> 2) == MCS_DPUM
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
 
-            if (this->verbose >= 256){
-                this->decrypt.dump();
+            for (size_t i = 0 ; i < this->channel_list.size() ; i++){
+                    uint16_t tmp_userid;
+                    uint16_t tmp_chanid;
+                    this->recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
+                    if (tmp_userid != this->userid){
+                        LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
+                        throw Error(ERR_MCS_BAD_USERID);
+                    }
+                    if (tmp_chanid != this->channel_list[i].chanid){
+                        LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->channel_list[i].chanid, tmp_chanid);
+                        throw Error(ERR_MCS_BAD_CHANID);
+                    }
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu : user_id=%u chanid=%u", this->userid, tmp_chanid);
+                    }
+                    this->send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
+                    this->channel_list.set_chanid(i, tmp_chanid);
+            }
+
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::RDP Security Commencement");
+            }
+
+            // RDP Security Commencement
+            // -------------------------
+
+            // RDP Security Commencement: If standard RDP security methods are being
+            // employed and encryption is in force (this is determined by examining the data
+            // embedded in the GCC Conference Create Response packet) then the client sends
+            // a Security Exchange PDU containing an encrypted 32-byte random number to the
+            // server. This random number is encrypted with the public key of the server
+            // (the server's public key, as well as a 32-byte server-generated random
+            // number, are both obtained from the data embedded in the GCC Conference Create
+            //  Response packet).
+
+            // The client and server then utilize the two 32-byte random numbers to generate
+            // session keys which are used to encrypt and validate the integrity of
+            // subsequent RDP traffic.
+
+            // From this point, all subsequent RDP traffic can be encrypted and a security
+            // header is included with the data if encryption is in force (the Client Info
+            // and licensing PDUs are an exception in that they always have a security
+            // header). The Security Header follows the X.224 and MCS Headers and indicates
+            // whether the attached data is encrypted.
+
+            // Even if encryption is in force server-to-client traffic may not always be
+            // encrypted, while client-to-server traffic will always be encrypted by
+            // Microsoft RDP implementations (encryption of licensing PDUs is optional,
+            // however).
+
+            // Client                                                     Server
+            //    |------Security Exchange PDU ---------------------------> |
+
+            recv_security_exchange_PDU(this->trans,
+                this->decrypt, this->client_crypt_random);
+
+            ssl_mod_exp(this->client_random, 64,
+                        this->client_crypt_random, 64,
+                        this->pub_mod, 64,
+                        this->pri_exp, 64);
+
+            // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
+            TODO(" looks like decrypt sign key is never used  if it's true remove it from CryptContext")
+            TODO(" this methode should probably move to ssl_calls")
+            rdp_sec_generate_keys(
+                this->decrypt,
+                this->encrypt,
+                this->encrypt.sign_key,
+                this->client_random,
+                this->server_random,
+                this->encrypt.rc4_key_size);
+
+
+            // Secure Settings Exchange
+            // ------------------------
+
+            // Secure Settings Exchange: Secure client data (such as the username,
+            // password and auto-reconnect cookie) is sent to the server using the Client
+            // Info PDU.
+
+            // Client                                                     Server
+            //    |------ Client Info PDU      ---------------------------> |
+
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
+            }
+
+            enum {
+                WAITING_FOR_LOGON_INFO = 0,
+                WAITING_FOR_ANSWER_TO_LICENCE,
+                DEMAND_ACTIVE_TO_SEND,
+                WAITING_FOR_CONFIRM_ACTIVE,
+            } state = WAITING_FOR_LOGON_INFO;
+
+            while (state != WAITING_FOR_CONFIRM_ACTIVE) {
+                Stream stream(65535);
+                X224In tpdu(this->trans, stream);
+                McsIn mcs_in(stream);
+                if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
+                    TODO("We should make a special case for MCS_DPUM, as this one is a demand to end connection");
+                    // mcs_in.opcode >> 2) == MCS_DPUM
+                    throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+                }
+
+                if (this->verbose >= 256){
+                    this->decrypt.dump();
+                }
+
+                SecIn sec(stream, this->decrypt);
+
+                switch (state){
+                case WAITING_FOR_LOGON_INFO:
+
+                    if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
+                        throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
+                    }
+
+                    /* this is the first test that the decrypt is working */
+                    this->client_info.process_logon_info(stream);
+                    if (this->client_info.is_mce) {
+                        LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
+                        LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");
+                        send_media_lic_response(this->trans, this->userid);
+                        state = DEMAND_ACTIVE_TO_SEND;
+                    }
+                    else {
+                        LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
+                        LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
+
+                        send_lic_initial(this->trans, this->userid);
+
+                        LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
+                        state = WAITING_FOR_ANSWER_TO_LICENCE;
+                    }
+                break;
+
+                case WAITING_FOR_ANSWER_TO_LICENCE:
+                    // Licensing
+                    // ---------
+
+                    // Licensing: The goal of the licensing exchange is to transfer a
+                    // license from the server to the client.
+
+                    // The client should store this license and on subsequent
+                    // connections send the license to the server for validation.
+                    // However, in some situations the client may not be issued a
+                    // license to store. In effect, the packets exchanged during this
+                    // phase of the protocol depend on the licensing mechanisms
+                    // employed by the server. Within the context of this document
+                    // we will assume that the client will not be issued a license to
+                    // store. For details regarding more advanced licensing scenarios
+                    // that take place during the Licensing Phase, see [MS-RDPELE].
+
+                    // Client                                                     Server
+                    //    | <------ Licence Error PDU Valid Client ---------------- |
+
+                    // Disconnect Provider Ultimatum datagram
+
+                    if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
+                        uint8_t tag = stream.in_uint8();
+                        uint8_t version = stream.in_uint8();
+                        uint16_t length = stream.in_uint16_le();
+                        TODO("currently we just skip data, we should consume them instead")
+                        stream.p = stream.end;
+                        LOG(LOG_INFO, "Front::WAITING_FOR_ANSWER_TO_LICENCE sec_flags=%x %u %u %u", sec.flags, tag, version, length);
+
+                        switch (tag) {
+                        case LICENCE_TAG_DEMAND:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_DEMAND");
+                            LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
+                            send_lic_response(this->trans, this->userid);
+                            break;
+                        case LICENCE_TAG_PRESENT:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_PRESENT");
+                            break;
+                        case LICENCE_TAG_AUTHREQ:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_AUTHREQ");
+                            break;
+                        case LICENCE_TAG_ISSUE:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_ISSUE");
+                            break;
+                        case LICENCE_TAG_REISSUE:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_REISSUE");
+                            break;
+                        case LICENCE_TAG_RESULT:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_RESULT");
+                            break;
+                        case LICENCE_TAG_REQUEST:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_REQUEST");
+                            LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
+                            send_lic_response(this->trans, this->userid);
+                            break;
+                        case LICENCE_TAG_AUTHRESP:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_AUTHRESP");
+                            break;
+                        default:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_UNKNOWN %u", tag);
+    //                        exit(0);
+                            continue;
+                        }
+                    }
+                    else {
+                        uint8_t length = stream.in_uint8();
+                        stream.p += length;
+                        continue;
+                    }
+
+                    // Capabilities Exchange
+                    // ---------------------
+
+                    // Capabilities Negotiation: The server sends the set of capabilities it
+                    // supports to the client in a Demand Active PDU. The client responds with its
+                    // capabilities by sending a Confirm Active PDU.
+
+                    // Client                                                     Server
+                    //    | <------- Demand Active PDU ---------------------------- |
+                    //    |--------- Confirm Active PDU --------------------------> |
+
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::incoming::send_demand_active");
+                    }
+                    this->send_demand_active();
+
+                    state = WAITING_FOR_CONFIRM_ACTIVE;
+                break;
+
+                case WAITING_FOR_CONFIRM_ACTIVE:
+                break;
+                default:
+                break;
+                }
+                sec.end();
+                mcs_in.end();
+                tpdu.end();
+            }
+            this->state = ACTIVATE_AND_PROCESS_DATA;
+        }
+        break;
+
+        case ACTIVATE_AND_PROCESS_DATA:
+        // Connection Finalization
+        // -----------------------
+
+        // Connection Finalization: The client and server send PDUs to finalize the
+        // connection details. The client-to-server and server-to-client PDUs exchanged
+        // during this phase may be sent concurrently as long as the sequencing in
+        // either direction is maintained (there are no cross-dependencies between any
+        // of the client-to-server and server-to-client PDUs). After the client receives
+        // the Font Map PDU it can start sending mouse and keyboard input to the server,
+        // and upon receipt of the Font List PDU the server can start sending graphics
+        // output to the client.
+
+        // Client                                                     Server
+        //    |----------Synchronize PDU------------------------------> |
+        //    |----------Control PDU Cooperate------------------------> |
+        //    |----------Control PDU Request Control------------------> |
+        //    |----------Persistent Key List PDU(s)-------------------> |
+        //    |----------Font List PDU--------------------------------> |
+
+        //    | <--------Synchronize PDU------------------------------- |
+        //    | <--------Control PDU Cooperate------------------------- |
+        //    | <--------Control PDU Granted Control------------------- |
+        //    | <--------Font Map PDU---------------------------------- |
+
+        // All PDU's in the client-to-server direction must be sent in the specified
+        // order and all PDU's in the server to client direction must be sent in the
+        // specified order. However, there is no requirement that client to server PDU's
+        // be sent before server-to-client PDU's. PDU's may be sent concurrently as long
+        // as the sequencing in either direction is maintained.
+
+
+        // Besides input and graphics data, other data that can be exchanged between
+        // client and server after the connection has been finalized includes
+        // connection management information and virtual channel messages (exchanged
+        // between client-side plug-ins and server-side applications).
+        {
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming");
+            }
+            ChannelList & channel_list = this->channel_list;
+
+            Stream stream(65535);
+
+            X224In tpdu(this->trans, stream);
+
+            if (tpdu.tpdu_hdr.code != X224Packet::DT_TPDU){
+                TODO("we can also get a DR (Disconnect Request), this a normal case that should be managed")
+                LOG(LOG_INFO, "Front::Unexpected non data PDU (got %u)", tpdu.tpdu_hdr.code);
+                throw Error(ERR_X224_EXPECTED_DATA_PDU);
+            }
+
+            McsIn mcs_in(stream);
+
+            // Disconnect Provider Ultimatum datagram
+            if ((mcs_in.opcode >> 2) == MCS_DPUM) {
+                throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
+            }
+
+            if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
+                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
 
             SecIn sec(stream, this->decrypt);
 
-            switch (state){
-            case WAITING_FOR_LOGON_INFO:
-
-                if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
-                    throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
-                }
-
-                /* this is the first test that the decrypt is working */
-                this->client_info.process_logon_info(stream);
-                if (this->client_info.is_mce) {
-                    LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
-                    LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");
-                    send_media_lic_response(this->trans, this->userid);
-                    state = DEMAND_ACTIVE_TO_SEND;
-                }
-                else {
-                    LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
-                    LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
-
-                    send_lic_initial(this->trans, this->userid);
-
-                    LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
-                    state = WAITING_FOR_ANSWER_TO_LICENCE;
-                }
-            break;
-
-            case WAITING_FOR_ANSWER_TO_LICENCE:
-                // Licensing
-                // ---------
-
-                // Licensing: The goal of the licensing exchange is to transfer a
-                // license from the server to the client.
-
-                // The client should store this license and on subsequent
-                // connections send the license to the server for validation.
-                // However, in some situations the client may not be issued a
-                // license to store. In effect, the packets exchanged during this
-                // phase of the protocol depend on the licensing mechanisms
-                // employed by the server. Within the context of this document
-                // we will assume that the client will not be issued a license to
-                // store. For details regarding more advanced licensing scenarios
-                // that take place during the Licensing Phase, see [MS-RDPELE].
-
-                // Client                                                     Server
-                //    | <------ Licence Error PDU Valid Client ---------------- |
-
-                // Disconnect Provider Ultimatum datagram
-
-                if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
-                    uint8_t tag = stream.in_uint8();
-                    uint8_t version = stream.in_uint8();
-                    uint16_t length = stream.in_uint16_le();
-                    TODO("currently we just skip data, we should consume them instead")
-                    stream.p = stream.end;
-                    LOG(LOG_INFO, "Front::WAITING_FOR_ANSWER_TO_LICENCE sec_flags=%x %u %u %u", sec.flags, tag, version, length);
-
-                    switch (tag) {
-                    case LICENCE_TAG_DEMAND:
-                        LOG(LOG_INFO, "Front::LICENCE_TAG_DEMAND");
-                        LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
-                        send_lic_response(this->trans, this->userid);
-                        break;
-                    case LICENCE_TAG_PRESENT:
-                        LOG(LOG_INFO, "Front::LICENCE_TAG_PRESENT");
-                        break;
-                    case LICENCE_TAG_AUTHREQ:
-                        LOG(LOG_INFO, "Front::LICENCE_TAG_AUTHREQ");
-                        break;
-                    case LICENCE_TAG_ISSUE:
-                        LOG(LOG_INFO, "Front::LICENCE_TAG_ISSUE");
-                        break;
-                    case LICENCE_TAG_REISSUE:
-                        LOG(LOG_INFO, "Front::LICENCE_TAG_REISSUE");
-                        break;
-                    case LICENCE_TAG_RESULT:
-                        LOG(LOG_INFO, "Front::LICENCE_TAG_RESULT");
-                        break;
-                    case LICENCE_TAG_REQUEST:
-                        LOG(LOG_INFO, "Front::LICENCE_TAG_REQUEST");
-                        LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
-                        send_lic_response(this->trans, this->userid);
-                        break;
-                    case LICENCE_TAG_AUTHRESP:
-                        LOG(LOG_INFO, "Front::LICENCE_TAG_AUTHRESP");
-                        break;
-                    default:
-                        LOG(LOG_INFO, "Front::LICENCE_TAG_UNKNOWN %u", tag);
-//                        exit(0);
-                        continue;
-                    }
-                }
-                else {
-                    uint8_t length = stream.in_uint8();
-                    stream.p += length;
-                    continue;
-                }
-
-                // Capabilities Exchange
-                // ---------------------
-
-                // Capabilities Negotiation: The server sends the set of capabilities it
-                // supports to the client in a Demand Active PDU. The client responds with its
-                // capabilities by sending a Confirm Active PDU.
-
-                // Client                                                     Server
-                //    | <------- Demand Active PDU ---------------------------- |
-                //    |--------- Confirm Active PDU --------------------------> |
-
-                if (this->verbose){
-                    LOG(LOG_INFO, "Front::incoming::send_demand_active");
-                }
-                this->send_demand_active();
-
-                state = WAITING_FOR_CONFIRM_ACTIVE;
-            break;
-
-            case WAITING_FOR_CONFIRM_ACTIVE:
-            break;
-            default:
-            break;
-            }
-            sec.end();
-            mcs_in.end();
-            tpdu.end();
-        }
-
-    }
-
-    // Connection Finalization
-    // -----------------------
-
-    // Connection Finalization: The client and server send PDUs to finalize the
-    // connection details. The client-to-server and server-to-client PDUs exchanged
-    // during this phase may be sent concurrently as long as the sequencing in
-    // either direction is maintained (there are no cross-dependencies between any
-    // of the client-to-server and server-to-client PDUs). After the client receives
-    // the Font Map PDU it can start sending mouse and keyboard input to the server,
-    // and upon receipt of the Font List PDU the server can start sending graphics
-    // output to the client.
-
-    // Client                                                     Server
-    //    |----------Synchronize PDU------------------------------> |
-    //    |----------Control PDU Cooperate------------------------> |
-    //    |----------Control PDU Request Control------------------> |
-    //    |----------Persistent Key List PDU(s)-------------------> |
-    //    |----------Font List PDU--------------------------------> |
-
-    //    | <--------Synchronize PDU------------------------------- |
-    //    | <--------Control PDU Cooperate------------------------- |
-    //    | <--------Control PDU Granted Control------------------- |
-    //    | <--------Font Map PDU---------------------------------- |
-
-    // All PDU's in the client-to-server direction must be sent in the specified
-    // order and all PDU's in the server to client direction must be sent in the
-    // specified order. However, there is no requirement that client to server PDU's
-    // be sent before server-to-client PDU's. PDU's may be sent concurrently as long
-    // as the sequencing in either direction is maintained.
-
-
-    // Besides input and graphics data, other data that can be exchanged between
-    // client and server after the connection has been finalized includes
-    // connection management information and virtual channel messages (exchanged
-    // between client-side plug-ins and server-side applications).
-
-
-    void activate_and_process_data(Callback & cb)
-    {
-        if (this->verbose){
-            LOG(LOG_INFO, "Front::activate_and_process_data");
-        }
-        ChannelList & channel_list = this->channel_list;
-
-        Stream stream(65535);
-
-        X224In tpdu(this->trans, stream);
-
-        if (tpdu.tpdu_hdr.code != X224Packet::DT_TPDU){
-            TODO("we can also get a DR (Disconnect Request), this a normal case that should be managed")
-            LOG(LOG_INFO, "Front::Unexpected non data PDU (got %u)", tpdu.tpdu_hdr.code);
-            throw Error(ERR_X224_EXPECTED_DATA_PDU);
-        }
-
-        McsIn mcs_in(stream);
-
-        // Disconnect Provider Ultimatum datagram
-        if ((mcs_in.opcode >> 2) == MCS_DPUM) {
-            throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
-        }
-
-        if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
-            throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-        }
-
-        SecIn sec(stream, this->decrypt);
-
-        if (this->verbose){
-            LOG(LOG_INFO, "Front::activate_and_process_data::sec_flags=%x", sec.flags);
-        }
-
-        if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
             if (this->verbose){
-                LOG(LOG_INFO, "Front::activate_and_process_data::SEC_REDIRECT_ENCRYPT");
+                LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
             }
-            /* Check for a redirect packet, starts with 00 04 */
-            if (stream.p[0] == 0 && stream.p[1] == 4){
-            /* for some reason the PDU and the length seem to be swapped.
-               This isn't good, but we're going to do a byte for byte
-               swap.  So the first four value appear as: 00 04 XX YY,
-               where XX YY is the little endian length. We're going to
-               use 04 00 as the PDU type, so after our swap this will look
-               like: XX YY 04 00 */
 
-                uint8_t swapbyte1 = stream.p[0];
-                stream.p[0] = stream.p[2];
-                stream.p[2] = swapbyte1;
+            if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
+                if (this->verbose){
+                    LOG(LOG_INFO, "Front::incoming::SEC_REDIRECT_ENCRYPT");
+                }
+                /* Check for a redirect packet, starts with 00 04 */
+                if (stream.p[0] == 0 && stream.p[1] == 4){
+                /* for some reason the PDU and the length seem to be swapped.
+                   This isn't good, but we're going to do a byte for byte
+                   swap.  So the first four value appear as: 00 04 XX YY,
+                   where XX YY is the little endian length. We're going to
+                   use 04 00 as the PDU type, so after our swap this will look
+                   like: XX YY 04 00 */
 
-                uint8_t swapbyte2 = stream.p[1];
-                stream.p[1] = stream.p[3];
-                stream.p[3] = swapbyte2;
+                    uint8_t swapbyte1 = stream.p[0];
+                    stream.p[0] = stream.p[2];
+                    stream.p[2] = swapbyte1;
 
-                uint8_t swapbyte3 = stream.p[2];
-                stream.p[2] = stream.p[3];
-                stream.p[3] = swapbyte3;
-            }
-        }
+                    uint8_t swapbyte2 = stream.p[1];
+                    stream.p[1] = stream.p[3];
+                    stream.p[3] = swapbyte2;
 
-        if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL) {
-            size_t num_channel_src = channel_list.size();
-            for (size_t index = 0; index < channel_list.size(); index++){
-                if (channel_list[index].chanid == mcs_in.chan_id){
-                    num_channel_src = index;
-                    break;
+                    uint8_t swapbyte3 = stream.p[2];
+                    stream.p[2] = stream.p[3];
+                    stream.p[3] = swapbyte3;
                 }
             }
 
-            if (num_channel_src >= channel_list.size()) {
-                LOG(LOG_ERR, "Front::activate_and_process_data::Unknown Channel");
-                throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
-            }
-
-            const McsChannelItem & channel = channel_list[num_channel_src];
-
-            int length = stream.in_uint32_le();
-            int flags = stream.in_uint32_le();
-
-            size_t chunk_size = stream.end - stream.p;
-
-            cb.send_to_mod_channel(channel.name, stream.p, length, chunk_size, flags);
-            stream.p += chunk_size;
-        }
-        else {
-            while (stream.p < stream.end) {
-                TODO(" here should be a ShareControlHeader/ShareDataHeader  check")
-                assert(stream.check_rem(2));
-                uint16_t length = stream.in_uint16_le();
-                uint8_t * next_packet = stream.p + length;
-                if (length < 4){
-                    TODO("Can't be a ShareControlHeader... should not happen but it does. We should try to understand why.")
-                    LOG(LOG_INFO, "PDU length (%u) too small for ShareControlHeader, remaining data :%u", length, stream.end - stream.p + 2);
-//                    exit(0);
-                }
-                else if (length == 0x8000) {
-                    next_packet = next_packet - 0x8000 + 8;
-                }
-                else if (length > stream.end - stream.p + 2){
-                    TODO("Should not happen. It means PDU length is inconsistant with TPDU length. It should not happen but it does")
-                    LOG(LOG_INFO, "PDU length (%u) too large for remaining TPDU data (%u)", length, stream.end - stream.p + 2);
-//                    exit(0);
-                    next_packet = stream.end;
-                }
-                else {
-                    assert(stream.check_rem(2));
-                    int pdu_code = stream.in_uint16_le();
-                    if (this->verbose){
-                        LOG(LOG_INFO, "front::activate_and_process_data::pdu_code=%d", pdu_code);
-                    }
-                    assert(stream.check_rem(2));
-                    stream.skip_uint8(2); /* mcs user id */
-
-                    switch (pdu_code & 0xf) {
-                    case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Front::activate_and_process_data::PDU_TYPE DEMANDACTIVEPDU");
-                        }
-                        break;
-                    case PDUTYPE_CONFIRMACTIVEPDU:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Front::activate_and_process_data::PDU_TYPE CONFIRMACTIVEPDU");
-                        }
-                        this->process_confirm_active(stream);
-                        break;
-                    case PDUTYPE_DATAPDU: /* 7 */
-                        // this is rdp_process_data that will set up_and_running to 1
-                        // when fonts have been received
-                        // we will not exit this loop until we are in this state.
-                        TODO(" see what happen if we never receive up_and_running due to some error in client code ?")
-                        this->process_data(stream, cb);
-                        break;
-                    case PDUTYPE_DEACTIVATEALLPDU:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Front::activate_and_process_data::unsupported PDUTYPE DEACTIVATEALLPDU");
-                        }
-                        break;
-                    case PDUTYPE_SERVER_REDIR_PKT:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Front::activate_and_process_data::"
-                                "unsupported PDU SERVER_REDIR_PKT in session_data (%d)\n", pdu_code & 0xf);
-                        }
-                        break;
-                    default:
-                        LOG(LOG_WARNING, "unknown PDU type in session_data (%d)\n", pdu_code & 0xf);
+            if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL) {
+                size_t num_channel_src = channel_list.size();
+                for (size_t index = 0; index < channel_list.size(); index++){
+                    if (channel_list[index].chanid == mcs_in.chan_id){
+                        num_channel_src = index;
                         break;
                     }
                 }
-                next_packet = stream.p + length;
+
+                if (num_channel_src >= channel_list.size()) {
+                    LOG(LOG_ERR, "Front::incoming::Unknown Channel");
+                    throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
+                }
+
+                const McsChannelItem & channel = channel_list[num_channel_src];
+
+                int length = stream.in_uint32_le();
+                int flags = stream.in_uint32_le();
+
+                size_t chunk_size = stream.end - stream.p;
+
+                cb.send_to_mod_channel(channel.name, stream.p, length, chunk_size, flags);
+                stream.p += chunk_size;
             }
+            else {
+                while (stream.p < stream.end) {
+                    TODO(" here should be a ShareControlHeader/ShareDataHeader  check")
+                    assert(stream.check_rem(2));
+                    uint16_t length = stream.in_uint16_le();
+                    uint8_t * next_packet = stream.p + length;
+                    if (length < 4){
+                        TODO("Can't be a ShareControlHeader... should not happen but it does. We should try to understand why.")
+                        LOG(LOG_INFO, "PDU length (%u) too small for ShareControlHeader, remaining data :%u", length, stream.end - stream.p + 2);
+    //                    exit(0);
+                    }
+                    else if (length == 0x8000) {
+                        next_packet = next_packet - 0x8000 + 8;
+                    }
+                    else if (length > stream.end - stream.p + 2){
+                        TODO("Should not happen. It means PDU length is inconsistant with TPDU length. It should not happen but it does")
+                        LOG(LOG_INFO, "PDU length (%u) too large for remaining TPDU data (%u)", length, stream.end - stream.p + 2);
+    //                    exit(0);
+                        next_packet = stream.end;
+                    }
+                    else {
+                        assert(stream.check_rem(2));
+                        int pdu_code = stream.in_uint16_le();
+                        if (this->verbose){
+                            LOG(LOG_INFO, "front::incoming::pdu_code=%d", pdu_code);
+                        }
+                        assert(stream.check_rem(2));
+                        stream.skip_uint8(2); /* mcs user id */
+
+                        switch (pdu_code & 0xf) {
+                        case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
+                            if (this->verbose){
+                                LOG(LOG_INFO, "Front::incoming::PDU_TYPE DEMANDACTIVEPDU");
+                            }
+                            break;
+                        case PDUTYPE_CONFIRMACTIVEPDU:
+                            if (this->verbose){
+                                LOG(LOG_INFO, "Front::incoming::PDU_TYPE CONFIRMACTIVEPDU");
+                            }
+                            this->process_confirm_active(stream);
+                            break;
+                        case PDUTYPE_DATAPDU: /* 7 */
+                            // this is rdp_process_data that will set up_and_running to 1
+                            // when fonts have been received
+                            // we will not exit this loop until we are in this state.
+                            TODO(" see what happen if we never receive up_and_running due to some error in client code ?")
+                            this->process_data(stream, cb);
+                            break;
+                        case PDUTYPE_DEACTIVATEALLPDU:
+                            if (this->verbose){
+                                LOG(LOG_INFO, "Front::incoming::unsupported PDUTYPE DEACTIVATEALLPDU");
+                            }
+                            break;
+                        case PDUTYPE_SERVER_REDIR_PKT:
+                            if (this->verbose){
+                                LOG(LOG_INFO, "Front::incoming::"
+                                    "unsupported PDU SERVER_REDIR_PKT in session_data (%d)\n", pdu_code & 0xf);
+                            }
+                            break;
+                        default:
+                            LOG(LOG_WARNING, "unknown PDU type in session_data (%d)\n", pdu_code & 0xf);
+                            break;
+                        }
+                    }
+                    next_packet = stream.p + length;
+                }
+            }
+        }
+        break;
         }
     }
-
 
     /*****************************************************************************/
     void send_data_update_sync() throw (Error)

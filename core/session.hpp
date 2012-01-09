@@ -419,7 +419,7 @@ struct Session {
         if (this->verbose){
             LOG(LOG_INFO, "step_STATE_KEY_HANDSHAKE(%u.%0.6u)", time.tv_sec, time.tv_usec);
         }
-        this->front->incoming();
+        this->front->incoming(*this->mod);
         if (this->verbose){
             LOG(LOG_INFO, "step_STATE_KEY_HANDSHAKE Done");
         }
@@ -446,7 +446,7 @@ struct Session {
         }
         if (this->front_event->is_set()) {
             try {
-                this->front->activate_and_process_data(*this->mod);
+                this->front->incoming(*this->mod);
             }
             catch(...){
                 return SESSION_STATE_STOP;
@@ -551,7 +551,7 @@ struct Session {
         select(max + 1, &rfds, &wfds, 0, &timeout);
         if (this->front_event->is_set()) { /* incoming client data */
             try {
-                this->front->activate_and_process_data(*this->mod);
+                this->front->incoming(*this->mod);
             }
             catch(...){
                 LOG(LOG_INFO, "Forced stop from client side");
@@ -589,7 +589,7 @@ struct Session {
 
         if (this->front_event->is_set()) { /* incoming client data */
             try {
-                this->front->activate_and_process_data(*this->mod);
+                this->front->incoming(*this->mod);
             }
             catch(...){
                 return SESSION_STATE_STOP;
@@ -631,7 +631,7 @@ struct Session {
 
         if (this->front_event->is_set()) { /* incoming client data */
             try {
-                this->front->activate_and_process_data(*this->mod);
+                this->front->incoming(*this->mod);
             }
             catch(...){
                 return SESSION_STATE_STOP;
@@ -769,7 +769,7 @@ struct Session {
         }
         if (this->front_event->is_set()) {
             try {
-                this->front->activate_and_process_data(*this->mod);
+                this->front->incoming(*this->mod);
             }
             catch(...){
                 return SESSION_STATE_STOP;
