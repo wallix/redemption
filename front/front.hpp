@@ -1218,52 +1218,23 @@ public:
         // h221NonStandard (server-to-client H.221 key) = "McDn"
         stream.out_copy_bytes("McDn", 4);
 
-        uint16_t padding = channel_list.size() & 1;
-        uint16_t srv_channel_size = 8 + (channel_list.size() + padding) * 2;
-        stream.out_2BUE(8 + srv_channel_size + 236); // len
+//        uint16_t padding = channel_list.size() & 1;
+//        uint16_t srv_channel_size = 8 + (channel_list.size() + padding) * 2;
+//        stream.out_2BUE(8 + srv_channel_size + 236 + 4); // len
+
+
+        uint32_t offset_user_data_len = stream.p - stream.data;
+        stream.out_uint16_be(0);
 
         bool use_rdp5 = 1;
         out_mcs_data_sc_core(stream, use_rdp5);
-
-        uint16_t num_channels = channel_list.size();
-        uint16_t padchan = num_channels & 1;
-
-
-    //03 0c 10 00 -> TS_UD_HEADER::type = SC_NET (0x0c03), length = 16 bytes
-
-    //eb 03 -> TS_UD_SC_NET::MCSChannelID = 0x3eb = 1003 (I/O channel)
-    //03 00 -> TS_UD_SC_NET::channelCount = 3
-    //ec 03 -> channel0 = 0x3ec = 1004 (rdpdr)
-    //ed 03 -> channel1 = 0x3ed = 1005 (cliprdr)
-    //ee 03 -> channel2 = 0x3ee = 1006 (rdpsnd)
-    //00 00 -> padding
-
-    //02 0c ec 00 -> TS_UD_HEADER::type = SC_SECURITY, length = 236
-
-    //02 00 00 00 -> TS_UD_SC_SEC1::encryptionMethod = 128BIT_ENCRYPTION_FLAG
-    //02 00 00 00 -> TS_UD_SC_SEC1::encryptionLevel = TS_ENCRYPTION_LEVEL_CLIENT_COMPATIBLE
-    //20 00 00 00 -> TS_UD_SC_SEC1::serverRandomLen = 32 bytes
-    //b8 00 00 00 -> TS_UD_SC_SEC1::serverCertLen = 184 bytes
-
-
-        stream.out_uint16_le(SC_NET);
-        // length, including tag and length fields
-        stream.out_uint16_le(8 + (num_channels + padchan) * 2);
-        stream.out_uint16_le(MCS_GLOBAL_CHANNEL);
-        stream.out_uint16_le(num_channels); /* number of other channels */
-
-        for (int index = 0; index < num_channels; index++) {
-                stream.out_uint16_le(MCS_GLOBAL_CHANNEL + (index + 1));
-        }
-        if (padchan){
-            stream.out_uint16_le(0);
-        }
-
+        out_mcs_data_sc_net(stream, channel_list);
         front_out_gcc_conference_user_data_sc_sec1(stream, client_info->crypt_level, server_random, rc4_key_size, pub_mod, pri_exp);
 
-        assert(offset_len_mcs_data - offset_len_mcs_connect_response  == 38);
+        TODO(" create a function in stream that sets differed ber_len_offsets (or other len_offset)")
 
-        TODO(" create a function in stream that sets differed ber_len_offsets")
+        // set user_data_len (TWO_BYTE_UNSIGNED_ENCODING)
+        stream.set_out_uint16_be(0x8000 | (stream.p - stream.data - offset_user_data_len - 2), offset_user_data_len);
         // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
         stream.set_out_ber_len_uint16(stream.p - stream.data - offset_len_mcs_data - 3, offset_len_mcs_data);
         // set BER_TAG_MCS_CONNECT_RESPONSE len

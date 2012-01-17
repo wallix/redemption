@@ -525,6 +525,13 @@ static inline void send_sec_tag_pubkey(Stream & stream, const char (&pub_exp)[4]
     stream.out_clear_bytes(8); /* pad */
 }
 
+//02 0c ec 00 -> TS_UD_HEADER::type = SC_SECURITY, length = 236
+
+//02 00 00 00 -> TS_UD_SC_SEC1::encryptionMethod = 128BIT_ENCRYPTION_FLAG
+//02 00 00 00 -> TS_UD_SC_SEC1::encryptionLevel = TS_ENCRYPTION_LEVEL_CLIENT_COMPATIBLE
+//20 00 00 00 -> TS_UD_SC_SEC1::serverRandomLen = 32 bytes
+//b8 00 00 00 -> TS_UD_SC_SEC1::serverCertLen = 184 bytes
+
 static inline void front_out_gcc_conference_user_data_sc_sec1(Stream & stream,
                                                 int crypt_level,
                                                 uint8_t (&server_random)[32],
