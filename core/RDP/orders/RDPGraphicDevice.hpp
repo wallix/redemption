@@ -136,7 +136,7 @@ struct RDPUnserializer
             }
             catch (Error & e){
                 TODO(" check specific error and return 0 only if actual EOF is reached or rethrow the error")
-                return 0;
+                return (e.id == ERR_TRANSPORT_READ_FAILED)?0:1;
             }
             this->trans->recv(&this->stream.end, this->chunk_size - 8);
         }
@@ -225,7 +225,7 @@ struct RDPUnserializer
                 break;
             }
         }
-        return 0;
+        return 1;
     }
 };
 
