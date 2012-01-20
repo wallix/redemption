@@ -1457,7 +1457,6 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_DEBUG, "catched error (2) =%u", e.id);
                 return (e.id == ERR_SOCKET_CLOSED)?BACK_EVENT_2:BACK_EVENT_1;
             };
-            exit(0);
             return BACK_EVENT_1;
         }
         return BACK_EVENT_NONE;
