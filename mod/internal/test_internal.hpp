@@ -25,6 +25,8 @@
 #if !defined(__TEST_INTERNAL_HPP__)
 #define __TEST_INTERNAL_HPP__
 
+#include "GraphicToFile.hpp"
+#include "RDP/orders/RDPGraphicDevice.hpp"
 
 struct test_internal_mod : public internal_mod {
     test_internal_mod(
@@ -63,22 +65,17 @@ struct test_internal_mod : public internal_mod {
     virtual BackEvent_t draw_event()
     {
         this->event->reset();
-        this->draw();
-        return BACK_EVENT_NONE;
-    }
-
-    void draw()
-    {
+        const char * movie = FIXTURES_PATH "/replay.wrm";
+        int fd = ::open(movie, O_RDONLY);
+        assert(fd > 0);
+        InFileTransport in_trans(fd);
+        RDPUnserializer reader(&in_trans, this->gd.front.orders, this->screen.rect);
         this->gd.front.send_global_palette(this->gd.palette332);
         this->gd.server_begin_update();
-
-    //        #include "../../bogus3.cpp"
-        RDPOpaqueRect cmd(Rect(10, 10, 100, 100), 0xffffff);
-        this->gd.front.orders->draw(cmd, Rect(0, 0, 1280, 800));
-
+        while (reader.next()){}
         this->gd.server_end_update();
+        return BACK_EVENT_NONE;
     }
-
 };
 
 #endif
