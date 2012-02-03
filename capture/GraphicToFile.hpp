@@ -100,11 +100,16 @@
 
 struct GraphicsToFile : public RDPSerializer
 {
+    enum { TIMESTAMP = 1000 };
+
     uint16_t offset_chunk_size;
+    uint16_t offset_chunk_type;
+    uint16_t chunk_type;
 
     GraphicsToFile(Transport * trans, const Inifile * ini)
         : RDPSerializer(trans, ini, 0, 1, 1)
     {
+        this->chunk_type = RDP_UPDATE_ORDERS;
         this->init();
     }
 
@@ -117,12 +122,26 @@ struct GraphicsToFile : public RDPSerializer
         }
         this->order_count = 0;
         this->stream.init(4096);
-        this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
+
+        // to keep things easy all chunks should have 8 bytes headers
+        // starting with chunk_type, chunk_size
+        // and order_count (whatever it means, depending on chunks)
+        this->offset_chunk_type = this->stream.get_offset(0);
+        this->stream.out_uint16_le(0);
         this->offset_chunk_size = this->stream.get_offset(0);
         this->stream.out_clear_bytes(2); // 16 bits chunk size (stored in padding reserved zone)
         this->offset_order_count = this->stream.get_offset(0);
         this->stream.out_clear_bytes(2); /* number of orders, set later */
         this->stream.out_clear_bytes(2); /* pad */
+    }
+
+    virtual void timestamp()
+    {
+        this->flush();
+        this->chunk_type = TIMESTAMP;
+        TODO("order_count below is arbitray, for first test it will be a number of seconds to wait before next frame. We obviously have to find out something better")
+        this->order_count = 5;
+        this->flush();
     }
 
     virtual void flush()
@@ -132,9 +151,11 @@ struct GraphicsToFile : public RDPSerializer
                 LOG(LOG_INFO, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             }
             uint16_t chunk_size = this->stream.p - this->stream.data;
+            this->stream.set_out_uint16_le(this->chunk_type, this->offset_chunk_type);
             this->stream.set_out_uint16_le(chunk_size, this->offset_chunk_size);
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
             this->trans->send(this->stream.data, chunk_size);
+            this->chunk_type = RDP_UPDATE_ORDERS;
             this->init();
         }
     }
