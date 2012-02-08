@@ -65,14 +65,15 @@ struct test_internal_mod : public internal_mod {
     virtual BackEvent_t draw_event()
     {
         this->event->reset();
-        const char * movie = FIXTURES_PATH "/replay.wrm";
+        const char * movie = "/tmp/replay.wrm";
         int fd = ::open(movie, O_RDONLY);
         assert(fd > 0);
         InFileTransport in_trans(fd);
         RDPUnserializer reader(&in_trans, this->gd.front.orders, this->screen.rect);
         this->gd.front.send_global_palette(this->gd.palette332);
         this->gd.server_begin_update();
-        while (reader.next()){}
+        while (reader.next()){
+        }
         this->gd.server_end_update();
         return BACK_EVENT_NONE;
     }

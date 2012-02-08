@@ -231,6 +231,9 @@ struct RDPUnserializer
             }
             break;
             default:
+                TODO("This is a naive way to replay native movies at the recording speed. As we recorded at 25 frames per second (snapshots), we inserted timestamp chunks more or less every 1/25 seconds. Naive idea is just to wait 1/25 second every time we get a timestamp frame when replaying. This is naive because sending data in between frames is not timeless. In the worst case it can often be larger than inter frame time. Hence we have to find a better way, probably based on timestamp difference between recording and replay.")
+                struct timespec wtime = { 0, 40000000 };
+                nanosleep(&wtime,NULL);
                 this->remaining_order_count = 0;
             break;
         }

@@ -137,10 +137,10 @@ struct GraphicsToFile : public RDPSerializer
 
     virtual void timestamp()
     {
+        LOG(LOG_INFO, "GraphicsToFile::timestamp()");
         this->flush();
         this->chunk_type = TIMESTAMP;
-        TODO("order_count below is arbitray, for first test it will be a number of seconds to wait before next frame. We obviously have to find out something better")
-        this->order_count = 5;
+        this->order_count = 1;
         this->flush();
     }
 
