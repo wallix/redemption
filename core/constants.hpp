@@ -25,6 +25,8 @@
 #if !defined(CONSTANTS_H)
 #define CONSTANTS_H
 
+#include "log.hpp"
+
 /* TCP port for Remote Desktop Protocol */
 #define TCP_PORT_RDP                   3389
 
@@ -53,6 +55,7 @@ enum {
 };
 
 /* MCS PDU codes */
+TODO("MCS PDU codes definitions should move to core/RDP/mcs.hpp")
 enum {
     MCS_EDRQ =  1, /* Erect Domain Request */
     MCS_DPUM =  8, /* Disconnect Provider Ultimatum */
@@ -135,14 +138,17 @@ LICENCE_SIGNATURE_SIZE         = 16,
 };
 
 enum {
-LICENCE_TAG_DEMAND             = 0x01,
-LICENCE_TAG_AUTHREQ            = 0x02,
-LICENCE_TAG_ISSUE              = 0x03,
-LICENCE_TAG_REISSUE            = 0x04,
-LICENCE_TAG_PRESENT            = 0x12,
-LICENCE_TAG_REQUEST            = 0x13,
-LICENCE_TAG_AUTHRESP           = 0x15,
-LICENCE_TAG_RESULT             = 0xff,
+LICENCE_TAG_DEMAND             = 0x01, // LICENSE_REQUEST
+LICENCE_TAG_AUTHREQ            = 0x02, // PLATFORM_CHALLENGE
+LICENCE_TAG_ISSUE              = 0x03, // NEW_LICENSE
+LICENCE_TAG_REISSUE            = 0x04, // UPGRADE_LICENSE
+
+LICENCE_TAG_PRESENT            = 0x12, // LICENSE_INFO
+LICENCE_TAG_REQUEST            = 0x13, // NEW_LICENSE_REQUEST
+LICENCE_TAG_AUTHRESP           = 0x15, // PLATFORM_CHALLENGE_RESPONSE
+
+LICENCE_TAG_RESULT             = 0xff, // ERROR_ALERT
+
 LICENCE_TAG_USER               = 0x000f,
 LICENCE_TAG_HOST               = 0x0010,
 };
@@ -308,45 +314,95 @@ PDU_FLAG_LAST                  = 0x02,
 // capability set exchanged between clients and servers. All capability sets
 // conform to this basic structure (see section 2.2.7).
 
-
 // capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type identifier
-// of the capability set.
+// of the capability set (see below).
 
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
+//   of the capability data, including the size of the capabilitySetType and
+//   lengthCapability fields.
+
+// capabilityData (variable): Capability set data which conforms to the
+//   structure of the type given by the capabilitySetType field.
+
+enum {
 // 1 CAPSTYPE_GENERAL General Capability Set (section 2.2.7.1.1)
 //
+RDP_CAPSET_GENERAL             = 1,
+RDP_CAPLEN_GENERAL             = 0x18,
+
 // 2 CAPSTYPE_BITMAP Bitmap Capability Set (section 2.2.7.1.2)
-//
+RDP_CAPSET_BITMAP              = 2,
+RDP_CAPLEN_BITMAP              = 0x1C,
+
 // 3 CAPSTYPE_ORDER Order Capability Set (section 2.2.7.1.3)
-//
+RDP_CAPSET_ORDER               = 3,
+RDP_CAPLEN_ORDER               = 0x58,
+
 // 4 CAPSTYPE_BITMAPCACHE Revision 1 Bitmap Cache Capability Set (section 2.2.7.1.4.1)
+RDP_CAPSET_BMPCACHE            = 4,
+RDP_CAPLEN_BMPCACHE            = 0x28,
 
 // 5 CAPSTYPE_CONTROL Control Capability Set (section 2.2.7.2.2)
+RDP_CAPSET_CONTROL             = 5,
+RDP_CAPLEN_CONTROL             = 0x0C,
+
 
 // 7 CAPSTYPE_ACTIVATION Window Activation Capability Set (section 2.2.7.2.3)
+RDP_CAPSET_ACTIVATE            = 7,
+RDP_CAPLEN_ACTIVATE            = 0x0C,
 
 // 8 CAPSTYPE_POINTER Pointer Capability Set (section 2.2.7.1.5)
+RDP_CAPSET_POINTER             = 8,
+RDP_CAPLEN_POINTER             = 0x0a,
+RDP_CAPLEN_POINTER_MONO        = 0x08,
 
 // 9 CAPSTYPE_SHARE Share Capability Set (section 2.2.7.2.4)
+RDP_CAPSET_SHARE               = 9,
+RDP_CAPLEN_SHARE               = 0x08,
 
 // 10 CAPSTYPE_COLORCACHE Color Table Cache Capability Set (see [MS-RDPEGDI] section 2.2.1.1)
+RDP_CAPSET_COLCACHE            = 10,
+RDP_CAPLEN_COLCACHE            = 0x08,
 
 // 12 CAPSTYPE_SOUND Sound Capability Set (section 2.2.7.1.11)
+RDP_CAPSET_SOUND               = 12,
 
 // 13 CAPSTYPE_INPUT Input Capability Set (section 2.2.7.1.6)
+RDP_CAPSET_INPUT               = 13,
+RDP_CAPLEN_INPUT               = 0x58,
 
 // 14 CAPSTYPE_FONT Font Capability Set (section 2.2.7.2.5)
+RDP_CAPSET_FONT                = 14,
+RDP_CAPLEN_FONT                = 0x04,
 
 // 15 CAPSTYPE_BRUSH Brush Capability Set (section 2.2.7.1.7)
+RDP_CAPSET_BRUSHCACHE          = 15,
+RDP_CAPLEN_BRUSHCACHE          = 0x08,
 
 // 16 CAPSTYPE_GLYPHCACHE Glyph Cache Capability Set (section 2.2.7.1.8)
+RDP_CAPSET_GLYPHCACHE          = 16,
 
 // 17 CAPSTYPE_OFFSCREENCACHE Offscreen Bitmap Cache Capability Set (section 2.2.7.1.9)
+RDP_CAPSET_OFFSCREENCACHE      = 17,
 
 // 18 CAPSTYPE_BITMAPCACHE_HOSTSUPPORT Bitmap Cache Host Support Capability Set (section 2.2.7.2.1)
+RDP_CAPSET_BITMAP_OFFSCREEN    = 18,
+RDP_CAPLEN_BITMAP_OFFSCREEN    = 0x08,
 
 // 19 CAPSTYPE_BITMAPCACHE_REV2 Revision 2 Bitmap Cache Capability Set (section 2.2.7.1.4.2)
+RDP_CAPSET_BMPCACHE2           = 19,
+RDP_CAPLEN_BMPCACHE2           = 0x28,
+BMPCACHE2_FLAG_PERSIST         = ((long)1<<31),
 
 // 20 CAPSTYPE_VIRTUALCHANNEL Virtual Channel Capability Set (section 2.2.7.1.10)
+RDP_CAPSET_VIRCHAN             = 20,
+RDP_CAPLEN_VIRCHAN             = 0x08,
+
+OS_MAJOR_TYPE_UNIX             = 4,
+OS_MINOR_TYPE_XSERVER          = 7,
+
+ORDER_CAP_NEGOTIATE            = 2,
+ORDER_CAP_NOSUPPORT            = 4,
 
 // 21 CAPSTYPE_DRAWNINEGRIDCACHE DrawNineGrid Cache Capability Set ([MS-RDPEGDI] section 2.2.1.2)
 
@@ -362,73 +418,7 @@ PDU_FLAG_LAST                  = 0x02,
 
 // 27 CAPSETTYPE_LARGE_POINTER Large Pointer Capability Set (section 2.2.7.2.7)
 
-// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
-//   of the capability data, including the size of the capabilitySetType and
-//   lengthCapability fields.
-
-// capabilityData (variable): Capability set data which conforms to the
-//   structure of the type given by the capabilitySetType field.
-
-
-/* RDP capabilities */
-enum {
-RDP_CAPSET_GENERAL             = 1,
-RDP_CAPLEN_GENERAL             = 0x18,
-
-OS_MAJOR_TYPE_UNIX             = 4,
-OS_MINOR_TYPE_XSERVER          = 7,
-
-RDP_CAPSET_BITMAP              = 2,
-RDP_CAPLEN_BITMAP              = 0x1C,
-
-RDP_CAPSET_ORDER               = 3,
-RDP_CAPLEN_ORDER               = 0x58,
-ORDER_CAP_NEGOTIATE            = 2,
-ORDER_CAP_NOSUPPORT            = 4,
-
-RDP_CAPSET_BMPCACHE            = 4,
-RDP_CAPLEN_BMPCACHE            = 0x28,
-
-RDP_CAPSET_CONTROL             = 5,
-RDP_CAPLEN_CONTROL             = 0x0C,
-
-RDP_CAPSET_ACTIVATE            = 7,
-RDP_CAPLEN_ACTIVATE            = 0x0C,
-
-RDP_CAPSET_POINTER             = 8,
-RDP_CAPLEN_POINTER             = 0x0a,
-RDP_CAPLEN_POINTER_MONO        = 0x08,
-
-RDP_CAPSET_SHARE               = 9,
-RDP_CAPLEN_SHARE               = 0x08,
-
-RDP_CAPSET_COLCACHE            = 10,
-RDP_CAPLEN_COLCACHE            = 0x08,
-
-RDP_CAPSET_INPUT               = 13,
-RDP_CAPLEN_INPUT               = 0x58,
-
-RDP_CAPSET_FONT                = 14,
-RDP_CAPLEN_FONT                = 0x04,
-
-RDP_CAPSET_BRUSHCACHE          = 15,
-RDP_CAPLEN_BRUSHCACHE          = 0x08,
-
-RDP_CAPSET_GLYPHCACHE          = 16,
-
-
-RDP_CAPSET_BITMAP_OFFSCREEN    = 18,
-RDP_CAPLEN_BITMAP_OFFSCREEN    = 0x08,
-
-RDP_CAPSET_BMPCACHE2           = 19,
-RDP_CAPLEN_BMPCACHE2           = 0x28,
-BMPCACHE2_FLAG_PERSIST         = ((long)1<<31),
-
-RDP_CAPSET_VIRCHAN             = 20,
-RDP_CAPLEN_VIRCHAN             = 0x08,
 };
-
-#define RDP_SOURCE             "MSTSC"
 
 /* Logon flags */
 enum {
@@ -625,7 +615,9 @@ BUTTON_STATE_DOWN = 1,
 };
 
 /* messages */
-#warning This messages have names of messages from winuser.h but values are completely different. See what it is about ? Looks like they are internal to proxy and value is irrelevant ?
+
+TODO(" This messages have names of messages from winuser.h but values are completely different. See what it is about ? Looks like they are internal to proxy and value is irrelevant ?")
+
 enum {
 WM_PAINT       = 3,
 WM_KEYDOWN     = 15,

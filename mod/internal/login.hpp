@@ -28,6 +28,8 @@
 #include "version.hpp"
 #include "widget_window_login.hpp"
 
+#include "version.hpp"
+
 struct combo_help : public window
 {
     Widget & notify_to;
@@ -44,7 +46,7 @@ struct combo_help : public window
                     this->notify_to.notify(this, 100, 1, 0); /* ok */
             }
         } else if (msg == WM_PAINT) { /* 3 */
-            #warning the code below is a bit too much specialized. Change it to some code able to write a paragraph of text in a given rectangle. Later we may even add some formatting support.
+            TODO(" the code below is a bit too much specialized. Change it to some code able to write a paragraph of text in a given rectangle. Later we may even add some formatting support.")
             const char * message =
                     "You must be authenticated before using this<br>"
                     "session.<br>"
@@ -72,8 +74,7 @@ struct combo_help : public window
                 const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
                 for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-                    this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
-                    this->mod->gd.server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK);
+                    this->mod->gd.server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK, region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
                 }
 
                 count++;
@@ -124,7 +125,7 @@ struct combo_login : public window_login
         Rect rect(regular ? 230 : 70, 35, 350, 20);
         this->combo = new widget_combo(this->mod, rect, *this, 6, 1);
 
-        #warning add this to combo through constructor (pass in an array of strings ?) a list of pairs with id and string could be better.
+        TODO(" add this to combo through constructor (pass in an array of strings ?) a list of pairs with id and string could be better.")
         for (int i = 0; i < 6 ; i++){
             if (ini->account[i].accountdefined){
                 this->combo->string_list.push_back(strdup(ini->account[i].accountname));
@@ -174,14 +175,14 @@ struct combo_login : public window_login
         }
         this->context.cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
 
-        #warning valgrind say there is a memory leak here
+        TODO(" valgrind say there is a memory leak here")
         but = new widget_button(this->mod,
               Rect(regular ? 180 : 30, 160, 60, 25),
               *this, 3, 1, context.get(STRAUTHID_TRANS_BUTTON_OK));
         this->child_list.push_back(but);
         this->default_button = but;
 
-        #warning valgrind say there is a memory leak here
+        TODO(" valgrind say there is a memory leak here")
         but = new widget_button(this->mod,
               Rect(regular ? 250 : ((r.cx - 30) - 60), 160, 60, 25),
               *this, 2, 1, context.get(STRAUTHID_TRANS_BUTTON_CANCEL));
@@ -189,7 +190,7 @@ struct combo_login : public window_login
         this->esc_button = but;
 
         if (regular) {
-        #warning valgrind say there is a memory leak here
+        TODO(" valgrind say there is a memory leak here")
             but = new widget_button(this->mod,
                   Rect(320, 160, 60, 25), *this, 1, 1, context.get(STRAUTHID_TRANS_BUTTON_HELP));
             this->child_list.push_back(but);
@@ -280,13 +281,13 @@ struct login_mod : public internal_mod {
 
     virtual ~login_mod()
     {
-        #warning here destroy all widgets from screen.child_list
+        TODO(" here destroy all widgets from screen.child_list")
     }
 
     /*****************************************************************************/
     int clear_popup()
     {
-        #warning simplify that
+        TODO(" simplify that")
         if (this->popup_wnd != 0) {
 
             vector<Widget*>::iterator to_erase;
@@ -299,7 +300,7 @@ struct login_mod : public internal_mod {
             }
             this->screen.child_list.erase(to_erase);
 
-            #warning below inlining of bogus rdp_input_invalidate_clip
+            TODO(" below inlining of bogus rdp_input_invalidate_clip")
             this->gd.server_begin_update();
             this->screen.draw(this->popup_wnd->rect);
 
@@ -405,7 +406,7 @@ struct login_mod : public internal_mod {
                     if (!wnd->modal_dialog) {
                         // change focus. Is graphical feedback necessary ?
                         if (control != wnd && control->tab_stop) {
-                            #warning control that had focus previously does not loose it, easy way could be to loop on all controls and clear all existing focus
+                            TODO(" control that had focus previously does not loose it  easy way could be to loop on all controls and clear all existing focus")
                             control->has_focus = true;
                             for (size_t i = 0; i < wnd->child_list.size(); i++) {
                                 wnd->child_list[i]->has_focus = false;
@@ -501,7 +502,7 @@ struct login_mod : public internal_mod {
                         if (wnd == this->get_screen_wdg() || (wnd->modal_dialog == 0)){
                             if (wnd != this->get_screen_wdg()) {
                                 if (control != wnd && control->tab_stop) {
-                                #warning previous focus on other control is not yet disabled
+                                TODO(" previous focus on other control is not yet disabled")
                                     control->has_focus = true;
                                     control->refresh(control->rect.wh());
                                 }

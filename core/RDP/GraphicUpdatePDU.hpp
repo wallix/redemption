@@ -19,7 +19,7 @@
 
    RDPGraphicDevice is an abstract class that describe a device able to
    proceed RDP Drawing Orders. How the drawing will be actually done
-   depends on the implementation. 
+   depends on the implementation.
    - It may be sent on the wire,
    - Used to draw on some internal bitmap,
    - etc.
@@ -98,63 +98,37 @@
 //   primary, secondary, or alternate secondary drawing order. The controlFlags
 //   field of the Drawing Order identifies the type of drawing order.
 
-struct GraphicsUpdatePDU : public RDPGraphicDevice
+struct GraphicsUpdatePDU : public RDPSerializer
 {
-    Stream stream;
-    // Internal state of orders
-    RDPOrderCommon common;
-    RDPDestBlt destblt;
-    RDPPatBlt patblt;
-    RDPScrBlt scrblt;
-    RDPOpaqueRect opaquerect;
-    RDPMemBlt memblt;
-    RDPLineTo lineto;
-    RDPGlyphIndex glyphindex;
-    // state variables for gathering batch of orders
-    size_t order_count;
-    uint32_t offset_order_count;
     X224Out * tpdu;
     McsOut * mcs_sdin;
     SecOut * sec_out;
     ShareControlOut * out_control;
     ShareDataOut * out_data;
-    Transport * trans;
     uint16_t & userid;
     int & shareid;
     int & crypt_level;
     CryptContext & encrypt;
-    const Inifile * ini;
 
     GraphicsUpdatePDU(Transport * trans,
                       uint16_t & userid,
                       int & shareid,
                       int & crypt_level,
                       CryptContext & encrypt,
-                      const Inifile * ini)
-        :    stream(4096),
-        // Internal state of orders
-        common(RDP::PATBLT, Rect(0, 0, 1, 1)),
-        destblt(Rect(), 0),
-        patblt(Rect(), 0, 0, 0, RDPBrush()),
-        scrblt(Rect(), 0, 0, 0),
-        opaquerect(Rect(), 0),
-        memblt(0, Rect(), 0, 0, 0, 0),
-        lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0)),
-        glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
-        // state variables for a batch of orders
-        order_count(0),
-        offset_order_count(0),
+                      const Inifile * ini,
+                      const int bitmap_cache_version,
+                      const int use_bitmap_comp,
+                      const int op2)
+        : RDPSerializer(trans, ini, bitmap_cache_version, use_bitmap_comp, op2),
         tpdu(NULL),
         mcs_sdin(NULL),
         sec_out(NULL),
         out_control(NULL),
         out_data(NULL),
-        trans(trans),
         userid(userid),
         shareid(shareid),
         crypt_level(crypt_level),
-        encrypt(encrypt),
-        ini(ini)
+        encrypt(encrypt)
     {
         this->init();
     }
@@ -177,12 +151,13 @@ struct GraphicsUpdatePDU : public RDPGraphicDevice
         if (this->ini->globals.debug.primary_orders){
             LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
         }
-        this->stream.init(4096);
+        this->stream.init(32768);
         this->tpdu = new X224Out(X224Packet::DT_TPDU, this->stream);
         this->mcs_sdin = new McsOut(this->stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        this->sec_out = new SecOut(this->stream, this->crypt_level, SEC_ENCRYPT, this->encrypt);
+        uint32_t sec_flags = this->crypt_level?SEC_ENCRYPT:0;
+        this->sec_out = new SecOut(this->stream, sec_flags, this->encrypt);
         this->out_control = new ShareControlOut(this->stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        this->out_data = new ShareDataOut(this->stream, PDUTYPE2_UPDATE, this->shareid);
+        this->out_data = new ShareDataOut(this->stream, PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
 
         this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
         this->stream.out_clear_bytes(2); /* pad */
@@ -207,148 +182,6 @@ struct GraphicsUpdatePDU : public RDPGraphicDevice
             this->tpdu->end();
             this->tpdu->send(this->trans);
             this->init();
-        }
-    }
-
-    /*****************************************************************************/
-    // check if the next order will fit in available packet size
-    // if not send previous orders we got and init a new packet
-    virtual void reserve_order(size_t asked_size)
-    {
-        if (this->ini->globals.debug.primary_orders){
-            LOG(LOG_INFO, "GraphicsUpdatePDU::reserve_order[%u](%u) remains=%u", this->order_count, asked_size, std::min(this->stream.capacity, (size_t)4096) - this->stream.get_offset(0));
-        }
-        size_t max_packet_size = std::min(this->stream.capacity, (size_t)4096);
-        size_t used_size = this->stream.get_offset(0);
-        const size_t max_order_batch = 4096;
-        if ((this->order_count >= max_order_batch)
-        || (used_size + asked_size + 100) > max_packet_size) {
-            this->flush();
-        }
-        this->order_count++;
-    }
-
-    virtual void send(const RDPOpaqueRect & cmd, const Rect & clip)
-    {
-        this->reserve_order(23);
-        RDPOrderCommon newcommon(RDP::RECT, clip);
-        cmd.emit(this->stream, newcommon, this->common, this->opaquerect);
-        this->common = newcommon;
-        this->opaquerect = cmd;
-        if (this->ini->globals.debug.primary_orders){
-            cmd.log(LOG_INFO, common.clip);
-        }
-    }
-
-    virtual void send(const RDPScrBlt & cmd, const Rect &clip)
-    {
-        this->reserve_order(25);
-        RDPOrderCommon newcommon(RDP::SCREENBLT, clip);
-        cmd.emit(this->stream, newcommon, this->common, this->scrblt);
-        this->common = newcommon;
-        this->scrblt = cmd;
-        if (this->ini->globals.debug.primary_orders){
-            cmd.log(LOG_INFO, common.clip);
-        }
-    }
-
-    virtual void send(const RDPDestBlt & cmd, const Rect &clip)
-    {
-        this->reserve_order(21);
-        RDPOrderCommon newcommon(RDP::DESTBLT, clip);
-        cmd.emit(this->stream, newcommon, this->common, this->destblt);
-        this->common = newcommon;
-        this->destblt = cmd;
-        if (this->ini->globals.debug.primary_orders){
-            cmd.log(LOG_INFO, common.clip);
-        }
-    }
-
-    virtual void send(const RDPPatBlt & cmd, const Rect &clip)
-    {
-        this->reserve_order(29);
-        using namespace RDP;
-        RDPOrderCommon newcommon(RDP::PATBLT, clip);
-        cmd.emit(this->stream, newcommon, this->common, this->patblt);
-        this->common = newcommon;
-        this->patblt = cmd;
-        if (this->ini->globals.debug.primary_orders){
-            cmd.log(LOG_INFO, common.clip);
-        }
-    }
-
-
-    virtual void send(const RDPMemBlt & cmd, const Rect & clip)
-    {
-        this->reserve_order(30);
-        RDPOrderCommon newcommon(RDP::MEMBLT, clip);
-        cmd.emit(this->stream, newcommon, this->common, this->memblt);
-        this->common = newcommon;
-        this->memblt = cmd;
-        if (this->ini->globals.debug.primary_orders){
-            cmd.log(LOG_INFO, common.clip);
-        }
-    }
-
-    virtual void send(const RDPLineTo& cmd, const Rect & clip)
-    {
-        this->reserve_order(32);
-        RDPOrderCommon newcommon(RDP::LINE, clip);
-        cmd.emit(this->stream, newcommon, this->common, this->lineto);
-        this->common = newcommon;
-        this->lineto = cmd;
-        if (this->ini->globals.debug.primary_orders){
-            cmd.log(LOG_INFO, common.clip);
-        }
-    }
-
-    virtual void send(const RDPGlyphIndex & cmd, const Rect & clip)
-    {
-        this->reserve_order(297);
-        RDPOrderCommon newcommon(RDP::GLYPHINDEX, clip);
-        cmd.emit(this->stream, newcommon, this->common, this->glyphindex);
-        this->common = newcommon;
-        this->glyphindex = cmd;
-        if (this->ini->globals.debug.primary_orders){
-            LOG(LOG_INFO, "glyphIndex");
-//            cmd.log(LOG_INFO, common.clip);
-        }
-    }
-
-    virtual void send(const RDPBrushCache & cmd)
-    {
-        this->reserve_order(cmd.size + 12);
-        cmd.emit(this->stream);
-        if (this->ini->globals.debug.secondary_orders){
-            cmd.log(LOG_INFO);
-        }
-    }
-
-    virtual void send(const RDPColCache & cmd)
-    {
-        this->reserve_order(2000);
-        cmd.emit(this->stream);
-        if (this->ini->globals.debug.secondary_orders){
-            cmd.log(LOG_INFO);
-        }
-    }
-
-    virtual void send(const RDPBmpCache & cmd)
-    {
-        this->reserve_order(cmd.bmp->bmp_size(cmd.bpp) + 16);
-        cmd.emit(this->stream);
-        if (this->ini->globals.debug.secondary_orders){
-            cmd.log(LOG_INFO);
-        }
-    }
-
-    virtual void send(const RDPGlyphCache & cmd)
-    {
-        #warning compute actual size, instead of a majoration as below
-        this->reserve_order(1000);
-        cmd.emit(this->stream);
-        if (this->ini->globals.debug.secondary_orders){
-            cmd.log(LOG_INFO);
         }
     }
 

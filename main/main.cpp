@@ -127,13 +127,13 @@ int shutdown(const char * pid_file)
         pid = atoi(text);
         cout << "stopping process id " << pid << "\n";
         if (pid > 0) {
-#warning check that a process with this id is really running, if not we may consider removing pid file.
+            TODO("check that a process with this id is really running, if not we may consider removing pid file.")
             cout << "sending sigterm to " << pid << "\n";
             kill(pid, SIGKILL);
-#warning wait some decent time and check no such process is running any more
+            TODO("wait some decent time and check no such process is running any more")
         }
     }
-    #warning exit with a correct error status if something failed
+    TODO("exit with a correct error status if something failed")
     close(fd);
     unlink(pid_file);
     return 0;
@@ -200,7 +200,7 @@ int main(int argc, char** argv)
     if (options.count("kill")) {
         int status = shutdown(PID_PATH "/" LOCKFILE);
         if (status){
-            #warning check the real error that occured
+            TODO("check the real error that occured")
             clog << "problem opening " << PID_PATH "/" LOCKFILE  << "."
             " Maybe rdpproxy is not running\n";
         }

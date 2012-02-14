@@ -55,40 +55,8 @@ BOOST_AUTO_TEST_CASE(TestStream)
     BOOST_CHECK(s->data == s->p);
     BOOST_CHECK(s->data == s->end);
 
-    // buffer is empty but no underflow check ok
-    BOOST_CHECK(s->check());
-
-    // add 100 characters to buffer
-    s->end += 100;
-    // now there is character in buffer
-    BOOST_CHECK(s->check());
-
-    // we are not at the end of buffer
-    BOOST_CHECK(!s->check_end());
-
-    // there is more than 50 characters
-    BOOST_CHECK(s->check_rem(50));
-
-    // there is 100 characters
-    BOOST_CHECK(s->check_rem(100));
-
-    // there is not 101 characters
-    BOOST_CHECK(!s->check_rem(101));
-
-    s->p += 100;
-    // Now we are at the end of buffer
-    BOOST_CHECK(s->check_end());
-
-    // still no buffer underflow
-    BOOST_CHECK(s->check());
-
-    s->p += 1;
-    // now we have a buffer underflow
-    BOOST_CHECK(!s->check());
-
     // and we can destroy Stream.
     delete s;
-
 }
 
 BOOST_AUTO_TEST_CASE(TestStream_uint8)
@@ -126,13 +94,6 @@ BOOST_AUTO_TEST_CASE(TestStream_uint8)
     // now the buffer is empty
     BOOST_CHECK(s->check_end());
 
-    // empty is OK
-    BOOST_CHECK(s->check());
-    // we read past the end of buffer
-    s->in_sint8();
-    // underflow is not OK
-    BOOST_CHECK(!s->check());
-
     delete s;
 
 }
@@ -167,11 +128,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint16)
     BOOST_CHECK_EQUAL(s->in_sint16_be(), 1);
 
     // empty is OK
-    BOOST_CHECK(s->check());
-    // we read past the end of buffer
-    s->in_sint16_le();
-    // underflow is not OK
-    BOOST_CHECK(!s->check());
+    BOOST_CHECK(s->p == s->end);
 
     delete s;
 }
@@ -199,11 +156,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint32)
     BOOST_CHECK_EQUAL(s->in_uint32_le(), 0xFFFFFFFC);
 
     // empty is OK
-    BOOST_CHECK(s->check());
-    // we read past the end of buffer
-    s->in_uint32_le();
-    // underflow is not OK
-    BOOST_CHECK(!s->check());
+    BOOST_CHECK(s->p == s->end);
 
     delete s;
 }
@@ -228,11 +181,7 @@ BOOST_AUTO_TEST_CASE(TestStream_in_uint8p)
     BOOST_CHECK_EQUAL(oldp+16, s->p);
 
     // empty is OK
-    BOOST_CHECK(s->check());
-    // we read past the end of buffer
-    s->in_uint8p(2);
-    // underflow is not OK
-    BOOST_CHECK(!s->check());
+    BOOST_CHECK(s->p == s->end);
 
     delete s;
 }
@@ -255,11 +204,7 @@ BOOST_AUTO_TEST_CASE(TestStream_skip_uint8)
     s->skip_uint8(3);
 
     // empty is OK
-    BOOST_CHECK(s->check());
-    // we read past the end of buffer
-    s->skip_uint8(1);
-    // underflow is not OK
-    BOOST_CHECK(!s->check());
+    BOOST_CHECK(s->p == s->end);
 
     delete s;
 }
@@ -300,14 +245,14 @@ BOOST_AUTO_TEST_CASE(TestStream_out_Stream)
     BOOST_CHECK(!memcmp("\xA\1\2\4\3\4\3\2\1\5\6\7\x8", s->data, 13));
 
     // underflow because end is not yet moved at p
-    BOOST_CHECK(!s->check());
+    BOOST_CHECK(s->p > s->end);
 
     // move end to where p is now, hence between data and end we have
     // the data we wish to export.
     s->mark_end();
 
     // no more underflow
-    BOOST_CHECK(s->check());
+    BOOST_CHECK(s->p == s->end);
 
     delete s;
 }

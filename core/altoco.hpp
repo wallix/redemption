@@ -37,12 +37,6 @@ static inline uint32_t nbbytes(unsigned value)
     return ((value+7) / 8);
 }
 
-#warning change that to aligned_row_size
-static inline uint32_t aligned_size(int width, int height, uint8_t bpp)
-{
-    return align4(width) * height * ((bpp<=8)?1:(bpp<=16)?2:4);
-}
-
 static inline void out_bytes_le(uint8_t * ptr, const uint8_t nb, const unsigned value)
 {
     for (int b = 0 ; b < nb ; ++b){
@@ -58,7 +52,6 @@ static inline unsigned in_bytes_le(const uint8_t nb, const uint8_t * ptr)
     }
     return res;
 }
-
 
 static inline uint32_t row_size(int width, uint8_t bpp)
 {

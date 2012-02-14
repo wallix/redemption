@@ -53,8 +53,9 @@ struct bouncer2_mod : public internal_mod {
     bouncer2_mod(wait_obj * back_event, Front & front) :
         internal_mod(front), event(back_event), speedx(10), speedy(10), dancing_rect(NULL)
     {
+        
         this->gd.server_begin_update();
-        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00));
+        this->gd.draw(RDPOpaqueRect(this->screen.rect, 0x00FF00), this->gd.get_front_rect());
         this->gd.server_end_update();
 
         this->dancing_rect = new Rect(0,0,100,100);
@@ -112,7 +113,7 @@ struct bouncer2_mod : public internal_mod {
     virtual BackEvent_t draw_event()
     {
 //        this->gd.server_begin_update();
-//        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00));
+//        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00), this->gd.get_front_rect());
 //        this->gd.server_end_update();
         // Creating a new RDP Order: OpaqueRect
         //RDPOpaqueRect white_rect(Rect(0, 0, 10, 10), 0xFFFFFF);
@@ -140,12 +141,12 @@ struct bouncer2_mod : public internal_mod {
 
         // Drawing the RECT
         this->gd.server_begin_update();
-        this->gd.opaque_rect(RDPOpaqueRect(*this->dancing_rect, 0x0000FF));
+        this->gd.draw(RDPOpaqueRect(*this->dancing_rect, 0x0000FF), this->gd.get_front_rect());
         this->gd.server_end_update();
 
         // And erase
         this->gd.server_begin_update();
-        this->wipe(oldrect, *this->dancing_rect, 0x00FF00);
+        this->wipe(oldrect, *this->dancing_rect, 0x00FF00, this->gd.get_front_rect());
         this->gd.server_end_update();
 
         // Final with setting next idle time
@@ -153,19 +154,21 @@ struct bouncer2_mod : public internal_mod {
         return BACK_EVENT_NONE;
     }
 
-    void wipe(Rect oldrect, Rect newrect, int color) {
+    void wipe(Rect oldrect, Rect newrect, int color, const Rect & clip) {
         // new RectIterator
         struct RectIt : public Rect::RectIterator {
             int color;
             bouncer2_mod & b;
+            const Rect & clip;
 
-            RectIt(int color, bouncer2_mod & b) : color(color), b(b)
+            RectIt(int color, bouncer2_mod & b, const Rect & clip) 
+            : color(color), b(b), clip(clip)
             {}
 
             void callback(const Rect & a) {
-                b.gd.opaque_rect(RDPOpaqueRect(a, color));
+                b.gd.draw(RDPOpaqueRect(a, color), this->clip);
             }
-        } it(color, *this);
+        } it(color, *this, clip);
 
         // Use my iterator
         oldrect.difference(newrect, it);

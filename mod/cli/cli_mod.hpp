@@ -23,7 +23,7 @@
 #if !defined(__CLI_HPP__)
 #define __CLI_HPP__
 
-#include "../transitory/transitory.hpp"
+#include "transitory/transitory.hpp"
 
 struct cli_mod : public transitory_mod {
 

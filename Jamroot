@@ -21,17 +21,21 @@ rule defines ( properties * )
     defs += <define>SHARE_PATH='\"/usr/local/share/rdpproxy\"' ;
     defs += <define>CFG_PATH='\"/etc/rdpproxy\"' ;
     defs += <define>FIXTURES_PATH='\"./tests/fixtures\"' ;
+    if [ os.environ VERBOSE ]
+    {
+        defs += <define>VERBOSE ;
+    }
     return $(defs) ;
 }
 
 project redemption
     : requirements
-    <toolset>gcc:<cxxflags>-Wno-cpp
-    <toolset>gcc:<cxxflags>-Wno-unused-variable
     <include>main
+    <include>mod
     <include>core
     <include>front
     <include>tests
+    <include>utils
     <include>capture
     <include>/usr/include
     <conditional>@defines
@@ -169,6 +173,10 @@ unit-test test_region : tests/test_region.cpp libboost_unit_test ;
 unit-test test_strings : tests/test_strings.cpp libboost_unit_test ;
 unit-test test_keymap : tests/test_keymap.cpp keymap libboost_unit_test libboost_program_options ;
 unit-test test_rsa_keys : tests/test_rsa_keys.cpp rsa_keys libboost_unit_test libboost_program_options ;
+unit-test test_transport : tests/test_transport.cpp libboost_unit_test ;
+unit-test test_RDP_graphic_to_file : tests/test_RDP_graphic_to_file.cpp png z libboost_unit_test ;
+unit-test test_RDP_graphic_to_file_2 : tests/test_RDP_graphic_to_file_2.cpp png z libboost_unit_test ;
+unit-test test_RDP_graphic_to_file_3 : tests/test_RDP_graphic_to_file_3.cpp png z libboost_unit_test ;
 
 unit-test test_primary_order_opaque_rect : tests/test_primary_order_opaque_rect.cpp libboost_unit_test ;
 unit-test test_primary_order_scr_blt : tests/test_primary_order_scr_blt.cpp libboost_unit_test ;
@@ -188,4 +196,7 @@ unit-test test_dico : tests/test_dico.cpp libboost_unit_test : ;
 unit-test test_colors : tests/test_colors.cpp libboost_unit_test : ;
 unit-test test_write_over_file : tests/test_write_over_file.cpp libboost_unit_test : ;
 unit-test test_libpng : tests/test_libpng.cpp libboost_unit_test png z : ;
-unit-test test_capture : tests/test_capture.cpp libboost_unit_test png z : ;
+unit-test test_capture : tests/test_capture.cpp libboost_unit_test png z d3des openssl crypto ;
+
+unit-test test_rdesktop_invalid_pdu : tests/test_rdesktop_invalid_pdu.cpp libboost_unit_test openssl crypto ini_config keymap rsa_keys d3des libboost_program_options ;
+# unit-test test_w2008_fail_licensing : tests/test_w2008_fail_licensing.cpp libboost_unit_test openssl crypto ini_config keymap rsa_keys d3des libboost_program_options ;

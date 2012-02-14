@@ -44,7 +44,7 @@ struct wab_close : public window
         if (regular) {
             widget_image * but = new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE,
                 *this, 10, 30, SHARE_PATH "/" LOGIN_LOGO24, this->mod->screen.bpp);
-            #warning bitmap load below should probably be done before call
+            TODO(" bitmap load below should probably be done before call")
             this->child_list.push_back(but);
         }
 

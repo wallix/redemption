@@ -27,7 +27,7 @@
 
 #include <algorithm>
 #include <ostream>
-
+#include "log.hpp"
 
 struct Rect {
     int x;
@@ -61,7 +61,7 @@ struct Rect {
                && y < (this->y + this->cy);
     }
 
-    #warning contains should work when inner rect is empty except if outer is empty
+    TODO(" contains should work when inner rect is empty except if outer is empty")
     bool contains(const Rect & inner) const {
         return (inner.x >= this->x
              && inner.y >= this->y
@@ -69,7 +69,7 @@ struct Rect {
              && inner.y + inner.cy <= this->y + this->cy);
     }
 
-    #warning equal should work when inner and outer rect are both empty
+    TODO(" equal should work when inner and outer rect are both empty")
     bool equal(const Rect & other) const {
         return (other.x == this->x
              && other.y == this->y
@@ -95,6 +95,20 @@ struct Rect {
 
     const Rect wh() {
         return Rect(0, 0, this->cx, this->cy);
+    }
+
+    // compute a new rect containing old rect and given point
+    const Rect enlarge_to(int x, int y) const {
+        if (this->isempty()){
+            return Rect(x, y, 1, 1);
+        }
+        else {
+            const int x0 = std::min(this->x, x);
+            const int y0 = std::min(this->y, y);
+            const int x1 = std::max(this->x + this->cx - 1, x);
+            const int y1 = std::max(this->y + this->cy - 1, y);
+            return Rect(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+        }
     }
 
     const Rect offset(int dx, int dy) const {

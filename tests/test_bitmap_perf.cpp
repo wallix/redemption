@@ -45,10 +45,13 @@ long long ustime() {
 BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 {
     {
+        BOOST_CHECK(true);
         int bpp = 16;
         Bitmap bigbmp(FIXTURES_PATH "/color_image.bmp");
+        BOOST_CHECK(true);
         // make it large enough to hold any image
         Stream out(2*bigbmp.bmp_size(bpp));
+        BOOST_CHECK(true);
         unsigned long long usec = ustime();
         unsigned long long cycles = rdtsc();
         bigbmp.compress(bpp, out);

@@ -58,7 +58,7 @@ unsigned level_from_string(string str)
     unsigned res = 0;
     if (0 == string("medium").compare(str)) { res = 1; }
     else if (0 == string("high").compare(str)) { res = 2; }
-#warning should throw an exeption for unrecognised values
+TODO(" should throw an exeption for unrecognised values")
     return res;
 }
 
@@ -176,7 +176,7 @@ idlib_t idlib_from_string(string str)
 unsigned channel_code_from_int(unsigned val)
 { // 0 no channels, 1 channels
     unsigned res = 1;
-#warning should throw an exeption for illegal values
+TODO(" should throw an exeption for illegal values")
     if (val <= 1) { res = val; }
     return res;
 }
@@ -208,7 +208,7 @@ Inifile::Inifile(istream & Inifile_stream){
 
 
 void Inifile::init(istream & Inifile_stream){
-#warning find a more generic way to read this struct with any number of account lines
+TODO(" find a more generic way to read this struct with any number of account lines")
     po::options_description Inifile_desc("Xrdp.ini configuration file:");
     Inifile_desc.add_options()
     ("globals.bitmap_cache", po::value<string>()->default_value("yes"), "")
@@ -441,11 +441,11 @@ void Inifile::init(istream & Inifile_stream){
             strncpy(this->account[account_num].authip, str.data(), str.length());
             this->account[account_num].authip[str.length()] = 0;
 
-    #warning TODO ask port, see what it really means, seems not to be about asking to user
+    TODO(" TODO ask port  see what it really means  seems not to be about asking to user")
             this->account[account_num].askport = false;
         }
     } catch (exception& e){
-#warning TODO some cleaner syntax error management. I could define a testconf target in command line and show errors. Catching all errors at once would also be handy.
+TODO(" TODO some cleaner syntax error management. I could define a testconf target in command line and show errors. Catching all errors at once would also be handy.")
         clog << "Exception raised reading config, check configuration file :" << e.what();
         _exit(1);
     };

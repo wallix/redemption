@@ -52,19 +52,19 @@
 
 #include "sesman.hpp"
 #include "front.hpp"
-#include "../mod/null/null.hpp"
-#include "../mod/internal/login.hpp"
-#include "../mod/internal/bouncer2.hpp"
-#include "../mod/internal/close.hpp"
-#include "../mod/internal/dialog.hpp"
-#include "../mod/internal/test_card.hpp"
-#include "../mod/internal/test_internal.hpp"
-#include "../mod/internal/selector.hpp"
-#include "../mod/rdp/rdp.hpp"
-#include "../mod/vnc/vnc.hpp"
-#include "../mod/xup/xup.hpp"
-#include "../mod/transitory/transitory.hpp"
-#include "../mod/cli/cli_mod.hpp"
+#include "null/null.hpp"
+#include "internal/login.hpp"
+#include "internal/bouncer2.hpp"
+#include "internal/close.hpp"
+#include "internal/dialog.hpp"
+#include "internal/test_card.hpp"
+#include "internal/test_internal.hpp"
+#include "internal/selector.hpp"
+#include "rdp/rdp.hpp"
+#include "vnc/vnc.hpp"
+#include "xup/xup.hpp"
+#include "transitory/transitory.hpp"
+#include "cli/cli_mod.hpp"
 
 
 using namespace std;
@@ -154,7 +154,7 @@ static inline int get_pixel(uint8_t* data, int x, int y, int width, int bpp)
     int start = y * real_width + x / pixels_per_byte;
     int shift = x & (pixels_per_byte-1);
 
-    #warning this need some cleanup, but we should define unit tests before correcting it, because mistaking is easy in these kind of things.
+    TODO(" this need some cleanup  but we should define unit tests before correcting it  because mistaking is easy in these kind of things.")
     if (bpp == 1) {
         return (data[start] & (0x80 >> shift)) != 0;
     } else if (bpp == 4) {
@@ -183,13 +183,17 @@ static inline int load_pointer(const char* file_name, uint8_t* data, uint8_t* ma
             LOG(LOG_WARNING, "loading pointer from file [%s] failed\n", file_name);
             throw 1;
         }
+
+        TODO("We should define some kind of transport object to read into the stream")
+
         int lg = read(fd, stream.data, 8192);
         if (!lg){
             throw 1;
         }
         close(fd);
+        stream.end = stream.data + lg;
 
-        #warning : the ways we do it now we have some risk of reading out of buffer (data that are not from file)
+        TODO("the ways we do it now we have some risk of reading out of buffer (data that are not from file)")
 
         stream.skip_uint8(6);
         int w = stream.in_uint8();
@@ -222,7 +226,7 @@ static inline int load_pointer(const char* file_name, uint8_t* data, uint8_t* ma
                 memcpy(palette, stream.in_uint8p(64), 64);
                 for (int i = 0; i < 32; i++) {
                     for (int j = 0; j < 32; j++) {
-            #warning probably bogus, we are in case bpp = 4 and we call get_pixel with 1 as bpp
+            TODO(" probably bogus  we are in case bpp = 4 and we call get_pixel with 1 as bpp")
                         int pixel = palette[get_pixel(stream.p, j, i, 32, 1)];
                         *data = pixel;
                         data++;
@@ -247,6 +251,7 @@ struct Session {
 
     int sck;
     Inifile * ini;
+    uint32_t & verbose;
 
     ModContext * context;
     int internal_state;
@@ -267,10 +272,10 @@ struct Session {
 
     SessionManager * sesman;
 
-    Session(int sck, const char * ip_source, Inifile * ini) 
-        : sck(sck), ini(ini)
+    Session(int sck, const char * ip_source, Inifile * ini)
+        : sck(sck), ini(ini), verbose(this->ini->globals.debug.session)
     {
-        if (this->ini->globals.debug.session){
+        if (this->verbose){
             LOG(LOG_INFO, "new Session(%u)", sck);
         }
         this->context = new ModContext(
@@ -278,7 +283,7 @@ struct Session {
                 sizeof(KeywordsDefinitions)/sizeof(ProtocolKeyword));
         this->context->cpy(STRAUTHID_HOST, ip_source);
 
-        this->sesman = new SessionManager(*this->context);
+        this->sesman = new SessionManager(*this->context, this->ini->globals.debug.auth);
         this->sesman->auth_trans_t = 0;
 
         this->mod = 0;
@@ -287,7 +292,7 @@ struct Session {
         this->front_event = new wait_obj(sck);
 
         /* create these when up and running */
-        this->trans = new SocketTransport(sck);
+        this->trans = new SocketTransport("RDP Client", sck, this->ini->globals.debug.front);
 
         /* set non blocking */
         int rv = 0;
@@ -317,7 +322,7 @@ struct Session {
 
     ~Session()
     {
-        if (this->ini->globals.debug.session){
+        if (this->verbose){
             LOG(LOG_INFO, "end of Session(%u)", sck);
         }
         delete this->front;
@@ -337,7 +342,7 @@ struct Session {
 
     int session_main_loop()
     {
-        if (this->ini->globals.debug.session){
+        if (this->verbose){
             LOG(LOG_INFO, "Session::session_main_loop()");
         }
         int rv = 0;
@@ -389,7 +394,7 @@ struct Session {
                     break;
                 }
                 if (this->internal_state == SESSION_STATE_STOP){
-                    if (this->ini->globals.debug.session){
+                    if (this->verbose){
                         LOG(LOG_INFO, "Session::session_main_loop::stop required()");
                     }
                     break;
@@ -411,11 +416,11 @@ struct Session {
 
     int step_STATE_KEY_HANDSHAKE(const struct timeval & time)
     {
-        if (this->ini->globals.debug.session){
+        if (this->verbose){
             LOG(LOG_INFO, "step_STATE_KEY_HANDSHAKE(%u.%0.6u)", time.tv_sec, time.tv_usec);
         }
-        this->front->incoming();
-        if (this->ini->globals.debug.session){
+        this->front->incoming(*this->mod);
+        if (this->verbose){
             LOG(LOG_INFO, "step_STATE_KEY_HANDSHAKE Done");
         }
         return SESSION_STATE_ENTRY;
@@ -423,7 +428,7 @@ struct Session {
 
     int step_STATE_ENTRY(const struct timeval & time_mark)
     {
-        if (this->ini->globals.debug.session){
+        if (this->verbose){
             LOG(LOG_INFO, "Session::step_STATE_ENTRY(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
         }
         unsigned max = 0;
@@ -436,19 +441,19 @@ struct Session {
 
         this->front_event->add_to_fd_set(rfds, max);
         select(max + 1, &rfds, &wfds, 0, &timeout);
-        if (this->ini->globals.debug.session){
+        if (this->verbose){
             LOG(LOG_INFO, "Session::step_STATE_ENTRY::timeout=%u.%0.6u", timeout.tv_sec, timeout.tv_usec);
         }
         if (this->front_event->is_set()) {
             try {
-                this->front->activate_and_process_data(*this->mod);
+                this->front->incoming(*this->mod);
             }
             catch(...){
                 return SESSION_STATE_STOP;
             };
 
             if (this->front->up_and_running){
-                if (this->ini->globals.debug.session){
+                if (this->verbose){
                     LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running");
                 }
 
@@ -456,15 +461,16 @@ struct Session {
                 // hence width and height and colors and keymap are availables
                 /* resize the main window */
                 this->mod->front_resize();
-                this->mod->gd.server_reset_clip();
                 this->front->reset();
                 this->front->set_keyboard_layout();
 
                 BGRPalette palette;
                 init_palette332(palette);
 
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 2");
                 this->mod->gd.color_cache(palette, 0);
 
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 3");
                 struct pointer_item pointer_item;
 
                 memset(&pointer_item, 0, sizeof(pointer_item));
@@ -474,12 +480,16 @@ struct Session {
                     &pointer_item.x,
                     &pointer_item.y);
 
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 4");
+
                 this->front->cache.add_pointer_static(&pointer_item, 0);
                 this->front->send_pointer(0,
                                  pointer_item.data,
                                  pointer_item.mask,
                                  pointer_item.x,
                                  pointer_item.y);
+
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 5");
 
                 memset(&pointer_item, 0, sizeof(pointer_item));
                 load_pointer(SHARE_PATH "/" CURSOR1,
@@ -489,11 +499,15 @@ struct Session {
                     &pointer_item.y);
                 this->front->cache.add_pointer_static(&pointer_item, 1);
 
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 6");
+
                 this->front->send_pointer(1,
                                  pointer_item.data,
                                  pointer_item.mask,
                                  pointer_item.x,
                                  pointer_item.y);
+
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 7");
 
                 if (this->front->get_client_info().username[0]){
                     this->context->parse_username(this->front->get_client_info().username);
@@ -504,7 +518,12 @@ struct Session {
                 }
 
                 this->internal_state = SESSION_STATE_RUNNING;
+
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 8");
+
                 this->session_setup_mod(MCTX_STATUS_CLI, this->context);
+
+                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 5");
             }
         }
 
@@ -515,7 +534,7 @@ struct Session {
 
     int step_STATE_WAITING_FOR_NEXT_MODULE(const struct timeval & time_mark)
     {
-        if (this->ini->globals.debug.session){
+        if (this->verbose){
             LOG(LOG_INFO, "Session::step_STATE_WAITING_FOR_NEXT_MODULE(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
         }
         unsigned max = 0;
@@ -532,7 +551,7 @@ struct Session {
         select(max + 1, &rfds, &wfds, 0, &timeout);
         if (this->front_event->is_set()) { /* incoming client data */
             try {
-                this->front->activate_and_process_data(*this->mod);
+                this->front->incoming(*this->mod);
             }
             catch(...){
                 LOG(LOG_INFO, "Forced stop from client side");
@@ -551,7 +570,7 @@ struct Session {
 
     int step_STATE_WAITING_FOR_CONTEXT(const struct timeval & time_mark)
     {
-        if (this->ini->globals.debug.session){
+        if (this->verbose){
             LOG(LOG_INFO, "Session::step_STATE_WAITING_FOR_CONTEXT(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
         }
         unsigned max = 0;
@@ -561,7 +580,7 @@ struct Session {
         FD_ZERO(&rfds);
         FD_ZERO(&wfds);
 
-        #warning we should manage some **real** timeout here, if context didn't answered in time, then we should close session.'
+        TODO(" we should manage some **real** timeout here  if context didn't answered in time  then we should close session.")
         struct timeval timeout = { 1, 0 };
 
         this->front_event->add_to_fd_set(rfds, max);
@@ -570,7 +589,7 @@ struct Session {
 
         if (this->front_event->is_set()) { /* incoming client data */
             try {
-                this->front->activate_and_process_data(*this->mod);
+                this->front->incoming(*this->mod);
             }
             catch(...){
                 return SESSION_STATE_STOP;
@@ -589,7 +608,7 @@ struct Session {
 
     int step_STATE_RUNNING(const struct timeval & time_mark)
     {
-        if (this->ini->globals.debug.session > 1000){
+        if (this->verbose > 1000){
             LOG(LOG_INFO, "Session::step_STATE_RUNNING(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
         }
         unsigned max = 0;
@@ -612,7 +631,7 @@ struct Session {
 
         if (this->front_event->is_set()) { /* incoming client data */
             try {
-                this->front->activate_and_process_data(*this->mod);
+                this->front->incoming(*this->mod);
             }
             catch(...){
                 return SESSION_STATE_STOP;
@@ -620,14 +639,14 @@ struct Session {
         }
 
         // incoming data from context
-        #warning this should use the WAIT_FOR_CONTEXT state or some race conditon may cause mayhem
+        TODO(" this should use the WAIT_FOR_CONTEXT state or some race conditon may cause mayhem")
         if (this->sesman->close_on_timestamp(timestamp)
         || !this->sesman->keep_alive_or_inactivity(this->keep_alive_time, timestamp, this->trans)){
             this->internal_state = SESSION_STATE_STOP;
             this->context->nextmod = ModContext::INTERNAL_CLOSE;
             if (this->session_setup_mod(MCTX_STATUS_INTERNAL, this->context)){
                 this->keep_alive_time = 0;
-                #warning move that to sesman (to hide implementation details)
+                TODO(" move that to sesman (to hide implementation details)")
                 if (this->sesman->auth_event){
                     delete this->sesman->auth_event;
                     this->sesman->auth_event = 0;
@@ -704,8 +723,7 @@ struct Session {
                                 this->context->get_bool(STRAUTHID_OPT_MOVIE),
                                 this->context->get(STRAUTHID_OPT_MOVIE_PATH),
                                 this->context->get(STRAUTHID_OPT_CODEC_ID),
-                                this->context->get(STRAUTHID_VIDEO_QUALITY),
-                                atoi(this->context->get(STRAUTHID_TIMEZONE)));
+                                this->context->get(STRAUTHID_VIDEO_QUALITY));
                         }
                         else {
                             this->mod->stop_capture();
@@ -728,12 +746,12 @@ struct Session {
 
     int step_STATE_CLOSE_CONNECTION(const struct timeval & time_mark)
     {
-        if (this->ini->globals.debug.session){
+        if (this->verbose){
             LOG(LOG_INFO, "Session::step_STATE_CLOSE_CONNECTION(%u.%0.6u)", time_mark.tv_sec, time_mark.tv_usec);
         }
-        
-        struct timeval timeout = time_mark;     
-        
+
+        struct timeval timeout = time_mark;
+
         unsigned max = 0;
         fd_set rfds;
         fd_set wfds;
@@ -751,7 +769,7 @@ struct Session {
         }
         if (this->front_event->is_set()) {
             try {
-                this->front->activate_and_process_data(*this->mod);
+                this->front->incoming(*this->mod);
             }
             catch(...){
                 return SESSION_STATE_STOP;
@@ -761,10 +779,10 @@ struct Session {
         return this->internal_state;
     }
 
-    #warning use exception to return error status instead of boolean
+    TODO(" use exception to return error status instead of boolean")
     bool session_setup_mod(int status, const ModContext * context)
     {
-        if (this->ini->globals.debug.session){
+        if (this->verbose){
             LOG(LOG_INFO, "Session::session_setup_mod(status=%u)", status);
         }
         try {
@@ -780,7 +798,7 @@ struct Session {
                 // default is "allow", do nothing special
             }
 
-            #warning wait_obj should become implementation details of modules, sesman and front end
+            TODO(" wait_obj should become implementation details of modules  sesman and front end")
             if (this->back_event) {
                 delete this->back_event;
                 this->back_event = 0;
@@ -794,23 +812,29 @@ struct Session {
             {
                 case MCTX_STATUS_CLI:
                 {
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Creation of new mod 'CLI parse'");
+                    }
                     this->back_event = new wait_obj(-1);
                     this->mod = new cli_mod(*this->context, *(this->front));
                     this->back_event->set();
-                    if (this->ini->globals.debug.session){
-                        LOG(LOG_INFO, "Creation of new mod 'CLI parse' suceeded\n");
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Creation of new mod 'CLI parse' suceeded");
                     }
                 }
                 break;
 
                 case MCTX_STATUS_TRANSITORY:
                 {
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Creation of new mod 'TRANSITORY'");
+                    }
                     this->back_event = new wait_obj(-1);
                     this->mod = new transitory_mod(*this->context, *(this->front));
                     // Transitory finish immediately
                     this->back_event->set();
-                    if (this->ini->globals.debug.session){
-                        LOG(LOG_INFO, "Creation of new mod 'TRANSITORY' suceeded\n");
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Creation of new mod 'TRANSITORY' suceeded");
                     }
                 }
                 break;
@@ -821,12 +845,15 @@ struct Session {
                     switch (this->context->nextmod){
                         case ModContext::INTERNAL_CLOSE:
                         {
+                            if (this->verbose){
+                                LOG(LOG_INFO, "Creation of new mod 'INTERNAL::Close'");
+                            }
                             if (this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection to server failed");
                             }
                             this->mod = new close_mod(this->back_event, *this->context, *this->front, this->ini);
 
-                            #warning we should probably send mouse pointers before any internal module connection
+                            TODO(" we should probably send mouse pointers before any internal module connection")
                             struct pointer_item pointer_item;
 
                             memset(&pointer_item, 0, sizeof(pointer_item));
@@ -857,7 +884,7 @@ struct Session {
                                     pointer_item.x,
                                     pointer_item.y);
                         }
-                        if (this->ini->globals.debug.session){
+                        if (this->verbose){
                             LOG(LOG_INFO, "internal module Close ready");
                         }
                         break;
@@ -865,7 +892,9 @@ struct Session {
                         {
                             const char * message = NULL;
                             const char * button = NULL;
-                            LOG(LOG_INFO, "Creation of internal module 'Dialog Accept Message'");
+                            if (this->verbose){
+                                LOG(LOG_INFO, "Creation of new mod 'INTERNAL::Dialog Accept Message'");
+                            }
                             message = this->context->get(STRAUTHID_MESSAGE);
                             button = this->context->get(STRAUTHID_TRANS_BUTTON_REFUSED);
                             this->mod = new dialog_mod(
@@ -876,7 +905,7 @@ struct Session {
                                             button,
                                             this->ini);
                         }
-                        if (this->ini->globals.debug.session){
+                        if (this->verbose){
                             LOG(LOG_INFO, "internal module 'Dialog Accept Message' ready");
                         }
                         break;
@@ -885,8 +914,8 @@ struct Session {
                         {
                             const char * message = NULL;
                             const char * button = NULL;
-                            if (this->ini->globals.debug.session){
-                                LOG(LOG_INFO, "Creation of internal module 'Dialog Display Message'");
+                            if (this->verbose){
+                                LOG(LOG_INFO, "Creation of new mod 'INTERNAL::Dialog Display Message'");
                             }
                             message = this->context->get(STRAUTHID_MESSAGE);
                             button = NULL;
@@ -898,12 +927,12 @@ struct Session {
                                             button,
                                             this->ini);
                         }
-                        if (this->ini->globals.debug.session){
+                        if (this->verbose){
                             LOG(LOG_INFO, "internal module 'Dialog Display Message' ready");
                         }
                         break;
                         case ModContext::INTERNAL_LOGIN:
-                            if (this->ini->globals.debug.session){
+                            if (this->verbose){
                                 LOG(LOG_INFO, "Creation of internal module 'Login'");
                             }
                             this->mod = new login_mod(
@@ -911,52 +940,52 @@ struct Session {
                                              *this->context,
                                              *this->front,
                                              this->ini);
-                            if (this->ini->globals.debug.session){
+                            if (this->verbose){
                                 LOG(LOG_INFO, "internal module Login ready");
                             }
                         break;
                         case ModContext::INTERNAL_BOUNCER2:
-                            if (this->ini->globals.debug.session){
+                            if (this->verbose){
                                 LOG(LOG_INFO, "Creation of internal module 'bouncer2'");
                             }
                             this->mod = new bouncer2_mod(this->back_event, *this->front);
-                            if (this->ini->globals.debug.session){
+                            if (this->verbose){
                                 LOG(LOG_INFO, "internal module 'bouncer2' ready");
                             }
                         break;
                         case ModContext::INTERNAL_TEST:
-                            if (this->ini->globals.debug.session){
+                            if (this->verbose){
                                 LOG(LOG_INFO, "Creation of internal module 'test'");
                             }
                             this->mod = new test_internal_mod(
                                             this->back_event,
                                             *this->context,
                                             *this->front);
-                            if (this->ini->globals.debug.session){
+                            if (this->verbose){
                                 LOG(LOG_INFO, "internal module 'test' ready");
                             }
                         break;
                         case ModContext::INTERNAL_CARD:
-                            if (this->ini->globals.debug.session){
+                            if (this->verbose){
                                 LOG(LOG_INFO, "Creation of internal module 'test_card'");
                             }
                             this->mod = new test_card_mod(
                                             this->back_event,
                                             *this->context,
                                             *this->front);
-                            if (this->ini->globals.debug.session){
+                            if (this->verbose){
                                 LOG(LOG_INFO, "internal module 'test_card' ready");
                             }
                         break;
                         case ModContext::INTERNAL_SELECTOR:
-                            if (this->ini->globals.debug.session){
+                            if (this->verbose){
                                 LOG(LOG_INFO, "Creation of internal module 'selector'");
                             }
                             this->mod = new selector_mod(
                                             this->back_event,
                                             *this->context,
                                             *this->front);
-                            if (this->ini->globals.debug.session){
+                            if (this->verbose){
                                 LOG(LOG_INFO, "internal module 'selector' ready");
                             }
                         break;
@@ -968,15 +997,20 @@ struct Session {
 
                 case MCTX_STATUS_XUP:
                 {
-                    SocketTransport * t = new SocketTransport(
-                                                connect(this->context->get(STRAUTHID_TARGET_DEVICE),
-                                                atoi(this->context->get(STRAUTHID_TARGET_PORT)),
-                                                4, 2500000));
+                    const char * name = "XUP Target";
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Creation of new mod 'XUP'\n");
+                    }
+                    int sck = connect(this->context->get(STRAUTHID_TARGET_DEVICE),
+                                    atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                                    name,
+                                    4, 2500000);
+                    SocketTransport * t = new SocketTransport(name, sck, this->ini->globals.debug.mod_xup);
                     this->back_event = new wait_obj(t->sck);
                     this->mod = new xup_mod(t, *this->context, *(this->front));
                     this->mod->draw_event();
 //                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
-                    if (this->ini->globals.debug.session){
+                    if (this->verbose){
                         LOG(LOG_INFO, "Creation of new mod 'XUP' suceeded\n");
                     }
                 }
@@ -984,6 +1018,9 @@ struct Session {
 
                 case MCTX_STATUS_RDP:
                 {
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Creation of new mod 'RDP'\n");
+                    }
                     // hostname is the name of the RDP host ("windows" hostname)
                     // it is **not** used to get an ip address.
                     char hostname[255];
@@ -992,9 +1029,12 @@ struct Session {
                         memcpy(hostname, this->front->get_client_info().hostname, 31);
                         hostname[31] = 0;
                     }
-                    SocketTransport * t = new SocketTransport(
-                                            connect(this->context->get(STRAUTHID_TARGET_DEVICE),
-                                                atoi(this->context->get(STRAUTHID_TARGET_PORT))));
+                    static const char * name = "RDP Target";
+                    int sck = connect(
+                        this->context->get(STRAUTHID_TARGET_DEVICE),
+                        atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                        name);
+                    SocketTransport * t = new SocketTransport(name, sck, this->ini->globals.debug.mod_rdp);
                     this->back_event = new wait_obj(t->sck);
                     this->mod = new mod_rdp(t,
                                         *this->back_event,
@@ -1006,7 +1046,7 @@ struct Session {
                                         this->context->get_bool(STRAUTHID_OPT_DEVICEREDIRECTION));
 //                    this->back_event->set();
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
-                    if (this->ini->globals.debug.session){
+                    if (this->verbose){
                         LOG(LOG_INFO, "Creation of new mod 'RDP' suceeded\n");
                     }
                 }
@@ -1014,13 +1054,19 @@ struct Session {
 
                 case MCTX_STATUS_VNC:
                 {
-                    SocketTransport *t = new SocketTransport(
-                        connect(this->context->get(STRAUTHID_TARGET_DEVICE), atoi(this->context->get(STRAUTHID_TARGET_PORT))));
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Creation of new mod 'VNC'\n");
+                    }
+                    static const char * name = "VNC Target";
+                    int sck = connect(this->context->get(STRAUTHID_TARGET_DEVICE),
+                                atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                                name);
+                    SocketTransport *t = new SocketTransport(name, sck, this->ini->globals.debug.mod_vnc);
                     this->back_event = new wait_obj(t->sck);
                     this->mod = new mod_vnc(t, *this->context, *(this->front), this->front->get_client_info().keylayout);
                     this->mod->draw_event();
 //                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
-                    if (this->ini->globals.debug.session){
+                    if (this->verbose){
                         LOG(LOG_INFO, "Creation of new mod 'VNC' suceeded\n");
                     }
                 }
@@ -1028,7 +1074,7 @@ struct Session {
 
                 default:
                 {
-                    if (this->ini->globals.debug.session){
+                    if (this->verbose){
                         LOG(LOG_INFO, "Unknown backend exception\n");
                     }
                     throw Error(ERR_SESSION_UNKNOWN_BACKEND);

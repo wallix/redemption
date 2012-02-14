@@ -24,6 +24,113 @@
 #if !defined(__RDPORDERSPRIMARYSCRBLT_HPP__)
 #define __RDPORDERSPRIMARYSCRBLT_HPP__
 
+// 2.2.2.2.1.1.2.7 ScrBlt (SCRBLT_ORDER)
+// =====================================
+
+// The ScrBlt Primary Drawing Order is used to perform a bit-block transfer from
+// a source region to a destination region. The source surface is always the
+// primary drawing surface, while the target surface is the current target
+// surface, specified by the Switch Surface Alternate Secondary Drawing Order
+// (section 2.2.2.2.1.3.3).
+
+// Encoding order number: 2 (0x02)
+// Negotiation order number: 2 (0x02)
+// Number of fields: 7
+// Number of field encoding bytes: 1
+// Maximum encoded field length: 13 bytes
+
+// nLeftRect (variable): The left coordinate of the destination rectangle
+// specified by using a Coord Field (section 2.2.2.2.1.1.1.1).
+
+// nTopRect (variable): The top coordinate of the destination rectangle
+// specified by using a Coord Field (section 2.2.2.2.1.1.1.1).
+
+// nWidth (variable): The width of the destination rectangle specified by using
+// a Coord Field (section 2.2.2.2.1.1.1.1).
+
+// nHeight (variable): The height of the destination rectangle specified by
+// using a Coord Field (section 2.2.2.2.1.1.1.1).
+
+// bRop (1 byte): The index of the ternary raster operation to perform (see
+// section 2.2.2.2.1.1.1.7). The resultant ROP3 operation MUST only depend on
+// the destination and source bits. (There MUST NOT be any dependence on pattern
+// bits.)
+
+// As scrblt does not involve pattern, only the following subset of rop3 values
+// should be provided in rop field fort ScrBlt order.
+
+// +------+-------------------------------+
+// | 0x00 | ROP: 0x00000042 (BLACKNESS)   |
+// |      | RPN: 0                        |
+// +------+-------------------------------+
+// +------+-------------------------------+
+// | 0x11 | ROP: 0x001100A6 (NOTSRCERASE) |
+// |      | RPN: DSon                     |
+// +------+-------------------------------+
+// +------+-------------------------------+
+// | 0x22 | ROP: 0x00220326               |
+// |      | RPN: DSna                     |
+// +------+-------------------------------+
+// +------+-------------------------------+
+// | 0x33 | ROP: 0x00330008 (NOTSRCCOPY)  |
+// |      | RPN: Sn                       |
+// +------+-------------------------------+
+// +------+-------------------------------+
+// | 0x44 | ROP: 0x00440328 (SRCERASE)    |
+// |      | RPN: SDna                     |
+// +------+-------------------------------+
+// +------+-------------------------------+
+// | 0x55 | ROP: 0x00550009 (DSTINVERT)   |
+// |      | RPN: Dn                       |
+// +------+-------------------------------+
+// +------+-------------------------------+
+// | 0x66 | ROP: 0x00660046 (SRCINVERT)   |
+// |      | RPN: DSx                      |
+// +------+-------------------------------+
+// +------+-------------------------------+
+// | 0x77 | ROP: 0x007700E6               |
+// |      | RPN: DSan                     |
+// +------+-------------------------------+
+// +------+-------------------------------+
+// | 0x88 | ROP: 0x008800C6 (SRCAND)      |
+// |      | RPN: DSa                      |
+// +------+-------------------------------+
+// +------+-------------------------------+
+// | 0x99 | ROP: 0x00990066               |
+// |      | RPN: DSxn                     |
+// +------+-------------------------------+
+// +------+-------------------------------+
+// | 0xAA | ROP: 0x00AA0029               |
+// |      | RPN: D                        |
+// +------+-------------------------------+
+// +------+-------------------------------+
+// | 0xBB | ROP: 0x00BB0226 (MERGEPAINT)  |
+// |      | RPN: DSno                     |
+// +------+-------------------------------+
+// +------+-------------------------------+
+// | 0xCC | ROP: 0x00CC0020 (SRCCOPY)     |
+// |      | RPN: S                        |
+// +------+-------------------------------+
+// +------+-------------------------------+
+// | 0xDD | ROP: 0x00DD0228               |
+// |      | RPN: SDno                     |
+// +------+-------------------------------+
+// +------+-------------------------------+
+// | 0xEE | ROP: 0x00EE0086 (SRCPAINT)    |
+// |      | RPN: DSo                      |
+// +------+-------------------------------+
+// +------+-------------------------------+
+// | 0xFF | ROP: 0x00FF0062 (WHITENESS)   |
+// |      | RPN: 1                        |
+// +------+-------------------------------+
+
+// nXSrc (variable): The x-coordinate of the source rectangle specified by using
+// a Coord Field (section 2.2.2.2.1.1.1.1).
+
+// nYSrc (variable): The y-coordinate of the source rectangle specified by using
+// a Coord Field (section 2.2.2.2.1.1.1.1).
+
+
 class RDPScrBlt {
     public:
     Rect rect;

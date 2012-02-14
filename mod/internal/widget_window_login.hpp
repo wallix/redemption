@@ -47,7 +47,7 @@ struct window_login : public window
         return &(this->ini->account[this->combo->item_index]);
     }
 
-    #warning this should not be here, the whole widget hierarchy should be rethought anyway
+    TODO(" this should not be here  the whole widget hierarchy should be rethought anyway")
     int login_window_show_edits()
     {
         int count;
@@ -161,7 +161,7 @@ struct window_login : public window
                     1, /* pointer */
                     0 /* edit pos */);
 
-            #warning move that into widget_edit
+            TODO(" move that into widget_edit")
             b->password_char = '*';
             list.push_back(b);
 
@@ -221,7 +221,7 @@ struct window_login : public window
 
     int help_clicked()
     {
-        #warning add new function in widget_screen : add_window, where window can be modal
+        TODO(" add new function in widget_screen : add_window  where window can be modal")
         this->modal_dialog = this->help;
         {
             vector<Widget *>::iterator it = this->mod->screen.child_list.begin();
@@ -236,7 +236,7 @@ struct window_login : public window
             this->help->child_list.insert(it, but);
         }
 
-        #warning add new function to window add_button (add_widget ?)
+        TODO(" add new function to window add_button (add_widget ?)")
         /* draw it */
         but->has_focus = true;
         this->help->default_button = but;
@@ -274,7 +274,7 @@ struct window_login : public window
                 /* get the user typed values */
                 i = 100;
                 for (;;) {
-                #warning we should not rely on labels and window ordering for such things but on widget (Widget) identifiers
+                TODO(" we should not rely on labels and window ordering for such things but on widget (Widget) identifiers")
                     struct Widget* label = this->Widget_get_child_by_id(i);
                     if (label == 0) {
                         break;
@@ -309,7 +309,7 @@ struct window_login : public window
                 if (label == 0) {
                     break;
                 }
-            #warning we should not rely on labels and window ordering for such things but on widget (Widget) identifiers
+            TODO(" we should not rely on labels and window ordering for such things but on widget (Widget) identifiers")
                 if (0 == strcmp(label->caption1, this->context.get(STRAUTHID_TRANS_PASSWORD))){
                         context.cpy(STRAUTHID_PASSWORD, edit->buffer);
                 }
