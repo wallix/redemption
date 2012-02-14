@@ -39,11 +39,11 @@
 #include "log.hpp"
 
 
-static inline int connect(const char* ip, int port,
+static inline int connect(const char* ip, int port, const char * name,
              int nbretry = 2, int retry_delai_ms = 1000) throw (Error)
 {
     int sck = 0;
-    LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
+    LOG(LOG_INFO, "connecting to %s (%s:%d)\n", name, ip, port);
     // we will try connection several time
     // the trial process include socket opening, hostname resolution, etc
     // because some problems can come from the local endpoint,
@@ -78,24 +78,20 @@ static inline int connect(const char* ip, int port,
             s.sin_port = htons(port);
             s.sin_addr.s_addr = inet_addr(ip);
             if (s.sin_addr.s_addr == INADDR_NONE) {
-            #warning gethostbyname is obsolete use new function getnameinfo
+            TODO(" gethostbyname is obsolete use new function getnameinfo")
                 LOG(LOG_INFO, "Asking ip to DNS for %s\n", ip);
                 struct hostent *h = gethostbyname(ip);
                 if (!h) {
-                    LOG(LOG_ERR, "DNS resolution failed for %s"
-                        " with errno =%d (%s)\n",
-                        ip,
-                        errno, strerror(errno));
+                    LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n",
+                        ip, errno, strerror(errno));
                     throw Error(ERR_SOCKET_GETHOSTBYNAME_FAILED);
                 }
                 s.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
             }
-            #warning we should control and detect timeout instead of relying on default connect behavior. Maybe set O_NONBLOCK and use poll to manage timeouts ?
+            TODO(" we should control and detect timeout instead of relying on default connect behavior. Maybe set O_NONBLOCK and use poll to manage timeouts ?")
             if (-1 == ::connect(sck, (struct sockaddr*)&s, sizeof(s))){
-                LOG(LOG_INFO, "connection to %s failed"
-                    " with errno = %d (%s)\n",
-                    ip,
-                    errno, strerror(errno));
+                LOG(LOG_INFO, "Connection to %s failed with errno = %d (%s)",
+                    ip, errno, strerror(errno));
                 throw Error(ERR_SOCKET_CONNECT_FAILED);
             }
             fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
@@ -137,18 +133,23 @@ public:
         last_quantum_sent = 0;
     }
 
+    void recv(uint8_t ** pbuffer, size_t len) throw (Error) {
+        this->recv(reinterpret_cast<char **>(pbuffer), len);
+    }
     virtual void recv(char ** pbuffer, size_t len) throw (Error) = 0;
-    virtual void send(const char * buffer, int len) throw (Error) = 0;
-    virtual void disconnect() = 0;
+    virtual void send(const char * const buffer, int len) throw (Error) = 0;
+    void send(const uint8_t * const buffer, int len) throw (Error) {
+        this->send(reinterpret_cast<const char * const>(buffer), len);
+    }
 };
 
 class GeneratorTransport : public Transport {
 
+    public:
     size_t current;
     char * data;
     size_t len;
 
-    public:
 
     GeneratorTransport(const char * data, size_t len)
         : Transport(), current(0), data(0), len(len)
@@ -157,31 +158,129 @@ class GeneratorTransport : public Transport {
         memcpy(this->data, data, len);
     }
 
+    void reset(const char * data, size_t len)
+    {
+        delete this->data;
+        current = 0;
+        this->len = len;
+        this->data = (char *)malloc(len);
+        memcpy(this->data, data, len);
+    }
+
+    using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        if (current > len){
-            throw Error(ERR_SOCKET_ERROR, 0);
+        if (current + len > this->len){
+            size_t available_len = this->len - this->current;
+            memcpy(*pbuffer, (const char *)(&this->data[this->current]),
+                                            available_len);
+            *pbuffer += available_len;
+            this->current += available_len;
+            LOG(LOG_INFO, "Generator transport has no more data");
+            throw Error(ERR_TRANSPORT_GENERATOR_NO_MORE_DATA, 0);
         }
         memcpy(*pbuffer, (const char *)(&this->data[current]), len);
         *pbuffer += len;
         current += len;
     }
 
-    virtual void send(const char * buffer, int len) throw (Error) {
+    using Transport::send;
+    virtual void send(const char * const buffer, int len) throw (Error) {
         // send perform like a /dev/null and does nothing in generator transport
-    }
-
-    virtual void disconnect() {
     }
 };
 
+class OutFileTransport : public Transport {
+
+    public:
+    int fd;
+
+    OutFileTransport(int fd) : Transport(), fd(fd) {}
+
+    ~OutFileTransport() {}
+
+    // recv is not implemented for OutFileTransport
+    using Transport::recv;
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+        LOG(LOG_INFO, "OutFileTransport used for recv");
+        throw Error(ERR_TRANSPORT_OUTFILE_TRANSPORT_USED_FOR_RECV, 0);
+    }
+
+    using Transport::send;
+    virtual void send(const char * const buffer, int len) throw (Error) {
+        int status = 0;
+        size_t remaining_len = len;
+        while (remaining_len) {
+            status = ::write(this->fd, buffer, remaining_len);
+            if (status > 0){
+                remaining_len -= status;
+            }
+            else {
+                if (errno == EINTR){
+                    continue;
+                }
+                LOG(LOG_INFO, "Outfile transport write failed with error %s", strerror(errno));
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
+            }
+        }
+    }
+
+};
+
+class InFileTransport : public Transport {
+
+    public:
+    int fd;
+
+    InFileTransport(int fd)
+        : Transport(), fd(fd)
+    {
+    }
+
+    ~InFileTransport()
+    {
+    }
+
+    using Transport::recv;
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+        int status = 0;
+        size_t remaining_len = len;
+        char * buffer = *pbuffer;
+        while (remaining_len) {
+            status = ::read(this->fd, buffer, remaining_len);
+            if (status > 0){
+                remaining_len -= status;
+                buffer += status;
+            }
+            else {
+                if (errno == EINTR){
+                    continue;
+                }
+                *pbuffer = buffer;
+                LOG(LOG_INFO, "Infile transport read failed with error %s", strerror(errno));
+                throw Error(ERR_TRANSPORT_READ_FAILED, 0);
+            }
+        }
+        *pbuffer = buffer;
+    }
+
+    // send is not implemented for InFileTransport
+    using Transport::send;
+    virtual void send(const char * const buffer, int len) throw (Error) {
+        LOG(LOG_INFO, "InFileTransport used for writing");
+        throw Error(ERR_TRANSPORT_OUTFILE_TRANSPORT_USED_FOR_SEND, 0);
+    }
+
+};
+
+TODO("for now loop transport is not yet implemented, it's a null transport")
 
 class LoopTransport : public Transport {
-
+    public:
+    using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
     }
-    virtual void send(const char * buffer, int len) throw (Error) {
-    }
-    virtual void disconnect() {
+    using Transport::send;
+    virtual void send(const char * const buffer, int len) throw (Error) {
     }
 };
 
@@ -189,8 +288,11 @@ class SocketTransport : public Transport {
     public:
         int sck;
         int sck_closed;
+        const char * name;
+        uint32_t verbose;
 
-    SocketTransport(int sck) : Transport()
+    SocketTransport(const char * name, int sck, uint32_t verbose)
+        : Transport(), name(name), verbose(verbose)
     {
         this->sck = sck;
         this->sck_closed = 0;
@@ -218,8 +320,8 @@ class SocketTransport : public Transport {
         return res;
     }
 
-    virtual void disconnect(){
-        LOG(LOG_INFO, "Socket %d : closing connection\n", this->sck);
+    void disconnect(){
+        LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
         if (this->sck != 0) {
             shutdown(this->sck, 2);
             close(this->sck);
@@ -233,16 +335,6 @@ class SocketTransport : public Transport {
         RECV = 1,
         SEND = 2
     };
-
-    void wait_recv_ready(int delay_ms) throw (Error)
-    {
-        this->wait_ready(RECV, delay_ms);
-    }
-
-    void wait_send_ready(int delay_ms) throw (Error)
-    {
-        this->wait_ready(SEND, delay_ms);
-    }
 
     void wait_ready(direction_t d, int delay_ms) throw (Error)
     {
@@ -263,21 +355,25 @@ class SocketTransport : public Transport {
             // Test if we got a socket error
 
             if (opt) {
-                LOG(LOG_INFO, "Socket error detected");
+                LOG(LOG_INFO, "Socket error detected on %s : %s", this->name, strerror(errno));
                 throw Error(ERR_SESSION_TERMINATED);
             }
 
         }
     }
 
+    using Transport::recv;
     virtual void recv(char ** input_buffer, size_t total_len) throw (Error)
     {
-//        uint8_t * start = (uint8_t*)(*input_buffer);
+        if (this->verbose & 0x100){
+            LOG(LOG_INFO, "Socket %s (%u) receiving %u bytes", this->name, this->sck, total_len);
+        }
+        char * start = *input_buffer;
         int len = total_len;
         char * pbuffer = *input_buffer;
 
         if (this->sck_closed) {
-            LOG(LOG_INFO, "socket allready closed\n");
+            LOG(LOG_INFO, "Socket %s (%u) already closed", this->name, this->sck);
             throw Error(ERR_SOCKET_ALLREADY_CLOSED);
         }
 
@@ -286,14 +382,14 @@ class SocketTransport : public Transport {
             switch (rcvd) {
                 case -1: /* error, maybe EAGAIN */
                     if (!this->try_again(errno)) {
-                        LOG(LOG_INFO, "closing socket on recv\n");
+                        LOG(LOG_INFO, "Closing socket %s (%u) on recv", this->name, this->sck);
                         this->sck_closed = 1;
                         throw Error(ERR_SOCKET_ERROR, errno);
                     }
                     this->wait_ready(RECV, 10);
                     break;
                 case 0: /* no data received, socket closed */
-                    LOG(LOG_INFO, "no data received socket %d closed on recv\n", this->sck);
+                    LOG(LOG_INFO, "No data received. Socket %s (%u) closed on recv", this->name, this->sck);
                     this->sck_closed = 1;
                     throw Error(ERR_SOCKET_CLOSED);
                 default: /* some data received */
@@ -301,34 +397,91 @@ class SocketTransport : public Transport {
                     len -= rcvd;
             }
         }
+
+        if (this->verbose & 0x100){
+            LOG(LOG_INFO, "Recv done on %s (%u)", this->name, this->sck);
+            this->hexdump_c(start, total_len);
+            LOG(LOG_INFO, "Dump done on %s (%u)", this->name, this->sck);
+        }
+
         *input_buffer = pbuffer;
         total_received += total_len;
         last_quantum_received += total_len;
-
-//        uint8_t * bb = start;
-//        LOG(LOG_INFO, "recv on socket %u : len=%u buffer=%p"
-//            " [%0.2X %0.2X %0.2X %0.2X]"
-//            " [%0.2X %0.2X %0.2X]"
-//            " [%0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X ...]",
-//            this->sck, total_len, *input_buffer,
-//            bb[0], bb[1], bb[2], bb[3],
-//            bb[4], bb[5], bb[6],
-//            bb[7], bb[8], bb[9], bb[10], bb[11],
-//            bb[12], bb[13], bb[14], bb[15], bb[16]);
     }
 
-    virtual void send(const char * buffer, int len) throw (Error)
+    void hexdump(const char * data, size_t size){
+        char buffer[2048];
+        for (size_t j = 0 ; j < size ; j += 16){
+            char * line = buffer;
+            line += sprintf(line, "%.4x ", (unsigned)j);
+            size_t i = 0;
+            for (i = 0; i < 16; i++){
+                if (j+i >= size){ break; }
+                line += sprintf(line, "%.2x ", (unsigned char)data[j+i]);
+            }
+            if (i < 16){
+                line += sprintf(line, "%*c", (unsigned)((16-i)*3), ' ');
+            }
+            for (i = 0; i < 16; i++){
+                if (j+i >= size){ break; }
+                unsigned char tmp = (unsigned)(data[j+i]);
+                if ((tmp < ' ') || (tmp > '~')){
+                    tmp = '.';
+                }
+                line += sprintf(line, "%c", tmp);
+            }
+
+            if (line != buffer){
+                line[0] = 0;
+                LOG(LOG_INFO, "%s", buffer);
+                buffer[0]=0;
+            }
+        }
+    }
+
+    void hexdump_c(const char * data, size_t size){
+        char buffer[2048];
+        for (size_t j = 0 ; j < size ; j += 16){
+            char * line = buffer;
+            line += sprintf(line, "/* %.4x */ \"", (unsigned)j);
+            size_t i = 0;
+            for (i = 0; i < 16; i++){
+                if (j+i >= size){ break; }
+                line += sprintf(line, "\\x%.2x", (unsigned char)data[j+i]);
+            }
+            line += sprintf(line, "\"");
+            if (i < 16){
+                line += sprintf(line, "%*c", (unsigned)((16-i)*4), ' ');
+            }
+            line += sprintf(line, " //");
+            for (i = 0; i < 16; i++){
+                if (j+i >= size){ break; }
+                unsigned char tmp = (unsigned)(data[j+i]);
+                if ((tmp < ' ') || (tmp > '~')){
+                    tmp = '.';
+                }
+                line += sprintf(line, "%c", tmp);
+            }
+
+            if (line != buffer){
+                line[0] = 0;
+                LOG(LOG_INFO, "%s", buffer);
+                buffer[0]=0;
+            }
+        }
+    }
+
+    using Transport::send;
+
+    virtual void send(const char * const buffer, int len) throw (Error)
     {
-//        LOG(LOG_INFO, "send on socket %u : len=%u buffer=%p"
-//            " [%0.2X %0.2X %0.2X %0.2X]"
-//            " [%0.2X %0.2X %0.2X]"
-//            " [%0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X %0.2X ...]",
-//            this->sck, len, buffer,
-//            (uint8_t)buffer[0], (uint8_t)buffer[1], (uint8_t)buffer[2], (uint8_t)buffer[3],
-//            (uint8_t)buffer[4], (uint8_t)buffer[5], (uint8_t)buffer[6],
-//            (uint8_t)buffer[7], (uint8_t)buffer[8], (uint8_t)buffer[9], (uint8_t)buffer[10], (uint8_t)buffer[11],
-//            (uint8_t)buffer[12], (uint8_t)buffer[13], (uint8_t)buffer[14], (uint8_t)buffer[15], (uint8_t)buffer[16]);
+        if (this->verbose & 0x100){
+            LOG(LOG_INFO, "Socket %s (%u) sending %u bytes", this->name, this->sck, len);
+            this->hexdump_c(buffer, len);
+            LOG(LOG_INFO, "Dump done %s (%u) sending %u bytes", this->name, this->sck, len);
+        }
         if (this->sck_closed) {
+            LOG(LOG_INFO, "Socket already closed on %s (%u)", this->name, this->sck);
             throw Error(ERR_SOCKET_ALLREADY_CLOSED);
         }
         int total = 0;
@@ -337,15 +490,15 @@ class SocketTransport : public Transport {
             switch (sent){
             case -1:
                 if (!this->try_again(errno)) {
-                    LOG(LOG_INFO, "%s sck=%d\n", strerror(errno), this->sck);
                     this->sck_closed = 1;
+                    LOG(LOG_INFO, "Socket %s (%u) : %s", this->name, this->sck, strerror(errno));
                     throw Error(ERR_SOCKET_ERROR, errno);
                 }
                 this->wait_ready(SEND, 10);
                 break;
             case 0:
-                LOG(LOG_INFO, "socket closed on sending %s sck=%d\n", strerror(errno), this->sck);
                 this->sck_closed = 1;
+                LOG(LOG_INFO, "Socket %s (%u) closed on sending : %s", this->name, this->sck, strerror(errno));
                 throw Error(ERR_SOCKET_CLOSED, errno);
             default:
                 total = total + sent;
@@ -353,6 +506,9 @@ class SocketTransport : public Transport {
         }
         total_sent += len;
         last_quantum_sent += len;
+        if (this->verbose & 0x100){
+            LOG(LOG_INFO, "Send done on %s (%u)", this->name, this->sck);
+        }
     }
 
     private:

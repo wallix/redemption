@@ -537,7 +537,7 @@ static int key_gen(const char* path_and_file_name)
 /*****************************************************************************/
 static int key_gen_auto(Rsakeys * rsa_keys)
 {
-    #warning: verify that is working, need to see changes!!
+    TODO(": verify that is working  need to see changes!!")
 
     if (strcasecmp(rsa_keys->pub_sig, inst_pub_sig) == 0) {
         return key_gen("/etc/xrdp/rsakeys.ini");
@@ -590,7 +590,7 @@ static int key_test(void)
 /*****************************************************************************/
 int main(int argc, char** argv)
 {
-    #warning: verify that is working
+    TODO(": verify that is working")
     char key_file[256];
     snprintf(key_file, 255, "%s/rsakeys.ini", CFG_PATH);
     Rsakeys * rsa_keys = new Rsakeys(key_file);

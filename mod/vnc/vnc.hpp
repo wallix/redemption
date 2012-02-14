@@ -38,7 +38,7 @@
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
 
-#warning remove this inheritance. Client_mod should be an interface object provided to mod_vnc (and other mods)
+TODO(" remove this inheritance. Client_mod should be an interface object provided to mod_vnc (and other mods)")
 struct mod_vnc : public client_mod {
     char dummy[1024];
     /* mod data */
@@ -117,7 +117,7 @@ struct mod_vnc : public client_mod {
                         stream.init(8192);
                         this->t->recv((char**)&stream.end, 16);
                         this->rfbEncryptBytes(stream.data, this->password);
-                        this->t->send((char*)stream.data, 16);
+                        this->t->send(stream.data, 16);
 
                         /* sec result */
                         stream.init(8192);
@@ -137,9 +137,9 @@ struct mod_vnc : public client_mod {
                 {
                     Stream stream(32768);
                     stream.data[0] = 1;
-                    #warning send and recv should be stream aware
-                    #warning we should always send at stream.p, not stream.data
-                    this->t->send((char*)stream.data, 1); /* share flag */
+                    TODO(" send and recv should be stream aware")
+                    TODO(" we should always send at stream.p  not stream.data")
+                    this->t->send(stream.data, 1); /* share flag */
                 }
 
                 // 7.3.2   ServerInit
@@ -216,7 +216,7 @@ struct mod_vnc : public client_mod {
                 // The text encoding used for name-string is historically undefined but it is strongly recommended to use UTF-8 (see String Encodings for more details).
 
 
-                #warning not yet supported
+                TODO(" not yet supported")
                 // If the Tight Security Type is activated, the server init
                 // message is extended with an interaction capabilities section.
 
@@ -238,8 +238,6 @@ struct mod_vnc : public client_mod {
                     stream.skip_uint8(3); // skip padding
 
                     LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
-
-                    this->gd.server_set_clip(Rect(0, 0, width, height));
 
                     int lg = stream.in_uint32_be();
 
@@ -337,7 +335,7 @@ struct mod_vnc : public client_mod {
                         "\x00" // blue shift      : 1 bytes =  0
                         "\0\0\0"; // padding      : 3 bytes
                     stream.out_copy_bytes(pixel_format, 16);
-                    this->t->send((char*)stream.data, 20);
+                    this->t->send(stream.data, 20);
 
                     this->bpp = 16;
                     this->depth  = 16;
@@ -379,7 +377,7 @@ struct mod_vnc : public client_mod {
                     stream.out_uint32_be(1); /* copy rect */
                     stream.out_uint32_be(0xffffff11); /* cursor */
 
-                    this->t->send((char*)stream.data, 4 + 3 * 4);
+                    this->t->send(stream.data, 4 + 3 * 4);
                 }
 
                 this->server_resize(this->width, this->height, this->gd.get_front_bpp());
@@ -389,17 +387,17 @@ struct mod_vnc : public client_mod {
                     Stream stream(32768);
                     stream.out_uint8(3);
                     stream.out_uint8(0);
-                    #warning we could create some out_rect primitive at stream level
+                    TODO(" we could create some out_rect primitive at stream level")
                     stream.out_uint16_be(0);
                     stream.out_uint16_be(0);
                     stream.out_uint16_be(width);
                     stream.out_uint16_be(height);
 
                     // sending framebuffer update request
-                    this->t->send((char*)stream.data, 10);
+                    this->t->send(stream.data, 10);
                 }
 
-                #warning define some constants, not need to use dynamic data
+                TODO(" define some constants  not need to use dynamic data")
                 /* set almost null cursor, this is the little dot cursor */
                 uint8_t rdp_cursor_data[32 * (32 * 3)];
                 uint8_t rdp_cursor_mask[32 * (32 / 8)];
@@ -433,7 +431,7 @@ struct mod_vnc : public client_mod {
         delete this->t;
     }
 
-    #warning optimize this, much duplicated code and several send at once when not necessary
+    TODO(" optimize this  much duplicated code and several send at once when not necessary")
     virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
     {
         Stream stream(32768);
@@ -444,8 +442,8 @@ struct mod_vnc : public client_mod {
             stream.out_uint8(this->mod_mouse_state);
             stream.out_uint16_be(x);
             stream.out_uint16_be(y);
-            this->t->send((char*)stream.data, 6);
-            #warning this should not be here!!! Move it to front
+            this->t->send(stream.data, 6);
+            TODO(" this should not be here!!! Move it to front")
             this->gd.front.mouse_x = x;
             this->gd.front.mouse_y = y;
         }
@@ -457,7 +455,7 @@ struct mod_vnc : public client_mod {
                 stream.out_uint8(this->mod_mouse_state);
                 stream.out_uint16_be(x);
                 stream.out_uint16_be(y);
-                this->t->send((char*)stream.data, 6);
+                this->t->send(stream.data, 6);
             }
             else {
                 stream.init(8192);
@@ -466,7 +464,7 @@ struct mod_vnc : public client_mod {
                 stream.out_uint8(this->mod_mouse_state);
                 stream.out_uint16_be(x);
                 stream.out_uint16_be(y);
-                this->t->send((char*)stream.data, 6);
+                this->t->send(stream.data, 6);
             }
         }
         if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
@@ -477,7 +475,7 @@ struct mod_vnc : public client_mod {
                 stream.out_uint8(this->mod_mouse_state);
                 stream.out_uint16_be(x);
                 stream.out_uint16_be(y);
-                this->t->send((char*)stream.data, 6);
+                this->t->send(stream.data, 6);
             }
             else {
                 stream.init(8192);
@@ -486,7 +484,7 @@ struct mod_vnc : public client_mod {
                 stream.out_uint8(this->mod_mouse_state);
                 stream.out_uint16_be(x);
                 stream.out_uint16_be(y);
-                this->t->send((char*)stream.data, 6);
+                this->t->send(stream.data, 6);
             }
         }
         if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
@@ -497,7 +495,7 @@ struct mod_vnc : public client_mod {
                 stream.out_uint8(this->mod_mouse_state);
                 stream.out_uint16_be(x);
                 stream.out_uint16_be(y);
-                this->t->send((char*)stream.data, 6);
+                this->t->send(stream.data, 6);
             }
             else {
                 stream.init(8192);
@@ -506,7 +504,7 @@ struct mod_vnc : public client_mod {
                 stream.out_uint8(this->mod_mouse_state);
                 stream.out_uint16_be(x);
                 stream.out_uint16_be(y);
-                this->t->send((char*)stream.data, 6);
+                this->t->send(stream.data, 6);
             }
         }
 
@@ -520,7 +518,7 @@ struct mod_vnc : public client_mod {
             stream.out_uint8(this->mod_mouse_state);
             stream.out_uint16_be(x);
             stream.out_uint16_be(y);
-            this->t->send((char*)stream.data, 6);
+            this->t->send(stream.data, 6);
             // UP
             stream.init(8192);
             this->mod_mouse_state &= ~8; // clear bit 3
@@ -528,7 +526,7 @@ struct mod_vnc : public client_mod {
             stream.out_uint8(this->mod_mouse_state);
             stream.out_uint16_be(x);
             stream.out_uint16_be(y);
-            this->t->send((char*)stream.data, 6);
+            this->t->send(stream.data, 6);
         }
         if (device_flags == MOUSE_FLAG_BUTTON5 /* 0x0380 */
         ||  device_flags == 0x0388) {
@@ -538,7 +536,7 @@ struct mod_vnc : public client_mod {
             stream.out_uint8(this->mod_mouse_state);
             stream.out_uint16_be(x);
             stream.out_uint16_be(y);
-            this->t->send((char*)stream.data, 6);
+            this->t->send(stream.data, 6);
             // UP
             stream.init(8192);
             this->mod_mouse_state &= ~16; // clear bit 4
@@ -546,7 +544,7 @@ struct mod_vnc : public client_mod {
             stream.out_uint8(this->mod_mouse_state);
             stream.out_uint16_be(x);
             stream.out_uint16_be(y);
-            this->t->send((char*)stream.data, 6);
+            this->t->send(stream.data, 6);
         }
     }
 
@@ -560,7 +558,7 @@ struct mod_vnc : public client_mod {
                 stream.out_uint8(msg == WM_KEYDOWN); /* down/up flag */
                 stream.out_clear_bytes(2);
                 stream.out_uint32_be(key);
-                this->t->send((char*)stream.data, 8);
+                this->t->send(stream.data, 8);
             }
         }
     }
@@ -582,7 +580,7 @@ struct mod_vnc : public client_mod {
             stream.out_uint16_be(r.y);
             stream.out_uint16_be(r.cx);
             stream.out_uint16_be(r.cy);
-            this->t->send((char*)stream.data, 10);
+            this->t->send(stream.data, 10);
         }
     }
 
@@ -621,13 +619,15 @@ struct mod_vnc : public client_mod {
     }
 
     private:
-    #warning use it for copy/paste, it is not called now
+    TODO(" use it for copy/paste  it is not called now")
     int lib_process_channel_data(int chanid, int flags, int size, Stream & stream, int total_size)
     {
         if (chanid == this->clip_chanid) {
             uint16_t type = stream.in_uint16_le();
             uint16_t status = stream.in_uint16_le();
             uint32_t length = stream.in_uint32_le();
+            LOG(LOG_DEBUG, "lib_process_channel_data: type=%u status=%u length=%u",
+                (unsigned)type, (unsigned)status, (unsigned)length);
             switch (type) {
             case 2:
             { /* CLIPRDR_FORMAT_ANNOUNCE */
@@ -716,10 +716,10 @@ struct mod_vnc : public client_mod {
                 uint8_t * tmp = raw;
                 this->t->recv((char**)&tmp, need_size);
 
-                #warning there is still an alignement issue in bitmaps, fixed, but my fix is quite evil.
+                TODO(" there is still an alignement issue in bitmaps  fixed  but my fix is quite evil.")
                 Bitmap bmp(this->bpp, &this->gd.palette332, cx, cy, raw, need_size, false, true);
                 free(raw);
-                this->gd.bitmap_update(bmp, Rect(x, y, cx, cy), 0, 0);
+                this->gd.bitmap_update(bmp, Rect(x, y, cx, cy), 0, 0, this->gd.get_front_rect());
             }
             break;
             case 1: /* copy rect */
@@ -730,13 +730,12 @@ struct mod_vnc : public client_mod {
                 const int srcx = stream.in_uint16_be();
                 const int srcy = stream.in_uint16_be();
 //                    LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
-                #warning should we not set clip rectangle ?
                 const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
-                this->gd.scr_blt(scrblt);
+                this->gd.draw(scrblt, this->gd.get_front_rect());
             }
             break;
             case 0xffffff11: /* cursor */
-            #warning see why we get these empty rects ?
+            TODO(" see why we get these empty rects ?")
             if (cx > 0 && cy > 0) {
                 // 7.7.2   Cursor Pseudo-encoding
                 // ------------------------------
@@ -807,7 +806,7 @@ struct mod_vnc : public client_mod {
                 /* (anyway hotspot is usually 0, 0)                   */
                 if (x > 31) { x = 31; }
                 if (y > 31) { y = 31; }
-#warning we should manage cursors bigger then 32 x 32, this is not an RDP protocol limitation
+TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation")
                 this->gd.server_set_pointer(x, y, rdp_cursor_data, rdp_cursor_mask);
             }
             break;
@@ -830,7 +829,7 @@ struct mod_vnc : public client_mod {
 
             stream.out_uint16_be(this->gd.clip.cx);
             stream.out_uint16_be(this->gd.clip.cy);
-            this->t->send((char*)stream.data, 10);
+            this->t->send(stream.data, 10);
         }
     }
 
@@ -896,7 +895,7 @@ struct mod_vnc : public client_mod {
     /******************************************************************************/
     void lib_open_clip_channel(void)
     {
-        #warning not working, see why
+        TODO(" not working  see why")
         return;
 //        uint8_t init_data[12] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 

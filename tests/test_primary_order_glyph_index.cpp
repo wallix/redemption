@@ -40,6 +40,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
 
     {
         Stream stream(1000);
+     TODO(" actual data is much more complex  than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer includes cache management primitives")
 
         RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));
         RDPGlyphIndex statecmd(0, 0, 0, 0, 0, 0, Rect(), Rect(), RDPBrush(), 0, 0, 0, (uint8_t*)"");
@@ -51,7 +52,6 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
                              Rect(3,4,50,70),
                              RDPBrush(3, 4, 0x03, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7"),
                              5, 6,
-     #warning actual data is much more complex, than a text, we should create a specialized object to store, serialize and replay it. This should be done after the RDP layer includes cache management primitives
                              12, (uint8_t*)"Hello, World");
 
         newcmd.emit(stream, newcommon, state_common, statecmd);
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
         BOOST_CHECK_EQUAL((uint8_t)GLYPHINDEX, newcommon.order);
         BOOST_CHECK_EQUAL(Rect(5, 0, 800, 600), newcommon.clip);
 
-        #warning DELTA is disabled because it does not works with rdesktop
+        TODO(" DELTA is disabled because it does not works with rdesktop")
         uint8_t datas[] = {
             CHANGE | STANDARD | BOUNDS,
             GLYPHINDEX,
@@ -99,6 +99,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
                 == cmd.brush)){
             BOOST_CHECK_EQUAL(true, false);
         }
+     TODO(" actual data is much more complex than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer includes cache management primitives")
         check<RDPGlyphIndex>(common_cmd, cmd,
             RDPOrderCommon(GLYPHINDEX, Rect(5, 0, 800, 600)),
             RDPGlyphIndex(1, 0x20, 1, 4,
@@ -108,7 +109,6 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
                           Rect(3,4,50,70),
                           RDPBrush(3, 4, 0x03, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7"),
                           5, 6,
-     #warning actual data is much more complex than a text, we should create a specialized object to store, serialize and replay it. This should be done after the RDP layer includes cache management primitives
                           12, (uint8_t*)"Hello, World"),
             "Text 1");
     }

@@ -226,7 +226,6 @@ namespace RDP {
         TRIBLT     = 14,
         POLYLINE   = 22,
         GLYPHINDEX = 27,
-        TEXT2      = 27,
     };
 
     enum SecondaryOrderType {

@@ -54,6 +54,23 @@
 #include "transport.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
+#include "RDP/capabilities/general.hpp"
+#include "RDP/capabilities/bitmap.hpp"
+#include "RDP/capabilities/share.hpp"
+#include "RDP/capabilities/font.hpp"
+#include "RDP/capabilities/order.hpp"
+#include "RDP/capabilities/colcache.hpp"
+#include "RDP/capabilities/pointer.hpp"
+#include "RDP/capabilities/input.hpp"
+
+#include "RDP/gcc_conference_user_data/cs_core.hpp"
+#include "RDP/gcc_conference_user_data/cs_sec.hpp"
+#include "RDP/gcc_conference_user_data/cs_net.hpp"
+#include "RDP/gcc_conference_user_data/cs_cluster.hpp"
+#include "RDP/gcc_conference_user_data/cs_monitor.hpp"
+#include "RDP/gcc_conference_user_data/sc_sec1.hpp"
+#include "RDP/gcc_conference_user_data/sc_core.hpp"
+#include "RDP/gcc_conference_user_data/sc_net.hpp"
 
 class Front {
 public:
@@ -66,7 +83,6 @@ public:
     int mouse_y;
     bool nomouse;
     bool notimestamp;
-    int timezone;
     ChannelList channel_list;
     int up_and_running;
     int share_id;
@@ -84,6 +100,12 @@ public:
     int order_level;
     GraphicsUpdatePDU * orders;
     Inifile * ini;
+    uint32_t verbose;
+
+    enum {
+        CONNECTION_INITIATION,
+        ACTIVATE_AND_PROCESS_DATA,
+    } state;
 
 public:
 
@@ -95,7 +117,6 @@ public:
         mouse_y(0),
         nomouse(ini->globals.nomouse),
         notimestamp(ini->globals.notimestamp),
-        timezone(0),
         up_and_running(0),
         share_id(65538),
         client_info(ini),
@@ -103,7 +124,9 @@ public:
         trans(trans),
         userid(0),
         order_level(0),
-        ini(ini)
+        ini(ini),
+        verbose(this->ini?this->ini->globals.debug.front:0),
+        state(CONNECTION_INITIATION)
     {
         // from server_sec
         // CGR: see if init has influence for the 3 following fields
@@ -135,12 +158,19 @@ public:
         break;
         }
 
+        LOG(LOG_INFO, "Front 1");
+
         this->orders = new GraphicsUpdatePDU(trans,
                             this->userid,
                             this->share_id,
                             this->client_info.crypt_level,
                             this->encrypt,
-                            ini);
+                            ini,
+                            this->client_info.bitmap_cache_version,
+                            this->client_info.use_bitmap_comp,
+                            this->client_info.op2);
+
+        LOG(LOG_INFO, "Front 2");
     }
 
     ~Front(){
@@ -155,7 +185,7 @@ public:
 
     void set_client_info(uint16_t width, uint16_t height, uint8_t bpp)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::set_client_info(%u, %u, %u)", width, height, bpp);
         }
         this->client_info.width = width;
@@ -164,10 +194,10 @@ public:
     }
 
     void reset(){
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::reset()");
         }
-        #warning is it necessary (or even useful) to send remaining drawing orders before resetting ?
+        TODO(" is it necessary (or even useful) to send remaining drawing orders before resetting ?")
         this->orders->flush();
 
         /* shut down the rdp client */
@@ -177,7 +207,15 @@ public:
         this->send_demand_active();
 
         delete this->orders;
-        this->orders = new GraphicsUpdatePDU(trans, this->userid, this->share_id, this->client_info.crypt_level, this->encrypt, this->ini);
+        this->orders = new GraphicsUpdatePDU(trans,
+                        this->userid,
+                        this->share_id,
+                        this->client_info.crypt_level,
+                        this->encrypt,
+                        this->ini,
+                        this->client_info.bitmap_cache_version,
+                        this->client_info.use_bitmap_comp,
+                        this->client_info.op2);
 
         if (this->bmp_cache){
             delete this->bmp_cache;
@@ -189,7 +227,7 @@ public:
     void set_keyboard_layout()
     {
         /* initialising keymap */
-        #warning I should move that to client_info, this is the place where I'm really sure the bitmap is known'
+        TODO(" I should move that to client_info  this is the place where I'm really sure the bitmap is known")
         char filename[256];
         snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->get_client_info().keylayout);
         LOG(LOG_INFO, "loading keymap %s\n", filename);
@@ -198,7 +236,7 @@ public:
 
     void begin_update()
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::begin_update()");
         }
         this->order_level++;
@@ -206,7 +244,7 @@ public:
 
     void end_update()
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::end_update()");
         }
         this->order_level--;
@@ -217,10 +255,10 @@ public:
 
     void disconnect() throw (Error)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::disconnect()");
         }
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
 
         stream.out_uint8((MCS_DPUM << 2) | 1);
@@ -232,7 +270,7 @@ public:
 
     void set_console_session(bool b)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::set_console_session(%u)", b);
         }
         this->client_info.console_session = b;
@@ -250,13 +288,14 @@ public:
         size_t chunk_size,
         int flags)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)", data, length, chunk_size, flags);
         }
         Stream stream(65536);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, channel.chanid);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
+        uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
+        SecOut sec_out(stream, sec_flags, this->encrypt);
 
         stream.out_uint32_le(length);
         if (channel.flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -264,6 +303,7 @@ public:
         }
         stream.out_uint32_le(flags);
         stream.out_copy_bytes(data, chunk_size);
+
         sec_out.end();
         sdin_out.end();
         tpdu.end();
@@ -285,15 +325,16 @@ public:
 
     void send_global_palette(const BGRPalette & palette) throw (Error)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::send_global_palette()");
         }
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
+        uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
+        SecOut sec_out(stream, sec_flags, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id);
+        ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
         stream.out_uint16_le(RDP_UPDATE_PALETTE);
         stream.out_uint16_le(0);
@@ -428,15 +469,16 @@ public:
 
     void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
         }
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
+        uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
+        SecOut sec_out(stream, sec_flags, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id);
+        ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
         stream.out_uint16_le(RDP_POINTER_COLOR);
         stream.out_uint16_le(0); /* pad */
@@ -545,15 +587,16 @@ public:
 
     void set_pointer(int cache_idx) throw (Error)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
         }
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
+        uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
+        SecOut sec_out(stream, sec_flags, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id);
+        ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
         stream.out_uint16_le(RDP_POINTER_CACHED);
         stream.out_uint16_le(0); /* pad */
@@ -569,193 +612,1207 @@ public:
     }
 
 
+//   2.2.1.5 Client MCS Erect Domain Request PDU
+//   -------------------------------------------
+//   The MCS Erect Domain Request PDU is an RDP Connection Sequence PDU sent
+//   from client to server during the Channel Connection phase (see section
+//   1.3.1.1). It is sent after receiving the MCS Connect Response PDU (section
+//   2.2.1.4).
 
-    // Connection Finalization
-    // -----------------------
+//   tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
 
-    // Connection Finalization: The client and server send PDUs to finalize the
-    // connection details. The client-to-server and server-to-client PDUs exchanged
-    // during this phase may be sent concurrently as long as the sequencing in
-    // either direction is maintained (there are no cross-dependencies between any
-    // of the client-to-server and server-to-client PDUs). After the client receives
-    // the Font Map PDU it can start sending mouse and keyboard input to the server,
-    // and upon receipt of the Font List PDU the server can start sending graphics
-    // output to the client.
+//   x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+//      section 13.7.
 
-    // Client                                                     Server
-    //    |----------Synchronize PDU------------------------------> |
-    //    |----------Control PDU Cooperate------------------------> |
-    //    |----------Control PDU Request Control------------------> |
-    //    |----------Persistent Key List PDU(s)-------------------> |
-    //    |----------Font List PDU--------------------------------> |
+// See description of tpktHeader and x224 Data TPDU in cheat sheet
 
-    //    | <--------Synchronize PDU------------------------------- |
-    //    | <--------Control PDU Cooperate------------------------- |
-    //    | <--------Control PDU Granted Control------------------- |
-    //    | <--------Font Map PDU---------------------------------- |
+//   mcsEDrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an MCS
+//      Erect Domain Request structure, as specified in [T125] (the ASN.1
+//      structure definitions are given in [T125] section 7, parts 3 and 10).
 
-    // All PDU's in the client-to-server direction must be sent in the specified
-    // order and all PDU's in the server to client direction must be sent in the
-    // specified order. However, there is no requirement that client to server PDU's
-    // be sent before server-to-client PDU's. PDU's may be sent concurrently as long
-    // as the sequencing in either direction is maintained.
+// 2.2.1.6 Client MCS Attach User Request PDU
+// ------------------------------------------
+// The MCS Attach User Request PDU is an RDP Connection Sequence PDU
+// sent from client to server during the Channel Connection phase (see
+// section 1.3.1.1) to request a user channel ID. It is sent after
+// transmitting the MCS Erect Domain Request PDU (section 2.2.1.5).
 
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
 
-    // Besides input and graphics data, other data that can be exchanged between
-    // client and server after the connection has been finalized includes
-    // connection management information and virtual channel messages (exchanged
-    // between client-side plug-ins and server-side applications).
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+//   [X224] section 13.7.
 
+// See description of tpktHeader and x224 Data TPDU in cheat sheet
 
-    void incoming() throw (Error)
+// mcsAUrq (1 byte): PER-encoded MCS Domain PDU which encapsulates an
+//  MCS Attach User Request structure, as specified in [T125] (the ASN.1
+//  structure definitions are given in [T125] section 7, parts 5 and 10).
+
+// AttachUserRequest ::= [APPLICATION 10] IMPLICIT SEQUENCE
+// {
+// }
+
+// 11.17 AttachUserRequest
+// -----------------------
+
+// AttachUserRequest is generated by an MCS-ATTACH-USER request. It rises to the
+// top MCS provider, which returns an AttachUserConfirm reply. If the domain
+// limit on number of user ids allows, a new user id is generated.
+
+// AttachUserRequest contains no information other than its MCSPDU type. The
+// domain to which the user attaches is determined by the MCS connection
+// conveying the MCSPDU. The only initial characteristic of the user id
+// generated is its uniqueness. An MCS provider shall make a record of each
+// unanswered AttachUserRequest received and by which MCS connection it arrived,
+// so that a replying AttachUserConfirm can be routed back to the same source.
+// To distribute replies fairly, each provider should maintain a first-in,
+// first-out queue for this purpose.
+
+    void recv_mcs_erect_domain_and_attach_user_request_pdu(Transport * trans, uint16_t & userid)
     {
-        if (this->ini->globals.debug.front){
+        TODO(" this code could lead to some problem if both MCS are combined in the same TPDU  we should manage this case")
+        {
+            Stream stream(32768);
+            X224In in(trans, stream);
+            uint8_t opcode = stream.in_uint8();
+            if ((opcode >> 2) != MCS_EDRQ) {
+                throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
+            }
+            stream.skip_uint8(2);
+            stream.skip_uint8(2);
+            if (opcode & 2) {
+                userid = stream.in_uint16_be();
+            }
+            in.end();
+        }
+
+        {
+            Stream stream(32768);
+            X224In in(trans, stream);
+            uint8_t opcode = stream.in_uint8();
+            if ((opcode >> 2) != MCS_AURQ) {
+                throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
+            }
+            if (opcode & 2) {
+                userid = stream.in_uint16_be();
+            }
+            in.end();
+        }
+
+    }
+
+
+// 2.2.1.4  Server MCS Connect Response PDU with GCC Conference Create Response
+// ----------------------------------------------------------------------------
+
+// From [MSRDPCGR]
+
+// The MCS Connect Response PDU is an RDP Connection Sequence PDU sent from
+// server to client during the Basic Settings Exchange phase (see section
+// 1.3.1.1). It is sent as a response to the MCS Connect Initial PDU (section
+// 2.2.1.3). The MCS Connect Response PDU encapsulates a GCC Conference Create
+// Response, which encapsulates concatenated blocks of settings data.
+
+// A basic high-level overview of the nested structure for the Server MCS
+// Connect Response PDU is illustrated in section 1.3.1.1, in the figure
+// specifying MCS Connect Response PDU. Note that the order of the settings
+// data blocks is allowed to vary from that shown in the previously mentioned
+// figure and the message syntax layout that follows. This is possible because
+// each data block is identified by a User Data Header structure (section
+// 2.2.1.4.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+// section 13.7.
+
+// mcsCrsp (variable): Variable-length BER-encoded MCS Connect Response
+//   structure (using definite-length encoding) as described in [T125]
+//   (the ASN.1 structure definition is detailed in [T125] section 7, part 2).
+//   The userData field of the MCS Connect Response encapsulates the GCC
+//   Conference Create Response data (contained in the gccCCrsp and subsequent
+//   fields).
+
+// gccCCrsp (variable): Variable-length PER-encoded GCC Connect Data structure
+//   which encapsulates a Connect GCC PDU that contains a GCC Conference Create
+//   Response structure as described in [T124] (the ASN.1 structure definitions
+//   are specified in [T124] section 8.7) appended as user data to the MCS
+//   Connect Response (using the format specified in [T124] sections 9.5 and
+//   9.6). The userData field of the GCC Conference Create Response contains
+//   one user data set consisting of concatenated server data blocks.
+
+// serverCoreData (12 bytes): Server Core Data structure (section 2.2.1.4.2).
+
+// serverSecurityData (variable): Variable-length Server Security Data structure
+//   (section 2.2.1.4.3).
+
+// serverNetworkData (variable): Variable-length Server Network Data structure
+//   (section 2.2.1.4.4).
+
+
+// 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
+// ------------------------------------------
+
+//The TS_UD_CS_CORE data block contains core client connection-related
+// information.
+
+//header (4 bytes): GCC user data block header, as specified in section
+//                  2.2.1.3.1. The User Data Header type field MUST be set to
+//                  CS_CORE (0xC001).
+
+// version (4 bytes): A 32-bit, unsigned integer. Client version number for the
+//                    RDP. The major version number is stored in the high 2
+//                    bytes, while the minor version number is stored in the
+//                    low 2 bytes.
+// +------------+------------------------------------+
+// |   Value    |    Meaning                         |
+// +------------+------------------------------------+
+// | 0x00080001 | RDP 4.0 clients                    |
+// +------------+------------------------------------+
+// | 0x00080004 | RDP 5.0, 5.1, 5.2, and 6.0 clients |
+// +------------+------------------------------------+
+
+// desktopWidth (2 bytes): A 16-bit, unsigned integer. The requested desktop
+//                         width in pixels (up to a maximum value of 4096
+//                         pixels).
+
+// desktopHeight (2 bytes): A 16-bit, unsigned integer. The requested desktop
+//                          height in pixels (up to a maximum value of 2048
+//                          pixels).
+
+// colorDepth (2 bytes): A 16-bit, unsigned integer. The requested color depth.
+//                       Values in this field MUST be ignored if the
+//                       postBeta2ColorDepth field is present.
+// +--------------------------+-------------------------+
+// |     Value                |        Meaning          |
+// +--------------------------+-------------------------+
+// | 0xCA00 RNS_UD_COLOR_4BPP | 4 bits-per-pixel (bpp)  |
+// +--------------------------+-------------------------+
+// | 0xCA01 RNS_UD_COLOR_8BPP | 8 bpp                   |
+// +--------------------------+-------------------------+
+
+// SASSequence (2 bytes): A 16-bit, unsigned integer. Secure access sequence.
+//                        This field SHOULD be set to RNS_UD_SAS_DEL (0xAA03).
+
+// keyboardLayout (4 bytes): A 32-bit, unsigned integer. Keyboard layout (active
+//                           input locale identifier). For a list of possible
+//                           input locales, see [MSDN-MUI].
+
+// clientBuild (4 bytes): A 32-bit, unsigned integer. The build number of the
+//                        client.
+
+// clientName (32 bytes): Name of the client computer. This field contains up to
+//                        15 Unicode characters plus a null terminator.
+
+// keyboardType (4 bytes): A 32-bit, unsigned integer. The keyboard type.
+// +-------+--------------------------------------------+
+// | Value |              Meaning                       |
+// +-------+--------------------------------------------+
+// |   1   | IBM PC/XT or compatible (83-key) keyboard  |
+// +-------+--------------------------------------------+
+// |   2   | Olivetti "ICO" (102-key) keyboard          |
+// +-------+--------------------------------------------+
+// |   3   | IBM PC/AT (84-key) and similar keyboards   |
+// +-------+--------------------------------------------+
+// |   4   | IBM enhanced (101- or 102-key) keyboard    |
+// +-------+--------------------------------------------+
+// |   5   | Nokia 1050 and similar keyboards           |
+// +-------+--------------------------------------------+
+// |   6   | Nokia 9140 and similar keyboards           |
+// +-------+--------------------------------------------+
+// |   7   | Japanese keyboard                          |
+// +-------+--------------------------------------------+
+
+// keyboardSubType (4 bytes): A 32-bit, unsigned integer. The keyboard subtype
+//                            (an original equipment manufacturer-dependent
+//                            value).
+
+// keyboardFunctionKey (4 bytes): A 32-bit, unsigned integer. The number of
+//                                function keys on the keyboard.
+
+// imeFileName (64 bytes): A 64-byte field. The Input Method Editor (IME) file
+//                         name associated with the input locale. This field
+//                         contains up to 31 Unicode characters plus a null
+//                         terminator.
+
+// postBeta2ColorDepth (2 bytes): A 16-bit, unsigned integer. The requested
+//                                color depth. Values in this field MUST be
+//                                ignored if the highColorDepth field is
+//                                present.
+// +--------------------------+-------------------------+
+// |      Value               |         Meaning         |
+// +--------------------------+-------------------------+
+// | 0xCA00 RNS_UD_COLOR_4BPP | 4 bits-per-pixel (bpp)  |
+// +--------------------------+-------------------------+
+// | 0xCA01 RNS_UD_COLOR_8BPP | 8 bpp                   |
+// +--------------------------+-------------------------+
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// clientProductId (2 bytes): A 16-bit, unsigned integer. The client product ID.
+//                            This field SHOULD be initialized to 1. If this
+//                            field is present, then all of the preceding fields
+//                            MUST also be present. If this field is not
+//                            present, then none of the subsequent fields MUST
+//                            be present.
+
+// serialNumber (4 bytes): A 32-bit, unsigned integer. Serial number. This field
+//                         SHOULD be initialized to 0. If this field is present,
+//                         then all of the preceding fields MUST also be
+//                         present. If this field is not present, then none of
+//                         the subsequent fields MUST be present.
+
+// highColorDepth (2 bytes): A 16-bit, unsigned integer. The requested color
+//                           depth.
+// +-------+-------------------------------------------------------------------+
+// | Value |                      Meaning                                      |
+// +-------+-------------------------------------------------------------------+
+// |     4 |   4 bpp                                                           |
+// +-------+-------------------------------------------------------------------+
+// |     8 |   8 bpp                                                           |
+// +-------+-------------------------------------------------------------------+
+// |    15 |  15-bit 555 RGB mask                                              |
+// |       |  (5 bits for red, 5 bits for green, and 5 bits for blue)          |
+// +-------+-------------------------------------------------------------------+
+// |    16 |  16-bit 565 RGB mask                                              |
+// |       |  (5 bits for red, 6 bits for green, and 5 bits for blue)          |
+// +-------+-------------------------------------------------------------------+
+// |    24 |  24-bit RGB mask                                                  |
+// |       |  (8 bits for red, 8 bits for green, and 8 bits for blue)          |
+// +-------+-------------------------------------------------------------------+
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// supportedColorDepths (2 bytes): A 16-bit, unsigned integer. Specifies the
+//                                 high color depths that the client is capable
+//                                 of supporting.
+// +-----------------------------+---------------------------------------------+
+// |          Flag               |                Meaning                      |
+// +-----------------------------+---------------------------------------------+
+// | 0x0001 RNS_UD_24BPP_SUPPORT | 24-bit RGB mask                             |
+// |                             | (8 bits for red, 8 bits for green,          |
+// |                             | and 8 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// | 0x0002 RNS_UD_16BPP_SUPPORT | 16-bit 565 RGB mask                         |
+// |                             | (5 bits for red, 6 bits for green,          |
+// |                             | and 5 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// | 0x0004 RNS_UD_15BPP_SUPPORT | 15-bit 555 RGB mask                         |
+// |                             | (5 bits for red, 5 bits for green,          |
+// |                             | and 5 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// | 0x0008 RNS_UD_32BPP_SUPPORT | 32-bit RGB mask                             |
+// |                             | (8 bits for the alpha channel,              |
+// |                             | 8 bits for red, 8 bits for green,           |
+// |                             | and 8 bits for blue)                        |
+// +-----------------------------+---------------------------------------------+
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// earlyCapabilityFlags (2 bytes): A 16-bit, unsigned integer. It specifies
+// capabilities early in the connection sequence.
+// +---------------------------------------------+-----------------------------|
+// |                Flag                         |              Meaning        |
+// +---------------------------------------------+-----------------------------|
+// | 0x0001 RNS_UD_CS_SUPPORT_ERRINFO_PDU        | Indicates that the client   |
+// |                                             | supports the Set Error Info |
+// |                                             | PDU (section 2.2.5.1).      |
+// +---------------------------------------------+-----------------------------|
+// | 0x0002 RNS_UD_CS_WANT_32BPP_SESSION         | Indicates that the client is|
+// |                                             | requesting a session color  |
+// |                                             | depth of 32 bpp. This flag  |
+// |                                             | is necessary because the    |
+// |                                             | highColorDepth field does   |
+// |                                             | not support a value of 32.  |
+// |                                             | If this flag is set, the    |
+// |                                             | highColorDepth field SHOULD |
+// |                                             | be set to 24 to provide an  |
+// |                                             | acceptable fallback for the |
+// |                                             | scenario where the server   |
+// |                                             | does not support 32 bpp     |
+// |                                             | color.                      |
+// +---------------------------------------------+-----------------------------|
+// | 0x0004 RNS_UD_CS_SUPPORT_STATUSINFO_PDU     | Indicates that the client   |
+// |                                             | supports the Server Status  |
+// |                                             | Info PDU (section 2.2.5.2). |
+// +---------------------------------------------+-----------------------------|
+// | 0x0008 RNS_UD_CS_STRONG_ASYMMETRIC_KEYS     | Indicates that the client   |
+// |                                             | supports asymmetric keys    |
+// |                                             | larger than 512 bits for use|
+// |                                             | with the Server Certificate |
+// |                                             | (section 2.2.1.4.3.1) sent  |
+// |                                             | in the Server Security Data |
+// |                                             | block (section 2.2.1.4.3).  |
+// +---------------------------------------------+-----------------------------|
+// | 0x0020 RNS_UD_CS_RESERVED1                  | Reserved for future use.    |
+// |                                             | This flag is ignored by the |
+// |                                             | server.                     |
+// +---------------------------------------------+-----------------------------+
+// | 0x0040 RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU | Indicates that the client   |
+// |                                             | supports the Monitor Layout |
+// |                                             | PDU (section 2.2.12.1).     |
+// +---------------------------------------------+-----------------------------|
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// clientDigProductId (64 bytes): Contains a value that uniquely identifies the
+//                                client. If this field is present, then all of
+//                                the preceding fields MUST also be present. If
+//                                this field is not present, then none of the
+//                                subsequent fields MUST be present.
+
+// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding to align the
+//   serverSelectedProtocol field on the correct byte boundary.
+// If this field is present, then all of the preceding fields MUST also be
+// present. If this field is not present, then none of the subsequent fields
+// MUST be present.
+
+// serverSelectedProtocol (4 bytes): A 32-bit, unsigned integer. It contains the value returned
+//   by the server in the selectedProtocol field of the RDP Negotiation Response structure
+//   (section 2.2.1.2.1). In the event that an RDP Negotiation Response structure was not sent,
+//   this field MUST be initialized to PROTOCOL_RDP (0). If this field is present, then all of the
+//   preceding fields MUST also be present.
+
+    void send_mcs_connect_response_pdu_with_gcc_conference_create_response(
+                                        Transport * trans,
+                                        ClientInfo * client_info,
+                                        const ChannelList & channel_list,
+                                        uint8_t (&server_random)[32],
+                                        int rc4_key_size,
+                                        uint8_t (&pub_mod)[512],
+                                        uint8_t (&pri_exp)[512]
+                                    ) throw(Error)
+    {
+        Stream stream(32768);
+
+        // TPKT Header (length = 337 bytes)
+        // X.224 Data TPDU
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+
+        // BER: Application-Defined Type = APPLICATION 102 = Connect-Response
+        stream.out_uint16_be(BER_TAG_MCS_CONNECT_RESPONSE);
+        uint32_t offset_len_mcs_connect_response = stream.p - stream.data;
+        // BER: Type Length
+        stream.out_ber_len_uint16(0); // filled later, 3 bytes
+
+        // Connect-Response::result = rt-successful (0)
+        // The first byte (0x0a) is the ASN.1 BER encoded Enumerated type. The
+        // length of the value is given by the second byte (1 byte), and the
+        // actual value is 0 (rt-successful).
+        stream.out_uint8(BER_TAG_RESULT);
+        stream.out_ber_len_uint7(1);
+        stream.out_uint8(0);
+
+        // Connect-Response::calledConnectId = 0
+        stream.out_uint8(BER_TAG_INTEGER);
+        stream.out_ber_len_uint7(1);
+        stream.out_uint8(0);
+
+        // Connect-Response::domainParameters (26 bytes)
+        stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
+        stream.out_ber_len_uint7(26);
+        // DomainParameters::maxChannelIds = 34
+        stream.out_ber_int8(22);
+        // DomainParameters::maxUserIds = 3
+        stream.out_ber_int8(3);
+        // DomainParameters::maximumTokenIds = 0
+        stream.out_ber_int8(0);
+        // DomainParameters::numPriorities = 1
+        stream.out_ber_int8(1);
+        // DomainParameters::minThroughput = 0
+        stream.out_ber_int8(0);
+        // DomainParameters::maxHeight = 1
+        stream.out_ber_int8(1);
+        // DomainParameters::maxMCSPDUsize = 65528
+        stream.out_ber_int24(0xfff8);
+        // DomainParameters::protocolVersion = 2
+        stream.out_ber_int8(2);
+
+        // Connect-Response::userData (287 bytes)
+        stream.out_uint8(BER_TAG_OCTET_STRING);
+        uint32_t offset_len_mcs_data = stream.p - stream.data;
+        stream.out_ber_len_uint16(0); // filled later, 3 bytes
+
+
+        // GCC Conference Create Response
+        // ------------------------------
+
+        // ConferenceCreateResponse Parameters
+        // -----------------------------------
+
+        // Generic definitions used in parameter descriptions:
+
+        // simpleTextFirstCharacter UniversalString ::= {0, 0, 0, 0}
+
+        // simpleTextLastCharacter UniversalString ::= {0, 0, 0, 255}
+
+        // SimpleTextString ::=  BMPString (SIZE (0..255)) (FROM (simpleTextFirstCharacter..simpleTextLastCharacter))
+
+        // TextString ::= BMPString (SIZE (0..255)) -- Basic Multilingual Plane of ISO/IEC 10646-1 (Unicode)
+
+        // SimpleNumericString ::= NumericString (SIZE (1..255)) (FROM ("0123456789"))
+
+        // DynamicChannelID ::= INTEGER (1001..65535) -- Those created and deleted by MCS
+
+        // UserID ::= DynamicChannelID
+
+        // H221NonStandardIdentifier ::= OCTET STRING (SIZE (4..255))
+        //      -- First four octets shall be country code and
+        //      -- Manufacturer code, assigned as specified in
+        //      -- Annex A/H.221 for NS-cap and NS-comm
+
+        // Key ::= CHOICE   -- Identifier of a standard or non-standard object
+        // {
+        //      object              OBJECT IDENTIFIER,
+        //      h221NonStandard     H221NonStandardIdentifier
+        // }
+
+        // UserData ::= SET OF SEQUENCE
+        // {
+        //      key     Key,
+        //      value   OCTET STRING OPTIONAL
+        // }
+
+        // ConferenceCreateResponse ::= SEQUENCE
+        // {    -- MCS-Connect-Provider response user data
+        //      nodeID              UserID, -- Node ID of the sending node
+        //      tag                 INTEGER,
+        //      result              ENUMERATED
+        //      {
+        //          success                         (0),
+        //          userRejected                    (1),
+        //          resourcesNotAvailable           (2),
+        //          rejectedForSymmetryBreaking     (3),
+        //          lockedConferenceNotSupported    (4),
+        //          ...
+        //      },
+        //      userData            UserData OPTIONAL,
+        //      ...
+        //}
+
+
+        // User Data                 : Optional
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        // User Data: Optional user data which may be used for functions outside
+        // the scope of this Recommendation such as authentication, billing,
+        // etc.
+
+        // Result                    : Mandatory
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        // An indication of whether the request was accepted or rejected, and if
+        // rejected, the reason why. It contains one of a list of possible
+        // results: successful, user rejected, resources not available, rejected
+        // for symmetry-breaking, locked conference not supported, Conference
+        // Name and Conference Name Modifier already exist, domain parameters
+        // unacceptable, domain not hierarchical, lower-layer initiated
+        // disconnect, unspecified failure to connect. A negative result in the
+        // GCC-Conference-Create confirm does not imply that the physical
+        // connection to the node to which the connection was being attempted
+        // is disconnected.
+
+        // The ConferenceCreateResponse PDU is shown in Table 8-4. The Node ID
+        // parameter, which is the User ID assigned by MCS in response to the
+        // MCS-Attach-User request issued by the GCC Provider, shall be supplied
+        // by the GCC Provider sourcing this PDU. The Tag parameter is assigned
+        // by the source GCC Provider to be locally unique. It is used to
+        // identify the returned UserIDIndication PDU. The Result parameter
+        // includes GCC-specific failure information sourced directly from
+        // the Result parameter in the GCC-Conference-Create response primitive.
+        // If the Result parameter is anything except successful, the Result
+        // parameter in the MCS-Connect-Provider response is set to
+        // user-rejected.
+
+        //            Table 8-4 – ConferenceCreateResponse GCCPDU
+        // +------------------+------------------+--------------------------+
+        // | Content          |     Source       |         Sink             |
+        // +==================+==================+==========================+
+        // | Node ID          | Top GCC Provider | Destination GCC Provider |
+        // +------------------+------------------+--------------------------+
+        // | Tag              | Top GCC Provider | Destination GCC Provider |
+        // +------------------+------------------+--------------------------+
+        // | Result           | Response         | Confirm                  |
+        // +------------------+------------------+--------------------------+
+        // | User Data (opt.) | Response         | Confirm                  |
+        // +------------------+------------------+--------------------------+
+
+        //PER encoded (ALIGNED variant of BASIC-PER) GCC Connection Data (ConnectData):
+        // 00 05 00
+        // 14 7c 00 01
+        // 2a
+        // 14 76 0a 01 01 00 01 c0 00 4d 63 44 6e
+        // 81 08
+
+
+        // 00 05 -> Key::object length = 5 bytes
+        // 00 14 7c 00 01 -> Key::object = { 0 0 20 124 0 1 }
+        stream.out_uint16_be(5);
+        stream.out_copy_bytes("\x00\x14\x7c\x00\x01", 5);
+
+
+        // 2a -> ConnectData::connectPDU length = 42 bytes
+        // This length MUST be ignored by the client.
+        stream.out_uint8(0x2a);
+
+        // PER encoded (ALIGNED variant of BASIC-PER) GCC Conference Create Response
+        // PDU:
+        // 14 76 0a 01 01 00 01 c0 00 00 4d 63 44 6e 81 08
+
+        // 0x14:
+        // 0 - extension bit (ConnectGCCPDU)
+        // 0 - --\ ...
+        // 0 -   | CHOICE: From ConnectGCCPDU select conferenceCreateResponse (1)
+        // 1 - --/ of type ConferenceCreateResponse
+        // 0 - extension bit (ConferenceCreateResponse)
+        // 1 - ConferenceCreateResponse::userData present
+        // 0 - padding
+        // 0 - padding
+        stream.out_uint8(0x10 | 4);
+
+        // ConferenceCreateResponse::nodeID
+        //  = 0x760a + 1001 = 30218 + 1001 = 31219
+        //  (minimum for UserID is 1001)
+        stream.out_uint16_le(0x760a);
+
+        // ConferenceCreateResponse::tag length = 1 byte
+        stream.out_uint8(1);
+
+        // ConferenceCreateResponse::tag = 1
+        stream.out_uint8(1);
+
+        // 0x00:
+        // 0 - extension bit (Result)
+        // 0 - --\ ...
+        // 0 -   | ConferenceCreateResponse::result = success (0)
+        // 0 - --/
+        // 0 - padding
+        // 0 - padding
+        // 0 - padding
+        // 0 - padding
+        stream.out_uint8(0);
+
+        // number of UserData sets = 1
+        stream.out_uint8(1);
+
+        // 0xc0:
+        // 1 - UserData::value present
+        // 1 - CHOICE: From Key select h221NonStandard (1)
+        //               of type H221NonStandardIdentifier
+        // 0 - padding
+        // 0 - padding
+        // 0 - padding
+        // 0 - padding
+        // 0 - padding
+        // 0 - padding
+        stream.out_uint8(0xc0);
+
+        // h221NonStandard length = 0 + 4 = 4 octets
+        //   (minimum for H221NonStandardIdentifier is 4)
+        stream.out_uint8(0);
+
+        // h221NonStandard (server-to-client H.221 key) = "McDn"
+        stream.out_copy_bytes("McDn", 4);
+
+//        uint16_t padding = channel_list.size() & 1;
+//        uint16_t srv_channel_size = 8 + (channel_list.size() + padding) * 2;
+//        stream.out_2BUE(8 + srv_channel_size + 236 + 4); // len
+
+
+        uint32_t offset_user_data_len = stream.p - stream.data;
+        stream.out_uint16_be(0);
+
+        bool use_rdp5 = 1;
+        out_mcs_data_sc_core(stream, use_rdp5);
+        out_mcs_data_sc_net(stream, channel_list);
+        front_out_gcc_conference_user_data_sc_sec1(stream, client_info->crypt_level, server_random, rc4_key_size, pub_mod, pri_exp);
+
+        TODO(" create a function in stream that sets differed ber_len_offsets (or other len_offset)")
+
+        // set user_data_len (TWO_BYTE_UNSIGNED_ENCODING)
+        stream.set_out_uint16_be(0x8000 | (stream.p - stream.data - offset_user_data_len - 2), offset_user_data_len);
+        // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
+        stream.set_out_ber_len_uint16(stream.p - stream.data - offset_len_mcs_data - 3, offset_len_mcs_data);
+        // set BER_TAG_MCS_CONNECT_RESPONSE len
+        stream.set_out_ber_len_uint16(stream.p - stream.data - offset_len_mcs_connect_response - 3, offset_len_mcs_connect_response);
+
+        tpdu.end();
+        tpdu.send(trans);
+    }
+
+
+// 2.2.1.3 Client MCS Connect Initial PDU with GCC Conference Create Request
+// =========================================================================
+
+// The MCS Connect Initial PDU is an RDP Connection Sequence PDU sent from
+// client to server during the Basic Settings Exchange phase (see section
+// 1.3.1.1). It is sent after receiving the X.224 Connection Confirm PDU
+// (section 2.2.1.2). The MCS Connect Initial PDU encapsulates a GCC Conference
+// Create Request, which encapsulates concatenated blocks of settings data. A
+// basic high-level overview of the nested structure for the Client MCS Connect
+// Initial PDU is illustrated in section 1.3.1.1, in the figure specifying MCS
+// Connect Initial PDU. Note that the order of the settings data blocks is
+// allowed to vary from that shown in the previously mentioned figure and the
+// message syntax layout that follows. This is possible because each data block
+// is identified by a User Data Header structure (section 2.2.1.3.1).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+//   section 13.7.
+
+// mcsCi (variable): Variable-length BER-encoded MCS Connect Initial structure
+//   (using definite-length encoding) as described in [T125] (the ASN.1
+//   structure definition is detailed in [T125] section 7, part 2). The userData
+//   field of the MCS Connect Initial encapsulates the GCC Conference Create
+//   Request data (contained in the gccCCrq and subsequent fields). The maximum
+//   allowed size of this user data is 1024 bytes, which implies that the
+//   combined size of the gccCCrq and subsequent fields MUST be less than 1024
+//   bytes.
+
+// gccCCrq (variable): Variable-length Packed Encoding Rule encoded
+//   (PER-encoded) GCC Connect Data structure, which encapsulates a Connect GCC
+//   PDU that contains a GCC Conference Create Request structure as described in
+//   [T124] (the ASN.1 structure definitions are detailed in [T124] section 8.7)
+//   appended as user data to the MCS Connect Initial (using the format
+//   described in [T124] sections 9.5 and 9.6). The userData field of the GCC
+//   Conference Create Request contains one user data set consisting of
+//   concatenated client data blocks.
+
+// clientCoreData (216 bytes): Client Core Data structure (section 2.2.1.3.2).
+
+// clientSecurityData (12 bytes): Client Security Data structure (section
+//   2.2.1.3.3).
+
+// clientNetworkData (variable): Optional and variable-length Client Network
+//   Data structure (section 2.2.1.3.4).
+
+// clientClusterData (12 bytes): Optional Client Cluster Data structure (section
+//   2.2.1.3.5).
+
+// clientMonitorData (variable): Optional Client Monitor Data structure (section
+//   2.2.1.3.6). This field MUST NOT be included if the server does not
+//   advertise support for extended client data blocks by using the
+//   EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section
+//   2.2.1.2.1.
+
+
+
+    void recv_mcs_connect_initial_pdu_with_gcc_conference_create_request(
+                    Transport * trans,
+                    ClientInfo * client_info,
+                    ChannelList & channel_list)
+    {
+        Stream stream(32768);
+        X224In(trans, stream);
+
+        if (stream.in_uint16_be() != BER_TAG_MCS_CONNECT_INITIAL) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        int len = stream.in_ber_len();
+        if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = stream.in_ber_len();
+        stream.skip_uint8(len);
+
+        if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = stream.in_ber_len();
+        stream.skip_uint8(len);
+        if (stream.in_uint8() != BER_TAG_BOOLEAN) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = stream.in_ber_len();
+        stream.skip_uint8(len);
+
+        if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = stream.in_ber_len();
+        stream.skip_uint8(len);
+
+        if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = stream.in_ber_len();
+        stream.skip_uint8(len);
+
+        if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = stream.in_ber_len();
+        stream.skip_uint8(len);
+
+        if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+            throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+        }
+        len = stream.in_ber_len();
+
+        stream.skip_uint8(23);
+
+    // 2.2.1.3.1 User Data Header (TS_UD_HEADER)
+    // =========================================
+
+    // type (2 bytes): A 16-bit, unsigned integer. The type of the data
+    //                 block that this header precedes.
+
+    // +-------------------+-------------------------------------------------------+
+    // | CS_CORE 0xC001    | The data block that follows contains Client Core      |
+    // |                   | Data (section 2.2.1.3.2).                             |
+    // +-------------------+-------------------------------------------------------+
+    // | CS_SECURITY 0xC002| The data block that follows contains Client           |
+    // |                   | Security Data (section 2.2.1.3.3).                    |
+    // +-------------------+-------------------------------------------------------+
+    // | CS_NET 0xC003     | The data block that follows contains Client Network   |
+    // |                   | Data (section 2.2.1.3.4).                             |
+    // +-------------------+-------------------------------------------------------+
+    // | CS_CLUSTER 0xC004 | The data block that follows contains Client Cluster   |
+    // |                   | Data (section 2.2.1.3.5).                             |
+    // +-------------------+-------------------------------------------------------+
+    // | CS_MONITOR 0xC005 | The data block that follows contains Client           |
+    // |                   | Monitor Data (section 2.2.1.3.6).                     |
+    // +-------------------+-------------------------------------------------------+
+    // | SC_CORE 0x0C01    | The data block that follows contains Server Core      |
+    // |                   | Data (section 2.2.1.4.2)                              |
+    // +-------------------+-------------------------------------------------------+
+    // | SC_SECURITY 0x0C02| The data block that follows contains Server           |
+    // |                   | Security Data (section 2.2.1.4.3).                    |
+    // +-------------------+-------------------------------------------------------+
+    // | SC_NET 0x0C03     | The data block that follows contains Server Network   |
+    // |                   | Data (section 2.2.1.4.4)                              |
+    // +-------------------+-------------------------------------------------------+
+
+    // length (2 bytes): A 16-bit, unsigned integer. The size in bytes of the data
+    //   block, including this header.
+
+        while (stream.check_rem(4)) {
+            uint8_t * current_header = stream.p;
+            uint16_t tag = stream.in_uint16_le();
+            uint16_t length = stream.in_uint16_le();
+            if (length < 4 || !stream.check_rem(length - 4)) {
+                LOG(LOG_ERR,
+                    "error reading block tag %d size %d\n",
+                    tag, length);
+                break;
+            }
+
+            switch (tag){
+                case CS_CORE:
+                    TODO(" we should check length to call the two variants of core_data (or begin by reading the common part then the extended part)")
+                    parse_mcs_data_cs_core(stream, client_info);
+                break;
+                case CS_SECURITY:
+                    parse_mcs_data_cs_security(stream);
+                break;
+                case CS_NET:
+                    parse_mcs_data_cs_net(stream, client_info, channel_list);
+                break;
+                case CS_CLUSTER:
+                    parse_mcs_data_cs_cluster(stream, client_info);
+                break;
+                case CS_MONITOR:
+                    parse_mcs_data_cs_monitor(stream);
+                break;
+                case SC_SECURITY:
+    //                parse_mcs_data_sc_security(stream);
+                break;
+                default:
+                    LOG(LOG_INFO, "Unexpected data block tag %x\n", tag);
+                break;
+            }
+            stream.p = current_header + length;
+        }
+    }
+
+
+// 2.2.1.7 Server MCS Attach User Confirm PDU
+// ------------------------------------------
+// The MCS Attach User Confirm PDU is an RDP Connection Sequence
+// PDU sent from server to client during the Channel Connection
+// phase (see section 1.3.1.1). It is sent as a response to the MCS
+// Attach User Request PDU (section 2.2.1.6).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+//   section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+//   section [X224] 13.7.
+
+// mcsAUcf (4 bytes): PER-encoded MCS Domain PDU which encapsulates
+//   an MCS Attach User Confirm structure, as specified in [T125]
+//   (the ASN.1 structure definitions are given in [T125] section 7,
+// parts 5 and 10).
+
+// AttachUserConfirm ::= [APPLICATION 11] IMPLICIT SEQUENCE
+// {
+//     result       Result,
+//     initiator    UserId OPTIONAL
+// }
+
+// 11.18 AttachUserConfirm
+// -----------------------
+
+// AttachUserConfirm is generated at the top MCS provider upon receipt of
+// AttachUserRequest. Routed back to the requesting provider, it generates an
+//  MCS-ATTACH-USER confirm.
+
+//      Table 11-18/T.125 – AttachUserConfirm MCSPDU
+// +----------------------+-----------------+------------+
+// |     Contents         |      Source     |    Sink    |
+// +----------------------+-----------------+------------+
+// | Result               | Top provider    |  Confirm   |
+// +----------------------+-----------------+------------+
+// | Initiator (optional) | Top provider    |  Confirm   |
+// +----------------------+-----------------+------------+
+
+// AttachUserConfirm contains a user id if and only if the result is successful.
+// Providers that receive a successful AttachUserConfirm shall enter the user id
+// into their information base. MCS providers shall route AttachUserConfirm to
+// the source of an antecedent AttachUserRequest, using the knowledge that
+// there is a one-to-one reply. A provider that transmits AttachUserConfirm
+// shall note to which downward MCS connection the new user id is thereby
+// assigned, so that it may validate the user id when it arises later in other
+// requests.
+
+    void send_mcs_attach_user_confirm_pdu(Transport * trans, uint16_t userid)
+    {
+        Stream stream(32768);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        stream.out_uint8(((MCS_AUCF << 2) | 2));
+        stream.out_uint8(0);
+        stream.out_uint16_be(userid);
+        tpdu.end();
+        tpdu.send(trans);
+    }
+
+
+// 2.2.1.9 Server MCS Channel Join Confirm PDU
+// -------------------------------------------
+// The MCS Channel Join Confirm PDU is an RDP Connection Sequence
+// PDU sent from server to client during the Channel Connection
+// phase (see section 1.3.1.1). It is sent as a response to the MCS
+// Channel Join Request PDU (section 2.2.1.8).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123]
+//   section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in
+//  [X224] section 13.7.
+
+// mcsCJcf (8 bytes): PER-encoded MCS Domain PDU which encapsulates
+//  an MCS Channel Join Confirm PDU structure, as specified in
+//  [T125] (the ASN.1 structure definitions are given in [T125]
+//  section 7, parts 6 and 10).
+
+// ChannelJoinConfirm ::= [APPLICATION 15] IMPLICIT SEQUENCE
+// {
+//   result Result,
+//   initiator UserId,
+//   requested ChannelId, -- may be zero
+//   channelId ChannelId OPTIONAL
+// }
+
+// 11.22 ChannelJoinConfirm
+// ------------------------
+
+// ChannelJoinConfirm is generated at a higher MCS provider upon receipt of
+// ChannelJoinRequest. Routed back to the requesting provider, it generates an
+// MCS-CHANNEL-JOIN confirm.
+
+// Table 11-22/T.125 – ChannelJoinConfirm MCSPDU
+// +-----------------------+------------------------+--------------------------+
+// | Contents              |       Source           |         Sink             |
+// +-----------------------+------------------------+--------------------------+
+// | Result                |   Higher provider      |        Confirm           |
+// +-----------------------+------------------------+--------------------------+
+// | Initiator             |   Higher provider      |        MCSPDU routing    |
+// +-----------------------+------------------------+--------------------------+
+// | Requested             |   Higher provider      |        Confirm           |
+// +-----------------------+------------------------+--------------------------+
+// | Channel Id (optional) |   Higher provider      |        Confirm           |
+// +-----------------------+------------------------+--------------------------+
+
+
+// ChannelJoinConfirm contains a joined channel id if and only if the result is
+// successful.
+
+
+// The channel id requested is the same as in ChannelJoinRequest. This helps
+// the initiating attachment relate MCS-CHANNEL-JOIN confirm to an antecedent
+// request. Since ChannelJoinRequest need not rise to the top provider,
+// confirms may occur out of order.
+
+// If the result is successful, ChannelJoinConfirm joins the receiving MCS
+// provider to the specified channel. Thereafter, higher providers shall route
+// to it any data that users send over the channel. A provider shall remain
+// joined to a channel as long as any of its attachments or subordinate
+// providers does. To leave the channel, a provider shall generate
+// ChannelLeaveRequest.
+
+// Providers that receive a successful ChannelJoinConfirm shall enter the
+// channel id into their information base. If not already there, the channel id
+// shall be given type static or assigned, depending on its range.
+
+// ChannelJoinConfirm shall be forwarded in the direction of the initiating user
+// id. If the user id is unreachable because an MCS connection no longer exists,
+// the provider shall decide whether it has reason to remain joined to the
+// channel. If not, it shall generate ChannelLeaveRequest.
+
+    void send_mcs_channel_join_confirm_pdu(Transport * trans, uint16_t userid, uint16_t chanid)
+    {
+        Stream stream(32768);
+        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        stream.out_uint8((MCS_CJCF << 2) | 2);
+        stream.out_uint8(0);
+        stream.out_uint16_be(userid);
+        stream.out_uint16_be(chanid);
+        TODO("this should be sent only if different from requested chan_id")
+        stream.out_uint16_be(chanid);
+        tpdu.end();
+        tpdu.send(trans);
+    }
+
+
+// 2.2.1.8 Client MCS Channel Join Request PDU
+// -------------------------------------------
+// The MCS Channel Join Request PDU is an RDP Connection Sequence PDU sent
+// from client to server during the Channel Connection phase (see section
+// 1.3.1.1). It is sent after receiving the MCS Attach User Confirm PDU
+// (section 2.2.1.7). The client uses the MCS Channel Join Request PDU to
+// join the user channel obtained from the Attach User Confirm PDU, the
+// I/O channel and all of the static virtual channels obtained from the
+// Server Network Data structure (section 2.2.1.4.4).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+//                     section 13.7.
+
+// mcsCJrq (5 bytes): PER-encoded MCS Domain PDU which encapsulates an
+//                    MCS Channel Join Request structure as specified in
+//                    [T125] sections 10.19 and I.3 (the ASN.1 structure
+//                    definitions are given in [T125] section 7, parts 6
+//                    and 10).
+
+// ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+// {
+//     initiator UserId
+//     channelId ChannelId
+//               -- may be zero
+// }
+
+
+// 11.21 ChannelJoinRequest
+// ------------------------
+
+// ChannelJoinRequest is generated by an MCS-CHANNEL-JOIN request. If valid, it
+// rises until it reaches an MCS provider with enough information to generate a
+// ChannelJoinConfirm reply. This may be the top MCS provider.
+
+// Table 11-21/T.125 – ChannelJoinRequest MCSPDU
+// +-----------------+-------------------------------+------------------------+
+// | Contents        |           Source              |           Sink         |
+// +-----------------+-------------------------------+------------------------+
+// | Initiator       |      Requesting Provider      |       Higher provider  |
+// +-----------------+-------------------------------+------------------------+
+// | Channel Id      |      Request                  |       Higher provider  |
+// +-----------------+-------------------------------+------------------------+
+
+
+// The user id of the initiating MCS attachment is supplied by the MCS provider
+// that receives the primitive request. Providers that receive
+// ChannelJoinRequest subsequently shall validate the user id to ensure that it
+// is legitimately assigned to the subtree of origin. If the user id is invalid,
+// the MCSPDU shall be ignored.
+
+// NOTE – This allows for the possibility that ChannelJoinRequest may be racing
+// upward against a purge of the initiating user id flowing down. A provider
+// that receives PurgeChannelsIndication first might receive a
+// ChannelJoinRequest soon thereafter that contains an invalid user id. This is
+// a normal occurrence and is not cause for rejecting the MCSPDU.
+
+// ChannelJoinRequest may rise to an MCS provider that has the requested channel
+// id in its information base. Any such provider, being consistent with the top
+// MCS provider, will agree whether the request should succeed. If the request
+// should fail, the provider shall generate an unsuccessful ChannelJoinConfirm.
+// If it should succeed and the provider is already joined to the same channel,
+// the provider shall generate a successful ChannelJoinConfirm. In these two
+// cases, MCS-CHANNEL-JOIN completes without necessarily visiting the top MCS
+// provider. Otherwise, if the request should succeed but the channel is not yet
+// joined, a provider shall forward ChannelJoinRequest upward.
+
+// If ChannelJoinRequest rises to the top MCS provider, the channel id
+// requested may be zero, which is in no information base because it is an
+// invalid id. If the domain limit on the number of channels in use allows,
+// a new assigned channel id shall be generated and returned in a successful
+// ChannelJoinConfirm. If the channel id requested is in the static range and
+// the domain limit on the number of channels in use allows, the channel id
+// shall be entered into the information base and shall likewise be returned
+// in a successful ChannelJoinConfirm.
+
+// Otherwise, the request will succeed only if the channel id is already in the
+// information base of the top MCS provider. A user id channel can only be
+// joined by the same user. A private channel id can be joined only by users
+// previously admitted by its manager. An assigned channel id can be joined
+// by any user.
+
+    void recv_mcs_channel_join_request_pdu(Transport * trans, uint16_t & userid, uint16_t & chanid){
+        Stream stream(32768);
+        // read tpktHeader (4 bytes = 3 0 len)
+        // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+        X224In in(trans, stream);
+
+        uint8_t opcode = stream.in_uint8();
+        if ((opcode >> 2) != MCS_CJRQ) {
+            LOG(LOG_INFO, "unexpected opcode = %u", opcode);
+            throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
+        }
+        userid = stream.in_uint16_be();
+        chanid = stream.in_uint16_be();
+
+        if (opcode & 2) {
+            stream.skip_uint8(2);
+        }
+
+        in.end();
+    }
+
+
+    void incoming(Callback & cb) throw (Error)
+    {
+        if (this->verbose){
             LOG(LOG_INFO, "Front::incoming()");
         }
-        // Connection Initiation
-        // ---------------------
 
-        // The client initiates the connection by sending the server an X.224 Connection
-        //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
-        // PDU (class 0). From this point, all subsequent data sent between client and
-        // server is wrapped in an X.224 Data Protocol Data Unit (PDU).
-
-        // Client                                                     Server
-        //    |------------X224 Connection Request PDU----------------> |
-        //    | <----------X224 Connection Confirm PDU----------------- |
-
-        if (this->ini->globals.debug.front){
-            LOG(LOG_INFO, "Front::incoming::receiving x224 request PDU");
-        }
-        recv_x224_connection_request_pdu(this->trans);
-        if (this->ini->globals.debug.front){
-            LOG(LOG_INFO, "Front::incoming::sending x224 connection confirm PDU");
-        }
-        send_x224_connection_confirm_pdu(this->trans);
-
-        // Basic Settings Exchange
-        // -----------------------
-
-        // Basic Settings Exchange: Basic settings are exchanged between the client and
-        // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
-        // Connect Initial PDU contains a GCC Conference Create Request, while the
-        // Connect Response PDU contains a GCC Conference Create Response.
-
-        // These two Generic Conference Control (GCC) packets contain concatenated
-        // blocks of settings data (such as core data, security data and network data)
-        // which are read by client and server
-
-        // Client                                                     Server
-        //    |--------------MCS Connect Initial PDU with-------------> |
-        //                   GCC Conference Create Request
-        //    | <------------MCS Connect Response PDU with------------- |
-        //                   GCC conference Create Response
-
-        if (this->ini->globals.debug.front){
-            LOG(LOG_INFO, "Front::incoming::Basic Settings Exchange");
-            LOG(LOG_INFO, "Front::incoming::channel_list : %u", this->channel_list.size());
-        }
-
-        recv_mcs_connect_initial_pdu_with_gcc_conference_create_request(
-            this->trans,
-            &this->client_info,
-            this->channel_list);
-
-        send_mcs_connect_response_pdu_with_gcc_conference_create_response(
-            this->trans,
-            &this->client_info,
-            this->channel_list,
-            this->server_random,
-            this->encrypt.rc4_key_size,
-            this->pub_mod,
-            this->pri_exp);
-
-        // Channel Connection
-        // ------------------
-
-        // Channel Connection: The client sends an MCS Erect Domain Request PDU,
-        // followed by an MCS Attach User Request PDU to attach the primary user
-        // identity to the MCS domain.
-
-        // The server responds with an MCS Attach User Response PDU containing the user
-        // channel ID.
-
-        // The client then proceeds to join the :
-        // - user channel,
-        // - the input/output (I/O) channel
-        // - and all of the static virtual channels
-
-        // (the I/O and static virtual channel IDs are obtained from the data embedded
-        //  in the GCC packets) by using multiple MCS Channel Join Request PDUs.
-
-        // The server confirms each channel with an MCS Channel Join Confirm PDU.
-        // (The client only sends a Channel Join Request after it has received the
-        // Channel Join Confirm for the previously sent request.)
-
-        // From this point, all subsequent data sent from the client to the server is
-        // wrapped in an MCS Send Data Request PDU, while data sent from the server to
-        //  the client is wrapped in an MCS Send Data Indication PDU. This is in
-        // addition to the data being wrapped by an X.224 Data PDU.
-
-        // Client                                                     Server
-        //    |-------MCS Erect Domain Request PDU--------------------> |
-        //    |-------MCS Attach User Request PDU---------------------> |
-
-        //    | <-----MCS Attach User Confirm PDU---------------------- |
-
-        //    |-------MCS Channel Join Request PDU--------------------> |
-        //    | <-----MCS Channel Join Confirm PDU--------------------- |
-
-        if (this->ini->globals.debug.front){
-            LOG(LOG_INFO, "Front::incoming::Channel Connection");
-            LOG(LOG_INFO, "Front::incoming::recv_mcs_erect_domain_and_attach_user_request_pdu : user_id=%u", this->userid);
-        }
-        recv_mcs_erect_domain_and_attach_user_request_pdu(this->trans, this->userid);
-
-        if (this->ini->globals.debug.front){
-            LOG(LOG_INFO, "Front::incoming::send_mcs_attach_user_confirm_pdu : user_id=%u", this->userid);
-        }
-        send_mcs_attach_user_confirm_pdu(this->trans, this->userid);
-
+        switch (this->state){
+        case CONNECTION_INITIATION:
         {
-            uint16_t tmp_userid;
-            uint16_t tmp_chanid;
-            recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
-            if (tmp_userid != this->userid){
-                LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
-                throw Error(ERR_MCS_BAD_USERID);
-            }
-            if (tmp_chanid != this->userid + MCS_USERCHANNEL_BASE){
-                LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->userid + MCS_USERCHANNEL_BASE, tmp_chanid);
-                throw Error(ERR_MCS_BAD_CHANID);
-            }
-            if (this->ini->globals.debug.front){
-                LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (G): user_id=%u chanid=%u", this->userid, tmp_chanid);
-            }
-            send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
-        }
+            // Connection Initiation
+            // ---------------------
 
+            // The client initiates the connection by sending the server an X.224 Connection
+            //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
+            // PDU (class 0). From this point, all subsequent data sent between client and
+            // server is wrapped in an X.224 Data Protocol Data Unit (PDU).
 
-        {
-            uint16_t tmp_userid;
-            uint16_t tmp_chanid;
-            recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
-            if (tmp_userid != this->userid){
-                LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
-                throw Error(ERR_MCS_BAD_USERID);
-            }
-            if (tmp_chanid != MCS_GLOBAL_CHANNEL){
-                LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", MCS_GLOBAL_CHANNEL, tmp_chanid);
-                throw Error(ERR_MCS_BAD_CHANID);
-            }
-            if (this->ini->globals.debug.front){
-                LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (IO): user_id=%u chanid=%u", this->userid, tmp_chanid);
-            }
-            send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
-        }
+            // Client                                                     Server
+            //    |------------X224 Connection Request PDU----------------> |
+            //    | <----------X224 Connection Confirm PDU----------------- |
 
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::receiving x224 request PDU");
+            }
 
-        for (size_t i = 0 ; i < this->channel_list.size() ; i++){
+            {
+                Stream in(8192);
+                X224In crtpdu(this->trans, in);
+                if (crtpdu.tpdu_hdr.code != ISO_PDU_CR) {
+                    LOG(LOG_INFO, "recv x224 connection request PDU failed code=%u", crtpdu.tpdu_hdr.code);
+                    throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
+                }
+                crtpdu.end();
+            }
+
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::sending x224 connection confirm PDU");
+            }
+            {
+                Stream out(128);
+                X224Out cctpdu(X224Packet::CC_TPDU, out);
+                cctpdu.end();
+                cctpdu.send(this->trans);
+            }
+            // Basic Settings Exchange
+            // -----------------------
+
+            // Basic Settings Exchange: Basic settings are exchanged between the client and
+            // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
+            // Connect Initial PDU contains a GCC Conference Create Request, while the
+            // Connect Response PDU contains a GCC Conference Create Response.
+
+            // These two Generic Conference Control (GCC) packets contain concatenated
+            // blocks of settings data (such as core data, security data and network data)
+            // which are read by client and server
+
+            // Client                                                     Server
+            //    |--------------MCS Connect Initial PDU with-------------> |
+            //                   GCC Conference Create Request
+            //    | <------------MCS Connect Response PDU with------------- |
+            //                   GCC conference Create Response
+
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::Basic Settings Exchange");
+                LOG(LOG_INFO, "Front::incoming::channel_list : %u", this->channel_list.size());
+            }
+
+            this->recv_mcs_connect_initial_pdu_with_gcc_conference_create_request(
+                this->trans,
+                &this->client_info,
+                this->channel_list);
+
+            this->send_mcs_connect_response_pdu_with_gcc_conference_create_response(
+                this->trans,
+                &this->client_info,
+                this->channel_list,
+                this->server_random,
+                this->encrypt.rc4_key_size,
+                this->pub_mod,
+                this->pri_exp);
+
+            // Channel Connection
+            // ------------------
+
+            // Channel Connection: The client sends an MCS Erect Domain Request PDU,
+            // followed by an MCS Attach User Request PDU to attach the primary user
+            // identity to the MCS domain.
+
+            // The server responds with an MCS Attach User Response PDU containing the user
+            // channel ID.
+
+            // The client then proceeds to join the :
+            // - user channel,
+            // - the input/output (I/O) channel
+            // - and all of the static virtual channels
+
+            // (the I/O and static virtual channel IDs are obtained from the data embedded
+            //  in the GCC packets) by using multiple MCS Channel Join Request PDUs.
+
+            // The server confirms each channel with an MCS Channel Join Confirm PDU.
+            // (The client only sends a Channel Join Request after it has received the
+            // Channel Join Confirm for the previously sent request.)
+
+            // From this point, all subsequent data sent from the client to the server is
+            // wrapped in an MCS Send Data Request PDU, while data sent from the server to
+            //  the client is wrapped in an MCS Send Data Indication PDU. This is in
+            // addition to the data being wrapped by an X.224 Data PDU.
+
+            // Client                                                     Server
+            //    |-------MCS Erect Domain Request PDU--------------------> |
+            //    |-------MCS Attach User Request PDU---------------------> |
+
+            //    | <-----MCS Attach User Confirm PDU---------------------- |
+
+            //    |-------MCS Channel Join Request PDU--------------------> |
+            //    | <-----MCS Channel Join Confirm PDU--------------------- |
+
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::Channel Connection");
+                LOG(LOG_INFO, "Front::incoming::recv_mcs_erect_domain_and_attach_user_request_pdu : user_id=%u", this->userid);
+            }
+            this->recv_mcs_erect_domain_and_attach_user_request_pdu(this->trans, this->userid);
+
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::send_mcs_attach_user_confirm_pdu : user_id=%u", this->userid);
+            }
+            this->send_mcs_attach_user_confirm_pdu(this->trans, this->userid);
+
+            {
                 uint16_t tmp_userid;
                 uint16_t tmp_chanid;
                 recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
@@ -763,132 +1820,325 @@ public:
                     LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
                     throw Error(ERR_MCS_BAD_USERID);
                 }
-                if (tmp_chanid != this->channel_list[i].chanid){
-                    LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->channel_list[i].chanid, tmp_chanid);
+                if (tmp_chanid != this->userid + MCS_USERCHANNEL_BASE){
+                    LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->userid + MCS_USERCHANNEL_BASE, tmp_chanid);
                     throw Error(ERR_MCS_BAD_CHANID);
                 }
-                if (this->ini->globals.debug.front){
-                    LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu : user_id=%u chanid=%u", this->userid, tmp_chanid);
+                if (this->verbose){
+                    LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (G): user_id=%u chanid=%u", this->userid, tmp_chanid);
                 }
-                send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
-                this->channel_list.set_chanid(i, tmp_chanid);
+                this->send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
+            }
+
+            {
+                uint16_t tmp_userid;
+                uint16_t tmp_chanid;
+                this->recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
+                if (tmp_userid != this->userid){
+                    LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
+                    throw Error(ERR_MCS_BAD_USERID);
+                }
+                if (tmp_chanid != MCS_GLOBAL_CHANNEL){
+                    LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", MCS_GLOBAL_CHANNEL, tmp_chanid);
+                    throw Error(ERR_MCS_BAD_CHANID);
+                }
+                if (this->verbose){
+                    LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu (IO): user_id=%u chanid=%u", this->userid, tmp_chanid);
+                }
+                this->send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
+            }
+
+            for (size_t i = 0 ; i < this->channel_list.size() ; i++){
+                    uint16_t tmp_userid;
+                    uint16_t tmp_chanid;
+                    this->recv_mcs_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
+                    if (tmp_userid != this->userid){
+                        LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
+                        throw Error(ERR_MCS_BAD_USERID);
+                    }
+                    if (tmp_chanid != this->channel_list[i].chanid){
+                        LOG(LOG_INFO, "MCS error bad chanid expecting %u got %u", this->channel_list[i].chanid, tmp_chanid);
+                        throw Error(ERR_MCS_BAD_CHANID);
+                    }
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::incoming::mcs_channel_join_confirm_pdu : user_id=%u chanid=%u", this->userid, tmp_chanid);
+                    }
+                    this->send_mcs_channel_join_confirm_pdu(this->trans, this->userid, tmp_chanid);
+                    this->channel_list.set_chanid(i, tmp_chanid);
+            }
+
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::RDP Security Commencement");
+            }
+
+            // RDP Security Commencement
+            // -------------------------
+
+            // RDP Security Commencement: If standard RDP security methods are being
+            // employed and encryption is in force (this is determined by examining the data
+            // embedded in the GCC Conference Create Response packet) then the client sends
+            // a Security Exchange PDU containing an encrypted 32-byte random number to the
+            // server. This random number is encrypted with the public key of the server
+            // (the server's public key, as well as a 32-byte server-generated random
+            // number, are both obtained from the data embedded in the GCC Conference Create
+            //  Response packet).
+
+            // The client and server then utilize the two 32-byte random numbers to generate
+            // session keys which are used to encrypt and validate the integrity of
+            // subsequent RDP traffic.
+
+            // From this point, all subsequent RDP traffic can be encrypted and a security
+            // header is included with the data if encryption is in force (the Client Info
+            // and licensing PDUs are an exception in that they always have a security
+            // header). The Security Header follows the X.224 and MCS Headers and indicates
+            // whether the attached data is encrypted.
+
+            // Even if encryption is in force server-to-client traffic may not always be
+            // encrypted, while client-to-server traffic will always be encrypted by
+            // Microsoft RDP implementations (encryption of licensing PDUs is optional,
+            // however).
+
+            // Client                                                     Server
+            //    |------Security Exchange PDU ---------------------------> |
+
+            recv_security_exchange_PDU(this->trans,
+                this->decrypt, this->client_crypt_random);
+
+            ssl_mod_exp(this->client_random, 64,
+                        this->client_crypt_random, 64,
+                        this->pub_mod, 64,
+                        this->pri_exp, 64);
+
+            // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
+            TODO(" looks like decrypt sign key is never used  if it's true remove it from CryptContext")
+            TODO(" this methode should probably move to ssl_calls")
+            rdp_sec_generate_keys(
+                this->decrypt,
+                this->encrypt,
+                this->encrypt.sign_key,
+                this->client_random,
+                this->server_random,
+                this->encrypt.rc4_key_size);
+
+
+            // Secure Settings Exchange
+            // ------------------------
+
+            // Secure Settings Exchange: Secure client data (such as the username,
+            // password and auto-reconnect cookie) is sent to the server using the Client
+            // Info PDU.
+
+            // Client                                                     Server
+            //    |------ Client Info PDU      ---------------------------> |
+
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
+            }
+
+            enum {
+                WAITING_FOR_LOGON_INFO = 0,
+                WAITING_FOR_ANSWER_TO_LICENCE,
+                DEMAND_ACTIVE_TO_SEND,
+                WAITING_FOR_CONFIRM_ACTIVE,
+            } state = WAITING_FOR_LOGON_INFO;
+
+            while (state != WAITING_FOR_CONFIRM_ACTIVE) {
+                Stream stream(65535);
+                X224In tpdu(this->trans, stream);
+                McsIn mcs_in(stream);
+                if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
+                    TODO("We should make a special case for MCS_DPUM, as this one is a demand to end connection");
+                    // mcs_in.opcode >> 2) == MCS_DPUM
+                    throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+                }
+
+                if (this->verbose >= 256){
+                    this->decrypt.dump();
+                }
+
+                SecIn sec(stream, this->decrypt);
+
+                switch (state){
+                case WAITING_FOR_LOGON_INFO:
+
+                    if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
+                        throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
+                    }
+
+                    /* this is the first test that the decrypt is working */
+                    this->client_info.process_logon_info(stream);
+                    if (this->client_info.is_mce) {
+                        LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
+                        LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");
+                        send_media_lic_response(this->trans, this->userid);
+                        state = DEMAND_ACTIVE_TO_SEND;
+                    }
+                    else {
+                        LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
+                        LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
+
+                        send_lic_initial(this->trans, this->userid);
+
+                        LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
+                        state = WAITING_FOR_ANSWER_TO_LICENCE;
+                    }
+                break;
+
+                case WAITING_FOR_ANSWER_TO_LICENCE:
+                    // Licensing
+                    // ---------
+
+                    // Licensing: The goal of the licensing exchange is to transfer a
+                    // license from the server to the client.
+
+                    // The client should store this license and on subsequent
+                    // connections send the license to the server for validation.
+                    // However, in some situations the client may not be issued a
+                    // license to store. In effect, the packets exchanged during this
+                    // phase of the protocol depend on the licensing mechanisms
+                    // employed by the server. Within the context of this document
+                    // we will assume that the client will not be issued a license to
+                    // store. For details regarding more advanced licensing scenarios
+                    // that take place during the Licensing Phase, see [MS-RDPELE].
+
+                    // Client                                                     Server
+                    //    | <------ Licence Error PDU Valid Client ---------------- |
+
+                    // Disconnect Provider Ultimatum datagram
+
+                    if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
+                        uint8_t tag = stream.in_uint8();
+                        uint8_t version = stream.in_uint8();
+                        uint16_t length = stream.in_uint16_le();
+                        TODO("currently we just skip data, we should consume them instead")
+                        stream.p = stream.end;
+                        LOG(LOG_INFO, "Front::WAITING_FOR_ANSWER_TO_LICENCE sec_flags=%x %u %u %u", sec.flags, tag, version, length);
+
+                        switch (tag) {
+                        case LICENCE_TAG_DEMAND:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_DEMAND");
+                            LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
+                            send_lic_response(this->trans, this->userid);
+                            break;
+                        case LICENCE_TAG_PRESENT:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_PRESENT");
+                            break;
+                        case LICENCE_TAG_AUTHREQ:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_AUTHREQ");
+                            break;
+                        case LICENCE_TAG_ISSUE:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_ISSUE");
+                            break;
+                        case LICENCE_TAG_REISSUE:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_REISSUE");
+                            break;
+                        case LICENCE_TAG_RESULT:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_RESULT");
+                            break;
+                        case LICENCE_TAG_REQUEST:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_REQUEST");
+                            LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
+                            send_lic_response(this->trans, this->userid);
+                            break;
+                        case LICENCE_TAG_AUTHRESP:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_AUTHRESP");
+                            break;
+                        default:
+                            LOG(LOG_INFO, "Front::LICENCE_TAG_UNKNOWN %u", tag);
+    //                        exit(0);
+                            continue;
+                        }
+                    }
+                    else {
+                        uint8_t length = stream.in_uint8();
+                        stream.p += length;
+                        continue;
+                    }
+
+                    // Capabilities Exchange
+                    // ---------------------
+
+                    // Capabilities Negotiation: The server sends the set of capabilities it
+                    // supports to the client in a Demand Active PDU. The client responds with its
+                    // capabilities by sending a Confirm Active PDU.
+
+                    // Client                                                     Server
+                    //    | <------- Demand Active PDU ---------------------------- |
+                    //    |--------- Confirm Active PDU --------------------------> |
+
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::incoming::send_demand_active");
+                    }
+                    this->send_demand_active();
+
+                    state = WAITING_FOR_CONFIRM_ACTIVE;
+                break;
+
+                case WAITING_FOR_CONFIRM_ACTIVE:
+                break;
+                default:
+                break;
+                }
+                sec.end();
+                mcs_in.end();
+                tpdu.end();
+            }
+            this->state = ACTIVATE_AND_PROCESS_DATA;
         }
-        if (this->ini->globals.debug.front){
-            LOG(LOG_INFO, "Front::incoming::RDP Security Commencement");
-        }
+        break;
 
-        // RDP Security Commencement
-        // -------------------------
+        case ACTIVATE_AND_PROCESS_DATA:
+        // Connection Finalization
+        // -----------------------
 
-        // RDP Security Commencement: If standard RDP security methods are being
-        // employed and encryption is in force (this is determined by examining the data
-        // embedded in the GCC Conference Create Response packet) then the client sends
-        // a Security Exchange PDU containing an encrypted 32-byte random number to the
-        // server. This random number is encrypted with the public key of the server
-        // (the server's public key, as well as a 32-byte server-generated random
-        // number, are both obtained from the data embedded in the GCC Conference Create
-        //  Response packet).
-
-        // The client and server then utilize the two 32-byte random numbers to generate
-        // session keys which are used to encrypt and validate the integrity of
-        // subsequent RDP traffic.
-
-        // From this point, all subsequent RDP traffic can be encrypted and a security
-        // header is included with the data if encryption is in force (the Client Info
-        // and licensing PDUs are an exception in that they always have a security
-        // header). The Security Header follows the X.224 and MCS Headers and indicates
-        // whether the attached data is encrypted.
-
-        // Even if encryption is in force server-to-client traffic may not always be
-        // encrypted, while client-to-server traffic will always be encrypted by
-        // Microsoft RDP implementations (encryption of licensing PDUs is optional,
-        // however).
+        // Connection Finalization: The client and server send PDUs to finalize the
+        // connection details. The client-to-server and server-to-client PDUs exchanged
+        // during this phase may be sent concurrently as long as the sequencing in
+        // either direction is maintained (there are no cross-dependencies between any
+        // of the client-to-server and server-to-client PDUs). After the client receives
+        // the Font Map PDU it can start sending mouse and keyboard input to the server,
+        // and upon receipt of the Font List PDU the server can start sending graphics
+        // output to the client.
 
         // Client                                                     Server
-        //    |------Security Exchange PDU ---------------------------> |
+        //    |----------Synchronize PDU------------------------------> |
+        //    |----------Control PDU Cooperate------------------------> |
+        //    |----------Control PDU Request Control------------------> |
+        //    |----------Persistent Key List PDU(s)-------------------> |
+        //    |----------Font List PDU--------------------------------> |
 
-        recv_security_exchange_PDU(this->trans,
-            this->decrypt, this->client_crypt_random);
+        //    | <--------Synchronize PDU------------------------------- |
+        //    | <--------Control PDU Cooperate------------------------- |
+        //    | <--------Control PDU Granted Control------------------- |
+        //    | <--------Font Map PDU---------------------------------- |
 
-        ssl_mod_exp(this->client_random, 64,
-                    this->client_crypt_random, 64,
-                    this->pub_mod, 64,
-                    this->pri_exp, 64);
-
-        // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
-        #warning looks like decrypt sign key is never used, if it's true remove it from CryptContext'
-        #warning this methode should probably move to ssl_calls
-        rdp_sec_generate_keys(
-            this->decrypt,
-            this->encrypt,
-            this->encrypt.sign_key,
-            this->client_random,
-            this->server_random,
-            this->encrypt.rc4_key_size);
+        // All PDU's in the client-to-server direction must be sent in the specified
+        // order and all PDU's in the server to client direction must be sent in the
+        // specified order. However, there is no requirement that client to server PDU's
+        // be sent before server-to-client PDU's. PDU's may be sent concurrently as long
+        // as the sequencing in either direction is maintained.
 
 
-        // Secure Settings Exchange
-        // ------------------------
-
-        // Secure Settings Exchange: Secure client data (such as the username,
-        // password and auto-reconnect cookie) is sent to the server using the Client
-        // Info PDU.
-
-        // Client                                                     Server
-        //    |------ Client Info PDU      ---------------------------> |
-
-        if (this->ini->globals.debug.front){
-            LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
-        }
-
+        // Besides input and graphics data, other data that can be exchanged between
+        // client and server after the connection has been finalized includes
+        // connection management information and virtual channel messages (exchanged
+        // between client-side plug-ins and server-side applications).
         {
-            Stream stream(8192);
-            X224In tpdu(this->trans, stream);
-            McsIn mcs_in(stream);
-
-            if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
-                throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming");
             }
-
-            SecIn sec(stream, this->decrypt);
-
-            if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
-                throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
-            }
-
-            this->client_info.process_logon_info(stream);
-        }
-
-        // Licensing
-        // ---------
-
-        // Licensing: The goal of the licensing exchange is to transfer a
-        // license from the server to the client.
-
-        // The client should store this license and on subsequent
-        // connections send the license to the server for validation.
-        // However, in some situations the client may not be issued a
-        // license to store. In effect, the packets exchanged during this
-        // phase of the protocol depend on the licensing mechanisms
-        // employed by the server. Within the context of this document
-        // we will assume that the client will not be issued a license to
-        // store. For details regarding more advanced licensing scenarios
-        // that take place during the Licensing Phase, see [MS-RDPELE].
-
-        // Client                                                     Server
-        //    | <------ Licence Error PDU Valid Client ---------------- |
-
-        if (this->ini->globals.debug.front){
-            LOG(LOG_INFO, "Front::incoming::licencing");
-        }
-        if (this->client_info.is_mce) {
-            send_media_lic_response(this->trans, this->userid);
-        }
-        else {
-            send_lic_initial(this->trans, this->userid);
+            ChannelList & channel_list = this->channel_list;
 
             Stream stream(65535);
+
             X224In tpdu(this->trans, stream);
+
+            if (tpdu.tpdu_hdr.code != X224Packet::DT_TPDU){
+                TODO("we can also get a DR (Disconnect Request), this a normal case that should be managed")
+                LOG(LOG_INFO, "Front::Unexpected non data PDU (got %u)", tpdu.tpdu_hdr.code);
+                throw Error(ERR_X224_EXPECTED_DATA_PDU);
+            }
+
             McsIn mcs_in(stream);
 
             // Disconnect Provider Ultimatum datagram
@@ -902,174 +2152,146 @@ public:
 
             SecIn sec(stream, this->decrypt);
 
-            if (!sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
-                throw Error(ERR_SEC_EXPECTED_LICENCE_NEG);
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
             }
-            send_lic_response(this->trans, this->userid);
-        }
 
-        // Capabilities Exchange
-        // ---------------------
+            if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
+                if (this->verbose){
+                    LOG(LOG_INFO, "Front::incoming::SEC_REDIRECT_ENCRYPT");
+                }
+                /* Check for a redirect packet, starts with 00 04 */
+                if (stream.p[0] == 0 && stream.p[1] == 4){
+                /* for some reason the PDU and the length seem to be swapped.
+                   This isn't good, but we're going to do a byte for byte
+                   swap.  So the first four value appear as: 00 04 XX YY,
+                   where XX YY is the little endian length. We're going to
+                   use 04 00 as the PDU type, so after our swap this will look
+                   like: XX YY 04 00 */
 
-        // Capabilities Negotiation: The server sends the set of capabilities it
-        // supports to the client in a Demand Active PDU. The client responds with its
-        // capabilities by sending a Confirm Active PDU.
+                    uint8_t swapbyte1 = stream.p[0];
+                    stream.p[0] = stream.p[2];
+                    stream.p[2] = swapbyte1;
 
-        // Client                                                     Server
-        //    | <------- Demand Active PDU ---------------------------- |
-        //    |--------- Confirm Active PDU --------------------------> |
+                    uint8_t swapbyte2 = stream.p[1];
+                    stream.p[1] = stream.p[3];
+                    stream.p[3] = swapbyte2;
 
-        if (this->ini->globals.debug.front){
-            LOG(LOG_INFO, "Front::incoming::send_demand_active");
-        }
-        this->send_demand_active();
-
-    }
-
-
-    void activate_and_process_data(Callback & cb)
-    {
-        if (this->ini->globals.debug.front){
-            LOG(LOG_INFO, "Front::activate_and_process_data");
-        }
-        ChannelList & channel_list = this->channel_list;
-        Stream stream(65535);
-
-        X224In tpdu(this->trans, stream);
-        McsIn mcs_in(stream);
-
-        // Disconnect Provider Ultimatum datagram
-        if ((mcs_in.opcode >> 2) == MCS_DPUM) {
-            throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
-        }
-
-        if ((mcs_in.opcode >> 2) != MCS_SDRQ) {
-            throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
-        }
-
-        SecIn sec(stream, this->decrypt);
-
-        if (sec.flags & 0x0400){ /* SEC_REDIRECT_ENCRYPT */
-            if (this->ini->globals.debug.front){
-                LOG(LOG_INFO, "Front::activate_and_process_data::SEC_REDIRECT_ENCRYPT");
-            }
-            /* Check for a redirect packet, starts with 00 04 */
-            if (stream.p[0] == 0 && stream.p[1] == 4){
-            /* for some reason the PDU and the length seem to be swapped.
-               This isn't good, but we're going to do a byte for byte
-               swap.  So the first four value appear as: 00 04 XX YY,
-               where XX YY is the little endian length. We're going to
-               use 04 00 as the PDU type, so after our swap this will look
-               like: XX YY 04 00 */
-
-                uint8_t swapbyte1 = stream.p[0];
-                stream.p[0] = stream.p[2];
-                stream.p[2] = swapbyte1;
-
-                uint8_t swapbyte2 = stream.p[1];
-                stream.p[1] = stream.p[3];
-                stream.p[3] = swapbyte2;
-
-                uint8_t swapbyte3 = stream.p[2];
-                stream.p[2] = stream.p[3];
-                stream.p[3] = swapbyte3;
-            }
-        }
-
-        if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL) {
-            size_t num_channel_src = channel_list.size();
-            for (size_t index = 0; index < channel_list.size(); index++){
-                if (channel_list[index].chanid == mcs_in.chan_id){
-                    num_channel_src = index;
-                    break;
+                    uint8_t swapbyte3 = stream.p[2];
+                    stream.p[2] = stream.p[3];
+                    stream.p[3] = swapbyte3;
                 }
             }
 
-            if (num_channel_src >= channel_list.size()) {
-                LOG(LOG_ERR, "Front::activate_and_process_data::Unknown Channel");
-                throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
-            }
-
-            const McsChannelItem & channel = channel_list[num_channel_src];
-
-            int length = stream.in_uint32_le();
-            int flags = stream.in_uint32_le();
-
-            size_t chunk_size = stream.end - stream.p;
-            
-            cb.send_to_mod_channel(channel.name, stream.p, length, chunk_size, flags);
-            stream.p += chunk_size;
-        }
-        else {
-            while (stream.p < stream.end) {
-                #warning here should be a ShareControlHeader/ShareDataHeader, check
-                int length = stream.in_uint16_le();
-                uint8_t * next_packet = stream.p + length;
-                if (length == 0x8000) {
-                    next_packet = next_packet - 0x8000 + 8;
-                }
-                else {
-                    int pdu_code = stream.in_uint16_le();
-                    stream.skip_uint8(2); /* mcs user id */
-                    switch (pdu_code & 0xf) {
-
-                    case 0:
-                        if (this->ini->globals.debug.front){
-                            LOG(LOG_INFO, "Front::activate_and_process_data::PDU_TYPE 0");
-                        }
-                        break;
-                    case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
-                        if (this->ini->globals.debug.front){
-                            LOG(LOG_INFO, "Front::activate_and_process_data::PDU_TYPE DEMANDACTIVEPDU");
-                        }
-                        break;
-                    case PDUTYPE_CONFIRMACTIVEPDU:
-                        if (this->ini->globals.debug.front){
-                            LOG(LOG_INFO, "Front::activate_and_process_data::PDU_TYPE CONFIRMACTIVEPDU");
-                        }
-                        this->process_confirm_active(stream);
-                        break;
-                    case PDUTYPE_DATAPDU: /* 7 */
-                        // this is rdp_process_data that will set up_and_running to 1
-                        // when fonts have been received
-                        // we will not exit this loop until we are in this state.
-                        #warning see what happen if we never receive up_and_running due to some error in client code ?
-                        this->process_data(stream, cb);
-                        break;
-                    case PDUTYPE_DEACTIVATEALLPDU:
-                        if (this->ini->globals.debug.front){
-                            LOG(LOG_INFO, "Front::activate_and_process_data::unsupported PDUTYPE DEACTIVATEALLPDU");                        
-                        }
-                        break;
-                    case PDUTYPE_SERVER_REDIR_PKT:
-                        if (this->ini->globals.debug.front){
-                            LOG(LOG_INFO, "Front::activate_and_process_data::"
-                                "unsupported PDU SERVER_REDIR_PKT in session_data (%d)\n", pdu_code & 0xf);
-                        }
-                        break;
-                    default:
-                        LOG(LOG_WARNING, "unknown PDU type in session_data (%d)\n", pdu_code & 0xf);
+            if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL) {
+                size_t num_channel_src = channel_list.size();
+                for (size_t index = 0; index < channel_list.size(); index++){
+                    if (channel_list[index].chanid == mcs_in.chan_id){
+                        num_channel_src = index;
                         break;
                     }
                 }
-                next_packet = stream.p + length;
+
+                if (num_channel_src >= channel_list.size()) {
+                    LOG(LOG_ERR, "Front::incoming::Unknown Channel");
+                    throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
+                }
+
+                const McsChannelItem & channel = channel_list[num_channel_src];
+
+                int length = stream.in_uint32_le();
+                int flags = stream.in_uint32_le();
+
+                size_t chunk_size = stream.end - stream.p;
+
+                cb.send_to_mod_channel(channel.name, stream.p, length, chunk_size, flags);
+                stream.p += chunk_size;
+            }
+            else {
+                while (stream.p < stream.end) {
+                    TODO(" here should be a ShareControlHeader/ShareDataHeader  check")
+                    assert(stream.check_rem(2));
+                    uint16_t length = stream.in_uint16_le();
+                    uint8_t * next_packet = stream.p + length;
+                    if (length < 4){
+                        TODO("Can't be a ShareControlHeader... should not happen but it does. We should try to understand why.")
+                        LOG(LOG_INFO, "PDU length (%u) too small for ShareControlHeader, remaining data :%u", length, stream.end - stream.p + 2);
+    //                    exit(0);
+                    }
+                    else if (length == 0x8000) {
+                        next_packet = next_packet - 0x8000 + 8;
+                    }
+                    else if (length > stream.end - stream.p + 2){
+                        TODO("Should not happen. It means PDU length is inconsistant with TPDU length. It should not happen but it does")
+                        LOG(LOG_INFO, "PDU length (%u) too large for remaining TPDU data (%u)", length, stream.end - stream.p + 2);
+    //                    exit(0);
+                        next_packet = stream.end;
+                    }
+                    else {
+                        assert(stream.check_rem(2));
+                        int pdu_code = stream.in_uint16_le();
+                        if (this->verbose){
+                            LOG(LOG_INFO, "front::incoming::pdu_code=%d", pdu_code);
+                        }
+                        assert(stream.check_rem(2));
+                        stream.skip_uint8(2); /* mcs user id */
+
+                        switch (pdu_code & 0xf) {
+                        case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
+                            if (this->verbose){
+                                LOG(LOG_INFO, "Front::incoming::PDU_TYPE DEMANDACTIVEPDU");
+                            }
+                            break;
+                        case PDUTYPE_CONFIRMACTIVEPDU:
+                            if (this->verbose){
+                                LOG(LOG_INFO, "Front::incoming::PDU_TYPE CONFIRMACTIVEPDU");
+                            }
+                            this->process_confirm_active(stream);
+                            break;
+                        case PDUTYPE_DATAPDU: /* 7 */
+                            // this is rdp_process_data that will set up_and_running to 1
+                            // when fonts have been received
+                            // we will not exit this loop until we are in this state.
+                            TODO(" see what happen if we never receive up_and_running due to some error in client code ?")
+                            this->process_data(stream, cb);
+                            break;
+                        case PDUTYPE_DEACTIVATEALLPDU:
+                            if (this->verbose){
+                                LOG(LOG_INFO, "Front::incoming::unsupported PDUTYPE DEACTIVATEALLPDU");
+                            }
+                            break;
+                        case PDUTYPE_SERVER_REDIR_PKT:
+                            if (this->verbose){
+                                LOG(LOG_INFO, "Front::incoming::"
+                                    "unsupported PDU SERVER_REDIR_PKT in session_data (%d)\n", pdu_code & 0xf);
+                            }
+                            break;
+                        default:
+                            LOG(LOG_WARNING, "unknown PDU type in session_data (%d)\n", pdu_code & 0xf);
+                            break;
+                        }
+                    }
+                    next_packet = stream.p + length;
+                }
             }
         }
+        break;
+        }
     }
-
 
     /*****************************************************************************/
     void send_data_update_sync() throw (Error)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "send_data_update_sync");
         }
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
+        uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
+        SecOut sec_out(stream, sec_flags, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id);
+        ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
         stream.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
         stream.out_clear_bytes(2);
@@ -1089,10 +2311,11 @@ public:
     {
         LOG(LOG_INFO, "send_demand_active");
 
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
+        uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
+        SecOut sec_out(stream, sec_flags, this->encrypt);
         ShareControlOut rdp_out(stream, PDUTYPE_DEMANDACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
 
         size_t caps_count = 0;
@@ -1111,361 +2334,30 @@ public:
         uint8_t * caps_ptr = stream.p;
 
         /* Output share capability set */
-        caps_count++;
-        stream.out_uint16_le(RDP_CAPSET_SHARE);
-        stream.out_uint16_le(RDP_CAPLEN_SHARE);
-        stream.out_uint16_le(this->userid + MCS_USERCHANNEL_BASE);
-        stream.out_uint16_be(0xb5e2); /* 0x73e1 */
+        caps_count++; front_out_share_caps(stream, this->userid + MCS_USERCHANNEL_BASE);
+        caps_count++; front_out_general_caps(stream);
+        caps_count++; front_out_bitmap_caps(stream,
+                                            this->client_info.bpp,
+                                            this->client_info.width,
+                                            this->client_info.height);
 
-        /* Output general capability set */
-        caps_count++;
-        stream.out_uint16_le(RDP_CAPSET_GENERAL); /* 1 */
-        stream.out_uint16_le(RDP_CAPLEN_GENERAL); /* 24(0x18) */
-        stream.out_uint16_le(1); /* OS major type */
-        stream.out_uint16_le(3); /* OS minor type */
-        stream.out_uint16_le(0x200); /* Protocol version */
-        stream.out_uint16_le(0); /* pad */
-        stream.out_uint16_le(0); /* Compression types */
-        stream.out_uint16_le(0); /* pad use 0x40d for rdp packets, 0 for not */
-        stream.out_uint16_le(0); /* Update capability */
-        stream.out_uint16_le(0); /* Remote unshare capability */
-        stream.out_uint16_le(0); /* Compression level */
-        stream.out_uint16_le(0); /* Pad */
-
-        /* Output bitmap capability set */
-        caps_count++;
-        stream.out_uint16_le(RDP_CAPSET_BITMAP); /* 2 */
-        stream.out_uint16_le(RDP_CAPLEN_BITMAP); /* 28(0x1c) */
-        stream.out_uint16_le(this->client_info.bpp); /* Preferred BPP */
-        stream.out_uint16_le(1); /* Receive 1 BPP */
-        stream.out_uint16_le(1); /* Receive 4 BPP */
-        stream.out_uint16_le(1); /* Receive 8 BPP */
-        stream.out_uint16_le(this->client_info.width); /* width */
-        stream.out_uint16_le(this->client_info.height); /* height */
-        stream.out_uint16_le(0); /* Pad */
-        stream.out_uint16_le(1); /* Allow resize */
-        stream.out_uint16_le(1); /* bitmap compression */
-        stream.out_uint16_le(0); /* unknown */
-        stream.out_uint16_le(0); /* unknown */
-        stream.out_uint16_le(0); /* pad */
-
-        /* Output font capability set */
-        caps_count++;
-        stream.out_uint16_le(RDP_CAPSET_FONT); /* 14 */
-        stream.out_uint16_le(RDP_CAPLEN_FONT); /* 4 */
-
-// 2.2.7.1.3 Order Capability Set (TS_ORDER_CAPABILITYSET)
-// =======================================================
-
-// The TS_ORDER_CAPABILITYSET structure advertises support for primary drawing
-// order-related capabilities and is based on the capability set specified in
-// [T128] section 8.2.5 (for more information about primary drawing orders, see
-// [MS-RDPEGDI] section 2.2.2.2.1.1). This capability is sent by both client and
-// server.
-
-// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
-// capability set. This field MUST be set to CAPSTYPE_ORDER (3).
-
-// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes of
-// the capability data, including the size of the capabilitySetType and
-// lengthCapability fields.
-
-// terminalDescriptor (16 bytes): A 16-element array of 8-bit, unsigned integers.
-// Terminal descriptor. This field is ignored and SHOULD be set to all zeros.
-
-// pad4octetsA (4 bytes): A 32-bit, unsigned integer. Padding. Values in this
-// field MUST be ignored.
-
-// desktopSaveXGranularity (2 bytes): A 16-bit, unsigned i46028714a40ade0e9a85f88c942dd9431fb21d44nteger. X granularity
-// used in conjunction with the SaveBitmap Primary Drawing Order (see
-// [MS-RDPEGDI] section 2.2.2.2.1.1.2.12). This value is ignored and assumed to
-// be 1.
-
-// desktopSaveYGranularity (2 bytes): A 16-bit, unsigned integer. Y granularity
-// used in conjunction with the SaveBitmap Primary Drawing Order (see
-// [MS-RDPEGDI] section 2.2.2.2.1.1.2.12). This value is ignored and assumed to
-// be 20.
-
-// pad2octetsA (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
-// field MUST be ignored.
-
-// maximumOrderLevel (2 bytes): A 16-bit, unsigned integer. Maximum order level.
-// This value is ignored and SHOULD be set to ORD_LEVEL_1_ORDERS (1).
-
-// numberFonts (2 bytes): A 16-bit, unsigned integer. Number of fonts. This 
-// value is ignored and SHOULD be set to 0.
-
-// orderFlags (2 bytes): A 16-bit, unsigned integer. A 16-bit unsigned integer.
-// Support for drawing order options.
-
-// +--------------------------------+------------------------------------------+
-// |              Flag              |             Meaning                      |
-// +--------------------------------+------------------------------------------+
-// | 0x0002 NEGOTIATEORDERSUPPORT   | Indicates support for specifying         |
-// |                                | supported drawing orders in the          |
-// |                                | orderSupport field. This flag MUST be    |
-// |                                | set.                                     |
-// +--------------------------------+------------------------------------------+
-// | 0x0008 ZEROBOUNDSDELTASSUPPORT | Indicates support for the                |
-// |                                | TS_ZERO_BOUNDS_DELTAS (0x20) flag (see   |
-// |                                | [MS-RDPEGDI] section 2.2.2.2.1.1.2). The |
-// |                                | client MUST set this flag.               |
-// +--------------------------------+------------------------------------------+
-// | 0x0020 COLORINDEXSUPPORT       | Indicates support for sending color      |
-// |                                | indices (not RGB values) in orders.      |
-// +--------------------------------+------------------------------------------+
-// | 0x0040 SOLIDPATTERNBRUSHONLY   | Indicates that this party can receive    |
-// |                                | only solid and pattern brushes.          |
-// +--------------------------------+------------------------------------------+
-// | 0x0080 ORDERFLAGS_EXTRA_FLAGS  | Indicates that the orderSupportExFlags   |
-// |                                | field contains valid data.               |
-// +--------------------------------+------------------------------------------+
-
-// orderSupport (32 bytes): An array of 32 bytes indicating support for various
-// primary drawing orders. The indices of this array are the negotiation indices
-// for the primary orders specified in [MS-RDPEGDI] section 2.2.2.2.1.1.2.
-
-// +---------------------------+-----------------------------------------------+
-// |   Negotiation index       |         Primary drawing order or orders       |
-// +---------------------------+-----------------------------------------------+
-// | 0x00 TS_NEG_DSTBLT_INDEX  | DstBlt Primary Drawing Order (see [MS-RDPEGDI]|
-// |                           | section 2.2.2.2.1.1.2.1).                     |
-// +---------------------------+-----------------------------------------------+
-// | 0x01 TS_NEG_PATBLT_INDEX  | PatBlt Primary Drawing Order (see [MS-RDPEGDI]|
-// |                           | section 2.2.2.2.1.1.2.3) and OpaqueRect       |
-// |                           | Primary Drawing Order (see [MS-RDPEGDI]       |
-// |                           | section 2.2.2.2.1.1.2.5).                     |
-// +---------------------------+-----------------------------------------------+
-// | 0x02 TS_NEG_SCRBLT_INDEX  | ScrBlt Primary Drawing Order (see [MS-RDPEGDI]|
-// |                           | section 2.2.2.2.1.1.2.7).                     |
-// +---------------------------+-----------------------------------------------+
-// | 0x03 TS_NEG_MEMBLT_INDEX  | MemBlt Primary Drawing Order (see [MS-RDPEGDI]|
-// |                           | section 2.2.2.2.1.1.2.9).                     |
-// +---------------------------+-----------------------------------------------+
-// | 0x04 TS_NEG_MEM3BLT_INDEX | Mem3Blt Primary Drawing Order (see            |
-// |                           | [MS-RDPEGDI] section 2.2.2.2.1.1.2.10).       |
-// +---------------------------+-----------------------------------------------+
-// | 0x05 UnusedIndex1         | The contents of the byte at this index MUST be|
-// |                           | ignored.                                      |
-// +---------------------------+-----------------------------------------------+
-// | 0x06 UnusedIndex2         | The contents of the byte at this index MUST be|
-// |                           | ignored.                                      |
-// +---------------------------+-----------------------------------------------+
-// | 0x07                      | DrawNineGrid Primary Drawing Order (see       |
-// | TS_NEG_DRAWNINEGRID_INDEX | [MS-RDPEGDI] section 2.2.2.2.1.1.2.21).       |
-// +---------------------------+-----+-----------------------------------------+
-// | 0x08 TS_NEG_LINETO_INDEX        | LineTo Primary Drawing Order (see       |
-// |                                 | [MS-RDPEGDI] section 2.2.2.2.1.1.2.11). |
-// +---------------------------------+-----------------------------------------+
-// | 0x09                            | MultiDrawNineGrid Primary Drawing Order |
-// | TS_NEG_MULTI_DRAWNINEGRID_INDEX | (see [MS-RDPEGDI] section               |
-// |                                 | 2.2.2.2.1.1.2.22).                      |
-// +---------------------------+-----+-----------------------------------------+
-// | 0x0A UnusedIndex3         | The contents of the byte at this index MUST be|
-// |                           | ignored.                                      |
-// +---------------------------+-----------------------------------------------+
-// | 0x0B                      | SaveBitmap Primary Drawing Order (see         |
-// | TS_NEG_SAVEBITMAP_INDEX   | [MS-RDPEGDI] section 2.2.2.2.1.1.2.12).       |
-// +---------------------------+-----------------------------------------------+
-// | 0x0C UnusedIndex4         | The contents of the byte at this index MUST be|
-// |                           | ignored.                                      |
-// +---------------------------+-----------------------------------------------+
-// | 0x0D UnusedIndex5         | The contents of the byte at this index MUST be|
-// |                           | ignored.                                      |
-// +---------------------------+-----------------------------------------------+
-// | 0x0E UnusedIndex6         | The contents of the byte at this index MUST be|
-// |                           | ignored.                                      |
-// +---------------------------+---+-------------------------------------------+
-// | 0x0F TS_NEG_MULTIDSTBLT_INDEX | MultiDstBlt Primary Drawing Order (see    |
-// |                               | [MS-RDPEGDI] section 2.2.2.2.1.1.2.2).    | 
-// +-------------------------------+-------------------------------------------+
-// | 0x10 TS_NEG_MULTIPATBLT_INDEX |MultiPatBlt Primary Drawing Order (see     |
-// |                               | [MS-RDPEGDI] section 2.2.2.2.1.1.2.4).    |
-// +-------------------------------+-------------------------------------------+
-// | 0x11 TS_NEG_MULTISCRBLT_INDEX |MultiScrBlt Primary Drawing Order (see     |
-// |                               | [MS-RDPEGDI] section 2.2.2.2.1.1.2.8).    |
-// +-------------------------------+---+---------------------------------------+
-// | 0x12 TS_NEG_MULTIOPAQUERECT_INDEX | MultiOpaqueRect Primary Drawing Order |
-// |                                   | (see [MS-RDPEGDI] section             |
-// |                                   |  2.2.2.2.1.1.2.6).                    |
-// +------------------------------+----+---------------------------------------+
-// | 0x13 TS_NEG_FAST_INDEX_INDEX |FastIndex Primary Drawing Order (see        |
-// |                              | [MS-RDPEGDI] section 2.2.2.2.1.1.2.14).    |
-// +------------------------------+--------------------------------------------+
-// | 0x14 TS_NEG_POLYGON_SC_INDEX | PolygonSC Primary Drawing Order (see       |
-// |                              | [MS-RDPEGDI] section 246028714a40ade0e9a85f88c942dd9431fb21d44.2.2.2.1.1.2.16) and |
-// |                              | PolygonCB Primary Drawing Order (see       |
-// |                              | [MS-RDPEGDI] section 2.2.2.2.1.1.2.17).    |
-// +------------------------------+--------------------------------------------+
-// | 0x15 TS_NEG_POLYGON_CB_INDEX | PolygonCB Primary Drawing Order (see       |
-// |                              | [MS-RDPEGDI] section 2.2.2.2.1.1.2.17) and |
-// |                              | PolygonSC Primary Drawing Order (see       |
-// |                              | [MS-RDPEGDI] section 2.2.2.2.1.1.2.16).    |
-// +----------------------------+-+--------------------------------------------+
-// | 0x16 TS_NEG_POLYLINE_INDEX | Polyline Primary Drawing Order (see          |
-// |                            | [MS-RDPEGDI] section 2.2.2.2.1.1.2.18).      |
-// +----------------------------+----------------------------------------------+
-// | 0x17 UnusedIndex7          | The contents of the byte at this index MUST  |
-// |                            | be ignored.                                  |
-// +----------------------------+-+--------------------------------------------+
-// | 0x18 TS_NEG_FAST_GLYPH_INDEX | FastGlyph Primary Drawing Order (see       |
-// |                              | [MS-RDPEGDI] section 2.2.2.2.1.1.2.15).    |
-// +------------------------------+--------------------------------------------+
-// | 0x19 TS_NEG_ELLIPSE_SC_INDEX | EllipseSC Primary Drawing Order (see       |
-// |                              | [MS-RDPEGDI] section 2.2.2.2.1.1.2.19) and |
-// |                              | EllipseCB Primary Drawing Order (see       |
-// |                              | [MS-RDPEGDI] section 2.2.2.2.1.1.2.20).    |
-// +------------------------------+--------------------------------------------+
-// | 0x1A TS_NEG_ELLIPSE_CB_INDEX | EllipseCB Primary Drawing Order (see       |
-// |                              | [MS-RDPEGDI] section 2.2.2.2.1.1.2.20) and |
-// |                              | EllipseSC Primary Drawing Order (see       |
-// |                              | [MS-RDPEGDI] section 2.2.2.2.1.1.2.19).    |
-// +---------------------------+--+--------------------------------------------+
-// | 0x1B TS_NEG_INDEX_INDEX   | GlyphIndex Primary Drawing Order (see         |
-// |                           | [MS-RDPEGDI] section 2.2.2.2.1.1.2.13).       |
-// +---------------------------+-----------------------------------------------+
-// | 0x1C UnusedIndex8         | The contents of the byte at this index MUST be|
-// |                           | ignored.                                      |
-// +---------------------------+-----------------------------------------------+
-// | 0x1D UnusedIndex9         | The contents of the byte at this index MUST be|
-// |                           | ignored.                                      |
-// +---------------------------+-----------------------------------------------+
-// | 0x1E UnusedIndex10        | The contents of the byte at this index MUST be|
-// |                           | ignored.                                      |
-// +---------------------------+-----------------------------------------------+
-// | 0x1F UnusedIndex11        | The contents of the byte at this index MUST be|
-// |                           | ignored.                                      |
-// +---------------------------+-----------------------------------------------+
-
-// If an order is supported, the byte at the given index MUST contain the value
-// 0x01. Any order not supported by the client causes the server to spend more
-// time and bandwidth using workarounds, such as other primary orders or simply
-// sending screen bitmap data in a Bitmap Update (see sections 2.2.9.1.1.3.1.2
-// and 2.2.9.1.2.1.2). If no primary drawing orders are supported, this array
-// MUST be initialized to all zeros.
-
-// textFlags (2 bytes): A 16-bit, unsigned integer. Values in this field MUST be
-// ignored.
-
-// orderSupportExFlags (2 bytes): A 16-bit, unsigned integer. Extended order
-// support flags.
-
-// +-------------------------------------------+-------------------------------+
-// |                 Flag                      |             Meaning           |
-// +-------------------------------------------+-------------------------------+
-// | 0x0002                                    | The Cache Bitmap (Revision 3) |
-// | ORDERFLAGS_EX_CACHE_BITMAP_REV3_SUPPORT   | Secondary Drawing Order       |
-// |                                           | ([MS-RDPEGDI] section         |
-// |                                           | 2.2.2.2.1.2.8) is supported.  |
-// +-------------------------------------------+-------------------------------+
-// | 0x0004                                    | The Frame Marker Alternate    |
-// | ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT | Secondary Drawing Order       |
-// |                                           | ([MS-RDPEGDI] section         |
-// |                                           | 2.2.2.2.1.3.7) is supported.  |
-// +-------------------------------------------+-------------------------------+
-
-// pad4octetsB (4 bytes): A 32-bit, unsigned integer. Padding. Values in this
-// field MUST be ignored.
-
-// desktopSaveSize (4 bytes): A 32-bit, unsigned integer. The maximum usable size
-// of bitmap space for bitmap packing in the SaveBitmap Primary Drawing Order
-// (see [MS-RDPEGDI] section 2.2.2.2.1.1.2.12). This field is ignored by the
-// client and assumed to be 230400 bytes (480 * 480).
-
-// pad2octetsC (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
-// field MUST be ignored.
-
-// pad2octetsD (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
-// field MUST be ignored.
-
-// textANSICodePage (2 bytes): A 16-bit, unsigned integer. ANSI code page
-// descriptor being used by the client (for a list of code pages, see [MSDN-CP]).
-// This field is ignored by the client and SHOULD be set to 0 by the server.
-
-// pad2octetsE (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
-// field MUST be ignored.
-
-        /* Output order capability set */
-        caps_count++;
-        stream.out_uint16_le(RDP_CAPSET_ORDER); /* 3 */
-        stream.out_uint16_le(RDP_CAPLEN_ORDER); /* 88(0x58) */
-        stream.out_clear_bytes(16);
-        stream.out_uint32_be(0x40420f00);
-        stream.out_uint16_le(1); // desktopSaveXGranularity 
-        stream.out_uint16_le(20); // desktopSaveYGranularity
-        stream.out_uint16_le(0); /* Pad */
-        stream.out_uint16_le(1); // maximumOrderLevel
-        stream.out_uint16_le(0x2f); // Number of fonts
-        stream.out_uint16_le(0x22); // Capability flags
-        /* caps */
-        stream.out_uint8(1); /* dest blt */
-        stream.out_uint8(1); /* pat blt */
-        stream.out_uint8(1); /* screen blt */
-        stream.out_uint8(1); /* mem blt */
-        stream.out_uint8(0); /* tri blt */
-        stream.out_uint8(0); /* unused */
-        stream.out_uint8(0); /* unused */
-        stream.out_uint8(0); /* nine grid */
-        stream.out_uint8(1); /* line to */
-        stream.out_uint8(0); /* multi nine grid */
-        stream.out_uint8(1); /* rect */
-        stream.out_uint8(0); /* desk save */
-        stream.out_uint8(0); /* unused */
-        stream.out_uint8(0); /* unused */
-        stream.out_uint8(0); /* unused */
-        stream.out_uint8(0); /* multi dest blt */
-        stream.out_uint8(0); /* multi pat blt */
-        stream.out_uint8(0); /* multi screen blt */
-        stream.out_uint8(0); /* multi rect */
-        stream.out_uint8(0); /* fast index */
-        stream.out_uint8(0); /* polygon */
-        stream.out_uint8(0); /* polygon */
-        stream.out_uint8(0); /* polyline */
-        stream.out_uint8(0); /* unused */
-        stream.out_uint8(0); /* fast glyph */
-        stream.out_uint8(0); /* ellipse */
-        stream.out_uint8(0); /* ellipse */
-        stream.out_uint8(0); /* ? */
-        stream.out_uint8(0); /* unused */
-        stream.out_uint8(0); /* unused */
-        stream.out_uint8(0); /* unused */
-        stream.out_uint8(0); /* unused */
-        
-        stream.out_uint16_le(0x6a1); // textFlags
-        stream.out_clear_bytes(2); // orderSupportExFlags
-        stream.out_uint32_le(0x0f4240); // pad4octetsB
-        stream.out_uint32_le(0x0f4240); // desktopSaveSize
-        stream.out_uint32_le(1); // pad 2octetsC, pad2octetsD
-        stream.out_uint32_le(0); // textANSICodePage, pad2octetsE
-
-        /* Output color cache capability set */
-        caps_count++;
-        stream.out_uint16_le(RDP_CAPSET_COLCACHE);
-        stream.out_uint16_le(RDP_CAPLEN_COLCACHE);
-        stream.out_uint16_le(6); /* cache size */
-        stream.out_uint16_le(0); /* pad */
-
-        /* Output pointer capability set */
-        caps_count++;
-        stream.out_uint16_le(RDP_CAPSET_POINTER);
-        stream.out_uint16_le(RDP_CAPLEN_POINTER);
-        stream.out_uint16_le(1); /* Colour pointer */
-        stream.out_uint16_le(0x19); /* Cache size */
-        stream.out_uint16_le(0x19); /* Cache size */
+        caps_count++; front_out_font_caps(stream);
+        caps_count++; front_out_order_caps(stream);
+        caps_count++; front_out_colcache_caps(stream);
+        caps_count++; front_out_pointer_caps(stream);
 
         /* Output input capability set */
-        caps_count++;
-        stream.out_uint16_le(RDP_CAPSET_INPUT); /* 13(0xd) */
-        stream.out_uint16_le(RDP_CAPLEN_INPUT); /* 88(0x58) */
-        stream.out_uint8(1);
-        stream.out_clear_bytes(83);
+        caps_count++; front_out_input_caps(stream);
 
+        TODO("Check if this padding is necessary and if so how it should actually be computed. Padding is usually here for memory alignment purpose but this one looks strange")
         stream.out_clear_bytes(4); /* pad */
 
         size_t caps_size = stream.p - caps_ptr;
+        TODO("change this using set_out_uint16_le")
         caps_size_ptr[0] = caps_size;
         caps_size_ptr[1] = caps_size >> 8;
 
+        TODO("change this using set_out_uint32_le")
         caps_count_ptr[0] = caps_count;
         caps_count_ptr[1] = caps_count >> 8;
         caps_count_ptr[2] = caps_count >> 16;
@@ -1476,26 +2368,6 @@ public:
         sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
-
-
-    }
-
-    /*****************************************************************************/
-    void capset_general(Stream & stream, int len)
-    {
-        LOG(LOG_INFO, "capset_general");
-        stream.skip_uint8(10);
-        /* use_compact_packets is pretty much 'use rdp5' */
-        this->client_info.use_compact_packets = stream.in_uint16_le();
-        if (this->client_info.use_compact_packets){
-            LOG(LOG_INFO, "Use compact packets");
-        }
-        /* op2 is a boolean to use compact bitmap headers in bitmap cache */
-        /* set it to same as 'use rdp5' boolean */
-        this->client_info.op2 = this->client_info.use_compact_packets;
-        if (this->client_info.op2){
-            LOG(LOG_INFO, "Use compact headers for cache");
-        }
     }
 
     /*****************************************************************************/
@@ -1597,7 +2469,9 @@ public:
 
             switch (type) {
             case RDP_CAPSET_GENERAL: /* 1 */
-                this->capset_general(stream, len);
+                front_capset_general(stream, len,
+                    this->client_info.use_compact_packets,
+                    this->client_info.op2);
                 break;
             case RDP_CAPSET_BITMAP: /* 2 */
                 break;
@@ -1713,17 +2587,18 @@ public:
 // targetUser (2 bytes): A 16-bit, unsigned integer. The MCS channel ID of the
 //   target user.
 
-    #warning duplicated code in mod/rdp
+    TODO(" duplicated code in mod/rdp")
     void send_synchronize()
     {
         LOG(LOG_INFO, "send_synchronize");
 
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
+        uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
+        SecOut sec_out(stream, sec_flags, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id);
+        ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
         stream.out_uint16_le(1); /* messageType */
         stream.out_uint16_le(1002); /* control id */
@@ -1763,12 +2638,13 @@ public:
     {
         LOG(LOG_INFO, "send_control action=%u", action);
 
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
+        uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
+        SecOut sec_out(stream, sec_flags, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_CONTROL, this->share_id);
+        ShareDataOut rdp_data_out(stream, PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
         stream.out_uint16_le(action);
         stream.out_uint16_le(0); /* userid */
@@ -1814,13 +2690,14 @@ public:
                                 0x2b, 0x00, 0x2a, 0x00
                               };
 
-        #warning we should create some RDPStream object created on init and sent before destruction
-        Stream stream(8192);
+        TODO(" we should create some RDPStream object created on init and sent before destruction")
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
+        uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
+        SecOut sec_out(stream, sec_flags, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_FONTMAP, this->share_id);
+        ShareDataOut rdp_data_out(stream, PDUTYPE2_FONTMAP, this->share_id, RDP::STREAM_MED);
 
         stream.out_copy_bytes((char*)g_fontmap, 172);
 
@@ -1836,18 +2713,25 @@ public:
     /* PDUTYPE_DATAPDU */
     void process_data(Stream & stream, Callback & cb) throw (Error)
     {
-        if (this->ini->globals.debug.front){
+        if (this->verbose){
             LOG(LOG_INFO, "process_data");
         }
+        ShareDataIn share_data_in(stream);
+        if (this->verbose > 0x80){
+            LOG(LOG_INFO, "share_data_in.pdutype2=%u"
+                          " share_data_in.len=%u"
+                          " share_data_in.compressedLen=%u"
+                          " remains=%u",
+                (unsigned)share_data_in.pdutype2,
+                (unsigned)share_data_in.len,
+                (unsigned)share_data_in.compressedLen,
+                (unsigned)(stream.end - stream.p)
+            );
+        }
 
-        stream.skip_uint8(6);
-        stream.in_uint16_le(); // len
-        int data_type = stream.in_uint8();
-        stream.in_uint8(); // ctype
-        stream.in_uint16_le(); // clen
-        switch (data_type) {
+        switch (share_data_in.pdutype2) {
         case PDUTYPE2_POINTER: /* 27(0x1b) */
-            if (this->ini->globals.debug.front){
+            if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_POINTER");
             }
             break;
@@ -1855,7 +2739,7 @@ public:
             {
                 int num_events = stream.in_uint16_le();
 
-                if (this->ini->globals.debug.front){
+                if (this->verbose){
                     LOG(LOG_INFO, "PDUTYPE2_INPUT num_events=%u", num_events);
                 }
 
@@ -1867,11 +2751,11 @@ public:
                     int16_t param1 = stream.in_sint16_le();
                     int16_t param2 = stream.in_sint16_le();
 
-                    #warning we should always call send_input with original data, if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it'
-                    #warning with the scheme above, any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.
+                    TODO(" we should always call send_input with original data  if the other side is rdp it will merely transmit it to the other end without change. If the other side is some internal module it will be it's own responsibility to decode it")
+                    TODO(" with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.")
                     switch (msg_type) {
                     case RDP_INPUT_SYNCHRONIZE:
-                        if (this->ini->globals.debug.front){
+                        if (this->verbose){
                             LOG(LOG_INFO, "RDP_INPUT_SYNCHRONIZE");
                         }
                         /* happens when client gets focus and sends key modifier info */
@@ -1879,11 +2763,11 @@ public:
                         cb.rdp_input_synchronize(time, device_flags, param1, param2);
                         break;
                     case RDP_INPUT_SCANCODE:
-                        if (this->ini->globals.debug.front){
+                        if (this->verbose){
                             LOG(LOG_INFO, "RDP_INPUT_SCANCODE");
                         }
                         {
-                            #warning move that to Keymap
+                            TODO(" move that to Keymap")
                             long p1 = param1 % 128;
                             this->keymap.keys[p1] = 1 | device_flags;
                             if ((device_flags & KBD_FLAG_UP) == 0) { /* 0x8000 */
@@ -1902,7 +2786,7 @@ public:
                                     ;
                                 }
                             }
-                            if (this->ini->globals.debug.front){
+                            if (this->verbose){
                                 LOG(LOG_INFO, "get_key_info(device_flags=%u, param1=%u)", device_flags, param1);
                             }
                             const key_info* ki = this->keymap.get_key_info_from_scan_code(
@@ -1915,7 +2799,7 @@ public:
                         }
                         break;
                     case RDP_INPUT_MOUSE:
-                        if (this->ini->globals.debug.front){
+                        if (this->verbose){
                             LOG(LOG_INFO, "RDP_INPUT_MOUSE(device_flags=%u, param1=%u, param2=%u)", device_flags, param1, param2);
                         }
                         this->mouse_x = param1;
@@ -1930,7 +2814,7 @@ public:
             }
             break;
         case PDUTYPE2_CONTROL: /* 20(0x14) */
-            if (this->ini->globals.debug.front){
+            if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_CONTROL");
             }
             {
@@ -1950,11 +2834,18 @@ public:
             }
             break;
         case PDUTYPE2_SYNCHRONIZE:
-            if (this->ini->globals.debug.front){
-                LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");
+            {
+                uint16_t messageType = stream.in_uint16_le();
+                uint16_t controlId = stream.in_uint16_le();
+                if (this->verbose){
+                    LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE"
+                                  " messageType=%u controlId=%u",
+                                  (unsigned)messageType,
+                                  (unsigned)controlId);
+                }
+                this->send_synchronize();
+                this->up_and_running = 1;
             }
-            this->send_synchronize();
-            this->up_and_running = 1;
             break;
         case PDUTYPE2_REFRESH_RECT:
             {
@@ -1965,14 +2856,16 @@ public:
                 int bottom = stream.in_uint16_le();
                 int cx = (right - left) + 1;
                 int cy = (bottom - top) + 1;
-                if (this->ini->globals.debug.front){
-                    LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT left=%u top=%u right=%u bottom=%u cx=%u cy=%u", left, top, right, bottom, cx, cy);
+                if (this->verbose){
+                    LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT"
+                        " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",
+                        left, top, right, bottom, cx, cy);
                 }
                 cb.rdp_input_invalidate(Rect(left, top, cx, cy));
             }
             break;
         case PDUTYPE2_SUPPRESS_OUTPUT:
-            if (this->ini->globals.debug.front){
+            if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_SUPPRESS_OUTPUT");
             }
             // PDUTYPE2_SUPPRESS_OUTPUT comes when minimizing a full screen
@@ -1981,19 +2874,20 @@ public:
             // to catch up so minimized apps don't take bandwidth
             break;
         case PDUTYPE2_SHUTDOWN_REQUEST:
-            if (this->ini->globals.debug.front){
+            if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_REQUEST");
             }
             {
                 // when this message comes, send a PDUTYPE2_SHUTDOWN_DENIED back
                 // so the client is sure the connection is alive and it can ask
                 // if user really wants to disconnect */
-                Stream stream(8192);
+                Stream stream(32768);
                 X224Out tpdu(X224Packet::DT_TPDU, stream);
                 McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-                SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
+                uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
+                SecOut sec_out(stream, sec_flags, this->encrypt);
                 ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-                ShareDataOut rdp_data_out(stream, PDUTYPE2_SHUTDOWN_DENIED, this->share_id);
+                ShareDataOut rdp_data_out(stream, PDUTYPE2_SHUTDOWN_DENIED, this->share_id, RDP::STREAM_MED);
                 rdp_data_out.end();
                 rdp_control_out.end();
                 sec_out.end();
@@ -2002,12 +2896,39 @@ public:
                 tpdu.send(this->trans);
             }
             break;
+
+        // 2.2.1.18.1 Font List PDU Data (TS_FONT_LIST_PDU)
+        // ================================================
+        // The TS_FONT_LIST_PDU structure contains the contents of the Font
+        // List PDU, which is a Share Data Header (section 2.2.8.1.1.1.2) and
+        // four fields.
+
+        // shareDataHeader (18 bytes): Share Data Header (section 2.2.8.1.1.1.2)
+        // containing information about the packet. The type subfield of the
+        // pduType field of the Share Control Header (section 2.2.8.1.1.1.1)
+        // MUST be set to PDUTYPE_DATAPDU (7). The pduType2 field of the Share
+        // Data Header MUST be set to PDUTYPE2_FONTLIST (39).
+
+        // numberFonts (2 bytes): A 16-bit, unsigned integer. The number of
+        // fonts. This field SHOULD be set to 0.
+
+        // totalNumFonts (2 bytes): A 16-bit, unsigned integer. The total number
+        // of fonts. This field SHOULD be set to 0.
+
+        // listFlags (2 bytes): A 16-bit, unsigned integer. The sequence flags.
+        // This field SHOULD be set to 0x0003, which is the logical OR'ed value
+        // of FONTLIST_FIRST (0x0001) and FONTLIST_LAST (0x0002).
+
+        // entrySize (2 bytes): A 16-bit, unsigned integer. The entry size. This
+        // field SHOULD be set to 0x0032 (50 bytes).
+
+
         case PDUTYPE2_FONTLIST: /* 39(0x27) */
-            if (this->ini->globals.debug.front){
+            if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_FONT_LIST");
             }
-            stream.skip_uint8(2); /* num of fonts */
-            stream.skip_uint8(2); /* unknown */
+            stream.in_uint16_le(); /* numberFont -> 0*/
+            stream.in_uint16_le(); /* totalNumFonts -> 0 */
             {
                 int seq = stream.in_uint16_le();
                 /* 419 client sends Seq 1, then 2 */
@@ -2020,20 +2941,23 @@ public:
                     this->send_data_update_sync();
                 }
             }
+            stream.in_uint16_le(); /* entrySize -> 50 */
             break;
         default:
-            LOG(LOG_WARNING, "unsupported PDUTYPE in process_data %d\n", data_type);
+            LOG(LOG_WARNING, "unsupported PDUTYPE in process_data %d\n", share_data_in.pdutype2);
             break;
         }
+        share_data_in.end();
     }
 
     void send_deactive() throw (Error)
     {
         LOG(LOG_INFO, "send_deactive");
-        Stream stream(8192);
+        Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level, SEC_ENCRYPT, this->encrypt);
+        uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
+        SecOut sec_out(stream, sec_flags, this->encrypt);
         ShareControlOut(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + MCS_USERCHANNEL_BASE).end();
         sec_out.end();
         sdin_out.end();

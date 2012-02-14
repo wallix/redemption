@@ -48,7 +48,7 @@ struct McsChannelItem {
 class ChannelList
 {
     size_t num;
-    #warning replace this 100 with dynamically allocated number of channels someday
+    TODO(" replace this 100 with dynamically allocated number of channels someday")
     McsChannelItem items[100];
 
 public:

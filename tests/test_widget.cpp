@@ -27,8 +27,8 @@
 #define BOOST_TEST_MODULE TestBitmap
 #include <boost/test/auto_unit_test.hpp>
 
-#include "../mod/internal/internal_mod.hpp"
-#include "../mod/internal/widget.hpp"
+#include "internal/internal_mod.hpp"
+#include "internal/widget.hpp"
 #include "colors.hpp"
 #include <sstream>
 #include <iostream>
@@ -40,7 +40,7 @@
 BOOST_AUTO_TEST_CASE(TestCreateWidget)
 {
 //    cout << "Test Creating Screen object";
-    #warning passing in a null front is not a good idea, define a test front
+    TODO(" passing in a null front is not a good idea  define a test front")
     Widget *screen = new widget_screen((GraphicalContext*)0, 20, 10, 24);
     BOOST_CHECK_EQUAL(20, screen->rect.cx);
     BOOST_CHECK_EQUAL(10, screen->rect.cy);
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(TestCreateWidget)
 BOOST_AUTO_TEST_CASE(TestCreateWidgetScreen)
 {
 //    cout << "Test Creating Screen object";
-    #warning passing in a null front is not a good idea, define a test front
+    TODO(" passing in a null front is not a good idea  define a test front")
     widget_screen *screen = new widget_screen((GraphicalContext*)0, 20, 10, 24);
     BOOST_CHECK_EQUAL(20, screen->rect.cx);
     BOOST_CHECK_EQUAL(10, screen->rect.cy);

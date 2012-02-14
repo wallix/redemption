@@ -171,7 +171,7 @@ inline static void buf_out_uint32(uint8_t* buffer, int value)
 }
 
 
-#warning method used by licence, common with basic crypto support code should be made common. pad are also common to several functions.
+TODO(" method used by licence  common with basic crypto support code should be made common. pad are also common to several functions.")
 /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
 inline static void sec_sign(uint8_t* signature, int siglen, uint8_t* session_key, int keylen, uint8_t* data, int datalen)
 {
@@ -226,6 +226,44 @@ struct CryptContext
     CryptContext() : use_count(0)
     {
         memset(this->sign_key, 0, 16);
+        memset(this->key, 0, 16);
+        memset(this->update_key, 0, 16);
+        this->rc4_key_len = 0;
+        memset(&rc4_info, 0, sizeof(rc4_info));
+        this->rc4_key_size = 0;
+    }
+
+
+    void rc4dump(const char * data, size_t size){
+        char buffer[16384];
+        char * line = buffer;
+        line += sprintf(line, "memcpy((void*)(&cc.rc4_info), (void*)\"");
+        for (size_t j = 0 ; j < size ; j ++){
+            line += sprintf(line, "\\x%.2x", (unsigned char)data[j]);
+        }
+        line += sprintf(line, "\", %u);", (unsigned)size);
+        LOG(LOG_INFO, "%s", buffer);
+    }
+
+    void dump(){
+        LOG(LOG_INFO, "cc.use_count=%u;", this->use_count);
+        LOG(LOG_INFO, "memcpy(cc.sign_key, \""
+            "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+            "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\", 16);",
+            this->sign_key[0],this->sign_key[1],this->sign_key[2],this->sign_key[3],
+            this->sign_key[4],this->sign_key[5],this->sign_key[6],this->sign_key[7],
+            this->sign_key[8],this->sign_key[9],this->sign_key[10],this->sign_key[11],
+            this->sign_key[12],this->sign_key[13],this->sign_key[14],this->sign_key[15]);
+        LOG(LOG_INFO, "memcpy(cc.key, \""
+            "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+            "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\\x%.2x\", 16);",
+            this->key[0],this->key[1],this->key[2],this->key[3],
+            this->key[4],this->key[5],this->key[6],this->key[7],
+            this->key[8],this->key[9],this->key[10],this->key[11],
+            this->key[12],this->key[13],this->key[14],this->key[15]);
+        LOG(LOG_INFO, "cc.rc4_key_len=%u;", this->rc4_key_len);
+        this->rc4dump((const char *)(&this->rc4_info), sizeof(this->rc4_info));
+        LOG(LOG_INFO, "cc.rc4_key_size=%u;", this->rc4_key_size);
     }
 
     /* Encrypt data using RC4 */
@@ -371,7 +409,7 @@ static inline int ssl_mod_exp(uint8_t* out, int out_len, uint8_t* in, int in_len
     uint8_t* l_mod;
     uint8_t* l_exp;
 
-    #warning replace these fucking new / delete by objects on stack
+    TODO(" replace these fucking new / delete by objects on stack")
     l_out = new uint8_t[out_len];
     memset(l_out, 0, out_len);
     l_in = new uint8_t[in_len];

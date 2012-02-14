@@ -30,35 +30,14 @@
 #include "RDP/x224.hpp"
 #include "RDP/rdp.hpp"
 
-BOOST_AUTO_TEST_CASE(TestSendShareControl)
-{
-    Stream stream(65536);
-    memset(stream.data, 0, 65536);
 
-    ShareControlAndDataOut out_control(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, 1, 0x12345678);
-    out_control.end();
-
-    uint8_t * data = stream.data;
-    BOOST_CHECK_EQUAL(0x12, data[0] + data[1]*256);
-    BOOST_CHECK_EQUAL(0x10 | PDUTYPE_DATAPDU, data[2] + data[3]*256);
-    BOOST_CHECK_EQUAL(1, data[4] + data[5]*256);
-    BOOST_CHECK_EQUAL(0x12345678, 
-            ((data[9]*256 + data[8])*256 + data[7])*256 + data[6]);
-    BOOST_CHECK_EQUAL(0, data[10]);
-    BOOST_CHECK_EQUAL(1, data[11]);
-    BOOST_CHECK_EQUAL(4, data[12] + data[13]*256);
-    BOOST_CHECK_EQUAL((uint8_t)PDUTYPE2_UPDATE, data[14]);
-    BOOST_CHECK_EQUAL(0, data[15]);
-    BOOST_CHECK_EQUAL(0, (data[17] << 8) + data[16]);
-}
-
-BOOST_AUTO_TEST_CASE(TestSendShareControlData)
+BOOST_AUTO_TEST_CASE(TestSendShareControlAndData)
 {
     Stream stream(65536);
     memset(stream.data, 0, 65536);
 
     ShareControlOut out_control(stream, PDUTYPE_DATAPDU, 1);
-    ShareDataOut out_data(stream, PDUTYPE2_UPDATE, 0x12345678);
+    ShareDataOut out_data(stream, PDUTYPE2_UPDATE, 0x12345678, RDP::STREAM_MED);
     out_data.end();
     out_control.end();
 
@@ -69,60 +48,34 @@ BOOST_AUTO_TEST_CASE(TestSendShareControlData)
     BOOST_CHECK_EQUAL(0x12345678, 
             ((data[9]*256 + data[8])*256 + data[7])*256 + data[6]);
     BOOST_CHECK_EQUAL(0, data[10]);
-    BOOST_CHECK_EQUAL(1, data[11]);
+    BOOST_CHECK_EQUAL(2, data[11]);
     BOOST_CHECK_EQUAL(4, data[12] + data[13]*256);
     BOOST_CHECK_EQUAL((uint8_t)PDUTYPE2_UPDATE, data[14]);
     BOOST_CHECK_EQUAL(0, data[15]);
     BOOST_CHECK_EQUAL(0, (data[17] << 8) + data[16]);
 }
 
-
-BOOST_AUTO_TEST_CASE(TestX224SendShareControlData)
-{
-    Stream stream(65536);
-    memset(stream.data, 0, 65536);
-
-    stream.skip_uint8(2);
-    X224Out tpdu(X224Packet::DT_TPDU, stream);
-    ShareControlAndDataOut out_control(stream, PDUTYPE_DATAPDU, PDUTYPE2_UPDATE, 1, 0x12345678);
-    out_control.end();
-    tpdu.end();
-
-    uint8_t * data = stream.data + 9;
-    BOOST_CHECK_EQUAL(0x12, data[0] + data[1]*256);
-    BOOST_CHECK_EQUAL(0x10 | PDUTYPE_DATAPDU, data[2] + data[3]*256);
-    BOOST_CHECK_EQUAL(1, data[4] + data[5]*256);
-    BOOST_CHECK_EQUAL(0x12345678, 
-            ((data[9]*256 + data[8])*256 + data[7])*256 + data[6]);
-    BOOST_CHECK_EQUAL(0, data[10]);
-    BOOST_CHECK_EQUAL(1, data[11]);
-    BOOST_CHECK_EQUAL(4, data[12] + data[13]*256);
-    BOOST_CHECK_EQUAL((uint8_t)PDUTYPE2_UPDATE, data[14]);
-    BOOST_CHECK_EQUAL(0, data[15]);
-    BOOST_CHECK_EQUAL(0, (data[17] << 8) + data[16]);
-}
 
 BOOST_AUTO_TEST_CASE(TestX224SendShareControlAndData)
 {
     Stream stream(65536);
     memset(stream.data, 0, 65536);
 
-    stream.skip_uint8(2);
     X224Out tpdu(X224Packet::DT_TPDU, stream);
     ShareControlOut out_control(stream, PDUTYPE_DATAPDU, 1);
-    ShareDataOut out_data(stream, PDUTYPE2_UPDATE, 0x12345678);
+    ShareDataOut out_data(stream, PDUTYPE2_UPDATE, 0x12345678, RDP::STREAM_MED);
     out_data.end();
     out_control.end();
     tpdu.end();
 
-    uint8_t * data = stream.data + 9;
+    uint8_t * data = stream.data + 7;
     BOOST_CHECK_EQUAL(0x12, data[0] + data[1]*256);
     BOOST_CHECK_EQUAL(0x10 | PDUTYPE_DATAPDU, data[2] + data[3]*256);
     BOOST_CHECK_EQUAL(1, data[4] + data[5]*256);
     BOOST_CHECK_EQUAL(0x12345678, 
             ((data[9]*256 + data[8])*256 + data[7])*256 + data[6]);
     BOOST_CHECK_EQUAL(0, data[10]);
-    BOOST_CHECK_EQUAL(1, data[11]);
+    BOOST_CHECK_EQUAL(2, data[11]);
     BOOST_CHECK_EQUAL(4, data[12] + data[13]*256);
     BOOST_CHECK_EQUAL((uint8_t)PDUTYPE2_UPDATE, data[14]);
     BOOST_CHECK_EQUAL(0, data[15]);

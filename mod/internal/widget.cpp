@@ -25,13 +25,12 @@
 */
 
 #include "widget.hpp"
-#include "../mod/internal/internal_mod.hpp"
+#include "internal/internal_mod.hpp"
 
 //struct GraphicalContext : public internal_mod
 //{
 //    nb_windows();
 //    window(i);
-//    server_set_clip()
 //    draw_window();
 //    draw_edit();
 //    draw_combo();
@@ -72,7 +71,7 @@ Widget::Widget(GraphicalContext * mod, int width, int height, Widget & parent, i
 
     this->has_focus = false;
 
-#warning build the right type of bitmap = class hierarchy
+TODO(" build the right type of bitmap = class hierarchy")
     /* 0 = bitmap 1 = window 2 = screen 3 = button 4 = image 5 = edit
        6 = label 7 = combo 8 = special */
     this->type = type;
@@ -161,7 +160,7 @@ struct Widget* Widget::widget_at_pos(int x, int y) {
     return this;
 }
 
-    #warning we should be able to pass only one pointer, either window if we are dealing with a window or this->parent if we are dealing with any other kind of widget
+    TODO(" we should be able to pass only one pointer  either window if we are dealing with a window or this->parent if we are dealing with any other kind of widget")
 const Region Widget::get_visible_region(Widget * window, Widget * widget, const Rect & rect)
 {
     Region region;
@@ -184,8 +183,10 @@ void window::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->gd.draw_window(scr_r, this->bg_color, this->caption1, this->has_focus);
+        this->mod->gd.draw_window(scr_r, 
+            this->bg_color, this->caption1, 
+            this->has_focus, 
+            region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 }
 
@@ -197,8 +198,12 @@ void widget_edit::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->gd.draw_edit(scr_r, this->password_char, this->buffer, this->edit_pos, this->has_focus);
+        this->mod->gd.draw_edit(scr_r, 
+            this->password_char, 
+            this->buffer, 
+            this->edit_pos, 
+            this->has_focus, 
+            region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 }
 
@@ -208,8 +213,8 @@ void widget_screen::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->gd.opaque_rect(RDPOpaqueRect(scr_r, this->bg_color));
+        this->mod->gd.draw(RDPOpaqueRect(scr_r, this->bg_color),
+            region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 }
 
@@ -219,8 +224,11 @@ void widget_combo::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->gd.draw_combo(scr_r, this->string_list[this->item_index], this->state, this->has_focus);
+        this->mod->gd.draw_combo(scr_r,
+            this->string_list[this->item_index],
+            this->state,
+            this->has_focus,
+            region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 }
 
@@ -232,8 +240,11 @@ void widget_button::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->gd.draw_button(scr_r, this->caption1, this->state, this->has_focus);
+        this->mod->gd.draw_button(scr_r,
+            this->caption1,
+            this->state,
+            this->has_focus,
+            region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 }
 
@@ -244,10 +255,11 @@ void widget_popup::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->gd.opaque_rect(RDPOpaqueRect(Rect(scr_r.x, scr_r.y, this->rect.cx, this->rect.cy), WHITE));
+        this->mod->gd.draw(
+            RDPOpaqueRect(Rect(scr_r.x, scr_r.y, this->rect.cx, this->rect.cy), WHITE),
+            region.rects[ir].intersect(this->to_screen_rect(clip)));
 
-        #warning this should be a two stages process, first prepare drop box data, then call draw_xxx that use that data to draw. For now everything is mixed up, (and that is not good)
+        TODO(" this should be a two stages process  first prepare drop box data  then call draw_xxx that use that data to draw. For now everything is mixed up  (and that is not good)")
         /* draw the list items */
         if (this->popped_from != 0) {
             int y = 0;
@@ -257,11 +269,11 @@ void widget_popup::draw(const Rect & clip)
                 int h = this->mod->gd.text_height(p);
                 this->item_height = h;
                 if (i == this->item_index) { // deleted item
-                    this->mod->gd.opaque_rect(RDPOpaqueRect(Rect(scr_r.x, scr_r.y + y, this->rect.cx, h), WABGREEN));
-                    this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + y, p, WABGREEN, WHITE);
+                    this->mod->gd.draw(RDPOpaqueRect(Rect(scr_r.x, scr_r.y + y, this->rect.cx, h), WABGREEN), region.rects[ir].intersect(this->to_screen_rect(clip)));
+                    this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + y, p, WABGREEN, WHITE, region.rects[ir].intersect(this->to_screen_rect(clip)));
                 }
                 else {
-                    this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + y, p, WHITE, BLACK);
+                    this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + y, p, WHITE, BLACK, region.rects[ir].intersect(this->to_screen_rect(clip)));
                 }
                 y = y + h;
             }
@@ -280,8 +292,8 @@ void widget_label::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.server_set_clip(region.rects[ir].intersect(this->to_screen_rect(clip)));
-        this->mod->gd.server_draw_text(scr_r.x, scr_r.y, this->caption1, GREY, BLACK);
+        this->mod->gd.server_draw_text(scr_r.x, scr_r.y, this->caption1, GREY, BLACK, 
+            region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 
 }
@@ -315,8 +327,7 @@ void widget_image::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, intersection);
 
     for (size_t ir = 0; ir < region.rects.size(); ir++){
-        this->mod->gd.server_set_clip(region.rects[ir]);
-        this->mod->gd.bitmap_update(this->bmp, image_screen_rect, 0, 0);
+        this->mod->gd.bitmap_update(this->bmp, image_screen_rect, 0, 0, region.rects[ir]);
     }
 }
 
@@ -364,7 +375,7 @@ void window::def_proc(const int msg, const int param1, const int param2, const K
         // find control that has focus
         size_t size = this->child_list.size();
         size_t i_focus;
-        #warning we should iterate only on controls that have tabstop setted (or another attribute can_get_focus ?). Or we could also keep index of focused_control in child_list (but do not forget to reset it when we redefine controls).
+        TODO(" we should iterate only on controls that have tabstop setted (or another attribute can_get_focus ?). Or we could also keep index of focused_control in child_list (but do not forget to reset it when we redefine controls).")
         for (i_focus = 0; i_focus < size; i_focus++){
             if (this->child_list[i_focus]->has_focus && this->child_list[i_focus]->tab_stop){
                 control_with_focus = this->child_list[i_focus];
@@ -491,7 +502,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
                 strncpy(text, this->buffer, 255);
 
                 int index = this->edit_pos;
-                #warning why not always keep wcs instead of constantly converting back and from wcs ?
+                TODO(" why not always keep wcs instead of constantly converting back and from wcs ?")
                 int len = mbstowcs(0, text, 0);
                 wchar_t wstr[len + 16];
                 mbstowcs(wstr, text, len + 1);
@@ -499,7 +510,7 @@ void widget_edit::def_proc(const int msg, int const param1, int const param2, co
                     wstr[len] = c;
                 }
                 else{
-                #warning is backward loop necessary ? a memcpy could do the trick
+                TODO(" is backward loop necessary ? a memcpy could do the trick")
                     int i;
                     for (i = (len - 1); i >= index; i--) {
                         wstr[i + 1] = wstr[i];

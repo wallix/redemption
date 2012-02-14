@@ -24,6 +24,17 @@
 #ifndef LOG_H
 #define LOG_H
 
+#include <string.h>
+
+#ifndef VERBOSE
+#define TODO(x)
+#else
+#define DO_PRAGMA(x) _Pragma (#x)
+#define TODO(x) DO_PRAGMA(message ("TODO - " x))
+#endif
+
+#define BOOM (*(int*)0=1)
+
 #include <stdio.h>
 #include <syslog.h>
 #include <sys/types.h>
@@ -59,13 +70,41 @@ static inline void LOG(int priority, const char *format, ...)
         { NULL, -1 }
     };
     char message[8192];
-    char formated_message[8192];
     va_list vl;
     va_start (vl, format);
     vsnprintf(message, 8191, format, vl);
-    snprintf(formated_message, 8191, "%s (%d/%d) -- %s", prioritynames[priority].c_name, getpid(), getpid(), message);
     va_end(vl);
-    syslog(priority, "%s", formated_message);
+    syslog(priority, "%s (%d/%d) -- %s", prioritynames[priority].c_name, getpid(), getpid(), message);
 };
+
+static inline void hexdump(const char * data, size_t size){
+    char buffer[2048];
+    for (size_t j = 0 ; j < size ; j += 16){
+        char * line = buffer;
+        line += sprintf(line, "%.4x ", (unsigned)j);
+        size_t i = 0;
+        for (i = 0; i < 16; i++){
+            if (j+i >= size){ break; }
+            line += sprintf(line, "%.2x ", (unsigned char)data[j+i]);
+        }
+        if (i < 16){
+            line += sprintf(line, "%*c", (unsigned)((16-i)*3), ' ');
+        }
+        for (i = 0; i < 16; i++){
+            if (j+i >= size){ break; }
+            unsigned char tmp = (unsigned)(data[j+i]);
+            if ((tmp < ' ') || (tmp > '~')){
+                tmp = '.';
+            }
+            line += sprintf(line, "%c", tmp);
+        }
+
+        if (line != buffer){
+            line[0] = 0;
+            LOG(LOG_INFO, "%s", buffer);
+            buffer[0]=0;
+        }
+    }
+}
 
 #endif

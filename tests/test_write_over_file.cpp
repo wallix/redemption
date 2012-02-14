@@ -51,7 +51,8 @@
 
 // Write batch of orders to file
 // Reads batch of orders from file
-#warning merge with GraphicsUpdatePDU, needs defining some kind of Transport object for common parts
+TODO("This test should probably be removed soon, the same feature is now performed by test_RDP_graphic_to_file")
+TODO(" merge with GraphicsUpdatePDU  needs defining some kind of Transport object for common parts")
 struct GraphicsFile
 {
     Stream stream;
@@ -75,7 +76,7 @@ struct GraphicsFile
     BGRPalette memblt_palette;
 
     GraphicsFile(bool read)
-        :    stream(4096),
+        :    stream(65536),
         // Internal state of orders
         common(RDP::PATBLT, Rect(0, 0, 1, 1)),
         destblt(Rect(), 0),
@@ -117,7 +118,7 @@ struct GraphicsFile
     }
 
     void init_write(){
-        this->stream.init(1024);
+        this->stream.init(65536);
         /* size (2 bytes)
          * nb of orders (1 byte)
          * type of batch (1 byte)
@@ -136,36 +137,19 @@ struct GraphicsFile
 //        LOG(LOG_INFO, "rdp_orders_process_bmpcache");
         BGRPalette palette;
         struct Bitmap* bitmap = NULL;
-        uint8_t cache_id = 0;
-        uint16_t cache_idx = 0;
-        switch (header.type){
-        case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
-            {
-                #warning RDPBmpCache is used to create bitmap
-                RDPBmpCache bmp(bpp);
-                bmp.receive_raw_v1(stream, control, header, palette);
-
-                //                bmp.print();
-                cache_id = bmp.cache_id;
-                cache_idx = bmp.cache_idx;
-                bitmap = bmp.bmp;
-            }
-        break;
-        case RDP::TS_CACHE_BITMAP_COMPRESSED:
-            {
-                #warning move that to RDPBmpCache -> receive
-                // Not handling compressed bitmap for now
-            }
-        break;
-        default:
-            assert(false);
-        }
+        uint8_t id = 0;
+        uint16_t idx = 0;
+        RDPBmpCache bmp(bpp);
+        bmp.receive(stream, control, header, palette);
+        id = bmp.id;
+        idx = bmp.idx;
+        bitmap = bmp.bmp;
         assert(bitmap);
 
-        if (this->cache_bitmap[cache_id][cache_idx]) {
-            delete this->cache_bitmap[cache_id][cache_idx];
+        if (this->cache_bitmap[id][idx]) {
+            delete this->cache_bitmap[id][idx];
         }
-        this->cache_bitmap[cache_id][cache_idx] = bitmap;
+        this->cache_bitmap[id][idx] = bitmap;
     }
 
     void receive(const Rect &clip) {
@@ -177,19 +161,22 @@ struct GraphicsFile
              * 0 is not a legal value in the header
              * the maximum size is 64kbytes according to the first field.
              */
-            this->stream.init(4);
+            this->stream.init(std::max(4, 65536));
             // Start reading simple header
             if (read ( this->pFile, this->stream.data, 4 ) == 0) {
                 return;
             }
+            this->stream.end = this->stream.data + 4;
+
 
             uint16_t length = stream.in_uint16_le(); // How long ?
             uint8_t  num_orders = stream.in_uint8(); // How many orders ?
             uint8_t  type = stream.in_uint8();       // What type ?
+            (void)type;
 
             // How long is my init ?
-            this->stream.init(length - 4); // The header have already been read
-            #warning use transport object to hide this, define some kind of FileTransport ? Very similar to socketTRansport
+            this->stream.init(std::max(65536,length - 4)); // The header have already been read
+            TODO(" use transport object to hide this  define some kind of FileTransport ? Very similar to socketTRansport")
             int readlen = 0;
             while ( readlen < length - 4 ) {
                 int rcvd = ::read ( this->pFile, this->stream.data + readlen, length - 4 - readlen);
@@ -200,15 +187,16 @@ struct GraphicsFile
                             case EBUSY: case EINTR:
                                 break;
                             default:
-                                #warning define some error code
+                                TODO(" define some error code")
                                 throw Error(ERR_SOCKET_ERROR);
                         }
                         break;
                     case 0: // no data received EOF, but that should not happen here
-                        #warning define some error code
+                        TODO(" define some error code")
                         throw Error(ERR_SOCKET_CLOSED);
                     default: /* some data received */
                         readlen += rcvd;
+                        this->stream.end = this->stream.data + readlen;
                 }
             }
 
@@ -264,23 +252,23 @@ struct GraphicsFile
                     }
                     //                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
                     switch (this->common.order) {
-                        case TEXT2://
+                        case GLYPHINDEX://
                             //this->glyph_index.receive(this->stream, header);
                             //mod->glyph_index(this->glyph_index);
                             break;
                         case DESTBLT://
                             this->destblt.receive(this->stream, header);
-                            this->destblt.print(clip);
+//                            this->destblt.print(clip);
                             //mod->dest_blt(this->destblt);
                             break;
                         case PATBLT://
                             this->patblt.receive(this->stream, header);
-                            this->patblt.print(clip);
+//                            this->patblt.print(clip);
                             //mod->pat_blt(this->patblt);
                             break;
                         case SCREENBLT://
                             this->scrblt.receive(this->stream, header);
-                            this->scrblt.print(clip);
+//                            this->scrblt.print(clip);
                             //mod->scr_blt(this->scrblt);
                             break;
                         case LINE://
@@ -289,14 +277,14 @@ struct GraphicsFile
                             break;
                         case RECT://
                             this->opaquerect.receive(this->stream, header);
-                            this->opaquerect.print(clip);
+//                            this->opaquerect.print(clip);
                             break;
                         case DESKSAVE:
                             //this->rdp_orders_process_desksave(this->stream, header.fields, header.control & DELTA, mod);
                             break;
                         case MEMBLT://
                             this->memblt.receive(this->stream, header);
-                            this->memblt.print(clip);
+//                            this->memblt.print(clip);
                             //{
                             //    struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xFF][this->memblt.cache_idx];
                             //    if (bitmap) {
@@ -335,7 +323,7 @@ struct GraphicsFile
             this->stream.set_out_uint8    (this->order_count, 2);                  // amout of orders on 1 byte
             this->stream.set_out_uint8    (1, 3);                                  // type of packet of order (1 is drawing)
 
-            #warning this var is directly linked to the init size of stream
+            TODO(" this var is directly linked to the init size of stream")
             uint16_t written = 0;
             while ( written < this->stream.p - this->stream.data ) {
                 int w = ::write  ( this->pFile, this->stream.data + written, this->stream.p - this->stream.data - written);
@@ -370,7 +358,7 @@ struct GraphicsFile
         this->order_count++;
     }
 
-    void send(const RDPOpaqueRect & cmd, const Rect & clip)
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         this->reserve_order(23);
         RDPOrderCommon newcommon(RDP::RECT, clip);
@@ -379,7 +367,7 @@ struct GraphicsFile
         this->opaquerect = cmd;
     }
 
-    void send(const RDPScrBlt & cmd, const Rect &clip)
+    void draw(const RDPScrBlt & cmd, const Rect &clip)
     {
         this->reserve_order(25);
         RDPOrderCommon newcommon(RDP::SCREENBLT, clip);
@@ -388,7 +376,7 @@ struct GraphicsFile
         this->scrblt = cmd;
     }
 
-    void send(const RDPDestBlt & cmd, const Rect &clip)
+    void draw(const RDPDestBlt & cmd, const Rect &clip)
     {
         this->reserve_order(21);
         RDPOrderCommon newcommon(RDP::DESTBLT, clip);
@@ -398,7 +386,7 @@ struct GraphicsFile
     }
 
 
-    void send(const RDPPatBlt & cmd, const Rect &clip)
+    void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
         this->reserve_order(29);
         using namespace RDP;
@@ -409,7 +397,7 @@ struct GraphicsFile
     }
 
 
-    void send(const RDPMemBlt & cmd, const Rect & clip)
+    void draw(const RDPMemBlt & cmd, const Rect & clip)
     {
         this->reserve_order(30);
         RDPOrderCommon newcommon(RDP::MEMBLT, clip);
@@ -418,7 +406,7 @@ struct GraphicsFile
         this->memblt = cmd;
     }
 
-    void send(const RDPLineTo& cmd, const Rect & clip)
+    void draw(const RDPLineTo& cmd, const Rect & clip)
     {
         this->reserve_order(32);
         RDPOrderCommon newcommon(RDP::LINE, clip);
@@ -427,7 +415,7 @@ struct GraphicsFile
         this->lineto = cmd;
     }
 
-    void send(const RDPGlyphIndex & cmd, const Rect & clip)
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
         this->reserve_order(297);
         RDPOrderCommon newcommon(RDP::GLYPHINDEX, clip);
@@ -436,27 +424,27 @@ struct GraphicsFile
         this->glyphindex = cmd;
     }
 
-    void send(const RDPBrushCache & cmd)
+    void draw(const RDPBrushCache & cmd)
     {
         this->reserve_order(cmd.size + 12);
         cmd.emit(this->stream);
     }
 
-    void send(const RDPColCache & cmd)
+    void draw(const RDPColCache & cmd)
     {
         this->reserve_order(2000);
         cmd.emit(this->stream);
     }
 
-    void send(const RDPBmpCache & cmd)
+    void draw(const RDPBmpCache & cmd)
     {
         this->reserve_order(cmd.bmp->bmp_size(cmd.bpp) + 16);
-        cmd.emit_raw_v1(this->stream); // There are no client_info
+        cmd.emit(this->stream, 0, 0, 0);
     }
 
-    void send(const RDPGlyphCache & cmd)
+    void draw(const RDPGlyphCache & cmd)
     {
-        #warning compute actual size, instead of a majoration as below
+        TODO(" compute actual size  instead of a majoration as below")
         this->reserve_order(1000);
         cmd.emit(this->stream);
     }
@@ -472,12 +460,12 @@ BOOST_AUTO_TEST_CASE(TestWriteOverFile)
     {
         GraphicsFile gf(false);
 
-        gf.send(RDPOpaqueRect(Rect(0, 0, 800, 600), 0xffffff), Rect(0, 0, 800, 600));
-        gf.send(RDPOpaqueRect(Rect(5, 5, 790, 590), 0x0000ff), Rect(0, 0, 800, 600));
-        gf.send(RDPOpaqueRect(Rect(10, 10, 780, 580), 0x00ff00), Rect(0, 0, 800, 600));
-        gf.send(RDPOpaqueRect(Rect(15, 15, 770, 570), 0xff0000), Rect(0, 0, 800, 600));
-        gf.send(RDPOpaqueRect(Rect(20, 20, 760, 560), 0x000000), Rect(0, 0, 800, 600));
-        gf.send(RDPOpaqueRect(Rect(30, 30, 740, 540), 0x9c4d00), Rect(0, 0, 800, 600));
+        gf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0xffffff), Rect(0, 0, 800, 600));
+        gf.draw(RDPOpaqueRect(Rect(5, 5, 790, 590), 0x0000ff), Rect(0, 0, 800, 600));
+        gf.draw(RDPOpaqueRect(Rect(10, 10, 780, 580), 0x00ff00), Rect(0, 0, 800, 600));
+        gf.draw(RDPOpaqueRect(Rect(15, 15, 770, 570), 0xff0000), Rect(0, 0, 800, 600));
+        gf.draw(RDPOpaqueRect(Rect(20, 20, 760, 560), 0x000000), Rect(0, 0, 800, 600));
+        gf.draw(RDPOpaqueRect(Rect(30, 30, 740, 540), 0x9c4d00), Rect(0, 0, 800, 600));
 
         // ------- Dumping bitmap RAW data [0x1a10470]---------
         // cx=32 cy=32
@@ -708,9 +696,8 @@ BOOST_AUTO_TEST_CASE(TestWriteOverFile)
         }; /* 0x1a10470 */
 
         Bitmap bmp0x1a10470(24, &palette332, 32, 32, raw0x1a10470, sizeof(raw0x1a10470));
-        gf.send(RDPBmpCache(24, &bmp0x1a10470, 1, 0, NULL));
-
-        gf.send(RDPMemBlt(1, Rect(80, 60, 32, 32), 204, 0, 0, 0), Rect(0, 0, 800, 600));
+        gf.draw(RDPBmpCache(24, &bmp0x1a10470, 1, 0));
+        gf.draw(RDPMemBlt(1, Rect(80, 60, 32, 32), 204, 0, 0, 0), Rect(0, 0, 800, 600));
 
         gf.flush();
     }

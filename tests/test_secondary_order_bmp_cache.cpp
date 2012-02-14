@@ -53,8 +53,8 @@ BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
             0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF, 
         };
         Bitmap bmp(24, NULL, 8, 1, data, sizeof(data), false, false);
-        RDPBmpCache newcmd(24, &bmp, 1, 10, &ci);
-        newcmd.emit(stream);
+        RDPBmpCache newcmd(24, &bmp, 1, 10);
+        newcmd.emit(stream, ci.bitmap_cache_version, ci.use_bitmap_comp, ci.op2);
 
         uint8_t datas[] = {
             STANDARD | SECONDARY,       // control = 0x03

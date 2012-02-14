@@ -380,7 +380,7 @@ class RDPOrderCommon {
         switch (this->order)
         {
             case TRIBLT:
-            case TEXT2:
+            case GLYPHINDEX:
                 size = 3;
                 break;
 
@@ -470,7 +470,7 @@ class RDPOrderCommon {
         switch (this->order)
         {
             case TRIBLT:
-            case TEXT2:
+            case GLYPHINDEX:
                 size = 3;
                 break;
 
@@ -522,7 +522,7 @@ class RDPOrderCommon {
         case MEMBLT:
             assert(!(header.fields & ~0x1FF));
         break;
-        case TEXT2:
+        case GLYPHINDEX:
             assert(!(header.fields & ~0x3FFFFF));
         break;
         default:

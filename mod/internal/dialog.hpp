@@ -56,7 +56,7 @@ struct dialog_mod : public internal_mod {
             log_width,
             log_height);
 
-        #warning valgrind say there is a memory leak here
+        TODO(" valgrind say there is a memory leak here")
         this->close_window = new window_dialog(this,
             r, context,
             this->screen, // parent
@@ -158,7 +158,7 @@ struct dialog_mod : public internal_mod {
                     if (wnd != this->get_screen_wdg()) {
                         // change focus. Is graphical feedback necessary ?
                         if (control != wnd && control->tab_stop) {
-                            #warning control that had focus previously does not loose it, easy way could be to loop on all controls and clear all existing focus
+                            TODO(" control that had focus previously does not loose it  easy way could be to loop on all controls and clear all existing focus")
                             control->has_focus = true;
                             for (size_t i = 0; i < wnd->child_list.size(); i++) {
                                 wnd->child_list[i]->has_focus = false;
@@ -228,7 +228,7 @@ struct dialog_mod : public internal_mod {
 
                         if (wnd != this->get_screen_wdg()) {
                             if (control != wnd && control->tab_stop) {
-                            #warning previous focus on other control is not yet disabled
+                            TODO(" previous focus on other control is not yet disabled")
                                 control->has_focus = true;
                                 control->refresh(control->rect.wh());
                             }
@@ -254,7 +254,7 @@ struct dialog_mod : public internal_mod {
     }
 
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const Keymap * keymap, const key_info* ki){
-        #warning dialog does not support keyboard any more, fix that
+        TODO(" dialog does not support keyboard any more  fix that")
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)

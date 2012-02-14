@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestColCache)
     using namespace RDP;
 
     {
-        Stream stream(1000);
+        Stream stream(65536);
 
         BGRPalette palette;
         for (int i = 0; i < 256; ++i){

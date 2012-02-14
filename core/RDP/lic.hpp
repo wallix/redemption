@@ -25,17 +25,115 @@
 #if !defined(__CORE_RDP_LIC_HPP__)
 #define __CORE_RDP_LIC_HPP__
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include "sec_utils.hpp"
 #include "RDP/sec.hpp"
+
+// 2.2.1.12 Server License Error PDU - Valid Client
+// =============================================
+
+// The License Error (Valid Client) PDU is an RDP Connection Sequence PDU sent
+// from server to client during the Licensing phase of the RDP Connection
+// Sequence (see section 1.3.1.1 for an overview of the RDP Connection Sequence
+// phases). This licensing PDU indicates that the server will not issue the
+// client a license to store and that the Licensing Phase has ended successfully.
+
+// This is one possible licensing PDU that may be sent during the Licensing
+// Phase (see [MS-RDPELE] section 2.2.2 for a list of all permissible licensing
+// PDUs).
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224] section 13.7.
+
+// mcsSDin (variable): Variable-length PER-encoded MCS Domain PDU (DomainMCSPDU) which encapsulates an MCS Send Data Indication structure (SDin, choice 26 from DomainMCSPDU), as specified in [T125] section 11.33 (the ASN.1 structure definitions are given in [T125] section 7, parts 7 and 10). The userData field of the MCS Send Data Indication contains a Security Header and a Valid Client License Data (section 2.2.1.12.1) structure.
+
+// securityHeader (variable): Security header. The format of the security header depends on the Encryption Level and Encryption Method selected by the server (sections 5.3.2 and 2.2.1.4.3).
+
+// This field MUST contain one of the following headers:
+
+// - Basic Security Header (section 2.2.8.1.1.2.1) if the Encryption Level selected by the server is ENCRYPTION_LEVEL_NONE (0) or ENCRYPTION_LEVEL_LOW (1) and the embedded flags field does not contain the SEC_ENCRYPT (0x0008) flag.
+
+// - Non-FIPS Security Header (section 2.2.8.1.1.2.2) if the Encryption Method selected by the server is ENCRYPTION_METHOD_40BIT (0x00000001), ENCRYPTION_METHOD_56BIT (0x00000008), or ENCRYPTION_METHOD_128BIT (0x00000002) and the embedded flags field contains the SEC_ENCRYPT (0x0008) flag.
+
+// - FIPS Security Header (section 2.2.8.1.1.2.3) if the Encryption Method selected by the server is ENCRYPTION_METHOD_FIPS (0x00000010) and the embedded flags field contains the SEC_ENCRYPT (0x0008) flag.
+
+// If the Encryption Level is set to ENCRYPTION_LEVEL_CLIENT_COMPATIBLE (2), ENCRYPTION_LEVEL_HIGH (3), or ENCRYPTION_LEVEL_FIPS (4) and the flags field of the security header does not contain the SEC_ENCRYPT (0x0008) flag (the licensing PDU is not encrypted), then the field MUST contain a Basic Security Header. This MUST be the case if SEC_LICENSE_ENCRYPT_SC (0x0200) flag was not set on the Security Exchange PDU (section 2.2.1.10).
+
+// The flags field of the security header MUST contain the SEC_LICENSE_PKT (0x0080) flag (see Basic (TS_SECURITY_HEADER)).
+
+// validClientLicenseData (variable): The actual contents of the License Error (Valid Client) PDU, as specified in section 2.2.1.12.1.
+
+// 2.2.1.12.1 Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
+// The LICENSE_VALID_CLIENT_DATA structure contains information which indicates that the server will not issue the client a license to store and that the Licensing Phase has ended successfully.
+
+// preamble (4 bytes): Licensing Preamble (section 2.2.1.12.1.1) structure containing header information. The bMsgType field of the preamble structure MUST be set to ERROR_ALERT (0xFF).
+
+// validClientMessage (variable): A Licensing Error Message (section 2.2.1.12.1.3) structure.
+
+// The dwErrorCode field of the error message structure MUST be set to STATUS_VALID_CLIENT (0x00000007) and the dwStateTransition field MUST be set to ST_NO_TRANSITION (0x00000002). The bbErrorInfo field MUST contain an empty binary large object (BLOB) of type BB_ERROR_BLOB (0x0004).
+
+// 2.2.1.12.1.1 Licensing Preamble (LICENSE_PREAMBLE)
+// The LICENSE_PREAMBLE structure precedes every licensing packet sent on the wire.
+
+// bMsgType (1 byte): An 8-bit, unsigned integer. A type of the licensing packet. For more details about the different licensing packets, see [MS-RDPELE] section 2.2.2.
+
+//Sent by server:
+
+// 0x01 LICENSE_REQUEST Indicates a License Request PDU ([MS-RDPELE] section 2.2.2.1).
+// 0x02 PLATFORM_CHALLENGE Indicates a Platform Challenge PDU ([MS-RDPELE] section 2.2.2.4).
+// 0x03 NEW_LICENSE Indicates a New License PDU ([MS-RDPELE] section 2.2.2.7).
+// 0x04 UPGRADE_LICENSE Indicates an Upgrade License PDU ([MS-RDPELE] section 2.2.2.6).
+//
+// Sent by client:
+
+// 0x12 LICENSE_INFO Indicates a License Information PDU ([MS-RDPELE] section 2.2.2.3).
+// 0x13 NEW_LICENSE_REQUEST Indicates a New License Request PDU ([MS-RDPELE] section 2.2.2.2).
+// 0x15 PLATFORM_CHALLENGE_RESPONSE Indicates a Platform Challenge Response PDU ([MS-RDPELE] section 2.2.2.5).
+
+// Sent by either client or server:
+
+// 0xFF ERROR_ALERT Indicates a Licensing Error Message PDU (section 2.2.1.12.1.3).
+
+// flags (1 byte): An 8-bit unsigned integer. License preamble flags.
+
+// 0x0F LicenseProtocolVersionMask The license protocol version. See the discussion which follows this table for more information.
+
+// 0x80 EXTENDED_ERROR_MSG_SUPPORTED Indicates that extended error information using the License Error Message (section 2.2.1.12.1.3) is supported.
+
+// The LicenseProtocolVersionMask is a 4-bit value containing the supported license protocol version. The following are possible version values.
+
+// wMsgSize (2 bytes): An 16-bit, unsigned integer. The size in bytes of the licensing packet (including the size of the preamble).
+
+// 2.2.2.1 Server License Request (SERVER_LICENSE_REQUEST)
+// =======================================================
+
+// See MS-RDPELE for details
+
 
 static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
 {
+
+    Stream stream(32768);
+    X224Out tpdu(X224Packet::DT_TPDU, stream);
+    McsOut sdin_out(stream, MCS_SDIN, userid, MCS_GLOBAL_CHANNEL);
+    stream.out_uint32_le(SEC_LICENCE_NEG);
+
+    stream.out_uint8(LICENCE_TAG_DEMAND);
+    stream.out_uint8(2); // preamble flags : PREAMBLE_VERSION_2_0 (RDP 4.0)
+    stream.out_uint16_le(318); // wMsgSize = 318 including preamble
+
     /* some compilers need unsigned char to avoid warnings */
-    static uint8_t lic1[322] = {
-        0x80, 0x00, 0x3e, 0x01, 0x01, 0x02, 0x3e, 0x01,
+    static uint8_t lic1[314] = {
+        // SEC_RANDOM ?
         0x7b, 0x3c, 0x31, 0xa6, 0xae, 0xe8, 0x74, 0xf6,
         0xb4, 0xa5, 0x03, 0x90, 0xe7, 0xc2, 0xc7, 0x39,
         0xba, 0x53, 0x1c, 0x30, 0x54, 0x6e, 0x90, 0x05,
         0xd0, 0x05, 0xce, 0x44, 0x18, 0x91, 0x83, 0x81,
+        //
         0x00, 0x00, 0x04, 0x00, 0x2c, 0x00, 0x00, 0x00,
         0x4d, 0x00, 0x69, 0x00, 0x63, 0x00, 0x72, 0x00,
         0x6f, 0x00, 0x73, 0x00, 0x6f, 0x00, 0x66, 0x00,
@@ -74,10 +172,13 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
         0x6d, 0x00
    };
 
-    Stream stream(32768);
-    X224Out tpdu(X224Packet::DT_TPDU, stream);
-    McsOut sdin_out(stream, MCS_SDIN, userid, MCS_GLOBAL_CHANNEL);
-    stream.out_copy_bytes((char*)lic1, 322);
+    stream.out_copy_bytes((char*)lic1, 314);
+
+//    Stream stream(32768);
+//    X224Out tpdu(X224Packet::DT_TPDU, stream);
+//    McsOut sdin_out(stream, MCS_SDIN, userid, MCS_GLOBAL_CHANNEL);
+//    stream.out_copy_bytes((char*)lic1, 322);
+
     sdin_out.end();
     tpdu.end();
     tpdu.send(trans);
@@ -127,19 +228,19 @@ struct RdpLicence {
     uint8_t * licence_data;
     size_t licence_size;
 
-    RdpLicence(const char * hostname) : licence_issued(0) {
+    RdpLicence(const char * hostname) : licence_issued(0), licence_size(0) {
         memset(this->licence_key, 0, 16);
         memset(this->licence_sign_key, 0, 16);
-        #warning licence loading should be done before creating protocol layers
+        TODO(" licence loading should be done before creating protocol layers")
         struct stat st;
         char path[256];
         sprintf(path, "/etc/xrdp/.xrdp/licence.%s", hostname);
         int fd = open(path, O_RDONLY);
         if (fd != -1 && fstat(fd, &st) != 0){
             this->licence_data = (uint8_t *)malloc(this->licence_size);
-            #warning check error code here
+            TODO(" check error code here")
             if (((int)this->licence_size) != read(fd, this->licence_data, this->licence_size)){
-                #warning throwing an error would be better
+                TODO(" throwing an error would be better")
                 return;
             }
             close(fd);
@@ -199,7 +300,7 @@ struct RdpLicence {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, 2, SEC_LICENCE_NEG, encrypt);
+        SecOut sec_out(stream, SEC_LICENCE_NEG, encrypt);
 
         stream.out_uint8(LICENCE_TAG_AUTHRESP);
 
@@ -216,12 +317,15 @@ struct RdpLicence {
         sec_out.end();
         sdrq_out.end();
         tpdu.end();
+
         tpdu.send(trans);
     }
 
 
     void rdp_lic_process_demand(Transport * trans, Stream & stream, const char * hostname, const char * username, int userid, const int licence_issued, CryptContext & encrypt)
     {
+        LOG(LOG_DEBUG, "rdp_lic_process_demand");
+
         uint8_t null_data[SEC_MODULUS_SIZE];
         uint8_t signature[LICENCE_SIGNATURE_SIZE];
         uint8_t hwid[LICENCE_HWID_SIZE];
@@ -305,7 +409,7 @@ struct RdpLicence {
         return 1;
     }
 
-    #warning this is not supported yet, but using rdp_save_licence we would keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Anyway the use of files to stoe licences should be abstracted.
+    TODO(" this is not supported yet  but using rdp_save_licence we would keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Anyway the use of files to stoe licences should be abstracted.")
     void rdp_save_licence(uint8_t *data, int length, const char * hostname)
     {
         int fd;
@@ -358,6 +462,8 @@ struct RdpLicence {
 
     void rdp_lic_send_request(Transport * trans, uint8_t* client_random, uint8_t* rsa_data, const char * hostname, const char * username, int userid, int licence_issued, CryptContext & encrypt)
     {
+        LOG(LOG_INFO, "rdp_lic_send_request");
+
         int userlen = strlen(username) + 1;
         int hostlen = strlen(hostname) + 1;
         int length = 128 + userlen + hostlen;
@@ -365,7 +471,7 @@ struct RdpLicence {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, 2, SEC_LICENCE_NEG, encrypt);
+        SecOut sec_out(stream, SEC_LICENCE_NEG, encrypt);
 
         stream.out_uint8(LICENCE_TAG_REQUEST);
         stream.out_uint8(2); /* version */
@@ -429,6 +535,25 @@ struct RdpLicence {
     }
 
 };
+
+// 2.2.1.12.1.2 Licensing Binary Blob (LICENSE_BINARY_BLOB)
+// The LICENSE_BINARY_BLOB structure is used to encapsulate arbitrary length binary licensing data.
+
+// wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of the binary information. If wBlobLen is set to 0, then the contents of this field SHOULD be ignored.
+
+// 0x0001 BB_DATA_BLOB Used by License Information PDU and Platform Challenge Response PDU ([MS-RDPELE] sections 2.2.2.3 and 2.2.2.5).
+// 0x0002 BB_RANDOM_BLOB Used by License Information PDU and New License Request PDU ([MS-RDPELE] sections 2.2.2.3 and 2.2.2.2).
+// 0x0003 BB_CERTIFICATE_BLOB Used by License Request PDU ([MS-RDPELE] section 2.2.2.1).
+// 0x0004 BB_ERROR_BLOB Used by License Error PDU (section 2.2.1.12).
+// 0x0009 BB_ENCRYPTED_DATA_BLOB Used by Platform Challenge Response PDU and Upgrade License PDU ([MS-RDPELE] sections 2.2.2.5 and 2.2.2.6).
+// 0x000D BB_KEY_EXCHG_ALG_BLOB Used by License Request PDU ([MS-RDPELE] section 2.2.2.1).
+// 0x000E BB_SCOPE_BLOB Used by License Request PDU ([MS-RDPELE] section 2.2.2.1).
+// 0x000F BB_CLIENT_USER_NAME_BLOB Used by New License Request PDU ([MS-RDPELE] section 2.2.2.2).
+// 0x0010 BB_CLIENT_MACHINE_NAME_BLOB Used by New License Request PDU ([MS-RDPELE] section 2.2.2.2).
+
+// wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of the binary information in the blobData field. If wBlobLen is set to 0, then the blobData field is not included in the Licensing Binary BLOB structure and the contents of the wBlobType field SHOULD be ignored.
+
+// blobData (variable): Variable-length binary data. The size of this data in bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field is not included in the Licensing Binary BLOB structure.
 
 
 
