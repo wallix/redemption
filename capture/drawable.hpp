@@ -176,11 +176,11 @@ public:
 //        LOG(LOG_INFO, "Reading bitmap %p from cache at (id=%u idx=%u)", pbmp, id, idx);
         const uint8_t Bpp = ::nbbytes(this->bpp);
         uint8_t * target = this->first_pixel(rect);
-        uint8_t * source = pbmp->data_co(this->bpp) + ((rect.cy - srcy - 1) * align4(rect.cx) + srcx) * Bpp;
+        uint8_t * source = pbmp->data_co(this->bpp) + ((rect.cy - srcy - 1) * pbmp->cx + srcx) * Bpp;
         for (int y = 0; y < rect.cy ; y++){
             uint8_t * linetarget = target;
             uint8_t * linesource = source;
-            for (int x = 0; x < rect.cx ; x++){
+            for (int x = 0; x < rect.cx ; x++, linesource += Bpp, linetarget += Bpp){
                 TODO("it would be nicer to manage clipping earlier and not test every pixel")
                 if (!(clip.contains_pt(x + rect.x, y + rect.y))) {
                   continue;
@@ -189,7 +189,6 @@ public:
                 for (int b = 1 ; b < Bpp ; b++){
                     px = (px << 8) + linesource[Bpp-1-b];
                 }
-                linesource += Bpp;
                 uint32_t color = color_decode(px, this->bpp, this->palette);
                 if (this->bgr){
                     color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
@@ -197,10 +196,9 @@ public:
                 linetarget[0] = (color >> 16);
                 linetarget[1] = (color >> 8);
                 linetarget[2] = color;
-                linetarget += Bpp;
             }
             target += this->full.cx * Bpp;
-            source -= align4(rect.cx) * Bpp;
+            source -= pbmp->cx * Bpp;
         }
     }
 
