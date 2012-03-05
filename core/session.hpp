@@ -467,10 +467,14 @@ struct Session {
                 BGRPalette palette;
                 init_palette332(palette);
 
-                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 2");
+                if (this->verbose > 63){
+                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 2");
+                }
                 this->mod->gd.color_cache(palette, 0);
 
-                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 3");
+                if (this->verbose > 63){
+                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 3");
+                }
                 struct pointer_item pointer_item;
 
                 memset(&pointer_item, 0, sizeof(pointer_item));
@@ -480,7 +484,9 @@ struct Session {
                     &pointer_item.x,
                     &pointer_item.y);
 
-                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 4");
+                if (this->verbose > 63){
+                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 4");
+                }
 
                 this->front->cache.add_pointer_static(&pointer_item, 0);
                 this->front->send_pointer(0,
@@ -489,7 +495,9 @@ struct Session {
                                  pointer_item.x,
                                  pointer_item.y);
 
-                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 5");
+                if (this->verbose > 63){
+                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 5");
+                }
 
                 memset(&pointer_item, 0, sizeof(pointer_item));
                 load_pointer(SHARE_PATH "/" CURSOR1,
@@ -499,7 +507,9 @@ struct Session {
                     &pointer_item.y);
                 this->front->cache.add_pointer_static(&pointer_item, 1);
 
-                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 6");
+                if (this->verbose > 63){
+                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 6");
+                }
 
                 this->front->send_pointer(1,
                                  pointer_item.data,
@@ -507,7 +517,9 @@ struct Session {
                                  pointer_item.x,
                                  pointer_item.y);
 
-                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 7");
+                if (this->verbose > 63){
+                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 7");
+                }
 
                 if (this->front->get_client_info().username[0]){
                     this->context->parse_username(this->front->get_client_info().username);
@@ -519,11 +531,15 @@ struct Session {
 
                 this->internal_state = SESSION_STATE_RUNNING;
 
-                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 8");
+                if (this->verbose > 63){
+                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 8");
+                }
 
                 this->session_setup_mod(MCTX_STATUS_CLI, this->context);
 
-                LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 5");
+                if (this->verbose > 63){
+                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 5");
+                }
             }
         }
 
