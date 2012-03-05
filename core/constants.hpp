@@ -164,17 +164,7 @@ PDUTYPE_SERVER_REDIR_PKT       = 10,
 };
 
 // [MS-RDPBCGR] 2.2.8.1.1.1.2 Share Data Header (TS_SHAREDATAHEADER)
-// +-----------------------------------+---------------------------------------+
-// | 48 PDUTYPE2_DRAWNINEGRID_ERROR_PDU| DrawNineGrid Cache Error PDU          |
-// |                                   | (see [MS-RDPEGDI] section 2.2.2.3.3)  |
-// +-----------------------------------+---------------------------------------+
-// | 49 PDUTYPE2_DRAWGDIPLUS_ERROR_PDU | GDI+ Error PDU (see [MS-RDPEGDI]      |
-// |                                   |  section 2.2.2.3.4)                   |
-// +-----------------------------------+---------------------------------------+
-// | 50 PDUTYPE2_ARC_STATUS_PDU        | Auto-Reconnect Status PDU             |
-// |                                   |    (section 2.2.4.1.1)                |
-// +-----------------------------------+---------------------------------------+
-
+// =================================================================
 enum {
 PDUTYPE2_UPDATE                = 2,  // Update PDU (section 2.2.9.1.1.3)
 PDUTYPE2_CONTROL               = 20, // Control PDU (section 2.2.1.15.1)
@@ -199,9 +189,15 @@ PDUTYPE2_BITMAPCACHE_ERROR_PDU = 44,       // Bitmap Cache Error PDU (see
                                            // [MS-RDPEGDI] section 2.2.2.3.1)
 PDUTYPE2_SET_KEYBOARD_IME_STATUS = 45,     // Set Keyboard IME Status PDU
                                            // (section 2.2.8.2.2.1)
-PDUTYPE2_OFFSCRCACHE_ERROR_PDU = 46,       // Offscreen Bitmap Cache Error PDU
-                                           // (see [MS-RDPEGDI] section 2.2.2.3.2)  |
-PDUTYPE2_SET_ERROR_INFO_PDU        = 47,   // Set Error Info PDU (section 2.2.5.1.1)
+PDUTYPE2_OFFSCRCACHE_ERROR_PDU = 46,   // Offscreen Bitmap Cache Error PDU
+                                       // (see [MS-RDPEGDI] section 2.2.2.3.2)
+PDUTYPE2_SET_ERROR_INFO_PDU    = 47,   // Set Error Info PDU (section 2.2.5.1.1)
+PDUTYPE2_DRAWNINEGRID_ERROR_PDU = 48,  // DrawNineGrid Cache Error PDU
+                                       // (see [MS-RDPEGDI] section 2.2.2.3.3)
+PDUTYPE2_DRAWGDIPLUS_ERROR_PDU = 49,   // GDI+ Error PDU 
+                                       // (see [MS-RDPEGDI] section 2.2.2.3.4)
+PDUTYPE2_ARC_STATUS_PDU        = 50,   // Auto-Reconnect Status PDU
+                                       // (section 2.2.4.1.1)
 };
 
 enum {

@@ -2730,12 +2730,37 @@ public:
         }
 
         switch (share_data_in.pdutype2) {
-        case PDUTYPE2_POINTER: /* 27(0x1b) */
+        case PDUTYPE2_UPDATE:  // Update PDU (section 2.2.9.1.1.3)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_UPDATE");
+            }
+        break;
+        case PDUTYPE2_CONTROL: // 20(0x14) Control PDU (section 2.2.1.15.1)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_CONTROL");
+            }
+            {
+                int action = stream.in_uint16_le();
+                stream.skip_uint8(2); /* user id */
+                stream.skip_uint8(4); /* control id */
+                switch (action){
+                    case RDP_CTL_REQUEST_CONTROL:
+                        this->send_control(RDP_CTL_GRANT_CONTROL);
+                    break;
+                    case RDP_CTL_COOPERATE:
+                        this->send_control(RDP_CTL_COOPERATE);
+                    break;
+                    default:
+                        LOG(LOG_WARNING, "process DATA_PDU_CONTROL unknown action (%d)\n", action);
+                }
+            }
+            break;
+        case PDUTYPE2_POINTER: // Pointer Update PDU (section 2.2.9.1.1.4)
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_POINTER");
             }
-            break;
-        case PDUTYPE2_INPUT: /* 28(0x1c) */
+        break;
+        case PDUTYPE2_INPUT:   // 28(0x1c) Input PDU (section 2.2.8.1.1.3)
             {
                 int num_events = stream.in_uint16_le();
 
@@ -2812,28 +2837,11 @@ public:
                     }
                 }
             }
-            break;
-        case PDUTYPE2_CONTROL: /* 20(0x14) */
+        break;
+        case PDUTYPE2_SYNCHRONIZE:  // Synchronize PDU (section 2.2.1.14.1)
             if (this->verbose){
-                LOG(LOG_INFO, "PDUTYPE2_CONTROL");
+                LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");
             }
-            {
-                int action = stream.in_uint16_le();
-                stream.skip_uint8(2); /* user id */
-                stream.skip_uint8(4); /* control id */
-                switch (action){
-                    case RDP_CTL_REQUEST_CONTROL:
-                        this->send_control(RDP_CTL_GRANT_CONTROL);
-                    break;
-                    case RDP_CTL_COOPERATE:
-                        this->send_control(RDP_CTL_COOPERATE);
-                    break;
-                    default:
-                        LOG(LOG_WARNING, "process DATA_PDU_CONTROL unknown action (%d)\n", action);
-                }
-            }
-            break;
-        case PDUTYPE2_SYNCHRONIZE:
             {
                 uint16_t messageType = stream.in_uint16_le();
                 uint16_t controlId = stream.in_uint16_le();
@@ -2846,8 +2854,11 @@ public:
                 this->send_synchronize();
                 this->up_and_running = 1;
             }
-            break;
-        case PDUTYPE2_REFRESH_RECT:
+        break;
+        case PDUTYPE2_REFRESH_RECT: // Refresh Rect PDU (section 2.2.11.2.1)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_REFRESH_RECT");
+            }
             {
                 /* int op = */ stream.in_uint32_le();
                 int left = stream.in_uint16_le();
@@ -2863,8 +2874,13 @@ public:
                 }
                 cb.rdp_input_invalidate(Rect(left, top, cx, cy));
             }
-            break;
-        case PDUTYPE2_SUPPRESS_OUTPUT:
+        break;
+        case PDUTYPE2_PLAY_SOUND:   // Play Sound PDU (section 2.2.9.1.1.5.1)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");
+            }
+        break;
+        case PDUTYPE2_SUPPRESS_OUTPUT:  // Suppress Output PDU (section 2.2.11.3.1)
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_SUPPRESS_OUTPUT");
             }
@@ -2873,7 +2889,9 @@ public:
             // screen updates and it will issue a PDUTYPE2_REFRESH_RECT above
             // to catch up so minimized apps don't take bandwidth
             break;
-        case PDUTYPE2_SHUTDOWN_REQUEST:
+
+        break;
+        case PDUTYPE2_SHUTDOWN_REQUEST: // Shutdown Request PDU (section 2.2.2.2.1)
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_REQUEST");
             }
@@ -2895,8 +2913,21 @@ public:
                 tpdu.end();
                 tpdu.send(this->trans);
             }
-            break;
-
+        break;
+        case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_SHUTDOWN_DENIED");
+            }
+        break;
+        case PDUTYPE2_SAVE_SESSION_INFO: // Save Session Info PDU (section 2.2.10.1.1)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");
+            }
+        break;
+        case PDUTYPE2_FONTLIST: // 39(0x27) Font List PDU (section 2.2.1.18.1)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_FONTLIST");
+            }
         // 2.2.1.18.1 Font List PDU Data (TS_FONT_LIST_PDU)
         // ================================================
         // The TS_FONT_LIST_PDU structure contains the contents of the Font
@@ -2922,11 +2953,6 @@ public:
         // entrySize (2 bytes): A 16-bit, unsigned integer. The entry size. This
         // field SHOULD be set to 0x0032 (50 bytes).
 
-
-        case PDUTYPE2_FONTLIST: /* 39(0x27) */
-            if (this->verbose){
-                LOG(LOG_INFO, "PDUTYPE2_FONT_LIST");
-            }
             stream.in_uint16_le(); /* numberFont -> 0*/
             stream.in_uint16_le(); /* totalNumFonts -> 0 */
             {
@@ -2942,7 +2968,58 @@ public:
                 }
             }
             stream.in_uint16_le(); /* entrySize -> 50 */
-            break;
+        break;
+        case PDUTYPE2_FONTMAP:  // Font Map PDU (section 2.2.1.22.1)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_FONTMAP");
+            }
+        break;
+        case PDUTYPE2_SET_KEYBOARD_INDICATORS: // Set Keyboard Indicators PDU (section 2.2.8.2.1.1)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_INDICATORS");
+            }
+        break;
+        case PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST: // Persistent Key List PDU (section 2.2.1.17.1)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST");
+            }
+        break;
+        case PDUTYPE2_BITMAPCACHE_ERROR_PDU: // Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.1)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_ERROR_PDU");
+            }
+        break;
+        case PDUTYPE2_SET_KEYBOARD_IME_STATUS: // Set Keyboard IME Status PDU (section 2.2.8.2.2.1)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_SET_KEYBOARD_IME_STATUS");
+            }
+        break;
+        case PDUTYPE2_OFFSCRCACHE_ERROR_PDU: // Offscreen Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.2)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_OFFSCRCACHE_ERROR_PDU");
+            }
+        break;
+        case PDUTYPE2_SET_ERROR_INFO_PDU: // Set Error Info PDU (section 2.2.5.1.1)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");
+            }
+        break;
+        case PDUTYPE2_DRAWNINEGRID_ERROR_PDU: // DrawNineGrid Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.3)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_DRAWNINEGRID_ERROR_PDU");
+            }
+        break;
+        case PDUTYPE2_DRAWGDIPLUS_ERROR_PDU: // GDI+ Error PDU (see [MS-RDPEGDI] section 2.2.2.3.4)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_DRAWGDIPLUS_ERROR_PDU");
+            }
+        break;
+        case PDUTYPE2_ARC_STATUS_PDU: // Auto-Reconnect Status PDU (section 2.2.4.1.1)
+            if (this->verbose){
+                LOG(LOG_INFO, "PDUTYPE2_ARC_STATUS_PDU");
+            }
+        break;
+
         default:
             LOG(LOG_WARNING, "unsupported PDUTYPE in process_data %d\n", share_data_in.pdutype2);
             break;
