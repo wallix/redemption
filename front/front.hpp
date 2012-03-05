@@ -80,7 +80,14 @@ class FrontAPI {
         size_t length,
         size_t chunk_size,
         int flags) = 0;
-    virtual const ClientInfo & get_client_info() const = 0;
+//    virtual const ClientInfo & get_client_info() const = 0;
+    virtual int get_front_bpp() const = 0;
+    virtual int get_front_width() const = 0;
+    virtual int get_front_height() const = 0;
+    virtual int get_front_build() const = 0;
+    virtual int get_front_console_session() const = 0;
+//    virtual const Rect get_front_rect() = 0;
+    virtual int get_front_brush_cache_code() const = 0;
     virtual const ChannelList & get_channel_list(void) const = 0;
     virtual void reset() = 0;
     virtual void set_client_info(uint16_t width, uint16_t height, uint8_t bpp) = 0;
@@ -205,8 +212,33 @@ public:
         }
     }
 
-    virtual const ClientInfo & get_client_info() const {
-        return this->client_info;
+//    virtual const ClientInfo & get_client_info() const {
+//        return this->client_info;
+//    }
+
+    virtual int get_front_bpp() const {
+        return this->client_info.bpp;
+    }
+
+    virtual int get_front_width() const {
+        return this->client_info.width;
+    }
+
+    virtual int get_front_height() const {
+        return this->client_info.height;
+    }
+
+    virtual int get_front_brush_cache_code() const {
+        return this->client_info.brush_cache_code;
+    }
+
+    virtual int get_front_console_session() const {
+        return this->client_info.console_session;
+    }
+
+
+    virtual int get_front_build() const {
+        return this->client_info.build;
     }
 
     virtual void set_client_info(uint16_t width, uint16_t height, uint8_t bpp)
@@ -255,7 +287,7 @@ public:
         /* initialising keymap */
         TODO(" I should move that to client_info  this is the place where I'm really sure the bitmap is known")
         char filename[256];
-        snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->get_client_info().keylayout);
+        snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->client_info.keylayout);
         LOG(LOG_INFO, "loading keymap %s\n", filename);
         this->keymap.keymap_init(filename);
     }

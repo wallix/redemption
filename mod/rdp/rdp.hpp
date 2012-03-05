@@ -383,7 +383,7 @@ struct mod_rdp : public client_mod {
         LOG(LOG_INFO, "Remote RDP Server login:%s host:%s\n", this->username, this->hostname);
         this->share_id = 0;
         this->bitmap_compression = 1;
-        this->console_session = this->gd.get_client_info().console_session;
+        this->console_session = this->gd.front.get_front_console_session();
 
         memset(this->password, 0, 256);
         strcpy(this->password, target_password);
@@ -1009,8 +1009,8 @@ struct mod_rdp : public client_mod {
             //    |------ Client Info PDU      ---------------------------> |
 
             LOG(LOG_INFO, "Secure Settings Exchange");
-            int rdp5_performanceflags = this->gd.get_client_info().rdp5_performanceflags;
-            rdp5_performanceflags = RDP5_NO_WALLPAPER;
+            TODO("We could use rdp5_performance flags sent from RDP clients to front and forward them")
+            int rdp5_performanceflags = RDP5_NO_WALLPAPER;
 
             this->send_client_info_pdu(
                                 this->trans,

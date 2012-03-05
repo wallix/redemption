@@ -39,9 +39,9 @@ struct internal_mod : public client_mod {
     internal_mod(FrontAPI & front)
             : client_mod(front),
                 screen(this,
-                 this->gd.get_client_info().width,
-                 this->gd.get_client_info().height,
-                 this->gd.get_client_info().bpp)
+                 this->gd.front.get_front_width(),
+                 this->gd.front.get_front_height(),
+                 this->gd.front.get_front_bpp())
     {
         /* dragging info */
         this->dragging = 0;
@@ -84,9 +84,9 @@ struct internal_mod : public client_mod {
 
 
     virtual void front_resize() {
-        this->screen.rect.cx = this->gd.get_client_info().width;
-        this->screen.rect.cy = this->gd.get_client_info().height;
-        this->screen.bpp     = this->gd.get_client_info().bpp;
+        this->screen.rect.cx = this->gd.front.get_front_width();
+        this->screen.rect.cy = this->gd.front.get_front_height();
+        this->screen.bpp     = this->gd.front.get_front_bpp();
     }
 
     Widget * window(int i)

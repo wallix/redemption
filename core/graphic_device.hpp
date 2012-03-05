@@ -51,7 +51,7 @@ struct GraphicDevice
     virtual int text_height(const char * text) = 0;
     virtual int server_begin_update() = 0;
     virtual int server_end_update() = 0;
-    virtual const ClientInfo & get_client_info() const = 0;
+//    virtual const ClientInfo & get_client_info() const = 0;
     virtual int get_front_bpp() const = 0;
     virtual int get_front_width() const = 0;
     virtual int get_front_height() const = 0;

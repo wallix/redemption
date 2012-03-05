@@ -521,12 +521,13 @@ struct Session {
                     LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 7");
                 }
 
-                if (this->front->get_client_info().username[0]){
-                    this->context->parse_username(this->front->get_client_info().username);
+                TODO("This should be done in cli_mod")
+                if (this->front->client_info.username[0]){
+                    this->context->parse_username(this->front->client_info.username);
                 }
 
-                if (this->front->get_client_info().password[0]){
-                    this->context->cpy(STRAUTHID_PASSWORD, this->front->get_client_info().password);
+                if (this->front->client_info.password[0]){
+                    this->context->cpy(STRAUTHID_PASSWORD, this->front->client_info.password);
                 }
 
                 this->internal_state = SESSION_STATE_RUNNING;
@@ -718,9 +719,9 @@ struct Session {
                     delete this->mod;
                     this->mod = this->no_mod;
                 }
-                this->context->cpy(STRAUTHID_OPT_WIDTH, this->front->get_client_info().width);
-                this->context->cpy(STRAUTHID_OPT_HEIGHT, this->front->get_client_info().height);
-                this->context->cpy(STRAUTHID_OPT_BPP, this->front->get_client_info().bpp);
+                this->context->cpy(STRAUTHID_OPT_WIDTH, this->front->client_info.width);
+                this->context->cpy(STRAUTHID_OPT_HEIGHT, this->front->client_info.height);
+                this->context->cpy(STRAUTHID_OPT_BPP, this->front->client_info.bpp);
                 bool record_video = false;
                 bool keep_alive = false;
                 LOG(LOG_INFO, "asking next module");
@@ -1041,8 +1042,8 @@ struct Session {
                     // it is **not** used to get an ip address.
                     char hostname[255];
                     hostname[0] = 0;
-                    if (this->front->get_client_info().hostname[0]){
-                        memcpy(hostname, this->front->get_client_info().hostname, 31);
+                    if (this->front->client_info.hostname[0]){
+                        memcpy(hostname, this->front->client_info.hostname, 31);
                         hostname[31] = 0;
                     }
                     static const char * name = "RDP Target";
@@ -1062,9 +1063,9 @@ struct Session {
                                         this->context->get(STRAUTHID_TARGET_PASSWORD),
                                         *this->front,
                                         hostname,
-                                        this->front->get_client_info().keylayout);
+                                        this->front->client_info.keylayout);
 //                    this->back_event->set();
-                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
+                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->client_info.width, this->front->client_info.height));
                     if (this->verbose){
                         LOG(LOG_INFO, "Creation of new mod 'RDP' suceeded\n");
                     }
@@ -1082,7 +1083,7 @@ struct Session {
                                 name);
                     SocketTransport *t = new SocketTransport(name, sck, this->ini->globals.debug.mod_vnc);
                     this->back_event = new wait_obj(t->sck);
-                    this->mod = new mod_vnc(t, *this->context, *(this->front), this->front->get_client_info().keylayout);
+                    this->mod = new mod_vnc(t, *this->context, *this->front, this->front->client_info.keylayout);
                     this->mod->draw_event();
 //                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                     if (this->verbose){

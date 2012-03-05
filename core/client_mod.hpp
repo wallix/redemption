@@ -115,20 +115,24 @@ struct GraphicDeviceMod : public GraphicDevice
         return 0;
     }
 
-    virtual const ClientInfo & get_client_info() const {
-        return this->front.get_client_info();
-    }
+//    virtual const ClientInfo & get_client_info() const {
+//        return this->front.get_client_info();
+//    }
 
     virtual int get_front_bpp() const {
-        return this->get_client_info().bpp;
+        return this->front.get_front_bpp();
     }
 
     virtual int get_front_width() const {
-        return this->get_client_info().width;
+        return this->front.get_front_width();
     }
 
     virtual int get_front_height() const {
-        return this->get_client_info().height;
+        return this->front.get_front_height();
+    }
+
+    virtual int get_front_brush_cache_code() const {
+        return this->front.get_front_brush_cache_code();
     }
 
     virtual const Rect get_front_rect(){
@@ -381,7 +385,7 @@ struct GraphicDeviceMod : public GraphicDevice
             new_cmd.fore_color = this->convert(cmd.fore_color);
 
             if (new_cmd.brush.style == 3){
-                if (this->get_client_info().brush_cache_code == 1) {
+                if (this->get_front_brush_cache_code() == 1) {
                     uint8_t pattern[8];
                     pattern[0] = new_cmd.brush.hatch;
                     memcpy(pattern+1, new_cmd.brush.extra, 7);
@@ -515,7 +519,7 @@ struct GraphicDeviceMod : public GraphicDevice
             new_cmd.fore_color = this->convert_opaque(cmd.fore_color);
 
             if (new_cmd.brush.style == 3){
-                if (this->get_client_info().brush_cache_code == 1) {
+                if (this->get_front_brush_cache_code() == 1) {
                     uint8_t pattern[8];
                     pattern[0] = new_cmd.brush.hatch;
                     memcpy(pattern+1, new_cmd.brush.extra, 7);
@@ -824,13 +828,16 @@ struct client_mod : public Callback {
 
     void server_resize(int width, int height, int bpp)
     {
-        const ClientInfo & client_info = this->gd.get_client_info();
+        int client_info_width = this->gd.front.get_front_width();
+        int client_info_height = this->gd.front.get_front_height();
+        int client_info_bpp = this->gd.front.get_front_bpp();
+        int client_info_build = this->gd.front.get_front_build();
 
-        if (client_info.width != width
-        || client_info.height != height
-        || client_info.bpp != bpp) {
+        if (client_info_width != width
+        || client_info_height != height
+        || client_info_bpp != bpp) {
             /* older client can't resize */
-            if (client_info.build <= 419) {
+            if (client_info_build <= 419) {
                 LOG(LOG_ERR, "Resizing is not available on older RDP clients");
                 return;
             }
