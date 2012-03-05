@@ -43,7 +43,7 @@ struct xup_mod : public client_mod {
     int rop;
     int fgcolor;
 
-    xup_mod(Transport * t, struct ModContext & context, struct Front & front)
+    xup_mod(Transport * t, struct ModContext & context, struct FrontAPI & front)
         : client_mod(front)
     {
         this->width = atoi(context.get(STRAUTHID_OPT_WIDTH));

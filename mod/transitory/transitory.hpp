@@ -30,7 +30,7 @@
 
 struct transitory_mod : public client_mod {
 
-    transitory_mod(struct ModContext & context, Front & front)
+    transitory_mod(struct ModContext & context, FrontAPI & front)
             :
             client_mod(front)
     {

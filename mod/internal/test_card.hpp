@@ -28,7 +28,7 @@
 struct test_card_mod : public internal_mod {
     test_card_mod(
         wait_obj * event,
-        ModContext & context, Front & front):
+        ModContext & context, FrontAPI & front):
             internal_mod(front)
     {
         this->event = event;
@@ -89,35 +89,35 @@ struct test_card_mod : public internal_mod {
 
         //  lineTo mix_mode=1 startx=200 starty=1198 endx=200 endy=145 bg_color=0 rop2=13 clip=(200, 145, 1, 110)
         this->gd.draw(
-            RDPLineTo(1, 200, 1198, 200, 145, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            RDPLineTo(1, 200, 1198, 200, 145, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(200, 145, 1, 110));
 
         this->gd.draw(
-            RDPLineTo(1, 200, 145, 200, 1198, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            RDPLineTo(1, 200, 145, 200, 1198, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(200, 145, 1, 110));
 
         this->gd.draw(
-            RDPLineTo(1, 201, 1198, 200, 145, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            RDPLineTo(1, 201, 1198, 200, 145, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(200, 145, 1, 110));
 
         this->gd.draw(
-            RDPLineTo(1, 200, 145, 201, 1198, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            RDPLineTo(1, 200, 145, 201, 1198, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(200, 145, 1, 110));
 
         this->gd.draw(
-            RDPLineTo(1, 1198, 200, 145, 200, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            RDPLineTo(1, 1198, 200, 145, 200, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(145, 200, 110, 1));
 
         this->gd.draw(
-            RDPLineTo(1, 145, 200, 1198, 200, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            RDPLineTo(1, 145, 200, 1198, 200, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(145, 200, 110, 1));
 
         this->gd.draw(
-            RDPLineTo(1, 1198, 201, 145, 200, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            RDPLineTo(1, 1198, 201, 145, 200, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(145, 200, 110, 1));
 
         this->gd.draw(
-            RDPLineTo(1, 145, 200, 1198, 201, 0, 13, RDPPen(0, 1, 0x0000FF)), 
+            RDPLineTo(1, 145, 200, 1198, 201, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(145, 200, 110, 1));
 
         this->gd.server_draw_text(30, 30, "White", BLACK, WHITE, clip);
@@ -139,7 +139,7 @@ struct test_card_mod : public internal_mod {
         TODO(" find a better fix than the current one in bitmap_update and mem_blt for the case occuring when drawing square below or similar.")
         uint8_t comp64x64RED[] = {
             0xc0, 0x30, 0x00, 0x00, 0xFF,
-            0xf0, 0xc0, 0x0f, 
+            0xf0, 0xc0, 0x0f,
         };
 
         Bitmap bloc64x64(24, &this->gd.palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );

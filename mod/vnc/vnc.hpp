@@ -68,7 +68,7 @@ struct mod_vnc : public client_mod {
     uint8_t green_shift;
     uint8_t blue_shift;
 
-    mod_vnc(Transport * t, struct ModContext & context, struct Front & front, int keylayout)
+    mod_vnc(Transport * t, struct ModContext & context, struct FrontAPI & front, int keylayout)
         :
         client_mod(front)
     {

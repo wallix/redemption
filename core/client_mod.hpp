@@ -45,7 +45,7 @@
 
 struct GraphicDeviceMod : public GraphicDevice
 {
-    Front & front;
+    FrontAPI & front;
     Capture * capture;
     Rect clip;
     RDPPen pen;
@@ -59,7 +59,7 @@ struct GraphicDeviceMod : public GraphicDevice
     bool mod_palette_setted;
 
 
-    GraphicDeviceMod(Front & front)
+    GraphicDeviceMod(FrontAPI & front)
     : front(front),
       capture(NULL),
       clip(clip),
@@ -767,7 +767,7 @@ struct client_mod : public Callback {
     wait_obj * event;
     BackEvent_t signal;
 
-    client_mod(Front & front)
+    client_mod(FrontAPI & front)
         : gd(front),
           signal(BACK_EVENT_NONE)    {
         this->pointer_displayed = false;

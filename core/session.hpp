@@ -1052,14 +1052,17 @@ struct Session {
                         name);
                     SocketTransport * t = new SocketTransport(name, sck, this->ini->globals.debug.mod_rdp);
                     this->back_event = new wait_obj(t->sck);
+                    // enable or disable clipboard
+                    // this->context->get_bool(STRAUTHID_OPT_CLIPBOARD)
+                    // enable or disable device redirection
+                    // this->context->get_bool(STRAUTHID_OPT_DEVICEREDIRECTION)
                     this->mod = new mod_rdp(t,
                                         *this->back_event,
-                                        *this->context,
-                                        *(this->front),
+                                        this->context->get(STRAUTHID_TARGET_USER),
+                                        this->context->get(STRAUTHID_TARGET_PASSWORD),
+                                        *this->front,
                                         hostname,
-                                        this->front->get_client_info().keylayout,
-                                        this->context->get_bool(STRAUTHID_OPT_CLIPBOARD),
-                                        this->context->get_bool(STRAUTHID_OPT_DEVICEREDIRECTION));
+                                        this->front->get_client_info().keylayout);
 //                    this->back_event->set();
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                     if (this->verbose){

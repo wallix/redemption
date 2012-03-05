@@ -35,7 +35,7 @@ struct close_mod : public internal_mod {
 
     close_mod(
         wait_obj * event,
-        ModContext & context, Front & front, Inifile * ini)
+        ModContext & context, FrontAPI & front, Inifile * ini)
             : internal_mod(front), ini(ini), closing(false)
     {
         this->event = event;

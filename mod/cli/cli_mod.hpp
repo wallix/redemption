@@ -28,7 +28,7 @@
 struct cli_mod : public transitory_mod {
 
     cli_mod(
-        struct ModContext & context, Front & front)
+        struct ModContext & context, FrontAPI & front)
             : transitory_mod(context, front)
     {
 

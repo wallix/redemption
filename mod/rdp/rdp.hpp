@@ -290,7 +290,6 @@ struct mod_rdp : public client_mod {
     ChannelList mod_channel_list;
 
     bool dev_redirection_enable;
-    struct ModContext & context;
     wait_obj & event;
     int use_rdp5;
     int keylayout;
@@ -341,14 +340,14 @@ struct mod_rdp : public client_mod {
 
 
     mod_rdp(Transport * trans, wait_obj & event,
-            struct ModContext & context, struct Front & front,
-            const char * hostname, int keylayout,
-            bool clipboard_enable, bool dev_redirection_enable)
+            const char * target_user,
+            const char * target_password,
+            struct FrontAPI & front,
+            const char * hostname, int keylayout)
             :
                 client_mod(front),
                     in_stream(65536),
                     trans(trans),
-                    context(context),
                     event(event),
                     use_rdp5(1),
                     keylayout(keylayout),
@@ -378,7 +377,7 @@ struct mod_rdp : public client_mod {
         strncpy(this->hostname, hostname, 15);
         this->hostname[15] = 0;
         TODO(" and if username is really larger  what happens ? We should at least emit a warning log")
-        strncpy(this->username, context.get(STRAUTHID_TARGET_USER), 127);
+        strncpy(this->username, target_user, 127);
         this->username[127] = 0;
 
         LOG(LOG_INFO, "Remote RDP Server login:%s host:%s\n", this->username, this->hostname);
@@ -387,7 +386,7 @@ struct mod_rdp : public client_mod {
         this->console_session = this->gd.get_client_info().console_session;
 
         memset(this->password, 0, 256);
-        strcpy(this->password, context.get(STRAUTHID_TARGET_PASSWORD));
+        strcpy(this->password, target_password);
 
         memset(this->domain, 0, 256);
         memset(this->program, 0, 256);
@@ -395,12 +394,6 @@ struct mod_rdp : public client_mod {
 
         this->keylayout = keylayout;
         LOG(LOG_INFO, "Server key layout is %x\n", this->keylayout);
-
-
-        /* clipboard allow us to deactivate copy/paste sequence from server
-        to client communication. This is allowed by default */
-        this->clipboard_enable = clipboard_enable;
-        this->dev_redirection_enable = dev_redirection_enable;
 
         while (UP_AND_RUNNING != this->connection_finalization_state){
             BackEvent_t res = this->draw_event();
@@ -1022,7 +1015,7 @@ struct mod_rdp : public client_mod {
             this->send_client_info_pdu(
                                 this->trans,
                                 this->userid,
-                                context.get(STRAUTHID_TARGET_PASSWORD),
+                                this->password,
                                 rdp5_performanceflags);
 
             this->state = MOD_RDP_GET_LICENSE;

@@ -110,7 +110,7 @@ struct selector_mod : public internal_mod {
     Bitmap * last_page_inactive;
 
 
-    selector_mod(wait_obj * event, ModContext & context, Front & front):
+    selector_mod(wait_obj * event, ModContext & context, FrontAPI & front):
             internal_mod(front), focus_line(0),
             focus_item(context.selector_focus),
             click_focus(NO_FOCUS),

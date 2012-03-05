@@ -31,7 +31,7 @@
 struct test_internal_mod : public internal_mod {
     test_internal_mod(
         wait_obj * event,
-        ModContext & context, Front & front):
+        ModContext & context, FrontAPI & front):
             internal_mod(front)
     {
       this->gd.mod_bpp = this->gd.get_front_bpp();

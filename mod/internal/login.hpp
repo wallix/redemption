@@ -211,7 +211,7 @@ struct login_mod : public internal_mod {
 
 
     login_mod(wait_obj * event,
-            ModContext & context, Front & front, Inifile * ini)
+            ModContext & context, FrontAPI & front, Inifile * ini)
             : internal_mod(front)
     {
 

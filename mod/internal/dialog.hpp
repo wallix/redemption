@@ -35,7 +35,7 @@ struct dialog_mod : public internal_mod {
 
     dialog_mod(wait_obj * event,
               ModContext & context,
-               Front & front,
+               FrontAPI & front,
                const char *message, const char * refuse, Inifile * ini)
             :
             internal_mod(front)

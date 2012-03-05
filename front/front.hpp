@@ -72,17 +72,50 @@
 #include "RDP/gcc_conference_user_data/sc_core.hpp"
 #include "RDP/gcc_conference_user_data/sc_net.hpp"
 
-class Front {
-public:
-    Keymap keymap;
+class FrontAPI {
+    public:
+    virtual void send_to_channel(
+        const McsChannelItem & channel,
+        uint8_t* data,
+        size_t length,
+        size_t chunk_size,
+        int flags) = 0;
+    virtual const ClientInfo & get_client_info() const = 0;
+    virtual const ChannelList & get_channel_list(void) const = 0;
+    virtual void reset() = 0;
+    virtual void set_client_info(uint16_t width, uint16_t height, uint8_t bpp) = 0;
+    virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error) = 0;
+    virtual void send_global_palette(const BGRPalette & palette) throw (Error) = 0;
+    virtual void set_pointer(int cache_idx) throw (Error) = 0;
+    virtual void begin_update() = 0;
+    virtual void end_update() = 0;
 
+    struct Font font;
     Cache cache;
     struct BitmapCache *bmp_cache;
-    struct Font font;
+    bool notimestamp;
     int mouse_x;
     int mouse_y;
     bool nomouse;
-    bool notimestamp;
+    GraphicsUpdatePDU * orders;
+
+    FrontAPI(Inifile * ini):
+        font(SHARE_PATH "/" DEFAULT_FONT_NAME),
+        cache(),
+        bmp_cache(0),
+        notimestamp(ini->globals.notimestamp),
+        mouse_x(0),
+        mouse_y(0),
+        nomouse(ini->globals.nomouse)
+        {}
+
+};
+
+
+class Front : public FrontAPI {
+public:
+    Keymap keymap;
+
     ChannelList channel_list;
     int up_and_running;
     int share_id;
@@ -98,7 +131,6 @@ public:
     CryptContext encrypt, decrypt;
 
     int order_level;
-    GraphicsUpdatePDU * orders;
     Inifile * ini;
     uint32_t verbose;
 
@@ -110,13 +142,7 @@ public:
 public:
 
     Front(SocketTransport * trans, Inifile * ini) :
-        cache(),
-        bmp_cache(0),
-        font(SHARE_PATH "/" DEFAULT_FONT_NAME),
-        mouse_x(0),
-        mouse_y(0),
-        nomouse(ini->globals.nomouse),
-        notimestamp(ini->globals.notimestamp),
+        FrontAPI(ini),
         up_and_running(0),
         share_id(65538),
         client_info(ini),
@@ -179,11 +205,11 @@ public:
         }
     }
 
-    const ClientInfo & get_client_info() const {
+    virtual const ClientInfo & get_client_info() const {
         return this->client_info;
     }
 
-    void set_client_info(uint16_t width, uint16_t height, uint8_t bpp)
+    virtual void set_client_info(uint16_t width, uint16_t height, uint8_t bpp)
     {
         if (this->verbose){
             LOG(LOG_INFO, "Front::set_client_info(%u, %u, %u)", width, height, bpp);
@@ -193,7 +219,7 @@ public:
         this->client_info.bpp = bpp;
     }
 
-    void reset(){
+    virtual void reset(){
         if (this->verbose){
             LOG(LOG_INFO, "Front::reset()");
         }
@@ -234,7 +260,7 @@ public:
         this->keymap.keymap_init(filename);
     }
 
-    void begin_update()
+    virtual void begin_update()
     {
         if (this->verbose){
             LOG(LOG_INFO, "Front::begin_update()");
@@ -242,7 +268,7 @@ public:
         this->order_level++;
     }
 
-    void end_update()
+    virtual void end_update()
     {
         if (this->verbose){
             LOG(LOG_INFO, "Front::end_update()");
@@ -276,12 +302,12 @@ public:
         this->client_info.console_session = b;
     }
 
-    const ChannelList & get_channel_list(void) const
+    virtual const ChannelList & get_channel_list(void) const
     {
         return this->channel_list;
     }
 
-    void send_to_channel(
+    virtual void send_to_channel(
         const McsChannelItem & channel,
         uint8_t* data,
         size_t length,
@@ -467,7 +493,7 @@ public:
 //    color pointer, as specified in [T128] section 8.14.3. This pointer update
 //    is used for both monochrome and color pointers in RDP.
 
-    void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
+    virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
     {
         if (this->verbose){
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
@@ -585,7 +611,7 @@ public:
 //      cached using either the Color Pointer Update (section 2.2.9.1.1.4.4) or
 //      New Pointer Update (section 2.2.9.1.1.4.5).
 
-    void set_pointer(int cache_idx) throw (Error)
+    virtual void set_pointer(int cache_idx) throw (Error)
     {
         if (this->verbose){
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);

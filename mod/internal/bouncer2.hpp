@@ -50,10 +50,10 @@ struct bouncer2_mod : public internal_mod {
         Rect * dancing_rect;
     public:
 
-    bouncer2_mod(wait_obj * back_event, Front & front) :
+    bouncer2_mod(wait_obj * back_event, FrontAPI & front) :
         internal_mod(front), event(back_event), speedx(10), speedy(10), dancing_rect(NULL)
     {
-        
+
         this->gd.server_begin_update();
         this->gd.draw(RDPOpaqueRect(this->screen.rect, 0x00FF00), this->gd.get_front_rect());
         this->gd.server_end_update();
@@ -161,7 +161,7 @@ struct bouncer2_mod : public internal_mod {
             bouncer2_mod & b;
             const Rect & clip;
 
-            RectIt(int color, bouncer2_mod & b, const Rect & clip) 
+            RectIt(int color, bouncer2_mod & b, const Rect & clip)
             : color(color), b(b), clip(clip)
             {}
 

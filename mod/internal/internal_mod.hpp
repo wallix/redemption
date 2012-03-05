@@ -36,7 +36,7 @@ struct internal_mod : public client_mod {
     struct Widget* dragging_window;
     RDPBrush brush;
 
-    internal_mod(Front & front)
+    internal_mod(FrontAPI & front)
             : client_mod(front),
                 screen(this,
                  this->gd.get_client_info().width,
