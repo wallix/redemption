@@ -69,7 +69,7 @@ struct test_internal_mod : public internal_mod {
         int fd = ::open(movie, O_RDONLY);
         assert(fd > 0);
         InFileTransport in_trans(fd);
-        RDPUnserializer reader(&in_trans, this->gd.front.orders, this->screen.rect);
+        RDPUnserializer reader(&in_trans, this->gd.front.orders, this->get_screen_rect());
         this->gd.front.send_global_palette(this->gd.palette332);
         this->gd.server_begin_update();
         while (reader.next()){

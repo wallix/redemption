@@ -69,15 +69,15 @@ struct test_card_mod : public internal_mod {
     {
         this->gd.server_begin_update();
 
-        const Rect & clip = this->screen.rect;
+        const Rect & clip = this->get_screen_rect();
 
-        this->gd.draw(RDPOpaqueRect(this->screen.rect, WHITE), clip);
-        this->gd.draw(RDPOpaqueRect(this->screen.rect.shrink(5), RED), clip);
-        this->gd.draw(RDPOpaqueRect(this->screen.rect.shrink(10), GREEN), clip);
-        this->gd.draw(RDPOpaqueRect(this->screen.rect.shrink(15), BLUE), clip);
-        this->gd.draw(RDPOpaqueRect(this->screen.rect.shrink(20), BLACK), clip);
+        this->gd.draw(RDPOpaqueRect(this->get_screen_rect(), WHITE), clip);
+        this->gd.draw(RDPOpaqueRect(this->get_screen_rect().shrink(5), RED), clip);
+        this->gd.draw(RDPOpaqueRect(this->get_screen_rect().shrink(10), GREEN), clip);
+        this->gd.draw(RDPOpaqueRect(this->get_screen_rect().shrink(15), BLUE), clip);
+        this->gd.draw(RDPOpaqueRect(this->get_screen_rect().shrink(20), BLACK), clip);
 
-        Rect winrect = this->screen.rect.shrink(30);
+        Rect winrect = this->get_screen_rect().shrink(30);
         this->gd.draw(RDPOpaqueRect(winrect, WINBLUE), clip);
 
         Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.bmp");
@@ -131,8 +131,8 @@ struct test_card_mod : public internal_mod {
 
         Bitmap card(SHARE_PATH "/" REDEMPTION_LOGO24);
         this->gd.bitmap_update(card,
-            Rect(this->screen.rect.cx - card.cx - 30,
-                 this->screen.rect.cy - card.cy - 30, card.cx, card.cy),
+            Rect(this->get_screen_rect().cx - card.cx - 30,
+                 this->get_screen_rect().cy - card.cy - 30, card.cx, card.cy),
              0, 0, clip);
 
         // Bogus square generating zero width/height tiles if not properly guarded
@@ -144,7 +144,7 @@ struct test_card_mod : public internal_mod {
 
         Bitmap bloc64x64(24, &this->gd.palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
         this->gd.bitmap_update(bloc64x64,
-            Rect(0, this->screen.rect.cy - 64, bloc64x64.cx, bloc64x64.cy),
+            Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx, bloc64x64.cy),
              32, 32, clip);
 
 

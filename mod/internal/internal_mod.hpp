@@ -89,6 +89,11 @@ struct internal_mod : public client_mod {
         this->screen.bpp     = this->gd.front.get_front_bpp();
     }
 
+    const Rect & get_screen_rect() const
+    {
+        return this->screen.rect;
+    }
+
     Widget * window(int i)
     {
         return this->screen.child_list[i];

@@ -131,10 +131,6 @@ struct GraphicDeviceMod : public GraphicDevice
         return this->front.get_front_height();
     }
 
-    virtual int get_front_brush_cache_code() const {
-        return this->front.get_front_brush_cache_code();
-    }
-
     virtual const Rect get_front_rect(){
         return Rect(0, 0, this->get_front_width(), get_front_height());
     }
@@ -373,6 +369,26 @@ struct GraphicDeviceMod : public GraphicDevice
         }
     }
 
+
+    virtual void cache_brush(RDPBrush & brush)
+    {
+        if ((brush.style == 3)
+        && (this->front.get_front_brush_cache_code() == 1)) {
+            uint8_t pattern[8];
+            pattern[0] = brush.hatch;
+            memcpy(pattern+1, brush.extra, 7);
+            int cache_idx = 0;
+            if (BRUSH_TO_SEND == this->front.cache.add_brush(pattern, cache_idx)){
+                RDPBrushCache cmd(cache_idx, 1, 8, 8, 0x81,
+                    sizeof(this->front.cache.brush_items[cache_idx].pattern),
+                    this->front.cache.brush_items[cache_idx].pattern);
+                this->front.orders->draw(cmd);
+            }
+            brush.hatch = cache_idx;
+            brush.style = 0x81;
+        }
+    }
+
     virtual void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
         if (!clip.isempty()
@@ -384,19 +400,10 @@ struct GraphicDeviceMod : public GraphicDevice
             new_cmd.back_color = this->convert(cmd.back_color);
             new_cmd.fore_color = this->convert(cmd.fore_color);
 
-            if (new_cmd.brush.style == 3){
-                if (this->get_front_brush_cache_code() == 1) {
-                    uint8_t pattern[8];
-                    pattern[0] = new_cmd.brush.hatch;
-                    memcpy(pattern+1, new_cmd.brush.extra, 7);
-                    int cache_idx = 0;
-                    if (BRUSH_TO_SEND == this->front.cache.add_brush(pattern, cache_idx)){
-                        this->brush_cache(cache_idx);
-                    }
-                    new_cmd.brush.hatch = cache_idx;
-                    new_cmd.brush.style = 0x81;
-                }
-            }
+            TODO("Shouldn't this be done before calling draw");
+            // this may change the brush add send it to to remote cache
+            this->cache_brush(new_cmd.brush);
+
             this->front.orders->draw(new_cmd, clip);
 
             if (this->capture){
@@ -518,19 +525,9 @@ struct GraphicDeviceMod : public GraphicDevice
             new_cmd.back_color = this->convert_opaque(cmd.back_color);
             new_cmd.fore_color = this->convert_opaque(cmd.fore_color);
 
-            if (new_cmd.brush.style == 3){
-                if (this->get_front_brush_cache_code() == 1) {
-                    uint8_t pattern[8];
-                    pattern[0] = new_cmd.brush.hatch;
-                    memcpy(pattern+1, new_cmd.brush.extra, 7);
-                    int cache_idx = 0;
-                    if (BRUSH_TO_SEND == this->front.cache.add_brush(pattern, cache_idx)){
-                        this->brush_cache(cache_idx);
-                    }
-                    new_cmd.brush.hatch = cache_idx;
-                    new_cmd.brush.style = 0x81;
-                }
-            }
+            TODO("Shouldn't this be done before calling draw");
+            // this may change the brush and send it to to remote cache
+            this->cache_brush(new_cmd.brush);
 
             this->front.orders->draw(new_cmd, clip);
 
@@ -543,15 +540,6 @@ struct GraphicDeviceMod : public GraphicDevice
             }
         }
     }
-
-    virtual void brush_cache(const int index)
-    {
-        RDPBrushCache cmd(index, 1, 8, 8, 0x81,
-            sizeof(this->front.cache.brush_items[index].pattern),
-            this->front.cache.brush_items[index].pattern);
-        this->front.orders->draw(cmd);
-    }
-
 
     virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
     {
@@ -847,7 +835,7 @@ struct client_mod : public Callback {
             }
             LOG(LOG_INFO, "// Resizing client to : %d x %d x %d\n", width, height, bpp);
 
-            this->gd.front.set_client_info(width, height, bpp);
+            this->gd.front.set_front_resolution(width, height, bpp);
             this->front_resize();
             this->gd.front.reset();
         }

@@ -74,23 +74,19 @@
 
 class FrontAPI {
     public:
-    virtual void send_to_channel(
-        const McsChannelItem & channel,
-        uint8_t* data,
-        size_t length,
-        size_t chunk_size,
-        int flags) = 0;
-//    virtual const ClientInfo & get_client_info() const = 0;
+
     virtual int get_front_bpp() const = 0;
     virtual int get_front_width() const = 0;
     virtual int get_front_height() const = 0;
     virtual int get_front_build() const = 0;
     virtual int get_front_console_session() const = 0;
-//    virtual const Rect get_front_rect() = 0;
     virtual int get_front_brush_cache_code() const = 0;
+
     virtual const ChannelList & get_channel_list(void) const = 0;
+    virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags) = 0;
+
     virtual void reset() = 0;
-    virtual void set_client_info(uint16_t width, uint16_t height, uint8_t bpp) = 0;
+    virtual void set_front_resolution(uint16_t width, uint16_t height, uint8_t bpp) = 0;
     virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error) = 0;
     virtual void send_global_palette(const BGRPalette & palette) throw (Error) = 0;
     virtual void set_pointer(int cache_idx) throw (Error) = 0;
@@ -104,6 +100,7 @@ class FrontAPI {
     int mouse_x;
     int mouse_y;
     bool nomouse;
+
     GraphicsUpdatePDU * orders;
 
     FrontAPI(Inifile * ini):
@@ -241,10 +238,10 @@ public:
         return this->client_info.build;
     }
 
-    virtual void set_client_info(uint16_t width, uint16_t height, uint8_t bpp)
+    virtual void set_front_resolution(uint16_t width, uint16_t height, uint8_t bpp)
     {
         if (this->verbose){
-            LOG(LOG_INFO, "Front::set_client_info(%u, %u, %u)", width, height, bpp);
+            LOG(LOG_INFO, "Front::set_front_resolution(%u, %u, %u)", width, height, bpp);
         }
         this->client_info.width = width;
         this->client_info.height = height;

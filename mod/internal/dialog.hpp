@@ -51,8 +51,8 @@ struct dialog_mod : public internal_mod {
 
         /* draw login window */
         Rect r(
-            this->screen.rect.cx / 2 - log_width / 2,
-            this->screen.rect.cy / 2 - log_height / 2,
+            this->get_screen_rect().cx / 2 - log_width / 2,
+            this->get_screen_rect().cy / 2 - log_height / 2,
             log_width,
             log_height);
 
@@ -73,7 +73,7 @@ struct dialog_mod : public internal_mod {
 
         this->close_window->focus(this->close_window->rect);
         this->close_window->has_focus = true;
-        this->screen.refresh(this->screen.rect.wh());
+        this->screen.refresh(this->get_screen_rect().wh());
     }
     ~dialog_mod() {
     }
@@ -82,7 +82,7 @@ struct dialog_mod : public internal_mod {
     {
         if (!rect.isempty()) {
             this->gd.server_begin_update();
-            Rect & r = this->screen.rect;
+            const Rect & r = this->get_screen_rect();
             this->screen.draw(r);
             /* draw any child windows in the area */
             for (size_t i = 0; i < this->nb_windows(); i++) {
@@ -101,20 +101,20 @@ struct dialog_mod : public internal_mod {
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
             if (this->dragging) {
                 long dragx = (x < 0)                    ? 0
-                           : (x < this->screen.rect.cx) ? x
-                           : this->screen.rect.cx
+                           : (x < this->get_screen_rect().cx) ? x
+                           : this->get_screen_rect().cx
                            ;
 
                 long dragy = (y < 0)                    ? 0
-                           : (y < this->screen.rect.cy) ? y
-                           : this->screen.rect.cy
+                           : (y < this->get_screen_rect().cy) ? y
+                           : this->get_screen_rect().cy
                            ;
 
                 this->gd.server_begin_update();
-                this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
+                this->server_draw_dragging_rect(this->dragging_rect, this->get_screen_rect());
                 this->dragging_rect.x = dragx - this->draggingdx ;
                 this->dragging_rect.y = dragy - this->draggingdy;
-                this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
+                this->server_draw_dragging_rect(this->dragging_rect, this->get_screen_rect());
                 this->gd.server_end_update();
             }
             else {
@@ -186,7 +186,7 @@ struct dialog_mod : public internal_mod {
                                 this->dragging_rect = Rect(
                                     x - this->draggingdx, y - this->draggingdy,
                                     control->rect.cx, control->rect.cy);
-                                this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
+                                this->server_draw_dragging_rect(this->dragging_rect, this->get_screen_rect());
                             }
                         break;
                         default:
@@ -198,7 +198,7 @@ struct dialog_mod : public internal_mod {
                 if (this->dragging) {
                     /* if done dragging */
                     /* draw xor box one more time */
-                    this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
+                    this->server_draw_dragging_rect(this->dragging_rect, this->get_screen_rect());
 
                     /* move dragged window to new location */
                     Rect r = this->dragging_window->rect;
@@ -206,7 +206,7 @@ struct dialog_mod : public internal_mod {
                     this->dragging_window->rect.y = this->dragging_rect.y;
                     this->gd.server_begin_update();
                     this->dragging_window->refresh(r);
-                    this->screen.refresh(this->screen.rect.wh());
+                    this->screen.refresh(this->get_screen_rect().wh());
                     this->gd.server_end_update();
                     this->dragging_window = 0;
                     this->dragging = 0;

@@ -93,7 +93,7 @@ struct Rect {
         return this->y + (this->cy / 2);
     }
 
-    const Rect wh() {
+    const Rect wh() const {
         return Rect(0, 0, this->cx, this->cy);
     }
 

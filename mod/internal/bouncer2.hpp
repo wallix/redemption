@@ -55,7 +55,7 @@ struct bouncer2_mod : public internal_mod {
     {
 
         this->gd.server_begin_update();
-        this->gd.draw(RDPOpaqueRect(this->screen.rect, 0x00FF00), this->gd.get_front_rect());
+        this->gd.draw(RDPOpaqueRect(this->get_screen_rect(), 0x00FF00), this->gd.get_front_rect());
         this->gd.server_end_update();
 
         this->dancing_rect = new Rect(0,0,100,100);
@@ -89,8 +89,8 @@ struct bouncer2_mod : public internal_mod {
         // Get x% of the screen cx and cy
         long x = this->gd.front.mouse_x;
         long y = this->gd.front.mouse_y;
-        int scarex = this->screen.rect.cx / 5;
-        int scarey = this->screen.rect.cx / 5;
+        int scarex = this->get_screen_rect().cx / 5;
+        int scarey = this->get_screen_rect().cx / 5;
         Rect scareZone(this->dancing_rect->getCenteredX() - (scarex / 2),this->dancing_rect->getCenteredY() - (scarey / 2),scarex,scarey);
 
         // Calculating new speedx and speedy, if cube encounters a moving mouse pointer, it flees
@@ -113,7 +113,7 @@ struct bouncer2_mod : public internal_mod {
     virtual BackEvent_t draw_event()
     {
 //        this->gd.server_begin_update();
-//        this->gd.opaque_rect(RDPOpaqueRect(this->screen.rect, 0x00FF00), this->gd.get_front_rect());
+//        this->gd.opaque_rect(RDPOpaqueRect(this->get_screen_rect(), 0x00FF00), this->gd.get_front_rect());
 //        this->gd.server_end_update();
         // Creating a new RDP Order: OpaqueRect
         //RDPOpaqueRect white_rect(Rect(0, 0, 10, 10), 0xFFFFFF);
@@ -123,12 +123,12 @@ struct bouncer2_mod : public internal_mod {
         // Calculating new speedx and speedy
         if (this->dancing_rect->x <= 0 && this->speedx < 0) {
             this->speedx = -this->speedx;
-        } else if (this->dancing_rect->x + this->dancing_rect->cx >= this->screen.rect.cx && this->speedx > 0) {
+        } else if (this->dancing_rect->x + this->dancing_rect->cx >= this->get_screen_rect().cx && this->speedx > 0) {
             this->speedx = -this->speedx;
         }
         if (this->dancing_rect->y <= 0 && this->speedy < 0) {
             this->speedy = -this->speedy;
-        } else if (this->dancing_rect->y + this->dancing_rect->cy >= this->screen.rect.cy && this->speedy > 0) {
+        } else if (this->dancing_rect->y + this->dancing_rect->cy >= this->get_screen_rect().cy && this->speedy > 0) {
             this->speedy = -this->speedy;
         }
 

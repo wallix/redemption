@@ -3377,19 +3377,19 @@ struct selector_mod : public internal_mod {
             strcpy(this->filter_group_text, context.get(STRAUTHID_SELECTOR_GROUP_FILTER));
         }
 
-        this->rect_button_logout = Rect(this->screen.rect.cx-240, this->screen.rect.cy- 100, 60, 26);
+        this->rect_button_logout = Rect(this->get_screen_rect().cx-240, this->get_screen_rect().cy- 100, 60, 26);
         this->rect_button_apply = this->rect_button_logout.offset(70,0);
         this->rect_button_connect = this->rect_button_apply.offset(70,0);
 
-        this->rect_button_first = Rect(this->screen.rect.cx - 240, this->screen.rect.cy - 130, 30, 20);
+        this->rect_button_first = Rect(this->get_screen_rect().cx - 240, this->get_screen_rect().cy - 130, 30, 20);
         this->rect_button_prec = this->rect_button_first.offset(40, 0);
         this->rect_button_next = this->rect_button_prec.offset(40 + 50, 0);
         this->rect_button_last = this->rect_button_next.offset(40, 0);
 
-        uint32_t w = (this->screen.rect.cx - 40) / 20;
+        uint32_t w = (this->get_screen_rect().cx - 40) / 20;
         this->rect_group_filter = Rect(30, 70, 3*w - 15, 20);
         this->rect_device_filter = Rect(30 + 3*w, 70, 10*w - 15, 20);
-        this->rect_grid = Rect(20, 100, this->screen.rect.cx-40, this->nblines() * 20);
+        this->rect_grid = Rect(20, 100, this->get_screen_rect().cx-40, this->nblines() * 20);
 
 
         const char * groups = context.get(STRAUTHID_TARGET_USER);
@@ -3740,7 +3740,7 @@ struct selector_mod : public internal_mod {
     virtual BackEvent_t draw_event()
     {
 //        LOG(LOG_INFO, "selector::draw_event");
-        this->draw(this->screen.rect);
+        this->draw(this->get_screen_rect());
         this->event->reset();
 //        LOG(LOG_INFO, "draw_event : signal = %u", this->signal);
         return this->signal;
@@ -3748,7 +3748,7 @@ struct selector_mod : public internal_mod {
 
 
     void draw_background(const Rect & clip){
-        this->gd.draw(RDPOpaqueRect(this->screen.rect, GREY), clip);
+        this->gd.draw(RDPOpaqueRect(this->get_screen_rect(), GREY), clip);
     }
 
     void draw_login(const Rect & clip){
@@ -3759,14 +3759,14 @@ struct selector_mod : public internal_mod {
     }
 
     size_t nblines(){
-        uint32_t nb = (this->screen.rect.cy - 230) / 20;
+        uint32_t nb = (this->get_screen_rect().cy - 230) / 20;
         return (nb > 50)?50:nb;
     }
 
     void draw_array(const Rect & clip){
 //        LOG(LOG_INFO, "drawing array");
 
-        uint32_t w = (this->screen.rect.cx - 40) / 20;
+        uint32_t w = (this->get_screen_rect().cx - 40) / 20;
 
         this->gd.server_draw_text(30       , 50,  "Device Group", GREY, BLACK, clip);
 
@@ -3782,7 +3782,7 @@ struct selector_mod : public internal_mod {
         this->gd.server_draw_text(30 + 16*w, 50,  "Close Time", GREY, BLACK, clip);
 
         for (size_t line = 0 ; line < this->nblines() ; line++){
-            Rect rect(this->rect_grid.x, this->rect_grid.y + line * 20, this->screen.rect.cx-40, 19);
+            Rect rect(this->rect_grid.x, this->rect_grid.y + line * 20, this->get_screen_rect().cx-40, 19);
             uint32_t bc = this->back_color[line%2+2*(line == this->focus_line)];
             uint32_t fc = this->fore_color[line%2+2*(line == this->focus_line)];
 
