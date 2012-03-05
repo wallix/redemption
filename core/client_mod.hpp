@@ -836,8 +836,9 @@ struct client_mod : public Callback {
             LOG(LOG_INFO, "// Resizing client to : %d x %d x %d\n", width, height, bpp);
 
             this->gd.front.set_front_resolution(width, height, bpp);
+            TODO("This warns modules that the resolution has changed, it is only used in internal modules.")
             this->front_resize();
-            this->gd.front.reset();
+//            this->gd.front.reset();
         }
     }
 

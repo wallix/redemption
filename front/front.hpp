@@ -85,7 +85,6 @@ class FrontAPI {
     virtual const ChannelList & get_channel_list(void) const = 0;
     virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags) = 0;
 
-    virtual void reset() = 0;
     virtual void set_front_resolution(uint16_t width, uint16_t height, uint8_t bpp) = 0;
     virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error) = 0;
     virtual void send_global_palette(const BGRPalette & palette) throw (Error) = 0;
@@ -246,6 +245,11 @@ public:
         this->client_info.width = width;
         this->client_info.height = height;
         this->client_info.bpp = bpp;
+
+        // clear all pending orders, caches data, and so on and
+        // start a send_deactive, send_deman_active process with
+        // the new resolution setting
+        this->reset();
     }
 
     virtual void reset(){
