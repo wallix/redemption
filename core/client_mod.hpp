@@ -75,35 +75,21 @@ struct GraphicDeviceMod : public GraphicDevice
         init_palette332(this->palette332);
     }
 
-
-    virtual int text_width(const char * text){
-        int rv = 0;
+    virtual void text_metrics(const char * text, int & width, int & height){
+        height = 0;
+        width = 0;
         if (text) {
             size_t len = mbstowcs(0, text, 0);
             wchar_t wstr[len + 2];
             mbstowcs(wstr, text, len + 1);
             for (size_t index = 0; index < len; index++) {
                 FontChar *font_item = this->front.font.font_items[wstr[index]];
-                rv = rv + font_item->incby;
+                width += font_item->incby;
+                height = std::max(height, font_item->height);
             }
         }
-        return rv;
     }
 
-    virtual int text_height(const char * text){
-        int rv = 0;
-        if (text) {
-            int len = mbstowcs(0, text, 0);
-            wchar_t *wstr = new wchar_t[len + 2];
-            mbstowcs(wstr, text, len + 1);
-            for (int index = 0; index < len; index++) {
-                FontChar *font_item = this->front.font.font_items[wstr[index]];
-                rv = std::max(rv, font_item->height);
-            }
-            delete [] wstr;
-        }
-        return rv;
-    }
 
     virtual int server_begin_update() {
         this->front.begin_update();
@@ -114,10 +100,6 @@ struct GraphicDeviceMod : public GraphicDevice
         this->front.end_update();
         return 0;
     }
-
-//    virtual const ClientInfo & get_client_info() const {
-//        return this->front.get_client_info();
-//    }
 
     virtual int get_front_bpp() const {
         return this->front.get_front_bpp();
@@ -194,8 +176,9 @@ struct GraphicDeviceMod : public GraphicDevice
             this->draw(RDPOpaqueRect(Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK), clip);
             this->draw(RDPOpaqueRect(Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK), clip);
         }
-        int w = this->text_width(caption);
-        int h = this->text_height(caption);
+        int w = 0;
+        int h = 0;
+        this->text_metrics(caption, w, h);
         this->server_draw_text(
             r.x + r.cx / 2 - w / 2 + bevel,
             r.y + r.cy / 2 - h / 2 + bevel,
@@ -258,9 +241,12 @@ struct GraphicDeviceMod : public GraphicDevice
                 wcstombs(text, wtext, 255);
             }
 
-            this->draw(RDPOpaqueRect(
-                    Rect(r.x + 4 + this->text_width(text), r.y + 3, 2, r.cy - 6),
-                    PALE_GREEN), clip);
+            int w = 0;
+            int h = 0;
+            this->text_metrics(text, w, h);
+            this->draw(
+                RDPOpaqueRect(Rect(r.x + 4 + w, r.y + 3, 2, r.cy - 6), PALE_GREEN),
+                clip);
         }
     }
 

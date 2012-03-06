@@ -183,9 +183,9 @@ void window::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.draw_window(scr_r, 
-            this->bg_color, this->caption1, 
-            this->has_focus, 
+        this->mod->gd.draw_window(scr_r,
+            this->bg_color, this->caption1,
+            this->has_focus,
             region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 }
@@ -198,11 +198,11 @@ void widget_edit::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.draw_edit(scr_r, 
-            this->password_char, 
-            this->buffer, 
-            this->edit_pos, 
-            this->has_focus, 
+        this->mod->gd.draw_edit(scr_r,
+            this->password_char,
+            this->buffer,
+            this->edit_pos,
+            this->has_focus,
             region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 }
@@ -266,14 +266,20 @@ void widget_popup::draw(const Rect & clip)
             size_t list_count = this->popped_from->string_list.size();
             for (unsigned i = 0; i < list_count; i++) {
                 char * p = this->popped_from->string_list[i];
-                int h = this->mod->gd.text_height(p);
+                int h = 0;
+                int w = 0;
+                this->mod->gd.text_metrics(p, w, h);
                 this->item_height = h;
                 if (i == this->item_index) { // deleted item
-                    this->mod->gd.draw(RDPOpaqueRect(Rect(scr_r.x, scr_r.y + y, this->rect.cx, h), WABGREEN), region.rects[ir].intersect(this->to_screen_rect(clip)));
-                    this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + y, p, WABGREEN, WHITE, region.rects[ir].intersect(this->to_screen_rect(clip)));
+                    this->mod->gd.draw(
+                        RDPOpaqueRect(Rect(scr_r.x, scr_r.y + y, this->rect.cx, h), WABGREEN),
+                        region.rects[ir].intersect(this->to_screen_rect(clip)));
+                    this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + y, p, WABGREEN, WHITE,
+                        region.rects[ir].intersect(this->to_screen_rect(clip)));
                 }
                 else {
-                    this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + y, p, WHITE, BLACK, region.rects[ir].intersect(this->to_screen_rect(clip)));
+                    this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + y, p, WHITE, BLACK,
+                        region.rects[ir].intersect(this->to_screen_rect(clip)));
                 }
                 y = y + h;
             }
@@ -292,7 +298,7 @@ void widget_label::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        this->mod->gd.server_draw_text(scr_r.x, scr_r.y, this->caption1, GREY, BLACK, 
+        this->mod->gd.server_draw_text(scr_r.x, scr_r.y, this->caption1, GREY, BLACK,
             region.rects[ir].intersect(this->to_screen_rect(clip)));
     }
 
