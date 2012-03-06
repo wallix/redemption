@@ -31,6 +31,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <png.h>
+#include "difftimeval.hpp"
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersSecondaryHeader.hpp"
@@ -289,13 +290,6 @@ class StaticCapture : public Drawable
                 }
             }
         }
-    }
-
-    uint64_t difftimeval(const struct timeval endtime, const struct timeval starttime)
-    {
-      uint64_t sec = (endtime.tv_sec  - starttime.tv_sec ) * 1000000
-                   + (endtime.tv_usec - starttime.tv_usec);
-      return sec;
     }
 
     void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)

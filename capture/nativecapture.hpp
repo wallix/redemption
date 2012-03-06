@@ -29,6 +29,7 @@
 #include "rect.hpp"
 #include "constants.hpp"
 #include <time.h>
+#include "difftimeval.hpp"
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersSecondaryHeader.hpp"
@@ -84,13 +85,6 @@ class NativeCapture
 
     ~NativeCapture(){
         close(this->f);
-    }
-
-    uint64_t difftimeval(const struct timeval endtime, const struct timeval starttime)
-    {
-      uint64_t usec = (endtime.tv_sec  - starttime.tv_sec ) * 1000000
-                   + (endtime.tv_usec - starttime.tv_usec);
-      return usec;
     }
 
     void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
