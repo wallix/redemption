@@ -47,11 +47,9 @@ struct Rect {
         return this->y + this->cy;
     }
 
-    Rect(int left = 0, int top = 0, int width = 0, int height = 0) {
-        this->x = left;
-        this->y = top;
-        this->cx = width;
-        this->cy = height;
+    Rect(int left = 0, int top = 0, int width = 0, int height = 0)
+        : x(left), y(top), cx(width), cy(height)
+    {
     }
 
     bool contains_pt(int x, int y) const {
@@ -85,20 +83,20 @@ struct Rect {
         return this->cx <= 0 || this->cy <= 0;
     }
 
-    int getCenteredX() {
+    int getCenteredX() const {
         return this->x + (this->cx / 2);
     }
 
-    int getCenteredY() {
+    int getCenteredY() const {
         return this->y + (this->cy / 2);
     }
 
-    const Rect wh() const {
+    Rect wh() const {
         return Rect(0, 0, this->cx, this->cy);
     }
 
     // compute a new rect containing old rect and given point
-    const Rect enlarge_to(int x, int y) const {
+    Rect enlarge_to(int x, int y) const {
         if (this->isempty()){
             return Rect(x, y, 1, 1);
         }
@@ -111,32 +109,32 @@ struct Rect {
         }
     }
 
-    const Rect offset(int dx, int dy) const {
+    Rect offset(int dx, int dy) const {
         return Rect(this->x + dx, this->y + dy, this->cx, this->cy);
     }
 
-    const Rect shrink(int margin) const {
+    Rect shrink(int margin) const {
         return Rect(this->x + margin, this->y + margin,
                     this->cx - margin * 2, this->cy - margin * 2);
     }
 
-    const Rect upper_side(){
+    Rect upper_side() const {
         return Rect(this->x, this->y, this->cx, 1);
     }
 
-    const Rect left_side(){
+    Rect left_side() const {
         return Rect(this->x, this->y, 1, this->cy);
     }
 
-    const Rect lower_side(){
+    Rect lower_side() const {
         return Rect(this->x, this->y + this->cy - 1, this->cx, 1);
     }
 
-    const Rect right_side(){
+    Rect right_side() const {
         return Rect(this->x + this->cx - 1, this->cy, 1, this->cy);
     }
 
-    const Rect intersect(const Rect & in) const
+    Rect intersect(const Rect & in) const
     {
         Rect res(0, 0, 0, 0);
 
@@ -153,8 +151,16 @@ struct Rect {
         return res;
     }
 
+    Rect intersect(int w, int h) const
+    {
+        return Rect(this->x,
+                    this->y,
+                    std::min(w - this->x, this->cx),
+                    std::min(h - this->y, this->cy));
+    }
+
     // Ensemblist difference
-    void difference(const Rect & a, RectIterator & it)
+    void difference(const Rect & a, RectIterator & it) const
     {
         const Rect & intersect = this->intersect(a);
 
@@ -178,7 +184,7 @@ struct Rect {
 
     /* adjust the bounds to fit in the bitmap */
     /* return false if there is nothing to draw else return true */
-    bool check_bounds(int* x, int* y, int* cx, int* cy)
+    bool check_bounds(int* x, int* y, int* cx, int* cy) const
     {
         if (*x >= this->cx) {
             return false;
@@ -211,16 +217,12 @@ struct Rect {
 
     /*****************************************************************************/
     /* returns boolean */
-    bool rect_contained_by(int left, int top, int right, int bottom)
+    bool rect_contained_by(int left, int top, int right, int bottom) const
     {
-        if (left < this->x
-        ||  top < this->y
-        || right > (this->x + this->cx)
-        || bottom > (this->y + this->cy)) {
-            return false;
-        } else {
-            return true;
-        }
+        return !( (left   <  this->x)
+               || (top    <  this->y)
+               || (right  > (this->x + this->cx))
+               || (bottom > (this->y + this->cy)));
     }
 
     friend inline std::ostream & operator<<(std::ostream& os, const Rect &r) {
