@@ -182,10 +182,12 @@ void window::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+        const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
+
         this->mod->gd.draw_window(scr_r,
             this->bg_color, this->caption1,
             this->has_focus,
-            region.rects[ir].intersect(this->to_screen_rect(clip)));
+            region_clip);
     }
 }
 
@@ -197,12 +199,14 @@ void widget_edit::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+        const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
+
         this->mod->gd.draw_edit(scr_r,
             this->password_char,
             this->buffer,
             this->edit_pos,
             this->has_focus,
-            region.rects[ir].intersect(this->to_screen_rect(clip)));
+            region_clip);
     }
 }
 
@@ -212,8 +216,10 @@ void widget_screen::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+        const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
+
         this->mod->gd.draw(RDPOpaqueRect(scr_r, this->bg_color),
-            region.rects[ir].intersect(this->to_screen_rect(clip)));
+            region_clip);
     }
 }
 
@@ -223,11 +229,13 @@ void widget_combo::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+        const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
+
         this->mod->gd.draw_combo(scr_r,
             this->string_list[this->item_index],
             this->state,
             this->has_focus,
-            region.rects[ir].intersect(this->to_screen_rect(clip)));
+            region_clip);
     }
 }
 
@@ -239,11 +247,13 @@ void widget_button::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+        const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
+
         this->mod->gd.draw_button(scr_r,
             this->caption1,
             this->state,
             this->has_focus,
-            region.rects[ir].intersect(this->to_screen_rect(clip)));
+            region_clip);
     }
 }
 
@@ -294,8 +304,10 @@ void widget_label::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+        const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
+
         this->mod->gd.server_draw_text(scr_r.x, scr_r.y, this->caption1, GREY, BLACK,
-            region.rects[ir].intersect(this->to_screen_rect(clip)));
+            region_clip);
     }
 
 }
@@ -324,6 +336,8 @@ Rect const Widget::to_screen_rect()
 
 void widget_image::draw(const Rect & clip)
 {
+
+    TODO("See why region clipping is not done the same way as everywhere else here")
     Rect image_screen_rect = this->to_screen_rect();
     Rect intersection = image_screen_rect.intersect(this->to_screen_rect(clip));
     const Region region = this->get_visible_region(this, &this->parent, intersection);
