@@ -63,7 +63,6 @@ Widget::Widget(GraphicalContext * mod, int width, int height, Widget & parent, i
     this->state = 0; /* for button 0 = normal 1 = down */
     /* for popup */
     this->popped_from = 0;
-    this->item_height = 0;
     /* for combo or popup */
     this->item_index = 0;
     /* crc */
@@ -253,35 +252,32 @@ void widget_popup::draw(const Rect & clip)
 {
     const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
     const Region region = this->get_visible_region(this, &this->parent, scr_r);
+    TODO("Font Height is currently hardcoded to 16 in drop box")
+    const int height = 16;
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+        const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
+
         this->mod->gd.draw(
             RDPOpaqueRect(Rect(scr_r.x, scr_r.y, this->rect.cx, this->rect.cy), WHITE),
-            region.rects[ir].intersect(this->to_screen_rect(clip)));
+            region_clip);
 
         TODO(" this should be a two stages process  first prepare drop box data  then call draw_xxx that use that data to draw. For now everything is mixed up  (and that is not good)")
         /* draw the list items */
         if (this->popped_from != 0) {
-            int y = 0;
             size_t list_count = this->popped_from->string_list.size();
+
+            // draw the selected line
+            this->mod->gd.draw(
+                    RDPOpaqueRect(Rect(scr_r.x, scr_r.y + height * this->item_index, this->rect.cx, height), WABGREEN), region_clip);
+
             for (unsigned i = 0; i < list_count; i++) {
-                char * p = this->popped_from->string_list[i];
-                int h = 0;
-                int w = 0;
-                this->mod->gd.text_metrics(p, w, h);
-                this->item_height = h;
-                if (i == this->item_index) { // deleted item
-                    this->mod->gd.draw(
-                        RDPOpaqueRect(Rect(scr_r.x, scr_r.y + y, this->rect.cx, h), WABGREEN),
-                        region.rects[ir].intersect(this->to_screen_rect(clip)));
-                    this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + y, p, WABGREEN, WHITE,
-                        region.rects[ir].intersect(this->to_screen_rect(clip)));
-                }
-                else {
-                    this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + y, p, WHITE, BLACK,
-                        region.rects[ir].intersect(this->to_screen_rect(clip)));
-                }
-                y = y + h;
+                const char * p = this->popped_from->string_list[i];
+                this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + i * height,
+                    p,
+                    (i == this->item_index)?WABGREEN:WHITE,
+                    (i == this->item_index)?WHITE:BLACK,
+                    region_clip);
             }
         }
 
@@ -567,8 +563,9 @@ void widget_combo::def_proc(const int msg, const int param1, const int param2, c
 void widget_popup::def_proc(const int msg, const int param1, const int param2, const Keymap * keymap)
 {
     if (msg == WM_MOUSEMOVE) {
-        if (this->item_height > 0 && this->popped_from != 0) {
-            unsigned i = param2 / this->item_height;
+        if (this->popped_from != 0) {
+            TODO("The size of a line in drop box is currently hardcoded (16). We should get this size from font information. But the way it was done previously is not sufficient. We should be able to have lines of different sizes in drop box and such")
+            unsigned i = param2 / 16;
             if (i != this->item_index && i < this->popped_from->string_list.size())
             {
                 this->item_index = i;
