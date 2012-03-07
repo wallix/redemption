@@ -65,16 +65,16 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
 
 
     uint8_t shasig[20] = {
-        0x4f, 0xa1, 0xdb, 0xe7, 0xbd, 0x4c, 0x2c, 0x0e, 0x2b, 0x77, 
+        0x4f, 0xa1, 0xdb, 0xe7, 0xbd, 0x4c, 0x2c, 0x0e, 0x2b, 0x77,
 	0xfd, 0x86, 0xd8, 0xf8, 0x79, 0x1a, 0x01, 0xcc, 0xe6, 0xb9,
     };
-    
+
     SSL_SHA1 sha1;
     uint8_t sig[20];
     ssllib ssl;
     ssl.sha1_init(&sha1);
-    for (size_t y = 0; y < (size_t)gd.full.cy; y++){
-        ssl.sha1_update(&sha1, gd.data + y * gd.rowsize, gd.rowsize);
+    for (size_t y = 0; y < (size_t)gd.data.height; y++){
+        ssl.sha1_update(&sha1, gd.data.data + y * gd.data.rowsize, gd.data.rowsize);
     }
     ssl.sha1_final(&sha1, sig);
 
@@ -98,11 +98,11 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
     sprintf(tmpname, "/tmp/test_line_%s_XXXXXX.png", "000");
     int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
     FILE * f = fdopen(fd, "wb");
-    ::dump_png24(f, gd.data, gd.full.cx, gd.full.cy, gd.rowsize);
+    ::dump_png24(f, gd.data.data, gd.data.width, gd.data.height, gd.data.rowsize);
     ::fflush(f);
     ::fclose(f);
     // remove this unlink to see what is drawn
-    ::unlink(tmpname);
+//    ::unlink(tmpname);
 }
 
 void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * name, const char * shasig){
@@ -125,8 +125,8 @@ void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * nam
     uint8_t sig[20] = {};
     ssllib ssl;
     ssl.sha1_init(&sha1);
-    for (size_t y = 0; y < (size_t)gd.full.cy; y++){
-        ssl.sha1_update(&sha1, gd.data + y * gd.rowsize, gd.rowsize);
+    for (size_t y = 0; y < (size_t)gd.data.height; y++){
+        ssl.sha1_update(&sha1, gd.data.data + y * gd.data.rowsize, gd.data.rowsize);
     }
     ssl.sha1_final(&sha1, sig);
 
@@ -150,7 +150,7 @@ void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * nam
     sprintf(tmpname, "/tmp/test_scrblt_%s_XXXXXX.png", name);
     int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
     FILE * f = fdopen(fd, "wb");
-    ::dump_png24(f, gd.data, gd.full.cx, gd.full.cy, gd.rowsize);
+    ::dump_png24(f, gd.data.data, gd.data.width, gd.data.height, gd.data.rowsize);
     ::fflush(f);
     ::fclose(f);
     // remove this unlink to see what is drawn
@@ -244,9 +244,9 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     sprintf(tmpname, "/tmp/test_memblt_XXXXXX.png");
     int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
     FILE * f = fdopen(fd, "wb");
-    ::dump_png24(f, gd.data, gd.full.cx, gd.full.cy, gd.rowsize);
+    ::dump_png24(f, gd.data.data, gd.data.width, gd.data.height, gd.data.rowsize);
     ::fflush(f);
     ::fclose(f);
     // remove this unlink to see what is drawn
-//    ::unlink(tmpname);
+    ::unlink(tmpname);
 }

@@ -353,16 +353,16 @@ class StaticCapture : public Drawable
             // If pointer is drawn by the server (like in Windows Seven), no need to do anything.
             if (!pointer_already_displayed){
                 if ((x > 0)
-                        && (x < this->full.cx - 12)
+                        && (x < this->data.width - 12)
                         && (y > 0)
-                        && (y < this->full.cy - mouse_height)){
+                        && (y < this->data.height - mouse_height)){
                     uint8_t * psave = mouse_save;
                     for (size_t i = 0 ; i < 20 ; i++){
                         unsigned yy = mouse_cursor[i].y;
                         unsigned xx = mouse_cursor[i].x;
                         unsigned lg = mouse_cursor[i].lg;
                         const char * line = mouse_cursor[i].line;
-                        char * pixel_start = (char*)this->data + ((yy+y)*this->full.cx+x+xx)*3;
+                        char * pixel_start = (char*)this->data.data + ((yy+y)*this->data.width+x+xx)*3;
                         memcpy(psave, pixel_start, lg);
                         psave += lg;
                         memcpy(pixel_start, line, lg);
@@ -383,9 +383,9 @@ class StaticCapture : public Drawable
                 strncpy(this->previous_timestamp, rawdate, 19);
                 uint8_t * tsave = timestamp_save;
                 for (size_t y = 0; y < ts_height ; ++y){
-                    memcpy(tsave, (char*)data+y * this->full.cx * 3, ts_width*3);
+                    memcpy(tsave, (char*)this->data.data+y * this->data.width * 3, ts_width*3);
                     tsave += ts_width*3;
-                    memcpy((char*)data + y * this->full.cx * 3,
+                    memcpy((char*)this->data.data + y * this->data.width * 3,
                             this->timestamp_data + y*ts_width*3, ts_width*3);
                 }
             }
@@ -395,15 +395,15 @@ class StaticCapture : public Drawable
             // Time to restore mouse/timestamp for the next frame (otherwise it piles up)
             if (!pointer_already_displayed){
                 if ((x > 0)
-                        && (x < this->full.cx - 12)
+                        && (x < this->data.width - 12)
                         && (y > 0)
-                        && (y < this->full.cy - mouse_height)){
+                        && (y < this->data.height - mouse_height)){
                     uint8_t * psave = mouse_save;
                     for (size_t i = 0 ; i < 20 ; i++){
                         unsigned yy = mouse_cursor[i].y;
                         unsigned xx = mouse_cursor[i].x;
                         unsigned lg = mouse_cursor[i].lg;
-                        char * pixel_start = (char*)this->data + ((yy+y)*this->full.cx+x+xx)*3;
+                        char * pixel_start = (char*)this->data.data + ((yy+y)*this->data.width+x+xx)*3;
                         memcpy(pixel_start, psave, lg);
                         psave += lg;
                     }
@@ -412,7 +412,7 @@ class StaticCapture : public Drawable
             if (!no_timestamp){
                 uint8_t * tsave = timestamp_save;
                 for (size_t y = 0; y < ts_height ; ++y){
-                    memcpy((char*)data+y * this->full.cx * 3, tsave, ts_width*3);
+                    memcpy((char*)this->data.data+y * this->data.width * 3, tsave, ts_width*3);
                     tsave += ts_width*3;
                 }
             }
@@ -432,12 +432,12 @@ class StaticCapture : public Drawable
 //        LOG(LOG_INFO, "Dumping to file %s", rawImagePath);
         FILE * fd = fopen(rawImageMetaPath, "w");
         if (fd) {
-           fprintf(fd, "%d,%d,%s\n", this->full.cx, this->full.cy, this->previous_timestamp);
+           fprintf(fd, "%d,%d,%s\n", this->data.width, this->data.height, this->previous_timestamp);
         }
         fclose(fd);
         fd = fopen(rawImagePath, "w");
         if (fd) {
-            ::dump_png24(fd, this->data, this->full.cx, this->full.cy, this->rowsize);
+            ::dump_png24(fd, this->data.data, this->data.width, this->data.height, this->data.rowsize);
         }
         fclose(fd);
     }

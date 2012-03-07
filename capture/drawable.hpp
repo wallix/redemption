@@ -34,29 +34,93 @@
 
 class Drawable {
 public:
-    const Rect full;
-    const uint8_t bpp;
+    uint8_t bpp;
     const BGRPalette & palette;
-    const size_t rowsize;
-    uint8_t * data;
     bool bgr;
     BmpCache & bmpcache;
+
+    struct CaptureBuf
+    {
+        static const std::size_t Bpp = 3;
+
+        int width;
+        int height;
+        const size_t rowsize;
+        unsigned long pix_len;
+        uint8_t * data;
+
+        CaptureBuf(int width, int height)
+            : width(width)
+            , height(height)
+            , rowsize(width * Bpp)
+            , pix_len(this->rowsize * height)
+        {
+            if (!this->pix_len) {
+                throw Error(ERR_RECORDER_EMPTY_IMAGE);
+            }
+            this->data = new (std::nothrow) uint8_t[this->pix_len];
+            if (this->data == 0){
+                throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
+            }
+            std::fill<>(this->data, this->data + this->pix_len, 0);
+        }
+
+        ~CaptureBuf()
+        {
+            delete[] this->data;
+        }
+
+        uint8_t * first_pixel()
+        {
+            return this->data;
+        }
+
+        uint8_t * first_pixel(const Rect & rect)
+        {
+            return this->data + (rect.y * this->width + rect.x) * Bpp;
+        }
+
+        uint8_t * first_pixel(int y)
+        {
+            return this->data + y * this->width * Bpp;
+        }
+
+        uint8_t * first_pixel(int x, int y)
+        {
+            return this->data + (y * this->width + x) * Bpp;
+        }
+
+        uint8_t * after_last_pixel()
+        {
+            return this->data + this->pix_len;
+        }
+
+        uint8_t * beginning_of_last_line(const Rect & rect)
+        {
+            return this->data + ((rect.y + rect.cy - 1) * this->width + rect.x) * Bpp;
+        }
+
+        int size() const
+        {
+            return this->width * this->height;
+        }
+    } data;
+
 
     Drawable(const uint16_t width, const uint16_t height,
              const uint8_t bpp, const BGRPalette & palette,
              BmpCache & bmpcache, bool bgr=true)
-      : full(Rect(0, 0, width, height)),
-        bpp(bpp), palette(palette),
-        rowsize(this->full.cx * ::nbbytes(this->bpp)),
-        data(new uint8_t [this->rowsize * this->full.cy]),
+      : bpp(bpp),
+        palette(palette), // source palette for RDP primitives
         bgr(bgr),
-        bmpcache(bmpcache)
+        bmpcache(bmpcache),
+        data(width, height)
     {
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        const Rect & trect = this->full.intersect(clip).intersect(cmd.rect);
+        const Rect & trect = Rect(0, 0, this->data.width, this->data.height).intersect(clip).intersect(cmd.rect);
         uint32_t color = color_decode(cmd.color, this->bpp, this->palette);
         if (this->bgr){
             color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
@@ -66,13 +130,13 @@ public:
 
     void draw(const RDPDestBlt & cmd, const Rect & clip)
     {
-        const Rect trect = this->full.intersect(clip).intersect(cmd.rect);
+        const Rect trect = Rect(0, 0, this->data.width, this->data.height).intersect(clip).intersect(cmd.rect);
         this->destblt(trect, cmd.rop);
     }
 
     void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
-        const Rect trect = this->full.intersect(clip).intersect(cmd.rect);
+        const Rect trect = Rect(0, 0, this->data.width, this->data.height).intersect(clip).intersect(cmd.rect);
         TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.")
         uint32_t color = color_decode(cmd.back_color, this->bpp, this->palette);
         if (this->bgr){
@@ -84,7 +148,7 @@ public:
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
         // Destination rectangle : drect
-        const Rect drect = this->full.intersect(clip).intersect(cmd.rect);
+        const Rect drect = Rect(0, 0, this->data.width, this->data.height).intersect(clip).intersect(cmd.rect);
         if (drect.isempty()){ return; }
         // adding delta move dest to source
         const signed int deltax = cmd.srcx - cmd.rect.x;
@@ -175,7 +239,7 @@ public:
         Bitmap * pbmp =  this->bmpcache.get(id, idx);
 //        LOG(LOG_INFO, "Reading bitmap %p from cache at (id=%u idx=%u)", pbmp, id, idx);
         const uint8_t Bpp = ::nbbytes(this->bpp);
-        uint8_t * target = this->first_pixel(rect);
+        uint8_t * target = this->data.first_pixel(rect);
         uint8_t * source = pbmp->data_co(this->bpp) + ((rect.cy - srcy - 1) * pbmp->cx + srcx) * Bpp;
         for (int y = 0; y < rect.cy ; y++){
             uint8_t * linetarget = target;
@@ -197,28 +261,17 @@ public:
                 linetarget[1] = (color >> 8);
                 linetarget[2] = color;
             }
-            target += this->full.cx * Bpp;
+            target += Rect(0, 0, this->data.width, this->data.height).cx * Bpp;
             source -= pbmp->cx * Bpp;
         }
     }
-
-    uint8_t * first_pixel(const Rect & rect){
-        return this->data + (rect.y * this->full.cx + rect.x) * ::nbbytes(this->bpp);
-    }
-
-    uint8_t * beginning_of_last_line(const Rect & rect){
-        return this->data + ((rect.y + rect.cy - 1) * this->full.cx + rect.x) * ::nbbytes(this->bpp);
-    }
-
-
-
 
     // low level opaquerect,
     // mostly avoid clipping because we already took care of it
     // also we already swapped color if we are using BGR instead of RGB
     void opaquerect(const Rect & rect, const uint32_t color)
     {
-        uint8_t * const base = first_pixel(rect);
+        uint8_t * const base = this->data.first_pixel(rect);
         uint8_t * p = base;
 
         for (size_t x = 0; x < (size_t)rect.cx ; x++){
@@ -228,7 +281,7 @@ public:
         uint8_t * target = base;
         size_t line_size = rect.cx * ::nbbytes(this->bpp);
         for (size_t y = 1; y < (size_t)rect.cy ; y++){
-            target += this->rowsize;
+            target += this->data.rowsize;
             memcpy(target, base, line_size);
         }
     }
@@ -237,7 +290,7 @@ public:
     // mostly avoid clipping because we already took care of it
     void patblt(const Rect & rect, const uint8_t rop, const uint32_t color)
     {
-        uint8_t * const base = first_pixel(rect);
+        uint8_t * const base = this->data.first_pixel(rect);
         uint8_t * p = base;
         uint8_t p0 = color & 0xFF;
         uint8_t p1 = (color >> 8) & 0xFF;
@@ -253,7 +306,7 @@ public:
         case 0x00: // blackness
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
                 memset(p, 0, rect.cx * ::nbbytes(this->bpp));
-                p += this->rowsize;
+                p += this->data.rowsize;
             }
         break;
 // +------+-------------------------------+
@@ -262,7 +315,7 @@ public:
 // +------+-------------------------------+
         case 0x05:
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->rowsize * y;
+                p = base + this->data.rowsize * y;
                 for (size_t x = 0; x < (size_t)rect.cx ; x++){
                     p[0] = ~(p[0] | p0);
                     p[1] = ~(p[1] | p1);
@@ -277,7 +330,7 @@ public:
 // +------+-------------------------------+
         case 0x0F:
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->rowsize * y;
+                p = base + this->data.rowsize * y;
                 for (size_t x = 0; x < (size_t)rect.cx ; x++){
                     p[0] = ~p0;
                     p[1] = ~p1;
@@ -292,7 +345,7 @@ public:
 // +------+-------------------------------+
         case 0x50:
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->rowsize * y;
+                p = base + this->data.rowsize * y;
                 for (size_t x = 0; x < (size_t)rect.cx ; x++){
                     p[0] = ~p[0] & p0;
                     p[1] = ~p[1] & p1;
@@ -307,7 +360,7 @@ public:
 // +------+-------------------------------+
         case 0x55: // inversion
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->rowsize * y;
+                p = base + this->data.rowsize * y;
                 for (size_t x = 0; x < (size_t)rect.cx ; x++){
                     p[0] ^= 0xFF; p[1] ^= 0xFF; p[2] ^= 0xFF;
                     p += 3;
@@ -320,7 +373,7 @@ public:
 // +------+-------------------------------+
         case 0x5A:
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->rowsize * y;
+                p = base + this->data.rowsize * y;
                 for (size_t x = 0; x < (size_t)rect.cx ; x++){
                     p[0] = p[0] ^ p0;
                     p[1] = p[1] ^ p1;
@@ -334,7 +387,7 @@ public:
 // |      | RPN: DPan                     |
 // +------+-------------------------------+
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->rowsize * y;
+                p = base + this->data.rowsize * y;
                 for (size_t x = 0; x < (size_t)rect.cx ; x++){
                     p[0] = ~(p[0] & p0);
                     p[1] = ~(p[1] & p1);
@@ -349,7 +402,7 @@ public:
 // +------+-------------------------------+
         case 0xA0:
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->rowsize * y;
+                p = base + this->data.rowsize * y;
                 for (size_t x = 0; x < (size_t)rect.cx ; x++){
                     p[0] = p[0] | p0;
                     p[1] = p[1] | p1;
@@ -364,7 +417,7 @@ public:
 // +------+-------------------------------+
         case 0xA5:
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->rowsize * y;
+                p = base + this->data.rowsize * y;
                 for (size_t x = 0; x < (size_t)rect.cx ; x++){
                     p[0] = ~(p[0] ^ p0);
                     p[1] = ~(p[1] ^ p1);
@@ -385,7 +438,7 @@ public:
 // +------+-------------------------------+
         case 0xAF:
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->rowsize * y;
+                p = base + this->data.rowsize * y;
                 for (size_t x = 0; x < (size_t)rect.cx ; x++){
                     p[0] = p[0] | ~p0;
                     p[1] = p[1] | ~p1;
@@ -400,7 +453,7 @@ public:
 // +------+-------------------------------+
         case 0xF0:
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->rowsize * y;
+                p = base + this->data.rowsize * y;
                 for (size_t x = 0; x < (size_t)rect.cx ; x++){
                     p[0] = p0;
                     p[1] = p1;
@@ -415,7 +468,7 @@ public:
 // +------+-------------------------------+
         case 0xF5:
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->rowsize * y;
+                p = base + this->data.rowsize * y;
                 for (size_t x = 0; x < (size_t)rect.cx ; x++){
                     p[0] = ~p[0] | p0;
                     p[1] = ~p[1] | p1;
@@ -430,7 +483,7 @@ public:
 // +------+-------------------------------+
         case 0xFA:
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->rowsize * y;
+                p = base + this->data.rowsize * y;
                 for (size_t x = 0; x < (size_t)rect.cx ; x++){
                     p[0] = p[0] | p0;
                     p[1] = p[1] | p1;
@@ -446,7 +499,7 @@ public:
         case 0xFF: // whiteness
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
                 memset(p, 0, rect.cx * ::nbbytes(this->bpp));
-                p += this->rowsize;
+                p += this->data.rowsize;
             }
         break;
         default:
@@ -459,7 +512,7 @@ public:
     // mostly avoid clipping because we already took care of it
     void destblt(const Rect & rect, const uint8_t rop)
     {
-        uint8_t * const base = first_pixel(rect);
+        uint8_t * const base = this->data.first_pixel(rect);
         uint8_t * p = base;
 
         TODO(" this switch contains much duplicated code  to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution  in this particular case I see no obvious better way.")
@@ -467,12 +520,12 @@ public:
         case 0x00: // blackness
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
                 memset(p, 0, rect.cx * ::nbbytes(this->bpp));
-                p += this->rowsize;
+                p += this->data.rowsize;
             }
         break;
         case 0x55: // inversion
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->rowsize * y;
+                p = base + this->data.rowsize * y;
                 for (size_t x = 0; x < (size_t)rect.cx ; x++){
                     p[0] ^= 0xFF; p[1] ^= 0xFF; p[2] ^= 0xFF;
                     p += 3;
@@ -484,7 +537,7 @@ public:
         case 0xFF: // whiteness
             for (size_t y = 0; y < (size_t)rect.cy ; y++){
                 memset(p, 0, rect.cx * ::nbbytes(this->bpp));
-                p += this->rowsize;
+                p += this->data.rowsize;
             }
         break;
         default:
@@ -492,6 +545,152 @@ public:
         break;
         }
     }
+
+    uint8_t * first_pixel(const Rect & r)
+    {
+        return this->data.first_pixel(r);
+    }
+
+    uint8_t * beginning_of_last_line(const Rect & r)
+    {
+        return this->data.beginning_of_last_line(r);
+    }
+
+    struct Op_0x11
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~(target | ~source);
+        }
+    };
+
+    struct Op_0x22
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return target & ~source;
+        }
+    };
+
+    struct Op_0x33
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            TODO("The templated function can be optimize in the case the target is not read.")
+            (void)target;
+            return ~source;
+        }
+    };
+
+    struct Op_0x44
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~target & source;
+        }
+    };
+
+    struct Op_0x66
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return target ^ source;
+        }
+    };
+
+    struct Op_0x77
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~(target & source);
+        }
+    };
+
+    struct Op_0x88
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return target & source;
+        }
+    };
+
+    struct Op_0x99
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~(target ^ source);
+        }
+    };
+
+    struct Op_0xBB
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return target | ~source;
+        }
+    };
+
+    struct Op_0xCC
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            TODO("The templated function can be optimized because in the case the target is not read. See commented code in src_blt (and add performance benchmark)")
+            (void)target;
+            return source;
+        }
+    };
+
+    struct Op_0xDD
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~target | source;
+        }
+    };
+
+    struct Op_0xEE
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return target | source;
+        }
+    };
+
+
+    template <typename Op>
+        void scr_blt_op(unsigned srcx, unsigned srcy, const Rect drect)
+        {
+            Op op;
+            const signed int deltax = srcx - drect.x;
+            const signed int deltay = srcy - drect.y;
+            const uint8_t Bpp = ::nbbytes(this->bpp);
+            const Rect srect = drect.offset(deltax, deltay);
+            const Rect & overlap = srect.intersect(drect);
+            uint8_t * target = ((deltay >= 0)||overlap.isempty())
+                             ? this->data.first_pixel(drect)
+                             : this->data.beginning_of_last_line(drect);
+            uint8_t * source = ((deltay >= 0)||overlap.isempty())
+                             ? this->data.first_pixel(srect)
+                             : this->data.beginning_of_last_line(srect);
+            const signed int to_nextrow = ((deltay >= 0)||overlap.isempty())
+                                     ?  this->data.rowsize
+                                     : -this->data.rowsize;
+            signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?Bpp:-Bpp;
+            const unsigned offset = ((deltay != 0)||(deltax >= 0))?0:Bpp*(drect.cx - 1);
+            for (size_t y = 0; y < (size_t)drect.cy ; y++) {
+                uint8_t * linetarget = target + offset;
+                uint8_t * linesource = source + offset;
+                for (size_t x = 0; x < (size_t)drect.cx ; x++) {
+                    for (uint8_t b = 0 ; b < Bpp; b++){
+                        linetarget[b] = op(linetarget[b], linesource[b]);
+                    }
+                    linetarget += to_nextpixel;
+                    linesource += to_nextpixel;
+                }
+                target += to_nextrow;
+                source += to_nextrow;
+            }
+        };
 
     // low level scrblt, mostly avoid considering clipping
     // because we already took care of it
@@ -511,150 +710,30 @@ public:
         // |      | RPN: DSon                     |
         // +------+-------------------------------+
         case 0x11:
-        {
-            const signed int deltax = srcx - drect.x;
-            const signed int deltay = srcy - drect.y;
-            const uint8_t Bpp = ::nbbytes(this->bpp);
-            const Rect srect = drect.offset(deltax, deltay);
-            const Rect & overlap = srect.intersect(drect);
-            uint8_t * target = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(drect)
-                             : this->beginning_of_last_line(drect);
-            uint8_t * source = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(srect)
-                             : this->beginning_of_last_line(srect);
-            const signed int to_nextrow = ((deltay >= 0)||overlap.isempty())
-                                     ?  this->rowsize
-                                     : -this->rowsize;
-            signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?Bpp:-Bpp;
-            const unsigned offset = ((deltay != 0)||(deltax >= 0))?0:Bpp*(drect.cx - 1);
-            for (size_t y = 0; y < (size_t)drect.cy ; y++) {
-                uint8_t * linetarget = target + offset;
-                uint8_t * linesource = source + offset;
-                for (size_t x = 0; x < (size_t)drect.cx ; x++) {
-                    for (uint8_t b = 0 ; b < Bpp; b++){
-                        linetarget[b] = ~(linetarget[b] | ~linesource[b]);
-                    }
-                    linetarget += to_nextpixel;
-                    linesource += to_nextpixel;
-                }
-                target += to_nextrow;
-                source += to_nextrow;
-            }
-        }
+            this->scr_blt_op<Op_0x11>(srcx, srcy, drect);
         break;
         // +------+-------------------------------+
         // | 0x22 | ROP: 0x00220326               |
         // |      | RPN: DSna                     |
         // +------+-------------------------------+
         case 0x22:
-        {
-            const signed int deltax = srcx - drect.x;
-            const signed int deltay = srcy - drect.y;
-            const uint8_t Bpp = ::nbbytes(this->bpp);
-            const Rect srect = drect.offset(deltax, deltay);
-            const Rect & overlap = srect.intersect(drect);
-            uint8_t * target = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(drect)
-                             : this->beginning_of_last_line(drect);
-            uint8_t * source = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(srect)
-                             : this->beginning_of_last_line(srect);
-            const signed int to_nextrow = ((deltay >= 0)||overlap.isempty())
-                                     ?  this->rowsize
-                                     : -this->rowsize;
-            signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?Bpp:-Bpp;
-            const unsigned offset = ((deltay != 0)||(deltax >= 0))?0:Bpp*(drect.cx - 1);
-            for (size_t y = 0; y < (size_t)drect.cy ; y++) {
-                uint8_t * linetarget = target + offset;
-                uint8_t * linesource = source + offset;
-                for (size_t x = 0; x < (size_t)drect.cx ; x++) {
-                    for (uint8_t b = 0 ; b < Bpp; b++){
-                        linetarget[b] = linetarget[b] & ~linesource[b];
-                    }
-                    linetarget += to_nextpixel;
-                    linesource += to_nextpixel;
-                }
-                target += to_nextrow;
-                source += to_nextrow;
-            }
-        }
+            this->scr_blt_op<Op_0x22>(srcx, srcy, drect);
         break;
         // +------+-------------------------------+
         // | 0x33 | ROP: 0x00330008 (NOTSRCCOPY)  |
         // |      | RPN: Sn                       |
         // +------+-------------------------------+
         case 0x33:
-        {
-            const signed int deltax = srcx - drect.x;
-            const signed int deltay = srcy - drect.y;
-            const uint8_t Bpp = ::nbbytes(this->bpp);
-            const Rect srect = drect.offset(deltax, deltay);
-            const Rect & overlap = srect.intersect(drect);
-            uint8_t * target = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(drect)
-                             : this->beginning_of_last_line(drect);
-            uint8_t * source = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(srect)
-                             : this->beginning_of_last_line(srect);
-            const signed int to_nextrow = ((deltay >= 0)||overlap.isempty())
-                                     ?  this->rowsize
-                                     : -this->rowsize;
-            signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?Bpp:-Bpp;
-            const unsigned offset = ((deltay != 0)||(deltax >= 0))?0:Bpp*(drect.cx - 1);
-            for (size_t y = 0; y < (size_t)drect.cy ; y++) {
-                uint8_t * linetarget = target + offset;
-                uint8_t * linesource = source + offset;
-                for (size_t x = 0; x < (size_t)drect.cx ; x++) {
-                    for (uint8_t b = 0 ; b < Bpp; b++){
-                        linetarget[b] = ~linesource[b];
-                    }
-                    linetarget += to_nextpixel;
-                    linesource += to_nextpixel;
-                }
-                target += to_nextrow;
-                source += to_nextrow;
-            }
-        }
+            this->scr_blt_op<Op_0x33>(srcx, srcy, drect);
         break;
         // +------+-------------------------------+
         // | 0x44 | ROP: 0x00440328 (SRCERASE)    |
         // |      | RPN: SDna                     |
         // +------+-------------------------------+
         case 0x44:
-        {
-            const signed int deltax = srcx - drect.x;
-            const signed int deltay = srcy - drect.y;
-            const uint8_t Bpp = ::nbbytes(this->bpp);
-            const Rect srect = drect.offset(deltax, deltay);
-            const Rect & overlap = srect.intersect(drect);
-            uint8_t * target = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(drect)
-                             : this->beginning_of_last_line(drect);
-            uint8_t * source = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(srect)
-                             : this->beginning_of_last_line(srect);
-            const signed int to_nextrow = ((deltay >= 0)||overlap.isempty())
-                                     ?  this->rowsize
-                                     : -this->rowsize;
-            signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?Bpp:-Bpp;
-            const unsigned offset = ((deltay != 0)||(deltax >= 0))?0:Bpp*(drect.cx - 1);
-            for (size_t y = 0; y < (size_t)drect.cy ; y++) {
-                uint8_t * linetarget = target + offset;
-                uint8_t * linesource = source + offset;
-                for (size_t x = 0; x < (size_t)drect.cx ; x++) {
-                    for (uint8_t b = 0 ; b < Bpp; b++){
-                        linetarget[b] = ~linetarget[b] & linesource[b];
-                    }
-                    linetarget += to_nextpixel;
-                    linesource += to_nextpixel;
-                }
-                target += to_nextrow;
-                source += to_nextrow;
-            }
-        }
-
+            this->scr_blt_op<Op_0x44>(srcx, srcy, drect);
         break;
+
         // +------+-------------------------------+
         // | 0x55 | ROP: 0x00550009 (DSTINVERT)   |
         // |      | RPN: Dn                       |
@@ -667,149 +746,28 @@ public:
         // |      | RPN: DSx                      |
         // +------+-------------------------------+
         case 0x66:
-        {
-            const signed int deltax = srcx - drect.x;
-            const signed int deltay = srcy - drect.y;
-            const uint8_t Bpp = ::nbbytes(this->bpp);
-            const Rect srect = drect.offset(deltax, deltay);
-            const Rect & overlap = srect.intersect(drect);
-            uint8_t * target = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(drect)
-                             : this->beginning_of_last_line(drect);
-            uint8_t * source = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(srect)
-                             : this->beginning_of_last_line(srect);
-            const signed int to_nextrow = ((deltay >= 0)||overlap.isempty())
-                                     ?  this->rowsize
-                                     : -this->rowsize;
-            signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?Bpp:-Bpp;
-            const unsigned offset = ((deltay != 0)||(deltax >= 0))?0:Bpp*(drect.cx - 1);
-            for (size_t y = 0; y < (size_t)drect.cy ; y++) {
-                uint8_t * linetarget = target + offset;
-                uint8_t * linesource = source + offset;
-                for (size_t x = 0; x < (size_t)drect.cx ; x++) {
-                    for (uint8_t b = 0 ; b < Bpp; b++){
-                        linetarget[b] = linetarget[b] ^ linesource[b];
-                    }
-                    linetarget += to_nextpixel;
-                    linesource += to_nextpixel;
-                }
-                target += to_nextrow;
-                source += to_nextrow;
-            }
-        }
+            this->scr_blt_op<Op_0x66>(srcx, srcy, drect);
         break;
         // +------+-------------------------------+
         // | 0x77 | ROP: 0x007700E6               |
         // |      | RPN: DSan                     |
         // +------+-------------------------------+
         case 0x77:
-        {
-            const signed int deltax = srcx - drect.x;
-            const signed int deltay = srcy - drect.y;
-            const uint8_t Bpp = ::nbbytes(this->bpp);
-            const Rect srect = drect.offset(deltax, deltay);
-            const Rect & overlap = srect.intersect(drect);
-            uint8_t * target = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(drect)
-                             : this->beginning_of_last_line(drect);
-            uint8_t * source = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(srect)
-                             : this->beginning_of_last_line(srect);
-            const signed int to_nextrow = ((deltay >= 0)||overlap.isempty())
-                                     ?  this->rowsize
-                                     : -this->rowsize;
-            signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?Bpp:-Bpp;
-            const unsigned offset = ((deltay != 0)||(deltax >= 0))?0:Bpp*(drect.cx - 1);
-            for (size_t y = 0; y < (size_t)drect.cy ; y++) {
-                uint8_t * linetarget = target + offset;
-                uint8_t * linesource = source + offset;
-                for (size_t x = 0; x < (size_t)drect.cx ; x++) {
-                    for (uint8_t b = 0 ; b < Bpp; b++){
-                        linetarget[b] = ~(linetarget[b] & linesource[b]);
-                    }
-                    linetarget += to_nextpixel;
-                    linesource += to_nextpixel;
-                }
-                target += to_nextrow;
-                source += to_nextrow;
-            }
-        }
+            this->scr_blt_op<Op_0x77>(srcx, srcy, drect);
         break;
         // +------+-------------------------------+
         // | 0x88 | ROP: 0x008800C6 (SRCAND)      |
         // |      | RPN: DSa                      |
         // +------+-------------------------------+
         case 0x88:
-        {
-            const signed int deltax = srcx - drect.x;
-            const signed int deltay = srcy - drect.y;
-            const uint8_t Bpp = ::nbbytes(this->bpp);
-            const Rect srect = drect.offset(deltax, deltay);
-            const Rect & overlap = srect.intersect(drect);
-            uint8_t * target = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(drect)
-                             : this->beginning_of_last_line(drect);
-            uint8_t * source = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(srect)
-                             : this->beginning_of_last_line(srect);
-            const signed int to_nextrow = ((deltay >= 0)||overlap.isempty())
-                                     ?  this->rowsize
-                                     : -this->rowsize;
-            signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?Bpp:-Bpp;
-            const unsigned offset = ((deltay != 0)||(deltax >= 0))?0:Bpp*(drect.cx - 1);
-            for (size_t y = 0; y < (size_t)drect.cy ; y++) {
-                uint8_t * linetarget = target + offset;
-                uint8_t * linesource = source + offset;
-                for (size_t x = 0; x < (size_t)drect.cx ; x++) {
-                    for (uint8_t b = 0 ; b < Bpp; b++){
-                        linetarget[b] = linetarget[b] & linesource[b];
-                    }
-                    linetarget += to_nextpixel;
-                    linesource += to_nextpixel;
-                }
-                target += to_nextrow;
-                source += to_nextrow;
-            }
-        }
+            this->scr_blt_op<Op_0x88>(srcx, srcy, drect);
         break;
         // +------+-------------------------------+
         // | 0x99 | ROP: 0x00990066               |
         // |      | RPN: DSxn                     |
         // +------+-------------------------------+
         case 0x99:
-        {
-            const signed int deltax = srcx - drect.x;
-            const signed int deltay = srcy - drect.y;
-            const uint8_t Bpp = ::nbbytes(this->bpp);
-            const Rect srect = drect.offset(deltax, deltay);
-            const Rect & overlap = srect.intersect(drect);
-            uint8_t * target = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(drect)
-                             : this->beginning_of_last_line(drect);
-            uint8_t * source = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(srect)
-                             : this->beginning_of_last_line(srect);
-            const signed int to_nextrow = ((deltay >= 0)||overlap.isempty())
-                                     ?  this->rowsize
-                                     : -this->rowsize;
-            signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?Bpp:-Bpp;
-            const unsigned offset = ((deltay != 0)||(deltax >= 0))?0:Bpp*(drect.cx - 1);
-            for (size_t y = 0; y < (size_t)drect.cy ; y++) {
-                uint8_t * linetarget = target + offset;
-                uint8_t * linesource = source + offset;
-                for (size_t x = 0; x < (size_t)drect.cx ; x++) {
-                    for (uint8_t b = 0 ; b < Bpp; b++){
-                        linetarget[b] = ~(linetarget[b] ^ linesource[b]);
-                    }
-                    linetarget += to_nextpixel;
-                    linesource += to_nextpixel;
-                }
-                target += to_nextrow;
-                source += to_nextrow;
-            }
-        }
-
+            this->scr_blt_op<Op_0x99>(srcx, srcy, drect);
         break;
         // +------+-------------------------------+
         // | 0xAA | ROP: 0x00AA0029               |
@@ -822,152 +780,54 @@ public:
         // |      | RPN: DSno                     |
         // +------+-------------------------------+
         case 0xBB:
-        {
-            const signed int deltax = srcx - drect.x;
-            const signed int deltay = srcy - drect.y;
-            const uint8_t Bpp = ::nbbytes(this->bpp);
-            const Rect srect = drect.offset(deltax, deltay);
-            const Rect & overlap = srect.intersect(drect);
-            uint8_t * target = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(drect)
-                             : this->beginning_of_last_line(drect);
-            uint8_t * source = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(srect)
-                             : this->beginning_of_last_line(srect);
-            const signed int to_nextrow = ((deltay >= 0)||overlap.isempty())
-                                     ?  this->rowsize
-                                     : -this->rowsize;
-            signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?Bpp:-Bpp;
-            const unsigned offset = ((deltay != 0)||(deltax >= 0))?0:Bpp*(drect.cx - 1);
-            for (size_t y = 0; y < (size_t)drect.cy ; y++) {
-                uint8_t * linetarget = target + offset;
-                uint8_t * linesource = source + offset;
-                for (size_t x = 0; x < (size_t)drect.cx ; x++) {
-                    for (uint8_t b = 0 ; b < Bpp; b++){
-                        linetarget[b] = linetarget[b] | ~linesource[b];
-                    }
-                    linetarget += to_nextpixel;
-                    linesource += to_nextpixel;
-                }
-                target += to_nextrow;
-                source += to_nextrow;
-            }
-        }
+            this->scr_blt_op<Op_0xBB>(srcx, srcy, drect);
         break;
         // +------+-------------------------------+
         // | 0xCC | ROP: 0x00CC0020 (SRCCOPY)     |
         // |      | RPN: S                        |
         // +------+-------------------------------+
         case 0xCC:
-        {
-            const signed int deltax = srcx - drect.x;
-            const signed int deltay = srcy - drect.y;
-            const Rect srect = drect.offset(deltax, deltay);
-            if (!srect.equal(drect)){
-                const Rect & overlap = srect.intersect(drect);
-                if ((deltay > 0)||(overlap.isempty())){
-                    uint8_t * target = this->first_pixel(drect);
-                    uint8_t * source = this->first_pixel(srect);
-                    for (size_t j = 0; j < (size_t)drect.cy ; j++) {
-                        memcpy(target, source, drect.cx * ::nbbytes(this->bpp));
-                        target += this->rowsize;
-                        source += this->rowsize;
-                    }
-                }
-                else if (deltay < 0){
-                    uint8_t * target = this->beginning_of_last_line(drect);
-                    uint8_t * source = this->beginning_of_last_line(srect);
-                    for (size_t j = 0; j < (size_t)drect.cy ; j++) {
-                        memcpy(target, source, drect.cx * ::nbbytes(this->bpp));
-                        target -= this->rowsize;
-                        source -= this->rowsize;
-                     }
-                }
-                else {
-                    uint8_t * target = this->first_pixel(drect);
-                    uint8_t * source = this->first_pixel(srect);
-                    for (size_t j = 0; j < (size_t)drect.cy ; j++) {
-                        memmove(target, source, drect.cx * ::nbbytes(this->bpp));
-                        target += this->rowsize;
-                        source += this->rowsize;
-                    }
-                }
-            }
-        }
+            this->scr_blt_op<Op_0xCC>(srcx, srcy, drect);
+//        {
+//            const signed int deltax = srcx - drect.x;
+//            const signed int deltay = srcy - drect.y;
+//            const Rect srect = drect.offset(deltax, deltay);
+//            if (!srect.equal(drect)){
+//                const Rect & overlap = srect.intersect(drect);
+//                if ((deltay >= 0)||(overlap.isempty())){
+//                    uint8_t * target = this->first_pixel(drect);
+//                    uint8_t * source = this->first_pixel(srect);
+//                    for (size_t j = 0; j < (size_t)drect.cy ; j++) {
+//                        memcpy(target, source, drect.cx * ::nbbytes(this->bpp));
+//                        target += this->data.rowsize;
+//                        source += this->data.rowsize;
+//                    }
+//                }
+//                else if (deltay < 0){
+//                    uint8_t * target = this->beginning_of_last_line(drect);
+//                    uint8_t * source = this->beginning_of_last_line(srect);
+//                    for (size_t j = 0; j < (size_t)drect.cy ; j++) {
+//                        memcpy(target, source, drect.cx * ::nbbytes(this->bpp));
+//                        target -= this->data.rowsize;
+//                        source -= this->data.rowsize;
+//                     }
+//                }
+//            }
+//        }
         break;
         // +------+-------------------------------+
         // | 0xDD | ROP: 0x00DD0228               |
         // |      | RPN: SDno                     |
         // +------+-------------------------------+
         case 0xDD:
-        {
-            const signed int deltax = srcx - drect.x;
-            const signed int deltay = srcy - drect.y;
-            const uint8_t Bpp = ::nbbytes(this->bpp);
-            const Rect srect = drect.offset(deltax, deltay);
-            const Rect & overlap = srect.intersect(drect);
-            uint8_t * target = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(drect)
-                             : this->beginning_of_last_line(drect);
-            uint8_t * source = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(srect)
-                             : this->beginning_of_last_line(srect);
-            const signed int to_nextrow = ((deltay >= 0)||overlap.isempty())
-                                     ?  this->rowsize
-                                     : -this->rowsize;
-            signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?Bpp:-Bpp;
-            const unsigned offset = ((deltay != 0)||(deltax >= 0))?0:Bpp*(drect.cx - 1);
-            for (size_t y = 0; y < (size_t)drect.cy ; y++) {
-                uint8_t * linetarget = target + offset;
-                uint8_t * linesource = source + offset;
-                for (size_t x = 0; x < (size_t)drect.cx ; x++) {
-                    for (uint8_t b = 0 ; b < Bpp; b++){
-                        linetarget[b] = ~linetarget[b] | linesource[b];
-                    }
-                    linetarget += to_nextpixel;
-                    linesource += to_nextpixel;
-                }
-                target += to_nextrow;
-                source += to_nextrow;
-            }
-        }
+            this->scr_blt_op<Op_0xDD>(srcx, srcy, drect);
         break;
         // +------+-------------------------------+
         // | 0xEE | ROP: 0x00EE0086 (SRCPAINT)    |
         // |      | RPN: DSo                      |
         // +------+-------------------------------+
         case 0xEE:
-        {
-            const signed int deltax = srcx - drect.x;
-            const signed int deltay = srcy - drect.y;
-            const uint8_t Bpp = ::nbbytes(this->bpp);
-            const Rect srect = drect.offset(deltax, deltay);
-            const Rect & overlap = srect.intersect(drect);
-            uint8_t * target = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(drect)
-                             : this->beginning_of_last_line(drect);
-            uint8_t * source = ((deltay >= 0)||overlap.isempty())
-                             ? this->first_pixel(srect)
-                             : this->beginning_of_last_line(srect);
-            const signed int to_nextrow = ((deltay >= 0)||overlap.isempty())
-                                     ?  this->rowsize
-                                     : -this->rowsize;
-            signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?Bpp:-Bpp;
-            const unsigned offset = ((deltay != 0)||(deltax >= 0))?0:Bpp*(drect.cx - 1);
-            for (size_t y = 0; y < (size_t)drect.cy ; y++) {
-                uint8_t * linetarget = target + offset;
-                uint8_t * linesource = source + offset;
-                for (size_t x = 0; x < (size_t)drect.cx ; x++) {
-                    for (uint8_t b = 0 ; b < Bpp; b++){
-                        linetarget[b] = linetarget[b] | linesource[b];
-                    }
-                    linetarget += to_nextpixel;
-                    linesource += to_nextpixel;
-                }
-                target += to_nextrow;
-                source += to_nextrow;
-            }
-        }
+            this->scr_blt_op<Op_0xEE>(srcx, srcy, drect);
         break;
         // +------+-------------------------------+
         // | 0xFF | ROP: 0x00FF0062 (WHITENESS)   |
@@ -999,7 +859,7 @@ public:
         while (true){
             if (clip.contains_pt(x, y)){
                 const uint8_t Bpp = ::nbbytes(this->bpp);
-                uint8_t * const p = this->data + (y * this->full.cx + x) * Bpp;
+                uint8_t * const p = this->data.data + (y * Rect(0, 0, this->data.width, this->data.height).cx + x) * Bpp;
                 for (uint8_t b = 0 ; b < Bpp; b++){
                     p[b] = col[b];
                 }
@@ -1030,7 +890,7 @@ public:
         // also base of the new coordinate system
         const unsigned y0 = std::max(starty, clip.y);
         const unsigned y1 = std::min(endy, clip.y + clip.cy - 1);
-        const uint16_t & height = this->full.cx;
+        const uint16_t & height = Rect(0, 0, this->data.width, this->data.height).cx;
         const uint8_t Bpp = ::nbbytes(this->bpp);
 
         // these tests are probably unnecessary if calling code is ok
@@ -1038,7 +898,7 @@ public:
         if (y1 >= height){ return; }
 
         if (y0 < y1){ // this test is probably unnecessary if calling code is ok
-            uint8_t * const base = this->data + (y0 * height + x) * 3;
+            uint8_t * const base = this->data.data + (y0 * height + x) * 3;
 
             for (unsigned dy = 0; dy <= (y1 - y0) ; dy++) {
                 uint8_t * const p = base + dy * height * 3;
@@ -1054,14 +914,14 @@ public:
         const unsigned x0 = std::max(startx, clip.x);
         const unsigned x1 = std::min(endx, clip.x + clip.cx - 1);
         uint8_t col[3] = { color, color >> 8, color >> 16};
-        const uint16_t & height = this->full.cx;
+        const uint16_t & height = Rect(0, 0, this->data.width, this->data.height).cx;
         const uint8_t Bpp = ::nbbytes(this->bpp);
 
         // this tests is probably unnecessary if calling code is ok
         if (y >= height){ return; }
 
         // base adress (*3 because 3 bytes per pixel)
-        uint8_t * const base = this->data + (y * height) * 3;
+        uint8_t * const base = this->data.data + (y * height) * 3;
 
         for (unsigned x = x0; x <= x1 ; x++) {
             // Pixel position
