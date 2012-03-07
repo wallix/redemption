@@ -266,6 +266,55 @@ public:
         }
     }
 
+
+//    void set_color(const Rect & rect)
+//    {
+//        const Rect & trect = rect.intersect(this->buf_data->width, this->buf_data->height);
+//        uint8_t * p = this->buf_data->first_pixel(trect);
+//        int step = (this->buf_data->width - rect.cx) * 3;
+
+//        for (int j = 0; j < trect.cy ; j++, p += step){
+//            for (int i = 0; i < trect.cx ; i++, p += 3){
+//                _Code;
+//            }
+//        }
+//    }
+
+    void black_color(const Rect & rect)
+    {
+        const Rect & trect = rect.intersect(this->data.width, this->data.height);
+        uint8_t * p = this->data.first_pixel(trect);
+        const size_t step = this->data.rowsize;
+        const size_t rect_rowsize = trect.cx * this->data.Bpp;
+        for (int j = 0; j < trect.cy ; j++, p += step){
+            bzero(p, rect_rowsize);
+        }
+    }
+
+    void white_color(const Rect & rect)
+    {
+        uint8_t * p = this->data.first_pixel(rect);
+        const size_t step = this->data.rowsize;
+        const size_t rect_rowsize = rect.cx * this->data.Bpp;
+        for (int j = 0; j < rect.cy ; j++, p += step){
+            memset(p, 0xFF, rect_rowsize);
+        }
+    }
+
+    void invert_color(const Rect & rect)
+    {
+        const Rect & trect = rect.intersect(this->data.width, this->data.height);
+        uint8_t * p = this->data.first_pixel(trect);
+        const size_t rect_rowsize = trect.cx * this->data.Bpp;
+        const size_t step = this->data.rowsize - rect_rowsize;
+        for (int j = 0; j < trect.cy ; j++, p += step){
+            for (int i = 0; i < trect.cx ; i++, p += 3){
+                TODO("Applying inversion on blocks of 32 bits instead of bytes should be faster")
+                p[0] ^= 0xFF; p[1] ^= 0xFF; p[2] ^= 0xFF;
+            }
+        }
+    }
+
     // low level opaquerect,
     // mostly avoid clipping because we already took care of it
     // also we already swapped color if we are using BGR instead of RGB
@@ -286,15 +335,120 @@ public:
         }
     }
 
+    template <typename Op>
+        void patblt_op(const Rect & rect, const uint32_t color)
+        {
+            Op op;
+            uint8_t * const base = this->data.first_pixel(rect);
+            uint8_t * p = base;
+            uint8_t p0 = color & 0xFF;
+            uint8_t p1 = (color >> 8) & 0xFF;
+            uint8_t p2 = (color >> 16) & 0xFF;
+
+            for (size_t y = 0; y < (size_t)rect.cy ; y++){
+                p = base + this->data.rowsize * y;
+                for (size_t x = 0; x < (size_t)rect.cx ; x++){
+                    p[0] = op(p[0], p0);
+                    p[1] = op(p[1], p1);
+                    p[2] = op(p[2], p2);
+                    p += 3;
+                }
+            }
+        }
+
+    struct Op_0x05
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~(target | source);
+        }
+    };
+
+    struct Op_0x0F
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~source;
+        }
+    };
+
+    struct Op_0x50
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~target & source;
+        }
+    };
+
+    struct Op_0x5A
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return target ^ source;
+        }
+    };
+
+    struct Op_0x5F
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~(target & source);
+        }
+    };
+
+    struct Op_0xA0
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return target & source;
+        }
+    };
+
+    struct Op_0xA5
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~(target ^ source);
+        }
+    };
+
+    struct Op_0xAF
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return target | ~source;
+        }
+    };
+
+    TODO("This one is a memset and should be simplified")
+    struct Op_0xF0
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return source;
+        }
+    };
+
+    struct Op_0xF5
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~target | source;
+        }
+    };
+
+    struct Op_0xFA
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return target | source;
+        }
+    };
+
     // low level patblt,
     // mostly avoid clipping because we already took care of it
     void patblt(const Rect & rect, const uint8_t rop, const uint32_t color)
     {
-        uint8_t * const base = this->data.first_pixel(rect);
-        uint8_t * p = base;
-        uint8_t p0 = color & 0xFF;
-        uint8_t p1 = (color >> 8) & 0xFF;
-        uint8_t p2 = (color >> 16) & 0xFF;
 
 
         TODO(" this switch contains much duplicated code  to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution  in this particular case I see no obvious better way.")
@@ -304,127 +458,63 @@ public:
 // |      | RPN: 0                        |
 // +------+-------------------------------+
         case 0x00: // blackness
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                memset(p, 0, rect.cx * ::nbbytes(this->bpp));
-                p += this->data.rowsize;
-            }
+            this->black_color(rect);
         break;
 // +------+-------------------------------+
 // | 0x05 | ROP: 0x000500A9               |
 // |      | RPN: DPon                     |
 // +------+-------------------------------+
         case 0x05:
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->data.rowsize * y;
-                for (size_t x = 0; x < (size_t)rect.cx ; x++){
-                    p[0] = ~(p[0] | p0);
-                    p[1] = ~(p[1] | p1);
-                    p[2] = ~(p[2] | p2);
-                    p += 3;
-                }
-            }
+            this->patblt_op<Op_0x05>(rect, color);
         break;
 // +------+-------------------------------+
 // | 0x0F | ROP: 0x000F0001               |
 // |      | RPN: Pn                       |
 // +------+-------------------------------+
         case 0x0F:
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->data.rowsize * y;
-                for (size_t x = 0; x < (size_t)rect.cx ; x++){
-                    p[0] = ~p0;
-                    p[1] = ~p1;
-                    p[2] = ~p2;
-                    p += 3;
-                }
-            }
+            this->patblt_op<Op_0x0F>(rect, color);
         break;
 // +------+-------------------------------+
 // | 0x50 | ROP: 0x00500325               |
 // |      | RPN: PDna                     |
 // +------+-------------------------------+
         case 0x50:
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->data.rowsize * y;
-                for (size_t x = 0; x < (size_t)rect.cx ; x++){
-                    p[0] = ~p[0] & p0;
-                    p[1] = ~p[1] & p1;
-                    p[2] = ~p[2] & p2;
-                    p += 3;
-                }
-            }
+            this->patblt_op<Op_0x50>(rect, color);
         break;
 // +------+-------------------------------+
 // | 0x55 | ROP: 0x00550009 (DSTINVERT)   |
 // |      | RPN: Dn                       |
 // +------+-------------------------------+
         case 0x55: // inversion
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->data.rowsize * y;
-                for (size_t x = 0; x < (size_t)rect.cx ; x++){
-                    p[0] ^= 0xFF; p[1] ^= 0xFF; p[2] ^= 0xFF;
-                    p += 3;
-                }
-            }
+            this->invert_color(rect);
         break;
 // +------+-------------------------------+
 // | 0x5A | ROP: 0x005A0049 (PATINVERT)   |
 // |      | RPN: DPx                      |
 // +------+-------------------------------+
         case 0x5A:
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->data.rowsize * y;
-                for (size_t x = 0; x < (size_t)rect.cx ; x++){
-                    p[0] = p[0] ^ p0;
-                    p[1] = p[1] ^ p1;
-                    p[2] = p[2] ^ p2;
-                    p += 3;
-                }
-            }
+            this->patblt_op<Op_0x5A>(rect, color);
         break;
 // +------+-------------------------------+
 // | 0x5F | ROP: 0x005F00E9               |
 // |      | RPN: DPan                     |
 // +------+-------------------------------+
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->data.rowsize * y;
-                for (size_t x = 0; x < (size_t)rect.cx ; x++){
-                    p[0] = ~(p[0] & p0);
-                    p[1] = ~(p[1] & p1);
-                    p[2] = ~(p[2] & p2);
-                    p += 3;
-                }
-            }
+        case 0x5F:
+            this->patblt_op<Op_0x5F>(rect, color);
         break;
 // +------+-------------------------------+
 // | 0xA0 | ROP: 0x00A000C9               |
 // |      | RPN: DPa                      |
 // +------+-------------------------------+
         case 0xA0:
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->data.rowsize * y;
-                for (size_t x = 0; x < (size_t)rect.cx ; x++){
-                    p[0] = p[0] | p0;
-                    p[1] = p[1] | p1;
-                    p[2] = p[2] | p2;
-                    p += 3;
-                }
-            }
+            this->patblt_op<Op_0xA0>(rect, color);
         break;
 // +------+-------------------------------+
 // | 0xA5 | ROP: 0x00A50065               |
 // |      | RPN: PDxn                     |
 // +------+-------------------------------+
         case 0xA5:
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->data.rowsize * y;
-                for (size_t x = 0; x < (size_t)rect.cx ; x++){
-                    p[0] = ~(p[0] ^ p0);
-                    p[1] = ~(p[1] ^ p1);
-                    p[2] = ~(p[2] ^ p2);
-                    p += 3;
-                }
-            }
+            this->patblt_op<Op_0xA5>(rect, color);
         break;
 // +------+-------------------------------+
 // | 0xAA | ROP: 0x00AA0029               |
@@ -437,70 +527,35 @@ public:
 // |      | RPN: DPno                     |
 // +------+-------------------------------+
         case 0xAF:
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->data.rowsize * y;
-                for (size_t x = 0; x < (size_t)rect.cx ; x++){
-                    p[0] = p[0] | ~p0;
-                    p[1] = p[1] | ~p1;
-                    p[2] = p[2] | ~p2;
-                    p += 3;
-                }
-            }
+            this->patblt_op<Op_0xAF>(rect, color);
         break;
 // +------+-------------------------------+
 // | 0xF0 | ROP: 0x00F00021 (PATCOPY)     |
 // |      | RPN: P                        |
 // +------+-------------------------------+
         case 0xF0:
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->data.rowsize * y;
-                for (size_t x = 0; x < (size_t)rect.cx ; x++){
-                    p[0] = p0;
-                    p[1] = p1;
-                    p[2] = p2;
-                    p += 3;
-                }
-            }
+            this->patblt_op<Op_0xF0>(rect, color);
         break;
 // +------+-------------------------------+
 // | 0xF5 | ROP: 0x00F50225               |
 // |      | RPN: PDno                     |
 // +------+-------------------------------+
         case 0xF5:
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->data.rowsize * y;
-                for (size_t x = 0; x < (size_t)rect.cx ; x++){
-                    p[0] = ~p[0] | p0;
-                    p[1] = ~p[1] | p1;
-                    p[2] = ~p[2] | p2;
-                    p += 3;
-                }
-            }
+            this->patblt_op<Op_0xF5>(rect, color);
         break;
 // +------+-------------------------------+
 // | 0xFA | ROP: 0x00FA0089               |
 // |      | RPN: DPo                      |
 // +------+-------------------------------+
         case 0xFA:
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->data.rowsize * y;
-                for (size_t x = 0; x < (size_t)rect.cx ; x++){
-                    p[0] = p[0] | p0;
-                    p[1] = p[1] | p1;
-                    p[2] = p[2] | p2;
-                    p += 3;
-                }
-            }
+            this->patblt_op<Op_0xFA>(rect, color);
         break;
 // +------+-------------------------------+
 // | 0xFF | ROP: 0x00FF0062 (WHITENESS)   |
 // |      | RPN: 1                        |
 // +------+-------------------------------+
         case 0xFF: // whiteness
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                memset(p, 0, rect.cx * ::nbbytes(this->bpp));
-                p += this->data.rowsize;
-            }
+            this->white_color(rect);
         break;
         default:
             // should not happen, do nothing
@@ -512,33 +567,17 @@ public:
     // mostly avoid clipping because we already took care of it
     void destblt(const Rect & rect, const uint8_t rop)
     {
-        uint8_t * const base = this->data.first_pixel(rect);
-        uint8_t * p = base;
-
-        TODO(" this switch contains much duplicated code  to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution  in this particular case I see no obvious better way.")
         switch (rop){
         case 0x00: // blackness
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                memset(p, 0, rect.cx * ::nbbytes(this->bpp));
-                p += this->data.rowsize;
-            }
+            this->black_color(rect);
         break;
         case 0x55: // inversion
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                p = base + this->data.rowsize * y;
-                for (size_t x = 0; x < (size_t)rect.cx ; x++){
-                    p[0] ^= 0xFF; p[1] ^= 0xFF; p[2] ^= 0xFF;
-                    p += 3;
-                }
-            }
+            this->invert_color(rect);
         break;
         case 0xAA: // change nothing
         break;
         case 0xFF: // whiteness
-            for (size_t y = 0; y < (size_t)rect.cy ; y++){
-                memset(p, 0, rect.cx * ::nbbytes(this->bpp));
-                p += this->data.rowsize;
-            }
+            this->white_color(rect);
         break;
         default:
             // should not happen
@@ -546,15 +585,15 @@ public:
         }
     }
 
-    uint8_t * first_pixel(const Rect & r)
-    {
-        return this->data.first_pixel(r);
-    }
+//    uint8_t * first_pixel(const Rect & r)
+//    {
+//        return this->data.first_pixel(r);
+//    }
 
-    uint8_t * beginning_of_last_line(const Rect & r)
-    {
-        return this->data.beginning_of_last_line(r);
-    }
+//    uint8_t * beginning_of_last_line(const Rect & r)
+//    {
+//        return this->data.beginning_of_last_line(r);
+//    }
 
     struct Op_0x11
     {
@@ -703,7 +742,7 @@ public:
         // |      | RPN: 0                        |
         // +------+-------------------------------+
         case 0x00:
-            this->destblt(drect, rop);
+            this->black_color(drect);
         break;
         // +------+-------------------------------+
         // | 0x11 | ROP: 0x001100A6 (NOTSRCERASE) |
@@ -739,7 +778,7 @@ public:
         // |      | RPN: Dn                       |
         // +------+-------------------------------+
         case 0x55:
-            this->destblt(drect, rop);
+            this->invert_color(drect);
         break;
         // +------+-------------------------------+
         // | 0x66 | ROP: 0x00660046 (SRCINVERT)   |
@@ -834,7 +873,7 @@ public:
         // |      | RPN: 1                        |
         // +------+-------------------------------+
         case 0xFF:
-            this->destblt(drect, rop);
+            this->white_color(drect);
         break;
         default:
             // should not happen

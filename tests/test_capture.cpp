@@ -33,6 +33,11 @@
 #include "staticcapture.hpp"
 #include "drawable.hpp"
 
+// to see last result file, remove unlink
+// and do something like:
+// eog `ls -1tr /tmp/test_* | tail -n 1`
+// (or any other variation you like)
+
 BOOST_AUTO_TEST_CASE(TestLineTo)
 {
     // Create a simple capture image and dump it to file
@@ -102,7 +107,171 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
     ::fflush(f);
     ::fclose(f);
     // remove this unlink to see what is drawn
-//    ::unlink(tmpname);
+    ::unlink(tmpname);
+}
+
+BOOST_AUTO_TEST_CASE(TestPatBlt)
+{
+    // Create a simple capture image and dump it to file
+    uint16_t width = 640;
+    uint16_t height = 480;
+    uint8_t bpp = 24;
+    Rect screen_rect(0, 0, width, height);
+    BGRPalette palette;
+    init_palette332(palette);
+    BmpCache bmpcache;
+    Drawable gd(width, height, bpp, palette, bmpcache, false);
+    gd.draw(RDPPatBlt(screen_rect, 0xFF, WHITE, WHITE, RDPBrush()), screen_rect);
+    gd.draw(RDPPatBlt(screen_rect.shrink(5), 0x00, WHITE, WHITE, RDPBrush()), screen_rect);
+
+
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(10), RED), screen_rect);
+     // RED inverted becomes CYAN
+    gd.draw(RDPPatBlt(screen_rect.shrink(15), 0x55, WHITE, WHITE, RDPBrush()), screen_rect);
+
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(20), RED), screen_rect);
+    // Should be Black
+    gd.draw(RDPPatBlt(screen_rect.shrink(25), 0x05, 0xFFFF00, WHITE, RDPBrush()), screen_rect);
+
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(30), RED), screen_rect);
+    // Should be RED
+    gd.draw(RDPPatBlt(screen_rect.shrink(35), 0x0F, 0xFFFF00, WHITE, RDPBrush()), screen_rect);
+
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(40), GREEN), screen_rect);
+    // Should be BLUE
+    gd.draw(RDPPatBlt(screen_rect.shrink(45), 0x50, 0xFFFF00, WHITE, RDPBrush()), screen_rect);
+
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(50), GREEN), screen_rect);
+    // Should be purple
+    gd.draw(RDPPatBlt(screen_rect.shrink(55), 0x5A, WHITE, WHITE, RDPBrush()), screen_rect);
+
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(60), GREEN), screen_rect);
+    // Should be purple
+    gd.draw(RDPPatBlt(screen_rect.shrink(65), 0x5F, 0xFFFF00, WHITE, RDPBrush()), screen_rect);
+
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(70), 0xFF00FF), screen_rect);
+    // Should be blue
+    gd.draw(RDPPatBlt(screen_rect.shrink(75), 0xA0, 0xFFFF00, WHITE, RDPBrush()), screen_rect);
+
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(80), GREEN), screen_rect);
+    // Should be GREEN
+    gd.draw(RDPPatBlt(screen_rect.shrink(85), 0xA5, WHITE, WHITE, RDPBrush()), screen_rect);
+
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(90), RED), screen_rect);
+    // Should be white
+    gd.draw(RDPPatBlt(screen_rect.shrink(95), 0xAF, RED, WHITE, RDPBrush()), screen_rect);
+
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(100), GREEN), screen_rect);
+    // Should be 0x2F2F2F Dark Grey
+    gd.draw(RDPPatBlt(screen_rect.shrink(105), 0xF0, 0x2F2F2F, WHITE, RDPBrush()), screen_rect);
+
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(110), 0xFF00FF), screen_rect);
+    // Should be yellow
+    gd.draw(RDPPatBlt(screen_rect.shrink(115), 0xF5, RED, WHITE, RDPBrush()), screen_rect);
+
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(120), RED), screen_rect);
+    // Should be purple
+    gd.draw(RDPPatBlt(screen_rect.shrink(125), 0xFA, BLUE, WHITE, RDPBrush()), screen_rect);
+
+    uint8_t shasig[20] = {
+        0x8e, 0x6b, 0xe0, 0x91, 0x08, 0xce, 0x54, 0x3b, 0x58, 0x3a,
+        0x8f, 0x84, 0x6c, 0x59, 0x1c, 0x3e, 0xae, 0x5c, 0x1c, 0xf5
+    };
+
+    SSL_SHA1 sha1;
+    uint8_t sig[20];
+    ssllib ssl;
+    ssl.sha1_init(&sha1);
+    for (size_t y = 0; y < (size_t)gd.data.height; y++){
+        ssl.sha1_update(&sha1, gd.data.data + y * gd.data.rowsize, gd.data.rowsize);
+    }
+    ssl.sha1_final(&sha1, sig);
+
+    if (memcmp(shasig, sig, 20)){
+        char buffer[1024];
+        sprintf(buffer, "Expected signature: \""
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
+        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
+        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
+        sig[ 8], sig[ 9], sig[10], sig[11],
+        sig[12], sig[13], sig[14], sig[15],
+        sig[16], sig[17], sig[18], sig[19]);
+        BOOST_CHECK_MESSAGE(false, buffer);
+    }
+
+    char tmpname[128];
+    sprintf(tmpname, "/tmp/test_patblt_%s_XXXXXX.png", "000");
+    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
+    FILE * f = fdopen(fd, "wb");
+    ::dump_png24(f, gd.data.data, gd.data.width, gd.data.height, gd.data.rowsize);
+    ::fflush(f);
+    ::fclose(f);
+    // remove this unlink to see what is drawn
+    ::unlink(tmpname);
+}
+
+BOOST_AUTO_TEST_CASE(TestDestBlt)
+{
+    // Create a simple capture image and dump it to file
+    uint16_t width = 640;
+    uint16_t height = 480;
+    uint8_t bpp = 24;
+    Rect screen_rect(0, 0, width, height);
+    BGRPalette palette;
+    init_palette332(palette);
+    BmpCache bmpcache;
+    Drawable gd(width, height, bpp, palette, bmpcache, false);
+//    gd.draw(RDPPatBlt(screen_rect, 0xFF, WHITE, WHITE, RDPBrush()), screen_rect);
+    gd.draw(RDPDestBlt(screen_rect, 0xFF), screen_rect); // WHITENESS
+    gd.draw(RDPDestBlt(screen_rect.shrink(5), 0x00), screen_rect); // BLACKNESS
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(10), RED), screen_rect); // RED
+     // RED inverted becomes CYAN
+    gd.draw(RDPDestBlt(screen_rect.shrink(15), 0x55), screen_rect);
+
+
+    uint8_t shasig[20] = {
+    0xca, 0xee, 0x18, 0x2c, 0x77, 0x53, 0x70, 0x93, 0xfa, 0xf3,
+    0x58, 0xda, 0xd1, 0x65, 0x1a, 0x17, 0x4d, 0x7c, 0xff, 0xd7
+    };
+
+    SSL_SHA1 sha1;
+    uint8_t sig[20];
+    ssllib ssl;
+    ssl.sha1_init(&sha1);
+    for (size_t y = 0; y < (size_t)gd.data.height; y++){
+        ssl.sha1_update(&sha1, gd.data.data + y * gd.data.rowsize, gd.data.rowsize);
+    }
+    ssl.sha1_final(&sha1, sig);
+
+    if (memcmp(shasig, sig, 20)){
+        char buffer[1024];
+        sprintf(buffer, "Expected signature: \""
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
+        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
+        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
+        sig[ 8], sig[ 9], sig[10], sig[11],
+        sig[12], sig[13], sig[14], sig[15],
+        sig[16], sig[17], sig[18], sig[19]);
+        BOOST_CHECK_MESSAGE(false, buffer);
+    }
+
+    char tmpname[128];
+    sprintf(tmpname, "/tmp/test_destblt_%s_XXXXXX.png", "000");
+    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
+    FILE * f = fdopen(fd, "wb");
+    ::dump_png24(f, gd.data.data, gd.data.width, gd.data.height, gd.data.rowsize);
+    ::fflush(f);
+    ::fclose(f);
+    // remove this unlink to see what is drawn
+    ::unlink(tmpname);
 }
 
 void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * name, const char * shasig){
