@@ -142,53 +142,6 @@ class Authentifier(object):
         self.users = users
         self.dic = {'login':'ASK', 'password':'ASK'}
 
-#    passwords = {
-#        'v' : 'v',
-#        'vnc' : 'vnc',
-#        'vnc2' : 'vnc2',
-#        'error_invalid' : 'error_invalid'
-#    }
-#        'message' : {
-#            'proxy_type': 'RDP',
-#            'target_device' : 'test_card',
-#            'display_message' : 'ASK',
-#            'message' : 'Hello, World',
-#            'proto_dest': 'INTERNAL',
-#            'is_rec':'False',
-#            'authenticated':'true'
-#        },
-#        'card' : {
-#            'proxy_type': 'RDP',
-#            'target_device' : 'test_card',
-#            'proto_dest': 'INTERNAL',
-#            'is_rec':'True',
-#            'rec_path':'/tmp/test_card.cpp',
-#        },
-#        'vnc' : {
-#            'proxy_type': 'RDP',
-#            'target_login' : r'vnc',
-#            'target_device' : '10.10.3.141',
-#            'target_password' : 'SecureLinux',
-#            'target_port':'5900',
-#            'proto_dest': 'VNC',
-#            'is_rec':'True',
-#            'rec_path':'/tmp/vnctest.cpp',
-#        },
-#        'v' : {
-#            'proxy_type': 'RDP',
-#            'target_login' : r'vnc',
-#            'target_device' : '192.168.1.28',
-#            'target_password' : 'secure',
-#            'target_port':'5900',
-#            'proto_dest': 'VNC'
-#        },
-#        'error_invalid' : {
-#            'target_device': "10.10.3.54" ,
-#            'target_login': "administrateur",
-#            'authenticated': 'False',
-#            'rejected':"Invalid IP Source"}
-#    }
-
     def read(self):
         print("Reading")
         try:
@@ -246,37 +199,37 @@ manager ={}
 
 users = [
     User('x', 'x', [
-        Service('xp', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
-        Service('w2008', '10.10.14.78', r'administrateur@qa', 'S3cur3!1nux', 'RDP', '3389'),
-        Service('w2000', '10.10.14.64', r'administrateur', 'S3cur3!1nux', 'RDP', '3389'),
-        Service('ok2008', '10.10.3.172', r'Administrateur', 'SecureLinux42', 'RDP', '3389'),
-        Service('cert2008', '10.10.3.171', r'Administrateur', 'SecureLinux42', 'RDP', '3389'),
-        Service('w7', '10.10.14.77', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389'),
-        Service('w2000', '10.10.14.64', r'administrateur', 'SecureLinux', 'RDP', '3389'),
+        Service('xp', '10.10.14.111', r'qa\administrateur', 'P@ssword', 'RDP', '3389'),
+        Service('w2008', '10.10.14.78', r'administrateur@qa', 'P@ssword', 'RDP', '3389'),
+        Service('w2000', '10.10.14.64', r'administrateur', 'P@ssword', 'RDP', '3389'),
+        Service('ok2008', '10.10.3.172', r'Administrateur', 'P@ssword', 'RDP', '3389'),
+        Service('cert2008', '10.10.3.171', r'Administrateur', 'P@ssword', 'RDP', '3389'),
+        Service('w7', '10.10.14.77', r'qa\administrateur', 'P@ssword', 'RDP', '3389'),
+        Service('w2000', '10.10.14.64', r'administrateur', 'P@ssword', 'RDP', '3389'),
         Service('Bouncer', 'bouncer2', 'internal', 'internal', 'INTERNAL', ''),
         Service('Test', 'test', 'internal', 'internal', 'INTERNAL', ''),
         Service('Card', 'test_card', 'internal', 'internal', 'INTERNAL', ''),
-        Service('Vnc', '10.10.3.103', 'any', 'SecureLinux', 'VNC', '5900'),
-        Service('Vnc', '10.10.4.13', 'any', 'SecureLinux', 'VNC', '5900')]),
+        Service('Vnc', '10.10.3.103', 'any', 'P@ssword', 'VNC', '5900'),
+        Service('Vnc', '10.10.4.13', 'any', 'P@ssword', 'VNC', '5900')]),
 
     User('timeout', 'timeout', [
-        Service('xp2m', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389', alive=120),
-        Service('w2008', '10.10.14.78', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389', alive=120),
-        Service('w2008-2', '10.10.14.78', r'administrateur@qa', 'S3cur3!1nux', 'RDP', '3389', alive=120),
-        Service('w7', '10.10.14.77', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389', alive=120),
-        Service('w2000', '10.10.14.64', r'administrateur', 'SecureLinux', 'RDP', '3389', alive=120),
+        Service('xp2m', '10.10.14.111', r'qa\administrateur', 'P@ssword', 'RDP', '3389', alive=120),
+        Service('w2008', '10.10.14.78', r'qa\administrateur', 'P@ssword', 'RDP', '3389', alive=120),
+        Service('w2008-2', '10.10.14.78', r'administrateur@qa', 'P@ssword', 'RDP', '3389', alive=120),
+        Service('w7', '10.10.14.77', r'qa\administrateur', 'P@ssword', 'RDP', '3389', alive=120),
+        Service('w2000', '10.10.14.64', r'administrateur', 'P@ssword', 'RDP', '3389', alive=120),
         Service('Bouncer', 'bouncer2', 'internal', 'internal', 'INTERNAL', '', alive=120),
         Service('Test', 'test', 'internal', 'internal', 'INTERNAL', '', alive=120),
         Service('Card', 'test_card', 'internal', 'internal', 'INTERNAL', '', alive=120),
-        Service('Vnc', '10.10.3.103', 'any', 'SecureLinux', 'VNC', '5900', alive=120),
-        Service('Vnc', '10.10.4.13', 'any', 'SecureLinux', 'VNC', '5900', alive=120)]),
+        Service('Vnc', '10.10.3.103', 'any', 'P@ssword', 'VNC', '5900', alive=120),
+        Service('Vnc', '10.10.4.13', 'any', 'P@ssword', 'VNC', '5900', alive=120)]),
 
     User('rec', 'rec', [
-        Service('xp', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389', is_rec = 'True'),
-        Service('w2008', '10.10.14.78', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389', is_rec = 'True'),
-        Service('w2008-2', '10.10.14.78', r'administrateur@qa', 'S3cur3!1nux', 'RDP', '3389', is_rec = 'True'),
-        Service('w7', '10.10.14.77', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389', is_rec = 'True'),
-        Service('w2000', '10.10.14.64', r'administrateur', 'SecureLinux', 'RDP', '3389', is_rec = 'True'),
+        Service('xp', '10.10.14.111', r'qa\administrateur', 'P@ssword', 'RDP', '3389', is_rec = 'True'),
+        Service('w2008', '10.10.14.78', r'qa\administrateur', 'P@ssword', 'RDP', '3389', is_rec = 'True'),
+        Service('w2008-2', '10.10.14.78', r'administrateur@qa', 'P@ssword', 'RDP', '3389', is_rec = 'True'),
+        Service('w7', '10.10.14.77', r'qa\administrateur', 'P@ssword', 'RDP', '3389', is_rec = 'True'),
+        Service('w2000', '10.10.14.64', r'administrateur', 'P@ssword', 'RDP', '3389', is_rec = 'True'),
         Service('Bouncer', 'bouncer2', 'internal', 'internal', 'INTERNAL', '', is_rec = 'True'),
         Service('Test', 'test', 'internal', 'internal', 'INTERNAL', '', is_rec = 'True'),
         Service('Card', 'test_card', 'internal', 'internal', 'INTERNAL', '', is_rec = 'True'),
@@ -284,7 +237,7 @@ users = [
         Service('Vnc', '10.10.4.13', 'any', 'SecureLinux', 'VNC', '5900', is_rec = 'True')]),
 
     User('xp', 'xp', [
-        Service('xp', '10.10.14.111', r'qa\administrateur', 'S3cur3!1nux', 'RDP', '3389')]),
+        Service('xp', '10.10.14.111', r'qa\administrateur', 'P@ssword', 'RDP', '3389')]),
 
     User('card', 'card', [
         Service('Card', 'test_card', 'internal', 'internal', 'INTERNAL', '')]),
@@ -295,9 +248,6 @@ users = [
     User('selector', 'selector', [
         Service('Selector', 'selector', 'internal', 'internal', 'INTERNAL', '')])
 ]
-
-#            'is_rec' : 'true',
-#            'rec_path':'/tmp/trace2008.cpp',
 
 while 1:
     rsockets = [server]+manager.keys()
