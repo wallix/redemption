@@ -31,6 +31,7 @@
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 
 #include "bmpcache.hpp"
+#include <time.h>
 
 class Drawable {
 public:
@@ -104,6 +105,265 @@ public:
         {
             return this->width * this->height;
         }
+
+        struct Mouse_t{
+            uint8_t y;
+            uint8_t x;
+            uint8_t lg;
+            const char * line;
+        };
+
+        enum { contiguous_mouse_pixels = 20 };
+
+        const Mouse_t & line_of_mouse(size_t i){
+            static const Mouse_t mouse_cursor[contiguous_mouse_pixels] =
+            {
+                {0,  0, 3*1, "\x00\x00\x00"},
+                {1,  0, 3*2, "\x00\x00\x00\x00\x00\x00"},
+                {2,  0, 3*3, "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00"},
+                {3,  0, 3*4, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+                {4,  0, 3*5, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+                {5,  0, 3*6, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+                {6,  0, 3*7, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+                {7,  0, 3*8, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+                {8,  0, 3*9, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+                {9,  0, 3*10, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+                {10, 0, 3*11, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+                {11, 0, 3*12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+                {12, 0, 3*12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
+                {13, 0, 3*8, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+                {14, 0, 3*4, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+                {14, 5, 3*4, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+                {15, 0, 3*3, "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00"},
+                {15, 5, 3*4, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+                {16, 1, 3*1, "\x00\x00\x00"},
+                {16, 6, 3*4, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"}
+            };
+            return mouse_cursor[i];
+        }
+        
+        enum { mouse_height = 17 };
+
+        uint8_t save_mouse[1024];
+        uint16_t save_mouse_x;
+        uint16_t save_mouse_y;
+
+        char * pixel_start_data(int x, int y, size_t i)
+        {
+            return (char*)this->data + ((this->line_of_mouse(i).y + y) * this->width + this->line_of_mouse(i).x + x) * 3;
+        }
+
+        int _posch(char ch)
+        {
+            return 7 * 11 *
+            (isdigit(ch) ? ch-'0'
+            : ch == '-'  ?    10
+            : ch == ':'  ?    11
+            : ch == 'X'  ?    13
+            :                 12);
+        }
+
+        void draw_11x7_digits(uint8_t * rgbpixbuf, unsigned width, unsigned lg_message, const char * message, const char * old_message)
+        {
+            const char * digits =
+            "       "
+            "  XX   "
+            " X  X  "
+            "XX  XX "
+            "XX  XX "
+            "XX  XX "
+            "XX  XX "
+            "XX  XX "
+            " X  X  "
+            "  XX   "
+            "       "
+
+            "       "
+            "  XX   "
+            " XXX   "
+            "X XX   "
+            "  XX   "
+            "  XX   "
+            "  XX   "
+            "  XX   "
+            "  XX   "
+            "XXXXXX "
+            "       "
+
+            "       "
+            " XXXX  "
+            "XX  XX "
+            "XX  XX "
+            "    XX "
+            "  XXX  "
+            " XX    "
+            "XX     "
+            "XX     "
+            "XXXXXX "
+            "       "
+
+
+            "       "
+            "XXXXXX "
+            "    XX "
+            "   XX  "
+            "  XX   "
+            " XXXX  "
+            "    XX "
+            "    XX "
+            "XX  XX "
+            " XXXX  "
+            "       "
+
+
+            "       "
+            "    XX "
+            "   XXX "
+            "  XXXX "
+            " XX XX "
+            "XX  XX "
+            "XX  XX "
+            "XXXXXX "
+            "    XX "
+            "    XX "
+            "       "
+
+            "       "
+            "XXXXXX "
+            "XX     "
+            "XX     "
+            "XXXXX  "
+            "XX  XX "
+            "    XX "
+            "    XX "
+            "XX  XX "
+            " XXXX  "
+            "       "
+
+            "       "
+            " XXXX  "
+            "XX  XX "
+            "XX     "
+            "XX     "
+            "XXXXX  "
+            "XX  XX "
+            "XX  XX "
+            "XX  XX "
+            " XXXX  "
+            "       "
+
+            "       "
+            "XXXXXX "
+            "    XX "
+            "    XX "
+            "   XX  "
+            "   XX  "
+            "  XX   "
+            "  XX   "
+            " XX    "
+            " XX    "
+            "       "
+
+            "       "
+            " XXXX  "
+            "XX  XX "
+            "XX  XX "
+            "XX  XX "
+            " XXXX  "
+            "XX  XX "
+            "XX  XX "
+            "XX  XX "
+            " XXXX  "
+            "       "
+
+            "       "
+            " XXXX  "
+            "XX  XX "
+            "XX  XX "
+            "XX  XX "
+            " XXXXX "
+            "    XX "
+            "    XX "
+            "XX  XX "
+            " XXXX  "
+            "       "
+
+            "       "
+            "       "
+            "       "
+            "       "
+            "       "
+            "       "
+            "XXXXXX "
+            "       "
+            "       "
+            "       "
+            "       "
+
+            "       "
+            "       "
+            "  XX   "
+            " XXXX  "
+            "  XX   "
+            "       "
+            "       "
+            "  XX   "
+            " XXXX  "
+            "  XX   "
+            "       "
+
+            "       "
+            "       "
+            "       "
+            "       "
+            "       "
+            "       "
+            "       "
+            "       "
+            "       "
+            "       "
+            "       "
+
+            "XXXXXXX"
+            "XXXXXXX"
+            "XXXXXXX"
+            "XXXXXXX"
+            "XXXXXXX"
+            "XXXXXXX"
+            "XXXXXXX"
+            "XXXXXXX"
+            "XXXXXXX"
+            "XXXXXXX"
+            "XXXXXXX"
+            ;
+            for (size_t i = 0 ; i < lg_message ; ++i){
+                char newch = message[i];
+                char oldch = old_message[i];
+
+                
+                if (newch != oldch){
+                    const char * pnewch = digits + _posch(newch);
+                    const char * poldch = digits + _posch(oldch);
+
+                    unsigned br_pix = 0;
+                    unsigned br_pixindex = i * (7 * 3);
+
+                    for (size_t y = 0 ; y < 11 ; ++y, br_pix += 7, br_pixindex += width*3){
+                        for (size_t x = 0 ; x <  7 ; ++x){
+                            unsigned pix = br_pix + x;
+                            if (pnewch[pix] != poldch[pix]){
+                                uint8_t pixcolorcomponent = (pnewch[pix] == 'X') ? 0xFF : 0;
+                                unsigned pixindex = br_pixindex + x*3;
+                                rgbpixbuf[pixindex] =
+                                    rgbpixbuf[pixindex+1] =
+                                        rgbpixbuf[pixindex+2] = pixcolorcomponent;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
     } data;
 
 
@@ -116,6 +376,11 @@ public:
         bmpcache(bmpcache),
         data(width, height)
     {
+        memset(this->timestamp_data, 0xFF, sizeof(this->timestamp_data));
+        memset(this->previous_timestamp, 'X', sizeof(this->previous_timestamp));
+//        memset(this->timestamp_data, 0x00, sizeof(this->timestamp_data));
+//        memset(this->previous_timestamp, ' ', len_str_timestamp);
+
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
@@ -249,10 +514,13 @@ public:
             case 0xFF:
                 this->white_color(rect); break;
             case 0x55:
-                this->mem_blt(rect, *bmp, cmd.srcx, cmd.srcy, 0xFFFFFF);
+                this->mem_blt(rect, *bmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->bgr);
+            break;
+            case 0xCC:
+                this->mem_blt(rect, *bmp, cmd.srcx, cmd.srcy, 0, this->bgr);
             break;
             default:
-                this->mem_blt(rect, *bmp, cmd.srcx, cmd.srcy, 0);
+                // should not happen
             break;
         }
     }
@@ -263,7 +531,7 @@ public:
      * a cache (data) and insert a subpart (srcx, srcy) to the local
      * image cache (this->data) a the given position (rect).
      */
-    void mem_blt(const Rect& rect, Bitmap & bmp, const unsigned int srcx, const unsigned int srcy, const uint32_t xormask)
+    void mem_blt(const Rect& rect, Bitmap & bmp, const unsigned int srcx, const unsigned int srcy, const uint32_t xormask, const bool bgr)
     {
         if (bmp.cx < srcx || bmp.cy < srcy){
             return ;
@@ -291,6 +559,9 @@ public:
                     px = (px << 8) + source[Bpp-1-b];
                 }
                 uint32_t color = xormask ^ color_decode(px, bmp.original_bpp, bmp.original_palette);
+                if (bgr){
+                    color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
+                }
                 target[0] = color;
                 target[1] = color >> 8;
                 target[2] = color >> 16;
@@ -978,6 +1249,76 @@ public:
                 p[b] = col[b];
             }
         }
+    }
+
+    void trace_mouse(uint16_t x, uint16_t y)
+    {
+        uint8_t * psave = this->data.save_mouse;
+        for (size_t i = 0 ; i < CaptureBuf::contiguous_mouse_pixels ; i++){
+            char * pixel_start = this->data.pixel_start_data(x,y, i);
+            unsigned lg = this->data.line_of_mouse(i).lg;
+            memcpy(psave, pixel_start, lg);
+            psave += lg;
+            memcpy(pixel_start, this->data.line_of_mouse(i).line, lg);
+        }
+        this->data.save_mouse_x = x;
+        this->data.save_mouse_y = y;
+    }
+
+    void clear_mouse()
+    {
+        uint8_t * psave = this->data.save_mouse;
+        uint16_t x = this->data.save_mouse_x;
+        uint16_t y = this->data.save_mouse_y;
+        for (size_t i = 0 ; i < CaptureBuf::contiguous_mouse_pixels ; i++){
+            char * pixel_start = this->data.pixel_start_data(x,y, i);
+            unsigned lg = this->data.line_of_mouse(i).lg;
+            memcpy(pixel_start, psave, lg);
+            psave += lg;
+        }
+    }
+
+
+    enum {
+        ts_width = 133,
+        ts_height = 11,
+        size_str_timestamp = 20
+    };
+
+    uint8_t timestamp_save[ts_width * ts_height * 3];
+    uint8_t timestamp_data[ts_width * ts_height * 3];
+    char previous_timestamp[size_str_timestamp];
+
+    void trace_timestamp(tm & now)
+    {
+        char rawdate[size_str_timestamp];
+        snprintf(rawdate, size_str_timestamp, "%4d-%02d-%02d %02d:%02d:%02d",
+                now.tm_year+1900, now.tm_mon+1, now.tm_mday,
+                now.tm_hour, now.tm_min, now.tm_sec);
+
+        this->data.draw_11x7_digits(this->timestamp_data, ts_width, size_str_timestamp-1, rawdate, this->previous_timestamp);
+        memcpy(this->previous_timestamp, rawdate, size_str_timestamp);
+        
+        uint8_t * tsave = this->timestamp_save;
+        uint8_t* buf = this->data.data;
+        int step = this->data.width * 3;
+        for (size_t y = 0; y < ts_height ; ++y, buf += step){
+            memcpy(tsave, buf, ts_width*3);
+            tsave += ts_width*3;
+            memcpy(buf, this->timestamp_data + y*ts_width*3, ts_width*3);
+        }
+    }
+
+    void clear_timestamp()
+    {
+        const uint8_t * tsave = this->timestamp_save;
+        int step = this->data.width * 3;
+        uint8_t* buf = this->data.data;
+        for (size_t y = 0; y < ts_height ; ++y, buf += step){
+            memcpy(buf, tsave, ts_width*3);
+            tsave += ts_width*3;
+        }
+
     }
 
 };

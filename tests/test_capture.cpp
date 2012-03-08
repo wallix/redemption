@@ -38,6 +38,44 @@
 // eog `ls -1tr /tmp/test_* | tail -n 1`
 // (or any other variation you like)
 
+void dump_png(const char * prefix, const Drawable::CaptureBuf & data)
+{
+    char tmpname[128];
+    sprintf(tmpname, "%sXXXXXX.png", prefix);
+    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
+    FILE * f = fdopen(fd, "wb");
+    ::dump_png24(f, data.data, data.width, data.height, data.rowsize);
+    ::fclose(f);
+}
+
+bool check_sig(Drawable::CaptureBuf & data, char * message, const char * shasig)
+{
+    SSL_SHA1 sha1;
+    uint8_t sig[20];
+    ssllib ssl;
+    ssl.sha1_init(&sha1);
+    for (size_t y = 0; y < (size_t)data.height; y++){
+        ssl.sha1_update(&sha1, data.data + y * data.rowsize, data.rowsize);
+    }
+    ssl.sha1_final(&sha1, sig);
+
+    if (memcmp(shasig, sig, 20)){
+        sprintf(message, "Expected signature: \""
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
+        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
+        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
+        sig[ 8], sig[ 9], sig[10], sig[11],
+        sig[12], sig[13], sig[14], sig[15],
+        sig[16], sig[17], sig[18], sig[19]);
+        return false;
+    }
+    return true;
+}
+
 BOOST_AUTO_TEST_CASE(TestLineTo)
 {
     // Create a simple capture image and dump it to file
@@ -68,46 +106,17 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
 
     gd.draw(RDPLineTo(10, 0, 10, 1024, 479, BLUE, 0xCC, RDPPen(0, 1, PINK)), screen_rect);
 
-
     uint8_t shasig[20] = {
         0x4f, 0xa1, 0xdb, 0xe7, 0xbd, 0x4c, 0x2c, 0x0e, 0x2b, 0x77,
 	0xfd, 0x86, 0xd8, 0xf8, 0x79, 0x1a, 0x01, 0xcc, 0xe6, 0xb9,
     };
-
-    SSL_SHA1 sha1;
-    uint8_t sig[20];
-    ssllib ssl;
-    ssl.sha1_init(&sha1);
-    for (size_t y = 0; y < (size_t)gd.data.height; y++){
-        ssl.sha1_update(&sha1, gd.data.data + y * gd.data.rowsize, gd.data.rowsize);
-    }
-    ssl.sha1_final(&sha1, sig);
-
-    if (memcmp(shasig, sig, 20)){
-        char buffer[1024];
-        sprintf(buffer, "Expected signature: \""
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
-        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
-        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
-        sig[ 8], sig[ 9], sig[10], sig[11],
-        sig[12], sig[13], sig[14], sig[15],
-        sig[16], sig[17], sig[18], sig[19]);
-        BOOST_CHECK_MESSAGE(false, buffer);
+    char message[1024];
+    if (!check_sig(gd.data, message, (char*)shasig)){
+        BOOST_CHECK_MESSAGE(false, message);
     }
 
-    char tmpname[128];
-    sprintf(tmpname, "/tmp/test_line_%s_XXXXXX.png", "000");
-    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
-    FILE * f = fdopen(fd, "wb");
-    ::dump_png24(f, gd.data.data, gd.data.width, gd.data.height, gd.data.rowsize);
-    ::fflush(f);
-    ::fclose(f);
-    // remove this unlink to see what is drawn
-    ::unlink(tmpname);
+    // uncomment to see result in png file
+    //    dump_png("/tmp/test_line_000_", gd.data);
 }
 
 BOOST_AUTO_TEST_CASE(TestPatBlt)
@@ -177,42 +186,17 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         0x8e, 0x6b, 0xe0, 0x91, 0x08, 0xce, 0x54, 0x3b, 0x58, 0x3a,
         0x8f, 0x84, 0x6c, 0x59, 0x1c, 0x3e, 0xae, 0x5c, 0x1c, 0xf5
     };
-
-    SSL_SHA1 sha1;
-    uint8_t sig[20];
-    ssllib ssl;
-    ssl.sha1_init(&sha1);
-    for (size_t y = 0; y < (size_t)gd.data.height; y++){
-        ssl.sha1_update(&sha1, gd.data.data + y * gd.data.rowsize, gd.data.rowsize);
-    }
-    ssl.sha1_final(&sha1, sig);
-
-    if (memcmp(shasig, sig, 20)){
-        char buffer[1024];
-        sprintf(buffer, "Expected signature: \""
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
-        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
-        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
-        sig[ 8], sig[ 9], sig[10], sig[11],
-        sig[12], sig[13], sig[14], sig[15],
-        sig[16], sig[17], sig[18], sig[19]);
-        BOOST_CHECK_MESSAGE(false, buffer);
+    char message[1024];
+    if (!check_sig(gd.data, message, (char*)shasig)){
+        BOOST_CHECK_MESSAGE(false, message);
     }
 
-    char tmpname[128];
-    sprintf(tmpname, "/tmp/test_patblt_%s_XXXXXX.png", "000");
-    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
-    FILE * f = fdopen(fd, "wb");
-    ::dump_png24(f, gd.data.data, gd.data.width, gd.data.height, gd.data.rowsize);
-    ::fflush(f);
-    ::fclose(f);
-    // remove this unlink to see what is drawn
-    ::unlink(tmpname);
+    // uncomment to see result in png file
+    //    dump_png("/tmp/test_patblt_000_", gd.data);
 }
+
+
+
 
 BOOST_AUTO_TEST_CASE(TestDestBlt)
 {
@@ -232,46 +216,141 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
      // RED inverted becomes CYAN
     gd.draw(RDPDestBlt(screen_rect.shrink(15), 0x55), screen_rect);
 
-
-    uint8_t shasig[20] = {
-    0xca, 0xee, 0x18, 0x2c, 0x77, 0x53, 0x70, 0x93, 0xfa, 0xf3,
-    0x58, 0xda, 0xd1, 0x65, 0x1a, 0x17, 0x4d, 0x7c, 0xff, 0xd7
-    };
-
-    SSL_SHA1 sha1;
-    uint8_t sig[20];
-    ssllib ssl;
-    ssl.sha1_init(&sha1);
-    for (size_t y = 0; y < (size_t)gd.data.height; y++){
-        ssl.sha1_update(&sha1, gd.data.data + y * gd.data.rowsize, gd.data.rowsize);
-    }
-    ssl.sha1_final(&sha1, sig);
-
-    if (memcmp(shasig, sig, 20)){
-        char buffer[1024];
-        sprintf(buffer, "Expected signature: \""
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
-        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
-        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
-        sig[ 8], sig[ 9], sig[10], sig[11],
-        sig[12], sig[13], sig[14], sig[15],
-        sig[16], sig[17], sig[18], sig[19]);
-        BOOST_CHECK_MESSAGE(false, buffer);
+    char message[1024];
+    if (!check_sig(gd.data, message,
+            "\xca\xee\x18\x2c\x77\x53\x70\x93\xfa\xf3"
+            "\x58\xda\xd1\x65\x1a\x17\x4d\x7c\xff\xd7")){
+        BOOST_CHECK_MESSAGE(false, message);
     }
 
-    char tmpname[128];
-    sprintf(tmpname, "/tmp/test_destblt_%s_XXXXXX.png", "000");
-    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
-    FILE * f = fdopen(fd, "wb");
-    ::dump_png24(f, gd.data.data, gd.data.width, gd.data.height, gd.data.rowsize);
-    ::fflush(f);
-    ::fclose(f);
-    // remove this unlink to see what is drawn
-    ::unlink(tmpname);
+    // uncomment to see result in png file
+    //    dump_png("/tmp/test_destblt_000_", gd.data);
+}
+
+BOOST_AUTO_TEST_CASE(TestAddMouse)
+{
+    // Create a simple capture image and dump it to file
+    uint16_t width = 640;
+    uint16_t height = 480;
+    uint8_t bpp = 24;
+    Rect screen_rect(0, 0, width, height);
+    BGRPalette palette;
+    init_palette332(palette);
+    BmpCache bmpcache;
+    Drawable gd(width, height, bpp, palette, bmpcache, false);
+    gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
+    gd.trace_mouse(100, 100);
+
+    {
+        char message[1024];
+        if (!check_sig(gd.data, message,
+            "\x36\x27\xca\x81\x58\x35\x86\x4c\x20\x90"
+            "\x62\x13\x69\x4a\x91\x79\xb5\x18\x42\x1e")){
+            BOOST_CHECK_MESSAGE(false, message);
+        }
+    }
+
+    // uncomment to see result in png file
+    // dump_png("/tmp/test_mouse_000_", gd.data);
+
+    gd.clear_mouse();
+
+    {
+        char message[1024];
+        if (!check_sig(gd.data, message,
+            "\x59\x99\x2f\x37\x8b\x44\x4b\xad\xf0\x10"
+            "\x23\x03\xd8\xde\xea\x81\x41\x3b\x12\x0a")){
+            BOOST_CHECK_MESSAGE(false, message);
+        }
+    }
+
+    // uncomment to see result in png file
+    // dump_png("/tmp/test_mouse_001_", gd.data);
+}
+
+
+BOOST_AUTO_TEST_CASE(TestTimestampMouse)
+{
+    // Create a simple capture image and dump it to file
+    uint16_t width = 640;
+    uint16_t height = 480;
+    uint8_t bpp = 24;
+    Rect screen_rect(0, 0, width, height);
+    BGRPalette palette;
+    init_palette332(palette);
+    BmpCache bmpcache;
+    Drawable gd(width, height, bpp, palette, bmpcache, false);
+    gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
+
+    time_t rawtime;
+    time(&rawtime);
+    struct tm now;
+
+    now.tm_sec  =  51;
+    now.tm_min  =  11;
+    now.tm_hour =  13;
+    now.tm_mday =   8;
+    now.tm_mon  =   2;
+    now.tm_year = 112;
+    now.tm_wday =   4;
+    now.tm_yday =  67;
+    now.tm_isdst =  0;
+
+    gd.trace_timestamp(now);
+
+    {
+        char message[1024];
+        if (!check_sig(gd.data, message,
+            "\x69\xc8\xb0\x41\x33\x12\xf8\x13\xe7\x20"
+            "\x6b\xa2\xdb\x2d\x58\x89\xa3\xea\x76\x71")){
+            BOOST_CHECK_MESSAGE(false, message);
+        }
+    }
+
+    // uncomment to see result in png file
+    dump_png("/tmp/test_timestamp_000_", gd.data);
+
+
+    now.tm_sec  =  00;
+    now.tm_min  =  12;
+    now.tm_hour =  13;
+    now.tm_mday =   8;
+    now.tm_mon  =   2;
+    now.tm_year = 113;
+    now.tm_wday =   4;
+    now.tm_yday =  67;
+    now.tm_isdst =  0;
+
+    gd.clear_timestamp();
+    gd.trace_timestamp(now);
+
+    {
+        char message[1024];
+        if (!check_sig(gd.data, message,
+            "\xc3\xd3\xc4\x03\x65\x7e\xe3\xcf\x1a\x94"
+            "\xb0\xa7\x18\x14\x66\xa9\xc8\x78\xb4\x63")){
+            BOOST_CHECK_MESSAGE(false, message);
+        }
+    }
+
+    // uncomment to see result in png file
+    dump_png("/tmp/test_timestamp_001_", gd.data);
+
+
+    gd.clear_timestamp();
+
+    {
+        char message[1024];
+        if (!check_sig(gd.data, message,
+            "\x59\x99\x2f\x37\x8b\x44\x4b\xad\xf0\x10"
+            "\x23\x03\xd8\xde\xea\x81\x41\x3b\x12\x0a")){
+            BOOST_CHECK_MESSAGE(false, message);
+        }
+    }
+
+    // uncomment to see result in png file
+    dump_png("/tmp/test_timestamp_002_", gd.data);
+
 }
 
 TODO("We should perform exhaustive tests on scrblt like for patblt, current tests are not exhaustive.")
@@ -291,40 +370,15 @@ void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * nam
     gd.scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
     gd.scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
 
-    SSL_SHA1 sha1;
-    uint8_t sig[20] = {};
-    ssllib ssl;
-    ssl.sha1_init(&sha1);
-    for (size_t y = 0; y < (size_t)gd.data.height; y++){
-        ssl.sha1_update(&sha1, gd.data.data + y * gd.data.rowsize, gd.data.rowsize);
+    char message[1024];
+    if (!check_sig(gd.data, message, shasig)){
+        BOOST_CHECK_MESSAGE(false, message);
     }
-    ssl.sha1_final(&sha1, sig);
 
-    if (memcmp(shasig, sig, 20)){
-        char buffer[1024];
-        sprintf(buffer, "Expected signature: \""
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
-        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
-        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
-        sig[ 8], sig[ 9], sig[10], sig[11],
-        sig[12], sig[13], sig[14], sig[15],
-        sig[16], sig[17], sig[18], sig[19]);
-        BOOST_CHECK_MESSAGE(false, buffer);
-    }
-    // here compute sha1 of drawable and check for expected value
-    char tmpname[128];
-    sprintf(tmpname, "/tmp/test_scrblt_%s_XXXXXX.png", name);
-    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
-    FILE * f = fdopen(fd, "wb");
-    ::dump_png24(f, gd.data.data, gd.data.width, gd.data.height, gd.data.rowsize);
-    ::fflush(f);
-    ::fclose(f);
-    // remove this unlink to see what is drawn
-    ::unlink(tmpname);
+    // uncomment to see result in png file
+    // char tmpname[128];
+    // sprintf(tmpname, "/tmp/test_scrblt_%s", name);
+    // dump_png(tmpname, gd.data);
 }
 
 BOOST_AUTO_TEST_CASE(TestDrawableScrBltDown)
@@ -397,26 +451,37 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     Rect screen_rect(0, 0, width, height);
     BGRPalette palette;
     init_palette332(palette);
+
     BmpCache bmpcache;
     Drawable gd(width, height, bpp, palette, bmpcache, false);
-    gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
+    gd.draw(RDPOpaqueRect(screen_rect, 0x2F2F2F), screen_rect);
     gd.draw(RDPOpaqueRect(Rect(100,100,20, 20), BLUE), screen_rect);
 
-    uint8_t comp64x64RED[] = { 0xc0, 0x30, 0x00, 0x00, 0xFF, 0xf0, 0xc0, 0x0f, };
+    uint8_t comp64x64RED[] = { 0xc0, 0x30, 0xFF, 0x00, 0x00, 0xf0, 0xc0, 0x0f, };
     BGRPalette palette332;
     init_palette332(palette332);
     Bitmap * bmp = new Bitmap(24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
+
     bmpcache.put(1, 10, bmp);
     gd.draw(RDPBmpCache(bpp, bmp, 1, 10));
-    gd.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect);
 
-    char tmpname[128];
-    sprintf(tmpname, "/tmp/test_memblt_XXXXXX.png");
-    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
-    FILE * f = fdopen(fd, "wb");
-    ::dump_png24(f, gd.data.data, gd.data.width, gd.data.height, gd.data.rowsize);
-    ::fflush(f);
-    ::fclose(f);
-    // remove this unlink to see what is drawn
-    ::unlink(tmpname);
+    // red square
+    gd.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect);
+    // inverted red square (cyan)
+    gd.draw(RDPMemBlt(1, Rect(25, 25, 20, 20), 0x55, 0, 0, 10), screen_rect);
+    // black square
+    gd.draw(RDPMemBlt(1, Rect(45, 45, 20, 20), 0x00, 0, 0, 10), screen_rect);
+    // white square
+    gd.draw(RDPMemBlt(1, Rect(65, 65, 20, 20), 0xFF, 0, 0, 10), screen_rect);
+
+    char message[1024];
+    if (!check_sig(gd.data, message,
+    "\x6b\x51\x02\x43\xfd\xb5\x37\x97\x8e\x7e"
+    "\x80\xf9\xce\x74\xcb\x7e\x34\x7d\xb8\xe6")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // uncomment to see result in png file
+    // dump_png("/tmp/test_memblt_", gd.data);
+
 }
