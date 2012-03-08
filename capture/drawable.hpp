@@ -228,57 +228,76 @@ public:
         // nothing to do, cache management is performed outside Drawable
     }
 
-    void draw(const RDPMemBlt & memblt, const Rect & clip)
+    void draw(const RDPMemBlt & cmd, const Rect & clip)
     {
-        TODO(" we should use rop parameter to change mem_blt behavior and palette_id part of cache_id")
-        const uint8_t id = memblt.cache_id & 0xFF;
-        const Rect & rect = memblt.rect;
-        const uint16_t srcx = memblt.srcx;
-        const uint16_t srcy = memblt.srcy;
-        const uint16_t idx = memblt.cache_idx;
-        Bitmap * pbmp =  this->bmpcache.get(id, idx);
-//        LOG(LOG_INFO, "Reading bitmap %p from cache at (id=%u idx=%u)", pbmp, id, idx);
-        const uint8_t Bpp = ::nbbytes(this->bpp);
-        uint8_t * target = this->data.first_pixel(rect);
-        uint8_t * source = pbmp->data_co(this->bpp) + ((rect.cy - srcy - 1) * pbmp->cx + srcx) * Bpp;
-        for (int y = 0; y < rect.cy ; y++){
-            uint8_t * linetarget = target;
-            uint8_t * linesource = source;
-            for (int x = 0; x < rect.cx ; x++, linesource += Bpp, linetarget += Bpp){
-                TODO("it would be nicer to manage clipping earlier and not test every pixel")
-                if (!(clip.contains_pt(x + rect.x, y + rect.y))) {
-                  continue;
-                }
-                uint32_t px = linesource[Bpp-1];
-                for (int b = 1 ; b < Bpp ; b++){
-                    px = (px << 8) + linesource[Bpp-1-b];
-                }
-                uint32_t color = color_decode(px, this->bpp, this->palette);
-                if (this->bgr){
-                    color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
-                }
-                linetarget[0] = (color >> 16);
-                linetarget[1] = (color >> 8);
-                linetarget[2] = color;
-            }
-            target += Rect(0, 0, this->data.width, this->data.height).cx * Bpp;
-            source -= pbmp->cx * Bpp;
+        const Rect& rect = clip.intersect(cmd.rect);
+        if (rect.isempty()){
+            return ;
+        }
+
+        Bitmap* bmp = this->bmpcache.get(cmd.cache_id & 0x3, cmd.cache_idx);
+        if (!bmp){
+            LOG(LOG_ERR,
+                "bitmap not found in cache (%p) (id = %u, idx = %u)",
+                &this->bmpcache, cmd.cache_id, cmd.cache_idx);
+            return;
+        }
+
+        switch (cmd.rop) {
+            case 0x00:
+                this->black_color(rect); break;
+            case 0xFF:
+                this->white_color(rect); break;
+            case 0x55:
+                this->mem_blt(rect, *bmp, cmd.srcx, cmd.srcy, 0xFFFFFF);
+            break;
+            default:
+                this->mem_blt(rect, *bmp, cmd.srcx, cmd.srcy, 0);
+            break;
         }
     }
 
 
-//    void set_color(const Rect & rect)
-//    {
-//        const Rect & trect = rect.intersect(this->buf_data->width, this->buf_data->height);
-//        uint8_t * p = this->buf_data->first_pixel(trect);
-//        int step = (this->buf_data->width - rect.cx) * 3;
+    /*
+     * The name doesn't say it : mem_blt COPIES a decoded bitmap from
+     * a cache (data) and insert a subpart (srcx, srcy) to the local
+     * image cache (this->data) a the given position (rect).
+     */
+    void mem_blt(const Rect& rect, Bitmap & bmp, const unsigned int srcx, const unsigned int srcy, const uint32_t xormask)
+    {
+        if (bmp.cx < srcx || bmp.cy < srcy){
+            return ;
+        }
 
-//        for (int j = 0; j < trect.cy ; j++, p += step){
-//            for (int i = 0; i < trect.cx ; i++, p += 3){
-//                _Code;
-//            }
-//        }
-//    }
+        const Rect & trect = Rect(
+            rect.x, rect.y,
+            std::min<int>(bmp.cx - srcx,
+                          std::min(this->data.width - rect.x, rect.cx)),
+            std::min<int>(bmp.cy - srcy,
+                          std::min(this->data.height - rect.y, rect.cy)));
+        if (trect.isempty()){
+            return ;
+        }
+        const uint8_t Bpp = ::nbbytes(bmp.original_bpp);
+        uint8_t * target = this->data.first_pixel(trect);
+        uint8_t * source = bmp.data_co(bmp.original_bpp) + ((bmp.cy - srcy - 1) * bmp.cx + srcx) * Bpp;
+        int steptarget = (this->data.width - trect.cx) * 3;
+        int stepsource = (bmp.cx + trect.cx) * Bpp;
+
+        for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource){
+            for (int x = 0; x < trect.cx ; x++, target += 3, source += Bpp){
+                uint32_t px = source[Bpp-1];
+                for (int b = 1 ; b < Bpp ; b++){
+                    px = (px << 8) + source[Bpp-1-b];
+                }
+                uint32_t color = xormask ^ color_decode(px, bmp.original_bpp, bmp.original_palette);
+                target[0] = color;
+                target[1] = color >> 8;
+                target[2] = color >> 16;
+            }
+        }
+    }
+
 
     void black_color(const Rect & rect)
     {
@@ -584,16 +603,6 @@ public:
         break;
         }
     }
-
-//    uint8_t * first_pixel(const Rect & r)
-//    {
-//        return this->data.first_pixel(r);
-//    }
-
-//    uint8_t * beginning_of_last_line(const Rect & r)
-//    {
-//        return this->data.beginning_of_last_line(r);
-//    }
 
     struct Op_0x11
     {

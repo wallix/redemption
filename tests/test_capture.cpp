@@ -274,6 +274,7 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
     ::unlink(tmpname);
 }
 
+TODO("We should perform exhaustive tests on scrblt like for patblt, current tests are not exhaustive.")
 void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * name, const char * shasig){
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
