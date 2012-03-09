@@ -59,7 +59,7 @@ private:
     {
         BOOST_CHECK(false);
     }
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip)
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, Bitmap & bmp)
     {
         BOOST_CHECK(false);
     }
@@ -76,10 +76,6 @@ private:
         BOOST_CHECK(false);
     }
     virtual void draw(const RDPColCache & cmd)
-    {
-        BOOST_CHECK(false);
-    }
-    virtual void draw(const RDPBmpCache & cmd)
     {
         BOOST_CHECK(false);
     }
@@ -280,8 +276,8 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_SecondaryOrderCache)
         uint8_t comp64x64RED[] = { 0xc0, 0x30, 0x00, 0x00, 0xFF, 0xf0, 0xc0, 0x0f, };
         BGRPalette palette332;
         init_palette332(palette332);
-        Bitmap bloc64x64(24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
-        RDPBmpCache cmd(24, &bloc64x64, 1, 10);
+        Bitmap* bloc64x64 = new Bitmap(24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
+        RDPBmpCache cmd(24, bloc64x64, 1, 10);
         gtf.draw(cmd);
         gtf.flush();
         ::close(fd);
@@ -299,36 +295,10 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_SecondaryOrderCache)
             } cache;
         public:
             Consumer(const Rect & screen_rect) : TestConsumer(screen_rect){}
-            void check_end()
-            {
-                BOOST_CHECK_EQUAL(icount, 1);
-            }
-        private:
-            virtual void draw(const RDPBmpCache & cmd)
-            {
-                icount++;
-                this->cache.bmp.put(cmd.id, cmd.idx, cmd.bmp);
-                switch (icount){
-                case 1:
-                {
-                    BOOST_CHECK_EQUAL((uint8_t)1, cmd.id);
-                    BOOST_CHECK_EQUAL((uint16_t)10, cmd.idx);
-                    Bitmap * bmp = this->cache.bmp.get(cmd.id, cmd.idx);
-                    BOOST_CHECK_EQUAL((uint16_t)64, bmp->cx);
-                    BOOST_CHECK_EQUAL((uint16_t)64, bmp->cy);
-                    BOOST_CHECK_EQUAL((uint8_t)24, bmp->original_bpp);
-                    BOOST_CHECK_EQUAL((uint32_t)2984132952u, (uint32_t)bmp->get_crc());
-                }
-                break;
-                default:
-                    BOOST_CHECK(false);
-                }
-            }
         } consumer(screen_rect);
 
         RDPUnserializer reader(&in_trans, &consumer, screen_rect);
         reader.next();
-        consumer.check_end();
         // check we have read everything
         BOOST_CHECK_EQUAL(stream.end - stream.p, 0);
         ::close(fd);
@@ -355,9 +325,9 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), Rect(10, 10, 100, 100));
 
         uint8_t comp64x64RED[] = { 0xc0, 0x30, 0x00, 0x00, 0xFF, 0xf0, 0xc0, 0x0f, };
-        Bitmap bloc64x64(24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
-        gtf.draw(RDPBmpCache(24, &bloc64x64, 1, 10));
-        gtf.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect);
+        Bitmap* bloc64x64 = new Bitmap(24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
+        gtf.draw(RDPBmpCache(24, bloc64x64, 1, 10));
+        gtf.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect, *bloc64x64);
         gtf.flush();
         ::close(fd);
     }

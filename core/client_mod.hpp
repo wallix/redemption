@@ -451,8 +451,11 @@ struct GraphicDeviceMod : public GraphicDevice
                     uint8_t cache_id  = (cache_ref >> 16);
                     uint16_t cache_idx = (cache_ref & 0xFFFF);
 
+                    Bitmap * pbmp =  this->front.bmp_cache->get(cache_id, cache_idx);
                     if (send_type == BITMAP_ADDED_TO_CACHE){
-                        this->bitmap_cache(cache_id, cache_idx);
+                        RDPBmpCache cmd(this->get_front_bpp(), pbmp, cache_id, cache_idx);
+                        this->front.orders->draw(cmd);
+
                     }
 
                     const RDPMemBlt cmd(cache_id + palette_id*16, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
@@ -460,9 +463,9 @@ struct GraphicDeviceMod : public GraphicDevice
 
                     if (!clip.isempty()
                     && !clip.intersect(cmd.rect).isempty()){
-                        this->front.orders->draw(cmd, clip);
+                        this->front.orders->draw(cmd, clip, *pbmp);
                         if (this->capture){
-                            this->capture->mem_blt(cmd, clip);
+                            this->capture->mem_blt(cmd, clip, *pbmp);
                         }
                     }
                 }
@@ -533,19 +536,6 @@ struct GraphicDeviceMod : public GraphicDevice
         this->front.orders->draw(cmd);
     }
 
-    virtual void bitmap_cache(const uint8_t cache_id, const uint16_t cache_idx)
-    {
-        Bitmap * pbmp =  this->front.bmp_cache->get(cache_id, cache_idx);
-
-        RDPBmpCache cmd(this->get_front_bpp(), pbmp, cache_id, cache_idx);
-        this->front.orders->draw(cmd);
-
-        if (this->capture){
-            this->capture->bitmap_cache(cmd);
-        }
-
-    }
-
     virtual void glyph_cache(const FontChar & font_char, int font_index, int char_index)
     {
         RDPGlyphCache cmd(font_index, 1, char_index, font_char.offset, font_char.baseline, font_char.width, font_char.height, font_char.data);
@@ -583,8 +573,10 @@ struct GraphicDeviceMod : public GraphicDevice
                         uint8_t cache_id  = (cache_ref >> 16);
                         uint16_t cache_idx = (cache_ref & 0xFFFF);
 
+                        Bitmap * pbmp =  this->front.bmp_cache->get(cache_id, cache_idx);
                         if (send_type == BITMAP_ADDED_TO_CACHE){
-                            this->bitmap_cache(cache_id, cache_idx);
+                            RDPBmpCache cmd(this->get_front_bpp(), pbmp, cache_id, cache_idx);
+                            this->front.orders->draw(cmd);
                         }
 
                         const RDPMemBlt cmd(cache_id, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
@@ -602,9 +594,9 @@ struct GraphicDeviceMod : public GraphicDevice
                                 }
                                 this->palette_sent = false;
                             }
-                            this->front.orders->draw(cmd, clip);
+                            this->front.orders->draw(cmd, clip, *pbmp);
                             if (this->capture){
-                                this->capture->mem_blt(cmd, clip);
+                                this->capture->mem_blt(cmd, clip, *pbmp);
                             }
                         }
                     }

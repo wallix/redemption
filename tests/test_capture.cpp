@@ -462,17 +462,14 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     init_palette332(palette332);
     Bitmap * bmp = new Bitmap(24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
 
-    bmpcache.put(1, 10, bmp);
-    gd.draw(RDPBmpCache(bpp, bmp, 1, 10));
-
     // red square
-    gd.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect);
+    gd.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect, *bmp);
     // inverted red square (cyan)
-    gd.draw(RDPMemBlt(1, Rect(25, 25, 20, 20), 0x55, 0, 0, 10), screen_rect);
+    gd.draw(RDPMemBlt(1, Rect(25, 25, 20, 20), 0x55, 0, 0, 10), screen_rect, *bmp);
     // black square
-    gd.draw(RDPMemBlt(1, Rect(45, 45, 20, 20), 0x00, 0, 0, 10), screen_rect);
+    gd.draw(RDPMemBlt(1, Rect(45, 45, 20, 20), 0x00, 0, 0, 10), screen_rect, *bmp);
     // white square
-    gd.draw(RDPMemBlt(1, Rect(65, 65, 20, 20), 0xFF, 0, 0, 10), screen_rect);
+    gd.draw(RDPMemBlt(1, Rect(65, 65, 20, 20), 0xFF, 0, 0, 10), screen_rect, *bmp);
 
     char message[1024];
     if (!check_sig(gd.drawable, message,

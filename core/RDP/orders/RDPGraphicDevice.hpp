@@ -46,6 +46,8 @@
 #include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 
+#include "bmpcache.hpp"
+
 struct RDPGraphicDevice
 {
     virtual void flush() = 0;
@@ -53,13 +55,12 @@ struct RDPGraphicDevice
     virtual void draw(const RDPScrBlt & cmd, const Rect &clip) = 0;
     virtual void draw(const RDPDestBlt & cmd, const Rect &clip) = 0;
     virtual void draw(const RDPPatBlt & cmd, const Rect &clip) = 0;
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, Bitmap & bmp) = 0;
     virtual void draw(const RDPLineTo& cmd, const Rect & clip) = 0;
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
 
     virtual void draw(const RDPBrushCache & cmd) = 0;
     virtual void draw(const RDPColCache & cmd) = 0;
-    virtual void draw(const RDPBmpCache & cmd) = 0;
     virtual void draw(const RDPGlyphCache & cmd) = 0;
 
 protected:
@@ -86,6 +87,8 @@ struct RDPUnserializer
     RDPMemBlt memblt;
     RDPLineTo lineto;
     RDPGlyphIndex glyphindex;
+
+    BmpCache bmp_cache;
 
     // variables used to read batch of orders "chunks"
     uint16_t chunk_num;
@@ -163,7 +166,7 @@ struct RDPUnserializer
                         BGRPalette palette;
                         init_palette332(palette);
                         cmd.receive(this->stream, control, header, palette);
-                        consumer->draw(cmd);
+                        this->bmp_cache.put(cmd.id, cmd.idx, cmd.bmp);
                     }
                     break;
                     case TS_CACHE_COLOR_TABLE:
@@ -219,8 +222,16 @@ struct RDPUnserializer
                     consumer->draw(this->opaquerect, clip);
                     break;
                 case RDP::MEMBLT:
-                    this->memblt.receive(this->stream, header);
-                    this->consumer->draw(this->memblt, clip);
+                    {
+                        this->memblt.receive(this->stream, header);
+                        Bitmap * bmp = this->bmp_cache.get(this->memblt.cache_id, this->memblt.cache_idx);
+                        if (!bmp){
+                            LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)", this->memblt.cache_id, this->memblt.cache_idx);
+                        }
+                        else {
+                            this->consumer->draw(this->memblt, clip, *bmp);
+                        }
+                    }
                     break;
                 default:
                     /* error unknown order */
@@ -262,6 +273,7 @@ struct RDPSerializer : public RDPGraphicDevice
     // state variables for gathering batch of orders
     size_t order_count;
     uint32_t offset_order_count;
+    BmpCache bmp_cache;
 
 
     RDPSerializer(Transport * trans, const Inifile * ini,
@@ -285,7 +297,8 @@ struct RDPSerializer : public RDPGraphicDevice
         glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)""),
         // state variables for a batch of orders
         order_count(0),
-        offset_order_count(0)
+        offset_order_count(0),
+        bmp_cache()
      {}
     ~RDPSerializer() {}
     virtual void flush() = 0;
@@ -358,15 +371,32 @@ struct RDPSerializer : public RDPGraphicDevice
     }
 
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip)
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, Bitmap & bmp)
     {
+
+        uint32_t res = this->bmp_cache.get_by_crc(&bmp);
+        unsigned cache_id = (res >> 16) & 0xFF;
+        unsigned cache_idx = (res & 0xFFFF);
+        if ((res >> 24) == BITMAP_ADDED_TO_CACHE){
+            RDPBmpCache cmd_cache(24, &bmp, cache_id, cache_idx);
+            this->reserve_order(cmd_cache.bmp->bmp_size(cmd_cache.bpp) + 16);
+            cmd_cache.emit(this->stream, this->bitmap_cache_version, this->use_bitmap_comp, this->op2);
+
+            if (this->ini && this->ini->globals.debug.secondary_orders){
+                cmd_cache.log(LOG_INFO);
+            }
+        }
+
+        RDPMemBlt newcmd = cmd;
+        newcmd.cache_id = cache_id;
+        newcmd.cache_idx = cache_idx;
         this->reserve_order(30);
         RDPOrderCommon newcommon(RDP::MEMBLT, clip);
-        cmd.emit(this->stream, newcommon, this->common, this->memblt);
+        newcmd.emit(this->stream, newcommon, this->common, this->memblt);
         this->common = newcommon;
-        this->memblt = cmd;
+        this->memblt = newcmd;
         if (this->ini && this->ini->globals.debug.primary_orders){
-            cmd.log(LOG_INFO, common.clip);
+            newcmd.log(LOG_INFO, common.clip);
         }
     }
 

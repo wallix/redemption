@@ -103,13 +103,9 @@ class NativeCapture
         this->recorder.draw(cmd, clip);
     }
 
-    void draw(const RDPBmpCache & cmd)
+    void draw(const RDPMemBlt & cmd, const Rect & clip, Bitmap & bmp)
     {
-        this->recorder.draw(cmd);
-    }
-    void draw(const RDPMemBlt & cmd, const Rect & clip)
-    {
-        this->recorder.draw(cmd, clip);
+        this->recorder.draw(cmd, clip, bmp);
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)

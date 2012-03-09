@@ -118,6 +118,7 @@ public:
             color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
         }
 
+        TODO("move this to a general purpose function to draw lines in Drawable")
         if (lineto.startx == lineto.endx){
             if (lineto.starty <= lineto.endy){
                 this->drawable.vertical_line(lineto.back_mode,
@@ -148,25 +149,21 @@ public:
         }
     }
 
-    void draw(const RDPBmpCache & cmd)
+    void draw(const RDPMemBlt & cmd, const Rect & clip, Bitmap & bmp)
     {
-        // nothing to do, cache management is performed outside Drawable
-    }
-
-    void draw(const RDPMemBlt & cmd, const Rect & clip)
-    {
+        TODO("If I use bitmap as is, I must count how many times it is used");
         const Rect& rect = clip.intersect(cmd.rect);
         if (rect.isempty()){
             return ;
         }
 
-        Bitmap* bmp = this->bmpcache.get(cmd.cache_id & 0x3, cmd.cache_idx);
-        if (!bmp){
-            LOG(LOG_ERR,
-                "bitmap not found in cache (%p) (id = %u, idx = %u)",
-                &this->bmpcache, cmd.cache_id, cmd.cache_idx);
-            return;
-        }
+//        Bitmap* bmp = this->bmpcache.get(cmd.cache_id & 0x3, cmd.cache_idx);
+//        if (!bmp){
+//            LOG(LOG_ERR,
+//                "bitmap not found in cache (%p) (id = %u, idx = %u)",
+//                &this->bmpcache, cmd.cache_id, cmd.cache_idx);
+//            return;
+//        }
 
         switch (cmd.rop) {
             case 0x00:
@@ -174,10 +171,10 @@ public:
             case 0xFF:
                 this->drawable.white_color(rect); break;
             case 0x55:
-                this->drawable.mem_blt(rect, *bmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->bgr);
+                this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->bgr);
                 break;
             case 0xCC:
-                this->drawable.mem_blt(rect, *bmp, cmd.srcx, cmd.srcy, 0, this->bgr);
+                this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0, this->bgr);
                 break;
             default:
                 // should not happen

@@ -41,24 +41,8 @@
 BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
 {
     BGRPalette palette;
-    std::stringstream oss("");
-    Inifile ini(oss);
-    ClientInfo ci(&ini);
-    ci.use_bitmap_comp = true;
-    ci.bitmap_cache_persist_enable = true;
-    ci.bitmap_cache_version = 0;
-    // "small" bitmaps (limit values reduced for tests... 4 pixels max)
-    ci.cache1_entries = 30;
-    ci.cache1_size = 16;
-    // "medium" bitmaps (limit values reduced for tests... 40 pixels max)
-    ci.cache2_entries = 10;
-    ci.cache2_size = 160;
-    // "big" bitmaps (limit values reduced for tests... 100 pixels max)
-    ci.cache3_entries = 10;
-    ci.cache3_size = 400;
 
-    BitmapCache cache(&ci);
-
+    BitmapCache cache(30, 16, 10, 160, 10, 400);
     #define RED30 \
         {0,0,0xFF}, {0,0,0xFF}, {0,0,0xFF}, {0,0,0xFF}, {0,0,0xFF}, {0,0,0xFF},\
         {0,0,0xFF}, {0,0,0xFF}, {0,0,0xFF}, {0,0,0xFF}, {0,0,0xFF}, {0,0,0xFF},\

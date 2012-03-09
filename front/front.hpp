@@ -275,7 +275,13 @@ public:
         if (this->bmp_cache){
             delete this->bmp_cache;
         }
-        this->bmp_cache = new BitmapCache(&(this->client_info));
+        this->bmp_cache = new BitmapCache(
+            this->client_info.cache1_entries,
+            this->client_info.cache1_size,
+            this->client_info.cache2_entries,
+            this->client_info.cache2_size,
+            this->client_info.cache3_entries,
+            this->client_info.cache3_size);
         this->cache.reset(this->client_info);
     }
 

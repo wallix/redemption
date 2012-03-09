@@ -45,12 +45,6 @@
 
 #include "bmpcache.hpp"
 
-enum {
-    BITMAP_FOUND_IN_CACHE,
-    BITMAP_ADDED_TO_CACHE
-};
-
-
 struct BitmapCache : public BmpCache {
     /* client info */
     unsigned small_entries;
@@ -60,13 +54,14 @@ struct BitmapCache : public BmpCache {
     unsigned big_entries;
     unsigned big_size;
 
-    BitmapCache(ClientInfo* client_info) {
-        this->small_entries = client_info->cache1_entries;
-        this->small_size = client_info->cache1_size;
-        this->medium_entries = client_info->cache2_entries;
-        this->medium_size = client_info->cache2_size;
-        this->big_entries = client_info->cache3_entries;
-        this->big_size = client_info->cache3_size;
+    BitmapCache(unsigned small_entries, unsigned small_size, unsigned medium_entries, unsigned medium_size, unsigned big_entries, unsigned big_size)
+        : small_entries(small_entries)
+        , small_size(small_size)
+        , medium_entries(medium_entries)
+        , medium_size(medium_size)
+        , big_entries(big_size)
+        , big_size(big_size)
+    {
     }
 
     ~BitmapCache()

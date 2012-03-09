@@ -178,16 +178,13 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ReadCapture)
                 }
             }
         }
-        virtual void draw(const RDPMemBlt & cmd, const Rect & clip)
+        virtual void draw(const RDPMemBlt & cmd, const Rect & clip, Bitmap & bmp)
         {
             BOOST_CHECK(true);
-            const uint8_t cache_id = cmd.cache_id & 0xFF;
             const Rect & rect = cmd.rect;
             const uint16_t srcx = cmd.srcx;
             const uint16_t srcy = cmd.srcy;
-            const uint16_t cache_idx = cmd.cache_idx;
-            Bitmap * bmp = this->cache.bmp.get(cache_id, cache_idx);
-            const uint8_t * const bmp_data = bmp->data_co(this->bpp);
+            const uint8_t * const bmp_data = bmp.data_co(this->bpp);
             BOOST_CHECK(true);
 
             // Where we draw -> target

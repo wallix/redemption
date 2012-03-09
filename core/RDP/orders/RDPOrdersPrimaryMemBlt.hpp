@@ -90,11 +90,13 @@
 
 class RDPMemBlt {
     public:
+    TODO("Change to cache_id")
     uint16_t cache_id;
     Rect rect;
     uint8_t rop;
     uint16_t srcx;
     uint16_t srcy;
+    TODO("Change to cache_idx")
     uint16_t cache_idx;
 
     static const uint8_t id(void)

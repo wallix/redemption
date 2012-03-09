@@ -69,7 +69,6 @@ struct GraphicDevice
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
 
     virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex) = 0;
-    virtual void bitmap_cache(const uint8_t cache_id, const uint16_t cache_idx) = 0;
     virtual void glyph_cache(const FontChar & font_char, int font_index, int char_index) = 0;
 
 

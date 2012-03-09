@@ -73,11 +73,11 @@ class Capture
         this->nc.snapshot(x, y, pointer_already_displayed, no_timestamp);
     }
 
-    void bitmap_cache(const RDPBmpCache & cmd)
-    {
-        this->nc.draw(cmd);
-        this->sc.draw(cmd);
-    }
+//    void bitmap_cache(const RDPBmpCache & cmd)
+//    {
+//        this->nc.draw(cmd);
+//        this->sc.draw(cmd);
+//    }
 
     void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
     {
@@ -97,10 +97,10 @@ class Capture
         this->nc.draw(cmd, clip);
     }
 
-    void mem_blt(const RDPMemBlt & cmd, const Rect & clip)
+    void mem_blt(const RDPMemBlt & cmd, const Rect & clip, Bitmap & bmp)
     {
-        this->sc.draw(cmd, clip);
-        this->nc.draw(cmd, clip);
+        this->sc.draw(cmd, clip, bmp);
+        this->nc.draw(cmd, clip, bmp);
     }
 
     void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
