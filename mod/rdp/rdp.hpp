@@ -3259,7 +3259,7 @@ struct mod_rdp : public client_mod {
                         final_size, bitmap.bmp_size(bpp), width, height, bpp);
                 }
 
-                mod->gd.bitmap_update(bitmap, boundary, 0, 0, boundary);
+                mod->gd.bitmap_update(bitmap, boundary, 0, 0, this->orders.global_palette, boundary);
             }
             else {
                 const uint8_t * data = stream.in_uint8p(bufsize);
@@ -3271,7 +3271,7 @@ struct mod_rdp : public client_mod {
                         bufsize, bitmap.bmp_size(bpp), width, height, bpp);
                 }
 
-                mod->gd.bitmap_update(bitmap, boundary, 0, 0, boundary);
+                mod->gd.bitmap_update(bitmap, boundary, 0, 0, this->orders.global_palette, boundary);
             }
         }
         mod->gd.server_end_update();

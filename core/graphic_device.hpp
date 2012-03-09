@@ -75,7 +75,7 @@ struct GraphicDevice
     virtual void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const BGRPalette & palette, const Rect & clip) = 0;
 
     virtual void server_set_pen(int style, int width) = 0;
-    virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const Rect & clip) = 0;
+    virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const BGRPalette & palette, const Rect & clip) = 0;
     virtual void set_pointer(int cache_idx) = 0;
     virtual void send_global_palette() = 0;
     virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask) = 0;

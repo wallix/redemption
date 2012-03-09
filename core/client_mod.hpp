@@ -542,12 +542,23 @@ struct GraphicDeviceMod : public GraphicDevice
         this->front.orders->draw(cmd);
     }
 
-    virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const Rect & clip)
+    virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const BGRPalette & palette, const Rect & clip)
     {
+        const uint8_t palette_id = 0;
+        if (this->get_front_bpp() == 8){
+            this->palette_sent = false;
+            this->send_global_palette();
+            if (!this->palette_memblt_sent[palette_id]) {
+                this->color_cache(palette, palette_id);
+                this->palette_memblt_sent[palette_id] = true;
+            }
+            this->palette_sent = false;
+        }
+
+
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
         const Rect src_r(srcx, srcy, width, height);
-        const int palette_id = 0;
         const uint8_t * src_data = bitmap.data_co(this->get_front_bpp());
         const uint8_t rop = 0xCC;
 
@@ -560,44 +571,33 @@ struct GraphicDeviceMod : public GraphicDevice
 //                LOG(LOG_INFO, "tile at dst = tile(%u, %u %u, %u) dst(%u, %u) src(%u, %u, %u, %u) clip(%u, %u, %u, %u)",
 //                    tile.x, tile.y, tile.cx, tile.cy, dst.x, dst.y, src_r.x, src_r.y, src_r.cx, src_r.cy,
 //                    clip.x, clip.y, clip.cx, clip.cy);
-                if (!clip.intersect(tile.offset(dst.x, dst.y)).isempty()) {
-                    if ((src_r.cx > src_r.x + x) && (src_r.cy > src_r.y + y)) {
-                         uint32_t cache_ref = this->front.bmp_cache->add_bitmap(
-                                                    src_r.cx, src_r.cy,
-                                                    src_data,
-                                                    tile.offset(src_r.x, src_r.y),
-                                                    this->get_front_bpp(),
-                                                    bitmap.original_palette);
+                if (!clip.intersect(tile.offset(dst.x, dst.y)).isempty()
+                && (src_r.cx > src_r.x + x)
+                && (src_r.cy > src_r.y + y)) {
+                     uint32_t cache_ref = this->front.bmp_cache->add_bitmap(
+                                                src_r.cx, src_r.cy,
+                                                src_data,
+                                                tile.offset(src_r.x, src_r.y),
+                                                this->get_front_bpp(),
+                                                bitmap.original_palette);
 
-                        uint8_t send_type = (cache_ref >> 24);
-                        uint8_t cache_id  = (cache_ref >> 16);
-                        uint16_t cache_idx = (cache_ref & 0xFFFF);
+                    uint8_t send_type = (cache_ref >> 24);
+                    uint8_t cache_id  = (cache_ref >> 16);
+                    uint16_t cache_idx = (cache_ref & 0xFFFF);
 
-                        Bitmap * pbmp =  this->front.bmp_cache->get(cache_id, cache_idx);
-                        if (send_type == BITMAP_ADDED_TO_CACHE){
-                            RDPBmpCache cmd(this->get_front_bpp(), pbmp, cache_id, cache_idx);
-                            this->front.orders->draw(cmd);
-                        }
+                    Bitmap * pbmp =  this->front.bmp_cache->get(cache_id, cache_idx);
+                    if (send_type == BITMAP_ADDED_TO_CACHE){
+                        RDPBmpCache cmd(this->get_front_bpp(), pbmp, cache_id, cache_idx);
+                        this->front.orders->draw(cmd);
+                    }
 
-                        const RDPMemBlt cmd(cache_id, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
-                        if (!clip.isempty()
-                        && !clip.intersect(cmd.rect).isempty()){
-                            if (this->get_front_bpp() == 8){
-                                if (!this->palette_memblt_sent[palette_id]) {
-                                    if (bitmap.original_bpp == 8){
-                                        this->color_cache(this->mod_palette, palette_id);
-                                    }
-                                    else {
-                                        this->color_cache(this->palette332, palette_id);
-                                    }
-                                    this->palette_memblt_sent[palette_id] = true;
-                                }
-                                this->palette_sent = false;
-                            }
-                            this->front.orders->draw(cmd, clip, *pbmp);
-                            if (this->capture){
-                                this->capture->mem_blt(cmd, clip, *pbmp);
-                            }
+                    const RDPMemBlt cmd(cache_id + palette_id*16, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
+
+                    if (!clip.isempty()
+                    && !clip.intersect(cmd.rect).isempty()){
+                        this->front.orders->draw(cmd, clip, *pbmp);
+                        if (this->capture){
+                            this->capture->mem_blt(cmd, clip, *pbmp);
                         }
                     }
                 }

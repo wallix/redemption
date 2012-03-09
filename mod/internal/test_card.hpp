@@ -67,6 +67,7 @@ struct test_card_mod : public internal_mod {
 
     void draw()
     {
+        BGRPalette palette;
         this->gd.server_begin_update();
 
         const Rect & clip = this->get_screen_rect();
@@ -85,7 +86,7 @@ struct test_card_mod : public internal_mod {
             Rect(winrect.x + (winrect.cx - bitmap.cx)/2,
                  winrect.y + (winrect.cy - bitmap.cy)/2,
                  bitmap.cx, bitmap.cy),
-             0, 0, clip);
+             0, 0, palette, clip);
 
         //  lineTo mix_mode=1 startx=200 starty=1198 endx=200 endy=145 bg_color=0 rop2=13 clip=(200, 145, 1, 110)
         this->gd.draw(
@@ -133,7 +134,7 @@ struct test_card_mod : public internal_mod {
         this->gd.bitmap_update(card,
             Rect(this->get_screen_rect().cx - card.cx - 30,
                  this->get_screen_rect().cy - card.cy - 30, card.cx, card.cy),
-             0, 0, clip);
+             0, 0, this->gd.palette332, clip);
 
         // Bogus square generating zero width/height tiles if not properly guarded
         TODO(" find a better fix than the current one in bitmap_update and mem_blt for the case occuring when drawing square below or similar.")
@@ -145,7 +146,7 @@ struct test_card_mod : public internal_mod {
         Bitmap bloc64x64(24, &this->gd.palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
         this->gd.bitmap_update(bloc64x64,
             Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx, bloc64x64.cy),
-             32, 32, clip);
+             32, 32, this->gd.palette332, clip);
 
 
         this->gd.server_end_update();
