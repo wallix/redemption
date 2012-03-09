@@ -165,9 +165,6 @@ struct close_mod : public internal_mod {
                     b->notify(&b->parent, 2, x, y);
                 }
             }
-            this->gd.front.mouse_x = x;
-            this->gd.front.mouse_y = y;
-
         }
 
         // ---------------------------------------------------------------

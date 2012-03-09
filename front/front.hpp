@@ -96,8 +96,6 @@ class FrontAPI {
     Cache cache;
     struct BitmapCache *bmp_cache;
     bool notimestamp;
-    int mouse_x;
-    int mouse_y;
     bool nomouse;
 
     GraphicsUpdatePDU * orders;
@@ -107,8 +105,6 @@ class FrontAPI {
         cache(),
         bmp_cache(0),
         notimestamp(ini->globals.notimestamp),
-        mouse_x(0),
-        mouse_y(0),
         nomouse(ini->globals.nomouse)
         {}
 
@@ -2886,8 +2882,8 @@ public:
                         if (this->verbose){
                             LOG(LOG_INFO, "RDP_INPUT_MOUSE(device_flags=%u, param1=%u, param2=%u)", device_flags, param1, param2);
                         }
-                        this->mouse_x = param1;
-                        this->mouse_y = param2;
+                        cb.mouse_x = param1;
+                        cb.mouse_y = param2;
                         cb.rdp_input_mouse(device_flags, param1, param2, &this->keymap);
                         break;
                     default:

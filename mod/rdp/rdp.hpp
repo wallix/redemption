@@ -428,8 +428,6 @@ struct mod_rdp : public client_mod {
             TODO(" is decoding and reencoding really necessary  a simple pass-through from front to back-end should be enough")
             if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
                 this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_MOVE, x, y);
-                this->gd.front.mouse_x = x;
-                this->gd.front.mouse_y = y;
             }
             if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
                 this->send_input(0, RDP_INPUT_MOUSE, MOUSE_FLAG_BUTTON1 | (device_flags & MOUSE_FLAG_DOWN), x, y);

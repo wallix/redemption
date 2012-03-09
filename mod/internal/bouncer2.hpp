@@ -87,20 +87,23 @@ struct bouncer2_mod : public internal_mod {
     int interaction()
     {
         // Get x% of the screen cx and cy
-        long x = this->gd.front.mouse_x;
-        long y = this->gd.front.mouse_y;
+        long x = this->mouse_x;
+        long y = this->mouse_y;
         int scarex = this->get_screen_rect().cx / 5;
         int scarey = this->get_screen_rect().cx / 5;
         Rect scareZone(this->dancing_rect->getCenteredX() - (scarex / 2),this->dancing_rect->getCenteredY() - (scarey / 2),scarex,scarey);
 
         // Calculating new speedx and speedy, if cube encounters a moving mouse pointer, it flees
         if (scareZone.contains_pt(x,y)) {
-            if (((this->dancing_rect->getCenteredX() - x) < scarex) && this->dancing_rect->getCenteredX() > x) {
+            if (((this->dancing_rect->getCenteredX() - x) < scarex)
+            && this->dancing_rect->getCenteredX() > x) {
                 this->speedx = 2;
-            } else if (((x - this->dancing_rect->getCenteredX()) < scarex) && x > this->dancing_rect->getCenteredX()) {
+            } else if (((x - this->dancing_rect->getCenteredX()) < scarex)
+            && x > this->dancing_rect->getCenteredX()) {
                 this->speedx = -2;
             }
-            if (((this->dancing_rect->getCenteredY() - y) < scarey) && this->dancing_rect->getCenteredY() > y) {
+            if (((this->dancing_rect->getCenteredY() - y) < scarey)
+            && this->dancing_rect->getCenteredY() > y) {
                 this->speedy = 2;
             } else if (((y - this->dancing_rect->getCenteredY()) < scarey) && y > this->dancing_rect->getCenteredY()) {
                 this->speedy = -2;

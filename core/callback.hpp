@@ -30,6 +30,8 @@
 
 struct Callback
 {
+    int mouse_x;
+    int mouse_y;
     virtual void send_to_mod_channel(const char * const front_channel_name, uint8_t * data, size_t length, size_t chunk_size, uint32_t flags)
     {
     }

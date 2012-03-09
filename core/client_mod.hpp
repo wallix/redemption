@@ -779,7 +779,7 @@ struct client_mod : public Callback {
     void periodic_snapshot(bool pointer_is_displayed)
     {
         if (this->gd.capture){
-            this->gd.capture->snapshot(this->gd.front.mouse_x, this->gd.front.mouse_y,
+            this->gd.capture->snapshot(this->mouse_x, this->mouse_y,
                     pointer_is_displayed|this->gd.front.nomouse, this->gd.front.notimestamp);
         }
     }

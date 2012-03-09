@@ -443,9 +443,6 @@ struct mod_vnc : public client_mod {
             stream.out_uint16_be(x);
             stream.out_uint16_be(y);
             this->t->send(stream.data, 6);
-            TODO(" this should not be here!!! Move it to front")
-            this->gd.front.mouse_x = x;
-            this->gd.front.mouse_y = y;
         }
         if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
             if (device_flags & MOUSE_FLAG_DOWN){
