@@ -30,15 +30,15 @@
 #include <algorithm>
 #include "ssl_calls.hpp"
 #include "png.hpp"
+#include "RDP/orders/RDPDrawable.hpp"
 #include "staticcapture.hpp"
-#include "drawable.hpp"
 
 // to see last result file, remove unlink
 // and do something like:
 // eog `ls -1tr /tmp/test_* | tail -n 1`
 // (or any other variation you like)
 
-void dump_png(const char * prefix, const Drawable::CaptureBuf & data)
+void dump_png(const char * prefix, const Drawable & data)
 {
     char tmpname[128];
     sprintf(tmpname, "%sXXXXXX.png", prefix);
@@ -48,7 +48,7 @@ void dump_png(const char * prefix, const Drawable::CaptureBuf & data)
     ::fclose(f);
 }
 
-bool check_sig(Drawable::CaptureBuf & data, char * message, const char * shasig)
+bool check_sig(Drawable & data, char * message, const char * shasig)
 {
     SSL_SHA1 sha1;
     uint8_t sig[20];
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
     BGRPalette palette;
     init_palette332(palette);
     BmpCache bmpcache;
-    Drawable gd(width, height, bpp, palette, bmpcache, false);
+    RDPDrawable gd(width, height, bpp, palette, bmpcache, false);
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect);
 
@@ -111,12 +111,12 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
 	0xfd, 0x86, 0xd8, 0xf8, 0x79, 0x1a, 0x01, 0xcc, 0xe6, 0xb9,
     };
     char message[1024];
-    if (!check_sig(gd.data, message, (char*)shasig)){
+    if (!check_sig(gd.drawable, message, (char*)shasig)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
-    //    dump_png("/tmp/test_line_000_", gd.data);
+    //    dump_png("/tmp/test_line_000_", gd.drawable);
 }
 
 BOOST_AUTO_TEST_CASE(TestPatBlt)
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
     BGRPalette palette;
     init_palette332(palette);
     BmpCache bmpcache;
-    Drawable gd(width, height, bpp, palette, bmpcache, false);
+    RDPDrawable gd(width, height, bpp, palette, bmpcache, false);
     gd.draw(RDPPatBlt(screen_rect, 0xFF, WHITE, WHITE, RDPBrush()), screen_rect);
     gd.draw(RDPPatBlt(screen_rect.shrink(5), 0x00, WHITE, WHITE, RDPBrush()), screen_rect);
 
@@ -187,12 +187,12 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         0x8f, 0x84, 0x6c, 0x59, 0x1c, 0x3e, 0xae, 0x5c, 0x1c, 0xf5
     };
     char message[1024];
-    if (!check_sig(gd.data, message, (char*)shasig)){
+    if (!check_sig(gd.drawable, message, (char*)shasig)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
-    //    dump_png("/tmp/test_patblt_000_", gd.data);
+    //    dump_png("/tmp/test_patblt_000_", gd.drawable);
 }
 
 
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
     BGRPalette palette;
     init_palette332(palette);
     BmpCache bmpcache;
-    Drawable gd(width, height, bpp, palette, bmpcache, false);
+    RDPDrawable gd(width, height, bpp, palette, bmpcache, false);
 //    gd.draw(RDPPatBlt(screen_rect, 0xFF, WHITE, WHITE, RDPBrush()), screen_rect);
     gd.draw(RDPDestBlt(screen_rect, 0xFF), screen_rect); // WHITENESS
     gd.draw(RDPDestBlt(screen_rect.shrink(5), 0x00), screen_rect); // BLACKNESS
@@ -217,14 +217,14 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
     gd.draw(RDPDestBlt(screen_rect.shrink(15), 0x55), screen_rect);
 
     char message[1024];
-    if (!check_sig(gd.data, message,
+    if (!check_sig(gd.drawable, message,
             "\xca\xee\x18\x2c\x77\x53\x70\x93\xfa\xf3"
             "\x58\xda\xd1\x65\x1a\x17\x4d\x7c\xff\xd7")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
-    //    dump_png("/tmp/test_destblt_000_", gd.data);
+    //    dump_png("/tmp/test_destblt_000_", gd.drawable);
 }
 
 BOOST_AUTO_TEST_CASE(TestAddMouse)
@@ -237,13 +237,13 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     BGRPalette palette;
     init_palette332(palette);
     BmpCache bmpcache;
-    Drawable gd(width, height, bpp, palette, bmpcache, false);
+    RDPDrawable gd(width, height, bpp, palette, bmpcache, false);
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
-    gd.trace_mouse(100, 100);
+    gd.drawable.trace_mouse(100, 100);
 
     {
         char message[1024];
-        if (!check_sig(gd.data, message,
+        if (!check_sig(gd.drawable, message,
             "\x36\x27\xca\x81\x58\x35\x86\x4c\x20\x90"
             "\x62\x13\x69\x4a\x91\x79\xb5\x18\x42\x1e")){
             BOOST_CHECK_MESSAGE(false, message);
@@ -251,13 +251,13 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     }
 
     // uncomment to see result in png file
-    // dump_png("/tmp/test_mouse_000_", gd.data);
+    // dump_png("/tmp/test_mouse_000_", gd.drawable);
 
-    gd.clear_mouse();
+    gd.drawable.clear_mouse();
 
     {
         char message[1024];
-        if (!check_sig(gd.data, message,
+        if (!check_sig(gd.drawable, message,
             "\x59\x99\x2f\x37\x8b\x44\x4b\xad\xf0\x10"
             "\x23\x03\xd8\xde\xea\x81\x41\x3b\x12\x0a")){
             BOOST_CHECK_MESSAGE(false, message);
@@ -265,7 +265,7 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     }
 
     // uncomment to see result in png file
-    // dump_png("/tmp/test_mouse_001_", gd.data);
+    // dump_png("/tmp/test_mouse_001_", gd.drawable);
 }
 
 
@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     BGRPalette palette;
     init_palette332(palette);
     BmpCache bmpcache;
-    Drawable gd(width, height, bpp, palette, bmpcache, false);
+    RDPDrawable gd(width, height, bpp, palette, bmpcache, false);
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
 
     time_t rawtime;
@@ -296,11 +296,11 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     now.tm_yday =  67;
     now.tm_isdst =  0;
 
-    gd.trace_timestamp(now);
+    gd.drawable.trace_timestamp(now);
 
     {
         char message[1024];
-        if (!check_sig(gd.data, message,
+        if (!check_sig(gd.drawable, message,
             "\x69\xc8\xb0\x41\x33\x12\xf8\x13\xe7\x20"
             "\x6b\xa2\xdb\x2d\x58\x89\xa3\xea\x76\x71")){
             BOOST_CHECK_MESSAGE(false, message);
@@ -308,7 +308,7 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     }
 
     // uncomment to see result in png file
-    dump_png("/tmp/test_timestamp_000_", gd.data);
+    //dump_png("/tmp/test_timestamp_000_", gd.drawable);
 
 
     now.tm_sec  =  00;
@@ -321,12 +321,12 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     now.tm_yday =  67;
     now.tm_isdst =  0;
 
-    gd.clear_timestamp();
-    gd.trace_timestamp(now);
+    gd.drawable.clear_timestamp();
+    gd.drawable.trace_timestamp(now);
 
     {
         char message[1024];
-        if (!check_sig(gd.data, message,
+        if (!check_sig(gd.drawable, message,
             "\xc3\xd3\xc4\x03\x65\x7e\xe3\xcf\x1a\x94"
             "\xb0\xa7\x18\x14\x66\xa9\xc8\x78\xb4\x63")){
             BOOST_CHECK_MESSAGE(false, message);
@@ -334,14 +334,14 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     }
 
     // uncomment to see result in png file
-    dump_png("/tmp/test_timestamp_001_", gd.data);
+    //dump_png("/tmp/test_timestamp_001_", gd.drawable);
 
 
-    gd.clear_timestamp();
+    gd.drawable.clear_timestamp();
 
     {
         char message[1024];
-        if (!check_sig(gd.data, message,
+        if (!check_sig(gd.drawable, message,
             "\x59\x99\x2f\x37\x8b\x44\x4b\xad\xf0\x10"
             "\x23\x03\xd8\xde\xea\x81\x41\x3b\x12\x0a")){
             BOOST_CHECK_MESSAGE(false, message);
@@ -349,7 +349,7 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     }
 
     // uncomment to see result in png file
-    dump_png("/tmp/test_timestamp_002_", gd.data);
+    //dump_png("/tmp/test_timestamp_002_", gd.drawable);
 
 }
 
@@ -363,22 +363,22 @@ void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * nam
     BGRPalette palette;
     init_palette332(palette);
     BmpCache bmpcache;
-    Drawable gd(width, height, bpp, palette, bmpcache, false);
+    RDPDrawable gd(width, height, bpp, palette, bmpcache, false);
     gd.draw(RDPOpaqueRect(Rect(90, 90, 120, 120), RED), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect, BLUE), Rect(100, 100, 100, 100));
     gd.draw(RDPOpaqueRect(Rect(120, 120, 60, 60), PINK), Rect(100, 100, 100, 100));
-    gd.scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
-    gd.scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
+    gd.drawable.scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
+    gd.drawable.scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
 
     char message[1024];
-    if (!check_sig(gd.data, message, shasig)){
+    if (!check_sig(gd.drawable, message, shasig)){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
     // char tmpname[128];
     // sprintf(tmpname, "/tmp/test_scrblt_%s", name);
-    // dump_png(tmpname, gd.data);
+    // dump_png(tmpname, gd.drawable);
 }
 
 BOOST_AUTO_TEST_CASE(TestDrawableScrBltDown)
@@ -453,7 +453,7 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     init_palette332(palette);
 
     BmpCache bmpcache;
-    Drawable gd(width, height, bpp, palette, bmpcache, false);
+    RDPDrawable gd(width, height, bpp, palette, bmpcache, false);
     gd.draw(RDPOpaqueRect(screen_rect, 0x2F2F2F), screen_rect);
     gd.draw(RDPOpaqueRect(Rect(100,100,20, 20), BLUE), screen_rect);
 
@@ -475,13 +475,12 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     gd.draw(RDPMemBlt(1, Rect(65, 65, 20, 20), 0xFF, 0, 0, 10), screen_rect);
 
     char message[1024];
-    if (!check_sig(gd.data, message,
+    if (!check_sig(gd.drawable, message,
     "\x6b\x51\x02\x43\xfd\xb5\x37\x97\x8e\x7e"
     "\x80\xf9\xce\x74\xcb\x7e\x34\x7d\xb8\xe6")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
-    // dump_png("/tmp/test_memblt_", gd.data);
-
+    // dump_png("/tmp/test_memblt_", gd.drawable);
 }

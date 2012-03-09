@@ -48,10 +48,11 @@
 #include "config.hpp"
 #include "bitmap_cache.hpp"
 #include "colors.hpp"
-#include "drawable.hpp"
+
+#include "RDP/orders/RDPDrawable.hpp"
 
 
-class StaticCapture : public Drawable
+class StaticCapture : public RDPDrawable
 {
     enum {
         ts_width  = 133,
@@ -70,7 +71,7 @@ class StaticCapture : public Drawable
     char path[1024];
 
     StaticCapture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality)
-        : Drawable(width, height, bpp, palette, bmpcache, false),
+        : RDPDrawable(width, height, bpp, palette, bmpcache, false),
           framenb(0)
     {
         gettimeofday(&this->start, NULL);
@@ -353,16 +354,16 @@ class StaticCapture : public Drawable
             // If pointer is drawn by the server (like in Windows Seven), no need to do anything.
             if (!pointer_already_displayed){
                 if ((x > 0)
-                        && (x < this->data.width - 12)
+                        && (x < this->drawable.width - 12)
                         && (y > 0)
-                        && (y < this->data.height - mouse_height)){
+                        && (y < this->drawable.height - mouse_height)){
                     uint8_t * psave = mouse_save;
                     for (size_t i = 0 ; i < 20 ; i++){
                         unsigned yy = mouse_cursor[i].y;
                         unsigned xx = mouse_cursor[i].x;
                         unsigned lg = mouse_cursor[i].lg;
                         const char * line = mouse_cursor[i].line;
-                        char * pixel_start = (char*)this->data.data + ((yy+y)*this->data.width+x+xx)*3;
+                        char * pixel_start = (char*)this->drawable.data + ((yy+y)*this->drawable.width+x+xx)*3;
                         memcpy(psave, pixel_start, lg);
                         psave += lg;
                         memcpy(pixel_start, line, lg);
@@ -383,9 +384,9 @@ class StaticCapture : public Drawable
                 strncpy(this->previous_timestamp, rawdate, 19);
                 uint8_t * tsave = timestamp_save;
                 for (size_t y = 0; y < ts_height ; ++y){
-                    memcpy(tsave, (char*)this->data.data+y * this->data.width * 3, ts_width*3);
+                    memcpy(tsave, (char*)this->drawable.data+y * this->drawable.width * 3, ts_width*3);
                     tsave += ts_width*3;
-                    memcpy((char*)this->data.data + y * this->data.width * 3,
+                    memcpy((char*)this->drawable.data + y * this->drawable.width * 3,
                             this->timestamp_data + y*ts_width*3, ts_width*3);
                 }
             }
@@ -395,15 +396,15 @@ class StaticCapture : public Drawable
             // Time to restore mouse/timestamp for the next frame (otherwise it piles up)
             if (!pointer_already_displayed){
                 if ((x > 0)
-                        && (x < this->data.width - 12)
+                        && (x < this->drawable.width - 12)
                         && (y > 0)
-                        && (y < this->data.height - mouse_height)){
+                        && (y < this->drawable.height - mouse_height)){
                     uint8_t * psave = mouse_save;
                     for (size_t i = 0 ; i < 20 ; i++){
                         unsigned yy = mouse_cursor[i].y;
                         unsigned xx = mouse_cursor[i].x;
                         unsigned lg = mouse_cursor[i].lg;
-                        char * pixel_start = (char*)this->data.data + ((yy+y)*this->data.width+x+xx)*3;
+                        char * pixel_start = (char*)this->drawable.data + ((yy+y)*this->drawable.width+x+xx)*3;
                         memcpy(pixel_start, psave, lg);
                         psave += lg;
                     }
@@ -412,7 +413,7 @@ class StaticCapture : public Drawable
             if (!no_timestamp){
                 uint8_t * tsave = timestamp_save;
                 for (size_t y = 0; y < ts_height ; ++y){
-                    memcpy((char*)this->data.data+y * this->data.width * 3, tsave, ts_width*3);
+                    memcpy((char*)this->drawable.data+y * this->drawable.width * 3, tsave, ts_width*3);
                     tsave += ts_width*3;
                 }
             }
@@ -432,12 +433,12 @@ class StaticCapture : public Drawable
 //        LOG(LOG_INFO, "Dumping to file %s", rawImagePath);
         FILE * fd = fopen(rawImageMetaPath, "w");
         if (fd) {
-           fprintf(fd, "%d,%d,%s\n", this->data.width, this->data.height, this->previous_timestamp);
+           fprintf(fd, "%d,%d,%s\n", this->drawable.width, this->drawable.height, this->previous_timestamp);
         }
         fclose(fd);
         fd = fopen(rawImagePath, "w");
         if (fd) {
-            ::dump_png24(fd, this->data.data, this->data.width, this->data.height, this->data.rowsize);
+            ::dump_png24(fd, this->drawable.data, this->drawable.width, this->drawable.height, this->drawable.rowsize);
         }
         fclose(fd);
     }
