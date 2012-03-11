@@ -258,9 +258,10 @@ struct rdp_orders {
                         assert((this->memblt.cache_id >> 4) < 6);
                         struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xF][this->memblt.cache_idx];
                         if (bitmap) {
-                            mod->gd.mem_blt(
-                                this->memblt,
+                            mod->gd.bitmap_update(
                                 *bitmap,
+                                this->memblt.rect, 
+                                this->memblt.srcx, this->memblt.srcy, this->memblt.rop,
                                 this->cache_colormap[this->memblt.cache_id >> 4],
                                 cmd_clip);
                         }
@@ -3259,7 +3260,7 @@ struct mod_rdp : public client_mod {
                         final_size, bitmap.bmp_size(bpp), width, height, bpp);
                 }
 
-                mod->gd.bitmap_update(bitmap, boundary, 0, 0, this->orders.global_palette, boundary);
+                mod->gd.bitmap_update(bitmap, boundary, 0, 0, 0xCC, this->orders.global_palette, boundary);
             }
             else {
                 const uint8_t * data = stream.in_uint8p(bufsize);
@@ -3271,7 +3272,7 @@ struct mod_rdp : public client_mod {
                         bufsize, bitmap.bmp_size(bpp), width, height, bpp);
                 }
 
-                mod->gd.bitmap_update(bitmap, boundary, 0, 0, this->orders.global_palette, boundary);
+                mod->gd.bitmap_update(bitmap, boundary, 0, 0, 0xCC, this->orders.global_palette, boundary);
             }
         }
         mod->gd.server_end_update();

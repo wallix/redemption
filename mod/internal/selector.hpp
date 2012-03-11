@@ -3796,31 +3796,31 @@ struct selector_mod : public internal_mod {
         }
 
         if (this->focus_item == FOCUS_ON_FIRSTPAGE){
-            this->gd.bitmap_update(*this->first_page, this->rect_button_first, 0, 0, palette, clip);
+            this->gd.bitmap_update(*this->first_page, this->rect_button_first, 0, 0, 0xCC, palette, clip);
         }
         else {
-            this->gd.bitmap_update(*this->first_page_inactive, this->rect_button_first, 0, 0, palette, clip);
+            this->gd.bitmap_update(*this->first_page_inactive, this->rect_button_first, 0, 0,  0xCC, palette, clip);
         }
 
         if (this->focus_item == FOCUS_ON_PREVPAGE){
-            this->gd.bitmap_update(*this->prec_page, this->rect_button_prec, 0, 0, palette, clip);
+            this->gd.bitmap_update(*this->prec_page, this->rect_button_prec, 0, 0,  0xCC, palette, clip);
         }
         else {
-            this->gd.bitmap_update(*this->prec_page_inactive, this->rect_button_prec, 0, 0, palette, clip);
+            this->gd.bitmap_update(*this->prec_page_inactive, this->rect_button_prec, 0, 0,  0xCC, palette, clip);
         }
 
         if (this->focus_item == FOCUS_ON_NEXTPAGE){
-            this->gd.bitmap_update(*this->next_page, this->rect_button_next, 0, 0, palette, clip);
+            this->gd.bitmap_update(*this->next_page, this->rect_button_next, 0, 0,  0xCC, palette, clip);
         }
         else {
-            this->gd.bitmap_update(*this->next_page_inactive, this->rect_button_next, 0, 0, palette, clip);
+            this->gd.bitmap_update(*this->next_page_inactive, this->rect_button_next, 0, 0,  0xCC, palette, clip);
         }
 
         if (this->focus_item == FOCUS_ON_LASTPAGE){
-            this->gd.bitmap_update(*this->last_page, this->rect_button_last, 0, 0, palette, clip);
+            this->gd.bitmap_update(*this->last_page, this->rect_button_last, 0, 0,  0xCC, palette, clip);
         }
         else {
-            this->gd.bitmap_update(*this->last_page_inactive, this->rect_button_last, 0, 0, palette, clip);
+            this->gd.bitmap_update(*this->last_page_inactive, this->rect_button_last, 0, 0,  0xCC, palette, clip);
         }
 
         char buffer[256];
@@ -3839,24 +3839,24 @@ struct selector_mod : public internal_mod {
     void draw_buttons(const Rect & clip){
         BGRPalette palette;
         if (this->focus_item == FOCUS_ON_LOGOUT){
-            this->gd.bitmap_update(*this->logout_active, this->rect_button_logout, 0, 0, palette, clip);
+            this->gd.bitmap_update(*this->logout_active, this->rect_button_logout, 0, 0, 0xCC, palette, clip);
         }
         else {
-            this->gd.bitmap_update(*this->logout_inactive, this->rect_button_logout, 0, 0, palette, clip);
+            this->gd.bitmap_update(*this->logout_inactive, this->rect_button_logout, 0, 0, 0xCC, palette, clip);
         }
 
         if (this->focus_item == FOCUS_ON_APPLY){
-            this->gd.bitmap_update(*this->apply_active, this->rect_button_apply, 0, 0, palette, clip);
+            this->gd.bitmap_update(*this->apply_active, this->rect_button_apply, 0, 0, 0xCC, palette, clip);
         }
         else {
-            this->gd.bitmap_update(*this->apply_inactive, this->rect_button_apply, 0, 0, palette, clip);
+            this->gd.bitmap_update(*this->apply_inactive, this->rect_button_apply, 0, 0, 0xCC, palette, clip);
         }
 
         if (this->focus_item == FOCUS_ON_CONNECT){
-            this->gd.bitmap_update(*this->connect_active, this->rect_button_connect, 0, 0, palette, clip);
+            this->gd.bitmap_update(*this->connect_active, this->rect_button_connect, 0, 0, 0xCC, palette, clip);
         }
         else {
-            this->gd.bitmap_update(*this->connect_inactive, this->rect_button_connect, 0, 0, palette, clip);
+            this->gd.bitmap_update(*this->connect_inactive, this->rect_button_connect, 0, 0, 0xCC, palette, clip);
         }
 
     }

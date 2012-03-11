@@ -344,7 +344,7 @@ void widget_image::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, intersection);
 
     for (size_t ir = 0; ir < region.rects.size(); ir++){
-        this->mod->gd.bitmap_update(this->bmp, image_screen_rect, 0, 0, palette, region.rects[ir]);
+        this->mod->gd.bitmap_update(this->bmp, image_screen_rect, 0, 0, 0xCC, palette, region.rects[ir]);
     }
 }
 

@@ -21,8 +21,8 @@
    module object. Some kind of interface between core and modules
 
 */
-#if !defined(__MOD_HPP__)
-#define __MOD_HPP__
+#if !defined(__CLIENT_MOD_HPP__)
+#define __CLIENT_MOD_HPP__
 
 #include <string.h>
 #include <stdio.h>
@@ -402,16 +402,13 @@ struct GraphicDeviceMod : public GraphicDevice
         }
     }
 
-    TODO(" we should replace mem_blt below by draw")
     virtual void draw(const RDPMemBlt & memblt, const Rect & clip){
     }
 
-    virtual void mem_blt(const RDPMemBlt & memblt, Bitmap & bitmap, const BGRPalette & palette, const Rect & clip)
+    virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const uint8_t rop, const BGRPalette & palette, const Rect & clip)
     {
-        uint8_t palette_id = ((memblt.cache_id >> 4) >= 6)?0:(memblt.cache_id >> 4);
-
+        const uint8_t palette_id = 0;
         if (this->get_front_bpp() == 8){
-            TODO(" there may be some performance issue when client is 8 bits  palette is sent way too often")
             this->palette_sent = false;
             this->send_global_palette();
             if (!this->palette_memblt_sent[palette_id]) {
@@ -421,14 +418,10 @@ struct GraphicDeviceMod : public GraphicDevice
             this->palette_sent = false;
         }
 
-        const Rect & dst = memblt.rect;
-        const int srcx = memblt.srcx;
-        const int srcy = memblt.srcy;
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
         const Rect src_r(srcx, srcy, width, height);
         const uint8_t * src_data = bitmap.data_co(this->get_front_bpp());
-        const uint8_t rop = memblt.rop;
 
         for (int y = 0; y < dst.cy ; y += 32) {
             int cy = std::min(32, dst.cy - y);
@@ -436,9 +429,12 @@ struct GraphicDeviceMod : public GraphicDevice
                 int cx = std::min(32, dst.cx - x);
                 const Rect tile(x, y, cx, cy);
                 TODO(" simplify this code and add unit tests. It is much too complicated and that introduce subtile bugs")
+//                LOG(LOG_INFO, "tile at dst = tile(%u, %u %u, %u) dst(%u, %u) src(%u, %u, %u, %u) clip(%u, %u, %u, %u)",
+//                    tile.x, tile.y, tile.cx, tile.cy, dst.x, dst.y, src_r.x, src_r.y, src_r.cx, src_r.cy,
+//                    clip.x, clip.y, clip.cx, clip.cy);
                 if (!clip.intersect(tile.offset(dst.x, dst.y)).isempty()
                 && (src_r.cx > src_r.x + x)
-                && (src_r.cy > src_r.y + y)){
+                && (src_r.cy > src_r.y + y)) {
                     TODO(" transmit a bitmap to add_bitmap instead of individual components")
                      uint32_t cache_ref = this->front.bmp_cache->add_bitmap(
                                                 src_r.cx, src_r.cy,
@@ -455,11 +451,9 @@ struct GraphicDeviceMod : public GraphicDevice
                     if (send_type == BITMAP_ADDED_TO_CACHE){
                         RDPBmpCache cmd(this->get_front_bpp(), pbmp, cache_id, cache_idx);
                         this->front.orders->draw(cmd);
-
                     }
 
                     const RDPMemBlt cmd(cache_id + palette_id*16, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
-//                    cmd.log(LOG_INFO, clip);
 
                     if (!clip.isempty()
                     && !clip.intersect(cmd.rect).isempty()){
@@ -542,68 +536,6 @@ struct GraphicDeviceMod : public GraphicDevice
         this->front.orders->draw(cmd);
     }
 
-    virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const BGRPalette & palette, const Rect & clip)
-    {
-        const uint8_t palette_id = 0;
-        if (this->get_front_bpp() == 8){
-            this->palette_sent = false;
-            this->send_global_palette();
-            if (!this->palette_memblt_sent[palette_id]) {
-                this->color_cache(palette, palette_id);
-                this->palette_memblt_sent[palette_id] = true;
-            }
-            this->palette_sent = false;
-        }
-
-
-        const uint16_t width = bitmap.cx;
-        const uint16_t height = bitmap.cy;
-        const Rect src_r(srcx, srcy, width, height);
-        const uint8_t * src_data = bitmap.data_co(this->get_front_bpp());
-        const uint8_t rop = 0xCC;
-
-        for (int y = 0; y < dst.cy ; y += 32) {
-            int cy = std::min(32, dst.cy - y);
-            for (int x = 0; x < dst.cx ; x += 32) {
-                int cx = std::min(32, dst.cx - x);
-                const Rect tile(x, y, cx, cy);
-                TODO(" simplify this code and add unit tests. It is much too complicated and that introduce subtile bugs")
-//                LOG(LOG_INFO, "tile at dst = tile(%u, %u %u, %u) dst(%u, %u) src(%u, %u, %u, %u) clip(%u, %u, %u, %u)",
-//                    tile.x, tile.y, tile.cx, tile.cy, dst.x, dst.y, src_r.x, src_r.y, src_r.cx, src_r.cy,
-//                    clip.x, clip.y, clip.cx, clip.cy);
-                if (!clip.intersect(tile.offset(dst.x, dst.y)).isempty()
-                && (src_r.cx > src_r.x + x)
-                && (src_r.cy > src_r.y + y)) {
-                     uint32_t cache_ref = this->front.bmp_cache->add_bitmap(
-                                                src_r.cx, src_r.cy,
-                                                src_data,
-                                                tile.offset(src_r.x, src_r.y),
-                                                this->get_front_bpp(),
-                                                bitmap.original_palette);
-
-                    uint8_t send_type = (cache_ref >> 24);
-                    uint8_t cache_id  = (cache_ref >> 16);
-                    uint16_t cache_idx = (cache_ref & 0xFFFF);
-
-                    Bitmap * pbmp =  this->front.bmp_cache->get(cache_id, cache_idx);
-                    if (send_type == BITMAP_ADDED_TO_CACHE){
-                        RDPBmpCache cmd(this->get_front_bpp(), pbmp, cache_id, cache_idx);
-                        this->front.orders->draw(cmd);
-                    }
-
-                    const RDPMemBlt cmd(cache_id + palette_id*16, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
-
-                    if (!clip.isempty()
-                    && !clip.intersect(cmd.rect).isempty()){
-                        this->front.orders->draw(cmd, clip, *pbmp);
-                        if (this->capture){
-                            this->capture->mem_blt(cmd, clip, *pbmp);
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     virtual void set_pointer(int cache_idx)
     {
