@@ -56,11 +56,7 @@ struct Bitmap {
 TODO(" at some point in the future drawable and Bitmap may be merged together not really sure for now  as Bitmap object also perform conversions between color depths  hence maybe the current bitmap object should handle several Drawables  one for each color depth. However it looks like if a large part of bitmap code could move to Drawable. Or maybe they just have some common shared abstraction.")
 
     public:
-    // data_co is allocated on demand
-    uint8_t *data_co24;
-    uint8_t *data_co16;
-    uint8_t *data_co15;
-    uint8_t *data_co8;
+    uint8_t *data_bitmap;
 
     int original_bpp;
     BGRPalette original_palette;
@@ -76,7 +72,7 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
     TODO("there is way too many constructors  doing things much too complicated. We should split that in two stages. First prepare minimal context for bitmap but keep a flag or something to mark it as non ready  then load actual data into bitmap.")
 
     Bitmap(int bpp, const BGRPalette * palette, unsigned cx, unsigned cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
-        : data_co24(0), data_co16(0), data_co15(0), data_co8(0),
+        : data_bitmap(0),
           original_bpp(bpp), cx(cx), cy(cy),
           crc(0), crc_computed(false)
     {
@@ -89,7 +85,7 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
                 init_palette332(this->original_palette);
             }
         }
-        this->set_data_co(bpp);
+        this->set_data_bitmap(this->original_bpp);
 
         if (compressed) {
             this->decompress(bpp, data, size);
@@ -97,7 +93,7 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
             this->copy_upsidedown(bpp, data, cx);
         } else {
             assert(size == this->bmp_size(bpp));
-            memcpy(this->data_co(bpp), data, size);
+            memcpy(this->data_bitmap, data, size);
         }
         if (this->cx <= 0 || this->cy <= 0){
             LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u size=%u bpp=%u", this->cx, this->cy, size, this->original_bpp);
@@ -106,7 +102,7 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
 
 
     Bitmap(int bpp, BGRPalette * palette, const Rect & r, int src_cx, int src_cy, const uint8_t * src_data)
-        : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(bpp),
+        : data_bitmap(0), original_bpp(bpp),
         cx(0), cy(0), crc(0), crc_computed(false)
     {
 //        LOG(LOG_ERR, "Creating bitmap (2) src_cx=%u src_cy=%u cx=%u cy=%u bpp=%u r(%u, %u, %u, %u)", src_cx, src_cy, cx, cy, bpp, r.x, r.y, r.cx, r.cy);
@@ -131,13 +127,12 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
         unsigned cy = std::min(r.cy, src_cy - r.y);
         this->cy = cy;
 
-        // Important and only once
-        this->set_data_co(bpp);
+        this->set_data_bitmap(this->original_bpp);
 
         TODO(" We could reserve statical space for caches thus avoiding many memory allocation. RDP sets maximum size for cache items anyway and we MUST check this size is never larger than allowed.")
 
         TODO(" case 32 bits is (certainly) not working")
-        uint8_t *d8 = this->data_co(bpp);
+        uint8_t *d8 = this->data_bitmap;
         unsigned src_row_size = row_size(src_cx, bpp);
         unsigned int width = cx * nbbytes(bpp);
 
@@ -161,7 +156,7 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
 
 
     Bitmap(const char* filename)
-        : data_co24(0), data_co16(0), data_co15(0), data_co8(0), original_bpp(0),
+        : data_bitmap(0), original_bpp(24),
         cx(0), cy(0), crc(0), crc_computed(false)
     {
         LOG(LOG_INFO, "loading bitmap %s", filename);
@@ -320,9 +315,8 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
         close(fd); // from now on all is in memory
         stream.end = stream.data + size;
 
-        this->original_bpp = 24;
-        this->set_data_co(this->original_bpp);
-        uint8_t * dest = this->data_co(this->original_bpp);
+        this->set_data_bitmap(this->original_bpp);
+        uint8_t * dest = this->data_bitmap;
         const uint8_t nbbytes_dest = ::nbbytes(this->original_bpp);
         row_size = this->line_size(this->original_bpp);
 
@@ -364,16 +358,16 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
     void dump(int bpp){
         LOG(LOG_INFO, "------- Dumping bitmap RAW data [%p]---------\n", this);
         LOG(LOG_INFO, "cx=%d cy=%d bpp=%d BPP=%d line_size=%d bmp_size=%d data=%p \n",
-            this->cx, this->cy, bpp, nbbytes(bpp), this->line_size(bpp), this->bmp_size(bpp), this->data_co(bpp));
+            this->cx, this->cy, bpp, nbbytes(bpp), this->line_size(bpp), this->bmp_size(bpp), this->data_bitmap);
         assert(bpp);
         assert(this->line_size(bpp));
         assert(this->cx);
         assert(this->cy);
-        assert(this->data_co(bpp));
+        assert(this->data_bitmap);
         assert(this->bmp_size(bpp));
 
         LOG(LOG_INFO, "uint8_t raw%p[] = {", this);
-        uint8_t * data = this->data_co(bpp);
+        uint8_t * data = this->data_bitmap;
 
         for (size_t j = 0 ; j < this->cy ; j++){
             LOG(LOG_INFO, "/* line %d */", (this->cy - j - 1));
@@ -398,26 +392,11 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
 //        LOG(LOG_INFO, "\n-----End of dump [%p] -----------------------\n", this);
     }
 
-    bool isset_bpp(int bpp) {
-        switch(bpp) {
-            case 24:
-                return this->data_co24 != 0;
-            case 16:
-                return this->data_co16 != 0;
-            case 15:
-                return this->data_co15 != 0;
-            case 8:
-                return this->data_co8  != 0;
-            default:
-                return false;
-        }
-    }
-
     void copy_upsidedown(int bpp, const uint8_t* input, uint16_t cx)
     {
         TODO(" without this evil alnment we are expirimenting problems with VNC bitmaps  but there should be a better fix.")
         this->cx = align4(cx);
-        uint8_t * d8 = this->data_co(bpp) + (this->cy-1) * this->line_size(bpp);
+        uint8_t * d8 = this->data_bitmap + (this->cy-1) * this->line_size(bpp);
         const uint8_t * s8 = input;
         uint32_t src_width = cx * nbbytes(bpp);
 
@@ -780,7 +759,7 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
 //        printf("Decompressing bitmap done\n");
 //        printf("============================================\n");
 
-        uint8_t* pmin = this->data_co(bpp);
+        uint8_t* pmin = this->data_bitmap;
         uint8_t* pmax = pmin + this->bmp_size(bpp);
         unsigned yprev = 0;
         uint8_t* out = pmin;
@@ -1243,7 +1222,7 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
         const uint8_t Bpp = nbbytes(bpp);
         uint8_t * oldp = 0;
 //        LOG(LOG_INFO, "compressing bitmap from %u to %u", this->original_bpp, bpp);
-        uint8_t * pmin = this->data_co(bpp);
+        uint8_t * pmin = this->data_bitmap;
         uint8_t * p = pmin;
 
         // white with the right length : either 0xFF or 0xFFFF or 0xFFFFFF
@@ -1460,7 +1439,7 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
         uint8_t Bpp = nbbytes(this->original_bpp);
         unsigned crc = crc_seed;
         unsigned width = this->cx * Bpp;
-        const uint8_t *s8 = this->data_co(this->original_bpp);
+        const uint8_t *s8 = this->data_bitmap;
         for (unsigned i = 0; i < this->cy; i++) {
             for (unsigned j = 0; j < width ; j++) {
                 crc = crc_table[(crc ^ *s8++) & 0xff] ^ (crc >> 8);
@@ -1473,56 +1452,16 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
     }
 
     ~Bitmap(){
-        if (this->data_co24){
-            memset(this->data_co24, -1, this->bmp_size(24));
-            free(this->data_co24);
-        }
-        if (this->data_co16){
-            memset(this->data_co16, -1, this->bmp_size(16));
-            free(this->data_co16);
-        }
-        if (this->data_co15){
-            memset(this->data_co15, -1, this->bmp_size(15));
-            free(this->data_co15);
-        }
-        if (this->data_co8){
-            memset(this->data_co8, -1, this->bmp_size(8));
-            free(this->data_co8);
-        }
-        this->data_co8 = this->data_co24 = this->data_co15 = this->data_co16 = 0;
+        free(this->data_bitmap);
+        this->data_bitmap = 0;
         this->cx = 0;
         this->cy = 0;
         this->original_bpp = 0;
     }
 
-    uint8_t * data_co(const int bpp) {
-        uint8_t * dest = 0;
-        switch (bpp) {
-            case 24:
-                dest = this->data_co24;
-                break;
-            case 16:
-                dest = this->data_co16;
-                break;
-            case 15:
-                dest = this->data_co15;
-                break;
-            case 8:
-                dest = this->data_co8;
-                break;
-            default:
-                throw Error(ERR_BITMAP_UNSUPPORTED_COLOR_DEPTH);
-        }
-        if (!dest) {
-            dest = set_data_co(bpp);
-            convert_data_co(bpp, dest);
-        }
-        return dest;
-    }
+    void convert_data_bitmap(int out_bpp, uint8_t * dest) {
 
-    void convert_data_co(int out_bpp, uint8_t * dest) {
-
-        uint8_t * src = data_co(this->original_bpp);
+        uint8_t * src = this->data_bitmap;
 
         TODO(" code below looks time consuming (applies to every pixels) and should probably be optimized")
         // Color decode/encode
@@ -1545,30 +1484,17 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
                 }
                 pixel = color_encode(pixel, out_bpp);
             }
-
             out_bytes_le(dest, dest_nbbytes, pixel);
             src += src_nbbytes;
             dest += dest_nbbytes;
         }
     }
 
-    // Initialize room for data_coXX.
-    uint8_t * set_data_co(int bpp)
+    // Initialize room for data_bitmap
+    uint8_t * set_data_bitmap(int bpp)
     {
         size_t size = this->bmp_size(bpp);
-        switch (bpp) {
-            case 24:
-                return this->data_co24 = (uint8_t*)malloc(size);
-            case 16:
-                return this->data_co16 = (uint8_t*)malloc(size);
-            case 15:
-                return this->data_co15 = (uint8_t*)malloc(size);
-            case 8:
-                return this->data_co8  = (uint8_t*)malloc(size);
-            default:
-                throw Error(ERR_BITMAP_UNSUPPORTED_COLOR_DEPTH);
-        }
-        return (uint8_t *)0;
+        return this->data_bitmap  = (uint8_t*)malloc(size);
     }
 
     size_t line_size(const int bpp) const {

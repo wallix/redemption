@@ -426,7 +426,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
                 const uint16_t srcy = cmd.srcy;
                 const uint16_t cache_idx = cmd.cache_idx;
                 Bitmap * bmp = this->cache.bmp.get(cache_id, cache_idx);
-                const uint8_t * const bmp_data = bmp->data_co(this->bpp);
+                const uint8_t * const bmp_data = bmp->data_bitmap;
                 BOOST_CHECK(true);
 
                 // Where we draw -> target

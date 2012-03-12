@@ -421,7 +421,7 @@ struct GraphicDeviceMod : public GraphicDevice
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
         const Rect src_r(srcx, srcy, width, height);
-        const uint8_t * src_data = bitmap.data_co(this->get_front_bpp());
+        const uint8_t * src_data = bitmap.data_bitmap;
 
         for (int y = 0; y < dst.cy ; y += 32) {
             int cy = std::min(32, dst.cy - y);

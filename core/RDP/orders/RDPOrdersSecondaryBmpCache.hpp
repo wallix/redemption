@@ -732,10 +732,10 @@ class RDPBmpCache {
         for (size_t y = 0 ; y < this->bmp->cy; y++) {
 //            char buffer[1024] = {};
 //            for (int xx=0; xx < row_size ; xx++){
-//                snprintf(buffer+3*xx, 1024-3*xx, "%.2x ", this->bmp->data_co(this->bpp)[y * row_size + xx*3]);
+//                snprintf(buffer+3*xx, 1024-3*xx, "%.2x ", this->bmp->data_bitmap[y * row_size + xx*3]);
 //            }
 //            LOG(LOG_INFO, "%s", buffer);
-            stream.out_copy_bytes(this->bmp->data_co(this->bpp) + y * row_size, row_size);
+            stream.out_copy_bytes(this->bmp->data_bitmap + y * row_size, row_size);
         }
     }
 
@@ -961,7 +961,7 @@ class RDPBmpCache {
         //                              2.2.9.1.1.3.1.2.2).
 
         // for uncompressed bitmaps the format is quite simple
-        stream.out_copy_bytes(this->bmp->data_co(this->bpp), this->bmp->cy * row_size);
+        stream.out_copy_bytes(this->bmp->data_bitmap, this->bmp->cy * row_size);
         stream.set_length(-12, length_ptr);
     }
 

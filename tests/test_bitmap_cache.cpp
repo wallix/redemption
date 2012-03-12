@@ -221,11 +221,10 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     // width is padded to next multiple of 4 for rdesktop compatibility
     BOOST_CHECK_EQUAL(12, pbmp->cx);
     BOOST_CHECK_EQUAL(10, pbmp->cy);
-    BOOST_CHECK(pbmp->isset_bpp(24));
 
-    BOOST_CHECK_EQUAL(0, pbmp->data_co(24)[0]);
-    BOOST_CHECK_EQUAL(0, pbmp->data_co(24)[1]);
-    BOOST_CHECK_EQUAL(0xFF, pbmp->data_co(24)[2]);
+    BOOST_CHECK_EQUAL(0, pbmp->data_bitmap[0]);
+    BOOST_CHECK_EQUAL(0, pbmp->data_bitmap[1]);
+    BOOST_CHECK_EQUAL(0xFF, pbmp->data_bitmap[2]);
 
     // Check first pixel
     // -----------------
@@ -240,39 +239,39 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     // RrrRrrRrrRrrRrrGggGggGggGggGgg......
     // RrrRrrRrrRrrRrrGggGggGggGggGgg......
 
-    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_co(24)[0]+(pbmp->data_co(24)[1]<<8)+(pbmp->data_co(24)[2]<<16));
-    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_co(24)[3]+(pbmp->data_co(24)[4]<<8)+(pbmp->data_co(24)[5]<<16));
-    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_co(24)[6]+(pbmp->data_co(24)[7]<<8)+(pbmp->data_co(24)[8]<<16));
-    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_co(24)[9]+(pbmp->data_co(24)[10]<<8)+(pbmp->data_co(24)[11]<<16));
-    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_co(24)[12]+(pbmp->data_co(24)[13]<<8)+(pbmp->data_co(24)[14]<<16));
+    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_bitmap[0]+(pbmp->data_bitmap[1]<<8)+(pbmp->data_bitmap[2]<<16));
+    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_bitmap[3]+(pbmp->data_bitmap[4]<<8)+(pbmp->data_bitmap[5]<<16));
+    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_bitmap[6]+(pbmp->data_bitmap[7]<<8)+(pbmp->data_bitmap[8]<<16));
+    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_bitmap[9]+(pbmp->data_bitmap[10]<<8)+(pbmp->data_bitmap[11]<<16));
+    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_bitmap[12]+(pbmp->data_bitmap[13]<<8)+(pbmp->data_bitmap[14]<<16));
 
-    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_co(24)[15]+(pbmp->data_co(24)[16]<<8)+(pbmp->data_co(24)[17]<<16));
-    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_co(24)[18]+(pbmp->data_co(24)[19]<<8)+(pbmp->data_co(24)[20]<<16));
-    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_co(24)[21]+(pbmp->data_co(24)[22]<<8)+(pbmp->data_co(24)[23]<<16));
-    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_co(24)[24]+(pbmp->data_co(24)[25]<<8)+(pbmp->data_co(24)[26]<<16));
-    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_co(24)[27]+(pbmp->data_co(24)[28]<<8)+(pbmp->data_co(24)[29]<<16));
+    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_bitmap[15]+(pbmp->data_bitmap[16]<<8)+(pbmp->data_bitmap[17]<<16));
+    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_bitmap[18]+(pbmp->data_bitmap[19]<<8)+(pbmp->data_bitmap[20]<<16));
+    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_bitmap[21]+(pbmp->data_bitmap[22]<<8)+(pbmp->data_bitmap[23]<<16));
+    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_bitmap[24]+(pbmp->data_bitmap[25]<<8)+(pbmp->data_bitmap[26]<<16));
+    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_bitmap[27]+(pbmp->data_bitmap[28]<<8)+(pbmp->data_bitmap[29]<<16));
 
     // padded with 2 black pixels
-    BOOST_CHECK_EQUAL(0, pbmp->data_co(24)[30]+(pbmp->data_co(24)[31]<<8)+(pbmp->data_co(24)[32]<<16));
-    BOOST_CHECK_EQUAL(0, pbmp->data_co(24)[33]+(pbmp->data_co(24)[34]<<8)+(pbmp->data_co(24)[35]<<16));
+    BOOST_CHECK_EQUAL(0, pbmp->data_bitmap[30]+(pbmp->data_bitmap[31]<<8)+(pbmp->data_bitmap[32]<<16));
+    BOOST_CHECK_EQUAL(0, pbmp->data_bitmap[33]+(pbmp->data_bitmap[34]<<8)+(pbmp->data_bitmap[35]<<16));
 
 
     int row_size = 36;
-    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_co(24)[row_size+0]+(pbmp->data_co(24)[row_size+1]<<8)+(pbmp->data_co(24)[row_size+2]<<16));
-    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_co(24)[row_size+3]+(pbmp->data_co(24)[row_size+4]<<8)+(pbmp->data_co(24)[row_size+5]<<16));
-    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_co(24)[row_size+6]+(pbmp->data_co(24)[row_size+7]<<8)+(pbmp->data_co(24)[row_size+8]<<16));
-    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_co(24)[row_size+9]+(pbmp->data_co(24)[row_size+10]<<8)+(pbmp->data_co(24)[row_size+11]<<16));
-    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_co(24)[row_size+12]+(pbmp->data_co(24)[row_size+13]<<8)+(pbmp->data_co(24)[row_size+14]<<16));
+    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_bitmap[row_size+0]+(pbmp->data_bitmap[row_size+1]<<8)+(pbmp->data_bitmap[row_size+2]<<16));
+    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_bitmap[row_size+3]+(pbmp->data_bitmap[row_size+4]<<8)+(pbmp->data_bitmap[row_size+5]<<16));
+    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_bitmap[row_size+6]+(pbmp->data_bitmap[row_size+7]<<8)+(pbmp->data_bitmap[row_size+8]<<16));
+    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_bitmap[row_size+9]+(pbmp->data_bitmap[row_size+10]<<8)+(pbmp->data_bitmap[row_size+11]<<16));
+    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_bitmap[row_size+12]+(pbmp->data_bitmap[row_size+13]<<8)+(pbmp->data_bitmap[row_size+14]<<16));
 
-    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_co(24)[row_size+15]+(pbmp->data_co(24)[row_size+16]<<8)+(pbmp->data_co(24)[row_size+17]<<16));
-    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_co(24)[row_size+18]+(pbmp->data_co(24)[row_size+19]<<8)+(pbmp->data_co(24)[row_size+20]<<16));
-    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_co(24)[row_size+21]+(pbmp->data_co(24)[row_size+22]<<8)+(pbmp->data_co(24)[row_size+23]<<16));
-    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_co(24)[row_size+24]+(pbmp->data_co(24)[row_size+25]<<8)+(pbmp->data_co(24)[row_size+26]<<16));
-    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_co(24)[row_size+27]+(pbmp->data_co(24)[row_size+28]<<8)+(pbmp->data_co(24)[row_size+29]<<16));
+    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_bitmap[row_size+15]+(pbmp->data_bitmap[row_size+16]<<8)+(pbmp->data_bitmap[row_size+17]<<16));
+    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_bitmap[row_size+18]+(pbmp->data_bitmap[row_size+19]<<8)+(pbmp->data_bitmap[row_size+20]<<16));
+    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_bitmap[row_size+21]+(pbmp->data_bitmap[row_size+22]<<8)+(pbmp->data_bitmap[row_size+23]<<16));
+    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_bitmap[row_size+24]+(pbmp->data_bitmap[row_size+25]<<8)+(pbmp->data_bitmap[row_size+26]<<16));
+    BOOST_CHECK_EQUAL(0xFF00, pbmp->data_bitmap[row_size+27]+(pbmp->data_bitmap[row_size+28]<<8)+(pbmp->data_bitmap[row_size+29]<<16));
 
     // padded with 2 black pixels
-    BOOST_CHECK_EQUAL(0, pbmp->data_co(24)[row_size+30]+(pbmp->data_co(24)[row_size+31]<<8)+(pbmp->data_co(24)[row_size+32]<<16));
-    BOOST_CHECK_EQUAL(0, pbmp->data_co(24)[row_size+33]+(pbmp->data_co(24)[row_size+34]<<8)+(pbmp->data_co(24)[row_size+35]<<16));
+    BOOST_CHECK_EQUAL(0, pbmp->data_bitmap[row_size+30]+(pbmp->data_bitmap[row_size+31]<<8)+(pbmp->data_bitmap[row_size+32]<<16));
+    BOOST_CHECK_EQUAL(0, pbmp->data_bitmap[row_size+33]+(pbmp->data_bitmap[row_size+34]<<8)+(pbmp->data_bitmap[row_size+35]<<16));
 
     // Check pixel at coordinates (5,4)
     // --------------------------------
@@ -287,16 +286,16 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
     // RrrRrrRrrRrrRrrGggGggGggGggGgg......
     // RrrRrrRrrRrrRrrGggGggGggGggGgg......
 
-    BOOST_CHECK_EQUAL(0x00FF00, pbmp->data_co(24)[row_size*4+5*3]+(pbmp->data_co(24)[row_size*4+5*3+1]<<8)+(pbmp->data_co(24)[row_size*4+5*3+2]<<16));
+    BOOST_CHECK_EQUAL(0x00FF00, pbmp->data_bitmap[row_size*4+5*3]+(pbmp->data_bitmap[row_size*4+5*3+1]<<8)+(pbmp->data_bitmap[row_size*4+5*3+2]<<16));
 
     // Check Padding at end of line 3
     // ------------------------------
-    BOOST_CHECK_EQUAL(0, pbmp->data_co(24)[row_size*3-6]);
-    BOOST_CHECK_EQUAL(0, pbmp->data_co(24)[row_size*3-3]);
+    BOOST_CHECK_EQUAL(0, pbmp->data_bitmap[row_size*3-6]);
+    BOOST_CHECK_EQUAL(0, pbmp->data_bitmap[row_size*3-3]);
 
     // Now beginning of line 4
     // -----------------------
-    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_co(24)[row_size*3]+(pbmp->data_co(24)[row_size*3+1]<<8)+(pbmp->data_co(24)[row_size*3+2]<<16));
+    BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_bitmap[row_size*3]+(pbmp->data_bitmap[row_size*3+1]<<8)+(pbmp->data_bitmap[row_size*3+2]<<16));
 
     // Check cache id and idx
     // ----------------------
@@ -325,8 +324,8 @@ BOOST_AUTO_TEST_CASE(TestCreateBitmapCache)
 
         Bitmap * pbmp =  cache.get(cache_id, cache_idx);
 
-        BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_co(24)[0]+(pbmp->data_co(24)[1]<<8)+(pbmp->data_co(24)[2]<<16));
-        BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_co(24)[315]+(pbmp->data_co(24)[316]<<8)+(pbmp->data_co(24)[317]<<16));
+        BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_bitmap[0]+(pbmp->data_bitmap[1]<<8)+(pbmp->data_bitmap[2]<<16));
+        BOOST_CHECK_EQUAL(0xFF0000, pbmp->data_bitmap[315]+(pbmp->data_bitmap[316]<<8)+(pbmp->data_bitmap[317]<<16));
         BOOST_CHECK_EQUAL(2, cache_id);
         BOOST_CHECK_EQUAL(1, cache_idx);
         BOOST_CHECK_EQUAL(12, pbmp->cx);
