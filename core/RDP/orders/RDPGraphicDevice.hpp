@@ -387,6 +387,7 @@ struct RDPSerializer : public RDPGraphicDevice
             }
         }
 
+
         RDPMemBlt newcmd = cmd;
         newcmd.cache_id = cache_id;
         newcmd.cache_idx = cache_idx;
@@ -443,14 +444,14 @@ struct RDPSerializer : public RDPGraphicDevice
         }
     }
 
-    virtual void draw(const RDPBmpCache & cmd)
-    {
-        this->reserve_order(cmd.bmp->bmp_size(cmd.bpp) + 16);
-        cmd.emit(this->stream, this->bitmap_cache_version, this->use_bitmap_comp, this->op2);
-        if (this->ini && this->ini->globals.debug.secondary_orders){
-            cmd.log(LOG_INFO);
-        }
-    }
+//    virtual void draw(const RDPBmpCache & cmd)
+//    {
+//        this->reserve_order(cmd.bmp->bmp_size(cmd.bpp) + 16);
+//        cmd.emit(this->stream, this->bitmap_cache_version, this->use_bitmap_comp, this->op2);
+//        if (this->ini && this->ini->globals.debug.secondary_orders){
+//            cmd.log(LOG_INFO);
+//        }
+//    }
 
     virtual void draw(const RDPGlyphCache & cmd)
     {

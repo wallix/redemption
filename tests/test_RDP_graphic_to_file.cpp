@@ -262,52 +262,6 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
 
 }
 
-BOOST_AUTO_TEST_CASE(TestGraphicsToFile_SecondaryOrderCache)
-{
-    Rect screen_rect(0, 0, 800, 600);
-
-    char tmpname[128];
-    {
-        sprintf(tmpname, "/tmp/test_gtf_chunk1XXXXXX");
-        int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
-        OutFileTransport trans(fd);
-        GraphicsToFile gtf(&trans, NULL);
-
-        uint8_t comp64x64RED[] = { 0xc0, 0x30, 0x00, 0x00, 0xFF, 0xf0, 0xc0, 0x0f, };
-        BGRPalette palette332;
-        init_palette332(palette332);
-        Bitmap* bloc64x64 = new Bitmap(24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
-        RDPBmpCache cmd(24, bloc64x64, 1, 10);
-        gtf.draw(cmd);
-        gtf.flush();
-        ::close(fd);
-    }
-
-    {
-        // reread data from file
-        int fd = ::open(tmpname, O_RDONLY);
-        BOOST_CHECK(fd > 0);
-        Stream stream(4096);
-        InFileTransport in_trans(fd);
-        class Consumer : public TestConsumer {
-            struct Cache {
-                class BmpCache bmp;
-            } cache;
-        public:
-            Consumer(const Rect & screen_rect) : TestConsumer(screen_rect){}
-        } consumer(screen_rect);
-
-        RDPUnserializer reader(&in_trans, &consumer, screen_rect);
-        reader.next();
-        // check we have read everything
-        BOOST_CHECK_EQUAL(stream.end - stream.p, 0);
-        ::close(fd);
-    }
-    ::unlink(tmpname);
-
-}
-
-
 BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
 {
     Rect screen_rect(0, 0, 800, 600);
@@ -326,7 +280,6 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
 
         uint8_t comp64x64RED[] = { 0xc0, 0x30, 0x00, 0x00, 0xFF, 0xf0, 0xc0, 0x0f, };
         Bitmap* bloc64x64 = new Bitmap(24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
-        gtf.draw(RDPBmpCache(24, bloc64x64, 1, 10));
         gtf.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect, *bloc64x64);
         gtf.flush();
         ::close(fd);
@@ -397,10 +350,6 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
 
         private:
             virtual void flush() {}
-            virtual void draw(const RDPBmpCache & cmd)
-            {
-                this->cache.bmp.put(cmd.id, cmd.idx, cmd.bmp);
-            }
             virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
             {
                 const Rect trect = clip.intersect(cmd.rect);
@@ -417,16 +366,12 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
                     }
                 }
             }
-            virtual void draw(const RDPMemBlt & cmd, const Rect & clip)
+            virtual void draw(const RDPMemBlt & cmd, const Rect & clip, Bitmap & bmp)
             {
-                BOOST_CHECK(true);
-                const uint8_t cache_id = cmd.cache_id & 0xFF;
                 const Rect & rect = cmd.rect;
                 const uint16_t srcx = cmd.srcx;
                 const uint16_t srcy = cmd.srcy;
-                const uint16_t cache_idx = cmd.cache_idx;
-                Bitmap * bmp = this->cache.bmp.get(cache_id, cache_idx);
-                const uint8_t * const bmp_data = bmp->data_bitmap;
+                const uint8_t * const bmp_data = bmp.data_bitmap;
                 BOOST_CHECK(true);
 
                 // Where we draw -> target
