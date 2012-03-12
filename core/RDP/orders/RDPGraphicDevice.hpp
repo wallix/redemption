@@ -308,7 +308,7 @@ struct RDPSerializer : public RDPGraphicDevice
     // if not send previous orders we got and init a new packet
     void reserve_order(size_t asked_size)
     {
-        if (this->ini && this->ini->globals.debug.primary_orders){
+        if (this->ini && this->ini->globals.debug.primary_orders > 63){
             LOG(LOG_INFO, "GraphicsUpdatePDU::reserve_order[%u](%u) remains=%u", this->order_count, asked_size, std::min(this->stream.capacity, (size_t)4096) - this->stream.get_offset(0));
         }
         size_t max_packet_size = std::min(this->stream.capacity, (size_t)4096);

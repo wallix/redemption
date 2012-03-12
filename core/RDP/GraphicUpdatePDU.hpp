@@ -169,7 +169,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
     virtual void flush()
     {
         if (this->order_count > 0){
-            if (this->ini->globals.debug.primary_orders){
+            if (this->ini->globals.debug.primary_orders > 63){
                 LOG(LOG_INFO, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             }
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);

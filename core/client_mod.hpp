@@ -35,7 +35,7 @@
 #include "cache.hpp"
 #include "front.hpp"
 #include "mainloop.hpp"
-#include "bitmap_cache.hpp"
+#include "bmpcache.hpp"
 #include "wait_obj.hpp"
 #include "keymap.hpp"
 #include "callback.hpp"
@@ -405,7 +405,7 @@ struct GraphicDeviceMod : public GraphicDevice
     virtual void draw(const RDPMemBlt & memblt, const Rect & clip){
     }
 
-    virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const uint8_t rop, const BGRPalette & palette, const Rect & clip)
+    virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, const int srcx, const int srcy, const uint8_t rop, const BGRPalette & palette, const Rect & clip)
     {
         const uint8_t palette_id = 0;
         if (this->get_front_bpp() == 8){
@@ -417,50 +417,91 @@ struct GraphicDeviceMod : public GraphicDevice
             }
             this->palette_sent = false;
         }
-
         const uint16_t width = bitmap.cx;
         const uint16_t height = bitmap.cy;
-        const Rect src_r(srcx, srcy, width, height);
         const uint8_t * src_data = bitmap.data_bitmap;
+
+        LOG(LOG_INFO, "(srcx=%u, srcy=%u, width=%u, height=%u) -> dst(%u, %u, %u, %u) clip[%u %u %u %u]",
+            srcx, srcy, width, height,
+            dst.x, dst.y, dst.cx, dst.cy,
+            clip.x, clip.y, clip.cx, clip.cy);
 
         for (int y = 0; y < dst.cy ; y += 32) {
             int cy = std::min(32, dst.cy - y);
             for (int x = 0; x < dst.cx ; x += 32) {
                 int cx = std::min(32, dst.cx - x);
                 const Rect tile(x, y, cx, cy);
-                TODO(" simplify this code and add unit tests. It is much too complicated and that introduce subtile bugs")
-//                LOG(LOG_INFO, "tile at dst = tile(%u, %u %u, %u) dst(%u, %u) src(%u, %u, %u, %u) clip(%u, %u, %u, %u)",
-//                    tile.x, tile.y, tile.cx, tile.cy, dst.x, dst.y, src_r.x, src_r.y, src_r.cx, src_r.cy,
-//                    clip.x, clip.y, clip.cx, clip.cy);
+
+                LOG(LOG_INFO, "tile at dst = tile(x=%u, y=%u, cx=%u, cy=%u)",
+                    tile.x, tile.y, tile.cx, tile.cy);
+
                 if (!clip.intersect(tile.offset(dst.x, dst.y)).isempty()
-                && (src_r.cx > src_r.x + x)
-                && (src_r.cy > src_r.y + y)) {
+                && (width > srcx + x)
+                && (height > srcy + y)) {
                     TODO(" transmit a bitmap to add_bitmap instead of individual components")
-                     uint32_t cache_ref = this->front.bmp_cache->add_bitmap(
-                                                src_r.cx, src_r.cy,
-                                                src_data,
-                                                tile.offset(src_r.x, src_r.y),
-                                                this->get_front_bpp(),
-                                                bitmap.original_palette);
+                    Bitmap * candidate_bmp = new Bitmap(this->get_front_bpp(), &bitmap.original_palette, tile, width, height, src_data);
+                    uint16_t entries = 0;
+                    uint8_t id = 0;
+                    uint32_t bmp_size = candidate_bmp->bmp_size(this->get_front_bpp());
+                    if (bmp_size <= this->front.bmp_cache->small_size) {
+                        entries = this->front.bmp_cache->small_entries;
+                        id = 0;
+                    } else if (bmp_size <= this->front.bmp_cache->medium_size) {
+                        entries = this->front.bmp_cache->medium_entries;
+                        id = 1;
+                    } else if (bmp_size <= this->front.bmp_cache->big_size) {
+                        entries = this->front.bmp_cache->big_entries;
+                        id = 2;
+                    }
+                    else {
+                        LOG(LOG_ERR, "bitmap size too big %d", bmp_size);
+                        throw Error(ERR_BITMAP_CACHE_TOO_BIG);
+                    }
+                    uint8_t cache_id = 0;
+                    uint8_t cache_idx = 0;
+                    uint8_t send_type = BITMAP_ADDED_TO_CACHE;
+                    unsigned oldest_idx = 0;
+                    unsigned oldest = 0x7fffffff;
+                    for (unsigned idx = 0; idx < entries; idx++) {
+                        unsigned stamp = this->front.bmp_cache->get_stamp(id, idx);
+                        if (stamp < oldest) {
+                            // Keep oldest
+                            oldest = stamp;
+                            oldest_idx = idx;
+                        }
+                        Bitmap * pbmp = this->front.bmp_cache->get(id, idx);
 
-                    uint8_t send_type = (cache_ref >> 24);
-                    uint8_t cache_id  = (cache_ref >> 16);
-                    uint16_t cache_idx = (cache_ref & 0xFFFF);
+                        if (pbmp){
+                            if (pbmp->cx == candidate_bmp->cx
+                            && pbmp->cy == candidate_bmp->cy
+                            && pbmp->get_crc() == candidate_bmp->get_crc())
+                            {
+                                delete candidate_bmp;
+                                candidate_bmp = pbmp;
+                                this->front.bmp_cache->restamp(id, idx); // refresh stamp
+                                LOG(LOG_INFO, "FOUND_IN_CACHE AT (%u, %u)", id, idx);
+                                send_type = BITMAP_FOUND_IN_CACHE;
+                                cache_id  = id;
+                                cache_idx = idx;
+                                break;
+                            }
+                        }
+                    }
 
-                    Bitmap * pbmp =  this->front.bmp_cache->get(cache_id, cache_idx);
                     if (send_type == BITMAP_ADDED_TO_CACHE){
-                        RDPBmpCache cmd(this->get_front_bpp(), pbmp, cache_id, cache_idx);
+                        this->front.bmp_cache->put(id, oldest_idx, candidate_bmp);
+                        LOG(LOG_INFO, "ADDED_TO_CACHE AT (%u, %u)", id, oldest_idx);
+                        cache_id  = id;
+                        cache_idx = oldest_idx;
+                        RDPBmpCache cmd(this->get_front_bpp(), candidate_bmp, cache_id, cache_idx);
                         this->front.orders->draw(cmd);
                     }
 
                     const RDPMemBlt cmd(cache_id + palette_id*16, tile.offset(dst.x, dst.y), rop, 0, 0, cache_idx);
 
-                    if (!clip.isempty()
-                    && !clip.intersect(cmd.rect).isempty()){
-                        this->front.orders->draw(cmd, clip, *pbmp);
-                        if (this->capture){
-                            this->capture->mem_blt(cmd, clip, *pbmp);
-                        }
+                    this->front.orders->draw(cmd, clip, *candidate_bmp);
+                    if (this->capture){
+                        this->capture->mem_blt(cmd, clip, *candidate_bmp);
                     }
                 }
             }

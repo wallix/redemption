@@ -43,7 +43,7 @@
 #include "capture.hpp"
 #include "font.hpp"
 #include "bitmap.hpp"
-#include "bitmap_cache.hpp"
+#include "bmpcache.hpp"
 #include "cache.hpp"
 #include "client_info.hpp"
 #include "config.hpp"
@@ -94,7 +94,7 @@ class FrontAPI {
 
     struct Font font;
     Cache cache;
-    struct BitmapCache *bmp_cache;
+    struct BmpCache *bmp_cache;
     bool notimestamp;
     bool nomouse;
 
@@ -275,7 +275,7 @@ public:
         if (this->bmp_cache){
             delete this->bmp_cache;
         }
-        this->bmp_cache = new BitmapCache(
+        this->bmp_cache = new BmpCache(
             this->client_info.cache1_entries,
             this->client_info.cache1_size,
             this->client_info.cache2_entries,
