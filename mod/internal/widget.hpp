@@ -392,7 +392,7 @@ struct widget_image : public Widget {
     Bitmap bmp;
 
     widget_image(GraphicalContext * mod, int width, int height, int type, Widget & parent, int x, int y, const char* filename, uint8_t bpp)
-    : Widget(mod, width, height, parent, type), bmp(filename) {
+    : Widget(mod, width, height, parent, type), bmp(24, filename) {
 
         assert(type == WND_TYPE_IMAGE);
 

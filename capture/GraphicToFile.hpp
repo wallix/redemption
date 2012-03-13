@@ -106,8 +106,17 @@ struct GraphicsToFile : public RDPSerializer
     uint16_t offset_chunk_type;
     uint16_t chunk_type;
 
-    GraphicsToFile(Transport * trans, const Inifile * ini)
-        : RDPSerializer(trans, ini, 0, 1, 1)
+    GraphicsToFile(Transport * trans, const Inifile * ini, 
+          const uint8_t  bpp, 
+          uint32_t small_entries, uint32_t small_size,
+          uint32_t medium_entries, uint32_t medium_size,
+          uint32_t big_entries, uint32_t big_size)
+        : RDPSerializer(trans, ini, 
+            bpp, 
+            small_entries, small_size,
+            medium_entries, medium_size,
+            big_entries, big_size,
+            0, 1, 1)
     {
         this->chunk_type = RDP_UPDATE_ORDERS;
         this->init();

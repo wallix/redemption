@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
     Rect screen_rect(0, 0, width, height);
     BGRPalette palette;
     init_palette332(palette);
-    BmpCache bmpcache;
+    BmpCache bmpcache(bpp);
     RDPDrawable gd(width, height, bpp, palette, bmpcache, false);
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect);
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
     Rect screen_rect(0, 0, width, height);
     BGRPalette palette;
     init_palette332(palette);
-    BmpCache bmpcache;
+    BmpCache bmpcache(bpp);
     RDPDrawable gd(width, height, bpp, palette, bmpcache, false);
     gd.draw(RDPPatBlt(screen_rect, 0xFF, WHITE, WHITE, RDPBrush()), screen_rect);
     gd.draw(RDPPatBlt(screen_rect.shrink(5), 0x00, WHITE, WHITE, RDPBrush()), screen_rect);
@@ -207,7 +207,7 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
     Rect screen_rect(0, 0, width, height);
     BGRPalette palette;
     init_palette332(palette);
-    BmpCache bmpcache;
+    BmpCache bmpcache(bpp);
     RDPDrawable gd(width, height, bpp, palette, bmpcache, false);
 //    gd.draw(RDPPatBlt(screen_rect, 0xFF, WHITE, WHITE, RDPBrush()), screen_rect);
     gd.draw(RDPDestBlt(screen_rect, 0xFF), screen_rect); // WHITENESS
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     Rect screen_rect(0, 0, width, height);
     BGRPalette palette;
     init_palette332(palette);
-    BmpCache bmpcache;
+    BmpCache bmpcache(bpp);
     RDPDrawable gd(width, height, bpp, palette, bmpcache, false);
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
     gd.drawable.trace_mouse(100, 100);
@@ -278,7 +278,7 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     Rect screen_rect(0, 0, width, height);
     BGRPalette palette;
     init_palette332(palette);
-    BmpCache bmpcache;
+    BmpCache bmpcache(bpp);
     RDPDrawable gd(width, height, bpp, palette, bmpcache, false);
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
 
@@ -362,7 +362,7 @@ void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * nam
     Rect screen_rect(0, 0, width, height);
     BGRPalette palette;
     init_palette332(palette);
-    BmpCache bmpcache;
+    BmpCache bmpcache(bpp);
     RDPDrawable gd(width, height, bpp, palette, bmpcache, false);
     gd.draw(RDPOpaqueRect(Rect(90, 90, 120, 120), RED), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect, BLUE), Rect(100, 100, 100, 100));
@@ -452,7 +452,7 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     BGRPalette palette;
     init_palette332(palette);
 
-    BmpCache bmpcache;
+    BmpCache bmpcache(bpp);
     RDPDrawable gd(width, height, bpp, palette, bmpcache, false);
     gd.draw(RDPOpaqueRect(screen_rect, 0x2F2F2F), screen_rect);
     gd.draw(RDPOpaqueRect(Rect(100,100,20, 20), BLUE), screen_rect);

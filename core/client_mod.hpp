@@ -674,7 +674,8 @@ struct client_mod : public Callback {
     {
         if (flag){
             this->stop_capture();
-            this->gd.capture = new Capture(width, height, 24, this->gd.palette332, *this->gd.front.bmp_cache, path, codec_id, quality);
+            this->gd.capture = new Capture(width, height, 24, this->gd.palette332, 
+                this->gd.front.orders->bmp_cache, path, codec_id, quality);
         }
     }
 

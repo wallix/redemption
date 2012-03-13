@@ -576,7 +576,7 @@ class RDPBmpCache {
         stream.out_uint16_le(this->idx);
 
         uint32_t offset_buf_start = stream.p - stream.data;
-        this->bmp->compress(this->bpp, stream);
+        this->bmp->compress(stream);
         uint32_t bufsize = (stream.p - stream.data) - offset_buf_start;
         stream.set_out_uint16_le(bufsize + 2, offset_header);
         stream.set_out_uint16_le(bufsize, offset);
@@ -608,10 +608,10 @@ class RDPBmpCache {
         stream.out_clear_bytes(2); /* pad */
         uint32_t offset_compression_header = stream.p - stream.data;
         stream.out_uint16_le(0); // placeholder for bufsize
-        stream.out_uint16_le(this->bmp->line_size(this->bpp));
-        stream.out_uint16_le(this->bmp->bmp_size(this->bpp)); // final size
+        stream.out_uint16_le(this->bmp->line_size);
+        stream.out_uint16_le(this->bmp->bmp_size); // final size
         uint32_t offset_buf_start = stream.p - stream.data;
-        this->bmp->compress(this->bpp, stream);
+        this->bmp->compress(stream);
         uint32_t bufsize = (stream.p - stream.data) - offset_buf_start;
         stream.set_out_uint16_le(bufsize, offset_compression_header);
         stream.set_out_uint16_le(bufsize + 8, offset);
@@ -637,7 +637,7 @@ class RDPBmpCache {
         stream.out_uint16_be(0); // place holder for image buffer size
         stream.out_uint8(((this->idx >> 8) & 0xff) | 0x80);
         stream.out_uint8(this->idx);
-        this->bmp->compress(this->bpp, stream);
+        this->bmp->compress(stream);
         size_t bufsize = stream.p - stream.data - offset + 4;
         stream.set_out_uint16_be(bufsize | 0x4000, offset); // set the actual size
         stream.set_out_uint16_le(bufsize + 6 - 7, offset_header); // length after type minus 7
@@ -1051,7 +1051,7 @@ class RDPBmpCache {
 
         TODO(" some error may occur inside bitmap (memory allocation  file load  decompression) we should catch thrown exception and emit some explicit log if that occurs (anyway that will lead to end of connection  as we can't do much to repair such problems).")
         this->bmp = new Bitmap(bpp, &palette, width, height, stream.in_uint8p(bufsize), bufsize);
-        if (bufsize != this->bmp->bmp_size(bpp)){
+        if (bufsize != this->bmp->bmp_size){
             LOG(LOG_WARNING, "broadcasted bufsize should be the same as bmp size computed from cx, cy, bpp and alignment rules");
         }
     }
@@ -1082,10 +1082,10 @@ class RDPBmpCache {
             const uint8_t* data = stream.in_uint8p(size);
 
             this->bmp = new Bitmap(bpp, &palette, width, height, data, size, true);
-            if (row_size != this->bmp->line_size(bpp)){
+            if (row_size != this->bmp->line_size){
                 LOG(LOG_WARNING, "broadcasted row_size should be the same as line size computed from cx, bpp and alignment rules");
             }
-            if (final_size != this->bmp->bmp_size(bpp)){
+            if (final_size != this->bmp->bmp_size){
                 LOG(LOG_WARNING, "broadcasted final_size should be the same as bmp size computed from cx, cy, bpp and alignment rules");
             }
         }

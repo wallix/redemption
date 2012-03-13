@@ -50,8 +50,8 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         uint8_t data[0] = {};
         Bitmap bmp(bpp, &palette332, 0, 4, data, 0);
         uint8_t * pmin = bmp.data_bitmap;
-        uint8_t * pmax = pmin + bmp.bmp_size(bpp);
-        BOOST_CHECK_EQUAL(0, bmp.get_color_count(bpp, pmax, bmp.data_bitmap, 0xFF));
+        uint8_t * pmax = pmin + bmp.bmp_size;
+        BOOST_CHECK_EQUAL(0, bmp.get_color_count(::nbbytes(bpp), pmax, bmp.data_bitmap, 0xFF));
     }
 
     // test COLOR COUNT
@@ -66,9 +66,9 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
         uint8_t * pmin = bmp.data_bitmap;
-        uint8_t * pmax = pmin + bmp.bmp_size(bpp);
-        BOOST_CHECK_EQUAL(16, bmp.get_color_count(bpp, pmax, bmp.data_bitmap, 0x05));
-        BOOST_CHECK_EQUAL(0, bmp.get_color_count(bpp, pmax, bmp.data_bitmap, 0xFE));
+        uint8_t * pmax = pmin + bmp.bmp_size;
+        BOOST_CHECK_EQUAL(16, bmp.get_color_count(::nbbytes(bpp), pmax, bmp.data_bitmap, 0x05));
+        BOOST_CHECK_EQUAL(0, bmp.get_color_count(::nbbytes(bpp), pmax, bmp.data_bitmap, 0xFE));
     }
 
     // test COLOR COUNT 2
@@ -82,9 +82,9 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
             0x0D, 0x0E, 0x0F, 0x10};
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
-        uint8_t * pmax = bmp.data_bitmap + bmp.bmp_size(bpp);
-        BOOST_CHECK_EQUAL(1, bmp.get_color_count(bpp, pmax, bmp.data_bitmap, 0x01));
-        BOOST_CHECK_EQUAL(2, bmp.get_color_count(bpp, pmax, bmp.data_bitmap + 1, 0x02));
+        uint8_t * pmax = bmp.data_bitmap + bmp.bmp_size;
+        BOOST_CHECK_EQUAL(1, bmp.get_color_count(::nbbytes(bpp), pmax, bmp.data_bitmap, 0x01));
+        BOOST_CHECK_EQUAL(2, bmp.get_color_count(::nbbytes(bpp), pmax, bmp.data_bitmap + 1, 0x02));
     }
 
     // test BICOLOR COUNT EMPTY
@@ -92,8 +92,8 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         int bpp = 8;
         uint8_t data[0] = {};
         Bitmap bmp(bpp, &palette332, 0, 4, data, 0);
-        uint8_t * pmax = bmp.data_bitmap + bmp.bmp_size(bpp);
-        BOOST_CHECK_EQUAL(0, bmp.get_bicolor_count(bpp, pmax, bmp.data_bitmap, 0xEF, 0xFE));
+        uint8_t * pmax = bmp.data_bitmap + bmp.bmp_size;
+        BOOST_CHECK_EQUAL(0, bmp.get_bicolor_count(::nbbytes(bpp), pmax, bmp.data_bitmap, 0xEF, 0xFE));
     }
 
     // test BICOLOR COUNT
@@ -107,10 +107,10 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 
         Bitmap bmp(8, &palette332, 4, 4, data, sizeof(data));
         uint8_t * pmin = bmp.data_bitmap;
-        uint8_t * pmax = pmin + bmp.bmp_size(bpp);
-        BOOST_CHECK_EQUAL(16, bmp.get_bicolor_count(bpp, pmax, pmin, 0x01, 0x05));
-        BOOST_CHECK_EQUAL(14, bmp.get_bicolor_count(bpp, pmax, pmin+1, 0x05, 0x01));
-        BOOST_CHECK_EQUAL(0 , bmp.get_bicolor_count(bpp, pmax, pmin, 0x05, 0x01));
+        uint8_t * pmax = pmin + bmp.bmp_size;
+        BOOST_CHECK_EQUAL(16, bmp.get_bicolor_count(::nbbytes(bpp), pmax, pmin, 0x01, 0x05));
+        BOOST_CHECK_EQUAL(14, bmp.get_bicolor_count(::nbbytes(bpp), pmax, pmin+1, 0x05, 0x01));
+        BOOST_CHECK_EQUAL(0 , bmp.get_bicolor_count(::nbbytes(bpp), pmax, pmin, 0x05, 0x01));
     }
 
     // test BICOLOR COUNT
@@ -124,9 +124,9 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
         uint8_t * pmin = bmp.data_bitmap;
-        uint8_t * pmax = pmin + bmp.bmp_size(bpp);
-        BOOST_CHECK_EQUAL(10, bmp.get_bicolor_count(bpp, pmax, pmin, 0x01, 0x05));
-        BOOST_CHECK_EQUAL(10, bmp.get_bicolor_count(bpp, pmax, pmin + 1, 0x05, 0x01));
+        uint8_t * pmax = pmin + bmp.bmp_size;
+        BOOST_CHECK_EQUAL(10, bmp.get_bicolor_count(::nbbytes(bpp), pmax, pmin, 0x01, 0x05));
+        BOOST_CHECK_EQUAL(10, bmp.get_bicolor_count(::nbbytes(bpp), pmax, pmin + 1, 0x05, 0x01));
     }
 
     // test FILL COUNT
@@ -135,8 +135,8 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         uint8_t data[0] = {};
         Bitmap bmp(bpp, &palette332, 0, 4, data, 0);
         uint8_t * pmin = bmp.data_bitmap;
-        uint8_t * pmax = pmin + bmp.bmp_size(bpp);
-        BOOST_CHECK_EQUAL(0, bmp.get_fill_count(bpp, pmin, pmax, bmp.data_bitmap));
+        uint8_t * pmax = pmin + bmp.bmp_size;
+        BOOST_CHECK_EQUAL(0, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap));
     }
 
     // test FILL COUNT
@@ -150,14 +150,14 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
         uint8_t * pmin = bmp.data_bitmap;
-        uint8_t * pmax = pmin + bmp.bmp_size(bpp);
+        uint8_t * pmax = pmin + bmp.bmp_size;
 
         // Line above first line is black
-        BOOST_CHECK_EQUAL(4, bmp.get_fill_count(bpp, pmin, pmax, bmp.data_bitmap));
-        BOOST_CHECK_EQUAL(3, bmp.get_fill_count(bpp, pmin, pmax, bmp.data_bitmap+1));
+        BOOST_CHECK_EQUAL(4, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap));
+        BOOST_CHECK_EQUAL(3, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+1));
 
         // 3rd line, compared to 2nd line
-        BOOST_CHECK_EQUAL(3, bmp.get_fill_count(bpp, pmin, pmax, bmp.data_bitmap+8));
+        BOOST_CHECK_EQUAL(3, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+8));
     }
 
     // test FILL COUNT
@@ -171,16 +171,16 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
         uint8_t * pmin = bmp.data_bitmap;
-        uint8_t * pmax = pmin + bmp.bmp_size(bpp);
+        uint8_t * pmax = pmin + bmp.bmp_size;
 
         // Line above first line is black
-        BOOST_CHECK_EQUAL(0, bmp.get_fill_count(bpp, pmin, pmax, bmp.data_bitmap));
-        BOOST_CHECK_EQUAL(1, bmp.get_fill_count(bpp, pmin, pmax, bmp.data_bitmap+1));
-        BOOST_CHECK_EQUAL(0, bmp.get_fill_count(bpp, pmin, pmax, bmp.data_bitmap+2));
-        BOOST_CHECK_EQUAL(2, bmp.get_fill_count(bpp, pmin, pmax, bmp.data_bitmap+3));
+        BOOST_CHECK_EQUAL(0, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap));
+        BOOST_CHECK_EQUAL(1, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+1));
+        BOOST_CHECK_EQUAL(0, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+2));
+        BOOST_CHECK_EQUAL(2, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+3));
 
         // until the end
-        BOOST_CHECK_EQUAL(8, bmp.get_fill_count(bpp, pmin, pmax, bmp.data_bitmap+8));
+        BOOST_CHECK_EQUAL(8, bmp.get_fill_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+8));
 
     }
 
@@ -190,9 +190,9 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
         uint8_t data[0] = {};
         Bitmap bmp(bpp, &palette332, 0, 4, data, 0);
         uint8_t * pmin = bmp.data_bitmap;
-        uint8_t * pmax = pmin + bmp.bmp_size(bpp);
+        uint8_t * pmax = pmin + bmp.bmp_size;
 
-        BOOST_CHECK_EQUAL(0, bmp.get_mix_count(bpp, pmin, pmax, bmp.data_bitmap, white));
+        BOOST_CHECK_EQUAL(0, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap, white));
     }
 
     // test MIX COUNT
@@ -206,14 +206,14 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
         uint8_t * pmin = bmp.data_bitmap;
-        uint8_t * pmax = pmin + bmp.bmp_size(bpp);
+        uint8_t * pmax = pmin + bmp.bmp_size;
 
         // Line above first line is black
-        BOOST_CHECK_EQUAL(4, bmp.get_mix_count(bpp, pmin, pmax, bmp.data_bitmap, white));
-        BOOST_CHECK_EQUAL(3, bmp.get_mix_count(bpp, pmin, pmax, bmp.data_bitmap+1, white));
+        BOOST_CHECK_EQUAL(4, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap, white));
+        BOOST_CHECK_EQUAL(3, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+1, white));
 
         // 3rd line, compared to 2nd line
-        BOOST_CHECK_EQUAL(3, bmp.get_mix_count(bpp, pmin, pmax, bmp.data_bitmap+8, white));
+        BOOST_CHECK_EQUAL(3, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+8, white));
     }
 
     // test MIX COUNT
@@ -227,16 +227,16 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
         uint8_t * pmin = bmp.data_bitmap;
-        uint8_t * pmax = pmin + bmp.bmp_size(bpp);
+        uint8_t * pmax = pmin + bmp.bmp_size;
 
         // Line above first line is black
-        BOOST_CHECK_EQUAL(0, bmp.get_mix_count(bpp, pmin, pmax, bmp.data_bitmap, white));
-        BOOST_CHECK_EQUAL(1, bmp.get_mix_count(bpp, pmin, pmax, bmp.data_bitmap+1, white));
-        BOOST_CHECK_EQUAL(0, bmp.get_mix_count(bpp, pmin, pmax, bmp.data_bitmap+2, white));
-        BOOST_CHECK_EQUAL(2, bmp.get_mix_count(bpp, pmin, pmax, bmp.data_bitmap+3, white));
+        BOOST_CHECK_EQUAL(0, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap, white));
+        BOOST_CHECK_EQUAL(1, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+1, white));
+        BOOST_CHECK_EQUAL(0, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+2, white));
+        BOOST_CHECK_EQUAL(2, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+3, white));
 
         // until the end
-        BOOST_CHECK_EQUAL(8, bmp.get_mix_count(bpp, pmin, pmax, bmp.data_bitmap+8, white));
+        BOOST_CHECK_EQUAL(8, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+8, white));
     }
 
     // test FILL OR MIX COUNT
@@ -250,25 +250,25 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
         uint8_t * pmin = bmp.data_bitmap;
-        uint8_t * pmax = pmin + bmp.bmp_size(bpp);
+        uint8_t * pmax = pmin + bmp.bmp_size;
 
         // Line above first line is black
         uint8_t masks[512];
-        BOOST_CHECK_EQUAL(0, bmp.get_fom_count(bpp, pmin, pmax, bmp.data_bitmap+15, white));
-        BOOST_CHECK_EQUAL(2, bmp.get_fom_count(bpp, pmin, pmax, bmp.data_bitmap+14, white));
-        bmp.get_fom_masks(bpp, pmin, pmin+14, masks, 2);
+        BOOST_CHECK_EQUAL(0, bmp.get_fom_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+15, white));
+        BOOST_CHECK_EQUAL(2, bmp.get_fom_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+14, white));
+        bmp.get_fom_masks(::nbbytes(bpp), pmin, pmin+14, masks, 2);
         BOOST_CHECK_EQUAL(0x01, masks[0]);
 
 
-        BOOST_CHECK_EQUAL(4, bmp.get_fom_count(bpp, pmin, pmax, bmp.data_bitmap+12, white));
-        bmp.get_fom_masks(bpp, pmin, pmin+12, masks, 4);
+        BOOST_CHECK_EQUAL(4, bmp.get_fom_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+12, white));
+        bmp.get_fom_masks(::nbbytes(bpp), pmin, pmin+12, masks, 4);
         BOOST_CHECK_EQUAL(0x07, masks[0]);
 
-        BOOST_CHECK_EQUAL(5, bmp.get_fom_count(bpp, pmin, pmax, bmp.data_bitmap+11, white));
-        BOOST_CHECK_EQUAL(6, bmp.get_fom_count(bpp, pmin, pmax, bmp.data_bitmap+10, white));
+        BOOST_CHECK_EQUAL(5, bmp.get_fom_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+11, white));
+        BOOST_CHECK_EQUAL(6, bmp.get_fom_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+10, white));
 
-        BOOST_CHECK_EQUAL(12, bmp.get_fom_count(bpp, pmin, pmax, bmp.data_bitmap+4, white));
-        bmp.get_fom_masks(bpp, pmin, pmin+4, masks, 12);
+        BOOST_CHECK_EQUAL(12, bmp.get_fom_count(::nbbytes(bpp), pmin, pmax, bmp.data_bitmap+4, white));
+        bmp.get_fom_masks(::nbbytes(bpp), pmin, pmin+4, masks, 12);
         BOOST_CHECK_EQUAL(0xA5, masks[0]);
         BOOST_CHECK_EQUAL(0x07, masks[1]);
     }
@@ -283,15 +283,15 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
             0x0D, 0x0E, 0x0F, 0x10};
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
         uint8_t * pmin = bmp.data_bitmap;
-        uint8_t * pmax = pmin + bmp.bmp_size(bpp);
+        uint8_t * pmax = pmin + bmp.bmp_size;
 
         unsigned flags = 0;
         uint8_t * p = bmp.data_bitmap+3;
-        unsigned foreground = bmp.get_pixel_above(bpp, pmin, p) ^ bmp.get_pixel(bpp, p);
+        unsigned foreground = bmp.get_pixel_above(::nbbytes(bpp), pmin, p) ^ bmp.get_pixel(::nbbytes(bpp), p);
         BOOST_CHECK_EQUAL(0x04, foreground);
-        BOOST_CHECK_EQUAL(3, bmp.get_mix_count(bpp, pmin, pmax, p+nbbytes(bpp), foreground));
+        BOOST_CHECK_EQUAL(3, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, p+nbbytes(bpp), foreground));
         foreground = white;
-        BOOST_CHECK_EQUAL(4, bmp.get_fom_count_set(bpp, pmin, pmax, p, foreground, flags));
+        BOOST_CHECK_EQUAL(4, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, p, foreground, flags));
         BOOST_CHECK_EQUAL(0x04, foreground);
     }
 
@@ -307,15 +307,15 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 
         Bitmap bmp(bpp, &palette332, 4, 4, multicolor, sizeof(multicolor));
         uint8_t * pmin = bmp.data_bitmap;
-        uint8_t * pmax = pmin + bmp.bmp_size(bpp);
+        uint8_t * pmax = pmin + bmp.bmp_size;
         uint8_t * p = bmp.data_bitmap+3;
 
-        unsigned foreground = bmp.get_pixel_above(bpp, pmin, p) ^ bmp.get_pixel(bpp, p);
+        unsigned foreground = bmp.get_pixel_above(::nbbytes(bpp), pmin, p) ^ bmp.get_pixel(::nbbytes(bpp), p);
         BOOST_CHECK_EQUAL(4, foreground);
-        BOOST_CHECK_EQUAL(0, bmp.get_mix_count(bpp, pmin, pmax, p+nbbytes(bpp), foreground));
+        BOOST_CHECK_EQUAL(0, bmp.get_mix_count(::nbbytes(bpp), pmin, pmax, p+nbbytes(bpp), foreground));
         foreground = white;
         unsigned flags = 0;
-        BOOST_CHECK_EQUAL(2, bmp.get_fom_count_set(bpp, pmin, pmax, p, foreground, flags));
+        BOOST_CHECK_EQUAL(2, bmp.get_fom_count_set(::nbbytes(bpp), pmin, pmax, p, foreground, flags));
         BOOST_CHECK_EQUAL(4, foreground);
         BOOST_CHECK_EQUAL(3, flags); // MIX then FILL
 
@@ -364,7 +364,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
 
         Stream out(256);
-        bmp.compress(bpp, out);
+        bmp.compress(out);
         uint8_t expected[] = {
             0x84, 0x01, 0x02, 0x03, 0x04,
             0x8c, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x12, 0x13
@@ -383,7 +383,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        printf("\n");
 
         Bitmap bmp2(bpp, &palette332, 4, 4, out.data, out.p - out.data, true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(bpp), sizeof(data));
+        BOOST_CHECK_EQUAL(bmp2.bmp_size, sizeof(data));
         BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, data, sizeof(data)));
 
 //        printf("------- Decompress ---------\n");
@@ -413,7 +413,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp(bpp, NULL, 4, 4, data, sizeof(data));
         Stream out(256);
-        bmp.compress(bpp, out);
+        bmp.compress(out);
         uint8_t expected[] = {
             0x84, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00,
             0xc3, 0x04, 0x00, // 4 COPY
@@ -437,8 +437,8 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
         // empty set to 0,0,0,0,0,0,...
         uint8_t empty[2*4*4] = {};
         Bitmap bmp2(16, NULL, 4, 4, empty, 2*4*4);
-        bmp2.decompress(bpp, out.data, out.p - out.data);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(bpp), sizeof(data));
+        bmp2.decompress(out.data, out.p - out.data);
+        BOOST_CHECK_EQUAL(bmp2.bmp_size, sizeof(data));
         BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, data, sizeof(data)));
 
 //        printf("------- Decompressed ---------\n");
@@ -461,7 +461,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
         Stream out(256);
-        bmp.compress(bpp, out);
+        bmp.compress(out);
         uint8_t expected[] = {
             0x84, 0x01, 0x02, 0x03, 0x04, // 4 COPY
             0x6c, 0x01, // 12 COLOR (01)
@@ -479,7 +479,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
         BOOST_CHECK(0 == memcmp(out.data, expected, sizeof(expected)));
 
         Bitmap bmp2(bpp, &palette332, 4, 4, out.data, out.p - out.data, true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(bpp), sizeof(data));
+        BOOST_CHECK_EQUAL(bmp2.bmp_size, sizeof(data));
         BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, data, sizeof(data)));
 
     }
@@ -495,7 +495,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
         Stream out(256);
-        bmp.compress(bpp, out);
+        bmp.compress(out);
 
 //        printf("------- Compressed ---------\n");
 //        for (int i = 0; i < (out.p - out.data); i++){
@@ -515,7 +515,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
         BOOST_CHECK(0 == memcmp(out.data, expected, sizeof(expected)));
 
         Bitmap bmp2(bpp, &palette332, 4, 4, out.data, out.p - out.data, true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(bpp), sizeof(data));
+        BOOST_CHECK_EQUAL(bmp2.bmp_size, sizeof(data));
         BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, data, sizeof(data)));
     }
 
@@ -531,7 +531,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
         Stream out(256);
-        bmp.compress(bpp, out);
+        bmp.compress(out);
 
 //        printf("------- Compressed ---------\n");
 //        for (int i = 0; i < (out.p - out.data); i++){
@@ -552,7 +552,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
         BOOST_CHECK(0 == memcmp(out.data, expected, sizeof(expected)));
 
         Bitmap bmp2(bpp, &palette332, 4, 4, out.data, out.p - out.data, true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(bpp), sizeof(data));
+        BOOST_CHECK_EQUAL(bmp2.bmp_size, sizeof(data));
         BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, data, sizeof(data)));
 
 //        printf("------- Compressed ---------\n");
@@ -585,7 +585,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp(bpp, &palette332, 24, 1, data, sizeof(data));
         Stream out(256);
-        bmp.compress(bpp, out);
+        bmp.compress(out);
         uint8_t expected[] = {
             0xeC, 0x01, 0x02 // BICOLOR
         };
@@ -601,7 +601,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        printf("\n");
 
         Bitmap bmp2(bpp, &palette332, 24, 1, out.data, out.p - out.data, true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(bpp), sizeof(data));
+        BOOST_CHECK_EQUAL(bmp2.bmp_size, sizeof(data));
         BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, data, sizeof(data)));
 
 //        printf("------- Decompressed ---------\n");
@@ -624,7 +624,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
         Stream out(256);
-        bmp.compress(bpp, out);
+        bmp.compress(out);
 
 //        printf("------- Compressed ---------\n");
 //        for (int i = 0; i < (out.p - out.data); i++){
@@ -642,7 +642,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
         BOOST_CHECK(0 == memcmp(out.data, expected, sizeof(expected)));
 
         Bitmap bmp2(bpp, &palette332, 4, 4, out.data, out.p - out.data, true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(bpp), sizeof(data));
+        BOOST_CHECK_EQUAL(bmp2.bmp_size, sizeof(data));
         BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, data, sizeof(data)));
     }
 
@@ -657,7 +657,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
         Stream out(256);
-        bmp.compress(bpp, out);
+        bmp.compress(out);
         uint8_t expected[] = {
             0x84, 0x02, 0x03, 0x04, 0x05, // 4 COPY
             0x2c, // 12 MIX
@@ -675,7 +675,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
         BOOST_CHECK(0 == memcmp(out.data, expected, sizeof(expected)));
 
         Bitmap bmp2(bpp, &palette332, 4, 4, out.data, out.p - out.data, true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(bpp), sizeof(data));
+        BOOST_CHECK_EQUAL(bmp2.bmp_size, sizeof(data));
         BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, data, sizeof(data)));
     }
 
@@ -699,7 +699,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
         Stream out(256);
-        bmp.compress(bpp, out);
+        bmp.compress(out);
         uint8_t expected[] = {
             0x84, 0x02, 0x03, 0x04, 0x05,
             0x41, 0xa5, // 8 FOM 0b10100101
@@ -718,7 +718,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        printf("\n");
 
         Bitmap bmp2(bpp, &palette332, 4, 4, out.data, out.p - out.data, true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(bpp), sizeof(data));
+        BOOST_CHECK_EQUAL(bmp2.bmp_size, sizeof(data));
         BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, data, sizeof(data)));
 
 //        printf("------- Decompressed ---------\n");
@@ -749,7 +749,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
         Stream out(256);
-        bmp.compress(bpp, out);
+        bmp.compress(out);
         uint8_t expected[] = {
             0x84, 0x02, 0x03, 0x04, 0x05, // 4 COPY
             0x40, 0x0b, 0xa5, 0x05, // 11 FILL or MIX
@@ -766,7 +766,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        printf("\n");
 
         Bitmap bmp2(bpp, &palette332, 4, 4, out.data, out.p - out.data, true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(bpp), sizeof(data));
+        BOOST_CHECK_EQUAL(bmp2.bmp_size, sizeof(data));
         BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, data, sizeof(data)));
 
 //        printf("------- Decompressed ---------\n");
@@ -923,7 +923,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        printf("\n----------------------------\n");
 //        printf("\n");
 
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(bpp), sizeof(raw));
+        BOOST_CHECK_EQUAL(bmp2.bmp_size, sizeof(raw));
         BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, raw, sizeof(raw)));
 
     }
@@ -1043,7 +1043,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        printf("\n----------------------------\n");
 //        printf("\n");
 
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(16), sizeof(raw));
+        BOOST_CHECK_EQUAL(bmp2.bmp_size, sizeof(raw));
         BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, raw, sizeof(raw)));
 
     }
@@ -1076,7 +1076,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp(bpp, &palette332, 16, 2, raw, sizeof(raw));
         Stream out(256);
-        bmp.compress(bpp, out);
+        bmp.compress(out);
 
         uint8_t expected[] = {
             0xc4, 0x0c, 0x0c, 0xea,                   // 4 MIX SET 0xea0c0c
@@ -1106,7 +1106,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        printf("\n");
 
         Bitmap bmp2(bpp, &palette332, 16, 2, out.data, out.p - out.data, true);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(bpp), sizeof(raw));
+        BOOST_CHECK_EQUAL(bmp2.bmp_size, sizeof(raw));
         BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, raw, sizeof(raw)));
 
 //        printf("------- Decompressed ---------\n");
@@ -1196,7 +1196,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        printf("\n----------------------------\n");
 //        printf("\n");
 
-        BOOST_CHECK_EQUAL(bmp.bmp_size(bpp), sizeof(expected));
+        BOOST_CHECK_EQUAL(bmp.bmp_size, sizeof(expected));
         BOOST_CHECK(0 == memcmp(bmp.data_bitmap, expected, sizeof(expected)));
     }
 
@@ -1956,7 +1956,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
         Bitmap bmp(bpp, &palette332, 64, 64, uncompressed, sizeof(uncompressed));
 
         Stream out(8192);
-        bmp.compress(bpp, out);
+        bmp.compress(out);
 
 //        printf("------- Compressed ---------\n");
 //        for (int i = 0; i < (out.p - out.data) ; i++){
@@ -3157,7 +3157,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp(bpp, NULL, 64, 64, data, sizeof(data));
         Stream out(12288);
-        bmp.compress(bpp, out);
+        bmp.compress(out);
         // 64x64 24 bits RED Block
         uint8_t expected[] = {
             0xc0, 0x30, 0xff, 0x00, 0x00, 0xf0, 0xc0, 0x0f, 
@@ -3178,8 +3178,8 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
         // empty set to 0,0,0,0,0,0,...
         uint8_t empty[3*64*64] = {};
         Bitmap bmp2(bpp, NULL, 64, 64, empty, 3*64*64);
-        bmp2.decompress(bpp, out.data, out.p - out.data);
-        BOOST_CHECK_EQUAL(bmp2.bmp_size(bpp), sizeof(data));
+        bmp2.decompress(out.data, out.p - out.data);
+        BOOST_CHECK_EQUAL(bmp2.bmp_size, sizeof(data));
         BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, data, sizeof(data)));
 
 //        printf("------- Decompressed ---------\n");
@@ -3624,7 +3624,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
         BOOST_CHECK_EQUAL(1688359122, bmp2.get_crc());
 //        printf("------- Decompressed ---------\n");
-//        for (size_t i = 0; i < bmp2.bmp_size(bpp) ; i++){
+//        for (size_t i = 0; i < bmp2.bmp_size ; i++){
 //            if (i % 192 == 0) printf("\n");
 //            printf("%c", (bmp2.data_bitmap[i]==0xFF)?'O':'.');
 //        }

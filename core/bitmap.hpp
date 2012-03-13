@@ -53,8 +53,6 @@
 
 struct Bitmap {
 
-TODO(" at some point in the future drawable and Bitmap may be merged together not really sure for now  as Bitmap object also perform conversions between color depths  hence maybe the current bitmap object should handle several Drawables  one for each color depth. However it looks like if a large part of bitmap code could move to Drawable. Or maybe they just have some common shared abstraction.")
-
     public:
     uint8_t *data_bitmap;
 
@@ -68,14 +66,22 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
     bool crc_computed;
 
     public:
+    size_t line_size;
+    size_t bmp_size;
 
     TODO("there is way too many constructors  doing things much too complicated. We should split that in two stages. First prepare minimal context for bitmap but keep a flag or something to mark it as non ready  then load actual data into bitmap.")
 
     Bitmap(int bpp, const BGRPalette * palette, unsigned cx, unsigned cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
-        : data_bitmap(0),
-          original_bpp(bpp), cx(cx), cy(cy),
-          crc(0), crc_computed(false)
+        : data_bitmap(0)
+        , original_bpp(bpp)
+        , cx(cx)
+        , cy(cy)
+        , crc(0)
+        , crc_computed(false)
+        , line_size(row_size(this->cx, bpp))
+        , bmp_size(row_size(align4(this->cx), bpp) * cy)
     {
+
 //        LOG(LOG_ERR, "Creating bitmap cx=%u cy=%u size=%u bpp=%u", cx, cy, size, bpp);
         if (bpp == 8){
             if (palette){
@@ -85,14 +91,14 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
                 init_palette332(this->original_palette);
             }
         }
-        this->set_data_bitmap(this->original_bpp);
+        this->data_bitmap  = (uint8_t*)malloc(this->bmp_size);
 
         if (compressed) {
-            this->decompress(bpp, data, size);
+            this->decompress(data, size);
         } else if (upsidedown) {
-            this->copy_upsidedown(bpp, data, cx);
+            this->copy_upsidedown(data, cx);
         } else {
-            assert(size == this->bmp_size(bpp));
+            assert(size == this->bmp_size);
             memcpy(this->data_bitmap, data, size);
         }
         if (this->cx <= 0 || this->cy <= 0){
@@ -102,8 +108,14 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
 
 
     Bitmap(int bpp, BGRPalette * palette, const Rect & r, int src_cx, int src_cy, const uint8_t * src_data)
-        : data_bitmap(0), original_bpp(bpp),
-        cx(0), cy(0), crc(0), crc_computed(false)
+        : data_bitmap(0)
+        , original_bpp(bpp)
+        , cx(0)
+        , cy(0)
+        , crc(0)
+        , crc_computed(false)
+        , line_size(row_size(this->cx, bpp))
+        , bmp_size(row_size(align4(this->cx), bpp) * cy)
     {
 //        LOG(LOG_ERR, "Creating bitmap (2) src_cx=%u src_cy=%u cx=%u cy=%u bpp=%u r(%u, %u, %u, %u)", src_cx, src_cy, cx, cy, bpp, r.x, r.y, r.cx, r.cy);
 
@@ -127,7 +139,7 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
         unsigned cy = std::min(r.cy, src_cy - r.y);
         this->cy = cy;
 
-        this->set_data_bitmap(this->original_bpp);
+        this->data_bitmap  = (uint8_t*)malloc(this->bmp_size);
 
         TODO(" We could reserve statical space for caches thus avoiding many memory allocation. RDP sets maximum size for cache items anyway and we MUST check this size is never larger than allowed.")
 
@@ -142,11 +154,11 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
 
         for (unsigned i = 0; i < this->cy; i++) {
             memcpy(d8, s8, width);
-            if (this->line_size(bpp) > width){
-                memset(d8+width, 0, this->line_size(bpp) - width);
+            if (this->line_size > width){
+                memset(d8+width, 0, this->line_size - width);
             }
             s8 += src_row_size;
-            d8 += this->line_size(bpp);
+            d8 += this->line_size;
         }
         if (this->cx <= 0 || this->cy <= 0){
             LOG(LOG_ERR, "Bogus empty bitmap (2)!!! cx=%u cy=%u bpp=%u src_cx=%u, src_cy=%u r(%u, %u, %u, %u)", this->cx, this->cy, this->original_bpp, src_cx, src_cy, r.x, r.y, r.cx, r.cy);
@@ -155,9 +167,15 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
     }
 
 
-    Bitmap(const char* filename)
-        : data_bitmap(0), original_bpp(24),
-        cx(0), cy(0), crc(0), crc_computed(false)
+    Bitmap(int bpp, const char* filename)
+        : data_bitmap(0)
+        , original_bpp(bpp)
+        , cx(0)
+        , cy(0)
+        , crc(0)
+        , crc_computed(false)
+        , line_size(0)
+        , bmp_size(0)
     {
         LOG(LOG_INFO, "loading bitmap %s", filename);
         int size;
@@ -298,6 +316,8 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
 
         this->cx = header.image_width;
         this->cy = header.image_height;
+        this->line_size = row_size(this->cx, 24);
+        this->bmp_size = row_size(align4(this->cx), 24) * this->cy;
 
         // read bitmap data
         size = (header.image_width * header.image_height * file_Qpp) / 2;
@@ -315,10 +335,9 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
         close(fd); // from now on all is in memory
         stream.end = stream.data + size;
 
-        this->set_data_bitmap(this->original_bpp);
+        this->data_bitmap  = (uint8_t*)malloc(this->bmp_size);
         uint8_t * dest = this->data_bitmap;
         const uint8_t nbbytes_dest = ::nbbytes(this->original_bpp);
-        row_size = this->line_size(this->original_bpp);
 
         int k = 0;
         for (unsigned y = 0; y < this->cy ; y++) {
@@ -347,24 +366,43 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
                     pixel = palette1[pixel];
                 break;
                 }
+
                 uint32_t px = color_decode(pixel, header.bit_count, palette1);
-                TODO(" extract constants from loop")
-                ::out_bytes_le(dest + y * row_size + x * nbbytes_dest, nbbytes_dest, px);
+
+                switch (this->original_bpp)
+                {
+                default:
+                case 24:
+                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest, px);
+                break;
+                case 16:
+                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest, 
+                        color_encode(RGBtoBGR(px), 16));
+                break;
+                case 15:
+                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest, 
+                        color_encode(px, 15));
+                break;
+                case 8:
+                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest, 
+                        color_encode(px, 8));
+                break;
+                }
             }
         }
         return;
     }
 
-    void dump(int bpp){
+    void dump(){
+        const uint8_t Bpp = nbbytes(this->original_bpp);
         LOG(LOG_INFO, "------- Dumping bitmap RAW data [%p]---------\n", this);
-        LOG(LOG_INFO, "cx=%d cy=%d bpp=%d BPP=%d line_size=%d bmp_size=%d data=%p \n",
-            this->cx, this->cy, bpp, nbbytes(bpp), this->line_size(bpp), this->bmp_size(bpp), this->data_bitmap);
-        assert(bpp);
-        assert(this->line_size(bpp));
+        LOG(LOG_INFO, "cx=%d cy=%d BPP=%d line_size=%d bmp_size=%d data=%p \n",
+            this->cx, this->cy, Bpp, this->line_size, this->bmp_size, this->data_bitmap);
+        assert(this->line_size);
         assert(this->cx);
         assert(this->cy);
         assert(this->data_bitmap);
-        assert(this->bmp_size(bpp));
+        assert(this->bmp_size);
 
         LOG(LOG_INFO, "uint8_t raw%p[] = {", this);
         uint8_t * data = this->data_bitmap;
@@ -374,8 +412,8 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
             char buffer[2048];
             char * line = buffer;
             buffer[0] = 0;
-            for (size_t i = 0; i < this->line_size(bpp); i++){
-                line += snprintf(line, 1024, "0x%.2x, ", data[j*this->line_size(bpp)+i]);
+            for (size_t i = 0; i < this->line_size; i++){
+                line += snprintf(line, 1024, "0x%.2x, ", data[j*this->line_size+i]);
                 if (i % 16 == 15){
                     LOG(LOG_INFO, buffer);
                     line = buffer;
@@ -387,369 +425,32 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
             }
         }
         LOG(LOG_INFO, "}; /* %p */", this);
-        LOG(LOG_INFO, "Bitmap bmp%p(%d, %d, %d, raw%p, sizeof(raw%p));", this, bpp, this->cx, this->cy, this, this);
+        LOG(LOG_INFO, "Bitmap bmp%p(%d, %d, %d, raw%p, sizeof(raw%p));", 
+            this, this->original_bpp, this->cx, this->cy, this, this);
 
 //        LOG(LOG_INFO, "\n-----End of dump [%p] -----------------------\n", this);
     }
 
-    void copy_upsidedown(int bpp, const uint8_t* input, uint16_t cx)
+    void copy_upsidedown(const uint8_t* input, uint16_t cx)
     {
+        const uint8_t Bpp = nbbytes(this->original_bpp);
         TODO(" without this evil alnment we are expirimenting problems with VNC bitmaps  but there should be a better fix.")
         this->cx = align4(cx);
-        uint8_t * d8 = this->data_bitmap + (this->cy-1) * this->line_size(bpp);
+        uint8_t * d8 = this->data_bitmap + (this->cy-1) * this->line_size;
         const uint8_t * s8 = input;
-        uint32_t src_width = cx * nbbytes(bpp);
+        uint32_t src_width = cx * Bpp;
 
         for (unsigned i = 0; i < this->cy; i++) {
             memcpy(d8, s8, src_width);
-            if (this->line_size(bpp) > src_width){
-                memset(d8+src_width, 0, this->line_size(bpp) - src_width);
+            if (this->line_size > src_width){
+                memset(d8+src_width, 0, this->line_size - src_width);
             }
             s8 += src_width;
-            d8 -= this->line_size(bpp);
+            d8 -= this->line_size;
         }
     }
 
-    TODO(" unifying with decompress  the decompress function should be able to do both. Need probably some decompressor object  that would be a factory that creates bitmap or dump decompression data. Compression should also probably go in the same object (from principale that opening and closing parenthesis should be kept together).")
-    void dump_decompress(int bpp, const uint8_t* input, size_t size)
-    {
-        unsigned yprev = 0;
-        const uint8_t* end = input + size;
-        unsigned color1;
-        unsigned color2;
-        unsigned mix;
-        uint8_t code;
-        unsigned mask = 0;
-        unsigned fom_mask = 0;
-        unsigned count = 0;
-        int bicolor = 0;
-
-        struct PixelDumper
-        {
-            uint8_t bpp;
-            uint8_t * buffer;
-            uint32_t offset;
-            uint32_t line_width;
-            uint32_t height;
-            PixelDumper(uint8_t bpp, uint32_t height, uint32_t line_width, size_t size)
-                : bpp(bpp), buffer(0), offset(0), line_width(line_width), height(height)
-            {
-                this->buffer = (uint8_t*)malloc(size + 10);
-                memset(this->buffer, 0, size);
-            }
-            ~PixelDumper()
-            {
-                free(this->buffer);
-            }
-            void out_dump_pixel(uint32_t pix)
-            {
-                ::out_bytes_le(&this->buffer[offset], this->bpp, pix);
-                offset += nbbytes(this->bpp);
-            }
-            void dump(uint32_t start_offset)
-            {
-                if (start_offset % this->line_width == 0){
-                    printf("// LINE %u\n", (unsigned)(this->height - 1 - (offset / this->line_width)));
-                }
-
-                if (start_offset % 16 != 0){
-                    printf("// NEW %*c", 6 * (start_offset % 16), ' ');
-                }
-                else {
-                    printf("// NEW ");
-                }
-
-                for (size_t offset = start_offset ; offset < this->offset ; offset++){
-                    if ((offset % this->line_width == 0) && (offset > start_offset)){
-                        printf("\n// LINE %u\n", (unsigned)(this->height - 1 - (offset / this->line_width)));
-                    }
-
-                    if ((offset % 16 == 0) && (offset > start_offset)){
-                        printf("\n// NEW ");
-                    }
-                    printf("0x%.2x, ", this->buffer[offset]);
-                }
-                printf("\n");
-            }
-        } buffer(bpp, this->cy, this->line_size(bpp), this->bmp_size(bpp));
-
-        printf("// DUMP OUPUT: cx=%u cy=%u line_width=%u bmp_size=%u\n", this->cx, this->cy, (unsigned)this->line_size(bpp), (unsigned)this->bmp_size(bpp));
-
-        assert(nbbytes(bpp) <= 3);
-
-        color1 = 0;
-        color2 = 0;
-        mix = 0xFFFFFFFF;
-
-        enum {
-            FILL    = 0,
-            MIX     = 1,
-            FOM     = 2,
-            COLOR   = 3,
-            COPY    = 4,
-            MIX_SET = 6,
-            FOM_SET = 7,
-            BICOLOR = 8,
-            SPECIAL_FGBG_1 = 9,
-            SPECIAL_FGBG_2 = 10,
-            WHITE = 13,
-            BLACK = 14
-        };
-
-        uint8_t opcode;
-        uint8_t lastopcode = 0xFF;
-
-        while (input < end) {
-            const uint8_t * last_input = input;
-            uint32_t last_offset = buffer.offset;
-
-            // Read RLE operators, handle short and long forms
-            code = input[0]; input++;
-
-            switch (code >> 4) {
-            case 0xf:
-                switch (code){
-                    case 0xFD:
-                        opcode = WHITE;
-                        count = 1;
-                    break;
-                    case 0xFE:
-                        opcode = BLACK;
-                        count = 1;
-                    break;
-                    case 0xFA:
-                        opcode = SPECIAL_FGBG_1;
-                        count = 8;
-                    break;
-                    case 0xF9:
-                        opcode = SPECIAL_FGBG_2;
-                        count = 8;
-                    break;
-                    case 0xF8:
-                        opcode = code & 0xf;
-                        assert(opcode != 11 && opcode != 12 && opcode != 15);
-                        count = input[0]|(input[1] << 8);
-                        count += count;
-                        input += 2;
-                    break;
-                    default:
-                        opcode = code & 0xf;
-                        assert(opcode != 11 && opcode != 12 && opcode != 15);
-                        count = input[0]|(input[1] << 8);
-                        input += 2;
-                        // Opcodes 0xFB, 0xFC, 0xFF are some unknown orders of length 1 ?
-                    break;
-                }
-            break;
-            case 0x0e: // Bicolor, short form (1 or 2 bytes)
-                opcode = BICOLOR;
-                count = code & 0xf;
-                if (!count){
-                    count = input[0] + 16; input++;
-                }
-                count += count;
-                break;
-            case 0x0d:  // FOM SET, short form  (1 or 2 bytes)
-                opcode = FOM_SET;
-                count = code & 0x0F;
-                if (count){
-                    count <<= 3;
-                }
-                else {
-                    count = input[0] + 1; input++;
-                }
-            break;
-            case 0x05:
-            case 0x04:  // FOM, short form  (1 or 2 bytes)
-                opcode = FOM;
-                count = code & 0x1F;
-                if (count){
-                    count <<= 3;
-                }
-                else {
-                    count = input[0] + 1; input++;
-                }
-            break;
-            case 0x0c: // MIX SET, short form (1 or 2 bytes)
-                opcode = MIX_SET;
-                count = code & 0x0f;
-                if (!count){
-                    count = input[0] + 16; input++;
-                }
-            break;
-            default:
-                opcode = code >> 5; // FILL, MIX, FOM, COLOR, COPY
-                count = code & 0x1f;
-                if (!count){
-                    count = input[0] + 32; input++;
-                }
-
-                assert(opcode < 5);
-                break;
-            }
-
-            /* Read preliminary data */
-            switch (opcode) {
-            case FOM:
-                mask = 1;
-                fom_mask = input[0]; input++;
-                printf("// FOM %u [%.2x] ", count, fom_mask);
-            break;
-            case SPECIAL_FGBG_1:
-                mask = 1;
-                fom_mask = 7;
-                printf("// SPECIAL_FGBG_1 %u [%.2x] ", count, fom_mask);
-            break;
-            case SPECIAL_FGBG_2:
-                mask = 1;
-                fom_mask = 3;
-                printf("// SPECIAL_FGBG_2 %u [%.2x] ", count, fom_mask);
-            break;
-            case BICOLOR:
-
-                bicolor = 0;
-                color1 = in_bytes_le(nbbytes(bpp), input);
-                input += nbbytes(bpp);
-                color2 = in_bytes_le(nbbytes(bpp), input);
-                input += nbbytes(bpp);
-                printf("// BICOLOR %u %.6u %.6u", count, color1, color2);
-                break;
-            case COLOR:
-                color2 = in_bytes_le(nbbytes(bpp), input);
-                printf("// COLOR %u %.6u", count, color2);
-                input += nbbytes(bpp);
-                break;
-            case MIX_SET:
-                mix = in_bytes_le(nbbytes(bpp), input);
-                input += nbbytes(bpp);
-                printf("// MIX SET %u %.6u", count, mix);
-            break;
-            case FOM_SET:
-                mix = in_bytes_le(nbbytes(bpp), input);
-                input += nbbytes(bpp);
-                mask = 1;
-                fom_mask = input[0]; input++;
-                printf("// FOM SET %u %.6u [%.2x] ", count, mix, fom_mask);
-                break;
-            case MIX:
-                printf("// MIX %u", count);
-                break;
-            case FILL:
-                printf("// FILL %u", count);
-                break;
-            case COPY:
-                printf("// COPY %u", count);
-                break;
-            case WHITE:
-                printf("// WHITE %u", count);
-                break;
-            case BLACK:
-                printf("// BLACK %u", count);
-                break;
-            default: // for FILL, MIX or COPY nothing to do here
-                break;
-            }
-
-            // MAGIC MIX of one pixel to comply with crap in Bitmap RLE compression
-            if ((opcode == FILL)
-            && (opcode == lastopcode)
-            && (buffer.offset != this->line_size(bpp))){
-                printf(" MAGIC MIX");
-                if (buffer.offset < this->cx * nbbytes(bpp)){
-                    yprev = 0;
-                }
-                else {
-                    yprev = in_bytes_le(nbbytes(bpp), buffer.buffer+buffer.offset - this->cx * nbbytes(bpp));
-                }
-                buffer.out_dump_pixel(yprev ^ mix);
-                count--;
-            }
-            lastopcode = opcode;
-
-            /* Output body */
-            while (count > 0) {
-                if(buffer.offset >= this->bmp_size(bpp)) {
-                    LOG(LOG_WARNING, "Decompressed bitmap too large. Dying.");
-                    throw Error(ERR_BITMAP_DECOMPRESSED_DATA_TOO_LARGE);
-                }
-                if (buffer.offset < this->cx * nbbytes(bpp)){
-                    yprev = 0;
-                }
-                else {
-                    yprev = in_bytes_le(nbbytes(bpp), buffer.buffer+buffer.offset - this->cx * nbbytes(bpp));
-                }
-                switch (opcode) {
-                case FILL:
-                    buffer.out_dump_pixel(yprev);
-                    break;
-                case MIX_SET:
-                case MIX:
-                    buffer.out_dump_pixel(yprev ^ mix);
-                    break;
-                case FOM_SET:
-                case FOM:
-                    if (mask == 0x100){
-                        mask = 1;
-                        fom_mask = input[0]; input++;
-                        printf(" [%.2x] ", fom_mask);
-                    }
-                case SPECIAL_FGBG_1:
-                case SPECIAL_FGBG_2:
-                    if (mask & fom_mask){
-                        printf("1");
-                        buffer.out_dump_pixel(yprev ^ mix);
-                    }
-                    else {
-                        printf("0");
-                        buffer.out_dump_pixel(yprev);
-                    }
-                    mask <<= 1;
-                    if (mask == 0x10){
-                        printf(" ");
-                    }
-                    break;
-                case COLOR:
-                    buffer.out_dump_pixel(color2);
-                    break;
-                case COPY:
-                    buffer.out_dump_pixel(in_bytes_le(nbbytes(bpp), input));
-                    input += nbbytes(bpp);
-                    break;
-                case BICOLOR:
-                    if (bicolor) {
-                        buffer.out_dump_pixel(color2);
-                        bicolor = 0;
-                    }
-                    else {
-                        buffer.out_dump_pixel(color1);
-                        bicolor = 1;
-                    }
-                break;
-                case WHITE:
-                    buffer.out_dump_pixel(0xFFFFFFFF);
-                break;
-                case BLACK:
-                    buffer.out_dump_pixel(0);
-                break;
-                default:
-                    assert(false);
-                    break;
-                }
-                count--;
-            }
-            printf("\n");
-            for (const uint8_t * p = last_input ; p < input ; p++){
-                printf("0x%.2x, ",*p);
-            }
-            printf("\n");
-            buffer.dump(last_offset);
-            printf("\n");
-
-        }
-        return;
-    }
-
-    void decompress(int bpp, const uint8_t* input, size_t size)
+    void decompress(const uint8_t* input, size_t size)
     {
 //        printf("============================================\n");
 //        printf("Compressed bitmap data\n");
@@ -759,8 +460,9 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
 //        printf("Decompressing bitmap done\n");
 //        printf("============================================\n");
 
+        const uint8_t Bpp = nbbytes(this->original_bpp);
         uint8_t* pmin = this->data_bitmap;
-        uint8_t* pmax = pmin + this->bmp_size(bpp);
+        uint8_t* pmax = pmin + this->bmp_size;
         unsigned yprev = 0;
         uint8_t* out = pmin;
         const uint8_t* end = input + size;
@@ -773,8 +475,6 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
         unsigned count = 0;
         int bicolor = 0;
 
-        assert(nbbytes(bpp) <= 3);
-
         color1 = 0;
         color2 = 0;
         mix = 0xFFFFFFFF;
@@ -900,22 +600,22 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
             break;
             case BICOLOR:
                 bicolor = 0;
-                color1 = in_bytes_le(nbbytes(bpp), input);
-                input += nbbytes(bpp);
-                color2 = in_bytes_le(nbbytes(bpp), input);
-                input += nbbytes(bpp);
+                color1 = in_bytes_le(Bpp, input);
+                input += Bpp;
+                color2 = in_bytes_le(Bpp, input);
+                input += Bpp;
                 break;
             case COLOR:
-                color2 = in_bytes_le(nbbytes(bpp), input);
-                input += nbbytes(bpp);
+                color2 = in_bytes_le(Bpp, input);
+                input += Bpp;
                 break;
             case MIX_SET:
-                mix = in_bytes_le(nbbytes(bpp), input);
-                input += nbbytes(bpp);
+                mix = in_bytes_le(Bpp, input);
+                input += Bpp;
             break;
             case FOM_SET:
-                mix = in_bytes_le(nbbytes(bpp), input);
-                input += nbbytes(bpp);
+                mix = in_bytes_le(Bpp, input);
+                input += Bpp;
                 mask = 1;
                 fom_mask = input[0]; input++;
                 break;
@@ -926,16 +626,16 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
             // MAGIC MIX of one pixel to comply with crap in Bitmap RLE compression
             if ((opcode == FILL)
             && (opcode == lastopcode)
-            && (out != pmin + this->line_size(bpp))){
-                if (out - this->cx * nbbytes(bpp) < pmin){
+            && (out != pmin + this->line_size)){
+                if (out - this->cx * Bpp < pmin){
                     yprev = 0;
                 }
                 else {
-                     yprev = in_bytes_le(nbbytes(bpp), out - this->cx * nbbytes(bpp));
+                     yprev = in_bytes_le(Bpp, out - this->cx * Bpp);
                 }
-                out_bytes_le(out, nbbytes(bpp), yprev ^ mix);
+                out_bytes_le(out, Bpp, yprev ^ mix);
                 count--;
-                out+= nbbytes(bpp);
+                out+= Bpp;
             }
             lastopcode = opcode;
 
@@ -945,19 +645,19 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
                     LOG(LOG_WARNING, "Decompressed bitmap too large. Dying.");
                     throw Error(ERR_BITMAP_DECOMPRESSED_DATA_TOO_LARGE);
                 }
-                if (out - this->cx * nbbytes(bpp) < pmin){
+                if (out - this->cx * Bpp < pmin){
                     yprev = 0;
                 }
                 else {
-                    yprev = in_bytes_le(nbbytes(bpp), out - this->cx * nbbytes(bpp));
+                    yprev = in_bytes_le(Bpp, out - this->cx * Bpp);
                 }
                 switch (opcode) {
                 case FILL:
-                    out_bytes_le(out, nbbytes(bpp), yprev);
+                    out_bytes_le(out, Bpp, yprev);
                     break;
                 case MIX_SET:
                 case MIX:
-                    out_bytes_le(out, nbbytes(bpp), yprev ^ mix);
+                    out_bytes_le(out, Bpp, yprev ^ mix);
                     break;
                 case FOM_SET:
                 case FOM:
@@ -968,135 +668,135 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
                 case SPECIAL_FGBG_1:
                 case SPECIAL_FGBG_2:
                     if (mask & fom_mask){
-                        out_bytes_le(out, nbbytes(bpp), yprev ^ mix);
+                        out_bytes_le(out, Bpp, yprev ^ mix);
                     }
                     else {
-                        out_bytes_le(out, nbbytes(bpp), yprev);
+                        out_bytes_le(out, Bpp, yprev);
                     }
                     mask <<= 1;
                     break;
                 case COLOR:
-                    out_bytes_le(out, nbbytes(bpp), color2);
+                    out_bytes_le(out, Bpp, color2);
                     break;
                 case COPY:
-                    out_bytes_le(out, nbbytes(bpp), in_bytes_le(nbbytes(bpp), input));
-                    input += nbbytes(bpp);
+                    out_bytes_le(out, Bpp, in_bytes_le(Bpp, input));
+                    input += Bpp;
                     break;
                 case BICOLOR:
                     if (bicolor) {
-                        out_bytes_le(out, nbbytes(bpp), color2);
+                        out_bytes_le(out, Bpp, color2);
                         bicolor = 0;
                     }
                     else {
-                        out_bytes_le(out, nbbytes(bpp), color1);
+                        out_bytes_le(out, Bpp, color1);
                         bicolor = 1;
                     }
                 break;
                 case WHITE:
-                    out_bytes_le(out, nbbytes(bpp), 0xFFFFFFFF);
+                    out_bytes_le(out, Bpp, 0xFFFFFFFF);
                 break;
                 case BLACK:
-                    out_bytes_le(out, nbbytes(bpp), 0);
+                    out_bytes_le(out, Bpp, 0);
                 break;
                 default:
                     assert(false);
                     break;
                 }
                 count--;
-                out += nbbytes(bpp);
+                out += Bpp;
             }
         }
         return;
     }
 
 
-    unsigned get_pixel(int bpp, const uint8_t * const p) const
+    unsigned get_pixel(const uint8_t Bpp, const uint8_t * const p) const
     {
-        return in_bytes_le(nbbytes(bpp), p);
+        return in_bytes_le(Bpp, p);
     }
 
-    unsigned get_pixel_above(int bpp, const uint8_t * pmin, const uint8_t * const p)
+    unsigned get_pixel_above(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * const p)
     {
-        return ((p-this->line_size(bpp)) < pmin)
+        return ((p-this->line_size) < pmin)
         ? 0
-        : this->get_pixel(bpp, p - this->line_size(bpp));
+        : this->get_pixel(Bpp, p - this->line_size);
     }
 
-    unsigned get_color_count(int bpp, uint8_t * pmax, const uint8_t * p, unsigned color)
+    unsigned get_color_count(const uint8_t Bpp, uint8_t * pmax, const uint8_t * p, unsigned color)
     {
         unsigned acc = 0;
-        while (p < pmax && get_pixel(bpp, p) == color){
+        while (p < pmax && this->get_pixel(Bpp, p) == color){
             acc++;
-            p = p + nbbytes(bpp);
+            p = p + Bpp;
         }
         return acc;
     }
 
 
-    unsigned get_bicolor_count(int bpp, uint8_t * pmax, const uint8_t * p, unsigned color1, unsigned color2)
+    unsigned get_bicolor_count(const uint8_t Bpp, uint8_t * pmax, const uint8_t * p, unsigned color1, unsigned color2)
     {
         unsigned acc = 0;
         while ((p < pmax)
-            && (color1 == get_pixel(bpp, p))
-            && (p+nbbytes(bpp) < pmax)
-            && (color2 == get_pixel(bpp, p+nbbytes(bpp)))) {
+            && (color1 == this->get_pixel(Bpp, p))
+            && (p + Bpp < pmax)
+            && (color2 == this->get_pixel(Bpp, p + Bpp))) {
                 acc = acc + 2;
-                p = p+2*nbbytes(bpp);
+                p = p + 2 * Bpp;
         }
         return acc;
     }
 
 
-    unsigned get_fill_count(int bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p)
+    unsigned get_fill_count(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p)
     {
         unsigned acc = 0;
-        while  (p + nbbytes(bpp) <= pmax) {
-            unsigned pixel = this->get_pixel(bpp, p);
-            unsigned ypixel = this->get_pixel_above(bpp, pmin, p);
+        while  (p + Bpp <= pmax) {
+            unsigned pixel = this->get_pixel(Bpp, p);
+            unsigned ypixel = this->get_pixel_above(Bpp, pmin, p);
             if (ypixel != pixel){
                 break;
             }
-            p = p+nbbytes(bpp);
+            p = p + Bpp;
             acc = acc + 1;
         }
         return acc;
     }
 
 
-    unsigned get_mix_count(int bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
+    unsigned get_mix_count(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
     {
         unsigned acc = 0;
         while (p < pmax){
-            if (this->get_pixel_above(bpp, pmin, p) ^ foreground ^ this->get_pixel(bpp, p)){
+            if (this->get_pixel_above(Bpp, pmin, p) ^ foreground ^ this->get_pixel(Bpp, p)){
                 break;
             }
-            p+= nbbytes(bpp);
+            p += Bpp;
             acc += 1;
         }
         return acc;
     }
 
 
-    void get_fom_masks(int bpp, const uint8_t * pmin, const uint8_t * p, uint8_t * mask, const unsigned count)
+    void get_fom_masks(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * p, uint8_t * mask, const unsigned count)
     {
         unsigned i = 0;
-        for (i = 0; i < count; i+=8)
+        for (i = 0; i < count; i += 8)
         {
             mask[i>>3] = 0;
         }
-        for (i = 0 ; i < count; i++, p += nbbytes(bpp))
+        for (i = 0 ; i < count; i++, p += Bpp)
         {
-            if (get_pixel(bpp, p) != get_pixel_above(bpp, pmin, p)){
+            if (get_pixel(Bpp, p) != get_pixel_above(Bpp, pmin, p)){
                 mask[i>>3] |= (0x01 << (i & 7));
             }
         }
     }
 
-    unsigned get_fom_count_set(int bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned & foreground, unsigned & flags)
+    unsigned get_fom_count_set(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned & foreground, unsigned & flags)
     {
         // flags : 1 = fill, 2 = MIX, 3 = (1+2) = FOM
         {
-            unsigned fill_count = this->get_fill_count(bpp, pmin, pmax, p);
+            unsigned fill_count = this->get_fill_count(Bpp, pmin, pmax, p);
 
             if (fill_count >= 8) {
                 flags = 1;
@@ -1104,7 +804,7 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
             }
 
             if (fill_count) {
-                unsigned fom_count = this->get_fom_count_mix(bpp, pmin, pmax, p + fill_count * nbbytes(bpp), foreground);
+                unsigned fom_count = this->get_fom_count_mix(Bpp, pmin, pmax, p + fill_count * Bpp, foreground);
                 if (fom_count){
                     flags = 3;
                     return fill_count + fom_count;
@@ -1121,14 +821,14 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
         // Hence it's ok to check them independently.
         {
             unsigned mix_count = 0;
-            foreground = this->get_pixel_above(bpp, pmin, p) ^ this->get_pixel(bpp, p);
+            foreground = this->get_pixel_above(Bpp, pmin, p) ^ this->get_pixel(Bpp, p);
             if  (p < pmax) {
-                mix_count = 1 + get_mix_count(bpp, pmin, pmax, p+nbbytes(bpp), foreground);
+                mix_count = 1 + this->get_mix_count(Bpp, pmin, pmax, p + Bpp, foreground);
                 if (mix_count >= 8) {
                     flags = 2;
                     return mix_count;
                 }
-                unsigned fom_count = this->get_fom_count_fill(bpp, pmin, pmax, p + mix_count * nbbytes(bpp), foreground);
+                unsigned fom_count = this->get_fom_count_fill(Bpp, pmin, pmax, p + mix_count * Bpp, foreground);
                 if (fom_count){
                     flags = 3;
                     return mix_count + fom_count;
@@ -1143,16 +843,16 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
         return 0;
     }
 
-    unsigned get_fom_count(int bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
+    unsigned get_fom_count(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
     {
-        unsigned fill_count = this->get_fill_count(bpp, pmin, pmax, p);
+        unsigned fill_count = this->get_fill_count(Bpp, pmin, pmax, p);
 
         if (fill_count >= 8) {
             return 0;
         }
 
         if (fill_count) {
-            unsigned fom_count = this->get_fom_count_mix(bpp, pmin, pmax, p + fill_count * nbbytes(bpp), foreground);
+            unsigned fom_count = this->get_fom_count_mix(Bpp, pmin, pmax, p + fill_count * Bpp, foreground);
             return fom_count ? fill_count + fom_count : 0;
 
         }
@@ -1162,14 +862,14 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
         // it to black, as it's useless because fill_count allready does that.
         // Hence it's ok to check them independently.
 
-        unsigned mix_count = this->get_mix_count(bpp, pmin, pmax, p, foreground);
+        unsigned mix_count = this->get_mix_count(Bpp, pmin, pmax, p, foreground);
 
         if (mix_count >= 8) {
             return 0;
         }
 
         if (mix_count){
-            unsigned fom_count = this->get_fom_count_fill(bpp, pmin, pmax, p + mix_count * nbbytes(bpp), foreground);
+            unsigned fom_count = this->get_fom_count_fill(Bpp, pmin, pmax, p + mix_count * Bpp, foreground);
             return fom_count ? mix_count + fom_count : 0;
         }
 
@@ -1178,14 +878,14 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
     }
 
     TODO(" derecursive it")
-    unsigned get_fom_count_fill(int bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
+    unsigned get_fom_count_fill(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
     {
 
         if  (p < pmin || p >= pmax) {
             return 0;
         }
 
-        unsigned fill_count = get_fill_count(bpp, pmin, pmax, p);
+        unsigned fill_count = this->get_fill_count(Bpp, pmin, pmax, p);
 
         if (fill_count >= 9) {
             return 0;
@@ -1195,14 +895,14 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
             return 0;
         }
 
-        return fill_count + this->get_fom_count_mix(bpp, pmin, pmax, p + fill_count * nbbytes(bpp), foreground);
+        return fill_count + this->get_fom_count_mix(Bpp, pmin, pmax, p + fill_count * Bpp, foreground);
     }
 
 
     TODO(" derecursive it")
-    unsigned get_fom_count_mix(int bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
+    unsigned get_fom_count_mix(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
     {
-        unsigned mix_count = get_mix_count(bpp, pmin, pmax, p, foreground);
+        unsigned mix_count = this->get_mix_count(Bpp, pmin, pmax, p, foreground);
 
         if (mix_count >= 9) {
             return 0;
@@ -1212,21 +912,19 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
             return 0;
         }
 
-        return mix_count + this->get_fom_count_fill(bpp, pmin, pmax, p + mix_count * nbbytes(bpp), foreground);
+        return mix_count + this->get_fom_count_fill(Bpp, pmin, pmax, p + mix_count * Bpp, foreground);
     }
 
     TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.")
     TODO(" keep allready compressed bitmaps in cache to avoid useless computations")
-    void compress(int bpp, Stream & out)
+    void compress(Stream & out)
     {
-        const uint8_t Bpp = nbbytes(bpp);
-        uint8_t * oldp = 0;
-//        LOG(LOG_INFO, "compressing bitmap from %u to %u", this->original_bpp, bpp);
+        const uint8_t Bpp = nbbytes(this->original_bpp);
         uint8_t * pmin = this->data_bitmap;
         uint8_t * p = pmin;
 
         // white with the right length : either 0xFF or 0xFFFF or 0xFFFFFF
-        unsigned foreground = ~(-1 << (nbbytes(bpp)*8));
+        unsigned foreground = ~(-1 << (Bpp*8));
         unsigned new_foreground = foreground;
         unsigned flags = 0;
         uint8_t masks[512];
@@ -1236,7 +934,6 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
         uint32_t color = 0;
         uint32_t color2 = 0;
 
-        TODO(" we should also check out_size and truncate if it overflow buffer or find another to ensure out buffer is large enough")
         for (int part = 0 ; part < 2 ; part++){
             // As far as I can see the specs of bitmap RLE compressor is crap here
             // Fill orders between first scanline and all others must be splitted
@@ -1247,49 +944,43 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
             // orders, a magic MIX pixel is inserted between fills.
             // This explains the surprising loop above and the test below.pp
             if (part){
-                pmax = pmin + this->bmp_size(bpp);
+                pmax = pmin + this->bmp_size;
             }
             else {
-                pmax = pmin + this->line_size(bpp);
+                pmax = pmin + this->line_size;
             }
             while (p < pmax)
             {
-                TODO(" remove this  not necessary any more")
-                if (oldp == p){
-                    abort();
-                }
-                oldp = p;
-
-                uint32_t fom_count = this->get_fom_count_set(bpp, pmin, pmax, p, new_foreground, flags);
+                uint32_t fom_count = this->get_fom_count_set(Bpp, pmin, pmax, p, new_foreground, flags);
                 uint32_t color_count = 0;
                 uint32_t bicolor_count = 0;
 
-                if (p + nbbytes(bpp) < pmax){
-                    color = get_pixel(bpp, p);
-                    color2 = get_pixel(bpp, p+nbbytes(bpp));
+                if (p + Bpp < pmax){
+                    color = this->get_pixel(Bpp, p);
+                    color2 = this->get_pixel(Bpp, p + Bpp);
 
                     if (color == color2){
-                        color_count = get_color_count(bpp, pmax, p, color);
+                        color_count = this->get_color_count(Bpp, pmax, p, color);
                     }
                     else {
-                        bicolor_count = get_bicolor_count(bpp, pmax, p, color, color2);
+                        bicolor_count = this->get_bicolor_count(Bpp, pmax, p, color, color2);
                     }
                 }
 
                 const unsigned fom_cost = 1                      // header
-                    + (foreground != new_foreground) * nbbytes(bpp) // set
+                    + (foreground != new_foreground) * Bpp // set
                     + (flags == 3) * nbbytes(fom_count);         // mask
                 const unsigned copy_fom_cost = 1 * (copy_count == 0) // start copy
-                    + fom_count * nbbytes(bpp);                         // pixels
-                const unsigned color_cost = 1 + nbbytes(bpp);
-                const unsigned bicolor_cost = 1 + 2*nbbytes(bpp);
+                    + fom_count * Bpp;                         // pixels
+                const unsigned color_cost = 1 + Bpp;
+                const unsigned bicolor_cost = 1 + 2*Bpp;
 
                 if ((fom_count >= color_count || (color_count == 0))
                 && ((fom_count >= bicolor_count) || (bicolor_count == 0) || (bicolor_count < 4))
                 && fom_cost < copy_fom_cost) {
                     switch (flags){
                         case 3:
-                            get_fom_masks(bpp, pmin, p, masks, fom_count);
+                            this->get_fom_masks(Bpp, pmin, p, masks, fom_count);
                             if (new_foreground != foreground){
                                 flags += 4;
                             }
@@ -1305,9 +996,9 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
                 }
                 else {
                     unsigned copy_color_cost = (copy_count == 0) // start copy
-                        + color_count * nbbytes(bpp);               // pixels
+                        + color_count * Bpp;               // pixels
                     unsigned copy_bicolor_cost = (copy_count == 0) // start copy
-                        + bicolor_count * nbbytes(bpp);               // pixels
+                        + bicolor_count * Bpp;               // pixels
 
                     if ((color_cost < copy_color_cost)
                     && (color_count > 0)){
@@ -1324,7 +1015,7 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
                 }
 
                 if (flags && copy_count > 0){
-                    out.out_copy_sequence(Bpp, copy_count, p - copy_count * nbbytes(bpp));
+                    out.out_copy_sequence(Bpp, copy_count, p - copy_count * Bpp);
                     copy_count = 0;
                 }
 
@@ -1332,50 +1023,50 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
                 switch (flags){
                     case 9:
                         out.out_bicolor_sequence(Bpp, bicolor_count, color, color2);
-                        p+= bicolor_count * nbbytes(bpp);
+                        p+= bicolor_count * Bpp;
                     break;
 
                     case 8:
                         out.out_color_sequence(Bpp, color_count, color);
-                        p+= color_count * nbbytes(bpp);
+                        p+= color_count * Bpp;
                     break;
 
                     case 7:
-                        out.out_fom_sequence_set(nbbytes(bpp), fom_count, new_foreground, masks);
+                        out.out_fom_sequence_set(Bpp, fom_count, new_foreground, masks);
                         foreground = new_foreground;
-                        p+= fom_count * nbbytes(bpp);
+                        p+= fom_count * Bpp;
                     break;
 
                     case 6:
                         out.out_mix_count_set(fom_count);
-                        out.out_bytes_le(nbbytes(bpp), new_foreground);
+                        out.out_bytes_le(Bpp, new_foreground);
                         foreground = new_foreground;
-                        p+= fom_count * nbbytes(bpp);
+                        p+= fom_count * Bpp;
                     break;
 
                     case 3:
                         out.out_fom_sequence(fom_count, masks);
-                        p+= fom_count * nbbytes(bpp);
+                        p+= fom_count * Bpp;
                     break;
 
                     case 2:
                         out.out_mix_count(fom_count);
-                        p+= fom_count * nbbytes(bpp);
+                        p+= fom_count * Bpp;
                     break;
 
                     case 1:
                         out.out_fill_count(fom_count);
-                        p+= fom_count * nbbytes(bpp);
+                        p+= fom_count * Bpp;
                     break;
 
                     default:
-                        p += nbbytes(bpp);
+                        p += Bpp;
                     break;
                 }
             }
 
             if (copy_count > 0){
-                out.out_copy_sequence(Bpp, copy_count, p - copy_count * nbbytes(bpp));
+                out.out_copy_sequence(Bpp, copy_count, p - copy_count * Bpp);
                 copy_count = 0;
             }
         }
@@ -1444,7 +1135,7 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
             for (unsigned j = 0; j < width ; j++) {
                 crc = crc_table[(crc ^ *s8++) & 0xff] ^ (crc >> 8);
             }
-            s8 += this->line_size(this->original_bpp) - width;
+            s8 += this->line_size - width;
         }
         this->crc = crc ^ crc_seed;
         crc_computed = true;
@@ -1488,22 +1179,6 @@ TODO(" at some point in the future drawable and Bitmap may be merged together no
             src += src_nbbytes;
             dest += dest_nbbytes;
         }
-    }
-
-    // Initialize room for data_bitmap
-    uint8_t * set_data_bitmap(int bpp)
-    {
-        size_t size = this->bmp_size(bpp);
-        return this->data_bitmap  = (uint8_t*)malloc(size);
-    }
-
-    size_t line_size(const int bpp) const {
-        return row_size(this->cx, bpp);
-    }
-
-    size_t bmp_size(const int bpp) const {
-        TODO(" without this evil alignment we are experimenting problems with VNC bitmaps but there should be a better fix.")
-        return row_size(align4(this->cx), bpp) * cy;
     }
 };
 

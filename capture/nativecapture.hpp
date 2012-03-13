@@ -69,7 +69,9 @@ class NativeCapture
         : width(width), height(height), bpp(bpp),
         f(-1),
         trans(this->f),
-        recorder(&this->trans, NULL) {
+        recorder(&this->trans, NULL, bpp,
+                8192, 768, 8192, 3072, 8192, 12288        
+) {
         char tmppath[1024] = {};
         sprintf(tmppath, "%s.%u.wrm", path, getpid());
         LOG(LOG_INFO, "Recording to file : %s", tmppath);

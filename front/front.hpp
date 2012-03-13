@@ -94,7 +94,6 @@ class FrontAPI {
 
     struct Font font;
     Cache cache;
-    struct BmpCache *bmp_cache;
     bool notimestamp;
     bool nomouse;
 
@@ -103,7 +102,6 @@ class FrontAPI {
     FrontAPI(Inifile * ini):
         font(SHARE_PATH "/" DEFAULT_FONT_NAME),
         cache(),
-        bmp_cache(0),
         notimestamp(ini->globals.notimestamp),
         nomouse(ini->globals.nomouse)
         {}
@@ -191,6 +189,13 @@ public:
                             this->client_info.crypt_level,
                             this->encrypt,
                             ini,
+                            this->client_info.bpp,
+                            this->client_info.cache1_entries,
+                            this->client_info.cache1_size,
+                            this->client_info.cache2_entries,
+                            this->client_info.cache2_size,
+                            this->client_info.cache3_entries,
+                            this->client_info.cache3_size,              
                             this->client_info.bitmap_cache_version,
                             this->client_info.use_bitmap_comp,
                             this->client_info.op2);
@@ -199,9 +204,6 @@ public:
     }
 
     ~Front(){
-        if (this->bmp_cache){
-            delete this->bmp_cache;
-        }
     }
 
 //    virtual const ClientInfo & get_client_info() const {
@@ -268,20 +270,17 @@ public:
                         this->client_info.crypt_level,
                         this->encrypt,
                         this->ini,
+                        this->client_info.bpp,
+                        this->client_info.cache1_entries,
+                        this->client_info.cache1_size,
+                        this->client_info.cache2_entries,
+                        this->client_info.cache2_size,
+                        this->client_info.cache3_entries,
+                        this->client_info.cache3_size,              
                         this->client_info.bitmap_cache_version,
                         this->client_info.use_bitmap_comp,
                         this->client_info.op2);
 
-        if (this->bmp_cache){
-            delete this->bmp_cache;
-        }
-        this->bmp_cache = new BmpCache(
-            this->client_info.cache1_entries,
-            this->client_info.cache1_size,
-            this->client_info.cache2_entries,
-            this->client_info.cache2_size,
-            this->client_info.cache3_entries,
-            this->client_info.cache3_size);
         this->cache.reset(this->client_info);
     }
 

@@ -438,7 +438,7 @@ struct GraphicsFile
 
     void draw(const RDPBmpCache & cmd)
     {
-        this->reserve_order(cmd.bmp->bmp_size(cmd.bpp) + 16);
+        this->reserve_order(cmd.bmp->bmp_size + 16);
         cmd.emit(this->stream, 0, 0, 0);
     }
 
