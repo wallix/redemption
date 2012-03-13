@@ -45,6 +45,7 @@
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
+#include "transport.hpp"
 
 #include "bmpcache.hpp"
 
@@ -59,6 +60,7 @@ struct RDPGraphicDevice
     virtual void draw(const RDPLineTo& cmd, const Rect & clip) = 0;
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
 
+    TODO("The 3 methods below should not exist and cache access be done before calling drawing orders")
     virtual void draw(const RDPBrushCache & cmd) = 0;
     virtual void draw(const RDPColCache & cmd) = 0;
     virtual void draw(const RDPGlyphCache & cmd) = 0;

@@ -23,10 +23,11 @@
 
 #include "drawable.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "RDP/orders/RDPGraphicDevice.hpp"
 
 #include "bmpcache.hpp"
 
-class RDPDrawable {
+class RDPDrawable : public RDPGraphicDevice {
 public:
     uint8_t bpp;
     const BGRPalette & palette;
@@ -55,6 +56,17 @@ public:
         this->drawable.opaquerect(trect, color);
     }
 
+    void draw(const RDPScrBlt & cmd, const Rect & clip)
+    {
+        // Destination rectangle : drect
+        const Rect drect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
+        if (drect.isempty()){ return; }
+        // adding delta move dest to source
+        const signed int deltax = cmd.srcx - cmd.rect.x;
+        const signed int deltay = cmd.srcy - cmd.rect.y;
+        this->drawable.scrblt(drect.x + deltax, drect.y + deltay, drect, cmd.rop);
+    }
+
     void draw(const RDPDestBlt & cmd, const Rect & clip)
     {
         const Rect trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
@@ -72,15 +84,37 @@ public:
         this->drawable.patblt(trect, cmd.rop, color);
     }
 
-    void draw(const RDPScrBlt & cmd, const Rect & clip)
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        // Destination rectangle : drect
-        const Rect drect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
-        if (drect.isempty()){ return; }
-        // adding delta move dest to source
-        const signed int deltax = cmd.srcx - cmd.rect.x;
-        const signed int deltay = cmd.srcy - cmd.rect.y;
-        this->drawable.scrblt(drect.x + deltax, drect.y + deltay, drect, cmd.rop);
+        TODO("If I use bitmap as is, I must count how many times it is used");
+        const Rect& rect = clip.intersect(cmd.rect);
+        if (rect.isempty()){
+            return ;
+        }
+
+//        Bitmap* bmp = this->bmpcache.get(cmd.cache_id & 0x3, cmd.cache_idx);
+//        if (!bmp){
+//            LOG(LOG_ERR,
+//                "bitmap not found in cache (%p) (id = %u, idx = %u)",
+//                &this->bmpcache, cmd.cache_id, cmd.cache_idx);
+//            return;
+//        }
+
+        switch (cmd.rop) {
+            case 0x00:
+                this->drawable.black_color(rect); break;
+            case 0xFF:
+                this->drawable.white_color(rect); break;
+            case 0x55:
+                this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->bgr);
+                break;
+            case 0xCC:
+                this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0, this->bgr);
+                break;
+            default:
+                // should not happen
+                break;
+        }
     }
 
     /*
@@ -149,38 +183,13 @@ public:
         }
     }
 
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
-    {
-        TODO("If I use bitmap as is, I must count how many times it is used");
-        const Rect& rect = clip.intersect(cmd.rect);
-        if (rect.isempty()){
-            return ;
-        }
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) {}
+    virtual void draw(const RDPBrushCache & cmd) {}
+    virtual void draw(const RDPColCache & cmd) {}
+    virtual void draw(const RDPGlyphCache & cmd) {}
+    virtual void flush() {}
 
-//        Bitmap* bmp = this->bmpcache.get(cmd.cache_id & 0x3, cmd.cache_idx);
-//        if (!bmp){
-//            LOG(LOG_ERR,
-//                "bitmap not found in cache (%p) (id = %u, idx = %u)",
-//                &this->bmpcache, cmd.cache_id, cmd.cache_idx);
-//            return;
-//        }
 
-        switch (cmd.rop) {
-            case 0x00:
-                this->drawable.black_color(rect); break;
-            case 0xFF:
-                this->drawable.white_color(rect); break;
-            case 0x55:
-                this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->bgr);
-                break;
-            case 0xCC:
-                this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0, this->bgr);
-                break;
-            default:
-                // should not happen
-                break;
-        }
-    }
 };
 
 #endif

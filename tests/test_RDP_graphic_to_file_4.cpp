@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFileReadBogus)
 {
     Rect screen_rect(0, 0, 800, 600);
 
-    const char * movie = FIXTURES_PATH "/bug8.wrm";
+    const char * movie = FIXTURES_PATH "/bug9.wrm";
 
     // read data from file
     int fd = ::open(movie, O_RDONLY);
@@ -151,9 +151,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFileReadBogus)
             this->data = (uint8_t *)calloc(sizeof(char), this->pix_len);
         }
         ~Consumer(){
-            if (this->data){
-                free(data);
-            }
+            free(data);
         }
 
     private:
