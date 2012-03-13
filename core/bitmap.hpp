@@ -61,23 +61,15 @@ struct Bitmap {
     unsigned cx;
     unsigned cy;
 
-    private:
-    uint32_t crc;
-    bool crc_computed;
-
     public:
     size_t line_size;
     size_t bmp_size;
-
-    TODO("there is way too many constructors  doing things much too complicated. We should split that in two stages. First prepare minimal context for bitmap but keep a flag or something to mark it as non ready  then load actual data into bitmap.")
 
     Bitmap(uint8_t bpp, const BGRPalette * palette, unsigned cx, unsigned cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
         : data_bitmap(0)
         , original_bpp(bpp)
         , cx(cx)
         , cy(cy)
-        , crc(0)
-        , crc_computed(false)
         , line_size(row_size(this->cx, bpp))
         , bmp_size(row_size(align4(this->cx), bpp) * cy)
     {
@@ -118,8 +110,6 @@ struct Bitmap {
         , original_bpp(bpp)
         , cx(0)
         , cy(0)
-        , crc(0)
-        , crc_computed(false)
         , line_size(0)
         , bmp_size(0)
     {
@@ -172,7 +162,6 @@ struct Bitmap {
         if (this->cx <= 0 || this->cy <= 0){
             LOG(LOG_ERR, "Bogus empty bitmap (2)!!! cx=%u cy=%u bpp=%u src_cx=%u, src_cy=%u r(%u, %u, %u, %u)", this->cx, this->cy, this->original_bpp, src_cx, src_cy, r.x, r.y, r.cx, r.cy);
         }
-
     }
 
 
@@ -181,8 +170,6 @@ struct Bitmap {
         , original_bpp(bpp)
         , cx(0)
         , cy(0)
-        , crc(0)
-        , crc_computed(false)
         , line_size(0)
         , bmp_size(0)
     {
@@ -402,10 +389,10 @@ struct Bitmap {
                 }
             }
         }
-        return;
     }
 
-    void dump(){
+    void dump() const
+    {
         const uint8_t Bpp = nbbytes(this->original_bpp);
         LOG(LOG_INFO, "------- Dumping bitmap RAW data [%p]---------\n", this);
         LOG(LOG_INFO, "cx=%d cy=%d BPP=%d line_size=%d bmp_size=%d data=%p \n",
@@ -417,7 +404,7 @@ struct Bitmap {
         assert(this->bmp_size);
 
         LOG(LOG_INFO, "uint8_t raw%p[] = {", this);
-        uint8_t * data = this->data_bitmap;
+        const uint8_t * data = this->data_bitmap;
 
         for (size_t j = 0 ; j < this->cy ; j++){
             LOG(LOG_INFO, "/* line %d */", (this->cy - j - 1));
@@ -443,6 +430,7 @@ struct Bitmap {
 //        LOG(LOG_INFO, "\n-----End of dump [%p] -----------------------\n", this);
     }
 
+private:
     void copy_upsidedown(const uint8_t* input, uint16_t cx)
     {
         const uint8_t Bpp = nbbytes(this->original_bpp);
@@ -462,6 +450,7 @@ struct Bitmap {
         }
     }
 
+    TODO("move that function to external definition")
     void decompress(const uint8_t* input, size_t size)
     {
 //        printf("============================================\n");
@@ -721,20 +710,20 @@ struct Bitmap {
         return;
     }
 
-
+public:
     unsigned get_pixel(const uint8_t Bpp, const uint8_t * const p) const
     {
         return in_bytes_le(Bpp, p);
     }
 
-    unsigned get_pixel_above(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * const p)
+    unsigned get_pixel_above(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * const p) const
     {
         return ((p-this->line_size) < pmin)
         ? 0
         : this->get_pixel(Bpp, p - this->line_size);
     }
 
-    unsigned get_color_count(const uint8_t Bpp, uint8_t * pmax, const uint8_t * p, unsigned color)
+    unsigned get_color_count(const uint8_t Bpp, uint8_t * pmax, const uint8_t * p, unsigned color) const
     {
         unsigned acc = 0;
         while (p < pmax && this->get_pixel(Bpp, p) == color){
@@ -745,7 +734,7 @@ struct Bitmap {
     }
 
 
-    unsigned get_bicolor_count(const uint8_t Bpp, uint8_t * pmax, const uint8_t * p, unsigned color1, unsigned color2)
+    unsigned get_bicolor_count(const uint8_t Bpp, uint8_t * pmax, const uint8_t * p, unsigned color1, unsigned color2) const
     {
         unsigned acc = 0;
         while ((p < pmax)
@@ -759,7 +748,7 @@ struct Bitmap {
     }
 
 
-    unsigned get_fill_count(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p)
+    unsigned get_fill_count(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p) const
     {
         unsigned acc = 0;
         while  (p + Bpp <= pmax) {
@@ -775,7 +764,7 @@ struct Bitmap {
     }
 
 
-    unsigned get_mix_count(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
+    unsigned get_mix_count(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground) const
     {
         unsigned acc = 0;
         while (p < pmax){
@@ -789,7 +778,7 @@ struct Bitmap {
     }
 
 
-    void get_fom_masks(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * p, uint8_t * mask, const unsigned count)
+    void get_fom_masks(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * p, uint8_t * mask, const unsigned count) const
     {
         unsigned i = 0;
         for (i = 0; i < count; i += 8)
@@ -804,7 +793,7 @@ struct Bitmap {
         }
     }
 
-    unsigned get_fom_count_set(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned & foreground, unsigned & flags)
+    unsigned get_fom_count_set(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned & foreground, unsigned & flags) const
     {
         // flags : 1 = fill, 2 = MIX, 3 = (1+2) = FOM
         {
@@ -855,7 +844,7 @@ struct Bitmap {
         return 0;
     }
 
-    unsigned get_fom_count(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
+    unsigned get_fom_count(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground) const
     {
         unsigned fill_count = this->get_fill_count(Bpp, pmin, pmax, p);
 
@@ -890,7 +879,7 @@ struct Bitmap {
     }
 
     TODO(" derecursive it")
-    unsigned get_fom_count_fill(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
+    unsigned get_fom_count_fill(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground) const
     {
 
         if  (p < pmin || p >= pmax) {
@@ -912,7 +901,7 @@ struct Bitmap {
 
 
     TODO(" derecursive it")
-    unsigned get_fom_count_mix(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground)
+    unsigned get_fom_count_mix(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground) const
     {
         unsigned mix_count = this->get_mix_count(Bpp, pmin, pmax, p, foreground);
 
@@ -929,7 +918,7 @@ struct Bitmap {
 
     TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.")
     TODO(" keep allready compressed bitmaps in cache to avoid useless computations")
-    void compress(Stream & out)
+    void compress(Stream & out) const
     {
         const uint8_t Bpp = nbbytes(this->original_bpp);
         uint8_t * pmin = this->data_bitmap;
@@ -1084,14 +1073,8 @@ struct Bitmap {
         }
     }
 
-
-    uint32_t get_crc()
+    uint32_t compute_crc() const
     {
-        if (this->crc_computed){
-            return this->crc;
-        }
-        TODO(" is this memory table really necessary for crc computing ? I undersatnd some dispersion of values is a good thing  but other simpler signing scheme should be more efficient with less memory access (maybe even md5 or aes).")
-
         const static int crc_seed = 0xffffffff;
         const static int crc_table[256] = {
             0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -1149,20 +1132,14 @@ struct Bitmap {
             }
             s8 += this->line_size - width;
         }
-        this->crc = crc ^ crc_seed;
-        crc_computed = true;
-        return this->crc;
+        return crc ^ crc_seed;
     }
 
     ~Bitmap(){
         free(this->data_bitmap);
-        this->data_bitmap = 0;
-        this->cx = 0;
-        this->cy = 0;
-        this->original_bpp = 0;
     }
 
-    void convert_data_bitmap(int out_bpp, uint8_t * dest) {
+    size_t convert_data_bitmap(int out_bpp, uint8_t * dest) const {
 
         uint8_t * src = this->data_bitmap;
         const uint8_t src_nbbytes = nbbytes(this->original_bpp);
@@ -1187,6 +1164,7 @@ struct Bitmap {
             }
             src+= (this->bmp_size/ this->cy) - this->cx * src_nbbytes;
         }
+        return this->cx * this->cy * nbbytes(this->original_bpp);
     }
 };
 

@@ -76,7 +76,7 @@ struct BmpCache {
             delete this->cache[id][idx];
             this->cache[id][idx] = bmp;
             this->stamps[id][idx] = ++stamp;
-            this->crc[id][idx] = bmp->get_crc();
+            this->crc[id][idx] = bmp->compute_crc();
         }
 
         void restamp(uint8_t id, uint16_t idx){
@@ -93,16 +93,13 @@ struct BmpCache {
 
 
         uint32_t cache_bitmap(Bitmap & oldbmp){
-
-            LOG(LOG_INFO, "adding candidate bitmap to cache : oldbpp = %u cache bpp = %u", oldbmp.original_bpp, this->bpp);
             uint8_t outbuf[65536];
             oldbmp.convert_data_bitmap(this->bpp, outbuf);
             Bitmap * bmp = new Bitmap(this->bpp, &oldbmp.original_palette,
                     oldbmp.cx, oldbmp.cy, outbuf,
                     oldbmp.cx * nbbytes(this->bpp) * oldbmp.cy, false, false);
 
-            const unsigned bmp_crc = bmp->get_crc();
-            LOG(LOG_INFO, "candidate bitmap CRC=%u", bmp_crc);
+            const unsigned bmp_crc = bmp->compute_crc();
 
             uint16_t oldest_cidx = 0;
             unsigned oldstamp = this->stamps[0][0];
@@ -129,7 +126,6 @@ struct BmpCache {
                 if (bmp_crc == this->crc[id][cidx]
                 && this->cache[id][cidx]->cx == bmp->cx
                 && this->cache[id][cidx]->cy == bmp->cy){
-                    LOG(LOG_INFO, "candidate bitmap found in cache at (id=%u, idx=%u), deleting", id, cidx);
                     delete bmp;
                     return (BITMAP_FOUND_IN_CACHE << 24)|(id<<16)|cidx;
                 }
@@ -139,8 +135,10 @@ struct BmpCache {
                 }
             }
             // find oldest stamp (or 0) and replace bitmap
-            LOG(LOG_INFO, "candidate bitmap not found in cache, replacing (id=%u, idx=%u) [%p]", id, oldest_cidx, this->cache[id][oldest_cidx]);
-            this->put(id, oldest_cidx, bmp);
+            delete this->cache[id][oldest_cidx];
+            this->cache[id][oldest_cidx] = bmp;
+            this->stamps[id][oldest_cidx] = ++stamp;
+            this->crc[id][oldest_cidx] = bmp_crc;
             return (BITMAP_ADDED_TO_CACHE << 24)|(id<<16)|oldest_cidx;
         }
 };

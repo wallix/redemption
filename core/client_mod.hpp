@@ -439,8 +439,8 @@ struct GraphicDeviceMod : public GraphicDevice
                         bitmap.original_bpp, &bitmap.original_palette,
                         tile, width, height, src_data);
 
-                    LOG(LOG_INFO, "tile at dst = tile(x=%u, y=%u, cx=%u, cy=%u bpp=%u) Bitmap CRC=%u",
-                        tile.x, tile.y, tile.cx, tile.cy, tiled_bmp.original_bpp, tiled_bmp.get_crc());
+                    LOG(LOG_INFO, "tile at dst = tile(x=%u, y=%u, cx=%u, cy=%u bpp=%u)",
+                        tile.x, tile.y, tile.cx, tile.cy, tiled_bmp.original_bpp);
 
                     const RDPMemBlt cmd(0, tile.offset(dst.x, dst.y), rop, 0, 0, 0);
                     this->front.orders->draw(cmd, clip, tiled_bmp);
