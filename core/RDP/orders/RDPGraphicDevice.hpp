@@ -55,7 +55,7 @@ struct RDPGraphicDevice
     virtual void draw(const RDPScrBlt & cmd, const Rect &clip) = 0;
     virtual void draw(const RDPDestBlt & cmd, const Rect &clip) = 0;
     virtual void draw(const RDPPatBlt & cmd, const Rect &clip) = 0;
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, Bitmap & bmp) = 0;
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) = 0;
     virtual void draw(const RDPLineTo& cmd, const Rect & clip) = 0;
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
 
@@ -377,7 +377,7 @@ struct RDPSerializer : public RDPGraphicDevice
     }
 
 
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, Bitmap & oldbmp)
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & oldbmp)
     {
         uint32_t res = this->bmp_cache.cache_bitmap(oldbmp);
 

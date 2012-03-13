@@ -149,7 +149,7 @@ public:
         }
     }
 
-    void draw(const RDPMemBlt & cmd, const Rect & clip, Bitmap & bmp)
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
         TODO("If I use bitmap as is, I must count how many times it is used");
         const Rect& rect = clip.intersect(cmd.rect);

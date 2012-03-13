@@ -64,15 +64,16 @@ struct GraphicDevice
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPPatBlt & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPLineTo & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
+    TODO("change that to draw(RDPMemBlt ")
+    virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const uint8_t rop, const BGRPalette & palette, const Rect & clip) = 0;
+
 
     virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex) = 0;
     virtual void glyph_cache(const FontChar & font_char, int font_index, int char_index) = 0;
 
     virtual void server_set_pen(int style, int width) = 0;
-    virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const uint8_t rop, const BGRPalette & palette, const Rect & clip) = 0;
     virtual void set_pointer(int cache_idx) = 0;
     virtual void send_global_palette() = 0;
     virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask) = 0;

@@ -194,7 +194,6 @@ unit-test test_rdp : tests/test_rdp.cpp libboost_unit_test ;
 unit-test test_context_map : tests/test_context_as_map.cpp libboost_unit_test : ;
 unit-test test_dico : tests/test_dico.cpp libboost_unit_test : ;
 unit-test test_colors : tests/test_colors.cpp libboost_unit_test : ;
-unit-test test_write_over_file : tests/test_write_over_file.cpp libboost_unit_test : ;
 unit-test test_libpng : tests/test_libpng.cpp libboost_unit_test png z : ;
 unit-test test_capture : tests/test_capture.cpp libboost_unit_test png z d3des openssl crypto ;
 unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp libboost_unit_test png z d3des openssl crypto ;

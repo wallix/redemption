@@ -70,7 +70,7 @@ class NativeCapture
         f(-1),
         trans(this->f),
         recorder(&this->trans, NULL, bpp,
-                8192, 768, 8192, 3072, 8192, 12288        
+                8192, 768, 8192, 3072, 8192, 12288
 ) {
         char tmppath[1024] = {};
         sprintf(tmppath, "%s.%u.wrm", path, getpid());
@@ -105,7 +105,7 @@ class NativeCapture
         this->recorder.draw(cmd, clip);
     }
 
-    void draw(const RDPMemBlt & cmd, const Rect & clip, Bitmap & bmp)
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
         this->recorder.draw(cmd, clip, bmp);
     }

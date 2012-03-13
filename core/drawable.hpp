@@ -384,7 +384,7 @@ struct Drawable
      * a cache (data) and insert a subpart (srcx, srcy) to the local
      * image cache (this->data) a the given position (rect).
      */
-    void mem_blt(const Rect& rect, Bitmap & bmp, const unsigned int srcx, const unsigned int srcy, const uint32_t xormask, const bool bgr)
+    void mem_blt(const Rect& rect, const Bitmap & bmp, const unsigned int srcx, const unsigned int srcy, const uint32_t xormask, const bool bgr)
     {
         if (bmp.cx < srcx || bmp.cy < srcy){
             return ;

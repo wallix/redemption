@@ -402,9 +402,6 @@ struct GraphicDeviceMod : public GraphicDevice
         }
     }
 
-    virtual void draw(const RDPMemBlt & memblt, const Rect & clip){
-    }
-
     virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, const int srcx, const int srcy, const uint8_t rop, const BGRPalette & palette, const Rect & clip)
     {
         const uint8_t palette_id = 0;

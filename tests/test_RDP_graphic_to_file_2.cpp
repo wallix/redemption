@@ -59,7 +59,7 @@ private:
     {
         BOOST_CHECK(false);
     }
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip)
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
         BOOST_CHECK(false);
     }
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ReadCapture)
                 }
             }
         }
-        virtual void draw(const RDPMemBlt & cmd, const Rect & clip, Bitmap & bmp)
+        virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
         {
             BOOST_CHECK(true);
             const Rect & rect = cmd.rect;

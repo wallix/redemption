@@ -1152,8 +1152,7 @@ public:
                 if (!(this->original_bpp == 8 && out_bpp == 8)){
                     pixel = color_decode(pixel, this->original_bpp, this->original_palette);
 
-                    if (((this->original_bpp == 24) && (out_bpp == 16 || out_bpp == 15 || out_bpp == 8))
-                    ||  ((this->original_bpp == 8) && (out_bpp == 16 || out_bpp == 15))) {
+                    if (out_bpp == 16 || out_bpp == 15){
                         pixel = RGBtoBGR(pixel);
                     }
                     pixel = color_encode(pixel, out_bpp);

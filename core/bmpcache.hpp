@@ -92,7 +92,7 @@ struct BmpCache {
         }
 
 
-        uint32_t cache_bitmap(Bitmap & oldbmp){
+        uint32_t cache_bitmap(const Bitmap & oldbmp){
             uint8_t outbuf[65536];
             oldbmp.convert_data_bitmap(this->bpp, outbuf);
             Bitmap * bmp = new Bitmap(this->bpp, &oldbmp.original_palette,

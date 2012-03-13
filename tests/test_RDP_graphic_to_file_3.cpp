@@ -59,7 +59,7 @@ private:
     {
         BOOST_CHECK(false);
     }
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, Bitmap & bmp)
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
         BOOST_CHECK(false);
     }
