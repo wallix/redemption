@@ -65,7 +65,7 @@ class NativeCapture
     OutFileTransport trans;
     GraphicsToFile recorder;
 
-    NativeCapture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path)
+    NativeCapture(int width, int height, int bpp, const BGRPalette & palette, char * path)
         : width(width), height(height), bpp(bpp),
         f(-1),
         trans(this->f),

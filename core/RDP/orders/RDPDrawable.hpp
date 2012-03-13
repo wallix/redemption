@@ -31,17 +31,17 @@ public:
     uint8_t bpp;
     const BGRPalette & palette;
     bool bgr;
-    BmpCache & bmpcache;
+    BmpCache bmpcache;
     Drawable drawable;
 
 
     RDPDrawable(const uint16_t width, const uint16_t height,
                 const uint8_t bpp, const BGRPalette & palette,
-                BmpCache & bmpcache, bool bgr=true)
+                bool bgr=true)
     : bpp(bpp),
     palette(palette), // source palette for RDP primitives
     bgr(bgr),
-    bmpcache(bmpcache),
+    bmpcache(bpp),
     drawable(width, height)
     {}
 

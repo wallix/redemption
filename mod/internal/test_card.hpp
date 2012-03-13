@@ -147,7 +147,7 @@ struct test_card_mod : public internal_mod {
 
         Bitmap logo(24, SHARE_PATH "/ad24b.bmp");
         this->gd.bitmap_update(logo,
-            Rect(0, 0, logo.cx, logo.cy),
+            Rect(100, 100, logo.cx, logo.cy),
              0, 0, 0xCC, this->gd.palette332, clip);
 
         this->gd.server_end_update();

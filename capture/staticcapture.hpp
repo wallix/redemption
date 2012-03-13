@@ -63,8 +63,8 @@ class StaticCapture : public RDPDrawable
     BGRPalette palette;
     char path[1024];
 
-    StaticCapture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality)
-        : RDPDrawable(width, height, bpp, palette, bmpcache, false),
+    StaticCapture(int width, int height, int bpp, const BGRPalette & palette, char * path, const char * codec_id, const char * video_quality)
+        : RDPDrawable(width, height, bpp, palette, true),
           framenb(0)
     {
         gettimeofday(&this->start, NULL);

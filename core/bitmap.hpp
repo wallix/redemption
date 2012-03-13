@@ -47,6 +47,7 @@
 #include "colors.hpp"
 #include <inttypes.h>
 
+#include "ssl_calls.hpp"
 
 
 #include "rect.hpp"
@@ -1073,6 +1074,18 @@ public:
         }
     }
 
+    void compute_sha1(uint8_t (&sig)[20]) const
+    {
+        SSL_SHA1 sha1;
+        ssllib ssl;
+        ssl.sha1_init(&sha1);
+        uint16_t rowsize = this->cx * nbbytes(this->original_bpp);
+        for (size_t y = 0; y < (size_t)this->cy; y++){
+            ssl.sha1_update(&sha1, this->data_bitmap + y * rowsize, rowsize);
+        }
+        ssl.sha1_final(&sha1, sig);
+    }
+
     uint32_t compute_crc() const
     {
         const static int crc_seed = 0xffffffff;
@@ -1149,14 +1162,14 @@ public:
             for (size_t i = 0; i < this->cx ; i++) {
                 uint32_t pixel = in_bytes_le(src_nbbytes, src);
 
-                if (!(this->original_bpp == 8 && out_bpp == 8)){
+                if (this->original_bpp != out_bpp){
                     pixel = color_decode(pixel, this->original_bpp, this->original_palette);
-
-                    if (out_bpp == 16 || out_bpp == 15){
+                    if (out_bpp == 16 || out_bpp == 15 || out_bpp == 8){
                         pixel = RGBtoBGR(pixel);
                     }
                     pixel = color_encode(pixel, out_bpp);
                 }
+
                 out_bytes_le(dest, dest_nbbytes, pixel);
                 src += src_nbbytes;
                 dest += dest_nbbytes;

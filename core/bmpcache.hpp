@@ -40,7 +40,8 @@ struct BmpCache {
 
     Bitmap * cache[3][8192];
     uint32_t stamps[3][8192];
-    uint32_t crc[3][8192];
+    //uint32_t crc[3][8192];
+    uint8_t sha1[3][8192][20];
     uint32_t stamp;
     public:
         BmpCache(const uint8_t bpp,
@@ -60,7 +61,8 @@ struct BmpCache {
                 for (size_t cidx = 0; cidx < 8192 ; cidx++){
                     this->cache[cid][cidx] = NULL;
                     this->stamps[cid][cidx] = 0;
-                    this->crc[cid][cidx] = 0;
+                    //this->crc[cid][cidx] = 0;
+                    bzero(this->sha1[cid][cidx], 20);
                 }
             }
         }
@@ -76,7 +78,8 @@ struct BmpCache {
             delete this->cache[id][idx];
             this->cache[id][idx] = bmp;
             this->stamps[id][idx] = ++stamp;
-            this->crc[id][idx] = bmp->compute_crc();
+            //this->crc[id][idx] = bmp->compute_crc();
+            bmp->compute_sha1(this->sha1[id][idx]);
         }
 
         void restamp(uint8_t id, uint16_t idx){
@@ -99,7 +102,9 @@ struct BmpCache {
                     oldbmp.cx, oldbmp.cy, outbuf,
                     oldbmp.cx * nbbytes(this->bpp) * oldbmp.cy, false, false);
 
-            const unsigned bmp_crc = bmp->compute_crc();
+            //const unsigned bmp_crc = bmp->compute_crc();
+            uint8_t bmp_sha1[20];
+            bmp->compute_sha1(bmp_sha1);
 
             uint16_t oldest_cidx = 0;
             unsigned oldstamp = this->stamps[0][0];
@@ -123,7 +128,8 @@ struct BmpCache {
             }
 
             for (uint16_t cidx = 0 ; cidx < entries; cidx++){
-                if (bmp_crc == this->crc[id][cidx]
+                if (/*bmp_crc == this->crc[id][cidx]
+                && */0 == memcmp(bmp_sha1, this->sha1[id][cidx], sizeof(bmp_sha1))
                 && this->cache[id][cidx]->cx == bmp->cx
                 && this->cache[id][cidx]->cy == bmp->cy){
                     delete bmp;
@@ -138,7 +144,8 @@ struct BmpCache {
             delete this->cache[id][oldest_cidx];
             this->cache[id][oldest_cidx] = bmp;
             this->stamps[id][oldest_cidx] = ++stamp;
-            this->crc[id][oldest_cidx] = bmp_crc;
+            //this->crc[id][oldest_cidx] = bmp_crc;
+            bmp->compute_sha1(this->sha1[id][oldest_cidx]);
             return (BITMAP_ADDED_TO_CACHE << 24)|(id<<16)|oldest_cidx;
         }
 };

@@ -394,9 +394,8 @@ struct Drawable
             rect.x, rect.y,
             std::min<int>(bmp.cx - srcx,
                           std::min(this->width - rect.x, rect.cx)),
-                          std::min<int>(bmp.cy - srcy,
-                                        std::min(this->height - rect.y,
-                                                 rect.cy)));
+            std::min<int>(bmp.cy - srcy,
+                          std::min(this->height - rect.y, rect.cy)));
         if (trect.isempty()){
             return ;
         }

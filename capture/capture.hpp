@@ -58,9 +58,9 @@ class Capture
     public:
 
     TODO(" fat interface : ugly  find another way")
-    Capture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality) :
-        sc(width, height, 24, palette, bmpcache, path, codec_id, video_quality),
-        nc(width, height, 24, palette, bmpcache, path)
+    Capture(int width, int height, int bpp, const BGRPalette & palette, char * path, const char * codec_id, const char * video_quality) :
+        sc(width, height, 24, palette, path, codec_id, video_quality),
+        nc(width, height, 24, palette, path)
     {
     }
 
