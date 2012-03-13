@@ -92,16 +92,18 @@ struct BmpCache {
         }
 
 
-        uint32_t get_by_crc(Bitmap & oldbmp){
+        uint32_t cache_bitmap(Bitmap & oldbmp){
 
+            LOG(LOG_INFO, "adding candidate bitmap to cache : oldbpp = %u cache bpp = %u", oldbmp.original_bpp, this->bpp);
             uint8_t outbuf[65536];
-            TODO("Change both functions below to a function cloning to different color depth")
             oldbmp.convert_data_bitmap(this->bpp, outbuf);
             Bitmap * bmp = new Bitmap(this->bpp, &oldbmp.original_palette,
                     oldbmp.cx, oldbmp.cy, outbuf,
-                row_size(align4(oldbmp.cx), this->bpp) * oldbmp.cy, false, false);
+                    oldbmp.cx * nbbytes(this->bpp) * oldbmp.cy, false, false);
 
             const unsigned bmp_crc = bmp->get_crc();
+            LOG(LOG_INFO, "candidate bitmap CRC=%u", bmp_crc);
+
             uint16_t oldest_cidx = 0;
             unsigned oldstamp = this->stamps[0][0];
 
@@ -127,6 +129,7 @@ struct BmpCache {
                 if (bmp_crc == this->crc[id][cidx]
                 && this->cache[id][cidx]->cx == bmp->cx
                 && this->cache[id][cidx]->cy == bmp->cy){
+                    LOG(LOG_INFO, "candidate bitmap found in cache at (id=%u, idx=%u), deleting", id, cidx);
                     delete bmp;
                     return (BITMAP_FOUND_IN_CACHE << 24)|(id<<16)|cidx;
                 }
@@ -136,10 +139,9 @@ struct BmpCache {
                 }
             }
             // find oldest stamp (or 0) and replace bitmap
+            LOG(LOG_INFO, "candidate bitmap not found in cache, replacing (id=%u, idx=%u) [%p]", id, oldest_cidx, this->cache[id][oldest_cidx]);
             this->put(id, oldest_cidx, bmp);
             return (BITMAP_ADDED_TO_CACHE << 24)|(id<<16)|oldest_cidx;
         }
-
-
 };
 #endif

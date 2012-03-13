@@ -123,8 +123,8 @@ struct GraphicsUpdatePDU : public RDPSerializer
                       const int bitmap_cache_version,
                       const int use_bitmap_comp,
                       const int op2)
-        : RDPSerializer(trans, ini, 
-            bpp, 
+        : RDPSerializer(trans, ini,
+            bpp,
             small_entries, small_size,
             medium_entries, medium_size,
             big_entries, big_size,
@@ -157,7 +157,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
         if (this->out_control){ delete this->out_control; }
         if (this->out_data){ delete this->out_data; }
 
-        if (this->ini->globals.debug.primary_orders){
+        if (this->ini->globals.debug.primary_orders > 63){
             LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
         }
         this->stream.init(32768);

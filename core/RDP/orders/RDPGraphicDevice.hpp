@@ -379,21 +379,20 @@ struct RDPSerializer : public RDPGraphicDevice
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, Bitmap & oldbmp)
     {
-        uint32_t res = this->bmp_cache.get_by_crc(oldbmp);
+        uint32_t res = this->bmp_cache.cache_bitmap(oldbmp);
 
         unsigned cache_id = (res >> 16) & 0xFF;
         unsigned cache_idx = (res & 0xFFFF);
 
         Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
         if ((res >> 24) == BITMAP_ADDED_TO_CACHE){
-            RDPBmpCache cmd_cache(24, bmp, cache_id, cache_idx);
+            RDPBmpCache cmd_cache(bmp->original_bpp, bmp, cache_id, cache_idx);
             this->reserve_order(cmd_cache.bmp->bmp_size + 16);
             cmd_cache.emit(this->stream, this->bitmap_cache_version, this->use_bitmap_comp, this->op2);
             if (this->ini && this->ini->globals.debug.secondary_orders){
                 cmd_cache.log(LOG_INFO);
             }
         }
-
 
         RDPMemBlt newcmd = cmd;
         newcmd.cache_id = cache_id;

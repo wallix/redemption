@@ -56,7 +56,7 @@ struct Bitmap {
     public:
     uint8_t *data_bitmap;
 
-    int original_bpp;
+    uint8_t original_bpp;
     BGRPalette original_palette;
     unsigned cx;
     unsigned cy;
@@ -71,7 +71,7 @@ struct Bitmap {
 
     TODO("there is way too many constructors  doing things much too complicated. We should split that in two stages. First prepare minimal context for bitmap but keep a flag or something to mark it as non ready  then load actual data into bitmap.")
 
-    Bitmap(int bpp, const BGRPalette * palette, unsigned cx, unsigned cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
+    Bitmap(uint8_t bpp, const BGRPalette * palette, unsigned cx, unsigned cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
         : data_bitmap(0)
         , original_bpp(bpp)
         , cx(cx)
@@ -98,8 +98,14 @@ struct Bitmap {
         } else if (upsidedown) {
             this->copy_upsidedown(data, cx);
         } else {
-            assert(size == this->bmp_size);
-            memcpy(this->data_bitmap, data, size);
+            uint8_t * dest = this->data_bitmap;
+            const uint8_t * src = data;
+            for (uint16_t i = 0 ; i < this->cy ; i++){
+                memcpy(dest, src, this->cx * nbbytes(this->original_bpp));
+                bzero(dest + this->cx * nbbytes(this->original_bpp), (this->bmp_size / this->cy) -  this->cx * nbbytes(this->original_bpp));
+                src += this->cx * nbbytes(this->original_bpp);
+                dest += (this->bmp_size / this->cy);
+            }
         }
         if (this->cx <= 0 || this->cy <= 0){
             LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u size=%u bpp=%u", this->cx, this->cy, size, this->original_bpp);
@@ -1159,31 +1165,27 @@ struct Bitmap {
     void convert_data_bitmap(int out_bpp, uint8_t * dest) {
 
         uint8_t * src = this->data_bitmap;
-
-        TODO(" code below looks time consuming (applies to every pixels) and should probably be optimized")
-        // Color decode/encode
-        TODO(" heavy optimization is possible here")
         const uint8_t src_nbbytes = nbbytes(this->original_bpp);
         const uint8_t dest_nbbytes = nbbytes(out_bpp);
-        for (size_t i = 0; i < this->cx * this->cy; i++) {
-            uint32_t pixel = in_bytes_le(src_nbbytes, src);
 
-            if (!(this->original_bpp == 8 && out_bpp == 8)){
-                TODO(" is it the same on actual 24 bits server ? It may be a color inversion in widget layer")
-                pixel = color_decode(pixel, this->original_bpp, this->original_palette);
-                if ((this->original_bpp == 24)
-                && (out_bpp == 16 || out_bpp == 15 || out_bpp == 8)){
-                    pixel = RGBtoBGR(pixel);
+        for (size_t j = 0; j < this->cy ; j++) {
+            for (size_t i = 0; i < this->cx ; i++) {
+                uint32_t pixel = in_bytes_le(src_nbbytes, src);
+
+                if (!(this->original_bpp == 8 && out_bpp == 8)){
+                    pixel = color_decode(pixel, this->original_bpp, this->original_palette);
+
+                    if (((this->original_bpp == 24) && (out_bpp == 16 || out_bpp == 15 || out_bpp == 8))
+                    ||  ((this->original_bpp == 8) && (out_bpp == 16 || out_bpp == 15))) {
+                        pixel = RGBtoBGR(pixel);
+                    }
+                    pixel = color_encode(pixel, out_bpp);
                 }
-                if ((this->original_bpp == 8)
-                && (out_bpp == 16 || out_bpp == 15)){
-                    pixel = RGBtoBGR(pixel);
-                }
-                pixel = color_encode(pixel, out_bpp);
+                out_bytes_le(dest, dest_nbbytes, pixel);
+                src += src_nbbytes;
+                dest += dest_nbbytes;
             }
-            out_bytes_le(dest, dest_nbbytes, pixel);
-            src += src_nbbytes;
-            dest += dest_nbbytes;
+            src+= (this->bmp_size/ this->cy) - this->cx * src_nbbytes;
         }
     }
 };
