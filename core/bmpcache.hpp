@@ -47,7 +47,7 @@ struct BmpCache {
                  uint32_t small_entries = 8192, uint32_t small_size = 768,
                  uint32_t medium_entries = 8192, uint32_t medium_size = 3072,
                  uint32_t big_entries = 8192, uint32_t big_size = 12288)
-            : bpp(bpp) 
+            : bpp(bpp)
             , small_entries(small_entries)
             , small_size(small_size)
             , medium_entries(medium_entries)
@@ -67,17 +67,13 @@ struct BmpCache {
         ~BmpCache(){
             for (uint8_t cid = 0; cid < 3; cid++){
                 for (uint16_t cidx = 0 ; cidx < 8192; cidx++){
-                    if (this->cache[cid][cidx]){
-                        delete this->cache[cid][cidx];
-                    }
+                    delete this->cache[cid][cidx];
                 }
             }
         }
 
         void put(uint8_t id, uint16_t idx, Bitmap * const bmp){
-            if (this->cache[id][idx]){
-                delete this->cache[id][idx];
-            }
+            delete this->cache[id][idx];
             this->cache[id][idx] = bmp;
             this->stamps[id][idx] = ++stamp;
             this->crc[id][idx] = bmp->get_crc();
@@ -96,7 +92,15 @@ struct BmpCache {
         }
 
 
-        uint32_t get_by_crc(Bitmap * const bmp){
+        uint32_t get_by_crc(Bitmap & oldbmp){
+
+            uint8_t outbuf[65536];
+            TODO("Change both functions below to a function cloning to different color depth")
+            oldbmp.convert_data_bitmap(this->bpp, outbuf);
+            Bitmap * bmp = new Bitmap(this->bpp, &oldbmp.original_palette,
+                    oldbmp.cx, oldbmp.cy, outbuf,
+                row_size(align4(oldbmp.cx), this->bpp) * oldbmp.cy, false, false);
+
             const unsigned bmp_crc = bmp->get_crc();
             uint16_t oldest_cidx = 0;
             unsigned oldstamp = this->stamps[0][0];
@@ -123,6 +127,7 @@ struct BmpCache {
                 if (bmp_crc == this->crc[id][cidx]
                 && this->cache[id][cidx]->cx == bmp->cx
                 && this->cache[id][cidx]->cy == bmp->cy){
+                    delete bmp;
                     return (BITMAP_FOUND_IN_CACHE << 24)|(id<<16)|cidx;
                 }
                 if (this->stamps[id][cidx] < oldstamp){

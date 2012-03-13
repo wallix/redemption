@@ -279,7 +279,7 @@ struct RDPSerializer : public RDPGraphicDevice
 
 
     RDPSerializer(Transport * trans, const Inifile * ini,
-          const uint8_t  bpp, 
+          const uint8_t  bpp,
           uint32_t small_entries, uint32_t small_size,
           uint32_t medium_entries, uint32_t medium_size,
           uint32_t big_entries, uint32_t big_size,
@@ -379,36 +379,33 @@ struct RDPSerializer : public RDPGraphicDevice
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, Bitmap & oldbmp)
     {
-//        Stream(65536);
-//        bmp.convert_data_bitmap(this->bmp_cache.bpp, outbuf);
-//        Bitmap bmp = new Bitamp(this->bmp_cache.bpp, oldbpm.palette, oldbmp.cx, oldbmp.cy, oldbmp.cx * oldbmp.cy * nbbytes(this->bmp_cache.bpp), false, false); 
-//        Bitamp bmp;
+        uint32_t res = this->bmp_cache.get_by_crc(oldbmp);
 
-//        uint32_t res = this->bmp_cache.get_by_crc(&bmp);
-//        unsigned cache_id = (res >> 16) & 0xFF;
-//        unsigned cache_idx = (res & 0xFFFF);
-//        if ((res >> 24) == BITMAP_ADDED_TO_CACHE){
-//            RDPBmpCache cmd_cache(24, &bmp, cache_id, cache_idx);
-//            this->reserve_order(cmd_cache.bmp->bmp_size + 16);
-//            cmd_cache.emit(this->stream, this->bitmap_cache_version, this->use_bitmap_comp, this->op2);
+        unsigned cache_id = (res >> 16) & 0xFF;
+        unsigned cache_idx = (res & 0xFFFF);
 
-//            if (this->ini && this->ini->globals.debug.secondary_orders){
-//                cmd_cache.log(LOG_INFO);
-//            }
-//        }
+        Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
+        if ((res >> 24) == BITMAP_ADDED_TO_CACHE){
+            RDPBmpCache cmd_cache(24, bmp, cache_id, cache_idx);
+            this->reserve_order(cmd_cache.bmp->bmp_size + 16);
+            cmd_cache.emit(this->stream, this->bitmap_cache_version, this->use_bitmap_comp, this->op2);
+            if (this->ini && this->ini->globals.debug.secondary_orders){
+                cmd_cache.log(LOG_INFO);
+            }
+        }
 
 
-//        RDPMemBlt newcmd = cmd;
-//        newcmd.cache_id = cache_id;
-//        newcmd.cache_idx = cache_idx;
-//        this->reserve_order(30);
-//        RDPOrderCommon newcommon(RDP::MEMBLT, clip);
-//        newcmd.emit(this->stream, newcommon, this->common, this->memblt);
-//        this->common = newcommon;
-//        this->memblt = newcmd;
-//        if (this->ini && this->ini->globals.debug.primary_orders){
-//            newcmd.log(LOG_INFO, common.clip);
-//        }
+        RDPMemBlt newcmd = cmd;
+        newcmd.cache_id = cache_id;
+        newcmd.cache_idx = cache_idx;
+        this->reserve_order(30);
+        RDPOrderCommon newcommon(RDP::MEMBLT, clip);
+        newcmd.emit(this->stream, newcommon, this->common, this->memblt);
+        this->common = newcommon;
+        this->memblt = newcmd;
+        if (this->ini && this->ini->globals.debug.primary_orders){
+            newcmd.log(LOG_INFO, common.clip);
+        }
     }
 
     virtual void draw(const RDPLineTo& cmd, const Rect & clip)

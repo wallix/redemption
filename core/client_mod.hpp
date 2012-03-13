@@ -432,21 +432,21 @@ struct GraphicDeviceMod : public GraphicDevice
                 int cx = std::min(32, dst.cx - x);
                 const Rect tile(x, y, cx, cy);
 
-                Bitmap * candidate_bmp = new Bitmap(
-                    this->get_front_bpp(), &bitmap.original_palette,
+                Bitmap tiled_bmp(
+                    bitmap.original_bpp, &bitmap.original_palette,
                     tile, width, height, src_data);
 
                 LOG(LOG_INFO, "tile at dst = tile(x=%u, y=%u, cx=%u, cy=%u) Bitmap CRC=%u",
-                    tile.x, tile.y, tile.cx, tile.cy, candidate_bmp->get_crc());
+                    tile.x, tile.y, tile.cx, tile.cy, tiled_bmp.get_crc());
 
                 if (!clip.intersect(tile.offset(dst.x, dst.y)).isempty()
                 && (width > srcx + x)
                 && (height > srcy + y)) {
                     TODO("Memory leak here on candidate_bmp!!!!");
                     const RDPMemBlt cmd(0, tile.offset(dst.x, dst.y), rop, 0, 0, 0);
-                    this->front.orders->draw(cmd, clip, *candidate_bmp);
+                    this->front.orders->draw(cmd, clip, tiled_bmp);
                     if (this->capture){
-                        this->capture->mem_blt(cmd, clip, *candidate_bmp);
+                        this->capture->mem_blt(cmd, clip, tiled_bmp);
                     }
                 }
             }
@@ -674,7 +674,7 @@ struct client_mod : public Callback {
     {
         if (flag){
             this->stop_capture();
-            this->gd.capture = new Capture(width, height, 24, this->gd.palette332, 
+            this->gd.capture = new Capture(width, height, 24, this->gd.palette332,
                 this->gd.front.orders->bmp_cache, path, codec_id, quality);
         }
     }

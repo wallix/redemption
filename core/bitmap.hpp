@@ -114,8 +114,8 @@ struct Bitmap {
         , cy(0)
         , crc(0)
         , crc_computed(false)
-        , line_size(row_size(this->cx, bpp))
-        , bmp_size(row_size(align4(this->cx), bpp) * cy)
+        , line_size(0)
+        , bmp_size(0)
     {
 //        LOG(LOG_ERR, "Creating bitmap (2) src_cx=%u src_cy=%u cx=%u cy=%u bpp=%u r(%u, %u, %u, %u)", src_cx, src_cy, cx, cy, bpp, r.x, r.y, r.cx, r.cy);
 
@@ -138,6 +138,9 @@ struct Bitmap {
         this->cx = align4(cx);
         unsigned cy = std::min(r.cy, src_cy - r.y);
         this->cy = cy;
+        this->line_size = row_size(this->cx, bpp);
+        this->bmp_size = row_size(align4(this->cx), bpp) * this->cy;
+
 
         this->data_bitmap  = (uint8_t*)malloc(this->bmp_size);
 
@@ -167,7 +170,7 @@ struct Bitmap {
     }
 
 
-    Bitmap(int bpp, const char* filename)
+    Bitmap(uint8_t bpp, const char* filename)
         : data_bitmap(0)
         , original_bpp(bpp)
         , cx(0)
@@ -178,7 +181,6 @@ struct Bitmap {
         , bmp_size(0)
     {
         LOG(LOG_INFO, "loading bitmap %s", filename);
-        int size;
         BGRPalette palette1;
         char type1[4];
 
@@ -243,7 +245,10 @@ struct Bitmap {
             throw Error(ERR_BITMAP_LOAD_FAILED);
         }
         stream.end = stream.data + 4;
-        size = stream.in_uint32_le();
+        {
+            TODO("Check what is this size ? header size ? used as fixed below ?")
+            /* uint32_t size = */ stream.in_uint32_le();
+        }
 
         // skip some bytes to set file pointer to bmp header
         lseek(fd, 14, SEEK_SET);
@@ -314,27 +319,28 @@ struct Bitmap {
         // this avoid palette problems for 8 bits,
         // and 4 bits is not supported in other parts of code anyway
 
+        // read bitmap data
+        {
+            size_t size = (header.image_width * header.image_height * file_Qpp) / 2;
+            stream.init(size);
+            int row_size = (header.image_width * file_Qpp) / 2;
+            int padding = align4(row_size) - row_size;
+            for (int y = 0; y < header.image_height; y++) {
+                int k = read(fd, stream.data + y * row_size, row_size + padding);
+                if (k != (row_size + padding)) {
+                    LOG(LOG_ERR, "Widget_load: read error reading bitmap file [%s] read\n", filename);
+                    close(fd);
+                    throw Error(ERR_BITMAP_LOAD_FAILED);
+                }
+            }
+            close(fd); // from now on all is in memory
+            stream.end = stream.data + size;
+        }
+
         this->cx = header.image_width;
         this->cy = header.image_height;
-        this->line_size = row_size(this->cx, 24);
-        this->bmp_size = row_size(align4(this->cx), 24) * this->cy;
-
-        // read bitmap data
-        size = (header.image_width * header.image_height * file_Qpp) / 2;
-        stream.init(size);
-        int row_size = (this->cx * file_Qpp) / 2;
-        int padding = align4(row_size) - row_size;
-        for (unsigned y = 0; y < this->cy; y++) {
-            int k = read(fd, stream.data + y * row_size, row_size + padding);
-            if (k != (row_size + padding)) {
-                LOG(LOG_ERR, "Widget_load: read error reading bitmap file [%s] read\n", filename);
-                close(fd);
-                throw Error(ERR_BITMAP_LOAD_FAILED);
-            }
-        }
-        close(fd); // from now on all is in memory
-        stream.end = stream.data + size;
-
+        this->line_size = row_size(this->cx, this->original_bpp);
+        this->bmp_size = row_size(align4(this->cx), this->original_bpp) * this->cy;
         this->data_bitmap  = (uint8_t*)malloc(this->bmp_size);
         uint8_t * dest = this->data_bitmap;
         const uint8_t nbbytes_dest = ::nbbytes(this->original_bpp);
@@ -376,15 +382,15 @@ struct Bitmap {
                     ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest, px);
                 break;
                 case 16:
-                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest, 
+                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest,
                         color_encode(RGBtoBGR(px), 16));
                 break;
                 case 15:
-                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest, 
+                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest,
                         color_encode(px, 15));
                 break;
                 case 8:
-                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest, 
+                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest,
                         color_encode(px, 8));
                 break;
                 }
@@ -425,7 +431,7 @@ struct Bitmap {
             }
         }
         LOG(LOG_INFO, "}; /* %p */", this);
-        LOG(LOG_INFO, "Bitmap bmp%p(%d, %d, %d, raw%p, sizeof(raw%p));", 
+        LOG(LOG_INFO, "Bitmap bmp%p(%d, %d, %d, raw%p, sizeof(raw%p));",
             this, this->original_bpp, this->cx, this->cy, this, this);
 
 //        LOG(LOG_INFO, "\n-----End of dump [%p] -----------------------\n", this);
