@@ -67,7 +67,7 @@ struct GraphicDevice
     virtual void draw(const RDPLineTo & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
     TODO("change that to draw(RDPMemBlt ")
-    virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, int srcx, int srcy, const uint8_t rop, const BGRPalette & palette, const Rect & clip) = 0;
+    virtual void bitmap_update(const Bitmap & bitmap, const Rect & dst, const unsigned srcx, const unsigned srcy, const uint8_t rop, const BGRPalette & palette, const Rect & clip) = 0;
 
 
     virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex) = 0;

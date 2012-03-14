@@ -107,9 +107,10 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ReadCapture)
         uint8_t * data;
         BGRPalette palette;
 
+        TODO("use bmpcache")
         struct Cache {
             class BitmapCache {
-                Bitmap * cache[3][8192];
+                const Bitmap * cache[3][8192];
                 public:
                     BitmapCache(){
                         for (uint8_t cid = 0; cid < 3; cid++){
@@ -128,13 +129,13 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ReadCapture)
                             }
                         }
                     }
-                    void put(uint8_t id, uint16_t idx, Bitmap * bmp){
+                    void put(uint8_t id, uint16_t idx, const Bitmap * bmp){
                         if (cache[id][idx]){
                             delete cache[id][idx];
                         }
                         cache[id][idx] = bmp;
                     }
-                    Bitmap * get(uint8_t id, uint16_t idx){
+                    const Bitmap * get(uint8_t id, uint16_t idx){
                         return cache[id][idx];
                     }
             } bmp;

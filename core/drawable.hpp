@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier, Poelen Jonathan
 */
 
-#if !defined(__DRAWABLE_HPP__)
-#define __DRAWABLE_HPP__
+#if !defined(__CORE_DRAWABLE_HPP__)
+#define __CORE_DRAWABLE_HPP__
 
 #include "bitmap.hpp"
 
@@ -401,9 +401,9 @@ struct Drawable
         }
         const uint8_t Bpp = ::nbbytes(bmp.original_bpp);
         uint8_t * target = this->first_pixel(trect);
-        uint8_t * source = bmp.data_bitmap + ((bmp.cy - srcy - 1) * bmp.cx + srcx) * Bpp;
+        uint8_t * source = bmp.data_bitmap + (bmp.cy - srcy - 1) * (bmp.bmp_size / bmp.cy) + srcx * Bpp;
         int steptarget = (this->width - trect.cx) * 3;
-        int stepsource = (bmp.cx + trect.cx) * Bpp;
+        int stepsource = (bmp.bmp_size / bmp.cy) + trect.cx * Bpp;
 
         for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource){
             for (int x = 0; x < trect.cx ; x++, target += 3, source += Bpp){

@@ -46,14 +46,14 @@ BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
         ci.bitmap_cache_version = 1;
         ci.use_bitmap_comp = 0;
         ci.op2 = 0;
-        
+
         const uint8_t data[] = {
             /* line 0 */
             0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,
-            0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF, 
+            0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,
         };
         Bitmap bmp(24, NULL, 8, 1, data, sizeof(data), false, false);
-        RDPBmpCache newcmd(24, &bmp, 1, 10);
+        RDPBmpCache newcmd(&bmp, 1, 10);
         newcmd.emit(stream, ci.bitmap_cache_version, ci.use_bitmap_comp, ci.op2);
 
         uint8_t datas[] = {
@@ -83,8 +83,8 @@ BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
         BOOST_CHECK_EQUAL((uint16_t)33 - 7, header.length); // length after type - 7
         BOOST_CHECK_EQUAL((unsigned)0x08, header.flags);
         BOOST_CHECK_EQUAL((unsigned)TS_CACHE_BITMAP_UNCOMPRESSED, header.type);
-        
-        RDPBmpCache cmd(24);
+
+        RDPBmpCache cmd;
 //        cmd.receive(stream, control, header);
 
 //        check<RDPColCache>(cmd, newcmd, "Color Cache 1");

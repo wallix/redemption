@@ -402,7 +402,7 @@ struct GraphicDeviceMod : public GraphicDevice
         }
     }
 
-    virtual void bitmap_update(Bitmap & bitmap, const Rect & dst, const int srcx, const int srcy, const uint8_t rop, const BGRPalette & palette, const Rect & clip)
+    virtual void bitmap_update(const Bitmap & bitmap, const Rect & dst, const unsigned srcx, const unsigned srcy, const uint8_t rop, const BGRPalette & palette, const Rect & clip)
     {
         const uint8_t palette_id = 0;
         if (this->get_front_bpp() == 8){
@@ -414,12 +414,8 @@ struct GraphicDeviceMod : public GraphicDevice
             }
             this->palette_sent = false;
         }
-        const uint16_t width = bitmap.cx;
-        const uint16_t height = bitmap.cy;
-        const uint8_t * src_data = bitmap.data_bitmap;
-
         LOG(LOG_INFO, "(srcx=%u, srcy=%u, width=%u, height=%u bpp=%u) -> dst(%u, %u, %u, %u) clip[%u %u %u %u]",
-            srcx, srcy, width, height, bitmap.original_bpp,
+            srcx, srcy, bitmap.cx, bitmap.cy, bitmap.original_bpp,
             dst.x, dst.y, dst.cx, dst.cy,
             clip.x, clip.y, clip.cx, clip.cy);
 
@@ -427,24 +423,27 @@ struct GraphicDeviceMod : public GraphicDevice
             int cy = std::min(32, dst.cy - y);
             for (int x = 0; x < dst.cx ; x += 32) {
                 int cx = std::min(32, dst.cx - x);
+
                 const Rect tile(x, y, cx, cy);
-                if (!clip.intersect(tile.offset(dst.x, dst.y)).isempty()
-                && (width > srcx + x)
-                && (height > srcy + y)) {
 
-                    Bitmap tiled_bmp(
-                        bitmap.original_bpp, &bitmap.original_palette,
-                        tile, width, height, src_data);
-
-                    LOG(LOG_INFO, "tile at dst = tile(x=%u, y=%u, cx=%u, cy=%u bpp=%u)",
-                        tile.x, tile.y, tile.cx, tile.cy, tiled_bmp.original_bpp);
-
-                    const RDPMemBlt cmd(0, tile.offset(dst.x, dst.y), rop, 0, 0, 0);
-                    this->front.orders->draw(cmd, clip, tiled_bmp);
-                    if (this->capture){
-                        this->capture->mem_blt(cmd, clip, tiled_bmp);
-                    }
+                if ((clip.intersect(tile.offset(dst.x, dst.y)).isempty())
+                ||  (bitmap.cx < srcx + x)
+                ||  (bitmap.cy < srcy + y)){
+                     continue;
                 }
+
+                Bitmap tiled_bmp(bitmap, tile.offset(srcx, srcy));
+
+                LOG(LOG_INFO, "tile at dst = tile(x=%u, y=%u, cx=%u, cy=%u bpp=%u)",
+                    tile.x, tile.y, tile.cx, tile.cy, tiled_bmp.original_bpp);
+
+                const RDPMemBlt cmd(0, tile.offset(dst.x, dst.y), rop, 0, 0, 0);
+
+                this->front.orders->draw(cmd, clip, tiled_bmp);
+                if (this->capture){
+                    this->capture->mem_blt(cmd, clip, tiled_bmp);
+                }
+
             }
         }
     }

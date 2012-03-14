@@ -78,6 +78,8 @@ struct RDPUnserializer
     Stream stream;
     RDPGraphicDevice * consumer;
     Transport * trans;
+
+    TODO("This should be extracted from serialized data. Serializer should have some API function to set geometry width x height x bpp saved in native movie.")
     Rect screen_rect;
 
     // Internal state of orders
@@ -166,7 +168,7 @@ struct RDPUnserializer
                     case TS_CACHE_BITMAP_UNCOMPRESSED:
                     {
                         // we need color depth and palette
-                        RDPBmpCache cmd(24);
+                        RDPBmpCache cmd;
                         BGRPalette palette;
                         init_palette332(palette);
                         cmd.receive(this->stream, control, header, palette);
@@ -228,7 +230,7 @@ struct RDPUnserializer
                 case RDP::MEMBLT:
                     {
                         this->memblt.receive(this->stream, header);
-                        Bitmap * bmp = this->bmp_cache.get(this->memblt.cache_id, this->memblt.cache_idx);
+                        const Bitmap * bmp = this->bmp_cache.get(this->memblt.cache_id, this->memblt.cache_idx);
                         if (!bmp){
                             LOG(LOG_ERR, "Memblt bitmap not found in cache at (%u, %u)", this->memblt.cache_id, this->memblt.cache_idx);
                         }
@@ -383,12 +385,12 @@ struct RDPSerializer : public RDPGraphicDevice
     {
         uint32_t res = this->bmp_cache.cache_bitmap(oldbmp);
 
-        unsigned cache_id = (res >> 16) & 0xFF;
-        unsigned cache_idx = (res & 0xFFFF);
+        uint8_t cache_id = (res >> 16) & 0x3;
+        uint16_t cache_idx = res;
 
-        Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
+        const Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
         if ((res >> 24) == BITMAP_ADDED_TO_CACHE){
-            RDPBmpCache cmd_cache(bmp->original_bpp, bmp, cache_id, cache_idx);
+            RDPBmpCache cmd_cache(bmp, cache_id, cache_idx);
             this->reserve_order(cmd_cache.bmp->bmp_size + 16);
             cmd_cache.emit(this->stream, this->bitmap_cache_version, this->use_bitmap_comp, this->op2);
             if (this->ini && this->ini->globals.debug.secondary_orders){

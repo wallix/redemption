@@ -30,21 +30,19 @@
 class RDPDrawable : public RDPGraphicDevice {
 public:
     uint8_t bpp;
-    const BGRPalette & palette;
+    BGRPalette palette;
     bool bgr;
-    BmpCache bmpcache;
     Drawable drawable;
-
 
     RDPDrawable(const uint16_t width, const uint16_t height,
                 const uint8_t bpp, const BGRPalette & palette,
                 bool bgr=true)
     : bpp(bpp),
-    palette(palette), // source palette for RDP primitives
     bgr(bgr),
-    bmpcache(bpp),
     drawable(width, height)
-    {}
+    {
+        memcpy(this->palette, palette, sizeof(palette));
+    }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
@@ -86,31 +84,47 @@ public:
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        TODO("If I use bitmap as is, I must count how many times it is used");
         const Rect& rect = clip.intersect(cmd.rect);
         if (rect.isempty()){
             return ;
         }
-
-//        Bitmap* bmp = this->bmpcache.get(cmd.cache_id & 0x3, cmd.cache_idx);
-//        if (!bmp){
-//            LOG(LOG_ERR,
-//                "bitmap not found in cache (%p) (id = %u, idx = %u)",
-//                &this->bmpcache, cmd.cache_id, cmd.cache_idx);
-//            return;
-//        }
-
         switch (cmd.rop) {
             case 0x00:
-                this->drawable.black_color(rect); break;
+                this->drawable.black_color(rect);
+            break;
             case 0xFF:
-                this->drawable.white_color(rect); break;
+                this->drawable.white_color(rect);
+            break;
             case 0x55:
-                this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->bgr);
-                break;
+            {
+                if (bmp.original_bpp != this->bpp){
+                    uint8_t outbuf[65536];
+                    bmp.convert_data_bitmap(this->bpp, outbuf);
+                    const Bitmap newbmp(this->bpp, &bmp.original_palette,
+                            bmp.cx, bmp.cy, outbuf,
+                            bmp.cx * nbbytes(this->bpp) * bmp.cy, false, false);
+                    this->drawable.mem_blt(rect, newbmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->bgr);
+                }
+                else {
+                    this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->bgr);
+                }
+            }
+            break;
             case 0xCC:
-                this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0, this->bgr);
-                break;
+            {
+                if (bmp.original_bpp != this->bpp){
+                    uint8_t outbuf[65536];
+                    bmp.convert_data_bitmap(this->bpp, outbuf);
+                    const Bitmap newbmp(this->bpp, &bmp.original_palette,
+                            bmp.cx, bmp.cy, outbuf,
+                            bmp.cx * nbbytes(this->bpp) * bmp.cy, false, false);
+                    this->drawable.mem_blt(rect, newbmp, cmd.srcx, cmd.srcy, 0, this->bgr);
+                }
+                else {
+                    this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0, this->bgr);
+                }
+            }
+            break;
             default:
                 // should not happen
                 break;

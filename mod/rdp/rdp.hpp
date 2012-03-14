@@ -113,7 +113,7 @@ struct rdp_orders {
     BGRPalette memblt_palette;
 
     TODO(" this cache_bitmap here looks strange. At least it's size should be negotiated. And why is it not managed by the other cache management code ? This probably hide some kind of problem. See when working on cache secondary order primitives.")
-    Bitmap * cache_bitmap[3][10000];
+    const Bitmap * cache_bitmap[3][10000];
 
     rdp_orders() :
         common(RDP::PATBLT, Rect(0, 0, 1, 1)),
@@ -138,7 +138,7 @@ struct rdp_orders {
     void rdp_orders_process_bmpcache(int bpp, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
 //        LOG(LOG_INFO, "rdp_orders_process_bmpcache");
-        RDPBmpCache bmp(bpp);
+        RDPBmpCache bmp;
         bmp.receive(stream, control, header, this->global_palette);
 
         TODO("add cache_id, cache_idx range check, and also size check based on cache size by type and uncompressed bitmap size")
@@ -256,11 +256,11 @@ struct rdp_orders {
                     this->memblt.receive(stream, header);
                     {
                         assert((this->memblt.cache_id >> 4) < 6);
-                        struct Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xF][this->memblt.cache_idx];
+                        const Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xF][this->memblt.cache_idx];
                         if (bitmap) {
                             mod->gd.bitmap_update(
                                 *bitmap,
-                                this->memblt.rect, 
+                                this->memblt.rect,
                                 this->memblt.srcx, this->memblt.srcy, this->memblt.rop,
                                 this->cache_colormap[this->memblt.cache_id >> 4],
                                 cmd_clip);

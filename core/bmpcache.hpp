@@ -38,7 +38,7 @@ struct BmpCache {
     uint32_t big_entries;
     uint32_t big_size;
 
-    Bitmap * cache[3][8192];
+    const Bitmap * cache[3][8192];
     uint32_t stamps[3][8192];
     //uint32_t crc[3][8192];
     uint8_t sha1[3][8192][20];
@@ -53,7 +53,7 @@ struct BmpCache {
             , small_size(small_size)
             , medium_entries(medium_entries)
             , medium_size(medium_size)
-            , big_entries(big_size)
+            , big_entries(big_entries)
             , big_size(big_size)
         {
             this->stamp = 0;
@@ -74,7 +74,7 @@ struct BmpCache {
             }
         }
 
-        void put(uint8_t id, uint16_t idx, Bitmap * const bmp){
+        void put(uint8_t id, uint16_t idx, const Bitmap * const bmp){
             delete this->cache[id][idx];
             this->cache[id][idx] = bmp;
             this->stamps[id][idx] = ++stamp;
@@ -86,7 +86,7 @@ struct BmpCache {
             this->stamps[id][idx] = ++stamp;
         }
 
-        Bitmap * get(uint8_t id, uint16_t idx){
+        const Bitmap * get(uint8_t id, uint16_t idx){
             return this->cache[id][idx];
         }
 
@@ -98,7 +98,7 @@ struct BmpCache {
         uint32_t cache_bitmap(const Bitmap & oldbmp){
             uint8_t outbuf[65536];
             oldbmp.convert_data_bitmap(this->bpp, outbuf);
-            Bitmap * bmp = new Bitmap(this->bpp, &oldbmp.original_palette,
+            const Bitmap * bmp = new Bitmap(this->bpp, &oldbmp.original_palette,
                     oldbmp.cx, oldbmp.cy, outbuf,
                     oldbmp.cx * nbbytes(this->bpp) * oldbmp.cy, false, false);
 
@@ -112,6 +112,7 @@ struct BmpCache {
             uint16_t entries = 0;
             uint8_t id = 0;
             uint32_t bmp_size = bmp->bmp_size;
+
             if (bmp_size <= this->small_size) {
                 entries = this->small_entries;
                 id = 0;

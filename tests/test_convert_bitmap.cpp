@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap)
         BOOST_CHECK_EQUAL(0, outbuf[35]);
     }
 
-    BOOST_CHECK_EQUAL(8, bmp2.line_size);
+    BOOST_CHECK_EQUAL(6, bmp2.line_size);
     BOOST_CHECK_EQUAL(36, bmp2.bmp_size);
    BOOST_CHECK_EQUAL(2, bmp2.cx);
    BOOST_CHECK_EQUAL(3, bmp2.cy);

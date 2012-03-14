@@ -498,21 +498,16 @@ class RDPBmpCache {
 
     public:
     int id;
-    Bitmap * bmp;
-    int bpp;
     int idx;
+    const Bitmap * bmp;
 
 
-    RDPBmpCache(int bpp, Bitmap * bmp, int id, int idx)
-        : id(id), bmp(bmp), bpp(bpp), idx(idx)
+    RDPBmpCache(const Bitmap * bmp, int id, int idx)
+        : id(id), idx(idx), bmp(bmp)
     {
     }
 
-    RDPBmpCache(int bpp) :
-                    id(0),
-                    bmp(NULL),
-                    bpp(bpp),
-                    idx(0)
+    RDPBmpCache() : id(0), idx(0), bmp(NULL)
     {
     }
 
@@ -555,6 +550,7 @@ class RDPBmpCache {
 
     void emit_v1_compressed_small_headers(Stream & stream) const
     {
+        LOG(LOG_INFO, "emit_v1_compressed_small_headers");
         using namespace RDP;
 
         int order_flags = STANDARD | SECONDARY;
@@ -570,7 +566,7 @@ class RDPBmpCache {
 
         stream.out_uint8(align4(this->bmp->cx));
         stream.out_uint8(this->bmp->cy);
-        stream.out_uint8(this->bpp);
+        stream.out_uint8(this->bmp->original_bpp);
         uint32_t offset = stream.p - stream.data;
         stream.out_uint16_le(0); // placeholder for bufsize
         stream.out_uint16_le(this->idx);
@@ -585,6 +581,7 @@ class RDPBmpCache {
 
     void emit_v1_compressed(Stream & stream) const
     {
+        LOG(LOG_INFO, "emit_v1_compressed");
         using namespace RDP;
 
         int order_flags = STANDARD | SECONDARY;
@@ -600,7 +597,7 @@ class RDPBmpCache {
 
         stream.out_uint8(align4(this->bmp->cx));
         stream.out_uint8(this->bmp->cy);
-        stream.out_uint8(this->bpp);
+        stream.out_uint8(this->bmp->original_bpp);
         uint32_t offset = stream.p - stream.data;
         stream.out_uint16_le(0); // placeholder for bufsize
         stream.out_uint16_le(this->idx);
@@ -608,7 +605,7 @@ class RDPBmpCache {
         stream.out_clear_bytes(2); /* pad */
         uint32_t offset_compression_header = stream.p - stream.data;
         stream.out_uint16_le(0); // placeholder for bufsize
-        stream.out_uint16_le(this->bmp->line_size);
+        stream.out_uint16_le(this->bmp->bmp_size / this->bmp->cy);
         stream.out_uint16_le(this->bmp->bmp_size); // final size
         uint32_t offset_buf_start = stream.p - stream.data;
         this->bmp->compress(stream);
@@ -620,9 +617,10 @@ class RDPBmpCache {
 
     void emit_v2_compressed(Stream & stream) const
     {
+        LOG(LOG_INFO, "emit_v2_compressed");
         using namespace RDP;
 
-        int Bpp = nbbytes(this->bpp);
+        int Bpp = nbbytes(this->bmp->original_bpp);
 
         stream.out_uint8(STANDARD | SECONDARY);
         uint32_t offset_header = stream.p - stream.data;
@@ -646,18 +644,19 @@ class RDPBmpCache {
 
     void emit_raw_v1(Stream & stream) const
     {
+        LOG(LOG_INFO, "emit_raw_v1");
 //        LOG(LOG_INFO, "emit_raw_v1(id=%d, idx=%d)\n",
 //                this->id, this->idx);
 
         using namespace RDP;
-        unsigned int row_size = align4(this->bmp->cx * nbbytes(this->bpp));
+        unsigned int padded_line_size = this->bmp->bmp_size / this->bmp->cy;
 
         TODO(" this should become some kind of emit header")
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);
 //        LOG(LOG_INFO, "out_uint8::Standard and secondary");
 
-        stream.out_uint16_le(9 + this->bmp->cy * row_size  - 7); // length after orderType - 7
+        stream.out_uint16_le(9 + this->bmp->bmp_size  - 7); // length after orderType - 7
 //        LOG(LOG_INFO, "out_uint16_le::len %d\n", 9 + this->bmp->cy * row_size - 7);
 
         stream.out_uint16_le(8);        // extraFlags
@@ -683,7 +682,7 @@ class RDPBmpCache {
         // bitmapWidth (1 byte): An 8-bit, unsigned integer. The width of the
         // bitmap in pixels.
 
-        stream.out_uint8(this->bmp->cx);
+        stream.out_uint8(align4(this->bmp->cx));
 //        LOG(LOG_INFO, "out_uint8::width=%d (rowsize=%u)\n", this->bmp->cx, row_size);
 
         // bitmapHeight (1 byte): An 8-bit, unsigned integer. The height of the
@@ -700,14 +699,14 @@ class RDPBmpCache {
         //  0x18 24-bit color depth.
         //  0x20 32-bit color depth.
 
-        stream.out_uint8(this->bpp);
-//        LOG(LOG_INFO, "out_uint8::bpp=%d\n", this->bpp);
+        stream.out_uint8(this->bmp->original_bpp);
+//        LOG(LOG_INFO, "out_uint8::bpp=%d\n", this->bmp->original_bpp);
 
         // bitmapLength (2 bytes): A 16-bit, unsigned integer. The size in
         //  bytes of the data in the bitmapComprHdr and bitmapDataStream
         //  fields.
 
-        stream.out_uint16_le(this->bmp->cy * row_size);
+        stream.out_uint16_le(this->bmp->bmp_size);
 //        LOG(LOG_INFO, "out_uint16::bufsize=%d\n", this->bmp->cy * row_size);
 
         // cacheIndex (2 bytes): A 16-bit, unsigned integer. An entry in the
@@ -735,7 +734,7 @@ class RDPBmpCache {
 //                snprintf(buffer+3*xx, 1024-3*xx, "%.2x ", this->bmp->data_bitmap[y * row_size + xx*3]);
 //            }
 //            LOG(LOG_INFO, "%s", buffer);
-            stream.out_copy_bytes(this->bmp->data_bitmap + y * row_size, row_size);
+            stream.out_copy_bytes(this->bmp->data_bitmap + y * padded_line_size, padded_line_size);
         }
     }
 
@@ -882,9 +881,8 @@ class RDPBmpCache {
 
     void emit_raw_v2(Stream & stream) const
     {
+        LOG(LOG_INFO, "emit_raw_v2");
         using namespace RDP;
-        unsigned int row_size = align4(this->bmp->cx * nbbytes(this->bpp));
-
         TODO(" this should become some kind of emit header")
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);
@@ -893,7 +891,7 @@ class RDPBmpCache {
         uint8_t * length_ptr = stream.p;
         stream.skip_uint8(2);
 
-        int bitsPerPixelId = nbbytes(this->bpp)+2;
+        int bitsPerPixelId = nbbytes(this->bmp->original_bpp)+2;
 
         TODO(" some optimisations are possible here if we manage flags  but what will we do with persistant bitmaps ? We definitely do not want to save them on disk from here. There must be some kind of persistant structure where to save them and check if they exist.")
         uint16_t flags = 0;
@@ -929,7 +927,7 @@ class RDPBmpCache {
         //                          2.2.2.2.1.2.1.4) structure. The size in bytes
         //                          of the data in the bitmapComprHdr and
         //                          bitmapDataStream fields.
-        stream.out_uint16_be((this->bmp->cy * row_size) | 0x4000);
+        stream.out_uint16_be(this->bmp->bmp_size | 0x4000);
 
         // cacheIndex (variable): A Two-Byte Unsigned Encoding (section
         //                        2.2.2.2.1.2.1.2) structure. An entry in the bitmap
@@ -961,7 +959,7 @@ class RDPBmpCache {
         //                              2.2.9.1.1.3.1.2.2).
 
         // for uncompressed bitmaps the format is quite simple
-        stream.out_copy_bytes(this->bmp->data_bitmap, this->bmp->cy * row_size);
+        stream.out_copy_bytes(this->bmp->data_bitmap, this->bmp->bmp_size);
         stream.set_length(-12, length_ptr);
     }
 
@@ -1082,7 +1080,7 @@ class RDPBmpCache {
             const uint8_t* data = stream.in_uint8p(size);
 
             this->bmp = new Bitmap(bpp, &palette, width, height, data, size, true);
-            if (row_size != this->bmp->line_size){
+            if (row_size != (this->bmp->bmp_size / this->bmp->cy)){
                 LOG(LOG_WARNING, "broadcasted row_size should be the same as line size computed from cx, bpp and alignment rules");
             }
             if (final_size != this->bmp->bmp_size){
@@ -1101,7 +1099,7 @@ class RDPBmpCache {
         size_t lg = snprintf(buffer, sz,
             "RDPBmpCache(id=%u idx=%u bpp=%u cx=%u cy=%u)",
             this->id, this->idx,
-            this->bpp, this->bmp->cx, this->bmp->cy);
+            this->bmp->original_bpp, this->bmp->cx, this->bmp->cy);
         if (lg >= sz){
             return sz;
         }

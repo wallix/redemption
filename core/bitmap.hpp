@@ -71,7 +71,7 @@ struct Bitmap {
         , original_bpp(bpp)
         , cx(cx)
         , cy(cy)
-        , line_size(row_size(this->cx, bpp))
+        , line_size(this->cx * nbbytes(this->original_bpp))
         , bmp_size(row_size(align4(this->cx), bpp) * cy)
     {
 
@@ -106,62 +106,43 @@ struct Bitmap {
     }
 
 
-    Bitmap(int bpp, BGRPalette * palette, const Rect & r, int src_cx, int src_cy, const uint8_t * src_data)
+    Bitmap(const Bitmap & src_bmp, const Rect & r)
         : data_bitmap(0)
-        , original_bpp(bpp)
-        , cx(0)
-        , cy(0)
-        , line_size(0)
-        , bmp_size(0)
+        , original_bpp(src_bmp.original_bpp)
+        , cx(r.cx)
+        , cy(r.cy)
+        , line_size(this->cx * nbbytes(src_bmp.original_bpp))
+        , bmp_size(row_size(align4(this->cx), src_bmp.original_bpp) * this->cy)
     {
-//        LOG(LOG_ERR, "Creating bitmap (2) src_cx=%u src_cy=%u cx=%u cy=%u bpp=%u r(%u, %u, %u, %u)", src_cx, src_cy, cx, cy, bpp, r.x, r.y, r.cx, r.cy);
+        memcpy(this->original_palette, src_bmp.original_palette, sizeof(BGRPalette));
 
-        if (bpp == 8){
-            if (palette){
-                memcpy(&this->original_palette, palette, sizeof(BGRPalette));
-            }
-            else {
-                init_palette332(this->original_palette);
-            }
-        }
-        unsigned cx = std::min(r.cx, src_cx - r.x);
-        TODO(" there is both cx and this->cx and both can't be interchanged. this is intended to always store bitmaps that are multiple of 4 pixels to override a compatibility problem with rdesktop. This is not necessary for Microsoft clients. See MSRDP-CGR MS-RDPBCGR: 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)")
         // bitmapDataStream (variable): A variable-sized array of bytes.
         //  Uncompressed bitmap data represents a bitmap as a bottom-up,
         //  left-to-right series of pixels. Each pixel is a whole
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
-        this->cx = align4(cx);
-        unsigned cy = std::min(r.cy, src_cy - r.y);
-        this->cy = cy;
-        this->line_size = row_size(this->cx, bpp);
-        this->bmp_size = row_size(align4(this->cx), bpp) * this->cy;
-
-
+        const uint8_t Bpp = nbbytes(this->original_bpp);
         this->data_bitmap  = (uint8_t*)malloc(this->bmp_size);
 
-        TODO(" We could reserve statical space for caches thus avoiding many memory allocation. RDP sets maximum size for cache items anyway and we MUST check this size is never larger than allowed.")
+        const unsigned src_row_size = src_bmp.bmp_size / src_bmp.cy;
+        const unsigned dest_row_size = this->bmp_size / this->cy;
+        uint8_t *dest = this->data_bitmap;
+        const uint8_t *src = src_bmp.data_bitmap + src_row_size * (src_bmp.cy - r.y - this->cy) + r.x * Bpp;
 
-        TODO(" case 32 bits is (certainly) not working")
-        uint8_t *d8 = this->data_bitmap;
-        unsigned src_row_size = row_size(src_cx, bpp);
-        unsigned int width = cx * nbbytes(bpp);
+        LOG(LOG_INFO, "src: line_size=%u src_row_size=%u bmp_size=%u cx=%u cy=%u data_bitmap=%p bpp=%u",
+            src_bmp.line_size, src_row_size, src_bmp.bmp_size, src_bmp.cx, src_bmp.cy, src_bmp.data_bitmap, src_bmp.original_bpp);
 
-        assert(src_cy > r.y);
-
-        const uint8_t *s8 = src_data + src_row_size * (src_cy - r.y - this->cy) + r.x * nbbytes(bpp);
+        LOG(LOG_INFO, "dest: line_size=%u dest_row_size=%u bmp_size=%u cx=%u cy=%u data_bitmap=%p bpp=%u",
+            this->line_size, dest_row_size, this->bmp_size, this->cx, this->cy, this->data_bitmap, this->original_bpp);
 
         for (unsigned i = 0; i < this->cy; i++) {
-            memcpy(d8, s8, width);
-            if (this->line_size > width){
-                memset(d8+width, 0, this->line_size - width);
+            memcpy(dest, src, this->line_size);
+            if (this->line_size < dest_row_size){
+                memset(dest+this->line_size, 0, (dest_row_size-this->line_size));
             }
-            s8 += src_row_size;
-            d8 += this->line_size;
-        }
-        if (this->cx <= 0 || this->cy <= 0){
-            LOG(LOG_ERR, "Bogus empty bitmap (2)!!! cx=%u cy=%u bpp=%u src_cx=%u, src_cy=%u r(%u, %u, %u, %u)", this->cx, this->cy, this->original_bpp, src_cx, src_cy, r.x, r.y, r.cx, r.cy);
+            src += src_row_size;
+            dest += dest_row_size;
         }
     }
 
@@ -333,11 +314,12 @@ struct Bitmap {
 
         this->cx = header.image_width;
         this->cy = header.image_height;
-        this->line_size = row_size(this->cx, this->original_bpp);
+        this->line_size = this->cx * nbbytes(this->original_bpp);
         this->bmp_size = row_size(align4(this->cx), this->original_bpp) * this->cy;
         this->data_bitmap  = (uint8_t*)malloc(this->bmp_size);
         uint8_t * dest = this->data_bitmap;
         const uint8_t nbbytes_dest = ::nbbytes(this->original_bpp);
+        const uint16_t padded_line_size = this->bmp_size / this->cy;
 
         int k = 0;
         for (unsigned y = 0; y < this->cy ; y++) {
@@ -373,21 +355,24 @@ struct Bitmap {
                 {
                 default:
                 case 24:
-                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest, px);
+                    ::out_bytes_le(dest + y * padded_line_size + x * nbbytes_dest, nbbytes_dest, px);
                 break;
                 case 16:
-                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest,
+                    ::out_bytes_le(dest + y * padded_line_size + x * nbbytes_dest, nbbytes_dest,
                         color_encode(RGBtoBGR(px), 16));
                 break;
                 case 15:
-                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest,
+                    ::out_bytes_le(dest + y * padded_line_size + x * nbbytes_dest, nbbytes_dest,
                         color_encode(px, 15));
                 break;
                 case 8:
-                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest,
+                    ::out_bytes_le(dest + y * padded_line_size + x * nbbytes_dest, nbbytes_dest,
                         color_encode(px, 8));
                 break;
                 }
+            }
+            if (padded_line_size > this->line_size){
+                bzero(dest + y * padded_line_size + this->line_size, padded_line_size - this->line_size);
             }
         }
     }
@@ -949,7 +934,7 @@ public:
                 pmax = pmin + this->bmp_size;
             }
             else {
-                pmax = pmin + this->line_size;
+                pmax = pmin + align4(this->cx) * Bpp;
             }
             while (p < pmax)
             {
@@ -1143,7 +1128,7 @@ public:
             for (unsigned j = 0; j < width ; j++) {
                 crc = crc_table[(crc ^ *s8++) & 0xff] ^ (crc >> 8);
             }
-            s8 += this->line_size - width;
+            s8 += (this->bmp_size / this->cy) - width;
         }
         return crc ^ crc_seed;
     }
