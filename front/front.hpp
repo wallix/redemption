@@ -92,6 +92,9 @@ class FrontAPI {
     virtual void begin_update() = 0;
     virtual void end_update() = 0;
 
+
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap) = 0;
+
     Capture * capture;
     struct Font font;
     Cache cache;
@@ -113,6 +116,15 @@ class FrontAPI {
 
 class Front : public FrontAPI {
 public:
+
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap)
+    {
+        this->orders->draw(cmd, clip, bitmap);
+        if (this->capture){
+            this->capture->draw(cmd, clip, bitmap);
+        }
+    }
+
     Keymap keymap;
 
     ChannelList channel_list;

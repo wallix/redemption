@@ -437,10 +437,10 @@ struct GraphicDeviceMod : public RDPGraphicDevice
 
                 const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
 
-                this->front.orders->draw(cmd2, clip, tiled_bmp);
-                if (this->front.capture){
-                    this->front.capture->draw(cmd2, clip, tiled_bmp);
-                }
+                this->front.draw(
+                    RDPMemBlt(0, dst_tile, cmd.rop, 0, 0, 0),
+                    clip,
+                    Bitmap(bitmap, src_tile));
             }
         }
     }
