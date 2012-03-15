@@ -95,6 +95,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
     {
         sprintf(tmpname, "/tmp/test_gtf_chunk1XXXXXX");
         int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
+        BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
         GraphicsToFile gtf(&trans, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
         RDPOpaqueRect cmd(Rect(0, 0, 800, 600), 0);
@@ -158,6 +159,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk_reading_with_unserializ
     {
         sprintf(tmpname, "/tmp/test_gtf_chunk1XXXXXX");
         int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
+        BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
         GraphicsToFile gtf(&trans, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
         RDPOpaqueRect cmd(Rect(0, 0, 800, 600), 0);
@@ -210,6 +212,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
     {
         sprintf(tmpname, "/tmp/test_gtf_chunk1XXXXXX");
         int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
+        BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
         GraphicsToFile gtf(&trans, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), screen_rect);
@@ -219,11 +222,6 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
     }
 
     {
-        // reread data from file
-        int fd = ::open(tmpname, O_RDONLY);
-        BOOST_CHECK(fd > 0);
-        Stream stream(4096);
-        InFileTransport in_trans(fd);
         class Consumer : public TestConsumer {
         public:
             Consumer(const Rect & screen_rect) : TestConsumer(screen_rect){}
@@ -250,15 +248,27 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
             }
         } consumer(screen_rect);
 
+        // reread data from file
+        int fd = ::open(tmpname, O_RDONLY);
+        BOOST_CHECK(fd > 0);
+        Stream stream(4096);
+        InFileTransport in_trans(fd);
+
         RDPUnserializer reader(&in_trans, &consumer, screen_rect);
-        reader.next();
-        reader.next();
+
+        size_t i = 0;
+        for (i = 0; ; i++){
+            if (!reader.next()){
+                break;
+            }
+        }
+        BOOST_CHECK_EQUAL(2, i);
         consumer.check_end();
         // check we have read everything
         BOOST_CHECK_EQUAL(stream.end - stream.p, 0);
         ::close(fd);
     }
-    ::unlink(tmpname);
+//    ::unlink(tmpname);
 
 }
 
@@ -270,6 +280,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
     {
         sprintf(tmpname, "/tmp/test_gtf_chunk1XXXXXX");
         int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
+        BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
         GraphicsToFile gtf(&trans, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
         BGRPalette palette332;
@@ -278,9 +289,9 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), screen_rect);
         gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), Rect(10, 10, 100, 100));
 
-        uint8_t comp64x64RED[] = { 0xc0, 0x30, 0x00, 0x00, 0xFF, 0xf0, 0xc0, 0x0f, };
-        Bitmap* bloc64x64 = new Bitmap(24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
-        gtf.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect, *bloc64x64);
+        uint8_t comp32x32RED[] = { 0xc0, 0x10, 0x00, 0x00, 0xFF, 0xf0, 0xe0, 0x03, };
+        Bitmap* bloc32x32 = new Bitmap(24, &palette332, 32, 32, comp32x32RED, sizeof(comp32x32RED), true );
+        gtf.draw(RDPMemBlt(1, Rect(5, 5, 20, 20), 0xCC, 0, 0, 10), screen_rect, *bloc32x32);
         gtf.flush();
         ::close(fd);
     }

@@ -187,6 +187,7 @@ class Stream {
     }
 
     void out_uint8(unsigned char v) {
+        assert(has_room(1));
         *(this->p++) = v;
     }
 
@@ -234,6 +235,7 @@ class Stream {
 
 
     void out_sint8(char v) {
+        assert(has_room(1));
         *(this->p++) = v;
     }
 
@@ -242,6 +244,7 @@ class Stream {
     }
 
     void out_uint16_le(unsigned int v) {
+        assert(has_room(2));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p+=2;
@@ -253,6 +256,7 @@ class Stream {
     }
 
     void out_uint16_be(unsigned int v) {
+        assert(has_room(2));
         this->p[1] = v & 0xFF;
         this->p[0] = (v >> 8) & 0xFF;
         this->p+=2;
@@ -264,6 +268,7 @@ class Stream {
     }
 
     void out_uint32_le(unsigned int v) {
+        assert(has_room(4));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p[2] = (v >> 16) & 0xFF;
@@ -279,6 +284,7 @@ class Stream {
     }
 
     void out_uint32_be(unsigned int v) {
+        assert(has_room(4));
         this->p[0] = (v >> 24) & 0xFF;
         this->p[1] = (v >> 16) & 0xFF;
         this->p[2] = (v >> 8) & 0xFF;
@@ -287,6 +293,7 @@ class Stream {
     }
 
     void set_out_uint32_be(unsigned int v, size_t offset) {
+        assert(has_room(4));
         this->data[offset+0] = (v >> 24) & 0xFF;
         this->data[offset+1] = (v >> 16) & 0xFF;
         this->data[offset+2] = (v >> 8) & 0xFF;
@@ -442,6 +449,7 @@ class Stream {
     }
 
     void out_copy_bytes(const uint8_t * v, size_t n) {
+        assert(has_room(n));
         memcpy(this->p, v, n);
         this->p += n;
     }
@@ -468,6 +476,7 @@ class Stream {
 
 
     void out_clear_bytes(size_t n) {
+        assert(has_room(n));
         memset(this->p, 0, n);
         this->p += n;
     }
@@ -477,6 +486,7 @@ class Stream {
     }
 
     void out_bytes_le(const uint8_t nb, const unsigned value){
+        assert(has_room(nb));
         ::out_bytes_le(this->p, nb, value);
         this->p += nb;
     }

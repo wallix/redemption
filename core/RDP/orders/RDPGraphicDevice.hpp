@@ -76,6 +76,9 @@ protected:
 struct RDPUnserializer
 {
     Stream stream;
+
+//    uint8_t padding[65536];
+
     RDPGraphicDevice * consumer;
     Transport * trans;
 
@@ -261,6 +264,9 @@ struct RDPUnserializer
 struct RDPSerializer : public RDPGraphicDevice
 {
     Stream stream;
+
+//    uint8_t padding[65536];
+
     Transport * trans;
     const Inifile * ini;
     const int bitmap_cache_version;
@@ -321,6 +327,7 @@ struct RDPSerializer : public RDPGraphicDevice
         if (this->ini && this->ini->globals.debug.primary_orders > 63){
             LOG(LOG_INFO, "GraphicsUpdatePDU::reserve_order[%u](%u) remains=%u", this->order_count, asked_size, std::min(this->stream.capacity, (size_t)4096) - this->stream.get_offset(0));
         }
+        assert(asked_size < this->stream.capacity);
         size_t max_packet_size = std::min(this->stream.capacity, (size_t)4096);
         size_t used_size = this->stream.get_offset(0);
         const size_t max_order_batch = 4096;
@@ -384,7 +391,6 @@ struct RDPSerializer : public RDPGraphicDevice
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & oldbmp)
     {
         uint32_t res = this->bmp_cache.cache_bitmap(oldbmp);
-
         uint8_t cache_id = (res >> 16) & 0x3;
         uint16_t cache_idx = res;
 
@@ -393,6 +399,7 @@ struct RDPSerializer : public RDPGraphicDevice
             RDPBmpCache cmd_cache(bmp, cache_id, cache_idx);
             this->reserve_order(cmd_cache.bmp->bmp_size + 16);
             cmd_cache.emit(this->stream, this->bitmap_cache_version, this->use_bitmap_comp, this->op2);
+
             if (this->ini && this->ini->globals.debug.secondary_orders){
                 cmd_cache.log(LOG_INFO);
             }

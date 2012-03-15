@@ -109,7 +109,7 @@ struct Bitmap {
     Bitmap(const Bitmap & src_bmp, const Rect & r)
         : data_bitmap(0)
         , original_bpp(src_bmp.original_bpp)
-        , cx(r.cx)
+        , cx(align4(r.cx))
         , cy(r.cy)
         , line_size(this->cx * nbbytes(src_bmp.original_bpp))
         , bmp_size(row_size(align4(this->cx), src_bmp.original_bpp) * this->cy)
@@ -129,17 +129,12 @@ struct Bitmap {
         const unsigned dest_row_size = this->bmp_size / this->cy;
         uint8_t *dest = this->data_bitmap;
         const uint8_t *src = src_bmp.data_bitmap + src_row_size * (src_bmp.cy - r.y - this->cy) + r.x * Bpp;
-
-        LOG(LOG_INFO, "src: line_size=%u src_row_size=%u bmp_size=%u cx=%u cy=%u data_bitmap=%p bpp=%u",
-            src_bmp.line_size, src_row_size, src_bmp.bmp_size, src_bmp.cx, src_bmp.cy, src_bmp.data_bitmap, src_bmp.original_bpp);
-
-        LOG(LOG_INFO, "dest: line_size=%u dest_row_size=%u bmp_size=%u cx=%u cy=%u data_bitmap=%p bpp=%u",
-            this->line_size, dest_row_size, this->bmp_size, this->cx, this->cy, this->data_bitmap, this->original_bpp);
+        const unsigned line_to_copy = r.cx * nbbytes(src_bmp.original_bpp);
 
         for (unsigned i = 0; i < this->cy; i++) {
-            memcpy(dest, src, this->line_size);
-            if (this->line_size < dest_row_size){
-                memset(dest+this->line_size, 0, (dest_row_size-this->line_size));
+            memcpy(dest, src, line_to_copy);
+            if (line_to_copy < dest_row_size){
+                bzero(dest + line_to_copy, dest_row_size - line_to_copy);
             }
             src += src_row_size;
             dest += dest_row_size;
@@ -934,7 +929,7 @@ public:
                 pmax = pmin + this->bmp_size;
             }
             else {
-                pmax = pmin + align4(this->cx) * Bpp;
+                pmax = pmin + row_size(this->cx, this->original_bpp);
             }
             while (p < pmax)
             {
@@ -955,10 +950,10 @@ public:
                 }
 
                 const unsigned fom_cost = 1                      // header
-                    + (foreground != new_foreground) * Bpp // set
+                    + (foreground != new_foreground) * Bpp       // set
                     + (flags == 3) * nbbytes(fom_count);         // mask
                 const unsigned copy_fom_cost = 1 * (copy_count == 0) // start copy
-                    + fom_count * Bpp;                         // pixels
+                    + fom_count * Bpp;                               // pixels
                 const unsigned color_cost = 1 + Bpp;
                 const unsigned bicolor_cost = 1 + 2*Bpp;
 

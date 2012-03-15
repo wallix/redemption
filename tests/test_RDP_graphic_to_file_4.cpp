@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFileReadBogus)
         virtual void flush() {};
         virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
         {
-            cmd.print(clip);
+//            cmd.print(clip);
             this->data->draw(cmd, clip);
         }
         virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFileReadBogus)
         }
         virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
         {
-            cmd.print(clip);
+//            cmd.print(clip);
             this->data->draw(cmd, clip, bmp);
         }
         virtual void draw(const RDPLineTo& cmd, const Rect & clip)
@@ -113,19 +113,19 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFileReadBogus)
         }
     } consumer;
 
-    int fd = ::open(FIXTURES_PATH "/bug10.wrm", O_RDONLY); BOOST_CHECK(fd > 0);
+    int fd = ::open(FIXTURES_PATH "/bug9.wrm", O_RDONLY); BOOST_CHECK(fd > 0);
 
     InFileTransport in_trans(fd);
 
     RDPUnserializer reader(&in_trans, &consumer, Rect(0, 0, 800, 600));
     size_t i = 0;
-    for (i = 0; i < 2020 ; i++){
+    for (i = 0; ; i++){
         if (!reader.next()){
             break;
         }
     }
 
-    BOOST_CHECK_EQUAL(2020, i);
+    BOOST_CHECK_EQUAL(2733, i);
 
 // to see last result file, remove unlink
 // and do something like:

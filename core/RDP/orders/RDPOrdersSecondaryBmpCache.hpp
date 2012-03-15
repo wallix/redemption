@@ -550,7 +550,6 @@ class RDPBmpCache {
 
     void emit_v1_compressed_small_headers(Stream & stream) const
     {
-        LOG(LOG_INFO, "emit_v1_compressed_small_headers");
         using namespace RDP;
 
         int order_flags = STANDARD | SECONDARY;
@@ -581,7 +580,6 @@ class RDPBmpCache {
 
     void emit_v1_compressed(Stream & stream) const
     {
-        LOG(LOG_INFO, "emit_v1_compressed");
         using namespace RDP;
 
         int order_flags = STANDARD | SECONDARY;
@@ -617,7 +615,6 @@ class RDPBmpCache {
 
     void emit_v2_compressed(Stream & stream) const
     {
-        LOG(LOG_INFO, "emit_v2_compressed");
         using namespace RDP;
 
         int Bpp = nbbytes(this->bmp->original_bpp);
@@ -644,52 +641,33 @@ class RDPBmpCache {
 
     void emit_raw_v1(Stream & stream) const
     {
-        LOG(LOG_INFO, "emit_raw_v1");
-//        LOG(LOG_INFO, "emit_raw_v1(id=%d, idx=%d)\n",
-//                this->id, this->idx);
-
         using namespace RDP;
         unsigned int padded_line_size = this->bmp->bmp_size / this->bmp->cy;
 
         TODO(" this should become some kind of emit header")
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);
-//        LOG(LOG_INFO, "out_uint8::Standard and secondary");
-
         stream.out_uint16_le(9 + this->bmp->bmp_size  - 7); // length after orderType - 7
-//        LOG(LOG_INFO, "out_uint16_le::len %d\n", 9 + this->bmp->cy * row_size - 7);
-
         stream.out_uint16_le(8);        // extraFlags
-//        LOG(LOG_INFO, "out_uint16_le::flags %d\n", 8);
-
         stream.out_uint8(TS_CACHE_BITMAP_UNCOMPRESSED); // type
-//        LOG(LOG_INFO, "out_uint8::orderType %d\n", TS_CACHE_BITMAP_UNCOMPRESSED);
 
         // cacheId (1 byte): An 8-bit, unsigned integer. The bitmap cache into
         //  which to store the bitmap data. The bitmap cache ID MUST be in the
         // range negotiated by the Bitmap Cache Capability Set (Revision 1)
         //  (see [MS-RDPBCGR] section 2.2.7.1.4.1).
-
         stream.out_uint8(this->id);
-//        LOG(LOG_INFO, "out_uint8::id %d\n", this->id);
 
         // pad1Octet (1 byte): An 8-bit, unsigned integer. Padding. Values in
         // this field are arbitrary and MUST be ignored.
-
         stream.out_clear_bytes(1);
-//        LOG(LOG_INFO, "out_uint8::pad\n");
 
         // bitmapWidth (1 byte): An 8-bit, unsigned integer. The width of the
         // bitmap in pixels.
-
         stream.out_uint8(align4(this->bmp->cx));
-//        LOG(LOG_INFO, "out_uint8::width=%d (rowsize=%u)\n", this->bmp->cx, row_size);
 
         // bitmapHeight (1 byte): An 8-bit, unsigned integer. The height of the
         //  bitmap in pixels.
-
         stream.out_uint8(this->bmp->cy);
-//        LOG(LOG_INFO, "out_uint8::height=%d\n", this->bmp->cy);
 
         // bitmapBitsPerPel (1 byte): An 8-bit, unsigned integer. The color
         //  depth of the bitmap data in bits-per-pixel. This field MUST be one
@@ -698,25 +676,19 @@ class RDPBmpCache {
         //  0x10 16-bit color depth.
         //  0x18 24-bit color depth.
         //  0x20 32-bit color depth.
-
         stream.out_uint8(this->bmp->original_bpp);
-//        LOG(LOG_INFO, "out_uint8::bpp=%d\n", this->bmp->original_bpp);
 
         // bitmapLength (2 bytes): A 16-bit, unsigned integer. The size in
         //  bytes of the data in the bitmapComprHdr and bitmapDataStream
         //  fields.
-
         stream.out_uint16_le(this->bmp->bmp_size);
-//        LOG(LOG_INFO, "out_uint16::bufsize=%d\n", this->bmp->cy * row_size);
 
         // cacheIndex (2 bytes): A 16-bit, unsigned integer. An entry in the
         // bitmap cache (specified by the cacheId field) where the bitmap MUST
         // be stored. The bitmap cache index MUST be in the range negotiated by
         // the Bitmap Cache Capability Set (Revision 1) (see [MS-RDPBCGR]
         // section 2.2.7.1.4.1).
-
         stream.out_uint16_le(this->idx);
-//        LOG(LOG_INFO, "out_uint16::idx=%d\n", this->idx);
 
         // bitmapDataStream (variable): A variable-length byte array containing
         //  bitmap data (the format of this data is defined in [MS-RDPBCGR]
@@ -729,11 +701,6 @@ class RDPBmpCache {
         // (including up to three bytes of padding, as necessary).
 
         for (size_t y = 0 ; y < this->bmp->cy; y++) {
-//            char buffer[1024] = {};
-//            for (int xx=0; xx < row_size ; xx++){
-//                snprintf(buffer+3*xx, 1024-3*xx, "%.2x ", this->bmp->data_bitmap[y * row_size + xx*3]);
-//            }
-//            LOG(LOG_INFO, "%s", buffer);
             stream.out_copy_bytes(this->bmp->data_bitmap + y * padded_line_size, padded_line_size);
         }
     }
@@ -881,7 +848,6 @@ class RDPBmpCache {
 
     void emit_raw_v2(Stream & stream) const
     {
-        LOG(LOG_INFO, "emit_raw_v2");
         using namespace RDP;
         TODO(" this should become some kind of emit header")
         uint8_t control = STANDARD | SECONDARY;
@@ -1099,7 +1065,7 @@ class RDPBmpCache {
         size_t lg = snprintf(buffer, sz,
             "RDPBmpCache(id=%u idx=%u bpp=%u cx=%u cy=%u)",
             this->id, this->idx,
-            this->bmp->original_bpp, this->bmp->cx, this->bmp->cy);
+            this->bmp->original_bpp, align4(this->bmp->cx), this->bmp->cy);
         if (lg >= sz){
             return sz;
         }

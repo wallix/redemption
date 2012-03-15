@@ -24,32 +24,6 @@
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
 
-
-
-class DummyCapture
-{
-    public:
-
-    TODO(" fat interface : ugly  find another way")
-    DummyCapture(int width, int height, int bpp, const BGRPalette & palette, BmpCache & bmpcache, char * path, const char * codec_id, const char * video_quality) {}
-
-    ~DummyCapture(){
-    }
-
-    TODO(" fat interface : ugly  find another way")
-    void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp){}
-    void bitmap_cache(const RDPBmpCache & cmd){}
-    void scr_blt(const RDPScrBlt & cmd, const Rect & clip) {}
-    void dest_blt(const RDPDestBlt & cmd, const Rect &clip) {}
-    void pat_blt(const RDPPatBlt & cmd, const Rect &clip) {}
-    void mem_blt(const RDPMemBlt & cmd, const Rect & clip){}
-    void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip){}
-    void line_to(const RDPLineTo & cmd, const Rect & clip){}
-    void glyph_index(const RDPGlyphIndex & cmd, const Rect & clip) {}
-
-};
-
-
 class Capture
 {
     StaticCapture sc;
@@ -73,12 +47,6 @@ class Capture
         this->nc.snapshot(x, y, pointer_already_displayed, no_timestamp);
     }
 
-//    void bitmap_cache(const RDPBmpCache & cmd)
-//    {
-//        this->nc.draw(cmd);
-//        this->sc.draw(cmd);
-//    }
-
     void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
     {
         this->sc.draw(cmd, clip);
@@ -97,7 +65,7 @@ class Capture
         this->nc.draw(cmd, clip);
     }
 
-    void mem_blt(const RDPMemBlt & cmd, const Rect & clip, Bitmap & bmp)
+    void mem_blt(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
         this->sc.draw(cmd, clip, bmp);
         this->nc.draw(cmd, clip, bmp);
