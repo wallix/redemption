@@ -39,11 +39,10 @@
 #include "wait_obj.hpp"
 #include "keymap.hpp"
 #include "callback.hpp"
-#include "graphic_device.hpp"
 #include "modcontext.hpp"
 
 
-struct GraphicDeviceMod : public GraphicDevice
+struct GraphicDeviceMod
 {
     FrontAPI & front;
     Capture * capture;
