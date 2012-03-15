@@ -61,9 +61,9 @@ struct RDPGraphicDevice
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
 
     TODO("The 3 methods below should not exist and cache access be done before calling drawing orders")
-    virtual void draw(const RDPBrushCache & cmd) = 0;
-    virtual void draw(const RDPColCache & cmd) = 0;
-    virtual void draw(const RDPGlyphCache & cmd) = 0;
+    virtual void draw(const RDPBrushCache & cmd) {};
+    virtual void draw(const RDPColCache & cmd) {};
+    virtual void draw(const RDPGlyphCache & cmd) {};
 
 protected:
     // this to avoid calling constructor or destructor of base abstract class

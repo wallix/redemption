@@ -327,7 +327,7 @@ struct GraphicDeviceMod : public GraphicDevice
             if (this->capture){
                 RDPOpaqueRect new_cmd24 = cmd;
                 new_cmd24.color = this->convert24_opaque(cmd.color);
-                this->capture->opaque_rect(new_cmd24, clip);
+                this->capture->draw(new_cmd24, clip);
             }
         }
     }
@@ -339,7 +339,7 @@ struct GraphicDeviceMod : public GraphicDevice
             this->front.orders->draw(cmd, clip);
 
             if (this->capture){
-                this->capture->scr_blt(cmd, clip);
+                this->capture->draw(cmd, clip);
             }
         }
     }
@@ -350,7 +350,7 @@ struct GraphicDeviceMod : public GraphicDevice
         && !clip.intersect(cmd.rect).isempty()){
             this->front.orders->draw(cmd, clip);
             if (this->capture){
-                this->capture->dest_blt(cmd, clip);
+                this->capture->draw(cmd, clip);
             }
         }
     }
@@ -397,7 +397,7 @@ struct GraphicDeviceMod : public GraphicDevice
                 new_cmd24.back_color = this->convert24(cmd.back_color);
                 new_cmd24.fore_color = this->convert24(cmd.fore_color);
 
-                this->capture->pat_blt(new_cmd24, clip);
+                this->capture->draw(new_cmd24, clip);
             }
         }
     }
@@ -441,7 +441,7 @@ struct GraphicDeviceMod : public GraphicDevice
 
                 this->front.orders->draw(cmd, clip, tiled_bmp);
                 if (this->capture){
-                    this->capture->mem_blt(cmd, clip, tiled_bmp);
+                    this->capture->draw(cmd, clip, tiled_bmp);
                 }
             }
         }
@@ -474,7 +474,7 @@ struct GraphicDeviceMod : public GraphicDevice
                 new_cmd24.back_color = this->convert24(cmd.back_color);
                 new_cmd24.pen.color = this->convert24(cmd.pen.color);
 
-                this->capture->line_to(new_cmd24, clip);
+                this->capture->draw(new_cmd24, clip);
             }
         }
     }
@@ -499,7 +499,7 @@ struct GraphicDeviceMod : public GraphicDevice
                 new_cmd24.back_color = this->convert24_opaque(cmd.back_color);
                 new_cmd24.fore_color = this->convert24_opaque(cmd.fore_color);
 
-                this->capture->glyph_index(new_cmd24, clip);
+                this->capture->draw(new_cmd24, clip);
             }
         }
     }

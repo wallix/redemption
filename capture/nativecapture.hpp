@@ -52,7 +52,7 @@
 
 #include "GraphicToFile.hpp"
 
-class NativeCapture
+class NativeCapture : public RDPGraphicDevice
 {
     public:
     struct timeval start;
@@ -100,41 +100,44 @@ class NativeCapture
         this->recorder.timestamp();
     }
 
-    void draw(const RDPScrBlt & cmd, const Rect & clip)
+    virtual void flush() {}
+
+    virtual void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
     }
 
-    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
+    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
         this->recorder.draw(cmd, clip, bmp);
     }
 
-    void draw(const RDPOpaqueRect & cmd, const Rect & clip)
+    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
     }
 
-    void draw(const RDPDestBlt & cmd, const Rect & clip)
+    virtual void draw(const RDPDestBlt & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
     }
 
-    void draw(const RDPPatBlt & cmd, const Rect & clip)
+    virtual void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
     }
 
-    void draw(const RDPLineTo & cmd, const Rect & clip)
+    virtual void draw(const RDPLineTo & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
     }
 
-    void glyph_index(const RDPGlyphIndex & cmd, const Rect & clip)
+    virtual void glyph_index(const RDPGlyphIndex & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
     }
 
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) {}
 };
 
 #endif

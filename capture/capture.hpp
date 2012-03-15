@@ -24,7 +24,7 @@
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
 
-class Capture
+class Capture : public RDPGraphicDevice
 {
     StaticCapture sc;
     NativeCapture nc;
@@ -43,49 +43,55 @@ class Capture
 
     void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
+        this->flush();
         this->sc.snapshot(x, y, pointer_already_displayed, no_timestamp);
         this->nc.snapshot(x, y, pointer_already_displayed, no_timestamp);
     }
 
-    void scr_blt(const RDPScrBlt & cmd, const Rect & clip)
+    void flush(){
+        this->sc.flush();
+        this->nc.flush();
+}
+
+    void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
         this->sc.draw(cmd, clip);
         this->nc.draw(cmd, clip);
     }
 
-    void dest_blt(const RDPDestBlt & cmd, const Rect &clip)
+    void draw(const RDPDestBlt & cmd, const Rect &clip)
     {
         this->sc.draw(cmd, clip);
         this->nc.draw(cmd, clip);
     }
 
-    void pat_blt(const RDPPatBlt & cmd, const Rect &clip)
+    void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
         this->sc.draw(cmd, clip);
         this->nc.draw(cmd, clip);
     }
 
-    void mem_blt(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
         this->sc.draw(cmd, clip, bmp);
         this->nc.draw(cmd, clip, bmp);
     }
 
-    void opaque_rect(const RDPOpaqueRect & cmd, const Rect & clip)
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         this->sc.draw(cmd, clip);
         this->nc.draw(cmd, clip);
     }
 
 
-    void line_to(const RDPLineTo & cmd, const Rect & clip)
+    void draw(const RDPLineTo & cmd, const Rect & clip)
     {
         this->sc.draw(cmd, clip);
 //        this->nc.line_to(cmd, clip);
 
     }
 
-    void glyph_index(const RDPGlyphIndex & cmd, const Rect & clip)
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
 //        this->sc.glyph_index(cmd, clip);
 //        this->nc.glyph_index(cmd, clip);
