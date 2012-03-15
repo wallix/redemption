@@ -101,7 +101,7 @@
 
 // this adds the mcs channels in the list of channels to be used when
 // creating the server mcs data
-static inline void parse_mcs_data_cs_net(Stream & stream, ClientInfo * client_info, ChannelList & channel_list)
+static inline void parse_mcs_data_cs_net(Stream & stream, const ClientInfo * client_info, ChannelList & channel_list)
 {
     LOG(LOG_INFO, "CS_NET\n");
 //    // this is an option set in rdpproxy.ini

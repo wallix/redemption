@@ -92,6 +92,7 @@ class FrontAPI {
     virtual void begin_update() = 0;
     virtual void end_update() = 0;
 
+    Capture * capture;
     struct Font font;
     Cache cache;
     bool notimestamp;
@@ -99,11 +100,12 @@ class FrontAPI {
 
     GraphicsUpdatePDU * orders;
 
-    FrontAPI(Inifile * ini):
-        font(SHARE_PATH "/" DEFAULT_FONT_NAME),
-        cache(),
-        notimestamp(ini->globals.notimestamp),
-        nomouse(ini->globals.nomouse)
+    FrontAPI(Inifile * ini)
+        : capture(NULL)
+        , font(SHARE_PATH "/" DEFAULT_FONT_NAME)
+        , cache()
+        , notimestamp(ini->globals.notimestamp)
+        , nomouse(ini->globals.nomouse)
         {}
 
 };

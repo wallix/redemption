@@ -45,7 +45,6 @@
 struct GraphicDeviceMod : public RDPGraphicDevice
 {
     FrontAPI & front;
-    Capture * capture;
     Rect clip;
     RDPPen pen;
     bool palette_sent;
@@ -59,7 +58,6 @@ struct GraphicDeviceMod : public RDPGraphicDevice
 
     GraphicDeviceMod(FrontAPI & front)
     : front(front),
-      capture(NULL),
       clip(clip),
       palette_sent(false),
       mod_bpp(24),
@@ -324,10 +322,10 @@ struct GraphicDeviceMod : public RDPGraphicDevice
             new_cmd.color = this->convert_opaque(cmd.color);
             this->front.orders->draw(new_cmd, clip);
 
-            if (this->capture){
+            if (this->front.capture){
                 RDPOpaqueRect new_cmd24 = cmd;
                 new_cmd24.color = this->convert24_opaque(cmd.color);
-                this->capture->draw(new_cmd24, clip);
+                this->front.capture->draw(new_cmd24, clip);
             }
         }
     }
@@ -338,8 +336,8 @@ struct GraphicDeviceMod : public RDPGraphicDevice
         && !clip.intersect(cmd.rect).isempty()){
             this->front.orders->draw(cmd, clip);
 
-            if (this->capture){
-                this->capture->draw(cmd, clip);
+            if (this->front.capture){
+                this->front.capture->draw(cmd, clip);
             }
         }
     }
@@ -349,8 +347,8 @@ struct GraphicDeviceMod : public RDPGraphicDevice
         if (!clip.isempty()
         && !clip.intersect(cmd.rect).isempty()){
             this->front.orders->draw(cmd, clip);
-            if (this->capture){
-                this->capture->draw(cmd, clip);
+            if (this->front.capture){
+                this->front.capture->draw(cmd, clip);
             }
         }
     }
@@ -392,12 +390,12 @@ struct GraphicDeviceMod : public RDPGraphicDevice
 
             this->front.orders->draw(new_cmd, clip);
 
-            if (this->capture){
+            if (this->front.capture){
                 RDPPatBlt new_cmd24 = cmd;
                 new_cmd24.back_color = this->convert24(cmd.back_color);
                 new_cmd24.fore_color = this->convert24(cmd.fore_color);
 
-                this->capture->draw(new_cmd24, clip);
+                this->front.capture->draw(new_cmd24, clip);
             }
         }
     }
@@ -440,8 +438,8 @@ struct GraphicDeviceMod : public RDPGraphicDevice
                 const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
 
                 this->front.orders->draw(cmd2, clip, tiled_bmp);
-                if (this->capture){
-                    this->capture->draw(cmd2, clip, tiled_bmp);
+                if (this->front.capture){
+                    this->front.capture->draw(cmd2, clip, tiled_bmp);
                 }
             }
         }
@@ -469,12 +467,12 @@ struct GraphicDeviceMod : public RDPGraphicDevice
 
             this->front.orders->draw(new_cmd, clip);
 
-            if (this->capture){
+            if (this->front.capture){
                 RDPLineTo new_cmd24 = cmd;
                 new_cmd24.back_color = this->convert24(cmd.back_color);
                 new_cmd24.pen.color = this->convert24(cmd.pen.color);
 
-                this->capture->draw(new_cmd24, clip);
+                this->front.capture->draw(new_cmd24, clip);
             }
         }
     }
@@ -494,12 +492,12 @@ struct GraphicDeviceMod : public RDPGraphicDevice
 
             this->front.orders->draw(new_cmd, clip);
 
-            if (this->capture){
+            if (this->front.capture){
                 RDPGlyphIndex new_cmd24 = cmd;
                 new_cmd24.back_color = this->convert24_opaque(cmd.back_color);
                 new_cmd24.fore_color = this->convert24_opaque(cmd.fore_color);
 
-                this->capture->draw(new_cmd24, clip);
+                this->front.capture->draw(new_cmd24, clip);
             }
         }
     }
@@ -658,8 +656,8 @@ struct client_mod : public Callback {
 
     virtual ~client_mod()
     {
-        if (this->gd.capture){
-            delete this->gd.capture;
+        if (this->gd.front.capture){
+            delete this->gd.front.capture;
         }
     }
 
@@ -668,23 +666,23 @@ struct client_mod : public Callback {
     {
         if (flag){
             this->stop_capture();
-            this->gd.capture = new Capture(width, height, 24, this->gd.palette332,
+            this->gd.front.capture = new Capture(width, height, 24, this->gd.palette332,
                                            path, codec_id, quality);
         }
     }
 
     void stop_capture()
     {
-        if (this->gd.capture){
-            delete this->gd.capture;
-            this->gd.capture = 0;
+        if (this->gd.front.capture){
+            delete this->gd.front.capture;
+            this->gd.front.capture = 0;
         }
     }
 
     void periodic_snapshot(bool pointer_is_displayed)
     {
-        if (this->gd.capture){
-            this->gd.capture->snapshot(this->mouse_x, this->mouse_y,
+        if (this->gd.front.capture){
+            this->gd.front.capture->snapshot(this->mouse_x, this->mouse_y,
                     pointer_is_displayed|this->gd.front.nomouse, this->gd.front.notimestamp);
         }
     }
