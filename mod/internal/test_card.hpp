@@ -67,7 +67,6 @@ struct test_card_mod : public internal_mod {
 
     void draw()
     {
-        BGRPalette palette;
         this->gd.server_begin_update();
 
         const Rect & clip = this->get_screen_rect();
@@ -82,11 +81,12 @@ struct test_card_mod : public internal_mod {
         this->gd.draw(RDPOpaqueRect(winrect, WINBLUE), clip);
 
         Bitmap bitmap(24, SHARE_PATH "/" "Philips_PM5544_640.bmp");
-        this->gd.bitmap_update(bitmap,
+        this->gd.draw(RDPMemBlt(0,
             Rect(winrect.x + (winrect.cx - bitmap.cx)/2,
                  winrect.y + (winrect.cy - bitmap.cy)/2,
                  bitmap.cx, bitmap.cy),
-             0, 0, 0xCC, palette, clip);
+                 0xCC,
+             0, 0, 0), clip, bitmap);
 
         //  lineTo mix_mode=1 startx=200 starty=1198 endx=200 endy=145 bg_color=0 rop2=13 clip=(200, 145, 1, 110)
         this->gd.draw(
@@ -128,27 +128,28 @@ struct test_card_mod : public internal_mod {
         this->gd.server_draw_text(30, 110, "Black", WHITE, BLACK, clip);
 
         Bitmap card(24, SHARE_PATH "/" REDEMPTION_LOGO24);
-        this->gd.bitmap_update(card,
+        this->gd.draw(RDPMemBlt(0,
             Rect(this->get_screen_rect().cx - card.cx - 30,
                  this->get_screen_rect().cy - card.cy - 30, card.cx, card.cy),
-             0, 0, 0xCC, this->gd.palette332, clip);
+                 0xCC,
+             0, 0, 0), clip, card);
 
         // Bogus square generating zero width/height tiles if not properly guarded
-        TODO(" find a better fix than the current one in bitmap_update and mem_blt for the case occuring when drawing square below or similar.")
         uint8_t comp64x64RED[] = {
             0xc0, 0x30, 0x00, 0x00, 0xFF,
             0xf0, 0xc0, 0x0f,
         };
 
         Bitmap bloc64x64(24, &this->gd.palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
-        this->gd.bitmap_update(bloc64x64,
-            Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx, bloc64x64.cy),
-             32, 32, 0xCC, this->gd.palette332, clip);
+        this->gd.draw(RDPMemBlt(0,
+            Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx, bloc64x64.cy), 0xCC,
+             32, 32, 0), clip, bloc64x64);
 
         Bitmap logo(24, SHARE_PATH "/ad8b.bmp");
-        this->gd.bitmap_update(logo,
+        this->gd.draw(RDPMemBlt(0,
             Rect(100, 100, 26, 32),
-             80, 50, 0xCC, this->gd.palette332, clip);
+            0xCC,
+             80, 50, 0), clip, logo);
 
         this->gd.server_end_update();
     }

@@ -716,7 +716,7 @@ struct mod_vnc : public client_mod {
                 TODO(" there is still an alignement issue in bitmaps  fixed  but my fix is quite evil.")
                 Bitmap bmp(this->bpp, &this->gd.palette332, cx, cy, raw, need_size, false, true);
                 free(raw);
-                this->gd.bitmap_update(bmp, Rect(x, y, cx, cy), 0, 0, 0xCC, this->gd.palette332, this->gd.get_front_rect());
+                this->gd.draw(RDPMemBlt(0, Rect(x, y, cx, cy), 0xCC, 0, 0, 0), this->gd.get_front_rect(), bmp);
             }
             break;
             case 1: /* copy rect */

@@ -256,14 +256,11 @@ struct rdp_orders {
                     this->memblt.receive(stream, header);
                     {
                         assert((this->memblt.cache_id >> 4) < 6);
-                        const Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0xF][this->memblt.cache_idx];
+                        const Bitmap* bitmap = this->cache_bitmap[this->memblt.cache_id & 0x3][this->memblt.cache_idx];
+                        TODO("check if bitmap has the right palette...")
+                        TODO("8 bits palettes should probabily be transmitted to front, not stored in bitmaps")
                         if (bitmap) {
-                            mod->gd.bitmap_update(
-                                *bitmap,
-                                this->memblt.rect,
-                                this->memblt.srcx, this->memblt.srcy, this->memblt.rop,
-                                this->cache_colormap[this->memblt.cache_id >> 4],
-                                cmd_clip);
+                            mod->gd.draw(this->memblt, cmd_clip, *bitmap);
                         }
                     }
                     break;
@@ -3212,7 +3209,7 @@ struct mod_rdp : public client_mod {
             // +-----------------------------------+---------------------------+
 
             int flags = stream.in_uint16_le();
-            uint16_t bufsize = stream.in_uint16_le();
+            uint16_t size = stream.in_uint16_le();
 
             Rect boundary(left, top, right - left + 1, bottom - top + 1);
 
@@ -3224,10 +3221,10 @@ struct mod_rdp : public client_mod {
 
 //            LOG(LOG_INFO, "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */", i, bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
 
+            bool compressed = false;
+            uint16_t line_size = 0;
+            uint16_t final_size = 0;
             if (flags & 0x0001){
-                uint16_t size = bufsize;
-                uint16_t line_size = row_size(width, bpp);
-                uint16_t final_size = line_size * height;
                 if (!(flags & 0x400)) {
                 // bitmapComprHdr (8 bytes): Optional Compressed Data Header
                 // structure (see Compressed Data Header (TS_CD_HEADER)
@@ -3243,37 +3240,29 @@ struct mod_rdp : public client_mod {
                     final_size = stream.in_uint16_le();
                 }
 
-                const uint8_t * data = stream.in_uint8p(size);
                 if (width <= 0 || height <= 0){
                     LOG(LOG_ERR, "unexpected bitmap size : width=%u height=%u size=%u left=%u, top=%u, right=%u, bottom=%u", width, height, size, left, top, right, bottom);
                 }
-
-//                Bitmap bitmap(bpp, &this->orders.cache_colormap[0], width, height, data, size, true);
-                Bitmap bitmap(bpp, &this->orders.global_palette, width, height, data, size, true);
-
-                if (line_size != bitmap.line_size){
-                    LOG(LOG_WARNING, "Unexpected line_size in bitmap received [%u != %u] width=%u height=%u bpp=%u",
-                        line_size, bitmap.line_size, width, height, bpp);
-                }
-                if (line_size != bitmap.line_size){
-                    LOG(LOG_WARNING, "Unexpected final_size in bitmap received [%u != %u] width=%u height=%u bpp=%u",
-                        final_size, bitmap.bmp_size, width, height, bpp);
-                }
-
-                mod->gd.bitmap_update(bitmap, boundary, 0, 0, 0xCC, this->orders.global_palette, boundary);
+                compressed = true;
             }
-            else {
-                const uint8_t * data = stream.in_uint8p(bufsize);
-//                Bitmap bitmap(bpp, &this->orders.cache_colormap[0], width, height, data, bufsize);
-                Bitmap bitmap(bpp, &this->orders.global_palette, width, height, data, bufsize);
 
-                if (bufsize != bitmap.bmp_size){
-                    LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u",
-                        bufsize, bitmap.bmp_size, width, height, bpp);
-                }
-
-                mod->gd.bitmap_update(bitmap, boundary, 0, 0, 0xCC, this->orders.global_palette, boundary);
+            TODO("check which sanity checks should be done")
+//            if (bufsize != bitmap.bmp_size){
+//                LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u",
+//                    bufsize, bitmap.bmp_size, width, height, bpp);
+//            }
+            const uint8_t * data = stream.in_uint8p(size);
+            Bitmap bitmap(bpp, &this->orders.global_palette, width, height, data, size, compressed);
+            if (line_size && (line_size - bitmap.line_size)>= nbbytes(bitmap.original_bpp)){
+                LOG(LOG_WARNING, "Bad line size: line_size=%u width=%u height=%u bpp=%u",
+                    line_size, width, height, bpp);
             }
+
+            if (final_size && final_size != bitmap.bmp_size){
+                LOG(LOG_WARNING, "final_size should be size of decompressed bitmap [%u != %u] width=%u height=%u bpp=%u",
+                    final_size, bitmap.bmp_size, width, height, bpp);
+            }
+            mod->gd.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
         }
         mod->gd.server_end_update();
     }

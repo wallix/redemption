@@ -95,6 +95,7 @@ struct BmpCache {
         }
 
 
+        TODO("palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap")
         uint32_t cache_bitmap(const Bitmap & oldbmp){
             uint8_t outbuf[65536];
             oldbmp.convert_data_bitmap(this->bpp, outbuf);

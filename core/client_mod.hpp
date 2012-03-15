@@ -42,7 +42,7 @@
 #include "modcontext.hpp"
 
 
-struct GraphicDeviceMod
+struct GraphicDeviceMod : public RDPGraphicDevice
 {
     FrontAPI & front;
     Capture * capture;
@@ -56,7 +56,6 @@ struct GraphicDeviceMod
     uint8_t mod_bpp;
     BGRPalette memblt_mod_palette;
     bool mod_palette_setted;
-
 
     GraphicDeviceMod(FrontAPI & front)
     : front(front),
@@ -74,7 +73,9 @@ struct GraphicDeviceMod
         init_palette332(this->palette332);
     }
 
-    virtual void text_metrics(const char * text, int & width, int & height){
+    void flush() {}
+
+    void text_metrics(const char * text, int & width, int & height){
         height = 0;
         width = 0;
         if (text) {
@@ -90,33 +91,33 @@ struct GraphicDeviceMod
     }
 
 
-    virtual int server_begin_update() {
+    int server_begin_update() {
         this->front.begin_update();
         return 0;
     }
 
-    virtual int server_end_update(){
+    int server_end_update(){
         this->front.end_update();
         return 0;
     }
 
-    virtual int get_front_bpp() const {
+    int get_front_bpp() const {
         return this->front.get_front_bpp();
     }
 
-    virtual int get_front_width() const {
+    int get_front_width() const {
         return this->front.get_front_width();
     }
 
-    virtual int get_front_height() const {
+    int get_front_height() const {
         return this->front.get_front_height();
     }
 
-    virtual const Rect get_front_rect(){
+     const Rect get_front_rect(){
         return Rect(0, 0, this->get_front_width(), get_front_height());
     }
 
-    virtual void draw_window(const Rect & r, uint32_t bgcolor, const char * caption, bool has_focus, const Rect & clip){
+    void draw_window(const Rect & r, uint32_t bgcolor, const char * caption, bool has_focus, const Rect & clip){
 
         // Window surface and border
         this->draw(RDPOpaqueRect(r, bgcolor), clip);
@@ -136,7 +137,7 @@ struct GraphicDeviceMod
                 has_focus?WHITE:BLACK, clip);
     }
 
-    virtual void draw_combo(const Rect & r, const char * caption, int state, bool has_focus, const Rect & clip)
+    void draw_combo(const Rect & r, const char * caption, int state, bool has_focus, const Rect & clip)
     {
         this->draw(RDPOpaqueRect(Rect(r.x, r.y, r.cx, r.cy), GREY), clip);
         this->draw(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 3, r.cy - 3), WHITE), clip);
@@ -153,7 +154,7 @@ struct GraphicDeviceMod
         this->draw_button(Rect(r.x + r.cx - 20, r.y + 2, 18, r.cy - 4), "", state, false, clip);
     }
 
-    virtual void draw_button(const Rect & r, const char * caption, int state, bool has_focus, const Rect & clip){
+    void draw_button(const Rect & r, const char * caption, int state, bool has_focus, const Rect & clip){
 
         int bevel = (state == BUTTON_STATE_DOWN)?1:0;
 
@@ -203,7 +204,7 @@ struct GraphicDeviceMod
         }
     }
 
-    virtual void draw_edit(const Rect & r, char password_char, char * buffer, size_t edit_pos, bool has_focus, const Rect & clip){
+    void draw_edit(const Rect & r, char password_char, char * buffer, size_t edit_pos, bool has_focus, const Rect & clip){
         this->draw(RDPOpaqueRect(Rect(r.x+1, r.y+1, r.cx - 3, r.cy - 3), DARK_GREEN), clip);
         this->draw(RDPOpaqueRect(Rect(r.x, r.y, r.cx, 1), BLACK), clip);
         this->draw(RDPOpaqueRect(Rect(r.x, r.y, 1, r.cy), BLACK), clip);
@@ -250,7 +251,7 @@ struct GraphicDeviceMod
     }
 
     TODO(" implementation of the server_draw_text function below is quite broken (a small subset of possibilities is implemented  especially for data). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
-    virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+    void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
         setlocale(LC_CTYPE, "fr_FR.UTF-8");
         this->send_global_palette();
@@ -312,7 +313,7 @@ struct GraphicDeviceMod
         delete [] data;
     }
 
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
+    void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         if (!clip.isempty()
         && !clip.intersect(cmd.rect).isempty()){
@@ -331,7 +332,7 @@ struct GraphicDeviceMod
         }
     }
 
-    virtual void draw(const RDPScrBlt & cmd, const Rect & clip)
+    void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
         if (!clip.isempty()
         && !clip.intersect(cmd.rect).isempty()){
@@ -343,7 +344,7 @@ struct GraphicDeviceMod
         }
     }
 
-    virtual void draw(const RDPDestBlt & cmd, const Rect & clip)
+    void draw(const RDPDestBlt & cmd, const Rect & clip)
     {
         if (!clip.isempty()
         && !clip.intersect(cmd.rect).isempty()){
@@ -355,7 +356,7 @@ struct GraphicDeviceMod
     }
 
 
-    virtual void cache_brush(RDPBrush & brush)
+    void cache_brush(RDPBrush & brush)
     {
         if ((brush.style == 3)
         && (this->front.get_front_brush_cache_code() == 1)) {
@@ -374,7 +375,7 @@ struct GraphicDeviceMod
         }
     }
 
-    virtual void draw(const RDPPatBlt & cmd, const Rect & clip)
+    void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
         if (!clip.isempty()
         && !clip.intersect(cmd.rect).isempty()){
@@ -401,10 +402,10 @@ struct GraphicDeviceMod
         }
     }
 
-    virtual void bitmap_update(const Bitmap & bitmap, const Rect & dst, const unsigned srcx, const unsigned srcy, const uint8_t rop, const BGRPalette & palette, const Rect & clip)
+    void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap)
     {
-        if (bitmap.cx < srcx
-        ||  bitmap.cy < srcy){
+        if (bitmap.cx < cmd.srcx
+        ||  bitmap.cy < cmd.srcy){
             return;
         }
 
@@ -413,17 +414,17 @@ struct GraphicDeviceMod
             this->palette_sent = false;
             this->send_global_palette();
             if (!this->palette_memblt_sent[palette_id]) {
-                this->color_cache(palette, palette_id);
+                this->color_cache(bitmap.original_palette, palette_id);
                 this->palette_memblt_sent[palette_id] = true;
             }
             this->palette_sent = false;
         }
 
-        const uint16_t dst_x = dst.x;
-        const uint16_t dst_y = dst.y;
+        const uint16_t dst_x = cmd.rect.x;
+        const uint16_t dst_y = cmd.rect.y;
         // clip dst as it can be larger than source bitmap
-        const uint16_t dst_cx = std::min<uint16_t>(bitmap.cx - srcx, dst.cx);
-        const uint16_t dst_cy = std::min<uint16_t>(bitmap.cy - srcy, dst.cy);
+        const uint16_t dst_cx = std::min<uint16_t>(bitmap.cx - cmd.srcx, cmd.rect.cx);
+        const uint16_t dst_cy = std::min<uint16_t>(bitmap.cy - cmd.srcy, cmd.rect.cy);
 
         for (int y = 0; y < dst_cy ; y += 32) {
             int cy = std::min(32, dst_cy - y);
@@ -432,27 +433,27 @@ struct GraphicDeviceMod
                 int cx = std::min(32, dst_cx - x);
 
                 const Rect dst_tile(dst_x + x, dst_y + y, cx, cy);
-                const Rect src_tile(srcx + x, srcy + y, cx, cy);
+                const Rect src_tile(cmd.srcx + x, cmd.srcy + y, cx, cy);
 
                 const Bitmap tiled_bmp(bitmap, src_tile);
 
-                const RDPMemBlt cmd(0, dst_tile, rop, 0, 0, 0);
+                const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
 
-                this->front.orders->draw(cmd, clip, tiled_bmp);
+                this->front.orders->draw(cmd2, clip, tiled_bmp);
                 if (this->capture){
-                    this->capture->draw(cmd, clip, tiled_bmp);
+                    this->capture->draw(cmd2, clip, tiled_bmp);
                 }
             }
         }
     }
 
-    virtual void server_set_pen(int style, int width)
+    void server_set_pen(int style, int width)
     {
         this->pen.style = style;
         this->pen.width = width;
     }
 
-    virtual void draw(const RDPLineTo & cmd, const Rect & clip)
+    void draw(const RDPLineTo & cmd, const Rect & clip)
     {
         const uint16_t minx = std::min(cmd.startx, cmd.endx);
         const uint16_t miny = std::min(cmd.starty, cmd.endy);
@@ -478,7 +479,7 @@ struct GraphicDeviceMod
         }
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
         if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()){
             this->send_global_palette();
@@ -503,26 +504,26 @@ struct GraphicDeviceMod
         }
     }
 
-    virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
+    void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
     {
         RDPColCache cmd(cacheIndex, palette);
         this->front.orders->draw(cmd);
     }
 
-    virtual void glyph_cache(const FontChar & font_char, int font_index, int char_index)
+    void glyph_cache(const FontChar & font_char, int font_index, int char_index)
     {
         RDPGlyphCache cmd(font_index, 1, char_index, font_char.offset, font_char.baseline, font_char.width, font_char.height, font_char.data);
         this->front.orders->draw(cmd);
     }
 
 
-    virtual void set_pointer(int cache_idx)
+    void set_pointer(int cache_idx)
     {
         this->front.set_pointer(cache_idx);
         this->current_pointer = cache_idx;
     }
 
-    virtual void send_global_palette()
+    void send_global_palette()
     {
         if (!this->palette_sent && (this->get_front_bpp() == 8)){
             if (this->mod_bpp == 8){
@@ -535,7 +536,7 @@ struct GraphicDeviceMod
         }
     }
 
-    virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
+    void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
     {
         int cacheidx = 0;
         switch (this->front.cache.add_pointer(data, mask, x, y, cacheidx)){
@@ -549,7 +550,7 @@ struct GraphicDeviceMod
         }
     }
 
-    virtual void set_mod_palette(const BGRPalette & palette)
+    void set_mod_palette(const BGRPalette & palette)
     {
         this->mod_palette_setted = true;
         for (unsigned i = 0; i < 256 ; i++){
@@ -558,7 +559,7 @@ struct GraphicDeviceMod
         }
     }
 
-    virtual const BGRColor convert(const BGRColor color) const
+    const BGRColor convert(const BGRColor color) const
     {
         if (this->get_front_bpp() == 8 && this->mod_bpp == 8){
 //            return ((color >> 5) & 7) |((color << 1) & 0x31)|((color<<6)&0xc0);
@@ -571,7 +572,7 @@ struct GraphicDeviceMod
         }
     }
 
-    virtual const BGRColor convert_opaque(const BGRColor color) const
+    const BGRColor convert_opaque(const BGRColor color) const
     {
         if (this->get_front_bpp() == 8 && this->mod_bpp == 8){
 //            LOG(LOG_INFO, "convert_opaque: front=%u back=%u setted=%u color=%u palette=%.06x", this->get_front_bpp(), this->mod_bpp, this->mod_palette_setted, color, this->mod_palette[color]);
@@ -591,7 +592,7 @@ struct GraphicDeviceMod
         }
     }
 
-    virtual const BGRColor convert24_opaque(const BGRColor color) const
+    const BGRColor convert24_opaque(const BGRColor color) const
     {
         if (this->mod_bpp == 16 || this->mod_bpp == 15){
             const BGRColor color24 = color_decode_opaquerect(
@@ -608,13 +609,13 @@ struct GraphicDeviceMod
         }
     }
 
-    virtual const BGRColor convert24(const BGRColor color) const
+    const BGRColor convert24(const BGRColor color) const
     {
         const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
         return color_encode(color24, 24);
     }
 
-    virtual uint32_t convert_to_black(uint32_t color)
+    uint32_t convert_to_black(uint32_t color)
     {
         return 0; // convert(color);
     }

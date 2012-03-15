@@ -27,21 +27,6 @@
 #include "widget.hpp"
 #include "internal/internal_mod.hpp"
 
-//struct GraphicalContext : public internal_mod
-//{
-//    nb_windows();
-//    window(i);
-//    draw_window();
-//    draw_edit();
-//    draw_combo();
-//    opaque_rect()
-//    server_draw_text()
-//    text_height();
-//    bitmap_update()
-//    server_begin_update()
-//    server_end_update();
-//};
-
 Widget::Widget(GraphicalContext * mod, int width, int height, Widget & parent, int type) : parent(parent) {
     this->mod = mod;
     /* for all but bitmap */
@@ -336,15 +321,13 @@ Rect const Widget::to_screen_rect()
 
 void widget_image::draw(const Rect & clip)
 {
-
-    BGRPalette palette;
     TODO("See why region clipping is not done the same way as everywhere else here")
     Rect image_screen_rect = this->to_screen_rect();
     Rect intersection = image_screen_rect.intersect(this->to_screen_rect(clip));
     const Region region = this->get_visible_region(this, &this->parent, intersection);
 
     for (size_t ir = 0; ir < region.rects.size(); ir++){
-        this->mod->gd.bitmap_update(this->bmp, image_screen_rect, 0, 0, 0xCC, palette, region.rects[ir]);
+        this->mod->gd.draw(RDPMemBlt(0, image_screen_rect, 0xCC, 0, 0, 0), region.rects[ir], this->bmp);
     }
 }
 
