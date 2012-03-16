@@ -24,7 +24,7 @@
 #include "drawable.hpp"
 #include "bmpcache.hpp"
 
-#include "RDP/orders/RDPGraphicDevice.hpp"
+#include "RDP/RDPGraphicDevice.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersPrimaryHeader.hpp"
 #include "RDP/orders/RDPOrdersSecondaryHeader.hpp"

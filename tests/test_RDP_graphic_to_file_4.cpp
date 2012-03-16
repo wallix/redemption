@@ -28,7 +28,7 @@
 #include <boost/test/auto_unit_test.hpp>
 #include "test_orders.hpp"
 
-#include "RDP/orders/RDPDrawable.hpp"
+#include "RDP/RDPDrawable.hpp"
 #include "GraphicToFile.hpp"
 #include "constants.hpp"
 #include "bmpcache.hpp"

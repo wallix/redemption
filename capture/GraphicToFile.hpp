@@ -35,7 +35,7 @@
 #include "RDP/rdp.hpp"
 #include "RDP/sec.hpp"
 #include "RDP/lic.hpp"
-#include "RDP/orders/RDPGraphicDevice.hpp"
+#include "RDP/RDPGraphicDevice.hpp"
 // MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
 // ================================================================
 // The TS_FP_UPDATE_ORDERS structure contains primary, secondary, and alternate

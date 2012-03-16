@@ -49,7 +49,7 @@
 #include "bmpcache.hpp"
 #include "colors.hpp"
 
-#include "RDP/orders/RDPDrawable.hpp"
+#include "RDP/RDPDrawable.hpp"
 
 
 class StaticCapture : public RDPDrawable

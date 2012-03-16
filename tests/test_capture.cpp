@@ -30,7 +30,7 @@
 #include <algorithm>
 #include "ssl_calls.hpp"
 #include "png.hpp"
-#include "RDP/orders/RDPDrawable.hpp"
+#include "RDP/RDPDrawable.hpp"
 #include "staticcapture.hpp"
 
 // to see last result file, remove unlink

@@ -65,8 +65,6 @@ struct Listen {
     {
         int rv = 0;
         try{
-            Inifile ini(CFG_PATH "/" RDPPROXY_INI);
-
             struct sockaddr_in s;
             this->sck = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -92,7 +90,9 @@ struct Listen {
 
             memset(&s, 0, sizeof(struct sockaddr_in));
             s.sin_family = AF_INET;
-            s.sin_port = htons(ini.globals.port);
+            Inifile ini_listen(CFG_PATH "/" RDPPROXY_INI);
+
+            s.sin_port = htons(ini_listen.globals.port);
             s.sin_addr.s_addr = INADDR_ANY;
             rv = bind(this->sck, (struct sockaddr*)&s, sizeof(struct sockaddr_in));
 
@@ -168,6 +168,7 @@ struct Listen {
                     try {
                         close(this->sck);
                         LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
+                        Inifile ini(CFG_PATH "/" RDPPROXY_INI);
                         Session session(sck, ip_source, &ini);
                         session.session_main_loop();
                     } catch (...) {
