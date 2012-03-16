@@ -147,105 +147,6 @@ enum {
     SESSION_STATE_STOP,
 };
 
-static inline int get_pixel(uint8_t* data, int x, int y, int width, int bpp)
-{
-    int pixels_per_byte = 8/bpp;
-    int real_width = (width + pixels_per_byte-1) / pixels_per_byte;
-    int start = y * real_width + x / pixels_per_byte;
-    int shift = x & (pixels_per_byte-1);
-
-    TODO(" this need some cleanup  but we should define unit tests before correcting it  because mistaking is easy in these kind of things.")
-    if (bpp == 1) {
-        return (data[start] & (0x80 >> shift)) != 0;
-    } else if (bpp == 4) {
-        if (shift == 0) {
-            return (data[start] & 0xf0) >> 4;
-        } else {
-            return data[start] & 0x0f;
-        }
-    }
-    return 0;
-}
-
-
-static inline int load_pointer(const char* file_name, uint8_t* data, uint8_t* mask, int* x, int* y)
-{
-    int rv = 0;
-
-    try {
-        if (access(file_name, F_OK)){
-            LOG(LOG_WARNING, "pointer file [%s] does not exist\n", file_name);
-            throw 1;
-        }
-        Stream stream(8192);
-        int fd = open(file_name, O_RDONLY);
-        if (fd < 1) {
-            LOG(LOG_WARNING, "loading pointer from file [%s] failed\n", file_name);
-            throw 1;
-        }
-
-        TODO("We should define some kind of transport object to read into the stream")
-
-        int lg = read(fd, stream.data, 8192);
-        if (!lg){
-            throw 1;
-        }
-        close(fd);
-        stream.end = stream.data + lg;
-
-        TODO("the ways we do it now we have some risk of reading out of buffer (data that are not from file)")
-
-        stream.skip_uint8(6);
-        int w = stream.in_uint8();
-        int h = stream.in_uint8();
-        stream.skip_uint8(2);
-        *x = stream.in_uint16_le();
-        *y = stream.in_uint16_le();
-        stream.skip_uint8(22);
-        int bpp = stream.in_uint8();
-        stream.skip_uint8(25);
-
-        BGRPalette palette;
-        if (w == 32 && h == 32) {
-            if (bpp == 1) {
-                memcpy(palette, stream.in_uint8p(8), 8);
-                // read next 32x32 bytes
-                for (int i = 0; i < 32; i++) {
-                    for (int j = 0; j < 32; j++) {
-                        int pixel = palette[get_pixel(stream.p, j, i, 32, 1)];
-                        *data = pixel;
-                        data++;
-                        *data = pixel >> 8;
-                        data++;
-                        *data = pixel >> 16;
-                        data++;
-                    }
-                }
-                stream.skip_uint8(128);
-            } else if (bpp == 4) {
-                memcpy(palette, stream.in_uint8p(64), 64);
-                for (int i = 0; i < 32; i++) {
-                    for (int j = 0; j < 32; j++) {
-            TODO(" probably bogus  we are in case bpp = 4 and we call get_pixel with 1 as bpp")
-                        int pixel = palette[get_pixel(stream.p, j, i, 32, 1)];
-                        *data = pixel;
-                        data++;
-                        *data = pixel >> 8;
-                        data++;
-                        *data = pixel >> 16;
-                        data++;
-                    }
-                }
-                stream.skip_uint8(512);
-            }
-            memcpy(mask, stream.p, 128); /* mask */
-        }
-    }
-    catch(...){
-        rv = 1;
-    }
-    return rv;
-}
 
 struct Session {
 
@@ -451,59 +352,9 @@ struct Session {
                 BGRPalette palette;
                 init_palette332(palette);
 
-                if (this->verbose > 63){
-                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 2");
-                }
                 this->mod->gd.color_cache(palette, 0);
 
-                if (this->verbose > 63){
-                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 3");
-                }
-                struct pointer_item pointer_item;
-
-                memset(&pointer_item, 0, sizeof(pointer_item));
-                load_pointer(SHARE_PATH "/" CURSOR0,
-                    pointer_item.data,
-                    pointer_item.mask,
-                    &pointer_item.x,
-                    &pointer_item.y);
-
-                if (this->verbose > 63){
-                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 4");
-                }
-
-                this->front->cache.add_pointer_static(&pointer_item, 0);
-                this->front->send_pointer(0,
-                                 pointer_item.data,
-                                 pointer_item.mask,
-                                 pointer_item.x,
-                                 pointer_item.y);
-
-                if (this->verbose > 63){
-                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 5");
-                }
-
-                memset(&pointer_item, 0, sizeof(pointer_item));
-                load_pointer(SHARE_PATH "/" CURSOR1,
-                    pointer_item.data,
-                    pointer_item.mask,
-                    &pointer_item.x,
-                    &pointer_item.y);
-                this->front->cache.add_pointer_static(&pointer_item, 1);
-
-                if (this->verbose > 63){
-                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 6");
-                }
-
-                this->front->send_pointer(1,
-                                 pointer_item.data,
-                                 pointer_item.mask,
-                                 pointer_item.x,
-                                 pointer_item.y);
-
-                if (this->verbose > 63){
-                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 7");
-                }
+                this->front->init_pointers();
 
                 TODO("This should be done in cli_mod")
                 if (this->front->client_info.username[0]){
@@ -516,15 +367,8 @@ struct Session {
 
                 this->internal_state = SESSION_STATE_RUNNING;
 
-                if (this->verbose > 63){
-                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 8");
-                }
-
                 this->session_setup_mod(MCTX_STATUS_CLI, this->context);
 
-                if (this->verbose > 63){
-                    LOG(LOG_INFO, "Session::step_STATE_ENTRY::up_and_running 5");
-                }
             }
         }
 
@@ -853,37 +697,7 @@ struct Session {
                                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection to server failed");
                             }
                             this->mod = new close_mod(this->back_event, *this->context, *this->front, this->ini);
-
-                            TODO(" we should probably send mouse pointers before any internal module connection")
-                            struct pointer_item pointer_item;
-
-                            memset(&pointer_item, 0, sizeof(pointer_item));
-                            load_pointer(SHARE_PATH "/" CURSOR0,
-                                    pointer_item.data,
-                                    pointer_item.mask,
-                                    &pointer_item.x,
-                                    &pointer_item.y);
-
-                            this->front->cache.add_pointer_static(&pointer_item, 0);
-                            this->front->send_pointer(0,
-                                    pointer_item.data,
-                                    pointer_item.mask,
-                                    pointer_item.x,
-                                    pointer_item.y);
-
-                            memset(&pointer_item, 0, sizeof(pointer_item));
-                            load_pointer(SHARE_PATH "/" CURSOR1,
-                                    pointer_item.data,
-                                    pointer_item.mask,
-                                    &pointer_item.x,
-                                    &pointer_item.y);
-                            this->front->cache.add_pointer_static(&pointer_item, 1);
-
-                            this->front->send_pointer(1,
-                                    pointer_item.data,
-                                    pointer_item.mask,
-                                    pointer_item.x,
-                                    pointer_item.y);
+                            this->front->init_pointers();
                         }
                         if (this->verbose){
                             LOG(LOG_INFO, "internal module Close ready");
