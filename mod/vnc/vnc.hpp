@@ -690,7 +690,7 @@ struct mod_vnc : public client_mod {
             num_recs = stream.in_uint16_be();
         }
 
-        this->gd.server_begin_update();
+        this->gd.front.begin_update();
 
         for (size_t i = 0; i < num_recs; i++) {
             Stream stream(32768);
@@ -813,7 +813,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                 break;
             }
         }
-        this->gd.server_end_update();
+        this->gd.front.end_update();
 
         {
 //                LOG(LOG_INFO, "Frame buffer Update");
@@ -884,9 +884,9 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         }
         memcpy(this->gd.mod_palette, this->palette, sizeof(BGRPalette));
         this->gd.send_global_palette();
-        this->gd.server_begin_update();
+        this->gd.front.begin_update();
         this->gd.color_cache(this->palette, 0);
-        this->gd.server_end_update();
+        this->gd.front.end_update();
     }
 
     /******************************************************************************/

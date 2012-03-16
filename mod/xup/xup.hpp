@@ -177,15 +177,11 @@ struct xup_mod : public client_mod {
                 for (int index = 0; index < num_orders; index++) {
                     type = stream.in_uint16_le();
                     switch (type) {
-                    case 1: /* server_begin_update */
-                        if (this->gd.server_begin_update()){
-                            rv = BACK_EVENT_1;
-                        }
+                    case 1:
+                        this->gd.front.begin_update();
                         break;
-                    case 2: /* server_end_update */
-                        if (this->gd.server_end_update()){
-                            rv = BACK_EVENT_1;
-                        }
+                    case 2:
+                        this->gd.front.end_update();
                         break;
                     case 3:
                     {

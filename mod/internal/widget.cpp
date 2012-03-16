@@ -333,7 +333,7 @@ void widget_image::draw(const Rect & clip)
 
 void Widget::refresh(const Rect & clip)
 {
-    this->mod->gd.server_begin_update();
+    this->mod->gd.front.begin_update();
 
     this->draw(clip);
     this->notify(this, WM_PAINT, 0, 0);

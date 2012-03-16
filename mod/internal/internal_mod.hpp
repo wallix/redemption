@@ -54,7 +54,7 @@ struct internal_mod : public client_mod {
 
     void server_draw_dragging_rect(const Rect & r, const Rect & clip)
     {
-        this->gd.server_begin_update();
+        this->gd.front.begin_update();
 
         RDPBrush brush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55");
 
@@ -68,7 +68,7 @@ struct internal_mod : public client_mod {
         this->gd.draw(RDPPatBlt(Rect(r.x, r.y + (r.cy - 5), r.cx, 5), 0x5A, BLACK, WHITE, this->brush), clip);
         this->gd.draw(RDPPatBlt(Rect(r.x, r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush), clip);
         this->gd.draw(RDPPatBlt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush), clip);
-        this->gd.server_end_update();
+        this->gd.front.end_update();
     }
 
 

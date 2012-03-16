@@ -1331,7 +1331,7 @@ struct mod_rdp : public client_mod {
     // information for a session is sent to the client in the Update Palette PDU.
 
                                 int update_type = stream.in_uint16_le();
-                                this->gd.server_begin_update();
+                                this->gd.front.begin_update();
                                 switch (update_type) {
                                 case RDP_UPDATE_ORDERS:
                                     {
@@ -1352,7 +1352,7 @@ struct mod_rdp : public client_mod {
                                 default:
                                     break;
                                 }
-                                this->gd.server_end_update();
+                                this->gd.front.end_update();
                             }
                             break;
                             case PDUTYPE2_CONTROL:

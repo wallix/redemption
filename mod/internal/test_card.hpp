@@ -67,7 +67,7 @@ struct test_card_mod : public internal_mod {
 
     void draw()
     {
-        this->gd.server_begin_update();
+        this->gd.front.begin_update();
 
         const Rect & clip = this->get_screen_rect();
 
@@ -151,7 +151,7 @@ struct test_card_mod : public internal_mod {
             0xCC,
              80, 50, 0), clip, logo);
 
-        this->gd.server_end_update();
+        this->gd.front.end_update();
     }
 
 };

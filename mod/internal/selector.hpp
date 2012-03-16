@@ -3862,14 +3862,14 @@ struct selector_mod : public internal_mod {
 
     void draw(const Rect & clip)
     {
-        this->gd.server_begin_update();
+        this->gd.front.begin_update();
 
         this->draw_background(clip);
         this->draw_login(clip);
         this->draw_array(clip);
         this->draw_buttons(clip);
 
-        this->gd.server_end_update();
+        this->gd.front.end_update();
     }
 
 };

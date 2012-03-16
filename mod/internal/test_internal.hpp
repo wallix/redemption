@@ -71,10 +71,10 @@ struct test_internal_mod : public internal_mod {
         InFileTransport in_trans(fd);
         RDPUnserializer reader(&in_trans, this->gd.front.orders, this->get_screen_rect());
         this->gd.front.send_global_palette(this->gd.palette332);
-        this->gd.server_begin_update();
+        this->gd.front.begin_update();
         while (reader.next()){
         }
-        this->gd.server_end_update();
+        this->gd.front.end_update();
         return BACK_EVENT_NONE;
     }
 };
