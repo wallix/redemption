@@ -36,6 +36,7 @@ project redemption
     <include>front
     <include>tests
     <include>utils
+    <include>acl
     <include>capture
     <include>/usr/include
     <conditional>@defines
