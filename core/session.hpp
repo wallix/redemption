@@ -126,8 +126,8 @@ static ProtocolKeyword KeywordsDefinitions[] = {
 };
 
 enum {
-    // before anything else : exchange of credentials
-    SESSION_STATE_RSA_KEY_HANDSHAKE,
+//    // before anything else : exchange of credentials
+//    SESSION_STATE_RSA_KEY_HANDSHAKE,
     // initial state no module loaded, init not done
     SESSION_STATE_ENTRY,
     // no module loaded
@@ -288,7 +288,7 @@ struct Session {
 
         this->mod = 0;
 
-        this->internal_state = SESSION_STATE_RSA_KEY_HANDSHAKE;
+        this->internal_state = SESSION_STATE_ENTRY;
         this->front_event = new wait_obj(sck);
 
         /* create these when up and running */
@@ -357,11 +357,6 @@ struct Session {
                 }
                 switch (this->internal_state)
                 {
-                    case SESSION_STATE_RSA_KEY_HANDSHAKE:
-                        if (this->internal_state != previous_state)
-                            LOG(LOG_DEBUG, "-------------- RSA Key Handshake\n");
-                        this->internal_state = this->step_STATE_KEY_HANDSHAKE(time_mark);
-                    break;
                     case SESSION_STATE_ENTRY:
                         if (this->internal_state != previous_state)
                             LOG(LOG_DEBUG, "-------------- Initializing client session\n");
@@ -412,18 +407,6 @@ struct Session {
             close(this->sck);
         }
        return rv;
-    }
-
-    int step_STATE_KEY_HANDSHAKE(const struct timeval & time)
-    {
-        if (this->verbose){
-            LOG(LOG_INFO, "step_STATE_KEY_HANDSHAKE(%u.%0.6u)", time.tv_sec, time.tv_usec);
-        }
-        this->front->incoming(*this->mod);
-        if (this->verbose){
-            LOG(LOG_INFO, "step_STATE_KEY_HANDSHAKE Done");
-        }
-        return SESSION_STATE_ENTRY;
     }
 
     int step_STATE_ENTRY(const struct timeval & time_mark)
