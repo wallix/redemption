@@ -26,7 +26,7 @@
 #define __TEST_INTERNAL_HPP__
 
 #include "GraphicToFile.hpp"
-#include "RDP/orders/RDPGraphicDevice.hpp"
+#include "RDP/RDPGraphicDevice.hpp"
 
 struct test_internal_mod : public internal_mod {
     test_internal_mod(
