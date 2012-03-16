@@ -97,9 +97,9 @@ lib png : : <name>png <link>static ;
 obj widget : mod/internal/widget.cpp ;
 obj mainloop : core/mainloop.cpp ;
 obj keymap : core/keymap.cpp ;
-obj d3des : core/d3des.cpp ;
+obj d3des : utils/d3des.cpp ;
 obj ini_config : core/config.cpp  ;
-obj rsa_keys : core/rsa_keys.cpp  ;
+obj rsa_keys : utils/rsa_keys.cpp  ;
 
 #
 # Redemption
