@@ -27,6 +27,33 @@
 
 #include "log.hpp"
 
+#if !defined(SHARE_PATH)
+#define SHARE_PATH "/usr/local/share/rdpproxy"
+#endif
+
+#if !defined(CFG_PATH)
+#define CFG_PATH "/etc/rdpproxy"
+#endif
+
+#if !defined(PID_PATH)
+#define PID_PATH "/var/run"
+#endif
+
+#if !defined(SBIN_PATH)
+#define SBIN_PATH "/usr/local/sbin"
+#endif
+
+#define LOGIN_LOGO24 "ad24b.bmp"
+#define CURSOR0 "cursor0.cur"
+#define CURSOR1 "cursor1.cur"
+#define FONT1 "sans-10.fv1"
+#define REDEMPTION_LOGO24 "xrdp24b-redemption.bmp"
+#define CAPTUREFONT "FreeSans.ttf"
+#define LOCKFILE "rdpproxy.pid"
+
+#define RSAKEYS_INI "rsakeys.ini"
+#define RDPPROXY_INI "rdpproxy.ini"
+
 /* TCP port for Remote Desktop Protocol */
 #define TCP_PORT_RDP                   3389
 
@@ -194,7 +221,7 @@ PDUTYPE2_OFFSCRCACHE_ERROR_PDU = 46,   // Offscreen Bitmap Cache Error PDU
 PDUTYPE2_SET_ERROR_INFO_PDU    = 47,   // Set Error Info PDU (section 2.2.5.1.1)
 PDUTYPE2_DRAWNINEGRID_ERROR_PDU = 48,  // DrawNineGrid Cache Error PDU
                                        // (see [MS-RDPEGDI] section 2.2.2.3.3)
-PDUTYPE2_DRAWGDIPLUS_ERROR_PDU = 49,   // GDI+ Error PDU 
+PDUTYPE2_DRAWGDIPLUS_ERROR_PDU = 49,   // GDI+ Error PDU
                                        // (see [MS-RDPEGDI] section 2.2.2.3.4)
 PDUTYPE2_ARC_STATUS_PDU        = 50,   // Auto-Reconnect Status PDU
                                        // (section 2.2.4.1.1)

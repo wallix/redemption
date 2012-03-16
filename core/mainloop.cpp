@@ -42,7 +42,7 @@
 
 
 /*****************************************************************************/
-void xrdp_shutdown(int sig)
+void shutdown(int sig)
 {
     LOG(LOG_INFO, "shutting down : signal %d pid=%d\n", sig, getpid());
     exit(1);
@@ -93,13 +93,13 @@ void init_signals(void)
     sa.sa_handler = SIG_DFL;
     sigaction(SIGBUS, &sa, NULL);
 
-    sa.sa_handler = xrdp_shutdown;
+    sa.sa_handler = shutdown;
     sigaction(SIGTERM, &sa, NULL);
 
-    sa.sa_handler = xrdp_shutdown;
+    sa.sa_handler = shutdown;
     sigaction(SIGHUP, &sa, NULL);
 
-    sa.sa_handler = xrdp_shutdown;
+    sa.sa_handler = shutdown;
     sigaction(SIGINT, &sa, NULL);
 
     sa.sa_handler = sigpipe;

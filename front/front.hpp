@@ -36,7 +36,6 @@
 #include "stream.hpp"
 #include "constants.hpp"
 #include "ssl_calls.hpp"
-#include "file_loc.hpp"
 #include "altoco.hpp"
 #include "rect.hpp"
 #include "region.hpp"
@@ -309,7 +308,7 @@ public:
                             this->client_info.cache2_entries,
                             this->client_info.cache2_size,
                             this->client_info.cache3_entries,
-                            this->client_info.cache3_size,              
+                            this->client_info.cache3_size,
                             this->client_info.bitmap_cache_version,
                             this->client_info.use_bitmap_comp,
                             this->client_info.op2);
@@ -390,7 +389,7 @@ public:
                         this->client_info.cache2_entries,
                         this->client_info.cache2_size,
                         this->client_info.cache3_entries,
-                        this->client_info.cache3_size,              
+                        this->client_info.cache3_size,
                         this->client_info.bitmap_cache_version,
                         this->client_info.use_bitmap_comp,
                         this->client_info.op2);

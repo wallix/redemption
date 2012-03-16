@@ -34,7 +34,7 @@
 #include <string>
 #include <string.h>
 
-#include "file_loc.hpp"
+#include "constants.hpp"
 
 BOOST_AUTO_TEST_CASE(TestCreateFont)
 {

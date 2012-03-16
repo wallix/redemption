@@ -40,7 +40,6 @@
 #include "stream.hpp"
 #include "constants.hpp"
 #include "ssl_calls.hpp"
-#include "file_loc.hpp"
 #include "rect.hpp"
 #include "client_info.hpp"
 
