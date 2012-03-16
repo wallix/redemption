@@ -22,10 +22,20 @@
 #define __RDPDRAWABLE_HPP__
 
 #include "drawable.hpp"
-#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "RDP/orders/RDPGraphicDevice.hpp"
-
 #include "bmpcache.hpp"
+
+#include "RDP/orders/RDPGraphicDevice.hpp"
+#include "RDP/orders/RDPOrdersCommon.hpp"
+#include "RDP/orders/RDPOrdersPrimaryHeader.hpp"
+#include "RDP/orders/RDPOrdersSecondaryHeader.hpp"
+#include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+
 
 class RDPDrawable : public RDPGraphicDevice {
 public:
