@@ -169,7 +169,7 @@ void window::draw(const Rect & clip)
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
 
-        this->mod->gd.draw_window(scr_r,
+        this->mod->draw_window(scr_r,
             this->bg_color, this->caption1,
             this->has_focus,
             region_clip);
@@ -186,7 +186,7 @@ void widget_edit::draw(const Rect & clip)
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
 
-        this->mod->gd.draw_edit(scr_r,
+        this->mod->draw_edit(scr_r,
             this->password_char,
             this->buffer,
             this->edit_pos,
@@ -203,7 +203,7 @@ void widget_screen::draw(const Rect & clip)
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
 
-        this->mod->gd.draw(RDPOpaqueRect(scr_r, this->bg_color),
+        this->mod->front.draw(RDPOpaqueRect(scr_r, this->bg_color),
             region_clip);
     }
 }
@@ -216,7 +216,7 @@ void widget_combo::draw(const Rect & clip)
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
 
-        this->mod->gd.draw_combo(scr_r,
+        this->mod->draw_combo(scr_r,
             this->string_list[this->item_index],
             this->state,
             this->has_focus,
@@ -234,7 +234,7 @@ void widget_button::draw(const Rect & clip)
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
 
-        this->mod->gd.draw_button(scr_r,
+        this->mod->draw_button(scr_r,
             this->caption1,
             this->state,
             this->has_focus,
@@ -253,7 +253,7 @@ void widget_popup::draw(const Rect & clip)
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
 
-        this->mod->gd.draw(
+        this->mod->front.draw(
             RDPOpaqueRect(Rect(scr_r.x, scr_r.y, this->rect.cx, this->rect.cy), WHITE),
             region_clip);
 
@@ -263,12 +263,12 @@ void widget_popup::draw(const Rect & clip)
             size_t list_count = this->popped_from->string_list.size();
 
             // draw the selected line
-            this->mod->gd.draw(
+            this->mod->front.draw(
                     RDPOpaqueRect(Rect(scr_r.x, scr_r.y + height * this->item_index, this->rect.cx, height), WABGREEN), region_clip);
 
             for (unsigned i = 0; i < list_count; i++) {
                 const char * p = this->popped_from->string_list[i];
-                this->mod->gd.server_draw_text(scr_r.x + 2, scr_r.y + i * height,
+                this->mod->server_draw_text(scr_r.x + 2, scr_r.y + i * height,
                     p,
                     (i == this->item_index)?WABGREEN:WHITE,
                     (i == this->item_index)?WHITE:BLACK,
@@ -291,7 +291,7 @@ void widget_label::draw(const Rect & clip)
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
 
-        this->mod->gd.server_draw_text(scr_r.x, scr_r.y, this->caption1, GREY, BLACK,
+        this->mod->server_draw_text(scr_r.x, scr_r.y, this->caption1, GREY, BLACK,
             region_clip);
     }
 
@@ -327,13 +327,13 @@ void widget_image::draw(const Rect & clip)
     const Region region = this->get_visible_region(this, &this->parent, intersection);
 
     for (size_t ir = 0; ir < region.rects.size(); ir++){
-        this->mod->gd.draw(RDPMemBlt(0, image_screen_rect, 0xCC, 0, 0, 0), region.rects[ir], this->bmp);
+        this->mod->front.draw(RDPMemBlt(0, image_screen_rect, 0xCC, 0, 0, 0), region.rects[ir], this->bmp);
     }
 }
 
 void Widget::refresh(const Rect & clip)
 {
-    this->mod->gd.front.begin_update();
+    this->mod->front.begin_update();
 
     this->draw(clip);
     this->notify(this, WM_PAINT, 0, 0);
@@ -343,7 +343,7 @@ void Widget::refresh(const Rect & clip)
         Widget * b = this->child_list[i];
         b->refresh(b->rect.wh());
     }
-    this->mod->gd.server_end_update();
+    this->mod->front.end_update();
 }
 
 void Widget::notify(struct Widget* sender, int msg, long param1, long param2)

@@ -380,7 +380,7 @@ struct mod_vnc : public client_mod {
                     this->t->send(stream.data, 4 + 3 * 4);
                 }
 
-                this->server_resize(this->width, this->height, this->gd.get_front_bpp());
+                this->server_resize(this->width, this->height, this->get_front_bpp());
 
                 {
                     /* FrambufferUpdateRequest */
@@ -406,7 +406,7 @@ struct mod_vnc : public client_mod {
                 memset(rdp_cursor_data + (32 * (32 * 3) - 2 * 32 * 3), 0xff, 9);
                 memset(rdp_cursor_data + (32 * (32 * 3) - 3 * 32 * 3), 0xff, 9);
                 memset(rdp_cursor_mask, 0xff, 32 * (32 / 8));
-                this->gd.server_set_pointer(3, 3, rdp_cursor_data, rdp_cursor_mask);
+                this->server_set_pointer(3, 3, rdp_cursor_data, rdp_cursor_mask);
             } catch(int i) {
                 error = i;
             } catch(...) {
@@ -690,7 +690,7 @@ struct mod_vnc : public client_mod {
             num_recs = stream.in_uint16_be();
         }
 
-        this->gd.front.begin_update();
+        this->front.begin_update();
 
         for (size_t i = 0; i < num_recs; i++) {
             Stream stream(32768);
@@ -714,9 +714,9 @@ struct mod_vnc : public client_mod {
                 this->t->recv((char**)&tmp, need_size);
 
                 TODO(" there is still an alignement issue in bitmaps  fixed  but my fix is quite evil.")
-                Bitmap bmp(this->bpp, &this->gd.palette332, cx, cy, raw, need_size, false, true);
+                Bitmap bmp(this->bpp, &this->front.palette332, cx, cy, raw, need_size, false, true);
                 free(raw);
-                this->gd.draw(RDPMemBlt(0, Rect(x, y, cx, cy), 0xCC, 0, 0, 0), this->gd.get_front_rect(), bmp);
+                this->front.draw(RDPMemBlt(0, Rect(x, y, cx, cy), 0xCC, 0, 0, 0), this->get_front_rect(), bmp);
             }
             break;
             case 1: /* copy rect */
@@ -728,7 +728,7 @@ struct mod_vnc : public client_mod {
                 const int srcy = stream.in_uint16_be();
 //                    LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
                 const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
-                this->gd.draw(scrblt, this->gd.get_front_rect());
+                this->front.draw(scrblt, this->get_front_rect());
             }
             break;
             case 0xffffff11: /* cursor */
@@ -804,7 +804,7 @@ struct mod_vnc : public client_mod {
                 if (x > 31) { x = 31; }
                 if (y > 31) { y = 31; }
 TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation")
-                this->gd.server_set_pointer(x, y, rdp_cursor_data, rdp_cursor_mask);
+                this->server_set_pointer(x, y, rdp_cursor_data, rdp_cursor_mask);
             }
             break;
             default:
@@ -813,7 +813,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                 break;
             }
         }
-        this->gd.front.end_update();
+        this->front.end_update();
 
         {
 //                LOG(LOG_INFO, "Frame buffer Update");
@@ -824,8 +824,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             stream.out_uint16_be(0);
             stream.out_uint16_be(0);
 
-            stream.out_uint16_be(this->gd.clip.cx);
-            stream.out_uint16_be(this->gd.clip.cy);
+            stream.out_uint16_be(this->clip.cx);
+            stream.out_uint16_be(this->clip.cy);
             this->t->send(stream.data, 10);
         }
     }
@@ -882,11 +882,11 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         else {
             LOG(LOG_ERR, "VNC: number of palette colors too large: %d\n", num_colors);
         }
-        memcpy(this->gd.mod_palette, this->palette, sizeof(BGRPalette));
-        this->gd.send_global_palette();
-        this->gd.front.begin_update();
-        this->gd.color_cache(this->palette, 0);
-        this->gd.front.end_update();
+        memcpy(this->front.mod_palette, this->palette, sizeof(BGRPalette));
+        this->front.send_global_palette();
+        this->front.begin_update();
+        this->front.color_cache(this->palette, 0);
+        this->front.end_update();
     }
 
     /******************************************************************************/

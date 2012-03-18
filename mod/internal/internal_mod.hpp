@@ -39,9 +39,9 @@ struct internal_mod : public client_mod {
     internal_mod(FrontAPI & front)
             : client_mod(front),
                 screen(this,
-                 this->gd.front.get_front_width(),
-                 this->gd.front.get_front_height(),
-                 this->gd.front.get_front_bpp())
+                 this->front.get_front_width(),
+                 this->front.get_front_height(),
+                 this->front.get_front_bpp())
     {
         /* dragging info */
         this->dragging = 0;
@@ -54,7 +54,7 @@ struct internal_mod : public client_mod {
 
     void server_draw_dragging_rect(const Rect & r, const Rect & clip)
     {
-        this->gd.front.begin_update();
+        this->front.begin_update();
 
         RDPBrush brush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55");
 
@@ -64,11 +64,11 @@ struct internal_mod : public client_mod {
         // 0xCC = copy -> pat_blt( ... 0xF0 ...
         // 0x88 = and -> pat_blt( ...  0xC0 ...
 
-        this->gd.draw(RDPPatBlt(Rect(r.x, r.y, r.cx, 5), 0x5A, BLACK, WHITE, this->brush), clip);
-        this->gd.draw(RDPPatBlt(Rect(r.x, r.y + (r.cy - 5), r.cx, 5), 0x5A, BLACK, WHITE, this->brush), clip);
-        this->gd.draw(RDPPatBlt(Rect(r.x, r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush), clip);
-        this->gd.draw(RDPPatBlt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush), clip);
-        this->gd.front.end_update();
+        this->front.draw(RDPPatBlt(Rect(r.x, r.y, r.cx, 5), 0x5A, BLACK, WHITE, this->brush), clip);
+        this->front.draw(RDPPatBlt(Rect(r.x, r.y + (r.cy - 5), r.cx, 5), 0x5A, BLACK, WHITE, this->brush), clip);
+        this->front.draw(RDPPatBlt(Rect(r.x, r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush), clip);
+        this->front.draw(RDPPatBlt(Rect(r.x + (r.cx - 5), r.y + 5, 5, r.cy - 10), 0x5A, BLACK, WHITE, this->brush), clip);
+        this->front.end_update();
     }
 
 
@@ -84,9 +84,9 @@ struct internal_mod : public client_mod {
 
 
     virtual void front_resize() {
-        this->screen.rect.cx = this->gd.front.get_front_width();
-        this->screen.rect.cy = this->gd.front.get_front_height();
-        this->screen.bpp     = this->gd.front.get_front_bpp();
+        this->screen.rect.cx = this->front.get_front_width();
+        this->screen.rect.cy = this->front.get_front_height();
+        this->screen.bpp     = this->front.get_front_bpp();
     }
 
     const Rect & get_screen_rect() const

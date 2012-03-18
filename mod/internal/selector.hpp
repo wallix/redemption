@@ -3749,14 +3749,14 @@ struct selector_mod : public internal_mod {
 
 
     void draw_background(const Rect & clip){
-        this->gd.draw(RDPOpaqueRect(this->get_screen_rect(), GREY), clip);
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect(), GREY), clip);
     }
 
     void draw_login(const Rect & clip){
         char buffer[256];
         buffer[0] = 0;
         sprintf(buffer, "%s@%s", this->context.get(STRAUTHID_AUTH_USER), this->context.get(STRAUTHID_HOST));
-        this->gd.server_draw_text(30, 30, buffer, GREY, BLACK, clip);
+        this->server_draw_text(30, 30, buffer, GREY, BLACK, clip);
     }
 
     size_t nblines(){
@@ -3769,57 +3769,57 @@ struct selector_mod : public internal_mod {
 
         uint32_t w = (this->get_screen_rect().cx - 40) / 20;
 
-        this->gd.server_draw_text(30       , 50,  "Device Group", GREY, BLACK, clip);
+        this->server_draw_text(30       , 50,  "Device Group", GREY, BLACK, clip);
 
 //        LOG(LOG_INFO, "filter_group_text=%s", this->filter_group_text);
-        this->gd.draw_edit(this->rect_group_filter, 0, this->filter_group_text, this->filter_group_edit_pos,
+        this->draw_edit(this->rect_group_filter, 0, this->filter_group_text, this->filter_group_edit_pos,
             this->focus_item == FOCUS_ON_FILTER_GROUP, clip);
-        this->gd.server_draw_text(30 +  3*w, 50,  "Account Device", GREY, BLACK, clip);
+        this->server_draw_text(30 +  3*w, 50,  "Account Device", GREY, BLACK, clip);
 
 //        LOG(LOG_INFO, "filter_device_text=%s", this->filter_device_text);
-        this->gd.draw_edit(this->rect_device_filter, 0, this->filter_device_text, this->filter_device_edit_pos,
+        this->draw_edit(this->rect_device_filter, 0, this->filter_device_text, this->filter_device_edit_pos,
             this->focus_item == FOCUS_ON_FILTER_DEVICE, clip);
-        this->gd.server_draw_text(30 + 13*w, 50,  "Protocol", GREY, BLACK, clip);
-        this->gd.server_draw_text(30 + 16*w, 50,  "Close Time", GREY, BLACK, clip);
+        this->server_draw_text(30 + 13*w, 50,  "Protocol", GREY, BLACK, clip);
+        this->server_draw_text(30 + 16*w, 50,  "Close Time", GREY, BLACK, clip);
 
         for (size_t line = 0 ; line < this->nblines() ; line++){
             Rect rect(this->rect_grid.x, this->rect_grid.y + line * 20, this->get_screen_rect().cx-40, 19);
             uint32_t bc = this->back_color[line%2+2*(line == this->focus_line)];
             uint32_t fc = this->fore_color[line%2+2*(line == this->focus_line)];
 
-            this->gd.draw(RDPOpaqueRect(rect, bc), clip);
-            this->gd.server_draw_text(35       , rect.y + 2,  this->grid[line].group, bc, fc, clip);
-            this->gd.server_draw_text(35 +  3*w, rect.y + 2,  this->grid[line].target, bc, fc, clip);
-            this->gd.server_draw_text(35 + 13*w, rect.y + 2,  this->grid[line].protocol, bc, fc, clip);
-            this->gd.server_draw_text(35 + 15*w, rect.y + 2,  this->grid[line].endtime, bc, fc, clip);
+            this->front.draw(RDPOpaqueRect(rect, bc), clip);
+            this->server_draw_text(35       , rect.y + 2,  this->grid[line].group, bc, fc, clip);
+            this->server_draw_text(35 +  3*w, rect.y + 2,  this->grid[line].target, bc, fc, clip);
+            this->server_draw_text(35 + 13*w, rect.y + 2,  this->grid[line].protocol, bc, fc, clip);
+            this->server_draw_text(35 + 15*w, rect.y + 2,  this->grid[line].endtime, bc, fc, clip);
         }
 
         if (this->focus_item == FOCUS_ON_FIRSTPAGE){
-            this->gd.draw(RDPMemBlt(0, this->rect_button_first, 0xCC, 0, 0, 0), clip, *this->first_page);
+            this->front.draw(RDPMemBlt(0, this->rect_button_first, 0xCC, 0, 0, 0), clip, *this->first_page);
         }
         else {
-            this->gd.draw(RDPMemBlt(0, this->rect_button_first, 0xCC, 0, 0, 0), clip, *this->first_page_inactive);
+            this->front.draw(RDPMemBlt(0, this->rect_button_first, 0xCC, 0, 0, 0), clip, *this->first_page_inactive);
         }
 
         if (this->focus_item == FOCUS_ON_PREVPAGE){
-            this->gd.draw(RDPMemBlt(0, this->rect_button_prec, 0xCC, 0, 0, 0), clip, *this->prec_page);
+            this->front.draw(RDPMemBlt(0, this->rect_button_prec, 0xCC, 0, 0, 0), clip, *this->prec_page);
         }
         else {
-            this->gd.draw(RDPMemBlt(0, this->rect_button_prec, 0xCC, 0, 0, 0), clip, *this->prec_page_inactive);
+            this->front.draw(RDPMemBlt(0, this->rect_button_prec, 0xCC, 0, 0, 0), clip, *this->prec_page_inactive);
         }
 
         if (this->focus_item == FOCUS_ON_NEXTPAGE){
-            this->gd.draw(RDPMemBlt(0, this->rect_button_next, 0xCC, 0, 0, 0), clip, *this->next_page);
+            this->front.draw(RDPMemBlt(0, this->rect_button_next, 0xCC, 0, 0, 0), clip, *this->next_page);
         }
         else {
-            this->gd.draw(RDPMemBlt(0, this->rect_button_next, 0xCC, 0, 0, 0), clip, *this->next_page_inactive);
+            this->front.draw(RDPMemBlt(0, this->rect_button_next, 0xCC, 0, 0, 0), clip, *this->next_page_inactive);
         }
 
         if (this->focus_item == FOCUS_ON_LASTPAGE){
-            this->gd.draw(RDPMemBlt(0, this->rect_button_last, 0xCC, 0, 0, 0), clip, *this->last_page);
+            this->front.draw(RDPMemBlt(0, this->rect_button_last, 0xCC, 0, 0, 0), clip, *this->last_page);
         }
         else {
-            this->gd.draw(RDPMemBlt(0, this->rect_button_last, 0xCC, 0, 0, 0), clip, *this->last_page_inactive);
+            this->front.draw(RDPMemBlt(0, this->rect_button_last, 0xCC, 0, 0, 0), clip, *this->last_page_inactive);
         }
 
         char buffer[256];
@@ -3831,30 +3831,30 @@ struct selector_mod : public internal_mod {
         }
         sprintf(buffer, "%u/%u", (unsigned int)this->showed_page, (unsigned int)this->total_page);
         Rect rect_num_pages = this->rect_button_prec.offset(50, 2);
-        this->gd.server_draw_text(rect_num_pages.x, rect_num_pages.y, buffer, GREY, BLACK, clip);
+        this->server_draw_text(rect_num_pages.x, rect_num_pages.y, buffer, GREY, BLACK, clip);
 
     }
 
     void draw_buttons(const Rect & clip){
         if (this->focus_item == FOCUS_ON_LOGOUT){
-            this->gd.draw(RDPMemBlt(0, this->rect_button_logout, 0xCC, 0, 0, 0), clip, *this->logout_active);
+            this->front.draw(RDPMemBlt(0, this->rect_button_logout, 0xCC, 0, 0, 0), clip, *this->logout_active);
         }
         else {
-            this->gd.draw(RDPMemBlt(0, this->rect_button_logout, 0xCC, 0, 0, 0), clip, *this->logout_inactive);
+            this->front.draw(RDPMemBlt(0, this->rect_button_logout, 0xCC, 0, 0, 0), clip, *this->logout_inactive);
         }
 
         if (this->focus_item == FOCUS_ON_APPLY){
-            this->gd.draw(RDPMemBlt(0, this->rect_button_apply, 0xCC, 0, 0, 0), clip, *this->apply_active);
+            this->front.draw(RDPMemBlt(0, this->rect_button_apply, 0xCC, 0, 0, 0), clip, *this->apply_active);
         }
         else {
-            this->gd.draw(RDPMemBlt(0, this->rect_button_apply, 0xCC, 0, 0, 0), clip, *this->apply_inactive);
+            this->front.draw(RDPMemBlt(0, this->rect_button_apply, 0xCC, 0, 0, 0), clip, *this->apply_inactive);
         }
 
         if (this->focus_item == FOCUS_ON_CONNECT){
-            this->gd.draw(RDPMemBlt(0, this->rect_button_connect, 0xCC, 0, 0, 0), clip, *this->connect_active);
+            this->front.draw(RDPMemBlt(0, this->rect_button_connect, 0xCC, 0, 0, 0), clip, *this->connect_active);
         }
         else {
-            this->gd.draw(RDPMemBlt(0, this->rect_button_connect, 0xCC, 0, 0, 0), clip, *this->connect_inactive);
+            this->front.draw(RDPMemBlt(0, this->rect_button_connect, 0xCC, 0, 0, 0), clip, *this->connect_inactive);
         }
 
     }
@@ -3862,14 +3862,14 @@ struct selector_mod : public internal_mod {
 
     void draw(const Rect & clip)
     {
-        this->gd.front.begin_update();
+        this->front.begin_update();
 
         this->draw_background(clip);
         this->draw_login(clip);
         this->draw_array(clip);
         this->draw_buttons(clip);
 
-        this->gd.front.end_update();
+        this->front.end_update();
     }
 
 };

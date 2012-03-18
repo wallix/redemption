@@ -34,7 +34,7 @@ struct test_internal_mod : public internal_mod {
         ModContext & context, FrontAPI & front):
             internal_mod(front)
     {
-      this->gd.mod_bpp = this->gd.get_front_bpp();
+      this->front.mod_bpp = this->front.get_front_bpp();
         this->event = event;
         this->event->set();
     }
@@ -69,12 +69,12 @@ struct test_internal_mod : public internal_mod {
         int fd = ::open(movie, O_RDONLY);
         assert(fd > 0);
         InFileTransport in_trans(fd);
-        RDPUnserializer reader(&in_trans, this->gd.front.orders, this->get_screen_rect());
-        this->gd.front.send_global_palette(this->gd.palette332);
-        this->gd.front.begin_update();
+        RDPUnserializer reader(&in_trans, this->front.orders, this->get_screen_rect());
+        this->front.send_global_palette();
+        this->front.begin_update();
         while (reader.next()){
         }
-        this->gd.front.end_update();
+        this->front.end_update();
         return BACK_EVENT_NONE;
     }
 };

@@ -173,7 +173,7 @@ struct rdp_orders {
         RDPColCache colormap;
         colormap.receive(stream, control, header);
         memcpy(this->cache_colormap[colormap.cacheIndex], &colormap.palette, sizeof(BGRPalette));
-        mod->gd.color_cache(colormap.palette, colormap.cacheIndex);
+        mod->front.color_cache(colormap.palette, colormap.cacheIndex);
     }
 
     /*****************************************************************************/
@@ -225,32 +225,32 @@ struct rdp_orders {
             }
             else {
                 RDPPrimaryOrderHeader header = this->common.receive(stream, control);
-                const Rect & cmd_clip = ((control & BOUNDS)?this->common.clip:mod->gd.get_front_rect());
+                const Rect & cmd_clip = ((control & BOUNDS)?this->common.clip:mod->get_front_rect());
 //                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
-                    mod->gd.draw(this->glyph_index, cmd_clip);
+                    mod->front.draw(this->glyph_index, cmd_clip);
                     break;
                 case DESTBLT:
                     this->destblt.receive(stream, header);
-                    mod->gd.draw(this->destblt, cmd_clip);
+                    mod->front.draw(this->destblt, cmd_clip);
                     break;
                 case PATBLT:
                     this->patblt.receive(stream, header);
-                    mod->gd.draw(this->patblt, cmd_clip);
+                    mod->front.draw(this->patblt, cmd_clip);
                     break;
                 case SCREENBLT:
                     this->scrblt.receive(stream, header);
-                    mod->gd.draw(this->scrblt, cmd_clip);
+                    mod->front.draw(this->scrblt, cmd_clip);
                     break;
                 case LINE:
                     this->lineto.receive(stream, header);
-                    mod->gd.draw(this->lineto, cmd_clip);
+                    mod->front.draw(this->lineto, cmd_clip);
                     break;
                 case RECT:
                     this->opaquerect.receive(stream, header);
-                    mod->gd.draw(this->opaquerect, cmd_clip);
+                    mod->front.draw(this->opaquerect, cmd_clip);
                     break;
                 case MEMBLT:
                     this->memblt.receive(stream, header);
@@ -260,7 +260,7 @@ struct rdp_orders {
                         TODO("check if bitmap has the right palette...")
                         TODO("8 bits palettes should probabily be transmitted to front, not stored in bitmaps")
                         if (bitmap) {
-                            mod->gd.draw(this->memblt, cmd_clip, *bitmap);
+                            mod->front.draw(this->memblt, cmd_clip, *bitmap);
                         }
                     }
                     break;
@@ -270,7 +270,7 @@ struct rdp_orders {
                     break;
                 }
 //                if (header.control & BOUNDS) {
-//                    mod->gd.server_reset_clip();
+//                    mod->server_reset_clip();
 //                }
             }
             processed++;
@@ -381,7 +381,7 @@ struct mod_rdp : public client_mod {
         LOG(LOG_INFO, "Remote RDP Server login:%s host:%s\n", this->username, this->hostname);
         this->share_id = 0;
         this->bitmap_compression = 1;
-        this->console_session = this->gd.front.get_front_console_session();
+        this->console_session = this->front.get_front_console_session();
 
         memset(this->password, 0, 256);
         strcpy(this->password, target_password);
@@ -825,9 +825,9 @@ struct mod_rdp : public client_mod {
     {
         try{
 
-        int width = this->gd.get_front_width();
-        int height = this->gd.get_front_height();
-        int rdp_bpp = this->gd.get_front_bpp();
+        int width = this->get_front_width();
+        int height = this->get_front_height();
+        int rdp_bpp = this->get_front_bpp();
         char * hostname = this->hostname;
 
         switch (this->state){
@@ -874,7 +874,7 @@ struct mod_rdp : public client_mod {
             //                   GCC conference Create Response
 
             this->send_mcs_connect_initial_pdu_with_gcc_conference_create_request(
-                    this->trans, this->gd.front.get_channel_list(), width, height, rdp_bpp, keylayout, hostname);
+                    this->trans, this->front.get_channel_list(), width, height, rdp_bpp, keylayout, hostname);
 
             this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
         break;
@@ -882,7 +882,7 @@ struct mod_rdp : public client_mod {
         case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
             LOG(LOG_INFO, "Channel Connection");
             this->recv_mcs_connect_response_pdu_with_gcc_conference_create_response(
-                    this->trans, this->mod_channel_list, this->gd.front.get_channel_list(),
+                    this->trans, this->mod_channel_list, this->front.get_channel_list(),
                     this->encrypt,
                     this->decrypt,
                     this->server_public_key_len,
@@ -1310,7 +1310,7 @@ struct mod_rdp : public client_mod {
                             LOG(LOG_INFO, "Receiving Font Map");
 //                            this->check_data_pdu(PDUTYPE2_FONTMAP);
                             LOG(LOG_INFO, "process demand active ok\n");
-                            this->gd.mod_bpp = this->bpp;
+                            this->front.mod_bpp = this->bpp;
                             this->connection_finalization_state = UP_AND_RUNNING;
                         break;
                         case UP_AND_RUNNING:
@@ -1331,7 +1331,7 @@ struct mod_rdp : public client_mod {
     // information for a session is sent to the client in the Update Palette PDU.
 
                                 int update_type = stream.in_uint16_le();
-                                this->gd.front.begin_update();
+                                this->front.begin_update();
                                 switch (update_type) {
                                 case RDP_UPDATE_ORDERS:
                                     {
@@ -1352,7 +1352,7 @@ struct mod_rdp : public client_mod {
                                 default:
                                     break;
                                 }
-                                this->gd.front.end_update();
+                                this->front.end_update();
                             }
                             break;
                             case PDUTYPE2_CONTROL:
@@ -2320,7 +2320,7 @@ struct mod_rdp : public client_mod {
                 this->orders.global_palette[i] = (r << 16)|(g << 8)|b;
                 this->orders.memblt_palette[i] = (b << 16)|(g << 8)|r;
             }
-            mod->gd.set_mod_palette(this->orders.global_palette);
+            mod->front.set_mod_palette(this->orders.global_palette);
         }
 
 // 2.2.5.1.1 Set Error Info PDU Data (TS_SET_ERROR_INFO_PDU)
@@ -3081,7 +3081,7 @@ struct mod_rdp : public client_mod {
         }
         memcpy( cursor->data, stream.in_uint8p( dlen),  dlen);
         memcpy( cursor->mask, stream.in_uint8p( mlen),  mlen);
-        mod->gd.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
+        mod->server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
     }
 
     void process_cached_pointer_pdu(Stream & stream, client_mod * mod)
@@ -3096,7 +3096,7 @@ struct mod_rdp : public client_mod {
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
         struct rdp_cursor* cursor = this->cursors + cache_idx;
-        mod->gd.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
+        mod->server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
     }
 
     void process_system_pointer_pdu(Stream & stream, client_mod * mod)
@@ -3109,7 +3109,7 @@ struct mod_rdp : public client_mod {
                 struct rdp_cursor cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
                 TODO(" we should pass in a cursor to set_pointer instead of individual fields")
-                mod->gd.server_set_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);
+                mod->server_set_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);
                 mod->set_pointer_display();
             }
             break;
@@ -3120,7 +3120,7 @@ struct mod_rdp : public client_mod {
 
     void process_bitmap_updates(Stream & stream, client_mod * mod)
     {
-        mod->gd.server_begin_update();
+        mod->front.begin_update();
 //        LOG(LOG_INFO, "/* process_bitmap_updates */\n");
         // RDP-BCGR: 2.2.9.1.1.3.1.2 Bitmap Update (TS_UPDATE_BITMAP)
         // ----------------------------------------------------------
@@ -3262,9 +3262,9 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_WARNING, "final_size should be size of decompressed bitmap [%u != %u] width=%u height=%u bpp=%u",
                     final_size, bitmap.bmp_size, width, height, bpp);
             }
-            mod->gd.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
+            mod->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
         }
-        mod->gd.server_end_update();
+        mod->front.end_update();
     }
 
 

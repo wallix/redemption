@@ -351,7 +351,7 @@ struct Session {
                 BGRPalette palette;
                 init_palette332(palette);
 
-                this->mod->gd.color_cache(palette, 0);
+                this->front->color_cache(palette, 0);
 
                 this->front->init_pointers();
 
@@ -562,8 +562,8 @@ struct Session {
                     if (this->session_setup_mod(next_state, this->context)){
                         if (record_video) {
                             this->mod->start_capture(
-                                this->mod->gd.get_front_width(),
-                                this->mod->gd.get_front_height(),
+                                this->front->client_info.width,
+                                this->front->client_info.height,
                                 this->context->get_bool(STRAUTHID_OPT_MOVIE),
                                 this->context->get(STRAUTHID_OPT_MOVIE_PATH),
                                 this->context->get(STRAUTHID_OPT_CODEC_ID),

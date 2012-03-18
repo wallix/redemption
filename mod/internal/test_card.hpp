@@ -67,21 +67,21 @@ struct test_card_mod : public internal_mod {
 
     void draw()
     {
-        this->gd.front.begin_update();
+        this->front.begin_update();
 
         const Rect & clip = this->get_screen_rect();
 
-        this->gd.draw(RDPOpaqueRect(this->get_screen_rect(), WHITE), clip);
-        this->gd.draw(RDPOpaqueRect(this->get_screen_rect().shrink(5), RED), clip);
-        this->gd.draw(RDPOpaqueRect(this->get_screen_rect().shrink(10), GREEN), clip);
-        this->gd.draw(RDPOpaqueRect(this->get_screen_rect().shrink(15), BLUE), clip);
-        this->gd.draw(RDPOpaqueRect(this->get_screen_rect().shrink(20), BLACK), clip);
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect(), WHITE), clip);
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(5), RED), clip);
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(10), GREEN), clip);
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(15), BLUE), clip);
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect().shrink(20), BLACK), clip);
 
         Rect winrect = this->get_screen_rect().shrink(30);
-        this->gd.draw(RDPOpaqueRect(winrect, WINBLUE), clip);
+        this->front.draw(RDPOpaqueRect(winrect, WINBLUE), clip);
 
         Bitmap bitmap(24, SHARE_PATH "/" "Philips_PM5544_640.bmp");
-        this->gd.draw(RDPMemBlt(0,
+        this->front.draw(RDPMemBlt(0,
             Rect(winrect.x + (winrect.cx - bitmap.cx)/2,
                  winrect.y + (winrect.cy - bitmap.cy)/2,
                  bitmap.cx, bitmap.cy),
@@ -89,46 +89,46 @@ struct test_card_mod : public internal_mod {
              0, 0, 0), clip, bitmap);
 
         //  lineTo mix_mode=1 startx=200 starty=1198 endx=200 endy=145 bg_color=0 rop2=13 clip=(200, 145, 1, 110)
-        this->gd.draw(
+        this->front.draw(
             RDPLineTo(1, 200, 1198, 200, 145, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(200, 145, 1, 110));
 
-        this->gd.draw(
+        this->front.draw(
             RDPLineTo(1, 200, 145, 200, 1198, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(200, 145, 1, 110));
 
-        this->gd.draw(
+        this->front.draw(
             RDPLineTo(1, 201, 1198, 200, 145, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(200, 145, 1, 110));
 
-        this->gd.draw(
+        this->front.draw(
             RDPLineTo(1, 200, 145, 201, 1198, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(200, 145, 1, 110));
 
-        this->gd.draw(
+        this->front.draw(
             RDPLineTo(1, 1198, 200, 145, 200, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(145, 200, 110, 1));
 
-        this->gd.draw(
+        this->front.draw(
             RDPLineTo(1, 145, 200, 1198, 200, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(145, 200, 110, 1));
 
-        this->gd.draw(
+        this->front.draw(
             RDPLineTo(1, 1198, 201, 145, 200, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(145, 200, 110, 1));
 
-        this->gd.draw(
+        this->front.draw(
             RDPLineTo(1, 145, 200, 1198, 201, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(145, 200, 110, 1));
 
-        this->gd.server_draw_text(30, 30, "White", BLACK, WHITE, clip);
-        this->gd.server_draw_text(30, 50, "Red  ", BLACK, RED, clip);
-        this->gd.server_draw_text(30, 70, "Green", BLACK, GREEN, clip);
-        this->gd.server_draw_text(30, 90, "Blue ", BLACK, BLUE, clip);
-        this->gd.server_draw_text(30, 110, "Black", WHITE, BLACK, clip);
+        this->server_draw_text(30, 30, "White", BLACK, WHITE, clip);
+        this->server_draw_text(30, 50, "Red  ", BLACK, RED, clip);
+        this->server_draw_text(30, 70, "Green", BLACK, GREEN, clip);
+        this->server_draw_text(30, 90, "Blue ", BLACK, BLUE, clip);
+        this->server_draw_text(30, 110, "Black", WHITE, BLACK, clip);
 
         Bitmap card(24, SHARE_PATH "/" REDEMPTION_LOGO24);
-        this->gd.draw(RDPMemBlt(0,
+        this->front.draw(RDPMemBlt(0,
             Rect(this->get_screen_rect().cx - card.cx - 30,
                  this->get_screen_rect().cy - card.cy - 30, card.cx, card.cy),
                  0xCC,
@@ -140,18 +140,18 @@ struct test_card_mod : public internal_mod {
             0xf0, 0xc0, 0x0f,
         };
 
-        Bitmap bloc64x64(24, &this->gd.palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
-        this->gd.draw(RDPMemBlt(0,
+        Bitmap bloc64x64(24, &this->front.palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
+        this->front.draw(RDPMemBlt(0,
             Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx, bloc64x64.cy), 0xCC,
              32, 32, 0), clip, bloc64x64);
 
         Bitmap logo(24, SHARE_PATH "/ad8b.bmp");
-        this->gd.draw(RDPMemBlt(0,
+        this->front.draw(RDPMemBlt(0,
             Rect(100, 100, 26, 32),
             0xCC,
              80, 50, 0), clip, logo);
 
-        this->gd.front.end_update();
+        this->front.end_update();
     }
 
 };

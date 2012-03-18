@@ -178,10 +178,10 @@ struct xup_mod : public client_mod {
                     type = stream.in_uint16_le();
                     switch (type) {
                     case 1:
-                        this->gd.front.begin_update();
+                        this->front.begin_update();
                         break;
                     case 2:
-                        this->gd.front.end_update();
+                        this->front.end_update();
                         break;
                     case 3:
                     {
@@ -190,7 +190,7 @@ struct xup_mod : public client_mod {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                         this->gd.draw(RDPPatBlt(r, this->rop, BLACK, WHITE,
+                         this->front.draw(RDPPatBlt(r, this->rop, BLACK, WHITE,
                             RDPBrush(r.x, r.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")
                             ), r);
                     }
@@ -205,7 +205,7 @@ struct xup_mod : public client_mod {
                         const int srcx = stream.in_sint16_le();
                         const int srcy = stream.in_sint16_le();
                         const RDPScrBlt scrblt(r, 0xCC, srcx, srcy);
-                        this->gd.draw(scrblt, r);
+                        this->front.draw(scrblt, r);
                     }
                     break;
                     case 5:
@@ -221,8 +221,8 @@ struct xup_mod : public client_mod {
                         int height = stream.in_uint16_le();
                         int srcx = stream.in_sint16_le();
                         int srcy = stream.in_sint16_le();
-                        Bitmap bmp(bpp, &this->gd.palette332, width, height, bmpdata, sizeof(bmpdata));
-                        this->gd.draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
+                        Bitmap bmp(bpp, &this->front.palette332, width, height, bmpdata, sizeof(bmpdata));
+                        this->front.draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
                     }
                     break;
                     case 10: /* server_set_clip */
@@ -233,12 +233,12 @@ struct xup_mod : public client_mod {
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
                           TODO(" see clip management")
-//                        this->gd.server_set_clip(r);
+//                        this->server_set_clip(r);
                     }
                     break;
                     case 11: /* server_reset_clip */
                           TODO(" see clip management")
-//                        this->gd.server_reset_clip();
+//                        this->server_reset_clip();
                     break;
                     case 12: /* server_set_fgcolor */
                     {
@@ -252,7 +252,7 @@ struct xup_mod : public client_mod {
                     {
                         int style = stream.in_uint16_le();
                         int width = stream.in_uint16_le();
-                        this->gd.server_set_pen(style, width);
+                        this->server_set_pen(style, width);
                     }
                     break;
                     case 18:
@@ -263,8 +263,8 @@ struct xup_mod : public client_mod {
                         int y2 = stream.in_sint16_le();
                         const RDPLineTo lineto(1, x1, y1, x2, y2, WHITE,
                                                this->rop,
-                                               RDPPen(this->gd.pen.style, this->gd.pen.width, this->fgcolor));
-                        this->gd.draw(lineto, Rect(0,0,1,1));
+                                               RDPPen(this->pen.style, this->pen.width, this->fgcolor));
+                        this->front.draw(lineto, Rect(0,0,1,1));
                     }
                     break;
                     case 19:
@@ -276,7 +276,7 @@ struct xup_mod : public client_mod {
                         uint8_t cur_mask[32 * (32 / 8)];
                         memcpy(cur_data, stream.in_uint8p(32 * (32 * 3)), 32 * (32 * 3));
                         memcpy(cur_mask, stream.in_uint8p(32 * (32 / 8)), 32 * (32 / 8));
-                        this->gd.server_set_pointer(x, y, cur_data, cur_mask);
+                        this->server_set_pointer(x, y, cur_data, cur_mask);
                     }
                     break;
                     default:

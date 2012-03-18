@@ -81,7 +81,7 @@ struct dialog_mod : public internal_mod {
     virtual void rdp_input_invalidate(const Rect & rect)
     {
         if (!rect.isempty()) {
-            this->gd.front.begin_update();
+            this->front.begin_update();
             const Rect & r = this->get_screen_rect();
             this->screen.draw(r);
             /* draw any child windows in the area */
@@ -92,7 +92,7 @@ struct dialog_mod : public internal_mod {
                     b->refresh(r2);
                 }
             }
-            this->gd.front.end_update();
+            this->front.end_update();
         }
     }
 
@@ -110,20 +110,20 @@ struct dialog_mod : public internal_mod {
                            : this->get_screen_rect().cy
                            ;
 
-                this->gd.front.begin_update();
+                this->front.begin_update();
                 this->server_draw_dragging_rect(this->dragging_rect, this->get_screen_rect());
                 this->dragging_rect.x = dragx - this->draggingdx ;
                 this->dragging_rect.y = dragy - this->draggingdy;
                 this->server_draw_dragging_rect(this->dragging_rect, this->get_screen_rect());
-                this->gd.front.end_update();
+                this->front.end_update();
             }
             else {
                 struct Widget *b = this->screen.widget_at_pos(x, y);
                 if (b == 0) { /* if b is null, the movement must be over the screen */
                     b = this->get_screen_wdg();
                 }
-                if (b->pointer != this->gd.current_pointer) {
-                    this->gd.set_pointer(b->pointer);
+                if (b->pointer != this->current_pointer) {
+                    this->set_pointer(b->pointer);
                 }
                 b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), keymap);
                 if (this->button_down) {
@@ -204,10 +204,10 @@ struct dialog_mod : public internal_mod {
                     Rect r = this->dragging_window->rect;
                     this->dragging_window->rect.x = this->dragging_rect.x;
                     this->dragging_window->rect.y = this->dragging_rect.y;
-                    this->gd.front.begin_update();
+                    this->front.begin_update();
                     this->dragging_window->refresh(r);
                     this->screen.refresh(this->get_screen_rect().wh());
-                    this->gd.front.end_update();
+                    this->front.end_update();
                     this->dragging_window = 0;
                     this->dragging = 0;
                 }
