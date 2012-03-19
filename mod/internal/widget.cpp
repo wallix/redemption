@@ -268,7 +268,7 @@ void widget_popup::draw(const Rect & clip)
 
             for (unsigned i = 0; i < list_count; i++) {
                 const char * p = this->popped_from->string_list[i];
-                this->mod->server_draw_text(scr_r.x + 2, scr_r.y + i * height,
+                this->mod->front.server_draw_text(scr_r.x + 2, scr_r.y + i * height,
                     p,
                     (i == this->item_index)?WABGREEN:WHITE,
                     (i == this->item_index)?WHITE:BLACK,
@@ -291,7 +291,7 @@ void widget_label::draw(const Rect & clip)
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
 
-        this->mod->server_draw_text(scr_r.x, scr_r.y, this->caption1, GREY, BLACK,
+        this->mod->front.server_draw_text(scr_r.x, scr_r.y, this->caption1, GREY, BLACK,
             region_clip);
     }
 

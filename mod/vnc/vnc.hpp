@@ -406,7 +406,7 @@ struct mod_vnc : public client_mod {
                 memset(rdp_cursor_data + (32 * (32 * 3) - 2 * 32 * 3), 0xff, 9);
                 memset(rdp_cursor_data + (32 * (32 * 3) - 3 * 32 * 3), 0xff, 9);
                 memset(rdp_cursor_mask, 0xff, 32 * (32 / 8));
-                this->server_set_pointer(3, 3, rdp_cursor_data, rdp_cursor_mask);
+                this->front.server_set_pointer(3, 3, rdp_cursor_data, rdp_cursor_mask);
             } catch(int i) {
                 error = i;
             } catch(...) {
@@ -804,7 +804,7 @@ struct mod_vnc : public client_mod {
                 if (x > 31) { x = 31; }
                 if (y > 31) { y = 31; }
 TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation")
-                this->server_set_pointer(x, y, rdp_cursor_data, rdp_cursor_mask);
+                this->front.server_set_pointer(x, y, rdp_cursor_data, rdp_cursor_mask);
             }
             break;
             default:

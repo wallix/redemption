@@ -3081,7 +3081,7 @@ struct mod_rdp : public client_mod {
         }
         memcpy( cursor->data, stream.in_uint8p( dlen),  dlen);
         memcpy( cursor->mask, stream.in_uint8p( mlen),  mlen);
-        mod->server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
+        mod->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
     }
 
     void process_cached_pointer_pdu(Stream & stream, client_mod * mod)
@@ -3096,7 +3096,7 @@ struct mod_rdp : public client_mod {
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
         struct rdp_cursor* cursor = this->cursors + cache_idx;
-        mod->server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
+        mod->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
     }
 
     void process_system_pointer_pdu(Stream & stream, client_mod * mod)
@@ -3109,7 +3109,7 @@ struct mod_rdp : public client_mod {
                 struct rdp_cursor cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
                 TODO(" we should pass in a cursor to set_pointer instead of individual fields")
-                mod->server_set_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);
+                mod->front.server_set_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);
                 mod->set_pointer_display();
             }
             break;

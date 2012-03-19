@@ -30,10 +30,11 @@
 
 #include "RDP/RDPGraphicDevice.hpp"
 #include "channel_list.hpp"
+#include "cache.hpp"
 //#include "front_api.hpp"
 #include "client_mod.hpp"
 
-BOOST_AUTO_TEST_CASE(TestDecodePacket)
+BOOST_AUTO_TEST_CASE(TestShowTestCard)
 {
 //    wait_obj back_event(-1);
 //    const uint16_t width = 800;

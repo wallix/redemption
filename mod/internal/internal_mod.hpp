@@ -115,7 +115,7 @@ struct internal_mod : public client_mod {
         this->front.draw(RDPOpaqueRect(Rect(r.x + 3, r.y + 3, r.cx - 5, 18),
                           has_focus?WABGREEN:DARK_GREY), clip);
 
-        this->server_draw_text(r.x + 4, r.y + 4, caption,
+        this->front.server_draw_text(r.x + 4, r.y + 4, caption,
                 has_focus?WABGREEN:DARK_GREY,
                 has_focus?WHITE:BLACK, clip);
     }
@@ -133,7 +133,7 @@ struct internal_mod : public client_mod {
         this->front.draw(RDPOpaqueRect(Rect(r.x + r.cx - 1, r.y, 1, r.cy), WHITE), clip);
         this->front.draw(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, 1, r.cy - 2), BLACK), clip);
         this->front.draw(RDPOpaqueRect(Rect(r.x + 1, r.y + 1, r.cx - 2, 1), BLACK), clip);
-        this->server_draw_text(r.x + 4, r.y + 3, caption, has_focus?DARK_WABGREEN:WHITE, has_focus?WHITE:BLACK, clip);
+        this->front.server_draw_text(r.x + 4, r.y + 3, caption, has_focus?DARK_WABGREEN:WHITE, has_focus?WHITE:BLACK, clip);
         this->draw_button(Rect(r.x + r.cx - 20, r.y + 2, 18, r.cy - 4), "", state, false, clip);
     }
 
@@ -159,10 +159,12 @@ struct internal_mod : public client_mod {
             this->front.draw(RDPOpaqueRect(Rect(r.x, r.y + (r.cy - 1), r.cx, 1), BLACK), clip);
             this->front.draw(RDPOpaqueRect(Rect(r.x + (r.cx - 1), r.y, 1, r.cy), BLACK), clip);
         }
+
+        TODO("There is probably a way to move text_metrics into server_draw_text, or something similar")
         int w = 0;
         int h = 0;
-        this->text_metrics(caption, w, h);
-        this->server_draw_text(
+        this->front.text_metrics(caption, w, h);
+        this->front.server_draw_text(
             r.x + r.cx / 2 - w / 2 + bevel,
             r.y + r.cy / 2 - h / 2 + bevel,
             caption, GREY, BLACK, clip);
@@ -202,10 +204,10 @@ struct internal_mod : public client_mod {
             int i = mbstowcs(0, buffer, 0);
             memset(text, password_char, i);
             text[i] = 0;
-            this->server_draw_text(r.x + 4, r.y + 2, text, DARK_GREEN, LIGHT_GREEN, clip);
+            this->front.server_draw_text(r.x + 4, r.y + 2, text, DARK_GREEN, LIGHT_GREEN, clip);
         }
         else {
-            this->server_draw_text(r.x + 4, r.y + 2, buffer, DARK_GREEN, LIGHT_GREEN, clip);
+            this->front.server_draw_text(r.x + 4, r.y + 2, buffer, DARK_GREEN, LIGHT_GREEN, clip);
         }
         /* draw xor box(cursor) */
         if (has_focus) {
@@ -226,75 +228,13 @@ struct internal_mod : public client_mod {
 
             int w = 0;
             int h = 0;
-            this->text_metrics(text, w, h);
+            this->front.text_metrics(text, w, h);
             this->front.draw(
                 RDPOpaqueRect(Rect(r.x + 4 + w, r.y + 3, 2, r.cy - 6), PALE_GREEN),
                 clip);
         }
     }
 
-    TODO(" implementation of the server_draw_text function below is quite broken (a small subset of possibilities is implemented  especially for data). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
-    void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
-    {
-        setlocale(LC_CTYPE, "fr_FR.UTF-8");
-        this->front.send_global_palette();
-
-        // add text to glyph cache
-        TODO(" use mbsrtowcs instead")
-        int len = mbstowcs(0, text, 0);
-        wchar_t* wstr = new wchar_t[len + 2];
-        mbstowcs(wstr, text, len + 1);
-        int total_width = 0;
-        int total_height = 0;
-        uint8_t *data = new uint8_t[len * 4];
-        memset(data, 0, len * 4);
-        int f = 0;
-        int c = 0;
-        int distance_from_previous_fragment = 0;
-        for (int index = 0; index < len; index++) {
-            FontChar* font_item = this->front.font.font_items[wstr[index]];
-            TODO(" avoid passing parameters by reference to get results")
-            switch (this->front.cache.add_glyph(font_item, f, c))
-            {
-                case Cache::GLYPH_ADDED_TO_CACHE:
-                    this->glyph_cache(*font_item, f, c);
-                break;
-                default:
-                break;
-            }
-            data[index * 2] = c;
-            data[index * 2 + 1] = distance_from_previous_fragment;
-            distance_from_previous_fragment = font_item->incby;
-            total_width += font_item->incby;
-            total_height = std::max(total_height, font_item->height);
-        }
-
-        const Rect bk(x, y, total_width + 1, total_height);
-
-         RDPGlyphIndex glyphindex(
-            f, // cache_id
-            0x03, // fl_accel
-            0x0, // ui_charinc
-            1, // f_op_redundant,
-            bgcolor, // bgcolor
-            fgcolor, // fgcolor
-            bk, // bk
-            Rect(), // op
-            // brush
-            RDPBrush(0, 0, 3, 0xaa,
-                (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
-//            this->brush,
-            x,  // glyph_x
-            y + total_height, // glyph_y
-            len * 2, // data_len in bytes
-            data // data
-        );
-
-        this->front.draw(glyphindex, clip);
-
-        delete [] wstr;
-        delete [] data;
-    }
 
 
     uint32_t convert_to_black(uint32_t color)

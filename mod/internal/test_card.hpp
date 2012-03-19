@@ -119,11 +119,11 @@ struct test_card_mod : public internal_mod {
             RDPLineTo(1, 145, 200, 1198, 201, 0, 13, RDPPen(0, 1, 0x0000FF)),
             Rect(145, 200, 110, 1));
 
-        this->server_draw_text(30, 30, "White", BLACK, WHITE, clip);
-        this->server_draw_text(30, 50, "Red  ", BLACK, RED, clip);
-        this->server_draw_text(30, 70, "Green", BLACK, GREEN, clip);
-        this->server_draw_text(30, 90, "Blue ", BLACK, BLUE, clip);
-        this->server_draw_text(30, 110, "Black", WHITE, BLACK, clip);
+        this->front.server_draw_text(30, 30, "White", BLACK, WHITE, clip);
+        this->front.server_draw_text(30, 50, "Red  ", BLACK, RED, clip);
+        this->front.server_draw_text(30, 70, "Green", BLACK, GREEN, clip);
+        this->front.server_draw_text(30, 90, "Blue ", BLACK, BLUE, clip);
+        this->front.server_draw_text(30, 110, "Black", WHITE, BLACK, clip);
 
         Bitmap card(24, SHARE_PATH "/" REDEMPTION_LOGO24);
         this->front.draw(RDPMemBlt(0,

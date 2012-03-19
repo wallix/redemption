@@ -49,6 +49,9 @@ class FrontAPI : public RDPGraphicDevice {
     virtual void end_update() = 0;
     virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex) = 0;
     virtual void set_mod_palette(const BGRPalette & palette) = 0;
+    virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask) = 0;
+    virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) = 0;
+    virtual void text_metrics(const char * text, int & width, int & height) = 0;
 
     int mouse_x;
     int mouse_y;
@@ -61,19 +64,11 @@ class FrontAPI : public RDPGraphicDevice {
     BGRPalette memblt_mod_palette;
     bool mod_palette_setted;
 
-    RDPGraphicDevice * capture;
-    struct Font font;
-    Cache cache;
     bool notimestamp;
     bool nomouse;
 
-    GraphicsUpdatePDU * orders;
-
-    FrontAPI(Inifile * ini)
-        : capture(NULL)
-        , font(SHARE_PATH "/" DEFAULT_FONT_NAME)
-        , cache()
-        , notimestamp(ini->globals.notimestamp)
+    FrontAPI(Inifile * ini) :
+        notimestamp(ini->globals.notimestamp)
         , nomouse(ini->globals.nomouse)
         {}
 

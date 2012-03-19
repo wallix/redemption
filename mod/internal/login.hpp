@@ -73,7 +73,7 @@ struct combo_help : public window
                 const Region region = this->get_visible_region(this, &this->parent, scr_r);
 
                 for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-                    this->mod->server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK, region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
+                    this->mod->front.server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK, region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
                 }
 
                 count++;

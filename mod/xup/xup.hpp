@@ -276,7 +276,7 @@ struct xup_mod : public client_mod {
                         uint8_t cur_mask[32 * (32 / 8)];
                         memcpy(cur_data, stream.in_uint8p(32 * (32 * 3)), 32 * (32 * 3));
                         memcpy(cur_mask, stream.in_uint8p(32 * (32 / 8)), 32 * (32 / 8));
-                        this->server_set_pointer(x, y, cur_data, cur_mask);
+                        this->front.server_set_pointer(x, y, cur_data, cur_mask);
                     }
                     break;
                     default:

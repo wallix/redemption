@@ -176,6 +176,8 @@ static inline int load_pointer(const char* file_name, uint8_t* data, uint8_t* ma
 
 class Front : public FrontAPI {
 public:
+    RDPGraphicDevice * capture;
+    GraphicsUpdatePDU * orders;
     Keymap keymap;
     ChannelList channel_list;
     int up_and_running;
@@ -195,6 +197,9 @@ public:
     Inifile * ini;
     uint32_t verbose;
 
+    struct Font font;
+    Cache cache;
+
     enum {
         CONNECTION_INITIATION,
         ACTIVATE_AND_PROCESS_DATA,
@@ -202,6 +207,8 @@ public:
 
     Front(SocketTransport * trans, Inifile * ini) :
         FrontAPI(ini),
+        capture(NULL),
+        orders(NULL),
         up_and_running(0),
         share_id(65538),
         client_info(ini),
@@ -211,6 +218,8 @@ public:
         order_level(0),
         ini(ini),
         verbose(this->ini?this->ini->globals.debug.front:0),
+        font(SHARE_PATH "/" DEFAULT_FONT_NAME),
+        cache(),
         state(CONNECTION_INITIATION)
     {
         // from server_sec
@@ -266,6 +275,108 @@ public:
     }
 
     ~Front(){
+    }
+
+
+    void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
+    {
+        int cache_idx = 0;
+        switch (this->cache.add_pointer(data, mask, x, y, cache_idx)){
+        case POINTER_TO_SEND:
+            this->send_pointer(cache_idx, data, mask, x, y);
+        break;
+        default:
+        case POINTER_ALLREADY_SENT:
+            this->set_pointer(cache_idx);
+        break;
+        }
+    }
+
+    void text_metrics(const char * text, int & width, int & height){
+        height = 0;
+        width = 0;
+        if (text) {
+            size_t len = mbstowcs(0, text, 0);
+            wchar_t wstr[len + 2];
+            mbstowcs(wstr, text, len + 1);
+            for (size_t index = 0; index < len; index++) {
+                FontChar *font_item = this->font.font_items[wstr[index]];
+                width += font_item->incby;
+                height = std::max(height, font_item->height);
+            }
+        }
+    }
+
+
+    TODO(" implementation of the server_draw_text function below is quite broken (a small subset of possibilities is implemented  especially for data). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
+    void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+    {
+        setlocale(LC_CTYPE, "fr_FR.UTF-8");
+        this->send_global_palette();
+
+        // add text to glyph cache
+        TODO(" use mbsrtowcs instead")
+        int len = mbstowcs(0, text, 0);
+        wchar_t* wstr = new wchar_t[len + 2];
+        mbstowcs(wstr, text, len + 1);
+        int total_width = 0;
+        int total_height = 0;
+        uint8_t *data = new uint8_t[len * 4];
+        memset(data, 0, len * 4);
+        int f = 0;
+        int c = 0;
+        int distance_from_previous_fragment = 0;
+        for (int index = 0; index < len; index++) {
+            FontChar* font_item = this->font.font_items[wstr[index]];
+            TODO(" avoid passing parameters by reference to get results")
+            switch (this->cache.add_glyph(font_item, f, c))
+            {
+                case Cache::GLYPH_ADDED_TO_CACHE:
+                {
+                    RDPGlyphCache cmd(f, 1, c,
+                        font_item->offset,
+                        font_item->baseline,
+                        font_item->width,
+                        font_item->height,
+                        font_item->data);
+                    this->draw(cmd);
+                }
+                break;
+                default:
+                break;
+            }
+            data[index * 2] = c;
+            data[index * 2 + 1] = distance_from_previous_fragment;
+            distance_from_previous_fragment = font_item->incby;
+            total_width += font_item->incby;
+            total_height = std::max(total_height, font_item->height);
+        }
+
+        const Rect bk(x, y, total_width + 1, total_height);
+
+         RDPGlyphIndex glyphindex(
+            f, // cache_id
+            0x03, // fl_accel
+            0x0, // ui_charinc
+            1, // f_op_redundant,
+            bgcolor, // bgcolor
+            fgcolor, // fgcolor
+            bk, // bk
+            Rect(), // op
+            // brush
+            RDPBrush(0, 0, 3, 0xaa,
+                (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
+//            this->brush,
+            x,  // glyph_x
+            y + total_height, // glyph_y
+            len * 2, // data_len in bytes
+            data // data
+        );
+
+        this->draw(glyphindex, clip);
+
+        delete [] wstr;
+        delete [] data;
     }
 
     virtual int get_front_bpp() const {
@@ -3398,6 +3509,11 @@ public:
                 this->capture->draw(new_cmd24, clip);
             }
         }
+    }
+
+    void draw(const RDPGlyphCache & cmd)
+    {
+        this->orders->draw(cmd);
     }
 
     void flush(){}

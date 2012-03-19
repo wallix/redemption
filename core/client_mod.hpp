@@ -160,25 +160,10 @@ struct client_mod : public Callback {
         this->pointer_displayed = true;
     }
 
-    void text_metrics(const char * text, int & width, int & height){
-        height = 0;
-        width = 0;
-        if (text) {
-            size_t len = mbstowcs(0, text, 0);
-            wchar_t wstr[len + 2];
-            mbstowcs(wstr, text, len + 1);
-            for (size_t index = 0; index < len; index++) {
-                FontChar *font_item = this->front.font.font_items[wstr[index]];
-                width += font_item->incby;
-                height = std::max(height, font_item->height);
-            }
-        }
-    }
-
     void glyph_cache(const FontChar & font_char, int font_index, int char_index)
     {
         RDPGlyphCache cmd(font_index, 1, char_index, font_char.offset, font_char.baseline, font_char.width, font_char.height, font_char.data);
-        this->front.orders->draw(cmd);
+        this->front.draw(cmd);
     }
 
     void server_set_pen(int style, int width)
@@ -187,20 +172,6 @@ struct client_mod : public Callback {
         this->pen.width = width;
     }
 
-
-    void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
-    {
-        int cache_idx = 0;
-        switch (this->front.cache.add_pointer(data, mask, x, y, cache_idx)){
-        case POINTER_TO_SEND:
-            this->front.send_pointer(cache_idx, data, mask, x, y);
-        break;
-        default:
-        case POINTER_ALLREADY_SENT:
-            this->front.set_pointer(cache_idx);
-        break;
-        }
-    }
 
     int get_front_bpp() const {
         return this->front.get_front_bpp();
