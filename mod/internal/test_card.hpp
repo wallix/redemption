@@ -26,9 +26,7 @@
 #define __TEST_CARD_HPP__
 
 struct test_card_mod : public internal_mod {
-    test_card_mod(
-        wait_obj * event,
-        ModContext & context, FrontAPI & front, uint16_t width, uint16_t height):
+    test_card_mod(wait_obj * event, FrontAPI & front, uint16_t width, uint16_t height):
             internal_mod(front, width, height)
     {
         this->event = event;

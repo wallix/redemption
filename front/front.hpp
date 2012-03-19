@@ -26,6 +26,7 @@
 #define __FRONT_HPP__
 
 #include "log.hpp"
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -71,59 +72,7 @@
 #include "RDP/gcc_conference_user_data/sc_core.hpp"
 #include "RDP/gcc_conference_user_data/sc_net.hpp"
 
-class FrontAPI :  public RDPGraphicDevice {
-    public:
-
-    using RDPGraphicDevice::draw;
-
-    virtual int get_front_bpp() const = 0;
-    virtual int get_front_width() const = 0;
-    virtual int get_front_height() const = 0;
-    virtual int get_front_build() const = 0;
-    virtual int get_front_console_session() const = 0;
-    virtual int get_front_brush_cache_code() const = 0;
-
-    virtual const ChannelList & get_channel_list(void) const = 0;
-    virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags) = 0;
-
-    virtual void set_front_resolution(uint16_t width, uint16_t height, uint8_t bpp) = 0;
-    virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error) = 0;
-    virtual void send_global_palette() throw (Error) = 0;
-    virtual void set_pointer(int cache_idx) throw (Error) = 0;
-    virtual void begin_update() = 0;
-    virtual void end_update() = 0;
-    virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex) = 0;
-    virtual void set_mod_palette(const BGRPalette & palette) = 0;
-
-    int mouse_x;
-    int mouse_y;
-
-    bool palette_sent;
-    bool palette_memblt_sent[6];
-    BGRPalette palette332;
-    BGRPalette mod_palette;
-    uint8_t mod_bpp;
-    BGRPalette memblt_mod_palette;
-    bool mod_palette_setted;
-
-    Capture * capture;
-    struct Font font;
-    Cache cache;
-    bool notimestamp;
-    bool nomouse;
-
-    GraphicsUpdatePDU * orders;
-
-    FrontAPI(Inifile * ini)
-        : capture(NULL)
-        , font(SHARE_PATH "/" DEFAULT_FONT_NAME)
-        , cache()
-        , notimestamp(ini->globals.notimestamp)
-        , nomouse(ini->globals.nomouse)
-        {}
-
-};
-
+#include "front_api.hpp"
 
 static inline int get_pixel(uint8_t* data, int x, int y, int width, int bpp)
 {
@@ -250,8 +199,6 @@ public:
         CONNECTION_INITIATION,
         ACTIVATE_AND_PROCESS_DATA,
     } state;
-
-public:
 
     Front(SocketTransport * trans, Inifile * ini) :
         FrontAPI(ini),
@@ -564,8 +511,8 @@ public:
     {
 
         if (!this->palette_sent && (this->get_front_bpp() == 8)){
-            
-            const BGRPalette & palette = 
+
+            const BGRPalette & palette =
                 (this->mod_bpp == 8)?this->memblt_mod_palette:this->palette332;
 
             if (this->verbose){

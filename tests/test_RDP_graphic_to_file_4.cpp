@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFileReadBogus)
             BGRPalette palette;
             this->data = new RDPDrawable(800, 600, 24, palette, true);
         }
-        ~Consumer(){
+        virtual ~Consumer(){
             delete this->data;
         }
 
