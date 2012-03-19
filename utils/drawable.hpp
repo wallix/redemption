@@ -389,6 +389,16 @@ struct Drawable
         if (trect.isempty()){
             return ;
         }
+
+        TODO("if 8bit, get palette in front")
+        BGRPalette palette;
+        if (bmp.original_bpp == 8) {
+            init_palette332(palette);
+        }
+        else {
+            memcpy(palette, bmp.original_palette, sizeof(BGRPalette));
+        }
+
         const uint8_t Bpp = ::nbbytes(bmp.original_bpp);
         uint8_t * target = this->first_pixel(trect);
         uint8_t * source = bmp.data_bitmap + (bmp.cy - srcy - 1) * (bmp.bmp_size / bmp.cy) + srcx * Bpp;
@@ -401,7 +411,7 @@ struct Drawable
                 for (int b = 1 ; b < Bpp ; b++){
                     px = (px << 8) + source[Bpp-1-b];
                 }
-                uint32_t color = xormask ^ color_decode(px, bmp.original_bpp, bmp.original_palette);
+                uint32_t color = xormask ^ color_decode(px, bmp.original_bpp, palette/*bmp.original_palette*/);
                 if (bgr){
                     color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
                 }

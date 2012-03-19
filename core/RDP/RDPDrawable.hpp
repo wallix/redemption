@@ -107,7 +107,7 @@ public:
             break;
             case 0x55:
             {
-                if (bmp.original_bpp != this->bpp){
+                /*if (bmp.original_bpp != this->bpp){
                     uint8_t outbuf[65536];
                     bmp.convert_data_bitmap(this->bpp, outbuf);
                     const Bitmap newbmp(this->bpp, &bmp.original_palette,
@@ -115,14 +115,14 @@ public:
                             bmp.cx * nbbytes(this->bpp) * bmp.cy, false, false);
                     this->drawable.mem_blt(rect, newbmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->bgr);
                 }
-                else {
+                else*/ {
                     this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->bgr);
                 }
             }
             break;
             case 0xCC:
             {
-                if (bmp.original_bpp != this->bpp){
+                /*if (bmp.original_bpp != this->bpp){
                     uint8_t outbuf[65536];
                     bmp.convert_data_bitmap(this->bpp, outbuf);
                     const Bitmap newbmp(this->bpp, &bmp.original_palette,
@@ -130,7 +130,7 @@ public:
                             bmp.cx * nbbytes(this->bpp) * bmp.cy, false, false);
                     this->drawable.mem_blt(rect, newbmp, cmd.srcx, cmd.srcy, 0, this->bgr);
                 }
-                else {
+                else*/ {
                     this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0, this->bgr);
                 }
             }
