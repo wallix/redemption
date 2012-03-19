@@ -35,14 +35,14 @@ struct close_mod : public internal_mod {
 
     close_mod(
         wait_obj * event,
-        ModContext & context, FrontAPI & front, Inifile * ini)
-            : internal_mod(front), ini(ini), closing(false)
+        ModContext & context, FrontAPI & front, uint16_t width, uint16_t height, Inifile * ini)
+            : internal_mod(front, width, height), ini(ini), closing(false)
     {
         this->event = event;
         this->event->set();
         this->button_down = 0;
 
-        int width = 600;
+        int win_width = 600;
         bool done = false;
         const char * message;
         message = context.get(STRAUTHID_AUTH_ERROR_MESSAGE);
@@ -57,21 +57,21 @@ struct close_mod : public internal_mod {
                 message = str + 4;
             }
         }
-        int height = 200+line*16;
+        int win_height = 200+line*16;
 
         int regular = 1;
 
-        if (this->get_screen_rect().cx < width ) {
-            width = std::min(this->get_screen_rect().cx - 4, 240);
+        if (this->get_screen_rect().cx < win_width ) {
+            win_width = std::min(this->get_screen_rect().cx - 4, 240);
             regular = 0;
         }
 
         /* draw login window */
         Rect r(
-            this->get_screen_rect().cx / 2 - width / 2,
-            this->get_screen_rect().cy / 2 - height / 2,
-            width,
-            height);
+            this->get_screen_rect().cx / 2 - win_width / 2,
+            this->get_screen_rect().cy / 2 - win_height / 2,
+            win_width,
+            win_height);
 
         this->close_window = new wab_close(this,
             r, context,

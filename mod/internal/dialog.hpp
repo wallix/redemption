@@ -35,10 +35,10 @@ struct dialog_mod : public internal_mod {
 
     dialog_mod(wait_obj * event,
               ModContext & context,
-               FrontAPI & front,
+               FrontAPI & front, uint16_t width, uint16_t height, 
                const char *message, const char * refuse, Inifile * ini)
             :
-            internal_mod(front)
+            internal_mod(front, width, height)
     {
         this->event = event;
         this->button_down = 0;

@@ -74,6 +74,8 @@
 class FrontAPI :  public RDPGraphicDevice {
     public:
 
+    using RDPGraphicDevice::draw;
+
     virtual int get_front_bpp() const = 0;
     virtual int get_front_width() const = 0;
     virtual int get_front_height() const = 0;
@@ -95,7 +97,6 @@ class FrontAPI :  public RDPGraphicDevice {
 
     int mouse_x;
     int mouse_y;
-    using RDPGraphicDevice::draw;
 
     bool palette_sent;
     bool palette_memblt_sent[6];

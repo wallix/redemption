@@ -695,7 +695,11 @@ struct Session {
                             if (this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection to server failed");
                             }
-                            this->mod = new close_mod(this->back_event, *this->context, *this->front, this->ini);
+                            this->mod = new close_mod(this->back_event, *this->context, 
+                                                      *this->front, 
+                                                      this->front->client_info.width,
+                                                      this->front->client_info.height,
+                                                      this->ini);
                             this->front->init_pointers();
                         }
                         if (this->verbose){
@@ -714,7 +718,9 @@ struct Session {
                             this->mod = new dialog_mod(
                                             this->back_event,
                                             *this->context,
-                                            *this->front,
+                                            *this->front, 
+                                            this->front->client_info.width,
+                                            this->front->client_info.height,
                                             message,
                                             button,
                                             this->ini);
@@ -736,7 +742,9 @@ struct Session {
                             this->mod = new dialog_mod(
                                             this->back_event,
                                             *this->context,
-                                            *this->front,
+                                            *this->front, 
+                                            this->front->client_info.width,
+                                            this->front->client_info.height,
                                             message,
                                             button,
                                             this->ini);
@@ -752,7 +760,9 @@ struct Session {
                             this->mod = new login_mod(
                                             this->back_event,
                                              *this->context,
-                                             *this->front,
+                                             *this->front, 
+                                             this->front->client_info.width,
+                                             this->front->client_info.height,
                                              this->ini);
                             if (this->verbose){
                                 LOG(LOG_INFO, "internal module Login ready");
@@ -762,7 +772,11 @@ struct Session {
                             if (this->verbose){
                                 LOG(LOG_INFO, "Creation of internal module 'bouncer2'");
                             }
-                            this->mod = new bouncer2_mod(this->back_event, *this->front);
+                            this->mod = new bouncer2_mod(this->back_event,
+                                                         *this->front, 
+                                                         this->front->client_info.width,
+                                                         this->front->client_info.height
+                                                         );
                             if (this->verbose){
                                 LOG(LOG_INFO, "internal module 'bouncer2' ready");
                             }
@@ -774,7 +788,10 @@ struct Session {
                             this->mod = new test_internal_mod(
                                             this->back_event,
                                             *this->context,
-                                            *this->front);
+                                            *this->front, 
+                                            this->front->client_info.width,
+                                            this->front->client_info.height
+                                            );
                             if (this->verbose){
                                 LOG(LOG_INFO, "internal module 'test' ready");
                             }
@@ -786,7 +803,10 @@ struct Session {
                             this->mod = new test_card_mod(
                                             this->back_event,
                                             *this->context,
-                                            *this->front);
+                                            *this->front, 
+                                            this->front->client_info.width,
+                                            this->front->client_info.height
+                                            );
                             if (this->verbose){
                                 LOG(LOG_INFO, "internal module 'test_card' ready");
                             }
@@ -798,7 +818,10 @@ struct Session {
                             this->mod = new selector_mod(
                                             this->back_event,
                                             *this->context,
-                                            *this->front);
+                                            *this->front, 
+                                            this->front->client_info.width,
+                                            this->front->client_info.height
+                                            );
                             if (this->verbose){
                                 LOG(LOG_INFO, "internal module 'selector' ready");
                             }

@@ -211,8 +211,8 @@ struct login_mod : public internal_mod {
 
 
     login_mod(wait_obj * event,
-            ModContext & context, FrontAPI & front, Inifile * ini)
-            : internal_mod(front)
+            ModContext & context, FrontAPI & front, uint16_t width, uint16_t height, Inifile * ini)
+            : internal_mod(front, width, height)
     {
 
         uint32_t nb = (this->get_screen_rect().cy - 230) / 20;

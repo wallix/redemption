@@ -50,8 +50,8 @@ struct bouncer2_mod : public internal_mod {
         Rect * dancing_rect;
     public:
 
-    bouncer2_mod(wait_obj * back_event, FrontAPI & front) :
-        internal_mod(front), event(back_event), speedx(10), speedy(10), dancing_rect(NULL)
+    bouncer2_mod(wait_obj * back_event, FrontAPI & front, uint16_t width, uint16_t height) :
+        internal_mod(front, width, height), event(back_event), speedx(10), speedy(10), dancing_rect(NULL)
     {
 
         this->front.begin_update();

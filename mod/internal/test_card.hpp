@@ -28,8 +28,8 @@
 struct test_card_mod : public internal_mod {
     test_card_mod(
         wait_obj * event,
-        ModContext & context, FrontAPI & front):
-            internal_mod(front)
+        ModContext & context, FrontAPI & front, uint16_t width, uint16_t height):
+            internal_mod(front, width, height)
     {
         this->event = event;
         this->event->set();

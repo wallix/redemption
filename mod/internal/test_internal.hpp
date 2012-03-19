@@ -31,8 +31,8 @@
 struct test_internal_mod : public internal_mod {
     test_internal_mod(
         wait_obj * event,
-        ModContext & context, FrontAPI & front):
-            internal_mod(front)
+        ModContext & context, FrontAPI & front, uint16_t width, uint16_t height):
+            internal_mod(front, width, height)
     {
       this->front.mod_bpp = this->front.get_front_bpp();
         this->event = event;
