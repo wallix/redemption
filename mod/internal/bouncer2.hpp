@@ -87,8 +87,8 @@ struct bouncer2_mod : public internal_mod {
     int interaction()
     {
         // Get x% of the screen cx and cy
-        long x = this->mouse_x;
-        long y = this->mouse_y;
+        long x = this->front.mouse_x;
+        long y = this->front.mouse_y;
         int scarex = this->get_screen_rect().cx / 5;
         int scarey = this->get_screen_rect().cx / 5;
         Rect scareZone(this->dancing_rect->getCenteredX() - (scarex / 2),this->dancing_rect->getCenteredY() - (scarey / 2),scarex,scarey);

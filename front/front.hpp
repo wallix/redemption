@@ -93,7 +93,8 @@ class FrontAPI :  public RDPGraphicDevice {
     virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex) = 0;
     virtual void set_mod_palette(const BGRPalette & palette) = 0;
 
-
+    int mouse_x;
+    int mouse_y;
     using RDPGraphicDevice::draw;
 
     bool palette_sent;
@@ -226,7 +227,6 @@ static inline int load_pointer(const char* file_name, uint8_t* data, uint8_t* ma
 class Front : public FrontAPI {
 public:
     Keymap keymap;
-
     ChannelList channel_list;
     int up_and_running;
     int share_id;
@@ -320,10 +320,6 @@ public:
     ~Front(){
     }
 
-//    virtual const ClientInfo & get_client_info() const {
-//        return this->client_info;
-//    }
-
     virtual int get_front_bpp() const {
         return this->client_info.bpp;
     }
@@ -363,6 +359,36 @@ public:
         // the new resolution setting
         this->reset();
     }
+
+
+    void start_capture(int width, int height, bool flag, char * path,
+                const char * codec_id, const char * quality)
+    {
+        if (flag){
+            this->stop_capture();
+            this->capture = new Capture(width, height, 24, this->palette332,
+                                           path, codec_id, quality);
+        }
+    }
+
+
+    void periodic_snapshot(bool pointer_is_displayed)
+    {
+        if (this->capture){
+            this->capture->snapshot(this->mouse_x, this->mouse_y,
+                    pointer_is_displayed|this->nomouse, this->notimestamp);
+        }
+    }
+
+
+    void stop_capture()
+    {
+        if (this->capture){
+            delete this->capture;
+            this->capture = 0;
+        }
+    }
+
 
     virtual void reset(){
         if (this->verbose){
@@ -3046,8 +3072,8 @@ public:
                         if (this->verbose){
                             LOG(LOG_INFO, "RDP_INPUT_MOUSE(device_flags=%u, param1=%u, param2=%u)", device_flags, param1, param2);
                         }
-                        cb.mouse_x = param1;
-                        cb.mouse_y = param2;
+                        this->mouse_x = param1;
+                        this->mouse_y = param2;
                         cb.rdp_input_mouse(device_flags, param1, param2, &this->keymap);
                         break;
                     default:

@@ -55,7 +55,6 @@ struct client_mod : public Callback {
     FrontAPI & front;
     Rect clip;
     RDPPen pen;
-    int current_pointer;
 
     bool clipboard_enable;
     bool pointer_displayed;
@@ -78,42 +77,13 @@ struct client_mod : public Callback {
         for (size_t i = 0; i < 6 ; i++){
             this->front.palette_memblt_sent[i] = false;
         }
-        this->current_pointer = 0;
         init_palette332(this->front.palette332);
     }
 
     virtual ~client_mod()
     {
-        if (this->front.capture){
-            delete this->front.capture;
-        }
     }
 
-    void start_capture(int width, int height, bool flag, char * path,
-                const char * codec_id, const char * quality)
-    {
-        if (flag){
-            this->stop_capture();
-            this->front.capture = new Capture(width, height, 24, this->front.palette332,
-                                           path, codec_id, quality);
-        }
-    }
-
-    void stop_capture()
-    {
-        if (this->front.capture){
-            delete this->front.capture;
-            this->front.capture = 0;
-        }
-    }
-
-    void periodic_snapshot(bool pointer_is_displayed)
-    {
-        if (this->front.capture){
-            this->front.capture->snapshot(this->mouse_x, this->mouse_y,
-                    pointer_is_displayed|this->front.nomouse, this->front.notimestamp);
-        }
-    }
 
     // draw_event is run when mod socket received some data (drawing order),
     // these order could also be auto-generated, say to comply to some refresh.
@@ -218,22 +188,16 @@ struct client_mod : public Callback {
     }
 
 
-    void set_pointer(int cache_idx)
-    {
-        this->front.set_pointer(cache_idx);
-        this->current_pointer = cache_idx;
-    }
-
     void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
     {
-        int cacheidx = 0;
-        switch (this->front.cache.add_pointer(data, mask, x, y, cacheidx)){
+        int cache_idx = 0;
+        switch (this->front.cache.add_pointer(data, mask, x, y, cache_idx)){
         case POINTER_TO_SEND:
-            this->front.send_pointer(cacheidx, data, mask, x, y);
+            this->front.send_pointer(cache_idx, data, mask, x, y);
         break;
         default:
         case POINTER_ALLREADY_SENT:
-            this->set_pointer(cacheidx);
+            this->front.set_pointer(cache_idx);
         break;
         }
     }

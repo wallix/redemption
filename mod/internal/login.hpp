@@ -368,9 +368,9 @@ struct login_mod : public internal_mod {
                 if (b == 0) { /* if b is null, the movement must be over the screen */
                     b = this->get_screen_wdg();
                 }
-                if (b->pointer != this->current_pointer) {
-                    this->set_pointer(b->pointer);
-                }
+//                if (b->pointer != this->current_pointer) {
+//                    this->server_set_pointer(b->pointer);
+//                }
                 b->def_proc(WM_MOUSEMOVE, b->from_screenx(x), b->from_screeny(y), keymap);
                 if (this->button_down) {
                     this->button_down->state = (b == this->button_down);

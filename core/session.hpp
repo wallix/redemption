@@ -301,7 +301,7 @@ struct Session {
             rv = 1;
         };
         LOG(LOG_INFO, "Client Session Disconnected\n");
-        this->mod->stop_capture();
+        this->front->stop_capture();
         if (this->sck){
             shutdown(this->sck, 2);
             close(this->sck);
@@ -471,7 +471,7 @@ struct Session {
         select(max + 1, &rfds, &wfds, 0, &timeout);
 
         time_t timestamp = time(NULL);
-        this->mod->periodic_snapshot(this->mod->get_pointer_displayed());
+        this->front->periodic_snapshot(this->mod->get_pointer_displayed());
 
         if (this->front_event->is_set()) { /* incoming client data */
             try {
@@ -497,7 +497,7 @@ struct Session {
                 }
                 this->internal_state = SESSION_STATE_RUNNING;
             }
-            this->mod->stop_capture();
+            this->front->stop_capture();
         }
 
         if (this->back_event->is_set()){ // data incoming from server module
@@ -561,7 +561,7 @@ struct Session {
                     this->internal_state = SESSION_STATE_STOP;
                     if (this->session_setup_mod(next_state, this->context)){
                         if (record_video) {
-                            this->mod->start_capture(
+                            this->front->start_capture(
                                 this->front->client_info.width,
                                 this->front->client_info.height,
                                 this->context->get_bool(STRAUTHID_OPT_MOVIE),
@@ -570,7 +570,7 @@ struct Session {
                                 this->context->get(STRAUTHID_VIDEO_QUALITY));
                         }
                         else {
-                            this->mod->stop_capture();
+                            this->front->stop_capture();
                         }
                         if (keep_alive){
                             this->sesman->start_keep_alive(keep_alive_time);
