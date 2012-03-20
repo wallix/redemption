@@ -42,6 +42,7 @@ struct xup_mod : public client_mod {
     Transport *t;
     int rop;
     int fgcolor;
+    BGRPalette palette332;
 
     xup_mod(Transport * t, struct ModContext & context, struct FrontAPI & front)
         : client_mod(front)
@@ -50,6 +51,8 @@ struct xup_mod : public client_mod {
         this->height = atoi(context.get(STRAUTHID_OPT_HEIGHT));
         this->bpp = atoi(context.get(STRAUTHID_OPT_BPP));
         this->rop = 0xCC;
+        init_palette332(this->palette332);
+
         try {
             this->t = t;
             Stream stream(32768);
@@ -221,7 +224,7 @@ struct xup_mod : public client_mod {
                         int height = stream.in_uint16_le();
                         int srcx = stream.in_sint16_le();
                         int srcy = stream.in_sint16_le();
-                        Bitmap bmp(bpp, &this->front.palette332, width, height, bmpdata, sizeof(bmpdata));
+                        Bitmap bmp(bpp, &this->palette332, width, height, bmpdata, sizeof(bmpdata));
                         this->front.draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
                     }
                     break;

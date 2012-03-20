@@ -1310,7 +1310,7 @@ struct mod_rdp : public client_mod {
                             LOG(LOG_INFO, "Receiving Font Map");
 //                            this->check_data_pdu(PDUTYPE2_FONTMAP);
                             LOG(LOG_INFO, "process demand active ok\n");
-                            this->front.mod_bpp = this->bpp;
+                            this->front.set_mod_bpp(this->bpp);
                             this->connection_finalization_state = UP_AND_RUNNING;
                         break;
                         case UP_AND_RUNNING:

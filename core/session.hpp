@@ -343,8 +343,6 @@ struct Session {
                 // if we reach this point we are up_and_running,
                 // hence width and height and colors and keymap are availables
                 /* resize the main window */
-                // front_resize() warns internal modules that the resolution has changed
-                this->mod->front_resize();
                 this->front->reset();
                 this->front->set_keyboard_layout();
 

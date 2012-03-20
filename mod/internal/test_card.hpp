@@ -26,9 +26,11 @@
 #define __TEST_CARD_HPP__
 
 struct test_card_mod : public internal_mod {
+    BGRPalette palette332;
     test_card_mod(wait_obj * event, FrontAPI & front, uint16_t width, uint16_t height):
             internal_mod(front, width, height)
     {
+        init_palette332(this->palette332);
         this->event = event;
         this->event->set();
     }
@@ -138,7 +140,7 @@ struct test_card_mod : public internal_mod {
             0xf0, 0xc0, 0x0f,
         };
 
-        Bitmap bloc64x64(24, &this->front.palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
+        Bitmap bloc64x64(24, &this->palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
         this->front.draw(RDPMemBlt(0,
             Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx, bloc64x64.cy), 0xCC,
              32, 32, 0), clip, bloc64x64);

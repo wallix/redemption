@@ -200,6 +200,14 @@ public:
     struct Font font;
     Cache cache;
 
+    bool palette_sent;
+    bool palette_memblt_sent[6];
+    BGRPalette palette332;
+    BGRPalette mod_palette;
+    uint8_t mod_bpp;
+    BGRPalette memblt_mod_palette;
+    bool mod_palette_setted;
+
     enum {
         CONNECTION_INITIATION,
         ACTIVATE_AND_PROCESS_DATA,
@@ -277,6 +285,47 @@ public:
     ~Front(){
     }
 
+    void init_mod()
+    {
+        this->mod_palette_setted = false;
+        this->mod_bpp = 24;
+        this->palette_sent = false;
+        for (size_t i = 0; i < 6 ; i++){
+            this->palette_memblt_sent[i] = false;
+        }
+        init_palette332(this->palette332);
+    }
+
+    void set_mod_bpp(uint8_t bpp)
+    {
+        this->mod_bpp = bpp;
+    }
+
+    int server_resize(int width, int height, int bpp)
+    {
+        if (this->client_info.width != width
+        || this->client_info.height != height
+        || this->client_info.bpp != bpp) {
+            /* older client can't resize */
+            if (client_info.build <= 419) {
+                LOG(LOG_ERR, "Resizing is not available on older RDP clients");
+                // resizing needed but not available
+                return -1;
+            }
+            this->palette_sent = false;
+            for (size_t i = 0; i < 6 ; i++){
+                this->palette_memblt_sent[i] = false;
+            }
+            LOG(LOG_INFO, "// Resizing client to : %d x %d x %d\n", width, height, bpp);
+
+            this->set_front_resolution(width, height, bpp);
+            // resizing done
+//            this->front.reset();
+            return 1;
+        }
+        // resizing not necessary
+        return 0;
+    }
 
     void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
     {
@@ -3600,6 +3649,7 @@ public:
         }
     }
 
+    TODO("RGBtoBGR conversion should be done by caller when necessary. Also we should separate memblt palette and global palette")
     void set_mod_palette(const BGRPalette & palette)
     {
         this->mod_palette_setted = true;
@@ -3607,6 +3657,11 @@ public:
             this->mod_palette[i] = palette[i];
             this->memblt_mod_palette[i] = RGBtoBGR(palette[i]);
         }
+    }
+
+    void set_mod_bpp_to_front_bpp()
+    {
+        this->mod_bpp = this->get_front_bpp();
     }
 
 };

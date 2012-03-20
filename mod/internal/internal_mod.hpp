@@ -79,12 +79,6 @@ struct internal_mod : public client_mod {
     }
 
 
-    virtual void front_resize() {
-        this->screen.rect.cx = this->front.get_front_width();
-        this->screen.rect.cy = this->front.get_front_height();
-        this->screen.bpp     = this->front.get_front_bpp();
-    }
-
     const Rect & get_screen_rect() const
     {
         return this->screen.rect;

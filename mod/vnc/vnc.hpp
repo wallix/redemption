@@ -67,11 +67,13 @@ struct mod_vnc : public client_mod {
     uint8_t red_shift;
     uint8_t green_shift;
     uint8_t blue_shift;
+    BGRPalette palette332;
 
     mod_vnc(Transport * t, struct ModContext & context, struct FrontAPI & front, int keylayout)
         :
         client_mod(front)
     {
+        init_palette332(this->palette332);
         const char * password = context.get(STRAUTHID_TARGET_PASSWORD);
         const char * username = context.get(STRAUTHID_TARGET_USER);
         this->t = t;
@@ -380,7 +382,20 @@ struct mod_vnc : public client_mod {
                     this->t->send(stream.data, 4 + 3 * 4);
                 }
 
-                this->server_resize(this->width, this->height, this->get_front_bpp());
+                switch (this->front.server_resize(this->width, this->height, this->bpp)){
+                case 0:
+                    // no resizing needed
+                    break;
+                case 1:
+                    // resizing done
+//                    this->screen.rect.cx = width;
+//                    this->screen.rect.cy = height;
+//                    this->screen.bpp     = bpp;
+                    break;
+                case -1:
+                    // resizing failed
+                    break;
+                }
 
                 {
                     /* FrambufferUpdateRequest */
@@ -714,7 +729,7 @@ struct mod_vnc : public client_mod {
                 this->t->recv((char**)&tmp, need_size);
 
                 TODO(" there is still an alignement issue in bitmaps  fixed  but my fix is quite evil.")
-                Bitmap bmp(this->bpp, &this->front.palette332, cx, cy, raw, need_size, false, true);
+                Bitmap bmp(this->bpp, &this->palette332, cx, cy, raw, need_size, false, true);
                 free(raw);
                 this->front.draw(RDPMemBlt(0, Rect(x, y, cx, cy), 0xCC, 0, 0, 0), this->get_front_rect(), bmp);
             }
@@ -882,7 +897,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         else {
             LOG(LOG_ERR, "VNC: number of palette colors too large: %d\n", num_colors);
         }
-        memcpy(this->front.mod_palette, this->palette, sizeof(BGRPalette));
+
+        this->front.set_mod_palette(this->palette);
         this->front.send_global_palette();
         this->front.begin_update();
         this->front.color_cache(this->palette, 0);

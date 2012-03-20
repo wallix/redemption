@@ -71,13 +71,7 @@ struct client_mod : public Callback {
         : front(front),
           signal(BACK_EVENT_NONE)    {
         this->pointer_displayed = false;
-        this->front.mod_palette_setted = false;
-        this->front.mod_bpp = 24;
-        this->front.palette_sent = false;
-        for (size_t i = 0; i < 6 ; i++){
-            this->front.palette_memblt_sent[i] = false;
-        }
-        init_palette332(this->front.palette332);
+        this->front.init_mod();
     }
 
     virtual ~client_mod()
@@ -96,38 +90,6 @@ struct client_mod : public Callback {
     virtual void refresh_context(ModContext & context)
     {
         return; // used when context changed to avoid creating a new module
-    }
-
-    void server_resize(int width, int height, int bpp)
-    {
-        int client_info_width = this->front.get_front_width();
-        int client_info_height = this->front.get_front_height();
-        int client_info_bpp = this->front.get_front_bpp();
-        int client_info_build = this->front.get_front_build();
-
-        if (client_info_width != width
-        || client_info_height != height
-        || client_info_bpp != bpp) {
-            /* older client can't resize */
-            if (client_info_build <= 419) {
-                LOG(LOG_ERR, "Resizing is not available on older RDP clients");
-                return;
-            }
-            this->front.palette_sent = false;
-            for (size_t i = 0; i < 6 ; i++){
-                this->front.palette_memblt_sent[i] = false;
-            }
-            LOG(LOG_INFO, "// Resizing client to : %d x %d x %d\n", width, height, bpp);
-
-            this->front.set_front_resolution(width, height, bpp);
-            TODO("This warns modules that the resolution has changed, it is only used in internal modules.")
-            this->front_resize();
-//            this->front.reset();
-        }
-    }
-
-    void front_resize()
-    {
     }
 
     int server_is_term()
