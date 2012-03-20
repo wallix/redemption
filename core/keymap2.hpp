@@ -1533,7 +1533,12 @@ struct Keymap2 {
                 { 133,   0 }, { 134,   0 }, { 135,   0 }                              // 125 - 127
         } ;
         if (this->keys_down[keyCode]){
-            this->last_char = keylayout_WORK_shift[map[keyCode & 0x7f].code1] ;
+            if (this->is_shift_pressed()){
+                this->last_char = keylayout_WORK_shift[map[keyCode & 0x7f].code1] ;
+            }
+            else {
+                this->last_char = keylayout_WORK_noshift[map[keyCode & 0x7f].code1] ;
+            }
         }
         else {
             this->last_char = 0;
