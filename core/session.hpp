@@ -880,7 +880,8 @@ struct Session {
                                         this->context->get(STRAUTHID_TARGET_PASSWORD),
                                         *this->front,
                                         hostname,
-                                        this->front->client_info.keylayout);
+                                        this->front->client_info.keylayout,
+                                        this->front->client_info.bpp);
 //                    this->back_event->set();
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front->client_info.width, this->front->client_info.height));
                     if (this->verbose){

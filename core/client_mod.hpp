@@ -135,10 +135,6 @@ struct client_mod : public Callback {
     }
 
 
-    int get_front_bpp() const {
-        return this->front.get_front_bpp();
-    }
-
     int get_front_width() const {
         return this->front.get_front_width();
     }

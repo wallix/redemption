@@ -31,7 +31,6 @@ class FrontAPI : public RDPGraphicDevice {
 
     using RDPGraphicDevice::draw;
 
-    virtual int get_front_bpp() const = 0;
     virtual int get_front_width() const = 0;
     virtual int get_front_height() const = 0;
     virtual int get_front_build() const = 0;
@@ -41,7 +40,6 @@ class FrontAPI : public RDPGraphicDevice {
     virtual const ChannelList & get_channel_list(void) const = 0;
     virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags) = 0;
 
-    virtual void set_front_resolution(uint16_t width, uint16_t height, uint8_t bpp) = 0;
     virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error) = 0;
     virtual void send_global_palette() throw (Error) = 0;
     virtual void set_pointer(int cache_idx) throw (Error) = 0;
@@ -62,9 +60,9 @@ class FrontAPI : public RDPGraphicDevice {
     bool notimestamp;
     bool nomouse;
 
-    FrontAPI(Inifile * ini) :
-        notimestamp(ini->globals.notimestamp)
-        , nomouse(ini->globals.nomouse)
+    FrontAPI(bool notimestamp, bool nomouse) :
+          notimestamp(notimestamp)
+        , nomouse(nomouse)
         {}
 
 };

@@ -214,7 +214,7 @@ public:
     } state;
 
     Front(SocketTransport * trans, Inifile * ini) :
-        FrontAPI(ini),
+        FrontAPI(ini->globals.notimestamp, ini->globals.nomouse),
         capture(NULL),
         orders(NULL),
         up_and_running(0),
@@ -426,10 +426,6 @@ public:
 
         delete [] wstr;
         delete [] data;
-    }
-
-    virtual int get_front_bpp() const {
-        return this->client_info.bpp;
     }
 
     virtual int get_front_width() const {
@@ -670,7 +666,7 @@ public:
     void send_global_palette() throw (Error)
     {
 
-        if (!this->palette_sent && (this->get_front_bpp() == 8)){
+        if (!this->palette_sent && (this->client_info.bpp == 8)){
 
             const BGRPalette & palette =
                 (this->mod_bpp == 8)?this->memblt_mod_palette:this->palette332;
@@ -3476,7 +3472,7 @@ public:
         }
 
         const uint8_t palette_id = 0;
-        if (this->get_front_bpp() == 8){
+        if (this->client_info.bpp == 8){
             this->palette_sent = false;
             this->send_global_palette();
             if (!this->palette_memblt_sent[palette_id]) {
@@ -3613,14 +3609,14 @@ public:
 
     const BGRColor convert(const BGRColor color) const
     {
-        if (this->get_front_bpp() == 8 && this->mod_bpp == 8){
+        if (this->client_info.bpp == 8 && this->mod_bpp == 8){
 //            return ((color >> 5) & 7) |((color << 1) & 0x31)|((color<<6)&0xc0);
 //            this->mod_palette[color]
             return color;
         }
         else{
             const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
-            return color_encode(color24, this->get_front_bpp());
+            return color_encode(color24, this->client_info.bpp);
         }
     }
 
@@ -3633,8 +3629,8 @@ public:
 
     const BGRColor convert_opaque(const BGRColor color) const
     {
-        if (this->get_front_bpp() == 8 && this->mod_bpp == 8){
-//            LOG(LOG_INFO, "convert_opaque: front=%u back=%u setted=%u color=%u palette=%.06x", this->get_front_bpp(), this->front.mod_bpp, this->mod_palette_setted, color, this->mod_palette[color]);
+        if (this->client_info.bpp == 8 && this->mod_bpp == 8){
+//            LOG(LOG_INFO, "convert_opaque: front=%u back=%u setted=%u color=%u palette=%.06x", this->client_info.bpp, this->front.mod_bpp, this->mod_palette_setted, color, this->mod_palette[color]);
 //            return ((color >> 5) & 7) |((color << 1) & 0x31)|((color<<6)&0xc0);
 //            this->mod_palette[color]
             return color;
@@ -3643,11 +3639,11 @@ public:
         if (this->mod_bpp == 16 || this->mod_bpp == 15 || this->mod_bpp == 8){
             const BGRColor color24 = color_decode_opaquerect(
                         color, this->mod_bpp, this->mod_palette);
-            return  color_encode(color24, this->get_front_bpp());
+            return  color_encode(color24, this->client_info.bpp);
         }
         else {
             const BGRColor color24 = color_decode(color, this->mod_bpp, this->mod_palette);
-            return color_encode(color24, this->get_front_bpp());
+            return color_encode(color24, this->client_info.bpp);
         }
     }
 
@@ -3663,7 +3659,7 @@ public:
 
     void set_mod_bpp_to_front_bpp()
     {
-        this->mod_bpp = this->get_front_bpp();
+        this->mod_bpp = this->client_info.bpp;
     }
 
 };

@@ -25,6 +25,8 @@
 #if !defined(__TEST_CARD_HPP__)
 #define __TEST_CARD_HPP__
 
+#include "internal/internal_mod.hpp"
+
 struct test_card_mod : public internal_mod {
     BGRPalette palette332;
     test_card_mod(wait_obj * event, FrontAPI & front, uint16_t width, uint16_t height):

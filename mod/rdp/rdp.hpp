@@ -335,13 +335,14 @@ struct mod_rdp : public client_mod {
 
     int state;
     struct rdp_cursor cursors[32];
-
+    const uint8_t front_bpp;
 
     mod_rdp(Transport * trans, wait_obj & event,
             const char * target_user,
             const char * target_password,
             struct FrontAPI & front,
-            const char * hostname, int keylayout)
+            const char * hostname, int keylayout,
+            const uint8_t front_bpp)
             :
                 client_mod(front),
                     in_stream(65536),
@@ -354,7 +355,8 @@ struct mod_rdp : public client_mod {
                     bpp(bpp),
                     crypt_level(0),
                     connection_finalization_state(EARLY),
-                    state(MOD_RDP_CONNECTING)
+                    state(MOD_RDP_CONNECTING),
+                    front_bpp(front_bpp)
     {
         LOG(LOG_INFO, "Creation of new mod 'RDP'");
         // from rdp_sec
@@ -827,7 +829,6 @@ struct mod_rdp : public client_mod {
 
         int width = this->get_front_width();
         int height = this->get_front_height();
-        int rdp_bpp = this->get_front_bpp();
         char * hostname = this->hostname;
 
         switch (this->state){
@@ -874,7 +875,7 @@ struct mod_rdp : public client_mod {
             //                   GCC conference Create Response
 
             this->send_mcs_connect_initial_pdu_with_gcc_conference_create_request(
-                    this->trans, this->front.get_channel_list(), width, height, rdp_bpp, keylayout, hostname);
+                    this->trans, this->front.get_channel_list(), width, height, this->front_bpp, keylayout, hostname);
 
             this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
         break;
