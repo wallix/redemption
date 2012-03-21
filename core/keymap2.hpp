@@ -24,6 +24,7 @@ struct Keymap2 {
                             // Windows = 64, AltGr = 128
 
     uint32_t last_char;
+    uint32_t last_char_key;
 
     int last_chr_unicode;
 
@@ -1533,6 +1534,7 @@ struct Keymap2 {
                 { 133,   0 }, { 134,   0 }, { 135,   0 }                              // 125 - 127
         } ;
         if (this->keys_down[keyCode]){
+            this->last_char_key = keyCode;
             if (this->is_shift_pressed()){
                 this->last_char = keylayout_WORK_shift[map[keyCode & 0x7f].code1] ;
             }
@@ -1541,7 +1543,9 @@ struct Keymap2 {
             }
         }
         else {
-            this->last_char = 0;
+            if (keyCode == this->last_char_key){
+                this->last_char = 0;
+            }
         }
     }
 

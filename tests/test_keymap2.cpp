@@ -68,8 +68,8 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
    BOOST_CHECK_EQUAL(false, keymap.is_right_shift_pressed());
 
    // shift was released, but not A (last char down goes 'a' for autorepeat)
-//   key = keymap.last_char_down();
-//   BOOST_CHECK_EQUAL('a', key);
+   key = keymap.last_char_down();
+   BOOST_CHECK_EQUAL('A', key);
 
    keyboardFlags = keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE ; // key is not extended, key was down, key goes up
    keyCode = 16 ; // key is 'A'
