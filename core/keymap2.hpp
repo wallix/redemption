@@ -114,7 +114,7 @@ struct Keymap2 {
         }
 
         switch (keyb){
-            case 0x0407:
+            case 0x0407: // GERMAN
             {
                 const int keylayout_0407_noshift[128] = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
@@ -221,7 +221,7 @@ struct Keymap2 {
                 }
             }
             break;
-            case 0x0409:
+            case 0x0409: // United States
             {
                 const int keylayout_0409_noshift[128] = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
@@ -328,7 +328,7 @@ struct Keymap2 {
                 }
             }
             break;
-            case 0x040c:
+            case 0x040c: // French
             {
                 const int keylayout_040c_noshift[128] = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
@@ -435,7 +435,7 @@ struct Keymap2 {
                 }
             }
             break;
-            case 0x0410:
+            case 0x0410: // Italian
             {
                 const int keylayout_0410_noshift[128] = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
@@ -542,7 +542,7 @@ struct Keymap2 {
                 }
             }
             break;
-            case 0x0419:
+            case 0x0419: // Russian
             {
                 const int keylayout_0419_noshift[128] = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
@@ -650,7 +650,7 @@ struct Keymap2 {
 
             }
             break;
-            case 0x041d:
+            case 0x041d: // Swedish
             {
                 const int keylayout_041d_noshift[128] = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
@@ -758,7 +758,7 @@ struct Keymap2 {
 
             }
             break;
-            case 0x046e:
+            case 0x046e: // Luxemburgish
             {
                 const int keylayout_046e_noshift[128] = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
@@ -866,7 +866,7 @@ struct Keymap2 {
 
             }
             break;
-            case 0x0807:
+            case 0x0807: // German Swizerland
             {
                 const int keylayout_0807_noshift[128] = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
@@ -974,7 +974,7 @@ struct Keymap2 {
 
             }
             break;
-            case 0x0809:
+            case 0x0809: // English UK
             {
                 const int keylayout_0809_noshift[128] = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
@@ -1082,7 +1082,7 @@ struct Keymap2 {
 
             }
             break;
-            case 0x080c:
+            case 0x080c: // French Belgium
             {
                 const int keylayout_080c_noshift[128] = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
@@ -1189,7 +1189,7 @@ struct Keymap2 {
                 }
             }
             break;
-            case 0x0813:
+            case 0x0813: // Dutch Belgium
             {
                 const int keylayout_0813_noshift[128] = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
@@ -1296,7 +1296,7 @@ struct Keymap2 {
                 }
             }
             break;
-            case 0x100c:
+            case 0x100c: // French Swizerland
             {
                 const int keylayout_100c_noshift[128] = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
