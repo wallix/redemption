@@ -173,6 +173,12 @@ class Stream {
              ;
     }
 
+    void in_copy_bytes(uint8_t * v, size_t n) {
+        assert(check_rem(n));
+        memcpy(v, this->p, n);
+        this->p += n;
+    }
+
     const uint8_t *in_uint8p(unsigned int n) {
         assert(check_rem(n));
         this->p+=n;

@@ -39,8 +39,8 @@
 BOOST_AUTO_TEST_CASE(TestShowTestCard)
 {
     wait_obj back_event(-1);
-    const uint16_t width = 800;
-    const uint16_t height = 600;
+//     const uint16_t width = 800;
+//     const uint16_t height = 600;
 //    class Front : public FrontAPI {
 //        public:
 //            Front() : FrontAPI() {}

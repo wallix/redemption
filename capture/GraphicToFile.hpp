@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Jonathan Poelen
 
    RDPGraphicDevice is an abstract class that describe a device able to
    proceed RDP Drawing Orders. How the drawing will be actually done
@@ -29,6 +29,9 @@
 #if !defined(__GRAPHIC_TO_FILE_HPP__)
 #define __GRAPHIC_TO_FILE_HPP__
 
+#include <sys/time.h>
+#include <ctime>
+#include <iostream>
 
 #include "RDP/x224.hpp"
 #include "RDP/mcs.hpp"
@@ -36,6 +39,8 @@
 #include "RDP/sec.hpp"
 #include "RDP/lic.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
+#include "difftimeval.hpp"
+
 // MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
 // ================================================================
 // The TS_FP_UPDATE_ORDERS structure contains primary, secondary, and alternate
@@ -100,31 +105,51 @@
 
 struct GraphicsToFile : public RDPSerializer
 {
-    enum { TIMESTAMP = 1000 };
+    enum { OLD_TIMESTAMP = 1000, TIMESTAMP = 1001 };
 
     uint16_t offset_chunk_size;
     uint16_t offset_chunk_type;
     uint16_t chunk_type;
+    struct timeval now;
 
-    GraphicsToFile(Transport * trans, const Inifile * ini, 
-          const uint8_t  bpp, 
+    GraphicsToFile(Transport * trans, const Inifile * ini,
+          const uint8_t  bpp,
           uint32_t small_entries, uint32_t small_size,
           uint32_t medium_entries, uint32_t medium_size,
-          uint32_t big_entries, uint32_t big_size)
-        : RDPSerializer(trans, ini, 
-            bpp, 
+          uint32_t big_entries, uint32_t big_size, const timeval& now)
+        : RDPSerializer(trans, ini,
+            bpp,
             small_entries, small_size,
             medium_entries, medium_size,
             big_entries, big_size,
             0, 1, 1)
+        , chunk_type(RDP_UPDATE_ORDERS)
+        , now(now)
     {
-        this->chunk_type = RDP_UPDATE_ORDERS;
+        this->init();
+    }
+
+    GraphicsToFile(Transport * trans, const Inifile * ini,
+                   const uint8_t  bpp,
+                   uint32_t small_entries, uint32_t small_size,
+                   uint32_t medium_entries, uint32_t medium_size,
+                   uint32_t big_entries, uint32_t big_size)
+    : RDPSerializer(trans, ini,
+                    bpp,
+                    small_entries, small_size,
+                    medium_entries, medium_size,
+                    big_entries, big_size,
+                    0, 1, 1)
+    , chunk_type(RDP_UPDATE_ORDERS)
+    {
+        gettimeofday(&this->now, 0);
         this->init();
     }
 
     ~GraphicsToFile(){
     }
 
+    TODO("init => reset ?")
     void init(){
         if (this->ini && this->ini->globals.debug.primary_orders){
             LOG(LOG_INFO, "GraphicsToFile::init::Initializing orders batch");
@@ -146,10 +171,21 @@ struct GraphicsToFile : public RDPSerializer
 
     virtual void timestamp()
     {
+        struct timeval t;
+        gettimeofday(&t, 0);
+        timestamp(t);
+    }
+
+    virtual void timestamp(const timeval& now)
+    {
         LOG(LOG_INFO, "GraphicsToFile::timestamp()");
         this->flush();
         this->chunk_type = TIMESTAMP;
         this->order_count = 1;
+        uint64_t micro_sec = ::difftimeval(now, this->now);
+        this->now = now;
+        this->stream.out_copy_bytes((uint8_t*)(&micro_sec), sizeof(micro_sec));
+        //this->stream.out_copy_bytes("\x00\x00\x00\x02", sizeof(micro_sec));
         this->flush();
     }
 
@@ -159,6 +195,7 @@ struct GraphicsToFile : public RDPSerializer
             if (this->ini && this->ini->globals.debug.primary_orders){
                 LOG(LOG_INFO, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             }
+
             uint16_t chunk_size = this->stream.p - this->stream.data;
             this->stream.set_out_uint16_le(this->chunk_type, this->offset_chunk_type);
             this->stream.set_out_uint16_le(chunk_size, this->offset_chunk_size);
