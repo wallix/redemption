@@ -24,7 +24,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestGraphicsToFile3
+#define BOOST_TEST_MODULE TestGraphicsToFile
 #include <boost/test/auto_unit_test.hpp>
 #include "test_orders.hpp"
 
@@ -86,20 +86,22 @@ private:
 };
 
 
-BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
+
+BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
 {
     Rect screen_rect(0, 0, 800, 600);
 
+    timeval now = { 212, 10 };
     char tmpname[128];
     {
         sprintf(tmpname, "/tmp/test_gtf_chunk1XXXXXX");
-        printf("filename: %s\n", tmpname);
         int fd = ::mkostemp(tmpname, O_WRONLY|O_CREAT);
+        BOOST_CHECK(fd > 0);
         OutFileTransport trans(fd);
-        GraphicsToFile gtf(&trans, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288);
-        gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), screen_rect);
-        gtf.timestamp();
-        gtf.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), 0), Rect(10, 10, 100, 100));
+        GraphicsToFile gtf(&trans, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288, now);
+        now.tv_sec += 5;
+        now.tv_usec += 1100;
+        gtf.timestamp(now);
         gtf.flush();
         ::close(fd);
     }
@@ -109,41 +111,28 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         int fd = ::open(tmpname, O_RDONLY);
         BOOST_CHECK(fd > 0);
         Stream stream(4096);
-        InFileTransport in_trans(fd);
-        class Consumer : public TestConsumer {
-        public:
-            Consumer(const Rect & screen_rect) : TestConsumer(screen_rect){}
-            void check_end()
-            {
-                BOOST_CHECK_EQUAL(icount, 2);
-            }
-        private:
-            virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
-            {
-                icount++;
-                switch (icount){
-                case 1:
-                    BOOST_CHECK(cmd == RDPOpaqueRect(Rect(0, 0, 800, 600), 0));
-                    BOOST_CHECK(this->screen_rect == clip);
-                break;
-                case 2:
-                    BOOST_CHECK(cmd == RDPOpaqueRect(Rect(0, 0, 800, 600), 0));
-                    BOOST_CHECK(Rect(10, 10, 100, 100) == clip);
-                break;
-                default:
-                    BOOST_CHECK(false);
-                }
-            }
-        } consumer(screen_rect);
 
-        RDPUnserializer reader(&in_trans, &consumer, screen_rect);
-        reader.next();
-        reader.next();
-        reader.next();
-        consumer.check_end();
-        // check we have read everything
-        BOOST_CHECK_EQUAL(stream.end - stream.p, 0);
+        InFileTransport in_trans(fd);
+
+        in_trans.recv(&stream.end, 16);
+        BOOST_CHECK_EQUAL(stream.end - stream.p, 16);
+        uint16_t chunk_type = stream.in_uint16_le();
+        BOOST_CHECK_EQUAL(chunk_type, (uint16_t)GraphicsToFile::TIMESTAMP);
+        uint16_t chunk_size = stream.in_uint16_le();
+        BOOST_CHECK_EQUAL(chunk_size, (uint16_t)16);
+        uint16_t order_count = stream.in_uint16_le();
+        BOOST_CHECK_EQUAL(order_count, (uint16_t)1);
+        uint16_t pad = stream.in_uint16_le();
+        BOOST_CHECK_EQUAL(pad, (uint16_t)0); // really we don't care
+
+        uint64_t micro_sec;
+        stream.in_copy_bytes((uint8_t*)&micro_sec, sizeof(micro_sec));
+        BOOST_CHECK_EQUAL(micro_sec, uint64_t(5ull * 1000000ull + 1100ull));
+
+        BOOST_CHECK_EQUAL(stream.p, stream.end);
+
         ::close(fd);
     }
     ::unlink(tmpname);
+
 }
