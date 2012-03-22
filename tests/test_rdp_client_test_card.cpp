@@ -53,9 +53,6 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
 //            virtual void draw(const RDPLineTo&, const Rect&) {}
 //            virtual void draw(const RDPGlyphIndex&, const Rect&) {}
 
-//            virtual int get_front_width() const {return 800;}
-//            virtual int get_front_height() const {return 600;}
-//            virtual int get_front_build() const { return 2600;}
 //            virtual int get_front_console_session() const {return 0;}
 //            virtual int get_front_brush_cache_code() const { return 0;}
 //            virtual const ChannelList& get_channel_list() const {}

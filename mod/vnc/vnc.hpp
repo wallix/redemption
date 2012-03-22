@@ -68,10 +68,14 @@ struct mod_vnc : public client_mod {
     uint8_t green_shift;
     uint8_t blue_shift;
     BGRPalette palette332;
+    uint16_t front_width;
+    uint16_t front_height;
 
-    mod_vnc(Transport * t, struct ModContext & context, struct FrontAPI & front, int keylayout)
+    mod_vnc(Transport * t, struct ModContext & context, struct FrontAPI & front, int keylayout, uint16_t front_width, uint16_t front_height)
         :
-        client_mod(front)
+        client_mod(front),
+        front_width(front_width),
+        front_height(front_height)
     {
         init_palette332(this->palette332);
         const char * password = context.get(STRAUTHID_TARGET_PASSWORD);
@@ -731,7 +735,7 @@ struct mod_vnc : public client_mod {
                 TODO(" there is still an alignement issue in bitmaps  fixed  but my fix is quite evil.")
                 Bitmap bmp(this->bpp, &this->palette332, cx, cy, raw, need_size, false, true);
                 free(raw);
-                this->front.draw(RDPMemBlt(0, Rect(x, y, cx, cy), 0xCC, 0, 0, 0), this->get_front_rect(), bmp);
+                this->front.draw(RDPMemBlt(0, Rect(x, y, cx, cy), 0xCC, 0, 0, 0), Rect(0, 0, this->front_width, this->front_height), bmp);
             }
             break;
             case 1: /* copy rect */
@@ -743,7 +747,7 @@ struct mod_vnc : public client_mod {
                 const int srcy = stream.in_uint16_be();
 //                    LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
                 const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
-                this->front.draw(scrblt, this->get_front_rect());
+                this->front.draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
             }
             break;
             case 0xffffff11: /* cursor */

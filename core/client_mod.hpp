@@ -134,19 +134,6 @@ struct client_mod : public Callback {
         this->pen.width = width;
     }
 
-
-    int get_front_width() const {
-        return this->front.get_front_width();
-    }
-
-    int get_front_height() const {
-        return this->front.get_front_height();
-    }
-
-     const Rect get_front_rect(){
-        return Rect(0, 0, this->get_front_width(), get_front_height());
-    }
-
     virtual void rdp_input_invalidate(const Rect & r) = 0;
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
     virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, const Keymap * keymap, const key_info* ki) = 0;

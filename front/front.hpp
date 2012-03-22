@@ -318,9 +318,15 @@ public:
             }
             LOG(LOG_INFO, "// Resizing client to : %d x %d x %d\n", width, height, bpp);
 
-            this->set_front_resolution(width, height, bpp);
+            this->client_info.width = width;
+            this->client_info.height = height;
+            this->client_info.bpp = bpp;
+
+             // clear all pending orders, caches data, and so on and
+            // start a send_deactive, send_deman_active process with
+            // the new resolution setting
+            this->reset();
             // resizing done
-//            this->front.reset();
             return 1;
         }
         // resizing not necessary
@@ -444,25 +450,24 @@ public:
         return this->client_info.console_session;
     }
 
-
     virtual int get_front_build() const {
         return this->client_info.build;
     }
 
-    virtual void set_front_resolution(uint16_t width, uint16_t height, uint8_t bpp)
-    {
-        if (this->verbose){
-            LOG(LOG_INFO, "Front::set_front_resolution(%u, %u, %u)", width, height, bpp);
-        }
-        this->client_info.width = width;
-        this->client_info.height = height;
-        this->client_info.bpp = bpp;
+//    void set_front_resolution(uint16_t width, uint16_t height, uint8_t bpp)
+//    {
+//        if (this->verbose){
+//            LOG(LOG_INFO, "Front::set_front_resolution(%u, %u, %u)", width, height, bpp);
+//        }
+//        this->client_info.width = width;
+//        this->client_info.height = height;
+//        this->client_info.bpp = bpp;
 
-        // clear all pending orders, caches data, and so on and
-        // start a send_deactive, send_deman_active process with
-        // the new resolution setting
-        this->reset();
-    }
+//        // clear all pending orders, caches data, and so on and
+//        // start a send_deactive, send_deman_active process with
+//        // the new resolution setting
+//        this->reset();
+//    }
 
 
     void start_capture(int width, int height, bool flag, char * path,
@@ -3574,7 +3579,7 @@ public:
     void cache_brush(RDPBrush & brush)
     {
         if ((brush.style == 3)
-        && (this->get_front_brush_cache_code() == 1)) {
+        && (this->client_info.brush_cache_code == 1)) {
             uint8_t pattern[8];
             pattern[0] = brush.hatch;
             memcpy(pattern+1, brush.extra, 7);

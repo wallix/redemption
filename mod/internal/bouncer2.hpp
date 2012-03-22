@@ -55,7 +55,7 @@ struct bouncer2_mod : public internal_mod {
     {
 
         this->front.begin_update();
-        this->front.draw(RDPOpaqueRect(this->get_screen_rect(), 0x00FF00), this->get_front_rect());
+        this->front.draw(RDPOpaqueRect(this->get_screen_rect(), 0x00FF00), this->screen.rect);
         this->front.end_update();
 
         this->dancing_rect = new Rect(0,0,100,100);
@@ -115,13 +115,6 @@ struct bouncer2_mod : public internal_mod {
     // This should come from BACK!
     virtual BackEvent_t draw_event()
     {
-//        this->front.begin_update();
-//        this->opaque_rect(RDPOpaqueRect(this->get_screen_rect(), 0x00FF00), this->get_front_rect());
-//        this->front.end_update();
-        // Creating a new RDP Order: OpaqueRect
-        //RDPOpaqueRect white_rect(Rect(0, 0, 10, 10), 0xFFFFFF);
-        //RDPOpaqueRect black_rect(Rect(0, 0, 10, 10), 0x000000);
-
         this->interaction();
         // Calculating new speedx and speedy
         if (this->dancing_rect->x <= 0 && this->speedx < 0) {
@@ -144,12 +137,12 @@ struct bouncer2_mod : public internal_mod {
 
         // Drawing the RECT
         this->front.begin_update();
-        this->front.draw(RDPOpaqueRect(*this->dancing_rect, 0x0000FF), this->get_front_rect());
+        this->front.draw(RDPOpaqueRect(*this->dancing_rect, 0x0000FF), this->screen.rect);
         this->front.end_update();
 
         // And erase
         this->front.begin_update();
-        this->wipe(oldrect, *this->dancing_rect, 0x00FF00, this->get_front_rect());
+        this->wipe(oldrect, *this->dancing_rect, 0x00FF00, this->screen.rect);
         this->front.end_update();
 
         // Final with setting next idle time

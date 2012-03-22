@@ -225,7 +225,9 @@ struct rdp_orders {
             }
             else {
                 RDPPrimaryOrderHeader header = this->common.receive(stream, control);
-                const Rect & cmd_clip = ((control & BOUNDS)?this->common.clip:mod->get_front_rect());
+                const Rect & cmd_clip = ((control & BOUNDS)
+                                      ? this->common.clip
+                                    : Rect(0, 0, mod->front.get_front_width(), mod->front.get_front_height()));
 //                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
                 case GLYPHINDEX:
@@ -305,14 +307,12 @@ struct mod_rdp : public client_mod {
     char domain[256];
     char program[256];
     char directory[256];
-    bool console_session;
     uint16_t bpp;
 
     int crypt_level;
     uint32_t server_public_key_len;
     uint8_t client_crypt_random[512];
     CryptContext encrypt, decrypt;
-
 
     enum {
         MOD_RDP_CONNECTING,
@@ -335,14 +335,22 @@ struct mod_rdp : public client_mod {
 
     int state;
     struct rdp_cursor cursors[32];
+    const bool console_session;
+    const int brush_cache_code;
     const uint8_t front_bpp;
+    uint8_t front_width;
+    uint8_t front_height;
 
     mod_rdp(Transport * trans, wait_obj & event,
             const char * target_user,
             const char * target_password,
             struct FrontAPI & front,
             const char * hostname, int keylayout,
-            const uint8_t front_bpp)
+            const bool console_session,
+            const int brush_cache_code,
+            const uint8_t front_bpp,
+            const uint16_t front_width,
+            const uint16_t front_heigth)
             :
                 client_mod(front),
                     in_stream(65536),
@@ -356,7 +364,11 @@ struct mod_rdp : public client_mod {
                     crypt_level(0),
                     connection_finalization_state(EARLY),
                     state(MOD_RDP_CONNECTING),
-                    front_bpp(front_bpp)
+                    console_session(console_session),
+                    brush_cache_code(brush_cache_code),
+                    front_bpp(front_bpp),
+                    front_width(front_width),
+                    front_height(front_height)
     {
         LOG(LOG_INFO, "Creation of new mod 'RDP'");
         // from rdp_sec
@@ -383,7 +395,6 @@ struct mod_rdp : public client_mod {
         LOG(LOG_INFO, "Remote RDP Server login:%s host:%s\n", this->username, this->hostname);
         this->share_id = 0;
         this->bitmap_compression = 1;
-        this->console_session = this->front.get_front_console_session();
 
         memset(this->password, 0, 256);
         strcpy(this->password, target_password);
@@ -827,8 +838,8 @@ struct mod_rdp : public client_mod {
     {
         try{
 
-        int width = this->get_front_width();
-        int height = this->get_front_height();
+        int width = this->front.get_front_width();
+        int height = this->front.get_front_height();
         char * hostname = this->hostname;
 
         switch (this->state){
@@ -1212,7 +1223,7 @@ struct mod_rdp : public client_mod {
             X224In(this->trans, stream);
             McsIn mcs_in(stream);
             if ((mcs_in.opcode >> 2) != MCS_SDIN) {
-                LOG(LOG_ERR, "Error: MCS_SDIN TPDU expected");
+                LOG(LOG_ERR, "Error: MCS_SDIN TPDU expected, got %u", (mcs_in.opcode >> 2));
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
             SecIn sec(stream, this->decrypt);
