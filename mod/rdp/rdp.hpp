@@ -354,64 +354,22 @@ struct mod_rdp : public client_mod {
                     use_rdp5(1),
                     keylayout(info.keylayout),
                     lic_layer(hostname),
+                    share_id(0),
+                    bitmap_compression(1),
+                    version(0),
                     userid(0),
                     bpp(bpp),
                     crypt_level(0),
+                    server_public_key_len(0),
                     connection_finalization_state(EARLY),
                     state(MOD_RDP_CONNECTING),
                     console_session(info.console_session),
                     brush_cache_code(info.brush_cache_code),
                     front_bpp(info.bpp)
-
-//    mod_rdp(Transport * trans,
-//            wait_obj & event,
-//            const char * target_user,
-//            const char * target_password,
-//            struct FrontAPI & front,
-//            const char * hostname,
-//            int keylayout,
-//            const bool console_session,
-//            const int brush_cache_code,
-//            const uint8_t front_bpp,
-//            const uint16_t front_width,
-//            const uint16_t front_heigth)
-//            :
-//                client_mod(front, front_width, front_height),
-//                    in_stream(65536),
-//                    trans(trans),
-//                    event(event),
-//                    use_rdp5(1),
-//                    keylayout(keylayout),
-//                    lic_layer(hostname),
-//                    userid(0),
-//                    bpp(bpp),
-//                    crypt_level(0),
-//                    connection_finalization_state(EARLY),
-//                    state(MOD_RDP_CONNECTING),
-//                    console_session(console_session),
-//                    brush_cache_code(brush_cache_code),
-//                    front_bpp(front_bpp)
     {
-
-            if (this->front_width != this->front.get_front_width()){
-                LOG(LOG_INFO, "constructor incoherence in front: front_width=%u front.client_info.width=%u",
-                    this->front_width,
-                    this->front.get_front_width());
-                    exit(0);
-            }
-
-            if (this->front_height != this->front.get_front_height()){
-                LOG(LOG_INFO, "constructor incoherence in front: front_height=%u front_height=%u front.client_info.height=%u",
-                    front_height,
-                    this->front_height,
-                    this->front.get_front_height());
-                    exit(0);
-            }
-
         LOG(LOG_INFO, "Creation of new mod 'RDP'");
         // from rdp_sec
         memset(this->client_crypt_random, 0, 512);
-        this->server_public_key_len = 0;
 
         // shared
         memset(this->decrypt.key, 0, 16);
@@ -431,8 +389,6 @@ struct mod_rdp : public client_mod {
         this->username[127] = 0;
 
         LOG(LOG_INFO, "Remote RDP Server login:%s host:%s\n", this->username, this->hostname);
-        this->share_id = 0;
-        this->bitmap_compression = 1;
 
         memset(this->password, 0, 256);
         strcpy(this->password, target_password);
@@ -441,7 +397,6 @@ struct mod_rdp : public client_mod {
         memset(this->program, 0, 256);
         memset(this->directory, 0, 256);
 
-        this->keylayout = keylayout;
         LOG(LOG_INFO, "Server key layout is %x\n", this->keylayout);
 
         while (UP_AND_RUNNING != this->connection_finalization_state){
@@ -920,20 +875,6 @@ struct mod_rdp : public client_mod {
             //                   GCC Conference Create Request
             //    | <------------MCS Connect Response PDU with------------- |
             //                   GCC conference Create Response
-
-            if (this->front_width != this->front.get_front_width()){
-                LOG(LOG_INFO, "incoherence in front: front_width=%u front.client_info.width=%u",
-                    this->front_width,
-                    this->front.get_front_width());
-                    exit(0);
-            }
-
-            if (this->front_height != this->front.get_front_height()){
-                LOG(LOG_INFO, "incoherence in front: front_height=%u front.client_info.height=%u",
-                    this->front_height,
-                    this->front.get_front_height());
-                    exit(0);
-            }
 
             this->send_mcs_connect_initial_pdu_with_gcc_conference_create_request(
                     this->trans, this->front.get_channel_list(), this->front_width, this->front_height, this->front_bpp, keylayout, hostname);

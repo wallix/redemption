@@ -400,7 +400,9 @@ class SocketTransport : public Transport {
 
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Recv done on %s (%u)", this->name, this->sck);
+//            printf("Recv done on %s (%u)\n", this->name, this->sck);
             this->hexdump_c(start, total_len);
+//            printf("Dump done on %s (%u)\n", this->name, this->sck);
             LOG(LOG_INFO, "Dump done on %s (%u)", this->name, this->sck);
         }
 
@@ -434,6 +436,7 @@ class SocketTransport : public Transport {
             if (line != buffer){
                 line[0] = 0;
                 LOG(LOG_INFO, "%s", buffer);
+//                printf("%s", buffer);
                 buffer[0]=0;
             }
         }
@@ -466,6 +469,7 @@ class SocketTransport : public Transport {
             if (line != buffer){
                 line[0] = 0;
                 LOG(LOG_INFO, "%s", buffer);
+//                printf("%s\n", buffer);
                 buffer[0]=0;
             }
         }
@@ -477,7 +481,9 @@ class SocketTransport : public Transport {
     {
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Socket %s (%u) sending %u bytes", this->name, this->sck, len);
+//            printf("Socket %s (%u) sending %u bytes\n", this->name, this->sck, len);
             this->hexdump_c(buffer, len);
+//            printf("Dump done %s (%u) sending %u bytes\n", this->name, this->sck, len);
             LOG(LOG_INFO, "Dump done %s (%u) sending %u bytes", this->name, this->sck, len);
         }
         if (this->sck_closed) {

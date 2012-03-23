@@ -44,6 +44,7 @@
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
+
     ClientInfo info(1, 1, true, true);
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -54,6 +55,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     class Front : public FrontAPI {
         public:
+        const ClientInfo & info;
         ChannelList cl;
 
         virtual void flush() {}
@@ -64,9 +66,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         virtual void draw(const RDPMemBlt&, const Rect&, const Bitmap&){}
         virtual void draw(const RDPLineTo&, const Rect&){}
         virtual void draw(const RDPGlyphIndex&, const Rect&){}
-
-        virtual const uint16_t get_front_width() const { return 800; }
-        virtual const uint16_t get_front_height() const { return 600; }
 
         virtual const ChannelList & get_channel_list(void) const { return cl; }
         virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags) {}
@@ -90,17 +89,18 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         bool notimestamp;
         bool nomouse;
 
-        Front() :
-              FrontAPI(false, false)
+        Front(const ClientInfo & info) :
+              FrontAPI(false, false),
+              info(info)
             {}
 
-    } front;
+    } front(info);
 
 
     Stream stream(65536);
     const char * name = "RDP Target";
     int sck = connect("10.10.14.78", 3389, name);
-    int verbose = 255;
+    int verbose = 0;
     SocketTransport t(name, sck, verbose);
     wait_obj back_event(t.sck);
     struct client_mod * mod = new mod_rdp(&t,
@@ -110,6 +110,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                         front,
                         "laptop",
                         info);
+
+    BOOST_CHECK_EQUAL(mod->front_width, 800);
+    BOOST_CHECK_EQUAL(mod->front_height, 600);
 
     BackEvent_t res = mod->draw_event();
     if (res != BACK_EVENT_NONE){

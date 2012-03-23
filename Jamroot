@@ -41,7 +41,7 @@ project redemption
     <include>/usr/include
     <conditional>@defines
 #    <cxxflags>-pedantic
-#    <cxxflags>-Wconversion
+    <cxxflags>-Wconversion
 #    <cxxflags>-Wvla
 #    <cxxflags>-Wlong-long
     : default-build release

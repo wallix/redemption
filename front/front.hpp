@@ -434,26 +434,6 @@ public:
         delete [] data;
     }
 
-    virtual const uint16_t get_front_width() const {
-        return this->client_info.width;
-    }
-
-    virtual const uint16_t get_front_height() const {
-        return this->client_info.height;
-    }
-
-    virtual int get_front_brush_cache_code() const {
-        return this->client_info.brush_cache_code;
-    }
-
-    virtual int get_front_console_session() const {
-        return this->client_info.console_session;
-    }
-
-    virtual int get_front_build() const {
-        return this->client_info.build;
-    }
-
 //    void set_front_resolution(uint16_t width, uint16_t height, uint8_t bpp)
 //    {
 //        if (this->verbose){

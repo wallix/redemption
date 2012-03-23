@@ -903,27 +903,7 @@ struct Session {
                                         *this->front,
                                         hostname,
                                         info);
-//                                        this->front->client_info.keylayout,
-//                                        this->front->client_info.console_session,
-//                                        this->front->client_info.brush_cache_code,
-//                                        this->front->client_info.bpp,
-//                                        this->front->client_info.width,
-//                                        this->front->client_info.height);
 //                    this->back_event->set();
-
-                    if (this->front->client_info.width != this->front->get_front_width()){
-                        LOG(LOG_INFO, "session incoherence in front: front_width=%u front.client_info.width=%u",
-                            this->front->client_info.width,
-                            this->front->get_front_width());
-                        exit(0);
-                    }
-
-                    if (this->front->client_info.height != this->front->get_front_height()){
-                        LOG(LOG_INFO, "session incoherence in front: front_height=%u front.client_info.height=%u",
-                            this->front->client_info.height,
-                            this->front->get_front_height());
-                            exit(0);
-                    }
 
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front->client_info.width, this->front->client_info.height));
                     if (this->verbose){

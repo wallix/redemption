@@ -234,13 +234,17 @@ struct RdpLicence {
         TODO(" licence loading should be done before creating protocol layers")
         struct stat st;
         char path[256];
-        sprintf(path, "/etc/xrdp/.xrdp/licence.%s", hostname);
+        sprintf(path, PERSIST_PATH "/licence.%s", hostname);
         int fd = open(path, O_RDONLY);
         if (fd != -1 && fstat(fd, &st) != 0){
             this->licence_data = (uint8_t *)malloc(this->licence_size);
             TODO(" check error code here")
+            if (this->licence_data){
+                close(fd);
+                return;
+            }
             if (((int)this->licence_size) != read(fd, this->licence_data, this->licence_size)){
-                TODO(" throwing an error would be better")
+                close(fd);
                 return;
             }
             close(fd);

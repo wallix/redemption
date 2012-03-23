@@ -31,9 +31,6 @@ class FrontAPI : public RDPGraphicDevice {
 
     using RDPGraphicDevice::draw;
 
-    virtual const uint16_t get_front_width() const = 0;
-    virtual const uint16_t get_front_height() const = 0;
-
     virtual const ChannelList & get_channel_list(void) const = 0;
     virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags) = 0;
 

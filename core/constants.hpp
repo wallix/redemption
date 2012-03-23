@@ -35,6 +35,10 @@
 #define CFG_PATH "/etc/rdpproxy"
 #endif
 
+#if !defined(PERSIST_PATH)
+#define PERSIST_PATH "/tmp/rdpproxy"
+#endif
+
 #if !defined(PID_PATH)
 #define PID_PATH "/var/run"
 #endif
