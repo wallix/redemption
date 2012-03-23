@@ -27,23 +27,24 @@
 
 #include <algorithm>
 #include <ostream>
+#include <stdint.h>
 #include "log.hpp"
 
 struct Rect {
-    int x;
-    int y;
-    int cx;
-    int cy;
+    uint16_t x;
+    uint16_t y;
+    uint16_t cx;
+    uint16_t cy;
 
     struct RectIterator {
         virtual void callback(const Rect & rect) = 0;
     };
 
-    int right() const {
+    uint16_t right() const {
         return this->x + this->cx;
     }
 
-    int bottom() const {
+    uint16_t bottom() const {
         return this->y + this->cy;
     }
 
@@ -83,11 +84,11 @@ struct Rect {
         return this->cx <= 0 || this->cy <= 0;
     }
 
-    int getCenteredX() const {
+    uint16_t getCenteredX() const {
         return this->x + (this->cx / 2);
     }
 
-    int getCenteredY() const {
+    uint16_t getCenteredY() const {
         return this->y + (this->cy / 2);
     }
 
@@ -96,24 +97,24 @@ struct Rect {
     }
 
     // compute a new rect containing old rect and given point
-    Rect enlarge_to(int x, int y) const {
+    Rect enlarge_to(uint16_t x, uint16_t y) const {
         if (this->isempty()){
             return Rect(x, y, 1, 1);
         }
         else {
-            const int x0 = std::min(this->x, x);
-            const int y0 = std::min(this->y, y);
-            const int x1 = std::max(this->x + this->cx - 1, x);
-            const int y1 = std::max(this->y + this->cy - 1, y);
+            const uint16_t x0 = std::min<uint16_t>(this->x, x);
+            const uint16_t y0 = std::min<uint16_t>(this->y, y);
+            const uint16_t x1 = std::max<uint16_t>(this->x + this->cx - 1, x);
+            const uint16_t y1 = std::max<uint16_t>(this->y + this->cy - 1, y);
             return Rect(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
         }
     }
 
-    Rect offset(int dx, int dy) const {
+    Rect offset(uint16_t dx, uint16_t dy) const {
         return Rect(this->x + dx, this->y + dy, this->cx, this->cy);
     }
 
-    Rect shrink(int margin) const {
+    Rect shrink(uint16_t margin) const {
         return Rect(this->x + margin, this->y + margin,
                     this->cx - margin * 2, this->cy - margin * 2);
     }
@@ -134,29 +135,28 @@ struct Rect {
         return Rect(this->x + this->cx - 1, this->cy, 1, this->cy);
     }
 
+    Rect intersect(uint16_t width, uint16_t height) const
+    {
+        return this->intersect(Rect(0, 0, width, height));
+    }
+
     Rect intersect(const Rect & in) const
     {
         Rect res(0, 0, 0, 0);
 
         res.x = std::max(in.x, this->x);
         res.y = std::max(in.y, this->y);
-        res.cx = std::min(in.x + in.cx, this->x + this->cx) - res.x;
-        res.cy = std::min(in.y + in.cy, this->y + this->cy) - res.y;
+        uint16_t min_right = std::min(in.x + in.cx, this->x + this->cx);
+        uint16_t min_bottom = std::min(in.y + in.cy, this->y + this->cy);
 
-        // Is it necessary to force empty rect to be canonical ?
-        if (res.isempty()){
-            Rect empty;
-            res = empty;
+        if ((min_right > res.x) && (min_bottom > res.y)){
+            return Rect(std::max(in.x, this->x), std::max(in.y, this->y),
+                        min_right - res.x, min_bottom - res.y);
         }
-        return res;
-    }
-
-    Rect intersect(int w, int h) const
-    {
-        return Rect(this->x,
-                    this->y,
-                    std::min(w - this->x, this->cx),
-                    std::min(h - this->y, this->cy));
+        else {
+            // empty rect
+            return Rect();
+        }
     }
 
     // Ensemblist difference
@@ -165,16 +165,16 @@ struct Rect {
         const Rect & intersect = this->intersect(a);
 
         if (!intersect.isempty()) {
-            if ( (intersect.y - this->y > 0) ) {
+            if (intersect.y  > this->y) {
                 it.callback(Rect(this->x, this->y, this->cx, intersect.y - this->y));
             }
-            if ( ((intersect.x - this->x) > 0) ) {
+            if (intersect.x > this->x) {
                 it.callback(Rect(this->x, intersect.y, intersect.x - this->x, intersect.cy));
             }
-            if ( (((this->x + this->cx) - (intersect.x + intersect.cx)) > 0) ) {
+            if ( ((this->x + this->cx) > (intersect.x + intersect.cx)) ) {
                 it.callback(Rect(intersect.x + intersect.cx, intersect.y, (this->x + this->cx) - (intersect.x + intersect.cx), intersect.cy));
             }
-            if ( ((this->y + this->cy) - (intersect.y + intersect.cy)) > 0 ) {
+            if ((this->y + this->cy) > (intersect.y + intersect.cy)) {
                 it.callback(Rect(this->x, intersect.y + intersect.cy, this->cx, (this->y + this->cy) - (intersect.y + intersect.cy)));
             }
         } else {
@@ -182,42 +182,9 @@ struct Rect {
         }
     }
 
-    /* adjust the bounds to fit in the bitmap */
-    /* return false if there is nothing to draw else return true */
-    bool check_bounds(int* x, int* y, int* cx, int* cy) const
-    {
-        if (*x >= this->cx) {
-            return false;
-        }
-        if (*y >= this->cy) {
-            return false;
-        }
-        if (*x < 0) {
-            *cx += *x;
-            *x = 0;
-        }
-        if (*y < 0) {
-            *cy += *y;
-            *y = 0;
-        }
-        if (*cx <= 0) {
-            return false;
-        }
-        if (*cy <= 0) {
-            return false;
-        }
-        if (*x + *cx > this->cx) {
-            *cx = this->cx - *x;
-        }
-        if (*y + *cy > this->cy) {
-            *cy = this->cy - *y;
-        }
-        return true;
-    }
-
     /*****************************************************************************/
     /* returns boolean */
-    bool rect_contained_by(int left, int top, int right, int bottom) const
+    bool rect_contained_by(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) const
     {
         return !( (left   <  this->x)
                || (top    <  this->y)

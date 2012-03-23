@@ -33,8 +33,8 @@ struct Drawable
 {
     static const std::size_t Bpp = 3;
 
-    int width;
-    int height;
+    uint16_t width;
+    uint16_t height;
     const size_t rowsize;
     unsigned long pix_len;
     uint8_t * data;
@@ -374,21 +374,19 @@ struct Drawable
      * a cache (data) and insert a subpart (srcx, srcy) to the local
      * image cache (this->data) a the given position (rect).
      */
-    void mem_blt(const Rect& rect, const Bitmap & bmp, const unsigned int srcx, const unsigned int srcy, const uint32_t xormask, const bool bgr)
+    void mem_blt(const Rect& rect, const Bitmap & bmp, const uint16_t srcx, const uint16_t srcy, const uint32_t xormask, const bool bgr)
     {
         if (bmp.cx < srcx || bmp.cy < srcy){
             return ;
         }
 
-        const Rect & trect = Rect(
-            rect.x, rect.y,
-            std::min<int>(bmp.cx - srcx,
-                          std::min(this->width - rect.x, rect.cx)),
-            std::min<int>(bmp.cy - srcy,
-                          std::min(this->height - rect.y, rect.cy)));
-        if (trect.isempty()){
-            return ;
+        const int16_t mincx = std::min<int16_t>(bmp.cx - srcx, std::min<int16_t>(this->width - rect.x, rect.cx));
+        const int16_t mincy = std::min<int16_t>(bmp.cy - srcy, std::min<int16_t>(this->height - rect.y, rect.cy));
+
+        if (mincx <= 0 || mincy <= 0){
+            return;
         }
+        const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
 
         TODO("if 8bit, get palette in front")
         BGRPalette palette;
@@ -424,7 +422,7 @@ struct Drawable
 
     void black_color(const Rect & rect)
     {
-        const Rect & trect = rect.intersect(this->width, this->height);
+        const Rect & trect = rect.intersect(Rect(0, 0, this->width, this->height));
         uint8_t * p = this->first_pixel(trect);
         const size_t step = this->rowsize;
         const size_t rect_rowsize = trect.cx * this->Bpp;
@@ -445,7 +443,7 @@ struct Drawable
 
     void invert_color(const Rect & rect)
     {
-        const Rect & trect = rect.intersect(this->width, this->height);
+        const Rect & trect = rect.intersect(Rect(0, 0, this->width, this->height));
         uint8_t * p = this->first_pixel(trect);
         const size_t rect_rowsize = trect.cx * this->Bpp;
         const size_t step = this->rowsize - rect_rowsize;
@@ -1051,14 +1049,14 @@ struct Drawable
         }
     }
 
-    void vertical_line(const int mix_mode, const int x, const int starty, const int endy, const uint32_t color, const Rect & clip)
+    void vertical_line(const uint8_t mix_mode, const uint16_t x, const uint16_t starty, const uint16_t endy, const uint32_t color, const Rect & clip)
     {
         // Color handling
         uint8_t col[3] = { color, color >> 8, color >> 16};
 
         // also base of the new coordinate system
         const unsigned y0 = std::max(starty, clip.y);
-        const unsigned y1 = std::min(endy, clip.y + clip.cy - 1);
+        const unsigned y1 = std::min(endy, (uint16_t)(clip.y + clip.cy - 1));
         const uint16_t & height = Rect(0, 0, this->width, this->height).cx;
 
         // these tests are probably unnecessary if calling code is ok
@@ -1077,10 +1075,10 @@ struct Drawable
         }
     }
 
-    void horizontal_line(const int mix_mode, const int startx, const int y, const int endx, const uint32_t color, const Rect & clip)
+    void horizontal_line(const uint8_t mix_mode, const uint16_t startx, const uint16_t y, const uint16_t endx, const uint32_t color, const Rect & clip)
     {
-        const unsigned x0 = std::max(startx, clip.x);
-        const unsigned x1 = std::min(endx, clip.x + clip.cx - 1);
+        const uint16_t x0 = std::max(startx, clip.x);
+        const uint16_t x1 = std::min(endx, (uint16_t)(clip.x + clip.cx - 1));
         uint8_t col[3] = { color, color >> 8, color >> 16};
         const uint16_t & height = Rect(0, 0, this->width, this->height).cx;
 

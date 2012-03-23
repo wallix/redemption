@@ -299,7 +299,7 @@ struct mod_rdp : public client_mod {
     int share_id;
     int bitmap_compression;
     int version;
-    int userid;
+    uint16_t userid;
 
     char hostname[16];
     char username[128];
@@ -807,7 +807,7 @@ struct mod_rdp : public client_mod {
 // assigned, so that it may validate the user id when it arises later in other
 // requests.
 
-    void recv_mcs_attach_user_confirm_pdu(Transport * trans, int & userid)
+    void recv_mcs_attach_user_confirm_pdu(Transport * trans, uint16_t & userid)
     {
         Stream aucf_stream(32768);
         X224In aucf_tpdu(trans, aucf_stream);
@@ -3186,7 +3186,7 @@ struct mod_rdp : public client_mod {
 
             // A 16-bit, unsigned integer. The color depth of the rectangle
             // data in bits-per-pixel.
-            uint8_t bpp = stream.in_uint16_le();
+            uint8_t bpp = (uint8_t)stream.in_uint16_le();
 
 //            LOG(LOG_ERR, "left=%u top=%u right=%u bottom=%u width=%u height=%u bpp=%u", left, top, right, bottom, width, height, bpp);
 

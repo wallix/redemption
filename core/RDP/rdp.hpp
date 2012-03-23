@@ -259,7 +259,8 @@ class ShareDataOut
     uint8_t offlen;
     public:
     ShareDataOut(Stream & stream, uint8_t pdu_type2, uint32_t share_id, uint8_t streamid)
-        : stream(stream), offlen(stream.p - stream.data)
+        : stream(stream)
+        , offlen(stream.p - stream.data)
     {
         stream.out_uint32_le(share_id);
         stream.out_uint8(0); // pad1
