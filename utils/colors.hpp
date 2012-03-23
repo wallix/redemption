@@ -61,18 +61,18 @@ static inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, cons
     case 15:
     {
         // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 b1 b2 b3 b4 b5
-        uint8_t r = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
-        uint8_t g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
-        uint8_t b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
+        const BGRColor r = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
+        const BGRColor g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
+        const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
         return (r << 16) | (g << 8) | b;
     }
     break;
     case 16:
     {
         // r1 r2 r3 r4 r5 g1 g2 g3 g4 g5 g6 b1 b2 b3 b4 b5
-        uint8_t r = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
-        uint8_t g = ((c >> 3) & 0xfc) | ((c >>  9) & 0x3); // g1 g2 g3 g4 g5 g6 g1 g2
-        uint8_t b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
+        const BGRColor r = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
+        const BGRColor g = ((c >> 3) & 0xfc) | ((c >>  9) & 0x3); // g1 g2 g3 g4 g5 g6 g1 g2
+        const BGRColor b = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
         return (r << 16) | (g << 8) | b;
     }
     case 32:
@@ -94,18 +94,18 @@ static inline BGRColor color_decode_opaquerect(const BGRColor c, const uint8_t i
     case 15:
     {
         //  b1 b2 b3 b4 b5 g1 g2 g3 g4 g5r1 r2 r3 r4 r5
-        uint8_t b = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
-        uint8_t g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
-        uint8_t r = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
+        const BGRColor b = ((c >> 7) & 0xf8) | ((c >> 12) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
+        const BGRColor g = ((c >> 2) & 0xf8) | ((c >>  7) & 0x7); // g1 g2 g3 g4 g5 g1 g2 g3
+        const BGRColor r = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // r1 r2 r3 r4 r5 r1 r2 r3
         return (r << 16) | (g << 8) | b;
     }
     break;
     case 16:
     {
         //  b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
-        uint8_t b = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
-        uint8_t g = ((c >> 3) & 0xfc) | ((c >>  9) & 0x3); // g1 g2 g3 g4 g5 g6 g1 g2
-        uint8_t r = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
+        const BGRColor b = ((c >> 8) & 0xf8) | ((c >> 13) & 0x7); // b1 b2 b3 b4 b5 b1 b2 b3
+        const BGRColor g = ((c >> 3) & 0xfc) | ((c >>  9) & 0x3); // g1 g2 g3 g4 g5 g6 g1 g2
+        const BGRColor r = ((c << 3) & 0xf8) | ((c >>  2) & 0x7); // r1 r2 r3 r4 r5 r6 r7 r8
         return (r << 16) | (g << 8) | b;
     }
     case 32:

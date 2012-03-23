@@ -31,12 +31,12 @@ class Bitmap;
 struct BmpCache {
 
     const uint8_t bpp;
-    uint32_t small_entries;
-    uint32_t small_size;
-    uint32_t medium_entries;
-    uint32_t medium_size;
-    uint32_t big_entries;
-    uint32_t big_size;
+    uint16_t small_entries;
+    uint16_t small_size;
+    uint16_t medium_entries;
+    uint16_t medium_size;
+    uint16_t big_entries;
+    uint16_t big_size;
 
     const Bitmap * cache[3][8192];
     uint32_t stamps[3][8192];
@@ -45,9 +45,9 @@ struct BmpCache {
     uint32_t stamp;
     public:
         BmpCache(const uint8_t bpp,
-                 uint32_t small_entries = 8192, uint32_t small_size = 768,
-                 uint32_t medium_entries = 8192, uint32_t medium_size = 3072,
-                 uint32_t big_entries = 8192, uint32_t big_size = 12288)
+                 uint16_t small_entries = 8192, uint16_t small_size = 768,
+                 uint16_t medium_entries = 8192, uint16_t medium_size = 3072,
+                 uint16_t big_entries = 8192, uint16_t big_size = 12288)
             : bpp(bpp)
             , small_entries(small_entries)
             , small_size(small_size)

@@ -27,14 +27,14 @@
 #include <stdint.h>
 #include <assert.h>
 
-static inline uint32_t align4(int value)
+static inline uint16_t align4(int value)
 {
     return (value+3) & ~3;
 }
 
-static inline uint32_t nbbytes(unsigned value)
+static inline uint8_t nbbytes(unsigned value)
 {
-    return ((value+7) / 8);
+    return (uint8_t)((value+7) / 8);
 }
 
 static inline void out_bytes_le(uint8_t * ptr, const uint8_t nb, const unsigned value)
@@ -53,7 +53,7 @@ static inline unsigned in_bytes_le(const uint8_t nb, const uint8_t * ptr)
     return res;
 }
 
-static inline uint32_t row_size(int width, uint8_t bpp)
+static inline uint16_t row_size(uint16_t width, uint8_t bpp)
 {
     return align4(width * nbbytes(bpp));
 }

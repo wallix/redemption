@@ -59,14 +59,14 @@ struct Bitmap {
 
     uint8_t original_bpp;
     BGRPalette original_palette;
-    unsigned cx;
-    unsigned cy;
+    uint16_t cx;
+    uint16_t cy;
 
     public:
     size_t line_size;
     size_t bmp_size;
 
-    Bitmap(uint8_t bpp, const BGRPalette * palette, unsigned cx, unsigned cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
+    Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
         : data_bitmap(0)
         , original_bpp(bpp)
         , cx(cx)
@@ -110,7 +110,7 @@ struct Bitmap {
         : data_bitmap(0)
         , original_bpp(src_bmp.original_bpp)
         , cx(align4(r.cx))
-        , cy(r.cy)
+        , cy((uint16_t)r.cy)
         , line_size(this->cx * nbbytes(src_bmp.original_bpp))
         , bmp_size(row_size(align4(this->cx), src_bmp.original_bpp) * this->cy)
     {
@@ -307,14 +307,14 @@ struct Bitmap {
             stream.end = stream.data + size;
         }
 
-        this->cx = header.image_width;
-        this->cy = header.image_height;
+        this->cx = (uint16_t)(header.image_width);
+        this->cy = (uint16_t)header.image_height;
         this->line_size = this->cx * nbbytes(this->original_bpp);
         this->bmp_size = row_size(align4(this->cx), this->original_bpp) * this->cy;
         this->data_bitmap  = (uint8_t*)malloc(this->bmp_size);
         uint8_t * dest = this->data_bitmap;
         const uint8_t nbbytes_dest = ::nbbytes(this->original_bpp);
-        const uint16_t padded_line_size = this->bmp_size / this->cy;
+        const uint16_t padded_line_size = (uint16_t)(this->bmp_size / this->cy);
 
         int k = 0;
         for (unsigned y = 0; y < this->cy ; y++) {
@@ -344,7 +344,7 @@ struct Bitmap {
                 break;
                 }
 
-                uint32_t px = color_decode(pixel, header.bit_count, palette1);
+                uint32_t px = color_decode(pixel, (uint8_t)header.bit_count, palette1);
 
                 switch (this->original_bpp)
                 {
@@ -416,7 +416,7 @@ private:
     {
         const uint8_t Bpp = nbbytes(this->original_bpp);
         TODO(" without this evil alnment we are expirimenting problems with VNC bitmaps  but there should be a better fix.")
-        this->cx = align4(cx);
+        this->cx = (uint16_t)align4(cx);
         uint8_t * d8 = this->data_bitmap + (this->cy-1) * this->line_size;
         const uint8_t * s8 = input;
         uint32_t src_width = cx * Bpp;
@@ -556,7 +556,7 @@ private:
                 }
             break;
             default:
-                opcode = code >> 5; // FILL, MIX, FOM, COLOR, COPY
+                opcode = (uint8_t)(code >> 5); // FILL, MIX, FOM, COLOR, COPY
                 count = code & 0x1f;
                 if (!count){
                     count = input[0] + 32; input++;
@@ -769,7 +769,7 @@ public:
         for (i = 0 ; i < count; i++, p += Bpp)
         {
             if (get_pixel(Bpp, p) != get_pixel_above(Bpp, pmin, p)){
-                mask[i>>3] |= (0x01 << (i & 7));
+                mask[i>>3] |= (uint8_t)(0x01 << (i & 7));
             }
         }
     }
@@ -1059,7 +1059,7 @@ public:
         SSL_SHA1 sha1;
         ssllib ssl;
         ssl.sha1_init(&sha1);
-        uint16_t rowsize = this->cx * nbbytes(this->original_bpp);
+        uint16_t rowsize = (uint16_t)(this->cx * nbbytes(this->original_bpp));
         for (size_t y = 0; y < (size_t)this->cy; y++){
             ssl.sha1_update(&sha1, this->data_bitmap + y * rowsize, rowsize);
         }
@@ -1132,7 +1132,7 @@ public:
         free(this->data_bitmap);
     }
 
-    size_t convert_data_bitmap(int out_bpp, uint8_t * dest) const {
+    size_t convert_data_bitmap(uint8_t out_bpp, uint8_t * dest) const {
 
         uint8_t * src = this->data_bitmap;
         const uint8_t src_nbbytes = nbbytes(this->original_bpp);

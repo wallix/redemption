@@ -95,10 +95,11 @@ class Stream {
         return (this->end - this->data + n) <= this->capacity;
     }
 
+    TODO("set_length is only used once in code, we should probably remove it")
     void set_length(int offset, uint8_t * const length_ptr){
-        uint16_t length = this->p - length_ptr + offset;
-        length_ptr[0] = length;
-        length_ptr[1] = (length >> 8);
+        uint16_t length = (uint16_t)(this->p - length_ptr + offset);
+        length_ptr[0] = (uint8_t)length;
+        length_ptr[1] = (uint8_t)(length >> 8);
     }
 
     int free_size(){
@@ -123,13 +124,13 @@ class Stream {
         return *((unsigned char*)(this->p++));
     }
 
-    signed int in_sint16_be(void) {
+    int16_t in_sint16_be(void) {
         assert(check_rem(2));
         unsigned int v = this->in_uint16_be();
         return (v > 32767)?v - 65536:v;
     }
 
-    signed int in_sint16_le(void) {
+    int16_t in_sint16_le(void) {
         assert(check_rem(2));
         unsigned int v = this->in_uint16_le();
         return (v > 32767)?v - 65536:v;
@@ -141,16 +142,16 @@ class Stream {
         return ::in_bytes_le(nb, this->p - nb);
     }
 
-    unsigned int in_uint16_le(void) {
+    uint16_t in_uint16_le(void) {
         assert(check_rem(2));
         this->p += 2;
-        return ((unsigned char*)this->p)[-2] + ((unsigned char*)this->p)[-1] * 256;
+        return (uint16_t)(this->p[-2] | (this->p[-1] << 8));
     }
 
-    unsigned int in_uint16_be(void) {
+    uint16_t in_uint16_be(void) {
         assert(check_rem(2));
         this->p += 2;
-        return ((unsigned char*)this->p)[-1] + ((unsigned char*)this->p)[-2] * 256;
+        return (uint16_t)(this->p[-1] | (this->p[-2] << 8)) ;
     }
 
     unsigned int in_uint32_le(void) {
@@ -222,7 +223,7 @@ class Stream {
 
     void out_2BUE(uint16_t v){
         if (v <= 127){
-            this->out_uint8(v);
+            this->out_uint8((uint8_t)v);
         }
         else {
             this->out_uint16_be(v|0x8000);
@@ -231,7 +232,7 @@ class Stream {
 
     void set_out_2BUE(uint16_t v, size_t offset){
         if (v <= 127){
-            this->set_out_uint8(v, offset);
+            this->set_out_uint8((uint8_t)v, offset);
         }
         else {
             this->set_out_uint16_be(v|0x8000, offset);
@@ -277,7 +278,7 @@ class Stream {
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p[2] = (v >> 16) & 0xFF;
-        this->p[3] = (v >> 24) & 0xFF;
+        this->p[3] = (uint8_t)(v >> 24) & 0xFF;
         this->p+=4;
     }
 
@@ -285,12 +286,12 @@ class Stream {
         this->data[offset+0] = v & 0xFF;
         this->data[offset+1] = (v >> 8) & 0xFF;
         this->data[offset+2] = (v >> 16) & 0xFF;
-        this->data[offset+3] = (v >> 24) & 0xFF;
+        this->data[offset+3] = (uint8_t)(v >> 24) & 0xFF;
     }
 
     void out_uint32_be(unsigned int v) {
         assert(has_room(4));
-        this->p[0] = (v >> 24) & 0xFF;
+        this->p[0] = (uint8_t)(v >> 24) & 0xFF;
         this->p[1] = (v >> 16) & 0xFF;
         this->p[2] = (v >> 8) & 0xFF;
         this->p[3] = v & 0xFF;
@@ -299,7 +300,7 @@ class Stream {
 
     void set_out_uint32_be(unsigned int v, size_t offset) {
         assert(has_room(4));
-        this->data[offset+0] = (v >> 24) & 0xFF;
+        this->data[offset+0] = (uint8_t)(v >> 24) & 0xFF;
         this->data[offset+1] = (v >> 16) & 0xFF;
         this->data[offset+2] = (v >> 8) & 0xFF;
         this->data[offset+3] = v & 0xFF;
@@ -308,46 +309,46 @@ class Stream {
     void out_ber_int8(unsigned int v){
         this->out_uint8(BER_TAG_INTEGER);
         this->out_uint8(1);
-        this->out_uint8(v);
+        this->out_uint8((uint8_t)v);
     }
 
     void set_out_ber_int8(unsigned int v, size_t offset){
         this->set_out_uint8(BER_TAG_INTEGER, offset);
         this->set_out_uint8(1, offset+1);
-        this->set_out_uint8(v, offset+2);
+        this->set_out_uint8((uint8_t)v, offset+2);
     }
 
     void out_ber_int16(int value)
     {
         this->out_uint8(BER_TAG_INTEGER);
         this->out_uint8(2);
-        this->out_uint8((value >> 8));
-        this->out_uint8(value);
+        this->out_uint8((uint8_t)(value >> 8));
+        this->out_uint8((uint8_t)value);
     }
 
     void set_out_ber_int16(unsigned int v, size_t offset){
         this->set_out_uint8(BER_TAG_INTEGER, offset);
         this->set_out_uint8(2,               offset+1);
-        this->set_out_uint8(v >> 8,          offset+2);
-        this->set_out_uint8(v,               offset+3);
+        this->set_out_uint8((uint8_t)(v >> 8),          offset+2);
+        this->set_out_uint8((uint8_t)v,               offset+3);
     }
 
     void out_ber_int24(int value)
     {
         this->out_uint8(BER_TAG_INTEGER);
         this->out_uint8(3);
-        this->out_uint8(value >> 16);
-        this->out_uint8(value >> 8);
-        this->out_uint8(value);
+        this->out_uint8((uint8_t)(value >> 16));
+        this->out_uint8((uint8_t)(value >> 8));
+        this->out_uint8((uint8_t)value);
     }
 
     void set_out_ber_int24(int value, size_t offset)
     {
         this->set_out_uint8(BER_TAG_INTEGER, offset);
         this->set_out_uint8(3,               offset+1);
-        this->set_out_uint8(value >> 16,     offset+2);
-        this->set_out_uint8(value >> 8,      offset+3);
-        this->set_out_uint8(value,           offset+4);
+        this->set_out_uint8((uint8_t)(value >> 16),     offset+2);
+        this->set_out_uint8((uint8_t)(value >> 8),      offset+3);
+        this->set_out_uint8((uint8_t)value,           offset+4);
     }
 
     void out_ber_len(unsigned int v){
@@ -357,7 +358,7 @@ class Stream {
             this->out_uint16_be(v);
         }
         else {
-            this->out_uint8(v);
+            this->out_uint8((uint8_t)v);
         }
     }
 
@@ -366,7 +367,7 @@ class Stream {
             LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
             throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
         }
-        this->set_out_uint8(v, offset+0);
+        this->set_out_uint8((uint8_t)v, offset+0);
     }
 
     void out_ber_len_uint7(unsigned int v){
@@ -374,7 +375,7 @@ class Stream {
             LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
             throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
         }
-        this->out_uint8(v);
+        this->out_uint8((uint8_t)v);
     }
 
     void set_out_ber_len_uint16(unsigned int v, size_t offset){
@@ -394,14 +395,14 @@ class Stream {
             this->set_out_uint16_be(v, offset+1);
         }
         else {
-            this->data[offset+0] = v;
+            this->data[offset+0] = (uint8_t)v;
         }
     }
 
     unsigned int in_ber_len(void) {
         uint8_t l = this->in_uint8();
         if (l & 0x80) {
-            const uint8_t nbbytes = l & ~0x80;
+            const uint8_t nbbytes = (uint8_t)(l & ~0x80);
             unsigned int len = 0;
             for (uint8_t i = 0 ; i < nbbytes ; i++) {
                 len = (len << 8) | this->in_uint8();
@@ -508,14 +509,14 @@ class Stream {
     /*****************************************************************************/
     void out_count(const int in_count, const int mask){
         if (in_count < 32) {
-            this->out_uint8((mask << 5) | in_count);
+            this->out_uint8((uint8_t)((mask << 5) | in_count));
         }
         else if (in_count < 256 + 32){
-            this->out_uint8(mask << 5);
-            this->out_uint8(in_count - 32);
+            this->out_uint8((uint8_t)(mask << 5));
+            this->out_uint8((uint8_t)(in_count - 32));
         }
         else {
-            this->out_uint8(0xf0 | mask);
+            this->out_uint8((uint8_t)(0xf0 | mask));
             this->out_uint16_le(in_count);
         }
     }
@@ -614,11 +615,11 @@ class Stream {
     {
         const uint8_t mask = 0x06;
         if (in_count < 16) {
-            this->out_uint8(0xc0 | in_count);
+            this->out_uint8((uint8_t)(0xc0 | in_count));
         }
         else if (in_count < 256 + 16){
             this->out_uint8(0xc0);
-            this->out_uint8(in_count - 16);
+            this->out_uint8((uint8_t)(in_count - 16));
         }
         else {
             this->out_uint8(0xf0 | mask);
@@ -707,10 +708,10 @@ class Stream {
         if (in_count < 256){
             if (in_count & 7){
                 this->out_uint8(0x40);
-                this->out_uint8(in_count - 1);
+                this->out_uint8((uint8_t)(in_count - 1));
             }
             else{
-                this->out_uint8(0x40 | (in_count >> 3));
+                this->out_uint8((uint8_t)(0x40 | (in_count >> 3)));
             }
         }
         else{
@@ -729,10 +730,10 @@ class Stream {
         if (in_count < 256){
             if (in_count & 0x87){
                 this->out_uint8(0xD0);
-                this->out_uint8(in_count - 1);
+                this->out_uint8((uint8_t)(in_count - 1));
             }
             else{
-                this->out_uint8(0xD0 | (in_count >> 3));
+                this->out_uint8((uint8_t)(0xD0 | (in_count >> 3)));
             }
         }
         else{
@@ -859,11 +860,11 @@ class Stream {
     {
         const uint8_t mask = 0x08;
         if (in_count / 2 < 16){
-            this->out_uint8(0xe0 | (in_count / 2));
+            this->out_uint8((uint8_t)(0xe0 | (in_count / 2)));
         }
         else if (in_count / 2 < 256 + 16){
-            this->out_uint8(0xe0);
-            this->out_uint8(in_count / 2 - 16);
+            this->out_uint8((uint8_t)0xe0);
+            this->out_uint8((uint8_t)(in_count / 2 - 16));
         }
         else{
             this->out_uint8(0xf | mask);

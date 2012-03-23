@@ -44,6 +44,7 @@ project redemption
     <cxxflags>-Wconversion
 #    <cxxflags>-Wvla
 #    <cxxflags>-Wlong-long
+    <cxxflags>-O3
     : default-build release
 
 ;
