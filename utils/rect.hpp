@@ -41,14 +41,14 @@ struct Rect {
     };
 
     uint16_t right() const {
-        return this->x + this->cx;
+        return (uint16_t)(this->x + this->cx);
     }
 
     uint16_t bottom() const {
-        return this->y + this->cy;
+        return (uint16_t)(this->y + this->cy);
     }
 
-    Rect(int left = 0, int top = 0, int width = 0, int height = 0)
+    Rect(uint16_t left = 0, uint16_t top = 0, uint16_t width = 0, uint16_t height = 0)
         : x(left), y(top), cx(width), cy(height)
     {
     }
@@ -85,11 +85,11 @@ struct Rect {
     }
 
     uint16_t getCenteredX() const {
-        return this->x + (this->cx / 2);
+        return (uint16_t)(this->x + (this->cx / 2));
     }
 
     uint16_t getCenteredY() const {
-        return this->y + (this->cy / 2);
+        return (uint16_t)(this->y + (this->cy / 2));
     }
 
     Rect wh() const {
@@ -104,19 +104,25 @@ struct Rect {
         else {
             const uint16_t x0 = std::min<uint16_t>(this->x, x);
             const uint16_t y0 = std::min<uint16_t>(this->y, y);
-            const uint16_t x1 = std::max<uint16_t>(this->x + this->cx - 1, x);
-            const uint16_t y1 = std::max<uint16_t>(this->y + this->cy - 1, y);
-            return Rect(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+            const uint16_t x1 = std::max<uint16_t>((uint16_t)(this->x + this->cx - 1), x);
+            const uint16_t y1 = std::max<uint16_t>((uint16_t)(this->y + this->cy - 1), y);
+            return Rect(x0, y0, (uint16_t)(x1 - x0 + 1), (uint16_t)(y1 - y0 + 1));
         }
     }
 
-    Rect offset(uint16_t dx, uint16_t dy) const {
-        return Rect(this->x + dx, this->y + dy, this->cx, this->cy);
+    Rect offset(int dx, int dy) const {
+        if ((this->x + dx > 0) && (this->y + dy > 0)){
+            return Rect((uint16_t)(this->x + dx), (uint16_t)(this->y + dy), this->cx, this->cy);
+        }
+        else {
+            TODO("Should we remove the part of the rectangle that is outside screen in this case. doing so we may get something that is not a rectangle... for now we just return an empty rect")
+            return Rect();
+        }
     }
 
     Rect shrink(uint16_t margin) const {
-        return Rect(this->x + margin, this->y + margin,
-                    this->cx - margin * 2, this->cy - margin * 2);
+        return Rect((uint16_t)(this->x + margin), (uint16_t)(this->y + margin),
+                    (uint16_t)(this->cx - margin * 2), (uint16_t)(this->cy - margin * 2));
     }
 
     Rect upper_side() const {
@@ -128,11 +134,11 @@ struct Rect {
     }
 
     Rect lower_side() const {
-        return Rect(this->x, this->y + this->cy - 1, this->cx, 1);
+        return Rect(this->x, (uint16_t)(this->y + this->cy - 1), this->cx, 1);
     }
 
     Rect right_side() const {
-        return Rect(this->x + this->cx - 1, this->cy, 1, this->cy);
+        return Rect((uint16_t)(this->x + this->cx - 1), this->cy, 1, this->cy);
     }
 
     Rect intersect(uint16_t width, uint16_t height) const
@@ -146,12 +152,12 @@ struct Rect {
 
         res.x = std::max(in.x, this->x);
         res.y = std::max(in.y, this->y);
-        uint16_t min_right = std::min(in.x + in.cx, this->x + this->cx);
-        uint16_t min_bottom = std::min(in.y + in.cy, this->y + this->cy);
+        uint16_t min_right = std::min<uint16_t>((uint16_t)(in.x + in.cx), (uint16_t)(this->x + this->cx));
+        uint16_t min_bottom = std::min<uint16_t>((uint16_t)(in.y + in.cy), (uint16_t)(this->y + this->cy));
 
         if ((min_right > res.x) && (min_bottom > res.y)){
             return Rect(std::max(in.x, this->x), std::max(in.y, this->y),
-                        min_right - res.x, min_bottom - res.y);
+                        (uint16_t)(min_right - res.x), (uint16_t)(min_bottom - res.y));
         }
         else {
             // empty rect
@@ -166,16 +172,20 @@ struct Rect {
 
         if (!intersect.isempty()) {
             if (intersect.y  > this->y) {
-                it.callback(Rect(this->x, this->y, this->cx, intersect.y - this->y));
+                it.callback(Rect(this->x, this->y, this->cx, (uint16_t)(intersect.y - this->y)));
             }
             if (intersect.x > this->x) {
-                it.callback(Rect(this->x, intersect.y, intersect.x - this->x, intersect.cy));
+                it.callback(Rect(this->x, intersect.y, (uint16_t)(intersect.x - this->x), intersect.cy));
             }
             if ( ((this->x + this->cx) > (intersect.x + intersect.cx)) ) {
-                it.callback(Rect(intersect.x + intersect.cx, intersect.y, (this->x + this->cx) - (intersect.x + intersect.cx), intersect.cy));
+                it.callback(Rect((uint16_t)(intersect.x + intersect.cx), intersect.y,
+                                (uint16_t)((this->x + this->cx) - (intersect.x + intersect.cx)),
+                                intersect.cy));
             }
             if ((this->y + this->cy) > (intersect.y + intersect.cy)) {
-                it.callback(Rect(this->x, intersect.y + intersect.cy, this->cx, (this->y + this->cy) - (intersect.y + intersect.cy)));
+                it.callback(Rect(this->x, (uint16_t)(intersect.y + intersect.cy),
+                                this->cx,
+                                (uint16_t)((this->y + this->cy) - (intersect.y + intersect.cy))));
             }
         } else {
             it.callback(*this);

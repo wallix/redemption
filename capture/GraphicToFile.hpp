@@ -196,7 +196,7 @@ struct GraphicsToFile : public RDPSerializer
                 LOG(LOG_INFO, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
             }
 
-            uint16_t chunk_size = this->stream.p - this->stream.data;
+            uint16_t chunk_size = (uint16_t)(this->stream.p - this->stream.data);
             this->stream.set_out_uint16_le(this->chunk_type, this->offset_chunk_type);
             this->stream.set_out_uint16_le(chunk_size, this->offset_chunk_size);
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
