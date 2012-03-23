@@ -30,8 +30,7 @@
 
 struct null_mod : public client_mod {
 
-    null_mod(struct ModContext & context, FrontAPI & front)
-            : client_mod(front)
+    null_mod(FrontAPI & front) : client_mod(front, 0, 0)
     {
 
     }

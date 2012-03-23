@@ -68,14 +68,10 @@ struct mod_vnc : public client_mod {
     uint8_t green_shift;
     uint8_t blue_shift;
     BGRPalette palette332;
-    uint16_t front_width;
-    uint16_t front_height;
 
     mod_vnc(Transport * t, struct ModContext & context, struct FrontAPI & front, int keylayout, uint16_t front_width, uint16_t front_height)
         :
-        client_mod(front),
-        front_width(front_width),
-        front_height(front_height)
+        client_mod(front, front_width, front_height)
     {
         init_palette332(this->palette332);
         const char * password = context.get(STRAUTHID_TARGET_PASSWORD);

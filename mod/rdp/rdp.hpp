@@ -227,7 +227,7 @@ struct rdp_orders {
                 RDPPrimaryOrderHeader header = this->common.receive(stream, control);
                 const Rect & cmd_clip = ((control & BOUNDS)
                                       ? this->common.clip
-                                    : Rect(0, 0, mod->front.get_front_width(), mod->front.get_front_height()));
+                                    : Rect(0, 0, mod->front_width, mod->front_height));
 //                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
                 case GLYPHINDEX:
@@ -338,38 +338,76 @@ struct mod_rdp : public client_mod {
     const bool console_session;
     const int brush_cache_code;
     const uint8_t front_bpp;
-    uint8_t front_width;
-    uint8_t front_height;
 
-    mod_rdp(Transport * trans, wait_obj & event,
+    mod_rdp(Transport * trans,
+            wait_obj & event,
             const char * target_user,
             const char * target_password,
             struct FrontAPI & front,
-            const char * hostname, int keylayout,
-            const bool console_session,
-            const int brush_cache_code,
-            const uint8_t front_bpp,
-            const uint16_t front_width,
-            const uint16_t front_heigth)
+            const char * hostname,
+            const ClientInfo & info)
             :
-                client_mod(front),
+                client_mod(front, info.width, info.height),
                     in_stream(65536),
                     trans(trans),
                     event(event),
                     use_rdp5(1),
-                    keylayout(keylayout),
+                    keylayout(info.keylayout),
                     lic_layer(hostname),
                     userid(0),
                     bpp(bpp),
                     crypt_level(0),
                     connection_finalization_state(EARLY),
                     state(MOD_RDP_CONNECTING),
-                    console_session(console_session),
-                    brush_cache_code(brush_cache_code),
-                    front_bpp(front_bpp),
-                    front_width(front_width),
-                    front_height(front_height)
+                    console_session(info.console_session),
+                    brush_cache_code(info.brush_cache_code),
+                    front_bpp(info.bpp)
+
+//    mod_rdp(Transport * trans,
+//            wait_obj & event,
+//            const char * target_user,
+//            const char * target_password,
+//            struct FrontAPI & front,
+//            const char * hostname,
+//            int keylayout,
+//            const bool console_session,
+//            const int brush_cache_code,
+//            const uint8_t front_bpp,
+//            const uint16_t front_width,
+//            const uint16_t front_heigth)
+//            :
+//                client_mod(front, front_width, front_height),
+//                    in_stream(65536),
+//                    trans(trans),
+//                    event(event),
+//                    use_rdp5(1),
+//                    keylayout(keylayout),
+//                    lic_layer(hostname),
+//                    userid(0),
+//                    bpp(bpp),
+//                    crypt_level(0),
+//                    connection_finalization_state(EARLY),
+//                    state(MOD_RDP_CONNECTING),
+//                    console_session(console_session),
+//                    brush_cache_code(brush_cache_code),
+//                    front_bpp(front_bpp)
     {
+
+            if (this->front_width != this->front.get_front_width()){
+                LOG(LOG_INFO, "constructor incoherence in front: front_width=%u front.client_info.width=%u",
+                    this->front_width,
+                    this->front.get_front_width());
+                    exit(0);
+            }
+
+            if (this->front_height != this->front.get_front_height()){
+                LOG(LOG_INFO, "constructor incoherence in front: front_height=%u front_height=%u front.client_info.height=%u",
+                    front_height,
+                    this->front_height,
+                    this->front.get_front_height());
+                    exit(0);
+            }
+
         LOG(LOG_INFO, "Creation of new mod 'RDP'");
         // from rdp_sec
         memset(this->client_crypt_random, 0, 512);
@@ -838,8 +876,6 @@ struct mod_rdp : public client_mod {
     {
         try{
 
-        int width = this->front.get_front_width();
-        int height = this->front.get_front_height();
         char * hostname = this->hostname;
 
         switch (this->state){
@@ -885,8 +921,22 @@ struct mod_rdp : public client_mod {
             //    | <------------MCS Connect Response PDU with------------- |
             //                   GCC conference Create Response
 
+            if (this->front_width != this->front.get_front_width()){
+                LOG(LOG_INFO, "incoherence in front: front_width=%u front.client_info.width=%u",
+                    this->front_width,
+                    this->front.get_front_width());
+                    exit(0);
+            }
+
+            if (this->front_height != this->front.get_front_height()){
+                LOG(LOG_INFO, "incoherence in front: front_height=%u front.client_info.height=%u",
+                    this->front_height,
+                    this->front.get_front_height());
+                    exit(0);
+            }
+
             this->send_mcs_connect_initial_pdu_with_gcc_conference_create_request(
-                    this->trans, this->front.get_channel_list(), width, height, this->front_bpp, keylayout, hostname);
+                    this->trans, this->front.get_channel_list(), this->front_width, this->front_height, this->front_bpp, keylayout, hostname);
 
             this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
         break;
@@ -1879,9 +1929,9 @@ struct mod_rdp : public client_mod {
     void send_mcs_connect_initial_pdu_with_gcc_conference_create_request(
             Transport * trans,
             const ChannelList & channel_list,
-            int width,
-            int height,
-            int rdp_bpp,
+            const uint16_t width,
+            const uint16_t height,
+            const uint8_t rdp_bpp,
             int keylayout,
             char * hostname){
 

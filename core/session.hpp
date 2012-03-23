@@ -211,7 +211,8 @@ struct Session {
         }
 
         this->front = new Front(this->trans, ini);
-        this->no_mod = new null_mod(*this->context, *(this->front));
+        this->no_mod = new null_mod(*(this->front));
+        this->front->init_mod();
         this->mod = this->no_mod;
 
         /* module interface */
@@ -658,7 +659,10 @@ struct Session {
                         LOG(LOG_INFO, "Creation of new mod 'CLI parse'");
                     }
                     this->back_event = new wait_obj(-1);
-                    this->mod = new cli_mod(*this->context, *(this->front));
+                    this->front->init_mod();
+                    this->mod = new cli_mod(*this->context, *(this->front),
+                                            this->front->client_info.width,
+                                            this->front->client_info.height);
                     this->back_event->set();
                     if (this->verbose){
                         LOG(LOG_INFO, "Creation of new mod 'CLI parse' suceeded");
@@ -672,7 +676,10 @@ struct Session {
                         LOG(LOG_INFO, "Creation of new mod 'TRANSITORY'");
                     }
                     this->back_event = new wait_obj(-1);
-                    this->mod = new transitory_mod(*this->context, *(this->front));
+                    this->front->init_mod();
+                    this->mod = new transitory_mod(*(this->front),
+                                                   this->front->client_info.width,
+                                                   this->front->client_info.height);
                     // Transitory finish immediately
                     this->back_event->set();
                     if (this->verbose){
@@ -693,6 +700,7 @@ struct Session {
                             if (this->context->get(STRAUTHID_AUTH_ERROR_MESSAGE)[0] == 0){
                                 this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection to server failed");
                             }
+                            this->front->init_mod();
                             this->mod = new close_mod(this->back_event, *this->context,
                                                       *this->front,
                                                       this->front->client_info.width,
@@ -713,6 +721,7 @@ struct Session {
                             }
                             message = this->context->get(STRAUTHID_MESSAGE);
                             button = this->context->get(STRAUTHID_TRANS_BUTTON_REFUSED);
+                            this->front->init_mod();
                             this->mod = new dialog_mod(
                                             this->back_event,
                                             *this->context,
@@ -737,6 +746,7 @@ struct Session {
                             }
                             message = this->context->get(STRAUTHID_MESSAGE);
                             button = NULL;
+                            this->front->init_mod();
                             this->mod = new dialog_mod(
                                             this->back_event,
                                             *this->context,
@@ -755,6 +765,7 @@ struct Session {
                             if (this->verbose){
                                 LOG(LOG_INFO, "Creation of internal module 'Login'");
                             }
+                            this->front->init_mod();
                             this->mod = new login_mod(
                                             this->back_event,
                                              *this->context,
@@ -770,6 +781,7 @@ struct Session {
                             if (this->verbose){
                                 LOG(LOG_INFO, "Creation of internal module 'bouncer2'");
                             }
+                            this->front->init_mod();
                             this->mod = new bouncer2_mod(this->back_event,
                                                          *this->front,
                                                          this->front->client_info.width,
@@ -783,6 +795,7 @@ struct Session {
                             if (this->verbose){
                                 LOG(LOG_INFO, "Creation of internal module 'test'");
                             }
+                            this->front->init_mod();
                             this->mod = new test_internal_mod(
                                             this->back_event,
                                             *this->context,
@@ -798,6 +811,7 @@ struct Session {
                             if (this->verbose){
                                 LOG(LOG_INFO, "Creation of internal module 'test_card'");
                             }
+                            this->front->init_mod();
                             this->mod = new test_card_mod(
                                             this->back_event,
                                             *this->front,
@@ -812,6 +826,7 @@ struct Session {
                             if (this->verbose){
                                 LOG(LOG_INFO, "Creation of internal module 'selector'");
                             }
+                            this->front->init_mod();
                             this->mod = new selector_mod(
                                             this->back_event,
                                             *this->context,
@@ -841,7 +856,10 @@ struct Session {
                                     4, 2500000);
                     SocketTransport * t = new SocketTransport(name, sck, this->ini->globals.debug.mod_xup);
                     this->back_event = new wait_obj(t->sck);
-                    this->mod = new xup_mod(t, *this->context, *(this->front));
+                    this->front->init_mod();
+                    this->mod = new xup_mod(t, *this->context, *(this->front),
+                                            this->front->client_info.width,
+                                            this->front->client_info.height);
                     this->mod->draw_event();
 //                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                     if (this->verbose){
@@ -874,19 +892,39 @@ struct Session {
                     // this->context->get_bool(STRAUTHID_OPT_CLIPBOARD)
                     // enable or disable device redirection
                     // this->context->get_bool(STRAUTHID_OPT_DEVICEREDIRECTION)
+                    this->front->init_mod();
+
+                    const ClientInfo & info = this->front->client_info;
+
                     this->mod = new mod_rdp(t,
                                         *this->back_event,
                                         this->context->get(STRAUTHID_TARGET_USER),
                                         this->context->get(STRAUTHID_TARGET_PASSWORD),
                                         *this->front,
                                         hostname,
-                                        this->front->client_info.keylayout,
-                                        this->front->client_info.console_session,
-                                        this->front->client_info.brush_cache_code,
-                                        this->front->client_info.bpp,
-                                        this->front->client_info.width,
-                                        this->front->client_info.height);
+                                        info);
+//                                        this->front->client_info.keylayout,
+//                                        this->front->client_info.console_session,
+//                                        this->front->client_info.brush_cache_code,
+//                                        this->front->client_info.bpp,
+//                                        this->front->client_info.width,
+//                                        this->front->client_info.height);
 //                    this->back_event->set();
+
+                    if (this->front->client_info.width != this->front->get_front_width()){
+                        LOG(LOG_INFO, "session incoherence in front: front_width=%u front.client_info.width=%u",
+                            this->front->client_info.width,
+                            this->front->get_front_width());
+                        exit(0);
+                    }
+
+                    if (this->front->client_info.height != this->front->get_front_height()){
+                        LOG(LOG_INFO, "session incoherence in front: front_height=%u front.client_info.height=%u",
+                            this->front->client_info.height,
+                            this->front->get_front_height());
+                            exit(0);
+                    }
+
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front->client_info.width, this->front->client_info.height));
                     if (this->verbose){
                         LOG(LOG_INFO, "Creation of new mod 'RDP' suceeded\n");
@@ -905,6 +943,7 @@ struct Session {
                                 name);
                     SocketTransport *t = new SocketTransport(name, sck, this->ini->globals.debug.mod_vnc);
                     this->back_event = new wait_obj(t->sck);
+                    this->front->init_mod();
                     this->mod = new mod_vnc(t, *this->context, *this->front,
                                             this->front->client_info.keylayout,
                                             this->front->client_info.width,

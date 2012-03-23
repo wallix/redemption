@@ -44,8 +44,8 @@ struct xup_mod : public client_mod {
     int fgcolor;
     BGRPalette palette332;
 
-    xup_mod(Transport * t, struct ModContext & context, struct FrontAPI & front)
-        : client_mod(front)
+    xup_mod(Transport * t, struct ModContext & context, struct FrontAPI & front, uint16_t front_width, uint16_t front_height)
+        : client_mod(front, front_width, front_height)
     {
         this->width = atoi(context.get(STRAUTHID_OPT_WIDTH));
         this->height = atoi(context.get(STRAUTHID_OPT_HEIGHT));

@@ -219,7 +219,7 @@ public:
         orders(NULL),
         up_and_running(0),
         share_id(65538),
-        client_info(ini),
+        client_info(ini->globals.crypt_level, ini->globals.channel_code, ini->globals.bitmap_compression, ini->globals.bitmap_cache),
         packet_number(1),
         trans(trans),
         userid(0),
@@ -434,11 +434,11 @@ public:
         delete [] data;
     }
 
-    virtual int get_front_width() const {
+    virtual const uint16_t get_front_width() const {
         return this->client_info.width;
     }
 
-    virtual int get_front_height() const {
+    virtual const uint16_t get_front_height() const {
         return this->client_info.height;
     }
 

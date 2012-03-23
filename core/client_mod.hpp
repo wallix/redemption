@@ -66,12 +66,16 @@ struct client_mod : public Callback {
 
     wait_obj * event;
     BackEvent_t signal;
+    const uint16_t front_width;
+    const uint16_t front_height;
 
-    client_mod(FrontAPI & front)
-        : front(front),
-          signal(BACK_EVENT_NONE)    {
+    client_mod(FrontAPI & front, const uint16_t front_width, const uint16_t front_height)
+        : front(front)
+        , signal(BACK_EVENT_NONE)
+        , front_width(front_width)
+        , front_height(front_height)
+    {
         this->pointer_displayed = false;
-        this->front.init_mod();
     }
 
     virtual ~client_mod()

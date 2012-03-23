@@ -31,8 +31,8 @@ class FrontAPI : public RDPGraphicDevice {
 
     using RDPGraphicDevice::draw;
 
-    virtual int get_front_width() const = 0;
-    virtual int get_front_height() const = 0;
+    virtual const uint16_t get_front_width() const = 0;
+    virtual const uint16_t get_front_height() const = 0;
 
     virtual const ChannelList & get_channel_list(void) const = 0;
     virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags) = 0;
@@ -47,7 +47,6 @@ class FrontAPI : public RDPGraphicDevice {
     virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask) = 0;
     virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) = 0;
     virtual void text_metrics(const char * text, int & width, int & height) = 0;
-    virtual void init_mod() = 0;
     virtual int server_resize(int width, int height, int bpp) = 0;
     virtual void set_mod_bpp(uint8_t bpp) = 0;
     virtual void set_mod_bpp_to_front_bpp() = 0;
