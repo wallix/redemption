@@ -22,8 +22,8 @@
 #if !defined(__INTERNAL_MOD_HPP__)
 #define __INTERNAL_MOD_HPP__
 
-#include "modcontext.hpp"
 #include "internal/widget.hpp"
+#include "modcontext.hpp"
 #include "client_mod.hpp"
 
 struct internal_mod : public client_mod {
@@ -88,11 +88,6 @@ struct internal_mod : public client_mod {
     {
         return this->screen.child_list[i];
     }
-
-    widget_screen * get_screen_wdg(){
-        return &(this->screen);
-    }
-
 
     void draw_window(const Rect & r, uint32_t bgcolor, const char * caption, bool has_focus, const Rect & clip){
 

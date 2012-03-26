@@ -39,40 +39,63 @@
 BOOST_AUTO_TEST_CASE(TestShowTestCard)
 {
     wait_obj back_event(-1);
-//     const uint16_t width = 800;
-//     const uint16_t height = 600;
-//    class Front : public FrontAPI {
-//        public:
-//            Front() : FrontAPI() {}
-//            virtual void flush() {}
-//            virtual void draw(const RDPOpaqueRect&, const Rect&) {}
-//            virtual void draw(const RDPScrBlt&, const Rect&) {}
-//            virtual void draw(const RDPDestBlt&, const Rect&) {}
-//            virtual void draw(const RDPPatBlt&, const Rect&) {}
-//            virtual void draw(const RDPMemBlt&, const Rect&, const Bitmap&) {}
-//            virtual void draw(const RDPLineTo&, const Rect&) {}
-//            virtual void draw(const RDPGlyphIndex&, const Rect&) {}
+    ClientInfo info(1, 1, true, true);
+    info.keylayout = 0x04C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 24;
+    info.width = 800;
+    info.height = 600;
 
-//            virtual int get_front_console_session() const {return 0;}
-//            virtual int get_front_brush_cache_code() const { return 0;}
-//            virtual const ChannelList& get_channel_list() const {}
-//            virtual void send_to_channel(const McsChannelItem&, uint8_t*, size_t, size_t, int) {}
-//            virtual void send_pointer(int, uint8_t*, uint8_t*, int, int) {}
-//            virtual void send_global_palette() {}
-//            virtual void set_pointer(int) {}
-//            virtual void begin_update() {}
-//            virtual void end_update() {}
-//            virtual void color_cache(const BGRColor (&)[256], uint8_t) {}
-//            virtual void set_mod_palette(const BGRColor (&)[256]) {}
-//            virtual void server_set_pointer(int, int, uint8_t*, uint8_t*) {}
-//            virtual void server_draw_text(uint16_t, uint16_t, const char*, uint32_t, uint32_t, const Rect&) {}
-//            virtual void text_metrics(const char*, int&, int&) {}
-//            virtual void init_mod() {}
-//            virtual int server_resize(int, int, int) { return 0;}
-//            virtual void set_mod_bpp(uint8_t) {}
-//            virtual void set_mod_bpp_to_front_bpp() {}
-//    } front;
-//    test_card_mod mod(back_event, front, width, height);
+    class Front : public FrontAPI {
+        public:
+        const ClientInfo & info;
+        ChannelList cl;
+
+        virtual void flush() {}
+        virtual void draw(const RDPOpaqueRect&, const Rect&){}
+        virtual void draw(const RDPScrBlt&, const Rect&){}
+        virtual void draw(const RDPDestBlt&, const Rect&){}
+        virtual void draw(const RDPPatBlt&, const Rect&){}
+        virtual void draw(const RDPMemBlt&, const Rect&, const Bitmap&){}
+        virtual void draw(const RDPLineTo&, const Rect&){}
+        virtual void draw(const RDPGlyphIndex&, const Rect&){}
+
+        virtual const ChannelList & get_channel_list(void) const { return cl; }
+        virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags) {}
+
+        virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error) {}
+        virtual void send_global_palette() throw (Error) {}
+        virtual void set_pointer(int cache_idx) throw (Error) {}
+        virtual void begin_update() {}
+        virtual void end_update() {}
+        virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex) {}
+        virtual void set_mod_palette(const BGRPalette & palette) {}
+        virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask) {}
+        virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) {}
+        virtual void text_metrics(const char * text, int & width, int & height) {}
+        virtual int server_resize(int width, int height, int bpp) { return 0; }
+        virtual void set_mod_bpp(uint8_t bpp) {}
+        virtual void set_mod_bpp_to_front_bpp() {}
+
+        int mouse_x;
+        int mouse_y;
+        bool notimestamp;
+        bool nomouse;
+
+        Front(const ClientInfo & info) :
+              FrontAPI(false, false),
+              info(info),
+              mouse_x(0),
+              mouse_y(0),
+              notimestamp(true),
+              nomouse(true)
+            {}
+
+    } front(info);
+
+
+    test_card_mod mod(&back_event, front, info.width, info.height);
 
 
 }

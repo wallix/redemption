@@ -151,7 +151,7 @@ struct close_mod : public internal_mod {
             else {
                 struct Widget *b = this->screen.widget_at_pos(x, y);
                 if (b == 0) { /* if b is null, the movement must be over the screen */
-                    b = this->get_screen_wdg();
+                    b = &this->screen;
                 }
 //                if (b->pointer != this->current_pointer) {
 //                    this->server_set_pointer(b->pointer);
@@ -173,7 +173,7 @@ struct close_mod : public internal_mod {
             if (device_flags & MOUSE_FLAG_DOWN){
                 if (!this->dragging){
                     /* loop on surface widgets on screen to find active window */
-                    Widget* wnd = this->get_screen_wdg();
+                    Widget* wnd = &this->screen;
                     for (size_t i = 0; i < wnd->child_list.size(); i++) {
                         if (wnd->child_list[i]->rect.contains_pt(x, y)) {
                             wnd = this->screen.child_list[i];

@@ -26,6 +26,7 @@
 
 #include "widget.hpp"
 #include "internal/internal_mod.hpp"
+#include "internal/widget_implementation.hpp"
 
 Widget::Widget(GraphicalContext * mod, int width, int height, Widget & parent, int type) : parent(parent) {
     this->mod = mod;

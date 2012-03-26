@@ -35,7 +35,7 @@ struct dialog_mod : public internal_mod {
 
     dialog_mod(wait_obj * event,
               ModContext & context,
-               FrontAPI & front, uint16_t width, uint16_t height, 
+               FrontAPI & front, uint16_t width, uint16_t height,
                const char *message, const char * refuse, Inifile * ini)
             :
             internal_mod(front, width, height)
@@ -120,7 +120,7 @@ struct dialog_mod : public internal_mod {
             else {
                 struct Widget *b = this->screen.widget_at_pos(x, y);
                 if (b == 0) { /* if b is null, the movement must be over the screen */
-                    b = this->get_screen_wdg();
+                    b = &this->screen;
                 }
 //                if (b->pointer != this->current_pointer) {
 //                    this->server_set_pointer(b->pointer);
@@ -140,7 +140,7 @@ struct dialog_mod : public internal_mod {
         if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
             if (device_flags & MOUSE_FLAG_DOWN){
                 /* loop on surface widgets on screen to find active window */
-                Widget* wnd = this->get_screen_wdg();
+                Widget* wnd = &this->screen;
                 for (size_t i = 0; i < wnd->child_list.size(); i++) {
                     if (wnd->child_list[i]->rect.contains_pt(x, y)) {
                         wnd = this->screen.child_list[i];
@@ -154,8 +154,8 @@ struct dialog_mod : public internal_mod {
                 }
 
                 Widget * control = wnd->widget_at_pos(x, y);
-                if ((wnd == this->get_screen_wdg()) || (wnd->modal_dialog == 0)) {
-                    if (wnd != this->get_screen_wdg()) {
+                if ((wnd == &this->screen) || (wnd->modal_dialog == 0)) {
+                    if (wnd != &this->screen) {
                         // change focus. Is graphical feedback necessary ?
                         if (control != wnd && control->tab_stop) {
                             TODO(" control that had focus previously does not loose it  easy way could be to loop on all controls and clear all existing focus")
@@ -213,7 +213,7 @@ struct dialog_mod : public internal_mod {
                 }
                 else {
                     /* loop on surface widgets on screen to find active window */
-                    Widget* wnd = this->get_screen_wdg();
+                    Widget* wnd = &this->screen;
                     for (size_t i = 0; i < wnd->child_list.size(); i++) {
                         if (wnd->child_list[i]->rect.contains_pt(x, y)) {
                             wnd = this->screen.child_list[i];
@@ -223,10 +223,10 @@ struct dialog_mod : public internal_mod {
 
                     Widget * control = wnd->widget_at_pos(x, y);
 
-                    if (wnd == this->get_screen_wdg()
+                    if ((wnd == &this->screen)
                     || (wnd->modal_dialog == 0)) {
 
-                        if (wnd != this->get_screen_wdg()) {
+                        if (wnd != &this->screen) {
                             if (control != wnd && control->tab_stop) {
                             TODO(" previous focus on other control is not yet disabled")
                                 control->has_focus = true;

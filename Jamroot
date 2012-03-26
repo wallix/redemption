@@ -209,7 +209,7 @@ unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp libboost_unit_test
 unit-test test_rdesktop_invalid_pdu : tests/test_rdesktop_invalid_pdu.cpp libboost_unit_test openssl crypto ini_config keymap rsa_keys d3des libboost_program_options ;
 # unit-test test_w2008_fail_licensing : tests/test_w2008_fail_licensing.cpp libboost_unit_test openssl crypto ini_config keymap rsa_keys d3des libboost_program_options ;
 
-unit-test test_rdp_client_test_card : tests/test_rdp_client_test_card.cpp libboost_unit_test ini_config libboost_program_options ;
+unit-test test_rdp_client_test_card : tests/test_rdp_client_test_card.cpp widget libboost_unit_test ini_config libboost_program_options ;
 unit-test test_rdp_client_simple : tests/test_rdp_client_simple.cpp libboost_unit_test ini_config openssl crypto rsa_keys d3des z dl libboost_program_options ;
 
 unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test : ;
