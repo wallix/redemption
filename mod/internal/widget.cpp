@@ -31,33 +31,6 @@
 
 
 
-void window::focus(const Rect & clip)
-{
-    this->has_focus = true;
-}
-
-void window::blur(const Rect & clip)
-{
-    this->has_focus = false;
-}
-
-
-
-void window::draw(const Rect & clip)
-{
-    Rect r(0, 0, this->rect.cx, this->rect.cy);
-    const Rect scr_r = this->to_screen_rect(r);
-    const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
-
-    for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-        const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
-
-        this->mod->draw_window(scr_r,
-            this->bg_color, this->caption1,
-            this->has_focus,
-            region_clip);
-    }
-}
 
 void widget_edit::draw(const Rect & clip)
 {
@@ -189,77 +162,6 @@ void widget_image::draw(const Rect & clip)
     }
 }
 
-static inline bool switch_focus(Widget * old_focus, Widget * new_focus) {
-    bool res = false;
-    if (new_focus->tab_stop){
-        if (old_focus) {
-            old_focus->has_focus = (old_focus == new_focus);
-            old_focus->refresh(old_focus->rect.wh());
-        }
-        if (old_focus != new_focus){
-            new_focus->has_focus = true;
-            new_focus->refresh(new_focus->rect.wh());
-        }
-        res = true;
-    }
-    return res;
-}
-
-void window::def_proc(const int msg, const int param1, const int param2, const Keymap * keymap)
-{
-    if (msg == WM_KEYDOWN) {
-
-        Widget * control_with_focus = this->default_button;
-        // find control that has focus
-        size_t size = this->child_list.size();
-        size_t i_focus;
-        TODO(" we should iterate only on controls that have tabstop setted (or another attribute can_get_focus ?). Or we could also keep index of focused_control in child_list (but do not forget to reset it when we redefine controls).")
-        for (i_focus = 0; i_focus < size; i_focus++){
-            if (this->child_list[i_focus]->has_focus && this->child_list[i_focus]->tab_stop){
-                control_with_focus = this->child_list[i_focus];
-                break;
-            }
-        }
-
-        int scan_code = param1 & 0x7F;
-        switch (scan_code){
-        case 15:
-        { /* tab */
-            /* move to next tab stop */
-            int shift = keymap->keys[42] || keymap->keys[54];
-            // find the next tab_stop
-            if (shift) {
-                for (size_t i = (size+i_focus-1) % size ; i != i_focus ; i = (i+size-1) % size) {
-                    Widget * new_focus = this->child_list[i];
-                    if (switch_focus(control_with_focus, new_focus)) {
-                        break;
-                    }
-                }
-            } else {
-                for (size_t i = (size+i_focus+1) % size ; i != i_focus ; i = (i+size+1) % size) {
-                    Widget * new_focus = this->child_list[i];
-                    if (switch_focus(control_with_focus, new_focus)) {
-                        break;
-                    }
-                }
-            }
-        }
-        break;
-        case 28: /* enter */
-            this->notify(this->default_button, 1, 0, 0);
-        return;
-        case 1: /* esc */
-            if (this->esc_button) {
-                this->notify(this->esc_button, 1, 0, 0);
-            }
-        break;
-        default:
-            if (control_with_focus){
-                control_with_focus->def_proc(msg, param1, param2, keymap);
-            }
-        }
-    }
-}
 
 void widget_edit::def_proc(const int msg, int const param1, int const param2, const Keymap * keymap)
 {

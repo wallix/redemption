@@ -343,4 +343,20 @@ struct Widget {
     }
 };
 
+static inline bool switch_focus(Widget * old_focus, Widget * new_focus) {
+    bool res = false;
+    if (new_focus->tab_stop){
+        if (old_focus) {
+            old_focus->has_focus = (old_focus == new_focus);
+            old_focus->refresh(old_focus->rect.wh());
+        }
+        if (old_focus != new_focus){
+            new_focus->has_focus = true;
+            new_focus->refresh(new_focus->rect.wh());
+        }
+        res = true;
+    }
+    return res;
+}
+
 #endif
