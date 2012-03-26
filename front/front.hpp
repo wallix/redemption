@@ -1329,7 +1329,7 @@ public:
 
         // BER: Application-Defined Type = APPLICATION 102 = Connect-Response
         stream.out_uint16_be(BER_TAG_MCS_CONNECT_RESPONSE);
-        uint32_t offset_len_mcs_connect_response = stream.p - stream.data;
+        uint32_t offset_len_mcs_connect_response = stream.get_offset(0);
         // BER: Type Length
         stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
@@ -1368,7 +1368,7 @@ public:
 
         // Connect-Response::userData (287 bytes)
         stream.out_uint8(BER_TAG_OCTET_STRING);
-        uint32_t offset_len_mcs_data = stream.p - stream.data;
+        uint32_t offset_len_mcs_data = stream.get_offset(0);
         stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
 
@@ -1557,7 +1557,7 @@ public:
 //        stream.out_2BUE(8 + srv_channel_size + 236 + 4); // len
 
 
-        uint32_t offset_user_data_len = stream.p - stream.data;
+        uint32_t offset_user_data_len = stream.get_offset(0);
         stream.out_uint16_be(0);
 
         bool use_rdp5 = 1;
@@ -1568,11 +1568,11 @@ public:
         TODO(" create a function in stream that sets differed ber_len_offsets (or other len_offset)")
 
         // set user_data_len (TWO_BYTE_UNSIGNED_ENCODING)
-        stream.set_out_uint16_be(0x8000 | (stream.p - stream.data - offset_user_data_len - 2), offset_user_data_len);
+        stream.set_out_uint16_be(0x8000 | (stream.get_offset(offset_user_data_len + 2)), offset_user_data_len);
         // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
-        stream.set_out_ber_len_uint16(stream.p - stream.data - offset_len_mcs_data - 3, offset_len_mcs_data);
+        stream.set_out_ber_len_uint16(stream.get_offset(offset_len_mcs_data + 3), offset_len_mcs_data);
         // set BER_TAG_MCS_CONNECT_RESPONSE len
-        stream.set_out_ber_len_uint16(stream.p - stream.data - offset_len_mcs_connect_response - 3, offset_len_mcs_connect_response);
+        stream.set_out_ber_len_uint16(stream.get_offset(offset_len_mcs_connect_response + 3), offset_len_mcs_connect_response);
 
         tpdu.end();
         tpdu.send(trans);

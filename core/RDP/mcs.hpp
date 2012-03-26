@@ -35,7 +35,7 @@ class McsOut
     uint8_t offlen;
     public:
     McsOut(Stream & stream, uint8_t command, uint8_t user_id, uint16_t chan_id)
-        : stream(stream), offlen(stream.p - stream.data + 6)
+        : stream(stream), offlen(stream.get_offset(-6))
     {
         stream.out_uint8(command << 2);
         stream.out_uint16_be(user_id);
@@ -45,7 +45,7 @@ class McsOut
     }
 
     void end(){
-        int len = stream.p - stream.data - offlen - 2;
+        int len = stream.get_offset(offlen + 2);
         stream.set_out_uint16_be(0x8000|len, this->offlen);
     }
 };

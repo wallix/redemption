@@ -158,7 +158,7 @@ struct xup_mod : public client_mod {
         stream.out_uint32_le(param2);
         stream.out_uint32_le(param3);
         stream.out_uint32_le(param4);
-        uint32_t len = stream.p - stream.data;
+        uint32_t len = stream.get_offset(0);
         stream.set_out_uint32_le(len, 0);
         this->t->send(stream.data, len);
     }

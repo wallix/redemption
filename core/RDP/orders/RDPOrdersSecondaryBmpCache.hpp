@@ -555,7 +555,7 @@ class RDPBmpCache {
         int order_flags = STANDARD | SECONDARY;
         stream.out_uint8(order_flags);
         /* length after type minus 7 */
-        uint32_t offset_header = stream.p - stream.data;
+        uint32_t offset_header = stream.get_offset(0);
         stream.out_uint16_le(0); // placeholder for size after type - 7
         stream.out_uint16_le(NO_BITMAP_COMPRESSION_HDR); // flags
         stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); // type
@@ -566,13 +566,13 @@ class RDPBmpCache {
         stream.out_uint8(align4(this->bmp->cx));
         stream.out_uint8(this->bmp->cy);
         stream.out_uint8(this->bmp->original_bpp);
-        uint32_t offset = stream.p - stream.data;
+        uint32_t offset = stream.get_offset(0);
         stream.out_uint16_le(0); // placeholder for bufsize
         stream.out_uint16_le(this->idx);
 
-        uint32_t offset_buf_start = stream.p - stream.data;
+        uint32_t offset_buf_start = stream.get_offset(0);
         this->bmp->compress(stream);
-        uint32_t bufsize = (stream.p - stream.data) - offset_buf_start;
+        uint32_t bufsize = stream.get_offset(offset_buf_start);
         stream.set_out_uint16_le(bufsize + 2, offset_header);
         stream.set_out_uint16_le(bufsize, offset);
     }
@@ -585,7 +585,7 @@ class RDPBmpCache {
         int order_flags = STANDARD | SECONDARY;
         stream.out_uint8(order_flags);
         /* length after type minus 7 */
-        uint32_t offset_header = stream.p - stream.data;
+        uint32_t offset_header = stream.get_offset(0);
         stream.out_uint16_le(0); // placeholder for size after type - 7
         stream.out_uint16_le(8); // flags : why do we put 8 ? Any value should be ok except NO_BITMAP_COMPRESSION_HDR
         stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); // type
@@ -596,18 +596,18 @@ class RDPBmpCache {
         stream.out_uint8(align4(this->bmp->cx));
         stream.out_uint8(this->bmp->cy);
         stream.out_uint8(this->bmp->original_bpp);
-        uint32_t offset = stream.p - stream.data;
+        uint32_t offset = stream.get_offset(0);
         stream.out_uint16_le(0); // placeholder for bufsize
         stream.out_uint16_le(this->idx);
 
         stream.out_clear_bytes(2); /* pad */
-        uint32_t offset_compression_header = stream.p - stream.data;
+        uint32_t offset_compression_header = stream.get_offset(0);
         stream.out_uint16_le(0); // placeholder for bufsize
         stream.out_uint16_le(this->bmp->bmp_size / this->bmp->cy);
         stream.out_uint16_le(this->bmp->bmp_size); // final size
-        uint32_t offset_buf_start = stream.p - stream.data;
+        uint32_t offset_buf_start = stream.get_offset(0);
         this->bmp->compress(stream);
-        uint32_t bufsize = (stream.p - stream.data) - offset_buf_start;
+        uint32_t bufsize = stream.get_offset(offset_buf_start);
         stream.set_out_uint16_le(bufsize, offset_compression_header);
         stream.set_out_uint16_le(bufsize + 8, offset);
         stream.set_out_uint16_le(bufsize + 10, offset_header);
@@ -620,7 +620,7 @@ class RDPBmpCache {
         int Bpp = nbbytes(this->bmp->original_bpp);
 
         stream.out_uint8(STANDARD | SECONDARY);
-        uint32_t offset_header = stream.p - stream.data;
+        uint32_t offset_header = stream.get_offset(0);
         stream.out_uint16_le(0); // placeholder for length after type minus 7
         uint16_t cbr2_flags = (CBR2_NO_BITMAP_COMPRESSION_HEADER << 7) & 0xFF80;
         uint16_t cbr2_bpp = (((Bpp + 2) << 3) & 0x78);
@@ -628,12 +628,12 @@ class RDPBmpCache {
         stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED_REV2); // type
         stream.out_uint8(align4(this->bmp->cx));
         stream.out_uint8(this->bmp->cy);
-        uint32_t offset = stream.p - stream.data;
+        uint32_t offset = stream.get_offset(0);
         stream.out_uint16_be(0); // place holder for image buffer size
         stream.out_uint8(((this->idx >> 8) & 0xff) | 0x80);
         stream.out_uint8(this->idx);
         this->bmp->compress(stream);
-        size_t bufsize = stream.p - stream.data - offset + 4;
+        size_t bufsize = stream.get_offset(offset - 4);
         stream.set_out_uint16_be(bufsize | 0x4000, offset); // set the actual size
         stream.set_out_uint16_le(bufsize + 6 - 7, offset_header); // length after type minus 7
     }

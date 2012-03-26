@@ -73,10 +73,10 @@
 class ShareControlOut
 {
     Stream & stream;
-    uint8_t offlen;
+    uint16_t offlen;
     public:
     ShareControlOut(Stream & stream, uint8_t pdu_type1, uint16_t mcs_channel)
-        : stream(stream), offlen((uint8_t)(stream.p - stream.data))
+        : stream(stream), offlen(stream.get_offset(0))
     {
         stream.skip_uint8(2); // len
         stream.out_uint16_le(0x10 | pdu_type1);
@@ -84,8 +84,7 @@ class ShareControlOut
     }
 
     void end(){
-        uint16_t len =(uint16_t)(stream.p - stream.data - this->offlen);
-        stream.set_out_uint16_le(len, this->offlen);
+        stream.set_out_uint16_le(stream.get_offset(this->offlen), this->offlen);
     }
 };
 
@@ -256,11 +255,11 @@ namespace RDP {
 class ShareDataOut
 {
     Stream & stream;
-    uint8_t offlen;
+    uint16_t offlen;
     public:
     ShareDataOut(Stream & stream, uint8_t pdu_type2, uint32_t share_id, uint8_t streamid)
         : stream(stream)
-        , offlen((uint8_t)(stream.p - stream.data))
+        , offlen(stream.get_offset(0))
     {
         stream.out_uint32_le(share_id);
         stream.out_uint8(0); // pad1
@@ -272,8 +271,7 @@ class ShareDataOut
     }
 
     void end(){
-        uint16_t len = (uint16_t)(stream.p - stream.data - this->offlen - 8);
-        stream.set_out_uint16_le(len, this->offlen + 6);
+        stream.set_out_uint16_le(stream.get_offset(this->offlen + 8), this->offlen + 6);
     }
 };
 

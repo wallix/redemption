@@ -154,7 +154,7 @@ static inline void out_general_caps(Stream & stream, int use_rdp5)
     LOG(LOG_INFO, "Sending General caps to remote server");
 
     stream.out_uint16_le(RDP_CAPSET_GENERAL);
-    const uint16_t offset_len = stream.p - stream.data;
+    const uint16_t offset_len = stream.get_offset(0);
     stream.out_uint16_le(0);
     stream.out_uint16_le(1); /* OS major type */
     stream.out_uint16_le(3); /* OS minor type */

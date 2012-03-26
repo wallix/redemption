@@ -1885,7 +1885,7 @@ struct mod_rdp : public client_mod {
     X224Out ci_tpdu(X224Packet::DT_TPDU, stream);
 
     stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
-    uint32_t offset_data_len_connect_initial = stream.p - stream.data;
+    uint32_t offset_data_len_connect_initial = stream.get_offset(0);
     stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
     stream.out_uint8(BER_TAG_OCTET_STRING);
@@ -1936,7 +1936,7 @@ struct mod_rdp : public client_mod {
 
 
     stream.out_uint8(BER_TAG_OCTET_STRING);
-    uint32_t offset_data_len = stream.p - stream.data;
+    uint32_t offset_data_len = stream.get_offset(0);
     stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
     /* Generic Conference Control (T.124) ConferenceCreateRequest */
@@ -1970,10 +1970,10 @@ struct mod_rdp : public client_mod {
     mod_rdp_out_cs_net(stream, channel_list);
 
     // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
-    stream.set_out_ber_len_uint16(stream.p - stream.data - offset_data_len - 3, offset_data_len);
+    stream.set_out_ber_len_uint16(stream.get_offset(offset_data_len + 3), offset_data_len);
 
     // set mcs_data len for BER_TAG_MCS_CONNECT_INITIAL
-    stream.set_out_ber_len_uint16(stream.p - stream.data - offset_data_len_connect_initial - 3, offset_data_len_connect_initial);
+    stream.set_out_ber_len_uint16(stream.get_offset(offset_data_len_connect_initial + 3), offset_data_len_connect_initial);
 
     ci_tpdu.end();
     ci_tpdu.send(trans);
@@ -2207,14 +2207,14 @@ struct mod_rdp : public client_mod {
 
         // lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer. The combined size in bytes of the numberCapabilities, pad2Octets, and capabilitySets fields.
 
-            uint16_t offset_caplen = stream.p - stream.data;
+            uint16_t offset_caplen = stream.get_offset(0);
             stream.out_uint16_le(0); // caplen
 
         // sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see [T128] section 8.4.1 for more information regarding source descriptors).
             stream.out_copy_bytes("MSTSC", 5);
 
         // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the Demand Active PDU.
-            uint16_t offset_capscount = stream.p - stream.data;
+            uint16_t offset_capscount = stream.get_offset(0);
             uint16_t capscount = 0;
             stream.out_uint16_le(0); /* num_caps */
 
@@ -2222,7 +2222,7 @@ struct mod_rdp : public client_mod {
             stream.out_clear_bytes(2); /* pad */
 
         // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number of capability sets is specified by the numberCapabilities field.
-            uint16_t total_caplen = stream.p - stream.data;
+            uint16_t total_caplen = stream.get_offset(0);
 
             capscount++; out_general_caps(stream, this->use_rdp5);
             capscount++; out_bitmap_caps(stream, this->bpp, this->bitmap_compression);
@@ -2243,15 +2243,15 @@ struct mod_rdp : public client_mod {
             capscount++; out_font_caps(stream);
             capscount++; out_glyphcache_caps(stream);
 
-            total_caplen = stream.p - stream.data - total_caplen;
+            total_caplen = stream.get_offset(total_caplen);
 
             // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
             stream.out_uint32_le(0);
 
-//            stream.set_out_uint16_le(stream.p - stream.data - offset_caplen - 47, offset_caplen); // caplen
+//            stream.set_out_uint16_le(stream.get_offset(offset_caplen + 47), offset_caplen); // caplen
 //            stream.set_out_uint16_le(caplen, offset_caplen); // caplen
             stream.set_out_uint16_le(total_caplen + 4, offset_caplen); // caplen
-            LOG(LOG_INFO, "total_caplen = %u, caplen=%u computed caplen=%u offset_here = %u offset_caplen=%u", total_caplen, 388, stream.p - stream.data - offset_caplen, stream.p - stream.data, offset_caplen);
+            LOG(LOG_INFO, "total_caplen = %u, caplen=%u computed caplen=%u offset_here = %u offset_caplen=%u", total_caplen, 388, stream.get_offset(offset_caplen), stream.get_offset(0), offset_caplen);
             stream.set_out_uint16_le(capscount, offset_capscount); // caplen
 
             rdp_control_out.end();

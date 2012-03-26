@@ -830,8 +830,8 @@ struct Drawable
     void scr_blt_op(uint16_t srcx, uint16_t srcy, const Rect drect)
     {
         Op op;
-        const int16_t deltax = srcx - drect.x;
-        const int16_t deltay = srcy - drect.y;
+        const int16_t deltax = (int16_t)(srcx - drect.x);
+        const int16_t deltay = (int16_t)(srcy - drect.y);
         const Rect srect = drect.offset(deltax, deltay);
         const Rect & overlap = srect.intersect(drect);
         uint8_t * target = ((deltay >= 0)||overlap.isempty())

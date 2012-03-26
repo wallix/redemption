@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean
 
-   RDP Capabilities : 
+   RDP Capabilities :
 
 */
 
@@ -87,9 +87,8 @@
 static inline void out_glyphcache_caps(Stream & stream)
 {
     stream.out_uint16_le(RDP_CAPSET_GLYPHCACHE);
-    uint16_t offset_length = stream.p - stream.data;
+    uint16_t offset_length = stream.get_offset(0);
     stream.out_uint16_le(0);
-    uint16_t length = stream.p - stream.data;
     static const char glyphcache[] = {
     0xFE, 0x00, 0x04, 0x00, 0xFE, 0x00, 0x04, 0x00,
     0xFE, 0x00, 0x08, 0x00, 0xFE, 0x00, 0x08, 0x00,
@@ -100,10 +99,8 @@ static inline void out_glyphcache_caps(Stream & stream)
     stream.out_uint32_le(0x01000100);
     stream.out_uint16_le(0x0000);
     stream.out_uint16_le(0);
-    length = stream.p - stream.data - length;
-    stream.set_out_uint16_le(length, offset_length);
+    stream.set_out_uint16_le(stream.get_offset(offset_length+2), offset_length);
 
 }
 
 #endif
-
