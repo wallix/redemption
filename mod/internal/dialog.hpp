@@ -59,9 +59,7 @@ struct dialog_mod : public internal_mod {
         TODO(" valgrind say there is a memory leak here")
         this->close_window = new window_dialog(this,
             r, context,
-            this->screen, // parent
-            this->screen, // owner
-            this->screen, // notify_to
+            &this->screen, // parent
             GREY,
             "Information",
             ini,
@@ -131,7 +129,7 @@ struct dialog_mod : public internal_mod {
                     this->button_down->refresh(this->button_down->rect.wh());
                 }
                 else {
-                    b->notify(&b->parent, 2, x, y);
+                    b->notify(b->parent, 2, x, y);
                 }
             }
         }

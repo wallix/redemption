@@ -28,60 +28,7 @@
 #include "internal/internal_mod.hpp"
 #include "internal/widget_implementation.hpp"
 
-Widget::Widget(GraphicalContext * mod, int width, int height, Widget & parent, int type) : parent(parent) {
-    this->mod = mod;
-    /* for all but bitmap */
-    this->pointer = 0;
-    this->bg_color = 0;
-    this->tab_stop = 0;
-    this->id = 0;
-    this->caption1 = 0;
-    /* for window or screen */
-    this->modal_dialog = 0;
-    this->focused_control = 0;
-    /* for modal dialog */
-    this->default_button = 0; /* button when enter is pressed */
-    this->esc_button = 0; /* button when esc is pressed */
-    /* for edit */
-    this->edit_pos = 0;
-    this->password_char = 0;
-    /* for button or combo */
-    this->state = 0; /* for button 0 = normal 1 = down */
-    /* for popup */
-    this->popped_from = 0;
-    /* for combo or popup */
-    this->item_index = 0;
-    /* crc */
-    this->crc = 0;
 
-    this->has_focus = false;
-
-TODO(" build the right type of bitmap = class hierarchy")
-    /* 0 = bitmap 1 = window 2 = screen 3 = button 4 = image 5 = edit
-       6 = label 7 = combo 8 = special */
-    this->type = type;
-    this->rect.x = 0;
-    this->rect.y = 0;
-    this->rect.cx = width;
-    this->rect.cy = height;
-}
-
-Widget::~Widget(){
-    if (this->type != WND_TYPE_SCREEN){
-        vector<Widget*>::iterator it;
-        for (it = this->child_list.begin(); it != this->child_list.end(); it++){
-            if (*it == this){
-                this->parent.child_list.erase(it);
-                break;
-            }
-        }
-    }
-    if (this->caption1){
-        free(this->caption1);
-        this->caption1 = 0;
-    }
-
-}
 
 void window::focus(const Rect & clip)
 {
@@ -93,79 +40,13 @@ void window::blur(const Rect & clip)
     this->has_focus = false;
 }
 
-/*****************************************************************************/
-Widget* Widget::Widget_get_child_by_id(int id) {
-    for (size_t i = 0; i < this->child_list.size(); i++) {
-        struct Widget * b = this->child_list[i];
-        if (b->id == id) {
-            return b;
-        }
-    }
-    return 0;
-}
 
-
-/*****************************************************************************/
-// called for screen
-int Widget::delete_all_childs()
-{
-    {
-        size_t index = this->child_list.size();
-        while (index > 0) {
-            index--;
-            this->child_list[index]->refresh(this->child_list[index]->rect.wh());
-        }
-    }
-    {
-        size_t index = this->child_list.size();
-        while (index > 0) {
-            index--;
-            delete this->child_list[index];
-        }
-    }
-    this->child_list.clear();
-    return 0;
-}
-
-/*****************************************************************************/
-/* return the window at x, y on the screen */
-/* coordinates are given relative to the container of this */
-struct Widget* Widget::widget_at_pos(int x, int y) {
-    x -= this->rect.x;
-    y -= this->rect.y;
-    /* loop through all windows. */
-    /* If a widget contains overlapping subwidgets */
-    /* consider the right one is the first one found in child_list */
-    for (size_t i = 0; i < this->child_list.size(); i++) {
-        if (this->child_list[i]->rect.contains_pt(x, y)) {
-            Widget * res =  this->child_list[i]->widget_at_pos(x, y);
-            return res;
-        }
-    }
-    return this;
-}
-
-    TODO(" we should be able to pass only one pointer  either window if we are dealing with a window or this->parent if we are dealing with any other kind of widget")
-const Region Widget::get_visible_region(Widget * window, Widget * widget, const Rect & rect)
-{
-    Region region;
-    region.rects.push_back(rect);
-    /* loop through all windows in z order */
-    for (size_t i = 0; i < this->mod->nb_windows(); i++) {
-        Widget *p = this->mod->window(i);
-        if (p == window || p == widget) {
-            break;
-        }
-        region.subtract_rect(p->rect);
-    }
-    return region;
-}
 
 void window::draw(const Rect & clip)
 {
     Rect r(0, 0, this->rect.cx, this->rect.cy);
     const Rect scr_r = this->to_screen_rect(r);
-    const Region region = this->get_visible_region(this, &this->parent, scr_r);
+    const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
@@ -182,7 +63,7 @@ void widget_edit::draw(const Rect & clip)
 
     Rect r(0, 0, this->rect.cx, this->rect.cy);
     const Rect scr_r = this->to_screen_rect(r);
-    const Region region = this->get_visible_region(this, &this->parent, scr_r);
+    const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
@@ -196,10 +77,10 @@ void widget_edit::draw(const Rect & clip)
     }
 }
 
-void widget_screen::draw(const Rect & clip)
+void Widget::draw(const Rect & clip)
 {
     const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
-    const Region region = this->get_visible_region(this, &this->parent, scr_r);
+    const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
@@ -212,7 +93,7 @@ void widget_screen::draw(const Rect & clip)
 void widget_combo::draw(const Rect & clip)
 {
     const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
-    const Region region = this->get_visible_region(this, &this->parent, scr_r);
+    const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
@@ -230,7 +111,7 @@ void widget_button::draw(const Rect & clip)
     Rect r(0, 0, this->rect.cx, this->rect.cy);
 
     const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
-    const Region region = this->get_visible_region(this, &this->parent, scr_r);
+    const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
@@ -247,7 +128,7 @@ void widget_button::draw(const Rect & clip)
 void widget_popup::draw(const Rect & clip)
 {
     const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
-    const Region region = this->get_visible_region(this, &this->parent, scr_r);
+    const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
     TODO("Font Height is currently hardcoded to 16 in drop box")
     const int height = 16;
 
@@ -280,14 +161,10 @@ void widget_popup::draw(const Rect & clip)
     }
 }
 
-void Widget::draw(const Rect & clip)
-{
-}
-
 void widget_label::draw(const Rect & clip)
 {
     const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
-    const Region region = this->get_visible_region(this, &this->parent, scr_r);
+    const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
 
     for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
         const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
@@ -298,58 +175,17 @@ void widget_label::draw(const Rect & clip)
 
 }
 
-// transform a rectangle relative to current widget to rectangle relative to screen
-Rect const Widget::to_screen_rect(const Rect & r)
-{
-        Rect a = r;
-        Widget *b = this;
-        for (; WND_TYPE_SCREEN != b->type ; b = &b->parent) {
-            a = a.offset(b->rect.x, b->rect.y);
-        }
-        return a.intersect(b->rect);
-}
-
-// get current widget rectangle relative to screen
-Rect const Widget::to_screen_rect()
-{
-        Rect a = Rect(0, 0, this->rect.cx, this->rect.cy);
-        Widget *b = this;
-        for (; WND_TYPE_SCREEN != b->type ; b = &b->parent) {
-            a = a.offset(b->rect.x, b->rect.y);
-        }
-        return a.intersect(b->rect);
-}
 
 void widget_image::draw(const Rect & clip)
 {
     TODO("See why region clipping is not done the same way as everywhere else here")
     Rect image_screen_rect = this->to_screen_rect();
     Rect intersection = image_screen_rect.intersect(this->to_screen_rect(clip));
-    const Region region = this->get_visible_region(this, &this->parent, intersection);
+    const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, intersection);
 
     for (size_t ir = 0; ir < region.rects.size(); ir++){
         this->mod->front.draw(RDPMemBlt(0, image_screen_rect, 0xCC, 0, 0, 0), region.rects[ir], this->bmp);
     }
-}
-
-void Widget::refresh(const Rect & clip)
-{
-    this->mod->front.begin_update();
-
-    this->draw(clip);
-    this->notify(this, WM_PAINT, 0, 0);
-
-    size_t count = this->child_list.size();
-    for (size_t i = 0; i < count; i++) {
-        Widget * b = this->child_list[i];
-        b->refresh(b->rect.wh());
-    }
-    this->mod->front.end_update();
-}
-
-void Widget::notify(struct Widget* sender, int msg, long param1, long param2)
-{
-    this->parent.notify(sender, msg, param1, param2);
 }
 
 static inline bool switch_focus(Widget * old_focus, Widget * new_focus) {
@@ -579,8 +415,4 @@ void widget_popup::def_proc(const int msg, const int param1, const int param2, c
             this->popped_from->notify(this->popped_from, CB_ITEMCHANGE, 0, 0);
         }
     }
-}
-
-void Widget::def_proc(const int msg, const int param1, const int param2, const Keymap * keymap)
-{
 }

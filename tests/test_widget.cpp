@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(TestCreateWidget)
 {
 //    cout << "Test Creating Screen object";
     TODO(" passing in a null front is not a good idea  define a test front")
-    Widget *screen = new widget_screen((GraphicalContext*)0, 20, 10, 24);
+    Widget *screen = new Widget((GraphicalContext*)0, 20, 10, NULL, WND_TYPE_SCREEN);
     BOOST_CHECK_EQUAL(20, screen->rect.cx);
     BOOST_CHECK_EQUAL(10, screen->rect.cy);
     BOOST_CHECK_EQUAL((int)WND_TYPE_SCREEN, screen->type);
@@ -52,10 +52,9 @@ BOOST_AUTO_TEST_CASE(TestCreateWidgetScreen)
 {
 //    cout << "Test Creating Screen object";
     TODO(" passing in a null front is not a good idea  define a test front")
-    widget_screen *screen = new widget_screen((GraphicalContext*)0, 20, 10, 24);
+    Widget *screen = new Widget((GraphicalContext*)0, 20, 10, NULL, WND_TYPE_SCREEN);
     BOOST_CHECK_EQUAL(20, screen->rect.cx);
     BOOST_CHECK_EQUAL(10, screen->rect.cy);
-    BOOST_CHECK_EQUAL(24, screen->bpp);
     BOOST_CHECK_EQUAL((int)WND_TYPE_SCREEN, screen->type);
     delete screen;
 }

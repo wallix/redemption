@@ -29,22 +29,20 @@
 
 struct wab_close : public window
 {
-    Widget & notify_to;
     Inifile * ini;
     widget_combo * combo;
     ModContext & context;
     window * help;
 
-    wab_close(internal_mod * mod, const Rect & r, ModContext & context, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
+    wab_close(internal_mod * mod, const Rect & r, ModContext & context, Widget * parent, int bg_color, const char * title, Inifile * ini, int regular)
     : window(mod, r, parent, bg_color, title),
-      notify_to(notify_to),
       context(context)
     {
         struct Widget* but;
 
         if (regular) {
             widget_image * but = new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE,
-                *this, 10, 30, SHARE_PATH "/" LOGIN_LOGO24, this->mod->screen.bpp);
+                this, 10, 30, SHARE_PATH "/" LOGIN_LOGO24, 24);
             TODO(" bitmap load below should probably be done before call")
             this->child_list.push_back(but);
         }
@@ -54,12 +52,12 @@ struct wab_close : public window
         /* label */
         b = new widget_label(this->mod,
             Rect(10 + ((this->rect.cx >= 400) ? 155 : 5), 60 + 25 * count, 70, 20),
-            *this, "Username:");
+            this, "Username:");
 
         this->child_list.push_back(b);
         b = new widget_label(this->mod,
             Rect(10 + ((this->rect.cx >= 400) ?  230 : 70), 60 + 25 * count, 350, 20),
-            *this, context.is_asked(STRAUTHID_AUTH_USER)?"":context.get(STRAUTHID_AUTH_USER));
+            this, context.is_asked(STRAUTHID_AUTH_USER)?"":context.get(STRAUTHID_AUTH_USER));
 
         b->id = 100 + 2 * count;
         this->child_list.push_back(b);
@@ -78,12 +76,12 @@ struct wab_close : public window
 
         b = new widget_label(this->mod,
             Rect(10+((this->rect.cx >= 400) ? 155 : 5), 60 + 25 * count, 70, 20),
-            *this, "Target:");
+            this, "Target:");
 
         this->child_list.push_back(b);
         b = new widget_label(this->mod,
             Rect(10 + ((this->rect.cx >= 400) ?  230 : 70), 60 + 25 * count, 350, 20),
-            *this, target);
+            this, target);
 
         b->id = 100 + 2 * count;
         this->child_list.push_back(b);
@@ -91,14 +89,14 @@ struct wab_close : public window
 
         b = new widget_label(this->mod,
             Rect(150 + ((this->rect.cx >= 400) ? 155 : 5), 60 + 25 * count, 130, 20),
-            *this, "Connection closed");
+            this, "Connection closed");
 
         this->child_list.push_back(b);
         count ++;
 
         b = new widget_label(this->mod,
             Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 20),
-            *this, "Diagnostic:");
+            this, "Diagnostic:");
 
         this->child_list.push_back(b);
 
@@ -112,7 +110,7 @@ struct wab_close : public window
             tmp[0] = 0;
             strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
             tmp[255] = 0;
-            b = new widget_label(this->mod, Rect((this->rect.cx >= 400) ?  230 : 70, 60 + 25 * count + 16 * line, 350, 20), *this, tmp);
+            b = new widget_label(this->mod, Rect((this->rect.cx >= 400) ?  230 : 70, 60 + 25 * count + 16 * line, 350, 20), this, tmp);
             this->child_list.push_back(b);
             line++;
             if (!str){
@@ -126,7 +124,7 @@ struct wab_close : public window
         /* label */
         but = new widget_button(this->mod,
               Rect(50 + (regular ? 250 : ((r.cx - 30) - 60)), 150 + 16 * line, 60, 25),
-              *this, 2, 1, "Close");
+              this, 2, 1, "Close");
         this->child_list.push_back(but);
         this->esc_button = but;
         this->default_button = but;

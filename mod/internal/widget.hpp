@@ -91,7 +91,7 @@ struct Widget {
     /* for window or screen */
     struct Widget* modal_dialog;
     struct Widget* focused_control;
-    struct Widget & parent; /* window contained in */
+    struct Widget * parent; /* widget container, NULL for screen */
     /* for modal dialog */
     struct Widget* default_button; /* button when enter is pressed */
     struct Widget* esc_button; /* button when esc is pressed */
@@ -115,48 +115,174 @@ struct Widget {
     public:
 
 
-    Widget(GraphicalContext * mod, int width, int height, Widget & parent, int type);
+    Widget(struct internal_mod * mod, int width, int height, Widget * parent, int type) : parent(parent) {
+        this->mod = mod;
+        /* for all but bitmap */
+        this->pointer = 0;
+        this->bg_color = 0;
+        this->tab_stop = 0;
+        this->id = 0;
+        this->caption1 = 0;
+        /* for window or screen */
+        this->modal_dialog = 0;
+        this->focused_control = 0;
+        /* for modal dialog */
+        this->default_button = 0; /* button when enter is pressed */
+        this->esc_button = 0; /* button when esc is pressed */
+        /* for edit */
+        this->edit_pos = 0;
+        this->password_char = 0;
+        /* for button or combo */
+        this->state = 0; /* for button 0 = normal 1 = down */
+        /* for popup */
+        this->popped_from = 0;
+        /* for combo or popup */
+        this->item_index = 0;
+        /* crc */
+        this->crc = 0;
 
-    ~Widget();
+        this->has_focus = false;
 
-    Widget* Widget_get_child_by_id(int id);
+    TODO(" build the right type of bitmap = class hierarchy")
+        /* 0 = bitmap 1 = window 2 = screen 3 = button 4 = image 5 = edit
+           6 = label 7 = combo 8 = special */
+        this->type = type;
+        this->rect.x = 0;
+        this->rect.y = 0;
+        this->rect.cx = width;
+        this->rect.cy = height;
+    }
 
-    int delete_all_childs();
+    ~Widget(){
+        if (this->type != WND_TYPE_SCREEN){
+            vector<Widget*>::iterator it;
+            for (it = this->child_list.begin(); it != this->child_list.end(); it++){
+                if (*it == this){
+                    this->parent->child_list.erase(it);
+                    break;
+                }
+            }
+        }
+        if (this->caption1){
+            free(this->caption1);
+            this->caption1 = 0;
+        }
 
-    struct Widget* widget_at_pos(int x, int y);
+    }
 
-    void Widget_set_focus(int focused);
+    /*****************************************************************************/
+    Widget* Widget_get_child_by_id(int id) {
+        for (size_t i = 0; i < this->child_list.size(); i++) {
+            struct Widget * b = this->child_list[i];
+            if (b->id == id) {
+                return b;
+            }
+        }
+        return 0;
+    }
 
-    virtual void notify(struct Widget* sender, int msg, long param1, long param2);
+
+    /*****************************************************************************/
+    // called for screen
+    int delete_all_childs()
+    {
+        {
+            size_t index = this->child_list.size();
+            while (index > 0) {
+                index--;
+                this->child_list[index]->refresh(this->child_list[index]->rect.wh());
+            }
+        }
+        {
+            size_t index = this->child_list.size();
+            while (index > 0) {
+                index--;
+                delete this->child_list[index];
+            }
+        }
+        this->child_list.clear();
+        return 0;
+    }
+
+    /*****************************************************************************/
+    /* return the window at x, y on the screen */
+    /* coordinates are given relative to the container of this */
+    struct Widget* widget_at_pos(int x, int y) {
+        x -= this->rect.x;
+        y -= this->rect.y;
+        /* loop through all windows. */
+        /* If a widget contains overlapping subwidgets */
+        /* consider the right one is the first one found in child_list */
+        for (size_t i = 0; i < this->child_list.size(); i++) {
+            if (this->child_list[i]->rect.contains_pt(x, y)) {
+                Widget * res =  this->child_list[i]->widget_at_pos(x, y);
+                return res;
+            }
+        }
+        return this;
+    }
+
+
+    virtual void notify(struct Widget* sender, int msg, long param1, long param2)
+    {
+        if (this->type != WND_TYPE_SCREEN){
+            this->parent->notify(sender, msg, param1, param2);
+        }
+    }
+
     virtual void focus()
     {
     }
+
     virtual void blur()
     {
     }
 
-    void draw_title_bar(int bg_color, int fg_color, const Rect & clip);
+    virtual void refresh(const Rect & clip)
+    {
+        this->draw(clip);
+        this->notify(this, WM_PAINT, 0, 0);
 
-    /* returns true if they are the same, else returns false */
-    int Widget_compare(struct Widget* other_bitmap);
+        size_t count = this->child_list.size();
+        for (size_t i = 0; i < count; i++) {
+            Widget * b = this->child_list[i];
+            b->refresh(b->rect.wh());
+        }
+    }
 
-    /******************************************************************/
-    /* returns true if they are the same, else returns false */
-    int Widget_compare_with_crc(struct Widget* other_bitmap);
+    void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap)
+    {
+    }
 
-    virtual void refresh(const Rect & clip);
-
-    virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap);
     virtual void draw(const Rect & clip);
 
-    Rect const to_screen_rect(const Rect & r);
-    Rect const to_screen_rect();
+    // transform a rectangle relative to current widget to rectangle relative to screen
+    Rect const to_screen_rect(const Rect & r)
+    {
+            Rect a = r;
+            Widget *b = this;
+            for (; WND_TYPE_SCREEN != b->type ; b = b->parent) {
+                a = a.offset(b->rect.x, b->rect.y);
+            }
+            return a.intersect(b->rect);
+    }
+
+    // get current widget rectangle relative to screen
+    Rect const to_screen_rect()
+    {
+            Rect a = Rect(0, 0, this->rect.cx, this->rect.cy);
+            Widget *b = this;
+            for (; WND_TYPE_SCREEN != b->type ; b = b->parent) {
+                a = a.offset(b->rect.x, b->rect.y);
+            }
+            return a.intersect(b->rect);
+    }
 
     /* convert the controls coords to screen coords */
     int to_screenx()
     {
         int x = 0;
-        for (Widget *b = this; WND_TYPE_SCREEN != b->type ; b = &b->parent) {
+        for (Widget *b = this; WND_TYPE_SCREEN != b->type ; b = b->parent) {
              x += b->rect.x;
         }
         return x;
@@ -167,7 +293,7 @@ struct Widget {
     int to_screeny()
     {
         int y = 0;
-        for (Widget *b = this; WND_TYPE_SCREEN != b->type ; b = &b->parent) {
+        for (Widget *b = this; WND_TYPE_SCREEN != b->type ; b = b->parent) {
              y += b->rect.y;
         }
         return y;
@@ -177,7 +303,7 @@ struct Widget {
     /* convert the screen coords to controls coords */
     int from_screenx(int x)
     {
-        for (Widget *b = this ; WND_TYPE_SCREEN != b->type ; b = &b->parent){
+        for (Widget *b = this ; WND_TYPE_SCREEN != b->type ; b = b->parent){
             x -= b->rect.x;
         }
         return x;
@@ -187,7 +313,7 @@ struct Widget {
     /* convert the screen coords to controls coords */
     int from_screeny(int y)
     {
-        for (Widget *b = this ; WND_TYPE_SCREEN != b->type ; b = &b->parent){
+        for (Widget *b = this ; WND_TYPE_SCREEN != b->type ; b = b->parent){
             y -= b->rect.y;
         }
         return y;
@@ -197,37 +323,24 @@ struct Widget {
     /* find the window containing widget or the screen */
     virtual Widget * find_window()
     {
-        return this->parent.find_window();
+        return (this->type == WND_TYPE_SCREEN)?this:this->parent->find_window();
     }
 
-    const Region get_visible_region(Widget * window, Widget * widget, const Rect & rect);
-};
-
-struct widget_screen : public Widget {
-    uint8_t bpp;
-
-    widget_screen(GraphicalContext * mod, int width, int height, uint8_t bpp)
-    : Widget(mod, width, height, *this, WND_TYPE_SCREEN), bpp(bpp) {
-        assert(type == WND_TYPE_SCREEN);
-    }
-
-    ~widget_screen() {
-    }
-
-    virtual void notify(struct Widget* sender, int msg, long param1, long param2)
-    { // notify for screen does nothing
-        return;
-    }
-
-    /*****************************************************************************/
-    /* find the window containing widget */
-    virtual widget_screen * find_window()
+        TODO(" we should be able to pass only one pointer  either window if we are dealing with a window or this->parent if we are dealing with any other kind of widget")
+    const Region get_visible_region(Widget * screen, Widget * window, Widget * widget, const Rect & rect)
     {
-        return this;
+        Region region;
+        region.rects.push_back(rect);
+        /* loop through all windows in z order */
+        for (size_t i = 0; i < screen->child_list.size(); i++) {
+            Widget *p = screen->child_list[i];
+            if (p == window || p == widget) {
+                break;
+            }
+            region.subtract_rect(p->rect);
+        }
+        return region;
     }
-
-    virtual void draw(const Rect & clip);
-
 };
 
 #endif

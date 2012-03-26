@@ -33,7 +33,7 @@ struct combo_help : public window
 {
     Widget & notify_to;
 
-    combo_help(internal_mod * mod, const Rect & r, Widget & parent, Widget & notify_to, int bg_color, const char * title)
+    combo_help(internal_mod * mod, const Rect & r, Widget * parent, Widget & notify_to, int bg_color, const char * title)
     : window(mod, r, parent, bg_color, title), notify_to(notify_to)
     {
     }
@@ -70,7 +70,7 @@ struct combo_help : public window
 
                 Rect r(0, 0, this->rect.cx, this->rect.cy);
                 const Rect scr_r = this->to_screen_rect(r);
-                const Region region = this->get_visible_region(this, &this->parent, scr_r);
+                const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
 
                 for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
                     this->mod->front.server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK, region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
@@ -93,7 +93,7 @@ struct combo_help : public window
 
 struct combo_login : public window_login
 {
-    combo_login(internal_mod * mod, const Rect & r, ModContext & context, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
+    combo_login(internal_mod * mod, const Rect & r, ModContext & context, Widget * parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
     : window_login(mod, r, context, parent, notify_to, bg_color, title, ini, regular)
     {
         this->ini = ini;
@@ -106,23 +106,23 @@ struct combo_login : public window_login
                 this->mod->screen.rect.cy / 2 - 300 / 2,
                 340,
                 300),
-            mod->screen, // parent
-            *this, // notify_to
+            &mod->screen, // parent
+            *this, // notify
             grey,
             "Login help");
 
         if (regular) {
-            widget_image * but = new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE, *this, 10, 30,
-                    SHARE_PATH "/" LOGIN_LOGO24, this->mod->screen.bpp);
+            widget_image * but = new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE, this, 10, 30,
+                    SHARE_PATH "/" LOGIN_LOGO24, 24);
             this->child_list.push_back(but);
         }
 
         /* label */
-        but = new widget_label(this->mod, Rect((regular ? 155 : 5), 35, 60, 20), *this,  "Module");
+        but = new widget_label(this->mod, Rect((regular ? 155 : 5), 35, 60, 20), this,  "Module");
         this->child_list.push_back(but);
 
         Rect rect(regular ? 230 : 70, 35, 350, 20);
-        this->combo = new widget_combo(this->mod, rect, *this, 6, 1);
+        this->combo = new widget_combo(this->mod, rect, this, 6, 1);
 
         TODO(" add this to combo through constructor (pass in an array of strings ?) a list of pairs with id and string could be better.")
         for (int i = 0; i < 6 ; i++){
@@ -177,21 +177,21 @@ struct combo_login : public window_login
         TODO(" valgrind say there is a memory leak here")
         but = new widget_button(this->mod,
               Rect(regular ? 180 : 30, 160, 60, 25),
-              *this, 3, 1, context.get(STRAUTHID_TRANS_BUTTON_OK));
+              this, 3, 1, context.get(STRAUTHID_TRANS_BUTTON_OK));
         this->child_list.push_back(but);
         this->default_button = but;
 
         TODO(" valgrind say there is a memory leak here")
         but = new widget_button(this->mod,
               Rect(regular ? 250 : ((r.cx - 30) - 60), 160, 60, 25),
-              *this, 2, 1, context.get(STRAUTHID_TRANS_BUTTON_CANCEL));
+              this, 2, 1, context.get(STRAUTHID_TRANS_BUTTON_CANCEL));
         this->child_list.push_back(but);
         this->esc_button = but;
 
         if (regular) {
         TODO(" valgrind say there is a memory leak here")
             but = new widget_button(this->mod,
-                  Rect(320, 160, 60, 25), *this, 1, 1, context.get(STRAUTHID_TRANS_BUTTON_HELP));
+                  Rect(320, 160, 60, 25), this, 1, 1, context.get(STRAUTHID_TRANS_BUTTON_HELP));
             this->child_list.push_back(but);
         }
 
@@ -245,7 +245,7 @@ struct login_mod : public internal_mod {
 
         this->login_window = new combo_login(this,
             r, context,
-            this->screen, // parent
+            &this->screen, // parent
             this->screen, // notify_to
             GREY,
             VERSION,
@@ -261,11 +261,11 @@ struct login_mod : public internal_mod {
             /* image */
             widget_image * but = new widget_image(this, 4, 4,
                 WND_TYPE_IMAGE,
-                this->screen,
+                &this->screen,
                 this->screen.rect.cx - 250 - 4,
                 this->screen.rect.cy - 120 - 4,
                 SHARE_PATH "/" REDEMPTION_LOGO24,
-                this->screen.bpp);
+                24);
 
             this->screen.child_list.push_back(but);
         }
@@ -274,8 +274,10 @@ struct login_mod : public internal_mod {
 
         this->login_window->focus(this->login_window->rect);
 
+        this->front.begin_update();
         this->screen.refresh(this->screen.rect.wh());
 //        LOG(LOG_INFO, "rdp_input_invalidate screen done");
+        this->front.end_update();
     }
 
     virtual ~login_mod()
@@ -364,6 +366,8 @@ struct login_mod : public internal_mod {
                 this->front.end_update();
             }
             else {
+                this->front.begin_update();
+
                 struct Widget *b = this->screen.widget_at_pos(x, y);
                 if (b == 0) { /* if b is null, the movement must be over the screen */
                     b = &this->screen;
@@ -377,8 +381,9 @@ struct login_mod : public internal_mod {
                     this->button_down->refresh(this->button_down->rect.wh());
                 }
                 else {
-                    b->notify(&b->parent, 2, x, y);
+                    b->notify(b->parent, 2, x, y);
                 }
+                this->front.end_update();
             }
         }
 
@@ -405,6 +410,8 @@ struct login_mod : public internal_mod {
                     if (!wnd->modal_dialog) {
                         // change focus. Is graphical feedback necessary ?
                         if (control != wnd && control->tab_stop) {
+                            this->front.begin_update();
+
                             TODO(" control that had focus previously does not loose it  easy way could be to loop on all controls and clear all existing focus")
                             control->has_focus = true;
                             for (size_t i = 0; i < wnd->child_list.size(); i++) {
@@ -412,11 +419,14 @@ struct login_mod : public internal_mod {
                                 wnd->child_list[i]->refresh(wnd->child_list[i]->rect.wh());
                             }
                             control->refresh(control->rect.wh());
+                            this->front.end_update();
+
                         }
                     }
                 }
 
                 if ((wnd != &this->screen) && !wnd->modal_dialog){
+                    this->front.begin_update();
                     switch (control->type) {
                         case WND_TYPE_BUTTON:
                             this->button_down = control;
@@ -434,7 +444,7 @@ struct login_mod : public internal_mod {
                                         control->rect.cx,
                                         100),
                                     control, // popped_from
-                                    this->screen, // parent
+                                    &this->screen, // parent
                                     control->item_index); // item_index
 
                             this->screen.child_list.insert(this->screen.child_list.begin(), this->popup_wnd);
@@ -456,10 +466,13 @@ struct login_mod : public internal_mod {
                         default:
                         break;
                     }
+                    this->front.end_update();
                 }
             }
             else { // Button UP
                 if (this->dragging) {
+                     this->front.begin_update();
+
                     /* if done dragging */
                     /* draw xor box one more time */
                     this->server_draw_dragging_rect(this->dragging_rect, this->screen.rect);
@@ -474,6 +487,8 @@ struct login_mod : public internal_mod {
                     this->front.end_update();
                     this->dragging_window = 0;
                     this->dragging = 0;
+
+                    this->front.end_update();
                 }
                 else {
                     /* loop on surface widgets on screen to find active window */
@@ -489,6 +504,8 @@ struct login_mod : public internal_mod {
 
                     // popup is opened
                     if (this->popup_wnd) {
+                         this->front.begin_update();
+
                         // click inside popup
                         if (this->popup_wnd == control){
                             this->popup_wnd->def_proc(WM_LBUTTONUP, x, y, keymap);
@@ -496,6 +513,8 @@ struct login_mod : public internal_mod {
                         // clear popup
                         this->clear_popup();
                         this->screen.refresh(this->screen.rect.wh());
+
+                        this->front.end_update();
                     }
                     else {
                         if (wnd == &this->screen || (wnd->modal_dialog == 0)){
@@ -503,7 +522,9 @@ struct login_mod : public internal_mod {
                                 if (control != wnd && control->tab_stop) {
                                 TODO(" previous focus on other control is not yet disabled")
                                     control->has_focus = true;
+                                    this->front.begin_update();
                                     control->refresh(control->rect.wh());
+                                    this->front.end_update();
                                 }
                             }
 
@@ -512,8 +533,10 @@ struct login_mod : public internal_mod {
                                 case WND_TYPE_COMBO:
                                     if (this->button_down == control){
                                         control->state = 0;
+                                        this->front.begin_update();
                                         control->refresh(control->rect.wh());
                                         control->notify(control, 1, x, y);
+                                        this->front.end_update();
                                     }
                                 break;
                                 default:

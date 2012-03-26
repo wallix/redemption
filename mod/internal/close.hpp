@@ -75,8 +75,7 @@ struct close_mod : public internal_mod {
 
         this->close_window = new wab_close(this,
             r, context,
-            this->screen, // parent
-            this->screen, // notify_to
+            &this->screen, // parent
             GREY,
             "Close",
             this->ini,
@@ -88,10 +87,10 @@ struct close_mod : public internal_mod {
         if (regular) {
             /* image */
             widget_image * but = new widget_image(this, 4, 4,
-                WND_TYPE_IMAGE, this->screen,
-                this->get_screen_rect().cx - 250 - 4,
-                this->get_screen_rect().cy - 120 - 4,
-                SHARE_PATH "/" REDEMPTION_LOGO24, this->screen.bpp);
+                WND_TYPE_IMAGE, &this->screen,
+                this->screen.rect.cx - 250 - 4,
+                this->screen.rect.cy - 120 - 4,
+                SHARE_PATH "/" REDEMPTION_LOGO24, 24);
 
             this->screen.child_list.push_back(but);
         }
@@ -162,7 +161,7 @@ struct close_mod : public internal_mod {
                     this->button_down->refresh(this->button_down->rect.wh());
                 }
                 else {
-                    b->notify(&b->parent, 2, x, y);
+                    b->notify(b->parent, 2, x, y);
                 }
             }
         }

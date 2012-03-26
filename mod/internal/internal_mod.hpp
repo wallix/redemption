@@ -28,7 +28,7 @@
 
 struct internal_mod : public client_mod {
     public:
-    widget_screen screen;
+    Widget screen;
     int dragging;
     Rect dragging_rect;
     int draggingdx; // distance between mouse and top angle of dragged window
@@ -37,7 +37,8 @@ struct internal_mod : public client_mod {
     RDPBrush brush;
 
     internal_mod(FrontAPI & front, uint16_t front_width, uint16_t front_height)
-            : client_mod(front, front_width, front_height), screen(this, front_width, front_height, 24)
+            : client_mod(front, front_width, front_height),
+            screen(this, front_width, front_height, NULL, WND_TYPE_SCREEN)
     {
         /* dragging info */
         this->dragging = 0;

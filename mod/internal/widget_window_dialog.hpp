@@ -33,8 +33,7 @@ struct window_dialog : public window
 
     window_dialog(internal_mod * mod, const Rect & r,
                   ModContext & context,
-                  Widget & parent, Widget & owner, Widget & notify_to,
-                  int bg_color,
+                  Widget * parent, int bg_color,
                   const char * title, Inifile * ini, int regular,
                   const char * message, const char * refuse)
     : window(mod, r, parent, bg_color, title)
@@ -43,12 +42,12 @@ struct window_dialog : public window
         this->context = &context;
         this->esc_button = NULL;
 
-        but = new widget_button(this->mod, Rect(200, 160, 60, 25), *this, 3, 1, "OK");
+        but = new widget_button(this->mod, Rect(200, 160, 60, 25), this, 3, 1, "OK");
         this->child_list.push_back(but);
         this->default_button = but;
 
         if (refuse) {
-            but = new widget_button(this->mod, Rect(300, 160, 60, 25), *this, 2, 1, refuse);
+            but = new widget_button(this->mod, Rect(300, 160, 60, 25), this, 2, 1, refuse);
             this->child_list.push_back(but);
             this->esc_button = but;
             this->default_button = but;
@@ -61,7 +60,7 @@ struct window_dialog : public window
             tmp[0] = 0;
             strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
             tmp[255] = 0;
-            but = new widget_label(this->mod, Rect(50, 60 + 16 * count, 500, 40), *this, tmp);
+            but = new widget_label(this->mod, Rect(50, 60 + 16 * count, 500, 40), this, tmp);
             this->child_list.push_back(but);
             count++;
             if (!str){

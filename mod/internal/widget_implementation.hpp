@@ -27,7 +27,7 @@
 
 struct widget_button : public Widget
 {
-    widget_button(GraphicalContext * mod, const Rect & r, Widget & parent, int id, int tab_stop, const char * caption)
+    widget_button(GraphicalContext * mod, const Rect & r, Widget * parent, int id, int tab_stop, const char * caption)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_BUTTON) {
 
         assert(type == WND_TYPE_BUTTON);
@@ -56,7 +56,7 @@ struct widget_edit : public Widget {
 
     char buffer[256];
 
-    widget_edit(GraphicalContext * mod, const Rect & r, Widget & parent, int id, int tab_stop, const char * caption, int pointer, int edit_pos)
+    widget_edit(GraphicalContext * mod, const Rect & r, Widget * parent, int id, int tab_stop, const char * caption, int pointer, int edit_pos)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_EDIT) {
 
         assert(type == WND_TYPE_EDIT);
@@ -86,7 +86,7 @@ struct widget_edit : public Widget {
 
 struct window : public Widget
 {
-    window(GraphicalContext * mod, const Rect & r, Widget & parent, int bg_color, const char * title)
+    window(GraphicalContext * mod, const Rect & r, Widget * parent, int bg_color, const char * title)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_WND) {
 
         assert(type == WND_TYPE_WND);
@@ -121,7 +121,7 @@ struct window : public Widget
 
 struct widget_label : public Widget {
 
-    widget_label(GraphicalContext * mod, const Rect & r, Widget & parent, const char * title)
+    widget_label(GraphicalContext * mod, const Rect & r, Widget * parent, const char * title)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_LABEL) {
 
         assert(type == WND_TYPE_LABEL);
@@ -144,7 +144,7 @@ struct widget_popup : public Widget
 
     widget_popup(GraphicalContext * mod, const Rect & r,
          Widget * popped_from,
-         Widget & parent,
+         Widget * parent,
          int item_index)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_SPECIAL)
     {
@@ -163,7 +163,7 @@ struct widget_popup : public Widget
 struct widget_combo : public Widget
 {
     widget_combo(GraphicalContext * mod, const Rect & r,
-                Widget & parent, int id, int tab_stop)
+                Widget * parent, int id, int tab_stop)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_COMBO){
         this->rect.x = r.x;
         this->rect.y = r.y;
@@ -182,7 +182,7 @@ struct widget_combo : public Widget
 struct widget_image : public Widget {
     Bitmap bmp;
 
-    widget_image(GraphicalContext * mod, int width, int height, int type, Widget & parent, int x, int y, const char* filename, uint8_t bpp)
+    widget_image(GraphicalContext * mod, int width, int height, int type, Widget * parent, int x, int y, const char* filename, uint8_t bpp)
     : Widget(mod, width, height, parent, type), bmp(24, filename) {
 
         assert(type == WND_TYPE_IMAGE);

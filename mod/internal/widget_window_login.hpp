@@ -36,7 +36,7 @@ struct window_login : public window
     ModContext & context;
     window * help;
 
-    window_login(internal_mod * mod, const Rect & r, ModContext & context, Widget & parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
+    window_login(internal_mod * mod, const Rect & r, ModContext & context, Widget * parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
     :   window(mod, r, parent, bg_color, title),
         notify_to(notify_to),
         context(context)
@@ -98,7 +98,7 @@ struct window_login : public window
             /* label */
             b = new widget_label(this->mod,
                 Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 20),
-                *this, "ip");
+                this, "ip");
 
             b->id = 100 + 2 * count;
             list.push_back(b);
@@ -106,7 +106,7 @@ struct window_login : public window
             /* edit */
             b = new widget_edit(this->mod,
                 Rect(this->rect.cx >= 400 ? 230 : 70, 60 + 25 * count, 350, 20),
-                *this,
+                this,
                 100 + 2 * count + 1, /* id */
                 1, /* tab stop */
                 acc.ip,
@@ -120,7 +120,7 @@ struct window_login : public window
         if (acc.askusername){
             b = new widget_label(this->mod,
                 Rect((this->rect.cx >= 400) ? 155 : 5, 60 + 25 * count, 70, 20),
-                *this, this->context.get(STRAUTHID_TRANS_LOGIN));
+                this, this->context.get(STRAUTHID_TRANS_LOGIN));
 
             b->id = 100 + 2 * count;
             list.push_back(b);
@@ -128,7 +128,7 @@ struct window_login : public window
             /* edit */
             b = new widget_edit(this->mod,
                 Rect((this->rect.cx >= 400) ? 230 : 70, 60 + 25 * count, 350, 20),
-                    *this,
+                    this,
                     100 + 2 * count + 1, /* id */
                     1, /* tab stop */
                     acc.username,
@@ -147,7 +147,7 @@ struct window_login : public window
         if (acc.askpassword){
             b = new widget_label(this->mod,
                 Rect(this->rect.cx >= 400 ? 155 : 5, 60 + 25 * count, 70, 20),
-                *this, this->context.get(STRAUTHID_TRANS_PASSWORD));
+                this, this->context.get(STRAUTHID_TRANS_PASSWORD));
 
             b->id = 100 + 2 * count;
             list.push_back(b);
@@ -155,7 +155,7 @@ struct window_login : public window
             /* edit */
             b = new widget_edit(this->mod,
                     Rect((this->rect.cx) >= 400 ? 230 : 70, 60 + 25 * count, 350, 20),
-                    *this,
+                    this,
                     100 + 2 * count + 1, /* id */
                     1, /* tab stop */
                     acc.password,
@@ -231,7 +231,7 @@ struct window_login : public window
 
         struct Widget* but = new widget_button(this->mod,
                     Rect(140, 260, 60, 25),
-                    *this->help, 1, 1, this->context.get(STRAUTHID_TRANS_BUTTON_OK));
+                    this->help, 1, 1, this->context.get(STRAUTHID_TRANS_BUTTON_OK));
         {
             vector<Widget *>::iterator it = this->help->child_list.begin();
             this->help->child_list.insert(it, but);
