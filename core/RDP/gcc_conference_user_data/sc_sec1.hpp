@@ -512,7 +512,7 @@ static inline void send_sec_tag_sig(Stream & stream, const uint8_t (&pub_sig)[51
     stream.out_clear_bytes(8); /* pad */
 }
 
-static inline void send_sec_tag_pubkey(Stream & stream, const char (&pub_exp)[4], const uint8_t (&pub_mod)[512])
+static inline void send_sec_tag_pubkey(Stream & stream, const uint8_t (&pub_exp)[4], const uint8_t (&pub_mod)[512])
 {
     stream.out_uint16_le(SEC_TAG_PUBKEY);
     stream.out_uint16_le(92); // length

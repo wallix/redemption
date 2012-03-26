@@ -499,7 +499,7 @@ class Stream {
         ::out_bytes_le(this->data+offset, nb, value);
     }
 
-    uint16_t get_offset(size_t offset){
+    uint16_t get_offset(uint16_t offset){
         return this->p - this->data - offset;
     }
 

@@ -39,8 +39,8 @@ static inline uint8_t nbbytes(unsigned value)
 
 static inline void out_bytes_le(uint8_t * ptr, const uint8_t nb, const unsigned value)
 {
-    for (int b = 0 ; b < nb ; ++b){
-        ptr[b] = value >> (8 * b);
+    for (uint8_t b = 0 ; b < nb ; ++b){
+        ptr[b] = (uint8_t)(value >> (8 * b));
     }
 }
 

@@ -538,7 +538,7 @@ static int key_gen_auto(Rsakeys * rsa_keys)
 {
     TODO(": verify that is working  need to see changes!!")
 
-    if (strcasecmp(rsa_keys->pub_sig, inst_pub_sig) == 0) {
+    if (strcasecmp((char*)rsa_keys->pub_sig, inst_pub_sig) == 0) {
         return key_gen("/etc/xrdp/rsakeys.ini");
     }
     printf("xrdp-keygen does not need to run\n");
