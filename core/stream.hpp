@@ -102,10 +102,6 @@ class Stream {
         length_ptr[1] = (uint8_t)(length >> 8);
     }
 
-    int free_size(){
-        return this->end - this->p;
-    }
-
     bool check_rem(unsigned n) {
         return (this->p + n) <= this->end;
     }
@@ -127,13 +123,13 @@ class Stream {
     int16_t in_sint16_be(void) {
         assert(check_rem(2));
         unsigned int v = this->in_uint16_be();
-        return (v > 32767)?v - 65536:v;
+        return (int16_t)((v > 32767)?v - 65536:v);
     }
 
     int16_t in_sint16_le(void) {
         assert(check_rem(2));
         unsigned int v = this->in_uint16_le();
-        return (v > 32767)?v - 65536:v;
+        return (int16_t)((v > 32767)?v - 65536:v);
     }
 
     unsigned in_bytes_le(const uint8_t nb){
@@ -437,13 +433,15 @@ class Stream {
     // sz utf16 bytes are translated to ascci, 00 terminated
     void in_uni_to_ascii_str(char* text, size_t sz)
     {
-        int i = 0;
-        int max = (sz>>1);
+        size_t i = 0;
+        size_t max = (sz>>1);
         while (i < max) {
             text[i++] = this->in_uint8();
             this->skip_uint8(1);
         }
-        text[i-1] = 0;
+        if (i > 0){
+            text[i-1] = 0;
+        }
     }
 
     void mark_end() {

@@ -827,11 +827,11 @@ struct Drawable
 
 
     template <typename Op>
-    void scr_blt_op(unsigned srcx, unsigned srcy, const Rect drect)
+    void scr_blt_op(uint16_t srcx, uint16_t srcy, const Rect drect)
     {
         Op op;
-        const signed int deltax = srcx - drect.x;
-        const signed int deltay = srcy - drect.y;
+        const int16_t deltax = srcx - drect.x;
+        const int16_t deltay = srcy - drect.y;
         const Rect srect = drect.offset(deltax, deltay);
         const Rect & overlap = srect.intersect(drect);
         uint8_t * target = ((deltay >= 0)||overlap.isempty())
@@ -840,15 +840,15 @@ struct Drawable
         uint8_t * source = ((deltay >= 0)||overlap.isempty())
         ? this->first_pixel(srect)
         : this->beginning_of_last_line(srect);
-        const signed int to_nextrow = ((deltay >= 0)||overlap.isempty())
+        const signed int to_nextrow = (signed int)(((deltay >= 0)||overlap.isempty())
         ?  this->rowsize
-        : -this->rowsize;
-        signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?this->Bpp:-this->Bpp;
-        const unsigned offset = ((deltay != 0)||(deltax >= 0))?0:this->Bpp*(drect.cx - 1);
-        for (size_t y = 0; y < (size_t)drect.cy ; y++) {
+        : -this->rowsize);
+        const signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?this->Bpp:-this->Bpp;
+        const unsigned offset = (unsigned)(((deltay != 0)||(deltax >= 0))?0:this->Bpp*(drect.cx - 1));
+        for (size_t y = 0; y < drect.cy ; y++) {
             uint8_t * linetarget = target + offset;
             uint8_t * linesource = source + offset;
-            for (size_t x = 0; x < (size_t)drect.cx ; x++) {
+            for (size_t x = 0; x < drect.cx ; x++) {
                 for (uint8_t b = 0 ; b < this->Bpp; b++){
                     linetarget[b] = op(linetarget[b], linesource[b]);
                 }

@@ -137,8 +137,8 @@ public:
         this->recv(reinterpret_cast<char **>(pbuffer), len);
     }
     virtual void recv(char ** pbuffer, size_t len) throw (Error) = 0;
-    virtual void send(const char * const buffer, int len) throw (Error) = 0;
-    void send(const uint8_t * const buffer, int len) throw (Error) {
+    virtual void send(const char * const buffer, size_t len) throw (Error) = 0;
+    void send(const uint8_t * const buffer, size_t len) throw (Error) {
         this->send(reinterpret_cast<const char * const>(buffer), len);
     }
 };
@@ -184,7 +184,7 @@ class GeneratorTransport : public Transport {
     }
 
     using Transport::send;
-    virtual void send(const char * const buffer, int len) throw (Error) {
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
         // send perform like a /dev/null and does nothing in generator transport
     }
 };
@@ -206,8 +206,8 @@ class OutFileTransport : public Transport {
     }
 
     using Transport::send;
-    virtual void send(const char * const buffer, int len) throw (Error) {
-        int status = 0;
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
+        ssize_t status = 0;
         size_t remaining_len = len;
         while (remaining_len) {
             status = ::write(this->fd, buffer, remaining_len);
@@ -242,7 +242,7 @@ class InFileTransport : public Transport {
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        int status = 0;
+        size_t status = 0;
         size_t remaining_len = len;
         char * buffer = *pbuffer;
         while (remaining_len) {
@@ -265,7 +265,7 @@ class InFileTransport : public Transport {
 
     // send is not implemented for InFileTransport
     using Transport::send;
-    virtual void send(const char * const buffer, int len) throw (Error) {
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
         LOG(LOG_INFO, "InFileTransport used for writing");
         throw Error(ERR_TRANSPORT_OUTFILE_TRANSPORT_USED_FOR_SEND, 0);
     }
@@ -280,7 +280,7 @@ class LoopTransport : public Transport {
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
     }
     using Transport::send;
-    virtual void send(const char * const buffer, int len) throw (Error) {
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
     }
 };
 
@@ -369,7 +369,7 @@ class SocketTransport : public Transport {
             LOG(LOG_INFO, "Socket %s (%u) receiving %u bytes", this->name, this->sck, total_len);
         }
         char * start = *input_buffer;
-        int len = total_len;
+        size_t len = total_len;
         char * pbuffer = *input_buffer;
 
         if (this->sck_closed) {
@@ -378,7 +378,7 @@ class SocketTransport : public Transport {
         }
 
         while (len > 0) {
-            int rcvd = ::recv(this->sck, pbuffer, len, 0);
+            ssize_t rcvd = ::recv(this->sck, pbuffer, len, 0);
             switch (rcvd) {
                 case -1: /* error, maybe EAGAIN */
                     if (!this->try_again(errno)) {
@@ -477,7 +477,7 @@ class SocketTransport : public Transport {
 
     using Transport::send;
 
-    virtual void send(const char * const buffer, int len) throw (Error)
+    virtual void send(const char * const buffer, size_t len) throw (Error)
     {
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Socket %s (%u) sending %u bytes", this->name, this->sck, len);
@@ -490,9 +490,9 @@ class SocketTransport : public Transport {
             LOG(LOG_INFO, "Socket already closed on %s (%u)", this->name, this->sck);
             throw Error(ERR_SOCKET_ALLREADY_CLOSED);
         }
-        int total = 0;
+        size_t total = 0;
         while (total < len) {
-            int sent = ::send(this->sck, buffer + total, len - total, 0);
+            ssize_t sent = ::send(this->sck, buffer + total, len - total, 0);
             switch (sent){
             case -1:
                 if (!this->try_again(errno)) {

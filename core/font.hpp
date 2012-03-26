@@ -200,7 +200,7 @@ TODO(" baseline is always -height (seen from the code of fontdump) looks strange
                         LOG(LOG_ERR, "Error loading font %s:"
                             " not enough data for definition of glyph %d"
                             " (expected %d, got %d)\n", file_path, index,
-                            datasize, stream.free_size());
+                            datasize, (unsigned)(stream.end - stream.p));
                             throw 6;
                             // we stop loading font here, we are at end of file
                     }

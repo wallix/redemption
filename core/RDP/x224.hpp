@@ -317,7 +317,7 @@ struct X224In : public X224Packet
         stream.skip_uint8(1);
         this->tpkt.len = stream.in_uint16_be();
 
-        const size_t payload_len = this->tpkt.len - TPKT_HEADER_LEN;
+        const uint16_t payload_len = (uint16_t)(this->tpkt.len - TPKT_HEADER_LEN);
         if (!stream.has_room(payload_len)){
             LOG(LOG_INFO, "ERR_STREAM_MEMORY_TOO_SMALL (asked for %u, has %u, used=%u)",
                 payload_len, stream.capacity, stream.end-stream.data);
@@ -718,8 +718,8 @@ struct X224Out : public X224Packet
     // and protocol negotiation appending a string "Cookie: mstshash=username\r\n"
     // to tpdu header.
     {
-        this->stream.set_out_uint8(this->stream.p - this->bop - 5, 4); // LI
-        this->stream.set_out_uint16_le(this->stream.p-this->bop, 2);   // tpkt.len
+        this->stream.set_out_uint8((uint8_t)(this->stream.p - this->bop - 5), 4); // LI
+        this->stream.set_out_uint16_le((uint16_t)(this->stream.p-this->bop), 2);   // tpkt.len
     }
 
     void end()
@@ -728,9 +728,9 @@ struct X224Out : public X224Packet
     {
 //        LOG(LOG_INFO, "X224 OUT TPDU end");
 
-        size_t len = this->stream.p - this->bop;
-        this->stream.set_out_uint8(len >> 8, 2);
-        this->stream.set_out_uint8(len & 0xFF, 3);
+        uint16_t len = (uint16_t)(this->stream.p - this->bop);
+        this->stream.set_out_uint8((uint8_t)(len >> 8), 2);
+        this->stream.set_out_uint8((uint8_t)(len & 0xFF), 3);
 //        LOG(LOG_INFO, "2) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", this->stream.data[0], this->stream.data[1], this->stream.data[2], this->stream.data[3], this->stream.data[4], this->stream.data[5], this->stream.data[6], this->stream.data[7]);
         uint8_t tpdutype = this->bop[5];
         switch (tpdutype){
@@ -761,7 +761,7 @@ struct X224Out : public X224Packet
         if (this->verbose){
             LOG(LOG_INFO, "iso X224 sending %u bytes", this->stream.p - this->bop);
         }
-        t->send(this->bop, this->stream.p - this->bop);
+        t->send(this->bop, (uint16_t)(this->stream.p - this->bop));
     }
 };
 

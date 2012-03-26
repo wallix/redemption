@@ -76,7 +76,7 @@ class ShareControlOut
     uint8_t offlen;
     public:
     ShareControlOut(Stream & stream, uint8_t pdu_type1, uint16_t mcs_channel)
-        : stream(stream), offlen(stream.p - stream.data)
+        : stream(stream), offlen((uint8_t)(stream.p - stream.data))
     {
         stream.skip_uint8(2); // len
         stream.out_uint16_le(0x10 | pdu_type1);
@@ -84,7 +84,7 @@ class ShareControlOut
     }
 
     void end(){
-        int len = stream.p - stream.data - this->offlen;
+        uint16_t len =(uint16_t)(stream.p - stream.data - this->offlen);
         stream.set_out_uint16_le(len, this->offlen);
     }
 };
@@ -260,7 +260,7 @@ class ShareDataOut
     public:
     ShareDataOut(Stream & stream, uint8_t pdu_type2, uint32_t share_id, uint8_t streamid)
         : stream(stream)
-        , offlen(stream.p - stream.data)
+        , offlen((uint8_t)(stream.p - stream.data))
     {
         stream.out_uint32_le(share_id);
         stream.out_uint8(0); // pad1
@@ -272,7 +272,7 @@ class ShareDataOut
     }
 
     void end(){
-        int len = stream.p - stream.data - this->offlen - 8;
+        uint16_t len = (uint16_t)(stream.p - stream.data - this->offlen - 8);
         stream.set_out_uint16_le(len, this->offlen + 6);
     }
 };
