@@ -26,6 +26,7 @@
 #include "widget.hpp"
 #include "internal_mod.hpp"
 #include "widget_implementation.hpp"
+#include "widget_window.hpp"
 
 struct window_login : public window
 {

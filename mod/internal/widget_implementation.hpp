@@ -84,41 +84,6 @@ struct widget_edit : public Widget {
 
 };
 
-struct window : public Widget
-{
-    window(GraphicalContext * mod, const Rect & r, Widget * parent, int bg_color, const char * title)
-    : Widget(mod, r.cx, r.cy, parent, WND_TYPE_WND) {
-
-        assert(type == WND_TYPE_WND);
-
-        this->bg_color = bg_color;
-        this->rect.x = r.x;
-        this->rect.y = r.y;
-        this->caption1 = strdup(title);
-    }
-
-    /* find the window containing widget */
-    virtual window * find_window()
-    {
-        return this;
-    }
-
-    ~window() {
-        if (this->caption1){
-            free(this->caption1);
-            this->caption1 = 0;
-        }
-    }
-
-    virtual void draw(const Rect & clip);
-    virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap);
-    virtual void focus(const Rect & clip);
-    virtual void blur(const Rect & clip);
-
-
-};
-
-
 struct widget_label : public Widget {
 
     widget_label(GraphicalContext * mod, const Rect & r, Widget * parent, const char * title)

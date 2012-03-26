@@ -27,6 +27,7 @@
 #include "widget.hpp"
 #include "internal/internal_mod.hpp"
 #include "internal/widget_implementation.hpp"
+#include "internal/widget_window.hpp"
 
 
 
