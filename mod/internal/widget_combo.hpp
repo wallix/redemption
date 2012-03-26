@@ -19,18 +19,30 @@
 
 */
 
-#if !defined(__MOD_INTERNAL_WIDGET_IMPLEMENTATION__)
-#define __MOD_INTERNAL_WIDGET_IMPLEMENTATION__
+#if !defined(__MOD_INTERNAL_WIDGET_COMBO__)
+#define __MOD_INTERNAL_WIDGET_COMBO__
 
 #include "widget.hpp"
 #include "internal/internal_mod.hpp"
 
-#include "internal/widget_combo.hpp"
-#include "internal/widget_label.hpp"
-#include "internal/widget_image.hpp"
-#include "internal/widget_popup.hpp"
-#include "internal/widget_edit.hpp"
-#include "internal/widget_button.hpp"
 
+struct widget_combo : public Widget
+{
+    widget_combo(GraphicalContext * mod, const Rect & r,
+                Widget * parent, int id, int tab_stop)
+    : Widget(mod, r.cx, r.cy, parent, WND_TYPE_COMBO){
+        this->rect.x = r.x;
+        this->rect.y = r.y;
+        this->id = id;
+        this->tab_stop = tab_stop;
+        this->item_index = 0;
+    }
+
+    ~widget_combo() {}
+
+    virtual void draw(const Rect & clip);
+    virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap);
+
+};
 
 #endif

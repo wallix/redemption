@@ -19,18 +19,32 @@
 
 */
 
-#if !defined(__MOD_INTERNAL_WIDGET_IMPLEMENTATION__)
-#define __MOD_INTERNAL_WIDGET_IMPLEMENTATION__
+#if !defined(__MOD_INTERNAL_WIDGET_POPUP__)
+#define __MOD_INTERNAL_WIDGET_POPUP__
 
 #include "widget.hpp"
 #include "internal/internal_mod.hpp"
 
-#include "internal/widget_combo.hpp"
-#include "internal/widget_label.hpp"
-#include "internal/widget_image.hpp"
-#include "internal/widget_popup.hpp"
-#include "internal/widget_edit.hpp"
-#include "internal/widget_button.hpp"
 
+struct widget_popup : public Widget
+{
+
+    widget_popup(GraphicalContext * mod, const Rect & r,
+         Widget * popped_from,
+         Widget * parent,
+         int item_index)
+    : Widget(mod, r.cx, r.cy, parent, WND_TYPE_SPECIAL)
+    {
+            this->popped_from = popped_from;
+            this->rect.x = r.x;
+            this->rect.y = r.y;
+            this->item_index = item_index;
+    }
+    ~widget_popup() {}
+
+    virtual void draw(const Rect & clip);
+    virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap);
+
+};
 
 #endif

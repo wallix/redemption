@@ -19,18 +19,37 @@
 
 */
 
-#if !defined(__MOD_INTERNAL_WIDGET_IMPLEMENTATION__)
-#define __MOD_INTERNAL_WIDGET_IMPLEMENTATION__
+#if !defined(__MOD_INTERNAL_WIDGET_BUTTON__)
+#define __MOD_INTERNAL_WIDGET_BUTTON__
 
 #include "widget.hpp"
 #include "internal/internal_mod.hpp"
 
-#include "internal/widget_combo.hpp"
-#include "internal/widget_label.hpp"
-#include "internal/widget_image.hpp"
-#include "internal/widget_popup.hpp"
-#include "internal/widget_edit.hpp"
-#include "internal/widget_button.hpp"
+struct widget_button : public Widget
+{
+    widget_button(GraphicalContext * mod, const Rect & r, Widget * parent, int id, int tab_stop, const char * caption)
+    : Widget(mod, r.cx, r.cy, parent, WND_TYPE_BUTTON) {
 
+        assert(type == WND_TYPE_BUTTON);
+
+        this->rect.x = r.x;
+        this->rect.y = r.y;
+        this->tab_stop = tab_stop;
+        this->id = id;
+        this->caption1 = strdup(caption);
+    }
+
+    ~widget_button() {
+        if (this->caption1){
+            free(this->caption1);
+            this->caption1 = 0;
+        }
+    }
+
+    void draw(const Rect & clip);
+
+    void draw_focus_rect(Widget * wdg, const Rect & r, const Rect & clip);
+
+};
 
 #endif

@@ -19,18 +19,30 @@
 
 */
 
-#if !defined(__MOD_INTERNAL_WIDGET_IMPLEMENTATION__)
-#define __MOD_INTERNAL_WIDGET_IMPLEMENTATION__
+#if !defined(__MOD_INTERNAL_WIDGET_LABEL__)
+#define __MOD_INTERNAL_WIDGET_LABLE__
 
 #include "widget.hpp"
 #include "internal/internal_mod.hpp"
 
-#include "internal/widget_combo.hpp"
-#include "internal/widget_label.hpp"
-#include "internal/widget_image.hpp"
-#include "internal/widget_popup.hpp"
-#include "internal/widget_edit.hpp"
-#include "internal/widget_button.hpp"
+struct widget_label : public Widget {
 
+    widget_label(GraphicalContext * mod, const Rect & r, Widget * parent, const char * title)
+    : Widget(mod, r.cx, r.cy, parent, WND_TYPE_LABEL) {
+
+        assert(type == WND_TYPE_LABEL);
+
+        this->rect.x = r.x;
+        this->rect.y = r.y;
+        this->caption1 = strdup(title);
+    }
+
+    ~widget_label() {
+        free(this->caption1);
+    }
+
+    virtual void draw(const Rect & clip);
+
+};
 
 #endif

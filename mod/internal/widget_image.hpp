@@ -19,18 +19,28 @@
 
 */
 
-#if !defined(__MOD_INTERNAL_WIDGET_IMPLEMENTATION__)
-#define __MOD_INTERNAL_WIDGET_IMPLEMENTATION__
+#if !defined(__MOD_INTERNAL_WIDGET_IMAGE__)
+#define __MOD_INTERNAL_WIDGET_IMAGE__
 
 #include "widget.hpp"
 #include "internal/internal_mod.hpp"
 
-#include "internal/widget_combo.hpp"
-#include "internal/widget_label.hpp"
-#include "internal/widget_image.hpp"
-#include "internal/widget_popup.hpp"
-#include "internal/widget_edit.hpp"
-#include "internal/widget_button.hpp"
+struct widget_image : public Widget {
+    Bitmap bmp;
 
+    widget_image(GraphicalContext * mod, int width, int height, int type, Widget * parent, int x, int y, const char* filename, uint8_t bpp)
+    : Widget(mod, width, height, parent, type), bmp(24, filename) {
+
+        assert(type == WND_TYPE_IMAGE);
+
+        this->rect = Rect(x, y, bmp.cx, bmp.cy);
+    }
+
+    ~widget_image() {
+    }
+
+    virtual void draw(const Rect & clip);
+
+};
 
 #endif
