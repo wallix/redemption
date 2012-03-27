@@ -31,7 +31,6 @@
 
 #include <sys/time.h>
 #include <ctime>
-#include <iostream>
 
 #include "RDP/x224.hpp"
 #include "RDP/mcs.hpp"
@@ -39,7 +38,7 @@
 #include "RDP/sec.hpp"
 #include "RDP/lic.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
-#include "difftimeval.hpp"
+#include "timer_capture.hpp"
 
 // MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
 // ================================================================
@@ -110,7 +109,7 @@ struct GraphicsToFile : public RDPSerializer
     uint16_t offset_chunk_size;
     uint16_t offset_chunk_type;
     uint16_t chunk_type;
-    struct timeval now;
+    TimerCapture timer;
 
     GraphicsToFile(Transport * trans, const Inifile * ini,
           const uint8_t  bpp,
@@ -124,7 +123,7 @@ struct GraphicsToFile : public RDPSerializer
             big_entries, big_size,
             0, 1, 1)
         , chunk_type(RDP_UPDATE_ORDERS)
-        , now(now)
+        , timer(now)
     {
         this->init();
     }
@@ -141,15 +140,14 @@ struct GraphicsToFile : public RDPSerializer
                     big_entries, big_size,
                     0, 1, 1)
     , chunk_type(RDP_UPDATE_ORDERS)
+    , timer()
     {
-        gettimeofday(&this->now, 0);
         this->init();
     }
 
     ~GraphicsToFile(){
     }
 
-    TODO("init => reset ?")
     void init(){
         if (this->ini && this->ini->globals.debug.primary_orders){
             LOG(LOG_INFO, "GraphicsToFile::init::Initializing orders batch");
@@ -182,10 +180,8 @@ struct GraphicsToFile : public RDPSerializer
         this->flush();
         this->chunk_type = TIMESTAMP;
         this->order_count = 1;
-        uint64_t micro_sec = ::difftimeval(now, this->now);
-        this->now = now;
+        uint64_t micro_sec = this->timer.elapsed(now);
         this->stream.out_copy_bytes((uint8_t*)(&micro_sec), sizeof(micro_sec));
-        //this->stream.out_copy_bytes("\x00\x00\x00\x02", sizeof(micro_sec));
         this->flush();
     }
 

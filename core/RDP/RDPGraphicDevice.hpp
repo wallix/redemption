@@ -48,6 +48,7 @@
 #include "transport.hpp"
 
 #include "bmpcache.hpp"
+#include "timer_capture.hpp"
 
 struct RDPGraphicDevice
 {
@@ -111,6 +112,8 @@ struct RDPUnserializer
     uint16_t remaining_order_count;
     uint16_t order_count;
 
+    WaitCapture wait_cap;
+
     RDPUnserializer(Transport * trans, RDPGraphicDevice * consumer, const Rect screen_rect)
      : stream(4096), consumer(consumer), trans(trans), screen_rect(screen_rect),
      // Internal state of orders
@@ -130,7 +133,8 @@ struct RDPUnserializer
     chunk_size(0),
     chunk_type(0),
     remaining_order_count(0),
-    order_count(0)
+    order_count(0),
+    wait_cap()
     {
     }
 
@@ -261,9 +265,8 @@ struct RDPUnserializer
             {
                 uint64_t micro_sec;
                 this->stream.in_copy_bytes((uint8_t*)&micro_sec, sizeof(micro_sec));
-                struct timespec wtime = { micro_sec / 1000000 , micro_sec % 1000000 * 1000 };
-                nanosleep(&wtime,NULL);
-                this->remaining_order_count = 0;
+                this->wait_cap.wait(micro_sec);
+                --this->remaining_order_count;
             }
             break;
             default:

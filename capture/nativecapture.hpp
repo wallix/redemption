@@ -96,8 +96,8 @@ class NativeCapture : public RDPGraphicDevice
         if (difftimeval(now, this->start) < this->inter_frame_interval){
             return;
         }
+        this->recorder.timestamp(now);
         this->start = now;
-        this->recorder.timestamp();
     }
 
     virtual void flush() {}
