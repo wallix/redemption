@@ -26,183 +26,11 @@
 #define __LOGIN_HPP__
 
 #include "widget_window_login.hpp"
+#include "widget_combo_help.hpp"
+#include "widget_combo_login.hpp"
 
 #include "version.hpp"
 
-struct combo_help : public window
-{
-    Widget & notify_to;
-
-    combo_help(internal_mod * mod, const Rect & r, Widget * parent, Widget & notify_to, int bg_color, const char * title)
-    : window(mod, r, parent, bg_color, title), notify_to(notify_to)
-    {
-    }
-
-    virtual void notify(struct Widget* sender, int msg, long param1, long param2)
-    {
-        if (msg == 1) { /* click */
-            if (sender->id == 1) { /* ok button */
-                    this->notify_to.notify(this, 100, 1, 0); /* ok */
-            }
-        } else if (msg == WM_PAINT) { /* 3 */
-            TODO(" the code below is a bit too much specialized. Change it to some code able to write a paragraph of text in a given rectangle. Later we may even add some formatting support.")
-            const char * message =
-                    "You must be authenticated before using this<br>"
-                    "session.<br>"
-                    "<br>"
-                    "Enter a valid username in the username edit box.<br>"
-                    "Enter the password in the password edit box.<br>"
-                    "<br>"
-                    "Both the username and password are case<br>"
-                    "sensitive.<br>"
-                    "<br>"
-                    "Contact your system administrator if you are<br>"
-                    "having problems logging on.<br>"
-                    ;
-            int count = 0;
-            bool done = false;
-            while (!done) {
-                const char * str = strstr(message, "<br>");
-                char tmp[256];
-                tmp[0] = 0;
-                strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
-                tmp[255] = 0;
-
-                Rect r(0, 0, this->rect.cx, this->rect.cy);
-                const Rect scr_r = this->to_screen_rect(r);
-                const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
-
-                for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
-                    this->mod->front.server_draw_text(scr_r.x + 10, scr_r.y + 30 + 16 * count, tmp, GREY, BLACK, region.rects[ir].intersect(this->to_screen_rect(this->rect.wh())));
-                }
-
-                count++;
-                if (!str){
-                    done = true;
-                }
-                else {
-                    message = str + 4;
-                }
-            }
-        }
-        return;
-    }
-
-};
-
-
-struct combo_login : public window_login
-{
-    combo_login(internal_mod * mod, const Rect & r, ModContext & context, Widget * parent, Widget & notify_to, int bg_color, const char * title, Inifile * ini, int regular)
-    : window_login(mod, r, context, parent, notify_to, bg_color, title, ini, regular)
-    {
-        this->ini = ini;
-        struct Widget* but;
-
-        /* create help screen */
-        uint32_t grey = 0xc0c0c0;
-        this->help = new combo_help(this->mod,
-            Rect(this->mod->screen.rect.cx / 2 - 340 / 2,
-                this->mod->screen.rect.cy / 2 - 300 / 2,
-                340,
-                300),
-            &mod->screen, // parent
-            *this, // notify
-            grey,
-            "Login help");
-
-        if (regular) {
-            widget_image * but = new widget_image(this->mod, 4, 4, WND_TYPE_IMAGE, this, 10, 30,
-                    SHARE_PATH "/" LOGIN_LOGO24, 24);
-            this->child_list.push_back(but);
-        }
-
-        /* label */
-        but = new widget_label(this->mod, Rect((regular ? 155 : 5), 35, 60, 20), this,  "Module");
-        this->child_list.push_back(but);
-
-        Rect rect(regular ? 230 : 70, 35, 350, 20);
-        this->combo = new widget_combo(this->mod, rect, this, 6, 1);
-
-        TODO(" add this to combo through constructor (pass in an array of strings ?) a list of pairs with id and string could be better.")
-        for (int i = 0; i < 6 ; i++){
-            if (ini->account[i].accountdefined){
-                this->combo->string_list.push_back(strdup(ini->account[i].accountname));
-            }
-        }
-
-        for (int i = 0; i < 6 ; i++){
-            if (ini->account[i].accountdefined){
-                this->combo->item_index = i;
-
-                if (context.is_asked(STRAUTHID_TARGET_USER)
-                ||  context.is_asked(STRAUTHID_TARGET_DEVICE)){
-                    if (context.is_asked(STRAUTHID_AUTH_USER)){
-                        ini->account[i].username[0] = 0;
-                    }
-                    else {
-                        strcpy(ini->account[i].username, context.get(STRAUTHID_AUTH_USER));
-                    }
-                }
-                else if (context.is_asked(STRAUTHID_AUTH_USER)) {
-                    ini->account[i].username[0] = 0;
-                }
-                else {
-                    char buffer[256];
-                    snprintf(buffer, 256, "%s@%s:%s",
-                        context.get(STRAUTHID_TARGET_USER),
-                        context.get(STRAUTHID_TARGET_DEVICE),
-                        context.get(STRAUTHID_AUTH_USER));
-                    strcpy(ini->account[i].username, buffer);
-                }
-                break;
-            }
-        }
-
-        this->child_list.push_back(this->combo);
-
-        struct IniAccounts * acc = this->current_account();
-        const char * target_protocol = "RDP";
-        switch (acc->idlib){
-            case ID_LIB_VNC:
-                target_protocol = "VNC";
-            break;
-            case ID_LIB_XUP:
-                target_protocol = "XUP";
-            break;
-            default:;
-        }
-        this->context.cpy(STRAUTHID_TARGET_PROTOCOL, target_protocol);
-
-        TODO(" valgrind say there is a memory leak here")
-        but = new widget_button(this->mod,
-              Rect(regular ? 180 : 30, 160, 60, 25),
-              this, 3, 1, context.get(STRAUTHID_TRANS_BUTTON_OK));
-        this->child_list.push_back(but);
-        this->default_button = but;
-
-        TODO(" valgrind say there is a memory leak here")
-        but = new widget_button(this->mod,
-              Rect(regular ? 250 : ((r.cx - 30) - 60), 160, 60, 25),
-              this, 2, 1, context.get(STRAUTHID_TRANS_BUTTON_CANCEL));
-        this->child_list.push_back(but);
-        this->esc_button = but;
-
-        if (regular) {
-        TODO(" valgrind say there is a memory leak here")
-            but = new widget_button(this->mod,
-                  Rect(320, 160, 60, 25), this, 1, 1, context.get(STRAUTHID_TRANS_BUTTON_HELP));
-            this->child_list.push_back(but);
-        }
-
-         this->login_window_show_edits();
-    }
-
-    ~combo_login(){
-        delete this->help;
-    }
-
-};
 
 struct login_mod : public internal_mod {
     struct window_login * login_window;
@@ -554,12 +382,16 @@ struct login_mod : public internal_mod {
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const Keymap * keymap, const key_info* ki){
         if (device_flags & KBD_FLAG_UP){
             if (this->popup_wnd != 0) {
+                this->front.begin_update();
                 this->clear_popup();
+                this->front.end_update();
             }
         }
         else {
             if (!this->popup_wnd && this->login_window->has_focus) {
+                this->front.begin_update();
                 this->login_window->def_proc(WM_KEYDOWN, param1, device_flags, keymap);
+                this->front.end_update();
             }
         }
     }

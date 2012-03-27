@@ -22,15 +22,15 @@
 #if !defined(__MOD_INTERNAL_WIDGET_IMPLEMENTATION__)
 #define __MOD_INTERNAL_WIDGET_IMPLEMENTATION__
 
-#include "widget.hpp"
-#include "internal/internal_mod.hpp"
+//#include "widget.hpp"
+//#include "internal/internal_mod.hpp"
 
-#include "internal/widget_combo.hpp"
-#include "internal/widget_label.hpp"
-#include "internal/widget_image.hpp"
-#include "internal/widget_popup.hpp"
-#include "internal/widget_edit.hpp"
-#include "internal/widget_button.hpp"
+//#include "internal/widget_combo.hpp"
+//#include "internal/widget_label.hpp"
+//#include "internal/widget_image.hpp"
+//#include "internal/widget_popup.hpp"
+//#include "internal/widget_edit.hpp"
+//#include "internal/widget_button.hpp"
 
 
 #endif

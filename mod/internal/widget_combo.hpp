@@ -40,8 +40,50 @@ struct widget_combo : public Widget
 
     ~widget_combo() {}
 
-    virtual void draw(const Rect & clip);
-    virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap);
+    virtual void draw(const Rect & clip)
+    {
+        const Rect scr_r = this->to_screen_rect(Rect(0, 0, this->rect.cx, this->rect.cy));
+        const Region region = this->get_visible_region(&this->mod->screen, this, this->parent, scr_r);
+
+        for (size_t ir = 0 ; ir < region.rects.size() ; ir++){
+            const Rect region_clip = region.rects[ir].intersect(this->to_screen_rect(clip));
+
+            this->mod->draw_combo(scr_r,
+                this->string_list[this->item_index],
+                this->state,
+                this->has_focus,
+                region_clip);
+        }
+    }
+
+
+    virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap)
+    {
+        int ext;
+        int scan_code;
+
+        if (msg == WM_KEYDOWN) {
+            scan_code = param1 % 128;
+            ext = param2 & 0x0100;
+            /* left or up arrow */
+            if (((scan_code == 75) || (scan_code == 72)) && (ext || (keymap->key_flags & 5))) {
+                if (this->item_index > 0) {
+                    this->item_index--;
+                    this->refresh(this->rect.wh());
+                    this->notify(this, CB_ITEMCHANGE, 0, 0);
+                }
+            }
+            /* right or down arrow */
+            else if ((scan_code == 77 || scan_code == 80) && (ext || (keymap->key_flags & 5))) {
+                        size_t count = this->string_list.size();
+                if ((this->item_index + 1) < count) {
+                    this->item_index++;
+                    this->refresh(this->rect.wh());
+                    this->notify(this, CB_ITEMCHANGE, 0, 0);
+                }
+            }
+        }
+    }
 
 };
 

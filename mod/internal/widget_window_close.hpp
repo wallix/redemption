@@ -20,13 +20,16 @@
 
 */
 
-#if !defined(__WIDGET_WINDOW_CLOSE_HPP__)
-#define __WIDGET_WINDOW_CLOSE_HPP__
+#if !defined(__MOD_INTERNAL_WIDGET_WINDOW_CLOSE_HPP__)
+#define __MOD_INTERNAL_WIDGET_WINDOW_CLOSE_HPP__
 
 #include "widget.hpp"
 #include "internal_mod.hpp"
-#include "widget_implementation.hpp"
 #include "widget_window.hpp"
+#include "widget_image.hpp"
+#include "widget_button.hpp"
+#include "widget_label.hpp"
+#include "widget_combo.hpp"
 
 struct wab_close : public window
 {

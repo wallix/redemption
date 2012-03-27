@@ -250,7 +250,7 @@ struct Widget {
         }
     }
 
-    void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap)
+    virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap)
     {
     }
 
