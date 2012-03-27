@@ -11,20 +11,29 @@ using namespace std;
 struct Keymap2 {
 
     enum {
-           KBDFLAGS_EXTENDED=0x0100
-         , KBDFLAGS_DOWN=0x4000
-         , KBDFLAGS_RELEASE=0x8000
+           KBDFLAGS_EXTENDED = 0x0100
+         , KBDFLAGS_DOWN     = 0x4000
+         , KBDFLAGS_RELEASE  = 0x8000
          };
 
 
     enum {
-        SCROLLLOCK = 0x01,
-        NUMLOCK    = 0x02,
-        CAPSLOCK   = 0x04
+           SCROLLLOCK = 0x01
+         , NUMLOCK    = 0x02
+         , CAPSLOCK   = 0x04
+    };
+
+    enum {
+           LEFT_SHIFT  = 0x36
+         , RIGHT_SHIFT = 0x2A
+         , LEFT_CTRL   = 0x1D
+         , RIGHT_CTRL  = 0x9D
+         , LEFT_ALT    = 0x38
+         , RIGHT_ALT   = 0xB8
     };
 
     // keyboard info
-    int keys_down[256];  // key states 0 up 1 down
+    int keys_down[256];  // key states 0 up 1 down (0..127 plain keys, 128..255 extended keys)
 
     int key_flags;          // scrool_lock = 1, num_lock = 2, caps_lock = 4,
                             // shift = 8, ctrl = 16, Alt = 32,
@@ -373,17 +382,17 @@ struct Keymap2 {
                 };
                 const int keylayout_040c_capslock[128] = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
-                    /*   8 */     0x0,   0x1b,   0x26,   0xc9,   0x22,   0x27,   0x28,   0x2d,
-                    /*  16 */    0xc8,   0x5f,   0xc7,   0xc0,   0x29,   0x3d,    0x8,    0x9,
+                    /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
+                    /*  16 */    0x37,   0x38,   0x39,   0x30,   0xb0,   0x2b,    0x8,    0x0,
                     /*  24 */    0x41,   0x5a,   0x45,   0x52,   0x54,   0x59,   0x55,   0x49,
-                    /*  32 */    0x4f,   0x50,   0x5e,   0x24,    0xd,    0x0,   0x51,   0x53,
+                    /*  32 */    0x4f,   0x50,   0xa8,   0xa3,    0xd,    0x0,   0x51,   0x53,
                     /*  40 */    0x44,   0x46,   0x47,   0x48,   0x4a,   0x4b,   0x4c,   0x4d,
-                    /*  48 */    0xd9,   0xb2,    0x0,   0x2a,   0x57,   0x58,   0x43,   0x56,
-                    /*  56 */    0x42,   0x4e,   0x2c,   0x3b,   0x3a,   0x21,    0x0,   0x2a,
+                    /*  48 */    0x25,   0x7e,    0x0,   0xb5,   0x57,   0x58,   0x43,   0x56,
+                    /*  56 */    0x42,   0x4e,   0x3f,   0x2e,   0x2f,   0xa7,    0x0,   0x2a,
                     /*  64 */     0x0,   0x20,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
-                    /*  72 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
-                    /*  80 */     0x0,    0x0,   0x2d,    0x0,    0x0,    0x0,   0x2b,    0x0,
-                    /*  88 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,   0x3c,    0x0,
+                    /*  72 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,   0x37,
+                    /*  80 */    0x38,   0x39,   0x2d,   0x34,   0x35,   0x36,   0x2b,   0x31,
+                    /*  88 */    0x32,   0x33,   0x30,   0x2e,    0x0,    0x0,   0x3e,    0x0,
                     /*  96 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
@@ -407,17 +416,17 @@ struct Keymap2 {
                 };
                 const int keylayout_040c_shiftcapslock[128] = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
-                    /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
-                    /*  16 */    0x37,   0x38,   0x39,   0x30,   0xb0,   0x2b,    0x8,    0x0,
+                    /*   8 */     0x0,   0x1b,   0x26,   0xe9,   0x22,   0x27,   0x28,   0x2d,
+                    /*  16 */    0xe8,   0x5f,   0xe7,   0xe0,   0x29,   0x3d,    0x8,    0x9,
                     /*  24 */    0x61,   0x7a,   0x65,   0x72,   0x74,   0x79,   0x75,   0x69,
-                    /*  32 */    0x6f,   0x70,   0xa8,   0xa3,    0xd,    0x0,   0x71,   0x73,
+                    /*  32 */    0x6f,   0x70,   0x5e,   0x24,    0xd,    0x0,   0x71,   0x73,
                     /*  40 */    0x64,   0x66,   0x67,   0x68,   0x6a,   0x6b,   0x6c,   0x6d,
-                    /*  48 */    0x25,   0x7e,    0x0,    0x0,   0x77,   0x78,   0x63,   0x76,
-                    /*  56 */    0x62,   0x6e,   0x3f,   0x2e,   0x2f,   0xa7,    0x0,   0x2a,
+                    /*  48 */    0xf9,   0xb2,    0x0,   0x2a,   0x77,   0x78,   0x63,   0x76,
+                    /*  56 */    0x62,   0x6e,   0x2c,   0x3b,   0x3a,   0x21,    0x0,   0x2a,
                     /*  64 */     0x0,   0x20,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
-                    /*  72 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,   0x37,
-                    /*  80 */    0x38,   0x39,   0x2d,   0x34,   0x35,   0x36,   0x2b,   0x31,
-                    /*  88 */    0x32,   0x33,   0x30,   0x2e,    0x0,    0x0,   0x3e,    0x0,
+                    /*  72 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
+                    /*  80 */     0x0,    0x0,   0x2d,    0x0,    0x0,    0x0,   0x2b,    0x0,
+                    /*  88 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,   0x3c,    0x0,
                     /*  96 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
@@ -1462,64 +1471,79 @@ struct Keymap2 {
 
     void event(const uint16_t keyboardFlags, const uint16_t keyCode)
     {
-        this->keys_down[keyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
+        uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
+        this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
 
-        switch (keyCode){
-            case 0x3A:
-                this->key_flags |= CAPSLOCK;
+        switch (extendedKeyCode){
+            case 0x3A: // capslock
+                if (this->keys_down[extendedKeyCode]){
+                    this->key_flags ^= CAPSLOCK;
+                }
+            break;
+            case LEFT_SHIFT: // left shift
+            case RIGHT_SHIFT: // right shift
+            case LEFT_CTRL: // left ctrl
+            case RIGHT_CTRL: // right ctrl
+            case LEFT_ALT: // left alt
+            case RIGHT_ALT: // right alt
             break;
             default:
 
                 // This table translates the RDP scanodes to X11 scandodes :
                 //  - if regular device : applies the +8 translation
                 //  - if ext device : applies the redirection
-                static struct codepair {
-                    uint8_t code1 ;
-                    uint8_t code2 ;
-                } map[128] =  {
-                        {   0,   0 }, {   9,   0 }, {  10,   0 }, {  11,   0 }, {  12,   0 }, //   0 -   4
-                        {  13,   0 }, {  14,   0 }, {  15,   0 }, {  16,   0 }, {  17,   0 }, //   5 -   9
-                        {  18,   0 }, {  19,   0 }, {  20,   0 }, {  21,   0 }, {  22,   0 }, //  10 -  14
-                        {  23,   0 }, {  24,   0 }, {  25,   0 }, {  26,   0 }, {  27,   0 }, //  15 -  19
-                        {  28,   0 }, {  29,   0 }, {  30,   0 }, {  31,   0 }, {  32,   0 }, //  20 -  24
-                        {  33,   0 }, {  34,   0 }, {  35,   0 }, {  36, 108 }, {  37, 109 }, //  25 -  29
-                        {  38,   0 }, {  39,   0 }, {  40,   0 }, {  41,   0 }, {  42,   0 }, //  30 -  34
-                        {  43,   0 }, {  44,   0 }, {  45,   0 }, {  46,   0 }, {  47,   0 }, //  35 -  39
-                        {  48,   0 }, {  49,   0 }, {  50,   0 }, {  51,   0 }, {  52,   0 }, //  40 -  44
-                        {  53,   0 }, {  54,   0 }, {  55,   0 }, {  56,   0 }, {  57,   0 }, //  45 -  49
-                        {  58,   0 }, {  59,   0 }, {  60,   0 }, {  61, 112 }, {  62,   0 }, //  50 -  54
-                        {  63, 111 }, {  64, 113 }, {  65,   0 }, {  66,   0 }, {  67,   0 }, //  55 -  59
-                        {  68,   0 }, {  69,   0 }, {  70,   0 }, {  71,   0 }, {  72,   0 }, //  60 -  64
-                        {  73,   0 }, {  74,   0 }, {  75,   0 }, {  76,   0 }, {  77,   0 }, //  65 -  69
-                        {  78,   0 }, {  79,  97 }, {  80,  98 }, {  81,  99 }, {  82,   0 }, //  70 -  74
-                        {  83, 100 }, {  84,   0 }, {  85, 102 }, {  86,   0 }, {  87, 103 }, //  75 -  79
-                        {  88, 104 }, {  89, 105 }, {  90, 106 }, {  91, 107 }, {  92,   0 }, //  80 -  84
-                        {  93,   0 }, {  94,   0 }, {  95,   0 }, {  96,   0 }, {  97,   0 }, //  85 -  89
-                        {  98,   0 }, {   0, 115 }, {   0, 116 }, {   0, 117 }, { 102,   0 }, //  90 -  94
-                        { 103,   0 }, { 104,   0 }, { 105,   0 }, { 106,   0 }, { 107,   0 }, //  95 -  99
-                        { 108,   0 }, { 109,   0 }, { 110,   0 }, { 111,   0 }, { 112,   0 }, // 100 - 104
-                        { 113,   0 }, { 114,   0 }, { 115,   0 }, { 116,   0 }, { 117,   0 }, // 105 - 109
-                        { 118,   0 }, { 119,   0 }, { 120,   0 }, { 121,   0 }, { 122,   0 }, // 110 - 114
-                        { 123,   0 }, { 124,   0 }, { 125,   0 }, { 126,   0 }, { 127,   0 }, // 115 - 119
-                        { 128,   0 }, { 129,   0 }, { 130,   0 }, { 131,   0 }, { 132,   0 }, // 120 - 124
-                        { 133,   0 }, { 134,   0 }, { 135,   0 }                              // 125 - 127
+                uint8_t map[256] =  {
+                    0x00, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+                    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+                    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+                    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+                    0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
+                    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+                    0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
+                    0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
+                    0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
+                    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
+                    0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f,
+                    0x60, 0x61, 0x62, 0x00, 0x00, 0x00, 0x66, 0x67,
+                    0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
+                    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77,
+                    0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x6c, 0x6d, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x70, 0x00, 0x6f,
+                    0x71, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x61,
+                    0x62, 0x63, 0x00, 0x64, 0x00, 0x66, 0x00, 0x67,
+                    0x68, 0x69, 0x6a, 0x6b, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x73, 0x74, 0x75, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
                 } ;
 
-                if (this->keys_down[keyCode]){
-                    this->last_char_key = keyCode;
-                    if (this->is_shift_pressed()){
-                        this->last_char = keylayout_WORK_shift[map[keyCode & 0x7f].code1] ;
+                if (this->keys_down[extendedKeyCode]){
+                    this->last_char_key = extendedKeyCode;
+                    if (this->is_ctrl_pressed() && this->is_alt_pressed()){
+                        this->last_char = keylayout_WORK_altgr[map[extendedKeyCode]] ;
+                    }
+                    else if (this->is_shift_pressed() && this->is_caps_locked()){
+                        this->last_char = keylayout_WORK_shiftcapslock[map[extendedKeyCode]] ;
+                    }
+                    else if (this->is_shift_pressed()){
+                        this->last_char = keylayout_WORK_shift[map[extendedKeyCode]] ;
                     }
                     else if (this->is_caps_locked()) {
-                        this->last_char = keylayout_WORK_capslock[map[keyCode & 0x7f].code1] ;
+                        this->last_char = keylayout_WORK_capslock[map[extendedKeyCode]] ;
                     }
                     else {
-                        this->last_char = keylayout_WORK_noshift[map[keyCode & 0x7f].code1] ;
-                    }
-                }
-                else {
-                    if (keyCode == this->last_char_key){
-                        this->last_char = 0;
+                        this->last_char = keylayout_WORK_noshift[map[extendedKeyCode]] ;
                     }
                 }
 
@@ -1529,6 +1553,7 @@ struct Keymap2 {
 
     }
 
+    // head of keyboard buffer (or keyboard buffer of size 1)
     uint32_t last_char_down()
     {
         return this->last_char;
@@ -1551,17 +1576,48 @@ struct Keymap2 {
 
     bool is_left_shift_pressed()
     {
-        return this->keys_down[54];
+        return this->keys_down[LEFT_SHIFT];
     }
     bool is_right_shift_pressed()
     {
-        return this->keys_down[42];
+        return this->keys_down[RIGHT_SHIFT];
     }
 
     bool is_shift_pressed()
     {
         return this->is_left_shift_pressed() || this->is_right_shift_pressed();
     }
+
+    bool is_left_ctrl_pressed()
+    {
+        return this->keys_down[LEFT_CTRL];
+    }
+
+    bool is_right_ctrl_pressed()
+    {
+        return this->keys_down[RIGHT_CTRL];
+    }
+
+    bool is_ctrl_pressed()
+    {
+        return is_right_ctrl_pressed() || is_left_ctrl_pressed();
+    }
+
+    bool is_left_alt_pressed()
+    {
+        return this->keys_down[LEFT_ALT];
+    }
+
+    bool is_right_alt_pressed() // altgr
+    {
+        return this->keys_down[RIGHT_ALT];
+    }
+
+    bool is_alt_pressed()
+    {
+        return is_right_alt_pressed() || is_left_alt_pressed();
+    }
+
 };
 
 

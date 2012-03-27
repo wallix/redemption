@@ -3122,7 +3122,7 @@ public:
                         cb.rdp_input_synchronize(time, device_flags, param1, param2);
                         break;
                     case RDP_INPUT_SCANCODE:
-                        if (this->verbose){
+                        if (1 || this->verbose){
                             LOG(LOG_INFO, "RDP_INPUT_SCANCODE time=%u flags=%04x param1=%04x param2=%04x",
                                 time, device_flags, param1, param2
                             );
