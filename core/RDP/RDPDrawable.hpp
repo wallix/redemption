@@ -163,6 +163,7 @@ public:
         //            lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy,
         //            lineto.rop2, lineto.back_color, clip.x, clip.y, clip.cx, clip.cy);
 
+        TODO("We should perform a true intersection between line and clip rectangle, not cheat as below.")
         // enlarge_to compute a new rect including old rect and added point
         const Rect & line_rect = Rect(lineto.startx, lineto.starty, 1, 1).enlarge_to(lineto.endx, lineto.endy);
         if (line_rect.intersect(clip).isempty()){
@@ -176,23 +177,31 @@ public:
             color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
         }
 
-        TODO("move this to a general purpose function to draw lines in Drawable")
-        if (lineto.startx == lineto.endx){
-            if (lineto.starty <= lineto.endy){
-                this->drawable.vertical_line(lineto.back_mode,
-                                    lineto.startx, lineto.starty, lineto.endy,
-                                    color, clip);
-            }
-            else {
-                this->drawable.vertical_line(lineto.back_mode,
-                                    lineto.startx, lineto.endy, lineto.starty,
-                                    color, clip);
-            }
+
+        int startx = (lineto.startx >= clip.x + clip.cx)?clip.x + clip.cx-1:lineto.startx;
+        int endx = (lineto.endx >= clip.x + clip.cx)?clip.x + clip.cx-1:lineto.endx;
+        startx = (startx & 0x8000)?0:startx;
+        endx = (endx & 0x8000)?0:endx;
+
+        int starty = (lineto.starty >= clip.y + clip.cy)?clip.y + clip.cy - 1:lineto.starty;
+        int endy = (lineto.endy >= clip.y + clip.cy)?clip.y + clip.cy - 1:lineto.endy;
+        starty = (starty & 0x8000)?0:starty;
+        endy = (endy & 0x8000)?0:endy;
+
+
+        if (startx == endx){
+            this->drawable.vertical_line(lineto.back_mode,
+                                lineto.startx,
+                                (starty <= endy)?starty:endy,
+                                (starty <= endy)?endy:starty,
+                                color);
         }
-        else if (lineto.starty == lineto.endy){
+        else if (starty == endy){
             this->drawable.horizontal_line(lineto.back_mode,
-                                  lineto.startx, lineto.starty, lineto.endx,
-                                  color, clip);
+                                  (startx <= endx)?startx:endx,
+                                  starty,
+                                  (startx <= endx)?endx:startx,
+                                  color);
 
         }
         else if (lineto.startx <= lineto.endx){

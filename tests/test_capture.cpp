@@ -105,17 +105,15 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
 
     gd.draw(RDPLineTo(10, 0, 10, 1024, 479, BLUE, 0xCC, RDPPen(0, 1, PINK)), screen_rect);
 
-    uint8_t shasig[20] = {
-        0x4f, 0xa1, 0xdb, 0xe7, 0xbd, 0x4c, 0x2c, 0x0e, 0x2b, 0x77,
-	0xfd, 0x86, 0xd8, 0xf8, 0x79, 0x1a, 0x01, 0xcc, 0xe6, 0xb9,
-    };
     char message[1024];
-    if (!check_sig(gd.drawable, message, (char*)shasig)){
+    if (!check_sig(gd.drawable, message,
+        "\x9c\x08\x94\x45\xa6\xa3\x80\xaa\xb6\x3d"
+        "\xbb\xca\xfc\x31\x16\xd1\x31\xa0\xe4\x9c")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
-    //    dump_png("/tmp/test_line_000_", gd.drawable);
+//        dump_png("/tmp/test_line_000_", gd.drawable);
 }
 
 BOOST_AUTO_TEST_CASE(TestPatBlt)

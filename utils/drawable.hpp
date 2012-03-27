@@ -1016,6 +1016,8 @@ struct Drawable
         // Color handling
         uint8_t col[3] = { color, color >> 8, color >> 16};
 
+        const Rect line_clip = clip.intersect(Rect(0, 0, this->width, this->height));
+
         // Prep
         int x = startx;
         int y = starty;
@@ -1025,8 +1027,8 @@ struct Drawable
         int err = dx - dy;
 
         while (true){
-            if (clip.contains_pt(x, y)){
-                uint8_t * const p = this->data + (y * Rect(0, 0, this->width, this->height).cx + x) * this->Bpp;
+            if (line_clip.contains_pt(x, y)){
+                uint8_t * const p = this->data + (y * this->width + x) * this->Bpp;
                 for (uint8_t b = 0 ; b < this->Bpp; b++){
                     p[b] = col[b];
                 }
@@ -1049,51 +1051,30 @@ struct Drawable
         }
     }
 
-    void vertical_line(const uint8_t mix_mode, const uint16_t x, const uint16_t starty, const uint16_t endy, const uint32_t color, const Rect & clip)
+    void vertical_line(const uint8_t mix_mode, const uint16_t x, const uint16_t starty, const uint16_t endy, const uint32_t color)
     {
         // Color handling
         uint8_t col[3] = { color, color >> 8, color >> 16};
 
-        // also base of the new coordinate system
-        const unsigned y0 = std::max(starty, clip.y);
-        const unsigned y1 = std::min(endy, (uint16_t)(clip.y + clip.cy - 1));
-        const uint16_t & height = Rect(0, 0, this->width, this->height).cx;
-
-        // these tests are probably unnecessary if calling code is ok
-        if (y0 >= height){ return; }
-        if (y1 >= height){ return; }
-
-        if (y0 < y1){ // this test is probably unnecessary if calling code is ok
-            uint8_t * const base = this->data + (y0 * height + x) * 3;
-
-            for (unsigned dy = 0; dy <= (y1 - y0) ; dy++) {
-                uint8_t * const p = base + dy * height * 3;
-                for (uint8_t b = 0 ; b < this->Bpp; b++){
-                    p[b] = col[b];
-                }
-            }
+        uint8_t * p = this->data + (starty * this->width + x) * 3;
+        for (int dy = starty; dy <= endy ; dy++) {
+            p[0] = col[0];
+            p[1] = col[1];
+            p[2] = col[2];
+            p += this->width * 3;
         }
     }
 
-    void horizontal_line(const uint8_t mix_mode, const uint16_t startx, const uint16_t y, const uint16_t endx, const uint32_t color, const Rect & clip)
+    void horizontal_line(const uint8_t mix_mode, const uint16_t startx, const uint16_t y, const uint16_t endx, const uint32_t color)
     {
-        const uint16_t x0 = std::max(startx, clip.x);
-        const uint16_t x1 = std::min(endx, (uint16_t)(clip.x + clip.cx - 1));
         uint8_t col[3] = { color, color >> 8, color >> 16};
-        const uint16_t & height = Rect(0, 0, this->width, this->height).cx;
 
-        // this tests is probably unnecessary if calling code is ok
-        if (y >= height){ return; }
-
-        // base adress (*3 because 3 bytes per pixel)
-        uint8_t * const base = this->data + (y * height) * 3;
-
-        for (unsigned x = x0; x <= x1 ; x++) {
-            // Pixel position
-            uint8_t * const p = base + x * 3;
-            for (uint8_t b = 0 ; b < this->Bpp; b++){
-                p[b] = col[b];
-            }
+        uint8_t * p = this->data + (y * this->width + startx) * 3;
+        for (int dx = startx; dx <= endx ; dx++) {
+            p[0] = col[0];
+            p[1] = col[1];
+            p[2] = col[2];
+            p += 3;
         }
     }
 

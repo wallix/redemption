@@ -59,8 +59,9 @@ BOOST_AUTO_TEST_CASE(TestRect)
     BOOST_CHECK_EQUAL(false, r.isempty());
 
     /* this one is empty because left is after right */
-//    Rect e1(20, 110, -10, 10);
-//    BOOST_CHECK_EQUAL(true, e1.isempty());
+    Rect e1(20, 110, -10, 10);
+    BOOST_CHECK_EQUAL(true, e1.isempty());
+
 
     Rect e2(10, 110, 0, 0);
     BOOST_CHECK_EQUAL(true, e2.isempty());
@@ -70,6 +71,8 @@ BOOST_AUTO_TEST_CASE(TestRect)
 
     Rect e4(10, 110, 10, 1);
     BOOST_CHECK_EQUAL(false, e4.isempty());
+    BOOST_CHECK_EQUAL(Rect(-10, -20, 10, 1), e4.offset(-20, -130));
+    BOOST_CHECK_EQUAL(Rect(-10, -20, 10, 1), Rect(10, 110, 10, 1).offset(-20, -130));
 
     /* test if a point is inside rect */
     /* lower bounds are included, upper bounds are excluded */
@@ -123,6 +126,15 @@ BOOST_AUTO_TEST_CASE(TestRect)
         BOOST_CHECK_EQUAL(0, res.right());
         BOOST_CHECK_EQUAL(0, res.bottom());
     }
+
+    {
+        Rect i1(-10, -20, 110, 120);
+        Rect i2(-5, -7, 155, 157);
+        /* here i2 is included in i1 : then it is the intersection */
+        Rect res = i1.intersect(i2);
+        BOOST_CHECK_EQUAL(Rect(-5, -7, 105, 107), res);
+    }
+
 
     {
         /* we can move a rect by some offset */

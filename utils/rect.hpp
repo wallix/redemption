@@ -31,8 +31,8 @@
 #include "log.hpp"
 
 struct Rect {
-    uint16_t x;
-    uint16_t y;
+    int16_t x;
+    int16_t y;
     uint16_t cx;
     uint16_t cy;
 
@@ -48,9 +48,13 @@ struct Rect {
         return (uint16_t)(this->y + this->cy);
     }
 
-    Rect(uint16_t left = 0, uint16_t top = 0, uint16_t width = 0, uint16_t height = 0)
+    Rect(int left = 0, int top = 0, uint16_t width = 0, uint16_t height = 0)
         : x(left), y(top), cx(width), cy(height)
     {
+        // fast detection of overflow, works for valid width/height range 0..4096
+        if (((width-1)|(height-1)) & 0x8000){
+            this->x = this->y = this->cx = this->cy = 0;
+        }
     }
 
     bool contains_pt(int x, int y) const {
@@ -60,7 +64,9 @@ struct Rect {
                && y < (this->y + this->cy);
     }
 
-    TODO(" contains should work when inner rect is empty except if outer is empty")
+    // special cases: contains returns true
+    // - if both rects are empty
+    // - if inner rect is empty
     bool contains(const Rect & inner) const {
         return (inner.x >= this->x
              && inner.y >= this->y
@@ -68,7 +74,6 @@ struct Rect {
              && inner.y + inner.cy <= this->y + this->cy);
     }
 
-    TODO(" equal should work when inner and outer rect are both empty")
     bool equal(const Rect & other) const {
         return (other.x == this->x
              && other.y == this->y
@@ -80,16 +85,18 @@ struct Rect {
         return this->equal(other);
     }
 
+    // Rect constructor ensures that any empty rect will be (0, 0, 0, 0)
+    // hence testing cx or cy is enough
     bool isempty() const {
-        return this->cx <= 0 || this->cy <= 0;
+        return this->cx == 0;
     }
 
-    uint16_t getCenteredX() const {
-        return (uint16_t)(this->x + (this->cx / 2));
+    int getCenteredX() const {
+        return this->x + (this->cx / 2);
     }
 
-    uint16_t getCenteredY() const {
-        return (uint16_t)(this->y + (this->cy / 2));
+    int getCenteredY() const {
+        return this->y + (this->cy / 2);
     }
 
     Rect wh() const {
@@ -97,32 +104,27 @@ struct Rect {
     }
 
     // compute a new rect containing old rect and given point
-    Rect enlarge_to(uint16_t x, uint16_t y) const {
+    Rect enlarge_to(int x, int y) const {
         if (this->isempty()){
             return Rect(x, y, 1, 1);
         }
         else {
-            const uint16_t x0 = std::min<uint16_t>(this->x, x);
-            const uint16_t y0 = std::min<uint16_t>(this->y, y);
-            const uint16_t x1 = std::max<uint16_t>((uint16_t)(this->x + this->cx - 1), x);
-            const uint16_t y1 = std::max<uint16_t>((uint16_t)(this->y + this->cy - 1), y);
-            return Rect(x0, y0, (uint16_t)(x1 - x0 + 1), (uint16_t)(y1 - y0 + 1));
+            const int x0 = std::min<int>(this->x, x);
+            const int y0 = std::min<int>(this->y, y);
+            const int x1 = std::max<int>(this->x + this->cx - 1, x);
+            const int y1 = std::max<int>(this->y + this->cy - 1, y);
+            return Rect(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
         }
     }
 
     Rect offset(int dx, int dy) const {
-        if ((this->x + dx > 0) && (this->y + dy > 0)){
-            return Rect((uint16_t)(this->x + dx), (uint16_t)(this->y + dy), this->cx, this->cy);
-        }
-        else {
-            TODO("Should we remove the part of the rectangle that is outside screen in this case. doing so we may get something that is not a rectangle... for now we just return an empty rect")
-            return Rect();
-        }
+        return Rect(this->x + dx, this->y + dy, this->cx, this->cy);
     }
 
     Rect shrink(uint16_t margin) const {
-        return Rect((uint16_t)(this->x + margin), (uint16_t)(this->y + margin),
-                    (uint16_t)(this->cx - margin * 2), (uint16_t)(this->cy - margin * 2));
+        return Rect(this->x + margin, this->y + margin,
+                    (uint16_t)(this->cx - margin * 2),
+                    (uint16_t)(this->cy - margin * 2));
     }
 
     Rect upper_side() const {
@@ -134,11 +136,11 @@ struct Rect {
     }
 
     Rect lower_side() const {
-        return Rect(this->x, (uint16_t)(this->y + this->cy - 1), this->cx, 1);
+        return Rect(this->x, this->y + this->cy - 1, this->cx, 1);
     }
 
     Rect right_side() const {
-        return Rect((uint16_t)(this->x + this->cx - 1), this->cy, 1, this->cy);
+        return Rect(this->x + this->cx - 1, this->cy, 1, this->cy);
     }
 
     Rect intersect(uint16_t width, uint16_t height) const
@@ -148,21 +150,12 @@ struct Rect {
 
     Rect intersect(const Rect & in) const
     {
-        Rect res(0, 0, 0, 0);
+        int max_x = std::max(in.x, this->x);
+        int max_y = std::max(in.y, this->y);
+        int min_right = std::min<int>(in.x + in.cx, this->x + this->cx);
+        int min_bottom = std::min<int>(in.y + in.cy, this->y + this->cy);
 
-        res.x = std::max(in.x, this->x);
-        res.y = std::max(in.y, this->y);
-        uint16_t min_right = std::min<uint16_t>((uint16_t)(in.x + in.cx), (uint16_t)(this->x + this->cx));
-        uint16_t min_bottom = std::min<uint16_t>((uint16_t)(in.y + in.cy), (uint16_t)(this->y + this->cy));
-
-        if ((min_right > res.x) && (min_bottom > res.y)){
-            return Rect(std::max(in.x, this->x), std::max(in.y, this->y),
-                        (uint16_t)(min_right - res.x), (uint16_t)(min_bottom - res.y));
-        }
-        else {
-            // empty rect
-            return Rect();
-        }
+        return Rect(max_x, max_y, min_right - max_x, min_bottom - max_y);
     }
 
     // Ensemblist difference
@@ -177,29 +170,20 @@ struct Rect {
             if (intersect.x > this->x) {
                 it.callback(Rect(this->x, intersect.y, (uint16_t)(intersect.x - this->x), intersect.cy));
             }
-            if ( ((this->x + this->cx) > (intersect.x + intersect.cx)) ) {
-                it.callback(Rect((uint16_t)(intersect.x + intersect.cx), intersect.y,
-                                (uint16_t)((this->x + this->cx) - (intersect.x + intersect.cx)),
+            if (this->x + this->cx > intersect.x + intersect.cx) {
+                it.callback(Rect(intersect.x + intersect.cx, intersect.y,
+                                this->x + this->cx - (intersect.x + intersect.cx),
                                 intersect.cy));
             }
-            if ((this->y + this->cy) > (intersect.y + intersect.cy)) {
-                it.callback(Rect(this->x, (uint16_t)(intersect.y + intersect.cy),
+            if (this->y + this->cy > intersect.y + intersect.cy) {
+                it.callback(Rect(this->x, intersect.y + intersect.cy,
                                 this->cx,
-                                (uint16_t)((this->y + this->cy) - (intersect.y + intersect.cy))));
+                                this->y + this->cy - (intersect.y + intersect.cy)));
             }
-        } else {
+        }
+        else {
             it.callback(*this);
         }
-    }
-
-    /*****************************************************************************/
-    /* returns boolean */
-    bool rect_contained_by(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) const
-    {
-        return !( (left   <  this->x)
-               || (top    <  this->y)
-               || (right  > (this->x + this->cx))
-               || (bottom > (this->y + this->cy)));
     }
 
     friend inline std::ostream & operator<<(std::ostream& os, const Rect &r) {
