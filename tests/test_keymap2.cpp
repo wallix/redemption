@@ -87,6 +87,16 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
 
     // CAPSLOCK Down
     // RDP_INPUT_SCANCODE time=538384316 flags=0000 param1=003a param2=0000
+   BOOST_CHECK_EQUAL(false, keymap.is_caps_locked());
+   keymap.event(0, 0x3A);
+   BOOST_CHECK_EQUAL(true, keymap.is_caps_locked());
+   key = keymap.last_char_down();
+   BOOST_CHECK_EQUAL('a', key);
+
+    // Now I hit the 'A' key on french keyboard
+   keymap.event(0, 0x10);
+   key = keymap.last_char_down();
+   BOOST_CHECK_EQUAL('A', key);
 
     // CAPSLOCK Down Autorepeat
     // RDP_INPUT_SCANCODE time=538384831 flags=4000 param1=003a param2=0000
