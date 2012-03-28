@@ -71,11 +71,11 @@ struct bouncer2_mod : public internal_mod {
     {
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
     }
 
-    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, const Keymap * keymap, const key_info* ki)
+    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
     {
         this->interaction();
     }

@@ -3449,7 +3449,7 @@ struct selector_mod : public internal_mod {
     {
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
 //        LOG(LOG_INFO, "x=%u y=%u flags=%x", x, y, device_flags);
 
@@ -3599,61 +3599,54 @@ struct selector_mod : public internal_mod {
     }
 
 
-    virtual void rdp_input_scancode(long param1, long param2, long flags, long time, const Keymap * keymap, const key_info* ki)
+    virtual void rdp_input_scancode(long param1, long param2, long flags, long time, Keymap2 * keymap)
     {
-//        LOG(LOG_INFO, "param1=%u param2=%u flags=%x time=%u chr=%u sym=%u key_flags=%u", param1, param2, flags, time, ki?ki->chr:0, ki?ki->sym:0, keymap->key_flags);
         if (flags & 0xC000){ // KEYUP
             switch (this->focus_item){
                 case FOCUS_ON_FILTER_DEVICE:
                 {
-//                    LOG(LOG_INFO, "focus on filter device chr=%u", ki?ki->chr:0);
                     size_t lg_dev_text = strlen(this->filter_device_text);
-                    if (ki){
-                        if (8 == ki->chr && this->filter_device_edit_pos > 0){
-                            memmove(this->filter_device_text + this->filter_device_edit_pos - 1,
-                                   this->filter_device_text + this->filter_device_edit_pos,
-                                   lg_dev_text - this->filter_device_edit_pos + 1);
-                            this->filter_device_edit_pos--;
-                        }
-                        else if (127 == ki->chr && (lg_dev_text - this->filter_device_edit_pos) > 0){
-                            memmove(this->filter_device_text + this->filter_device_edit_pos,
-                                   this->filter_device_text + this->filter_device_edit_pos + 1,
-                                   lg_dev_text - this->filter_device_edit_pos);
-                        }
-                        else if ((ki->chr > 32) && (ki->chr < 127) && lg_dev_text < 20){
-                            memmove(this->filter_device_text + this->filter_device_edit_pos+1,
-                                   this->filter_device_text + this->filter_device_edit_pos,
-                                   lg_dev_text - this->filter_device_edit_pos + 1);
-                            *(this->filter_device_text + this->filter_device_edit_pos) = ki->chr;
-                            this->filter_device_edit_pos++;
-                        }
+                    if (8 == keymap->top_char() && this->filter_device_edit_pos > 0){
+                        memmove(this->filter_device_text + this->filter_device_edit_pos - 1,
+                               this->filter_device_text + this->filter_device_edit_pos,
+                               lg_dev_text - this->filter_device_edit_pos + 1);
+                        this->filter_device_edit_pos--;
+                    }
+                    else if (127 == keymap->top_char() && (lg_dev_text - this->filter_device_edit_pos) > 0){
+                        memmove(this->filter_device_text + this->filter_device_edit_pos,
+                               this->filter_device_text + this->filter_device_edit_pos + 1,
+                               lg_dev_text - this->filter_device_edit_pos);
+                    }
+                    else if ((keymap->top_char() > 32) && (keymap->top_char() < 127) && lg_dev_text < 20){
+                        memmove(this->filter_device_text + this->filter_device_edit_pos+1,
+                               this->filter_device_text + this->filter_device_edit_pos,
+                               lg_dev_text - this->filter_device_edit_pos + 1);
+                        *(this->filter_device_text + this->filter_device_edit_pos) = keymap->top_char();
+                        this->filter_device_edit_pos++;
                     }
                 }
                 this->event->set();
                 break;
                 case FOCUS_ON_FILTER_GROUP:
                 {
-//                    LOG(LOG_INFO, "focus on filter group chr=%u", ki?ki->chr:0);
                     size_t lg_group_text = strlen(this->filter_group_text);
-                    if (ki){
-                        if (8 == ki->chr && this->filter_group_edit_pos > 0){
-                            memmove(this->filter_group_text + this->filter_group_edit_pos - 1,
-                                   this->filter_group_text + this->filter_group_edit_pos,
-                                   lg_group_text - this->filter_group_edit_pos + 1);
-                            this->filter_group_edit_pos--;
-                        }
-                        else if (127 == ki->chr && lg_group_text - this->filter_group_edit_pos > 0){
-                            memmove(this->filter_group_text + this->filter_group_edit_pos,
-                                   this->filter_group_text + this->filter_group_edit_pos + 1,
-                                   lg_group_text - this->filter_group_edit_pos);
-                        }
-                        else if ((ki->chr > 32) && (ki->chr < 127) && lg_group_text < 10){
-                            memmove(this->filter_group_text + this->filter_group_edit_pos + 1,
-                                   this->filter_group_text + this->filter_group_edit_pos,
-                                   lg_group_text - this->filter_group_edit_pos + 1);
-                            *(this->filter_group_text + this->filter_group_edit_pos) = ki->chr;
-                            this->filter_group_edit_pos++;
-                        }
+                    if (8 == keymap->top_char() && this->filter_group_edit_pos > 0){
+                        memmove(this->filter_group_text + this->filter_group_edit_pos - 1,
+                               this->filter_group_text + this->filter_group_edit_pos,
+                               lg_group_text - this->filter_group_edit_pos + 1);
+                        this->filter_group_edit_pos--;
+                    }
+                    else if (127 == keymap->top_char() && lg_group_text - this->filter_group_edit_pos > 0){
+                        memmove(this->filter_group_text + this->filter_group_edit_pos,
+                               this->filter_group_text + this->filter_group_edit_pos + 1,
+                               lg_group_text - this->filter_group_edit_pos);
+                    }
+                    else if ((keymap->top_char() > 32) && (keymap->top_char() < 127) && lg_group_text < 10){
+                        memmove(this->filter_group_text + this->filter_group_edit_pos + 1,
+                               this->filter_group_text + this->filter_group_edit_pos,
+                               lg_group_text - this->filter_group_edit_pos + 1);
+                        *(this->filter_group_text + this->filter_group_edit_pos) = keymap->top_char();
+                        this->filter_group_edit_pos++;
                     }
                 }
                 this->event->set();
@@ -3663,7 +3656,7 @@ struct selector_mod : public internal_mod {
             }
             switch (param1){
                 case 15:
-                    if (keymap->shift_pressed()){
+                    if (keymap->is_shift_pressed()){
                         this->focus_item = (this->focus_item - 1 + MAX_FOCUS_ITEM) % MAX_FOCUS_ITEM;
                     }
                     else {

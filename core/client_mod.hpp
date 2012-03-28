@@ -37,7 +37,7 @@
 #include "mainloop.hpp"
 #include "bmpcache.hpp"
 #include "wait_obj.hpp"
-#include "keymap.hpp"
+#include "keymap2.hpp"
 #include "callback.hpp"
 #include "modcontext.hpp"
 
@@ -140,8 +140,8 @@ struct client_mod : public Callback {
 
     virtual void rdp_input_invalidate(const Rect & r) = 0;
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
-    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, const Keymap * keymap, const key_info* ki) = 0;
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap) = 0;
+    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) = 0;
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) = 0;
 
 };
 

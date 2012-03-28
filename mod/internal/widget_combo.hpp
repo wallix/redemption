@@ -57,7 +57,7 @@ struct widget_combo : public Widget
     }
 
 
-    virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap)
+    virtual void def_proc(const int msg, const int param1, const int param2, Keymap2 * keymap)
     {
         int ext;
         int scan_code;

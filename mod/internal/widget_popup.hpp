@@ -78,7 +78,7 @@ struct widget_popup : public Widget
         }
     }
 
-    virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap)
+    virtual void def_proc(const int msg, const int param1, const int param2, Keymap2 * keymap)
     {
         if (msg == WM_MOUSEMOVE) {
             if (this->popped_from != 0) {

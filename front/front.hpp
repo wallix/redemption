@@ -178,7 +178,7 @@ class Front : public FrontAPI {
 public:
     RDPGraphicDevice * capture;
     GraphicsUpdatePDU * orders;
-    Keymap keymap;
+    Keymap2 keymap;
     ChannelList channel_list;
     int up_and_running;
     int share_id;
@@ -552,11 +552,7 @@ public:
     void set_keyboard_layout()
     {
         /* initialising keymap */
-        TODO(" I should move that to client_info  this is the place where I'm really sure the bitmap is known")
-        char filename[256];
-        snprintf(filename, 255, CFG_PATH "/km-%4.4x.ini", this->client_info.keylayout);
-        LOG(LOG_INFO, "loading keymap %s\n", filename);
-        this->keymap.keymap_init(filename);
+        this->keymap.init_layout(this->client_info.keylayout);
     }
 
     virtual void begin_update()
@@ -3118,45 +3114,18 @@ public:
                             LOG(LOG_INFO, "RDP_INPUT_SYNCHRONIZE");
                         }
                         /* happens when client gets focus and sends key modifier info */
-                        this->keymap.key_flags = param1;
+                        this->keymap.synchronize(param1);
                         cb.rdp_input_synchronize(time, device_flags, param1, param2);
                         break;
                     case RDP_INPUT_SCANCODE:
-                        if (1 || this->verbose){
-                            LOG(LOG_INFO, "RDP_INPUT_SCANCODE time=%u flags=%04x param1=%04x param2=%04x",
-                                time, device_flags, param1, param2
-                            );
-                        }
                         {
-                            TODO(" move that to Keymap")
-                            long p1 = param1 % 128;
-                            this->keymap.keys[p1] = 1 | device_flags;
-                            if ((device_flags & KBD_FLAG_UP) == 0) { /* 0x8000 */
-                                /* key down */
-                                switch (p1) {
-                                case 58:
-                                    this->keymap.key_flags ^= 4;
-                                    break; /* caps lock */
-                                case 69:
-                                    this->keymap.key_flags ^= 2;
-                                    break; /* num lock */
-                                case 70:
-                                    this->keymap.key_flags ^= 1;
-                                    break; /* scroll lock */
-                                default:
-                                    ;
-                                }
+                            if (1 || this->verbose){
+                                LOG(LOG_INFO, "RDP_INPUT_SCANCODE time=%u flags=%04x param1=%04x param2=%04x",
+                                    time, device_flags, param1, param2
+                                );
                             }
-                            if (this->verbose){
-                                LOG(LOG_INFO, "get_key_info(device_flags=%u, param1=%u)", device_flags, param1);
-                            }
-                            const key_info* ki = this->keymap.get_key_info_from_scan_code(
-                                device_flags,
-                                param1);
-                            cb.rdp_input_scancode(param1, param2, device_flags, time, &this->keymap, ki);
-                            if (device_flags & KBD_FLAG_UP){
-                                this->keymap.keys[p1] = 0;
-                            }
+                            this->keymap.event(device_flags, param1);
+                            cb.rdp_input_scancode(param1, param2, device_flags, time, &this->keymap);
                         }
                         break;
                     case RDP_INPUT_MOUSE:

@@ -41,10 +41,10 @@
 #include "bitmap.hpp"
 #include "client_mod.hpp"
 #include "region.hpp"
-#include "keymap.hpp"
+#include "keymap2.hpp"
 //#include "internal/internal_mod.hpp"
 
-#include "keymap.hpp"
+#include "keymap2.hpp"
 
 
 /*****************************************************************************/
@@ -250,7 +250,7 @@ struct Widget {
         }
     }
 
-    virtual void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap)
+    virtual void def_proc(const int msg, const int param1, const int param2, Keymap2 * keymap)
     {
     }
 
@@ -327,6 +327,15 @@ struct Widget {
     }
 
         TODO(" we should be able to pass only one pointer  either window if we are dealing with a window or this->parent if we are dealing with any other kind of widget")
+    // find out the visible part of a widget
+    // the visible part of a widget is a list of rectangles
+    // expressed in absolute (screen) coordinates
+    // Rules are:
+    // 1 - widget is clipped by it's parent (and so on until screen
+    // if the parent itself is not fully visible)
+    // 2 - offsprings of a widget overlap it
+    // 3 - siblings overlap if they are youger (after it in the child list of parent)
+    // It is obvious that Rule 1 yield only one rectangle while other rules yields true regions
     const Region get_visible_region(Widget * screen, Widget * window, Widget * widget, const Rect & rect)
     {
         Region region;

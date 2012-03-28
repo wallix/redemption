@@ -79,7 +79,7 @@ struct window : public Widget
         }
     }
 
-    void def_proc(const int msg, const int param1, const int param2, const Keymap * keymap)
+    void def_proc(const int msg, const int param1, const int param2, Keymap2 * keymap)
     {
         if (msg == WM_KEYDOWN) {
 
@@ -100,7 +100,7 @@ struct window : public Widget
             case 15:
             { /* tab */
                 /* move to next tab stop */
-                int shift = keymap->keys[42] || keymap->keys[54];
+                int shift = keymap->is_shift_pressed();
                 // find the next tab_stop
                 if (shift) {
                     for (size_t i = (size+i_focus-1) % size ; i != i_focus ; i = (i+size-1) % size) {

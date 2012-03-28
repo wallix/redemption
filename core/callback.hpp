@@ -25,7 +25,7 @@
 
 #ifndef __CALLBACK_HPP__
 #define __CALLBACK_HPP__
-#include "keymap.hpp"
+#include "keymap2.hpp"
 #include "channel_list.hpp"
 
 struct Callback
@@ -33,8 +33,8 @@ struct Callback
     virtual void send_to_mod_channel(const char * const front_channel_name, uint8_t * data, size_t length, size_t chunk_size, uint32_t flags)
     {
     }
-    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, const Keymap * keymap, const key_info* ki) = 0;
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap) = 0;
+    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) = 0;
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) = 0;
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
     virtual void rdp_input_invalidate(const Rect & r) = 0;
 };

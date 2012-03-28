@@ -412,7 +412,7 @@ struct mod_rdp : public client_mod {
         delete this->trans;
     }
 
-    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long time, const Keymap * keymap, const key_info* ki){
+    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long time, Keymap2 * keymap){
         if (UP_AND_RUNNING == this->connection_finalization_state) {
 //            LOG(LOG_INFO, "Direct parameter transmission \n");
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
@@ -426,7 +426,7 @@ struct mod_rdp : public client_mod {
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             TODO(" is decoding and reencoding really necessary  a simple pass-through from front to back-end should be enough")

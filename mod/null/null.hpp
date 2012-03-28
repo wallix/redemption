@@ -39,12 +39,12 @@ struct null_mod : public client_mod {
     {
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         return;
     }
 
-    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, const Keymap * keymap, const key_info* ki)
+    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
     {
         return;
     }

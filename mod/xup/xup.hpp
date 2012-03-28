@@ -90,7 +90,7 @@ struct xup_mod : public client_mod {
         WM_INVALIDATE = 200,
     };
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         LOG(LOG_INFO, "input mouse");
 
@@ -122,12 +122,14 @@ struct xup_mod : public client_mod {
         }
     }
 
-    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const Keymap * keymap, const key_info* ki){
+    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap){
         LOG(LOG_INFO, "scan code");
+        /*
         if (ki != 0) {
             int msg = (device_flags & KBD_FLAG_UP)?WM_KEYUP:WM_KEYDOWN;
             this->x_input_event(msg, ki->chr, ki->sym, param1, device_flags);
         }
+        */
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)

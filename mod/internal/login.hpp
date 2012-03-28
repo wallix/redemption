@@ -172,7 +172,7 @@ struct login_mod : public internal_mod {
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
             if (this->dragging) {
@@ -379,7 +379,7 @@ struct login_mod : public internal_mod {
         }
     }
 
-    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const Keymap * keymap, const key_info* ki){
+    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap){
         if (device_flags & KBD_FLAG_UP){
             if (this->popup_wnd != 0) {
                 this->front.begin_update();

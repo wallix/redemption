@@ -126,7 +126,7 @@ struct close_mod : public internal_mod {
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, const Keymap * keymap)
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
             if (this->dragging) {
@@ -240,25 +240,23 @@ struct close_mod : public internal_mod {
         // No other button are used in redemption interface
     }
 
-    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, const Keymap * keymap, const key_info* ki){
-        if (ki != 0) {
-            int msg = (device_flags & KBD_FLAG_UP)?WM_KEYUP:WM_KEYDOWN;
-            switch (msg){
-            case WM_KEYUP:
-                if (this->close_window->has_focus) {
-                    this->close_window->def_proc(msg, param1, device_flags, keymap);
-                    this->signal = BACK_EVENT_STOP;
-                    this->event->set();
-                } else {
-                    this->close_window->has_focus = 1;
-                }
-            break;
-            case WM_KEYDOWN:
-                if (this->close_window->has_focus) {
-                    this->close_window->def_proc(msg, param1, device_flags, keymap);
-                }
-            break;
+    virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap){
+        int msg = (device_flags & KBD_FLAG_UP)?WM_KEYUP:WM_KEYDOWN;
+        switch (msg){
+        case WM_KEYUP:
+            if (this->close_window->has_focus) {
+                this->close_window->def_proc(msg, param1, device_flags, keymap);
+                this->signal = BACK_EVENT_STOP;
+                this->event->set();
+            } else {
+                this->close_window->has_focus = 1;
             }
+        break;
+        case WM_KEYDOWN:
+            if (this->close_window->has_focus) {
+                this->close_window->def_proc(msg, param1, device_flags, keymap);
+            }
+        break;
         }
     }
 

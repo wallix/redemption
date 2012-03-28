@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
     BOOST_CHECK_EQUAL(true, keymap.is_left_shift_pressed());
     BOOST_CHECK_EQUAL(false, keymap.is_right_shift_pressed());
 
-    uint32_t key = keymap.last_char_down();
+    uint32_t key = keymap.top_char();
     BOOST_CHECK_EQUAL('A', key);
 
     keyboardFlags = keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE ; // key is not extended, key was down, key goes up
@@ -68,21 +68,21 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
     BOOST_CHECK_EQUAL(false, keymap.is_right_shift_pressed());
 
     // shift was released, but not A (last char down goes 'a' for autorepeat)
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('A', key);
 
     keyboardFlags = keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE ; // key is not extended, key was down, key goes up
     keyCode = 16 ; // key is 'A'
     keymap.event(keyboardFlags, keyCode);
 
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('A', key);
 
 
     keyboardFlags = 0 ; // key is not extended, key was up, key goes down
     keyCode = 16 ; // key is 'A'
     keymap.event(keyboardFlags, keyCode);
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('a', key);
 
     // CAPSLOCK Down
@@ -90,29 +90,29 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
     BOOST_CHECK_EQUAL(false, keymap.is_caps_locked());
     keymap.event(0, 0x3A);
     BOOST_CHECK_EQUAL(true, keymap.is_caps_locked());
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('a', key);
 
     // CAPSLOCK Up
     // RDP_INPUT_SCANCODE time=538384894 flags=c000 param1=003a param2=0000
     keymap.event(0xc000, 0x3A);
     BOOST_CHECK_EQUAL(true, keymap.is_caps_locked());
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('a', key);
 
 
     // Now I hit the 'A' key on french keyboard
     keymap.event(0, 0x10);
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('A', key);
 
     keymap.event(0xc000, 0x10); // A up
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('A', key);
 
     BOOST_CHECK_EQUAL(true, keymap.is_caps_locked());
     keymap.event(0, 0x02);
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('1', key);
 
     // left shift down
@@ -135,30 +135,30 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
     keymap.event(0xC000, 0x3A); // capslock up
     BOOST_CHECK_EQUAL(false, keymap.is_caps_locked());
 
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('1', key);
 
     // Now I hit the 'A' key on french keyboard
     keymap.event(0, 0x10);
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('a', key);
     keymap.event(0xc000, 0x10); // up
 
     keymap.event(0, 0x02);
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('&', key);
     keymap.event(0xc000, 0x02);
 
     // left shift down
     keymap.event(0, 54);
     keymap.event(0, 0x02);
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('1', key);
 
     // left shift up
     keymap.event(0xc000, 54);
     keymap.event(0, 0x02);
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('&', key);
 
     BOOST_CHECK_EQUAL(false, keymap.is_caps_locked());
@@ -168,30 +168,30 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
     BOOST_CHECK_EQUAL(true, keymap.is_caps_locked());
 
 
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('&', key);
 
     // Now I hit the 'A' key on french keyboard
     keymap.event(0, 0x10);
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('A', key);
     keymap.event(0xc000, 0x10); // up
 
     keymap.event(0, 0x02);
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('1', key);
     keymap.event(0xc000, 0x02);
 
     // left shift down
     keymap.event(0, 54);
     keymap.event(0, 0x02);
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('&', key);
 
     // left shift up
     keymap.event(0xc000, 54);
     keymap.event(0, 0x02);
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('1', key);
 
     // altgr down
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
     keymap.event(0x0100, 0x38); // ALT Right
     BOOST_CHECK_EQUAL(true, keymap.is_right_alt_pressed());
     keymap.event(0x0000, 0x03); // Tilde
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('~', key);
 
     keymap.event(0xC000, 0x03); // Tilde
@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
 
 
     keymap.event(0x0100, 0x35); // '/' on keypad
-    key = keymap.last_char_down();
+    key = keymap.top_char();
     BOOST_CHECK_EQUAL('/', key);
 
     // Autorepeat
@@ -347,5 +347,67 @@ BOOST_AUTO_TEST_CASE(TestKeymap)
     // RDP_INPUT_SCANCODE time=540564274 flags=0000 param1=0001 param2=0000
     // RDP_INPUT_SCANCODE time=540564290 flags=0000 param1=0001 param2=0000
     // RDP_INPUT_SCANCODE time=540564290 flags=8000 param1=0001 param2=0000
+
+}
+
+
+BOOST_AUTO_TEST_CASE(TestKeymapBuffer)
+{
+    Keymap2 keymap;
+    keymap.init_layout(0x040C);
+
+    BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
+    keymap.event(0, 0x10);
+    BOOST_CHECK_EQUAL(1, keymap.nb_char_available());
+    BOOST_CHECK_EQUAL('a', keymap.top_char());
+    keymap.event(0xc000, 0x10); // up
+
+    keymap.event(0x0100, 0x35); // '/' on keypad
+    BOOST_CHECK_EQUAL('/', keymap.top_char());
+    BOOST_CHECK_EQUAL(2, keymap.nb_char_available());
+    keymap.event(0xc100, 0x35); // '/' on keypad
+
+    BOOST_CHECK_EQUAL('a', keymap.get_char());
+    BOOST_CHECK_EQUAL(1, keymap.nb_char_available());
+    BOOST_CHECK_EQUAL('/', keymap.get_char());
+    BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
+
+    // saturating buffer
+    for(size_t i = 0; i < 10 ; i++){
+        keymap.event(0, 0x10);
+        BOOST_CHECK_EQUAL(i+1, keymap.nb_char_available());
+        BOOST_CHECK_EQUAL('a', keymap.top_char());
+        keymap.event(0xc000, 0x10); // up
+    }
+
+    // saturating buffer
+    for(size_t i = 10; i < 20 ; i++){
+        keymap.event(0, 0x11);
+        BOOST_CHECK_EQUAL(i+1, keymap.nb_char_available());
+        BOOST_CHECK_EQUAL('z', keymap.top_char());
+        keymap.event(0xc000, 0x11); // up
+    }
+
+    // buffer saturated
+    keymap.event(0, 0x10);
+    BOOST_CHECK_EQUAL(20, keymap.nb_char_available());
+    keymap.event(0xc000, 0x10); // up
+
+    // saturating buffer
+    for(size_t i = 0; i < 10 ; i++){
+        BOOST_CHECK_EQUAL('a', keymap.get_char());
+        BOOST_CHECK_EQUAL(19 - i, keymap.nb_char_available());
+    }
+
+    for(size_t i = 10; i < 20 ; i++){
+        BOOST_CHECK_EQUAL('z', keymap.get_char());
+        BOOST_CHECK_EQUAL(19 - i, keymap.nb_char_available());
+    }
+
+    // down arrow
+    keymap.event(0x0100, 0x50);
+    BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
+    keymap.event(0xc100, 0x50);
+
 
 }

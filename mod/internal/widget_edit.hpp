@@ -70,14 +70,11 @@ struct widget_edit : public Widget {
         }
     }
 
-    virtual void def_proc(const int msg, int const param1, int const param2, const Keymap * keymap)
+    virtual void def_proc(const int msg, int const param1, int const param2, Keymap2 * keymap)
     {
-        wchar_t c;
         int n;
         int ext;
         int scan_code;
-        int num_bytes;
-        int num_chars;
 
         if (msg == WM_KEYDOWN) {
             scan_code = param1 % 128;
@@ -140,44 +137,32 @@ struct widget_edit : public Widget {
                 }
             }
             else {
-                c = (wchar_t)(keymap->get_key_info_from_scan_code(param2, scan_code)->chr);
-                num_chars = mbstowcs(0, this->buffer, 0);
-                num_bytes = strlen(this->buffer);
-
-                if ((c >= 32) && (num_chars < 127) && (num_bytes < 250)) {
-                    char text[256];
-                    strncpy(text, this->buffer, 255);
-
-                    int index = this->edit_pos;
-                    TODO(" why not always keep wcs instead of constantly converting back and from wcs ?")
-                    int len = mbstowcs(0, text, 0);
-                    wchar_t wstr[len + 16];
-                    mbstowcs(wstr, text, len + 1);
-                    if ((this->edit_pos >= len) || (this->edit_pos < 0)) {
-                        wstr[len] = c;
+                while (keymap->nb_char_available() > 0){
+                    wchar_t c = keymap->get_char();
+                    int num_chars = mbstowcs(0, this->buffer, 0);
+                    if ((this->edit_pos >= num_chars) || (this->edit_pos < 0)) {
+                        this->edit_pos = num_chars;
                     }
-                    else{
-                    TODO(" is backward loop necessary ? a memcpy could do the trick")
-                        int i;
-                        for (i = (len - 1); i >= index; i--) {
+
+                    if ((c >= 32) && (num_chars < 120)) {
+                        wchar_t wstr[num_chars + 16];
+                        mbstowcs(wstr, this->buffer, num_chars + 1);
+                        // make room by moving the end
+                        for (int i = (num_chars - 1); i >= this->edit_pos; i--) {
                             wstr[i + 1] = wstr[i];
                         }
-                        wstr[i + 1] = c;
+                        // store char at the right place
+                        wstr[this->edit_pos] = c;
+                        wstr[num_chars + 1] = 0;
+                        TODO("check man page and perform checks for conversion failure cases")
+                        wcstombs(this->buffer, wstr, 255);
+                        this->edit_pos++;
+                        this->refresh(this->rect.wh());
                     }
-                    wstr[len + 1] = 0;
-                    wcstombs(text, wstr, 255);
-                    this->edit_pos++;
-                    strncpy(this->buffer, text, 255);
-                    this->buffer[255] = 0;
-                    this->refresh(this->rect.wh());
                 }
-
             }
         }
     }
-
-
-
 };
 
 #endif

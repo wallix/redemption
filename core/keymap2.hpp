@@ -18,9 +18,14 @@ struct Keymap2 {
 
 
     enum {
-           SCROLLLOCK = 0x01
-         , NUMLOCK    = 0x02
-         , CAPSLOCK   = 0x04
+           SCROLLLOCK  = 0x01
+         , NUMLOCK     = 0x02
+         , CAPSLOCK    = 0x04
+         , FLG_SHIFT   = 0x08
+         , FLG_CTRL    = 0x10
+         , FLG_ALT     = 0x20
+         , FLG_WINDOWS = 0x40
+         , FLG_ALTGR   = 0x80
     };
 
     enum {
@@ -35,34 +40,69 @@ struct Keymap2 {
     // keyboard info
     int keys_down[256];  // key states 0 up 1 down (0..127 plain keys, 128..255 extended keys)
 
-    int key_flags;          // scrool_lock = 1, num_lock = 2, caps_lock = 4,
+    int key_flags;          // scroll_lock = 1, num_lock = 2, caps_lock = 4,
                             // shift = 8, ctrl = 16, Alt = 32,
                             // Windows = 64, AltGr = 128
 
-    uint32_t last_char;
+    enum {
+        SIZE_KEYBUF = 20
+    };
+
+    enum {
+        SIZE_KEYBUF_KEVENT = 20
+    };
+
+    enum {
+        KEVENT_KEY,
+        KEVENT_TAB,
+        KEVENT_BACKTAB,
+        KEVENT_ENTER,
+        KEVENT_ESC,
+        KEVENT_DELETE,
+        KEVENT_LEFT_ARROW,
+        KEVENT_RIGHT_ARROW,
+        KEVENT_UP_ARROW,
+        KEVENT_DOWN_ARROW,
+        KEVENT_HOME,
+        KEVENT_END,
+        KEVENT_PGUP,
+        KEVENT_PGDOWN,
+    };
+
+    uint32_t ibuf; // first free position in char buffer
+    uint32_t nbuf; // number of char in char buffer
+    uint32_t buffer[SIZE_KEYBUF]; // actual char buffer
+
+    uint32_t ibuf_kevent; // first free position
+    uint32_t nbuf_kevent; // number of char in char buffer
+    uint32_t buffer_kevent[SIZE_KEYBUF_KEVENT]; // actual char buffer
+
     uint32_t last_char_key;
 
     int last_chr_unicode;
 
+    typedef int KeyLayout_t[128];
+
     // keylayout working tables (X11 mode : begins in 8e position.)
-    int keylayout_WORK_noshift[128];
-    int keylayout_WORK_shift[128];
-    int keylayout_WORK_altgr[128];
-    int keylayout_WORK_capslock[128];
-    int keylayout_WORK_shiftcapslock[128];
+    KeyLayout_t keylayout_WORK_noshift;
+    KeyLayout_t keylayout_WORK_shift;
+    KeyLayout_t keylayout_WORK_altgr;
+    KeyLayout_t keylayout_WORK_capslock;
+    KeyLayout_t keylayout_WORK_shiftcapslock;
 
 
     // constructor
 // ################################################################
-    Keymap2() {
+    Keymap2() : ibuf(0), nbuf(0)
+    {
 // ################################################################
         memset(this->keys_down, 0, 256 * sizeof(int));
 
-        memset(this->keylayout_WORK_noshift,       0, 128 * sizeof(int));
-        memset(this->keylayout_WORK_shift,         0, 128 * sizeof(int));
-        memset(this->keylayout_WORK_altgr,         0, 128 * sizeof(int));
-        memset(this->keylayout_WORK_capslock,      0, 128 * sizeof(int));
-        memset(this->keylayout_WORK_shiftcapslock, 0, 128 * sizeof(int));
+        memset(&this->keylayout_WORK_noshift,       0, 128 * sizeof(int));
+        memset(&this->keylayout_WORK_shift,         0, 128 * sizeof(int));
+        memset(&this->keylayout_WORK_altgr,         0, 128 * sizeof(int));
+        memset(&this->keylayout_WORK_capslock,      0, 128 * sizeof(int));
+        memset(&this->keylayout_WORK_shiftcapslock, 0, 128 * sizeof(int));
 
         this->key_flags = 0;
         this->last_chr_unicode = 0;
@@ -72,67 +112,71 @@ struct Keymap2 {
     void init_layout(int keyb)
     {
         // DEFAULT KEYMAP
-        const int keylayout_DEFAULT_noshift[128]={
+        const KeyLayout_t DEFAULT_noshift = {
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 27, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 223, 180, 8, 9, 113, 119, 101, 114,
             116, 122, 117, 105, 111, 112, 252, 43, 13, 0, 97, 115, 100, 102, 103, 104, 106, 107, 108, 246,
             228, 94, 0, 35, 121, 120, 99, 118, 98, 110, 109, 44, 46, 45, 0, 42, 0, 32, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 45, 0, 0, 0, 43, 0,
-            0, 0, 0, 0, 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 127,
+            0, 0, 0, 0, 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             13, 0, 0, 0, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 61, 0,
         } ;
 
-        const int keylayout_DEFAULT_shift[128]={
+        const KeyLayout_t DEFAULT_shift={
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 27, 33, 34, 167, 36, 37, 38, 47, 40, 41, 61, 63, 96, 8, 0, 81, 87, 69, 82,
             84, 90, 85, 73, 79, 80, 220, 42, 13, 0, 65, 83, 68, 70, 71, 72, 74, 75, 76, 214,
             196, 176, 0, 39, 89, 88, 67, 86, 66, 78, 77, 59, 58, 95, 0, 42, 0, 32, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 55, 56, 57, 45, 52, 53, 54, 43, 49,
-            50, 51, 48, 44, 0, 0, 62, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 127,
+            50, 51, 48, 44, 0, 0, 62, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             13, 0, 0, 0, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 61, 0,
         } ;
 
-        const int keylayout_DEFAULT_altgr[128]={
+        const KeyLayout_t DEFAULT_altgr={
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 27, 185, 178, 179, 188, 189, 172, 123, 91, 93, 125, 92, 184, 8, 9, 64, 322, 8364, 182,
             359, 8592, 8595, 8594, 248, 254, 168, 126, 13, 0, 230, 223, 240, 273, 331, 295, 106, 312, 322, 733,
             94, 172, 0, 96, 171, 187, 162, 8220, 8221, 110, 181, 0, 183, 0, 0, 42, 0, 32, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 45, 0, 0, 0, 43, 0,
-            0, 0, 0, 0, 0, 0, 124, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 127,
+            0, 0, 0, 0, 0, 0, 124, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             13, 0, 0, 0, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 61, 0,
         } ;
 
-        const int keylayout_DEFAULT_capslock[128]={
+        const KeyLayout_t DEFAULT_capslock={
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 27, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 223, 180, 8, 9, 81, 87, 69, 82,
             84, 90, 85, 73, 79, 80, 220, 43, 13, 0, 65, 83, 68, 70, 71, 72, 74, 75, 76, 214,
             196, 94, 0, 35, 89, 88, 67, 86, 66, 78, 77, 44, 46, 45, 0, 42, 0, 32, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 45, 0, 0, 0, 43, 0,
-            0, 0, 0, 0, 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 127,
+            0, 0, 0, 0, 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             13, 0, 0, 0, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 61, 0,
         } ;
 
-        const int keylayout_DEFAULT_shiftcapslock[128]={
+        const KeyLayout_t DEFAULT_shiftcapslock={
             0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         } ;
 
         // Intialize the WORK tables
         for(int i=0 ; i < 128 ; i++) {
-            keylayout_WORK_noshift[i] = keylayout_DEFAULT_noshift[i] ;
-            keylayout_WORK_shift[i] = keylayout_DEFAULT_shift[i] ;
-            keylayout_WORK_altgr[i] = keylayout_DEFAULT_altgr[i] ;
-            keylayout_WORK_capslock[i] = keylayout_DEFAULT_capslock[i] ;
-            keylayout_WORK_shiftcapslock[i] = keylayout_DEFAULT_shiftcapslock[i] ;
+            keylayout_WORK_noshift[i] = DEFAULT_noshift[i] ;
+            keylayout_WORK_shift[i] = DEFAULT_shift[i] ;
+            keylayout_WORK_altgr[i] = DEFAULT_altgr[i] ;
+            keylayout_WORK_capslock[i] = DEFAULT_capslock[i] ;
+            keylayout_WORK_shiftcapslock[i] = DEFAULT_shiftcapslock[i] ;
         }
 
         switch (keyb){
             case 0x0407: // GERMAN
             {
-                const int keylayout_0407_noshift[128] = {
+                const KeyLayout_t x0407_noshift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0xdf,   0xb4,    0x8,    0x9,
@@ -149,7 +193,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0407_shift[128] = {
+                const KeyLayout_t x0407_shift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x22,   0xa7,   0x24,   0x25,   0x26,
                     /*  16 */    0x2f,   0x28,   0x29,   0x3d,   0x3f,   0x60,    0x8,    0x0,
@@ -166,7 +210,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0407_capslock[128] = {
+                const KeyLayout_t x0407_capslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0xdf,   0xb4,    0x8,    0x9,
@@ -183,7 +227,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0407_altgr[128] = {
+                const KeyLayout_t x0407_altgr = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0xb9,   0xb2,   0xb3,   0xbc,   0xbd,   0xac,
                     /*  16 */    0x7b,   0x5b,   0x5d,   0x7d,   0x5c,   0xb8,    0x8,    0x9,
@@ -200,7 +244,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0407_shiftcapslock[128] = {
+                const KeyLayout_t x0407_shiftcapslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x22,   0xa7,   0x24,   0x25,   0x26,
                     /*  16 */    0x2f,   0x28,   0x29,   0x3d,   0x3f,   0x60,    0x8,    0x0,
@@ -219,27 +263,27 @@ struct Keymap2 {
                 };
 
                 for(size_t i = 0 ; i < 128 ; i++) {
-                    if (keylayout_0407_noshift[i]){
-                        keylayout_WORK_noshift[i] = keylayout_0407_noshift[i] ;
+                    if (x0407_noshift[i]){
+                        keylayout_WORK_noshift[i] = x0407_noshift[i] ;
                     }
-                    if (keylayout_0407_shift[i]){
-                        keylayout_WORK_shift[i] = keylayout_0407_shift[i] ;
+                    if (x0407_shift[i]){
+                        keylayout_WORK_shift[i] = x0407_shift[i] ;
                     }
-                    if (keylayout_0407_altgr[i]){
-                        keylayout_WORK_altgr[i] = keylayout_0407_altgr[i] ;
+                    if (x0407_altgr[i]){
+                        keylayout_WORK_altgr[i] = x0407_altgr[i] ;
                     }
-                    if (keylayout_0407_capslock[i]){
-                        keylayout_WORK_capslock[i] = keylayout_0407_capslock[i] ;
+                    if (x0407_capslock[i]){
+                        keylayout_WORK_capslock[i] = x0407_capslock[i] ;
                     }
-                    if (keylayout_0407_shiftcapslock[i]){
-                        keylayout_WORK_shiftcapslock[i] = keylayout_0407_shiftcapslock[i] ;
+                    if (x0407_shiftcapslock[i]){
+                        keylayout_WORK_shiftcapslock[i] = x0407_shiftcapslock[i] ;
                     }
                 }
             }
             break;
             case 0x0409: // United States
             {
-                const int keylayout_0409_noshift[128] = {
+                const KeyLayout_t x0409_noshift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0x2d,   0x3d,    0x8,    0x9,
@@ -256,7 +300,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0409_shift[128] = {
+                const KeyLayout_t x0409_shift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x40,   0x23,   0x24,   0x25,   0x5e,
                     /*  16 */    0x26,   0x2a,   0x28,   0x29,   0x5f,   0x2b,    0x8,    0x0,
@@ -273,7 +317,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0409_capslock[128] = {
+                const KeyLayout_t x0409_capslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0x2d,   0x3d,    0x8,    0x9,
@@ -290,7 +334,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0409_altgr[128] = {
+                const KeyLayout_t x0409_altgr = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0x2d,   0x3d,    0x8,    0x9,
@@ -307,7 +351,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0409_shiftcapslock[128] = {
+                const KeyLayout_t x0409_shiftcapslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x40,   0x23,   0x24,   0x25,   0x5e,
                     /*  16 */    0x26,   0x2a,   0x28,   0x29,   0x5f,   0x2b,    0x8,    0x0,
@@ -326,27 +370,27 @@ struct Keymap2 {
                 };
 
                 for(size_t i = 0 ; i < 128 ; i++) {
-                    if (keylayout_0409_noshift[i]){
-                        keylayout_WORK_noshift[i] = keylayout_0409_noshift[i] ;
+                    if (x0409_noshift[i]){
+                        keylayout_WORK_noshift[i] = x0409_noshift[i] ;
                     }
-                    if (keylayout_0409_shift[i]){
-                        keylayout_WORK_shift[i] = keylayout_0409_shift[i] ;
+                    if (x0409_shift[i]){
+                        keylayout_WORK_shift[i] = x0409_shift[i] ;
                     }
-                    if (keylayout_0409_altgr[i]){
-                        keylayout_WORK_altgr[i] = keylayout_0409_altgr[i] ;
+                    if (x0409_altgr[i]){
+                        keylayout_WORK_altgr[i] = x0409_altgr[i] ;
                     }
-                    if (keylayout_0409_capslock[i]){
-                        keylayout_WORK_capslock[i] = keylayout_0409_capslock[i] ;
+                    if (x0409_capslock[i]){
+                        keylayout_WORK_capslock[i] = x0409_capslock[i] ;
                     }
-                    if (keylayout_0409_shiftcapslock[i]){
-                        keylayout_WORK_shiftcapslock[i] = keylayout_0409_shiftcapslock[i] ;
+                    if (x0409_shiftcapslock[i]){
+                        keylayout_WORK_shiftcapslock[i] = x0409_shiftcapslock[i] ;
                     }
                 }
             }
             break;
             case 0x040c: // French
             {
-                const int keylayout_040c_noshift[128] = {
+                const KeyLayout_t x040c_noshift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x26,   0xe9,   0x22,   0x27,   0x28,   0x2d,
                     /*  16 */    0xe8,   0x5f,   0xe7,   0xe0,   0x29,   0x3d,    0x8,    0x9,
@@ -360,10 +404,10 @@ struct Keymap2 {
                     /*  80 */     0x0,    0x0,   0x2d,    0x0,    0x0,    0x0,   0x2b,    0x0,
                     /*  88 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,   0x3c,    0x0,
                     /*  96 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
-                    /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
+                    /* 104 */     0x0,    0x0,    0x0,    0x0,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_040c_shift[128] = {
+                const KeyLayout_t x040c_shift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0xb0,   0x2b,    0x8,    0x0,
@@ -377,10 +421,10 @@ struct Keymap2 {
                     /*  80 */    0x38,   0x39,   0x2d,   0x34,   0x35,   0x36,   0x2b,   0x31,
                     /*  88 */    0x32,   0x33,   0x30,   0x2e,    0x0,    0x0,   0x3e,    0x0,
                     /*  96 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
-                    /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
+                    /* 104 */     0x0,    0x0,    0x0,    0x0,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_040c_capslock[128] = {
+                const KeyLayout_t x040c_capslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0xb0,   0x2b,    0x8,    0x0,
@@ -394,10 +438,10 @@ struct Keymap2 {
                     /*  80 */    0x38,   0x39,   0x2d,   0x34,   0x35,   0x36,   0x2b,   0x31,
                     /*  88 */    0x32,   0x33,   0x30,   0x2e,    0x0,    0x0,   0x3e,    0x0,
                     /*  96 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
-                    /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
+                    /* 104 */     0x0,    0x0,    0x0,    0x0,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_040c_altgr[128] = {
+                const KeyLayout_t x040c_altgr = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0xb9,   0x7e,   0x23,   0x7b,   0x5b,   0x7c,
                     /*  16 */    0x60,   0x5c,   0x5e,   0x40,   0x5d,   0x7d,    0x8,    0x9,
@@ -411,10 +455,10 @@ struct Keymap2 {
                     /*  80 */     0x0,    0x0,   0x2d,    0x0,    0x0,    0x0,   0x2b,    0x0,
                     /*  88 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,   0x7c,    0x0,
                     /*  96 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
-                    /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
+                    /* 104 */     0x0,    0x0,    0x0,    0x0,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_040c_shiftcapslock[128] = {
+                const KeyLayout_t x040c_shiftcapslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x26,   0xe9,   0x22,   0x27,   0x28,   0x2d,
                     /*  16 */    0xe8,   0x5f,   0xe7,   0xe0,   0x29,   0x3d,    0x8,    0x9,
@@ -428,32 +472,32 @@ struct Keymap2 {
                     /*  80 */     0x0,    0x0,   0x2d,    0x0,    0x0,    0x0,   0x2b,    0x0,
                     /*  88 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,   0x3c,    0x0,
                     /*  96 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
-                    /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
+                    /* 104 */     0x0,    0x0,    0x0,    0x0,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
 
                 for(size_t i = 0 ; i < 128 ; i++) {
-                    if (keylayout_040c_noshift[i]){
-                        keylayout_WORK_noshift[i] = keylayout_040c_noshift[i] ;
+                    if (x040c_noshift[i]){
+                        keylayout_WORK_noshift[i] = x040c_noshift[i] ;
                     }
-                    if (keylayout_040c_shift[i]){
-                        keylayout_WORK_shift[i] = keylayout_040c_shift[i] ;
+                    if (x040c_shift[i]){
+                        keylayout_WORK_shift[i] = x040c_shift[i] ;
                     }
-                    if (keylayout_040c_altgr[i]){
-                        keylayout_WORK_altgr[i] = keylayout_040c_altgr[i] ;
+                    if (x040c_altgr[i]){
+                        keylayout_WORK_altgr[i] = x040c_altgr[i] ;
                     }
-                    if (keylayout_040c_capslock[i]){
-                        keylayout_WORK_capslock[i] = keylayout_040c_capslock[i] ;
+                    if (x040c_capslock[i]){
+                        keylayout_WORK_capslock[i] = x040c_capslock[i] ;
                     }
-                    if (keylayout_040c_shiftcapslock[i]){
-                        keylayout_WORK_shiftcapslock[i] = keylayout_040c_shiftcapslock[i] ;
+                    if (x040c_shiftcapslock[i]){
+                        keylayout_WORK_shiftcapslock[i] = x040c_shiftcapslock[i] ;
                     }
                 }
             }
             break;
             case 0x0410: // Italian
             {
-                const int keylayout_0410_noshift[128] = {
+                const KeyLayout_t x0410_noshift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0x27,   0xec,    0x8,    0x9,
@@ -470,7 +514,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0410_shift[128] = {
+                const KeyLayout_t x0410_shift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x22,   0xa3,   0x24,   0x25,   0x26,
                     /*  16 */    0x2f,   0x28,   0x29,   0x3d,   0x3f,   0x5e,    0x8,    0x0,
@@ -487,7 +531,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0410_capslock[128] = {
+                const KeyLayout_t x0410_capslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0x27,   0xcc,    0x8,    0x9,
@@ -504,7 +548,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0410_altgr[128] = {
+                const KeyLayout_t x0410_altgr = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0xb9,   0xb2,   0xb3,   0xbc,   0xbd,   0xac,
                     /*  16 */    0x7b,   0x5b,   0x5d,   0x7d,   0x60,   0x7e,    0x8,    0x9,
@@ -521,7 +565,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0410_shiftcapslock[128] = {
+                const KeyLayout_t x0410_shiftcapslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x22,   0xa3,   0x24,   0x25,   0x26,
                     /*  16 */    0x2f,   0x28,   0x29,   0x3d,   0x3f,   0x5e,    0x8,    0x0,
@@ -540,27 +584,27 @@ struct Keymap2 {
                 };
 
                 for(size_t i = 0 ; i < 128 ; i++) {
-                    if (keylayout_0410_noshift[i]){
-                        keylayout_WORK_noshift[i] = keylayout_0410_noshift[i] ;
+                    if (x0410_noshift[i]){
+                        keylayout_WORK_noshift[i] = x0410_noshift[i] ;
                     }
-                    if (keylayout_0410_shift[i]){
-                        keylayout_WORK_shift[i] = keylayout_0410_shift[i] ;
+                    if (x0410_shift[i]){
+                        keylayout_WORK_shift[i] = x0410_shift[i] ;
                     }
-                    if (keylayout_0410_altgr[i]){
-                        keylayout_WORK_altgr[i] = keylayout_0410_altgr[i] ;
+                    if (x0410_altgr[i]){
+                        keylayout_WORK_altgr[i] = x0410_altgr[i] ;
                     }
-                    if (keylayout_0410_capslock[i]){
-                        keylayout_WORK_capslock[i] = keylayout_0410_capslock[i] ;
+                    if (x0410_capslock[i]){
+                        keylayout_WORK_capslock[i] = x0410_capslock[i] ;
                     }
-                    if (keylayout_0410_shiftcapslock[i]){
-                        keylayout_WORK_shiftcapslock[i] = keylayout_0410_shiftcapslock[i] ;
+                    if (x0410_shiftcapslock[i]){
+                        keylayout_WORK_shiftcapslock[i] = x0410_shiftcapslock[i] ;
                     }
                 }
             }
             break;
             case 0x0419: // Russian
             {
-                const int keylayout_0419_noshift[128] = {
+                const KeyLayout_t x0419_noshift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0x2d,   0x3d,    0x8,    0x9,
@@ -577,7 +621,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0419_shift[128] = {
+                const KeyLayout_t x0419_shift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x22,   0x23,   0x2a,   0x3a,   0x2c,
                     /*  16 */    0x2e,   0x3b,   0x28,   0x29,   0x5f,   0x2b,    0x8,    0x0,
@@ -594,7 +638,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0419_capslock[128] = {
+                const KeyLayout_t x0419_capslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0x2d,   0x3d,    0x8,    0x9,
@@ -611,7 +655,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0419_altgr[128] = {
+                const KeyLayout_t x0419_altgr = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0x2d,   0x3d,    0x8,    0x9,
@@ -628,7 +672,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0419_shiftcapslock[128] = {
+                const KeyLayout_t x0419_shiftcapslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x22,   0x23,   0x2a,   0x3a,   0x2c,
                     /*  16 */    0x2e,   0x3b,   0x28,   0x29,   0x5f,   0x2b,    0x8,    0x0,
@@ -647,20 +691,20 @@ struct Keymap2 {
                 };
 
                 for(size_t i = 0 ; i < 128 ; i++) {
-                    if (keylayout_0419_noshift[i]){
-                        keylayout_WORK_noshift[i] = keylayout_0419_noshift[i] ;
+                    if (x0419_noshift[i]){
+                        keylayout_WORK_noshift[i] = x0419_noshift[i] ;
                     }
-                    if (keylayout_0419_shift[i]){
-                        keylayout_WORK_shift[i] = keylayout_0419_shift[i] ;
+                    if (x0419_shift[i]){
+                        keylayout_WORK_shift[i] = x0419_shift[i] ;
                     }
-                    if (keylayout_0419_altgr[i]){
-                        keylayout_WORK_altgr[i] = keylayout_0419_altgr[i] ;
+                    if (x0419_altgr[i]){
+                        keylayout_WORK_altgr[i] = x0419_altgr[i] ;
                     }
-                    if (keylayout_0419_capslock[i]){
-                        keylayout_WORK_capslock[i] = keylayout_0419_capslock[i] ;
+                    if (x0419_capslock[i]){
+                        keylayout_WORK_capslock[i] = x0419_capslock[i] ;
                     }
-                    if (keylayout_0419_shiftcapslock[i]){
-                        keylayout_WORK_shiftcapslock[i] = keylayout_0419_shiftcapslock[i] ;
+                    if (x0419_shiftcapslock[i]){
+                        keylayout_WORK_shiftcapslock[i] = x0419_shiftcapslock[i] ;
                     }
                 }
 
@@ -668,7 +712,7 @@ struct Keymap2 {
             break;
             case 0x041d: // Swedish
             {
-                const int keylayout_041d_noshift[128] = {
+                const KeyLayout_t x041d_noshift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0x2b,   0xb4,    0x8,    0x9,
@@ -685,7 +729,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_041d_shift[128] = {
+                const KeyLayout_t x041d_shift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x22,   0x23,   0xa4,   0x25,   0x26,
                     /*  16 */    0x2f,   0x28,   0x29,   0x3d,   0x3f,   0x60,    0x8,    0x0,
@@ -702,7 +746,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_041d_capslock[128] = {
+                const KeyLayout_t x041d_capslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0x2b,   0xb4,    0x8,    0x9,
@@ -719,7 +763,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_041d_altgr[128] = {
+                const KeyLayout_t x041d_altgr = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0xa1,   0x40,   0xa3,   0x24, 0x20ac,   0xa5,
                     /*  16 */    0x7b,   0x5b,   0x5d,   0x7d,   0x5c,   0xb1,    0x8,    0x9,
@@ -736,7 +780,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_041d_shiftcapslock[128] = {
+                const KeyLayout_t x041d_shiftcapslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x22,   0x23,   0xa4,   0x25,   0x26,
                     /*  16 */    0x2f,   0x28,   0x29,   0x3d,   0x3f,   0x60,    0x8,    0x0,
@@ -755,20 +799,20 @@ struct Keymap2 {
                 };
 
                 for(size_t i = 0 ; i < 128 ; i++) {
-                    if (keylayout_041d_noshift[i]){
-                        keylayout_WORK_noshift[i] = keylayout_041d_noshift[i] ;
+                    if (x041d_noshift[i]){
+                        keylayout_WORK_noshift[i] = x041d_noshift[i] ;
                     }
-                    if (keylayout_041d_shift[i]){
-                        keylayout_WORK_shift[i] = keylayout_041d_shift[i] ;
+                    if (x041d_shift[i]){
+                        keylayout_WORK_shift[i] = x041d_shift[i] ;
                     }
-                    if (keylayout_041d_altgr[i]){
-                        keylayout_WORK_altgr[i] = keylayout_041d_altgr[i] ;
+                    if (x041d_altgr[i]){
+                        keylayout_WORK_altgr[i] = x041d_altgr[i] ;
                     }
-                    if (keylayout_041d_capslock[i]){
-                        keylayout_WORK_capslock[i] = keylayout_041d_capslock[i] ;
+                    if (x041d_capslock[i]){
+                        keylayout_WORK_capslock[i] = x041d_capslock[i] ;
                     }
-                    if (keylayout_041d_shiftcapslock[i]){
-                        keylayout_WORK_shiftcapslock[i] = keylayout_041d_shiftcapslock[i] ;
+                    if (x041d_shiftcapslock[i]){
+                        keylayout_WORK_shiftcapslock[i] = x041d_shiftcapslock[i] ;
                     }
                 }
 
@@ -776,7 +820,7 @@ struct Keymap2 {
             break;
             case 0x046e: // Luxemburgish
             {
-                const int keylayout_046e_noshift[128] = {
+                const KeyLayout_t x046e_noshift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0x27,   0x5e,    0x8,    0x9,
@@ -793,7 +837,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_046e_shift[128] = {
+                const KeyLayout_t x046e_shift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x2b,   0x22,   0x2a,    0x0,   0x25,   0x26,
                     /*  16 */    0x2f,   0x28,   0x29,   0x3d,   0x3f,   0x60,    0x8,    0x0,
@@ -810,7 +854,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_046e_capslock[128] = {
+                const KeyLayout_t x046e_capslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0xdf,   0xb4,    0x8,    0x9,
@@ -827,7 +871,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_046e_altgr[128] = {
+                const KeyLayout_t x046e_altgr = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x7e,   0x23,   0x7b,   0x5b,   0x7c,   0x60,
                     /*  16 */    0x5c,   0x5e,   0x40,   0x5d,   0x7d,   0x3d,    0x8,    0x9,
@@ -844,7 +888,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_046e_shiftcapslock[128] = {
+                const KeyLayout_t x046e_shiftcapslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x22,   0xa7,   0x24,   0x25,   0x26,
                     /*  16 */    0x2f,   0x28,   0x29,   0x3d,   0x3f,   0x60,    0x8,    0x0,
@@ -863,20 +907,20 @@ struct Keymap2 {
                 };
 
                 for(size_t i = 0 ; i < 128 ; i++) {
-                    if (keylayout_046e_noshift[i]){
-                        keylayout_WORK_noshift[i] = keylayout_046e_noshift[i] ;
+                    if (x046e_noshift[i]){
+                        keylayout_WORK_noshift[i] = x046e_noshift[i] ;
                     }
-                    if (keylayout_046e_shift[i]){
-                        keylayout_WORK_shift[i] = keylayout_046e_shift[i] ;
+                    if (x046e_shift[i]){
+                        keylayout_WORK_shift[i] = x046e_shift[i] ;
                     }
-                    if (keylayout_046e_altgr[i]){
-                        keylayout_WORK_altgr[i] = keylayout_046e_altgr[i] ;
+                    if (x046e_altgr[i]){
+                        keylayout_WORK_altgr[i] = x046e_altgr[i] ;
                     }
-                    if (keylayout_046e_capslock[i]){
-                        keylayout_WORK_capslock[i] = keylayout_046e_capslock[i] ;
+                    if (x046e_capslock[i]){
+                        keylayout_WORK_capslock[i] = x046e_capslock[i] ;
                     }
-                    if (keylayout_046e_shiftcapslock[i]){
-                        keylayout_WORK_shiftcapslock[i] = keylayout_046e_shiftcapslock[i] ;
+                    if (x046e_shiftcapslock[i]){
+                        keylayout_WORK_shiftcapslock[i] = x046e_shiftcapslock[i] ;
                     }
                 }
 
@@ -884,7 +928,7 @@ struct Keymap2 {
             break;
             case 0x0807: // German Swizerland
             {
-                const int keylayout_0807_noshift[128] = {
+                const KeyLayout_t x0807_noshift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0xdf,   0xb4,    0x8,    0x9,
@@ -901,7 +945,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0807_shift[128] = {
+                const KeyLayout_t x0807_shift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x22,   0xa7,   0x24,   0x25,   0x26,
                     /*  16 */    0x2f,   0x28,   0x29,   0x3d,   0x3f,   0x60,    0x8,    0x0,
@@ -918,7 +962,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0807_capslock[128] = {
+                const KeyLayout_t x0807_capslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0xdf,   0xb4,    0x8,    0x9,
@@ -935,7 +979,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0807_altgr[128] = {
+                const KeyLayout_t x0807_altgr = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x7c,   0x40,   0x23,    0x0,    0x0,    0x0,
                     /*  16 */    0x7c,    0x0,    0x0,   0x5d,   0x60,   0x7e,    0x8,    0x9,
@@ -952,7 +996,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0807_shiftcapslock[128] = {
+                const KeyLayout_t x0807_shiftcapslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x22,   0xa7,   0x24,   0x25,   0x26,
                     /*  16 */    0x2f,   0x28,   0x29,   0x3d,   0x3f,   0x60,    0x8,    0x0,
@@ -971,20 +1015,20 @@ struct Keymap2 {
                 };
 
                 for(size_t i = 0 ; i < 128 ; i++) {
-                    if (keylayout_0807_noshift[i]){
-                        keylayout_WORK_noshift[i] = keylayout_0807_noshift[i] ;
+                    if (x0807_noshift[i]){
+                        keylayout_WORK_noshift[i] = x0807_noshift[i] ;
                     }
-                    if (keylayout_0807_shift[i]){
-                        keylayout_WORK_shift[i] = keylayout_0807_shift[i] ;
+                    if (x0807_shift[i]){
+                        keylayout_WORK_shift[i] = x0807_shift[i] ;
                     }
-                    if (keylayout_0807_altgr[i]){
-                        keylayout_WORK_altgr[i] = keylayout_0807_altgr[i] ;
+                    if (x0807_altgr[i]){
+                        keylayout_WORK_altgr[i] = x0807_altgr[i] ;
                     }
-                    if (keylayout_0807_capslock[i]){
-                        keylayout_WORK_capslock[i] = keylayout_0807_capslock[i] ;
+                    if (x0807_capslock[i]){
+                        keylayout_WORK_capslock[i] = x0807_capslock[i] ;
                     }
-                    if (keylayout_0807_shiftcapslock[i]){
-                        keylayout_WORK_shiftcapslock[i] = keylayout_0807_shiftcapslock[i] ;
+                    if (x0807_shiftcapslock[i]){
+                        keylayout_WORK_shiftcapslock[i] = x0807_shiftcapslock[i] ;
                     }
                 }
 
@@ -992,7 +1036,7 @@ struct Keymap2 {
             break;
             case 0x0809: // English UK
             {
-                const int keylayout_0809_noshift[128] = {
+                const KeyLayout_t x0809_noshift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0x2d,   0x3d,    0x8,    0x9,
@@ -1009,7 +1053,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0809_shift[128] = {
+                const KeyLayout_t x0809_shift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x40,   0x23,   0x24,   0x25,   0x5e,
                     /*  16 */    0x26,   0x2a,   0x28,   0x29,   0x5f,   0x2b,    0x8,    0x0,
@@ -1026,7 +1070,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0809_capslock[128] = {
+                const KeyLayout_t x0809_capslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0x2d,   0x3d,    0x8,    0x9,
@@ -1043,7 +1087,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0809_altgr[128] = {
+                const KeyLayout_t x0809_altgr = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0x2d,   0x3d,    0x8,    0x9,
@@ -1060,7 +1104,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0809_shiftcapslock[128] = {
+                const KeyLayout_t x0809_shiftcapslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x40,   0x23,   0x24,   0x25,   0x5e,
                     /*  16 */    0x26,   0x2a,   0x28,   0x29,   0x5f,   0x2b,    0x8,    0x0,
@@ -1079,20 +1123,20 @@ struct Keymap2 {
                 };
 
                 for(size_t i = 0 ; i < 128 ; i++) {
-                    if (keylayout_0809_noshift[i]){
-                        keylayout_WORK_noshift[i] = keylayout_0809_noshift[i] ;
+                    if (x0809_noshift[i]){
+                        keylayout_WORK_noshift[i] = x0809_noshift[i] ;
                     }
-                    if (keylayout_0809_shift[i]){
-                        keylayout_WORK_shift[i] = keylayout_0809_shift[i] ;
+                    if (x0809_shift[i]){
+                        keylayout_WORK_shift[i] = x0809_shift[i] ;
                     }
-                    if (keylayout_0809_altgr[i]){
-                        keylayout_WORK_altgr[i] = keylayout_0809_altgr[i] ;
+                    if (x0809_altgr[i]){
+                        keylayout_WORK_altgr[i] = x0809_altgr[i] ;
                     }
-                    if (keylayout_0809_capslock[i]){
-                        keylayout_WORK_capslock[i] = keylayout_0809_capslock[i] ;
+                    if (x0809_capslock[i]){
+                        keylayout_WORK_capslock[i] = x0809_capslock[i] ;
                     }
-                    if (keylayout_0809_shiftcapslock[i]){
-                        keylayout_WORK_shiftcapslock[i] = keylayout_0809_shiftcapslock[i] ;
+                    if (x0809_shiftcapslock[i]){
+                        keylayout_WORK_shiftcapslock[i] = x0809_shiftcapslock[i] ;
                     }
                 }
 
@@ -1100,7 +1144,7 @@ struct Keymap2 {
             break;
             case 0x080c: // French Belgium
             {
-                const int keylayout_080c_noshift[128] = {
+                const KeyLayout_t x080c_noshift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x26,   0xe9,   0x22,   0x27,   0x28,   0x2d,
                     /*  16 */    0xe8,   0x5f,   0xe7,   0xe0,   0x29,   0x3d,    0x8,    0x9,
@@ -1117,7 +1161,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_080c_shift[128] = {
+                const KeyLayout_t x080c_shift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0xb0,   0x2b,    0x8,    0x0,
@@ -1134,7 +1178,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_080c_capslock[128] = {
+                const KeyLayout_t x080c_capslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x26,   0xc9,   0x22,   0x27,   0x28,   0x2d,
                     /*  16 */    0xc8,   0x5f,   0xc7,   0xc0,   0x29,   0x3d,    0x8,    0x9,
@@ -1151,7 +1195,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_080c_altgr[128] = {
+                const KeyLayout_t x080c_altgr = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0xb9,   0x7e,   0x23,   0x7b,   0x5b,   0x7c,
                     /*  16 */    0x60,   0x5c,   0x5e,   0x40,   0x5d,   0x7d,    0x8,    0x9,
@@ -1168,7 +1212,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_080c_shiftcapslock[128] = {
+                const KeyLayout_t x080c_shiftcapslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0xb0,   0x2b,    0x8,    0x0,
@@ -1187,27 +1231,27 @@ struct Keymap2 {
                 };
 
                 for(size_t i = 0 ; i < 128 ; i++) {
-                    if (keylayout_080c_noshift[i]){
-                        keylayout_WORK_noshift[i] = keylayout_080c_noshift[i] ;
+                    if (x080c_noshift[i]){
+                        keylayout_WORK_noshift[i] = x080c_noshift[i] ;
                     }
-                    if (keylayout_080c_shift[i]){
-                        keylayout_WORK_shift[i] = keylayout_080c_shift[i] ;
+                    if (x080c_shift[i]){
+                        keylayout_WORK_shift[i] = x080c_shift[i] ;
                     }
-                    if (keylayout_080c_altgr[i]){
-                        keylayout_WORK_altgr[i] = keylayout_080c_altgr[i] ;
+                    if (x080c_altgr[i]){
+                        keylayout_WORK_altgr[i] = x080c_altgr[i] ;
                     }
-                    if (keylayout_080c_capslock[i]){
-                        keylayout_WORK_capslock[i] = keylayout_080c_capslock[i] ;
+                    if (x080c_capslock[i]){
+                        keylayout_WORK_capslock[i] = x080c_capslock[i] ;
                     }
-                    if (keylayout_080c_shiftcapslock[i]){
-                        keylayout_WORK_shiftcapslock[i] = keylayout_080c_shiftcapslock[i] ;
+                    if (x080c_shiftcapslock[i]){
+                        keylayout_WORK_shiftcapslock[i] = x080c_shiftcapslock[i] ;
                     }
                 }
             }
             break;
             case 0x0813: // Dutch Belgium
             {
-                const int keylayout_0813_noshift[128] = {
+                const KeyLayout_t x0813_noshift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x26,   0xe9,   0x22,   0x27,   0x28,   0x2d,
                     /*  16 */    0xe8,   0x21,   0xe7,   0xe0,   0x29,   0x2d,    0x8,    0x9,
@@ -1224,7 +1268,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0813_shift[128] = {
+                const KeyLayout_t x0813_shift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0xb0,   0x5f,    0x8,    0x0,
@@ -1241,7 +1285,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0813_capslock[128] = {
+                const KeyLayout_t x0813_capslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x26,   0xc9,   0x22,   0x27,   0x28,   0x2d,
                     /*  16 */    0xc8,   0x5f,   0xc7,   0xc0,   0x29,   0x3d,    0x8,    0x9,
@@ -1258,7 +1302,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0813_altgr[128] = {
+                const KeyLayout_t x0813_altgr = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0xb9,   0x40,   0x23,   0x7b,   0x5b,   0x5e,
                     /*  16 */     0x0,    0x0,   0x7b,   0x7d,    0x0,    0x0,    0x8,    0x9,
@@ -1275,7 +1319,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_0813_shiftcapslock[128] = {
+                const KeyLayout_t x0813_shiftcapslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0xb0,   0x2b,    0x8,    0x0,
@@ -1294,27 +1338,27 @@ struct Keymap2 {
                 };
 
                 for(size_t i = 0 ; i < 128 ; i++) {
-                    if (keylayout_0813_noshift[i]){
-                        keylayout_WORK_noshift[i] = keylayout_0813_noshift[i] ;
+                    if (x0813_noshift[i]){
+                        keylayout_WORK_noshift[i] = x0813_noshift[i] ;
                     }
-                    if (keylayout_0813_shift[i]){
-                        keylayout_WORK_shift[i] = keylayout_0813_shift[i] ;
+                    if (x0813_shift[i]){
+                        keylayout_WORK_shift[i] = x0813_shift[i] ;
                     }
-                    if (keylayout_0813_altgr[i]){
-                        keylayout_WORK_altgr[i] = keylayout_0813_altgr[i] ;
+                    if (x0813_altgr[i]){
+                        keylayout_WORK_altgr[i] = x0813_altgr[i] ;
                     }
-                    if (keylayout_0813_capslock[i]){
-                        keylayout_WORK_capslock[i] = keylayout_0813_capslock[i] ;
+                    if (x0813_capslock[i]){
+                        keylayout_WORK_capslock[i] = x0813_capslock[i] ;
                     }
-                    if (keylayout_0813_shiftcapslock[i]){
-                        keylayout_WORK_shiftcapslock[i] = keylayout_0813_shiftcapslock[i] ;
+                    if (x0813_shiftcapslock[i]){
+                        keylayout_WORK_shiftcapslock[i] = x0813_shiftcapslock[i] ;
                     }
                 }
             }
             break;
             case 0x100c: // French Swizerland
             {
-                const int keylayout_100c_noshift[128] = {
+                const KeyLayout_t x100c_noshift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0x27,   0x3d,    0x8,    0x9,
@@ -1331,7 +1375,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_100c_shift[128] = {
+                const KeyLayout_t x100c_shift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x2b,   0x22,   0x2a,    0x0,   0x25,   0x26,
                     /*  16 */    0x2f,   0x28,   0x29,   0x3d,   0x3f,   0x60,    0x8,    0x0,
@@ -1348,7 +1392,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_100c_capslock[128] = {
+                const KeyLayout_t x100c_capslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x31,   0x32,   0x33,   0x34,   0x35,   0x36,
                     /*  16 */    0x37,   0x38,   0x39,   0x30,   0xdf,   0xb4,    0x8,    0x9,
@@ -1365,7 +1409,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_100c_altgr[128] = {
+                const KeyLayout_t x100c_altgr = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x7c,   0x40,   0x23,    0x0,    0x0,    0x0,
                     /*  16 */     0x0,   0x7c,    0x0,   0x5d,   0x60,   0x7e,    0x8,    0x9,
@@ -1382,7 +1426,7 @@ struct Keymap2 {
                     /* 104 */     0x0,    0x0,    0x0,   0x7f,    0xd,    0x0,    0x0,    0x0,
                     /* 112 */    0x2f,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                 };
-                const int keylayout_100c_shiftcapslock[128] = {
+                const KeyLayout_t x100c_shiftcapslock = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x21,   0x22,   0xa7,   0x24,   0x25,   0x26,
                     /*  16 */    0x2f,   0x28,   0x29,   0x3d,   0x3f,   0x60,    0x8,    0x0,
@@ -1401,20 +1445,20 @@ struct Keymap2 {
                 };
 
                 for(size_t i = 0 ; i < 128 ; i++) {
-                    if (keylayout_100c_noshift[i]){
-                        keylayout_WORK_noshift[i] = keylayout_100c_noshift[i] ;
+                    if (x100c_noshift[i]){
+                        keylayout_WORK_noshift[i] = x100c_noshift[i] ;
                     }
-                    if (keylayout_100c_shift[i]){
-                        keylayout_WORK_shift[i] = keylayout_100c_shift[i] ;
+                    if (x100c_shift[i]){
+                        keylayout_WORK_shift[i] = x100c_shift[i] ;
                     }
-                    if (keylayout_100c_altgr[i]){
-                        keylayout_WORK_altgr[i] = keylayout_100c_altgr[i] ;
+                    if (x100c_altgr[i]){
+                        keylayout_WORK_altgr[i] = x100c_altgr[i] ;
                     }
-                    if (keylayout_100c_capslock[i]){
-                        keylayout_WORK_capslock[i] = keylayout_100c_capslock[i] ;
+                    if (x100c_capslock[i]){
+                        keylayout_WORK_capslock[i] = x100c_capslock[i] ;
                     }
-                    if (keylayout_100c_shiftcapslock[i]){
-                        keylayout_WORK_shiftcapslock[i] = keylayout_100c_shiftcapslock[i] ;
+                    if (x100c_shiftcapslock[i]){
+                        keylayout_WORK_shiftcapslock[i] = x100c_shiftcapslock[i] ;
                     }
                 }
             }
@@ -1429,6 +1473,17 @@ struct Keymap2 {
 //        }
 
     } // Keymap::init_layout
+
+    void synchronize(uint16_t param1){
+        this->key_flags = param1 & 0x07;
+        // non sticky keys are forced to be UP
+        this->keys_down[LEFT_SHIFT] = 0;
+        this->keys_down[RIGHT_SHIFT] = 0;
+        this->keys_down[LEFT_CTRL] = 0;
+        this->keys_down[RIGHT_CTRL] = 0;
+        this->keys_down[LEFT_ALT] = 0;
+        this->keys_down[RIGHT_ALT] = 0;
+    }
 
     void update_keys_flags(int key_state)
     {}
@@ -1494,56 +1549,65 @@ struct Keymap2 {
                 //  - if ext device : applies the redirection
                 uint8_t map[256] =  {
                     0x00, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-                    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+                     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
                     0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
-                    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+                     0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
                     0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
-                    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+                     0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
                     0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
-                    0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
+                     0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
                     0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
-                    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
+                     0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
                     0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f,
-                    0x60, 0x61, 0x62, 0x00, 0x00, 0x00, 0x66, 0x67,
+                     0x60, 0x61, 0x62, 0x00, 0x00, 0x00, 0x66, 0x67,
                     0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
-                    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77,
+                     0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77,
                     0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00, 0x6c, 0x6d, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x6c, 0x6d, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x70, 0x00, 0x6f,
-                    0x71, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x71, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x61,
-                    0x62, 0x63, 0x00, 0x64, 0x00, 0x66, 0x00, 0x67,
+                     0x62, 0x63, 0x00, 0x64, 0x00, 0x66, 0x00, 0x67,
                     0x68, 0x69, 0x6a, 0x6b, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x73, 0x74, 0x75, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x73, 0x74, 0x75, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
                 } ;
 
+
                 if (this->keys_down[extendedKeyCode]){
+
+                    const KeyLayout_t * layout = &keylayout_WORK_noshift;
                     this->last_char_key = extendedKeyCode;
                     if (this->is_ctrl_pressed() && this->is_alt_pressed()){
-                        this->last_char = keylayout_WORK_altgr[map[extendedKeyCode]] ;
+                        layout = &this->keylayout_WORK_altgr;
                     }
                     else if (this->is_shift_pressed() && this->is_caps_locked()){
-                        this->last_char = keylayout_WORK_shiftcapslock[map[extendedKeyCode]] ;
+                        layout = &this->keylayout_WORK_shiftcapslock;
                     }
                     else if (this->is_shift_pressed()){
-                        this->last_char = keylayout_WORK_shift[map[extendedKeyCode]] ;
+                        layout = &this->keylayout_WORK_shift;
                     }
                     else if (this->is_caps_locked()) {
-                        this->last_char = keylayout_WORK_capslock[map[extendedKeyCode]] ;
+                        layout = &this->keylayout_WORK_capslock;
+                    }
+                    uint8_t sym = map[extendedKeyCode];
+                    uint32_t uchar = (*layout)[sym];
+                    if (uchar){
+                        LOG(LOG_INFO, "pushing char %u", uchar);
+                        this->push(uchar);
                     }
                     else {
-                        this->last_char = keylayout_WORK_noshift[map[extendedKeyCode]] ;
+                        LOG(LOG_INFO, "pushing event");
                     }
                 }
 
@@ -1553,70 +1617,144 @@ struct Keymap2 {
 
     }
 
-    // head of keyboard buffer (or keyboard buffer of size 1)
-    uint32_t last_char_down()
+    void push(uint32_t uchar)
     {
-        return this->last_char;
+        this->push_char(uchar);
+        this->push_kevent(KEVENT_KEY);
     }
 
-    bool is_caps_locked()
+    void push_char(uint32_t uchar)
+    {
+        if (this->nbuf < SIZE_KEYBUF){
+            this->buffer[this->ibuf] = uchar;
+            this->ibuf++;
+            if (this->ibuf >= SIZE_KEYBUF){
+                this->ibuf = 0;
+            }
+            this->nbuf++;
+        }
+    }
+
+    uint32_t get_char()
+    {
+        if (this->nbuf > 0){
+            // remove top KEY KEVENT if present and any event may have occured before it
+            while (this->nbuf_kevent > 0 && this->get_kevent() != KEVENT_KEY){}
+            uint32_t res = this->buffer[(SIZE_KEYBUF + this->ibuf - this->nbuf) % SIZE_KEYBUF];
+
+            if (this->nbuf > 0){
+                this->nbuf--;
+            }
+            return res;
+        }
+        return 0;
+    }
+
+    // head of keyboard buffer (or keyboard buffer of size 1)
+    uint32_t top_char() const
+    {
+        return this->buffer[this->ibuf?this->ibuf-1:SIZE_KEYBUF-1];
+    }
+
+    uint32_t nb_char_available() const
+    {
+        return this->nbuf;
+    }
+
+    void push_kevent(uint32_t uevent)
+    {
+        if (this->nbuf_kevent < SIZE_KEYBUF_KEVENT){
+            this->buffer_kevent[this->ibuf_kevent] = uevent;
+            this->ibuf_kevent++;
+            if (this->ibuf_kevent >= SIZE_KEYBUF_KEVENT){
+                this->ibuf_kevent = 0;
+            }
+            this->nbuf_kevent++;
+        }
+    }
+
+    uint32_t get_kevent()
+    {
+        uint32_t res = this->buffer_kevent[(SIZE_KEYBUF_KEVENT + this->ibuf_kevent - this->nbuf_kevent) % SIZE_KEYBUF_KEVENT];
+
+        if (this->nbuf_kevent > 0){
+            this->nbuf_kevent--;
+        }
+        return res;
+    }
+
+    // head of keyboard buffer (or keyboard buffer of size 1)
+    uint32_t top_kevent() const
+    {
+        return this->buffer_kevent[this->ibuf_kevent?this->ibuf_kevent-1:SIZE_KEYBUF_KEVENT-1];
+    }
+
+
+    uint32_t nb_kevent_available() const
+    {
+        return this->nbuf_kevent;
+    }
+
+    bool is_caps_locked() const
     {
         return this->key_flags & CAPSLOCK;
     }
 
-    bool is_scroll_locked()
+    bool is_scroll_locked() const
     {
         return this->key_flags & SCROLLLOCK;
     }
 
-    bool is_num_locked()
+    bool is_num_locked() const
     {
         return this->key_flags & NUMLOCK;
     }
 
-    bool is_left_shift_pressed()
+    bool is_left_shift_pressed() const
     {
         return this->keys_down[LEFT_SHIFT];
     }
-    bool is_right_shift_pressed()
+    bool is_right_shift_pressed() const
     {
         return this->keys_down[RIGHT_SHIFT];
     }
 
-    bool is_shift_pressed()
+    bool is_shift_pressed() const
     {
         return this->is_left_shift_pressed() || this->is_right_shift_pressed();
     }
 
-    bool is_left_ctrl_pressed()
+    bool is_left_ctrl_pressed() const
     {
         return this->keys_down[LEFT_CTRL];
     }
 
-    bool is_right_ctrl_pressed()
+    bool is_right_ctrl_pressed() const
     {
         return this->keys_down[RIGHT_CTRL];
     }
 
-    bool is_ctrl_pressed()
+    bool is_ctrl_pressed() const
     {
         return is_right_ctrl_pressed() || is_left_ctrl_pressed();
     }
 
-    bool is_left_alt_pressed()
+    bool is_left_alt_pressed() const
     {
         return this->keys_down[LEFT_ALT];
     }
 
-    bool is_right_alt_pressed() // altgr
+    bool is_right_alt_pressed() const // altgr
     {
         return this->keys_down[RIGHT_ALT];
     }
 
-    bool is_alt_pressed()
+    bool is_alt_pressed() const
     {
         return is_right_alt_pressed() || is_left_alt_pressed();
     }
+
+
 
 };
 
