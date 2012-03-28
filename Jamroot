@@ -208,6 +208,8 @@ unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp libboost_unit_test
 
 unit-test test_timer_capture : tests/test_timer_capture.cpp libboost_unit_test ;
 
+unit-test test_countdown_ptr : tests/test_countdown_ptr.cpp libboost_unit_test ;
+
 unit-test test_rdesktop_invalid_pdu : tests/test_rdesktop_invalid_pdu.cpp libboost_unit_test openssl crypto ini_config keymap rsa_keys d3des libboost_program_options ;
 # unit-test test_w2008_fail_licensing : tests/test_w2008_fail_licensing.cpp libboost_unit_test openssl crypto ini_config keymap rsa_keys d3des libboost_program_options ;
 
