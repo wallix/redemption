@@ -101,8 +101,8 @@ public:
         this->now.tv_usec += elapsed % 1000000;
         if (this->now.tv_usec >= 1000000)
         {
-            ++this->now.tv_sec;
-            this->now.tv_usec -= 1000000;
+            this->now.tv_sec += this->now.tv_usec / 1000000;
+            this->now.tv_usec %= 1000000;
         }
         return *this;
     }
@@ -126,29 +126,27 @@ public:
         if (this->timer.valid())
         {
             uint64_t elapsed = this->timer.elapsed() + this->time_future;
-            if (elapsed <= micro_sec*2)
+            if (elapsed <= micro_sec)
             {
-                this->time_wait = micro_sec*2 - elapsed;
+                this->time_wait = micro_sec - elapsed;
                 this->time_future = 0;
             }
             else
             {
-                this->time_future = elapsed - micro_sec*2;
+                this->time_future = elapsed - micro_sec;
                 this->time_wait = 0;
             }
-            this->time_wait = micro_sec;
         }
         else
         {
             timer.reset();
-            this->time_wait = micro_sec*2;
+            this->time_wait = micro_sec;
             this->time_future = 0;
         }
     }
 
     void sleep()
     {
-        //std::cout << "sleep micro_sec: " << this->time_wait << '\n';
         if (this->time_wait)
         {
             struct timespec wtime = {
