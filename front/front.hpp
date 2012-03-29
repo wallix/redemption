@@ -73,6 +73,7 @@
 #include "RDP/gcc_conference_user_data/sc_net.hpp"
 
 #include "front_api.hpp"
+#include "genrandom.hpp"
 
 static inline int get_pixel(uint8_t* data, int x, int y, int width, int bpp)
 {
@@ -213,7 +214,9 @@ public:
         ACTIVATE_AND_PROCESS_DATA,
     } state;
 
-    Front(SocketTransport * trans, Inifile * ini) :
+    Random * gen;
+
+    Front(SocketTransport * trans, Random * gen, Inifile * ini) :
         FrontAPI(ini->globals.notimestamp, ini->globals.nomouse),
         capture(NULL),
         orders(NULL),
@@ -228,7 +231,8 @@ public:
         verbose(this->ini?this->ini->globals.debug.front:0),
         font(SHARE_PATH "/" DEFAULT_FONT_NAME),
         cache(),
-        state(CONNECTION_INITIATION)
+        state(CONNECTION_INITIATION),
+        gen(gen)
     {
         // from server_sec
         // CGR: see if init has influence for the 3 following fields
@@ -1559,7 +1563,7 @@ public:
         bool use_rdp5 = 1;
         out_mcs_data_sc_core(stream, use_rdp5);
         out_mcs_data_sc_net(stream, channel_list);
-        front_out_gcc_conference_user_data_sc_sec1(stream, client_info->crypt_level, server_random, rc4_key_size, pub_mod, pri_exp);
+        front_out_gcc_conference_user_data_sc_sec1(stream, client_info->crypt_level, server_random, rc4_key_size, pub_mod, pri_exp, this->gen);
 
         TODO(" create a function in stream that sets differed ber_len_offsets (or other len_offset)")
 

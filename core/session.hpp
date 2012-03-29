@@ -171,6 +171,7 @@ struct Session {
     int mouse_y;
 
     SessionManager * sesman;
+    UdevRandom gen;
 
     Session(int sck, const char * ip_source, Inifile * ini)
         : sck(sck), ini(ini), verbose(this->ini->globals.debug.session)
@@ -210,7 +211,7 @@ struct Session {
             throw 2;
         }
 
-        this->front = new Front(this->trans, ini);
+        this->front = new Front(this->trans, &this->gen, ini);
         this->no_mod = new null_mod(*(this->front));
         this->front->init_mod();
         this->mod = this->no_mod;
@@ -902,7 +903,8 @@ struct Session {
                                         this->context->get(STRAUTHID_TARGET_PASSWORD),
                                         *this->front,
                                         hostname,
-                                        info);
+                                        info,
+                                        &this->gen);
 //                    this->back_event->set();
 
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front->client_info.width, this->front->client_info.height));

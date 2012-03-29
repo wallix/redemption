@@ -30,6 +30,7 @@
 #include "rsa_keys.hpp"
 TODO(" ssl calls introduce some dependency on ssl system library  injecting it in the sec object would be better.")
 #include "ssl_calls.hpp"
+#include "genrandom.hpp"
 
 // 2.2.1.4.3 Server Security Data (TS_UD_SC_SEC1)
 // ==============================================
@@ -296,7 +297,8 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
                                               CryptContext & decrypt,
                                               uint32_t & server_public_key_len,
                                               uint8_t (& client_crypt_random)[512],
-                                              int & crypt_level)
+                                              int & crypt_level,
+                                              Random * gen)
 {
     LOG(LOG_INFO, "SC_SECURITY\n");
 
@@ -483,23 +485,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
     }
 
     /* Generate a client random, and determine encryption keys */
-    memset(client_random, 0x44, SEC_RANDOM_SIZE);
-    int fd = open("/dev/urandom", O_RDONLY);
-    if (fd == -1) {
-        fd = open("/dev/random", O_RDONLY);
-    }
-    if (fd != -1) {
-        if (read(fd, client_random, SEC_RANDOM_SIZE) != SEC_RANDOM_SIZE) {
-            LOG(LOG_WARNING, "random source failed to provide random data\n");
-        }
-        close(fd);
-    }
-    else {
-        LOG(LOG_WARNING, "random source failed to provide random data : couldn't open device\n");
-    }
-
-    memset(client_random, 0, SEC_RANDOM_SIZE);
-
+    gen->random(client_random, SEC_RANDOM_SIZE);
     ssl.rsa_encrypt(client_crypt_random, client_random, SEC_RANDOM_SIZE, server_public_key_len, modulus, exponent);
     rdp_sec_generate_keys(encrypt, decrypt, encrypt.sign_key, client_random, server_random, rc4_key_size);
 }
@@ -537,21 +523,14 @@ static inline void front_out_gcc_conference_user_data_sc_sec1(Stream & stream,
                                                 uint8_t (&server_random)[32],
                                                 int rc4_key_size,
                                                 uint8_t (&pub_mod)[512],
-                                                uint8_t (&pri_exp)[512])
+                                                uint8_t (&pri_exp)[512],
+                                                Random * gen)
 {
 
     TODO("Should we not keep rsa_keys somewhere. We just seem to forget them.")
     Rsakeys rsa_keys(CFG_PATH "/" RSAKEYS_INI);
-    memset(server_random, 0x44, 32);
-    int fd = open("/dev/urandom", O_RDONLY);
-    if (fd == -1) {
-        fd = open("/dev/random", O_RDONLY);
-    }
-    if (fd != -1) {
-        if (read(fd, server_random, 32) != 32) {
-        }
-        close(fd);
-    }
+
+    gen->random(server_random, 32);
 
     uint8_t pub_sig[512];
 

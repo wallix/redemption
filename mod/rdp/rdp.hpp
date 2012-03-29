@@ -78,6 +78,7 @@
 #include "RDP/gcc_conference_user_data/cs_cluster.hpp"
 #include "RDP/gcc_conference_user_data/cs_sec.hpp"
 #include "RDP/gcc_conference_user_data/cs_net.hpp"
+#include "genrandom.hpp"
 
 struct rdp_cursor {
     int x;
@@ -338,6 +339,7 @@ struct mod_rdp : public client_mod {
     const bool console_session;
     const int brush_cache_code;
     const uint8_t front_bpp;
+    Random * gen;
 
     mod_rdp(Transport * trans,
             wait_obj & event,
@@ -345,7 +347,8 @@ struct mod_rdp : public client_mod {
             const char * target_password,
             struct FrontAPI & front,
             const char * hostname,
-            const ClientInfo & info)
+            const ClientInfo & info,
+            Random * gen)
             :
                 client_mod(front, info.width, info.height),
                     in_stream(65536),
@@ -365,7 +368,8 @@ struct mod_rdp : public client_mod {
                     state(MOD_RDP_CONNECTING),
                     console_session(info.console_session),
                     brush_cache_code(info.brush_cache_code),
-                    front_bpp(info.bpp)
+                    front_bpp(info.bpp),
+                    gen(gen)
     {
         LOG(LOG_INFO, "Creation of new mod 'RDP'");
         // from rdp_sec
@@ -1797,7 +1801,8 @@ struct mod_rdp : public client_mod {
             case SC_SECURITY:
                 parse_mcs_data_sc_security(cr_stream, encrypt, decrypt,
                                            server_public_key_len, client_crypt_random,
-                                           crypt_level);
+                                           crypt_level,
+                                           this->gen);
             break;
             case SC_NET:
                 parse_mcs_data_sc_net(cr_stream, front_channel_list, mod_channel_list);

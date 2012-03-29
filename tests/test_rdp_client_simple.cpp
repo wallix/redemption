@@ -214,9 +214,11 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     Stream stream(65536);
     const char * name = "RDP Target";
     int sck = connect("10.10.14.78", 3389, name);
-    int verbose = 0;
+    int verbose = 256;
     SocketTransport t(name, sck, verbose);
     wait_obj back_event(t.sck);
+    // To always get the same client random, in tests
+    LCGRandom gen(0);
 
     LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     struct client_mod * mod = new mod_rdp(&t,
@@ -225,7 +227,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                         "S3cur3!1nux",
                         front,
                         "laptop",
-                        info);
+                        info,
+                        &gen);
     LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
 
     BOOST_CHECK_EQUAL(mod->front_width, 800);
