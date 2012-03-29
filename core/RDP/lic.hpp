@@ -416,45 +416,40 @@ struct RdpLicence {
     TODO(" this is not supported yet  but using rdp_save_licence we would keep a local copy of the licence of a remote server thus avoiding to ask it every time we connect. Anyway the use of files to stoe licences should be abstracted.")
     void rdp_save_licence(uint8_t *data, int length, const char * hostname)
     {
-        int fd;
-        char* path = NULL;
-        char* tmppath = NULL;
-
-        path = new char[256];
-        /* TODO: verify if location that we've stablished is right or not */
-        sprintf(path, LICENCE_PATH "/licence.%s", hostname);
-
-        if ((mkdir(path, 0700) == -1))
+        if ((mkdir(LICENCE_PATH, 0700) == -1))
         {
             if (errno != EEXIST){
-                perror(path);
+                LOG(LOG_ERR, "Error creating path to store licence file %s [%s]", LICENCE_PATH, strerror(errno));
                 return;
             }
         }
 
-        /* write licence to licence.hostname.new and after rename to licence.hostname */
+        char path[256];
+        char tmppath[256];
 
-        tmppath = new char[256];
+        /* TODO: verify if location that we've stablished is right or not */
+        sprintf(path, LICENCE_PATH "/licence.%s", hostname);
+
+        /* write licence to licence.hostname.new and after rename to licence.hostname */
         strcpy(tmppath, path);
         strcat(tmppath, ".new");
 
-        fd = open(tmppath, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+        int fd = open(tmppath, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 
         if (fd == -1){
-            perror(tmppath);
+            LOG(LOG_ERR, "Error creating licence file %s [%s]", tmppath, strerror(errno));
             return;
         }
+
         if (write(fd, data, length) != length){
-            perror(tmppath);
+            LOG(LOG_ERR, "Error writing data to licence file %s [%s]", tmppath, strerror(errno));
             unlink(tmppath);
         }
         else if (rename(tmppath, path) == -1){
-            printf("Error renaming licence file");
+            LOG(LOG_ERR, "Error renaming licence file %s -> %s [%s]", tmppath, path, strerror(errno));
             unlink(tmppath);
         }
         close(fd);
-        delete [] tmppath;
-        delete [] path;
     }
 
     void rdp_lic_generate_hwid(uint8_t* hwid, const char * hostname)
