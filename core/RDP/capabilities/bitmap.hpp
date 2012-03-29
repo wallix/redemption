@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean
 
-   RDP Capabilities : 
+   RDP Capabilities :
 
 */
 
@@ -121,7 +121,7 @@
 
 static inline void out_bitmap_caps(Stream & stream, uint16_t bpp, uint16_t bitmap_compression)
 {
-    LOG(LOG_INFO, "Sending bitmap caps to remote server\n");
+    LOG(LOG_INFO, "Sending bitmap caps to remote server");
     stream.out_uint16_le(RDP_CAPSET_BITMAP);
     stream.out_uint16_le(RDP_CAPLEN_BITMAP);
     stream.out_uint16_le(bpp); /* Preferred bpp */
@@ -146,7 +146,7 @@ static inline void process_bitmap_caps(Stream & stream, uint16_t & bpp)
     uint16_t width = stream.in_uint16_le();
     uint16_t height = stream.in_uint16_le();
     /* todo, call reset if needed and use width and height */
-    LOG(LOG_INFO, "Server bitmap caps (%dx%dx%d) [bpp=%d] ok\n", width, height, bpp, bpp);
+    LOG(LOG_INFO, "Server bitmap caps (%dx%dx%d) [bpp=%d] ok", width, height, bpp, bpp);
 }
 
 static inline void front_out_bitmap_caps(Stream & stream, uint16_t bpp, uint16_t width, uint16_t height)
@@ -168,4 +168,3 @@ static inline void front_out_bitmap_caps(Stream & stream, uint16_t bpp, uint16_t
 }
 
 #endif
-

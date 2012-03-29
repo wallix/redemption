@@ -265,37 +265,37 @@
 TODO(" use official field names from MS-RDPBCGR")
 static inline void parse_mcs_data_cs_core(Stream & stream, ClientInfo * client_info)
 {
-    LOG(LOG_INFO, "PARSE CS_CORE\n");
+    LOG(LOG_INFO, "PARSE CS_CORE");
     uint16_t rdp_version = stream.in_uint16_le();
-    LOG(LOG_INFO, "core_data: rdp_version (1=RDP1, 4=RDP5) %u\n", rdp_version);
+    LOG(LOG_INFO, "core_data: rdp_version (1=RDP1, 4=RDP5) %u", rdp_version);
     uint16_t dummy1 = stream.in_uint16_le();
-    LOG(LOG_INFO, "core_data: ?? = %u\n", dummy1);
+    LOG(LOG_INFO, "core_data: ?? = %u", dummy1);
     client_info->width = stream.in_uint16_le();
-    LOG(LOG_INFO, "core_data: width = %u\n", client_info->width);
+    LOG(LOG_INFO, "core_data: width = %u", client_info->width);
     client_info->height = stream.in_uint16_le();
-    LOG(LOG_INFO, "core_data: height = %u\n", client_info->height);
+    LOG(LOG_INFO, "core_data: height = %u", client_info->height);
     uint16_t bpp_code = stream.in_uint16_le();
-    LOG(LOG_INFO, "core_data: bpp_code = %x\n", bpp_code);
+    LOG(LOG_INFO, "core_data: bpp_code = %x", bpp_code);
     uint16_t dummy2 = stream.in_uint16_le();
-    LOG(LOG_INFO, "core_data: ?? = %x\n", dummy2);
+    LOG(LOG_INFO, "core_data: ?? = %x", dummy2);
     /* get keylayout */
     client_info->keylayout = stream.in_uint32_le();
-    LOG(LOG_INFO, "core_data: layout = %x\n", client_info->keylayout);
+    LOG(LOG_INFO, "core_data: layout = %x", client_info->keylayout);
     /* get build : windows build */
     client_info->build = stream.in_uint32_le();
-    LOG(LOG_INFO, "core_data: build = %x\n", client_info->build);
+    LOG(LOG_INFO, "core_data: build = %x", client_info->build);
 
     /* get hostname (it is UTF16, windows flavored widechars) */
     /* Unicode name of client is padded to 32 bytes */
     stream.in_uni_to_ascii_str(client_info->hostname, 32);
-    LOG(LOG_INFO, "core_data: hostname = %s\n", client_info->hostname);
+    LOG(LOG_INFO, "core_data: hostname = %s", client_info->hostname);
 
     uint32_t keyboard_type = stream.in_uint32_le();
-    LOG(LOG_INFO, "core_data: keyboard_type = %x\n", keyboard_type);
+    LOG(LOG_INFO, "core_data: keyboard_type = %x", keyboard_type);
     uint32_t keyboard_subtype = stream.in_uint32_le();
-    LOG(LOG_INFO, "core_data: keyboard_subtype = %x\n", keyboard_subtype);
+    LOG(LOG_INFO, "core_data: keyboard_subtype = %x", keyboard_subtype);
     uint32_t keyboard_functionkeys = stream.in_uint32_le();
-    LOG(LOG_INFO, "core_data: keyboard_functionkeys = %x\n", keyboard_functionkeys);
+    LOG(LOG_INFO, "core_data: keyboard_functionkeys = %x", keyboard_functionkeys);
     stream.skip_uint8(64);
 
     client_info->bpp = 8;
@@ -325,21 +325,21 @@ static inline void parse_mcs_data_cs_core(Stream & stream, ClientInfo * client_i
         client_info->bpp = 24;
     break;
     }
-    LOG(LOG_INFO, "core_data: bpp = %u\n", client_info->bpp);
+    LOG(LOG_INFO, "core_data: bpp = %u", client_info->bpp);
 }
 
 static inline void mod_rdp_out_cs_core(Stream & stream, int use_rdp5, int width, int height, int rdp_bpp, int keylayout, char * hostname)
 {
         stream.out_uint16_le(CS_CORE);
-        LOG(LOG_INFO, "Sending Client Core Data to remote server\n");
+        LOG(LOG_INFO, "Sending Client Core Data to remote server");
         stream.out_uint16_le(212); /* length */
-        LOG(LOG_INFO, "core::header::length = %u\n", 212);
+        LOG(LOG_INFO, "core::header::length = %u", 212);
         stream.out_uint32_le(use_rdp5?0x00080004:0x00080001); // RDP version. 1 == RDP4, 4 == RDP5.
         LOG(LOG_INFO, "core::header::version RDP 4=0x00080001 (0x00080004 = RDP 5.0, 5.1, 5.2, and 6.0 clients)");
         stream.out_uint16_le(width);
-        LOG(LOG_INFO, "core::desktopWidth = %u\n", width);
+        LOG(LOG_INFO, "core::desktopWidth = %u", width);
         stream.out_uint16_le(height);
-        LOG(LOG_INFO, "core::desktopHeight = %u\n", height);
+        LOG(LOG_INFO, "core::desktopHeight = %u", height);
         stream.out_uint16_le(0xca01);
         LOG(LOG_INFO, "core::colorDepth = RNS_UD_COLOR_8BPP (superseded by postBeta2ColorDepth)");
         stream.out_uint16_le(0xaa03);
@@ -348,7 +348,7 @@ static inline void mod_rdp_out_cs_core(Stream & stream, int use_rdp5, int width,
         LOG(LOG_INFO, "core::keyboardLayout = %x", keylayout);
         stream.out_uint32_le(2600); /* Client build. We are now 2600 compatible :-) */
         LOG(LOG_INFO, "core::clientBuild = 2600");
-        LOG(LOG_INFO, "core::clientName=%s\n", hostname);
+        LOG(LOG_INFO, "core::clientName=%s", hostname);
 
         /* Added in order to limit hostlen and hostname size */
         int hostlen = 2 * strlen(hostname);

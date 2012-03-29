@@ -21,8 +21,8 @@
    log file including syslog
 */
 
-#ifndef LOG_H
-#define LOG_H
+#ifndef __UTILS_LOG_HPP__
+#define __UTILS_LOG_HPP__
 
 #include <string.h>
 
@@ -46,6 +46,12 @@ typedef struct _code {
 	int	c_val;
 } CODE;
 
+#ifndef LOGPRINT
+#define LOG LOGSYSLOG__REDEMPTION__INTERNAL
+#else
+#define LOG LOGPRINT__REDEMPTION__INTERNAL
+#endif
+
 // LOG_EMERG      system is unusable
 // LOG_ALERT      action must be taken immediately
 // LOG_CRIT       critical conditions
@@ -55,7 +61,7 @@ typedef struct _code {
 // LOG_INFO       informational message
 // LOG_DEBUG      debug-level message
 
-static inline void LOG(int priority, const char *format, ...)
+static inline void LOGSYSLOG__REDEMPTION__INTERNAL(int priority, const char *format, ...)
 {
     static CODE prioritynames[] =
     {
@@ -75,6 +81,28 @@ static inline void LOG(int priority, const char *format, ...)
     vsnprintf(message, 8191, format, vl);
     va_end(vl);
     syslog(priority, "%s (%d/%d) -- %s", prioritynames[priority].c_name, getpid(), getpid(), message);
+};
+
+static inline void LOGPRINT__REDEMPTION__INTERNAL(int priority, const char *format, ...)
+{
+    static CODE prioritynames[] =
+    {
+        { "ALERT", LOG_ALERT },
+        { "CRIT", LOG_CRIT },
+        { "DEBUG", LOG_DEBUG },
+        { "EMERG", LOG_EMERG },
+        { "ERR", LOG_ERR },
+        { "INFO", LOG_INFO },
+        { "NOTICE", LOG_NOTICE },
+        { "WARNING", LOG_WARNING },
+        { NULL, -1 }
+    };
+    char message[8192];
+    va_list vl;
+    va_start (vl, format);
+    vsnprintf(message, 8191, format, vl);
+    va_end(vl);
+    printf("%s (%d/%d) -- %s\n", prioritynames[priority].c_name, getpid(), getpid(), message);
 };
 
 static inline void hexdump(const char * data, size_t size){

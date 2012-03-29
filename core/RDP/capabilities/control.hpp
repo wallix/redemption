@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean
 
-   RDP Capabilities : 
+   RDP Capabilities :
 
 */
 
@@ -28,7 +28,7 @@
 
 static inline void out_control_caps(Stream & stream)
 {
-    LOG(LOG_INFO, "Sending control caps to server\n");
+    LOG(LOG_INFO, "Sending control caps to server");
     stream.out_uint16_le(RDP_CAPSET_CONTROL);
     stream.out_uint16_le(RDP_CAPLEN_CONTROL);
     stream.out_uint16_le(0); /* Control capabilities */
@@ -38,4 +38,3 @@ static inline void out_control_caps(Stream & stream)
 }
 
 #endif
-

@@ -140,7 +140,7 @@ class RDPOpaqueRect {
         lg += snprintf(
             buffer+lg,
             sz-lg,
-            "opaquerect(rect(%d,%d,%d,%d) color=0x%.6x)\n",
+            "opaquerect(rect(%d,%d,%d,%d) color=0x%.6x)",
             this->rect.x, this->rect.y, this->rect.cx, this->rect.cy, this->color);
         if (lg >= sz){
             return sz;
@@ -157,7 +157,7 @@ class RDPOpaqueRect {
     void print(const Rect & clip) const {
         char buffer[1024];
         this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
-        printf("%s", buffer);
+        printf("%s\n", buffer);
     }
 
 };

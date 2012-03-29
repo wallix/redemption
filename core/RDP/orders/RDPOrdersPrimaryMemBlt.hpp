@@ -217,7 +217,7 @@ class RDPMemBlt {
         lg  += snprintf(
             buffer+lg,
             sz-lg,
-            "memblt(cache_id=%d rect(%d,%d,%d,%d) rop=%x srcx=%d srcy=%d cache_idx=%d)\n",
+            "memblt(cache_id=%d rect(%d,%d,%d,%d) rop=%x srcx=%d srcy=%d cache_idx=%d)",
             this->cache_id,
             this->rect.x, this->rect.y, this->rect.cx, this->rect.cy,
             this->rop,
@@ -238,7 +238,7 @@ class RDPMemBlt {
     void print(const Rect & clip) const {
         char buffer[1024];
         this->str(buffer, 1024, RDPOrderCommon(this->id(), clip));
-        printf("%s", buffer);
+        printf("%s\n", buffer);
     }
 
 };

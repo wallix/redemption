@@ -43,6 +43,11 @@
 #define PID_PATH "/var/run"
 #endif
 
+
+#if !defined(LICENCE_PATH)
+#define LICENCE_PATH "/var/certs/redemption"
+#endif
+
 #if !defined(SBIN_PATH)
 #define SBIN_PATH "/usr/local/sbin"
 #endif

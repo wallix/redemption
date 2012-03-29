@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean
 
-   RDP Capabilities : 
+   RDP Capabilities :
 
 */
 
@@ -28,28 +28,28 @@
 
 // 2.2.7.2.4 Share Capability Set (TS_SHARE_CAPABILITYSET)
 // ====================================================
-// The TS_SHARE_CAPABILITYSET structure is used to advertise the channel ID of 
-// the sender and is fully specified in [T128] section 8.2.12. This capability 
+// The TS_SHARE_CAPABILITYSET structure is used to advertise the channel ID of
+// the sender and is fully specified in [T128] section 8.2.12. This capability
 // is sent by both client and server.
 
-// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the 
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
 // capability set. This field MUST be set to CAPSTYPE_SHARE (9).
 
-// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes 
-// of the capability data, including the size of the capabilitySetType and 
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
+// of the capability data, including the size of the capabilitySetType and
 // lengthCapability fields.
 
-// nodeId (2 bytes): A 16-bit, unsigned integer. This field SHOULD be set to 0 
+// nodeId (2 bytes): A 16-bit, unsigned integer. This field SHOULD be set to 0
 // by the client and to the server channel ID by the server (0x03EA).
 
-// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this 
+// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
 // field MUST be ignored.
 
 
 
 static inline void out_share_caps(Stream & stream)
 {
-    LOG(LOG_INFO, "Sending share caps to server\n");
+    LOG(LOG_INFO, "Sending share caps to server");
 
     stream.out_uint16_le(RDP_CAPSET_SHARE);
     stream.out_uint16_le(RDP_CAPLEN_SHARE);
@@ -66,4 +66,3 @@ static inline void front_out_share_caps(Stream & stream, uint16_t channel_id)
 }
 
 #endif
-

@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean
 
-   RDP Capabilities : 
+   RDP Capabilities :
 
 */
 
@@ -70,7 +70,7 @@
 
 static inline void out_pointer_caps(Stream & stream)
 {
-    LOG(LOG_INFO, "Sending Pointer caps to server\n");
+    LOG(LOG_INFO, "Sending Pointer caps to server");
 
     stream.out_uint16_le(RDP_CAPSET_POINTER);
     stream.out_uint16_le(8); // total length of caps
@@ -88,4 +88,3 @@ static inline void front_out_pointer_caps(Stream & stream)
 }
 
 #endif
-

@@ -26,6 +26,8 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestRdpClientSimple
 #include <boost/test/auto_unit_test.hpp>
+
+#define LOGPRINT
 #include "./test_orders.hpp"
 
 #include "stream.hpp"
@@ -58,31 +60,140 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         const ClientInfo & info;
         ChannelList cl;
 
-        virtual void flush() {}
-        virtual void draw(const RDPOpaqueRect&, const Rect&){}
-        virtual void draw(const RDPScrBlt&, const Rect&){}
-        virtual void draw(const RDPDestBlt&, const Rect&){}
-        virtual void draw(const RDPPatBlt&, const Rect&){}
-        virtual void draw(const RDPMemBlt&, const Rect&, const Bitmap&){}
-        virtual void draw(const RDPLineTo&, const Rect&){}
-        virtual void draw(const RDPGlyphIndex&, const Rect&){}
+        virtual void flush()
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+             LOG(LOG_INFO, "flush()");
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void draw(const RDPOpaqueRect& cmd, const Rect& clip)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void draw(const RDPScrBlt& cmd, const Rect& clip)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void draw(const RDPDestBlt& cmd, const Rect& clip)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void draw(const RDPPatBlt& cmd, const Rect& clip)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void draw(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bmp)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void draw(const RDPLineTo& cmd, const Rect& clip)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            cmd.log(LOG_INFO, clip);
+             LOG(LOG_INFO, "========================================\n");
+        }
 
         virtual const ChannelList & get_channel_list(void) const { return cl; }
-        virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags) {}
+        virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags)
+        {
+        }
 
-        virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error) {}
-        virtual void send_global_palette() throw (Error) {}
-        virtual void set_pointer(int cache_idx) throw (Error) {}
-        virtual void begin_update() {}
-        virtual void end_update() {}
-        virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex) {}
-        virtual void set_mod_palette(const BGRPalette & palette) {}
-        virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask) {}
-        virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) {}
-        virtual void text_metrics(const char * text, int & width, int & height) {}
-        virtual int server_resize(int width, int height, int bpp) { return 0; }
-        virtual void set_mod_bpp(uint8_t bpp) {}
-        virtual void set_mod_bpp_to_front_bpp() {}
+        virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "send_pointer(cache_idx=%d, data=%p, mask=%p, x=%d, y=%d",
+                cache_idx, data, mask, x, y);
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void send_global_palette() throw (Error)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "send_global_palette()");
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void set_pointer(int cache_idx) throw (Error)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "set_pointer");
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void begin_update()
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "begin_update");
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void end_update()
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "end_update");
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "color_cache");
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void set_mod_palette(const BGRPalette & palette)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "set_mod_palette");
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "server_set_pointer");
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "server_draw_text %s", text);
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void text_metrics(const char * text, int & width, int & height)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+            LOG(LOG_INFO, "text_metrics");
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual int server_resize(int width, int height, int bpp)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
+             LOG(LOG_INFO, "========================================\n");
+             return 0;
+        }
+        virtual void set_mod_bpp(uint8_t bpp)
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+             LOG(LOG_INFO, "set_mod_bpp(bpp=%d)", bpp);
+             LOG(LOG_INFO, "========================================\n");
+        }
+        virtual void set_mod_bpp_to_front_bpp()
+        {
+             LOG(LOG_INFO, "--------- FRONT ------------------------");
+             LOG(LOG_INFO, "set_mod_bpp_to_front()");
+             LOG(LOG_INFO, "========================================\n");
+        }
 
         int mouse_x;
         int mouse_y;
@@ -91,11 +202,14 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
         Front(const ClientInfo & info) :
               FrontAPI(false, false),
-              info(info)
+              info(info),
+              mouse_x(0),
+              mouse_y(0),
+              notimestamp(true),
+              nomouse(true)
             {}
 
     } front(info);
-
 
     Stream stream(65536);
     const char * name = "RDP Target";
@@ -103,6 +217,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     int verbose = 0;
     SocketTransport t(name, sck, verbose);
     wait_obj back_event(t.sck);
+
+    LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     struct client_mod * mod = new mod_rdp(&t,
                         back_event,
                         "administrateur@qa",
@@ -110,6 +226,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                         front,
                         "laptop",
                         info);
+    LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
 
     BOOST_CHECK_EQUAL(mod->front_width, 800);
     BOOST_CHECK_EQUAL(mod->front_height, 600);
@@ -121,16 +238,16 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     }
     res = mod->draw_event();
     res = mod->draw_event();
-    res = mod->draw_event();
-    res = mod->draw_event();
-    res = mod->draw_event();
-    res = mod->draw_event();
-    res = mod->draw_event();
-    res = mod->draw_event();
-    res = mod->draw_event();
-    res = mod->draw_event();
-    res = mod->draw_event();
-    res = mod->draw_event();
-    res = mod->draw_event();
+//    res = mod->draw_event();
+//    res = mod->draw_event();
+//    res = mod->draw_event();
+//    res = mod->draw_event();
+//    res = mod->draw_event();
+//    res = mod->draw_event();
+//    res = mod->draw_event();
+//    res = mod->draw_event();
+//    res = mod->draw_event();
+//    res = mod->draw_event();
+//    res = mod->draw_event();
 
 }

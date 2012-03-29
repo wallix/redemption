@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean
 
-   RDP Capabilities : 
+   RDP Capabilities :
 
 */
 
@@ -28,7 +28,7 @@
 
 static inline void out_activate_caps(Stream & stream)
 {
-    LOG(LOG_INFO, "Sending Activate caps to server\n");
+    LOG(LOG_INFO, "Sending Activate caps to server");
 
     stream.out_uint16_le(RDP_CAPSET_ACTIVATE);
     stream.out_uint16_le(RDP_CAPLEN_ACTIVATE);
@@ -39,4 +39,3 @@ static inline void out_activate_caps(Stream & stream)
 }
 
 #endif
-

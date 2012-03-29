@@ -27,7 +27,7 @@
 #define BOOST_TEST_MODULE TestRdpClientTestCard
 #include <boost/test/auto_unit_test.hpp>
 
-
+//#define LOGPRINT
 #include "RDP/RDPGraphicDevice.hpp"
 #include "channel_list.hpp"
 #include "cache.hpp"
@@ -38,6 +38,7 @@
 
 BOOST_AUTO_TEST_CASE(TestShowTestCard)
 {
+    BOOST_CHECK(true);
     wait_obj back_event(-1);
     ClientInfo info(1, 1, true, true);
     info.keylayout = 0x04C;
@@ -53,30 +54,94 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
         ChannelList cl;
 
         virtual void flush() {}
-        virtual void draw(const RDPOpaqueRect&, const Rect&){}
-        virtual void draw(const RDPScrBlt&, const Rect&){}
-        virtual void draw(const RDPDestBlt&, const Rect&){}
-        virtual void draw(const RDPPatBlt&, const Rect&){}
-        virtual void draw(const RDPMemBlt&, const Rect&, const Bitmap&){}
-        virtual void draw(const RDPLineTo&, const Rect&){}
-        virtual void draw(const RDPGlyphIndex&, const Rect&){}
+        virtual void draw(const RDPOpaqueRect& cmd, const Rect& clip)
+        {
+            cmd.log(LOG_INFO, clip);
+        }
+        virtual void draw(const RDPScrBlt& cmd, const Rect& clip)
+        {
+            cmd.log(LOG_INFO, clip);
+        }
+        virtual void draw(const RDPDestBlt& cmd, const Rect& clip)
+        {
+            cmd.log(LOG_INFO, clip);
+        }
+        virtual void draw(const RDPPatBlt& cmd, const Rect& clip)
+        {
+            cmd.log(LOG_INFO, clip);
+        }
+        virtual void draw(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bmp)
+        {
+            cmd.log(LOG_INFO, clip);
+        }
+        virtual void draw(const RDPLineTo& cmd, const Rect& clip)
+        {
+            cmd.log(LOG_INFO, clip);
+        }
+        virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip)
+        {
+            cmd.log(LOG_INFO, clip);
+        }
 
         virtual const ChannelList & get_channel_list(void) const { return cl; }
-        virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags) {}
+        virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags)
+        {
+        }
 
-        virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error) {}
-        virtual void send_global_palette() throw (Error) {}
-        virtual void set_pointer(int cache_idx) throw (Error) {}
-        virtual void begin_update() {}
-        virtual void end_update() {}
-        virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex) {}
-        virtual void set_mod_palette(const BGRPalette & palette) {}
-        virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask) {}
-        virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) {}
-        virtual void text_metrics(const char * text, int & width, int & height) {}
-        virtual int server_resize(int width, int height, int bpp) { return 0; }
-        virtual void set_mod_bpp(uint8_t bpp) {}
-        virtual void set_mod_bpp_to_front_bpp() {}
+        virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
+        {
+            LOG(LOG_INFO, "send_pointer(cache_idx=%d, data=%p, mask=%p, x=%d, y=%d\n",
+                cache_idx, data, mask, x, y);
+        }
+        virtual void send_global_palette() throw (Error)
+        {
+            LOG(LOG_INFO, "send_global_palette()\n");
+        }
+        virtual void set_pointer(int cache_idx) throw (Error)
+        {
+            LOG(LOG_INFO, "set_pointer\n");
+        }
+        virtual void begin_update()
+        {
+            LOG(LOG_INFO, "begin_update\n");
+        }
+        virtual void end_update()
+        {
+            LOG(LOG_INFO, "end_update\n");
+        }
+        virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
+        {
+            LOG(LOG_INFO, "color_cache\n");
+        }
+        virtual void set_mod_palette(const BGRPalette & palette)
+        {
+            LOG(LOG_INFO, "set_mod_palette\n");
+        }
+        virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
+        {
+            LOG(LOG_INFO, "server_set_pointer\n");
+        }
+        virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+        {
+            LOG(LOG_INFO, "server_draw_text %s\n", text);
+        }
+        virtual void text_metrics(const char * text, int & width, int & height)
+        {
+            LOG(LOG_INFO, "text_metrics\n");
+        }
+        virtual int server_resize(int width, int height, int bpp)
+        {
+             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d\n", width, height, bpp);
+             return 0;
+        }
+        virtual void set_mod_bpp(uint8_t bpp)
+        {
+             LOG(LOG_INFO, "set_mod_bpp(bpp=%d)\n", bpp);
+        }
+        virtual void set_mod_bpp_to_front_bpp()
+        {
+             LOG(LOG_INFO, "set_mod_bpp_to_front()\n");
+        }
 
         int mouse_x;
         int mouse_y;
@@ -94,8 +159,12 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
 
     } front(info);
 
-
+    BOOST_CHECK(true);
     test_card_mod mod(&back_event, front, info.width, info.height);
-
-
+    BOOST_CHECK(true);
+    try {
+        uint32_t res = mod.draw_event();
+    } catch(const Error & e){
+        printf("Error catched id=%u\n", e.id);
+    }
 }

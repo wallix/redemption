@@ -181,17 +181,17 @@ static inline void process_general_caps(Stream & stream)
 
     (void)stream.in_uint16_le();
     uint16_t os_major = stream.in_uint16_le(); /* OS major type */
-    LOG(LOG_INFO, "General caps::major %u\n", os_major);
+    LOG(LOG_INFO, "General caps::major %u", os_major);
     uint16_t os_minor = stream.in_uint16_le(); /* OS minor type */
-    LOG(LOG_INFO, "General caps::minor %u\n", os_minor);
+    LOG(LOG_INFO, "General caps::minor %u", os_minor);
     uint16_t protocolVersion = stream.in_uint16_le(); /* Protocol version */
-    LOG(LOG_INFO, "General caps::protocol %u\n", protocolVersion);
+    LOG(LOG_INFO, "General caps::protocol %u", protocolVersion);
     (void)stream.in_uint16_le(); /* Pad */
     uint16_t compressionType = stream.in_uint16_le(); /* Compression types */
-    LOG(LOG_INFO, "General caps::compression types %x\n", compressionType);
+    LOG(LOG_INFO, "General caps::compression types %x", compressionType);
     /* Receiving rdp_5 extra flags supported for RDP 5.0 and later versions*/
     uint16_t extraflags = stream.in_uint16_le();
-    LOG(LOG_INFO, "General caps::extra flags %x\n", extraflags);
+    LOG(LOG_INFO, "General caps::extra flags %x", extraflags);
 }
 
 
@@ -232,4 +232,3 @@ static inline void front_capset_general(Stream & stream, int len, int & use_comp
 
 
 #endif
-

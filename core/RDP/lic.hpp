@@ -234,7 +234,7 @@ struct RdpLicence {
         TODO(" licence loading should be done before creating protocol layers")
         struct stat st;
         char path[256];
-        sprintf(path, PERSIST_PATH "/licence.%s", hostname);
+        sprintf(path, LICENCE_PATH "/licence.%s", hostname);
         int fd = open(path, O_RDONLY);
         if (fd != -1 && fstat(fd, &st) != 0){
             this->licence_data = (uint8_t *)malloc(this->licence_size);
@@ -270,7 +270,7 @@ struct RdpLicence {
 
         int tokenlen = stream.in_uint16_le();
         if (tokenlen != LICENCE_TOKEN_SIZE) {
-            LOG(LOG_ERR, "token len = %d, expected %d\n", tokenlen, LICENCE_TOKEN_SIZE);
+            LOG(LOG_ERR, "token len = %d, expected %d", tokenlen, LICENCE_TOKEN_SIZE);
         }
         else{
             in_token = stream.in_uint8p(tokenlen);
@@ -422,7 +422,7 @@ struct RdpLicence {
 
         path = new char[256];
         /* TODO: verify if location that we've stablished is right or not */
-        sprintf(path, "/etc/xrdp./xrdp/licence.%s", hostname);
+        sprintf(path, LICENCE_PATH "/licence.%s", hostname);
 
         if ((mkdir(path, 0700) == -1))
         {
@@ -434,7 +434,6 @@ struct RdpLicence {
 
         /* write licence to licence.hostname.new and after rename to licence.hostname */
 
-        sprintf(path, "/etc/xrdp./xrdp/licence.%s", hostname);
         tmppath = new char[256];
         strcpy(tmppath, path);
         strcat(tmppath, ".new");
@@ -450,7 +449,7 @@ struct RdpLicence {
             unlink(tmppath);
         }
         else if (rename(tmppath, path) == -1){
-            printf("Error renaming licence file\n");
+            printf("Error renaming licence file");
             unlink(tmppath);
         }
         close(fd);

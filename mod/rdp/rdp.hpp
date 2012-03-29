@@ -194,7 +194,7 @@ struct rdp_orders {
                 using namespace RDP;
 
                 RDPSecondaryOrderHeader header(stream);
-//                LOG(LOG_INFO, "secondary order=%d\n", header.type);
+//                LOG(LOG_INFO, "secondary order=%d", header.type);
                 uint8_t *next_order = stream.p + header.length + 7;
                 switch (header.type) {
                 case TS_CACHE_BITMAP_COMPRESSED:
@@ -228,7 +228,7 @@ struct rdp_orders {
                 const Rect & cmd_clip = ((control & BOUNDS)
                                       ? this->common.clip
                                     : Rect(0, 0, mod->front_width, mod->front_height));
-//                LOG(LOG_INFO, "/* order=%d ordername=%s */\n", this->common.order, ordernames[this->common.order]);
+//                LOG(LOG_INFO, "/* order=%d ordername=%s */", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
@@ -388,7 +388,7 @@ struct mod_rdp : public client_mod {
         strncpy(this->username, target_user, 127);
         this->username[127] = 0;
 
-        LOG(LOG_INFO, "Remote RDP Server login:%s host:%s\n", this->username, this->hostname);
+        LOG(LOG_INFO, "Remote RDP Server login:%s host:%s", this->username, this->hostname);
 
         memset(this->password, 0, 256);
         strcpy(this->password, target_password);
@@ -397,12 +397,12 @@ struct mod_rdp : public client_mod {
         memset(this->program, 0, 256);
         memset(this->directory, 0, 256);
 
-        LOG(LOG_INFO, "Server key layout is %x\n", this->keylayout);
+        LOG(LOG_INFO, "Server key layout is %x", this->keylayout);
 
         while (UP_AND_RUNNING != this->connection_finalization_state){
             BackEvent_t res = this->draw_event();
             if (res != BACK_EVENT_NONE){
-                LOG(LOG_INFO, "Creation of new mod 'RDP' failed\n");
+                LOG(LOG_INFO, "Creation of new mod 'RDP' failed");
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
             }
         }
@@ -414,7 +414,7 @@ struct mod_rdp : public client_mod {
 
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long time, Keymap2 * keymap){
         if (UP_AND_RUNNING == this->connection_finalization_state) {
-//            LOG(LOG_INFO, "Direct parameter transmission \n");
+//            LOG(LOG_INFO, "Direct parameter transmission ");
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
         }
     }
@@ -1312,13 +1312,13 @@ struct mod_rdp : public client_mod {
                         case WAITING_FONT_MAP:
                             LOG(LOG_INFO, "Receiving Font Map");
 //                            this->check_data_pdu(PDUTYPE2_FONTMAP);
-                            LOG(LOG_INFO, "process demand active ok\n");
+                            LOG(LOG_INFO, "process demand active ok");
                             this->front.set_mod_bpp(this->bpp);
                             this->connection_finalization_state = UP_AND_RUNNING;
                         break;
                         case UP_AND_RUNNING:
                         {
-//                            LOG(LOG_INFO, "Up and running\n");
+//                            LOG(LOG_INFO, "Up and running");
 
                             ShareDataIn share_data_in(stream);
 //                            LOG(LOG_INFO, "Up and running");
@@ -1368,10 +1368,10 @@ struct mod_rdp : public client_mod {
                             case PDUTYPE2_PLAY_SOUND:
                             break;
                             case PDUTYPE2_SAVE_SESSION_INFO:
-                                LOG(LOG_INFO, "DATA PDU LOGON\n");
+                                LOG(LOG_INFO, "DATA PDU LOGON");
                             break;
                             case PDUTYPE2_SET_ERROR_INFO_PDU:
-                                LOG(LOG_INFO, "DATA PDU DISCONNECT\n");
+                                LOG(LOG_INFO, "DATA PDU DISCONNECT");
                                 this->process_disconnect_pdu(stream);
                             break;
                             default:
@@ -1803,7 +1803,7 @@ struct mod_rdp : public client_mod {
                 parse_mcs_data_sc_net(cr_stream, front_channel_list, mod_channel_list);
                 break;
             default:
-                LOG(LOG_WARNING, "response tag 0x%x\n", tag);
+                LOG(LOG_WARNING, "response tag 0x%x", tag);
                 break;
             }
             cr_stream.p = next_tag;
@@ -2185,7 +2185,7 @@ struct mod_rdp : public client_mod {
 
         void send_confirm_active(client_mod * mod) throw(Error)
         {
-            LOG(LOG_INFO, "Sending confirm active to server\n");
+            LOG(LOG_INFO, "Sending confirm active to server");
 
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -2260,13 +2260,13 @@ struct mod_rdp : public client_mod {
             tpdu.end();
             tpdu.send(this->trans);
 
-            LOG(LOG_INFO, "Waiting for answer to confirm active\n");
+            LOG(LOG_INFO, "Waiting for answer to confirm active");
         }
 
 
         void out_unknown_caps(Stream & stream, int id, int length, const char * caps)
         {
-//            LOG(LOG_INFO, "Sending unknown caps to server\n");
+//            LOG(LOG_INFO, "Sending unknown caps to server");
             stream.out_uint16_le(id);
             stream.out_uint16_le(length);
             stream.out_copy_bytes(caps, length - 4);
@@ -2275,7 +2275,7 @@ struct mod_rdp : public client_mod {
 
         void process_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
         {
-//            LOG(LOG_INFO, "Process pointer PDU\n");
+//            LOG(LOG_INFO, "Process pointer PDU");
 
             int message_type = stream.in_uint16_le();
             stream.skip_uint8(2); /* pad */
@@ -2288,29 +2288,29 @@ struct mod_rdp : public client_mod {
             }
             break;
             case RDP_POINTER_COLOR:
-//                LOG(LOG_INFO, "Process pointer color\n");
+//                LOG(LOG_INFO, "Process pointer color");
                 this->process_color_pointer_pdu(stream, mod);
-//                LOG(LOG_INFO, "Process pointer color done\n");
+//                LOG(LOG_INFO, "Process pointer color done");
                 break;
             case RDP_POINTER_CACHED:
-//                LOG(LOG_INFO, "Process pointer cached\n");
+//                LOG(LOG_INFO, "Process pointer cached");
                 this->process_cached_pointer_pdu(stream, mod);
-//                LOG(LOG_INFO, "Process pointer cached done\n");
+//                LOG(LOG_INFO, "Process pointer cached done");
                 break;
             case RDP_POINTER_SYSTEM:
-//                LOG(LOG_INFO, "Process pointer system\n");
+//                LOG(LOG_INFO, "Process pointer system");
                 this->process_system_pointer_pdu(stream, mod);
-//                LOG(LOG_INFO, "Process pointer system done\n");
+//                LOG(LOG_INFO, "Process pointer system done");
                 break;
             default:
                 break;
             }
-//            LOG(LOG_INFO, "Process pointer PDU done\n");
+//            LOG(LOG_INFO, "Process pointer PDU done");
         }
 
         void process_palette(Stream & stream, client_mod * mod)
         {
-//            LOG(LOG_INFO, "Process palette\n");
+//            LOG(LOG_INFO, "Process palette");
 
             stream.skip_uint8(2); /* pad */
             uint16_t numberColors = stream.in_uint32_le();
@@ -2886,7 +2886,7 @@ struct mod_rdp : public client_mod {
         void process_disconnect_pdu(Stream & stream)
         {
             uint32_t errorInfo = stream.in_uint32_le();
-            LOG(LOG_INFO, "process disconnect pdu : code = %8x\n", errorInfo);
+            LOG(LOG_INFO, "process disconnect pdu : code = %8x", errorInfo);
         }
 
 
@@ -3006,7 +3006,7 @@ struct mod_rdp : public client_mod {
         void send_input(int time, int message_type,
                         int device_flags, int param1, int param2) throw(Error)
         {
-//            LOG(LOG_INFO, "send_input\n");
+//            LOG(LOG_INFO, "send_input");
 
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -3062,7 +3062,7 @@ struct mod_rdp : public client_mod {
 
     void process_color_pointer_pdu(Stream & stream, client_mod * mod) throw(Error)
     {
-//        LOG(LOG_INFO, "/* process_color_pointer_pdu */\n");
+//        LOG(LOG_INFO, "/* process_color_pointer_pdu */");
         unsigned cache_idx;
         unsigned dlen;
         unsigned mlen;
@@ -3089,7 +3089,7 @@ struct mod_rdp : public client_mod {
 
     void process_cached_pointer_pdu(Stream & stream, client_mod * mod)
     {
-//        LOG(LOG_INFO, "/* process_cached_pointer_pdu */\n");
+//        LOG(LOG_INFO, "/* process_cached_pointer_pdu */");
 
         int cache_idx = stream.in_uint16_le();
         if (cache_idx < 0){
@@ -3104,7 +3104,7 @@ struct mod_rdp : public client_mod {
 
     void process_system_pointer_pdu(Stream & stream, client_mod * mod)
     {
-//        LOG(LOG_INFO, "/* process_system_pointer_pdu */\n");
+//        LOG(LOG_INFO, "/* process_system_pointer_pdu */");
         int system_pointer_type = stream.in_uint16_le();
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
@@ -3123,8 +3123,7 @@ struct mod_rdp : public client_mod {
 
     void process_bitmap_updates(Stream & stream, client_mod * mod)
     {
-        mod->front.begin_update();
-//        LOG(LOG_INFO, "/* process_bitmap_updates */\n");
+//        LOG(LOG_INFO, "/* process_bitmap_updates */");
         // RDP-BCGR: 2.2.9.1.1.3.1.2 Bitmap Update (TS_UPDATE_BITMAP)
         // ----------------------------------------------------------
         // The TS_UPDATE_BITMAP structure contains one or more rectangular
@@ -3151,7 +3150,7 @@ struct mod_rdp : public client_mod {
         // numberRectangles (2 bytes): A 16-bit, unsigned integer.
         // The number of screen rectangles present in the rectangles field.
         size_t numberRectangles = stream.in_uint16_le();
-//        LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */\n", numberRectangles);
+//        LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */", numberRectangles);
         for (size_t i = 0; i < numberRectangles; i++) {
             // rectangles (variable): Variable-length array of TS_BITMAP_DATA
             // (section 2.2.9.1.1.3.1.2.2) structures, each of which contains a
@@ -3267,7 +3266,6 @@ struct mod_rdp : public client_mod {
             }
             mod->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
         }
-        mod->front.end_update();
     }
 
 
@@ -3279,7 +3277,7 @@ struct mod_rdp : public client_mod {
 
         int flags = RDP_LOGON_NORMAL | ((strlen(password) > 0)?RDP_LOGON_AUTO:0);
 
-//            LOG(LOG_INFO, "send login info to server\n");
+//            LOG(LOG_INFO, "send login info to server");
         time_t t = time(NULL);
         time_t tzone;
 
@@ -3310,7 +3308,7 @@ struct mod_rdp : public client_mod {
             LOG(LOG_INFO, "send login info (RDP4-style) %s:%s",this->domain, this->username);
         }
         else {
-            LOG(LOG_INFO, "send extended login info (RDP5-style) %x %s:%s\n",flags,
+            LOG(LOG_INFO, "send extended login info (RDP5-style) %x %s:%s",flags,
                 this->domain,
                 this->username);
         }
@@ -3361,7 +3359,7 @@ struct mod_rdp : public client_mod {
         tpdu.end();
         tpdu.send(trans);
 
-        LOG(LOG_INFO, "send login info ok\n");
+        LOG(LOG_INFO, "send login info ok");
     }
 
 };

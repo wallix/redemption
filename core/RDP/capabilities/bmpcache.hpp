@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean
 
-   RDP Capabilities : 
+   RDP Capabilities :
 
 */
 
@@ -28,7 +28,7 @@
 
 static inline void out_bmpcache_caps(Stream & stream, uint16_t bpp)
 {
-    LOG(LOG_INFO, "Sending bmpcache caps to server\n");
+    LOG(LOG_INFO, "Sending bmpcache caps to server");
     TODO(" see details for bmpcache caps")
     stream.out_uint16_le(RDP_CAPSET_BMPCACHE);
     stream.out_uint16_le(RDP_CAPLEN_BMPCACHE);
@@ -43,4 +43,3 @@ static inline void out_bmpcache_caps(Stream & stream, uint16_t bpp)
 }
 
 #endif
-
