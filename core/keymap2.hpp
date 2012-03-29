@@ -59,6 +59,7 @@ struct Keymap2 {
         KEVENT_ENTER,
         KEVENT_ESC,
         KEVENT_DELETE,
+        KEVENT_BACKSPACE,
         KEVENT_LEFT_ARROW,
         KEVENT_RIGHT_ARROW,
         KEVENT_UP_ARROW,
@@ -393,13 +394,11 @@ struct Keymap2 {
                 const KeyLayout_t x040c_noshift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x26,   0xe9,   0x22,   0x27,   0x28,   0x2d,
-                    /*  16 */    0xe8,   0x5f,   0xe7,   0xe0,   0x29,   0x3d,    0x8,    0x9,
-                    /*  24 */    0x61,   0x7a,   0x65,   0x72,   0x74,   0x79,   0x75,   0x69,
-                    /*  32 */    0x6f,   0x70,   0x5e,   0x24,    0xd,    0x0,   0x71,   0x73,
-                    /*  40 */    0x64,   0x66,   0x67,   0x68,   0x6a,   0x6b,   0x6c,   0x6d,
-                    /*  48 */    0xf9,   0xb2,    0x0,   0x2a,   0x77,   0x78,   0x63,   0x76,
-                    /*  56 */    0x62,   0x6e,   0x2c,   0x3b,   0x3a,   0x21,    0x0,   0x2a,
-                    /*  64 */     0x0,   0x20,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
+                    /*  16 */    0xe8,   0x5f,   0xe7,   0xe0,   0x29,   0x3d,    0x8,
+                    /*  23 */     0x9,    'a',    'z',    'e',    'r',    't',    'y',    'u',    'i',   'o',   'p',   0x5e,   0x24,   0xd,
+                    /*  37 */     0x0,    'q',    's',    'd',    'f',    'g',    'h',    'j',   'k',    'l',   'm',   0xf9,
+                    /*  49 */    0xb2,    0x0,   0x2a,    'w',    'x',    'c',    'v',    'b',   'n',   0x2c,  0x3b,   0x3a,   0x21,   0x0,
+                    /*  63 */    0x2a,    0x0,    ' ',    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*  72 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*  80 */     0x0,    0x0,   0x2d,    0x0,    0x0,    0x0,   0x2b,    0x0,
                     /*  88 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,   0x3c,    0x0,
@@ -1602,16 +1601,30 @@ struct Keymap2 {
                     }
                     uint8_t sym = map[extendedKeyCode];
                     uint32_t uchar = (*layout)[sym];
-                    // > 0x20 is for ruling out NUL, 
+                    // > 0x20 is for ruling out NUL,
                     // but also TAB, ESC and BACKSPACE
-                    // that has unicode values but are not actually 
+                    // that has unicode values but are not actually
                     // printable characters and that we don't want to track
-                    if (uchar >= 0x20){ 
+                    if ((uchar >= 0x20) && (uchar != 0x7f)){
                         LOG(LOG_INFO, "pushing char %u", uchar);
                         this->push(uchar);
                     }
                     else {
-                        LOG(LOG_INFO, "pushing event");
+                        LOG(LOG_INFO, "pushing event extendedKeyCode=%x", extendedKeyCode);
+                        switch (extendedKeyCode){
+                         /* backspace */
+                        case 0x0E:
+                            this->push_kevent(KEVENT_BACKSPACE);
+                        break;
+                        case 0xD3: // delete
+                            this->push_kevent(KEVENT_DELETE);
+                        break;
+                        case 0x53: // numpad delete
+                            this->push_kevent(KEVENT_DELETE);
+                        break;
+                        default:
+                        break;
+                        }
                     }
                 }
 

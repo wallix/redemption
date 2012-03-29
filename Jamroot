@@ -49,10 +49,10 @@ project redemption
 
 ;
 
-explicit install instexe install-bin install-test install-etc install-share install-keymaps ;
+explicit install instexe install-bin install-test install-etc install-share ;
 
 alias instexe : install-bin install-test ;
-alias install : install-bin install-etc install-share install-keymaps ;
+alias install : install-bin install-etc install-share ;
 
 install install-bin
     : rdpproxy
@@ -64,12 +64,6 @@ install install-share
     : [ glob sys/share/rdpproxy/[^.k]* ]
     :
     : <location>/usr/local/share/rdpproxy
-    ;
-
-install install-keymaps
-    : [ glob sys/share/rdpproxy/keymaps/[^.]* ]
-    :
-    : <location>/usr/local/share/rdpproxy/keymaps
     ;
 
 install install-etc
@@ -102,7 +96,6 @@ lib png : : <name>png <link>static ;
 
 obj widget : mod/internal/widget.cpp ;
 obj mainloop : core/mainloop.cpp ;
-obj keymap : core/keymap.cpp ;
 obj d3des : utils/d3des.cpp ;
 obj ini_config : core/config.cpp  ;
 obj rsa_keys : utils/rsa_keys.cpp  ;
@@ -118,7 +111,6 @@ exe rdpproxy
         widget
         mainloop
         ini_config
-        keymap
 
         rsa_keys
         d3des
@@ -165,7 +157,7 @@ exe xrdp-keygen
 
 import testing ;
 
-unit-test test_widget : tests/test_widget.cpp libboost_unit_test ini_config keymap rsa_keys widget mainloop d3des libboost_program_options openssl crypto png z dl ;
+unit-test test_widget : tests/test_widget.cpp libboost_unit_test ini_config rsa_keys widget mainloop d3des libboost_program_options openssl crypto png z dl ;
 unit-test test_bitmap : tests/test_bitmap.cpp libboost_unit_test ini_config libboost_program_options ;
 unit-test test_bitmap_cache : tests/test_bitmap_cache.cpp libboost_unit_test ini_config libboost_program_options ;
 unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp libboost_unit_test ini_config libboost_program_options ;
@@ -177,7 +169,6 @@ unit-test test_urt : tests/test_urt.cpp libboost_unit_test ;
 unit-test test_compact_to_aligned : tests/test_compact_to_aligned.cpp libboost_unit_test ;
 unit-test test_region : tests/test_region.cpp libboost_unit_test ;
 unit-test test_strings : tests/test_strings.cpp libboost_unit_test ;
-unit-test test_keymap : tests/test_keymap.cpp keymap libboost_unit_test libboost_program_options ;
 unit-test test_rsa_keys : tests/test_rsa_keys.cpp rsa_keys libboost_unit_test libboost_program_options ;
 unit-test test_transport : tests/test_transport.cpp libboost_unit_test ;
 unit-test test_RDP_graphic_to_file : tests/test_RDP_graphic_to_file.cpp png z libboost_unit_test z d3des openssl crypto ;
@@ -210,8 +201,8 @@ unit-test test_timer_capture : tests/test_timer_capture.cpp libboost_unit_test ;
 
 unit-test test_countdown_ptr : tests/test_countdown_ptr.cpp libboost_unit_test ;
 
-unit-test test_rdesktop_invalid_pdu : tests/test_rdesktop_invalid_pdu.cpp libboost_unit_test openssl crypto ini_config keymap rsa_keys d3des libboost_program_options ;
-# unit-test test_w2008_fail_licensing : tests/test_w2008_fail_licensing.cpp libboost_unit_test openssl crypto ini_config keymap rsa_keys d3des libboost_program_options ;
+unit-test test_rdesktop_invalid_pdu : tests/test_rdesktop_invalid_pdu.cpp libboost_unit_test openssl crypto ini_config rsa_keys d3des libboost_program_options ;
+# unit-test test_w2008_fail_licensing : tests/test_w2008_fail_licensing.cpp libboost_unit_test openssl crypto ini_config rsa_keys d3des libboost_program_options ;
 
 unit-test test_rdp_client_test_card : tests/test_rdp_client_test_card.cpp widget libboost_unit_test ini_config libboost_program_options ;
 unit-test test_rdp_client_simple : tests/test_rdp_client_simple.cpp libboost_unit_test ini_config openssl crypto rsa_keys d3des z dl libboost_program_options ;

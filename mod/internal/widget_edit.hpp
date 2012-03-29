@@ -98,8 +98,9 @@ struct widget_edit : public Widget {
                 }
             }
             /* backspace */
-            else if (scan_code == 14) {
-
+            else if ((keymap->nb_kevent_available() > 0)
+            && (keymap->top_kevent() == Keymap2::KEVENT_BACKSPACE)) {
+                keymap->get_kevent();
                 n = mbstowcs(0, this->buffer, 0);
                 if (n > 0) {
                     if (this->edit_pos > 0) {
@@ -110,8 +111,10 @@ struct widget_edit : public Widget {
                 }
             }
             /* delete */
-            else if (scan_code == 83  && (ext || keymap->key_flags & 5)) // numlock = 0
-            {
+            else if ((keymap->nb_kevent_available() > 0)
+            && (keymap->top_kevent() == Keymap2::KEVENT_DELETE)) {
+                keymap->get_kevent();
+//            scan_code == 83  && (ext || keymap->key_flags & 5)) // numlock = 0
                 n = mbstowcs(0, this->buffer, 0);
                 if (n > 0) {
                     if (this->edit_pos < n) {

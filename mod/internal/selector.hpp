@@ -3603,30 +3603,38 @@ struct selector_mod : public internal_mod {
     {
         if (flags & 0xC000){ // KEYUP
             int scan_code = param1 % 128;
-            int ext = param2 & 0x0100;
             switch (this->focus_item){
                 case FOCUS_ON_FILTER_DEVICE:
                 {
                     size_t lg_dev_text = strlen(this->filter_device_text);
                     /* backspace */
-                    if (scan_code == 14 && this->filter_device_edit_pos > 0){
+                    if ((keymap->nb_kevent_available() > 0)
+                    && (keymap->top_kevent() == Keymap2::KEVENT_BACKSPACE)
+                    && (this->filter_device_edit_pos > 0)){
+                        keymap->get_kevent();
                         memmove(this->filter_device_text + this->filter_device_edit_pos - 1,
                                this->filter_device_text + this->filter_device_edit_pos,
                                lg_dev_text - this->filter_device_edit_pos + 1);
                         this->filter_device_edit_pos--;
                     }
                     /* delete */
-                    else if (scan_code == 83 && (lg_dev_text - this->filter_device_edit_pos) > 0){
+                    else if ((keymap->nb_kevent_available() > 0)
+                    && (keymap->top_kevent() == Keymap2::KEVENT_DELETE)
+                    && (lg_dev_text - this->filter_device_edit_pos) > 0){
+                        keymap->get_kevent();
                         memmove(this->filter_device_text + this->filter_device_edit_pos,
                                this->filter_device_text + this->filter_device_edit_pos + 1,
                                lg_dev_text - this->filter_device_edit_pos);
                     }
-                    else if (keymap->nb_char_available() > 0 && lg_dev_text < 20){
-                        memmove(this->filter_device_text + this->filter_device_edit_pos+1,
-                               this->filter_device_text + this->filter_device_edit_pos,
-                               lg_dev_text - this->filter_device_edit_pos + 1);
-                        *(this->filter_device_text + this->filter_device_edit_pos) = keymap->get_char();
-                        this->filter_device_edit_pos++;
+                    else if (keymap->nb_char_available() > 0){
+                        uint32_t c = keymap->get_char();
+                        if (lg_dev_text < 20){
+                            memmove(this->filter_device_text + this->filter_device_edit_pos+1,
+                                   this->filter_device_text + this->filter_device_edit_pos,
+                                   lg_dev_text - this->filter_device_edit_pos + 1);
+                            *(this->filter_device_text + this->filter_device_edit_pos) = c;
+                            this->filter_device_edit_pos++;
+                        }
                     }
                 }
                 this->event->set();
@@ -3634,23 +3642,33 @@ struct selector_mod : public internal_mod {
                 case FOCUS_ON_FILTER_GROUP:
                 {
                     size_t lg_group_text = strlen(this->filter_group_text);
-                    if (scan_code == 14 && this->filter_group_edit_pos > 0){
+                    /* backspace */
+                    if ((keymap->nb_kevent_available() > 0)
+                    && (keymap->top_kevent() == Keymap2::KEVENT_BACKSPACE)
+                    && (this->filter_group_edit_pos > 0)){
+                        keymap->get_kevent();
                         memmove(this->filter_group_text + this->filter_group_edit_pos - 1,
                                this->filter_group_text + this->filter_group_edit_pos,
                                lg_group_text - this->filter_group_edit_pos + 1);
                         this->filter_group_edit_pos--;
                     }
-                    else if (scan_code == 83 && lg_group_text - this->filter_group_edit_pos > 0){
+                    else if ((keymap->nb_kevent_available() > 0)
+                    && (keymap->top_kevent() == Keymap2::KEVENT_DELETE)
+                    && lg_group_text - this->filter_group_edit_pos > 0){
+                        keymap->get_kevent();
                         memmove(this->filter_group_text + this->filter_group_edit_pos,
                                this->filter_group_text + this->filter_group_edit_pos + 1,
                                lg_group_text - this->filter_group_edit_pos);
                     }
-                    else if (keymap->nb_char_available() > 0 && lg_group_text < 10){
-                        memmove(this->filter_group_text + this->filter_group_edit_pos + 1,
-                               this->filter_group_text + this->filter_group_edit_pos,
-                               lg_group_text - this->filter_group_edit_pos + 1);
-                        *(this->filter_group_text + this->filter_group_edit_pos) = keymap->get_char();
-                        this->filter_group_edit_pos++;
+                    else if (keymap->nb_char_available() > 0){
+                        uint32_t c = keymap->get_char();
+                        if (lg_group_text < 10){
+                            memmove(this->filter_group_text + this->filter_group_edit_pos + 1,
+                                   this->filter_group_text + this->filter_group_edit_pos,
+                                   lg_group_text - this->filter_group_edit_pos + 1);
+                            *(this->filter_group_text + this->filter_group_edit_pos) = c;
+                            this->filter_group_edit_pos++;
+                        }
                     }
                 }
                 this->event->set();
