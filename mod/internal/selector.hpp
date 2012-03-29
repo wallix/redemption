@@ -3602,26 +3602,30 @@ struct selector_mod : public internal_mod {
     virtual void rdp_input_scancode(long param1, long param2, long flags, long time, Keymap2 * keymap)
     {
         if (flags & 0xC000){ // KEYUP
+            int scan_code = param1 % 128;
+            int ext = param2 & 0x0100;
             switch (this->focus_item){
                 case FOCUS_ON_FILTER_DEVICE:
                 {
                     size_t lg_dev_text = strlen(this->filter_device_text);
-                    if (8 == keymap->top_char() && this->filter_device_edit_pos > 0){
+                    /* backspace */
+                    if (scan_code == 14 && this->filter_device_edit_pos > 0){
                         memmove(this->filter_device_text + this->filter_device_edit_pos - 1,
                                this->filter_device_text + this->filter_device_edit_pos,
                                lg_dev_text - this->filter_device_edit_pos + 1);
                         this->filter_device_edit_pos--;
                     }
-                    else if (127 == keymap->top_char() && (lg_dev_text - this->filter_device_edit_pos) > 0){
+                    /* delete */
+                    else if (scan_code == 83 && (lg_dev_text - this->filter_device_edit_pos) > 0){
                         memmove(this->filter_device_text + this->filter_device_edit_pos,
                                this->filter_device_text + this->filter_device_edit_pos + 1,
                                lg_dev_text - this->filter_device_edit_pos);
                     }
-                    else if ((keymap->top_char() > 32) && (keymap->top_char() < 127) && lg_dev_text < 20){
+                    else if (keymap->nb_char_available() > 0 && lg_dev_text < 20){
                         memmove(this->filter_device_text + this->filter_device_edit_pos+1,
                                this->filter_device_text + this->filter_device_edit_pos,
                                lg_dev_text - this->filter_device_edit_pos + 1);
-                        *(this->filter_device_text + this->filter_device_edit_pos) = keymap->top_char();
+                        *(this->filter_device_text + this->filter_device_edit_pos) = keymap->get_char();
                         this->filter_device_edit_pos++;
                     }
                 }
@@ -3630,22 +3634,22 @@ struct selector_mod : public internal_mod {
                 case FOCUS_ON_FILTER_GROUP:
                 {
                     size_t lg_group_text = strlen(this->filter_group_text);
-                    if (8 == keymap->top_char() && this->filter_group_edit_pos > 0){
+                    if (scan_code == 14 && this->filter_group_edit_pos > 0){
                         memmove(this->filter_group_text + this->filter_group_edit_pos - 1,
                                this->filter_group_text + this->filter_group_edit_pos,
                                lg_group_text - this->filter_group_edit_pos + 1);
                         this->filter_group_edit_pos--;
                     }
-                    else if (127 == keymap->top_char() && lg_group_text - this->filter_group_edit_pos > 0){
+                    else if (scan_code == 83 && lg_group_text - this->filter_group_edit_pos > 0){
                         memmove(this->filter_group_text + this->filter_group_edit_pos,
                                this->filter_group_text + this->filter_group_edit_pos + 1,
                                lg_group_text - this->filter_group_edit_pos);
                     }
-                    else if ((keymap->top_char() > 32) && (keymap->top_char() < 127) && lg_group_text < 10){
+                    else if (keymap->nb_char_available() > 0 && lg_group_text < 10){
                         memmove(this->filter_group_text + this->filter_group_edit_pos + 1,
                                this->filter_group_text + this->filter_group_edit_pos,
                                lg_group_text - this->filter_group_edit_pos + 1);
-                        *(this->filter_group_text + this->filter_group_edit_pos) = keymap->top_char();
+                        *(this->filter_group_text + this->filter_group_edit_pos) = keymap->get_char();
                         this->filter_group_edit_pos++;
                     }
                 }
