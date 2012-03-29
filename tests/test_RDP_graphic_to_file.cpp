@@ -382,7 +382,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
                 const Rect & rect = cmd.rect;
                 const uint16_t srcx = cmd.srcx;
                 const uint16_t srcy = cmd.srcy;
-                const uint8_t * const bmp_data = bmp.data_bitmap;
+                const uint8_t * const bmp_data = bmp.data();
                 BOOST_CHECK(true);
 
                 // Where we draw -> target

@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 
         Bitmap bmp2(24, (BGRPalette *)NULL, bigbmp.cx, bigbmp.cy, out.data, out.p - out.data, true);
         BOOST_CHECK_EQUAL(bmp2.bmp_size, bigbmp.bmp_size);
-        BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, bigbmp.data_bitmap, bigbmp.bmp_size));
+        BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size));
     }
 
     {
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 
         Bitmap bmp2(bpp, (BGRPalette *)NULL, bigbmp.cx, bigbmp.cy, out.data, out.p - out.data, true);
         BOOST_CHECK_EQUAL(bmp2.bmp_size, bigbmp.bmp_size);
-        BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, bigbmp.data_bitmap, bigbmp.bmp_size));
+        BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size));
     }
 
 //    {
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 //                char * line = buffer;
 //                buffer[0] = 0;
 //                for (size_t i = 0; i < bmp.line_size(24); i++){
-//                    line += snprintf(line, 1024, "0x%.2x, ", bmp.data_bitmap[j*bmp.line_size(24)+i]);
+//                    line += snprintf(line, 1024, "0x%.2x, ", bmp.data()[j*bmp.line_size(24)+i]);
 //                    if (i % 16 == 15){
 //                        printf("%s", buffer);
 //                        printf("\n");
@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 //        }
 //        BOOST_CHECK_EQUAL(bmp2.bmp_size(bpp), bigbmp.bmp_size(bpp));
 
-//        BOOST_CHECK(0 == memcmp(bmp2.data_bitmap, bigbmp.data_bitmap, bigbmp.bmp_size(bpp)));
+//        BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size(bpp)));
 //    }
 
 

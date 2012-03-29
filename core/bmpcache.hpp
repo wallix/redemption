@@ -147,7 +147,7 @@ struct BmpCache {
             this->cache[id][oldest_cidx] = bmp;
             this->stamps[id][oldest_cidx] = ++stamp;
             //this->crc[id][oldest_cidx] = bmp_crc;
-            bmp->compute_sha1(this->sha1[id][oldest_cidx]);
+            memcpy(this->sha1[id][oldest_cidx], bmp_sha1, 20);
             return (BITMAP_ADDED_TO_CACHE << 24)|(id<<16)|oldest_cidx;
         }
 };

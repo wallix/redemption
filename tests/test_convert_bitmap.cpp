@@ -51,7 +51,7 @@ void dump_png(const char * prefix, const Bitmap & bmp)
     int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
     FILE * f = fdopen(fd, "wb");
 //    ::dump_png24(f, bmp.data_bitmap, bmp.bmp_size / (bmp.cy*nbbytes(bmp.original_bpp)), bmp.cy, bmp.bmp_size / bmp.cy);
-    ::dump_png24(f, bmp.data_bitmap, 4, 3, 12);
+    ::dump_png24(f, bmp.data(), 4, 3, 12);
 
     ::fclose(f);
 }
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap)
     BOOST_CHECK_EQUAL(bmp2.cy, 3);
 
     {
-        const uint8_t * outbuf = bmp2.data_bitmap;
+        const uint8_t * outbuf = bmp2.data();
         BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
         BOOST_CHECK_EQUAL(0xFF, outbuf[1]);
         BOOST_CHECK_EQUAL(0xFF, outbuf[2]);
@@ -218,7 +218,7 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap24to16)
     BOOST_CHECK_EQUAL(bmp2.cy, 3);
 
     {
-        const uint8_t * outbuf = bmp2.data_bitmap;
+        const uint8_t * outbuf = bmp2.data();
         BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
         BOOST_CHECK_EQUAL(0xFF, outbuf[1]);
 

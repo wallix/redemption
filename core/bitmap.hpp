@@ -49,30 +49,105 @@
 
 #include "ssl_calls.hpp"
 
-
 #include "rect.hpp"
 
-struct Bitmap {
+
+class Bitmap {
+    class CountdownData
+    {
+        typedef std::size_t size_type;
+
+        uint8_t* _ptr;
+
 
     public:
-    uint8_t *data_bitmap;
+        CountdownData()
+        : _ptr(0)
+        {
+        }
 
+        CountdownData(std::size_t bmp_size)
+        : _ptr(new uint8_t[bmp_size + sizeof(size_type)])
+        {
+            ++this->count();
+        }
+
+        CountdownData(const CountdownData& other)
+        : _ptr(other._ptr)
+        {
+            ++this->count();
+        }
+
+        CountdownData& operator=(const CountdownData& other)
+        {
+            if (other._ptr != this->_ptr)
+            {
+                if (this->_ptr)
+                    this->remove_used();
+                this->_ptr = other._ptr;
+                ++this->count();
+            }
+            return *this;
+        }
+
+        bool valid() const
+        { return this->_ptr; }
+
+        ~CountdownData()
+        {
+            if (this->_ptr)
+                this->remove_used();
+        }
+
+        void load(std::size_t bmp_size)
+        {
+            this->_ptr = new uint8_t[bmp_size + sizeof(size_type)];
+            ++this->count();
+        }
+
+        uint8_t* get()
+        { return this->_ptr + sizeof(size_type); }
+
+        const uint8_t* get() const
+        { return this->_ptr + sizeof(size_type); }
+
+        std::size_t count() const
+        { return *(const std::size_t*)this->_ptr; }
+
+    private:
+        std::size_t& count()
+        { return *(std::size_t*)this->_ptr; }
+
+        void remove_used()
+        {
+            if (/* !this->count() ||*/!--this->count())
+                this->destroy();
+        }
+
+        void destroy()
+        {
+            delete[] this->_ptr;
+        }
+    };
+
+public:
     uint8_t original_bpp;
     BGRPalette original_palette;
     uint16_t cx;
     uint16_t cy;
 
-    public:
     size_t line_size;
     size_t bmp_size;
 
+    CountdownData data_bitmap;
+
     Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
-        : data_bitmap(0)
-        , original_bpp(bpp)
+        : original_bpp(bpp)
         , cx(cx)
         , cy(cy)
         , line_size(this->cx * nbbytes(this->original_bpp))
         , bmp_size(row_size(align4(this->cx), bpp) * cy)
+        , data_bitmap(this->bmp_size)
     {
 
 //        LOG(LOG_ERR, "Creating bitmap cx=%u cy=%u size=%u bpp=%u", cx, cy, size, bpp);
@@ -84,14 +159,13 @@ struct Bitmap {
                 init_palette332(this->original_palette);
             }
         }
-        this->data_bitmap  = (uint8_t*)malloc(this->bmp_size);
 
         if (compressed) {
             this->decompress(data, size);
         } else if (upsidedown) {
             this->copy_upsidedown(data, cx);
         } else {
-            uint8_t * dest = this->data_bitmap;
+            uint8_t * dest = this->data_bitmap.get();
             const uint8_t * src = data;
             for (uint16_t i = 0 ; i < this->cy ; i++){
                 memcpy(dest, src, this->cx * nbbytes(this->original_bpp));
@@ -107,12 +181,12 @@ struct Bitmap {
 
 
     Bitmap(const Bitmap & src_bmp, const Rect & r)
-        : data_bitmap(0)
-        , original_bpp(src_bmp.original_bpp)
+        : original_bpp(src_bmp.original_bpp)
         , cx(align4(r.cx))
         , cy((uint16_t)r.cy)
         , line_size(this->cx * nbbytes(src_bmp.original_bpp))
         , bmp_size(row_size(align4(this->cx), src_bmp.original_bpp) * this->cy)
+        , data_bitmap(this->bmp_size)
     {
         memcpy(this->original_palette, src_bmp.original_palette, sizeof(BGRPalette));
 
@@ -123,12 +197,10 @@ struct Bitmap {
         // (including up to three bytes of padding, as necessary).
 
         const uint8_t Bpp = nbbytes(this->original_bpp);
-        this->data_bitmap  = (uint8_t*)malloc(this->bmp_size);
-
         const unsigned src_row_size = src_bmp.bmp_size / src_bmp.cy;
         const unsigned dest_row_size = this->bmp_size / this->cy;
-        uint8_t *dest = this->data_bitmap;
-        const uint8_t *src = src_bmp.data_bitmap + src_row_size * (src_bmp.cy - r.y - this->cy) + r.x * Bpp;
+        uint8_t *dest = this->data_bitmap.get();
+        const uint8_t *src = src_bmp.data_bitmap.get() + src_row_size * (src_bmp.cy - r.y - this->cy) + r.x * Bpp;
         const unsigned line_to_copy = r.cx * nbbytes(src_bmp.original_bpp);
 
         for (unsigned i = 0; i < this->cy; i++) {
@@ -143,12 +215,12 @@ struct Bitmap {
 
 
     Bitmap(uint8_t bpp, const char* filename)
-        : data_bitmap(0)
-        , original_bpp(bpp)
+        : original_bpp(bpp)
         , cx(0)
         , cy(0)
         , line_size(0)
         , bmp_size(0)
+        , data_bitmap()
     {
         LOG(LOG_INFO, "loading bitmap %s", filename);
         BGRPalette palette1;
@@ -311,8 +383,8 @@ struct Bitmap {
         this->cy = (uint16_t)header.image_height;
         this->line_size = this->cx * nbbytes(this->original_bpp);
         this->bmp_size = row_size(align4(this->cx), this->original_bpp) * this->cy;
-        this->data_bitmap  = (uint8_t*)malloc(this->bmp_size);
-        uint8_t * dest = this->data_bitmap;
+        this->data_bitmap.load(this->bmp_size);
+        uint8_t * dest = this->data_bitmap.get();
         const uint8_t nbbytes_dest = ::nbbytes(this->original_bpp);
         const uint16_t padded_line_size = (uint16_t)(this->bmp_size / this->cy);
 
@@ -372,20 +444,23 @@ struct Bitmap {
         }
     }
 
+    const uint8_t* data() const
+    { return this->data_bitmap.get(); }
+
     void dump() const
     {
         const uint8_t Bpp = nbbytes(this->original_bpp);
         LOG(LOG_INFO, "------- Dumping bitmap RAW data [%p]---------\n", this);
         LOG(LOG_INFO, "cx=%d cy=%d BPP=%d line_size=%d bmp_size=%d data=%p \n",
-            this->cx, this->cy, Bpp, this->line_size, this->bmp_size, this->data_bitmap);
+            this->cx, this->cy, Bpp, this->line_size, this->bmp_size, this->data_bitmap.get());
         assert(this->line_size);
         assert(this->cx);
         assert(this->cy);
-        assert(this->data_bitmap);
+        assert(this->data_bitmap.valid());
         assert(this->bmp_size);
 
         LOG(LOG_INFO, "uint8_t raw%p[] = {", this);
-        const uint8_t * data = this->data_bitmap;
+        const uint8_t * data = this->data_bitmap.get();
 
         for (size_t j = 0 ; j < this->cy ; j++){
             LOG(LOG_INFO, "/* line %d */", (this->cy - j - 1));
@@ -417,7 +492,7 @@ private:
         const uint8_t Bpp = nbbytes(this->original_bpp);
         TODO(" without this evil alnment we are expirimenting problems with VNC bitmaps  but there should be a better fix.")
         this->cx = (uint16_t)align4(cx);
-        uint8_t * d8 = this->data_bitmap + (this->cy-1) * this->line_size;
+        uint8_t * d8 = this->data_bitmap.get() + (this->cy-1) * this->line_size;
         const uint8_t * s8 = input;
         uint32_t src_width = cx * Bpp;
 
@@ -443,7 +518,7 @@ private:
 //        printf("============================================\n");
 
         const uint8_t Bpp = nbbytes(this->original_bpp);
-        uint8_t* pmin = this->data_bitmap;
+        uint8_t* pmin = this->data_bitmap.get();
         uint8_t* pmax = pmin + this->bmp_size;
         unsigned yprev = 0;
         uint8_t* out = pmin;
@@ -704,7 +779,7 @@ public:
         : this->get_pixel(Bpp, p - this->line_size);
     }
 
-    unsigned get_color_count(const uint8_t Bpp, uint8_t * pmax, const uint8_t * p, unsigned color) const
+    unsigned get_color_count(const uint8_t Bpp, const uint8_t * pmax, const uint8_t * p, unsigned color) const
     {
         unsigned acc = 0;
         while (p < pmax && this->get_pixel(Bpp, p) == color){
@@ -715,7 +790,7 @@ public:
     }
 
 
-    unsigned get_bicolor_count(const uint8_t Bpp, uint8_t * pmax, const uint8_t * p, unsigned color1, unsigned color2) const
+    unsigned get_bicolor_count(const uint8_t Bpp, const uint8_t * pmax, const uint8_t * p, unsigned color1, unsigned color2) const
     {
         unsigned acc = 0;
         while ((p < pmax)
@@ -729,7 +804,7 @@ public:
     }
 
 
-    unsigned get_fill_count(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p) const
+    unsigned get_fill_count(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * pmax, const uint8_t * p) const
     {
         unsigned acc = 0;
         while  (p + Bpp <= pmax) {
@@ -745,7 +820,7 @@ public:
     }
 
 
-    unsigned get_mix_count(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground) const
+    unsigned get_mix_count(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * pmax, const uint8_t * p, unsigned foreground) const
     {
         unsigned acc = 0;
         while (p < pmax){
@@ -774,7 +849,7 @@ public:
         }
     }
 
-    unsigned get_fom_count_set(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned & foreground, unsigned & flags) const
+    unsigned get_fom_count_set(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * pmax, const uint8_t * p, unsigned & foreground, unsigned & flags) const
     {
         // flags : 1 = fill, 2 = MIX, 3 = (1+2) = FOM
         {
@@ -825,7 +900,7 @@ public:
         return 0;
     }
 
-    unsigned get_fom_count(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground) const
+    unsigned get_fom_count(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * pmax, const uint8_t * p, unsigned foreground) const
     {
         unsigned fill_count = this->get_fill_count(Bpp, pmin, pmax, p);
 
@@ -860,7 +935,7 @@ public:
     }
 
     TODO(" derecursive it")
-    unsigned get_fom_count_fill(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground) const
+    unsigned get_fom_count_fill(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * pmax, const uint8_t * p, unsigned foreground) const
     {
 
         if  (p < pmin || p >= pmax) {
@@ -882,7 +957,7 @@ public:
 
 
     TODO(" derecursive it")
-    unsigned get_fom_count_mix(const uint8_t Bpp, const uint8_t * pmin, uint8_t * pmax, const uint8_t * p, unsigned foreground) const
+    unsigned get_fom_count_mix(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * pmax, const uint8_t * p, unsigned foreground) const
     {
         unsigned mix_count = this->get_mix_count(Bpp, pmin, pmax, p, foreground);
 
@@ -902,8 +977,8 @@ public:
     void compress(Stream & out) const
     {
         const uint8_t Bpp = nbbytes(this->original_bpp);
-        uint8_t * pmin = this->data_bitmap;
-        uint8_t * p = pmin;
+        const uint8_t * pmin = this->data_bitmap.get();
+        const uint8_t * p = pmin;
 
         // white with the right length : either 0xFF or 0xFFFF or 0xFFFFFF
         unsigned foreground = ~(-1 << (Bpp*8));
@@ -911,7 +986,7 @@ public:
         unsigned flags = 0;
         uint8_t masks[512];
         unsigned copy_count = 0;
-        uint8_t * pmax = 0;
+        const uint8_t * pmax = 0;
 
         uint32_t color = 0;
         uint32_t color2 = 0;
@@ -1061,7 +1136,7 @@ public:
         ssl.sha1_init(&sha1);
         uint16_t rowsize = (uint16_t)(this->cx * nbbytes(this->original_bpp));
         for (size_t y = 0; y < (size_t)this->cy; y++){
-            ssl.sha1_update(&sha1, this->data_bitmap + y * rowsize, rowsize);
+            ssl.sha1_update(&sha1, this->data_bitmap.get() + y * rowsize, rowsize);
         }
         ssl.sha1_final(&sha1, sig);
     }
@@ -1118,7 +1193,7 @@ public:
         uint8_t Bpp = nbbytes(this->original_bpp);
         unsigned crc = crc_seed;
         unsigned width = this->cx * Bpp;
-        const uint8_t *s8 = this->data_bitmap;
+        const uint8_t *s8 = this->data_bitmap.get();
         for (unsigned i = 0; i < this->cy; i++) {
             for (unsigned j = 0; j < width ; j++) {
                 crc = crc_table[(crc ^ *s8++) & 0xff] ^ (crc >> 8);
@@ -1129,12 +1204,38 @@ public:
     }
 
     ~Bitmap(){
-        free(this->data_bitmap);
+    }
+
+    Bitmap(uint8_t out_bpp, const Bitmap& bmp)
+    : original_bpp(out_bpp)
+    , cx(bmp.cx)
+    , cy(bmp.cy)
+    , line_size(bmp.line_size)
+    , bmp_size(bmp.bmp_size)
+    , data_bitmap()
+    {
+        if (out_bpp != bmp.original_bpp)
+        {
+            this->bmp_size = this->cx * this->cy * nbbytes(out_bpp);
+            this->data_bitmap.load(this->bmp_size);
+            bmp.convert_data_bitmap(out_bpp, this->data_bitmap.get());
+        }
+        else
+            data_bitmap = bmp.data_bitmap;
+
+        if (out_bpp == 8){
+            if (bmp.original_palette){
+                memcpy(&this->original_palette, bmp.original_palette, sizeof(BGRPalette));
+            }
+            else {
+                init_palette332(this->original_palette);
+            }
+        }
     }
 
     size_t convert_data_bitmap(uint8_t out_bpp, uint8_t * dest) const {
 
-        uint8_t * src = this->data_bitmap;
+        const uint8_t * src = this->data_bitmap.get();
         const uint8_t src_nbbytes = nbbytes(this->original_bpp);
         const uint8_t dest_nbbytes = nbbytes(out_bpp);
 

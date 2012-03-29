@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <png.h>
 
-static inline void dump_png24(FILE * fd, uint8_t * data,
+static inline void dump_png24(FILE * fd, const uint8_t * data,
                             const size_t width,
                             const size_t height,
                             const size_t rowsize)
@@ -42,9 +42,9 @@ static inline void dump_png24(FILE * fd, uint8_t * data,
     png_write_info(ppng, pinfo);
 
     // send image buffer to file, one pixel row at once
-    uint8_t * row = data;
+    const uint8_t * row = data;
     for (size_t k = 0 ; k < height ; ++k) {
-        png_write_row(ppng, row);
+        png_write_row(ppng, (unsigned char*)row);
         row += rowsize;
     }
     png_write_end(ppng, pinfo);

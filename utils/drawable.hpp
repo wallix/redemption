@@ -399,7 +399,7 @@ struct Drawable
 
         const uint8_t Bpp = ::nbbytes(bmp.original_bpp);
         uint8_t * target = this->first_pixel(trect);
-        uint8_t * source = bmp.data_bitmap + (bmp.cy - srcy - 1) * (bmp.bmp_size / bmp.cy) + srcx * Bpp;
+        const uint8_t * source = bmp.data() + (bmp.cy - srcy - 1) * (bmp.bmp_size / bmp.cy) + srcx * Bpp;
         int steptarget = (this->width - trect.cx) * 3;
         int stepsource = (bmp.bmp_size / bmp.cy) + trect.cx * Bpp;
 

@@ -49,150 +49,142 @@ struct A {
 BOOST_AUTO_TEST_CASE(CountdownPtrTestPtr)
 {
     std::ostringstream oss;
+
+    struct allocator {
+        unsigned i;
+        std::ostringstream& oss;
+        allocator(std::ostringstream& oss, unsigned i = 0)
+        : i(i)
+        , oss(oss)
+        {}
+
+        A* operator()()
+        { return new A(++i, oss); }
+    };
+
+    typedef CountdownPtr<A*> Countdown;
+    allocator alloc(oss);
+
+    BOOST_CHECK(1);
     {
-        struct allocator {
-            unsigned i;
-            std::ostringstream& oss;
-            allocator(std::ostringstream& oss, unsigned i = 0)
-            : i(i)
-            , oss(oss)
-            {}
-
-            A* operator()()
-            { return new A(++i, oss); }
-        };
-
-        allocator alloc(oss);
-
-        A* a1 = alloc();
-        A* a2 = alloc();
-        A* a3 = alloc();
-        A* a4 = alloc();
-        A* a5 = alloc();
-
-        BOOST_CHECK(1);
-        CountdownPtr<A*> countdown_data;
-
-        BOOST_CHECK(1);
-        countdown_data.insert(a1);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a1);
-        BOOST_CHECK_EQUAL(oss.str(), "1:~A"); oss.str("");
-        countdown_data.insert(a2);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.insert(a2);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.insert(a3);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.insert(a3);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a3);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.insert(a3);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a2);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.insert(a4);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a3);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.insert(a4);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a3);
-        BOOST_CHECK_EQUAL(oss.str(), "3:~A"); oss.str("");
-        countdown_data.insert(a4);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a4);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a2);
-        BOOST_CHECK_EQUAL(oss.str(), "2:~A"); oss.str("");
-        countdown_data.erase(a4);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a4);
-        BOOST_CHECK_EQUAL(oss.str(), "4:~A"); oss.str("");
-        countdown_data.erase(a5);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.insert(a5);
+        Countdown countdown_data(alloc());
         BOOST_CHECK_EQUAL(oss.str(), "");
     }
-    BOOST_CHECK_EQUAL(oss.str(), "5:~A"); oss.str("");
+    BOOST_CHECK_EQUAL(oss.str(), "1:~A"); oss.str("");
+
+    {
+        Countdown countdown_data(alloc());
+        {
+            Countdown countdown_data2(countdown_data);
+        }
+        BOOST_CHECK_EQUAL(oss.str(), "");
+    }
+    BOOST_CHECK_EQUAL(oss.str(), "2:~A"); oss.str("");
+
+    {
+        Countdown countdown_data(alloc());
+        {
+            Countdown countdown_data2(countdown_data);
+            Countdown countdown_data3(countdown_data);
+            Countdown countdown_data4(countdown_data3);
+        }
+        BOOST_CHECK_EQUAL(oss.str(), "");
+    }
+    BOOST_CHECK_EQUAL(oss.str(), "3:~A"); oss.str("");
+
+    {
+        Countdown countdown_data(alloc());
+        {
+            Countdown countdown_data2(countdown_data);
+            Countdown countdown_data3(countdown_data);
+            Countdown countdown_data4(countdown_data3);
+        }
+        BOOST_CHECK_EQUAL(oss.str(), "");
+    }
+    BOOST_CHECK_EQUAL(oss.str(), "4:~A"); oss.str("");
+
+
+    {
+        Countdown* countdown_data = new Countdown(alloc());
+        Countdown* countdown_data2 = new Countdown(*countdown_data);
+        delete countdown_data;
+        BOOST_CHECK_EQUAL(oss.str(), "");
+        delete countdown_data2;
+        BOOST_CHECK_EQUAL(oss.str(), "5:~A"); oss.str("");
+    }
 }
 
 BOOST_AUTO_TEST_CASE(CountdownPtrTestArray)
 {
     std::ostringstream oss;
+
+    struct allocator {
+        unsigned i;
+        std::ostringstream& oss;
+        allocator(std::ostringstream& oss, unsigned i = 0)
+        : i(i)
+        , oss(oss)
+        {}
+
+        A* operator()()
+        {
+            A* r = new A[2];
+            r[1].i = ++i;
+            r[1].oss = &oss;
+            r[0].i = ++i;
+            r[0].oss = &oss;
+            return r;
+        }
+    };
+
+    typedef CountdownPtr<A[]> Countdown;
+    allocator alloc(oss);
+
+    BOOST_CHECK(1);
     {
-        struct allocator {
-            unsigned i;
-            std::ostringstream& oss;
-            allocator(std::ostringstream& oss, unsigned i = 0)
-            : i(i)
-            , oss(oss)
-            {}
-
-            A* operator()()
-            {
-                A* r = new A[2];
-                r[1].i = ++i;
-                r[1].oss = &oss;
-                r[0].i = ++i;
-                r[0].oss = &oss;
-                return r;
-            }
-        };
-
-        allocator alloc(oss);
-
-        A* a1 = alloc();
-        A* a2 = alloc();
-        A* a3 = alloc();
-        A* a4 = alloc();
-        A* a5 = alloc();
-
-        BOOST_CHECK(1);
-        CountdownPtr<A[]> countdown_data;
-
-        BOOST_CHECK(1);
-        countdown_data.insert(a1);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a1);
-        BOOST_CHECK_EQUAL(oss.str(), "1:~A2:~A"); oss.str("");
-        countdown_data.insert(a2);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.insert(a2);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.insert(a3);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.insert(a3);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a3);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.insert(a3);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a2);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.insert(a4);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a3);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.insert(a4);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a3);
-        BOOST_CHECK_EQUAL(oss.str(), "5:~A6:~A"); oss.str("");
-        countdown_data.insert(a4);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a4);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a2);
-        BOOST_CHECK_EQUAL(oss.str(), "3:~A4:~A"); oss.str("");
-        countdown_data.erase(a4);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.erase(a4);
-        BOOST_CHECK_EQUAL(oss.str(), "7:~A8:~A"); oss.str("");
-        countdown_data.erase(a5);
-        BOOST_CHECK_EQUAL(oss.str(), "");
-        countdown_data.insert(a5);
+        Countdown countdown_data(alloc());
         BOOST_CHECK_EQUAL(oss.str(), "");
     }
-    BOOST_CHECK_EQUAL(oss.str(), "9:~A10:~A");
+    BOOST_CHECK_EQUAL(oss.str(), "1:~A2:~A"); oss.str("");
+
+    {
+        Countdown countdown_data(alloc());
+        {
+            Countdown countdown_data2(countdown_data);
+        }
+        BOOST_CHECK_EQUAL(oss.str(), "");
+    }
+    BOOST_CHECK_EQUAL(oss.str(), "3:~A4:~A"); oss.str("");
+
+    {
+        Countdown countdown_data(alloc());
+        {
+            Countdown countdown_data2(countdown_data);
+            Countdown countdown_data3(countdown_data);
+            Countdown countdown_data4(countdown_data3);
+        }
+        BOOST_CHECK_EQUAL(oss.str(), "");
+    }
+    BOOST_CHECK_EQUAL(oss.str(), "5:~A6:~A"); oss.str("");
+
+    {
+        Countdown countdown_data(alloc());
+        {
+            Countdown countdown_data2(countdown_data);
+            Countdown countdown_data3(countdown_data);
+            Countdown countdown_data4(countdown_data3);
+        }
+        BOOST_CHECK_EQUAL(oss.str(), "");
+    }
+    BOOST_CHECK_EQUAL(oss.str(), "7:~A8:~A"); oss.str("");
+
+
+    {
+        Countdown* countdown_data = new Countdown(alloc());
+        Countdown* countdown_data2 = new Countdown(*countdown_data);
+        delete countdown_data;
+        BOOST_CHECK_EQUAL(oss.str(), "");
+        delete countdown_data2;
+        BOOST_CHECK_EQUAL(oss.str(), "9:~A10:~A"); oss.str("");
+    }
 }

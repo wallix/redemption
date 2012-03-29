@@ -21,7 +21,7 @@
 #if !defined(__COUNTDOWN_PTR_HPP__)
 #define __COUNTDOWN_PTR_HPP__
 
-#include <map>
+#include <cstddef>
 
 template<typename _T>
 class CountdownPtr
@@ -54,50 +54,62 @@ private:
         }
     };
 
-    typedef std::map<pointer, std::size_t> map_type;
-    typedef typename map_type::iterator iterator;
-    typedef typename map_type::value_type value_type;
-
 private:
-    map_type _map;
+    std::size_t* count;
+    pointer ptr;
 
 public:
     CountdownPtr()
-    : _map()
-    { }
-
-    ~CountdownPtr()
+    : count(new std::size_t)
+    , ptr(0)
     {
-        for (iterator it = this->_map.begin(), end = this->_map.end(); it != end; ++it)
-            this->destroy(it);
+        *this->count = 0;
     }
 
-    void insert(pointer data)
+    CountdownPtr(pointer ptr)
+    : count(new std::size_t)
+    , ptr(ptr)
     {
-        iterator it = this->_map.find(data);
-        if (it == this->_map.end())
-            this->_map.insert(value_type(data, 1));
-        else
-            ++it->second;
+        *this->count = 0;
+        if (this->ptr)
+            ++*this->count;
     }
 
-    void erase(pointer data)
+    CountdownPtr(const CountdownPtr<_T>& other)
+    : count(other.count)
+    , ptr(other.ptr)
     {
-        iterator it = this->_map.find(data);
-        if (it != this->_map.end())
+        if (this->ptr)
+            ++*this->count;
+    }
+
+    CountdownPtr& operator=(const CountdownPtr<_T>& other)
+    {
+        if (other.count != this->count)
         {
-            if (!--it->second)
-            {
-                this->destroy(it);
-                this->_map.erase(it);
-            }
+            if (*this->count && !--*this->count)
+                this->destroy();
+            this->ptr = other.ptr;
+            this->count = other.count;
+            if (this->ptr)
+                ++*this->count;
         }
     }
 
-private:
-    void destroy(iterator& it)
+    ~CountdownPtr()
     {
-        default_delete<_T>::destroy(it->first);
+        if (*this->count && !--*this->count)
+            this->destroy();
+    }
+
+    pointer get()
+    { return this->ptr; }
+
+private:
+    void destroy()
+    {
+        default_delete<_T>::destroy(this->ptr);
+        delete this->count;
     }
 };
 

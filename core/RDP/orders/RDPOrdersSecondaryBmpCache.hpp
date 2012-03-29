@@ -701,7 +701,7 @@ class RDPBmpCache {
         // (including up to three bytes of padding, as necessary).
 
         for (size_t y = 0 ; y < this->bmp->cy; y++) {
-            stream.out_copy_bytes(this->bmp->data_bitmap + y * padded_line_size, padded_line_size);
+            stream.out_copy_bytes(this->bmp->data() + y * padded_line_size, padded_line_size);
         }
     }
 
@@ -925,7 +925,7 @@ class RDPBmpCache {
         //                              2.2.9.1.1.3.1.2.2).
 
         // for uncompressed bitmaps the format is quite simple
-        stream.out_copy_bytes(this->bmp->data_bitmap, this->bmp->bmp_size);
+        stream.out_copy_bytes(this->bmp->data(), this->bmp->bmp_size);
         stream.set_length(-12, length_ptr);
     }
 
