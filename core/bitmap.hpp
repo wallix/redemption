@@ -69,7 +69,7 @@ class Bitmap {
         CountdownData(std::size_t bmp_size)
         : _ptr(new uint8_t[bmp_size + sizeof(size_type)])
         {
-            ++this->count();
+            this->init(bmp_size);
         }
 
         CountdownData(const CountdownData& other)
@@ -102,7 +102,7 @@ class Bitmap {
         void load(std::size_t bmp_size)
         {
             this->_ptr = new uint8_t[bmp_size + sizeof(size_type)];
-            ++this->count();
+            this->init(bmp_size);
         }
 
         uint8_t* get()
@@ -120,13 +120,19 @@ class Bitmap {
 
         void remove_used()
         {
-            if (/* !this->count() ||*/!--this->count())
+            if (!--this->count())
                 this->destroy();
         }
 
         void destroy()
         {
             delete[] this->_ptr;
+        }
+
+        void init(std::size_t bmp_size)
+        {
+            std::fill_n<>(this->_ptr + sizeof(size_type), bmp_size, 0);
+            this->count() = 1;
         }
     };
 
@@ -1211,12 +1217,11 @@ public:
     , cx(bmp.cx)
     , cy(bmp.cy)
     , line_size(bmp.line_size)
-    , bmp_size(bmp.bmp_size)
+    , bmp_size(bmp.cx * nbbytes(out_bpp) * bmp.cy)
     , data_bitmap()
     {
         if (out_bpp != bmp.original_bpp)
         {
-            this->bmp_size = this->cx * this->cy * nbbytes(out_bpp);
             this->data_bitmap.load(this->bmp_size);
             bmp.convert_data_bitmap(out_bpp, this->data_bitmap.get());
         }

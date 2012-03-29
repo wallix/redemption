@@ -269,6 +269,27 @@ struct RDPUnserializer
                 --this->remaining_order_count;
             }
             break;
+            /*case 1002: //BPP
+            {
+                uint8_t bpp;
+                this->stream.skip_uint8(this->remaining_order_count - 1);
+                this->remaining_order_count = 0;
+                this->stream.in_copy_bytes(&bpp, 1);
+                this->bmp_cache.set_bpp(bpp);
+                this->consumer.set_bpp(bpp);
+            }
+            break;
+            case 1003: //SIZE
+            {
+                uint16_t width;
+                uint16_t height;
+                this->stream.skip_uint8((this->remaining_order_count - 1) * (sizeof(width) * 2));
+                this->remaining_order_count = 0;
+                this->stream.in_copy_bytes((uint8_t*)&width, sizeof(width));
+                this->stream.in_copy_bytes((uint8_t*)&height, sizeof(height));
+                this->consumer.resize(width, height);
+            }*/
+            break;
             default:
                 TODO("This is a naive way to replay native movies at the recording speed. As we recorded at 25 frames per second (snapshots), we inserted timestamp chunks more or less every 1/25 seconds. Naive idea is just to wait 1/25 second every time we get a timestamp frame when replaying. This is naive because sending data in between frames is not timeless. In the worst case it can often be larger than inter frame time. Hence we have to find a better way, probably based on timestamp difference between recording and replay.")
                 struct timespec wtime = { 0, 40000000 };
