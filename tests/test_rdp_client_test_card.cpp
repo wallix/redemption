@@ -162,9 +162,6 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
     BOOST_CHECK(true);
     test_card_mod mod(&back_event, front, info.width, info.height);
     BOOST_CHECK(true);
-    try {
-        uint32_t res = mod.draw_event();
-    } catch(const Error & e){
-        printf("Error catched id=%u\n", e.id);
-    }
+    BackEvent_t res = mod.draw_event();
+    BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, res);
 }

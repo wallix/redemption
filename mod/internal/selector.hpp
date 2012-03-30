@@ -3602,7 +3602,6 @@ struct selector_mod : public internal_mod {
     virtual void rdp_input_scancode(long param1, long param2, long flags, long time, Keymap2 * keymap)
     {
         if (flags & 0xC000){ // KEYUP
-            int scan_code = param1 % 128;
             switch (this->focus_item){
                 case FOCUS_ON_FILTER_DEVICE:
                 {
@@ -3676,25 +3675,28 @@ struct selector_mod : public internal_mod {
                 default:
                 break;
             }
-            switch (param1){
-                case 15:
-                    if (keymap->is_shift_pressed()){
-                        this->focus_item = (this->focus_item - 1 + MAX_FOCUS_ITEM) % MAX_FOCUS_ITEM;
-                    }
-                    else {
+            if (keymap->nb_kevent_available() > 0){
+                switch (keymap->top_kevent()){
+                    case Keymap2::KEVENT_TAB:
+                        keymap->get_kevent();
                         this->focus_item = (this->focus_item + 1) % MAX_FOCUS_ITEM;
-                    }
-                    this->event->set();
-                break;
-                case 28: // ENTER
-//                    LOG(LOG_INFO, "----------------------------------------> key up");
-                    if (this->click_focus == this->focus_item){
-                        this->click(this->focus_item);
-                        this->click_focus = NO_FOCUS;
-                    }
-                break;
-                default:
-                break;
+                    break;
+                    case Keymap2::KEVENT_BACKTAB:
+                        keymap->get_kevent();
+                        this->focus_item = (this->focus_item - 1 + MAX_FOCUS_ITEM) % MAX_FOCUS_ITEM;
+                        this->event->set();
+                    break;
+                    case Keymap2::KEVENT_ENTER:
+                        keymap->get_kevent();
+                        if (this->click_focus == this->focus_item){
+                            this->click(this->focus_item);
+                            this->click_focus = NO_FOCUS;
+                        }
+                        this->event->set();
+                    break;
+                    default:
+                    break;
+                }
             }
         }
         else { // KEY DOWN

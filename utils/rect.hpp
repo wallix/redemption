@@ -48,12 +48,18 @@ struct Rect {
         return (uint16_t)(this->y + this->cy);
     }
 
-    Rect(int left = 0, int top = 0, uint16_t width = 0, uint16_t height = 0)
+    Rect() : x(0), y(0), cx(0), cy(0) {
+    }
+
+    Rect(int left, int top, uint16_t width, uint16_t height)
         : x(left), y(top), cx(width), cy(height)
     {
         // fast detection of overflow, works for valid width/height range 0..4096
         if (((width-1)|(height-1)) & 0x8000){
-            this->x = this->y = this->cx = this->cy = 0;
+            this->x = 0;
+            this->y = 0;
+            this->cx = 0;
+            this->cy = 0;
         }
     }
 

@@ -1612,6 +1612,47 @@ struct Keymap2 {
                     else {
                         LOG(LOG_INFO, "pushing event extendedKeyCode=%x", extendedKeyCode);
                         switch (extendedKeyCode){
+                        /* LEFT ARROW */
+                        case 0xCB:
+                            this->push_kevent(KEVENT_LEFT_ARROW);
+                        break;
+                        /* UP ARROW */
+                        case 0xC8:
+                            this->push_kevent(KEVENT_UP_ARROW);
+                        break;
+                        /* RIGHT ARROW */
+                        case 0xCD:
+                            this->push_kevent(KEVENT_RIGHT_ARROW);
+                        break;
+                        /* DOWN ARROW */
+                        case 0xD0:
+                            this->push_kevent(KEVENT_DOWN_ARROW);
+                        break;
+                        /* HOME */
+                        case 0xC7:
+                            this->push_kevent(KEVENT_HOME);
+                        break;
+                        /* PGUP */
+                        case 0xC9:
+                            this->push_kevent(KEVENT_PGUP);
+                        break;
+                        /* PGDOWN */
+                        case 0xD1:
+                            this->push_kevent(KEVENT_PGDOWN);
+                        break;
+                        /* END */
+                        case 0xCF:
+                            this->push_kevent(KEVENT_END);
+                        break;
+                         /* TAB */
+                        case 0x0F:
+                            if (this->is_shift_pressed()){
+                                this->push_kevent(KEVENT_BACKTAB);
+                            }
+                            else {
+                                this->push_kevent(KEVENT_TAB);
+                            }
+                        break;
                          /* backspace */
                         case 0x0E:
                             this->push_kevent(KEVENT_BACKSPACE);
@@ -1705,7 +1746,6 @@ struct Keymap2 {
     {
         return this->buffer_kevent[this->ibuf_kevent?this->ibuf_kevent-1:SIZE_KEYBUF_KEVENT-1];
     }
-
 
     uint32_t nb_kevent_available() const
     {

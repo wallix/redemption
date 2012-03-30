@@ -73,25 +73,24 @@ struct widget_edit : public Widget {
     virtual void def_proc(const int msg, int const param1, int const param2, Keymap2 * keymap)
     {
         int n;
-        int ext;
-        int scan_code;
-
         if (msg == WM_KEYDOWN) {
-            scan_code = param1 % 128;
-            ext = param2 & 0x0100;
-            /* left or up arrow */
-            if ((scan_code == 75 || scan_code == 72)
-            && (ext || keymap->key_flags & 5)) // numlock = 0
+            if ((keymap->nb_kevent_available() > 0)
+            && (keymap->top_kevent() == Keymap2::KEVENT_LEFT_ARROW)
+            && (keymap->top_kevent() == Keymap2::KEVENT_UP_ARROW)
+            )
             {
+                keymap->get_kevent();
                 if (this->edit_pos > 0) {
                     this->edit_pos--;
                     this->refresh(this->rect.wh());
                 }
             }
-            /* right or down arrow */
-            else if ((scan_code == 77 || scan_code == 80)
-            && (ext || keymap->key_flags & 5)) // numlock = 0
+            if ((keymap->nb_kevent_available() > 0)
+            && (keymap->top_kevent() == Keymap2::KEVENT_RIGHT_ARROW)
+            && (keymap->top_kevent() == Keymap2::KEVENT_DOWN_ARROW)
+            )
             {
+                keymap->get_kevent();
                 if (this->edit_pos < (int)mbstowcs(0, this->buffer, 0)) {
                     this->edit_pos++;
                     this->refresh(this->rect.wh());
@@ -114,7 +113,6 @@ struct widget_edit : public Widget {
             else if ((keymap->nb_kevent_available() > 0)
             && (keymap->top_kevent() == Keymap2::KEVENT_DELETE)) {
                 keymap->get_kevent();
-//            scan_code == 83  && (ext || keymap->key_flags & 5)) // numlock = 0
                 n = mbstowcs(0, this->buffer, 0);
                 if (n > 0) {
                     if (this->edit_pos < n) {
@@ -124,7 +122,9 @@ struct widget_edit : public Widget {
                 }
             }
             /* end */
-            else if (scan_code == 79  && (ext || keymap->key_flags & 5)) {
+            else if ((keymap->nb_kevent_available() > 0)
+            && (keymap->top_kevent() == Keymap2::KEVENT_END)) {
+                keymap->get_kevent();
                 n = mbstowcs(0, this->buffer, 0);
                 if (this->edit_pos < n) {
                     this->edit_pos = n;
@@ -132,15 +132,19 @@ struct widget_edit : public Widget {
                 }
             }
             /* home */
-            else if ((scan_code == 71)  &&
-                     (ext || (keymap->key_flags & 5))) {
+            else if ((keymap->nb_kevent_available() > 0)
+            && (keymap->top_kevent() == Keymap2::KEVENT_HOME)) {
+                keymap->get_kevent();
                 if (this->edit_pos > 0) {
                     this->edit_pos = 0;
                     this->refresh(this->rect.wh());
                 }
             }
             else {
-                while (keymap->nb_char_available() > 0){
+                while ((keymap->nb_char_available() > 0)
+                && (keymap->nb_kevent_available() > 0)
+                && (keymap->top_kevent() == Keymap2::KEVENT_KEY))
+                {
                     wchar_t c = keymap->get_char();
                     int num_chars = mbstowcs(0, this->buffer, 0);
                     if ((this->edit_pos >= num_chars) || (this->edit_pos < 0)) {
