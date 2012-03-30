@@ -291,7 +291,6 @@ struct mod_rdp : public client_mod {
     ChannelList mod_channel_list;
 
     bool dev_redirection_enable;
-    wait_obj & event;
     int use_rdp5;
     int keylayout;
     struct RdpLicence lic_layer;
@@ -342,7 +341,6 @@ struct mod_rdp : public client_mod {
     Random * gen;
 
     mod_rdp(Transport * trans,
-            wait_obj & event,
             const char * target_user,
             const char * target_password,
             struct FrontAPI & front,
@@ -353,7 +351,6 @@ struct mod_rdp : public client_mod {
                 client_mod(front, info.width, info.height),
                     in_stream(65536),
                     trans(trans),
-                    event(event),
                     use_rdp5(1),
                     keylayout(info.keylayout),
                     lic_layer(hostname),

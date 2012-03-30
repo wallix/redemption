@@ -194,7 +194,7 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     // if send fails, the difference between expected and actual data is showed
     // and status is set to false (and will stay so) to allow tests to fail.
     // inside Transport, the difference
-    TestTransport gt("OUTPUT", 6, "input", 5);
+    TestTransport gt("Test1", "OUTPUT", 6, "input", 5);
     BOOST_CHECK_EQUAL(gt.status, true);
     char buf[128] = {};
     char * p = buf;

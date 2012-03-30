@@ -232,7 +232,7 @@ inline static void rdp_sec_generate_keys(CryptContext & encrypt, CryptContext & 
     sec_hash_16(encrypt.key, &key_block[32], client_random, server_random);
 
     if (rc4_key_size == 1) {
-        // LOG(LOG_DEBUG, "40-bit encryption enabled\n");
+        // LOG(LOG_DEBUG, "40-bit encryption enabled");
         sec_make_40bit(sign_key);
         sec_make_40bit(decrypt.key);
         sec_make_40bit(encrypt.key);
@@ -240,7 +240,7 @@ inline static void rdp_sec_generate_keys(CryptContext & encrypt, CryptContext & 
         encrypt.rc4_key_len = 8;
     }
     else {
-        //LOG(LOG_DEBUG, "rc_4_key_size == %d, 128-bit encryption enabled\n", rc4_key_size);
+        //LOG(LOG_DEBUG, "rc_4_key_size == %d, 128-bit encryption enabled", rc4_key_size);
         decrypt.rc4_key_len = 16;
         encrypt.rc4_key_len = 16;
     }
@@ -270,14 +270,14 @@ static inline void recv_sec_tag_pubkey(Stream & stream, uint32_t & server_public
     /* Parse a public key structure */
     uint32_t magic = stream.in_uint32_le();
     if (magic != SEC_RSA_MAGIC) {
-        LOG(LOG_WARNING, "RSA magic 0x%x\n", magic);
+        LOG(LOG_WARNING, "RSA magic 0x%x", magic);
         throw Error(ERR_SEC_PARSE_PUB_KEY_MAGIC_NOT_OK);
     }
     server_public_key_len = stream.in_uint32_le() - SEC_PADDING_SIZE;
 
     if ((server_public_key_len < SEC_MODULUS_SIZE)
     ||  (server_public_key_len > SEC_MAX_MODULUS_SIZE)) {
-        LOG(LOG_WARNING, "Bad server public key size (%u bits)\n", server_public_key_len * 8);
+        LOG(LOG_WARNING, "Bad server public key size (%u bits)", server_public_key_len * 8);
         throw Error(ERR_SEC_PARSE_PUB_KEY_MODUL_NOT_OK);
     }
     stream.skip_uint8(8); /* modulus_bits, unknown */
@@ -288,7 +288,7 @@ static inline void recv_sec_tag_pubkey(Stream & stream, uint32_t & server_public
     if (stream.p > stream.end){
         throw Error(ERR_SEC_PARSE_PUB_KEY_ERROR_CHECKING_STREAM);
     }
-    LOG(LOG_DEBUG, "Got Public key, RDP4-style\n");
+    LOG(LOG_DEBUG, "Got Public key, RDP4-style");
 }
 
 
@@ -300,7 +300,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
                                               int & crypt_level,
                                               Random * gen)
 {
-    LOG(LOG_INFO, "SC_SECURITY\n");
+    LOG(LOG_INFO, "SC_SECURITY");
 
     uint8_t server_random[SEC_RANDOM_SIZE];
     uint8_t client_random[SEC_RANDOM_SIZE];
@@ -340,7 +340,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
 
     if (random_len != SEC_RANDOM_SIZE) {
         LOG(LOG_ERR,
-            "parse_crypt_info_error: random len %d, expected %d\n",
+            "parse_crypt_info_error: random len %d, expected %d",
             random_len, SEC_RANDOM_SIZE);
         throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RANDOM_LEN);
     }
@@ -360,10 +360,10 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
     }
 
     uint32_t flags = cr_stream.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
-    LOG(LOG_INFO, "crypt flags %x\n", flags);
+    LOG(LOG_INFO, "crypt flags %x", flags);
     if (flags & 1) {
 
-        LOG(LOG_DEBUG, "We're going for the RDP4-style encryption\n");
+        LOG(LOG_DEBUG, "We're going for the RDP4-style encryption");
         cr_stream.skip_uint8(8); /* unknown */
 
         while (cr_stream.p < end) {
@@ -374,17 +374,17 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
 
             switch (tag) {
             case SEC_TAG_PUBKEY:
-                LOG(LOG_DEBUG, "ReceivingPublic key, RDP4-style\n");
+                LOG(LOG_DEBUG, "ReceivingPublic key, RDP4-style");
                 recv_sec_tag_pubkey(cr_stream, server_public_key_len, modulus, exponent);
                 LOG(LOG_DEBUG, "Got Public key, RDP4-style");
             break;
             case SEC_TAG_KEYSIG:
-                LOG(LOG_DEBUG, "Receiving key sig RDP4-style\n");
+                LOG(LOG_DEBUG, "Receiving key sig RDP4-style");
                 recv_sec_tag_sig(cr_stream, length);
-                LOG(LOG_DEBUG, "Got key sig RDP4-style\n");
+                LOG(LOG_DEBUG, "Got key sig RDP4-style");
                 break;
             default:
-                LOG(LOG_DEBUG, "unimplemented: crypt tag 0x%x\n", tag);
+                LOG(LOG_DEBUG, "unimplemented: crypt tag 0x%x", tag);
                 throw Error(ERR_SEC_PARSE_CRYPT_INFO_UNIMPLEMENTED_TAG);
                 break;
             }
@@ -392,25 +392,25 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         }
     }
     else {
-        LOG(LOG_DEBUG, "We're going for the RDP5-style encryption\n");
+        LOG(LOG_DEBUG, "We're going for the RDP5-style encryption");
         uint32_t certcount = cr_stream.in_uint32_le();
-        LOG(LOG_DEBUG, "Certcount = %u\n", certcount);
+        LOG(LOG_DEBUG, "Certcount = %u", certcount);
 
         if (certcount < 2){
-            LOG(LOG_DEBUG, "Server didn't send enough X509 certificates\n");
+            LOG(LOG_DEBUG, "Server didn't send enough X509 certificates");
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_CERT_NOK);
         }
         for (; certcount > 2; certcount--){
             /* ignore all the certificates between the root and the signing CA */
-            LOG(LOG_WARNING, " Ignored certs left: %d\n", certcount);
+            LOG(LOG_WARNING, " Ignored certs left: %d", certcount);
             uint32_t ignorelen = cr_stream.in_uint32_le();
-            LOG(LOG_WARNING, "Ignored Certificate length is %d\n", ignorelen);
+            LOG(LOG_WARNING, "Ignored Certificate length is %d", ignorelen);
             SSL_CERT *ignorecert = ssl_cert_read(cr_stream.p, ignorelen);
             cr_stream.skip_uint8(ignorelen);
             if (ignorecert == NULL){
                 LOG(LOG_WARNING,
                     "got a bad cert: this will probably screw up"
-                    " the rest of the communication\n");
+                    " the rest of the communication");
             }
             LOG(LOG_WARNING, "cert #%d (ignored)", certcount);
         }
@@ -426,22 +426,22 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
 
         /* Loading CA_Certificate from server*/
         uint32_t cacert_len = cr_stream.in_uint32_le();
-        LOG(LOG_DEBUG, "CA Certificate length is %d\n", cacert_len);
+        LOG(LOG_DEBUG, "CA Certificate length is %d", cacert_len);
         SSL_CERT *cacert = ssl_cert_read(cr_stream.p, cacert_len);
         cr_stream.skip_uint8(cacert_len);
         if (NULL == cacert){
-            LOG(LOG_DEBUG, "Couldn't load CA Certificate from server\n");
+            LOG(LOG_DEBUG, "Couldn't load CA Certificate from server");
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NULL);
         }
 
         /* Loading Certificate from server*/
         uint32_t cert_len = cr_stream.in_uint32_le();
-        LOG(LOG_DEBUG, "Certificate length is %d\n", cert_len);
+        LOG(LOG_DEBUG, "Certificate length is %d", cert_len);
         SSL_CERT *server_cert = ssl_cert_read(cr_stream.p, cert_len);
         cr_stream.skip_uint8(cert_len);
         if (NULL == server_cert){
             ssl_cert_free(cacert);
-            LOG(LOG_DEBUG, "Couldn't load Certificate from server\n");
+            LOG(LOG_DEBUG, "Couldn't load Certificate from server");
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_LOADED);
         }
 
@@ -449,26 +449,26 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         if (!ssl_certs_ok(server_cert, cacert)){
             ssl_cert_free(server_cert);
             ssl_cert_free(cacert);
-            LOG(LOG_DEBUG, "Security error CA Certificate invalid\n");
+            LOG(LOG_DEBUG, "Security error CA Certificate invalid");
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_MATCH);
         }
         ssl_cert_free(cacert);
         cr_stream.skip_uint8(16); /* Padding */
         SSL_RKEY *server_public_key = ssl_cert_to_rkey(server_cert, server_public_key_len);
-        LOG(LOG_DEBUG, "Server public key length=%u\n", (unsigned)server_public_key_len);
+        LOG(LOG_DEBUG, "Server public key length=%u", (unsigned)server_public_key_len);
 
         if (NULL == server_public_key){
-            LOG(LOG_DEBUG, "Didn't parse X509 correctly\n");
+            LOG(LOG_DEBUG, "Didn't parse X509 correctly");
             ssl_cert_free(server_cert);
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_X509_NOT_PARSED);
 
         }
         ssl_cert_free(server_cert);
 
-        LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d\n", server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
+        LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d", server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
         if ((server_public_key_len < SEC_MODULUS_SIZE) ||
             (server_public_key_len > SEC_MAX_MODULUS_SIZE)){
-            LOG(LOG_DEBUG, "Bad server public key size (%u bits)\n",
+            LOG(LOG_DEBUG, "Bad server public key size (%u bits)",
                 server_public_key_len * 8);
             ssl.rkey_free(server_public_key);
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_MOD_SIZE_NOT_OK);

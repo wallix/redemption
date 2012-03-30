@@ -726,7 +726,7 @@ static inline void recv_security_exchange_PDU(
 
 static inline void send_security_exchange_PDU(Transport * trans, int userid, uint32_t server_public_key_len, uint8_t * client_crypt_random)
 {
-    LOG(LOG_INFO, "Iso Layer : setting encryption\n");
+    LOG(LOG_INFO, "Iso Layer : setting encryption");
     /* Send the client random to the server */
     //      if (this->encryption)
     Stream sdrq_stream(32768);

@@ -75,7 +75,7 @@
 
 static inline void parse_mcs_data_cs_security(Stream & stream)
 {
-    LOG(LOG_INFO, "CS_SECURITY\n");
+    LOG(LOG_INFO, "CS_SECURITY");
 }
 
 static inline void mod_rdp_out_cs_sec(Stream & stream)

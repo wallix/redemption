@@ -14,14 +14,11 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+   Copyright (C) Wallix 2012
+   Author(s): Christophe Grosjean
 
    Transport layer abstraction
-
 */
-
 
 #if !defined(__TRANSPORT_HPP__)
 #define __TRANSPORT_HPP__
@@ -222,54 +219,32 @@ class CheckTransport : public Transport {
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
-        if (this->current + len > this->len){
-            size_t available_len = this->len - this->current;
-            if (0 != memcmp(buffer, (const char *)(&this->data[this->current]),
-                                            available_len)){
-                // data differs
-                this->status = false;
-                // find where
-                uint32_t differs = 0;
-                for (size_t i = 0; i < available_len ; i++){
-                    if (buffer[i] != ((const char *)(&this->data[this->current]))[i]){
-                        differs = i;
-                        break;
-                    }
-                }
-                LOG(LOG_INFO, "=============== Common Part =======");
-                hexdump(buffer, differs);
-                LOG(LOG_INFO, "=============== Expected ==========");
-                hexdump((const char *)(&this->data[this->current]) + differs, available_len - differs);
-                LOG(LOG_INFO, "=============== Got ===============");
-                hexdump(buffer+differs, available_len - differs);
-            }
-            this->current += available_len;
-            LOG(LOG_INFO, "Check transport has no more data");
-            TODO("Maybe we should expose it as a SOCKET CLOSE event ?");
-            this->status = false;
-            throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
-        }
-        if (0 != memcmp(buffer, (const char *)(&this->data[current]), len)){
+        size_t available_len = (this->current + len > this->len)?this->len - this->current:len;
+        if (0 != memcmp(buffer, (const char *)(&this->data[this->current]), available_len)){
             // data differs
             this->status = false;
             // find where
             uint32_t differs = 0;
-            for (size_t i = 0; i < len ; i++){
+            for (size_t i = 0; i < available_len ; i++){
                 if (buffer[i] != ((const char *)(&this->data[this->current]))[i]){
                     differs = i;
                     break;
                 }
             }
-            // dump common part and different part
-            LOG(LOG_INFO, "Difference found in Check Transport");
             LOG(LOG_INFO, "=============== Common Part =======");
             hexdump(buffer, differs);
             LOG(LOG_INFO, "=============== Expected ==========");
-            hexdump((const char *)(&this->data[this->current]) + differs, len - differs);
+            hexdump((const char *)(&this->data[this->current]) + differs, available_len - differs);
             LOG(LOG_INFO, "=============== Got ===============");
-            hexdump(buffer+differs, len - differs);
+            hexdump(buffer+differs, available_len - differs);
         }
-        current += len;
+        this->current += available_len;
+        if (available_len != len){
+            LOG(LOG_INFO, "Check transport out of reference data");
+            TODO("Maybe we should expose it as a SOCKET CLOSE event ?");
+            this->status = false;
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+        }
     }
 };
 
@@ -279,24 +254,41 @@ class TestTransport : public Transport {
     CheckTransport in;
     public:
     bool status;
+    char name[256];
+    uint32_t verbose;
 
-    TestTransport(const char * outdata, size_t outlen, const char * indata, size_t inlen)
-        : out(outdata, outlen), in(indata, inlen), status(true)
+    TestTransport(const char * name, const char * outdata, size_t outlen, const char * indata, size_t inlen, uint32_t verbose = 0)
+        : out(outdata, outlen), in(indata, inlen), status(true), verbose(verbose)
     {
+        strncpy(this->name, name, 254);
+        this->name[255]=0;
     }
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        this->out.recv(pbuffer, len);
+        if (this->status){
+            this->out.recv(pbuffer, len);
+            if (this->verbose & 0x100){
+                LOG(LOG_INFO, "Recv done on %s (Test Data)", this->name);
+                hexdump_c(*pbuffer - len, len);
+                LOG(LOG_INFO, "Dump done on %s (Test Data)", this->name);
+            }
+        }
     }
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
-        this->in.send(buffer, len);
-        this->status = in.status;
+        if (this->status){
+            if (this->verbose & 0x100){
+                LOG(LOG_INFO, "Test Transport %s (Test Data) sending %u bytes", this->name, len);
+                hexdump_c(buffer, len);
+                LOG(LOG_INFO, "Dump done %s (Test Data) sending %u bytes", this->name, len);
+            }
+            this->in.send(buffer, len);
+            this->status = this->in.status;
+        }
     }
 };
-
 
 class OutFileTransport : public Transport {
 

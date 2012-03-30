@@ -62,7 +62,7 @@
 
 static inline void parse_mcs_data_sc_net(Stream & stream, const ChannelList & front_channel_list, ChannelList & mod_channel_list)
 {
-    LOG(LOG_INFO, "SC_NET\n");
+    LOG(LOG_INFO, "SC_NET");
 
     stream.in_uint16_le(); /* base_channel */
     size_t num_channels = stream.in_uint16_le();

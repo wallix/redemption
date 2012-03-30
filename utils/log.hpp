@@ -63,16 +63,16 @@ typedef struct _code {
 
 static inline void LOGSYSLOG__REDEMPTION__INTERNAL(int priority, const char *format, ...)
 {
-    static CODE prioritynames[] =
+    const CODE prioritynames[] =
     {
+        { "EMERG", LOG_EMERG },
         { "ALERT", LOG_ALERT },
         { "CRIT", LOG_CRIT },
-        { "DEBUG", LOG_DEBUG },
-        { "EMERG", LOG_EMERG },
         { "ERR", LOG_ERR },
-        { "INFO", LOG_INFO },
-        { "NOTICE", LOG_NOTICE },
         { "WARNING", LOG_WARNING },
+        { "NOTICE", LOG_NOTICE },
+        { "INFO", LOG_INFO },
+        { "DEBUG", LOG_DEBUG },
         { NULL, -1 }
     };
     char message[8192];
@@ -85,16 +85,16 @@ static inline void LOGSYSLOG__REDEMPTION__INTERNAL(int priority, const char *for
 
 static inline void LOGPRINT__REDEMPTION__INTERNAL(int priority, const char *format, ...)
 {
-    static CODE prioritynames[] =
+    const CODE prioritynames[] =
     {
+        { "EMERG", LOG_EMERG },
         { "ALERT", LOG_ALERT },
         { "CRIT", LOG_CRIT },
-        { "DEBUG", LOG_DEBUG },
-        { "EMERG", LOG_EMERG },
         { "ERR", LOG_ERR },
-        { "INFO", LOG_INFO },
-        { "NOTICE", LOG_NOTICE },
         { "WARNING", LOG_WARNING },
+        { "NOTICE", LOG_NOTICE },
+        { "INFO", LOG_INFO },
+        { "DEBUG", LOG_DEBUG },
         { NULL, -1 }
     };
     char message[8192];

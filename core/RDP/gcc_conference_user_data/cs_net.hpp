@@ -103,7 +103,7 @@
 // creating the server mcs data
 static inline void parse_mcs_data_cs_net(Stream & stream, const ClientInfo * client_info, ChannelList & channel_list)
 {
-    LOG(LOG_INFO, "CS_NET\n");
+    LOG(LOG_INFO, "CS_NET");
 //    // this is an option set in rdpproxy.ini
 //    // to disable all channels (no clipboard, no device redirection, etc)
 //    if (client_info->channel_code != 1) { /* are channels on? */

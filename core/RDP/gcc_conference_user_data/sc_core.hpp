@@ -58,12 +58,11 @@ TODO("Create SCCoreIn and SCCoreOut classes (on the model of SecIn/SecOut for Se
 
 static inline void parse_mcs_data_sc_core(Stream & stream, int & use_rdp5)
 {
-    LOG(LOG_INFO, "SC_CORE\n");
+    LOG(LOG_INFO, "SC_CORE");
     uint32_t rdp_version = stream.in_uint32_le();
     LOG(LOG_DEBUG, "Remote RDP server supports version %s (was %s)",
                 ((rdp_version==0x0080001)?"RDP4":"RDP5"),
                 ((use_rdp5)?"RDP5":"RDP4"));
-    LOG(LOG_INFO, "So WTF?\n");
     if (0x0080001 == rdp_version){ // can't use rdp5
         use_rdp5 = 0;
         TODO(" why caring of server_depth here ? Quite strange")
@@ -79,12 +78,12 @@ static inline void parse_mcs_data_sc_core(Stream & stream, int & use_rdp5)
 
 static inline void out_mcs_data_sc_core(Stream & stream, const bool use_rdp5)
 {
-    LOG(LOG_INFO, "SC_CORE\n");
+    LOG(LOG_INFO, "SC_CORE");
     // length, including tag and length fields
     stream.out_uint16_le(SC_CORE);
     stream.out_uint16_le(12); /* len */
     const uint32_t rdp_version = use_rdp5?0x0080004:0x0080001;
-    LOG(LOG_DEBUG, "RDP proxy server supports version %s (was %s)\n",
+    LOG(LOG_DEBUG, "RDP proxy server supports version %s (was %s)",
             (rdp_version==0x0080001)?"RDP4":"RDP5",
             ((use_rdp5)?"RDP5":"RDP4"));
     stream.out_uint32_le(rdp_version);

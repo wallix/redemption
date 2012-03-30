@@ -898,7 +898,6 @@ struct Session {
                     const ClientInfo & info = this->front->client_info;
 
                     this->mod = new mod_rdp(t,
-                                        *this->back_event,
                                         this->context->get(STRAUTHID_TARGET_USER),
                                         this->context->get(STRAUTHID_TARGET_PASSWORD),
                                         *this->front,
