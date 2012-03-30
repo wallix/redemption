@@ -509,9 +509,7 @@ class SocketTransport : public Transport {
 
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Recv done on %s (%u)", this->name, this->sck);
-//            printf("Recv done on %s (%u)\n", this->name, this->sck);
-            this->hexdump_c(start, total_len);
-//            printf("Dump done on %s (%u)\n", this->name, this->sck);
+            hexdump_c(start, total_len);
             LOG(LOG_INFO, "Dump done on %s (%u)", this->name, this->sck);
         }
 
@@ -520,69 +518,6 @@ class SocketTransport : public Transport {
         last_quantum_received += total_len;
     }
 
-    void hexdump(const char * data, size_t size){
-        char buffer[2048];
-        for (size_t j = 0 ; j < size ; j += 16){
-            char * line = buffer;
-            line += sprintf(line, "%.4x ", (unsigned)j);
-            size_t i = 0;
-            for (i = 0; i < 16; i++){
-                if (j+i >= size){ break; }
-                line += sprintf(line, "%.2x ", (unsigned char)data[j+i]);
-            }
-            if (i < 16){
-                line += sprintf(line, "%*c", (unsigned)((16-i)*3), ' ');
-            }
-            for (i = 0; i < 16; i++){
-                if (j+i >= size){ break; }
-                unsigned char tmp = (unsigned)(data[j+i]);
-                if ((tmp < ' ') || (tmp > '~')){
-                    tmp = '.';
-                }
-                line += sprintf(line, "%c", tmp);
-            }
-
-            if (line != buffer){
-                line[0] = 0;
-                LOG(LOG_INFO, "%s", buffer);
-//                printf("%s", buffer);
-                buffer[0]=0;
-            }
-        }
-    }
-
-    void hexdump_c(const char * data, size_t size){
-        char buffer[2048];
-        for (size_t j = 0 ; j < size ; j += 16){
-            char * line = buffer;
-            line += sprintf(line, "/* %.4x */ \"", (unsigned)j);
-            size_t i = 0;
-            for (i = 0; i < 16; i++){
-                if (j+i >= size){ break; }
-                line += sprintf(line, "\\x%.2x", (unsigned char)data[j+i]);
-            }
-            line += sprintf(line, "\"");
-            if (i < 16){
-                line += sprintf(line, "%*c", (unsigned)((16-i)*4), ' ');
-            }
-            line += sprintf(line, " //");
-            for (i = 0; i < 16; i++){
-                if (j+i >= size){ break; }
-                unsigned char tmp = (unsigned)(data[j+i]);
-                if ((tmp < ' ') || (tmp > '~')){
-                    tmp = '.';
-                }
-                line += sprintf(line, "%c", tmp);
-            }
-
-            if (line != buffer){
-                line[0] = 0;
-                LOG(LOG_INFO, "%s", buffer);
-//                printf("%s\n", buffer);
-                buffer[0]=0;
-            }
-        }
-    }
 
     using Transport::send;
 
@@ -590,9 +525,7 @@ class SocketTransport : public Transport {
     {
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Socket %s (%u) sending %u bytes", this->name, this->sck, len);
-//            printf("Socket %s (%u) sending %u bytes\n", this->name, this->sck, len);
-            this->hexdump_c(buffer, len);
-//            printf("Dump done %s (%u) sending %u bytes\n", this->name, this->sck, len);
+            hexdump_c(buffer, len);
             LOG(LOG_INFO, "Dump done %s (%u) sending %u bytes", this->name, this->sck, len);
         }
         if (this->sck_closed) {

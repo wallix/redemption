@@ -105,7 +105,8 @@ static inline void LOGPRINT__REDEMPTION__INTERNAL(int priority, const char *form
     printf("%s (%d/%d) -- %s\n", prioritynames[priority].c_name, getpid(), getpid(), message);
 };
 
-static inline void hexdump(const char * data, size_t size){
+static inline void hexdump(const char * data, size_t size)
+{
     char buffer[2048];
     for (size_t j = 0 ; j < size ; j += 16){
         char * line = buffer;
@@ -134,5 +135,39 @@ static inline void hexdump(const char * data, size_t size){
         }
     }
 }
+
+static inline void hexdump_c(const char * data, size_t size)
+{
+    char buffer[2048];
+    for (size_t j = 0 ; j < size ; j += 16){
+        char * line = buffer;
+        line += sprintf(line, "/* %.4x */ \"", (unsigned)j);
+        size_t i = 0;
+        for (i = 0; i < 16; i++){
+            if (j+i >= size){ break; }
+            line += sprintf(line, "\\x%.2x", (unsigned char)data[j+i]);
+        }
+        line += sprintf(line, "\"");
+        if (i < 16){
+            line += sprintf(line, "%*c", (unsigned)((16-i)*4), ' ');
+        }
+        line += sprintf(line, " //");
+        for (i = 0; i < 16; i++){
+            if (j+i >= size){ break; }
+            unsigned char tmp = (unsigned)(data[j+i]);
+            if ((tmp < ' ') || (tmp > '~')){
+                tmp = '.';
+            }
+            line += sprintf(line, "%c", tmp);
+        }
+
+        if (line != buffer){
+            line[0] = 0;
+            LOG(LOG_INFO, "%s", buffer);
+            buffer[0]=0;
+        }
+    }
+}
+
 
 #endif
