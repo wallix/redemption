@@ -176,7 +176,7 @@ class GeneratorTransport : public Transport {
             *pbuffer += available_len;
             this->current += available_len;
             LOG(LOG_INFO, "Generator transport has no more data");
-            throw Error(ERR_TRANSPORT_GENERATOR_NO_MORE_DATA, 0);
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
         memcpy(*pbuffer, (const char *)(&this->data[current]), len);
         *pbuffer += len;
@@ -188,6 +188,115 @@ class GeneratorTransport : public Transport {
         // send perform like a /dev/null and does nothing in generator transport
     }
 };
+
+class CheckTransport : public Transport {
+
+    public:
+    bool status;
+    size_t current;
+    char * data;
+    size_t len;
+
+
+    CheckTransport(const char * data, size_t len)
+        : Transport(), status(true), current(0), data(0), len(len)
+    {
+        this->data = (char *)malloc(len);
+        memcpy(this->data, data, len);
+    }
+
+    void reset(const char * data, size_t len)
+    {
+        delete this->data;
+        current = 0;
+        this->len = len;
+        this->data = (char *)malloc(len);
+        memcpy(this->data, data, len);
+    }
+
+    using Transport::recv;
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+        // CheckTransport does never receive anything
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_RECV);
+    }
+
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
+        if (this->current + len > this->len){
+            size_t available_len = this->len - this->current;
+            if (0 != memcmp(buffer, (const char *)(&this->data[this->current]),
+                                            available_len)){
+                // data differs
+                this->status = false;
+                // find where
+                uint32_t differs = 0;
+                for (size_t i = 0; i < available_len ; i++){
+                    if (buffer[i] != ((const char *)(&this->data[this->current]))[i]){
+                        differs = i;
+                        break;
+                    }
+                }
+                LOG(LOG_INFO, "=============== Common Part =======");
+                hexdump(buffer, differs);
+                LOG(LOG_INFO, "=============== Expected ==========");
+                hexdump((const char *)(&this->data[this->current]) + differs, available_len - differs);
+                LOG(LOG_INFO, "=============== Got ===============");
+                hexdump(buffer+differs, available_len - differs);
+            }
+            this->current += available_len;
+            LOG(LOG_INFO, "Check transport has no more data");
+            TODO("Maybe we should expose it as a SOCKET CLOSE event ?");
+            this->status = false;
+            throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+        }
+        if (0 != memcmp(buffer, (const char *)(&this->data[current]), len)){
+            // data differs
+            this->status = false;
+            // find where
+            uint32_t differs = 0;
+            for (size_t i = 0; i < len ; i++){
+                if (buffer[i] != ((const char *)(&this->data[this->current]))[i]){
+                    differs = i;
+                    break;
+                }
+            }
+            // dump common part and different part
+            LOG(LOG_INFO, "Difference found in Check Transport");
+            LOG(LOG_INFO, "=============== Common Part =======");
+            hexdump(buffer, differs);
+            LOG(LOG_INFO, "=============== Expected ==========");
+            hexdump((const char *)(&this->data[this->current]) + differs, len - differs);
+            LOG(LOG_INFO, "=============== Got ===============");
+            hexdump(buffer+differs, len - differs);
+        }
+        current += len;
+    }
+};
+
+class TestTransport : public Transport {
+
+    GeneratorTransport out;
+    CheckTransport in;
+    public:
+    bool status;
+
+    TestTransport(const char * outdata, size_t outlen, const char * indata, size_t inlen)
+        : out(outdata, outlen), in(indata, inlen), status(true)
+    {
+    }
+
+    using Transport::recv;
+    virtual void recv(char ** pbuffer, size_t len) throw (Error) {
+        this->out.recv(pbuffer, len);
+    }
+
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error) {
+        this->in.send(buffer, len);
+        this->status = in.status;
+    }
+};
+
 
 class OutFileTransport : public Transport {
 
@@ -202,7 +311,7 @@ class OutFileTransport : public Transport {
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         LOG(LOG_INFO, "OutFileTransport used for recv");
-        throw Error(ERR_TRANSPORT_OUTFILE_TRANSPORT_USED_FOR_RECV, 0);
+        throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_RECV, 0);
     }
 
     using Transport::send;
@@ -267,7 +376,7 @@ class InFileTransport : public Transport {
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         LOG(LOG_INFO, "InFileTransport used for writing");
-        throw Error(ERR_TRANSPORT_OUTFILE_TRANSPORT_USED_FOR_SEND, 0);
+        throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_SEND, 0);
     }
 
 };

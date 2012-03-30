@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
         BOOST_CHECK_EQUAL(true, false);
     } catch (Error e) {
         BOOST_CHECK_EQUAL(p-buffer, 0);
-        BOOST_CHECK_EQUAL(e.id, (int)ERR_TRANSPORT_GENERATOR_NO_MORE_DATA);
+        BOOST_CHECK_EQUAL(e.id, (int)ERR_TRANSPORT_NO_MORE_DATA);
     };
 
 }
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport2)
     } catch (Error e) {
         BOOST_CHECK_EQUAL(p-buffer, 12);
         BOOST_CHECK_EQUAL(0, strncmp(buffer, " we provide!", 12));
-        BOOST_CHECK_EQUAL(e.id, (int)ERR_TRANSPORT_GENERATOR_NO_MORE_DATA);
+        BOOST_CHECK_EQUAL(e.id, (int)ERR_TRANSPORT_NO_MORE_DATA);
     };
 }
 
@@ -143,4 +143,69 @@ BOOST_AUTO_TEST_CASE(TestFileTransport)
         ::close(fd);
         ::unlink(tmpname);
     }
+}
+
+BOOST_AUTO_TEST_CASE(TestCheckTransport)
+{
+    // TestTransport is bidirectional
+    // We provide both an output and an input source
+    // when using a test Transport we read what we provide in input source
+    // and we check that what we write to output is identical to output source
+    // if send fails, the difference between expected and actual data is showed
+    // and status is set to false (and will stay so) to allow tests to fail.
+    // inside Transport, the difference
+    CheckTransport gt("input", 5);
+    BOOST_CHECK_EQUAL(gt.status, true);
+    gt.send("in", 2);
+    BOOST_CHECK_EQUAL(gt.status, true);
+    gt.send("pot", 3);
+    BOOST_CHECK_EQUAL(gt.status, false);
+}
+
+
+BOOST_AUTO_TEST_CASE(TestCheckTransportInputOverflow)
+{
+    // TestTransport is bidirectional
+    // We provide both an output and an input source
+    // when using a test Transport we read what we provide in input source
+    // and we check that what we write to output is identical to output source
+    // if send fails, the difference between expected and actual data is showed
+    // and status is set to false (and will stay so) to allow tests to fail.
+    // inside Transport, the difference
+    CheckTransport gt("0123456789ABCDEF", 16);
+    BOOST_CHECK_EQUAL(gt.status, true);
+    try {
+        gt.send("0123456789ABCDEFGHI", 19);
+    } catch (const Error & e)
+    {
+        BOOST_CHECK_EQUAL((uint32_t)e.id, (uint32_t)ERR_TRANSPORT_NO_MORE_DATA);
+    };
+    BOOST_CHECK_EQUAL(gt.status, false);
+}
+
+
+
+BOOST_AUTO_TEST_CASE(TestTestTransport)
+{
+    // TestTransport is bidirectional
+    // We provide both an output and an input source
+    // when using a test Transport we read what we provide in input source
+    // and we check that what we write to output is identical to output source
+    // if send fails, the difference between expected and actual data is showed
+    // and status is set to false (and will stay so) to allow tests to fail.
+    // inside Transport, the difference
+    TestTransport gt("OUTPUT", 6, "input", 5);
+    BOOST_CHECK_EQUAL(gt.status, true);
+    char buf[128] = {};
+    char * p = buf;
+    uint32_t sz = 3;
+    gt.recv(&p, sz);
+    BOOST_CHECK(0 == memcmp(p - sz, "OUT", sz));
+    gt.send("in", 2);
+    BOOST_CHECK_EQUAL(gt.status, true);
+    sz = 3;
+    gt.recv(&p, sz);
+    BOOST_CHECK(0 == memcmp(p - sz, "PUT", sz));
+    gt.send("pot", 3);
+    BOOST_CHECK_EQUAL(gt.status, false);
 }
