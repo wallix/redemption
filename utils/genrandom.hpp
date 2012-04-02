@@ -57,7 +57,7 @@ class LCGRandom : public Random
 
     uint32_t rand32()
     {
-        return this->seed = (uint64_t)999331UL * (uint64_t)this->seed + 200560490131UL;
+        return this->seed = (uint64_t)999331UL * (uint64_t)this->seed + 200560490131ULL;
     }
 };
 
