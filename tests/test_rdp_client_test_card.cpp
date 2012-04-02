@@ -28,6 +28,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 //#define LOGPRINT
+#define SHARE_PATH FIXTURES_PATH
 #include "RDP/RDPGraphicDevice.hpp"
 #include "channel_list.hpp"
 #include "cache.hpp"
