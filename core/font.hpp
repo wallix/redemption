@@ -77,8 +77,6 @@ struct FontChar {
 
 TODO(" NUM_FONTS is misleading it's actually number of glyph in font. Using it to set size of a static array is quite dangerous as we shouldn't have to change code whenever we change font file.")
 
-#define NUM_FONTS 0x4e00
-#define DEFAULT_FONT_NAME "sans-10.fv1"
 
 /*
   The fv1 files contain
@@ -101,17 +99,27 @@ TODO(" NUM_FONTS is misleading it's actually number of glyph in font. Using it t
 
 /* font */
 struct Font {
-    struct FontChar * font_items[NUM_FONTS];
+    enum {
+         NUM_GLYPHS = 0x4e00
+        };
+
+#define DEFAULT_FONT_NAME "sans-10.fv1"
+
+
+    struct FontChar * font_items[NUM_GLYPHS];
     char name[32];
     int size;
     int style;
     Font(const char * file_path){
         int fd;
         int b;
-        int index;
+         // we start at space, no glyph for chars below 32
+        int index = 32;
         int file_size;
 
-        for (int i = 0; i < NUM_FONTS ; i++){
+        LOG(LOG_INFO, "Reading font file %s", file_path);
+
+        for (int i = 0; i < NUM_GLYPHS ; i++){
             font_items[i] = 0;
         }
 
@@ -172,8 +180,8 @@ struct Font {
             stream.skip_uint8(8);
 
     TODO(" we can do something much cooler using C++ facilities and moving glyph building code to FontChar. Only problem : clean error management using exceptions implies a real exception object in FontChar. We will do that later.")
-            index = 32; // we start at space, no glyph for chars below 32
             while (stream.check_rem(16)) {
+//                LOG(LOG_INFO, "Reading definition for glyph %u", index);
                 int width = stream.in_sint16_le();
                 int height = stream.in_sint16_le();
 TODO(" baseline is always -height (seen from the code of fontdump) looks strange. It means that baseline is probably not used in current code.")
@@ -183,7 +191,6 @@ TODO(" baseline is always -height (seen from the code of fontdump) looks strange
                 int incby = stream.in_sint16_le();
                 stream.skip_uint8(6);
 
-                TODO(" valgrind say there is a memory leak here")
                 this->font_items[index] = new FontChar(offset, baseline, width, height, incby);
                 int datasize = this->font_items[index]->datasize();
                 if (datasize < 0 || datasize > 512) {
