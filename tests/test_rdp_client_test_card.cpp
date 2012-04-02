@@ -163,5 +163,5 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
     test_card_mod mod(&back_event, front, info.width, info.height);
     BOOST_CHECK(true);
     BackEvent_t res = mod.draw_event();
-    BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, res);
+    BOOST_CHECK_EQUAL((uint32_t)BACK_EVENT_NONE, (uint32_t)res);
 }
