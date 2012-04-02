@@ -34,7 +34,7 @@ struct test_internal_mod : public internal_mod {
         ModContext & context, FrontAPI & front, uint16_t width, uint16_t height):
             internal_mod(front, width, height)
     {
-        this->front.set_mod_bpp_to_front_bpp();
+        this->front.set_mod_bpp(24);
         this->event = event;
         this->event->set();
     }

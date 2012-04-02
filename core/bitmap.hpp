@@ -53,6 +53,74 @@
 
 
 class Bitmap {
+
+    class CopyData
+    {
+        typedef std::size_t size_type;
+
+        uint8_t* _ptr;
+        std::size_t bmp_size;
+
+
+    public:
+        CopyData()
+        : _ptr(0)
+        {
+        }
+
+        CopyData(std::size_t bmp_size)
+        : _ptr(0)
+        , bmp_size(bmp_size)
+        {
+            LOG(LOG_INFO, "addr this %p", this);
+            this->_ptr = new uint8_t[bmp_size];
+        }
+
+        CopyData(const CopyData& other)
+        : _ptr(other._ptr)
+        , bmp_size(other.bmp_size)
+        {
+            memcpy(_ptr, other._ptr, bmp_size);
+        }
+
+        CopyData(const CopyData& other, std::size_t bmp_size, bool alloc)
+        : _ptr(new uint8_t[bmp_size])
+        , bmp_size(bmp_size)
+        {
+            memcpy(_ptr, other._ptr, bmp_size);
+        }
+
+        void load(std::size_t bmp_size)
+        {
+            this->_ptr = new uint8_t[bmp_size];
+            this->bmp_size = bmp_size;
+        }
+
+        bool valid() const
+        {
+            return this->_ptr;
+        }
+
+        ~CopyData()
+        {
+                delete[] this->_ptr;
+        }
+
+        uint8_t* get()
+        {
+            return this->_ptr;
+        }
+
+        const uint8_t* get() const
+        {
+            return this->_ptr;
+        }
+
+    private:
+        CopyData& operator=(const CopyData& other);
+    };
+
+
     class CountdownData
     {
         typedef std::size_t size_type;
@@ -67,73 +135,60 @@ class Bitmap {
         }
 
         CountdownData(std::size_t bmp_size)
-        : _ptr(new uint8_t[bmp_size + sizeof(size_type)])
+        : _ptr(0)
         {
-            this->init(bmp_size);
+            LOG(LOG_INFO, "addr this %p", this);
+            this->_ptr = new uint8_t[bmp_size + sizeof(size_type)];
+            *(size_type*)(this->_ptr) = 1;
         }
 
         CountdownData(const CountdownData& other)
         : _ptr(other._ptr)
         {
-            ++this->count();
+            *(size_type*)(this->_ptr) += 1;
         }
 
-        CountdownData& operator=(const CountdownData& other)
+        CountdownData(const CountdownData& other, std::size_t bmp_size, bool alloc)
+        : _ptr(alloc ? new uint8_t[bmp_size + sizeof(size_type)] : other._ptr)
         {
-            if (other._ptr != this->_ptr)
-            {
-                if (this->_ptr)
-                    this->remove_used();
-                this->_ptr = other._ptr;
-                ++this->count();
+            if (alloc){
+                *(size_type*)(this->_ptr) = 0;
             }
-            return *this;
-        }
-
-        bool valid() const
-        { return this->_ptr; }
-
-        ~CountdownData()
-        {
-            if (this->_ptr)
-                this->remove_used();
+            *(size_type*)(this->_ptr) += 1;
         }
 
         void load(std::size_t bmp_size)
         {
             this->_ptr = new uint8_t[bmp_size + sizeof(size_type)];
-            this->init(bmp_size);
+            *(size_type*)(this->_ptr) = 1;
+        }
+
+        bool valid() const
+        {
+            return this->_ptr;
+        }
+
+        ~CountdownData()
+        {
+            assert(this->_ptr);
+            *(size_type*)(this->_ptr) -= 1;
+            if (!*(size_type*)(this->_ptr)){
+                delete[] this->_ptr;
+            }
         }
 
         uint8_t* get()
-        { return this->_ptr + sizeof(size_type); }
+        {
+            return this->_ptr + sizeof(size_type);
+        }
 
         const uint8_t* get() const
-        { return this->_ptr + sizeof(size_type); }
-
-        std::size_t count() const
-        { return *(const std::size_t*)this->_ptr; }
+        {
+            return this->_ptr + sizeof(size_type);
+        }
 
     private:
-        std::size_t& count()
-        { return *(std::size_t*)this->_ptr; }
-
-        void remove_used()
-        {
-            if (!--this->count())
-                this->destroy();
-        }
-
-        void destroy()
-        {
-            delete[] this->_ptr;
-        }
-
-        void init(std::size_t bmp_size)
-        {
-            std::fill_n<>(this->_ptr + sizeof(size_type), bmp_size, 0);
-            this->count() = 1;
-        }
+        CountdownData& operator=(const CountdownData& other);
     };
 
 public:
@@ -145,7 +200,7 @@ public:
     size_t line_size;
     size_t bmp_size;
 
-    CountdownData data_bitmap;
+    CopyData data_bitmap;
 
     Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
         : original_bpp(bpp)
@@ -156,7 +211,7 @@ public:
         , data_bitmap(this->bmp_size)
     {
 
-//        LOG(LOG_ERR, "Creating bitmap cx=%u cy=%u size=%u bpp=%u", cx, cy, size, bpp);
+        LOG(LOG_ERR, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
         if (bpp == 8){
             if (palette){
                 memcpy(&this->original_palette, palette, sizeof(BGRPalette));
@@ -194,6 +249,7 @@ public:
         , bmp_size(row_size(align4(this->cx), src_bmp.original_bpp) * this->cy)
         , data_bitmap(this->bmp_size)
     {
+        LOG(LOG_ERR, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
         memcpy(this->original_palette, src_bmp.original_palette, sizeof(BGRPalette));
 
         // bitmapDataStream (variable): A variable-sized array of bytes.
@@ -451,7 +507,10 @@ public:
     }
 
     const uint8_t* data() const
-    { return this->data_bitmap.get(); }
+    {
+        assert(this->data_bitmap.get());
+        return this->data_bitmap.get();
+    }
 
     void dump() const
     {
@@ -1218,15 +1277,9 @@ public:
     , cy(bmp.cy)
     , line_size(bmp.line_size)
     , bmp_size(bmp.cx * nbbytes(out_bpp) * bmp.cy)
-    , data_bitmap()
+    , data_bitmap(bmp.data_bitmap, this->bmp_size, out_bpp != bmp.original_bpp)
     {
-        if (out_bpp != bmp.original_bpp)
-        {
-            this->data_bitmap.load(this->bmp_size);
-            bmp.convert_data_bitmap(out_bpp, this->data_bitmap.get());
-        }
-        else
-            data_bitmap = bmp.data_bitmap;
+        LOG(LOG_ERR, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
 
         if (out_bpp == 8){
             if (bmp.original_palette){
