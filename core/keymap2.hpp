@@ -1605,6 +1605,8 @@ struct Keymap2 {
                     // but also TAB, ESC and BACKSPACE
                     // that has unicode values but are not actually
                     // printable characters and that we don't want to track
+                    LOG(LOG_INFO, "nbevent in buffer: %u %u\n", this->nbuf, this->nbuf_kevent);
+
                     if ((uchar >= 0x20) && (uchar != 0x7f)){
                         LOG(LOG_INFO, "pushing char %u", uchar);
                         this->push(uchar);
@@ -1704,7 +1706,9 @@ struct Keymap2 {
     {
         if (this->nbuf > 0){
             // remove top KEY KEVENT if present and any event may have occured before it
-            while (this->nbuf_kevent > 0 && this->get_kevent() != KEVENT_KEY){}
+            if (this->nbuf_kevent > 0 && this->top_kevent() == KEVENT_KEY){
+                this->nbuf_kevent--;
+            }
             uint32_t res = this->buffer[(SIZE_KEYBUF + this->ibuf - this->nbuf) % SIZE_KEYBUF];
 
             if (this->nbuf > 0){
@@ -1743,6 +1747,9 @@ struct Keymap2 {
         uint32_t res = this->buffer_kevent[(SIZE_KEYBUF_KEVENT + this->ibuf_kevent - this->nbuf_kevent) % SIZE_KEYBUF_KEVENT];
 
         if (this->nbuf_kevent > 0){
+            if (res == KEVENT_KEY && this->nbuf > 0){
+                    this->nbuf--;
+            }
             this->nbuf_kevent--;
         }
         return res;

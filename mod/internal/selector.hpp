@@ -122,6 +122,9 @@ struct selector_mod : public internal_mod {
             total_page(1),
             context(context)
     {
+
+        LOG(LOG_INFO, "Creating selector");
+
         this->back_color[0] = PALE_GREEN;
         this->back_color[1] = MEDIUM_GREEN;
         this->back_color[2] = 0x44FFAC;
@@ -3350,8 +3353,8 @@ struct selector_mod : public internal_mod {
     };
     this->last_page = new Bitmap(24, NULL, 32, 20, raw_last_page, sizeof(raw_last_page));
 
-    this->refresh_context(context);
-//        LOG(LOG_INFO, "selector init done : signal = %u", this->signal);
+        this->refresh_context(context);
+        LOG(LOG_INFO, "selector init done : signal = %u", this->signal);
         this->event = event;
         this->event->set();
     }

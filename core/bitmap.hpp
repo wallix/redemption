@@ -100,7 +100,7 @@ public:
         , data_bitmap()
     {
         this->data_bitmap.alloc(this->bmp_size);
-        LOG(LOG_ERR, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
+//        LOG(LOG_ERR, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
         if (bpp == 8){
             if (palette){
                 memcpy(&this->original_palette, palette, sizeof(BGRPalette));
@@ -140,7 +140,7 @@ public:
     {
         this->data_bitmap.alloc(this->bmp_size);
 
-        LOG(LOG_ERR, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
+//        LOG(LOG_ERR, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
         memcpy(this->original_palette, src_bmp.original_palette, sizeof(BGRPalette));
 
         // bitmapDataStream (variable): A variable-sized array of bytes.
@@ -1169,7 +1169,7 @@ public:
     , bmp_size(row_size(align4(this->cx), out_bpp) * cy)
     , data_bitmap()
     {
-        LOG(LOG_ERR, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
+//        LOG(LOG_ERR, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
 
         if (out_bpp != bmp.original_bpp){
             this->data_bitmap.alloc(this->bmp_size);
