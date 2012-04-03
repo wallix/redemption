@@ -54,71 +54,6 @@
 
 class Bitmap {
 
-    class CountdownData
-    {
-        typedef std::size_t size_type;
-
-        uint8_t* _ptr;
-
-
-    public:
-        CountdownData()
-        : _ptr(0)
-        {
-        }
-
-        CountdownData(std::size_t bmp_size)
-        : _ptr(0)
-        {
-            LOG(LOG_INFO, "addr this %p", this);
-            this->_ptr = new uint8_t[bmp_size + sizeof(size_type)];
-            *(size_type*)(this->_ptr) = 1;
-        }
-
-        CountdownData(const CountdownData& other)
-        : _ptr(other._ptr)
-        {
-            *(size_type*)(this->_ptr) += 1;
-        }
-
-        CountdownData(const CountdownData& other, std::size_t bmp_size, bool alloc)
-        : _ptr(alloc ? new uint8_t[bmp_size + sizeof(size_type)] : other._ptr)
-        {
-            if (alloc){
-                *(size_type*)(this->_ptr) = 0;
-            }
-            *(size_type*)(this->_ptr) += 1;
-        }
-
-        void load(std::size_t bmp_size)
-        {
-            this->_ptr = new uint8_t[bmp_size + sizeof(size_type)];
-            *(size_type*)(this->_ptr) = 1;
-        }
-
-        ~CountdownData()
-        {
-            assert(this->_ptr);
-            *(size_type*)(this->_ptr) -= 1;
-            if (!*(size_type*)(this->_ptr)){
-                delete[] this->_ptr;
-            }
-        }
-
-        uint8_t* get()
-        {
-            return this->_ptr + sizeof(size_type);
-        }
-
-        const uint8_t* get() const
-        {
-            return this->_ptr + sizeof(size_type);
-        }
-
-    private:
-        CountdownData& operator=(const CountdownData& other);
-    };
-
 public:
     uint8_t original_bpp;
     BGRPalette original_palette;
@@ -128,18 +63,16 @@ public:
     size_t line_size;
     size_t bmp_size;
 
-    struct CopyData {
+    struct CountdownData {
         uint8_t * ptr; 
-        CopyData() {
+        CountdownData() {
             this->ptr = 0;
         }
-        ~CopyData(){
+        ~CountdownData(){
             if (this->ptr){
-                if (this->ptr[0] == 1){
+                this->ptr[0]--;
+                if (!this->ptr[0]){
                     free(this->ptr);
-                }
-                else {
-                    this->ptr[0]--;
                 }
             }
         }
@@ -150,7 +83,7 @@ public:
             this->ptr = (uint8_t*)malloc(size+16);
             this->ptr[0] = 1;
         }
-        void use(const CopyData & other)
+        void use(const CountdownData & other)
         {
             this->ptr = other.ptr;
             this->ptr[0]++;
