@@ -42,9 +42,6 @@
 #include "client_mod.hpp"
 #include "region.hpp"
 #include "keymap2.hpp"
-//#include "internal/internal_mod.hpp"
-
-#include "keymap2.hpp"
 
 
 /*****************************************************************************/
@@ -67,10 +64,8 @@ static inline void remove_char_at(char* text, int text_size, int index)
     wcstombs(text, wstr, text_size);
 }
 
-#define GraphicalContext internal_mod
-
 struct Widget {
-    struct GraphicalContext * mod;
+    struct internal_mod * mod;
     bool has_focus;
 
     /* 0 = bitmap 1 = window 2 = screen 3 = button 4 = image 5 = edit
@@ -351,21 +346,5 @@ struct Widget {
         return region;
     }
 };
-
-static inline bool switch_focus(Widget * old_focus, Widget * new_focus) {
-    bool res = false;
-    if (new_focus->tab_stop){
-        if (old_focus) {
-            old_focus->has_focus = (old_focus == new_focus);
-            old_focus->refresh(old_focus->rect.wh());
-        }
-        if (old_focus != new_focus){
-            new_focus->has_focus = true;
-            new_focus->refresh(new_focus->rect.wh());
-        }
-        res = true;
-    }
-    return res;
-}
 
 #endif

@@ -29,7 +29,7 @@
 struct widget_popup : public Widget
 {
 
-    widget_popup(GraphicalContext * mod, const Rect & r,
+    widget_popup(internal_mod * mod, const Rect & r,
          Widget * popped_from,
          Widget * parent,
          int item_index)

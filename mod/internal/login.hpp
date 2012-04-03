@@ -380,17 +380,16 @@ struct login_mod : public internal_mod {
     }
 
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap){
-        if (device_flags & KBD_FLAG_UP){
+        if (keymap->nb_kevent_available() > 0){
             if (this->popup_wnd != 0) {
                 this->front.begin_update();
                 this->clear_popup();
                 this->front.end_update();
             }
-        }
-        else {
-            if (!this->popup_wnd && this->login_window->has_focus) {
+            if (this->login_window->has_focus) {
                 this->front.begin_update();
                 this->login_window->def_proc(WM_KEYDOWN, param1, device_flags, keymap);
+                keymap->get_kevent();
                 this->front.end_update();
             }
         }

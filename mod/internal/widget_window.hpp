@@ -27,7 +27,7 @@
 
 struct window : public Widget
 {
-    window(GraphicalContext * mod, const Rect & r, Widget * parent, int bg_color, const char * title)
+    window(internal_mod * mod, const Rect & r, Widget * parent, int bg_color, const char * title)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_WND) {
 
         assert(type == WND_TYPE_WND);
@@ -61,8 +61,6 @@ struct window : public Widget
         this->has_focus = false;
     }
 
-
-
     void draw(const Rect & clip)
     {
         Rect r(0, 0, this->rect.cx, this->rect.cy);
@@ -77,6 +75,23 @@ struct window : public Widget
                 this->has_focus,
                 region_clip);
         }
+    }
+
+    // change control that have focus
+    bool switch_focus(Widget * old_focus, Widget * new_focus) {
+        bool res = false;
+        if (new_focus->tab_stop){
+            if (old_focus) {
+                old_focus->has_focus = (old_focus == new_focus);
+                old_focus->refresh(old_focus->rect.wh());
+            }
+            if (old_focus != new_focus){
+                new_focus->has_focus = true;
+                new_focus->refresh(new_focus->rect.wh());
+            }
+            res = true;
+        }
+        return res;
     }
 
     void def_proc(const int msg, const int param1, const int param2, Keymap2 * keymap)
@@ -95,34 +110,27 @@ struct window : public Widget
                 }
             }
 
-            int scan_code = param1 & 0x7F;
-            switch (scan_code){
-            case 15:
-            { /* tab */
-                /* move to next tab stop */
-                int shift = keymap->is_shift_pressed();
-                // find the next tab_stop
-                if (shift) {
-                    for (size_t i = (size+i_focus-1) % size ; i != i_focus ; i = (i+size-1) % size) {
-                        Widget * new_focus = this->child_list[i];
-                        if (switch_focus(control_with_focus, new_focus)) {
-                            break;
-                        }
-                    }
-                } else {
-                    for (size_t i = (size+i_focus+1) % size ; i != i_focus ; i = (i+size+1) % size) {
-                        Widget * new_focus = this->child_list[i];
-                        if (switch_focus(control_with_focus, new_focus)) {
-                            break;
-                        }
+            switch (keymap->top_kevent()){
+            case Keymap2::KEVENT_TAB:
+                for (size_t i = (size+i_focus+1) % size ; i != i_focus ; i = (i+size+1) % size) {
+                    Widget * new_focus = this->child_list[i];
+                    if (this->switch_focus(control_with_focus, new_focus)) {
+                        break;
                     }
                 }
-            }
             break;
-            case 28: /* enter */
+            case Keymap2::KEVENT_BACKTAB:
+                for (size_t i = (size+i_focus-1) % size ; i != i_focus ; i = (i+size-1) % size) {
+                    Widget * new_focus = this->child_list[i];
+                    if (this->switch_focus(control_with_focus, new_focus)) {
+                        break;
+                    }
+                }
+            break;
+            case Keymap2::KEVENT_ENTER:
                 this->notify(this->default_button, 1, 0, 0);
             return;
-            case 1: /* esc */
+            case Keymap2::KEVENT_ESC:
                 if (this->esc_button) {
                     this->notify(this->esc_button, 1, 0, 0);
                 }
@@ -134,8 +142,6 @@ struct window : public Widget
             }
         }
     }
-
-
 };
 
 #endif

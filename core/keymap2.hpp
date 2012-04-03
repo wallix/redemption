@@ -1663,6 +1663,13 @@ struct Keymap2 {
                         case 0x53: // numpad delete
                             this->push_kevent(KEVENT_DELETE);
                         break;
+                        case 0x1C: // enter
+                            this->push_kevent(KEVENT_ENTER);
+                        break;
+                        case 0x9C: // numpad enter
+                            this->push_kevent(KEVENT_ENTER);
+                        break;
+
                         default:
                         break;
                         }

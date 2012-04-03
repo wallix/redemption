@@ -27,7 +27,7 @@
 
 struct widget_button : public Widget
 {
-    widget_button(GraphicalContext * mod, const Rect & r, Widget * parent, int id, int tab_stop, const char * caption)
+    widget_button(internal_mod * mod, const Rect & r, Widget * parent, int id, int tab_stop, const char * caption)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_BUTTON) {
 
         assert(type == WND_TYPE_BUTTON);

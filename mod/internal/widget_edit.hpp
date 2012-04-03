@@ -29,7 +29,7 @@ struct widget_edit : public Widget {
 
     char buffer[256];
 
-    widget_edit(GraphicalContext * mod, const Rect & r, Widget * parent, int id, int tab_stop, const char * caption, int pointer, int edit_pos)
+    widget_edit(internal_mod * mod, const Rect & r, Widget * parent, int id, int tab_stop, const char * caption, int pointer, int edit_pos)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_EDIT) {
 
         assert(type == WND_TYPE_EDIT);
@@ -74,32 +74,21 @@ struct widget_edit : public Widget {
     {
         int n;
         if (msg == WM_KEYDOWN) {
-            if ((keymap->nb_kevent_available() > 0)
-            && (keymap->top_kevent() == Keymap2::KEVENT_LEFT_ARROW)
-            && (keymap->top_kevent() == Keymap2::KEVENT_UP_ARROW)
-            )
-            {
-                keymap->get_kevent();
+            if ((keymap->top_kevent() == Keymap2::KEVENT_LEFT_ARROW)
+            || (keymap->top_kevent() == Keymap2::KEVENT_UP_ARROW)){
                 if (this->edit_pos > 0) {
                     this->edit_pos--;
                     this->refresh(this->rect.wh());
                 }
             }
-            if ((keymap->nb_kevent_available() > 0)
-            && (keymap->top_kevent() == Keymap2::KEVENT_RIGHT_ARROW)
-            && (keymap->top_kevent() == Keymap2::KEVENT_DOWN_ARROW)
-            )
-            {
-                keymap->get_kevent();
+            if ((keymap->top_kevent() == Keymap2::KEVENT_RIGHT_ARROW)
+            || (keymap->top_kevent() == Keymap2::KEVENT_DOWN_ARROW)){
                 if (this->edit_pos < (int)mbstowcs(0, this->buffer, 0)) {
                     this->edit_pos++;
                     this->refresh(this->rect.wh());
                 }
             }
-            /* backspace */
-            else if ((keymap->nb_kevent_available() > 0)
-            && (keymap->top_kevent() == Keymap2::KEVENT_BACKSPACE)) {
-                keymap->get_kevent();
+            else if ((keymap->top_kevent() == Keymap2::KEVENT_BACKSPACE)) {
                 n = mbstowcs(0, this->buffer, 0);
                 if (n > 0) {
                     if (this->edit_pos > 0) {
@@ -109,10 +98,7 @@ struct widget_edit : public Widget {
                     }
                 }
             }
-            /* delete */
-            else if ((keymap->nb_kevent_available() > 0)
-            && (keymap->top_kevent() == Keymap2::KEVENT_DELETE)) {
-                keymap->get_kevent();
+            else if ((keymap->top_kevent() == Keymap2::KEVENT_DELETE)) {
                 n = mbstowcs(0, this->buffer, 0);
                 if (n > 0) {
                     if (this->edit_pos < n) {
@@ -121,9 +107,7 @@ struct widget_edit : public Widget {
                     }
                 }
             }
-            /* end */
-            else if ((keymap->nb_kevent_available() > 0)
-            && (keymap->top_kevent() == Keymap2::KEVENT_END)) {
+            else if (keymap->top_kevent() == Keymap2::KEVENT_END) {
                 keymap->get_kevent();
                 n = mbstowcs(0, this->buffer, 0);
                 if (this->edit_pos < n) {
@@ -131,27 +115,21 @@ struct widget_edit : public Widget {
                     this->refresh(this->rect.wh());
                 }
             }
-            /* home */
-            else if ((keymap->nb_kevent_available() > 0)
-            && (keymap->top_kevent() == Keymap2::KEVENT_HOME)) {
-                keymap->get_kevent();
+            else if ((keymap->top_kevent() == Keymap2::KEVENT_HOME)) {
                 if (this->edit_pos > 0) {
                     this->edit_pos = 0;
                     this->refresh(this->rect.wh());
                 }
             }
             else {
-                while ((keymap->nb_char_available() > 0)
-                && (keymap->nb_kevent_available() > 0)
-                && (keymap->top_kevent() == Keymap2::KEVENT_KEY))
-                {
-                    wchar_t c = keymap->get_char();
+                if (keymap->top_kevent() == Keymap2::KEVENT_KEY){
+                    wchar_t c = keymap->top_char();
                     int num_chars = mbstowcs(0, this->buffer, 0);
                     if ((this->edit_pos >= num_chars) || (this->edit_pos < 0)) {
                         this->edit_pos = num_chars;
                     }
 
-                    if ((c >= 32) && (num_chars < 120)) {
+                    if (num_chars < 120) {
                         wchar_t wstr[num_chars + 16];
                         mbstowcs(wstr, this->buffer, num_chars + 1);
                         // make room by moving the end

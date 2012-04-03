@@ -27,7 +27,7 @@
 
 struct widget_label : public Widget {
 
-    widget_label(GraphicalContext * mod, const Rect & r, Widget * parent, const char * title)
+    widget_label(internal_mod * mod, const Rect & r, Widget * parent, const char * title)
     : Widget(mod, r.cx, r.cy, parent, WND_TYPE_LABEL) {
 
         assert(type == WND_TYPE_LABEL);
