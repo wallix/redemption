@@ -61,7 +61,6 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap)
     BGRPalette palette332;
     init_palette332(palette332);
 
-    uint8_t outbuf[65536];
     const uint8_t source_bpp = 16;
     const uint16_t cx = 2;
     const uint16_t cy = 3;
@@ -70,9 +69,24 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap)
         0xFF, 0xFF,   0xFF, 0xFF,
         0xFF, 0xFF,   0xFF, 0xFF,
     };
-    Bitmap bmp(source_bpp, &palette332, cx, cy, data, cx * nbbytes(source_bpp) * cy, false, false);
-    const uint16_t target_bpp = 24;
-    bmp.convert_data_bitmap(target_bpp, outbuf);
+
+    Bitmap bmp16(source_bpp, &palette332, cx, cy, data, cx * nbbytes(source_bpp) * cy, false, false);
+    BOOST_CHECK_EQUAL(24, bmp16.bmp_size);
+    BOOST_CHECK_EQUAL(4, bmp16.line_size);
+    BOOST_CHECK_EQUAL(cx, bmp16.cx); 
+    BOOST_CHECK_EQUAL(cy, bmp16.cy); 
+    BOOST_CHECK_EQUAL(16, bmp16.original_bpp);
+
+    uint16_t target_bpp = 24;
+    Bitmap bmp24(target_bpp, bmp16); 
+    BOOST_CHECK_EQUAL(36, bmp24.bmp_size);
+    BOOST_CHECK_EQUAL(6, bmp24.line_size);
+    BOOST_CHECK_EQUAL(cx, bmp24.cx); 
+    BOOST_CHECK_EQUAL(cy, bmp24.cy); 
+    BOOST_CHECK_EQUAL(24, bmp24.original_bpp);
+
+    const uint8_t * outbuf = bmp24.data();
+
     BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
     BOOST_CHECK_EQUAL(0xFF, outbuf[1]);
     BOOST_CHECK_EQUAL(0xFF, outbuf[2]);
@@ -81,15 +95,15 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap)
     BOOST_CHECK_EQUAL(0xFF, outbuf[4]);
     BOOST_CHECK_EQUAL(0xFF, outbuf[5]);
 
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
 
-    BOOST_CHECK_EQUAL(0xFF, outbuf[6]);
-    BOOST_CHECK_EQUAL(0xFF, outbuf[7]);
-    BOOST_CHECK_EQUAL(0xFF, outbuf[8]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
 
-    BOOST_CHECK_EQUAL(0xFF, outbuf[9]);
-    BOOST_CHECK_EQUAL(0xFF, outbuf[10]);
-    BOOST_CHECK_EQUAL(0xFF, outbuf[11]);
-
+    // ---------------------------------
 
     BOOST_CHECK_EQUAL(0xFF, outbuf[12]);
     BOOST_CHECK_EQUAL(0xFF, outbuf[13]);
@@ -99,167 +113,32 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap)
     BOOST_CHECK_EQUAL(0xFF, outbuf[16]);
     BOOST_CHECK_EQUAL(0xFF, outbuf[17]);
 
-    BOOST_CHECK_EQUAL(target_bpp, 24);
-    BOOST_CHECK_EQUAL(bmp.cx, 2);
-    BOOST_CHECK_EQUAL(bmp.cy, 3);
-
-    Bitmap bmp2(target_bpp, &palette332, bmp.cx, bmp.cy, outbuf, bmp.cx * nbbytes(target_bpp) * bmp.cy, false, false);
-
-    BOOST_CHECK_EQUAL(bmp2.original_bpp, 24);
-    BOOST_CHECK_EQUAL(bmp2.cx, 2);
-    BOOST_CHECK_EQUAL(bmp2.cy, 3);
-
-    {
-        const uint8_t * outbuf = bmp2.data();
-        BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[1]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[2]);
-
-        BOOST_CHECK_EQUAL(0xFF, outbuf[3]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[4]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[5]);
-
-        BOOST_CHECK_EQUAL(0, outbuf[6]);
-        BOOST_CHECK_EQUAL(0, outbuf[7]);
-        BOOST_CHECK_EQUAL(0, outbuf[8]);
-
-        BOOST_CHECK_EQUAL(0, outbuf[9]);
-        BOOST_CHECK_EQUAL(0, outbuf[10]);
-        BOOST_CHECK_EQUAL(0, outbuf[11]);
-
-
-        BOOST_CHECK_EQUAL(0xFF, outbuf[12]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[13]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[14]);
-
-        BOOST_CHECK_EQUAL(0xFF, outbuf[15]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[16]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[17]);
-
-        BOOST_CHECK_EQUAL(0, outbuf[18]);
-        BOOST_CHECK_EQUAL(0, outbuf[19]);
-        BOOST_CHECK_EQUAL(0, outbuf[20]);
-
-        BOOST_CHECK_EQUAL(0, outbuf[21]);
-        BOOST_CHECK_EQUAL(0, outbuf[22]);
-        BOOST_CHECK_EQUAL(0, outbuf[23]);
-
-        BOOST_CHECK_EQUAL(0xFF, outbuf[24]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[25]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[26]);
-
-        BOOST_CHECK_EQUAL(0xFF, outbuf[27]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[28]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[29]);
-
-        BOOST_CHECK_EQUAL(0, outbuf[30]);
-        BOOST_CHECK_EQUAL(0, outbuf[31]);
-        BOOST_CHECK_EQUAL(0, outbuf[32]);
-
-        BOOST_CHECK_EQUAL(0, outbuf[33]);
-        BOOST_CHECK_EQUAL(0, outbuf[34]);
-        BOOST_CHECK_EQUAL(0, outbuf[35]);
-    }
-
-    BOOST_CHECK_EQUAL(6, bmp2.line_size);
-    BOOST_CHECK_EQUAL(36, bmp2.bmp_size);
-   BOOST_CHECK_EQUAL(2, bmp2.cx);
-   BOOST_CHECK_EQUAL(3, bmp2.cy);
-   BOOST_CHECK_EQUAL(24, bmp2.original_bpp);
-
-    dump_png("/tmp/test_convert_000_", bmp2);
-}
-
-
-BOOST_AUTO_TEST_CASE(TestConvertBitmap24to16)
-{
-    BGRPalette palette332;
-    init_palette332(palette332);
-
-    uint8_t outbuf[65536];
-    const uint8_t source_bpp = 24;
-    const uint16_t cx = 2;
-    const uint16_t cy = 3;
-    const uint8_t data[] = {
-        0xFF, 0xFF, 0xFF,  0xFF, 0xFF, 0xFF,
-        0xFF, 0xFF, 0xFF,  0xFF, 0xFF, 0xFF,
-        0xFF, 0xFF, 0xFF,  0xFF, 0xFF, 0xFF,
-    };
-    Bitmap bmp(source_bpp, &palette332, cx, cy, data, cx * nbbytes(source_bpp) * cy, false, false);
-
-    const uint16_t target_bpp = 16;
-    bmp.convert_data_bitmap(target_bpp, outbuf);
     BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
-    BOOST_CHECK_EQUAL(0xFF, outbuf[1]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
 
-    BOOST_CHECK_EQUAL(0xFF, outbuf[2]);
-    BOOST_CHECK_EQUAL(0xFF, outbuf[3]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
 
-    BOOST_CHECK_EQUAL(0xFF, outbuf[4]);
-    BOOST_CHECK_EQUAL(0xFF, outbuf[5]);
+    // ---------------------------------
 
-    BOOST_CHECK_EQUAL(0xFF, outbuf[6]);
-    BOOST_CHECK_EQUAL(0xFF, outbuf[7]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[24]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[25]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[26]);
 
-    BOOST_CHECK_EQUAL(0xFF, outbuf[8]);
-    BOOST_CHECK_EQUAL(0xFF, outbuf[9]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[27]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[28]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[29]);
 
-    BOOST_CHECK_EQUAL(0xFF, outbuf[10]);
-    BOOST_CHECK_EQUAL(0xFF, outbuf[11]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
 
-    BOOST_CHECK_EQUAL(target_bpp, 16);
-    BOOST_CHECK_EQUAL(bmp.cx, 2);
-    BOOST_CHECK_EQUAL(bmp.cy, 3);
-
-    Bitmap bmp2(target_bpp, &palette332, bmp.cx, bmp.cy, outbuf, bmp.cx * nbbytes(target_bpp) * bmp.cy, false, false);
-
-    BOOST_CHECK_EQUAL(bmp2.original_bpp, 16);
-    BOOST_CHECK_EQUAL(bmp2.cx, 2);
-    BOOST_CHECK_EQUAL(bmp2.cy, 3);
-
-    {
-        const uint8_t * outbuf = bmp2.data();
-        BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[1]);
-
-        BOOST_CHECK_EQUAL(0xFF, outbuf[2]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[3]);
-
-        BOOST_CHECK_EQUAL(0, outbuf[4]);
-        BOOST_CHECK_EQUAL(0, outbuf[5]);
-
-        BOOST_CHECK_EQUAL(0, outbuf[6]);
-        BOOST_CHECK_EQUAL(0, outbuf[7]);
-
-        BOOST_CHECK_EQUAL(0xFF, outbuf[8]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[9]);
-
-        BOOST_CHECK_EQUAL(0xFF, outbuf[10]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[11]);
-
-        BOOST_CHECK_EQUAL(0, outbuf[12]);
-        BOOST_CHECK_EQUAL(0, outbuf[13]);
-
-        BOOST_CHECK_EQUAL(0, outbuf[14]);
-        BOOST_CHECK_EQUAL(0, outbuf[15]);
-
-        BOOST_CHECK_EQUAL(0xFF, outbuf[16]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[17]);
-
-        BOOST_CHECK_EQUAL(0xFF, outbuf[18]);
-        BOOST_CHECK_EQUAL(0xFF, outbuf[19]);
-
-        BOOST_CHECK_EQUAL(0, outbuf[20]);
-        BOOST_CHECK_EQUAL(0, outbuf[21]);
-
-        BOOST_CHECK_EQUAL(0, outbuf[22]);
-        BOOST_CHECK_EQUAL(0, outbuf[23]);
-    }
-
-    BOOST_CHECK_EQUAL(4, bmp2.line_size);
-    BOOST_CHECK_EQUAL(24, bmp2.bmp_size);
-   BOOST_CHECK_EQUAL(2, bmp2.cx);
-   BOOST_CHECK_EQUAL(3, bmp2.cy);
-   BOOST_CHECK_EQUAL(16, bmp2.original_bpp);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
+    BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
 
 }
+
+
