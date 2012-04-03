@@ -78,6 +78,8 @@ struct Keymap2 {
     uint32_t nbuf_kevent; // number of char in char buffer
     uint32_t buffer_kevent[SIZE_KEYBUF_KEVENT]; // actual char buffer
 
+    uint8_t dead_key;
+    uint32_t verbose;
     uint32_t last_char_key;
 
     int last_chr_unicode;
@@ -91,10 +93,9 @@ struct Keymap2 {
     KeyLayout_t keylayout_WORK_capslock;
     KeyLayout_t keylayout_WORK_shiftcapslock;
 
-
     // constructor
 // ################################################################
-    Keymap2() : ibuf(0), nbuf(0)
+    Keymap2(int verbose = 0) : ibuf(0), nbuf(0), ibuf_kevent(0), nbuf_kevent(0), dead_key(0), verbose(verbose)
     {
 // ################################################################
         memset(this->keys_down, 0, 256 * sizeof(int));
@@ -391,6 +392,19 @@ struct Keymap2 {
             break;
             case 0x040c: // French
             {
+
+            // +----+----+----+----+----+----+----+----+----+----+----+----+----+-------+
+            // | 29 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 0A | 0B | 0C | 0D |   0E  |
+            // |------------------------------------------------------------------------|
+            // |  0F  | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 1A | 1B |  1C |
+            // |------------------------------------------------------------------++    |
+            // |  3A   | 1E | 1F | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 2B |    |
+            // |------------------------------------------------------------------------|
+            // |  2A | 56 | 2C | 2D | 2E | 2F | 30 | 31 | 32 | 33 | 34 | 35 |    36     |
+            // |------------------------------------------------------------------------|
+            // |  1D  |  9F  | 38 |           39           |  B8   |  A7  |  AF  |  9D  |
+            // +------------------------------------------------------------------------+
+
                 const KeyLayout_t x040c_noshift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,
                     /*   8 */     0x0,   0x1b,   0x26,   0xe9,   0x22,   0x27,   0x28,   0x2d,
@@ -1605,15 +1619,42 @@ struct Keymap2 {
                     // but also TAB, ESC and BACKSPACE
                     // that has unicode values but are not actually
                     // printable characters and that we don't want to track
-                    LOG(LOG_INFO, "nbevent in buffer: %u %u\n", this->nbuf, this->nbuf_kevent);
+//                    LOG(LOG_INFO, "nbevent in buffer: %u %u\n", this->nbuf, this->nbuf_kevent);
+                    if (this->verbose){
+                        LOG(LOG_INFO, "extendedKeyCode=%x", extendedKeyCode);
+                    }
 
-                    if ((uchar >= 0x20) && (uchar != 0x7f)){
-                        LOG(LOG_INFO, "pushing char %u", uchar);
-                        this->push(uchar);
+                    if ((uchar >= 0x20) && (uchar != 0x7f) && (uchar != 0x5E)){
+                        if (this->verbose){
+                            LOG(LOG_INFO, "uchar=%x", uchar);
+                        }
+                            if (this->dead_key){
+                                switch (uchar){
+                                case 'e':
+                                    this->push(0xEA); // unicode for ê (ecirc)
+                                break;
+                                default:
+//                                    this->push(0x5E);
+                                    this->push(uchar);
+                                break;
+                            }
+                            this->dead_key = 0;
+                        }
+                        else {
+                            if (this->verbose){
+                                LOG(LOG_INFO, "pushing char %02x", uchar);
+                            }
+                            this->push(uchar);
+                        }
                     }
                     else {
-                        LOG(LOG_INFO, "pushing event extendedKeyCode=%x", extendedKeyCode);
+                        if (this->verbose){
+                            LOG(LOG_INFO, "pushing event extendedKeyCode=%x", extendedKeyCode);
+                        }
                         switch (extendedKeyCode){
+                        case 0x1A:
+                            this->dead_key = 1;
+                        break;
                         /* LEFT ARROW */
                         case 0xCB:
                             this->push_kevent(KEVENT_LEFT_ARROW);
