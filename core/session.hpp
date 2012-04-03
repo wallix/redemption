@@ -925,10 +925,12 @@ struct Session {
                     SocketTransport *t = new SocketTransport(name, sck, this->ini->globals.debug.mod_vnc);
                     this->back_event = new wait_obj(t->sck);
                     this->front->init_mod();
-                    this->mod = new mod_vnc(t, *this->context, *this->front,
-                                            this->front->client_info.keylayout,
-                                            this->front->client_info.width,
-                                            this->front->client_info.height);
+                    this->mod = new mod_vnc(t,
+                        this->context->get(STRAUTHID_TARGET_USER),
+                        this->context->get(STRAUTHID_TARGET_PASSWORD),
+                        *this->front,
+                        this->front->client_info.width,
+                        this->front->client_info.height);
                     this->mod->draw_event();
 //                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
                     if (this->verbose){

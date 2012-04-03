@@ -28,6 +28,9 @@
 
 struct internal_mod : public client_mod {
     public:
+    wait_obj * event;
+    BackEvent_t signal;
+
     Widget screen;
     int dragging;
     Rect dragging_rect;

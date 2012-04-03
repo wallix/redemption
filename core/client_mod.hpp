@@ -53,25 +53,14 @@ enum BackEvent_t {
 
 struct client_mod : public Callback {
     FrontAPI & front;
-    Rect clip;
     RDPPen pen;
-
-    bool clipboard_enable;
     bool pointer_displayed;
-    int sck;
-    char ip_source[256];
-    int rdp_compression;
-    int bitmap_cache_persist_enable;
-    uint8_t socket;
 
-    wait_obj * event;
-    BackEvent_t signal;
-    const uint16_t front_width;
-    const uint16_t front_height;
+    uint16_t front_width;
+    uint16_t front_height;
 
     client_mod(FrontAPI & front, const uint16_t front_width, const uint16_t front_height)
         : front(front)
-        , signal(BACK_EVENT_NONE)
         , front_width(front_width)
         , front_height(front_height)
     {

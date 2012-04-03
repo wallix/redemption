@@ -64,7 +64,7 @@ public:
     size_t bmp_size;
 
     struct CountdownData {
-        uint8_t * ptr; 
+        uint8_t * ptr;
         CountdownData() {
             this->ptr = 0;
         }
@@ -88,7 +88,7 @@ public:
             this->ptr = other.ptr;
             this->ptr[0]++;
         }
-        
+
     } data_bitmap;
 
     Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
@@ -1177,7 +1177,6 @@ public:
         }
         else {
             this->data_bitmap.use(bmp.data_bitmap);
-            memcpy(this->data_bitmap.get(), bmp.data_bitmap.get(), this->bmp_size);
         }
 
         if (out_bpp == 8){

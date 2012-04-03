@@ -34,6 +34,8 @@
 
 #include "stream.hpp"
 #include "d3des.hpp"
+#include "keymap2.hpp"
+#include "client_mod.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -50,8 +52,6 @@ struct mod_vnc : public client_mod {
     char password[256];
     public:
     Transport *t;
-    int shift_state; /* 0 up, 1 down */
-    int keylayout;
     int clip_chanid;
     Stream clip_data;
     size_t clip_data_size;
@@ -68,14 +68,15 @@ struct mod_vnc : public client_mod {
     uint8_t green_shift;
     uint8_t blue_shift;
     BGRPalette palette332;
+    Rect clip;
 
-    mod_vnc(Transport * t, struct ModContext & context, struct FrontAPI & front, int keylayout, uint16_t front_width, uint16_t front_height)
+
+    mod_vnc(Transport * t, const char * username, const char * password, struct FrontAPI & front, uint16_t front_width, uint16_t front_height)
         :
         client_mod(front, front_width, front_height)
     {
+        LOG(LOG_INFO, "Connecting to VNC Server");
         init_palette332(this->palette332);
-        const char * password = context.get(STRAUTHID_TARGET_PASSWORD);
-        const char * username = context.get(STRAUTHID_TARGET_USER);
         this->t = t;
         try {
             memset(this->mod_name, 0, 256);
@@ -85,16 +86,11 @@ struct mod_vnc : public client_mod {
             memset(this->username, 0, 256);
             memset(this->password, 0, 256);
 
-            this->shift_state = 0; /* 0 up, 1 down */
-            this->keylayout = 0;
             this->clip_chanid = 0;
             this->clip_data_size = 0;
 
             strcpy(this->username, username);
             strcpy(this->password, password);
-            // not used for vnc
-            // strcpy(this->hostname, hostname);
-            if (0 != keylayout) { this->keylayout = keylayout; }
 
             int error = 0;
 
@@ -114,14 +110,28 @@ struct mod_vnc : public client_mod {
                 switch (security_level){
                     case 1: /* none */
                         break;
-                    case 2: /* dec the password and the server random */
+                    case 2: /* the password and the server random */
                     {
+                        LOG(LOG_INFO, "Receiving VNC Server Random");
                         stream.init(8192);
                         this->t->recv((char**)&stream.end, 16);
-                        this->rfbEncryptBytes(stream.data, this->password);
+
+                        /* taken from vncauth.c */
+                        {
+                            char key[12];
+
+                            /* key is simply password padded with nulls */
+                            memset(key, 0, sizeof(key));
+                            strncpy(key, this->password, 8);
+                            rfbDesKey((unsigned char*)key, EN0); /* 0, encrypt */
+                            rfbDes((unsigned char*)stream.data, (unsigned char*)stream.data);
+                            rfbDes((unsigned char*)(stream.data + 8), (unsigned char*)(stream.data + 8));
+                        }
+                        LOG(LOG_INFO, "Sending Password");
                         this->t->send(stream.data, 16);
 
                         /* sec result */
+                        LOG(LOG_INFO, "Waiting for password ack");
                         stream.init(8192);
                         this->t->recv((char**)&stream.end, 4);
                         int i = stream.in_uint32_be();
@@ -129,20 +139,14 @@ struct mod_vnc : public client_mod {
                             LOG(LOG_INFO, "vnc password failed\n");
                             throw 2;
                         } else {
-//                            LOG(LOG_INFO, "vnc password ok\n");
+                            LOG(LOG_INFO, "vnc password ok\n");
                         }
                     }
                     break;
                     default:
                         throw 1;
                 }
-                {
-                    Stream stream(32768);
-                    stream.data[0] = 1;
-                    TODO(" send and recv should be stream aware")
-                    TODO(" we should always send at stream.p  not stream.data")
-                    this->t->send(stream.data, 1); /* share flag */
-                }
+                this->t->send("\x01", 1); /* share flag */
 
                 // 7.3.2   ServerInit
                 // ------------------
@@ -388,8 +392,8 @@ struct mod_vnc : public client_mod {
                     break;
                 case 1:
                     // resizing done
-//                    this->screen.rect.cx = width;
-//                    this->screen.rect.cy = height;
+                    this->front_width = this->width;
+                    this->front_height = this->height;
 //                    this->screen.bpp     = bpp;
                     break;
                 case -1:
@@ -915,20 +919,6 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 //        if (this->clip_chanid >= 0) {
             // this->send_to_front_channel(
 //        }
-    }
-
-    private:
-    /* taken from vncauth.c */
-    static void rfbEncryptBytes(uint8_t* bytes, char* passwd)
-    {
-        char key[12];
-
-        /* key is simply password padded with nulls */
-        memset(key, 0, sizeof(key));
-        strncpy(key, passwd, 8);
-        rfbDesKey((unsigned char*)key, EN0); /* 0, encrypt */
-        rfbDes((unsigned char*)bytes, (unsigned char*)bytes);
-        rfbDes((unsigned char*)(bytes + 8), (unsigned char*)(bytes + 8));
     }
 };
 
