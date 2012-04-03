@@ -58,7 +58,7 @@ public:
     {
         const Rect & trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
         uint32_t color = color_decode(cmd.color, this->bpp, this->palette);
-        if (this->bgr){
+        if (!this->bgr){
             color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
         }
         this->drawable.opaquerect(trect, color);
@@ -86,7 +86,7 @@ public:
         const Rect trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
         TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.")
         uint32_t color = color_decode(cmd.back_color, this->bpp, this->palette);
-        if (this->bgr){
+        if (!this->bgr){
             color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
         }
         this->drawable.patblt(trect, cmd.rop, color);
@@ -173,7 +173,7 @@ public:
 
         // Color handling
         uint32_t color = color_decode(lineto.pen.color, this->bpp, this->palette);
-        if (this->bgr){
+        if (!this->bgr){
             color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
         }
 
