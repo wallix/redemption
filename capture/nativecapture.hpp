@@ -65,7 +65,7 @@ class NativeCapture : public RDPGraphicDevice
     OutFileTransport trans;
     GraphicsToFile recorder;
 
-    NativeCapture(int width, int height, int bpp, const BGRPalette & palette, char * path)
+    NativeCapture(int width, int height, int bpp, const BGRPalette & palette, const char * path)
         : width(width), height(height), bpp(bpp),
         f(-1),
         trans(this->f),
@@ -77,7 +77,7 @@ class NativeCapture : public RDPGraphicDevice
         LOG(LOG_INFO, "Recording to file : %s", tmppath);
         this->f = open(tmppath, O_WRONLY|O_CREAT, 0666);
         if (this->f < 0){
-            LOG(LOG_INFO, "Error opening native capture file : %s", strerror(errno));
+            LOG(LOG_ERR, "Error opening native capture file : %s", strerror(errno));
             throw Error(ERR_RECORDER_NATIVE_CAPTURE_OPEN_FAILED);
         }
 

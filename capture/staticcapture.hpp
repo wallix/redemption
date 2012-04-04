@@ -63,7 +63,7 @@ class StaticCapture : public RDPDrawable
     BGRPalette palette;
     char path[1024];
 
-    StaticCapture(int width, int height, int bpp, const BGRPalette & palette, char * path, const char * codec_id, const char * video_quality)
+    StaticCapture(int width, int height, int bpp, const BGRPalette & palette, const char * path, const char * codec_id, const char * video_quality)
         : RDPDrawable(width, height, bpp, palette, true),
           framenb(0)
     {
@@ -82,6 +82,11 @@ class StaticCapture : public RDPDrawable
         if (difftimeval(now, this->start) < this->inter_frame_interval){
             return;
         }
+        this->dump_png();
+    }
+
+    virtual void flush()
+    {
         this->dump_png();
     }
 
