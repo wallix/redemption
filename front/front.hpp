@@ -3422,10 +3422,36 @@ public:
         }
     }
 
+    void draw_vnc(const Rect & rect, const uint8_t bpp, const BGRPalette & palette332, const uint8_t * raw, uint32_t need_size)
+    {
+        LOG(LOG_INFO, "draw vnc bitmap at (%u, %u, %u, %u)", rect.x, rect.y, rect.cx, rect.cy);
+        const uint16_t TILE_CX = 32;
+        const uint16_t TILE_CY = 32;
+
+        for (int y = 0; y < rect.cy ; y += TILE_CY) {
+            int cy = std::min(TILE_CY, (uint16_t)(rect.cy - y));
+
+            for (int x = 0; x < rect.cx ; x += TILE_CX) {
+                int cx = std::min(TILE_CX, (uint16_t)(rect.cx - x));
+
+                const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
+                const Rect src_tile(x, y, cx, cy);
+
+                const Bitmap tiled_bmp(raw, rect.cx, rect.cy, bpp, src_tile);
+
+                const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
+                this->orders->draw(cmd2, dst_tile, tiled_bmp);
+                if (this->capture){
+                    this->capture->draw(cmd2, dst_tile, tiled_bmp);
+                }
+            }
+        }
+
+    }
+
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap)
     {
-        if (bitmap.cx < cmd.srcx
-        ||  bitmap.cy < cmd.srcy){
+        if (bitmap.cx < cmd.srcx || bitmap.cy < cmd.srcy){
             return;
         }
 
@@ -3440,26 +3466,69 @@ public:
             this->palette_sent = false;
         }
 
+        // if not we have to split it
+        const uint16_t TILE_CX = 32;
+        const uint16_t TILE_CY = 32;
+
         const uint16_t dst_x = cmd.rect.x;
         const uint16_t dst_y = cmd.rect.y;
         // clip dst as it can be larger than source bitmap
         const uint16_t dst_cx = std::min<uint16_t>(bitmap.cx - cmd.srcx, cmd.rect.cx);
         const uint16_t dst_cy = std::min<uint16_t>(bitmap.cy - cmd.srcy, cmd.rect.cy);
 
-        for (int y = 0; y < dst_cy ; y += 32) {
-            int cy = std::min(32, dst_cy - y);
+//        LOG(LOG_WARNING, "bitmap.cx=%u bitmap.cy=%u cmd.srcx=%u cmd.srcy=%u cmd.rect=(%u, %u, %u, %u) dst_cx=%u dst_cy=%u",
+//                bitmap.cx, bitmap.cy, cmd.srcx, cmd.srcy, cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy, dst_cx, dst_cy);
 
-            for (int x = 0; x < dst_cx ; x += 32) {
-                int cx = std::min(32, dst_cx - x);
+        // if target bitmap can be fully stored inside one front cache entry
+        uint32_t front_bitmap_size = ::nbbytes(this->client_info.bpp) * align4(dst_cx) * dst_cy;
+        // even if cache seems to be large enough, cache entries cant be used for values whose width is larger than 256
+        // hence, we check for this case. There does not seem to exist any similar restriction on cy
+        // actual reason of this is unclear (I don't even know if it's related to redemption code or client code).
+        if (front_bitmap_size <= this->client_info.cache3_size
+            && align4(dst_cx) < 256 && dst_cy < 256){
+            // clip dst as it can be larger than source bitmap
+            const Rect dst_tile(dst_x, dst_y, dst_cx, dst_cy);
+            const Rect src_tile(cmd.srcx, cmd.srcy, dst_cx, dst_cy);
 
-                const Rect dst_tile(dst_x + x, dst_y + y, cx, cy);
-                const Rect src_tile(cmd.srcx + x, cmd.srcy + y, cx, cy);
-
+            // No need to resize bitmap
+            if (src_tile == Rect(0, 0, bitmap.cx, bitmap.cy)){
+                const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
+                this->orders->draw(cmd2, clip, bitmap);
+                if (this->capture){
+                    this->capture->draw(cmd2, clip, bitmap);
+                }
+            }
+            else {
+                TODO("if we immediately create tiled_bitmap at the target bpp value, we would avoid a data copy. Drawback need one more parameter to tiling bitmap constructor")
                 const Bitmap tiled_bmp(bitmap, src_tile);
                 const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
                 this->orders->draw(cmd2, clip, tiled_bmp);
                 if (this->capture){
                     this->capture->draw(cmd2, clip, tiled_bmp);
+                }
+            }
+        }
+        else {
+            for (int y = 0; y < dst_cy ; y += TILE_CY) {
+                int cy = std::min(TILE_CY, (uint16_t)(dst_cy - y));
+
+                for (int x = 0; x < dst_cx ; x += TILE_CX) {
+                    int cx = std::min(TILE_CX, (uint16_t)(dst_cx - x));
+
+                    const Rect dst_tile(dst_x + x, dst_y + y, cx, cy);
+                    const Rect src_tile(cmd.srcx + x, cmd.srcy + y, cx, cy);
+
+                    TODO("if we immediately create tiled_bitmap at the target bpp value, we would avoid a data copy. Drawback need one more parameter to tiling bitmap constructor")
+                    const Bitmap tiled_bmp(bitmap, src_tile);
+                    LOG(LOG_WARNING, "bitmap.cx=%u bitmap.cy=%u cmd.srcx=%u cmd.srcy=%u cmd.rect=(%u, %u, %u, %u) dst_cx=%u dst_cy=%u tbmp_cx=%u tbmp_cy=%u",
+                        bitmap.cx, bitmap.cy, cmd.srcx, cmd.srcy, cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy, dst_cx, dst_cy, tiled_bmp.cx, tiled_bmp.cy);
+
+                    const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
+                    cmd2.log(LOG_INFO, clip);
+                    this->orders->draw(cmd2, clip, tiled_bmp);
+                    if (this->capture){
+                        this->capture->draw(cmd2, clip, tiled_bmp);
+                    }
                 }
             }
         }

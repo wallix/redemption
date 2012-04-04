@@ -167,6 +167,44 @@ public:
     }
 
 
+    TODO("add palette support");
+    Bitmap(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t vnc_cy, uint8_t vnc_bpp, const Rect & tile)
+        : original_bpp(vnc_bpp)
+        , cx(align4(vnc_cx))
+        , cy(vnc_cy)
+        , line_size(this->cx * nbbytes(this->original_bpp))
+        , bmp_size(row_size(this->cx, this->original_bpp) * this->cy)
+        , data_bitmap()
+    {
+        this->data_bitmap.alloc(this->bmp_size);
+
+        // raw: vnc data is a bunch of pixels of size cx * cy * nbbytes(bpp)
+        // line 0 is the first line (top-up)
+
+        // bitmapDataStream (variable): A variable-sized array of bytes.
+        //  Uncompressed bitmap data represents a bitmap as a bottom-up,
+        //  left-to-right series of pixels. Each pixel is a whole
+        //  number of bytes. Each row contains a multiple of four bytes
+        // (including up to three bytes of padding, as necessary).
+
+        const uint8_t Bpp = nbbytes(this->original_bpp);
+        const unsigned src_row_size = vnc_cx * Bpp;
+        const unsigned dest_row_size = this->bmp_size / this->cy;
+        uint8_t *dest = this->data_bitmap.get();
+        const uint8_t *src = vnc_raw + src_row_size * (tile.y + tile.cy - 1) + tile.x * Bpp;
+
+        for (unsigned i = 0; i < this->cy; i++) {
+            memcpy(dest, src, src_row_size);
+            if (src_row_size < dest_row_size){
+                bzero(dest + src_row_size, dest_row_size - src_row_size);
+            }
+            src -= src_row_size;
+            dest += dest_row_size;
+        }
+    }
+
+
+
     Bitmap(uint8_t bpp, const char* filename)
         : original_bpp(bpp)
         , cx(0)
