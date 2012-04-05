@@ -495,10 +495,12 @@ public:
 
         /* shut down the rdp client */
         this->send_deactive();
+        this->up_and_running = 0;
 
         /* this should do the resizing */
         this->send_demand_active();
 
+        // reset outgoing orders and reset caches
         delete this->orders;
         this->orders = new GraphicsUpdatePDU(trans,
                         this->userid,

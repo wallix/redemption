@@ -43,7 +43,7 @@
 struct mod_vnc : public client_mod {
     /* mod data */
     char mod_name[256];
-    int mod_mouse_state;
+    uint8_t mod_mouse_state;
     BGRPalette palette;
     int vnc_desktop;
     char username[256];
@@ -381,6 +381,7 @@ struct mod_vnc : public client_mod {
             this->t->send(stream.data, 4 + 3 * 4);
         }
 
+        TODO("Maybe the resize should be done in session ?")
         switch (this->front.server_resize(this->width, this->height, this->bpp)){
         case 0:
             // no resizing needed
@@ -389,10 +390,11 @@ struct mod_vnc : public client_mod {
             // resizing done
             this->front_width = this->width;
             this->front_height = this->height;
-//                    this->screen.bpp     = bpp;
+            this->front.set_mod_bpp(this->bpp);
             break;
         case -1:
             // resizing failed
+            // thow an Error ?
             break;
         }
 
@@ -429,6 +431,7 @@ struct mod_vnc : public client_mod {
         this->lib_open_clip_channel();
 //            LOG(LOG_INFO, "VNC lib open clip channel ok\n");
         LOG(LOG_INFO, "VNC connection complete, connected ok\n");
+        TODO("Clearing the front screen could be done in session")
         this->front.begin_update();
         RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), 0);
 
@@ -438,117 +441,46 @@ struct mod_vnc : public client_mod {
 
     virtual ~mod_vnc(){}
 
-    TODO(" optimize this  much duplicated code and several send at once when not necessary")
+    void change_mouse_state(uint16_t x, uint16_t y, uint8_t button, bool set)
+    {
+        Stream stream(6);
+        this->mod_mouse_state = set?(this->mod_mouse_state|button):(this->mod_mouse_state&~button); // set or clear bit
+        stream.out_uint8(5);
+        stream.out_uint8(this->mod_mouse_state);
+        stream.out_uint16_be(x);
+        stream.out_uint16_be(y);
+        this->t->send(stream.data, 6);
+    }
+
+
+    TODO("It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?")
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         Stream stream(32768);
 
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
-            stream.init(8192);
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(x);
-            stream.out_uint16_be(y);
-            this->t->send(stream.data, 6);
+            this->change_mouse_state(x, y, 0, true);
         }
         if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
-            if (device_flags & MOUSE_FLAG_DOWN){
-                stream.init(8192);
-                this->mod_mouse_state |= 1; // set bit 0
-                stream.out_uint8(5);
-                stream.out_uint8(this->mod_mouse_state);
-                stream.out_uint16_be(x);
-                stream.out_uint16_be(y);
-                this->t->send(stream.data, 6);
-            }
-            else {
-                stream.init(8192);
-                this->mod_mouse_state &= ~1; // clear bit 0
-                stream.out_uint8(5);
-                stream.out_uint8(this->mod_mouse_state);
-                stream.out_uint16_be(x);
-                stream.out_uint16_be(y);
-                this->t->send(stream.data, 6);
-            }
+            this->change_mouse_state(x, y, 1, device_flags & MOUSE_FLAG_DOWN);
         }
         if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
-            if (device_flags & MOUSE_FLAG_DOWN){
-                stream.init(8192);
-                this->mod_mouse_state |= 4; // set bit 0
-                stream.out_uint8(5);
-                stream.out_uint8(this->mod_mouse_state);
-                stream.out_uint16_be(x);
-                stream.out_uint16_be(y);
-                this->t->send(stream.data, 6);
-            }
-            else {
-                stream.init(8192);
-                this->mod_mouse_state &= ~4; // clear bit 0
-                stream.out_uint8(5);
-                stream.out_uint8(this->mod_mouse_state);
-                stream.out_uint16_be(x);
-                stream.out_uint16_be(y);
-                this->t->send(stream.data, 6);
-            }
+            this->change_mouse_state(x, y, 4, device_flags & MOUSE_FLAG_DOWN);
         }
         if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
-            if (device_flags & MOUSE_FLAG_DOWN){
-                stream.init(8192);
-                this->mod_mouse_state |= 2; // set bit 0
-                stream.out_uint8(5);
-                stream.out_uint8(this->mod_mouse_state);
-                stream.out_uint16_be(x);
-                stream.out_uint16_be(y);
-                this->t->send(stream.data, 6);
-            }
-            else {
-                stream.init(8192);
-                this->mod_mouse_state &= ~2; // clear bit 0
-                stream.out_uint8(5);
-                stream.out_uint8(this->mod_mouse_state);
-                stream.out_uint16_be(x);
-                stream.out_uint16_be(y);
-                this->t->send(stream.data, 6);
-            }
+            this->change_mouse_state(x, y, 2, device_flags & MOUSE_FLAG_DOWN);
         }
 
         // Wheel buttons
         if (device_flags == MOUSE_FLAG_BUTTON4 /* 0x0280 */
         ||  device_flags == 0x0278) {
-            // DOWN
-            stream.init(8192);
-            this->mod_mouse_state |= 8; // set bit 3
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(x);
-            stream.out_uint16_be(y);
-            this->t->send(stream.data, 6);
-            // UP
-            stream.init(8192);
-            this->mod_mouse_state &= ~8; // clear bit 3
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(x);
-            stream.out_uint16_be(y);
-            this->t->send(stream.data, 6);
+            this->change_mouse_state(x, y, 8, true); // DOWN
+            this->change_mouse_state(x, y, 8, false); // UP
         }
         if (device_flags == MOUSE_FLAG_BUTTON5 /* 0x0380 */
         ||  device_flags == 0x0388) {
-            // DOWN
-            this->mod_mouse_state |= 16; // set bit 4
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(x);
-            stream.out_uint16_be(y);
-            this->t->send(stream.data, 6);
-            // UP
-            stream.init(8192);
-            this->mod_mouse_state &= ~16; // clear bit 4
-            stream.out_uint8(5);
-            stream.out_uint8(this->mod_mouse_state);
-            stream.out_uint16_be(x);
-            stream.out_uint16_be(y);
-            this->t->send(stream.data, 6);
+            this->change_mouse_state(x, y, 16, true); // DOWN
+            this->change_mouse_state(x, y, 16, false); // UP
         }
     }
 
@@ -705,8 +637,6 @@ struct mod_vnc : public client_mod {
             case 0: /* raw */
             {
                 int32_t need_size = cx * cy * Bpp;
-                LOG(LOG_INFO, "receiving raw data %u", need_size);
-
                 uint8_t * raw = (uint8_t *)malloc(cx*16*Bpp);
                 if (!raw){
                     LOG(LOG_ERR, "Memory allocation failed for raw buffer in VNC");
@@ -716,7 +646,6 @@ struct mod_vnc : public client_mod {
                 for (uint16_t yy = 0 ; yy < cy ; yy += 16){
                     uint8_t * tmp = raw;
                     this->t->recv((char**)&tmp, std::min<size_t>(cx*16*Bpp, need_size - cx*yy*Bpp));
-                    LOG(LOG_INFO, "received raw data %u sending to front", need_size);
                     this->front.begin_update();
                     this->front.draw_vnc(Rect(x, yy, cx, std::min(16, cy-yy)), this->bpp, this->palette332, raw, need_size);
                     this->front.end_update();
