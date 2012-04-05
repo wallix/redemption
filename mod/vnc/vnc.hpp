@@ -636,18 +636,19 @@ struct mod_vnc : public client_mod {
             switch (encoding){
             case 0: /* raw */
             {
-                int32_t need_size = cx * cy * Bpp;
                 uint8_t * raw = (uint8_t *)malloc(cx*16*Bpp);
                 if (!raw){
                     LOG(LOG_ERR, "Memory allocation failed for raw buffer in VNC");
                     throw Error(ERR_VNC_MEMORY_ALLOCATION_FAILED);
                 }
 
-                for (uint16_t yy = 0 ; yy < cy ; yy += 16){
+                for (uint16_t yy = y ; yy < y + cy ; yy += 16){
                     uint8_t * tmp = raw;
-                    this->t->recv((char**)&tmp, std::min<size_t>(cx*16*Bpp, need_size - cx*yy*Bpp));
+                    uint16_t cyy = std::min<uint16_t>(16, cy-(yy-y));
+                    this->t->recv((char**)&tmp, cyy*cx*Bpp);
                     this->front.begin_update();
-                    this->front.draw_vnc(Rect(x, yy, cx, std::min(16, cy-yy)), this->bpp, this->palette332, raw, need_size);
+                    LOG(LOG_INFO, "draw vnc: x=%d y=%d cx=%d cy=%d", x, yy, cx, cyy);
+                    this->front.draw_vnc(Rect(x, yy, cx, cyy), this->bpp, this->palette332, raw, cx*16*Bpp);
                     this->front.end_update();
                 }
                 free(raw);
@@ -655,12 +656,11 @@ struct mod_vnc : public client_mod {
             break;
             case 1: /* copy rect */
             {
-//                    LOG(LOG_INFO, "copy rect");
                 Stream stream(4);
                 this->t->recv((char**)&stream.end, 4);
                 const int srcx = stream.in_uint16_be();
                 const int srcy = stream.in_uint16_be();
-//                    LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
+                    LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
                 const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
                 this->front.begin_update();
                 this->front.draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
