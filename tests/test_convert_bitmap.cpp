@@ -70,19 +70,19 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap)
         0xFF, 0xFF,   0xFF, 0xFF,
     };
 
-    Bitmap bmp16(source_bpp, &palette332, cx, cy, data, cx * nbbytes(source_bpp) * cy, false, false);
+    Bitmap bmp16(source_bpp, &palette332, cx, cy, data, cx * nbbytes(source_bpp) * cy, false);
     BOOST_CHECK_EQUAL(24, bmp16.bmp_size);
     BOOST_CHECK_EQUAL(4, bmp16.line_size);
-    BOOST_CHECK_EQUAL(cx, bmp16.cx); 
-    BOOST_CHECK_EQUAL(cy, bmp16.cy); 
+    BOOST_CHECK_EQUAL(cx, bmp16.cx);
+    BOOST_CHECK_EQUAL(cy, bmp16.cy);
     BOOST_CHECK_EQUAL(16, bmp16.original_bpp);
 
     uint16_t target_bpp = 24;
-    Bitmap bmp24(target_bpp, bmp16); 
+    Bitmap bmp24(target_bpp, bmp16);
     BOOST_CHECK_EQUAL(36, bmp24.bmp_size);
     BOOST_CHECK_EQUAL(6, bmp24.line_size);
-    BOOST_CHECK_EQUAL(cx, bmp24.cx); 
-    BOOST_CHECK_EQUAL(cy, bmp24.cy); 
+    BOOST_CHECK_EQUAL(cx, bmp24.cx);
+    BOOST_CHECK_EQUAL(cy, bmp24.cy);
     BOOST_CHECK_EQUAL(24, bmp24.original_bpp);
 
     const uint8_t * outbuf = bmp24.data();
@@ -140,5 +140,3 @@ BOOST_AUTO_TEST_CASE(TestConvertBitmap)
     BOOST_CHECK_EQUAL(0xFF, outbuf[0]);
 
 }
-
-

@@ -91,7 +91,7 @@ public:
 
     } data_bitmap;
 
-    Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size, bool compressed=false, int upsidedown=false)
+    Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size, bool compressed=false)
         : original_bpp(bpp)
         , cx(cx)
         , cy(cy)
@@ -112,8 +112,6 @@ public:
 
         if (compressed) {
             this->decompress(data, size);
-        } else if (upsidedown) {
-            this->copy_upsidedown(data, cx);
         } else {
             uint8_t * dest = this->data_bitmap.get();
             const uint8_t * src = data;
@@ -482,25 +480,6 @@ public:
     }
 
 private:
-    void copy_upsidedown(const uint8_t* input, uint16_t cx)
-    {
-        const uint8_t Bpp = nbbytes(this->original_bpp);
-        TODO(" without this evil alnment we are expirimenting problems with VNC bitmaps  but there should be a better fix.")
-        this->cx = (uint16_t)align4(cx);
-        uint8_t * d8 = this->data_bitmap.get() + (this->cy-1) * this->line_size;
-        const uint8_t * s8 = input;
-        uint32_t src_width = cx * Bpp;
-
-        for (unsigned i = 0; i < this->cy; i++) {
-            memcpy(d8, s8, src_width);
-            if (this->line_size > src_width){
-                memset(d8+src_width, 0, this->line_size - src_width);
-            }
-            s8 += src_width;
-            d8 -= this->line_size;
-        }
-    }
-
     TODO("move that function to external definition")
     void decompress(const uint8_t* input, size_t size)
     {
