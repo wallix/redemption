@@ -3385,10 +3385,6 @@ public:
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        LOG(LOG_INFO, "RDPOpaqueRect cmd.rect(%u, %u, %u, %u) clip(%u, %u, %u, %u)",
-            cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,  
-            clip.x, clip.y, clip.cx, clip.cy);  
-
         if (!clip.isempty()
         && !clip.intersect(cmd.rect).isempty()){
 
@@ -3396,10 +3392,6 @@ public:
 
             RDPOpaqueRect new_cmd = cmd;
             new_cmd.color = this->convert_opaque(cmd.color);
-
-        LOG(LOG_INFO, "RDPOpaqueRect (2) cmd.rect(%u, %u, %u, %u) clip(%u, %u, %u, %u)",
-            cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy,  
-            clip.x, clip.y, clip.cx, clip.cy);  
 
             this->orders->draw(new_cmd, clip);
 
@@ -3464,7 +3456,6 @@ public:
 
     void draw_vnc(const Rect & rect, const uint8_t bpp, const BGRPalette & palette332, const uint8_t * raw, uint32_t need_size)
     {
-        LOG(LOG_INFO, "draw vnc bitmap at (%u, %u, %u, %u)", rect.x, rect.y, rect.cx, rect.cy);
         const uint16_t TILE_CX = 32;
         const uint16_t TILE_CY = 32;
 
@@ -3478,7 +3469,6 @@ public:
                 const Rect src_tile(x, y, cx, cy);
 
                 const Bitmap tiled_bmp(raw, rect.cx, rect.cy, bpp, src_tile);
-
                 const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
                 this->orders->draw(cmd2, dst_tile, tiled_bmp);
                 if (this->capture){
@@ -3515,9 +3505,6 @@ public:
         // clip dst as it can be larger than source bitmap
         const uint16_t dst_cx = std::min<uint16_t>(bitmap.cx - cmd.srcx, cmd.rect.cx);
         const uint16_t dst_cy = std::min<uint16_t>(bitmap.cy - cmd.srcy, cmd.rect.cy);
-
-//        LOG(LOG_WARNING, "bitmap.cx=%u bitmap.cy=%u cmd.srcx=%u cmd.srcy=%u cmd.rect=(%u, %u, %u, %u) dst_cx=%u dst_cy=%u",
-//                bitmap.cx, bitmap.cy, cmd.srcx, cmd.srcy, cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy, dst_cx, dst_cy);
 
         // if target bitmap can be fully stored inside one front cache entry
         uint32_t front_bitmap_size = ::nbbytes(this->client_info.bpp) * align4(dst_cx) * dst_cy;
@@ -3560,9 +3547,6 @@ public:
 
                     TODO("if we immediately create tiled_bitmap at the target bpp value, we would avoid a data copy. Drawback need one more parameter to tiling bitmap constructor")
                     const Bitmap tiled_bmp(bitmap, src_tile);
-                    LOG(LOG_WARNING, "bitmap.cx=%u bitmap.cy=%u cmd.srcx=%u cmd.srcy=%u cmd.rect=(%u, %u, %u, %u) dst_cx=%u dst_cy=%u tbmp_cx=%u tbmp_cy=%u",
-                        bitmap.cx, bitmap.cy, cmd.srcx, cmd.srcy, cmd.rect.x, cmd.rect.y, cmd.rect.cx, cmd.rect.cy, dst_cx, dst_cy, tiled_bmp.cx, tiled_bmp.cy);
-
                     const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
                     cmd2.log(LOG_INFO, clip);
                     this->orders->draw(cmd2, clip, tiled_bmp);

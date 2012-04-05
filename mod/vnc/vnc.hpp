@@ -691,8 +691,6 @@ struct mod_vnc : public client_mod {
         stream.skip_uint8(1);
         size_t num_recs = stream.in_uint16_be();
 
-        this->front.begin_update();
-
         uint8_t Bpp = nbbytes(this->bpp);
         stream.init(256);
         for (size_t i = 0; i < num_recs; i++) {
@@ -719,7 +717,9 @@ struct mod_vnc : public client_mod {
                     uint8_t * tmp = raw;
                     this->t->recv((char**)&tmp, std::min<size_t>(cx*16*Bpp, need_size - cx*yy*Bpp));
                     LOG(LOG_INFO, "received raw data %u sending to front", need_size);
-//                    this->front.draw_vnc(Rect(x, yy, cx, std::min(16, cy-yy)), this->bpp, this->palette332, raw, need_size);
+                    this->front.begin_update();
+                    this->front.draw_vnc(Rect(x, yy, cx, std::min(16, cy-yy)), this->bpp, this->palette332, raw, need_size);
+                    this->front.end_update();
                 }
                 free(raw);
             }
@@ -733,7 +733,9 @@ struct mod_vnc : public client_mod {
                 const int srcy = stream.in_uint16_be();
 //                    LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
                 const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
+                this->front.begin_update();
                 this->front.draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
+                this->front.end_update();
             }
             break;
             case 0xffffff11: /* cursor */
@@ -809,7 +811,9 @@ struct mod_vnc : public client_mod {
                 if (x > 31) { x = 31; }
                 if (y > 31) { y = 31; }
 TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation")
+                this->front.begin_update();
                 this->front.server_set_pointer(x, y, rdp_cursor_data, rdp_cursor_mask);
+                this->front.end_update();
             }
             break;
             default:
@@ -818,12 +822,10 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                 break;
             }
         }
-        this->front.end_update();
 
         {
-            LOG(LOG_INFO, "Frame buffer Update");
             /* FrambufferUpdateRequest */
-            Stream stream(32768);
+            Stream stream(10);
             stream.out_uint8(3);
             stream.out_uint8(1);
             stream.out_uint16_be(0);

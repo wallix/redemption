@@ -170,12 +170,14 @@ public:
     TODO("add palette support");
     Bitmap(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t vnc_cy, uint8_t vnc_bpp, const Rect & tile)
         : original_bpp(vnc_bpp)
-        , cx(align4(vnc_cx))
-        , cy(vnc_cy)
+        , cx(align4(tile.cx))
+        , cy(tile.cy)
         , line_size(this->cx * nbbytes(this->original_bpp))
         , bmp_size(row_size(this->cx, this->original_bpp) * this->cy)
         , data_bitmap()
     {
+//        LOG(LOG_ERR, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
+
         this->data_bitmap.alloc(this->bmp_size);
 
         // raw: vnc data is a bunch of pixels of size cx * cy * nbbytes(bpp)
@@ -194,7 +196,7 @@ public:
         const uint8_t *src = vnc_raw + src_row_size * (tile.y + tile.cy - 1) + tile.x * Bpp;
 
         for (unsigned i = 0; i < this->cy; i++) {
-            memcpy(dest, src, src_row_size);
+            memcpy(dest, src, dest_row_size);
             if (src_row_size < dest_row_size){
                 bzero(dest + src_row_size, dest_row_size - src_row_size);
             }
