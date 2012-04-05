@@ -57,7 +57,7 @@ class Bounds {
 
             this->absolute_bounds[LEFT]   = newclip.x;
             this->absolute_bounds[TOP]    = newclip.y;
-            this->absolute_bounds[RIGHT]   = newclip.x + newclip.cx - 1;
+            this->absolute_bounds[RIGHT]  = newclip.x + newclip.cx - 1;
             this->absolute_bounds[BOTTOM] = newclip.y + newclip.cy - 1;
 
             this->delta_bounds[LEFT]   = this->absolute_bounds[LEFT]   - old_bounds[LEFT];
@@ -356,7 +356,9 @@ class RDPOrderCommon {
     Rect clip;
 
     RDPOrderCommon(int order, Rect clip) :
-        order(order), clip(clip) {}
+        order(order), clip(clip) 
+    {
+    }
 
     bool operator==(const RDPOrderCommon &other) const {
         return  (this->order == other.order)

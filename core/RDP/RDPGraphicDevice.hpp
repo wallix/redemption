@@ -385,6 +385,7 @@ struct RDPSerializer : public RDPGraphicDevice
         cmd.emit(this->stream, newcommon, this->common, this->opaquerect);
         this->common = newcommon;
         this->opaquerect = cmd;
+
         if (this->ini && this->ini->globals.debug.primary_orders){
             cmd.log(LOG_INFO, common.clip);
         }

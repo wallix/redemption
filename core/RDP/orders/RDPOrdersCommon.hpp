@@ -21,8 +21,8 @@
 
 */
 
-#if !defined(__RDPORDERSCOMMON_HPP__)
-#define __RDPORDERSCOMMON_HPP__
+#if !defined(__CORE_RDP_ORDERS_RDPORDERSCOMMON_HPP__)
+#define __CORE_RDP_ORDERS_RDPORDERSCOMMON_HPP__
 
 #include "constants.hpp"
 #include "stream.hpp"
