@@ -18,11 +18,10 @@
  *   Author(s): Christophe Grosjean, Jonathan Poelen
  */
 
-#if !defined(__META_CAPTURE_HPP__)
-#define __META_CAPTURE_HPP__
+#if !defined(__META_WRM_HPP__)
+#define __META_WRM_HPP__
 
-#include <stdint.h>
-#include <unistd.h>
+#include "RDP/RDPGraphicDevice.hpp"
 
 struct MetaWRM {
     uint16_t version;
@@ -32,7 +31,15 @@ struct MetaWRM {
 
     MetaWRM()
     : version(0)
+    , width(0)
+    , height(0)
+    , bpp(0)
     {}
+
+    MetaWRM(RDPUnserializer& unserializer)
+    {
+        this->recv(unserializer);
+    }
 
     MetaWRM(uint16_t width, uint16_t height, uint8_t bpp)
     : version(0)
@@ -41,27 +48,49 @@ struct MetaWRM {
     , bpp(bpp)
     {}
 
-    MetaWRM(uint8_t bpp)
-    : version(0)
-    , bpp(bpp)
-    {}
-
-    ssize_t read(int fd)
+    void in(Stream& stream)
     {
-        return ::read(fd, this, sizeof(MetaWRM));
+        stream.in_copy_bytes((uint8_t *)this, sizeof(*this));/*
+        this->version = stream.in_uint16_le();
+        this->width = stream.in_uint16_le();
+        this->height = stream.in_uint16_le();
+        this->bpp = stream.in_uint8();*/
     }
 
-    ssize_t write(int fd) const
+    void recv(RDPUnserializer& unserializer)
     {
-        return ::write(fd, this, sizeof(MetaWRM));
+        unserializer.selected_next_order();
+        if (unserializer.chunk_type == WRMChunk::META_INFO) {
+            this->in(unserializer.stream);
+            --unserializer.remaining_order_count;
+        }
+        else {
+            this->version = 0;
+            this->width = 800;
+            this->height = 600;
+            this->bpp = 24;
+        }
+    }
+
+    void send(RDPSerializer& serializer) const
+    {
+        this->send(serializer.stream, *serializer.trans);
+    }
+
+    void send(Stream& stream, Transport& transport) const
+    {
+        out(stream);
+        transport.send(stream.data, sizeof(*this)+8/*stream.p - stream.data*/);
+    }
+
+    void out(Stream& stream) const
+    {
+        stream.set_out_uint16_le(WRMChunk::META_INFO, 0);
+        stream.set_out_uint16_le(sizeof(*this) + 8, 2);
+        stream.set_out_uint16_le(1, 4);
+        stream.set_out_uint16_le(0, 6);
+        stream.set_out_copy_bytes((const uint8_t *)this, sizeof(*this), 8);
     }
 };
-
-MetaWRM make_meta_wrm(int fd)
-{
-    MetaWRM meta;
-    meta.read(fd);
-    return meta;
-}
 
 #endif

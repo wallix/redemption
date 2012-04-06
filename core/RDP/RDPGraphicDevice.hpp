@@ -49,6 +49,10 @@
 
 #include "bmpcache.hpp"
 #include "timer_capture.hpp"
+#include "stream.hpp"
+#include "rect.hpp"
+#include "RDP/orders/RDPOrdersCommon.hpp"
+#include "colors.hpp"
 
 struct RDPGraphicDevice
 {
@@ -79,6 +83,12 @@ public:
     // through pointer of base class. As this class is interface only
     // it does not looks really usefull.
     virtual ~RDPGraphicDevice() {};
+};
+
+struct WRMChunk {
+    static const uint16_t OLD_TIMESTAMP = 1000;
+    static const uint16_t TIMESTAMP = 1001;
+    static const uint16_t META_INFO = 1002;
 };
 
 struct RDPUnserializer
@@ -138,7 +148,8 @@ struct RDPUnserializer
     {
     }
 
-    uint8_t next(){
+    bool selected_next_order()
+    {
         if (((this->stream.p == this->stream.end) && (this->remaining_order_count))
         ||  ((this->stream.p != this->stream.end) && (this->remaining_order_count == 0))){
             LOG(LOG_ERR, "Incomplete order batch at chunk %u "
@@ -159,10 +170,15 @@ struct RDPUnserializer
             }
             catch (Error & e){
                 TODO(" check specific error and return 0 only if actual EOF is reached or rethrow the error")
-                return (e.id == ERR_TRANSPORT_READ_FAILED)?0:1;
+                return (e.id == ERR_TRANSPORT_READ_FAILED) ? false : true;
             }
             this->trans->recv(&this->stream.end, this->chunk_size - 8);
         }
+        return true;
+    }
+
+    void interpret_order()
+    {
         switch (this->chunk_type){
         case RDP_UPDATE_ORDERS:
         {
@@ -261,7 +277,7 @@ struct RDPUnserializer
             }
             }
             break;
-            case 1001: //TIMESTAMP
+            case WRMChunk::TIMESTAMP:
             {
                 uint64_t micro_sec;
                 this->stream.in_copy_bytes((uint8_t*)&micro_sec, sizeof(micro_sec));
@@ -297,7 +313,14 @@ struct RDPUnserializer
                 this->remaining_order_count = 0;
             break;
         }
-        return 1;
+    }
+
+    uint8_t next(){
+        if (selected_next_order()) {
+            interpret_order();
+            return 1;
+        }
+        return 0;
     }
 };
 

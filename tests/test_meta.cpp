@@ -15,7 +15,7 @@
 
   Product name: redemption, a FLOSS RDP proxy
   Copyright (C) Wallix 2010-2012
-  Author(s): Jonathan Poeleb
+  Author(s): Jonathan Poelen
 
 */
 
@@ -36,12 +36,11 @@ BOOST_AUTO_TEST_CASE(TestMeta)
     {
         int fd = open("/tmp/test_meta.mwrm", O_WRONLY|O_CREAT, 0655);
         BOOST_CHECK(fd > 0);
-        MetaWRM meta;
-        meta.width = 1024;
-        meta.height = 800;
-        meta.bpp = 16;
+        MetaWRM meta(1024, 800, 16);
+        OutFileTransport out_file(fd);
+        Stream stream;
         BOOST_CHECK(1);
-        meta.write(fd);
+        meta.send(stream, out_file);
         BOOST_CHECK(1);
         close(fd);
     }
@@ -49,9 +48,15 @@ BOOST_AUTO_TEST_CASE(TestMeta)
     {
         int fd = open("/tmp/test_meta.mwrm", O_RDONLY);
         BOOST_CHECK(fd > 0);
-        MetaWRM meta;
+        InFileTransport in_trans(fd);
+        RDPUnserializer reader(&in_trans, 0, Rect());
         BOOST_CHECK(1);
-        meta.read(fd);
+        MetaWRM meta(reader);
+        //MetaWRM meta;
+        //reader.selected_next_order();
+        //BOOST_CHECK_EQUAL(reader.chunk_type, WRMChunk::META_INFO);
+        //BOOST_CHECK_EQUAL(reader.chunk_size, sizeof(meta) + 8);
+        //meta.in(reader.stream);
         BOOST_CHECK_EQUAL(1024, meta.width);
         BOOST_CHECK_EQUAL(800, meta.height);
         BOOST_CHECK_EQUAL(16, meta.bpp);

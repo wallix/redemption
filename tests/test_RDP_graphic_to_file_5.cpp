@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
         in_trans.recv(&stream.end, 16);
         BOOST_CHECK_EQUAL(stream.end - stream.p, 16);
         uint16_t chunk_type = stream.in_uint16_le();
-        BOOST_CHECK_EQUAL(chunk_type, (uint16_t)GraphicsToFile::TIMESTAMP);
+        BOOST_CHECK_EQUAL(chunk_type, (uint16_t)WRMChunk::TIMESTAMP);
         uint16_t chunk_size = stream.in_uint16_le();
         BOOST_CHECK_EQUAL(chunk_size, (uint16_t)16);
         uint16_t order_count = stream.in_uint16_le();

@@ -104,8 +104,6 @@
 
 struct GraphicsToFile : public RDPSerializer
 {
-    enum { OLD_TIMESTAMP = 1000, TIMESTAMP = 1001 };
-
     uint16_t offset_chunk_size;
     uint16_t offset_chunk_type;
     uint16_t chunk_type;
@@ -178,7 +176,7 @@ struct GraphicsToFile : public RDPSerializer
     {
         LOG(LOG_INFO, "GraphicsToFile::timestamp()");
         this->flush();
-        this->chunk_type = TIMESTAMP;
+        this->chunk_type = WRMChunk::TIMESTAMP;
         this->order_count = 1;
         uint64_t micro_sec = this->timer.elapsed(now);
         this->stream.out_copy_bytes((uint8_t*)(&micro_sec), sizeof(micro_sec));
