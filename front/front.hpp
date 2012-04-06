@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(__FRONT_HPP__)
-#define __FRONT_HPP__
+#if !defined(__FRONT_FRONT_HPP__)
+#define __FRONT_FRONT_HPP__
 
 #include "log.hpp"
 
@@ -3481,6 +3481,27 @@ public:
 
     }
 
+    void draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
+    {
+        // No need to resize bitmap
+        if (src_tile == Rect(0, 0, bitmap.cx, bitmap.cy)){
+            const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
+            this->orders->draw(cmd2, clip, bitmap);
+            if (this->capture){
+                this->capture->draw(cmd2, clip, bitmap);
+            }
+        }
+        else {
+            TODO("if we immediately create tiled_bitmap at the target bpp value, we would avoid a data copy. Drawback need one more parameter to tiling bitmap constructor")
+            const Bitmap tiled_bmp(bitmap, src_tile);
+            const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
+            this->orders->draw(cmd2, clip, tiled_bmp);
+            if (this->capture){
+                this->capture->draw(cmd2, clip, tiled_bmp);
+            }
+        }
+    }
+
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap)
     {
         if (bitmap.cx < cmd.srcx || bitmap.cy < cmd.srcy){
@@ -3508,34 +3529,20 @@ public:
         const uint16_t dst_cx = std::min<uint16_t>(bitmap.cx - cmd.srcx, cmd.rect.cx);
         const uint16_t dst_cy = std::min<uint16_t>(bitmap.cy - cmd.srcy, cmd.rect.cy);
 
-        // if target bitmap can be fully stored inside one front cache entry
+        // check if target bitmap can be fully stored inside one front cache entry
+        // if so no need to tile it.
         uint32_t front_bitmap_size = ::nbbytes(this->client_info.bpp) * align4(dst_cx) * dst_cy;
-        // even if cache seems to be large enough, cache entries cant be used for values whose width is larger than 256
-        // hence, we check for this case. There does not seem to exist any similar restriction on cy
-        // actual reason of this is unclear (I don't even know if it's related to redemption code or client code).
+        // even if cache seems to be large enough, cache entries cant be used
+        // for values whose width is larger or equal to 256 after alignment
+        // hence, we check for this case. There does not seem to exist any
+        // similar restriction on cy actual reason of this is unclear
+        // (I don't even know if it's related to redemption code or client code).
         if (front_bitmap_size <= this->client_info.cache3_size
             && align4(dst_cx) < 256 && dst_cy < 256){
             // clip dst as it can be larger than source bitmap
             const Rect dst_tile(dst_x, dst_y, dst_cx, dst_cy);
             const Rect src_tile(cmd.srcx, cmd.srcy, dst_cx, dst_cy);
-
-            // No need to resize bitmap
-            if (src_tile == Rect(0, 0, bitmap.cx, bitmap.cy)){
-                const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
-                this->orders->draw(cmd2, clip, bitmap);
-                if (this->capture){
-                    this->capture->draw(cmd2, clip, bitmap);
-                }
-            }
-            else {
-                TODO("if we immediately create tiled_bitmap at the target bpp value, we would avoid a data copy. Drawback need one more parameter to tiling bitmap constructor")
-                const Bitmap tiled_bmp(bitmap, src_tile);
-                const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
-                this->orders->draw(cmd2, clip, tiled_bmp);
-                if (this->capture){
-                    this->capture->draw(cmd2, clip, tiled_bmp);
-                }
-            }
+            this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
         }
         else {
             for (int y = 0; y < dst_cy ; y += TILE_CY) {
@@ -3546,15 +3553,7 @@ public:
 
                     const Rect dst_tile(dst_x + x, dst_y + y, cx, cy);
                     const Rect src_tile(cmd.srcx + x, cmd.srcy + y, cx, cy);
-
-                    TODO("if we immediately create tiled_bitmap at the target bpp value, we would avoid a data copy. Drawback need one more parameter to tiling bitmap constructor")
-                    const Bitmap tiled_bmp(bitmap, src_tile);
-                    const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
-                    cmd2.log(LOG_INFO, clip);
-                    this->orders->draw(cmd2, clip, tiled_bmp);
-                    if (this->capture){
-                        this->capture->draw(cmd2, clip, tiled_bmp);
-                    }
+                    this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
                 }
             }
         }

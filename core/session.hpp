@@ -20,8 +20,8 @@
 
 */
 
-#if !defined(__SESSION_HPP__)
-#define __SESSION_HPP__
+#if !defined(__CORE_SESSION_HPP__)
+#define __CORE_SESSION_HPP__
 
 #include <netinet/tcp.h>
 #include <unistd.h>
@@ -355,7 +355,6 @@ struct Session {
 
                 this->front->init_pointers();
 
-                TODO("This should be done in cli_mod")
                 if (this->front->client_info.username[0]){
                     this->context->parse_username(this->front->client_info.username);
                 }

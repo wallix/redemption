@@ -647,7 +647,7 @@ struct mod_vnc : public client_mod {
                     uint16_t cyy = std::min<uint16_t>(16, cy-(yy-y));
                     this->t->recv((char**)&tmp, cyy*cx*Bpp);
                     this->front.begin_update();
-                    LOG(LOG_INFO, "draw vnc: x=%d y=%d cx=%d cy=%d", x, yy, cx, cyy);
+//                    LOG(LOG_INFO, "draw vnc: x=%d y=%d cx=%d cy=%d", x, yy, cx, cyy);
                     this->front.draw_vnc(Rect(x, yy, cx, cyy), this->bpp, this->palette332, raw, cx*16*Bpp);
                     this->front.end_update();
                 }
