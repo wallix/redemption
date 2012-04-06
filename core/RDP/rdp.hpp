@@ -30,6 +30,7 @@
 #include <stdio.h>
 
 #include "channel_list.hpp"
+#include "log.hpp"
 
 // [MS-RDPBCGR] 2.2.8.1.1.1.1 Share Control Header (TS_SHARECONTROLHEADER)
 // =======================================================================

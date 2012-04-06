@@ -56,16 +56,47 @@ bool check_sig(Drawable & data, char * message, const char * shasig)
     return true;
 }
 
+void test_file_to_png(const char* filename, uint16_t w, uint16_t h, uint16_t bpp, const char * shasig)
+{
+    int fd;
+    {
+        char tmppath[1024] = {};
+        sprintf(tmppath, "%s.%u.wrm", filename, getpid());
+        fd = ::open(tmppath, O_RDONLY);
+        BOOST_CHECK(fd > 0);
+    }
+    InFileTransport in_trans(fd);
+    RDPUnserializer reader(&in_trans, 0, Rect());
+    BOOST_CHECK(1);
+    MetaWRM meta(reader);
+    BOOST_CHECK_EQUAL(w, meta.width);
+    BOOST_CHECK_EQUAL(h, meta.height);
+    BOOST_CHECK_EQUAL(bpp, meta.bpp);
+    reader.screen_rect.cx = meta.width;
+    reader.screen_rect.cy = meta.height;
+    BGRPalette palette;
+    StaticCapture consumer(meta.width, meta.height, /*meta.bpp*/24, palette, "/tmp/test_file_to_png.png", 0, 0);
+    reader.consumer = &consumer;
+    while (reader.next())
+        ;
+    consumer.flush();
+
+    char message[1024];
+    if (!check_sig(consumer.drawable, message, shasig)){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+    ::close(fd);
+}
+
 BOOST_AUTO_TEST_CASE(TestFileToPng)
 {
     BGRPalette palette;
-
     {
-        //         MetaWRM meta(800, 600, 24);
+        //MetaWRM meta(800, 600, 24);
         MetaWRM meta(1024, 912, 16);
         NativeCapture cap(meta.width, meta.height, meta.bpp,
-                          palette, "/tmp/test_meta");
-        meta.write(cap.trans.fd);
+                          palette, "/tmp/test_file_to_png");
+        meta.send(cap.recorder);
         Rect clip(0, 0, meta.width, meta.height);
         cap.draw(RDPOpaqueRect(Rect(10,844,500,42), RED), clip);
         cap.draw(RDPOpaqueRect(Rect(777,110,144,188), GREEN), clip);
@@ -74,36 +105,25 @@ BOOST_AUTO_TEST_CASE(TestFileToPng)
         gettimeofday(&now, NULL);
         cap.recorder.timestamp(now);
     }
+    test_file_to_png("/tmp/test_file_to_png", 1024, 912, 16,
+                     "\x10\xa4\xc3\xe2\x18\x1e\x00\x51\xcc\x9b"
+                     "\x09\xaf\xf3\x20\xb5\xb2\xba\xb7\x38\x21");
+}
 
-    char tmppath[1024] = {};
-    sprintf(tmppath, "/tmp/test_meta.%u.wrm", getpid());
-    int fd = ::open(tmppath, O_RDONLY);
-    BOOST_CHECK(fd > 0);
-
+BOOST_AUTO_TEST_CASE(TestFileWithoutMetaToPng)
+{
+    BGRPalette palette;
     {
-        MetaWRM meta = make_meta_wrm(fd);
-        //         BOOST_CHECK_EQUAL(800, meta.width);
-        //         BOOST_CHECK_EQUAL(600, meta.height);
-        //         BOOST_CHECK_EQUAL(24, meta.bpp);
-        BOOST_CHECK_EQUAL(1024, meta.width);
-        BOOST_CHECK_EQUAL(912, meta.height);
-        BOOST_CHECK_EQUAL(16, meta.bpp);
-        StaticCapture consumer(meta.width, meta.height, /*meta.bpp*/24, palette, "/tmp/test_meta.png", 0, 0);
-        InFileTransport in_trans(fd);
-        Rect screen_rect(0, 0, meta.width, meta.height);
-        RDPUnserializer reader(&in_trans, &consumer, screen_rect);
-        reader.next();
-        reader.next();
-        reader.next();
-        consumer.flush();
-
-        char message[1024];
-        if (!check_sig(consumer.drawable, message,
-            "\x10\xa4\xc3\xe2\x18\x1e\x00\x51\xcc\x9b"
-            "\x09\xaf\xf3\x20\xb5\xb2\xba\xb7\x38\x21")){
-            BOOST_CHECK_MESSAGE(false, message);
-            }
+        Rect clip(0, 0, 800, 600);
+        NativeCapture cap(clip.cx, clip.cy, 16, palette, "/tmp/test_file_without_meta_to_png");
+        cap.draw(RDPOpaqueRect(Rect(10,500,500,42), RED), clip);
+        cap.draw(RDPOpaqueRect(Rect(600,110,144,188), GREEN), clip);
+        cap.draw(RDPOpaqueRect(Rect(200,400,60,60), BLUE), clip);
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        cap.recorder.timestamp(now);
     }
-
-    ::close(fd);
+    test_file_to_png("/tmp/test_file_without_meta_to_png", 800, 600, 24,
+                     "\x1c\xf2\xcc\xf1\x37\x2d\x51\xde\x41\x9e"
+                     "\xee\x36\xa3\xa2\x20\x99\x04\x1e\xb7\xba");
 }

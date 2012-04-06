@@ -67,7 +67,7 @@ Fix the X backend:
 
     It used to work before forking from xrdp, but I guess it should be rewrited from
     scratch. Maybe one should take a look a the current xrdp code before doing it.
- 
+
 Remove libboost-program-options:
 
     Why? It is now used to parse program options, configuration file and create a nice

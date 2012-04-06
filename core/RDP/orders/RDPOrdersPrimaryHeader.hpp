@@ -24,6 +24,9 @@
 #if !defined(__CORE_RDP_ORDERS_RDPORDERSPRIMARYHEADER_HPP__)
 #define __CORE_RDP_ORDERS_RDPORDERSPRIMARYHEADER_HPP__
 
+#include "RDP/rdp.hpp"
+#include "RDP/orders/RDPOrdersCommon.hpp"
+
 
 class Bounds {
 
@@ -356,7 +359,7 @@ class RDPOrderCommon {
     Rect clip;
 
     RDPOrderCommon(int order, Rect clip) :
-        order(order), clip(clip) 
+        order(order), clip(clip)
     {
     }
 
