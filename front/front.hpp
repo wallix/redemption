@@ -309,19 +309,9 @@ public:
             // the new resolution setting
             /* shut down the rdp client */
             this->up_and_running = 0;
-
             this->send_deactive();
-
             /* this should do the actual resizing */
             this->send_demand_active();
-
-            // reset caches, etc.
-            this->reset();
-            // resizing done
-            BGRPalette palette;
-            init_palette332(palette);
-            this->color_cache(palette, 0);
-            this->init_pointers();
 
             state = ACTIVATE_AND_PROCESS_DATA;
             return 1;
@@ -2514,7 +2504,9 @@ public:
 
                 size_t chunk_size = stream.end - stream.p;
 
-                cb.send_to_mod_channel(channel.name, stream.p, length, chunk_size, flags);
+                if (this->up_and_running){
+                    cb.send_to_mod_channel(channel.name, stream.p, length, chunk_size, flags);
+                }
                 stream.p += chunk_size;
             }
             else {
@@ -2557,6 +2549,19 @@ public:
                                 LOG(LOG_INFO, "Front::incoming::PDUTYPE_CONFIRMACTIVEPDU");
                             }
                             this->process_confirm_active(stream);
+                            // reset caches, etc.
+                            this->reset();
+                            // resizing done
+                            BGRPalette palette;
+                            init_palette332(palette);
+                            this->color_cache(palette, 0);
+                            this->init_pointers();
+//                            this->up_and_running = 1;
+
+                            if (this->verbose){
+                                LOG(LOG_INFO, "Front::incoming::PDUTYPE_CONFIRMACTIVEPDU <---------------------");
+                            }
+
                             break;
                         case PDUTYPE_DATAPDU: /* 7 */
                             if (this->verbose){
@@ -2565,7 +2570,6 @@ public:
                             // this is rdp_process_data that will set up_and_running to 1
                             // when fonts have been received
                             // we will not exit this loop until we are in this state.
-                            TODO(" see what happen if we never receive up_and_running due to some error in client code ?")
                             this->process_data(stream, cb);
                             break;
                         case PDUTYPE_DEACTIVATEALLPDU:
@@ -2622,7 +2626,7 @@ public:
     /*****************************************************************************/
     void send_demand_active() throw (Error)
     {
-        LOG(LOG_INFO, "send_demand_active");
+        LOG(LOG_INFO, "Front::send_demand_active");
 
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -3098,17 +3102,22 @@ public:
                         }
                         /* happens when client gets focus and sends key modifier info */
                         this->keymap.synchronize(param1);
-                        cb.rdp_input_synchronize(time, device_flags, param1, param2);
+                        if (this->up_and_running){
+                            cb.rdp_input_synchronize(time, device_flags, param1, param2);
+                        }
                         break;
                     case RDP_INPUT_SCANCODE:
                         {
-                            if (1 || this->verbose){
+                            if (this->verbose){
                                 LOG(LOG_INFO, "RDP_INPUT_SCANCODE time=%u flags=%04x param1=%04x param2=%04x",
                                     time, device_flags, param1, param2
                                 );
+                                LOG(LOG_INFO, "up_and_running=%u orders=%p", this->up_and_running, this->orders);
                             }
                             this->keymap.event(device_flags, param1);
-                            cb.rdp_input_scancode(param1, param2, device_flags, time, &this->keymap);
+                            if (this->up_and_running){
+                                cb.rdp_input_scancode(param1, param2, device_flags, time, &this->keymap);
+                            }
                         }
                         break;
                     case RDP_INPUT_MOUSE:
@@ -3117,7 +3126,9 @@ public:
                         }
                         this->mouse_x = param1;
                         this->mouse_y = param2;
-                        cb.rdp_input_mouse(device_flags, param1, param2, &this->keymap);
+                        if (this->up_and_running){
+                            cb.rdp_input_mouse(device_flags, param1, param2, &this->keymap);
+                        }
                         break;
                     default:
                         LOG(LOG_INFO, "unsupported PDUTYPE2_INPUT msg %u", msg_type);
@@ -3140,14 +3151,6 @@ public:
                                   (unsigned)controlId);
                 }
                 this->send_synchronize();
-                /* shut down the rdp client */
-                this->send_deactive();
-                this->up_and_running = 0;
-
-                /* this should do the resizing */
-                this->send_demand_active();
-
-                this->reset();
 
                 BGRPalette palette;
                 init_palette332(palette);
@@ -3177,7 +3180,9 @@ public:
                         " left=%u top=%u right=%u bottom=%u cx=%u cy=%u",
                         left, top, right, bottom, cx, cy);
                 }
-                cb.rdp_input_invalidate(Rect(left, top, cx, cy));
+                if (this->up_and_running){
+                    cb.rdp_input_invalidate(Rect(left, top, cx, cy));
+                }
             }
         break;
         case PDUTYPE2_PLAY_SOUND:   // Play Sound PDU (section 2.2.9.1.1.5.1)
@@ -3449,6 +3454,9 @@ public:
 
     void draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
     {
+//        LOG(LOG_INFO, "front::draw:draw_tile((%u, %u, %u, %u) (%u, %u, %u, %u)",
+//             dst_tile.x, dst_tile.y, dst_tile.cx, dst_tile.cy,
+//             src_tile.x, src_tile.y, src_tile.cx, src_tile.cy);
         // No need to resize bitmap
         if (src_tile == Rect(0, 0, bitmap.cx, bitmap.cy)){
             const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
@@ -3470,6 +3478,7 @@ public:
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap)
     {
+//        LOG(LOG_INFO, "front::draw:RDPMemBlt");
         if (bitmap.cx < cmd.srcx || bitmap.cy < cmd.srcy){
             return;
         }
@@ -3503,6 +3512,11 @@ public:
         // hence, we check for this case. There does not seem to exist any
         // similar restriction on cy actual reason of this is unclear
         // (I don't even know if it's related to redemption code or client code).
+//        LOG(LOG_INFO, "cache1=%u cache2=%u cache3=%u bmp_size==%u",
+//            this->client_info.cache1_size,
+//            this->client_info.cache2_size,
+//            this->client_info.cache3_size,
+//            front_bitmap_size);
         if (front_bitmap_size <= this->client_info.cache3_size
             && align4(dst_cx) < 256 && dst_cy < 256){
             // clip dst as it can be larger than source bitmap
