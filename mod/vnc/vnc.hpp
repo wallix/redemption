@@ -66,10 +66,12 @@ struct mod_vnc : public client_mod {
     uint8_t green_shift;
     uint8_t blue_shift;
     BGRPalette palette332;
+    uint32_t verbose;
 
-    mod_vnc(Transport * t, const char * username, const char * password, struct FrontAPI & front, uint16_t front_width, uint16_t front_height)
+    mod_vnc(Transport * t, const char * username, const char * password, struct FrontAPI & front, uint16_t front_width, uint16_t front_height, uint32_t verbose)
         :
-        client_mod(front, front_width, front_height)
+        client_mod(front, front_width, front_height),
+        verbose(verbose)
     {
         LOG(LOG_INFO, "Connecting to VNC Server");
         init_palette332(this->palette332);
@@ -520,6 +522,9 @@ struct mod_vnc : public client_mod {
 
     virtual BackEvent_t draw_event(void)
     {
+        if (this->verbose){
+            LOG(LOG_INFO, "vnc::draw_event");
+        }
         Stream stream(1);
         BackEvent_t rv = BACK_EVENT_NONE;
 

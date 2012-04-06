@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.bpp = 24;
     info.width = 800;
     info.height = 600;
-    int verbose = 0;
+    int verbose = 256;
 
     class Front : public FrontAPI {
         public:
@@ -154,21 +154,31 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 LOG(LOG_INFO, "========================================\n");
             }
         }
-        virtual void begin_update()
+        virtual void draw_vnc(const Rect & rect, const uint8_t bpp, const BGRPalette & palette332, const uint8_t * raw, uint32_t need_size)
         {
             if (verbose > 10){
                 LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "begin_update");
+                LOG(LOG_INFO, "draw_vnc(rect(%u, %u, %u, %u), bpp=%u, need_size=%u",
+                    rect.x, rect.y, rect.cx, rect.cy, bpp, need_size);
                 LOG(LOG_INFO, "========================================\n");
             }
         }
+
+        virtual void begin_update()
+        {
+//            if (verbose > 10){
+//                LOG(LOG_INFO, "--------- FRONT ------------------------");
+//                LOG(LOG_INFO, "begin_update");
+//                LOG(LOG_INFO, "========================================\n");
+//            }
+        }
         virtual void end_update()
         {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "end_update");
-                LOG(LOG_INFO, "========================================\n");
-            }
+//            if (verbose > 10){
+//                LOG(LOG_INFO, "--------- FRONT ------------------------");
+//                LOG(LOG_INFO, "end_update");
+//                LOG(LOG_INFO, "========================================\n");
+//            }
         }
         virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
         {
@@ -217,7 +227,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
                 LOG(LOG_INFO, "========================================\n");
             }
-            return 0;
+            // resize done
+            return 1;
         }
         virtual void set_mod_bpp(uint8_t bpp)
         {
@@ -277,22 +288,22 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD VNC ------------------------");
     }
-    struct client_mod * mod = new mod_vnc(&t, "10.10.3.103", "SecureLinux", front, info.width, info.height);
+    struct client_mod * mod = new mod_vnc(&t, "10.10.3.103", "SecureLinux", front, info.width, info.height, verbose);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD VNC DONE ====================\n\n");
     }
 //    BOOST_CHECK(t.status);
 
-//    BOOST_CHECK_EQUAL(mod->front_width, 800);
-//    BOOST_CHECK_EQUAL(mod->front_height, 600);
+    BOOST_CHECK_EQUAL(mod->front_width, 1024);
+    BOOST_CHECK_EQUAL(mod->front_height, 768);
 
-//    BackEvent_t res = mod->draw_event();
-//    BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+    BackEvent_t res = mod->draw_event();
+    BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
 ////    BOOST_CHECK(t.status);
 
-//    res = mod->draw_event();
-//    BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+    res = mod->draw_event();
+    BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
 ////    BOOST_CHECK(t.status);
 
 //    res = mod->draw_event();
