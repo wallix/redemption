@@ -301,11 +301,28 @@ public:
             this->client_info.height = height;
             this->client_info.bpp = bpp;
 
+            // send buffered orders
+            this->orders->flush();
+
              // clear all pending orders, caches data, and so on and
             // start a send_deactive, send_deman_active process with
             // the new resolution setting
+            /* shut down the rdp client */
+            this->up_and_running = 0;
+
+            this->send_deactive();
+
+            /* this should do the actual resizing */
+            this->send_demand_active();
+
+            // reset caches, etc.
             this->reset();
             // resizing done
+            BGRPalette palette;
+            init_palette332(palette);
+            this->color_cache(palette, 0);
+            this->init_pointers();
+
             state = ACTIVATE_AND_PROCESS_DATA;
             return 1;
         }
@@ -414,22 +431,6 @@ public:
         delete [] data;
     }
 
-//    void set_front_resolution(uint16_t width, uint16_t height, uint8_t bpp)
-//    {
-//        if (this->verbose){
-//            LOG(LOG_INFO, "Front::set_front_resolution(%u, %u, %u)", width, height, bpp);
-//        }
-//        this->client_info.width = width;
-//        this->client_info.height = height;
-//        this->client_info.bpp = bpp;
-
-//        // clear all pending orders, caches data, and so on and
-//        // start a send_deactive, send_deman_active process with
-//        // the new resolution setting
-//        this->reset();
-//    }
-
-
     void start_capture(int width, int height, bool flag, char * path,
                 const char * codec_id, const char * quality)
     {
@@ -464,13 +465,6 @@ public:
             LOG(LOG_INFO, "Front::reset()");
         }
 
-        /* shut down the rdp client */
-        this->send_deactive();
-        this->up_and_running = 0;
-
-        /* this should do the resizing */
-        this->send_demand_active();
-
         // reset outgoing orders and reset caches
         delete this->orders;
         this->orders = new GraphicsUpdatePDU(trans,
@@ -491,15 +485,6 @@ public:
                         this->client_info.op2);
 
         this->cache.reset(this->client_info);
-
-        BGRPalette palette;
-        init_palette332(palette);
-
-        this->color_cache(palette, 0);
-
-        this->init_pointers();
-
-
     }
 
     void init_pointers()
@@ -2217,27 +2202,23 @@ public:
 
             recv_security_exchange_PDU(this->trans, this->decrypt, this->encrypt, this->server_random, this->pub_mod, this->pri_exp);
 
-            // Secure Settings Exchange
-            // ------------------------
-
-            // Secure Settings Exchange: Secure client data (such as the username,
-            // password and auto-reconnect cookie) is sent to the server using the Client
-            // Info PDU.
-
-            // Client                                                     Server
-            //    |------ Client Info PDU      ---------------------------> |
-
-            if (this->verbose){
-                LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
-            }
-
             this->state = WAITING_FOR_LOGON_INFO;
         }
         break;
 
         case WAITING_FOR_LOGON_INFO:
+        // Secure Settings Exchange
+        // ------------------------
+
+        // Secure Settings Exchange: Secure client data (such as the username,
+        // password and auto-reconnect cookie) is sent to the server using the Client
+        // Info PDU.
+
+        // Client                                                     Server
+        //    |------ Client Info PDU      ---------------------------> |
+
         if (this->verbose){
-            LOG(LOG_INFO, "Front::incoming::WAITING_FOR_LOGON_INFO");
+            LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
         }
         {
             Stream stream(65535);
@@ -3159,7 +3140,24 @@ public:
                                   (unsigned)controlId);
                 }
                 this->send_synchronize();
+                /* shut down the rdp client */
+                this->send_deactive();
+                this->up_and_running = 0;
+
+                /* this should do the resizing */
+                this->send_demand_active();
+
+                this->reset();
+
+                BGRPalette palette;
+                init_palette332(palette);
+                this->color_cache(palette, 0);
+                this->init_pointers();
+
                 this->up_and_running = 1;
+                if (this->verbose){
+                    LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
+                }
             }
         break;
         case PDUTYPE2_REFRESH_RECT: // Refresh Rect PDU (section 2.2.11.2.1)
@@ -3332,6 +3330,9 @@ public:
             break;
         }
         share_data_in.end();
+        if (this->verbose){
+            LOG(LOG_INFO, "process_data done");
+        }
     }
 
     void send_deactive() throw (Error)
