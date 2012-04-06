@@ -265,27 +265,6 @@ public:
             this->encrypt.rc4_key_len = 16; /* 16 = 128 bit */
         break;
         }
-
-        LOG(LOG_INFO, "Front 1");
-
-        this->orders = new GraphicsUpdatePDU(trans,
-                            this->userid,
-                            this->share_id,
-                            this->client_info.crypt_level,
-                            this->encrypt,
-                            ini,
-                            this->client_info.bpp,
-                            this->client_info.cache1_entries,
-                            this->client_info.cache1_size,
-                            this->client_info.cache2_entries,
-                            this->client_info.cache2_size,
-                            this->client_info.cache3_entries,
-                            this->client_info.cache3_size,
-                            this->client_info.bitmap_cache_version,
-                            this->client_info.use_bitmap_comp,
-                            this->client_info.op2);
-
-        LOG(LOG_INFO, "Front 2");
     }
 
     ~Front(){
@@ -490,8 +469,6 @@ public:
         if (this->verbose){
             LOG(LOG_INFO, "Front::reset()");
         }
-        TODO(" is it necessary (or even useful) to send remaining drawing orders before resetting ?")
-        this->orders->flush();
 
         /* shut down the rdp client */
         this->send_deactive();
@@ -520,9 +497,16 @@ public:
                         this->client_info.op2);
 
         this->cache.reset(this->client_info);
+
+        BGRPalette palette;
+        init_palette332(palette);
+
+        this->color_cache(palette, 0);
+
+        this->init_pointers();
+
+
     }
-
-
 
     void init_pointers()
     {
@@ -556,12 +540,6 @@ public:
                  pointer_item.mask,
                  pointer_item.x,
                  pointer_item.y);
-    }
-
-    void set_keyboard_layout()
-    {
-        /* initialising keymap */
-        this->keymap.init_layout(this->client_info.keylayout);
     }
 
     virtual void begin_update()
@@ -2302,6 +2280,8 @@ public:
 
             /* this is the first test that the decrypt is working */
             this->client_info.process_logon_info(stream);
+            this->keymap.init_layout(this->client_info.keylayout);
+
             if (this->client_info.is_mce) {
                 LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
                 LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");

@@ -346,27 +346,10 @@ struct Session {
                 // hence width and height and colors and keymap are availables
                 /* resize the main window */
                 this->front->reset();
-                this->front->set_keyboard_layout();
-
-                BGRPalette palette;
-                init_palette332(palette);
-
-                this->front->color_cache(palette, 0);
-
-                this->front->init_pointers();
-
-                if (this->front->client_info.username[0]){
-                    this->context->parse_username(this->front->client_info.username);
-                }
-
-                if (this->front->client_info.password[0]){
-                    this->context->cpy(STRAUTHID_PASSWORD, this->front->client_info.password);
-                }
-
-                this->internal_state = SESSION_STATE_RUNNING;
 
                 this->session_setup_mod(MCTX_STATUS_CLI, this->context);
 
+                this->internal_state = SESSION_STATE_RUNNING;
             }
         }
 
@@ -801,6 +784,7 @@ struct Session {
                     this->back_event = new wait_obj(-1);
                     this->front->init_mod();
                     this->mod = new cli_mod(*this->context, *(this->front),
+                                            this->front->client_info,
                                             this->front->client_info.width,
                                             this->front->client_info.height);
                     this->back_event->set();

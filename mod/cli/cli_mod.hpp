@@ -28,10 +28,16 @@
 struct cli_mod : public transitory_mod {
 
     cli_mod(
-        struct ModContext & context, FrontAPI & front, const uint16_t front_width, const uint16_t front_height)
+        struct ModContext & context, FrontAPI & front, ClientInfo & client_info, const uint16_t front_width, const uint16_t front_height)
             : transitory_mod(front, front_width, front_height)
     {
+        if (client_info.username[0]){
+            context.parse_username(client_info.username);
+        }
 
+        if (client_info.password[0]){
+            context.cpy(STRAUTHID_PASSWORD, client_info.password);
+        }
     }
 
     virtual ~cli_mod()
