@@ -190,8 +190,6 @@ public:
     uint8_t pub_mod[512];
     uint8_t pri_exp[512];
     uint8_t server_random[32];
-    uint8_t client_random[64];
-    uint8_t client_crypt_random[512];
     CryptContext encrypt, decrypt;
 
     int order_level;
@@ -239,10 +237,6 @@ public:
         // from server_sec
         // CGR: see if init has influence for the 3 following fields
         memset(this->server_random, 0, 32);
-        memset(this->client_random, 0, 64);
-
-        // from rdp_sec
-        memset(this->client_crypt_random, 0, 512);
 
         // shared
         memset(this->decrypt.key, 0, 16);
@@ -2004,11 +1998,14 @@ public:
     void incoming(Callback & cb) throw (Error)
     {
         if (this->verbose){
-            LOG(LOG_INFO, "Front::incoming()");
+            LOG(LOG_INFO, "Front::incoming()--------------------------");
         }
 
         switch (this->state){
         case CONNECTION_INITIATION:
+        if (this->verbose){
+            LOG(LOG_INFO, "Front::incoming:CONNECTION_INITIATION");
+        }
         {
             // Connection Initiation
             // ---------------------
@@ -2218,25 +2215,7 @@ public:
             // Client                                                     Server
             //    |------Security Exchange PDU ---------------------------> |
 
-            recv_security_exchange_PDU(this->trans,
-                this->decrypt, this->client_crypt_random);
-
-            ssl_mod_exp(this->client_random, 64,
-                        this->client_crypt_random, 64,
-                        this->pub_mod, 64,
-                        this->pri_exp, 64);
-
-            // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
-            TODO(" looks like decrypt sign key is never used  if it's true remove it from CryptContext")
-            TODO(" this methode should probably move to ssl_calls")
-            rdp_sec_generate_keys(
-                this->decrypt,
-                this->encrypt,
-                this->encrypt.sign_key,
-                this->client_random,
-                this->server_random,
-                this->encrypt.rc4_key_size);
-
+            recv_security_exchange_PDU(this->trans, this->decrypt, this->encrypt, this->server_random, this->pub_mod, this->pri_exp);
 
             // Secure Settings Exchange
             // ------------------------
@@ -2257,8 +2236,10 @@ public:
         break;
 
         case WAITING_FOR_LOGON_INFO:
-        {
+        if (this->verbose){
             LOG(LOG_INFO, "Front::incoming::WAITING_FOR_LOGON_INFO");
+        }
+        {
             Stream stream(65535);
             X224In tpdu(this->trans, stream);
             McsIn mcs_in(stream);
@@ -2323,9 +2304,10 @@ public:
         break;
 
         case WAITING_FOR_ANSWER_TO_LICENCE:
-        {
+        if (this->verbose){
             LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE");
-
+        }
+        {
             Stream stream(65535);
             X224In tpdu(this->trans, stream);
             McsIn mcs_in(stream);
@@ -2435,6 +2417,9 @@ public:
         break;
 
         case ACTIVATE_AND_PROCESS_DATA:
+        if (this->verbose){
+            LOG(LOG_INFO, "Front::incoming::ACTIVATE_AND_PROCESS_DATA");
+        }
         // Connection Finalization
         // -----------------------
 
@@ -2471,9 +2456,6 @@ public:
         // connection management information and virtual channel messages (exchanged
         // between client-side plug-ins and server-side applications).
         {
-            if (this->verbose){
-                LOG(LOG_INFO, "Front::incoming");
-            }
             ChannelList & channel_list = this->channel_list;
 
             Stream stream(65535);
@@ -2586,16 +2568,19 @@ public:
                         switch (pdu_code & 0xf) {
                         case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
                             if (this->verbose){
-                                LOG(LOG_INFO, "Front::incoming::PDU_TYPE DEMANDACTIVEPDU");
+                                LOG(LOG_INFO, "Front::incoming::PDUTYPE_DEMANDACTIVEPDU");
                             }
                             break;
                         case PDUTYPE_CONFIRMACTIVEPDU:
                             if (this->verbose){
-                                LOG(LOG_INFO, "Front::incoming::PDU_TYPE CONFIRMACTIVEPDU");
+                                LOG(LOG_INFO, "Front::incoming::PDUTYPE_CONFIRMACTIVEPDU");
                             }
                             this->process_confirm_active(stream);
                             break;
                         case PDUTYPE_DATAPDU: /* 7 */
+                            if (this->verbose){
+                                LOG(LOG_INFO, "Front::incoming::PDUTYPE_DATAPDU");
+                            }
                             // this is rdp_process_data that will set up_and_running to 1
                             // when fonts have been received
                             // we will not exit this loop until we are in this state.
@@ -2604,7 +2589,7 @@ public:
                             break;
                         case PDUTYPE_DEACTIVATEALLPDU:
                             if (this->verbose){
-                                LOG(LOG_INFO, "Front::incoming::unsupported PDUTYPE DEACTIVATEALLPDU");
+                                LOG(LOG_INFO, "Front::incoming::unsupported PDUTYPE_DEACTIVATEALLPDU");
                             }
                             break;
                         case PDUTYPE_SERVER_REDIR_PKT:

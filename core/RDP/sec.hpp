@@ -34,6 +34,7 @@
 #include "RDP/rdp.hpp"
 #include "client_info.hpp"
 #include "rsa_keys.hpp"
+#include "sec_utils.hpp"
 #include "constants.hpp"
 
 
@@ -696,8 +697,14 @@ class SecIn
 static inline void recv_security_exchange_PDU(
                         Transport * trans,
                         CryptContext & decrypt,
-                        uint8_t * client_crypt_random)
+                        CryptContext & encrypt,
+                        uint8_t (&server_random)[32],
+                        uint8_t (&pub_mod)[512],
+                        uint8_t (&pri_exp)[512])
 {
+    uint8_t client_crypt_random[512];
+    memset(client_crypt_random, 0, 512);
+
     Stream stream(32768);
     X224In tpdu(trans, stream);
     McsIn mcs_in(stream);
@@ -721,6 +728,23 @@ static inline void recv_security_exchange_PDU(
 
     mcs_in.end();
     tpdu.end();
+
+    uint8_t client_random[64];
+    memset(client_random, 0, 64);
+
+    ssl_mod_exp(client_random, 64,
+                client_crypt_random, 64,
+                pub_mod, 64,
+                pri_exp, 64);
+
+    // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
+    rdp_sec_generate_keys(
+        decrypt,
+        encrypt,
+        encrypt.sign_key,
+        client_random,
+        server_random,
+        encrypt.rc4_key_size);
 }
 
 
