@@ -296,7 +296,7 @@ static inline void parse_mcs_data_cs_core(Stream & stream, ClientInfo * client_i
     LOG(LOG_INFO, "core_data: keyboard_subtype = %x", keyboard_subtype);
     uint32_t keyboard_functionkeys = stream.in_uint32_le();
     LOG(LOG_INFO, "core_data: keyboard_functionkeys = %x", keyboard_functionkeys);
-    stream.skip_uint8(64);
+    stream.in_skip_bytes(64);
 
     client_info->bpp = 8;
     uint16_t i = stream.in_uint16_le();

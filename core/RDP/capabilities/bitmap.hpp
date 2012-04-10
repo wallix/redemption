@@ -142,7 +142,7 @@ static inline void out_bitmap_caps(Stream & stream, uint16_t bpp, uint16_t bitma
 static inline void process_bitmap_caps(Stream & stream, uint16_t & bpp)
 {
     bpp = stream.in_uint16_le();
-    stream.skip_uint8(6);
+    stream.in_skip_bytes(6);
     uint16_t width = stream.in_uint16_le();
     uint16_t height = stream.in_uint16_le();
     /* todo, call reset if needed and use width and height */

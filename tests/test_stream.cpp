@@ -186,27 +186,25 @@ BOOST_AUTO_TEST_CASE(TestStream_in_uint8p)
     delete s;
 }
 
-BOOST_AUTO_TEST_CASE(TestStream_skip_uint8)
+BOOST_AUTO_TEST_CASE(TestStream_in_skip_bytes)
 {
-    // test use of skip_uint8 that skip a given number of bytes
+    // test use of skip_bytes that skip a given number of bytes
 
-    Stream * s = new Stream(100);
+    Stream s(100);
     const char * data = "\0\1\2\3\4\5\6\7\x8\x9\xA\xB\xC\xD";
-    memcpy(s->data, (uint8_t*)data, 14);
-    s->end += 14;
+    memcpy(s.data, (uint8_t*)data, 14);
+    s.end += 14;
 
-    uint8_t * oldp = s->p;
+    uint8_t * oldp = s.p;
 
-    s->skip_uint8(10);
-    BOOST_CHECK_EQUAL(oldp+10, s->p);
-    BOOST_CHECK_EQUAL(s->in_uint8(), 0x0A);
+    s.in_skip_bytes(10);
+    BOOST_CHECK_EQUAL(oldp+10, s.p);
+    BOOST_CHECK_EQUAL(s.in_uint8(), 0x0A);
 
-    s->skip_uint8(3);
+    s.in_skip_bytes(3);
 
     // empty is OK
-    BOOST_CHECK(s->p == s->end);
-
-    delete s;
+    BOOST_CHECK(s.p == s.end);
 }
 
 BOOST_AUTO_TEST_CASE(TestStream_out_Stream)

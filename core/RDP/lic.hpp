@@ -266,7 +266,7 @@ struct RdpLicence {
 
         in_token = 0;
         /* Parse incoming packet and save the encrypted token */
-        stream.skip_uint8(6); /* unknown: f8 3d 15 00 04 f6 */
+        stream.in_skip_bytes(6); /* unknown: f8 3d 15 00 04 f6 */
 
         int tokenlen = stream.in_uint16_le();
         if (tokenlen != LICENCE_TOKEN_SIZE) {
@@ -380,7 +380,7 @@ struct RdpLicence {
     int rdp_lic_process_issue(Stream & stream, const char * hostname, int & licence_issued)
     {
 
-        stream.skip_uint8(2); /* 3d 45 - unknown */
+        stream.in_skip_bytes(2); /* 3d 45 - unknown */
         int length = stream.in_uint16_le();
         if (!stream.check_rem(length)) {
             return 0; // 0 = not connected, this case is probably worse and should cause a disconnection
@@ -397,11 +397,11 @@ struct RdpLicence {
 
         licence_issued = 1;
 
-        stream.skip_uint8(2); /* pad */
+        stream.in_skip_bytes(2); /* pad */
         /* advance to fourth string */
         length = 0;
         for (int i = 0; i < 4; i++) {
-            stream.skip_uint8(length);
+            stream.in_skip_bytes(length);
             length = stream.in_uint32_le();
             if (!stream.check_rem(length)) {
                 // remaining data after licence

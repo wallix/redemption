@@ -123,15 +123,15 @@ static inline int load_pointer(const char* file_name, uint8_t* data, uint8_t* ma
 
         TODO("the ways we do it now we have some risk of reading out of buffer (data that are not from file)")
 
-        stream.skip_uint8(6);
+        stream.in_skip_bytes(6);
         int w = stream.in_uint8();
         int h = stream.in_uint8();
-        stream.skip_uint8(2);
+        stream.in_skip_bytes(2);
         *x = stream.in_uint16_le();
         *y = stream.in_uint16_le();
-        stream.skip_uint8(22);
+        stream.in_skip_bytes(22);
         int bpp = stream.in_uint8();
-        stream.skip_uint8(25);
+        stream.in_skip_bytes(25);
 
         BGRPalette palette;
         if (w == 32 && h == 32) {
@@ -149,7 +149,7 @@ static inline int load_pointer(const char* file_name, uint8_t* data, uint8_t* ma
                         data++;
                     }
                 }
-                stream.skip_uint8(128);
+                stream.in_skip_bytes(128);
             } else if (bpp == 4) {
                 memcpy(palette, stream.in_uint8p(64), 64);
                 for (int i = 0; i < 32; i++) {
@@ -164,7 +164,7 @@ static inline int load_pointer(const char* file_name, uint8_t* data, uint8_t* ma
                         data++;
                     }
                 }
-                stream.skip_uint8(512);
+                stream.in_skip_bytes(512);
             }
             memcpy(mask, stream.p, 128); /* mask */
         }
@@ -513,7 +513,7 @@ public:
 
     virtual void begin_update()
     {
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "Front::begin_update()");
         }
         this->order_level++;
@@ -521,7 +521,7 @@ public:
 
     virtual void end_update()
     {
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "Front::end_update()");
         }
         this->order_level--;
@@ -964,8 +964,8 @@ public:
             if ((opcode >> 2) != MCS_EDRQ) {
                 throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
             }
-            stream.skip_uint8(2);
-            stream.skip_uint8(2);
+            stream.in_skip_bytes(2);
+            stream.in_skip_bytes(2);
             if (opcode & 2) {
                 userid = stream.in_uint16_be();
             }
@@ -1604,43 +1604,43 @@ public:
             throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
         }
         len = stream.in_ber_len();
-        stream.skip_uint8(len);
+        stream.in_skip_bytes(len);
 
         if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
             throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
         }
         len = stream.in_ber_len();
-        stream.skip_uint8(len);
+        stream.in_skip_bytes(len);
         if (stream.in_uint8() != BER_TAG_BOOLEAN) {
             throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
         }
         len = stream.in_ber_len();
-        stream.skip_uint8(len);
+        stream.in_skip_bytes(len);
 
         if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
             throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
         }
         len = stream.in_ber_len();
-        stream.skip_uint8(len);
+        stream.in_skip_bytes(len);
 
         if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
             throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
         }
         len = stream.in_ber_len();
-        stream.skip_uint8(len);
+        stream.in_skip_bytes(len);
 
         if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
             throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
         }
         len = stream.in_ber_len();
-        stream.skip_uint8(len);
+        stream.in_skip_bytes(len);
 
         if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
             throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
         }
         len = stream.in_ber_len();
 
-        stream.skip_uint8(23);
+        stream.in_skip_bytes(23);
 
     // 2.2.1.3.1 User Data Header (TS_UD_HEADER)
     // =========================================
@@ -1963,7 +1963,7 @@ public:
         chanid = stream.in_uint16_be();
 
         if (opcode & 2) {
-            stream.skip_uint8(2);
+            stream.in_skip_bytes(2);
         }
 
         in.end();
@@ -1972,7 +1972,7 @@ public:
 
     void incoming(Callback & cb) throw (Error)
     {
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "Front::incoming()--------------------------");
         }
 
@@ -2388,7 +2388,7 @@ public:
         break;
 
         case ACTIVATE_AND_PROCESS_DATA:
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "Front::incoming::ACTIVATE_AND_PROCESS_DATA");
         }
         // Connection Finalization
@@ -2452,7 +2452,7 @@ public:
 
             SecIn sec(stream, this->decrypt);
 
-            if (this->verbose){
+            if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
             }
 
@@ -2532,11 +2532,11 @@ public:
                     else {
                         assert(stream.check_rem(2));
                         int pdu_code = stream.in_uint16_le();
-                        if (this->verbose){
+                        if (this->verbose & 4){
                             LOG(LOG_INFO, "front::incoming::pdu_code=%d", pdu_code);
                         }
                         assert(stream.check_rem(2));
-                        stream.skip_uint8(2); /* mcs user id */
+                        stream.in_skip_bytes(2); /* mcs user id */
 
                         switch (pdu_code & 0xf) {
                         case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
@@ -2564,7 +2564,7 @@ public:
 
                             break;
                         case PDUTYPE_DATAPDU: /* 7 */
-                            if (this->verbose){
+                            if (this->verbose & 4){
                                 LOG(LOG_INFO, "Front::incoming::PDUTYPE_DATAPDU");
                             }
                             // this is rdp_process_data that will set up_and_running to 1
@@ -2652,7 +2652,7 @@ public:
 
         /* Output share capability set */
         caps_count++; front_out_share_caps(stream, this->userid + MCS_USERCHANNEL_BASE);
-        caps_count++; front_out_general_caps(stream);
+        caps_count++; sc_out_general_caps(stream);
         caps_count++; front_out_bitmap_caps(stream,
                                             this->client_info.bpp,
                                             this->client_info.width,
@@ -2691,13 +2691,13 @@ public:
     void capset_order(Stream & stream, int len)
     {
         LOG(LOG_INFO, "capset_order");
-        stream.skip_uint8(20); /* Terminal desc, pad */
-        stream.skip_uint8(2); /* Cache X granularity */
-        stream.skip_uint8(2); /* Cache Y granularity */
-        stream.skip_uint8(2); /* Pad */
-        stream.skip_uint8(2); /* Max order level */
-        stream.skip_uint8(2); /* Number of fonts */
-        stream.skip_uint8(2); /* Capability flags */
+        stream.in_skip_bytes(20); /* Terminal desc, pad */
+        stream.in_skip_bytes(2); /* Cache X granularity */
+        stream.in_skip_bytes(2); /* Cache Y granularity */
+        stream.in_skip_bytes(2); /* Pad */
+        stream.in_skip_bytes(2); /* Max order level */
+        stream.in_skip_bytes(2); /* Number of fonts */
+        stream.in_skip_bytes(2); /* Capability flags */
         char order_caps[32];
         memcpy(order_caps, stream.in_uint8p(32), 32); /* Orders supported */
         LOG(LOG_INFO, "dest blt-0 %d\n", order_caps[0]);
@@ -2716,20 +2716,20 @@ public:
         LOG(LOG_INFO, "ellipse2-26 %d\n", order_caps[26]);
         LOG(LOG_INFO, "text2-27 %d\n", order_caps[27]);
         LOG(LOG_INFO, "order_caps dump\n");
-        stream.skip_uint8(2); /* Text capability flags */
-        stream.skip_uint8(6); /* Pad */
+        stream.in_skip_bytes(2); /* Text capability flags */
+        stream.in_skip_bytes(6); /* Pad */
         /* desktop cache size, usually 0x38400 */
         this->client_info.desktop_cache = stream.in_uint32_le();;
         LOG(LOG_INFO, "desktop cache size %d\n", this->client_info.desktop_cache);
-        stream.skip_uint8(4); /* Unknown */
-        stream.skip_uint8(4); /* Unknown */
+        stream.in_skip_bytes(4); /* Unknown */
+        stream.in_skip_bytes(4); /* Unknown */
     }
 
     /* store the bitmap cache size in client_info */
     void capset_bmpcache(Stream & stream, int len)
     {
         LOG(LOG_INFO, "capset_bmpcache");
-        stream.skip_uint8(24);
+        stream.in_skip_bytes(24);
         this->client_info.cache1_entries = stream.in_uint16_le();
         this->client_info.cache1_size = stream.in_uint16_le();
         this->client_info.cache2_entries = stream.in_uint16_le();
@@ -2751,7 +2751,7 @@ public:
         this->client_info.bitmap_cache_version = 2;
         int Bpp = nbbytes(this->client_info.bpp);
         this->client_info.bitmap_cache_persist_enable = stream.in_uint16_le();
-        stream.skip_uint8(2); /* number of caches in set, 3 */
+        stream.in_skip_bytes(2); /* number of caches in set, 3 */
         this->client_info.cache1_entries = stream.in_uint32_le();
         this->client_info.cache1_size = 256 * Bpp;
         this->client_info.cache2_entries = stream.in_uint32_le();
@@ -2770,14 +2770,14 @@ public:
     void process_confirm_active(Stream & stream)
     {
         LOG(LOG_INFO, "process_confirm_active");
-        stream.skip_uint8(4); /* rdp_shareid */
-        stream.skip_uint8(2); /* userid */
+        stream.in_skip_bytes(4); /* rdp_shareid */
+        stream.in_skip_bytes(2); /* userid */
         int source_len = stream.in_uint16_le(); /* sizeof RDP_SOURCE */
         // int cap_len = stream.in_uint16_le();
-        stream.skip_uint8(2); // skip cap_len
-        stream.skip_uint8(source_len);
+        stream.in_skip_bytes(2); // skip cap_len
+        stream.in_skip_bytes(source_len);
         int num_caps = stream.in_uint16_le();
-        stream.skip_uint8(2); /* pad */
+        stream.in_skip_bytes(2); /* pad */
 
         for (int index = 0; index < num_caps; index++) {
             uint8_t *p = stream.p;
@@ -2786,7 +2786,7 @@ public:
 
             switch (type) {
             case RDP_CAPSET_GENERAL: /* 1 */
-                front_capset_general(stream, len,
+                cs_in_general_caps(stream, len,
                     this->client_info.use_compact_packets,
                     this->client_info.op2);
                 break;
@@ -2804,7 +2804,7 @@ public:
                 break;
             case RDP_CAPSET_POINTER: /* 8 */
                 {
-                    stream.skip_uint8(2); /* color pointer */
+                    stream.in_skip_bytes(2); /* color pointer */
                     int i = stream.in_uint16_le();
                     this->client_info.pointer_cache_entries = std::min(i, 32);
                 }
@@ -3030,8 +3030,8 @@ public:
     /* PDUTYPE_DATAPDU */
     void process_data(Stream & stream, Callback & cb) throw (Error)
     {
-        if (this->verbose){
-            LOG(LOG_INFO, "process_data");
+        if (this->verbose & 4){
+            LOG(LOG_INFO, "Front::process_data(...)");
         }
         ShareDataIn share_data_in(stream);
         if (this->verbose > 0x80){
@@ -3058,8 +3058,8 @@ public:
             }
             {
                 int action = stream.in_uint16_le();
-                stream.skip_uint8(2); /* user id */
-                stream.skip_uint8(4); /* control id */
+                stream.in_skip_bytes(2); /* user id */
+                stream.in_skip_bytes(4); /* control id */
                 switch (action){
                     case RDP_CTL_REQUEST_CONTROL:
                         this->send_control(RDP_CTL_GRANT_CONTROL);
@@ -3081,11 +3081,11 @@ public:
             {
                 int num_events = stream.in_uint16_le();
 
-                if (this->verbose){
+                if (this->verbose & 2){
                     LOG(LOG_INFO, "PDUTYPE2_INPUT num_events=%u", num_events);
                 }
 
-                stream.skip_uint8(2); /* pad */
+                stream.in_skip_bytes(2); /* pad */
                 for (int index = 0; index < num_events; index++) {
                     int time = stream.in_uint32_le();
                     uint16_t msg_type = stream.in_uint16_le();
@@ -3097,7 +3097,7 @@ public:
                     TODO(" with the scheme above  any kind of keymap management is only necessary for internal modules or if we convert mapping. But only the back-end module really knows what the target mapping should be.")
                     switch (msg_type) {
                     case RDP_INPUT_SYNCHRONIZE:
-                        if (this->verbose){
+                        if (this->verbose & 2){
                             LOG(LOG_INFO, "RDP_INPUT_SYNCHRONIZE");
                         }
                         /* happens when client gets focus and sends key modifier info */
@@ -3108,11 +3108,10 @@ public:
                         break;
                     case RDP_INPUT_SCANCODE:
                         {
-                            if (this->verbose){
+                            if (this->verbose & 2){
                                 LOG(LOG_INFO, "RDP_INPUT_SCANCODE time=%u flags=%04x param1=%04x param2=%04x",
                                     time, device_flags, param1, param2
                                 );
-                                LOG(LOG_INFO, "up_and_running=%u orders=%p", this->up_and_running, this->orders);
                             }
                             this->keymap.event(device_flags, param1);
                             if (this->up_and_running){
@@ -3121,7 +3120,7 @@ public:
                         }
                         break;
                     case RDP_INPUT_MOUSE:
-                        if (this->verbose){
+                        if (this->verbose & 6){
                             LOG(LOG_INFO, "RDP_INPUT_MOUSE(device_flags=%u, param1=%u, param2=%u)", device_flags, param1, param2);
                         }
                         this->mouse_x = param1;
@@ -3335,7 +3334,7 @@ public:
             break;
         }
         share_data_in.end();
-        if (this->verbose){
+        if (this->verbose & 4){
             LOG(LOG_INFO, "process_data done");
         }
     }

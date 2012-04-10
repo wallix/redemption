@@ -1120,7 +1120,7 @@ struct mod_rdp : public client_mod {
 
             if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
                 uint8_t tag = stream.in_uint8();
-                stream.skip_uint8(3); /* version, length */
+                stream.in_skip_bytes(3); /* version, length */
                 switch (tag) {
                 case LICENCE_TAG_DEMAND:
                     LOG(LOG_INFO, "LICENCE_TAG_DEMAND");
@@ -1286,7 +1286,7 @@ struct mod_rdp : public client_mod {
                     }
 
                     uint16_t pdu_type = stream.in_uint16_le();
-                    stream.skip_uint8(2);
+                    stream.in_skip_bytes(2);
                     next_packet += len;
 
                     switch (pdu_type & 0xF) {
@@ -1339,9 +1339,9 @@ struct mod_rdp : public client_mod {
                                 switch (update_type) {
                                 case RDP_UPDATE_ORDERS:
                                     {
-                                        stream.skip_uint8(2); /* pad */
+                                        stream.in_skip_bytes(2); /* pad */
                                         int count = stream.in_uint16_le();
-                                        stream.skip_uint8(2); /* pad */
+                                        stream.in_skip_bytes(2); /* pad */
                                         this->orders.process_orders(this->bpp, stream, count, this);
                                     }
                                     break;
@@ -1392,7 +1392,7 @@ struct mod_rdp : public client_mod {
                             this->share_id = stream.in_uint32_le();
                             len_src_descriptor = stream.in_uint16_le();
                             len_combined_caps = stream.in_uint16_le();
-                            stream.skip_uint8(len_src_descriptor);
+                            stream.in_skip_bytes(len_src_descriptor);
                             this->process_server_caps(stream, len_combined_caps);
                             TODO(" we should be able to pack all the following sends to the same X224 TPDU  instead of creating a different one for each send")
                             LOG(LOG_INFO, "Sending confirm active PDU");
@@ -1765,20 +1765,20 @@ struct mod_rdp : public client_mod {
             throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
         }
         len = cr_stream.in_ber_len();
-        cr_stream.skip_uint8(len); /* connect id */
+        cr_stream.in_skip_bytes(len); /* connect id */
 
         if (cr_stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
             throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
         }
         len = cr_stream.in_ber_len();
-        cr_stream.skip_uint8(len);
+        cr_stream.in_skip_bytes(len);
 
         if (cr_stream.in_uint8() != BER_TAG_OCTET_STRING) {
             throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
         }
         len = cr_stream.in_ber_len();
 
-        cr_stream.skip_uint8(21); /* header (T.124 ConferenceCreateResponse) */
+        cr_stream.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
         len = cr_stream.in_uint8();
 
         if (len & 0x80) {
@@ -2226,7 +2226,7 @@ struct mod_rdp : public client_mod {
         // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number of capability sets is specified by the numberCapabilities field.
             uint16_t total_caplen = stream.get_offset(0);
 
-            capscount++; out_general_caps(stream, this->use_rdp5);
+            capscount++; cs_out_general_caps(stream, this->use_rdp5);
             capscount++; out_bitmap_caps(stream, this->bpp, this->bitmap_compression);
             capscount++; out_order_caps(stream);
             capscount++; out_bmpcache_caps(stream, this->bpp);
@@ -2280,7 +2280,7 @@ struct mod_rdp : public client_mod {
 //            LOG(LOG_INFO, "Process pointer PDU");
 
             int message_type = stream.in_uint16_le();
-            stream.skip_uint8(2); /* pad */
+            stream.in_skip_bytes(2); /* pad */
             switch (message_type) {
             case RDP_POINTER_MOVE:
             {
@@ -2314,7 +2314,7 @@ struct mod_rdp : public client_mod {
         {
 //            LOG(LOG_INFO, "Process palette");
 
-            stream.skip_uint8(2); /* pad */
+            stream.in_skip_bytes(2); /* pad */
             uint16_t numberColors = stream.in_uint32_le();
             assert(numberColors == 256);
             for (int i = 0; i < numberColors; i++) {
@@ -2903,7 +2903,7 @@ struct mod_rdp : public client_mod {
 
             start = stream.p;
             ncapsets = stream.in_uint16_le();
-            stream.skip_uint8(2); /* pad */
+            stream.in_skip_bytes(2); /* pad */
             for (n = 0; n < ncapsets; n++) {
                 if (stream.p > start + len) {
                     return;
@@ -2913,7 +2913,7 @@ struct mod_rdp : public client_mod {
                 next = (stream.p + capset_length) - 4;
                 switch (capset_type) {
                 case RDP_CAPSET_GENERAL:
-                    process_general_caps(stream);
+                    sc_in_general_caps(stream);
                     break;
                 case RDP_CAPSET_BITMAP:
                     process_bitmap_caps(stream, this->bpp);
@@ -3238,7 +3238,7 @@ struct mod_rdp : public client_mod {
                 // Flags field, but the NO_BITMAP_COMPRESSION_HDR (0x0400)
                 // flag is not.
                     // bitmapComprHdr
-                    stream.skip_uint8(2); /* pad */
+                    stream.in_skip_bytes(2); /* pad */
                     size = stream.in_uint16_le();
                     line_size = stream.in_uint16_le();
                     final_size = stream.in_uint16_le();

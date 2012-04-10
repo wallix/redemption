@@ -238,7 +238,7 @@ struct mod_vnc : public client_mod {
             this->red_shift = stream.in_uint8();
             this->green_shift = stream.in_uint8();
             this->blue_shift = stream.in_uint8();
-            stream.skip_uint8(3); // skip padding
+            stream.in_skip_bytes(3); // skip padding
 
             LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
 
@@ -625,7 +625,7 @@ struct mod_vnc : public client_mod {
     {
         Stream stream(256);
         this->t->recv((char**)&stream.end, 3);
-        stream.skip_uint8(1);
+        stream.in_skip_bytes(1);
         size_t num_recs = stream.in_uint16_be();
 
         uint8_t Bpp = nbbytes(this->bpp);
@@ -775,7 +775,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
     {
         Stream stream(32768);
         this->t->recv((char**)&stream.end, 7);
-        stream.skip_uint8(3);
+        stream.in_skip_bytes(3);
         int size = stream.in_uint32_be();
 
         this->clip_data.init(size);
@@ -805,7 +805,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
     {
         Stream stream(32768);
         this->t->recv((char**)&stream.end, 5);
-        stream.skip_uint8(1);
+        stream.in_skip_bytes(1);
         int first_color = stream.in_uint16_be();
         int num_colors = stream.in_uint16_be();
 

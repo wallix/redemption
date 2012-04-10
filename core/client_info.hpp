@@ -686,20 +686,20 @@ enum {
         if (flags & RDP_LOGON_AUTO) {
             stream.in_uni_to_ascii_str(this->password, len_password);
         } else {
-            stream.skip_uint8(len_password);
+            stream.in_skip_bytes(len_password);
         }
         stream.in_uni_to_ascii_str(this->program, len_program);
         stream.in_uni_to_ascii_str(this->directory, len_directory);
 
         if (flags & RDP_LOGON_BLOB) {
             LOG(LOG_DEBUG, "RDP-5 Style logon");
-            stream.skip_uint8(2);
+            stream.in_skip_bytes(2);
             unsigned len_ip = stream.in_uint16_le();
             char tmpdata[256];
             stream.in_uni_to_ascii_str(tmpdata, len_ip);
             unsigned len_dll = stream.in_uint16_le();
             stream.in_uni_to_ascii_str(tmpdata, len_dll);
-            stream.skip_uint8(172); /* skip time data */
+            stream.in_skip_bytes(172); /* skip time data */
             this->rdp5_performanceflags = stream.in_uint32_le();
             // more data here
             TODO("We should take care of remaining data")

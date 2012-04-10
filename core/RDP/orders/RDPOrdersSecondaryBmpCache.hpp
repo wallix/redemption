@@ -500,14 +500,14 @@ class RDPBmpCache {
     int id;
     int idx;
     const Bitmap * bmp;
+    uint32_t verbose;
 
-
-    RDPBmpCache(const Bitmap * bmp, int id, int idx)
-        : id(id), idx(idx), bmp(bmp)
+    RDPBmpCache(const Bitmap * bmp, int id, int idx, int verbose = 0)
+        : id(id), idx(idx), bmp(bmp), verbose(verbose)
     {
     }
 
-    RDPBmpCache() : id(0), idx(0), bmp(NULL)
+    RDPBmpCache() : id(0), idx(0), bmp(NULL), verbose(0)
     {
     }
 
@@ -517,32 +517,42 @@ class RDPBmpCache {
 
     void emit(Stream & stream, const int bitmap_cache_version, const int use_bitmap_comp, const int op2) const
     {
-        TODO(" logs below should be dependant on debug flags")
         using namespace RDP;
         switch (bitmap_cache_version){
         case 0:
         case 1:
             if (use_bitmap_comp){
-//                LOG(LOG_INFO, "/* BMP Cache compressed V1 */");
                 if (op2){
+                    if (this->verbose){
+                        LOG(LOG_INFO, "/* BMP Cache compressed V1 Small Headers */");
+                    }
                     this->emit_v1_compressed_small_headers(stream);
                 }
                 else {
+                    if (this->verbose){
+                        LOG(LOG_INFO, "/* BMP Cache compressed V1*/");
+                    }
                     this->emit_v1_compressed(stream);
                 }
             }
             else {
-//                LOG(LOG_INFO, "/* BMP Cache raw V1 */");
+                if (this->verbose){
+                    LOG(LOG_INFO, "/* BMP Cache raw V1 */");
+                }
                 this->emit_raw_v1(stream);
             }
         break;
         default:
             if (use_bitmap_comp){
-//                LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
+                if (this->verbose){
+                    LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
+                }
                 this->emit_v2_compressed(stream);
             }
             else {
-//                LOG(LOG_INFO, "/* BMP Cache raw V2 */");
+                if (this->verbose){
+                    LOG(LOG_INFO, "/* BMP Cache raw V2 */");
+                }
                 this->emit_raw_v2(stream);
             }
         }
@@ -853,9 +863,8 @@ class RDPBmpCache {
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);
 
-        // here is length, it will be computed when packet will be complete
-        uint8_t * length_ptr = stream.p;
-        stream.skip_uint8(2);
+        uint32_t offset_header = stream.get_offset(0);
+        stream.out_uint16_le(0); // placeholder for length after type minus 7
 
         int bitsPerPixelId = nbbytes(this->bmp->original_bpp)+2;
 
@@ -926,7 +935,10 @@ class RDPBmpCache {
 
         // for uncompressed bitmaps the format is quite simple
         stream.out_copy_bytes(this->bmp->data(), this->bmp->bmp_size);
-        stream.set_length(-12, length_ptr);
+
+        uint16_t length = (uint16_t)(stream.get_offset(offset_header + 12));
+        stream.set_out_uint16_le(length, offset_header);
+
     }
 
     void receive(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header, const BGRPalette & palette)
@@ -967,7 +979,7 @@ class RDPBmpCache {
         // pad1Octet (1 byte): An 8-bit, unsigned integer. Padding. Values in
         // this field are arbitrary and MUST be ignored.
 
-        stream.skip_uint8(1);
+        stream.in_skip_bytes(1);
 
         // bitmapWidth (1 byte): An 8-bit, unsigned integer. The width of the
         // bitmap in pixels.

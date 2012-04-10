@@ -314,7 +314,7 @@ struct X224In : public X224Packet
             LOG(LOG_INFO, "UNSUPPORTED FAST-PATH PDU");
             throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
         }
-        stream.skip_uint8(1);
+        stream.in_skip_bytes(1);
         this->tpkt.len = stream.in_uint16_be();
 
         const uint16_t payload_len = (uint16_t)(this->tpkt.len - TPKT_HEADER_LEN);
@@ -331,23 +331,23 @@ struct X224In : public X224Packet
             case DT_TPDU:
 //                LOG(LOG_INFO, "recv DT_TPDU");
                 this->tpdu_hdr.eot = stream.in_uint8();
-                stream.skip_uint8(this->tpdu_hdr.LI-2);
+                stream.in_skip_bytes(this->tpdu_hdr.LI-2);
             break;
             case DR_TPDU:
 //                LOG(LOG_INFO, "recv DR_TPDU");
-                stream.skip_uint8(4);
+                stream.in_skip_bytes(4);
                 this->tpdu_hdr.reason = stream.in_uint8();
-                stream.skip_uint8(this->tpdu_hdr.LI-6);
+                stream.in_skip_bytes(this->tpdu_hdr.LI-6);
             break;
             case ER_TPDU:
 //                LOG(LOG_INFO, "recv ER_TPDU");
-                stream.skip_uint8(2);
+                stream.in_skip_bytes(2);
                 this->tpdu_hdr.reject_cause = stream.in_uint8();
-                stream.skip_uint8(this->tpdu_hdr.LI-4);
+                stream.in_skip_bytes(this->tpdu_hdr.LI-4);
             break;
             case CC_TPDU:
                 LOG(LOG_INFO, "recv CC_TPDU LI=%u",this->tpdu_hdr.LI);
-                stream.skip_uint8(5);
+                stream.in_skip_bytes(5);
                 if (this->tpdu_hdr.LI == 13){
 
                     enum {
@@ -412,13 +412,13 @@ struct X224In : public X224Packet
                         }
                     }
                 }
-                stream.skip_uint8(this->tpdu_hdr.LI-1);
+                stream.in_skip_bytes(this->tpdu_hdr.LI-1);
             }
             break;
             default:
                 LOG(LOG_INFO, "recv OTHER_TPDU %u", this->tpdu_hdr.code);
                 // just skip remaining TPDU header content
-                stream.skip_uint8(this->tpdu_hdr.LI-1);
+                stream.in_skip_bytes(this->tpdu_hdr.LI-1);
         }
     }
 

@@ -95,11 +95,8 @@ class Stream {
         return (this->end - this->data + n) <= this->capacity;
     }
 
-    TODO("set_length is only used once in code, we should probably remove it")
-    void set_length(int offset, uint8_t * const length_ptr){
-        uint16_t length = (uint16_t)(this->p - length_ptr + offset);
-        length_ptr[0] = (uint8_t)length;
-        length_ptr[1] = (uint8_t)(length >> 8);
+    uint16_t get_offset(uint16_t offset){
+        return this->p - this->data - offset;
     }
 
     bool check_rem(unsigned n) {
@@ -109,6 +106,10 @@ class Stream {
     bool check_end(void) {
         return this->p == this->end;
     }
+
+    // =========================================================================
+    // Generic binary Data access methods
+    // =========================================================================
 
     signed char in_sint8(void) {
         assert(check_rem(1));
@@ -130,12 +131,6 @@ class Stream {
         assert(check_rem(2));
         unsigned int v = this->in_uint16_le();
         return (int16_t)((v > 32767)?v - 65536:v);
-    }
-
-    unsigned in_bytes_le(const uint8_t nb){
-        assert(check_rem(nb));
-        this->p += nb;
-        return ::in_bytes_le(nb, this->p - nb);
     }
 
     uint16_t in_uint16_le(void) {
@@ -170,6 +165,12 @@ class Stream {
              ;
     }
 
+    unsigned in_bytes_le(const uint8_t nb){
+        assert(check_rem(nb));
+        this->p += nb;
+        return ::in_bytes_le(nb, this->p - nb);
+    }
+
     void in_copy_bytes(uint8_t * v, size_t n) {
         assert(check_rem(n));
         memcpy(v, this->p, n);
@@ -182,9 +183,13 @@ class Stream {
         return this->p - n;
     }
 
-    void skip_uint8(unsigned int n) {
-        TODO("We can't put the assert below because end is not (yet) setted when we are performing output. To solve this we should have two different skip functions, one for output, the other for input")
-//        assert(check_rem(n));
+    void in_skip_bytes(unsigned int n) {
+        assert(check_rem(n));
+        this->p+=n;
+    }
+
+    void out_skip_bytes(unsigned int n) {
+        assert(has_room(n));
         this->p+=n;
     }
 
@@ -302,6 +307,102 @@ class Stream {
         this->data[offset+3] = v & 0xFF;
     }
 
+
+    void out_unistr(const char* text)
+    {
+        for (int i=0; text[i]; i++) {
+            this->out_uint8(text[i]);
+            this->out_uint8(0);
+        }
+        this->out_uint8(0);
+        this->out_uint8(0);
+    }
+
+    void set_out_unistr(const char* text, size_t offset)
+    {
+        int i=0;
+        for (; text[i]; i++) {
+            this->set_out_uint8(text[i], offset+i*2);
+            this->set_out_uint8(0, offset+i*2+1);
+        }
+        this->set_out_uint8(0, offset+i*2);
+        this->set_out_uint8(0, offset+i*2+1);
+    }
+
+    // sz utf16 bytes are translated to ascci, 00 terminated
+    void in_uni_to_ascii_str(char* text, size_t sz)
+    {
+        size_t i = 0;
+        size_t max = (sz>>1);
+        while (i < max) {
+            text[i++] = this->in_uint8();
+            this->in_skip_bytes(1);
+        }
+        if (i > 0){
+            text[i-1] = 0;
+        }
+    }
+
+    void mark_end() {
+        this->end = this->p;
+    }
+
+    void goto_end() {
+        this->p = this->end;
+    }
+
+    void out_copy_bytes(const uint8_t * v, size_t n) {
+        assert(has_room(n));
+        memcpy(this->p, v, n);
+        this->p += n;
+    }
+
+    void set_out_copy_bytes(const uint8_t * v, size_t n, size_t offset) {
+        memcpy(this->data+offset, v, n);
+    }
+
+    void out_copy_bytes(const char * v, size_t n) {
+        out_copy_bytes((uint8_t*)v, n);
+    }
+
+    void set_out_copy_bytes(const char * v, size_t n, size_t offset) {
+        set_out_copy_bytes((uint8_t*)v, n, offset);
+    }
+
+    void out_concat(const char * v) {
+        out_copy_bytes(v, strlen(v));
+    }
+
+    void set_out_concat(const char * v, size_t offset) {
+        set_out_copy_bytes((uint8_t*)v, strlen(v), offset);
+    }
+
+
+    void out_clear_bytes(size_t n) {
+        assert(has_room(n));
+        memset(this->p, 0, n);
+        this->p += n;
+    }
+
+    void set_out_clear_bytes(size_t n, size_t offset) {
+        memset(this->data+offset, 0, n);
+    }
+
+    void out_bytes_le(const uint8_t nb, const unsigned value){
+        assert(has_room(nb));
+        ::out_bytes_le(this->p, nb, value);
+        this->p += nb;
+    }
+
+    void set_out_bytes_le(const uint8_t nb, const unsigned value, size_t offset){
+        ::out_bytes_le(this->data+offset, nb, value);
+    }
+
+
+    // =========================================================================
+    // BER encoding rules support methods
+    // =========================================================================
+
     void out_ber_int8(unsigned int v){
         this->out_uint8(BER_TAG_INTEGER);
         this->out_uint8(1);
@@ -408,103 +509,21 @@ class Stream {
         return l;
     }
 
+    // =========================================================================
+    // DER encoding rules support methods
+    // =========================================================================
 
-    void out_unistr(const char* text)
-    {
-        for (int i=0; text[i]; i++) {
-            this->out_uint8(text[i]);
-            this->out_uint8(0);
-        }
-        this->out_uint8(0);
-        this->out_uint8(0);
-    }
+    // =========================================================================
+    // BER encoding rules support methods
+    // =========================================================================
 
-    void set_out_unistr(const char* text, size_t offset)
-    {
-        int i=0;
-        for (; text[i]; i++) {
-            this->set_out_uint8(text[i], offset+i*2);
-            this->set_out_uint8(0, offset+i*2+1);
-        }
-        this->set_out_uint8(0, offset+i*2);
-        this->set_out_uint8(0, offset+i*2+1);
-    }
+    // =========================================================================
+    // ER encoding rules support methods
+    // =========================================================================
 
-    // sz utf16 bytes are translated to ascci, 00 terminated
-    void in_uni_to_ascii_str(char* text, size_t sz)
-    {
-        size_t i = 0;
-        size_t max = (sz>>1);
-        while (i < max) {
-            text[i++] = this->in_uint8();
-            this->skip_uint8(1);
-        }
-        if (i > 0){
-            text[i-1] = 0;
-        }
-    }
-
-    void mark_end() {
-        this->end = this->p;
-    }
-
-    void goto_end() {
-        this->p = this->end;
-    }
-
-    void out_copy_bytes(const uint8_t * v, size_t n) {
-        assert(has_room(n));
-        memcpy(this->p, v, n);
-        this->p += n;
-    }
-
-    void set_out_copy_bytes(const uint8_t * v, size_t n, size_t offset) {
-        memcpy(this->data+offset, v, n);
-    }
-
-    void out_copy_bytes(const char * v, size_t n) {
-        out_copy_bytes((uint8_t*)v, n);
-    }
-
-    void set_out_copy_bytes(const char * v, size_t n, size_t offset) {
-        set_out_copy_bytes((uint8_t*)v, n, offset);
-    }
-
-    void out_concat(const char * v) {
-        out_copy_bytes(v, strlen(v));
-    }
-
-    void set_out_concat(const char * v, size_t offset) {
-        set_out_copy_bytes((uint8_t*)v, strlen(v), offset);
-    }
-
-
-    void out_clear_bytes(size_t n) {
-        assert(has_room(n));
-        memset(this->p, 0, n);
-        this->p += n;
-    }
-
-    void set_out_clear_bytes(size_t n, size_t offset) {
-        memset(this->data+offset, 0, n);
-    }
-
-    void out_bytes_le(const uint8_t nb, const unsigned value){
-        assert(has_room(nb));
-        ::out_bytes_le(this->p, nb, value);
-        this->p += nb;
-    }
-
-    void set_out_bytes_le(const uint8_t nb, const unsigned value, size_t offset){
-        ::out_bytes_le(this->data+offset, nb, value);
-    }
-
-    uint16_t get_offset(uint16_t offset){
-        return this->p - this->data - offset;
-    }
-
-    // functions below are used in bitmap compress, it should be some kind of specialized stream instead of main stream
-    /*****************************************************************************/
+    // =========================================================================
+    // Helper methods for RDP bitmap compression support
+    // =========================================================================
     void out_count(const int in_count, const int mask){
         if (in_count < 32) {
             this->out_uint8((uint8_t)((mask << 5) | in_count));
@@ -869,7 +888,6 @@ class Stream {
             this->out_uint16_le(in_count / 2);
         }
     }
-
 
 };
 

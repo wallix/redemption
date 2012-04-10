@@ -485,18 +485,22 @@ BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
 // session (see section 5.5 for more details). The autoReconnectCookie field is
 // only read by RDP 5.2, 6.0, 6.1, and 7.0 servers and the maximum allowed
 // length is 128 bytes.
-    stream.skip_uint8(cbAutoReconnectLen);
+    stream.in_skip_bytes(cbAutoReconnectLen);
+    BOOST_CHECK(true);
 
-// reserved1 (2 bytes): This field is reserved for future use and has no affect
-// on RDP wire traffic. If this field is present, the reserved2 field MUST
-// be present.
-    stream.skip_uint8(2);
+    if (stream.check_rem(4)){
+    // reserved1 (2 bytes): This field is reserved for future use and has no affect
+    // on RDP wire traffic. If this field is present, the reserved2 field MUST
+    // be present.
+        stream.in_skip_bytes(2);
+        BOOST_CHECK(true);
 
-// reserved2 (2 bytes): This field is reserved for future use and has no affect
-// on RDP wire traffic. This field MUST be present if the reserved1 field
-// is present.
-    stream.skip_uint8(2);
-
+    // reserved2 (2 bytes): This field is reserved for future use and has no affect
+    // on RDP wire traffic. This field MUST be present if the reserved1 field
+    // is present.
+        stream.in_skip_bytes(2);
+        BOOST_CHECK(true);
+    }
 // Rdesktop advertise an overly large buffer, but this is not a problem
     BOOST_CHECK((uint32_t)318 >= (uint32_t)(stream.p - start_of_logon_info));
 
