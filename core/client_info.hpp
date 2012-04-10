@@ -48,9 +48,9 @@ struct ClientInfo {
     int use_bitmap_comp;
     int use_bitmap_cache;
     int op1; /* use smaller bitmap header, non cache */
-    int op2; /* use smaller bitmap header in bitmap cache */
+//    int op2; /* use smaller bitmap header in bitmap cache */
     int desktop_cache;
-    int use_compact_packets; /* rdp5 smaller packets */
+    bool use_compact_packets; /* rdp5 smaller packets */
     char hostname[512];
     int build;
     int keylayout;
@@ -89,9 +89,8 @@ struct ClientInfo {
         this->pointer_cache_entries = 0;
         /* other */
         this->op1 = 0; /* use smaller bitmap header, non cache */
-        this->op2 = 0; /* use smaller bitmap header in bitmap cache */
         this->desktop_cache = 0;
-        this->use_compact_packets = 0; /* rdp5 smaller packets */
+        this->use_compact_packets = false; /* rdp5 smaller packets */
         memset(this->hostname, 0, sizeof(this->hostname));
         this->build = 0;
         this->keylayout = 0;

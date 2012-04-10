@@ -43,7 +43,6 @@ BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
         ClientInfo ci(1, 1, true, true);
         ci.bitmap_cache_version = 1;
         ci.use_bitmap_comp = 0;
-        ci.op2 = 0;
 
         const uint8_t data[] = {
             /* line 0 */
@@ -52,7 +51,7 @@ BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
         };
         Bitmap bmp(24, NULL, 8, 1, data, sizeof(data), false);
         RDPBmpCache newcmd(&bmp, 1, 10);
-        newcmd.emit(stream, ci.bitmap_cache_version, ci.use_bitmap_comp, ci.op2);
+        newcmd.emit(stream, ci.bitmap_cache_version, ci.use_bitmap_comp, ci.use_compact_packets);
 
         uint8_t datas[] = {
             STANDARD | SECONDARY,       // control = 0x03

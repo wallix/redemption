@@ -472,7 +472,7 @@ public:
                         this->client_info.cache3_size,
                         this->client_info.bitmap_cache_version,
                         this->client_info.use_bitmap_comp,
-                        this->client_info.op2);
+                        this->client_info.use_compact_packets);
 
         this->cache.reset(this->client_info);
     }
@@ -2377,13 +2377,69 @@ public:
                 this->state = ACTIVATE_AND_PROCESS_DATA;
             }
             else {
+                if (this->verbose){
+                    LOG(LOG_INFO, "Unknown packet: still waiting for licence");
+                }
                 // still waiting for licence
-                uint8_t length = stream.in_uint8();
-                stream.p += length;
+                uint16_t length = stream.in_uint16_le();
+                stream.check_rem(length - 2);
+                uint16_t pdu_code = stream.in_uint16_le();
+                LOG(LOG_INFO, "front::incoming::pdu_code=%d", pdu_code);
+                stream.in_skip_bytes(2); /* mcs user id */
+
+                switch (pdu_code & 0xf) {
+                case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::incoming::PDUTYPE_DEMANDACTIVEPDU");
+                    }
+                    break;
+                case PDUTYPE_CONFIRMACTIVEPDU:
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::incoming::PDUTYPE_CONFIRMACTIVEPDU");
+                    }
+                    this->process_confirm_active(stream);
+                    // reset caches, etc.
+                    this->reset();
+                    // resizing done
+                    BGRPalette palette;
+                    init_palette332(palette);
+                    this->color_cache(palette, 0);
+                    this->init_pointers();
+//                            this->up_and_running = 1;
+
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::incoming::PDUTYPE_CONFIRMACTIVEPDU <---------------------");
+                    }
+
+                    break;
+                case PDUTYPE_DATAPDU: /* 7 */
+                    if (this->verbose & 4){
+                        LOG(LOG_INFO, "Front::incoming::PDUTYPE_DATAPDU");
+                    }
+                    // this is rdp_process_data that will set up_and_running to 1
+                    // when fonts have been received
+                    // we will not exit this loop until we are in this state.
+                    this->process_data(stream, cb);
+                    break;
+                case PDUTYPE_DEACTIVATEALLPDU:
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::incoming::unsupported PDUTYPE_DEACTIVATEALLPDU");
+                    }
+                    break;
+                case PDUTYPE_SERVER_REDIR_PKT:
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Front::incoming::"
+                            "unsupported PDU SERVER_REDIR_PKT in session_data (%d)\n", pdu_code & 0xf);
+                    }
+                    break;
+                default:
+                    LOG(LOG_WARNING, "unknown PDU type in session_data (%d)\n", pdu_code & 0xf);
+                    break;
+                }
             }
-//            sec.end();
-//            mcs_in.end();
-//            tpdu.end();
+            sec.end();
+            mcs_in.end();
+            tpdu.end();
         }
         break;
 
@@ -2515,19 +2571,8 @@ public:
                     assert(stream.check_rem(2));
                     uint16_t length = stream.in_uint16_le();
                     uint8_t * next_packet = stream.p + length;
-                    if (length < 4){
-                        TODO("Can't be a ShareControlHeader... should not happen but it does. We should try to understand why.")
-                        LOG(LOG_INFO, "PDU length (%u) too small for ShareControlHeader, remaining data :%u", length, stream.end - stream.p + 2);
-    //                    exit(0);
-                    }
-                    else if (length == 0x8000) {
+                    if (length == 0x8000) {
                         next_packet = next_packet - 0x8000 + 8;
-                    }
-                    else if (length > stream.end - stream.p + 2){
-                        TODO("Should not happen. It means PDU length is inconsistant with TPDU length. It should not happen but it does")
-                        LOG(LOG_INFO, "PDU length (%u) too large for remaining TPDU data (%u)", length, stream.end - stream.p + 2);
-    //                    exit(0);
-                        next_packet = stream.end;
                     }
                     else {
                         assert(stream.check_rem(2));
@@ -2588,7 +2633,6 @@ public:
                             break;
                         }
                     }
-                    next_packet = stream.p + length;
                 }
             }
         }
@@ -2786,9 +2830,7 @@ public:
 
             switch (type) {
             case RDP_CAPSET_GENERAL: /* 1 */
-                cs_in_general_caps(stream, len,
-                    this->client_info.use_compact_packets,
-                    this->client_info.op2);
+                cs_in_general_caps(stream, len, this->client_info.use_compact_packets);
                 break;
             case RDP_CAPSET_BITMAP: /* 2 */
                 break;

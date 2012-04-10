@@ -515,14 +515,14 @@ class RDPBmpCache {
     {
     }
 
-    void emit(Stream & stream, const int bitmap_cache_version, const int use_bitmap_comp, const int op2) const
+    void emit(Stream & stream, const int bitmap_cache_version, const int use_bitmap_comp, const int use_compact_packets) const
     {
         using namespace RDP;
         switch (bitmap_cache_version){
         case 0:
         case 1:
             if (use_bitmap_comp){
-                if (op2){
+                if (use_compact_packets){
                     if (this->verbose){
                         LOG(LOG_INFO, "/* BMP Cache compressed V1 Small Headers */");
                     }
