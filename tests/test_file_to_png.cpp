@@ -61,7 +61,7 @@ void file_to_png(const char* filename, uint16_t w, uint16_t h, uint16_t bpp, con
     int fd;
     {
         char tmppath[1024] = {};
-        sprintf(tmppath, "%s.%u.wrm", filename, getpid());
+        sprintf(tmppath, "%s-%u-0.wrm", filename, getpid());
         fd = ::open(tmppath, O_RDONLY);
         if (fd == -1)
         {
@@ -143,7 +143,6 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
         return ;
     }
     InFileTransport in_trans(fd);
-    Rect clip(0, 0, 800, 600);
     RDPUnserializer reader(&in_trans, 0, Rect());
     BOOST_CHECK(1);
     MetaWRM meta(reader);
@@ -155,14 +154,21 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
 
     StaticCapture consumer(meta.width, meta.height, /*meta.bpp*/24, palette, "/tmp/test_replay_to_png", 0, 0);
 
+    bool is_chunk_time = false;
+
     reader.consumer = &consumer;
     while (reader.selected_next_order())
     {
         if (reader.chunk_type == WRMChunk::TIMESTAMP || reader.chunk_type == WRMChunk::OLD_TIMESTAMP){
-            consumer.flush();
+            is_chunk_time = true;
             reader.remaining_order_count = 0;
         } else {
             reader.interpret_order();
+            if (is_chunk_time)
+            {
+                consumer.flush();
+                is_chunk_time = false;
+            }
         }
     }
 }

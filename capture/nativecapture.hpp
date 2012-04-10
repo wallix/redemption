@@ -61,32 +61,41 @@ class NativeCapture : public RDPGraphicDevice
     int height;
     int bpp;
     BGRPalette palette;
-    int f;
     OutFileTransport trans;
     GraphicsToFile recorder;
+    char basepath[1024];
+    uint16_t basepath_len;
+    uint32_t nb_file;
 
-    NativeCapture(int width, int height, int bpp, const BGRPalette & palette, const char * path)
-        : width(width), height(height), bpp(bpp),
-        f(-1),
-        trans(this->f),
-        recorder(&this->trans, NULL, bpp,
-                8192, 768, 8192, 3072, 8192, 12288
-) {
-        char tmppath[1024] = {};
-        sprintf(tmppath, "%s.%u.wrm", path, getpid());
-        LOG(LOG_INFO, "Recording to file : %s", tmppath);
-        this->f = open(tmppath, O_WRONLY|O_CREAT, 0666);
-        if (this->f < 0){
+private:
+    void open_file()
+    {
+        sprintf(this->basepath + this->basepath_len, "%u.wrm", this->nb_file++);
+        LOG(LOG_INFO, "Recording to file : %s", this->basepath);
+        this->trans.fd = open(this->basepath, O_WRONLY|O_CREAT, 0666);
+        if (this->trans.fd < 0){
             LOG(LOG_ERR, "Error opening native capture file : %s", strerror(errno));
             throw Error(ERR_RECORDER_NATIVE_CAPTURE_OPEN_FAILED);
         }
+    }
 
-        this->trans.fd = this->f;
-        this->inter_frame_interval = 40000; // 1 000 000 us is 1 sec (default)
+public:
+    NativeCapture(int width, int height, int bpp, const BGRPalette & palette, const char * path)
+    : inter_frame_interval(40000) // 1 000 000 us is 1 sec (default)
+    , width(width)
+    , height(height)
+    , bpp(bpp)
+    , trans(-1)
+    , recorder(&this->trans, NULL, bpp, 8192, 768, 8192, 3072, 8192, 12288)
+    , nb_file(0)
+    {
+        this->basepath_len = sprintf(this->basepath, "%s-%u-", path, getpid());
+        this->open_file();
+        this->basepath[this->basepath_len] = 0;
     }
 
     ~NativeCapture(){
-        close(this->f);
+        close(this->trans.fd);
     }
 
     void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
@@ -138,6 +147,126 @@ class NativeCapture : public RDPGraphicDevice
     }
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) {}
+
+private:
+    template<typename _T>
+    void out_copy_bytes(const _T& v)
+    {
+        this->recorder.stream.out_copy_bytes((const uint8_t*)(&v), sizeof(_T));
+    }
+
+public:
+// protected:
+    void breakpoint()
+    {
+        this->recorder.flush();
+        this->recorder.chunk_type = WRMChunk::NEXT_FILE;
+        this->recorder.order_count = 1;
+        this->recorder.stream.out_copy_bytes(this->basepath, strlen(this->basepath));
+        this->recorder.send_order();
+        this->basepath[this->basepath_len] = 0;
+
+        close(this->trans.fd);
+        this->open_file();
+
+        {
+            size_t size_alloc_stream = 8
+            + sizeof(MetaWRM)
+
+            + sizeof(this->recorder.bitmap_cache_version)
+            + sizeof(this->recorder.use_bitmap_comp)
+            + sizeof(this->recorder.op2)
+            + sizeof(this->recorder.common)
+            + sizeof(this->recorder.destblt)
+            + sizeof(this->recorder.patblt)
+            + sizeof(this->recorder.scrblt)
+            + sizeof(this->recorder.opaquerect)
+            + sizeof(this->recorder.memblt)
+            + sizeof(this->recorder.lineto)
+            + sizeof(this->recorder.glyphindex)
+            + sizeof(this->recorder.order_count)
+            + sizeof(this->recorder.offset_order_count)
+
+            + sizeof(this->recorder.bmp_cache.small_entries)
+            + sizeof(this->recorder.bmp_cache.small_size)
+            + sizeof(this->recorder.bmp_cache.medium_entries)
+            + sizeof(this->recorder.bmp_cache.medium_size)
+            + sizeof(this->recorder.bmp_cache.big_entries)
+            + sizeof(this->recorder.bmp_cache.big_size)
+            + sizeof(this->recorder.bmp_cache.stamps)
+            + sizeof(this->recorder.bmp_cache.stamp)
+
+            + 3 * 8192 * sizeof(bool);
+
+            for (size_t cid = 0; cid < 3 ; cid++){
+                for (size_t cidx = 0; cidx < 8192 ; cidx++){
+                    const Bitmap* bmp = this->recorder.bmp_cache.cache[cid][cidx];
+                    if (bmp){
+                        size_alloc_stream += sizeof(bmp->original_bpp)
+                        + sizeof(bmp->cx)
+                        + sizeof(bmp->cy)
+                        + sizeof(bmp->line_size)
+                        + sizeof(bmp->bmp_size)
+                        + bmp->bmp_size;
+                    }
+                }
+            }
+            this->recorder.init(size_alloc_stream);
+        }
+
+        this->recorder.chunk_type = WRMChunk::BREAKPOINT;
+        this->recorder.order_count = 1;
+        {
+            MetaWRM meta(this->width, this->height, this->bpp);
+            meta.send(this->recorder);
+            this->out_copy_bytes(meta);
+        }
+        this->out_copy_bytes(this->recorder.bitmap_cache_version);
+        this->out_copy_bytes(this->recorder.use_bitmap_comp);
+        this->out_copy_bytes(this->recorder.op2);
+        this->out_copy_bytes(this->recorder.common);
+        this->out_copy_bytes(this->recorder.destblt);
+        this->out_copy_bytes(this->recorder.patblt);
+        this->out_copy_bytes(this->recorder.scrblt);
+        this->out_copy_bytes(this->recorder.opaquerect);
+        this->out_copy_bytes(this->recorder.memblt);
+        this->out_copy_bytes(this->recorder.lineto);
+        this->out_copy_bytes(this->recorder.glyphindex);
+        this->out_copy_bytes(this->recorder.order_count);
+        this->out_copy_bytes(this->recorder.offset_order_count);
+
+        this->out_copy_bytes(this->recorder.bmp_cache.small_entries);
+        this->out_copy_bytes(this->recorder.bmp_cache.small_size);
+        this->out_copy_bytes(this->recorder.bmp_cache.medium_entries);
+        this->out_copy_bytes(this->recorder.bmp_cache.medium_size);
+        this->out_copy_bytes(this->recorder.bmp_cache.big_entries);
+        this->out_copy_bytes(this->recorder.bmp_cache.big_size);
+        this->out_copy_bytes(this->recorder.bmp_cache.stamps);
+        this->out_copy_bytes(this->recorder.bmp_cache.stamp);
+
+
+        for (size_t cid = 0; cid < 3 ; cid++){
+            for (size_t cidx = 0; cidx < 8192 ; cidx++){
+                const Bitmap* bmp = this->recorder.bmp_cache.cache[cid][cidx];
+                if (bmp){
+                    this->recorder.stream.out_uint8(1);
+                    this->out_copy_bytes(bmp->original_bpp);
+                    this->out_copy_bytes(bmp->cx);
+                    this->out_copy_bytes(bmp->cy);
+                    this->out_copy_bytes(bmp->line_size);
+                    this->out_copy_bytes(bmp->bmp_size);
+                    this->recorder.stream.out_copy_bytes(bmp->data(), bmp->bmp_size);
+                }
+                else{
+                    this->recorder.stream.out_uint8(0);
+                }
+            }
+        }
+
+        this->recorder.send_order();
+        this->recorder.chunk_type = RDP_UPDATE_ORDERS;
+        this->recorder.init();
+    }
 };
 
 #endif

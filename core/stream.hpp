@@ -72,8 +72,8 @@ class Stream {
                     delete [] this->data;
                 }
                 if (v > AUTOSIZE){
-                    this->data = new uint8_t[v];
 //                    LOG(LOG_DEBUG, "Stream buffer allocation succeeded : size=%d @%p\n", v, this->data);
+                    this->data = new uint8_t[v];
                 }
                 else {
                     this->data = &(this->autobuffer[0]);
