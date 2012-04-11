@@ -2325,7 +2325,7 @@ struct mod_rdp : public client_mod {
 
             capscount++; cs_out_general_caps(stream, this->use_rdp5);
             capscount++; out_bitmap_caps(stream, this->bpp, this->bitmap_compression);
-            capscount++; out_order_caps(stream);
+            capscount++; cs_out_order_caps(stream);
             capscount++; out_bmpcache_caps(stream, this->bpp);
 
 //            if(this->use_rdp5){
@@ -3029,6 +3029,9 @@ struct mod_rdp : public client_mod {
                     break;
                 case RDP_CAPSET_BITMAP:
                     process_bitmap_caps(stream, this->bpp);
+                    break;
+                case RDP_CAPSET_ORDER:
+                    sc_in_order_caps(stream, capset_length);
                     break;
                 default:
                     break;

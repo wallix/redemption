@@ -2674,7 +2674,7 @@ public:
                                             this->client_info.height);
 
         caps_count++; front_out_font_caps(stream);
-        caps_count++; cs_out_order_caps(stream);
+        caps_count++; sc_out_order_caps(stream);
         caps_count++; front_out_colcache_caps(stream);
         caps_count++; front_out_pointer_caps(stream);
 

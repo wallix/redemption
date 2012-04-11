@@ -258,7 +258,7 @@
 // pad2octetsE (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
 // field MUST be ignored.
 
-static inline void out_order_caps(Stream & stream)
+static inline void cs_out_order_caps(Stream & stream)
 {
     LOG(LOG_INFO, "Sending order caps to server");
 
@@ -302,7 +302,14 @@ static inline void out_order_caps(Stream & stream)
     stream.out_uint32_le(0x4e4); /* Unknown */
 }
 
-static inline void cs_out_order_caps(Stream & stream)
+    /*****************************************************************************/
+static inline void sc_in_order_caps(Stream & stream, uint16_t length)
+{
+    TODO("implement it, at least to trace server configuration settings");
+}
+
+
+static inline void sc_out_order_caps(Stream & stream)
 {
         stream.out_uint16_le(RDP_CAPSET_ORDER); /* 3 */
         stream.out_uint16_le(RDP_CAPLEN_ORDER); /* 88(0x58) */
