@@ -2311,7 +2311,15 @@ struct mod_rdp : public client_mod {
         // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number of capability sets is specified by the numberCapabilities field.
             uint16_t total_caplen = stream.get_offset(0);
 
-            capscount++; cs_out_general_caps(stream, this->use_rdp5);
+            capscount++;
+            GeneralCaps general;
+            general.extraflags = use_rdp5
+                ? NO_BITMAP_COMPRESSION_HDR
+                 |AUTORECONNECT_SUPPORTED
+                 |LONG_CREDENTIALS_SUPPORTED
+                :0;
+            general.log("Sending to server");
+            general.emit(stream);
             capscount++; out_bitmap_caps(stream, this->bpp, this->bitmap_compression);
             capscount++; cs_out_order_caps(stream);
             capscount++; out_bmpcache_caps(stream, this->bpp);
@@ -3107,7 +3115,11 @@ struct mod_rdp : public client_mod {
                 next = (stream.p + capset_length) - 4;
                 switch (capset_type) {
                 case RDP_CAPSET_GENERAL:
-                    sc_in_general_caps(stream);
+                    {
+                        GeneralCaps general;
+                        general.recv(stream);
+                        general.log("Received from server");
+                    }
                     break;
                 case RDP_CAPSET_BITMAP:
                     process_bitmap_caps(stream, this->bpp);

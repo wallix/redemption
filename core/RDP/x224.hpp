@@ -32,15 +32,6 @@
 #include "log.hpp"
 #include "error.hpp"
 
-enum {
-    ISO_PDU_CR = 0xE0, /* Connection Request */
-    ISO_PDU_CC = 0xD0, /* Connection Confirm */
-    ISO_PDU_DR = 0x80, /* Disconnect Request */
-    ISO_PDU_DT = 0xF0, /* Data */
-    ISO_PDU_ER = 0x70, /* Error */
-};
-
-
 struct X224Packet
 {
     // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
@@ -138,6 +129,7 @@ struct X224Packet
     // data which is present, this is a protocol error.
 
     // 13.7.3 Fixed part
+    // -----------------
     // The fixed part shall contain:
     // a) DT – Data transfer code: bits 8 to 5 shall be set to 1111.
     //    Bits 4 to 2 shall be set to zero.
@@ -169,8 +161,8 @@ struct X224Packet
     // classes 2, 3, 4 (normal format): octets 2 to 5;
     // classes 2, 3, 4 (extended format): octets 2 to 8.
 
-    // 13.7.4
-    // Variable part
+    // 13.7.4 Variable part
+    // --------------------
     // The variable part shall contain the checksum parameter if the condition
     // defined in 13.2.3.1 applies.
     // If the use of non-blocking expedited data transfer service is negotiated
@@ -190,8 +182,8 @@ struct X224Packet
     // even (resp. odd) LI always corresponds to the normal (resp.extended)
     // format is not broken.
 
-    // 13.7.5
-    // User data field
+    // 13.7.5 User data field
+    // ----------------------
     // This field contains data of the TSDU being transmitted.
     // NOTE – The length of this field is limited to the negotiated TPDU size
     // for this transport connection minus 3 octets in classes 0 and 1, and
