@@ -24,8 +24,6 @@
 #if !defined(__RDP_CAPABILITIES_SHARE_HPP__)
 #define __RDP_CAPABILITIES_SHARE_HPP__
 
-#include "constants.hpp"
-
 // 2.2.7.2.4 Share Capability Set (TS_SHARE_CAPABILITYSET)
 // ====================================================
 // The TS_SHARE_CAPABILITYSET structure is used to advertise the channel ID of

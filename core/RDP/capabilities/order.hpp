@@ -24,9 +24,6 @@
 #if !defined(__RDP_CAPABILITIES_ORDER_HPP__)
 #define __RDP_CAPABILITIES_ORDER_HPP__
 
-#include "constants.hpp"
-
-
 // 2.2.7.1.3 Order Capability Set (TS_ORDER_CAPABILITYSET)
 // =======================================================
 

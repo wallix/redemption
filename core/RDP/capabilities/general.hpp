@@ -24,8 +24,6 @@
 #if !defined(__RDP_CAPABILITIES_GENERAL_HPP__)
 #define __RDP_CAPABILITIES_GENERAL_HPP__
 
-#include "constants.hpp"
-
 // 2.2.7.1.1 General Capability Set (TS_GENERAL_CAPABILITYSET)
 // ===========================================================
 
@@ -225,7 +223,7 @@ static inline void cs_in_general_caps(Stream & stream, int len, bool & use_compa
         LOG(LOG_INFO, "NO_BITMAP_COMPRESSION_HDR");
     }
 
-    
+
     uint16_t updateCapability = stream.in_uint16_le(); /* Update capability */
     LOG(LOG_INFO, "General caps::updateCapability %x", updateCapability);
 

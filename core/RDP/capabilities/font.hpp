@@ -17,14 +17,12 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean
 
-   RDP Capabilities : 
+   RDP Capabilities :
 
 */
 
 #if !defined(__RDP_CAPABILITIES_FONT_HPP__)
 #define __RDP_CAPABILITIES_FONT_HPP__
-
-#include "constants.hpp"
 
 static inline void out_font_caps(Stream & stream)
 {
@@ -41,4 +39,3 @@ static inline void front_out_font_caps(Stream & stream)
 }
 
 #endif
-

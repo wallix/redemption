@@ -24,9 +24,6 @@
 #if !defined(__RDP_CAPABILITIES_POINTER_HPP__)
 #define __RDP_CAPABILITIES_POINTER_HPP__
 
-#include "constants.hpp"
-
-
 // 2.2.7.1.5 Pointer Capability Set (TS_POINTER_CAPABILITYSET)
 
 // The TS_POINTER_CAPABILITYSET structure advertises pointer cache sizes and

@@ -17,14 +17,12 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean
 
-   RDP Capabilities : 
+   RDP Capabilities :
 
 */
 
 #if !defined(__RDP_CAPABILITIES_SOUND_HPP__)
 #define __RDP_CAPABILITIES_SOUND_HPP__
-
-#include "constants.hpp"
 
 static inline void out_sound_caps(Stream & stream)
 {
@@ -35,4 +33,3 @@ static inline void out_sound_caps(Stream & stream)
 }
 
 #endif
-

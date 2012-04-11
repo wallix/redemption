@@ -26,8 +26,6 @@
 
 #include "log.hpp"
 
-#include "constants.hpp"
-
 // 2.2.7.1.2    Bitmap Capability Set (TS_BITMAP_CAPABILITYSET)
 // ============================================================
 

@@ -24,8 +24,6 @@
 #if !defined(__RDP_CAPABILITIES_ACTIVATE_HPP__)
 #define __RDP_CAPABILITIES_ACTIVATE_HPP__
 
-#include "constants.hpp"
-
 static inline void out_activate_caps(Stream & stream)
 {
     LOG(LOG_INFO, "Sending Activate caps to server");

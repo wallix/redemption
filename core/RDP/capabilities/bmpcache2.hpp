@@ -17,14 +17,12 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean
 
-   RDP Capabilities : 
+   RDP Capabilities :
 
 */
 
 #if !defined(__RDP_CAPABILITIES_BMPCACHE2_HPP__)
 #define __RDP_CAPABILITIES_BMPCACHE2_HPP__
-
-#include "constants.hpp"
 
 // 2.2.7.1.4.2 Revision 2 (TS_BITMAPCACHE_CAPABILITYSET_REV2)
 // ==========================================================
@@ -131,4 +129,3 @@ static inline void out_bmpcache2_caps(Stream & stream)
 }
 
 #endif
-

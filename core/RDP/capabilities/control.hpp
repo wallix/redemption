@@ -24,8 +24,6 @@
 #if !defined(__RDP_CAPABILITIES_CONTROL_HPP__)
 #define __RDP_CAPABILITIES_CONTROL_HPP__
 
-#include "constants.hpp"
-
 static inline void out_control_caps(Stream & stream)
 {
     LOG(LOG_INFO, "Sending control caps to server");

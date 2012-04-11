@@ -54,14 +54,7 @@
 #include "transport.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
-#include "RDP/capabilities/general.hpp"
-#include "RDP/capabilities/bitmap.hpp"
-#include "RDP/capabilities/share.hpp"
-#include "RDP/capabilities/font.hpp"
-#include "RDP/capabilities/order.hpp"
-#include "RDP/capabilities/colcache.hpp"
-#include "RDP/capabilities/pointer.hpp"
-#include "RDP/capabilities/input.hpp"
+#include "RDP/capabilities/capset.hpp"
 
 #include "RDP/gcc_conference_user_data/cs_core.hpp"
 #include "RDP/gcc_conference_user_data/cs_sec.hpp"
@@ -2411,7 +2404,7 @@ public:
                     }
                     // at this point licence negociation is still ongoing
                     // most data packets should not be received
-                    // actually even input is dubious, 
+                    // actually even input is dubious,
                     // but rdesktop actually sends input data
                     this->process_data(stream, cb);
                     break;

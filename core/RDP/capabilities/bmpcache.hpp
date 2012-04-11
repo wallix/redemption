@@ -24,8 +24,6 @@
 #if !defined(__RDP_CAPABILITIES_BMPCACHE_HPP__)
 #define __RDP_CAPABILITIES_BMPCACHE_HPP__
 
-#include "constants.hpp"
-
 static inline void out_bmpcache_caps(Stream & stream, uint16_t bpp)
 {
     LOG(LOG_INFO, "Sending bmpcache caps to server");

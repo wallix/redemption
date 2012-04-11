@@ -24,8 +24,6 @@
 #if !defined(__RDP_CAPABILITIES_COLCACHE_HPP__)
 #define __RDP_CAPABILITIES_COLCACHE_HPP__
 
-#include "constants.hpp"
-
 static inline void out_colcache_caps(Stream & stream)
 {
     LOG(LOG_INFO, "Sending colcache caps to server");

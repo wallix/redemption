@@ -24,8 +24,6 @@
 #if !defined(__RDP_CAPABILITIES_GLYPHCACHE_HPP__)
 #define __RDP_CAPABILITIES_GLYPHCACHE_HPP__
 
-#include "constants.hpp"
-
 
 // 2.2.7.1.8 Glyph Cache Capability Set (TS_GLYPHCACHE_CAPABILITYSET)
 // ==================================================================

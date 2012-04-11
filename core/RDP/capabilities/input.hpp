@@ -17,14 +17,12 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean
 
-   RDP Capabilities : 
+   RDP Capabilities :
 
 */
 
 #if !defined(__RDP_CAPABILITIES_INPUT_HPP__)
 #define __RDP_CAPABILITIES_INPUT_HPP__
-
-#include "constants.hpp"
 
 //2.2.7.1.6 Input Capability Set (TS_INPUT_CAPABILITYSET)
 //=======================================================
@@ -99,4 +97,3 @@ static inline void front_out_input_caps(Stream & stream)
     stream.out_clear_bytes(83);
 }
 #endif
-
