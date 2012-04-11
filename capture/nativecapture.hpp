@@ -68,9 +68,13 @@ class NativeCapture : public RDPGraphicDevice
     uint32_t nb_file;
 
 private:
+    int next_filename()
+    {
+        return sprintf(this->basepath + this->basepath_len, "%u.wrm", this->nb_file++);
+    }
+
     void open_file()
     {
-        sprintf(this->basepath + this->basepath_len, "%u.wrm", this->nb_file++);
         LOG(LOG_INFO, "Recording to file : %s", this->basepath);
         this->trans.fd = open(this->basepath, O_WRONLY|O_CREAT, 0666);
         if (this->trans.fd < 0){
@@ -90,8 +94,8 @@ public:
     , nb_file(0)
     {
         this->basepath_len = sprintf(this->basepath, "%s-%u-", path, getpid());
+        this->next_filename();
         this->open_file();
-        this->basepath[this->basepath_len] = 0;
     }
 
     ~NativeCapture(){
@@ -163,12 +167,11 @@ public:
         this->recorder.chunk_type = WRMChunk::NEXT_FILE;
         this->recorder.order_count = 1;
         {
-            size_t len = strlen(this->basepath);
+            size_t len = this->basepath_len + this->next_filename();
             this->out_copy_bytes(len);
             this->recorder.stream.out_copy_bytes(this->basepath, len);
         }
         this->recorder.send_order();
-        this->basepath[this->basepath_len] = 0;
 
         close(this->trans.fd);
         this->open_file();
@@ -206,9 +209,10 @@ public:
                         size_alloc_stream += sizeof(bmp->original_bpp)
                         + sizeof(bmp->cx)
                         + sizeof(bmp->cy)
-                        + sizeof(bmp->line_size)
                         + sizeof(bmp->bmp_size)
                         + bmp->bmp_size;
+                        if (bmp->original_bpp == 8)
+                            size_alloc_stream += sizeof(bmp->original_palette);
                     }
                 }
             }
@@ -253,8 +257,9 @@ public:
                     this->out_copy_bytes(bmp->original_bpp);
                     this->out_copy_bytes(bmp->cx);
                     this->out_copy_bytes(bmp->cy);
-                    this->out_copy_bytes(bmp->line_size);
                     this->out_copy_bytes(bmp->bmp_size);
+                    if (bmp->original_bpp == 8)
+                        this->out_copy_bytes(bmp->original_palette);
                     this->recorder.stream.out_copy_bytes(bmp->data(), bmp->bmp_size);
                 }
                 else{

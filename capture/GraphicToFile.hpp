@@ -170,7 +170,7 @@ struct GraphicsToFile : public RDPSerializer
     {
         struct timeval t;
         gettimeofday(&t, 0);
-        timestamp(t);
+        this->timestamp(t);
     }
 
     virtual void timestamp(const timeval& now)

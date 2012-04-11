@@ -25,7 +25,6 @@
 
 #include "nativecapture.hpp"
 #include "transport.hpp"
-#include "meta_wrm.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBreakpoint)
 {
@@ -48,5 +47,6 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
         struct timeval now;
         gettimeofday(&now, NULL);
         cap.recorder.timestamp(now);
+        BOOST_CHECK(1);
     }
 }

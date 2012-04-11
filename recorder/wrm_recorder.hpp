@@ -39,9 +39,9 @@ private:
     static int open(const char * filename)
     {
         int fd = ::open(filename, O_RDONLY);
-        //if (-1 == trans.fd){
-        //    throw Error(ERR_WRM_RECORDER_OPEN_FAILED);
-        //}
+        if (-1 == fd){
+           throw Error(0/*ERR_WRM_RECORDER_OPEN_FAILED*/);
+        }
         return fd;
     }
 
@@ -55,6 +55,11 @@ public:
         this->reader.screen_rect.cy = this->meta.height;
     }
 
+    ~WRMRecorder()
+    {
+        ::close(this->trans.fd);
+    }
+
     void consumer(RDPGraphicDevice * consumer)
     {
         this->reader.consumer = consumer;
@@ -65,9 +70,19 @@ public:
         return this->reader.consumer;
     }
 
-    bool select_next_order()
+    bool selected_next_order()
     {
         return this->reader.selected_next_order();
+    }
+
+    uint16_t& chunk_type()
+    {
+        return this->reader.chunk_type;
+    }
+
+    uint16_t& remaining_order_count()
+    {
+        return this->reader.remaining_order_count;
     }
 
 private:
@@ -86,72 +101,88 @@ public:
                 char filename[1024];
                 size_t len;
                 this->reader.stream.in_copy_bytes((uint8_t*)&len, sizeof(len));
-                this->reader.stream.in_copy_bytes(filename, len);
-                this->reader.remaining_order_count = 0;
+                this->reader.stream.in_copy_bytes((uint8_t*)filename, len);
 
                 filename[len] = 0;
-                this->trans.fd = open(filename);
-                this->select_next_order();
-
-                if (this->reader.chunk_type == WRMChunk::BREAKPOINT)
+                ::close(this->trans.fd);
+                this->trans.fd = -1;
+                this->trans.fd = open(filename); //can throw exception
+                this->trans.total_received = 0;
+                this->trans.last_quantum_received = 0;
+                this->trans.total_sent = 0;
+                this->trans.last_quantum_sent = 0;
+                this->trans.quantum_count = 0;
+                this->reader.remaining_order_count = 0;
+            }
+            break;
+            case WRMChunk::BREAKPOINT:
+            {
                 {
                     MetaWRM meta;
-                    meta->in(this->reader.stream);
+                    meta.in(this->reader.stream);
                     /*if (this->meta != meta){
-                        this->reader.consumer->resize(meta.width, meta.height, meta.bpp);
-                        this->meta = meta;
+                     *            this->reader.consumer->resize(meta.width, meta.height, meta.bpp);
+                     *            this->meta = meta;
                     }*/
+                }
 
-                    this->in_copy_bytes(this->reader.common);
-                    this->in_copy_bytes(this->reader.destblt);
-                    this->in_copy_bytes(this->reader.patblt);
-                    this->in_copy_bytes(this->reader.scrblt);
-                    this->in_copy_bytes(this->reader.opaquerect);
-                    this->in_copy_bytes(this->reader.memblt);
-                    this->in_copy_bytes(this->reader.lineto);
-                    this->in_copy_bytes(this->reader.glyphindex);
-                    this->reader.glyphindex.data = (uint8_t*)"";
-                    //this->reader.stream.in_copy_bytes(this->reader.glyphindex.data, this->reader.glyphindex.data_len);
-                    this->in_copy_bytes(this->reader.order_count);
+                this->in_copy_bytes(this->reader.common);
+                this->in_copy_bytes(this->reader.destblt);
+                this->in_copy_bytes(this->reader.patblt);
+                this->in_copy_bytes(this->reader.scrblt);
+                this->in_copy_bytes(this->reader.opaquerect);
+                this->in_copy_bytes(this->reader.memblt);
+                this->in_copy_bytes(this->reader.lineto);
+                this->in_copy_bytes(this->reader.glyphindex);
+                this->reader.glyphindex.data = (uint8_t*)"";
+                //this->reader.stream.in_copy_bytes(this->reader.glyphindex.data, this->reader.glyphindex.data_len);
+                this->in_copy_bytes(this->reader.order_count);
 
-                    this->in_copy_bytes(this->reader.bmp_cache.small_entries);
-                    this->in_copy_bytes(this->reader.bmp_cache.small_size);
-                    this->in_copy_bytes(this->reader.bmp_cache.medium_entries);
-                    this->in_copy_bytes(this->reader.bmp_cache.medium_size);
-                    this->in_copy_bytes(this->reader.bmp_cache.big_entries);
-                    this->in_copy_bytes(this->reader.bmp_cache.big_size);
-                    this->in_copy_bytes(this->reader.bmp_cache.stamps);
-                    this->in_copy_bytes(this->reader.bmp_cache.stamp);
+                this->in_copy_bytes(this->reader.bmp_cache.small_entries);
+                this->in_copy_bytes(this->reader.bmp_cache.small_size);
+                this->in_copy_bytes(this->reader.bmp_cache.medium_entries);
+                this->in_copy_bytes(this->reader.bmp_cache.medium_size);
+                this->in_copy_bytes(this->reader.bmp_cache.big_entries);
+                this->in_copy_bytes(this->reader.bmp_cache.big_size);
+                this->in_copy_bytes(this->reader.bmp_cache.stamps);
+                this->in_copy_bytes(this->reader.bmp_cache.stamp);
 
-                    {
-                        bool use_bmp;
-                        for (size_t cid = 0; cid < 3 ; cid++){
-                            for (size_t cidx = 0; cidx < 8192 ; cidx++){
-                                this->in_copy_bytes(use_bmp);
-                                if (use_bmp){
-                                    const Bitmap* bmp = this->reader.bmp_cache.cache[cid][cidx];
-                                    this->reader.stream.out_uint8(1);
-                                    this->in_copy_bytes(bmp->original_bpp);
-                                    this->in_copy_bytes(bmp->cx);
-                                    this->in_copy_bytes(bmp->cy);
-                                    this->in_copy_bytes(bmp->line_size);
-                                    this->in_copy_bytes(bmp->bmp_size);
-                                    bmp->data_bitmap.alloc(bmp->bmp_size);
-                                    this->reader.stream.in_copy_bytes(bmp->data_bitmap.get(), bmp->bmp_size);
-                                }
-                                else{
-                                    this->reader.bmp_cache.cache[cid][cidx] = 0;
-                                }
+                {
+                    uint8_t bpp;
+                    uint16_t cx;
+                    uint16_t cy;
+                    size_t bmp_size;
+
+                    BGRPalette palette;
+                    BGRPalette palette332;
+                    init_palette332(palette332);
+
+                    bool use_bmp;
+
+                    for (size_t cid = 0; cid < 3 ; cid++){
+                        for (size_t cidx = 0; cidx < 8192 ; cidx++){
+                            this->in_copy_bytes(use_bmp);
+                            if (use_bmp){
+                                this->in_copy_bytes(bpp);
+                                this->in_copy_bytes(cx);
+                                this->in_copy_bytes(cy);
+                                this->in_copy_bytes(bmp_size);
+                                if (8 == bpp)
+                                    this->in_copy_bytes(palette);
+
+                                this->reader.bmp_cache.cache[cid][cidx] = new Bitmap(bpp, 8 == bpp ? &palette : &palette332, cx, cy, this->reader.stream.p, bmp_size);
+                                this->reader.stream.p += bmp_size;
+                            }
+                            else{
+                                this->reader.bmp_cache.cache[cid][cidx] = 0;
                             }
                         }
                     }
+                }
 
-                    this->reader.remaining_order_count = 0;
-                }
-                else{
-                    this->reader.interpret_order();
-                }
+                this->reader.remaining_order_count = 0;
             }
+            break;
             default:
                 this->reader.interpret_order();
                 break;
@@ -160,7 +191,7 @@ public:
 
     bool next_order()
     {
-        if (this->select_next_order())
+        if (this->selected_next_order())
         {
             this->interpret_order();
             return true;
