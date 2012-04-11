@@ -2659,7 +2659,12 @@ public:
         uint8_t * caps_ptr = stream.p;
 
         caps_count++; front_out_share_caps(stream, this->userid + MCS_USERCHANNEL_BASE);
-        caps_count++; front_to_client_general_caps(stream);
+
+        caps_count++;
+        GeneralCaps general;
+        general.log("Sending to client");
+        general.emit(stream);
+
         caps_count++; front_out_bitmap_caps(stream,
                                             this->client_info.bpp,
                                             this->client_info.width,
@@ -2755,9 +2760,14 @@ public:
             int len = stream.in_uint16_le();
 
             switch (type) {
-            case RDP_CAPSET_GENERAL: /* 1 */
-                client_to_front_general_caps(stream, len, this->client_info.use_compact_packets);
-                break;
+            case RDP_CAPSET_GENERAL:
+            {
+                GeneralCaps general;
+                general.recv(stream);
+                general.log("Receiving from client");
+                this->client_info.use_compact_packets = 0!=(general.extraflags & NO_BITMAP_COMPRESSION_HDR);
+            }
+            break;
             case RDP_CAPSET_BITMAP: /* 2 */
                 break;
             case RDP_CAPSET_ORDER: /* 3 */

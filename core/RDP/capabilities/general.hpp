@@ -154,208 +154,84 @@ enum {
     NO_BITMAP_COMPRESSION_HDR = 0x0400,
 };
 
-static inline void mod_to_server_general_caps(Stream & stream, int use_rdp5)
-{
-    uint16_t len = RDP_CAPLEN_GENERAL;
-    uint16_t os_major = 1;
-    uint16_t os_minor = 3;
-    uint16_t protocolVersion = 0x200;
-    uint16_t pad1 = 0;
-    uint16_t compressionType = 0;
-    uint16_t extraflags = use_rdp5
-                        ? NO_BITMAP_COMPRESSION_HDR
-                         |AUTORECONNECT_SUPPORTED
-                         |LONG_CREDENTIALS_SUPPORTED
-                        :0;
-    uint16_t updateCapability = 0;
-    uint16_t remoteUnshare = 0;
-    uint16_t compressionLevel = 0;
-    uint16_t pad2 = 0;
+struct GeneralCaps {
+    uint16_t capabilityType;
+    uint16_t len;
+    uint16_t os_major;
+    uint16_t os_minor;
+    uint16_t protocolVersion;
+    uint16_t pad1;
+    uint16_t compressionType;
+    uint16_t extraflags;
+    uint16_t updateCapability;
+    uint16_t remoteUnshare;
+    uint16_t compressionLevel;
+    uint16_t pad2;
+    GeneralCaps()
+    : capabilityType(RDP_CAPSET_GENERAL)
+    , len(RDP_CAPLEN_GENERAL)
+    , os_major(1)
+    , os_minor(3)
+    , protocolVersion(0x200)
+    , pad1(0)
+    , compressionType(0)
+    , extraflags(0)
+    , updateCapability(0)
+    , remoteUnshare(0)
+    , compressionLevel(0)
+    , pad2(0)
+    {
+    }
 
-    stream.out_uint16_le(RDP_CAPSET_GENERAL);
-    stream.out_uint16_le(len);
+    void emit(Stream & stream){
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_uint16_le(this->os_major);
+        stream.out_uint16_le(this->os_minor);
+        stream.out_uint16_le(this->protocolVersion);
+        stream.out_uint16_le(this->pad1);
+        stream.out_uint16_le(this->compressionType);
+        stream.out_uint16_le(this->extraflags);
+        stream.out_uint16_le(this->updateCapability);
+        stream.out_uint16_le(this->remoteUnshare);
+        stream.out_uint16_le(this->compressionLevel);
+        stream.out_uint16_le(this->pad2);
+    }
 
-    stream.out_uint16_le(os_major);
-    stream.out_uint16_le(os_minor);
-    stream.out_uint16_le(protocolVersion);
-    stream.out_uint16_le(pad1);
-    stream.out_uint16_le(compressionType);
-    stream.out_uint16_le(extraflags);
-    stream.out_uint16_le(updateCapability);
-    stream.out_uint16_le(remoteUnshare);
-    stream.out_uint16_le(compressionLevel);
-    stream.out_uint16_le(pad2);
+    void recv(Stream & stream){
+        this->os_major = stream.in_uint16_le();
+        this->os_minor = stream.in_uint16_le();
+        this->protocolVersion = stream.in_uint16_le();
+        this->pad1 = stream.in_uint16_le();
+        this->compressionType = stream.in_uint16_le();
+        this->extraflags = stream.in_uint16_le();
+        this->updateCapability = stream.in_uint16_le();
+        this->remoteUnshare = stream.in_uint16_le();
+        this->compressionLevel = stream.in_uint16_le();
+        this->pad2 = stream.in_uint16_le();
+    }
 
-    LOG(LOG_INFO, "Sending General caps to server (%u bytes)", len);
-    LOG(LOG_INFO, "General caps::major %u", os_major);
-    LOG(LOG_INFO, "General caps::minor %u", os_minor);
-    LOG(LOG_INFO, "General caps::protocol %u", protocolVersion);
-    LOG(LOG_INFO, "General caps::compression type %x", compressionType);
-    LOG(LOG_INFO, "General caps::extra flags %x", extraflags);
-    if (extraflags & FASTPATH_OUTPUT_SUPPORTED){
-        LOG(LOG_INFO, "General caps::extraflags:FASTPATH_OUTPUT_SUPPORTED");
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s General caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "General caps::major %u", this->os_major);
+        LOG(LOG_INFO, "General caps::minor %u", this->os_minor);
+        LOG(LOG_INFO, "General caps::protocol %u", this->protocolVersion);
+        LOG(LOG_INFO, "General caps::compression type %x", this->compressionType);
+        LOG(LOG_INFO, "General caps::extra flags %x", this->extraflags);
+        LOG(LOG_INFO, "General caps::extraflags:FASTPATH_OUTPUT_SUPPORTED %s",
+            (extraflags & FASTPATH_OUTPUT_SUPPORTED)?"yes":"no");
+        LOG(LOG_INFO, "General caps::extraflags:LONG_CREDENTIALS_SUPPORTED %s",
+            (this->extraflags & LONG_CREDENTIALS_SUPPORTED)?"yes":"no");
+        LOG(LOG_INFO, "General caps::extraflags:AUTORECONNECT_SUPPORTED %s",
+            (this->extraflags & AUTORECONNECT_SUPPORTED)?"yes":"no");
+        LOG(LOG_INFO, "General caps::extraflags:ENC_SALTED_CHECKSUM %s",
+            (this->extraflags & ENC_SALTED_CHECKSUM)?"yes":"no");
+        LOG(LOG_INFO, "General caps::extraflags:NO_BITMAP_COMPRESSION_HDR %s",
+            (this->extraflags & NO_BITMAP_COMPRESSION_HDR)?"yes":"no");
+        LOG(LOG_INFO, "General caps::updateCapability %x", this->updateCapability);
+        LOG(LOG_INFO, "General caps::remoteUnshare %x", this->remoteUnshare);
+        LOG(LOG_INFO, "General caps::compressionLevel %x", this->compressionLevel);
     }
-    if (extraflags & LONG_CREDENTIALS_SUPPORTED){
-        LOG(LOG_INFO, "General caps::extraflags:LONG_CREDENTIALS_SUPPORTED");
-    }
-    if (extraflags & AUTORECONNECT_SUPPORTED){
-        LOG(LOG_INFO, "General caps::extraflags:AUTORECONNECT_SUPPORTED");
-    }
-    if (extraflags & ENC_SALTED_CHECKSUM){
-        LOG(LOG_INFO, "General caps::extraflags:ENC_SALTED_CHECKSUM");
-    }
-    if (extraflags & NO_BITMAP_COMPRESSION_HDR){
-        LOG(LOG_INFO, "General caps::extraflags:NO_BITMAP_COMPRESSION_HDR");
-    }
-    LOG(LOG_INFO, "General caps::updateCapability %x", updateCapability);
-    LOG(LOG_INFO, "General caps::remoteUnshare %x", remoteUnshare);
-    LOG(LOG_INFO, "General caps::compressionLevel %x", compressionLevel);
-
-}
-
-    /*****************************************************************************/
-static inline void client_to_front_general_caps(Stream & stream, uint16_t len, bool & use_compact_packets)
-{
-    // len including type and len field
-
-    uint16_t os_major = stream.in_uint16_le(); /* OS major type */
-    uint16_t os_minor = stream.in_uint16_le(); /* OS minor type */
-    uint16_t protocolVersion = stream.in_uint16_le(); /* Protocol version */
-    (void)stream.in_uint16_le(); /* Pad */
-    uint16_t compressionType = stream.in_uint16_le(); /* Compression types */
-
-    /* Receiving rdp_5 extra flags supported for RDP 5.0 and later versions*/
-    uint16_t extraflags = stream.in_uint16_le();
-    if (extraflags & NO_BITMAP_COMPRESSION_HDR){
-        use_compact_packets = true;
-    }
-    uint16_t updateCapability = stream.in_uint16_le(); /* Update capability */
-    uint16_t remoteUnshare = stream.in_uint16_le(); /* Remote unshare capability */
-    uint16_t compressionLevel = stream.in_uint16_le(); /* Compression level */
-    (void)stream.in_uint16_le(); /* Pad */
-
-    LOG(LOG_INFO, "Received General caps from client (%u bytes)", len);
-    LOG(LOG_INFO, "General caps::major %u", os_major);
-    LOG(LOG_INFO, "General caps::minor %u", os_minor);
-    LOG(LOG_INFO, "General caps::protocol %u", protocolVersion);
-    LOG(LOG_INFO, "General caps::compression type %x", compressionType);
-    LOG(LOG_INFO, "General caps::extra flags %x", extraflags);
-    if (extraflags & FASTPATH_OUTPUT_SUPPORTED){
-        LOG(LOG_INFO, "General caps::extraflags:FASTPATH_OUTPUT_SUPPORTED");
-    }
-    if (extraflags & LONG_CREDENTIALS_SUPPORTED){
-        LOG(LOG_INFO, "General caps::extraflags:LONG_CREDENTIALS_SUPPORTED");
-    }
-    if (extraflags & AUTORECONNECT_SUPPORTED){
-        LOG(LOG_INFO, "General caps::extraflags:AUTORECONNECT_SUPPORTED");
-    }
-    if (extraflags & ENC_SALTED_CHECKSUM){
-        LOG(LOG_INFO, "General caps::extraflags:ENC_SALTED_CHECKSUM");
-    }
-    if (extraflags & NO_BITMAP_COMPRESSION_HDR){
-        LOG(LOG_INFO, "General caps::extraflags:NO_BITMAP_COMPRESSION_HDR");
-    }
-    LOG(LOG_INFO, "General caps::updateCapability %x", updateCapability);
-    LOG(LOG_INFO, "General caps::remoteUnshare %x", remoteUnshare);
-    LOG(LOG_INFO, "General caps::compressionLevel %x", compressionLevel);
-}
-
-
-static inline void front_to_client_general_caps(Stream & stream)
-{
-    uint16_t len = RDP_CAPLEN_GENERAL;
-
-    stream.out_uint16_le(RDP_CAPSET_GENERAL); /* 1 */
-    stream.out_uint16_le(len); /* 24(0x18) */
-
-    uint16_t os_major = 1;
-    uint16_t os_minor = 3;
-    uint16_t protocolVersion = 0x200;
-    uint16_t pad1 = 0;
-    uint16_t compressionType = 0;
-    uint16_t extraflags = 0;
-    uint16_t updateCapability = 0;
-    uint16_t remoteUnshare = 0;
-    uint16_t compressionLevel = 0;
-    uint16_t pad2 = 0;
-
-    stream.out_uint16_le(os_major);
-    stream.out_uint16_le(os_minor);
-    stream.out_uint16_le(protocolVersion);
-    stream.out_uint16_le(pad1);
-    stream.out_uint16_le(compressionType);
-    stream.out_uint16_le(extraflags);
-    stream.out_uint16_le(updateCapability);
-    stream.out_uint16_le(remoteUnshare);
-    stream.out_uint16_le(compressionLevel);
-    stream.out_uint16_le(pad2);
-
-    LOG(LOG_INFO, "Send General caps to client (%u bytes)", len);
-    LOG(LOG_INFO, "General caps::major %u", os_major);
-    LOG(LOG_INFO, "General caps::minor %u", os_minor);
-    LOG(LOG_INFO, "General caps::protocol %u", protocolVersion);
-    LOG(LOG_INFO, "General caps::compression type %x", compressionType);
-    LOG(LOG_INFO, "General caps::extra flags %x", extraflags);
-    if (extraflags & FASTPATH_OUTPUT_SUPPORTED){
-        LOG(LOG_INFO, "General caps::extraflags:FASTPATH_OUTPUT_SUPPORTED");
-    }
-    if (extraflags & LONG_CREDENTIALS_SUPPORTED){
-        LOG(LOG_INFO, "General caps::extraflags:LONG_CREDENTIALS_SUPPORTED");
-    }
-    if (extraflags & AUTORECONNECT_SUPPORTED){
-        LOG(LOG_INFO, "General caps::extraflags:AUTORECONNECT_SUPPORTED");
-    }
-    if (extraflags & ENC_SALTED_CHECKSUM){
-        LOG(LOG_INFO, "General caps::extraflags:ENC_SALTED_CHECKSUM");
-    }
-    if (extraflags & NO_BITMAP_COMPRESSION_HDR){
-        LOG(LOG_INFO, "General caps::extraflags:NO_BITMAP_COMPRESSION_HDR");
-    }
-    LOG(LOG_INFO, "General caps::updateCapability %x", updateCapability);
-    LOG(LOG_INFO, "General caps::remoteUnshare %x", remoteUnshare);
-    LOG(LOG_INFO, "General caps::compressionLevel %x", compressionLevel);
-
-
-}
-
-static inline void server_to_mod_general_caps(Stream & stream)
-{
-
-    uint16_t os_major = stream.in_uint16_le(); /* OS major type */
-    uint16_t os_minor = stream.in_uint16_le(); /* OS minor type */
-    uint16_t protocolVersion = stream.in_uint16_le(); /* Protocol version */
-    (void)stream.in_uint16_le(); /* Pad */
-    uint16_t compressionType = stream.in_uint16_le(); /* Compression types */
-    uint16_t extraflags = stream.in_uint16_le();
-    uint16_t updateCapability = stream.in_uint16_le(); /* Update capability */
-    uint16_t remoteUnshare = stream.in_uint16_le(); /* Remote unshare capability */
-    uint16_t compressionLevel = stream.in_uint16_le(); /* Compression level */
-    (void)stream.in_uint16_le(); /* Pad */
-
-    LOG(LOG_INFO, "Receive General caps from server (%u bytes)", RDP_CAPLEN_GENERAL);
-    LOG(LOG_INFO, "General caps::major %u", os_major);
-    LOG(LOG_INFO, "General caps::minor %u", os_minor);
-    LOG(LOG_INFO, "General caps::protocol %u", protocolVersion);
-    LOG(LOG_INFO, "General caps::compression type %x", compressionType);
-    LOG(LOG_INFO, "General caps::extra flags %x", extraflags);
-    if (extraflags & FASTPATH_OUTPUT_SUPPORTED){
-        LOG(LOG_INFO, "General caps::extraflags:FASTPATH_OUTPUT_SUPPORTED");
-    }
-    if (extraflags & LONG_CREDENTIALS_SUPPORTED){
-        LOG(LOG_INFO, "General caps::extraflags:LONG_CREDENTIALS_SUPPORTED");
-    }
-    if (extraflags & AUTORECONNECT_SUPPORTED){
-        LOG(LOG_INFO, "General caps::extraflags:AUTORECONNECT_SUPPORTED");
-    }
-    if (extraflags & ENC_SALTED_CHECKSUM){
-        LOG(LOG_INFO, "General caps::extraflags:ENC_SALTED_CHECKSUM");
-    }
-    if (extraflags & NO_BITMAP_COMPRESSION_HDR){
-        LOG(LOG_INFO, "General caps::extraflags:NO_BITMAP_COMPRESSION_HDR");
-    }
-    LOG(LOG_INFO, "General caps::updateCapability %x", updateCapability);
-    LOG(LOG_INFO, "General caps::remoteUnshare %x", remoteUnshare);
-    LOG(LOG_INFO, "General caps::compressionLevel %x", compressionLevel);
-}
+};
 
 #endif
