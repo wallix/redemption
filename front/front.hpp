@@ -585,6 +585,9 @@ public:
         sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
+        if (this->verbose){
+            LOG(LOG_INFO, "Front::send_to_channel done");
+        }
     }
 
     // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
@@ -838,6 +841,11 @@ public:
         sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
+
+        if (this->verbose){
+            LOG(LOG_INFO, "Front::send_pointer done");
+        }
+
     }
 
 //    2.2.9.1.1.4.5    New Pointer Update (TS_POINTERATTRIBUTE)
@@ -894,6 +902,9 @@ public:
         sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
+        if (this->verbose){
+            LOG(LOG_INFO, "Front::set_pointer done");
+        }
 
     }
 
@@ -2573,6 +2584,7 @@ public:
                     uint8_t * next_packet = stream.p + length;
                     if (length == 0x8000) {
                         next_packet = next_packet - 0x8000 + 8;
+                        exit(0);
                     }
                     else {
                         assert(stream.check_rem(2));
