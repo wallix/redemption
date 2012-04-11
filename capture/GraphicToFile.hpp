@@ -38,6 +38,7 @@
 #include "RDP/sec.hpp"
 #include "RDP/lic.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
+#include "meta_wrm.hpp"
 #include "timer_capture.hpp"
 
 // MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
@@ -146,12 +147,12 @@ struct GraphicsToFile : public RDPSerializer
     ~GraphicsToFile(){
     }
 
-    void init(){
+    void init(size_t size = 4096){
         if (this->ini && this->ini->globals.debug.primary_orders){
             LOG(LOG_INFO, "GraphicsToFile::init::Initializing orders batch");
         }
         this->order_count = 0;
-        this->stream.init(4096);
+        this->stream.init(size);
 
         // to keep things easy all chunks should have 8 bytes headers
         // starting with chunk_type, chunk_size
@@ -187,17 +188,22 @@ struct GraphicsToFile : public RDPSerializer
     {
         if (this->order_count > 0){
             if (this->ini && this->ini->globals.debug.primary_orders){
-                LOG(LOG_INFO, "GraphicsUpdatePDU::flush: order_count=%d", this->order_count);
+                LOG(LOG_INFO, "GraphicsToFile::flush: order_count=%d", this->order_count);
             }
 
-            uint16_t chunk_size = (uint16_t)(this->stream.p - this->stream.data);
-            this->stream.set_out_uint16_le(this->chunk_type, this->offset_chunk_type);
-            this->stream.set_out_uint16_le(chunk_size, this->offset_chunk_size);
-            this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
-            this->trans->send(this->stream.data, chunk_size);
+            this->send_order();
             this->chunk_type = RDP_UPDATE_ORDERS;
             this->init();
         }
+    }
+
+    void send_order()
+    {
+        uint16_t chunk_size = (uint16_t)(this->stream.p - this->stream.data);
+        this->stream.set_out_uint16_le(this->chunk_type, this->offset_chunk_type);
+        this->stream.set_out_uint16_le(chunk_size, this->offset_chunk_size);
+        this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
+        this->trans->send(this->stream.data, chunk_size);
     }
 
 };

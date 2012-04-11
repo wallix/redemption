@@ -56,14 +56,18 @@ bool check_sig(Drawable & data, char * message, const char * shasig)
     return true;
 }
 
-void test_file_to_png(const char* filename, uint16_t w, uint16_t h, uint16_t bpp, const char * shasig)
+void file_to_png(const char* filename, uint16_t w, uint16_t h, uint16_t bpp, const char * shasig)
 {
     int fd;
     {
         char tmppath[1024] = {};
-        sprintf(tmppath, "%s.%u.wrm", filename, getpid());
+        sprintf(tmppath, "%s-%u-0.wrm", filename, getpid());
         fd = ::open(tmppath, O_RDONLY);
-        BOOST_CHECK(fd > 0);
+        if (fd == -1)
+        {
+            BOOST_CHECK_MESSAGE(false, "fd == -1");
+            return ;
+        }
     }
     InFileTransport in_trans(fd);
     RDPUnserializer reader(&in_trans, 0, Rect());
@@ -105,7 +109,7 @@ BOOST_AUTO_TEST_CASE(TestFileToPng)
         gettimeofday(&now, NULL);
         cap.recorder.timestamp(now);
     }
-    test_file_to_png("/tmp/test_file_to_png", 1024, 912, 16,
+    file_to_png("/tmp/test_file_to_png", 1024, 912, 16,
                      "\x10\xa4\xc3\xe2\x18\x1e\x00\x51\xcc\x9b"
                      "\x09\xaf\xf3\x20\xb5\xb2\xba\xb7\x38\x21");
 }
@@ -123,7 +127,48 @@ BOOST_AUTO_TEST_CASE(TestFileWithoutMetaToPng)
         gettimeofday(&now, NULL);
         cap.recorder.timestamp(now);
     }
-    test_file_to_png("/tmp/test_file_without_meta_to_png", 800, 600, 24,
+    file_to_png("/tmp/test_file_without_meta_to_png", 800, 600, 24,
                      "\x1c\xf2\xcc\xf1\x37\x2d\x51\xde\x41\x9e"
                      "\xee\x36\xa3\xa2\x20\x99\x04\x1e\xb7\xba");
+}
+
+BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
+{
+    BGRPalette palette;
+
+    int fd = ::open("/tmp/replay.wrm", O_RDONLY);
+    if (fd == -1)
+    {
+        BOOST_CHECK_MESSAGE(false, "fd == -1");
+        return ;
+    }
+    InFileTransport in_trans(fd);
+    RDPUnserializer reader(&in_trans, 0, Rect());
+    BOOST_CHECK(1);
+    MetaWRM meta(reader);
+    reader.screen_rect.cx = meta.width;
+    reader.screen_rect.cy = meta.height;
+    BOOST_CHECK_EQUAL(800, meta.width);
+    BOOST_CHECK_EQUAL(600, meta.height);
+    BOOST_CHECK_EQUAL(24, meta.bpp);
+
+    StaticCapture consumer(meta.width, meta.height, /*meta.bpp*/24, palette, "/tmp/test_replay_to_png", 0, 0);
+
+    bool is_chunk_time = false;
+
+    reader.consumer = &consumer;
+    while (reader.selected_next_order())
+    {
+        if (reader.chunk_type == WRMChunk::TIMESTAMP || reader.chunk_type == WRMChunk::OLD_TIMESTAMP){
+            is_chunk_time = true;
+            reader.remaining_order_count = 0;
+        } else {
+            reader.interpret_order();
+            if (is_chunk_time)
+            {
+                consumer.flush();
+                is_chunk_time = false;
+            }
+        }
+    }
 }
