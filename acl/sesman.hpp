@@ -93,7 +93,7 @@ class SessionManager {
         if (this->auth_trans_t){
             Stream stream(8192);
 
-            stream.skip_uint8(4); // skip length
+            stream.out_uint32_be(0); // skip length
             this->context.ask(STRAUTHID_KEEPALIVE);
             this->out_item(stream, STRAUTHID_KEEPALIVE);
             // now set length
@@ -232,9 +232,7 @@ class SessionManager {
 
                 keepalive_time = now + 30;
                 Stream stream(8192);
-
-                // skip length
-                stream.skip_uint8(4);
+                stream.out_uint32_be(0); // skip length
                 // set data
                 this->context.ask(STRAUTHID_KEEPALIVE);
                 this->out_item(stream, STRAUTHID_KEEPALIVE);
@@ -502,7 +500,7 @@ class SessionManager {
         try {
             Stream stream(8192);
 
-            stream.skip_uint8(4);
+            stream.out_uint32_be(0);
             TODO(" is there a way to make auth_event RAII ? (initialized in sesman constructor)")
             if (!this->auth_trans_t){
                 static const char * name = "Authentifier";

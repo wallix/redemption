@@ -635,10 +635,11 @@ class SecOut
         if (this->verbose){
             LOG(LOG_INFO, "SecOut(flags=%u)", flags);
         }
+        TODO("check this. There is something strange here. When sec is read we always read flags, but when written it is only done when flags is not null ? How could that be working ?")
         if (this->flags){
             this->stream.out_uint32_le(this->flags);
             if ((this->flags & SEC_ENCRYPT)||(this->flags & 0x0400)){
-                this->stream.skip_uint8(8);
+                this->stream.out_skip_bytes(8); // skip crypt sign
             }
         }
     }
@@ -670,7 +671,7 @@ class SecIn
             uint8_t * pdata = stream.p + 8;
             uint16_t datalen = stream.end - pdata;
             TODO(" shouldn't we check signature ?")
-            stream.skip_uint8(8); /* signature */
+            stream.in_skip_bytes(8); /* signature */
             // decrypting to the end of tpdu
             if (this->verbose >= 0x200){
                 LOG(LOG_DEBUG, "Receiving encrypted TPDU");
@@ -724,7 +725,7 @@ static inline void recv_security_exchange_PDU(
     }
 
     memcpy(client_crypt_random, stream.in_uint8p(len), len);
-    stream.skip_uint8(SEC_PADDING_SIZE);
+    stream.in_skip_bytes(SEC_PADDING_SIZE);
 
     mcs_in.end();
     tpdu.end();

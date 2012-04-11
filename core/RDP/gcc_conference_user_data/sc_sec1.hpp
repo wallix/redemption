@@ -213,7 +213,7 @@ TODO("Move crypto related utility methods to sec module (probably extract more s
 
 static inline void recv_sec_tag_sig(Stream & stream, uint16_t len)
 {
-    stream.skip_uint8(len);
+    stream.in_skip_bytes(len);
     /* Parse a public key structure */
     TODO("is padding always 8 bytes long ? may signature length change ? Check in documentation")
     TODO("we should check the signature is ok (using other provided parameters). This is not yet done today. Signature is just dropped")
@@ -235,14 +235,11 @@ static inline void recv_sec_tag_pubkey(Stream & stream, uint32_t & server_public
         LOG(LOG_WARNING, "Bad server public key size (%u bits)", server_public_key_len * 8);
         throw Error(ERR_SEC_PARSE_PUB_KEY_MODUL_NOT_OK);
     }
-    stream.skip_uint8(8); /* modulus_bits, unknown */
+    stream.in_skip_bytes(8); /* modulus_bits, unknown */
     memcpy(exponent, stream.in_uint8p(SEC_EXPONENT_SIZE), SEC_EXPONENT_SIZE);
     memcpy(modulus, stream.in_uint8p(server_public_key_len), server_public_key_len);
-    stream.skip_uint8(SEC_PADDING_SIZE);
+    stream.in_skip_bytes(SEC_PADDING_SIZE);
 
-    if (stream.p > stream.end){
-        throw Error(ERR_SEC_PARSE_PUB_KEY_ERROR_CHECKING_STREAM);
-    }
     LOG(LOG_DEBUG, "Got Public key, RDP4-style");
 }
 
@@ -319,7 +316,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
     if (flags & 1) {
 
         LOG(LOG_DEBUG, "We're going for the RDP4-style encryption");
-        cr_stream.skip_uint8(8); /* unknown */
+        cr_stream.in_skip_bytes(8); /* unknown */
 
         while (cr_stream.p < end) {
             uint16_t tag = cr_stream.in_uint16_le();
@@ -361,7 +358,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
             uint32_t ignorelen = cr_stream.in_uint32_le();
             LOG(LOG_WARNING, "Ignored Certificate length is %d", ignorelen);
             SSL_CERT *ignorecert = ssl_cert_read(cr_stream.p, ignorelen);
-            cr_stream.skip_uint8(ignorelen);
+            cr_stream.in_skip_bytes(ignorelen);
             if (ignorecert == NULL){
                 LOG(LOG_WARNING,
                     "got a bad cert: this will probably screw up"
@@ -383,7 +380,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         uint32_t cacert_len = cr_stream.in_uint32_le();
         LOG(LOG_DEBUG, "CA Certificate length is %d", cacert_len);
         SSL_CERT *cacert = ssl_cert_read(cr_stream.p, cacert_len);
-        cr_stream.skip_uint8(cacert_len);
+        cr_stream.in_skip_bytes(cacert_len);
         if (NULL == cacert){
             LOG(LOG_DEBUG, "Couldn't load CA Certificate from server");
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NULL);
@@ -393,7 +390,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         uint32_t cert_len = cr_stream.in_uint32_le();
         LOG(LOG_DEBUG, "Certificate length is %d", cert_len);
         SSL_CERT *server_cert = ssl_cert_read(cr_stream.p, cert_len);
-        cr_stream.skip_uint8(cert_len);
+        cr_stream.in_skip_bytes(cert_len);
         if (NULL == server_cert){
             ssl_cert_free(cacert);
             LOG(LOG_DEBUG, "Couldn't load Certificate from server");
@@ -408,7 +405,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
             throw Error(ERR_SEC_PARSE_CRYPT_INFO_CACERT_NOT_MATCH);
         }
         ssl_cert_free(cacert);
-        cr_stream.skip_uint8(16); /* Padding */
+        cr_stream.in_skip_bytes(16); /* Padding */
         SSL_RKEY *server_public_key = ssl_cert_to_rkey(server_cert, server_public_key_len);
         LOG(LOG_DEBUG, "Server public key length=%u", (unsigned)server_public_key_len);
 

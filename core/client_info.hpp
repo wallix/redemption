@@ -48,9 +48,8 @@ struct ClientInfo {
     int use_bitmap_comp;
     int use_bitmap_cache;
     int op1; /* use smaller bitmap header, non cache */
-    int op2; /* use smaller bitmap header in bitmap cache */
-    int desktop_cache;
-    int use_compact_packets; /* rdp5 smaller packets */
+    uint32_t desktop_cache;
+    bool use_compact_packets; /* rdp5 smaller packets */
     char hostname[512];
     int build;
     int keylayout;
@@ -89,9 +88,8 @@ struct ClientInfo {
         this->pointer_cache_entries = 0;
         /* other */
         this->op1 = 0; /* use smaller bitmap header, non cache */
-        this->op2 = 0; /* use smaller bitmap header in bitmap cache */
         this->desktop_cache = 0;
-        this->use_compact_packets = 0; /* rdp5 smaller packets */
+        this->use_compact_packets = false; /* rdp5 smaller packets */
         memset(this->hostname, 0, sizeof(this->hostname));
         this->build = 0;
         this->keylayout = 0;
@@ -686,20 +684,20 @@ enum {
         if (flags & RDP_LOGON_AUTO) {
             stream.in_uni_to_ascii_str(this->password, len_password);
         } else {
-            stream.skip_uint8(len_password);
+            stream.in_skip_bytes(len_password);
         }
         stream.in_uni_to_ascii_str(this->program, len_program);
         stream.in_uni_to_ascii_str(this->directory, len_directory);
 
         if (flags & RDP_LOGON_BLOB) {
             LOG(LOG_DEBUG, "RDP-5 Style logon");
-            stream.skip_uint8(2);
+            stream.in_skip_bytes(2);
             unsigned len_ip = stream.in_uint16_le();
             char tmpdata[256];
             stream.in_uni_to_ascii_str(tmpdata, len_ip);
             unsigned len_dll = stream.in_uint16_le();
             stream.in_uni_to_ascii_str(tmpdata, len_dll);
-            stream.skip_uint8(172); /* skip time data */
+            stream.in_skip_bytes(172); /* skip time data */
             this->rdp5_performanceflags = stream.in_uint32_le();
             // more data here
             TODO("We should take care of remaining data")

@@ -79,8 +79,12 @@ class ShareControlOut
     ShareControlOut(Stream & stream, uint8_t pdu_type1, uint16_t mcs_channel)
         : stream(stream), offlen(stream.get_offset(0))
     {
-        stream.skip_uint8(2); // len
-        stream.out_uint16_le(0x10 | pdu_type1);
+        enum {
+            versionLow = 0x10,
+            versionHigh = 0
+        };
+        stream.out_uint16_le(0); // skip len
+        stream.out_uint16_le(versionHigh | versionLow | pdu_type1);
         stream.out_uint16_le(mcs_channel);
     }
 
@@ -94,12 +98,17 @@ class ShareControlIn
     public:
     uint16_t len;
     uint8_t pdu_type1;
-    uint32_t mcs_channel;
+    uint16_t mcs_channel;
     ShareControlIn(Stream & stream)
     {
         this->len = stream.in_uint16_le();
-        this->mcs_channel = stream.in_uint32_le();
-        this->pdu_type1 = stream.in_uint8();
+        this->pdu_type1 = stream.in_uint16_le() & 0xF;
+        if (this->pdu_type1 == PDUTYPE_DEACTIVATEALLPDU && len == 4){
+            // should not happen 
+            // but DEACTIVATEALLPDU seems to be broken on windows 2000
+            return;
+        }
+        this->mcs_channel = stream.in_uint16_le();
     }
 
     void end(){
@@ -265,7 +274,7 @@ class ShareDataOut
         stream.out_uint32_le(share_id);
         stream.out_uint8(0); // pad1
         stream.out_uint8(streamid); // streamid
-        stream.skip_uint8(2); // len
+        stream.out_uint16_le(2); // skip len
         stream.out_uint8(pdu_type2); // pdutype2
         stream.out_uint8(0); // compressedType
         stream.out_uint16_le(0); // compressedLen

@@ -334,7 +334,7 @@ public:
                 uint8_t r = stream.in_uint8();
                 uint8_t g = stream.in_uint8();
                 uint8_t b = stream.in_uint8();
-                stream.skip_uint8(1); // skip alpha channel
+                stream.in_skip_bytes(1); // skip alpha channel
                 palette1[i] = (b << 16)|(g << 8)|r;
             }
             break;

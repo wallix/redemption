@@ -149,13 +149,14 @@
 // +------------+----------------------------------------------+
 
 
-static inline void out_general_caps(Stream & stream, int use_rdp5)
+static inline void cs_out_general_caps(Stream & stream, int use_rdp5)
 {
-    LOG(LOG_INFO, "Sending General caps to remote server");
+    LOG(LOG_INFO, "Sending General caps to server");
 
     stream.out_uint16_le(RDP_CAPSET_GENERAL);
     const uint16_t offset_len = stream.get_offset(0);
     stream.out_uint16_le(0);
+
     stream.out_uint16_le(1); /* OS major type */
     stream.out_uint16_le(3); /* OS minor type */
     stream.out_uint16_le(0x200); /* Protocol version */
@@ -168,6 +169,7 @@ static inline void out_general_caps(Stream & stream, int use_rdp5)
     // 0x0004 LONG_CREDENTIALS_SUPPORTED
     // 0x0001 FASTPATH_OUTPUT_SUPPORTED
     stream.out_uint16_le(use_rdp5?0x40C:0); // 0 for RDP4
+
     stream.out_uint16_le(0); /* Update capability */
     stream.out_uint16_le(0); /* Remote unshare capability */
     stream.out_uint16_le(0); /* Compression level */
@@ -175,11 +177,11 @@ static inline void out_general_caps(Stream & stream, int use_rdp5)
     stream.set_out_uint16_le(RDP_CAPLEN_GENERAL, offset_len);
 }
 
-static inline void process_general_caps(Stream & stream)
+    /*****************************************************************************/
+static inline void cs_in_general_caps(Stream & stream, int len, bool & use_compact_packets)
 {
-    LOG(LOG_INFO, "Received General caps from remote server");
+    LOG(LOG_INFO, "Received General caps from client");
 
-    (void)stream.in_uint16_le();
     uint16_t os_major = stream.in_uint16_le(); /* OS major type */
     LOG(LOG_INFO, "General caps::major %u", os_major);
     uint16_t os_minor = stream.in_uint16_le(); /* OS minor type */
@@ -189,15 +191,58 @@ static inline void process_general_caps(Stream & stream)
     (void)stream.in_uint16_le(); /* Pad */
     uint16_t compressionType = stream.in_uint16_le(); /* Compression types */
     LOG(LOG_INFO, "General caps::compression types %x", compressionType);
+
     /* Receiving rdp_5 extra flags supported for RDP 5.0 and later versions*/
     uint16_t extraflags = stream.in_uint16_le();
     LOG(LOG_INFO, "General caps::extra flags %x", extraflags);
+
+    enum {
+        FASTPATH_OUTPUT_SUPPORTED = 0x0001,
+        LONG_CREDENTIALS_SUPPORTED = 0x0004,
+        AUTORECONNECT_SUPPORTED = 0x0008,
+        ENC_SALTED_CHECKSUM = 0x0010,
+        NO_BITMAP_COMPRESSION_HDR = 0x0400,
+    };
+
+    if (extraflags & FASTPATH_OUTPUT_SUPPORTED){
+        LOG(LOG_INFO, "FASTPATH_OUTPUT_SUPPORTED");
+    }
+
+    if (extraflags & LONG_CREDENTIALS_SUPPORTED){
+        LOG(LOG_INFO, "LONG_CREDENTIALS_SUPPORTED");
+    }
+
+    if (extraflags & AUTORECONNECT_SUPPORTED){
+        LOG(LOG_INFO, "AUTORECONNECT_SUPPORTED");
+    }
+
+    if (extraflags & ENC_SALTED_CHECKSUM){
+        LOG(LOG_INFO, "ENC_SALTED_CHECKSUM");
+    }
+
+    if (extraflags & NO_BITMAP_COMPRESSION_HDR){
+        use_compact_packets = true;
+        LOG(LOG_INFO, "NO_BITMAP_COMPRESSION_HDR");
+    }
+
+    
+    uint16_t updateCapability = stream.in_uint16_le(); /* Update capability */
+    LOG(LOG_INFO, "General caps::updateCapability %x", updateCapability);
+
+    uint16_t remoteUnshare = stream.in_uint16_le(); /* Remote unshare capability */
+    LOG(LOG_INFO, "General caps::remoteUnshare %x", remoteUnshare);
+
+    uint16_t compressionLevel = stream.in_uint16_le(); /* Compression level */
+    LOG(LOG_INFO, "General caps::compressionLevel %x", compressionLevel);
+
+    (void)stream.in_uint16_le(); /* Pad */
 }
 
 
-
-static inline void front_out_general_caps(Stream & stream)
+static inline void sc_out_general_caps(Stream & stream)
 {
+    LOG(LOG_INFO, "Sending General caps to client");
+
     stream.out_uint16_le(RDP_CAPSET_GENERAL); /* 1 */
     stream.out_uint16_le(RDP_CAPLEN_GENERAL); /* 24(0x18) */
     stream.out_uint16_le(1); /* OS major type */
@@ -212,23 +257,31 @@ static inline void front_out_general_caps(Stream & stream)
     stream.out_uint16_le(0); /* Pad */
 }
 
-    /*****************************************************************************/
-static inline void front_capset_general(Stream & stream, int len, int & use_compact_packets, int & op2)
+static inline void sc_in_general_caps(Stream & stream)
 {
-    LOG(LOG_INFO, "capset_general");
-    stream.skip_uint8(10);
-    /* use_compact_packets is pretty much 'use rdp5' */
-    use_compact_packets = stream.in_uint16_le();
-    if (use_compact_packets){
-        LOG(LOG_INFO, "Use compact packets");
-    }
-    /* op2 is a boolean to use compact bitmap headers in bitmap cache */
-    /* set it to same as 'use rdp5' boolean */
-    op2 = use_compact_packets;
-    if (op2){
-        LOG(LOG_INFO, "Use compact headers for cache");
-    }
-}
+    LOG(LOG_INFO, "Received General caps from server");
 
+    uint16_t os_major = stream.in_uint16_le(); /* OS major type */
+    LOG(LOG_INFO, "General caps::major %u", os_major);
+    uint16_t os_minor = stream.in_uint16_le(); /* OS minor type */
+    LOG(LOG_INFO, "General caps::minor %u", os_minor);
+    uint16_t protocolVersion = stream.in_uint16_le(); /* Protocol version */
+    LOG(LOG_INFO, "General caps::protocol %u", protocolVersion);
+    (void)stream.in_uint16_le(); /* Pad */
+    uint16_t compressionType = stream.in_uint16_le(); /* Compression types */
+    LOG(LOG_INFO, "General caps::compression types %x", compressionType);
+    /* Receiving rdp_5 extra flags supported for RDP 5.0 and later versions*/
+    uint16_t extraflags = stream.in_uint16_le();
+    LOG(LOG_INFO, "General caps::extra flags %x", extraflags);
+
+    uint16_t updateCapability = stream.in_uint16_le(); /* Update capability */
+    LOG(LOG_INFO, "General caps::updateCapability %x", updateCapability);
+    uint16_t remoteUnshare = stream.in_uint16_le(); /* Remote unshare capability */
+    LOG(LOG_INFO, "General caps::remoteUnshare %x", remoteUnshare);
+    uint16_t compressionLevel = stream.in_uint16_le(); /* Compression level */
+    LOG(LOG_INFO, "General caps::compressionLevel %x", compressionLevel);
+    (void)stream.in_uint16_le(); /* Pad */
+
+}
 
 #endif

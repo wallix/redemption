@@ -41,7 +41,7 @@ class McsOut
         stream.out_uint16_be(user_id);
         stream.out_uint16_be(chan_id);
         stream.out_uint8(0x70);
-        stream.skip_uint8(2); //len
+        stream.out_uint16_be(0); // skip len
     }
 
     void end(){

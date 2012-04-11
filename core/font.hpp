@@ -173,11 +173,11 @@ struct Font {
             }
             close(fd);
 
-            stream.skip_uint8(4);
+            stream.in_skip_bytes(4);
             memcpy(this->name, stream.in_uint8p(32), 32);
             this->size = stream.in_uint16_le();
             this->style = stream.in_uint16_le();
-            stream.skip_uint8(8);
+            stream.in_skip_bytes(8);
 
     TODO(" we can do something much cooler using C++ facilities and moving glyph building code to FontChar. Only problem : clean error management using exceptions implies a real exception object in FontChar. We will do that later.")
             while (stream.check_rem(16)) {
@@ -189,7 +189,7 @@ TODO(" baseline is always -height (seen from the code of fontdump) looks strange
 
                 int offset = stream.in_sint16_le();
                 int incby = stream.in_sint16_le();
-                stream.skip_uint8(6);
+                stream.in_skip_bytes(6);
 
                 this->font_items[index] = new FontChar(offset, baseline, width, height, incby);
                 int datasize = this->font_items[index]->datasize();

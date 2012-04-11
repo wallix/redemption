@@ -291,7 +291,7 @@ struct RDPUnserializer
             /*case 1002: //BPP
             {
                 uint8_t bpp;
-                this->stream.skip_uint8(this->remaining_order_count - 1);
+                this->stream.in_skip_bytes(this->remaining_order_count - 1);
                 this->remaining_order_count = 0;
                 this->stream.in_copy_bytes(&bpp, 1);
                 this->bmp_cache.set_bpp(bpp);
@@ -302,7 +302,7 @@ struct RDPUnserializer
             {
                 uint16_t width;
                 uint16_t height;
-                this->stream.skip_uint8((this->remaining_order_count - 1) * (sizeof(width) * 2));
+                this->stream.in_skip_bytes((this->remaining_order_count - 1) * (sizeof(width) * 2));
                 this->remaining_order_count = 0;
                 this->stream.in_copy_bytes((uint8_t*)&width, sizeof(width));
                 this->stream.in_copy_bytes((uint8_t*)&height, sizeof(height));
@@ -463,7 +463,7 @@ struct RDPSerializer : public RDPGraphicDevice
 
         const Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
         if ((res >> 24) == BITMAP_ADDED_TO_CACHE){
-            RDPBmpCache cmd_cache(bmp, cache_id, cache_idx);
+            RDPBmpCache cmd_cache(bmp, cache_id, cache_idx, this->ini?this->ini->globals.debug.primary_orders:0);
             this->reserve_order(cmd_cache.bmp->bmp_size + 16);
             cmd_cache.emit(this->stream, this->bitmap_cache_version, this->use_bitmap_comp, this->op2);
 
