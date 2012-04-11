@@ -2659,7 +2659,7 @@ public:
         uint8_t * caps_ptr = stream.p;
 
         caps_count++; front_out_share_caps(stream, this->userid + MCS_USERCHANNEL_BASE);
-        caps_count++; sc_out_general_caps(stream);
+        caps_count++; front_to_client_general_caps(stream);
         caps_count++; front_out_bitmap_caps(stream,
                                             this->client_info.bpp,
                                             this->client_info.width,
@@ -2756,7 +2756,7 @@ public:
 
             switch (type) {
             case RDP_CAPSET_GENERAL: /* 1 */
-                cs_in_general_caps(stream, len, this->client_info.use_compact_packets);
+                client_to_front_general_caps(stream, len, this->client_info.use_compact_packets);
                 break;
             case RDP_CAPSET_BITMAP: /* 2 */
                 break;
