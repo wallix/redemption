@@ -2005,7 +2005,7 @@ public:
             {
                 Stream in(8192);
                 X224In crtpdu(this->trans, in);
-                if (crtpdu.tpdu_hdr.code != ISO_PDU_CR) {
+                if (crtpdu.tpdu_hdr.code != X224Packet::CR_TPDU) {
                     LOG(LOG_INFO, "recv x224 connection request PDU failed code=%u", crtpdu.tpdu_hdr.code);
                     throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
                 }
