@@ -2389,62 +2389,44 @@ public:
             }
             else {
                 if (this->verbose){
-                    LOG(LOG_INFO, "Unknown packet: still waiting for licence");
+                    LOG(LOG_INFO, "non licence packet: still waiting for licence");
                 }
-                // still waiting for licence
-                uint16_t length = stream.in_uint16_le();
-                stream.check_rem(length - 2);
-                uint16_t pdu_code = stream.in_uint16_le();
-                LOG(LOG_INFO, "front::incoming::pdu_code=%d", pdu_code);
-                stream.in_skip_bytes(2); /* mcs user id */
-
-                switch (pdu_code & 0xf) {
+                ShareControlIn sci(stream);
+                switch (sci.pdu_type1) {
                 case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
                     if (this->verbose){
-                        LOG(LOG_INFO, "Front::incoming::PDUTYPE_DEMANDACTIVEPDU");
+                        LOG(LOG_INFO, "unexpected DEMANDACTIVE PDU while in licence negociation");
                     }
                     break;
                 case PDUTYPE_CONFIRMACTIVEPDU:
                     if (this->verbose){
-                        LOG(LOG_INFO, "Front::incoming::PDUTYPE_CONFIRMACTIVEPDU");
+                        LOG(LOG_INFO, "Unexpected CONFIRMACTIVE PDU");
                     }
                     this->process_confirm_active(stream);
-                    // reset caches, etc.
-                    this->reset();
-                    // resizing done
-                    BGRPalette palette;
-                    init_palette332(palette);
-                    this->color_cache(palette, 0);
-                    this->init_pointers();
-//                            this->up_and_running = 1;
-
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Front::incoming::PDUTYPE_CONFIRMACTIVEPDU <---------------------");
-                    }
 
                     break;
                 case PDUTYPE_DATAPDU: /* 7 */
                     if (this->verbose & 4){
-                        LOG(LOG_INFO, "Front::incoming::PDUTYPE_DATAPDU");
+                        LOG(LOG_INFO, "unexpected DATA PDU while in licence negociation");
                     }
-                    // this is rdp_process_data that will set up_and_running to 1
-                    // when fonts have been received
-                    // we will not exit this loop until we are in this state.
+                    // at this point licence negociation is still ongoing
+                    // most data packets should not be received
+                    // actually even input is dubious, 
+                    // but rdesktop actually sends input data
                     this->process_data(stream, cb);
                     break;
                 case PDUTYPE_DEACTIVATEALLPDU:
                     if (this->verbose){
-                        LOG(LOG_INFO, "Front::incoming::unsupported PDUTYPE_DEACTIVATEALLPDU");
+                        LOG(LOG_INFO, "unexpected DEACTIVATEALL PDU while in licence negociation");
                     }
                     break;
                 case PDUTYPE_SERVER_REDIR_PKT:
                     if (this->verbose){
-                        LOG(LOG_INFO, "Front::incoming::"
-                            "unsupported PDU SERVER_REDIR_PKT in session_data (%d)\n", pdu_code & 0xf);
+                        LOG(LOG_INFO, "unsupported SERVER_REDIR_PKT while in licence negociation");
                     }
                     break;
                 default:
-                    LOG(LOG_WARNING, "unknown PDU type in session_data (%d)\n", pdu_code & 0xf);
+                    LOG(LOG_WARNING, "unknown PDU type received while in licence negociation (%d)\n", sci.pdu_type1);
                     break;
                 }
             }
