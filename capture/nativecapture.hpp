@@ -232,8 +232,8 @@ public:
         this->out_copy_bytes(this->recorder.memblt);
         this->out_copy_bytes(this->recorder.lineto);
         this->out_copy_bytes(this->recorder.glyphindex);
-        this->out_copy_bytes.stream(this->recorder.glyphindex.data,
-                                    this->recorder.glyphindex.data_len);
+        this->recorder.stream.out_copy_bytes(this->recorder.glyphindex.data,
+                                             this->recorder.glyphindex.data_len);
         this->out_copy_bytes(this->recorder.order_count);
 
         this->out_copy_bytes(this->recorder.bmp_cache.small_entries);

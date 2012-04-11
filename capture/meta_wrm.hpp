@@ -93,14 +93,14 @@ struct MetaWRM {
     }
 };
 
-bool operator==(const MetaWRM& meta1, const MetaWRM& meta2)
+inline bool operator==(const MetaWRM& meta1, const MetaWRM& meta2)
 {
     return meta1.width == meta2.width
         && meta1.height == meta2.height
         && meta1.bpp == meta2.bpp;
 }
 
-bool operator!=(const MetaWRM& meta1, const MetaWRM& meta2)
+inline bool operator!=(const MetaWRM& meta1, const MetaWRM& meta2)
 {
     return !(meta1 == meta2);
 }
