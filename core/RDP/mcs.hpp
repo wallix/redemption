@@ -29,6 +29,17 @@
 #include "RDP/x224.hpp"
 #include "channel_list.hpp"
 
+enum {
+    MCS_EDRQ =  1, /* Erect Domain Request */
+    MCS_DPUM =  8, /* Disconnect Provider Ultimatum */
+    MCS_AURQ = 10, /* Attach User Request */
+    MCS_AUCF = 11, /* Attach User Confirm */
+    MCS_CJRQ = 14, /* Channel Join Request */
+    MCS_CJCF = 15, /* Channel Join Confirm */
+    MCS_SDRQ = 25, /* Send Data Request */
+    MCS_SDIN = 26, /* Send Data Indication */
+};
+
 class McsOut
 {
     Stream & stream;

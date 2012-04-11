@@ -32,6 +32,14 @@
 #include "log.hpp"
 #include "error.hpp"
 
+enum {
+    ISO_PDU_CR = 0xE0, /* Connection Request */
+    ISO_PDU_CC = 0xD0, /* Connection Confirm */
+    ISO_PDU_DR = 0x80, /* Disconnect Request */
+    ISO_PDU_DT = 0xF0, /* Data */
+    ISO_PDU_ER = 0x70, /* Error */
+};
+
 
 struct X224Packet
 {

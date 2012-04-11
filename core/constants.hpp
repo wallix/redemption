@@ -22,8 +22,8 @@
 
 */
 
-#if !defined(CONSTANTS_H)
-#define CONSTANTS_H
+#if !defined(__CONSTANTS_HPP__)
+#define __CONSTANTS_HPP__
 
 #include "log.hpp"
 
@@ -42,7 +42,6 @@
 #if !defined(PID_PATH)
 #define PID_PATH "/var/run"
 #endif
-
 
 #if !defined(LICENCE_PATH)
 #define LICENCE_PATH "/var/certs/redemption"
@@ -63,9 +62,6 @@
 #define RSAKEYS_INI "rsakeys.ini"
 #define RDPPROXY_INI "rdpproxy.ini"
 
-/* TCP port for Remote Desktop Protocol */
-#define TCP_PORT_RDP                   3389
-
 enum Capture_flags {
     DONT_CAPTURE = 0,
     VIDEO_RECORDING = 1,
@@ -82,26 +78,6 @@ enum {
     BRUSH_ALLREADY_SENT
 };
 
-enum {
-    ISO_PDU_CR = 0xE0, /* Connection Request */
-    ISO_PDU_CC = 0xD0, /* Connection Confirm */
-    ISO_PDU_DR = 0x80, /* Disconnect Request */
-    ISO_PDU_DT = 0xF0, /* Data */
-    ISO_PDU_ER = 0x70, /* Error */
-};
-
-/* MCS PDU codes */
-TODO("MCS PDU codes definitions should move to core/RDP/mcs.hpp")
-enum {
-    MCS_EDRQ =  1, /* Erect Domain Request */
-    MCS_DPUM =  8, /* Disconnect Provider Ultimatum */
-    MCS_AURQ = 10, /* Attach User Request */
-    MCS_AUCF = 11, /* Attach User Confirm */
-    MCS_CJRQ = 14, /* Channel Join Request */
-    MCS_CJCF = 15, /* Channel Join Confirm */
-    MCS_SDRQ = 25, /* Send Data Request */
-    MCS_SDIN = 26, /* Send Data Indication */
-};
 
 enum {
     BER_TAG_MCS_CONNECT_INITIAL  = 0x7f65,
@@ -337,120 +313,6 @@ PDU_FLAG_FIRST                 = 0x01,
 PDU_FLAG_LAST                  = 0x02,
 };
 
-/* Maps to generalCapabilitySet in T.128 page 138 */
-
-// 2.2.1.13.1.1.1 Capability Set (TS_CAPS_SET)
-// ===========================================
-
-// The TS_CAPS_SET structure is used to describe the type and size of a
-// capability set exchanged between clients and servers. All capability sets
-// conform to this basic structure (see section 2.2.7).
-
-// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type identifier
-// of the capability set (see below).
-
-// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
-//   of the capability data, including the size of the capabilitySetType and
-//   lengthCapability fields.
-
-// capabilityData (variable): Capability set data which conforms to the
-//   structure of the type given by the capabilitySetType field.
-
-enum {
-// 1 CAPSTYPE_GENERAL General Capability Set (section 2.2.7.1.1)
-//
-RDP_CAPSET_GENERAL             = 1,
-RDP_CAPLEN_GENERAL             = 0x18,
-
-// 2 CAPSTYPE_BITMAP Bitmap Capability Set (section 2.2.7.1.2)
-RDP_CAPSET_BITMAP              = 2,
-RDP_CAPLEN_BITMAP              = 0x1C,
-
-// 3 CAPSTYPE_ORDER Order Capability Set (section 2.2.7.1.3)
-RDP_CAPSET_ORDER               = 3,
-RDP_CAPLEN_ORDER               = 0x58,
-
-// 4 CAPSTYPE_BITMAPCACHE Revision 1 Bitmap Cache Capability Set (section 2.2.7.1.4.1)
-RDP_CAPSET_BMPCACHE            = 4,
-RDP_CAPLEN_BMPCACHE            = 0x28,
-
-// 5 CAPSTYPE_CONTROL Control Capability Set (section 2.2.7.2.2)
-RDP_CAPSET_CONTROL             = 5,
-RDP_CAPLEN_CONTROL             = 0x0C,
-
-
-// 7 CAPSTYPE_ACTIVATION Window Activation Capability Set (section 2.2.7.2.3)
-RDP_CAPSET_ACTIVATE            = 7,
-RDP_CAPLEN_ACTIVATE            = 0x0C,
-
-// 8 CAPSTYPE_POINTER Pointer Capability Set (section 2.2.7.1.5)
-RDP_CAPSET_POINTER             = 8,
-RDP_CAPLEN_POINTER             = 0x0a,
-RDP_CAPLEN_POINTER_MONO        = 0x08,
-
-// 9 CAPSTYPE_SHARE Share Capability Set (section 2.2.7.2.4)
-RDP_CAPSET_SHARE               = 9,
-RDP_CAPLEN_SHARE               = 0x08,
-
-// 10 CAPSTYPE_COLORCACHE Color Table Cache Capability Set (see [MS-RDPEGDI] section 2.2.1.1)
-RDP_CAPSET_COLCACHE            = 10,
-RDP_CAPLEN_COLCACHE            = 0x08,
-
-// 12 CAPSTYPE_SOUND Sound Capability Set (section 2.2.7.1.11)
-RDP_CAPSET_SOUND               = 12,
-
-// 13 CAPSTYPE_INPUT Input Capability Set (section 2.2.7.1.6)
-RDP_CAPSET_INPUT               = 13,
-RDP_CAPLEN_INPUT               = 0x58,
-
-// 14 CAPSTYPE_FONT Font Capability Set (section 2.2.7.2.5)
-RDP_CAPSET_FONT                = 14,
-RDP_CAPLEN_FONT                = 0x04,
-
-// 15 CAPSTYPE_BRUSH Brush Capability Set (section 2.2.7.1.7)
-RDP_CAPSET_BRUSHCACHE          = 15,
-RDP_CAPLEN_BRUSHCACHE          = 0x08,
-
-// 16 CAPSTYPE_GLYPHCACHE Glyph Cache Capability Set (section 2.2.7.1.8)
-RDP_CAPSET_GLYPHCACHE          = 16,
-
-// 17 CAPSTYPE_OFFSCREENCACHE Offscreen Bitmap Cache Capability Set (section 2.2.7.1.9)
-RDP_CAPSET_OFFSCREENCACHE      = 17,
-
-// 18 CAPSTYPE_BITMAPCACHE_HOSTSUPPORT Bitmap Cache Host Support Capability Set (section 2.2.7.2.1)
-RDP_CAPSET_BITMAP_OFFSCREEN    = 18,
-RDP_CAPLEN_BITMAP_OFFSCREEN    = 0x08,
-
-// 19 CAPSTYPE_BITMAPCACHE_REV2 Revision 2 Bitmap Cache Capability Set (section 2.2.7.1.4.2)
-RDP_CAPSET_BMPCACHE2           = 19,
-RDP_CAPLEN_BMPCACHE2           = 0x28,
-BMPCACHE2_FLAG_PERSIST         = ((long)1<<31),
-
-// 20 CAPSTYPE_VIRTUALCHANNEL Virtual Channel Capability Set (section 2.2.7.1.10)
-RDP_CAPSET_VIRCHAN             = 20,
-RDP_CAPLEN_VIRCHAN             = 0x08,
-
-OS_MAJOR_TYPE_UNIX             = 4,
-OS_MINOR_TYPE_XSERVER          = 7,
-
-ORDER_CAP_NEGOTIATE            = 2,
-ORDER_CAP_NOSUPPORT            = 4,
-
-// 21 CAPSTYPE_DRAWNINEGRIDCACHE DrawNineGrid Cache Capability Set ([MS-RDPEGDI] section 2.2.1.2)
-
-// 22 CAPSTYPE_DRAWGDIPLUS Draw GDI+ Cache Capability Set ([MS-RDPEGDI] section 2.2.1.3)
-
-// 23 CAPSTYPE_RAIL Remote Programs Capability Set ([MS-RDPERP] section 2.2.1.1.1)
-
-// 24 CAPSTYPE_WINDOW Window List Capability Set ([MS-RDPERP] section 2.2.1.1.2)
-
-// 25 CAPSETTYPE_COMPDESK Desktop Composition Extension Capability Set (section 2.2.7.2.8)
-
-// 26 CAPSETTYPE_MULTIFRAGMENTUPDATE Multifragment Update Capability Set (section 2.2.7.2.6)
-
-// 27 CAPSETTYPE_LARGE_POINTER Large Pointer Capability Set (section 2.2.7.2.7)
-
-};
 
 /* Logon flags */
 enum {
@@ -483,37 +345,6 @@ RDP_MPPC_DICT_SIZE             = 8192,
 RDP5_COMPRESSED                = 0x80
 
 };
-
-/* Keymap flags */
-enum {
-    MapRightShiftMask          = (1 << 0),
-    MapLeftShiftMask               = (1 << 1),
-    MapShiftMask                   = (MapRightShiftMask | MapLeftShiftMask),
-
-    MapRightAltMask                = (1 << 2),
-    MapLeftAltMask                 = (1 << 3),
-    MapAltGrMask                   = MapRightAltMask,
-
-    MapRightCtrlMask               = (1 << 4),
-    MapLeftCtrlMask                = (1 << 5),
-    MapCtrlMask                    = (MapRightCtrlMask | MapLeftCtrlMask),
-
-    MapRightWinMask                = (1 << 6),
-    MapLeftWinMask                 = (1 << 7),
-    MapWinMask                     = (MapRightWinMask | MapLeftWinMask),
-
-    MapNumLockMask                 = (1 << 8),
-    MapCapsLockMask                = (1 << 9),
-
-    MapLocalStateMask              = (1 << 10),
-
-    MapInhibitMask                 = (1 << 11),
-};
-
-#define MASK_ADD_BITS(var, mask)       (var |= mask)
-#define MASK_REMOVE_BITS(var, mask)    (var &= ~mask)
-#define MASK_HAS_BITS(var, mask)       ((var & mask)>0)
-#define MASK_CHANGE_BIT(var, mask, active) (var = ((var & ~mask) | (active ? mask : 0)))
 
 /* Clipboard constants, "borrowed" from GCC system headers in the w32 cross compiler */
 enum {
@@ -601,31 +432,6 @@ FILE_NON_DIRECTORY_FILE        = 0x00000040,
 FILE_OPEN_FOR_FREE_SPACE_QUERY = 0x00800000,
 };
 
-/* RDP5 disconnect PDU */
-enum {
-exDiscReasonNoInfo                            = 0x0000,
-exDiscReasonAPIInitiatedDisconnect            = 0x0001,
-exDiscReasonAPIInitiatedLogoff                = 0x0002,
-exDiscReasonServerIdleTimeout                 = 0x0003,
-exDiscReasonServerLogonTimeout                = 0x0004,
-exDiscReasonReplacedByOtherConnection         = 0x0005,
-exDiscReasonOutOfMemory                       = 0x0006,
-exDiscReasonServerDeniedConnection            = 0x0007,
-exDiscReasonServerDeniedConnectionFips        = 0x0008,
-exDiscReasonLicenseInternal                   = 0x0100,
-exDiscReasonLicenseNoLicenseServer            = 0x0101,
-exDiscReasonLicenseNoLicense                  = 0x0102,
-exDiscReasonLicenseErrClientMsg               = 0x0103,
-exDiscReasonLicenseHwidDoesntMatchLicense     = 0x0104,
-exDiscReasonLicenseErrClientLicense           = 0x0105,
-exDiscReasonLicenseCantFinishProtocol         = 0x0106,
-exDiscReasonLicenseClientEndedProtocol        = 0x0107,
-exDiscReasonLicenseErrClientEncryption        = 0x0108,
-exDiscReasonLicenseCantUpgradeLicense         = 0x0109,
-exDiscReasonLicenseNoRemoteConnections        = 0x010a,
-};
-
-
 /* drawable types */
 enum {
 WND_TYPE_BITMAP  = 0,
@@ -647,8 +453,6 @@ BUTTON_STATE_DOWN = 1,
 };
 
 /* messages */
-
-TODO(" This messages have names of messages from winuser.h but values are completely different. See what it is about ? Looks like they are internal to proxy and value is irrelevant ?")
 
 enum {
 WM_PAINT       = 3,
