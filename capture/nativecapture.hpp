@@ -162,7 +162,11 @@ public:
         this->recorder.flush();
         this->recorder.chunk_type = WRMChunk::NEXT_FILE;
         this->recorder.order_count = 1;
-        this->recorder.stream.out_copy_bytes(this->basepath, strlen(this->basepath));
+        {
+            size_t len = strlen(this->basepath);
+            this->out_copy_bytes(len);
+            this->recorder.stream.out_copy_bytes(this->basepath, len);
+        }
         this->recorder.send_order();
         this->basepath[this->basepath_len] = 0;
 
@@ -173,9 +177,6 @@ public:
             size_t size_alloc_stream = 8
             + sizeof(MetaWRM)
 
-            + sizeof(this->recorder.bitmap_cache_version)
-            + sizeof(this->recorder.use_bitmap_comp)
-            + sizeof(this->recorder.op2)
             + sizeof(this->recorder.common)
             + sizeof(this->recorder.destblt)
             + sizeof(this->recorder.patblt)
@@ -185,7 +186,6 @@ public:
             + sizeof(this->recorder.lineto)
             + sizeof(this->recorder.glyphindex)
             + sizeof(this->recorder.order_count)
-            + sizeof(this->recorder.offset_order_count)
 
             + sizeof(this->recorder.bmp_cache.small_entries)
             + sizeof(this->recorder.bmp_cache.small_size)
@@ -196,7 +196,8 @@ public:
             + sizeof(this->recorder.bmp_cache.stamps)
             + sizeof(this->recorder.bmp_cache.stamp)
 
-            + 3 * 8192 * sizeof(bool);
+            + 3 * 8192 * sizeof(bool)
+            + this->recorder.glyphindex.data_len;
 
             for (size_t cid = 0; cid < 3 ; cid++){
                 for (size_t cidx = 0; cidx < 8192 ; cidx++){
@@ -216,14 +217,13 @@ public:
 
         this->recorder.chunk_type = WRMChunk::BREAKPOINT;
         this->recorder.order_count = 1;
+
         {
             MetaWRM meta(this->width, this->height, this->bpp);
             meta.send(this->recorder);
             this->out_copy_bytes(meta);
         }
-        this->out_copy_bytes(this->recorder.bitmap_cache_version);
-        this->out_copy_bytes(this->recorder.use_bitmap_comp);
-        this->out_copy_bytes(this->recorder.op2);
+
         this->out_copy_bytes(this->recorder.common);
         this->out_copy_bytes(this->recorder.destblt);
         this->out_copy_bytes(this->recorder.patblt);
@@ -232,8 +232,9 @@ public:
         this->out_copy_bytes(this->recorder.memblt);
         this->out_copy_bytes(this->recorder.lineto);
         this->out_copy_bytes(this->recorder.glyphindex);
+        this->out_copy_bytes.stream(this->recorder.glyphindex.data,
+                                    this->recorder.glyphindex.data_len);
         this->out_copy_bytes(this->recorder.order_count);
-        this->out_copy_bytes(this->recorder.offset_order_count);
 
         this->out_copy_bytes(this->recorder.bmp_cache.small_entries);
         this->out_copy_bytes(this->recorder.bmp_cache.small_size);
@@ -243,7 +244,6 @@ public:
         this->out_copy_bytes(this->recorder.bmp_cache.big_size);
         this->out_copy_bytes(this->recorder.bmp_cache.stamps);
         this->out_copy_bytes(this->recorder.bmp_cache.stamp);
-
 
         for (size_t cid = 0; cid < 3 ; cid++){
             for (size_t cidx = 0; cidx < 8192 ; cidx++){
