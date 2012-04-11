@@ -302,7 +302,7 @@ static inline void out_order_caps(Stream & stream)
     stream.out_uint32_le(0x4e4); /* Unknown */
 }
 
-static inline void front_out_order_caps(Stream & stream)
+static inline void cs_out_order_caps(Stream & stream)
 {
         stream.out_uint16_le(RDP_CAPSET_ORDER); /* 3 */
         stream.out_uint16_le(RDP_CAPLEN_ORDER); /* 88(0x58) */
@@ -356,5 +356,42 @@ static inline void front_out_order_caps(Stream & stream)
         stream.out_uint32_le(0); // textANSICodePage, pad2octetsE
 }
 
+    /*****************************************************************************/
+static inline void cs_in_order_caps(Stream & stream, int len, uint32_t & desktop_cache)
+{
+    LOG(LOG_INFO, "capset_order");
+    stream.in_skip_bytes(20); /* Terminal desc, pad */
+    stream.in_skip_bytes(2); /* Cache X granularity */
+    stream.in_skip_bytes(2); /* Cache Y granularity */
+    stream.in_skip_bytes(2); /* Pad */
+    stream.in_skip_bytes(2); /* Max order level */
+    stream.in_skip_bytes(2); /* Number of fonts */
+    stream.in_skip_bytes(2); /* Capability flags */
+    char order_caps[32];
+    memcpy(order_caps, stream.in_uint8p(32), 32); /* Orders supported */
+    LOG(LOG_INFO, "dest blt-0 %d\n", order_caps[0]);
+    LOG(LOG_INFO, "pat blt-1 %d\n", order_caps[1]);
+    LOG(LOG_INFO, "screen blt-2 %d\n", order_caps[2]);
+    LOG(LOG_INFO, "memblt-3-13 %d %d\n", order_caps[3], order_caps[13]);
+    LOG(LOG_INFO, "triblt-4-14 %d %d\n", order_caps[4], order_caps[14]);
+    LOG(LOG_INFO, "line-8 %d\n", order_caps[8]);
+    LOG(LOG_INFO, "line-9 %d\n", order_caps[9]);
+    LOG(LOG_INFO, "rect-10 %d\n", order_caps[10]);
+    LOG(LOG_INFO, "desksave-11 %d\n", order_caps[11]);
+    LOG(LOG_INFO, "polygon-20 %d\n", order_caps[20]);
+    LOG(LOG_INFO, "polygon2-21 %d\n", order_caps[21]);
+    LOG(LOG_INFO, "polyline-22 %d\n", order_caps[22]);
+    LOG(LOG_INFO, "ellipse-25 %d\n", order_caps[25]);
+    LOG(LOG_INFO, "ellipse2-26 %d\n", order_caps[26]);
+    LOG(LOG_INFO, "text2-27 %d\n", order_caps[27]);
+    LOG(LOG_INFO, "order_caps dump\n");
+    stream.in_skip_bytes(2); /* Text capability flags */
+    stream.in_skip_bytes(6); /* Pad */
+    /* desktop cache size, usually 0x38400 */
+    desktop_cache = stream.in_uint32_le();
+    LOG(LOG_INFO, "desktop cache size %d\n", desktop_cache);
+    stream.in_skip_bytes(4); /* Unknown */
+    stream.in_skip_bytes(4); /* Unknown */
+}
 
 #endif

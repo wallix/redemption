@@ -2561,7 +2561,6 @@ public:
             else {
                 while (stream.p < stream.end) {
                     ShareControlIn sci(stream);
-                    uint8_t * next_packet = stream.p + sci.len;
 
                     switch (sci.pdu_type1) {
                     case PDUTYPE_DEMANDACTIVEPDU:
@@ -2675,7 +2674,7 @@ public:
                                             this->client_info.height);
 
         caps_count++; front_out_font_caps(stream);
-        caps_count++; front_out_order_caps(stream);
+        caps_count++; cs_out_order_caps(stream);
         caps_count++; front_out_colcache_caps(stream);
         caps_count++; front_out_pointer_caps(stream);
 
@@ -2703,43 +2702,6 @@ public:
         tpdu.send(this->trans);
     }
 
-    /*****************************************************************************/
-    void capset_order(Stream & stream, int len)
-    {
-        LOG(LOG_INFO, "capset_order");
-        stream.in_skip_bytes(20); /* Terminal desc, pad */
-        stream.in_skip_bytes(2); /* Cache X granularity */
-        stream.in_skip_bytes(2); /* Cache Y granularity */
-        stream.in_skip_bytes(2); /* Pad */
-        stream.in_skip_bytes(2); /* Max order level */
-        stream.in_skip_bytes(2); /* Number of fonts */
-        stream.in_skip_bytes(2); /* Capability flags */
-        char order_caps[32];
-        memcpy(order_caps, stream.in_uint8p(32), 32); /* Orders supported */
-        LOG(LOG_INFO, "dest blt-0 %d\n", order_caps[0]);
-        LOG(LOG_INFO, "pat blt-1 %d\n", order_caps[1]);
-        LOG(LOG_INFO, "screen blt-2 %d\n", order_caps[2]);
-        LOG(LOG_INFO, "memblt-3-13 %d %d\n", order_caps[3], order_caps[13]);
-        LOG(LOG_INFO, "triblt-4-14 %d %d\n", order_caps[4], order_caps[14]);
-        LOG(LOG_INFO, "line-8 %d\n", order_caps[8]);
-        LOG(LOG_INFO, "line-9 %d\n", order_caps[9]);
-        LOG(LOG_INFO, "rect-10 %d\n", order_caps[10]);
-        LOG(LOG_INFO, "desksave-11 %d\n", order_caps[11]);
-        LOG(LOG_INFO, "polygon-20 %d\n", order_caps[20]);
-        LOG(LOG_INFO, "polygon2-21 %d\n", order_caps[21]);
-        LOG(LOG_INFO, "polyline-22 %d\n", order_caps[22]);
-        LOG(LOG_INFO, "ellipse-25 %d\n", order_caps[25]);
-        LOG(LOG_INFO, "ellipse2-26 %d\n", order_caps[26]);
-        LOG(LOG_INFO, "text2-27 %d\n", order_caps[27]);
-        LOG(LOG_INFO, "order_caps dump\n");
-        stream.in_skip_bytes(2); /* Text capability flags */
-        stream.in_skip_bytes(6); /* Pad */
-        /* desktop cache size, usually 0x38400 */
-        this->client_info.desktop_cache = stream.in_uint32_le();;
-        LOG(LOG_INFO, "desktop cache size %d\n", this->client_info.desktop_cache);
-        stream.in_skip_bytes(4); /* Unknown */
-        stream.in_skip_bytes(4); /* Unknown */
-    }
 
     /* store the bitmap cache size in client_info */
     void capset_bmpcache(Stream & stream, int len)
@@ -2807,7 +2769,7 @@ public:
             case RDP_CAPSET_BITMAP: /* 2 */
                 break;
             case RDP_CAPSET_ORDER: /* 3 */
-                this->capset_order(stream, len);
+                cs_in_order_caps(stream, len, this->client_info.desktop_cache);
                 break;
             case RDP_CAPSET_BMPCACHE: /* 4 */
                 this->capset_bmpcache(stream, len);

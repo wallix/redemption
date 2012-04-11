@@ -48,8 +48,7 @@ struct ClientInfo {
     int use_bitmap_comp;
     int use_bitmap_cache;
     int op1; /* use smaller bitmap header, non cache */
-//    int op2; /* use smaller bitmap header in bitmap cache */
-    int desktop_cache;
+    uint32_t desktop_cache;
     bool use_compact_packets; /* rdp5 smaller packets */
     char hostname[512];
     int build;
