@@ -2665,7 +2665,6 @@ public:
 
         uint8_t * caps_ptr = stream.p;
 
-        /* Output share capability set */
         caps_count++; front_out_share_caps(stream, this->userid + MCS_USERCHANNEL_BASE);
         caps_count++; sc_out_general_caps(stream);
         caps_count++; front_out_bitmap_caps(stream,
