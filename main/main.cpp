@@ -19,7 +19,6 @@
               Olivier Hervieu, Martin Potier
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
-
    main program
 
 */
@@ -146,8 +145,9 @@ namespace po = boost::program_options;
 const char * copyright_notice =
 "\n"
 "Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
-"Copyright (C) Wallix 2010.\n"
-"Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu and Martin Potier\n"
+"Copyright (C) Wallix 2010-2012.\n"
+"Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
+"Martin Potier, Dominique Lafages and Jonathan Poelen\n"
 "\n"
 ;
 
