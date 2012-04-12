@@ -14,7 +14,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2011
+   Copyright (C) Wallix 2012
    Author(s): Christophe Grosjean
 
    RDP Capabilities :
@@ -23,8 +23,6 @@
 
 #if !defined(__RDP_CAPABILITIES_BITMAP_HPP__)
 #define __RDP_CAPABILITIES_BITMAP_HPP__
-
-#include "log.hpp"
 
 // 2.2.7.1.2    Bitmap Capability Set (TS_BITMAP_CAPABILITYSET)
 // ============================================================
@@ -117,52 +115,103 @@
 // pad2octetsB (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
 //   field are ignored.
 
-static inline void out_bitmap_caps(Stream & stream, uint16_t bpp, uint16_t bitmap_compression)
-{
-    LOG(LOG_INFO, "Sending bitmap caps to remote server");
-    stream.out_uint16_le(RDP_CAPSET_BITMAP);
-    stream.out_uint16_le(RDP_CAPLEN_BITMAP);
-    stream.out_uint16_le(bpp); /* Preferred bpp */
-    stream.out_uint16_le(1); /* Receive 1 BPP */
-    stream.out_uint16_le(1); /* Receive 4 BPP */
-    stream.out_uint16_le(1); /* Receive 8 BPP */
-    stream.out_uint16_le(800); /* Desktop width */
-    stream.out_uint16_le(600); /* Desktop height */
-    stream.out_uint16_le(0); /* Pad */
-    stream.out_uint16_le(1); /* Allow resize */
-    stream.out_uint16_le(bitmap_compression); /* Support compression */
-    stream.out_uint16_le(0); /* Unknown */
-    stream.out_uint16_le(1); /* Unknown */
-    stream.out_uint16_le(0); /* Pad */
-}
+enum {
+    DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY = 0x02,
+    DRAW_ALLOW_COLOR_SUBSAMPLING = 0x04,
+    DRAW_ALLOW_SKIP_ALPHA = 0x08,
+};
 
-/* Process a bitmap capability set */
-static inline void process_bitmap_caps(Stream & stream, uint16_t & bpp)
-{
-    bpp = stream.in_uint16_le();
-    stream.in_skip_bytes(6);
-    uint16_t width = stream.in_uint16_le();
-    uint16_t height = stream.in_uint16_le();
-    /* todo, call reset if needed and use width and height */
-    LOG(LOG_INFO, "Server bitmap caps (%dx%dx%d) [bpp=%d] ok", width, height, bpp, bpp);
-}
 
-static inline void front_out_bitmap_caps(Stream & stream, uint16_t bpp, uint16_t width, uint16_t height)
-{
-    stream.out_uint16_le(RDP_CAPSET_BITMAP); /* 2 */
-    stream.out_uint16_le(RDP_CAPLEN_BITMAP); /* 28(0x1c) */
-    stream.out_uint16_le(bpp); /* Preferred BPP */
-    stream.out_uint16_le(1); /* Receive 1 BPP */
-    stream.out_uint16_le(1); /* Receive 4 BPP */
-    stream.out_uint16_le(1); /* Receive 8 BPP */
-    stream.out_uint16_le(width); /* width */
-    stream.out_uint16_le(height); /* height */
-    stream.out_uint16_le(0); /* Pad */
-    stream.out_uint16_le(1); /* Allow resize */
-    stream.out_uint16_le(1); /* bitmap compression */
-    stream.out_uint16_le(0); /* unknown */
-    stream.out_uint16_le(0); /* unknown */
-    stream.out_uint16_le(0); /* pad */
-}
+struct BitmapCaps : public Capability {
+    uint16_t preferredBitsPerPixel;
+    uint16_t receive1BitPerPixel;
+    uint16_t receive4BitsPerPixel;
+    uint16_t receive8BitsPerPixel;
+    uint16_t desktopWidth;
+    uint16_t desktopHeight;
+    uint16_t pad2octets;
+    uint16_t desktopResizeFlag;
+    uint16_t bitmapCompressionFlag;
+    uint8_t  highColorFlags;
+    uint8_t  drawingFlags;
+    uint16_t multipleRectangleSupport;
+    uint16_t pad2octetsB;
+    BitmapCaps()
+    : Capability(RDP_CAPSET_BITMAP, RDP_CAPLEN_BITMAP)
+    , preferredBitsPerPixel(8)
+    , receive1BitPerPixel(1)
+    , receive4BitsPerPixel(1)
+    , receive8BitsPerPixel(1)
+    , desktopWidth(0)
+    , desktopHeight(0)
+    , pad2octets(0)
+    , desktopResizeFlag(1)
+    , bitmapCompressionFlag(1)
+    , highColorFlags(0)
+    , drawingFlags(0)
+    , multipleRectangleSupport(1)
+    , pad2octetsB(0)
+    {
+    }
+
+    void emit(Stream & stream){
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_uint16_le(this->preferredBitsPerPixel);
+        stream.out_uint16_le(this->receive1BitPerPixel);
+        stream.out_uint16_le(this->receive4BitsPerPixel);
+        stream.out_uint16_le(this->receive8BitsPerPixel);
+        stream.out_uint16_le(this->desktopWidth);
+        stream.out_uint16_le(this->desktopHeight);
+        stream.out_uint16_le(this->pad2octets);
+        stream.out_uint16_le(this->desktopResizeFlag);
+        stream.out_uint16_le(this->bitmapCompressionFlag);
+        stream.out_uint8(this->highColorFlags);
+        stream.out_uint8(this->drawingFlags);
+        stream.out_uint16_le(this->multipleRectangleSupport);
+        stream.out_uint16_le(this->pad2octetsB);
+    }
+
+    void recv(Stream & stream){
+        this->preferredBitsPerPixel = stream.in_uint16_le();
+        this->receive1BitPerPixel = stream.in_uint16_le();
+        this->receive4BitsPerPixel = stream.in_uint16_le();
+        this->receive8BitsPerPixel = stream.in_uint16_le();
+        this->desktopWidth = stream.in_uint16_le();
+        this->desktopHeight = stream.in_uint16_le();
+        this->pad2octets = stream.in_uint16_le();
+        this->desktopResizeFlag = stream.in_uint16_le();
+        this->bitmapCompressionFlag = stream.in_uint16_le();
+        this->highColorFlags = stream.in_uint8();
+        this->drawingFlags = stream.in_uint8();
+        this->multipleRectangleSupport = stream.in_uint16_le();
+        this->pad2octetsB = stream.in_uint16_le();
+    }
+
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s Bitmap caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "Bitmap caps::preferredBitsPerPixel %u", this->preferredBitsPerPixel);
+        LOG(LOG_INFO, "Bitmap caps::receive1BitPerPixel %u", this->receive1BitPerPixel);
+        LOG(LOG_INFO, "Bitmap caps::receive4BitsPerPixel %u", this->receive4BitsPerPixel);
+        LOG(LOG_INFO, "Bitmap caps::receive8BitsPerPixel %u", this->receive8BitsPerPixel);
+        LOG(LOG_INFO, "Bitmap caps::desktopWidth %u", this->desktopWidth);
+        LOG(LOG_INFO, "Bitmap caps::desktopHeight %u", this->desktopHeight);
+        LOG(LOG_INFO, "Bitmap caps::pad2octets %u", this->pad2octets);
+        LOG(LOG_INFO, "Bitmap caps::desktopResizeFlag %u (%s)",
+            this->desktopResizeFlag, this->desktopResizeFlag?"yes":"no");
+        LOG(LOG_INFO, "Bitmap caps::bitmapCompressionFlag %u %s",
+            this->bitmapCompressionFlag, this->bitmapCompressionFlag?"yes":"no");
+        LOG(LOG_INFO, "Bitmap caps::highColorFlags %u", this->highColorFlags);
+        LOG(LOG_INFO, "Bitmap caps::drawingFlags %u", this->drawingFlags);
+        LOG(LOG_INFO, "Bitmap caps::drawingFlags:DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY %s",
+            (this->drawingFlags & DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY)?"yes":"no");
+        LOG(LOG_INFO, "Bitmap caps::drawingFlags:DRAW_ALLOW_COLOR_SUBSAMPLING %s",
+            (this->drawingFlags & DRAW_ALLOW_COLOR_SUBSAMPLING)?"yes":"no");
+        LOG(LOG_INFO, "Bitmap caps::drawingFlags:DRAW_ALLOW_SKIP_ALPHA %s",
+            (this->drawingFlags & DRAW_ALLOW_SKIP_ALPHA)?"yes":"no");
+        LOG(LOG_INFO, "Bitmap caps::multipleRectangleSupport %u", this->multipleRectangleSupport);
+        LOG(LOG_INFO, "Bitmap caps::pad2octetsB %u", this->pad2octetsB);
+    }
+};
 
 #endif

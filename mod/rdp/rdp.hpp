@@ -2311,32 +2311,59 @@ struct mod_rdp : public client_mod {
         // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number of capability sets is specified by the numberCapabilities field.
             uint16_t total_caplen = stream.get_offset(0);
 
+            GeneralCaps general_caps;
+            general_caps.extraflags = use_rdp5 ? NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:0;
+            general_caps.log("Sending to server");
+            general_caps.emit(stream);
             capscount++;
-            GeneralCaps general;
-            general.extraflags = use_rdp5
-                ? NO_BITMAP_COMPRESSION_HDR
-                 |AUTORECONNECT_SUPPORTED
-                 |LONG_CREDENTIALS_SUPPORTED
-                :0;
-            general.log("Sending to server");
-            general.emit(stream);
-            capscount++; out_bitmap_caps(stream, this->bpp, this->bitmap_compression);
-            capscount++; cs_out_order_caps(stream);
-            capscount++; out_bmpcache_caps(stream, this->bpp);
+
+//            out_bitmap_caps(stream, this->bpp, this->bitmap_compression);
+            BitmapCaps bitmap_caps;
+            bitmap_caps.preferredBitsPerPixel = this->bpp;
+            bitmap_caps.desktopWidth = 800;
+            bitmap_caps.desktopHeight = 600;
+            bitmap_caps.bitmapCompressionFlag = this->bitmap_compression;
+            bitmap_caps.log("Sending to server");
+            bitmap_caps.emit(stream);
+            capscount++;
+
+            cs_out_order_caps(stream);
+            capscount++;
+
+            out_bmpcache_caps(stream, this->bpp);
+            capscount++;
 
 //            if(this->use_rdp5){
-//                capscount++;
 //                out_bmpcache2_caps(stream);
+//                capscount++;
 //            }
-            capscount++; out_colcache_caps(stream);
-            capscount++; out_activate_caps(stream);
-            capscount++; out_control_caps(stream);
-            capscount++; out_pointer_caps(stream);
-            capscount++; out_share_caps(stream);
-            capscount++; out_input_caps(stream);
-            capscount++; out_sound_caps(stream);
-            capscount++; out_font_caps(stream);
-            capscount++; out_glyphcache_caps(stream);
+
+            out_colcache_caps(stream);
+            capscount++;
+
+            out_activate_caps(stream);
+            capscount++;
+
+            out_control_caps(stream);
+            capscount++;
+
+            out_pointer_caps(stream);
+            capscount++;
+
+            out_share_caps(stream);
+            capscount++;
+
+            out_input_caps(stream);
+            capscount++;
+
+            out_sound_caps(stream);
+            capscount++;
+
+            out_font_caps(stream);
+            capscount++;
+
+            out_glyphcache_caps(stream);
+            capscount++;
 
             total_caplen = stream.get_offset(total_caplen);
 
@@ -3115,15 +3142,24 @@ struct mod_rdp : public client_mod {
                 next = (stream.p + capset_length) - 4;
                 switch (capset_type) {
                 case RDP_CAPSET_GENERAL:
-                    {
-                        GeneralCaps general;
-                        general.recv(stream);
-                        general.log("Received from server");
-                    }
-                    break;
+                {
+                    GeneralCaps general_caps;
+                    general_caps.recv(stream);
+                    general_caps.log("Received from server");
+                }
+                break;
                 case RDP_CAPSET_BITMAP:
-                    process_bitmap_caps(stream, this->bpp);
-                    break;
+                {
+                    BitmapCaps bitmap_caps;
+                    bitmap_caps.recv(stream);
+                    bitmap_caps.log("Received from server");
+                    LOG(LOG_INFO, "Server bitmap caps (%dx%dx%d)",
+                        bitmap_caps.desktopWidth,
+                        bitmap_caps.desktopHeight,
+                        bitmap_caps.preferredBitsPerPixel);
+                    this->bpp = bitmap_caps.preferredBitsPerPixel;
+                }
+                break;
                 case RDP_CAPSET_ORDER:
                     sc_in_order_caps(stream, capset_length);
                     break;
