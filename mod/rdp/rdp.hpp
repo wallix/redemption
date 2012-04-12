@@ -881,6 +881,9 @@ struct mod_rdp : public client_mod {
 
     virtual BackEvent_t draw_event(void)
     {
+        static uint32_t count = 0;
+        LOG(LOG_INFO, "============================== DRAW_EVENT %u =================================", count++);
+
         try{
 
         char * hostname = this->hostname;
@@ -1259,18 +1262,18 @@ struct mod_rdp : public client_mod {
 
         case MOD_RDP_CONNECTED:
         {
-            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED");
+//            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED");
             Stream stream(65536);
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
             X224In(this->trans, stream);
-            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:X224In");
+//            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:X224In");
             McsIn mcs_in(stream);
             if ((mcs_in.opcode >> 2) != MCS_SDIN) {
                 LOG(LOG_ERR, "Error: MCS_SDIN TPDU expected, got %u", (mcs_in.opcode >> 2));
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
-            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");
+//            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");
             SecIn sec(stream, this->decrypt);
             if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
                 LOG(LOG_ERR, "Error: unexpected licence negotiation sec packet");

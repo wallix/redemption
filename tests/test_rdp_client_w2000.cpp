@@ -1,0 +1,298 @@
+/*
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   Product name: redemption, a FLOSS RDP proxy
+   Copyright (C) Wallix 2010
+   Author(s): Christophe Grosjean, Javier Caverni
+   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+
+   Unit test to writing RDP orders to file and rereading them
+
+*/
+
+#define BOOST_AUTO_TEST_MAIN
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE TestRdpClientSimple
+#include <boost/test/auto_unit_test.hpp>
+
+#define LOGPRINT
+#include "./test_orders.hpp"
+
+#include "stream.hpp"
+#include "transport.hpp"
+#include "constants.hpp"
+#include "RDP/x224.hpp"
+#include "RDP/mcs.hpp"
+#include "RDP/sec.hpp"
+#include "wait_obj.hpp"
+#include "RDP/RDPGraphicDevice.hpp"
+#include "channel_list.hpp"
+#include "front_api.hpp"
+#include "client_info.hpp"
+#include "rdp/rdp.hpp"
+
+
+BOOST_AUTO_TEST_CASE(TestDecodePacket)
+{
+
+    ClientInfo info(1, 1, true, true);
+    info.keylayout = 0x04C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 24;
+    info.width = 800;
+    info.height = 600;
+    int verbose = 256;
+
+    class Front : public FrontAPI {
+        public:
+        uint32_t verbose;
+        const ClientInfo & info;
+        ChannelList cl;
+
+        virtual void flush()
+        {
+            if (verbose > 10){
+                 LOG(LOG_INFO, "--------- FRONT ------------------------");
+                 LOG(LOG_INFO, "flush()");
+                 LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void draw(const RDPOpaqueRect& cmd, const Rect& clip)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                cmd.log(LOG_INFO, clip);
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void draw(const RDPScrBlt& cmd, const Rect& clip)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                cmd.log(LOG_INFO, clip);
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void draw(const RDPDestBlt& cmd, const Rect& clip)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                cmd.log(LOG_INFO, clip);
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void draw(const RDPPatBlt& cmd, const Rect& clip)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                cmd.log(LOG_INFO, clip);
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void draw(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bmp)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                cmd.log(LOG_INFO, clip);
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void draw(const RDPLineTo& cmd, const Rect& clip)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                cmd.log(LOG_INFO, clip);
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                cmd.log(LOG_INFO, clip);
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+
+        virtual const ChannelList & get_channel_list(void) const { return cl; }
+        virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags)
+        {
+        }
+
+        virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                LOG(LOG_INFO, "send_pointer(cache_idx=%d, data=%p, mask=%p, x=%d, y=%d",
+                    cache_idx, data, mask, x, y);
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void send_global_palette() throw (Error)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                LOG(LOG_INFO, "send_global_palette()");
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void set_pointer(int cache_idx) throw (Error)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                LOG(LOG_INFO, "set_pointer");
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void begin_update()
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                LOG(LOG_INFO, "begin_update");
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void end_update()
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                LOG(LOG_INFO, "end_update");
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                LOG(LOG_INFO, "color_cache");
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void set_mod_palette(const BGRPalette & palette)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                LOG(LOG_INFO, "set_mod_palette");
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                LOG(LOG_INFO, "server_set_pointer");
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                LOG(LOG_INFO, "server_draw_text %s", text);
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void text_metrics(const char * text, int & width, int & height)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                LOG(LOG_INFO, "text_metrics");
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual int server_resize(int width, int height, int bpp)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
+                LOG(LOG_INFO, "========================================\n");
+            }
+            return 0;
+        }
+        virtual void set_mod_bpp(uint8_t bpp)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                LOG(LOG_INFO, "set_mod_bpp(bpp=%d)", bpp);
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void set_mod_bpp_to_front_bpp()
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                LOG(LOG_INFO, "set_mod_bpp_to_front()");
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+
+        int mouse_x;
+        int mouse_y;
+        bool notimestamp;
+        bool nomouse;
+
+        Front(const ClientInfo & info, uint32_t verbose) :
+              FrontAPI(false, false),
+              verbose(verbose),
+              info(info),
+              mouse_x(0),
+              mouse_y(0),
+              notimestamp(true),
+              nomouse(true)
+            {}
+
+    } front(info, verbose);
+
+    Stream stream(65536);
+    const char * name = "RDP W2000 Target";
+    int sck = connect("10.10.14.64", 3389, name);
+    SocketTransport t(name, sck, verbose);
+//    wait_obj back_event(t.sck);
+
+    const char outdata[] =
+    {
+    };
+
+    const char indata[] = {
+    };
+
+
+//    TestTransport t("test_rdp_client_w2000", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+
+    // To always get the same client random, in tests
+    LCGRandom gen(0);
+
+    if (verbose > 2){
+        LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
+    }
+    struct client_mod * mod = new mod_rdp(&t, "administrateur@qa", "S3cur3!1nux", front, "test", info, &gen);
+
+    if (verbose > 2){
+        LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
+    }
+//    BOOST_CHECK(t.status);
+
+    BOOST_CHECK_EQUAL(mod->front_width, 800);
+    BOOST_CHECK_EQUAL(mod->front_height, 600);
+
+    uint32_t count = 0;
+    BackEvent_t res = BACK_EVENT_NONE;
+    while (res == BACK_EVENT_NONE){
+        if (count++ >= 54) break;
+        res = mod->draw_event();
+        BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+    }
+}
