@@ -216,6 +216,6 @@ unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test : ;
 unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test ;
 
 unit-test test_meta : tests/test_meta.cpp libboost_unit_test ;
-#unit-test test_file_to_png : tests/test_file_to_png.cpp libboost_unit_test png z d3des openssl crypto ;
+unit-test test_file_to_png : tests/test_file_to_png.cpp libboost_unit_test png z d3des openssl crypto ;
 unit-test test_breakpoint : tests/test_breakpoint.cpp libboost_unit_test png z d3des openssl crypto ;
 #unit-test test_wrm_recorder : tests/test_wrm_recorder.cpp libboost_unit_test png z d3des openssl crypto ;

@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
 {
     BGRPalette palette;
 
-    int fd = ::open("/tmp/replay.wrm", O_RDONLY);
+    int fd = ::open(FIXTURES_PATH "/replay2.wrm", O_RDONLY);
     if (fd == -1)
     {
         BOOST_CHECK_MESSAGE(false, "fd == -1");
