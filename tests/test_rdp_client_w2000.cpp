@@ -256,21 +256,15 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     } front(info, verbose);
 
-    Stream stream(65536);
+//    Stream stream(65536);
     const char * name = "RDP W2000 Target";
-    int sck = connect("10.10.14.64", 3389, name);
-    SocketTransport t(name, sck, verbose);
+//    int sck = connect("10.10.14.64", 3389, name);
+//    SocketTransport t(name, sck, verbose);
 //    wait_obj back_event(t.sck);
 
-    const char outdata[] =
-    {
-    };
+    #include "./fixtures/dump_w2000.hpp"
 
-    const char indata[] = {
-    };
-
-
-//    TestTransport t("test_rdp_client_w2000", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    TestTransport t("test_rdp_client_w2000", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
