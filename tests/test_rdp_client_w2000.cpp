@@ -24,8 +24,10 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdpClientSimple
+#define BOOST_TEST_MODULE TestRdpClientW2000
 #include <boost/test/auto_unit_test.hpp>
+#include <errno.h>
+#include <algorithm>
 
 #define LOGPRINT
 #include "./test_orders.hpp"
@@ -42,6 +44,10 @@
 #include "front_api.hpp"
 #include "client_info.hpp"
 #include "rdp/rdp.hpp"
+#include "ssl_calls.hpp"
+#include "png.hpp"
+#include "RDP/RDPDrawable.hpp"
+#include "staticcapture.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
@@ -77,6 +83,10 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 cmd.log(LOG_INFO, clip);
                 LOG(LOG_INFO, "========================================\n");
             }
+            RDPOpaqueRect cmd2 = cmd;
+            init_palette332(this->palette);
+            cmd2.color = color_decode(cmd.color, 8, this->palette);
+            this->gd.draw(cmd2, clip);
         }
         virtual void draw(const RDPScrBlt& cmd, const Rect& clip)
         {
@@ -244,6 +254,19 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         bool notimestamp;
         bool nomouse;
 
+        BGRPalette palette;
+        RDPDrawable gd;
+
+        void dump_png(const char * prefix)
+        {
+            char tmpname[128];
+            sprintf(tmpname, "%sXXXXXX.png", prefix);
+            int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
+            FILE * f = fdopen(fd, "wb");
+            ::dump_png24(f, this->gd.drawable.data, this->gd.drawable.width, this->gd.drawable.height, this->gd.drawable.rowsize);
+            ::fclose(f);
+        }
+
         Front(const ClientInfo & info, uint32_t verbose) :
               FrontAPI(false, false),
               verbose(verbose),
@@ -251,8 +274,11 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
               mouse_x(0),
               mouse_y(0),
               notimestamp(true),
-              nomouse(true)
-            {}
+              nomouse(true),
+              gd(info.width, info.height, 24, palette, true)
+            {
+
+            }
 
     } front(info, verbose);
 
@@ -289,4 +315,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         res = mod->draw_event();
         BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
     }
+
+    front.dump_png("trace_w2000_");
+
 }
