@@ -230,14 +230,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 LOG(LOG_INFO, "========================================\n");
             }
         }
-        virtual void set_mod_bpp_to_front_bpp()
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "set_mod_bpp_to_front()");
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
 
         int mouse_x;
         int mouse_y;

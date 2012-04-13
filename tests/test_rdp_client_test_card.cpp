@@ -140,10 +140,6 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
         {
              LOG(LOG_INFO, "set_mod_bpp(bpp=%d)\n", bpp);
         }
-        virtual void set_mod_bpp_to_front_bpp()
-        {
-             LOG(LOG_INFO, "set_mod_bpp_to_front()\n");
-        }
 
         int mouse_x;
         int mouse_y;

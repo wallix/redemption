@@ -99,45 +99,21 @@ public:
             return ;
         }
         switch (cmd.rop) {
-            case 0x00:
-                this->drawable.black_color(rect);
-            break;
-            case 0xFF:
-                this->drawable.white_color(rect);
-            break;
-            case 0x55:
-            {
-                /*if (bmp.original_bpp != this->bpp){
-                    uint8_t outbuf[65536];
-                    bmp.convert_data_bitmap(this->bpp, outbuf);
-                    const Bitmap newbmp(this->bpp, &bmp.original_palette,
-                            bmp.cx, bmp.cy, outbuf,
-                            bmp.cx * nbbytes(this->bpp) * bmp.cy, false, false);
-                    this->drawable.mem_blt(rect, newbmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->bgr);
-                }
-                else*/ {
-                    this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->bgr);
-                }
-            }
-            break;
-            case 0xCC:
-            {
-                /*if (bmp.original_bpp != this->bpp){
-                    uint8_t outbuf[65536];
-                    bmp.convert_data_bitmap(this->bpp, outbuf);
-                    const Bitmap newbmp(this->bpp, &bmp.original_palette,
-                            bmp.cx, bmp.cy, outbuf,
-                            bmp.cx * nbbytes(this->bpp) * bmp.cy, false, false);
-                    this->drawable.mem_blt(rect, newbmp, cmd.srcx, cmd.srcy, 0, this->bgr);
-                }
-                else*/ {
-                    this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0, this->bgr);
-                }
-            }
-            break;
-            default:
-                // should not happen
-                break;
+        case 0x00:
+            this->drawable.black_color(rect);
+        break;
+        case 0xFF:
+            this->drawable.white_color(rect);
+        break;
+        case 0x55:
+            this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0xFFFFFF, this->bgr);
+        break;
+        case 0xCC:
+            this->drawable.mem_blt(rect, bmp, cmd.srcx, cmd.srcy, 0, this->bgr);
+        break;
+        default:
+            // should not happen
+        break;
         }
     }
 

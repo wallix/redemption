@@ -24,7 +24,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdpClientW2000
+#define BOOST_TEST_MODULE TestRdpClientW2008
 #include <boost/test/auto_unit_test.hpp>
 #include <errno.h>
 #include <algorithm>
@@ -83,7 +83,10 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 cmd.log(LOG_INFO, clip);
                 LOG(LOG_INFO, "========================================\n");
             }
-            this->gd.draw(cmd, clip);
+            RDPOpaqueRect new_cmd24 = cmd;
+            const BGRColor color24 = color_decode_opaquerect(cmd.color, 16, this->palette);
+            new_cmd24.color = color_encode(color24, 24);
+            this->gd.draw(new_cmd24, clip);
         }
         virtual void draw(const RDPScrBlt& cmd, const Rect& clip)
         {
@@ -242,6 +245,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 LOG(LOG_INFO, "========================================\n");
             }
         }
+
         int mouse_x;
         int mouse_y;
         bool notimestamp;
@@ -275,12 +279,12 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     } front(info, verbose);
 
-//    const char * name = "RDP W2000 Target";
-//    int sck = connect("10.10.14.64", 3389, name);
+//    const char * name = "RDP W2008 Target";
+//    int sck = connect("10.10.14.78", 3389, name);
 //    SocketTransport t(name, sck, verbose);
 
-    #include "./fixtures/dump_w2000.hpp"
-    TestTransport t("test_rdp_client_w2000", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    #include "./fixtures/dump_w2008.hpp"
+    TestTransport t("test_rdp_client_w2008", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
@@ -301,12 +305,12 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE){
-        if (count++ >= 17) break;
+        if (count++ >= 50) break;
         printf("count=%d\n", count);
         res = mod->draw_event();
         BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
     }
 
-    front.dump_png("trace_w2000_");
+    front.dump_png("trace_w2008_");
 
 }
