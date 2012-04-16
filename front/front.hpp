@@ -3395,8 +3395,8 @@ public:
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->send_global_palette();
 
-            const BGRColor back_color24 = color_decode(cmd.back_color, this->mod_bpp, this->mod_palette);
-            const BGRColor fore_color24 = color_decode(cmd.fore_color, this->mod_bpp, this->mod_palette);
+            const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+            const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
 
             RDPPatBlt new_cmd = cmd;
             if (this->client_info.bpp != this->mod_bpp){
@@ -3540,10 +3540,10 @@ public:
         if (!clip.isempty() && !clip.intersect(rect).isempty()){
 
             RDPLineTo new_cmd = cmd;
-            if (!(this->client_info.bpp == 8 && this->mod_bpp == 8)){
-                const BGRColor back_color24 = color_decode(cmd.back_color, this->mod_bpp, this->mod_palette);
+            if (this->client_info.bpp != this->mod_bpp){
+                const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
                 new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
-                const BGRColor pen_color24 = color_decode(cmd.pen.color, this->mod_bpp, this->mod_palette);
+                const BGRColor pen_color24 = color_decode_opaquerect(cmd.pen.color, this->mod_bpp, this->mod_palette);
                 new_cmd.pen.color = color_encode(pen_color24, this->client_info.bpp);
             }
 
@@ -3551,9 +3551,9 @@ public:
 
             if (this->capture){
                 RDPLineTo new_cmd24 = cmd;
-                const BGRColor back_color24 = color_decode(cmd.back_color, this->mod_bpp, this->mod_palette);
+                const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
                 new_cmd24.back_color = color_encode(back_color24, 24);
-                const BGRColor pen_color24 = color_decode(cmd.pen.color, this->mod_bpp, this->mod_palette);
+                const BGRColor pen_color24 = color_decode_opaquerect(cmd.pen.color, this->mod_bpp, this->mod_palette);
                 new_cmd24.pen.color = color_encode(pen_color24, 24);
                 this->capture->draw(new_cmd24, clip);
             }
