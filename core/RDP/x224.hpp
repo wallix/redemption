@@ -308,6 +308,7 @@ struct X224In : public X224Packet
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
         t->recv((char**)(&(stream.end)), TPKT_HEADER_LEN);
+
         this->tpkt.version = stream.in_uint8();
 
         if (this->tpkt.version != 3) {
@@ -613,10 +614,10 @@ struct X224Out : public X224Packet
         : stream(stream), bop(stream.p), verbose(verbose)
     // Prepare a X224 TPDU in buffer for writing
     {
-        assert(stream.p == stream.data);
+        REDASSERT(stream.p == stream.data);
         switch (tpdutype){
             case CR_TPDU: // Connection Request 1110 xxxx
-//                LOG(LOG_INFO, "X224 OUT CR_TPDU");
+                LOG(LOG_INFO, "X224 OUT CR_TPDU");
                 // we can write the header, there must not be any data afterward
                 // tpkt
                 this->stream.out_uint8(0x03); // version 3
@@ -641,7 +642,7 @@ struct X224Out : public X224Packet
 
             break;
             case CC_TPDU: // Connection Confirm 1101 xxxx
-//                LOG(LOG_INFO, "X224 OUT CC_TPDU");
+                LOG(LOG_INFO, "X224 OUT CC_TPDU");
                 // we can write the header, there must not be any data
                 // tpkt
                 this->stream.out_uint8(0x03); // version 3
@@ -658,7 +659,7 @@ struct X224Out : public X224Packet
                 this->stream.out_uint8(0x00); // CLASS OPTION
             break;
             case DR_TPDU: // Disconnect Request 1000 0000
-//                LOG(LOG_INFO, "X224 OUT DR_TPDU");
+                LOG(LOG_INFO, "X224 OUT DR_TPDU");
                 // we can write the header, there must not be any data
                 // tpkt
                 this->stream.out_uint8(0x03); // version 3
@@ -675,7 +676,7 @@ struct X224Out : public X224Packet
                 this->stream.out_uint8(0x00); // CLASS OPTION
             break;
             case DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
-//                LOG(LOG_INFO, "X224 OUT DT_TPDU");
+                LOG(LOG_INFO, "X224 OUT DT_TPDU");
 
                 // we can't write the full header yet,
                 // we will know the length later

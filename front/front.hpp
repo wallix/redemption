@@ -2658,25 +2658,36 @@ public:
 
         uint8_t * caps_ptr = stream.p;
 
-        caps_count++; front_out_share_caps(stream, this->userid + MCS_USERCHANNEL_BASE);
-
+        GeneralCaps general_caps;
+        general_caps.log("Sending to client");
+        general_caps.emit(stream);
         caps_count++;
-        GeneralCaps general;
-        general.log("Sending to client");
-        general.emit(stream);
 
-        caps_count++; front_out_bitmap_caps(stream,
-                                            this->client_info.bpp,
-                                            this->client_info.width,
-                                            this->client_info.height);
+        BitmapCaps bitmap_caps;
+        bitmap_caps.preferredBitsPerPixel = this->client_info.bpp;
+        bitmap_caps.desktopWidth = this->client_info.width;
+        bitmap_caps.desktopHeight = this->client_info.height;
+        bitmap_caps.log("Sending to client");
+        bitmap_caps.emit(stream);
+        caps_count++;
 
-        caps_count++; front_out_font_caps(stream);
-        caps_count++; sc_out_order_caps(stream);
-        caps_count++; front_out_colcache_caps(stream);
-        caps_count++; front_out_pointer_caps(stream);
+        front_out_font_caps(stream);
+        caps_count++;
 
-        /* Output input capability set */
-        caps_count++; front_out_input_caps(stream);
+        sc_out_order_caps(stream);
+        caps_count++;
+
+        front_out_colcache_caps(stream);
+        caps_count++;
+
+        front_out_pointer_caps(stream);
+        caps_count++;
+
+        front_out_share_caps(stream, this->userid + MCS_USERCHANNEL_BASE);
+        caps_count++;
+
+        front_out_input_caps(stream);
+        caps_count++;
 
         TODO("Check if this padding is necessary and if so how it should actually be computed. Padding is usually here for memory alignment purpose but this one looks strange")
         stream.out_clear_bytes(4); /* pad */
@@ -2768,8 +2779,13 @@ public:
                 this->client_info.use_compact_packets = 0!=(general.extraflags & NO_BITMAP_COMPRESSION_HDR);
             }
             break;
-            case RDP_CAPSET_BITMAP: /* 2 */
-                break;
+            case RDP_CAPSET_BITMAP:
+            {
+                BitmapCaps bitmap_caps;
+                bitmap_caps.recv(stream);
+                bitmap_caps.log("Receiving from client");
+            }
+            break;
             case RDP_CAPSET_ORDER: /* 3 */
                 cs_in_order_caps(stream, len, this->client_info.desktop_cache);
                 break;

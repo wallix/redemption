@@ -35,6 +35,14 @@
 
 #define BOOM (*(int*)0=1)
 
+// REDASSERT behave like assert but instaed of calling abort it triggers a segfault
+// This is handy to get stacktrace while debugging.
+#ifdef NDEBUG
+#define REDASSERT(x)
+#else
+#define REDASSERT(x) if(!(x)){BOOM;}
+#endif
+
 #include <stdio.h>
 #include <syslog.h>
 #include <sys/types.h>

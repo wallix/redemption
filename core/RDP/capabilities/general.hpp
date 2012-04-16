@@ -154,9 +154,7 @@ enum {
     NO_BITMAP_COMPRESSION_HDR = 0x0400,
 };
 
-struct GeneralCaps {
-    uint16_t capabilityType;
-    uint16_t len;
+struct GeneralCaps : public Capability {
     uint16_t os_major;
     uint16_t os_minor;
     uint16_t protocolVersion;
@@ -168,8 +166,7 @@ struct GeneralCaps {
     uint16_t compressionLevel;
     uint16_t pad2;
     GeneralCaps()
-    : capabilityType(RDP_CAPSET_GENERAL)
-    , len(RDP_CAPLEN_GENERAL)
+    : Capability(RDP_CAPSET_GENERAL, RDP_CAPLEN_GENERAL)
     , os_major(1)
     , os_minor(3)
     , protocolVersion(0x200)
@@ -196,6 +193,7 @@ struct GeneralCaps {
         stream.out_uint16_le(this->remoteUnshare);
         stream.out_uint16_le(this->compressionLevel);
         stream.out_uint16_le(this->pad2);
+        TODO("Add support for server only flags refreshRectSupport and suppressOutputSupport")
     }
 
     void recv(Stream & stream){
@@ -209,6 +207,7 @@ struct GeneralCaps {
         this->remoteUnshare = stream.in_uint16_le();
         this->compressionLevel = stream.in_uint16_le();
         this->pad2 = stream.in_uint16_le();
+        TODO("Add support for server only flags refreshRectSupport and suppressOutputSupport")
     }
 
     void log(const char * msg){
@@ -231,6 +230,8 @@ struct GeneralCaps {
         LOG(LOG_INFO, "General caps::updateCapability %x", this->updateCapability);
         LOG(LOG_INFO, "General caps::remoteUnshare %x", this->remoteUnshare);
         LOG(LOG_INFO, "General caps::compressionLevel %x", this->compressionLevel);
+
+        TODO("Add support for server only flags refreshRectSupport and suppressOutputSupport")
     }
 };
 

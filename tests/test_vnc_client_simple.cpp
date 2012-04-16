@@ -27,7 +27,7 @@
 #define BOOST_TEST_MODULE TestVncClientSimple
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+//#define LOGPRINT
 #include "./test_orders.hpp"
 
 #include "stream.hpp"
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.bpp = 24;
     info.width = 800;
     info.height = 600;
-    int verbose = 256;
+    int verbose = 0;
 
     class Front : public FrontAPI {
         public:
@@ -264,23 +264,193 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     } front(info, verbose);
 
-    Stream stream(65536);
-    const char * name = "VNC Target";
-    int sck = connect("10.10.3.103", 5900, name);
-    SocketTransport t(name, sck, verbose);
+//    Stream stream(65536);
+//    const char * name = "VNC Target";
+//    int sck = connect("10.10.3.103", 5900, name);
+//    SocketTransport t(name, sck, verbose);
 //    wait_obj back_event(t.sck);
 
 
     const char outdata[] =
     {
+// connecting to VNC Target (10.10.3.103:5900)
+
+// connection to 10.10.3.103 succeeded : socket 3
+
+// --------- CREATION OF MOD VNC ------------------------
+// Connecting to VNC Server
+// Socket VNC Target (3) receiving 12 bytes
+// Recv done on VNC Target (3)
+// /* 0000 */ "\x52\x46\x42\x20\x30\x30\x33\x2e\x30\x30\x38\x0a"                 // RFB 003.008.
+// Dump done on VNC Target (3)
+// Socket VNC Target (3) sending 12 bytes
+ /* 0000 */ "\x52\x46\x42\x20\x30\x30\x33\x2e\x30\x30\x33\x0a"                 // RFB 003.003.
+// Dump done VNC Target (3) sending 12 bytes
+// Send done on VNC Target (3)
+// Socket VNC Target (3) receiving 4 bytes
+// Recv done on VNC Target (3)
+// /* 0000 */ "\x00\x00\x00\x02"                                                 // ....
+// Dump done on VNC Target (3)
+// security level is 2 (1 = none, 2 = standard)
+
+// Receiving VNC Server Random
+// Socket VNC Target (3) receiving 16 bytes
+// Recv done on VNC Target (3)
+// /* 0000 */ "\x18\xe7\xf7\xcc\x94\x50\x1d\x78\xa6\x36\x25\xf0\x4a\x7b\x00\x2c" // .....P.x.6%.J{.,
+// Dump done on VNC Target (3)
+// Sending Password
+// Socket VNC Target (3) sending 16 bytes
+ /* 0000 */ "\x1a\x8a\x6d\x99\xd1\xdb\x0f\x11\x6e\xf2\xbc\x29\xe1\x42\x61\x98" // ..m.....n..).Ba.
+// Dump done VNC Target (3) sending 16 bytes
+// Send done on VNC Target (3)
+// Waiting for password ack
+// Socket VNC Target (3) receiving 4 bytes
+// Recv done on VNC Target (3)
+// /* 0000 */ "\x00\x00\x00\x00"                                                 // ....
+// Dump done on VNC Target (3)
+// vnc password ok
+
+// Socket VNC Target (3) sending 1 bytes
+ /* 0000 */ "\x01"                                                             // .
+// Dump done VNC Target (3) sending 1 bytes
+// Send done on VNC Target (3)
+// Socket VNC Target (3) receiving 24 bytes
+// Recv done on VNC Target (3)
+// /* 0000 */ "\x04\x00\x03\x00\x20\x18\x00\x01\x00\xff\x00\xff\x00\xff\x10\x08" // .... ...........
+// /* 0010 */ "\x00\x00\x00\x00\x00\x00\x00\x0d"                                 // ........
+// Dump done on VNC Target (3)
+// VNC received: width=1024 height=768 bpp=32 depth=24 endianess=0 true_color=1 red_max=255 green_max=255 blue_max=255 red_shift=16 green_shift=8 blue_shift=0
+// Socket VNC Target (3) receiving 13 bytes
+// Recv done on VNC Target (3)
+// /* 0000 */ "\x41\x55\x54\x48\x2d\x32\x4b\x33\x2d\x4c\x44\x41\x50"             // AUTH-2K3-LDAP
+// Dump done on VNC Target (3)
+// Socket VNC Target (3) sending 20 bytes
+ /* 0000 */ "\x00\x00\x00\x00\x10\x10\x00\x01\x00\x1f\x00\x3f\x00\x1f\x0b\x05" // ...........?....
+ /* 0010 */ "\x00\x00\x00\x00"                                                 // ....
+// Dump done VNC Target (3) sending 20 bytes
+// Send done on VNC Target (3)
+// Socket VNC Target (3) sending 16 bytes
+ /* 0000 */ "\x02\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x01\xff\xff\xff\x11" // ................
+// Dump done VNC Target (3) sending 16 bytes
+// Send done on VNC Target (3)
+// --------- FRONT ------------------------
+// server_resize(width=1024, height=768, bpp=16
+// ========================================
+
+// --------- FRONT ------------------------
+// set_mod_bpp(bpp=16)
+// ========================================
+
+// Socket VNC Target (3) sending 10 bytes
+ /* 0000 */ "\x03\x00\x00\x00\x00\x00\x04\x00\x03\x00"                         // ..........
+// Dump done VNC Target (3) sending 10 bytes
+// Send done on VNC Target (3)
+// --------- FRONT ------------------------
+// server_set_pointer
+// ========================================
+
+// VNC connection complete, connected ok
+
+// --------- FRONT ------------------------
+// order(10 clip(0,0,1024,768)):opaquerect(rect(0,0,1024,768) color=0x000000)
+// ========================================
+
+// ========= CREATION OF MOD VNC DONE ====================
+
+
+// Socket VNC Target (3) : closing connection
     };
 
 
     const char indata[] = {
+// connecting to VNC Target (10.10.3.103:5900)
+
+// connection to 10.10.3.103 succeeded : socket 3
+
+// --------- CREATION OF MOD VNC ------------------------
+// Connecting to VNC Server
+// Socket VNC Target (3) receiving 12 bytes
+// Recv done on VNC Target (3)
+ /* 0000 */ "\x52\x46\x42\x20\x30\x30\x33\x2e\x30\x30\x38\x0a"                 // RFB 003.008.
+// Dump done on VNC Target (3)
+// Socket VNC Target (3) sending 12 bytes
+// /* 0000 */ "\x52\x46\x42\x20\x30\x30\x33\x2e\x30\x30\x33\x0a"                 // RFB 003.003.
+// Dump done VNC Target (3) sending 12 bytes
+// Send done on VNC Target (3)
+// Socket VNC Target (3) receiving 4 bytes
+// Recv done on VNC Target (3)
+ /* 0000 */ "\x00\x00\x00\x02"                                                 // ....
+// Dump done on VNC Target (3)
+// security level is 2 (1 = none, 2 = standard)
+
+// Receiving VNC Server Random
+// Socket VNC Target (3) receiving 16 bytes
+// Recv done on VNC Target (3)
+ /* 0000 */ "\x18\xe7\xf7\xcc\x94\x50\x1d\x78\xa6\x36\x25\xf0\x4a\x7b\x00\x2c" // .....P.x.6%.J{.,
+// Dump done on VNC Target (3)
+// Sending Password
+// Socket VNC Target (3) sending 16 bytes
+// /* 0000 */ "\x1a\x8a\x6d\x99\xd1\xdb\x0f\x11\x6e\xf2\xbc\x29\xe1\x42\x61\x98" // ..m.....n..).Ba.
+// Dump done VNC Target (3) sending 16 bytes
+// Send done on VNC Target (3)
+// Waiting for password ack
+// Socket VNC Target (3) receiving 4 bytes
+// Recv done on VNC Target (3)
+ /* 0000 */ "\x00\x00\x00\x00"                                                 // ....
+// Dump done on VNC Target (3)
+// vnc password ok
+
+// Socket VNC Target (3) sending 1 bytes
+// /* 0000 */ "\x01"                                                             // .
+// Dump done VNC Target (3) sending 1 bytes
+// Send done on VNC Target (3)
+// Socket VNC Target (3) receiving 24 bytes
+// Recv done on VNC Target (3)
+ /* 0000 */ "\x04\x00\x03\x00\x20\x18\x00\x01\x00\xff\x00\xff\x00\xff\x10\x08" // .... ...........
+ /* 0010 */ "\x00\x00\x00\x00\x00\x00\x00\x0d"                                 // ........
+// Dump done on VNC Target (3)
+// VNC received: width=1024 height=768 bpp=32 depth=24 endianess=0 true_color=1 red_max=255 green_max=255 blue_max=255 red_shift=16 green_shift=8 blue_shift=0
+// Socket VNC Target (3) receiving 13 bytes
+// Recv done on VNC Target (3)
+// /* 0000 */ "\x41\x55\x54\x48\x2d\x32\x4b\x33\x2d\x4c\x44\x41\x50"             // AUTH-2K3-LDAP
+// Dump done on VNC Target (3)
+// Socket VNC Target (3) sending 20 bytes
+ /* 0000 */ "\x00\x00\x00\x00\x10\x10\x00\x01\x00\x1f\x00\x3f\x00\x1f\x0b\x05" // ...........?....
+ /* 0010 */ "\x00\x00\x00\x00"                                                 // ....
+// Dump done VNC Target (3) sending 20 bytes
+// Send done on VNC Target (3)
+// Socket VNC Target (3) sending 16 bytes
+ /* 0000 */ "\x02\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x01\xff\xff\xff\x11" // ................
+// Dump done VNC Target (3) sending 16 bytes
+// Send done on VNC Target (3)
+// --------- FRONT ------------------------
+// server_resize(width=1024, height=768, bpp=16
+// ========================================
+
+// --------- FRONT ------------------------
+// set_mod_bpp(bpp=16)
+// ========================================
+
+// Socket VNC Target (3) sending 10 bytes
+// /* 0000 */ "\x03\x00\x00\x00\x00\x00\x04\x00\x03\x00"                         // ..........
+// Dump done VNC Target (3) sending 10 bytes
+// Send done on VNC Target (3)
+// --------- FRONT ------------------------
+// server_set_pointer
+// ========================================
+
+// VNC connection complete, connected ok
+
+// --------- FRONT ------------------------
+// order(10 clip(0,0,1024,768)):opaquerect(rect(0,0,1024,768) color=0x000000)
+// ========================================
+
+// ========= CREATION OF MOD VNC DONE ====================
+
+// Socket VNC Target (3) : closing connection
     };
 
-
-//    TestTransport t("test_vnc_client_simple", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    TestTransport t("test_vnc_client_simple", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests
 //    LCGRandom gen(0);
@@ -298,12 +468,12 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     BOOST_CHECK_EQUAL(mod->front_width, 1024);
     BOOST_CHECK_EQUAL(mod->front_height, 768);
 
-    BackEvent_t res = mod->draw_event();
-    BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+//    BackEvent_t res = mod->draw_event();
+//    BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
 ////    BOOST_CHECK(t.status);
 
-    res = mod->draw_event();
-    BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+//    res = mod->draw_event();
+//    BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
 ////    BOOST_CHECK(t.status);
 
 //    res = mod->draw_event();

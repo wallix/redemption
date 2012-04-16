@@ -24,6 +24,11 @@
 #if !defined(__RDP_CAPABILITIES_CAPSET_HPP__)
 #define __RDP_CAPABILITIES_CAPSET_HPP__
 
+#include <stdint.h>
+#include "log.hpp"
+#include "stream.hpp"
+#include "RDP/orders/RDPOrdersCommon.hpp"
+
 // 2.2.1.13.1.1.1 Capability Set (TS_CAPS_SET)
 // ===========================================
 // The TS_CAPS_SET structure is used to describe the type and size of a
@@ -241,6 +246,35 @@ ORDER_CAP_NEGOTIATE            = 2,
 ORDER_CAP_NOSUPPORT            = 4,
 
 BMPCACHE2_FLAG_PERSIST         = ((long)1<<31),
+};
+
+struct Capability {
+    uint16_t capabilityType;
+    uint16_t len;
+
+    Capability(uint16_t capabilityType, uint16_t len)
+        : capabilityType(capabilityType)
+        , len(len)
+    {
+    }
+
+    void emit(Stream & stream)
+    {
+        LOG(LOG_ERR, "Capability::emit [%u, %u] Implemented by subclass",
+            this->capabilityType, this->len);
+    }
+
+    void recv(Stream & stream)
+    {
+        LOG(LOG_ERR, "Capability::recv [%u, %u] Implemented by subclass",
+            this->capabilityType, this->len);
+    }
+
+    void log(const char * msg)
+    {
+        LOG(LOG_ERR, "Capability::log [%u, %u, %s] Implemented by subclass",
+            this->capabilityType, this->len, msg);
+    }
 };
 
 
