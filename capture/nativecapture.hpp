@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-#if !defined(__NATIVECAPTURE_HPP__)
-#define __NATIVECAPTURE_HPP__
+#if !defined(__CAPTURE_NATIVECAPTURE_HPP__)
+#define __CAPTURE_NATIVECAPTURE_HPP__
 
 #include <iostream>
 #include <stdio.h>
@@ -60,7 +60,6 @@ class NativeCapture : public RDPGraphicDevice
     int width;
     int height;
     int bpp;
-    BGRPalette palette;
     OutFileTransport trans;
     GraphicsToFile recorder;
     char basepath[1024];
@@ -84,13 +83,13 @@ private:
     }
 
 public:
-    NativeCapture(int width, int height, int bpp, const BGRPalette & palette, const char * path)
+    NativeCapture(int width, int height, const char * path)
     : inter_frame_interval(40000) // 1 000 000 us is 1 sec (default)
     , width(width)
     , height(height)
-    , bpp(bpp)
+    , bpp(24)
     , trans(-1)
-    , recorder(&this->trans, NULL, bpp, 8192, 768, 8192, 3072, 8192, 12288)
+    , recorder(&this->trans, NULL, 24, 8192, 768, 8192, 3072, 8192, 12288)
     , nb_file(0)
     {
         this->basepath_len = sprintf(this->basepath, "%s-%u-", path, getpid());

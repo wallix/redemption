@@ -81,11 +81,8 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
     uint16_t height = 480;
-    uint8_t bpp = 24;
     Rect screen_rect(0, 0, width, height);
-    BGRPalette palette;
-    init_palette332(palette);
-    RDPDrawable gd(width, height, bpp, palette, true);
+    RDPDrawable gd(width, height, true);
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect);
 
@@ -121,11 +118,8 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
     uint16_t height = 480;
-    uint8_t bpp = 24;
     Rect screen_rect(0, 0, width, height);
-    BGRPalette palette;
-    init_palette332(palette);
-    RDPDrawable gd(width, height, bpp, palette, true);
+    RDPDrawable gd(width, height, true);
     gd.draw(RDPPatBlt(screen_rect, 0xFF, WHITE, WHITE, RDPBrush()), screen_rect);
     gd.draw(RDPPatBlt(screen_rect.shrink(5), 0x00, WHITE, WHITE, RDPBrush()), screen_rect);
 
@@ -199,11 +193,8 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
     uint16_t height = 480;
-    uint8_t bpp = 24;
     Rect screen_rect(0, 0, width, height);
-    BGRPalette palette;
-    init_palette332(palette);
-    RDPDrawable gd(width, height, bpp, palette, true);
+    RDPDrawable gd(width, height, true);
 //    gd.draw(RDPPatBlt(screen_rect, 0xFF, WHITE, WHITE, RDPBrush()), screen_rect);
     gd.draw(RDPDestBlt(screen_rect, 0xFF), screen_rect); // WHITENESS
     gd.draw(RDPDestBlt(screen_rect.shrink(5), 0x00), screen_rect); // BLACKNESS
@@ -227,11 +218,8 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
     uint16_t height = 480;
-    uint8_t bpp = 24;
     Rect screen_rect(0, 0, width, height);
-    BGRPalette palette;
-    init_palette332(palette);
-    RDPDrawable gd(width, height, bpp, palette, true);
+    RDPDrawable gd(width, height, true);
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
     gd.drawable.trace_mouse(100, 100);
 
@@ -268,11 +256,8 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
     uint16_t height = 480;
-    uint8_t bpp = 24;
     Rect screen_rect(0, 0, width, height);
-    BGRPalette palette;
-    init_palette332(palette);
-    RDPDrawable gd(width, height, bpp, palette, true);
+    RDPDrawable gd(width, height, true);
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
 
     time_t rawtime;
@@ -351,11 +336,8 @@ void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * nam
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
     uint16_t height = 480;
-    uint8_t bpp = 24;
     Rect screen_rect(0, 0, width, height);
-    BGRPalette palette;
-    init_palette332(palette);
-    RDPDrawable gd(width, height, bpp, palette, true);
+    RDPDrawable gd(width, height, true);
     gd.draw(RDPOpaqueRect(Rect(90, 90, 120, 120), RED), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect, BLUE), Rect(100, 100, 100, 100));
     gd.draw(RDPOpaqueRect(Rect(120, 120, 60, 60), PINK), Rect(100, 100, 100, 100));
@@ -444,7 +426,7 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     BGRPalette palette;
     init_palette332(palette);
 
-    RDPDrawable gd(width, height, bpp, palette, true);
+    RDPDrawable gd(width, height, true);
     gd.draw(RDPOpaqueRect(screen_rect, 0x2F2F2F), screen_rect);
     gd.draw(RDPOpaqueRect(Rect(100,100,20, 20), BLUE), screen_rect);
 

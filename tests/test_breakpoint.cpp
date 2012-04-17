@@ -32,8 +32,7 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     {
         //MetaWRM meta(800, 600, 24);
         MetaWRM meta(1024, 912, 16);
-        NativeCapture cap(meta.width, meta.height, meta.bpp,
-                          palette, "/tmp/test_breakpoint");
+        NativeCapture cap(meta.width, meta.height, "/tmp/test_breakpoint");
         meta.send(cap.recorder);
         Rect clip(0, 0, meta.width, meta.height);
         cap.draw(RDPOpaqueRect(Rect(10,844,500,42), RED), clip);

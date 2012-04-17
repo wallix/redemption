@@ -419,8 +419,7 @@ public:
     {
         if (flag){
             this->stop_capture();
-            this->capture = new Capture(width, height, 24, this->palette332,
-                                           path, codec_id, quality);
+            this->capture = new Capture(width, height, path, codec_id, quality);
         }
     }
 

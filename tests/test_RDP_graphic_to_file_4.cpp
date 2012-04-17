@@ -45,8 +45,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFileReadBogus)
             : RDPGraphicDevice()
             , disable(false)
         {
-            BGRPalette palette;
-            this->data = new RDPDrawable(800, 600, 24, palette, true);
+            this->data = new RDPDrawable(800, 600, true);
         }
         virtual ~Consumer(){
             delete this->data;

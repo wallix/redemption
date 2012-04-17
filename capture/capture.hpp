@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-#if !defined(__CAPTURE_HPP__)
-#define __CAPTURE_HPP__
+#if !defined(__CAPTURE_CAPTURE_HPP__)
+#define __CAPTURE_CAPTURE_HPP__
 
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
@@ -32,9 +32,9 @@ class Capture : public RDPGraphicDevice
     public:
 
     TODO(" fat interface : ugly  find another way")
-    Capture(int width, int height, int bpp, const BGRPalette & palette, char * path, const char * codec_id, const char * video_quality) :
-        sc(width, height, 24, palette, path, codec_id, video_quality),
-        nc(width, height, 24, palette, path)
+    Capture(int width, int height, char * path, const char * codec_id, const char * video_quality) :
+        sc(width, height, path, codec_id, video_quality),
+        nc(width, height, path)
     {
     }
 

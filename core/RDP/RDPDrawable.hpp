@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier, Poelen Jonathan
 */
 
-#if !defined(__RDPDRAWABLE_HPP__)
-#define __RDPDRAWABLE_HPP__
+#if !defined(__CORE_RDP_RDPDRAWABLE_HPP__)
+#define __CORE_RDP_RDPDRAWABLE_HPP__
 
 #include "drawable.hpp"
 #include "bmpcache.hpp"
@@ -37,27 +37,23 @@
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 
 
+// orders provided to RDPDrawable *MUST* be 24 bits
+// drawable also only support 24 bits orders
 class RDPDrawable : public RDPGraphicDevice {
 public:
-    uint8_t bpp;
-    BGRPalette palette;
     bool bgr;
     Drawable drawable;
 
-    RDPDrawable(const uint16_t width, const uint16_t height,
-                const uint8_t bpp, const BGRPalette & palette,
-                bool bgr=true)
-    : bpp(bpp),
-    bgr(bgr),
+    RDPDrawable(const uint16_t width, const uint16_t height, bool bgr=true)
+    : bgr(bgr),
     drawable(width, height)
     {
-        memcpy(this->palette, palette, sizeof(palette));
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         const Rect & trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
-        uint32_t color = color_decode(cmd.color, this->bpp, this->palette);
+        uint32_t color = cmd.color;
         if (!this->bgr){
             color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
         }
@@ -85,7 +81,7 @@ public:
     {
         const Rect trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
         TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.")
-        uint32_t color = color_decode(cmd.back_color, this->bpp, this->palette);
+        uint32_t color = cmd.back_color;
         if (!this->bgr){
             color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
         }
@@ -148,7 +144,7 @@ public:
         }
 
         // Color handling
-        uint32_t color = color_decode(lineto.pen.color, this->bpp, this->palette);
+        uint32_t color = lineto.pen.color;
         if (!this->bgr){
             color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
         }
@@ -163,7 +159,6 @@ public:
         int endy = (lineto.endy >= clip.y + clip.cy)?clip.y + clip.cy - 1:lineto.endy;
         starty = (starty & 0x8000)?0:starty;
         endy = (endy & 0x8000)?0:endy;
-
 
         if (startx == endx){
             this->drawable.vertical_line(lineto.back_mode,
@@ -197,7 +192,6 @@ public:
     virtual void draw(const RDPColCache & cmd) {}
     virtual void draw(const RDPGlyphCache & cmd) {}
     virtual void flush() {}
-
 
 };
 

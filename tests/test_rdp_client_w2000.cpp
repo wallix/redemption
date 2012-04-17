@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
               mouse_y(0),
               notimestamp(true),
               nomouse(true),
-              gd(info.width, info.height, 24, palette, true)
+              gd(info.width, info.height, true)
             {
 
             }
