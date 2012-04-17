@@ -55,9 +55,6 @@
 class StaticCapture : public RDPDrawable
 {
     int framenb;
-    uint64_t inter_frame_interval;
-
-    struct timeval start;
 
     public:
     char path[1024];
@@ -66,22 +63,10 @@ class StaticCapture : public RDPDrawable
         : RDPDrawable(width, height, true),
           framenb(0)
     {
-        gettimeofday(&this->start, NULL);
-        this->inter_frame_interval = 1000000; // 1 000 000 us is 1 sec (default)
         strcpy(this->path, path);
     }
 
     ~StaticCapture(){
-    }
-
-    void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
-    {
-        struct timeval now;
-        gettimeofday(&now, NULL);
-        if (difftimeval(now, this->start) < this->inter_frame_interval){
-            return;
-        }
-        this->dump_png();
     }
 
     virtual void flush()

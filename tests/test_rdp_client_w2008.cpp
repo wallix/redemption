@@ -60,79 +60,116 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.bpp = 24;
     info.width = 800;
     info.height = 600;
-    int verbose = 256;
+    int verbose = 1;
+
 
     class Front : public FrontAPI {
         public:
         uint32_t verbose;
         const ClientInfo & info;
         ChannelList cl;
+        uint8_t mod_bpp;
+        BGRPalette mod_palette;
 
         virtual void flush()
         {
-            if (verbose > 10){
-                 LOG(LOG_INFO, "--------- FRONT ------------------------");
-                 LOG(LOG_INFO, "flush()");
-                 LOG(LOG_INFO, "========================================\n");
-            }
         }
         virtual void draw(const RDPOpaqueRect& cmd, const Rect& clip)
         {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                cmd.log(LOG_INFO, clip);
-                LOG(LOG_INFO, "========================================\n");
-            }
             RDPOpaqueRect new_cmd24 = cmd;
-            const BGRColor color24 = color_decode_opaquerect(cmd.color, 16, this->palette);
-            new_cmd24.color = color_encode(color24, 24);
+            new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
             this->gd.draw(new_cmd24, clip);
         }
         virtual void draw(const RDPScrBlt& cmd, const Rect& clip)
         {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                cmd.log(LOG_INFO, clip);
-                LOG(LOG_INFO, "========================================\n");
-            }
             this->gd.draw(cmd, clip);
         }
         virtual void draw(const RDPDestBlt& cmd, const Rect& clip)
         {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                cmd.log(LOG_INFO, clip);
-                LOG(LOG_INFO, "========================================\n");
-            }
             this->gd.draw(cmd, clip);
-
         }
         virtual void draw(const RDPPatBlt& cmd, const Rect& clip)
         {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                cmd.log(LOG_INFO, clip);
-                LOG(LOG_INFO, "========================================\n");
-            }
-            this->gd.draw(cmd, clip);
+            RDPPatBlt new_cmd24 = cmd;
+            new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+            new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+            this->gd.draw(new_cmd24, clip);
         }
-        virtual void draw(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bmp)
+
+        void draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
         {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                cmd.log(LOG_INFO, clip);
-                LOG(LOG_INFO, "========================================\n");
+            // No need to resize bitmap
+            if (src_tile == Rect(0, 0, bitmap.cx, bitmap.cy)){
+                const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
+                this->gd.draw(cmd2, clip, bitmap);
             }
-            this->gd.draw(cmd, clip, bmp);
+            else {
+                const Bitmap tiled_bmp(bitmap, src_tile);
+                const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
+                this->gd.draw(cmd2, clip, tiled_bmp);
+            }
         }
+
+
+        virtual void draw(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bitmap)
+        {
+            if (bitmap.cx < cmd.srcx || bitmap.cy < cmd.srcy){
+                return;
+            }
+
+            this->send_global_palette();
+
+            // if not we have to split it
+            const uint16_t TILE_CX = 32;
+            const uint16_t TILE_CY = 32;
+
+            const uint16_t dst_x = cmd.rect.x;
+            const uint16_t dst_y = cmd.rect.y;
+            // clip dst as it can be larger than source bitmap
+            const uint16_t dst_cx = std::min<uint16_t>(bitmap.cx - cmd.srcx, cmd.rect.cx);
+            const uint16_t dst_cy = std::min<uint16_t>(bitmap.cy - cmd.srcy, cmd.rect.cy);
+
+            // check if target bitmap can be fully stored inside one front cache entry
+            // if so no need to tile it.
+            uint32_t front_bitmap_size = ::nbbytes(this->info.bpp) * align4(dst_cx) * dst_cy;
+            // even if cache seems to be large enough, cache entries cant be used
+            // for values whose width is larger or equal to 256 after alignment
+            // hence, we check for this case. There does not seem to exist any
+            // similar restriction on cy actual reason of this is unclear
+            // (I don't even know if it's related to redemption code or client code).
+    //        LOG(LOG_INFO, "cache1=%u cache2=%u cache3=%u bmp_size==%u",
+    //            this->client_info.cache1_size,
+    //            this->client_info.cache2_size,
+    //            this->client_info.cache3_size,
+    //            front_bitmap_size);
+            if (front_bitmap_size <= this->info.cache3_size
+                && align4(dst_cx) < 256 && dst_cy < 256){
+                // clip dst as it can be larger than source bitmap
+                const Rect dst_tile(dst_x, dst_y, dst_cx, dst_cy);
+                const Rect src_tile(cmd.srcx, cmd.srcy, dst_cx, dst_cy);
+                this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
+            }
+            else {
+                for (int y = 0; y < dst_cy ; y += TILE_CY) {
+                    int cy = std::min(TILE_CY, (uint16_t)(dst_cy - y));
+
+                    for (int x = 0; x < dst_cx ; x += TILE_CX) {
+                        int cx = std::min(TILE_CX, (uint16_t)(dst_cx - x));
+
+                        const Rect dst_tile(dst_x + x, dst_y + y, cx, cy);
+                        const Rect src_tile(cmd.srcx + x, cmd.srcy + y, cx, cy);
+                        this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
+                    }
+                }
+            }
+        }
+
         virtual void draw(const RDPLineTo& cmd, const Rect& clip)
         {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                cmd.log(LOG_INFO, clip);
-                LOG(LOG_INFO, "========================================\n");
-            }
-            this->gd.draw(cmd, clip);
+            RDPLineTo new_cmd24 = cmd;
+            new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+            new_cmd24.pen.color = color_decode_opaquerect(cmd.pen.color, this->mod_bpp, this->mod_palette);
+            this->gd.draw(new_cmd24, clip);
 
         }
         virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip)
@@ -239,11 +276,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         }
         virtual void set_mod_bpp(uint8_t bpp)
         {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "set_mod_bpp(bpp=%d)", bpp);
-                LOG(LOG_INFO, "========================================\n");
-            }
+            this->mod_bpp = bpp;
         }
 
         int mouse_x;

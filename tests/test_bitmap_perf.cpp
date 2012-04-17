@@ -42,6 +42,15 @@ long long ustime() {
     return (long long)now.tv_sec*1000000LL + (long long)now.tv_usec;
 }
 
+//BOOST_AUTO_TEST_CASE(TestGtodPerf)
+//{
+//    long long us1 = ustime();
+//    sleep(1);
+//    long long us2 = ustime();
+//    printf("delta gtod us=%llu\n", us2-us1);
+//}
+
+
 BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 {
     {

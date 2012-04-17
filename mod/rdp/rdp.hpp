@@ -123,6 +123,21 @@ struct rdp_orders {
         memset(this->memblt_palette, 0, sizeof(this->memblt_palette));
     }
 
+    void reset()
+    {
+        this->common = RDPOrderCommon(RDP::PATBLT, Rect(0, 0, 1, 1));
+        this->memblt = RDPMemBlt(0, Rect(), 0, 0, 0, 0);
+        this->opaquerect = RDPOpaqueRect(Rect(), 0);
+        this->scrblt = RDPScrBlt(Rect(), 0, 0, 0);
+        this->destblt = RDPDestBlt(Rect(), 0);
+        this->patblt = RDPPatBlt(Rect(), 0, 0, 0, RDPBrush());
+        this->lineto = RDPLineTo(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0));
+        this->glyph_index = RDPGlyphIndex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"");
+        memset(this->cache_bitmap, 0, sizeof(this->cache_bitmap));
+        memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
+        memset(this->global_palette, 0, sizeof(this->global_palette));
+        memset(this->memblt_palette, 0, sizeof(this->memblt_palette));
+    }
 
     ~rdp_orders(){
     }
@@ -260,6 +275,7 @@ struct rdp_orders {
                     mod->front.draw(this->lineto, cmd_clip);
                     break;
                 case RECT:
+                    LOG(LOG_INFO, "received opaque_rect");
                     this->opaquerect.receive(stream, header);
                     mod->front.draw(this->opaquerect, cmd_clip);
                     break;
@@ -881,8 +897,8 @@ struct mod_rdp : public client_mod {
 
     virtual BackEvent_t draw_event(void)
     {
-        static uint32_t count = 0;
-        LOG(LOG_INFO, "============================== DRAW_EVENT %u =================================", count++);
+//        static uint32_t count = 0;
+//        LOG(LOG_INFO, "============================== DRAW_EVENT %u =================================", count++);
 
         try{
 
@@ -1306,7 +1322,7 @@ struct mod_rdp : public client_mod {
             }
 
             if (mcs_in.chan_id != MCS_GLOBAL_CHANNEL){
-                LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:Channel");
+//                LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:Channel");
                 size_t num_channel_src = this->mod_channel_list.size();
                 for (size_t index = 0; index < num_channel_src; index++){
                     const McsChannelItem & mod_channel_item = this->mod_channel_list[index];
@@ -1338,8 +1354,8 @@ struct mod_rdp : public client_mod {
                     stream.p = next_packet;
                     ShareControlIn sci(stream);
                     if (this->verbose){
-                        LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:len = %u pdu_type = %u",
-                            sci.len, sci.pdu_type1);
+//                        LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:len = %u pdu_type = %u",
+//                            sci.len, sci.pdu_type1);
                     }
                     next_packet += sci.len;
                     switch (sci.pdu_type1) {
@@ -1368,6 +1384,7 @@ struct mod_rdp : public client_mod {
 //                            this->check_data_pdu(PDUTYPE2_FONTMAP);
                             LOG(LOG_INFO, "process demand active ok");
                             this->front.set_mod_bpp(this->bpp);
+                            this->orders.reset();
                             this->connection_finalization_state = UP_AND_RUNNING;
                         break;
                         case UP_AND_RUNNING:
@@ -3487,7 +3504,7 @@ struct mod_rdp : public client_mod {
             // data in bits-per-pixel.
             uint8_t bpp = (uint8_t)stream.in_uint16_le();
 
-//            LOG(LOG_ERR, "left=%u top=%u right=%u bottom=%u width=%u height=%u bpp=%u", left, top, right, bottom, width, height, bpp);
+            LOG(LOG_ERR, "left=%u top=%u right=%u bottom=%u width=%u height=%u bpp=%u", left, top, right, bottom, width, height, bpp);
 
             assert(bpp == 24 || bpp == 16 || bpp == 8 || bpp == 15);
 

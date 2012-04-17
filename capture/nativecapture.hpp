@@ -55,8 +55,6 @@
 class NativeCapture : public RDPGraphicDevice
 {
     public:
-    struct timeval start;
-    uint64_t inter_frame_interval;
     int width;
     int height;
     int bpp;
@@ -84,8 +82,7 @@ private:
 
 public:
     NativeCapture(int width, int height, const char * path)
-    : inter_frame_interval(40000) // 1 000 000 us is 1 sec (default)
-    , width(width)
+    : width(width)
     , height(height)
     , bpp(24)
     , trans(-1)
@@ -99,17 +96,6 @@ public:
 
     ~NativeCapture(){
         close(this->trans.fd);
-    }
-
-    void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
-    {
-        struct timeval now;
-        gettimeofday(&now, NULL);
-        if (difftimeval(now, this->start) < this->inter_frame_interval){
-            return;
-        }
-        this->recorder.timestamp(now);
-        this->start = now;
     }
 
     virtual void flush() {}
