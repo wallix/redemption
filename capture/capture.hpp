@@ -58,7 +58,13 @@ class Capture : public RDPGraphicDevice
         struct timeval now;
         gettimeofday(&now, NULL);
         if (difftimeval(now, this->start_static_capture) >= this->inter_frame_interval_static_capture){
+            TODO("change code below, it would be better to provide now to drawable instead of tm struct");
+            time_t rawtime;
+            time(&rawtime);
+            tm *ptm = localtime(&rawtime);
+            this->sc.drawable.trace_timestamp(*ptm);
             this->sc.flush();
+            this->sc.drawable.clear_timestamp();
             this->start_static_capture = now;
         }
         if (difftimeval(now, this->start_native_capture) >= this->inter_frame_interval_native_capture){
