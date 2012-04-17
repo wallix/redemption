@@ -310,10 +310,12 @@ class OutFileTransport : public Transport {
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         ssize_t status = 0;
         size_t remaining_len = len;
+        size_t total_sent = 0;
         while (remaining_len) {
-            status = ::write(this->fd, buffer, remaining_len);
+            status = ::write(this->fd, buffer + total_sent, remaining_len);
             if (status > 0){
                 remaining_len -= status;
+                total_sent += status;
             }
             else {
                 if (errno == EINTR){
