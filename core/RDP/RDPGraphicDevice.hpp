@@ -70,10 +70,6 @@ struct RDPGraphicDevice
     virtual void draw(const RDPColCache & cmd) {};
     virtual void draw(const RDPGlyphCache & cmd) {};
 
-    TODO("This method is for mouse and pointer insertion in video, we should find another method at it is not used when sending data to remote client and mouse moves won't be recorded in RDP native_video. There should probably exist some mouse API that follow cursor moves and record mouse pointers");
-    virtual void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp) {
-    }
-
 protected:
     // this to avoid calling constructor of base abstract class
     RDPGraphicDevice() {}

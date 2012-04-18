@@ -96,72 +96,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
             this->gd.draw(new_cmd24, clip);
         }
 
-        void draw_tile(const Rect & dst_tile, const Rect & src_tile, const RDPMemBlt & cmd, const Bitmap & bitmap, const Rect & clip)
-        {
-            // No need to resize bitmap
-            if (src_tile == Rect(0, 0, bitmap.cx, bitmap.cy)){
-                const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
-                this->gd.draw(cmd2, clip, bitmap);
-            }
-            else {
-                const Bitmap tiled_bmp(bitmap, src_tile);
-                const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
-                this->gd.draw(cmd2, clip, tiled_bmp);
-            }
-        }
-
-
         virtual void draw(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bitmap)
         {
-            if (bitmap.cx < cmd.srcx || bitmap.cy < cmd.srcy){
-                return;
-            }
-
-            this->send_global_palette();
-
-            // if not we have to split it
-            const uint16_t TILE_CX = 32;
-            const uint16_t TILE_CY = 32;
-
-            const uint16_t dst_x = cmd.rect.x;
-            const uint16_t dst_y = cmd.rect.y;
-            // clip dst as it can be larger than source bitmap
-            const uint16_t dst_cx = std::min<uint16_t>(bitmap.cx - cmd.srcx, cmd.rect.cx);
-            const uint16_t dst_cy = std::min<uint16_t>(bitmap.cy - cmd.srcy, cmd.rect.cy);
-
-            // check if target bitmap can be fully stored inside one front cache entry
-            // if so no need to tile it.
-            uint32_t front_bitmap_size = ::nbbytes(this->info.bpp) * align4(dst_cx) * dst_cy;
-            // even if cache seems to be large enough, cache entries cant be used
-            // for values whose width is larger or equal to 256 after alignment
-            // hence, we check for this case. There does not seem to exist any
-            // similar restriction on cy actual reason of this is unclear
-            // (I don't even know if it's related to redemption code or client code).
-    //        LOG(LOG_INFO, "cache1=%u cache2=%u cache3=%u bmp_size==%u",
-    //            this->client_info.cache1_size,
-    //            this->client_info.cache2_size,
-    //            this->client_info.cache3_size,
-    //            front_bitmap_size);
-            if (front_bitmap_size <= this->info.cache3_size
-                && align4(dst_cx) < 256 && dst_cy < 256){
-                // clip dst as it can be larger than source bitmap
-                const Rect dst_tile(dst_x, dst_y, dst_cx, dst_cy);
-                const Rect src_tile(cmd.srcx, cmd.srcy, dst_cx, dst_cy);
-                this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
-            }
-            else {
-                for (int y = 0; y < dst_cy ; y += TILE_CY) {
-                    int cy = std::min(TILE_CY, (uint16_t)(dst_cy - y));
-
-                    for (int x = 0; x < dst_cx ; x += TILE_CX) {
-                        int cx = std::min(TILE_CX, (uint16_t)(dst_cx - x));
-
-                        const Rect dst_tile(dst_x + x, dst_y + y, cx, cy);
-                        const Rect src_tile(cmd.srcx + x, cmd.srcy + y, cx, cy);
-                        this->draw_tile(dst_tile, src_tile, cmd, bitmap, clip);
-                    }
-                }
-            }
+            this->gd.draw(cmd, clip, bitmap);
         }
 
         virtual void draw(const RDPLineTo& cmd, const Rect& clip)
@@ -179,104 +116,46 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
         virtual const ChannelList & get_channel_list(void) const { return cl; }
         virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags)
-        {
-        }
+        {}
 
         virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "send_pointer(cache_idx=%d, data=%p, mask=%p, x=%d, y=%d",
-                    cache_idx, data, mask, x, y);
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
+
         virtual void send_global_palette() throw (Error)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "send_global_palette()");
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
+
         virtual void set_pointer(int cache_idx) throw (Error)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "set_pointer");
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
+
         virtual void begin_update()
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "begin_update");
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
+
         virtual void end_update()
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "end_update");
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
+
         virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "color_cache");
-                LOG(LOG_INFO, "========================================\n");
-            }
-//            exit(0);
-        }
+        {}
+
         virtual void set_mod_palette(const BGRPalette & palette)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "set_mod_palette");
-                LOG(LOG_INFO, "========================================\n");
-            }
-            exit(0);
-        }
+        {}
+
         virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "server_set_pointer");
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
+
         virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "server_draw_text %s", text);
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
         virtual void text_metrics(const char * text, int & width, int & height)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "text_metrics");
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
+
         virtual int server_resize(int width, int height, int bpp)
         {
+            this->mod_bpp = bpp;
             if (verbose > 10){
                 LOG(LOG_INFO, "--------- FRONT ------------------------");
                 LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
                 LOG(LOG_INFO, "========================================\n");
             }
             return 0;
-        }
-        virtual void set_mod_bpp(uint8_t bpp)
-        {
-            this->mod_bpp = bpp;
         }
 
         int mouse_x;

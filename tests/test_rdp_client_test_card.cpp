@@ -136,10 +136,6 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
              LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d\n", width, height, bpp);
              return 0;
         }
-        virtual void set_mod_bpp(uint8_t bpp)
-        {
-             LOG(LOG_INFO, "set_mod_bpp(bpp=%d)\n", bpp);
-        }
 
         int mouse_x;
         int mouse_y;

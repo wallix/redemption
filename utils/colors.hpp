@@ -80,6 +80,7 @@ static inline BGRColor color_decode(const BGRColor c, const uint8_t in_bpp, cons
       return c & 0xFFFFFF;
     default:
         LOG(LOG_ERR, "in_bpp = %d", in_bpp);
+        exit(0);
         assert(false);
         break;
     }
@@ -113,6 +114,7 @@ static inline BGRColor color_decode_opaquerect(const BGRColor c, const uint8_t i
       return c & 0xFFFFFF;
     default:
         LOG(LOG_ERR, "in_bpp = %d", in_bpp);
+        exit(0);
         assert(false);
         break;
     }

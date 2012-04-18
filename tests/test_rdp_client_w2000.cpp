@@ -67,6 +67,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         uint32_t verbose;
         const ClientInfo & info;
         ChannelList cl;
+        uint8_t mod_bpp;
 
         virtual void flush()
         {
@@ -227,20 +228,13 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         }
         virtual int server_resize(int width, int height, int bpp)
         {
+            this->mod_bpp = bpp;
             if (verbose > 10){
                 LOG(LOG_INFO, "--------- FRONT ------------------------");
                 LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
                 LOG(LOG_INFO, "========================================\n");
             }
             return 0;
-        }
-        virtual void set_mod_bpp(uint8_t bpp)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "set_mod_bpp(bpp=%d)", bpp);
-                LOG(LOG_INFO, "========================================\n");
-            }
         }
         int mouse_x;
         int mouse_y;
@@ -275,12 +269,12 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     } front(info, verbose);
 
-//    const char * name = "RDP W2000 Target";
-//    int sck = connect("10.10.14.64", 3389, name);
-//    SocketTransport t(name, sck, verbose);
+    const char * name = "RDP W2000 Target";
+    int sck = connect("10.10.14.64", 3389, name);
+    SocketTransport t(name, sck, verbose);
 
-    #include "./fixtures/dump_w2000.hpp"
-    TestTransport t("test_rdp_client_w2000", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+//    #include "./fixtures/dump_w2000.hpp"
+//    TestTransport t("test_rdp_client_w2000", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests
     LCGRandom gen(0);

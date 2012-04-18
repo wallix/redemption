@@ -392,11 +392,12 @@ struct mod_vnc : public client_mod {
             // resizing done
             this->front_width = this->width;
             this->front_height = this->height;
-            this->front.set_mod_bpp(this->bpp);
             break;
         case -1:
             // resizing failed
             // thow an Error ?
+            LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
+            throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
             break;
         }
 

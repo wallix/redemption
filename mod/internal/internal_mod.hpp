@@ -44,6 +44,7 @@ struct internal_mod : public client_mod {
             , signal(BACK_EVENT_NONE)
             , screen(this, front_width, front_height, NULL, WND_TYPE_SCREEN)
     {
+        this->front.server_resize(front_width, front_height, 24);
         /* dragging info */
         this->dragging = 0;
         this->event = event;

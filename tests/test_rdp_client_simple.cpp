@@ -61,6 +61,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         uint32_t verbose;
         const ClientInfo & info;
         ChannelList cl;
+        uint8_t mod_bpp;
 
         virtual void flush()
         {
@@ -215,20 +216,13 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         }
         virtual int server_resize(int width, int height, int bpp)
         {
+            this->mod_bpp = bpp;
             if (verbose > 10){
                 LOG(LOG_INFO, "--------- FRONT ------------------------");
                 LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
                 LOG(LOG_INFO, "========================================\n");
             }
             return 0;
-        }
-        virtual void set_mod_bpp(uint8_t bpp)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "set_mod_bpp(bpp=%d)", bpp);
-                LOG(LOG_INFO, "========================================\n");
-            }
         }
 
         int mouse_x;

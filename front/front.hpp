@@ -170,7 +170,7 @@ static inline int load_pointer(const char* file_name, uint8_t* data, uint8_t* ma
 
 class Front : public FrontAPI {
 public:
-    RDPGraphicDevice * capture;
+    Capture * capture;
     GraphicsUpdatePDU * orders;
     Keymap2 keymap;
     ChannelList channel_list;
@@ -227,6 +227,13 @@ public:
         state(CONNECTION_INITIATION),
         gen(gen)
     {
+        init_palette332(this->palette332);
+        this->mod_palette_setted = false;
+        this->palette_sent = false;
+        for (size_t i = 0; i < 6 ; i++){
+            this->palette_memblt_sent[i] = false;
+        }
+
         // from server_sec
         // CGR: see if init has influence for the 3 following fields
         memset(this->server_random, 0, 32);
@@ -259,22 +266,12 @@ public:
 
     void init_mod()
     {
-        this->mod_palette_setted = false;
-        this->mod_bpp = 24;
-        this->palette_sent = false;
-        for (size_t i = 0; i < 6 ; i++){
-            this->palette_memblt_sent[i] = false;
-        }
-        init_palette332(this->palette332);
-    }
-
-    void set_mod_bpp(uint8_t bpp)
-    {
-        this->mod_bpp = bpp;
     }
 
     int server_resize(int width, int height, int bpp)
     {
+        uint32_t res = 0;
+        this->mod_bpp = bpp;
         if (this->client_info.width != width
         || this->client_info.height != height
         || this->client_info.bpp != bpp) {
@@ -282,35 +279,49 @@ public:
             if (client_info.build <= 419) {
                 LOG(LOG_ERR, "Resizing is not available on older RDP clients");
                 // resizing needed but not available
-                return -1;
+
+                // if we only change bpp, this is acceptable even on older clients
+                // proxy will perform the color conversion work
+                res = -1;
+                if ((this->client_info.width == width)
+                && (this->client_info.height == height)
+                && this->client_info.bpp != bpp){
+                    res = 0;
+                }
             }
-            this->palette_sent = false;
-            for (size_t i = 0; i < 6 ; i++){
-                this->palette_memblt_sent[i] = false;
+            else {
+                if (bpp == 8){
+                    this->mod_palette_setted = false;
+                    this->palette_sent = false;
+                    for (size_t i = 0; i < 6 ; i++){
+                        this->palette_memblt_sent[i] = false;
+                    }
+                }
+                LOG(LOG_INFO, "// Resizing client to : %d x %d x %d\n", width, height, bpp);
+
+                this->client_info.width = width;
+                this->client_info.height = height;
+                this->client_info.bpp = bpp;
+
+                // send buffered orders
+                this->orders->flush();
+
+                 // clear all pending orders, caches data, and so on and
+                // start a send_deactive, send_deman_active process with
+                // the new resolution setting
+                /* shut down the rdp client */
+                this->up_and_running = 0;
+                this->send_deactive();
+                /* this should do the actual resizing */
+                this->send_demand_active();
+
+                state = ACTIVATE_AND_PROCESS_DATA;
+                res = 1;
             }
-            LOG(LOG_INFO, "// Resizing client to : %d x %d x %d\n", width, height, bpp);
-
-            this->client_info.width = width;
-            this->client_info.height = height;
-            this->client_info.bpp = bpp;
-
-            // send buffered orders
-            this->orders->flush();
-
-             // clear all pending orders, caches data, and so on and
-            // start a send_deactive, send_deman_active process with
-            // the new resolution setting
-            /* shut down the rdp client */
-            this->up_and_running = 0;
-            this->send_deactive();
-            /* this should do the actual resizing */
-            this->send_demand_active();
-
-            state = ACTIVATE_AND_PROCESS_DATA;
-            return 1;
         }
+
         // resizing not necessary
-        return 0;
+        return res;
     }
 
     void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
@@ -597,12 +608,11 @@ public:
 
     void send_global_palette() throw (Error)
     {
-
         if (!this->palette_sent && (this->client_info.bpp == 8)){
 
             const BGRPalette & palette = (this->mod_bpp == 8)?this->memblt_mod_palette:this->palette332;
 
-            if (this->verbose){
+            if (this->verbose > 4){
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
             Stream stream(32768);
@@ -2782,6 +2792,10 @@ public:
                 BitmapCaps bitmap_caps;
                 bitmap_caps.recv(stream);
                 bitmap_caps.log("Receiving from client");
+                this->client_info.bpp = bitmap_caps.preferredBitsPerPixel;
+                this->client_info.width = bitmap_caps.desktopWidth;
+                this->client_info.height = bitmap_caps.desktopHeight;
+
             }
             break;
             case RDP_CAPSET_ORDER: /* 3 */
@@ -3016,7 +3030,6 @@ public:
         sdin_out.end();
         tpdu.end();
         tpdu.send(this->trans);
-
     }
 
     /* PDUTYPE_DATAPDU */
@@ -3142,16 +3155,6 @@ public:
                                   (unsigned)controlId);
                 }
                 this->send_synchronize();
-
-                BGRPalette palette;
-                init_palette332(palette);
-                this->color_cache(palette, 0);
-                this->init_pointers();
-
-                this->up_and_running = 1;
-                if (this->verbose){
-                    LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
-                }
             }
         break;
         case PDUTYPE2_REFRESH_RECT: // Refresh Rect PDU (section 2.2.11.2.1)
@@ -3226,6 +3229,7 @@ public:
             }
         break;
         case PDUTYPE2_FONTLIST: // 39(0x27) Font List PDU (section 2.2.1.18.1)
+        {
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_FONTLIST");
             }
@@ -3256,19 +3260,29 @@ public:
 
             stream.in_uint16_le(); /* numberFont -> 0*/
             stream.in_uint16_le(); /* totalNumFonts -> 0 */
-            {
-                int seq = stream.in_uint16_le();
-                /* 419 client sends Seq 1, then 2 */
-                /* 2600 clients sends only Seq 3 */
-                /* after second font message, we are up and running */
-                if (seq == 2 || seq == 3)
-                {
-                    this->send_fontmap();
-//                    this->up_and_running = 1;
-                    this->send_data_update_sync();
-                }
-            }
+            int seq = stream.in_uint16_le();
             stream.in_uint16_le(); /* entrySize -> 50 */
+
+            /* 419 client sends Seq 1, then 2 */
+            /* 2600 clients sends only Seq 3 */
+            /* after second font message, we are up and running */
+            if (seq == 2 || seq == 3)
+            {
+                this->send_fontmap();
+                this->send_data_update_sync();
+
+
+                BGRPalette palette;
+                init_palette332(palette);
+                this->color_cache(palette, 0);
+                this->init_pointers();
+
+                if (this->verbose){
+                    LOG(LOG_INFO, "--------------> UP AND RUNNING <----------------");
+                }
+                this->up_and_running = 1;
+            }
+        }
         break;
         case PDUTYPE2_FONTMAP:  // Font Map PDU (section 2.2.1.22.1)
             if (this->verbose){
@@ -3465,7 +3479,7 @@ public:
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap)
     {
-//        LOG(LOG_INFO, "front::draw:RDPMemBlt");
+        LOG(LOG_INFO, "front::draw:RDPMemBlt");
         if (bitmap.cx < cmd.srcx || bitmap.cy < cmd.srcy){
             return;
         }
@@ -3619,7 +3633,7 @@ public:
             this->mod_palette[i] = palette[i];
             this->memblt_mod_palette[i] = RGBtoBGR(palette[i]);
         }
-        this->palette_sent = true;
+        this->palette_sent = false;
     }
 };
 

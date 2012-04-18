@@ -71,8 +71,7 @@ class Capture : public RDPGraphicDevice
             this->nc.recorder.timestamp(now);
             this->start_native_capture = now;
         }
-
-        this->nc.snapshot(x, y, pointer_already_displayed, no_timestamp);
+        this->nc.recorder.flush();
     }
 
     void flush(){}
