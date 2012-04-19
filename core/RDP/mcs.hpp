@@ -234,14 +234,12 @@ static inline void mcs_send_connect_initial(
     stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
     /* Generic Conference Control (T.124) ConferenceCreateRequest */
-    //	/* ConnectData */
-    //	stream.out_per_choice(0); /* From Key select object (0) of type OBJECT_IDENTIFIER */
-    // { 0, 0, 20, 124, 0, 1 }
-    //	stream.out_per_object_identifier(t124_02_98_oid); /* ITU-T T.124 (02/98) OBJECT_IDENTIFIER */
-    stream.out_uint16_be(5);
-    stream.out_uint16_be(0x14);
-    stream.out_uint8(0x7c);
-    stream.out_uint16_be(1);
+    // see : gcc_write_conference_create_request
+
+    // ConnectData
+    stream.out_per_choice(0); // From Key select object (0) of type OBJECT_IDENTIFIER
+    const uint8_t t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
+    stream.out_per_object_identifier(t124_02_98_oid); // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
 
     int length = 158 + 76 + 12 + 4;
 
@@ -250,32 +248,26 @@ static inline void mcs_send_connect_initial(
         length += channel_list.size() * 12 + 8;
     }
 
-//	/* ConnectData::connectPDU (OCTET_STRING) */
-//	stream.out_per_length(s, stream_get_length(user_data) + 14); /* connectPDU length */
-    stream.out_uint16_be((length | 0x8000)); /* remaining length */
+//  ConnectData::connectPDU (OCTET_STRING)
+    stream.out_per_length(length); // connectPDU length
 
-//	/* ConnectGCCPDU */
-//	stream.out_per_choice(s, 0); /* From ConnectGCCPDU select conferenceCreateRequest (0) of type ConferenceCreateRequest */
-//	stream.out_per_selection(s, 0x08); /* select optional userData from ConferenceCreateRequest */
+//  ConnectGCCPDU
+    stream.out_per_choice(0); // From ConnectGCCPDU select conferenceCreateRequest (0) of type ConferenceCreateRequest
+    stream.out_per_selection(0x08); // select optional userData from ConferenceCreateRequest
 
-//	/* ConferenceCreateRequest::conferenceName */
+//  ConferenceCreateRequest::conferenceName
 //	stream.out_per_numeric_string(s, (uint8*)"1", 1, 1); /* ConferenceName::numeric */
-    stream.out_uint16_be(8); /* length? */
     stream.out_uint16_be(16);
+    stream.out_per_padding(1); /* padding */
 
-//	stream.out_per_padding(s, 1); /* padding */
-    stream.out_uint8(0);
+//  UserData (SET OF SEQUENCE)
+    stream.out_per_number_of_sets(1); // one set of UserData
+    stream.out_per_choice(0xC0); // UserData::value present + select h221NonStandard (1)
 
-//	/* UserData (SET OF SEQUENCE) */
-//	stream.out_per_number_of_sets(1); /* one set of UserData */
-//	stream.out_per_choice(0xC0); /* UserData::value present + select h221NonStandard (1) */
+//  h221NonStandard
+    const uint8_t h221_cs_key[4] = {'D', 'u', 'c', 'a'};
+    stream.out_per_octet_string(h221_cs_key, 4, 4); // h221NonStandard, client-to-server H.221 key, "Duca"
 
-    stream.out_uint16_le(0xc001);
-    stream.out_uint8(0);
-
-//	/* h221NonStandard */
-//	stream.out_per_octet_string(h221_cs_key, 4, 4); /* h221NonStandard, client-to-server H.221 key, "Duca" */
-    stream.out_copy_bytes("Duca", 4); /* OEM ID: "Duca", as in Ducati. */
     stream.out_uint16_be(((length - 14) | 0x8000)); /* remaining length */
 
     /* Client User Data */
