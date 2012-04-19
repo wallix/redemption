@@ -78,8 +78,8 @@ void file_to_png(const char* filename, uint16_t w, uint16_t h, uint16_t bpp, con
     BOOST_CHECK_EQUAL(bpp, meta.bpp);
     reader.screen_rect.cx = meta.width;
     reader.screen_rect.cy = meta.height;
-    BGRPalette palette;
-    StaticCapture consumer(meta.width, meta.height, /*meta.bpp*/24, palette, "/tmp/test_file_to_png.png", 0, 0);
+    StaticCapture consumer(meta.width, meta.height,
+                           "/tmp/test_file_to_png.png", 0, 0);
     reader.consumer = &consumer;
     while (reader.next())
         ;
@@ -94,12 +94,12 @@ void file_to_png(const char* filename, uint16_t w, uint16_t h, uint16_t bpp, con
 
 BOOST_AUTO_TEST_CASE(TestFileToPng)
 {
-    BGRPalette palette;
     {
         //MetaWRM meta(800, 600, 24);
         MetaWRM meta(1024, 912, 16);
-        NativeCapture cap(meta.width, meta.height, meta.bpp,
-                          palette, "/tmp/test_file_to_png");
+        NativeCapture cap(meta.width, meta.height,
+                          "/tmp/test_file_to_png");
+        BOOST_CHECK_EQUAL(cap.recorder.stream.p - cap.recorder.stream.data, 8);
         meta.send(cap.recorder);
         Rect clip(0, 0, meta.width, meta.height);
         cap.draw(RDPOpaqueRect(Rect(10,844,500,42), RED), clip);
@@ -116,10 +116,10 @@ BOOST_AUTO_TEST_CASE(TestFileToPng)
 
 BOOST_AUTO_TEST_CASE(TestFileWithoutMetaToPng)
 {
-    BGRPalette palette;
     {
         Rect clip(0, 0, 800, 600);
-        NativeCapture cap(clip.cx, clip.cy, 16, palette, "/tmp/test_file_without_meta_to_png");
+        NativeCapture cap(clip.cx, clip.cy,
+                          "/tmp/test_file_without_meta_to_png");
         cap.draw(RDPOpaqueRect(Rect(10,500,500,42), RED), clip);
         cap.draw(RDPOpaqueRect(Rect(600,110,144,188), GREEN), clip);
         cap.draw(RDPOpaqueRect(Rect(200,400,60,60), BLUE), clip);
@@ -134,8 +134,6 @@ BOOST_AUTO_TEST_CASE(TestFileWithoutMetaToPng)
 
 BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
 {
-    BGRPalette palette;
-
     int fd = ::open(FIXTURES_PATH "/replay2.wrm", O_RDONLY);
     if (fd == -1)
     {
@@ -152,7 +150,8 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     BOOST_CHECK_EQUAL(600, meta.height);
     BOOST_CHECK_EQUAL(24, meta.bpp);
 
-    StaticCapture consumer(meta.width, meta.height, /*meta.bpp*/24, palette, "/tmp/test_replay_to_png", 0, 0);
+    StaticCapture consumer(meta.width, meta.height,
+                           "/tmp/test_replay_to_png", 0, 0);
 
     bool is_chunk_time = false;
 

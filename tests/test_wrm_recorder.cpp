@@ -23,25 +23,25 @@
 #define BOOST_TEST_MODULE TestWRMRecorde
 #include <boost/test/auto_unit_test.hpp>
 
+// #define LOGPRINT
+
+#include <iostream>
 #include "wrm_recorder.hpp"
 #include "transport.hpp"
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
+#include "RDP/RDPGraphicDevice.hpp"
 
 BOOST_AUTO_TEST_CASE(TestWRMRecordeToMultiWRM)
 {
     BOOST_CHECK(1);
-    WRMRecorder recorder("/tmp/replay.wrm");
+    WRMRecorder recorder(FIXTURES_PATH "/replay2.wrm");
     BOOST_CHECK_EQUAL(800, recorder.meta.width);
     BOOST_CHECK_EQUAL(600, recorder.meta.height);
     BOOST_CHECK_EQUAL(24, recorder.meta.bpp);
 
-    BGRPalette palette;
-    if (recorder.meta.bpp == 8)
-        init_palette332(palette);
     NativeCapture consumer(recorder.meta.width, recorder.meta.height,
-                          recorder.meta.bpp, palette,
-                          "/tmp/replay_part");
+                           "/tmp/replay_part");
 
     recorder.consumer(&consumer);
 
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(TestWRMRecordeToMultiWRM)
             BOOST_CHECK(1);
             recorder.interpret_order();
             BOOST_CHECK(1);
-            if (200 > ++n && recorder.remaining_order_count() == 0)
+            if (50 < ++n && recorder.remaining_order_count() == 0)
             {
                 n = 0;
                 consumer.breakpoint();
@@ -70,8 +70,7 @@ BOOST_AUTO_TEST_CASE(TestWRMRecordeToMultiWRM)
             BOOST_CHECK(1);
         }
     }
-    std::cout << ntime << '\n';
-    BOOST_CHECK(1);
+    BOOST_CHECK(328 == ntime);
 }
 
 BOOST_AUTO_TEST_CASE(TestMultiWRMRecordeToPng)
@@ -84,16 +83,12 @@ BOOST_AUTO_TEST_CASE(TestMultiWRMRecordeToPng)
     BOOST_CHECK_EQUAL(600, recorder.meta.height);
     BOOST_CHECK_EQUAL(24, recorder.meta.bpp);
 
-    BGRPalette palette;
-    if (recorder.meta.bpp == 8)
-        init_palette332(palette);
     StaticCapture consumer(recorder.meta.width, recorder.meta.height,
-                           recorder.meta.bpp, palette,
                            "/tmp/test_wrm_recorder_to_png", 0, 0);
     BOOST_CHECK(1);
 
     recorder.consumer(&consumer);
-    bool is_chunk_time = false;
+    bool is_chunk_time = true;
     BOOST_CHECK(1);
 
     uint n = 0;
@@ -107,33 +102,225 @@ BOOST_AUTO_TEST_CASE(TestMultiWRMRecordeToPng)
             ++n;
         } else {
             BOOST_CHECK(1);
-            if (recorder.chunk_type() == WRMChunk::NEXT_FILE){
-                std::cout << "WRMChunk::NEXT_FILE\n";
-                recorder.interpret_order();
-                std::cout << "NEXT_FILE done\n";
-            }
-            else if (recorder.chunk_type() == WRMChunk::BREAKPOINT){
-                std::cout << "WRMChunk::BREAKPOINT\n";
-                recorder.interpret_order();
-                std::cout << "BREAKPOINT done\n";
-            }
-            else
+            if (is_chunk_time)
             {
-                if (is_chunk_time)
-                {
-                    BOOST_CHECK(1);
-                    consumer.flush();
-                    is_chunk_time = false;
-                }
-                recorder.interpret_order();
+                BOOST_CHECK(1);
+                consumer.flush();
+                is_chunk_time = false;
             }
+            recorder.interpret_order();
             BOOST_CHECK(1);
         }
         BOOST_CHECK(1);
     }
     BOOST_CHECK(1);
     consumer.flush();
+
+    BOOST_CHECK(328 == n);
+}
+
+BOOST_AUTO_TEST_CASE(TestMultiWRMRecordeToPng2)
+{
+    char filename[50];
+    sprintf(filename, "/tmp/replay_part-%u-0.wrm", getpid());
+    BOOST_CHECK(1);
+    WRMRecorder* recorder = new WRMRecorder(filename);
+    BOOST_CHECK_EQUAL(800, recorder->meta.width);
+    BOOST_CHECK_EQUAL(600, recorder->meta.height);
+    BOOST_CHECK_EQUAL(24, recorder->meta.bpp);
+
+    StaticCapture consumer(recorder->meta.width, recorder->meta.height,
+                           "/tmp/test_wrm_recorder_to_png2", 0, 0);
     BOOST_CHECK(1);
 
-    std::cout << n << '\n';
+    recorder->consumer(&consumer);
+    bool is_chunk_time = true;
+    BOOST_CHECK(1);
+
+    uint n = 0;
+
+    while (recorder->selected_next_order())
+    {
+        BOOST_CHECK(1);
+        if (recorder->chunk_type() == WRMChunk::TIMESTAMP || recorder->chunk_type() == WRMChunk::OLD_TIMESTAMP){
+            is_chunk_time = true;
+            recorder->remaining_order_count() = 0;
+            ++n;
+        } else if (recorder->chunk_type() == WRMChunk::NEXT_FILE) {
+            BOOST_CHECK(1);
+            size_t len = recorder->reader.stream.in_uint32_le();
+            recorder->reader.stream.in_copy_bytes((uint8_t*)filename, len);
+            BOOST_CHECK(1);
+            filename[len] = 0;
+            BOOST_CHECK(1);
+            delete recorder;
+            BOOST_CHECK(1);
+            recorder = new WRMRecorder(filename);
+            recorder->consumer(&consumer);
+            BOOST_CHECK(1);
+        } else {
+            BOOST_CHECK(1);
+            if (is_chunk_time)
+            {
+                BOOST_CHECK(1);
+                consumer.flush();
+                is_chunk_time = false;
+            }
+            recorder->interpret_order();
+            BOOST_CHECK(1);
+        }
+        BOOST_CHECK(1);
+    }
+    BOOST_CHECK(1);
+    consumer.flush();
+
+    BOOST_CHECK(328 == n);
+    delete recorder;
+    //std::cout << n << '\n';
+}
+
+BOOST_AUTO_TEST_CASE(TestMultiWRMRecordeToPng3)
+{
+    char filename[50];
+    sprintf(filename, "/tmp/replay_part-%u-0.wrm", getpid());
+    BOOST_CHECK(1);
+    WRMRecorder* recorder = new WRMRecorder(filename);
+    BOOST_CHECK_EQUAL(800, recorder->meta.width);
+    BOOST_CHECK_EQUAL(600, recorder->meta.height);
+    BOOST_CHECK_EQUAL(24, recorder->meta.bpp);
+
+    char filename_consumer[50];
+    int nframe = 0;
+    sprintf(filename_consumer, "/tmp/test_wrm_recorder_to_png3-%d", nframe);
+    StaticCapture *consumer = new StaticCapture(recorder->meta.width,
+                                                recorder->meta.height,
+                                                filename_consumer,
+                                                0, 0);
+    BOOST_CHECK(1);
+
+    recorder->consumer(consumer);
+    bool is_chunk_time = true;
+    BOOST_CHECK(1);
+
+    uint n = 0;
+
+    while (recorder->selected_next_order())
+    {
+        BOOST_CHECK(1);
+        if (recorder->chunk_type() == WRMChunk::TIMESTAMP || recorder->chunk_type() == WRMChunk::OLD_TIMESTAMP){
+            is_chunk_time = true;
+            recorder->remaining_order_count() = 0;
+            ++n;
+        } else if (recorder->chunk_type() == WRMChunk::NEXT_FILE) {
+            BOOST_CHECK(1);
+            size_t len = recorder->reader.stream.in_uint32_le();
+            recorder->reader.stream.in_copy_bytes((uint8_t*)filename, len);
+            BOOST_CHECK(1);
+            filename[len] = 0;
+            BOOST_CHECK(1);
+            delete recorder;
+            BOOST_CHECK(1);
+            recorder = new WRMRecorder(filename);
+            delete consumer;
+            sprintf(filename_consumer, "/tmp/test_wrm_recorder_to_png3-%d", ++nframe);
+            consumer = new StaticCapture(recorder->meta.width,
+                                         recorder->meta.height,
+                                         filename_consumer,
+                                         0, 0);
+            recorder->consumer(consumer);
+            BOOST_CHECK(1);
+        } else {
+            BOOST_CHECK(1);
+            if (is_chunk_time)
+            {
+                BOOST_CHECK(1);
+                consumer->flush();
+                is_chunk_time = false;
+            }
+            recorder->interpret_order();
+            BOOST_CHECK(1);
+        }
+        BOOST_CHECK(1);
+    }
+    BOOST_CHECK(1);
+    consumer->flush();
+
+    BOOST_CHECK(328 == n);
+    delete recorder;
+    delete consumer;
+    //std::cout << n << '\n';
+}
+
+BOOST_AUTO_TEST_CASE(TestMultiWRMRecordeToPng4)
+{
+    char filename[50];
+    sprintf(filename, "/tmp/replay_part-%u-5.wrm", getpid());
+    BOOST_CHECK(1);
+    WRMRecorder* recorder = new WRMRecorder(filename);
+    BOOST_CHECK_EQUAL(800, recorder->meta.width);
+    BOOST_CHECK_EQUAL(600, recorder->meta.height);
+    BOOST_CHECK_EQUAL(24, recorder->meta.bpp);
+
+    char filename_consumer[50];
+    int nframe = 0;
+    sprintf(filename_consumer, "/tmp/test_wrm_recorder_to_png4-%d", nframe);
+    StaticCapture *consumer = new StaticCapture(recorder->meta.width,
+                                                recorder->meta.height,
+                                                filename_consumer,
+                                                0, 0);
+    BOOST_CHECK(1);
+
+    recorder->consumer(consumer);
+    if (recorder->reader.chunk_type != WRMChunk::META_INFO)
+        recorder->interpret_order();
+    bool is_chunk_time = true;
+    BOOST_CHECK(1);
+
+    uint n = 0;
+
+    while (recorder->selected_next_order())
+    {
+        BOOST_CHECK(1);
+        if (recorder->chunk_type() == WRMChunk::TIMESTAMP || recorder->chunk_type() == WRMChunk::OLD_TIMESTAMP){
+            is_chunk_time = true;
+            recorder->remaining_order_count() = 0;
+            ++n;
+        } else if (recorder->chunk_type() == WRMChunk::NEXT_FILE) {
+            BOOST_CHECK(1);
+            size_t len = recorder->reader.stream.in_uint32_le();
+            recorder->reader.stream.in_copy_bytes((uint8_t*)filename, len);
+            BOOST_CHECK(1);
+            filename[len] = 0;
+            BOOST_CHECK(1);
+            delete recorder;
+            BOOST_CHECK(1);
+            recorder = new WRMRecorder(filename);
+            delete consumer;
+            sprintf(filename_consumer, "/tmp/test_wrm_recorder_to_png4-%d", ++nframe);
+            consumer = new StaticCapture(recorder->meta.width,
+                                         recorder->meta.height,
+                                         filename_consumer,
+                                         0, 0);
+            recorder->consumer(consumer);
+            BOOST_CHECK(1);
+        } else {
+            BOOST_CHECK(1);
+            if (is_chunk_time)
+            {
+                BOOST_CHECK(1);
+                consumer->flush();
+                is_chunk_time = false;
+            }
+            recorder->interpret_order();
+            BOOST_CHECK(1);
+        }
+        BOOST_CHECK(1);
+    }
+    BOOST_CHECK(1);
+    consumer->flush();
+
+    //BOOST_CHECK(323 == n);
+    delete recorder;
+    delete consumer;
+    //std::cout << n << '\n';
 }

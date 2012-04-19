@@ -110,8 +110,7 @@ class Capture : public RDPGraphicDevice
     void draw(const RDPLineTo & cmd, const Rect & clip)
     {
         this->sc.draw(cmd, clip);
-//        this->nc.line_to(cmd, clip);
-
+        this->nc.draw(cmd, clip);
     }
 
     void draw(const RDPGlyphIndex & cmd, const Rect & clip)
