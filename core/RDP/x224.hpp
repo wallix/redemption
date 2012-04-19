@@ -676,7 +676,7 @@ struct X224Out : public X224Packet
                 this->stream.out_uint8(0x00); // CLASS OPTION
             break;
             case DT_TPDU: // Data               1111 0000 (no ROA = No Ack)
-                LOG(LOG_INFO, "X224 OUT DT_TPDU");
+//                LOG(LOG_INFO, "X224 OUT DT_TPDU");
 
                 // we can't write the full header yet,
                 // we will know the length later

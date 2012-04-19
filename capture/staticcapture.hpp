@@ -18,19 +18,20 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-#if !defined(__STATICCAPTURE_HPP__)
-#define __STATICCAPTURE_HPP__
+#if !defined(__CAPTURE_STATICCAPTURE_HPP__)
+#define __CAPTURE_STATICCAPTURE_HPP__
 
 #include <iostream>
 #include <stdio.h>
-#include "rdtsc.hpp"
 #include <sstream>
-#include "bitmap.hpp"
-#include "rect.hpp"
-#include "constants.hpp"
 #include <sys/time.h>
 #include <time.h>
 #include <png.h>
+
+#include "rdtsc.hpp"
+#include "bitmap.hpp"
+#include "rect.hpp"
+#include "constants.hpp"
 #include "difftimeval.hpp"
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
@@ -43,7 +44,6 @@
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
 #include "png.hpp"
-
 #include "error.hpp"
 #include "config.hpp"
 #include "bmpcache.hpp"
@@ -55,34 +55,18 @@
 class StaticCapture : public RDPDrawable
 {
     int framenb;
-    uint64_t inter_frame_interval;
-
-    struct timeval start;
 
     public:
-    BGRPalette palette;
     char path[1024];
 
-    StaticCapture(int width, int height, int bpp, const BGRPalette & palette, const char * path, const char * codec_id, const char * video_quality)
-        : RDPDrawable(width, height, bpp, palette, true),
+    StaticCapture(int width, int height, const char * path, const char * codec_id, const char * video_quality)
+        : RDPDrawable(width, height, true),
           framenb(0)
     {
-        gettimeofday(&this->start, NULL);
-        this->inter_frame_interval = 1000000; // 1 000 000 us is 1 sec (default)
         strcpy(this->path, path);
     }
 
     ~StaticCapture(){
-    }
-
-    void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
-    {
-        struct timeval now;
-        gettimeofday(&now, NULL);
-        if (difftimeval(now, this->start) < this->inter_frame_interval){
-            return;
-        }
-        this->dump_png();
     }
 
     virtual void flush()

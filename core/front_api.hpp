@@ -47,8 +47,6 @@ class FrontAPI : public RDPGraphicDevice {
     virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip) = 0;
     virtual void text_metrics(const char * text, int & width, int & height) = 0;
     virtual int server_resize(int width, int height, int bpp) = 0;
-    virtual void set_mod_bpp(uint8_t bpp) = 0;
-    virtual void set_mod_bpp_to_front_bpp() = 0;
 
     int mouse_x;
     int mouse_y;

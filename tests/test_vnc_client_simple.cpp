@@ -55,6 +55,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     class Front : public FrontAPI {
         public:
+        uint8_t mod_bpp;
         uint32_t verbose;
         const ClientInfo & info;
         ChannelList cl;
@@ -222,6 +223,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         }
         virtual int server_resize(int width, int height, int bpp)
         {
+            this->mod_bpp = bpp;
             if (verbose > 10){
                 LOG(LOG_INFO, "--------- FRONT ------------------------");
                 LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
@@ -229,22 +231,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
             }
             // resize done
             return 1;
-        }
-        virtual void set_mod_bpp(uint8_t bpp)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "set_mod_bpp(bpp=%d)", bpp);
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
-        virtual void set_mod_bpp_to_front_bpp()
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "set_mod_bpp_to_front()");
-                LOG(LOG_INFO, "========================================\n");
-            }
         }
 
         int mouse_x;

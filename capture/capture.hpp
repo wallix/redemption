@@ -18,24 +18,36 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-#if !defined(__CAPTURE_HPP__)
-#define __CAPTURE_HPP__
+#if !defined(__CAPTURE_CAPTURE_HPP__)
+#define __CAPTURE_CAPTURE_HPP__
 
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
 
 class Capture : public RDPGraphicDevice
 {
+    struct timeval start_static_capture;
+    uint64_t inter_frame_interval_static_capture;
+
+    struct timeval start_native_capture;
+    uint64_t inter_frame_interval_native_capture;
+
     StaticCapture sc;
     NativeCapture nc;
 
     public:
 
     TODO(" fat interface : ugly  find another way")
-    Capture(int width, int height, int bpp, const BGRPalette & palette, char * path, const char * codec_id, const char * video_quality) :
-        sc(width, height, 24, palette, path, codec_id, video_quality),
-        nc(width, height, 24, palette, path)
+    Capture(int width, int height, char * path, const char * codec_id, const char * video_quality) :
+        sc(width, height, path, codec_id, video_quality),
+        nc(width, height, path)
     {
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        this->start_static_capture = now;
+        this->start_native_capture = now;
+        this->inter_frame_interval_static_capture = 5000000; // 1 000 000 us is 1 sec (default)
+        this->inter_frame_interval_native_capture =   40000; // 1 000 000 us is 1 sec (default)
     }
 
     ~Capture(){
@@ -43,15 +55,26 @@ class Capture : public RDPGraphicDevice
 
     void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
     {
-        this->flush();
-        this->sc.snapshot(x, y, pointer_already_displayed, no_timestamp);
-        this->nc.snapshot(x, y, pointer_already_displayed, no_timestamp);
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        if (difftimeval(now, this->start_static_capture) >= this->inter_frame_interval_static_capture){
+            TODO("change code below, it would be better to provide now to drawable instead of tm struct");
+            time_t rawtime;
+            time(&rawtime);
+            tm *ptm = localtime(&rawtime);
+            this->sc.drawable.trace_timestamp(*ptm);
+            this->sc.flush();
+            this->sc.drawable.clear_timestamp();
+            this->start_static_capture = now;
+        }
+        if (difftimeval(now, this->start_native_capture) >= this->inter_frame_interval_native_capture){
+            this->nc.recorder.timestamp(now);
+            this->start_native_capture = now;
+        }
+        this->nc.recorder.flush();
     }
 
-    void flush(){
-        this->sc.flush();
-        this->nc.flush();
-}
+    void flush(){}
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
