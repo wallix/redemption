@@ -519,6 +519,125 @@ class Stream {
     // =========================================================================
 
     // =========================================================================
+    // PER encoding rules support methods
+    // =========================================================================
+
+    uint16_t in_per_length()
+    {
+        uint16_t length = this->in_uint8();
+        if (length & 0x80){
+            length = ((length & 0x7F) << 8);
+            length += this->in_uint8();
+        }
+        return length;
+    }
+
+    void out_per_length(uint16_t length)
+    {
+        if (length & 0xFF80){
+            this->out_uint16_be(length|0x8000);
+        }
+        else {
+            this->out_uint8(length);
+        }
+    }
+
+    uint8_t in_per_choice()
+    {
+        return this->in_uint8();
+    }
+
+    void out_per_choice(uint8_t choice)
+    {
+        this->out_uint8(choice);
+    }
+
+    uint8_t in_per_selection()
+    {
+        return this->in_uint8();
+    }
+
+    void out_per_selection(uint8_t selection)
+    {
+        this->out_uint8(selection);
+    }
+
+    uint8_t in_per_number_of_sets()
+    {
+        return this->in_uint8();
+    }
+
+    void out_per_number_of_sets(uint8_t number)
+    {
+        this->out_uint8(number);
+    }
+
+    void in_per_padding(uint8_t length)
+    {
+        this->in_skip_bytes(length);
+    }
+
+    void out_per_padding(uint8_t length)
+    {
+        this->out_clear_bytes(length);
+    }
+
+    uint32_t in_per_integer()
+    {
+        switch (this->in_per_length()){
+        case 1:
+            return this->in_uint8();
+        case 2:
+            return this->in_uint16_be();
+        case 4:
+            return this->in_uint32_be();
+        default:
+            REDASSERT(0);
+            return 0;
+        }
+    }
+
+    void out_per_integer(uint32_t integer)
+    {
+        uint8_t length = (integer & 0xFFFF0000)?4:(integer & 0xFF00)?2:1;
+        this->out_per_length(4);
+        switch (length){
+        case 4:
+            this->out_uint32_be(integer);
+            break;
+        case 2:
+            this->out_uint16_be((uint16_t)integer);
+            break;
+        default:
+            this->out_uint8((uint8_t)integer);
+            break;
+        }
+    }
+
+    uint16_t in_per_integer16(uint16_t min)
+    {
+        return this->in_uint16_be() + min;
+    }
+
+    void out_per_integer16(uint16_t integer, uint16_t min)
+    {
+        this->out_uint16_be(integer+min);
+    }
+
+    uint8_t in_per_enumerated(uint8_t count)
+    {
+        uint8_t enumerated = this->in_uint8();
+        REDASSERT(enumerated <= count);
+        return enumerated;
+    }
+
+    void out_per_enumerated(uint8_t enumerated, uint8_t count)
+    {
+        REDASSERT(enumerated <= count);
+        this->out_uint8(enumerated);
+    }
+
+    // =========================================================================
     // ER encoding rules support methods
     // =========================================================================
 
