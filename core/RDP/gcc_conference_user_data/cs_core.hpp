@@ -94,6 +94,59 @@
 // keyboardFunctionKey (4 bytes): A 32-bit, unsigned integer. The number
 //                        of function keys on the keyboard.
 
+// If the Layout Manager entry points for LayoutMgrGetKeyboardType and
+// LayoutMgrGetKeyboardLayoutName do not exist, the values in certain registry
+// keys are queried and their values are returned instead. The following
+// registry key example shows the registry keys to configure to support RDP.
+
+// [HKEY_LOCAL_MACHINE\HARDWARE\DEVICEMAP\KEYBD]
+//    "Keyboard Type"=dword:<type>
+//    "Keyboard SubType"=dword:<subtype>
+//    "Keyboard Function Keys"=dword:<function keys>
+//    "Keyboard Layout"="<layout>"
+
+// To set these values for the desired locale, set the variable DEFINE_KEYBOARD_TYPE
+// in Platform.reg before including Keybd.reg. The following code sample shows
+// how to set the DEFINE_KEYBOARD_TYPE in Platform.reg before including Keybd.reg.
+
+//    #define DEFINE_KEYBOARD_TYPE
+//    #include "$(DRIVERS_DIR)\keybd\keybd.reg"
+//    This will bring in the proper values for the current LOCALE, if it is
+//    supported. Logic in Keybd.reg sets these values. The following registry
+//    example shows this logic.
+//    ; Define this variable in platform.reg if your keyboard driver does not
+//    ; report its type information.
+//    #if defined DEFINE_KEYBOARD_TYPE
+
+//    #if $(LOCALE)==0411
+
+//    ; Japanese keyboard layout
+//        "Keyboard Type"=dword:7
+//        "Keyboard SubType"=dword:2
+//        "Keyboard Function Keys"=dword:c
+//        "Keyboard Layout"="00000411"
+
+//    #elif $(LOCALE)==0412
+
+//    ; Korean keyboard layout
+//        "Keyboard Type"=dword:8
+//        "Keyboard SubType"=dword:3
+//        "Keyboard Function Keys"=dword:c
+//        "Keyboard Layout"="00000412"
+
+//    #else
+
+//    ; Default to US keyboard layout
+//        "Keyboard Type"=dword:4
+//        "Keyboard SubType"=dword:0
+//        "Keyboard Function Keys"=dword:c
+//        "Keyboard Layout"="00000409"
+
+//    #endif
+
+//    #endif ; DEFINE_KEYBOARD_TYPE
+
+
 // imeFileName (64 bytes): A 64-byte field. The Input Method Editor
 //                        (IME) file name associated with the input
 //                        locale. This field contains up to 31 Unicode
@@ -265,7 +318,10 @@
 
 
 struct CSCoreGccUserData {
-    uint32_t header;
+    // header
+    uint16_t userDataType;
+    uint16_t length;
+    // base payload
     uint32_t version;
     uint16_t desktopWidth;
     uint16_t desktopHeight;
@@ -273,12 +329,14 @@ struct CSCoreGccUserData {
     uint16_t SASSequence;
     uint32_t keyboardLayout;
     uint32_t clientBuild;
-    uint16_t clientName[32];
+    uint16_t clientName[16];
     uint32_t keyboardType;
     uint32_t keyboardSubType;
     uint32_t keyboardFunctionKey;
     uint16_t imeFileName[32];
+    // post beta 2 payload
     uint16_t postBeta2ColorDepth;
+    uint16_t clientProductId;
     uint32_t serialNumber;
     uint16_t highColorDepth;
     uint16_t supportedColorDepths;
@@ -286,136 +344,257 @@ struct CSCoreGccUserData {
     uint8_t  clientDigProductId[64];
     uint8_t  connectionType;
     uint8_t  pad1octet;
+    // extended payload
     uint32_t serverSelectedProtocol;
+
+    CSCoreGccUserData()
+    : userDataType(CS_CORE)
+    , length(212) // default: everything except serverSelectedProtocol
+    , version(0x00080001)  // RDP version. 1 == RDP4, 4 == RDP5.
+    , colorDepth(0xca01)
+    , SASSequence(0xaa03)
+    , keyboardLayout(0x040c) // default to French
+    , clientBuild(2600)
+    // clientName = ""
+    , keyboardType(4)
+    , keyboardSubType(0)
+    , keyboardFunctionKey(12)
+    // imeFileName = ""
+    , postBeta2ColorDepth(0xca01)
+    , clientProductId(1)
+    , serialNumber(0)
+    , highColorDepth(0)
+    , supportedColorDepths(7)
+    , earlyCapabilityFlags(1)
+    // clientDigProductId = ""
+    , connectionType(0)
+    , pad1octet(0)
+    , serverSelectedProtocol(0)
+    {
+        bzero(this->clientName, sizeof(this->clientName));
+        bzero(this->imeFileName, sizeof(this->imeFileName));
+        bzero(this->clientDigProductId, sizeof(this->clientDigProductId));
+    }
+
+
+    void emit(Stream & stream)
+    {
+        stream.out_uint16_le(this->userDataType);
+        stream.out_uint16_le(this->length);
+        stream.out_uint32_le(this->version);
+        stream.out_uint16_le(this->desktopWidth);
+        stream.out_uint16_le(this->desktopHeight);
+        stream.out_uint16_le(this->colorDepth);
+        stream.out_uint16_le(this->SASSequence);
+        stream.out_uint32_le(this->keyboardLayout);
+        stream.out_uint32_le(this->clientBuild);
+        // utf16 hostname fixed length,
+        // including mandatory terminal 0
+        // length is a number of utf16 characters
+        stream.out_utf16(this->clientName, 16);
+        stream.out_uint32_le(this->keyboardType);
+        stream.out_uint32_le(this->keyboardSubType);
+        stream.out_uint32_le(this->keyboardFunctionKey);
+        // utf16 fixed length,
+        // including mandatory terminal 0
+        // length is a number of utf16 characters
+        stream.out_utf16(this->imeFileName, 32);
+                // --------------------- Optional Fields ---------------------------------------
+        if (this->length < 134) { return; }
+        stream.out_uint16_le(this->postBeta2ColorDepth);
+        if (this->length < 136) { return; }
+        stream.out_uint16_le(this->clientProductId);
+        if (this->length < 140) { return; }
+        stream.out_uint32_le(this->serialNumber);
+        if (this->length < 142) { return; }
+        stream.out_uint16_le(this->highColorDepth);
+        if (this->length < 144) { return; }
+        stream.out_uint16_le(this->supportedColorDepths);
+        if (this->length < 146) { return; }
+        stream.out_uint16_le(this->earlyCapabilityFlags);
+        if (this->length < 210) { return; }
+        stream.out_copy_bytes(this->clientDigProductId, sizeof(this->clientDigProductId));
+        if (this->length < 211) { return; }
+        stream.out_uint8(this->connectionType);
+        if (this->length < 212) { return; }
+        stream.out_uint8(this->pad1octet);
+        if (this->length < 216) { return; }
+        stream.out_uint32_le(this->serverSelectedProtocol);
+    }
+
+    void recv(Stream & stream)
+    {
+        this->userDataType = stream.in_uint16_le();
+        this->length = stream.in_uint16_le();
+        this->version = stream.in_uint32_le();
+        this->desktopWidth = stream.in_uint16_le();
+        this->desktopHeight = stream.in_uint16_le();
+        this->colorDepth = stream.in_uint16_le();
+        this->SASSequence = stream.in_uint16_le();
+        this->keyboardLayout =stream.in_uint32_le();
+        this->clientBuild = stream.in_uint32_le();
+        // utf16 hostname fixed length,
+        // including mandatory terminal 0
+        // length is a number of utf16 characters
+        stream.in_utf16(this->clientName, 16);
+        this->keyboardType = stream.in_uint32_le();
+        this->keyboardSubType = stream.in_uint32_le();
+        this->keyboardFunctionKey = stream.in_uint32_le();
+        // utf16 fixed length,
+        // including mandatory terminal 0
+        // length is a number of utf16 characters
+        stream.in_utf16(this->imeFileName, 32);
+                // --------------------- Optional Fields ---------------------------------------
+        if (this->length < 134) { return; }
+        this->postBeta2ColorDepth = stream.in_uint16_le();
+        if (this->length < 136) { return; }
+        this->clientProductId = stream.in_uint16_le();
+        if (this->length < 140) { return; }
+        this->serialNumber = stream.in_uint32_le();
+        if (this->length < 142) { return; }
+        this->highColorDepth = stream.in_uint16_le();
+        if (this->length < 144) { return; }
+        this->supportedColorDepths = stream.in_uint16_le();
+        if (this->length < 146) { return; }
+        this->earlyCapabilityFlags = stream.in_uint16_le();
+        if (this->length < 210) { return; }
+        stream.in_copy_bytes(this->clientDigProductId, sizeof(this->clientDigProductId));
+        if (this->length < 211) { return; }
+        this->connectionType = stream.in_uint8();
+        if (this->length < 212) { return; }
+        this->pad1octet = stream.in_uint8();
+        if (this->length < 216) { return; }
+        this->serverSelectedProtocol = stream.in_uint32_le();
+    }
+
+    void log(const char * msg)
+    {
+        // --------------------- Base Fields ---------------------------------------
+        LOG(LOG_INFO, "%s GCC User Data CS_CORE (%u bytes)", msg, this->length);
+
+        if (this->length < 132){
+            LOG(LOG_INFO, "GCC User Data CS_CORE truncated");
+            return;
+        }
+
+        LOG(LOG_INFO, "cs_core::header::version [%04x] %s", this->version,
+              (this->version==0x00080001) ? "RDP 4 client"
+             :(this->version==0x00080001) ? "RDP 5.0, 5.1, 5.2, and 6.0 clients)"
+                                          : "Unknown client");
+        LOG(LOG_INFO, "cs_core::desktopWidth  = %u",  this->desktopWidth);
+        LOG(LOG_INFO, "cs_core::desktopHeight = %u", this->desktopHeight);
+        LOG(LOG_INFO, "cs_core::colorDepth    = [%04x] [%s] superseded by postBeta2ColorDepth", this->colorDepth,
+            (this->colorDepth == 0xCA00) ? "RNS_UD_COLOR_4BPP"
+          : (this->colorDepth == 0xCA01) ? "RNS_UD_COLOR_8BPP"
+                                         : "Unknown");
+        LOG(LOG_INFO, "cs_core::SASSequence   = [%04x] [%s]", this->SASSequence,
+            (this->SASSequence == 0xCA00) ? "RNS_UD_SAS_DEL"
+                                          : "Unknown");
+        LOG(LOG_INFO, "cs_core::keyboardLayout= %04x",  this->keyboardLayout);
+        LOG(LOG_INFO, "cs_core::clientBuild   = %u",  this->clientBuild);
+        char hostname[16];
+        for (size_t i = 0; i < 16 ; hostname[i] = (uint8_t)this->clientName[i]);
+        LOG(LOG_INFO, "cs_core::clientName    = %s",  hostname);
+        LOG(LOG_INFO, "cs_core::keyboardType  = [%04x] %s",  this->keyboardType,
+              (this->keyboardType == 0x00000001) ? "IBM PC/XT or compatible (83-key) keyboard"
+            : (this->keyboardType == 0x00000002) ? "Olivetti \"ICO\" (102-key) keyboard"
+            : (this->keyboardType == 0x00000003) ? "IBM PC/AT (84-key) and similar keyboards"
+            : (this->keyboardType == 0x00000004) ? "IBM enhanced (101-key or 102-key) keyboard"
+            : (this->keyboardType == 0x00000005) ? "Nokia 1050 and similar keyboards"
+            : (this->keyboardType == 0x00000006) ? "Nokia 9140 and similar keyboards"
+            : (this->keyboardType == 0x00000007) ? "Japanese keyboard"
+                                                 : "Unknown");
+        LOG(LOG_INFO, "cs_core::keyboardSubType      = [%04x] OEM code",  this->keyboardSubType);
+        LOG(LOG_INFO, "cs_core::keyboardFunctionKey  = %u function keys",  this->keyboardFunctionKey);
+        char imename[32];
+        for (size_t i = 0; i < 32 ; imename[i] = (uint8_t)this->imeFileName[i]);
+        LOG(LOG_INFO, "cs_core::imeFileName    = %s",  imename);
+
+        // --------------------- Optional Fields ---------------------------------------
+        if (this->length < 134) { return; }
+        LOG(LOG_INFO, "cs_core::postBeta2ColorDepth  = [%04x] [%s]", this->postBeta2ColorDepth,
+            (this->postBeta2ColorDepth == 0xCA00) ? "4 bpp"
+          : (this->postBeta2ColorDepth == 0xCA01) ? "8 bpp"
+          : (this->postBeta2ColorDepth == 0xCA02) ? "15-bit 555 RGB mask"
+          : (this->postBeta2ColorDepth == 0xCA03) ? "16-bit 565 RGB mask"
+          : (this->postBeta2ColorDepth == 0xCA04) ? "24-bit RGB mask"
+                                                  : "Unknown");
+        if (this->length < 136) { return; }
+        LOG(LOG_INFO, "cs_core::clientProductId = %u", this->clientProductId);
+        if (this->length < 140) { return; }
+        LOG(LOG_INFO, "cs_core::serialNumber = %u", this->serialNumber);
+        if (this->length < 142) { return; }
+        LOG(LOG_INFO, "cs_core::highColorDepth  = [%04x] [%s]", this->highColorDepth,
+            (this->highColorDepth == 4)  ? "4 bpp"
+          : (this->highColorDepth == 8)  ? "8 bpp"
+          : (this->highColorDepth == 15) ? "15-bit 555 RGB mask"
+          : (this->highColorDepth == 16) ? "16-bit 565 RGB mask"
+          : (this->highColorDepth == 24) ? "24-bit RGB mask"
+                                         : "Unknown");
+        if (this->length < 144) { return; }
+        LOG(LOG_INFO, "cs_core::supportedColorDepths  = [%04x] [%s/%s/%s/%s]", this->supportedColorDepths,
+            (this->supportedColorDepths & 1) ? "24":"",
+            (this->supportedColorDepths & 2) ? "16":"",
+            (this->supportedColorDepths & 4) ? "15":"",
+            (this->supportedColorDepths & 8) ? "32":"");
+        if (this->length < 146) { return; }
+        LOG(LOG_INFO, "cs_core::earlyCapabilityFlags  = [%04x]", this->earlyCapabilityFlags);
+        if (this->earlyCapabilityFlags & 0x0001){
+            LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:RNS_UD_CS_SUPPORT_ERRINFO_PDU");
+        }
+        if (this->earlyCapabilityFlags & 0x0002){
+            LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:RNS_UD_CS_WANT_32BPP_SESSION");
+        }
+        if (this->earlyCapabilityFlags & 0x0004){
+            LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:RNS_UD_CS_SUPPORT_STATUSINFO_PDU");
+        }
+        if (this->earlyCapabilityFlags & 0x0008){
+            LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:RNS_UD_CS_STRONG_ASYMMETRIC_KEYS");
+        }
+        if (this->earlyCapabilityFlags & 0x00020){
+            LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:RNS_UD_CS_VALID_CONNECTION_TYPE");
+        }
+        if (this->earlyCapabilityFlags & 0x00040){
+            LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU");
+        }
+        if (this->earlyCapabilityFlags & 0xFF10){
+            LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:Unknown early capability flag");
+        }
+        if (this->length < 210) { return; }
+        const uint8_t (& cdpid)[64] = this->clientDigProductId;
+        LOG(LOG_INFO, "cs_core::clientDigProductId=["
+        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+        cdpid[0x00], cdpid[0x01], cdpid[0x02], cdpid[0x03],
+        cdpid[0x04], cdpid[0x05], cdpid[0x06], cdpid[0x07],
+        cdpid[0x08], cdpid[0x09], cdpid[0x0A], cdpid[0x0B],
+        cdpid[0x0C], cdpid[0x0D], cdpid[0x0E], cdpid[0x0F],
+
+        cdpid[0x10], cdpid[0x11], cdpid[0x12], cdpid[0x13],
+        cdpid[0x14], cdpid[0x15], cdpid[0x16], cdpid[0x17],
+        cdpid[0x18], cdpid[0x19], cdpid[0x1A], cdpid[0x1B],
+        cdpid[0x1C], cdpid[0x1D], cdpid[0x1E], cdpid[0x1F],
+
+        cdpid[0x20], cdpid[0x21], cdpid[0x22], cdpid[0x23],
+        cdpid[0x24], cdpid[0x25], cdpid[0x26], cdpid[0x27],
+        cdpid[0x28], cdpid[0x29], cdpid[0x2A], cdpid[0x2B],
+        cdpid[0x2C], cdpid[0x2D], cdpid[0x2E], cdpid[0x2F],
+
+        cdpid[0x30], cdpid[0x31], cdpid[0x32], cdpid[0x33],
+        cdpid[0x34], cdpid[0x35], cdpid[0x36], cdpid[0x37],
+        cdpid[0x38], cdpid[0x39], cdpid[0x3A], cdpid[0x3B],
+        cdpid[0x3C], cdpid[0x3D], cdpid[0x3E], cdpid[0x3F]
+        );
+        if (this->length < 211) { return; }
+        LOG(LOG_INFO, "cs_core::connectionType  = %u", this->connectionType);
+        if (this->length < 212) { return; }
+        LOG(LOG_INFO, "cs_core::pad1octet  = %u", this->pad1octet);
+        if (this->length < 216) { return; }
+        LOG(LOG_INFO, "cs_core::pad1octet  = %u", this->serverSelectedProtocol);
+    }
+
 };
 
-
-TODO(" use official field names from MS-RDPBCGR, see struct above")
-static inline void parse_mcs_data_cs_core(Stream & stream, ClientInfo * client_info)
-{
-    LOG(LOG_INFO, "PARSE CS_CORE");
-    uint16_t rdp_version = stream.in_uint16_le();
-    LOG(LOG_INFO, "core_data: rdp_version (1=RDP1, 4=RDP5) %u", rdp_version);
-    uint16_t dummy1 = stream.in_uint16_le();
-    LOG(LOG_INFO, "core_data: ?? = %u", dummy1);
-    client_info->width = stream.in_uint16_le();
-    LOG(LOG_INFO, "core_data: width = %u", client_info->width);
-    client_info->height = stream.in_uint16_le();
-    LOG(LOG_INFO, "core_data: height = %u", client_info->height);
-    uint16_t bpp_code = stream.in_uint16_le();
-    LOG(LOG_INFO, "core_data: bpp_code = %x", bpp_code);
-    uint16_t dummy2 = stream.in_uint16_le();
-    LOG(LOG_INFO, "core_data: ?? = %x", dummy2);
-    /* get keylayout */
-    client_info->keylayout = stream.in_uint32_le();
-    LOG(LOG_INFO, "core_data: layout = %x", client_info->keylayout);
-    /* get build : windows build */
-    client_info->build = stream.in_uint32_le();
-    LOG(LOG_INFO, "core_data: build = %x", client_info->build);
-
-    /* get hostname (it is UTF16, windows flavored widechars) */
-    /* Unicode name of client is padded to 32 bytes */
-    stream.in_uni_to_ascii_str(client_info->hostname, 32);
-    LOG(LOG_INFO, "core_data: hostname = %s", client_info->hostname);
-
-    uint32_t keyboard_type = stream.in_uint32_le();
-    LOG(LOG_INFO, "core_data: keyboard_type = %x", keyboard_type);
-    uint32_t keyboard_subtype = stream.in_uint32_le();
-    LOG(LOG_INFO, "core_data: keyboard_subtype = %x", keyboard_subtype);
-    uint32_t keyboard_functionkeys = stream.in_uint32_le();
-    LOG(LOG_INFO, "core_data: keyboard_functionkeys = %x", keyboard_functionkeys);
-    stream.in_skip_bytes(64);
-
-    client_info->bpp = 8;
-    uint16_t i = stream.in_uint16_le();
-    switch (i) {
-    case 0xca01:
-    {
-        uint16_t clientProductId = stream.in_uint16_le();
-        LOG(LOG_INFO, "core_data: clientProductId = %x", clientProductId);
-        uint32_t serialNumber = stream.in_uint32_le();
-        LOG(LOG_INFO, "core_data: serialNumber = %x", serialNumber);
-        uint16_t rdp_bpp = stream.in_uint16_le();
-        LOG(LOG_INFO, "core_data: rdp_bpp = %u", rdp_bpp);
-        uint16_t supportedColorDepths = stream.in_uint16_le();
-        LOG(LOG_INFO, "core_data: supportedColorDepths = %u", supportedColorDepths);
-
-        client_info->bpp = (rdp_bpp <= 24)?rdp_bpp:24;
-    }
-    break;
-    case 0xca02:
-        client_info->bpp = 15;
-    break;
-    case 0xca03:
-        client_info->bpp = 16;
-    break;
-    case 0xca04:
-        client_info->bpp = 24;
-    break;
-    }
-    LOG(LOG_INFO, "core_data: bpp = %u", client_info->bpp);
-}
-
-static inline void mod_rdp_out_cs_core(Stream & stream, int use_rdp5, int width, int height, int rdp_bpp, int keylayout, char * hostname)
-{
-        stream.out_uint16_le(CS_CORE);
-        LOG(LOG_INFO, "Sending Client Core Data to remote server");
-        stream.out_uint16_le(212); /* length */
-        LOG(LOG_INFO, "core::header::length = %u", 212);
-        stream.out_uint32_le(use_rdp5?0x00080004:0x00080001); // RDP version. 1 == RDP4, 4 == RDP5.
-        LOG(LOG_INFO, "core::header::version RDP 4=0x00080001 (0x00080004 = RDP 5.0, 5.1, 5.2, and 6.0 clients)");
-        stream.out_uint16_le(width);
-        LOG(LOG_INFO, "core::desktopWidth = %u", width);
-        stream.out_uint16_le(height);
-        LOG(LOG_INFO, "core::desktopHeight = %u", height);
-        stream.out_uint16_le(0xca01);
-        LOG(LOG_INFO, "core::colorDepth = RNS_UD_COLOR_8BPP (superseded by postBeta2ColorDepth)");
-        stream.out_uint16_le(0xaa03);
-        LOG(LOG_INFO, "core::SASSequence = RNS_UD_SAS_DEL");
-        stream.out_uint32_le(keylayout);
-        LOG(LOG_INFO, "core::keyboardLayout = %x", keylayout);
-        stream.out_uint32_le(2600); /* Client build. We are now 2600 compatible :-) */
-        LOG(LOG_INFO, "core::clientBuild = 2600");
-        LOG(LOG_INFO, "core::clientName=%s", hostname);
-
-        /* Added in order to limit hostlen and hostname size */
-        int hostlen = 2 * strlen(hostname);
-        if (hostlen > 30){
-            hostlen = 30;
-        }
-        /* Unicode name of client, padded to 30 bytes */
-        stream.out_unistr(hostname);
-        stream.out_clear_bytes(30 - hostlen);
-
-        /* See
-        http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wceddk40/html/cxtsksupportingremotedesktopprotocol.asp */
-        TODO(" code should be updated to take care of keyboard type")
-        stream.out_uint32_le(4); // g_keyboard_type
-        LOG(LOG_INFO, "core::keyboardType = IBM enhanced (101- or 102-key) keyboard");
-        stream.out_uint32_le(0); // g_keyboard_subtype
-        LOG(LOG_INFO, "core::keyboardSubType = 0");
-        stream.out_uint32_le(12); // g_keyboard_functionkeys
-        LOG(LOG_INFO, "core::keyboardFunctionKey = 12 function keys");
-        stream.out_clear_bytes(64); /* imeFileName */
-        LOG(LOG_INFO, "core::imeFileName = \"\"");
-        stream.out_uint16_le(0xca01); /* color depth 8bpp */
-        LOG(LOG_INFO, "core::postBeta2ColorDepth = RNS_UD_COLOR_8BPP (superseded by highColorDepth)");
-        stream.out_uint16_le(1);
-        LOG(LOG_INFO, "core::clientProductId = 1");
-        stream.out_uint32_le(0);
-        LOG(LOG_INFO, "core::serialNumber = 0");
-        stream.out_uint16_le(rdp_bpp);
-        LOG(LOG_INFO, "core::highColorDepth = %u", rdp_bpp);
-        stream.out_uint16_le(0x0007);
-        LOG(LOG_INFO, "core::supportedColorDepths = 24/16/15");
-        stream.out_uint16_le(1);
-        LOG(LOG_INFO, "core::earlyCapabilityFlags = RNS_UD_CS_SUPPORT_ERRINFO_PDU");
-        stream.out_clear_bytes(64);
-        LOG(LOG_INFO, "core::clientDigProductId = \"\"");
-        stream.out_clear_bytes(2);
-        LOG(LOG_INFO, "core::pad2octets");
-    //        stream.out_uint32_le(0); // optional
-    //        LOG(LOG_INFO, "core::serverSelectedProtocol = 0");
-        /* End of client info */
-}
 #endif

@@ -329,6 +329,20 @@ class Stream {
         this->set_out_uint8(0, offset+i*2+1);
     }
 
+    void out_utf16(const uint16_t utf16[], size_t length)
+    {
+        for (size_t i = 0; i < length ; i ++){
+            this->out_uint16_le(utf16[i]);
+        }
+    }
+
+    void in_utf16(uint16_t utf16[], size_t length)
+    {
+        for (size_t i = 0; i < length ; i ++){
+            utf16[i] = this->in_uint16_le();
+        }
+    }
+
     // sz utf16 bytes are translated to ascci, 00 terminated
     void in_uni_to_ascii_str(char* text, size_t sz)
     {

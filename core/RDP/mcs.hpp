@@ -25,6 +25,7 @@
 #if !defined(__CORE_RDP_MCS_HPP__)
 #define __CORE_RDP_MCS_HPP__
 
+#include <algorithm>
 #include "client_info.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/gcc.hpp"
@@ -237,7 +238,21 @@ static inline void mcs_send_connect_initial(
     // Client User Data
     // ================
     // 158 bytes
-    mod_rdp_out_cs_core(stream, use_rdp5, front_width, front_height, front_bpp, keylayout, hostname);
+    CSCoreGccUserData cs_core;
+    cs_core.version = use_rdp5?0x00080004:0x00080001;
+    cs_core.desktopWidth = front_width;
+    cs_core.desktopHeight = front_height;
+    cs_core.highColorDepth = front_bpp;
+    cs_core.keyboardLayout = keylayout;
+    uint16_t hostlen = strlen(hostname);
+    uint16_t maxhostlen = std::min((uint16_t)15, hostlen);
+    for (size_t i = 0; i < maxhostlen ; i++){
+        cs_core.clientName[i] = hostname[i];
+    }
+    bzero(&(cs_core.clientName[hostlen]), 16-hostlen);
+    cs_core.log("Sending to Server");
+    cs_core.emit(stream);
+
     // 76 bytes
     mod_rdp_out_cs_cluster(stream, console_session);
     // 12 bytes
@@ -542,8 +557,36 @@ static inline void mcs_recv_connect_initial(
 
         switch (tag){
             case CS_CORE:
-                TODO(" we should check length to call the two variants of core_data (or begin by reading the common part then the extended part)")
-                parse_mcs_data_cs_core(stream, client_info);
+            {
+                CSCoreGccUserData cs_core;
+                cs_core.length = length;
+                cs_core.recv(stream);
+                client_info->width = cs_core.desktopWidth;
+                client_info->height = cs_core.desktopHeight;
+                client_info->keylayout = cs_core.keyboardLayout;
+                client_info->build = cs_core.clientBuild;
+                for (size_t i = 0; i < 16 ; i++){
+                    client_info->hostname[i] = cs_core.clientName[i];
+                }
+                client_info->bpp = 8;
+                switch (cs_core.postBeta2ColorDepth){
+                case 0xca01:
+                    client_info->bpp = (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
+                break;
+                case 0xca02:
+                    client_info->bpp = 15;
+                break;
+                case 0xca03:
+                    client_info->bpp = 16;
+                break;
+                case 0xca04:
+                    client_info->bpp = 24;
+                break;
+                default:
+                break;
+                }
+                cs_core.log("Receiving from Client");
+            }
             break;
             case CS_SECURITY:
                 parse_mcs_data_cs_security(stream);
