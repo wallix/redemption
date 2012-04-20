@@ -2774,7 +2774,7 @@ struct mod_rdp : public client_mod {
         void send_input(int time, int message_type,
                         int device_flags, int param1, int param2) throw(Error)
         {
-            if (this->verbose){
+            if (this->verbose > 10){
                 LOG(LOG_INFO, "mod_rdp::send_input");
             }
 
@@ -2800,7 +2800,7 @@ struct mod_rdp : public client_mod {
             tpdu.end();
             tpdu.send(this->trans);
 
-            if (this->verbose){
+            if (this->verbose > 10){
                 LOG(LOG_INFO, "mod_rdp::send_input done");
             }
         }
