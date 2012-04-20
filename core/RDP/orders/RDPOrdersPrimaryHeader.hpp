@@ -349,7 +349,6 @@ class RDPPrimaryOrderHeader
 // ---------------------------------------
 
 // common part of Primary Drawing Orders (last_order, bounding rectangle)
-// updated as each order is executed
 
 class RDPOrderCommon {
     public:
@@ -368,18 +367,10 @@ class RDPOrderCommon {
              && (this->clip == other.clip);
     }
 
-    void emit(Stream & stream, RDPPrimaryOrderHeader & header, const RDPOrderCommon & oldcommon)
+private:
+    void _emit(Stream & stream, RDPPrimaryOrderHeader & header)
     {
-
         using namespace RDP;
-
-        Bounds bounds(oldcommon.clip, this->clip);
-
-        header.control |= (this->order != oldcommon.order) * CHANGE;
-
-        if (header.control & BOUNDS){
-            header.control |= ((bounds.bounds_flags == 0) * LASTBOUNDS);
-        }
 
         int size = 1;
         switch (this->order)
@@ -392,8 +383,8 @@ class RDPOrderCommon {
             case PATBLT:
             case MEMBLT:
             case LINE:
-            //case POLYGON2:
-            //case ELLIPSE2:
+                //case POLYGON2:
+                //case ELLIPSE2:
                 size = 2;
                 break;
             case RECT:
@@ -404,20 +395,20 @@ class RDPOrderCommon {
         }
 
         int realsize = (header.fields == 0)      ?  0  :
-                       (header.fields < 0x100)   ?  1  :
-                       (header.fields < 0x10000) ?  2  :
-                                             3;
+        (header.fields < 0x100)   ?  1  :
+        (header.fields < 0x10000) ?  2  :
+        3;
 
         switch (size - realsize){
             case 3:
                 header.control |= TINY | SMALL;
-            break;
+                break;
             case 2:
                 header.control |= TINY;
-            break;
+                break;
             case 1:
                 header.control |= SMALL;
-            break;
+                break;
             default:;
         }
 
@@ -437,6 +428,32 @@ class RDPOrderCommon {
                 }
             }
         }
+    }
+
+public:
+    void emit(Stream & stream, RDPPrimaryOrderHeader & header)
+    {
+        using namespace RDP;
+
+        header.control |= CHANGE;
+
+        this->_emit(stream, header);
+    }
+
+    void emit(Stream & stream, RDPPrimaryOrderHeader & header, const RDPOrderCommon & oldcommon)
+    {
+
+        using namespace RDP;
+
+        Bounds bounds(oldcommon.clip, this->clip);
+
+        header.control |= (this->order != oldcommon.order) * CHANGE;
+
+        if (header.control & BOUNDS){
+            header.control |= ((bounds.bounds_flags == 0) * LASTBOUNDS);
+        }
+
+        this->_emit(stream, header);
 
         if (header.control & BOUNDS){
             if (!(header.control & LASTBOUNDS)){

@@ -50,11 +50,10 @@ struct MetaWRM {
 
     void in(Stream& stream)
     {
-        stream.in_copy_bytes((uint8_t *)this, sizeof(*this));/*
         this->version = stream.in_uint16_le();
         this->width = stream.in_uint16_le();
         this->height = stream.in_uint16_le();
-        this->bpp = stream.in_uint8();*/
+        this->bpp = stream.in_uint8();
     }
 
     void recv(RDPUnserializer& unserializer)
@@ -79,17 +78,31 @@ struct MetaWRM {
 
     void send(Stream& stream, Transport& transport) const
     {
-        out(stream);
-        transport.send(stream.data, sizeof(*this)+8/*stream.p - stream.data*/);
+        if (stream.p == stream.data)
+        {
+            stream.out_uint16_le(WRMChunk::META_INFO);
+            stream.out_uint16_le(7 + 8);
+            stream.out_uint16_le(1);
+            stream.out_uint16_le(0);
+        }
+        else
+        {
+            stream.set_out_uint16_le(WRMChunk::META_INFO, 0);
+            stream.set_out_uint16_le(7 + 8, 2);
+            stream.set_out_uint16_le(1, 4);
+        }
+        this->out(stream);
+        transport.send(stream.data, stream.p - stream.data);
+        stream.p = stream.data + 8;
+        stream.end = stream.p;
     }
 
     void out(Stream& stream) const
     {
-        stream.set_out_uint16_le(WRMChunk::META_INFO, 0);
-        stream.set_out_uint16_le(sizeof(*this) + 8, 2);
-        stream.set_out_uint16_le(1, 4);
-        stream.set_out_uint16_le(0, 6);
-        stream.set_out_copy_bytes((const uint8_t *)this, sizeof(*this), 8);
+        stream.out_uint16_le(this->version);
+        stream.out_uint16_le(this->width);
+        stream.out_uint16_le(this->height);
+        stream.out_uint8(this->bpp);
     }
 };
 

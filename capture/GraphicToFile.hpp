@@ -147,12 +147,12 @@ struct GraphicsToFile : public RDPSerializer
     ~GraphicsToFile(){
     }
 
-    void init(size_t size = 4096){
+    void init(){
         if (this->ini && this->ini->globals.debug.primary_orders){
             LOG(LOG_INFO, "GraphicsToFile::init::Initializing orders batch");
         }
         this->order_count = 0;
-        this->stream.init(size);
+        this->stream.init(4096);
 
         // to keep things easy all chunks should have 8 bytes headers
         // starting with chunk_type, chunk_size

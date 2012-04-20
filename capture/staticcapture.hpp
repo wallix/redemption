@@ -56,14 +56,18 @@ class StaticCapture : public RDPDrawable
 {
     int framenb;
 
-    public:
+public:
     char path[1024];
+    char image_path[1024];
+    uint16_t image_basepath_len;
 
+public:
     StaticCapture(int width, int height, const char * path, const char * codec_id, const char * video_quality)
         : RDPDrawable(width, height, true),
           framenb(0)
     {
         strcpy(this->path, path);
+        this->image_basepath_len = sprintf(this->image_path, "%s-%u-", path, getpid());
     }
 
     ~StaticCapture(){
@@ -75,17 +79,16 @@ class StaticCapture : public RDPDrawable
     }
 
     void dump_png(void){
-        char rawImagePath[256]     = {0};
         char rawImageMetaPath[256] = {0};
-        snprintf(rawImagePath,     254, "%s.%u.%u.png", this->path, getpid(), this->framenb++);
-        snprintf(rawImageMetaPath, 254, "%s.meta", rawImagePath);
+        sprintf(this->image_path + this->image_basepath_len, "%u.png", this->framenb++);
+        snprintf(rawImageMetaPath, 254, "%s.meta", this->image_path);
 //        LOG(LOG_INFO, "Dumping to file %s", rawImagePath);
         FILE * fd = fopen(rawImageMetaPath, "w");
         if (fd) {
            fprintf(fd, "%d,%d\n", this->drawable.width, this->drawable.height);
         }
         fclose(fd);
-        fd = fopen(rawImagePath, "w");
+        fd = fopen(this->image_path, "w");
         if (fd) {
             ::dump_png24(fd, this->drawable.data, this->drawable.width, this->drawable.height, this->drawable.rowsize);
         }

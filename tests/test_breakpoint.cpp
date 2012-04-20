@@ -23,29 +23,24 @@
 #define BOOST_TEST_MODULE TestBreakpoint
 #include <boost/test/auto_unit_test.hpp>
 
-#include "nativecapture.hpp"
+#include "capture.hpp"
 #include "transport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBreakpoint)
 {
-    BGRPalette palette;
-    {
-        //MetaWRM meta(800, 600, 24);
-        MetaWRM meta(1024, 912, 16);
-        NativeCapture cap(meta.width, meta.height, "/tmp/test_breakpoint");
-        meta.send(cap.recorder);
-        Rect clip(0, 0, meta.width, meta.height);
-        cap.draw(RDPOpaqueRect(Rect(10,844,500,42), RED), clip);
-        BOOST_CHECK(1);
-        cap.breakpoint();
-        BOOST_CHECK(1);
-        cap.draw(RDPOpaqueRect(Rect(777,110,144,188), GREEN), clip);
-        cap.breakpoint();
-        BOOST_CHECK(1);
-        cap.draw(RDPOpaqueRect(Rect(200,400,60,60), BLUE), clip);
-        struct timeval now;
-        gettimeofday(&now, NULL);
-        cap.recorder.timestamp(now);
-        BOOST_CHECK(1);
-    }
+    //MetaWRM meta(800, 600, 24);
+    MetaWRM meta(1024, 912, 16);
+    Capture cap(meta.width, meta.height, "/tmp/test_breakpoint", 0, 0);
+    cap.emit_meta(meta);
+    Rect clip(0, 0, meta.width, meta.height);
+    cap.draw(RDPOpaqueRect(Rect(10,844,500,42), RED), clip);
+    BOOST_CHECK(1);
+    cap.breakpoint();
+    BOOST_CHECK(1);
+    cap.draw(RDPOpaqueRect(Rect(777,110,144,188), GREEN), clip);
+    cap.breakpoint();
+    BOOST_CHECK(1);
+    cap.draw(RDPOpaqueRect(Rect(200,400,60,60), BLUE), clip);
+    cap.timestamp();
+    BOOST_CHECK(1);
 }

@@ -92,7 +92,7 @@ void check(const RDPOrderCommon & common,
     idx += snprintf(buffer + idx,   1024 - idx, "%s:\n", message);
     idx += snprintf(buffer + idx,   1024 - idx, "Expected ");
     idx += expected_cmd.str(buffer + idx, 1024 - idx, expected_common);
-    idx += snprintf(buffer + idx,   1024 - idx, "Got ");
+    idx += snprintf(buffer + idx,   1024 - idx, "\nGot ");
     idx += cmd.str(buffer + idx, 1024 - idx, common);
     buffer[1023] = 0;
 
@@ -108,7 +108,7 @@ void check(const RDPOrderType & cmd, const RDPOrderType & expected_cmd,
     idx += snprintf(buffer + idx,   1024 - idx, "%s:\n", message);
     idx += snprintf(buffer + idx,   1024 - idx, "Expected ");
     idx += expected_cmd.str(buffer + idx, 1024 - idx);
-    idx += snprintf(buffer + idx,   1024 - idx, "Got ");
+    idx += snprintf(buffer + idx,   1024 - idx, "\nGot ");
     idx += cmd.str(buffer + idx, 1024 - idx);
     buffer[1023] = 0;
 
