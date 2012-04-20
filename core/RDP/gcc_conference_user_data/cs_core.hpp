@@ -371,9 +371,9 @@ struct CSCoreGccUserData {
     , pad1octet(0)
     , serverSelectedProtocol(0)
     {
-        bzero(this->clientName, sizeof(this->clientName));
-        bzero(this->imeFileName, sizeof(this->imeFileName));
-        bzero(this->clientDigProductId, sizeof(this->clientDigProductId));
+        bzero(this->clientName, 32);
+        bzero(this->imeFileName, 64);
+        bzero(this->clientDigProductId, 64);
     }
 
 
@@ -424,8 +424,6 @@ struct CSCoreGccUserData {
 
     void recv(Stream & stream)
     {
-        this->userDataType = stream.in_uint16_le();
-        this->length = stream.in_uint16_le();
         this->version = stream.in_uint32_le();
         this->desktopWidth = stream.in_uint16_le();
         this->desktopHeight = stream.in_uint16_le();
@@ -444,7 +442,7 @@ struct CSCoreGccUserData {
         // including mandatory terminal 0
         // length is a number of utf16 characters
         stream.in_utf16(this->imeFileName, 32);
-                // --------------------- Optional Fields ---------------------------------------
+        // --------------------- Optional Fields ---------------------------------------
         if (this->length < 134) { return; }
         this->postBeta2ColorDepth = stream.in_uint16_le();
         if (this->length < 136) { return; }
@@ -479,7 +477,7 @@ struct CSCoreGccUserData {
 
         LOG(LOG_INFO, "cs_core::header::version [%04x] %s", this->version,
               (this->version==0x00080001) ? "RDP 4 client"
-             :(this->version==0x00080001) ? "RDP 5.0, 5.1, 5.2, and 6.0 clients)"
+             :(this->version==0x00080004) ? "RDP 5.0, 5.1, 5.2, and 6.0 clients)"
                                           : "Unknown client");
         LOG(LOG_INFO, "cs_core::desktopWidth  = %u",  this->desktopWidth);
         LOG(LOG_INFO, "cs_core::desktopHeight = %u", this->desktopHeight);
@@ -493,7 +491,9 @@ struct CSCoreGccUserData {
         LOG(LOG_INFO, "cs_core::keyboardLayout= %04x",  this->keyboardLayout);
         LOG(LOG_INFO, "cs_core::clientBuild   = %u",  this->clientBuild);
         char hostname[16];
-        for (size_t i = 0; i < 16 ; hostname[i] = (uint8_t)this->clientName[i]);
+        for (size_t i = 0; i < 16 ; i++) {
+            hostname[i] = (uint8_t)this->clientName[i];
+        }
         LOG(LOG_INFO, "cs_core::clientName    = %s",  hostname);
         LOG(LOG_INFO, "cs_core::keyboardType  = [%04x] %s",  this->keyboardType,
               (this->keyboardType == 0x00000001) ? "IBM PC/XT or compatible (83-key) keyboard"
@@ -507,7 +507,9 @@ struct CSCoreGccUserData {
         LOG(LOG_INFO, "cs_core::keyboardSubType      = [%04x] OEM code",  this->keyboardSubType);
         LOG(LOG_INFO, "cs_core::keyboardFunctionKey  = %u function keys",  this->keyboardFunctionKey);
         char imename[32];
-        for (size_t i = 0; i < 32 ; imename[i] = (uint8_t)this->imeFileName[i]);
+        for (size_t i = 0; i < 32 ; i++){
+            imename[i] = (uint8_t)this->imeFileName[i];
+        }
         LOG(LOG_INFO, "cs_core::imeFileName    = %s",  imename);
 
         // --------------------- Optional Fields ---------------------------------------

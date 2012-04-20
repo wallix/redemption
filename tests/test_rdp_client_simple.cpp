@@ -27,7 +27,7 @@
 #define BOOST_TEST_MODULE TestRdpClientSimple
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGPRINT
+#define LOGPRINT
 #include "./test_orders.hpp"
 
 #include "stream.hpp"
