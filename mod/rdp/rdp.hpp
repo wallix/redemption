@@ -60,13 +60,8 @@
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
-//#include "RDP/orders/RDPOrdersNames.hpp"
-#include "RDP/capabilities/capset.hpp"
+#include "RDP/capabilities.hpp"
 
-#include "RDP/gcc_conference_user_data/cs_core.hpp"
-#include "RDP/gcc_conference_user_data/cs_cluster.hpp"
-#include "RDP/gcc_conference_user_data/cs_sec.hpp"
-#include "RDP/gcc_conference_user_data/cs_net.hpp"
 #include "genrandom.hpp"
 
 struct rdp_cursor {

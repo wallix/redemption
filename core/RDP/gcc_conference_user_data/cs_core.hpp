@@ -27,6 +27,7 @@
 #define __CORE_RDP_GCC_CONFERENCE_USER_DATA_CS_CORE_HPP__
 
 #include "stream.hpp"
+#include "client_info.hpp"
 
 // 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
 // -------------------------------------

@@ -29,7 +29,7 @@
 #include <errno.h>
 #include <algorithm>
 
-#define LOGPRINT
+//#define LOGPRINT
 #include "./test_orders.hpp"
 
 #include "stream.hpp"
@@ -269,12 +269,12 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     } front(info, verbose);
 
-    const char * name = "RDP W2000 Target";
-    int sck = connect("10.10.14.64", 3389, name);
-    SocketTransport t(name, sck, verbose);
+//    const char * name = "RDP W2000 Target";
+//    int sck = connect("10.10.14.64", 3389, name);
+//    SocketTransport t(name, sck, verbose);
 
-//    #include "./fixtures/dump_w2000.hpp"
-//    TestTransport t("test_rdp_client_w2000", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    #include "./fixtures/dump_w2000.hpp"
+    TestTransport t("test_rdp_client_w2000", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
@@ -287,7 +287,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-//    BOOST_CHECK(t.status);
+    BOOST_CHECK(t.status);
 
     BOOST_CHECK_EQUAL(mod->front_width, 800);
     BOOST_CHECK_EQUAL(mod->front_height, 600);
@@ -296,7 +296,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     BackEvent_t res = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE){
         if (count++ >= 17) break;
-        printf("count=%d\n", count);
         res = mod->draw_event();
         BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
     }

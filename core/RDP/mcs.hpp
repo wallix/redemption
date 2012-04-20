@@ -28,14 +28,6 @@
 #include "client_info.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/gcc.hpp"
-#include "RDP/gcc_conference_user_data/cs_core.hpp"
-#include "RDP/gcc_conference_user_data/cs_cluster.hpp"
-#include "RDP/gcc_conference_user_data/cs_sec.hpp"
-#include "RDP/gcc_conference_user_data/cs_net.hpp"
-#include "RDP/gcc_conference_user_data/cs_monitor.hpp"
-#include "RDP/gcc_conference_user_data/sc_core.hpp"
-#include "RDP/gcc_conference_user_data/sc_sec1.hpp"
-#include "RDP/gcc_conference_user_data/sc_net.hpp"
 #include "channel_list.hpp"
 #include "genrandom.hpp"
 
@@ -237,7 +229,7 @@ static inline void mcs_send_connect_initial(
     /* Generic Conference Control (T.124) ConferenceCreateRequest */
 
     size_t offset_gcc_conference_create_request_header_length = 0;
-    gcc_write_conference_create_request_header(stream, offset_gcc_conference_create_request_header_length);    
+    gcc_write_conference_create_request_header(stream, offset_gcc_conference_create_request_header_length);
 
     size_t offset_user_data_length = stream.get_offset(0);
     stream.out_per_length(256); // remaining length, reserve 16 bits
@@ -560,7 +552,7 @@ static inline void mcs_recv_connect_initial(
                 parse_mcs_data_cs_net(stream, client_info, channel_list);
             break;
             case CS_CLUSTER:
-                parse_mcs_data_cs_cluster(stream, client_info);
+                parse_mcs_data_cs_cluster(stream, client_info->console_session);
             break;
             case CS_MONITOR:
                 parse_mcs_data_cs_monitor(stream);

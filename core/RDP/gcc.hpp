@@ -21,7 +21,7 @@
    Generic Conference Control (T.124)
 
    T.124 GCC is defined in:
-   
+
    http://www.itu.int/rec/T-REC-T.124-199802-S/en
    ITU-T T.124 (02/98): Generic Conference Control
 
@@ -31,6 +31,15 @@
 #define __CORE_RDP_GCC_HPP__
 
 #include "stream.hpp"
+#include "gcc_conference_user_data/cs_core.hpp"
+
+#include "gcc_conference_user_data/cs_cluster.hpp"
+#include "gcc_conference_user_data/cs_monitor.hpp"
+#include "gcc_conference_user_data/cs_net.hpp"
+#include "gcc_conference_user_data/cs_sec.hpp"
+#include "gcc_conference_user_data/sc_core.hpp"
+#include "gcc_conference_user_data/sc_net.hpp"
+#include "gcc_conference_user_data/sc_sec1.hpp"
 
 static inline void gcc_write_conference_create_request_header(Stream & stream, size_t & offset_length)
 {

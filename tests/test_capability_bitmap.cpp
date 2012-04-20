@@ -26,7 +26,7 @@
 #define BOOST_TEST_MODULE TestCapabilityBitmap
 #include <boost/test/auto_unit_test.hpp>
 
-#include "RDP/capabilities/capset.hpp"
+#include "RDP/capabilities.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestCapabilityBitmapEmit)

@@ -94,12 +94,12 @@
 //                                requests to connect.
 
 // This is this header that contains the console flag (undocumented ?)
-static inline void parse_mcs_data_cs_cluster(Stream & stream, ClientInfo * client_info)
+static inline void parse_mcs_data_cs_cluster(Stream & stream, bool & console_session)
 {
     LOG(LOG_INFO, "CS_CLUSTER\n");
     uint32_t flags = stream.in_uint32_le();
     LOG(LOG_INFO, "cluster_data: flags = %x\n", flags);
-    client_info->console_session = (flags & 0x2) != 0;
+    console_session = (flags & 0x2) != 0;
 }
 
 static inline void mod_rdp_out_cs_cluster(Stream & stream, int console_session)

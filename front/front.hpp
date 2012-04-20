@@ -54,16 +54,7 @@
 #include "transport.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
-#include "RDP/capabilities/capset.hpp"
-
-#include "RDP/gcc_conference_user_data/cs_core.hpp"
-#include "RDP/gcc_conference_user_data/cs_sec.hpp"
-#include "RDP/gcc_conference_user_data/cs_net.hpp"
-#include "RDP/gcc_conference_user_data/cs_cluster.hpp"
-#include "RDP/gcc_conference_user_data/cs_monitor.hpp"
-#include "RDP/gcc_conference_user_data/sc_sec1.hpp"
-#include "RDP/gcc_conference_user_data/sc_core.hpp"
-#include "RDP/gcc_conference_user_data/sc_net.hpp"
+#include "RDP/capabilities.hpp"
 
 #include "front_api.hpp"
 #include "genrandom.hpp"
