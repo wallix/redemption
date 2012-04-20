@@ -24,6 +24,7 @@
 #include "transport.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 #include "meta_wrm.hpp"
+#include "RDP/RDPDrawable.hpp"
 #include "bitmap.hpp"
 
 class WRMRecorder
@@ -35,6 +36,9 @@ public:
 
 public:
     MetaWRM meta;
+
+private:
+    Drawable * drawable;
 
 
 private:
@@ -64,9 +68,10 @@ public:
         ::close(this->trans.fd);
     }
 
-    void consumer(RDPGraphicDevice * consumer)
+    void consumer(RDPDrawable * consumer)
     {
         this->reader.consumer = consumer;
+        this->drawable = &consumer->drawable;
     }
 
     RDPGraphicDevice * consumer()
@@ -235,6 +240,21 @@ public:
                 this->reader.bmp_cache.big_size = this->reader.stream.in_uint16_le();
                 this->reader.bmp_cache.stamp = this->reader.stream.in_uint32_le();
                 //std::cout << "interpret_order: "  << this->reader.bmp_cache.small_entries << ',' << this->reader.bmp_cache.small_size << ',' << this->reader.bmp_cache.medium_entries << ',' << this->reader.bmp_cache.medium_size << ',' << this->reader.bmp_cache.big_entries << ',' << this->reader.bmp_cache.big_size << '\n';
+
+                {
+                    uint32_t pix_len = this->reader.stream.in_uint32_le();
+                    if (pix_len > this->drawable->pix_len)
+                    {
+                        delete [] this->drawable->data;
+                        this->drawable->data = new (std::nothrow) uint8_t[pix_len];
+                        if (this->drawable->data == 0){
+                            throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
+                        }
+                    }
+                    this->drawable->pix_len = pix_len;
+                    uint8_t *p = this->drawable->data;
+                    this->trans.recv(&p, pix_len);
+                }
 
                 for (size_t cid = 0; cid < 3 ; ++cid){
                     uint32_t* stamps = this->reader.bmp_cache.stamps[cid];
