@@ -63,6 +63,22 @@ class NativeCapture : public RDPGraphicDevice
     uint16_t basepath_len;
     uint32_t nb_file;
 
+private:
+    int next_filename()
+    {
+        return sprintf(this->basepath + this->basepath_len, "%u.wrm", this->nb_file++);
+    }
+
+    void open_file()
+    {
+        LOG(LOG_INFO, "Recording to file : %s", this->basepath);
+        this->trans.fd = open(this->basepath, O_WRONLY|O_CREAT, 0666);
+        if (this->trans.fd < 0){
+            LOG(LOG_ERR, "Error opening native capture file : %s", strerror(errno));
+            throw Error(ERR_RECORDER_NATIVE_CAPTURE_OPEN_FAILED);
+        }
+    }
+
 public:
     NativeCapture(int width, int height, const char * path)
     : width(width)
@@ -81,22 +97,8 @@ public:
         close(this->trans.fd);
     }
 
-    int next_filename()
-    {
-        return sprintf(this->basepath + this->basepath_len, "%u.wrm", this->nb_file++);
-    }
-
-    void open_file()
-    {
-        LOG(LOG_INFO, "Recording to file : %s", this->basepath);
-        this->trans.fd = open(this->basepath, O_WRONLY|O_CREAT, 0666);
-        if (this->trans.fd < 0){
-            LOG(LOG_ERR, "Error opening native capture file : %s", strerror(errno));
-            throw Error(ERR_RECORDER_NATIVE_CAPTURE_OPEN_FAILED);
-        }
-    }
-
-    virtual void flush() {}
+    virtual void flush()
+    {}
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
@@ -375,8 +377,8 @@ public:
         //std::cout << "cid end\n";
 
         for (size_t cid = 0; cid < 3 ; ++cid){
-            BitmapsSender(this->recorder.bmp_cache.cache[cid])
-            .send_in(this->trans, this->recorder.stream);
+            BitmapsSender sender(this->recorder.bmp_cache.cache[cid]);
+            sender.send_in(this->trans, this->recorder.stream);
         }
 
         this->recorder.init();

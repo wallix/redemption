@@ -85,7 +85,8 @@ class Capture : public RDPGraphicDevice
         this->nc.recorder.flush();
     }
 
-    void flush(){}
+    void flush()
+    {}
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
@@ -132,6 +133,7 @@ class Capture : public RDPGraphicDevice
 
     void breakpoint()
     {
+        //this->sc.flush();
         this->nc.breakpoint(this->sc.drawable.data, this->sc.drawable.pix_len);
     }
 

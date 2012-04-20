@@ -71,6 +71,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
             BOOST_CHECK(1);
         }
     }
+    consumer.breakpoint();
     BOOST_CHECK(328 == ntime);
 }
 
