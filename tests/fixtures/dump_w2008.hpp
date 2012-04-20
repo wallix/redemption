@@ -31,7 +31,7 @@ const char outdata[] =
 // Dump done on RDP W2008 Target (3) |
 // recv CC_TPDU LI=6 |
 // mod_rdp::recv_x224_connection_confirm_pdu done |
-// mod_rdp::send_mcs_connect_initial_pdu_with_gcc_conference_create_request |
+// mod_rdp::mcs_send_connect_initial |
 // X224 OUT DT_TPDU |
 // Sending Client Core Data to remote server |
 // core::header::length = 212 |
@@ -85,10 +85,10 @@ const char outdata[] =
 /* 0180 */ "\x00\x00"                                                         //.. |
 // Dump done RDP W2008 Target (3) sending 386 bytes |
 // Send done on RDP W2008 Target (3) |
-// mod_rdp::send_mcs_connect_initial_pdu_with_gcc_conference_create_request done |
+// mod_rdp::mcs_send_connect_initial done |
 // ============================== DRAW_EVENT 2 ================================= |
 // Channel Connection |
-// mod_rdp::recv_mcs_connect_response_pdu_with_gcc_conference_create_response |
+// mod_rdp::mcs_recv_connect_response |
 // Socket RDP W2008 Target (3) receiving 4 bytes |
 // Recv done on RDP W2008 Target (3) |
 // /* 0000 */ "\x03\x00\x22\x89"                                                 //..". |
@@ -676,7 +676,7 @@ const char outdata[] =
 // Certificate length is 1112 |
 // Server public key length=64 |
 // server_public_key_len=64, MODULUS_SIZE=64 MAX_MODULUS_SIZE=256 |
-// mod_rdp::recv_mcs_connect_response_pdu_with_gcc_conference_create_response done |
+// mod_rdp::mcs_recv_connect_response done |
 // mod_rdp::send_mcs_erect_domain_and_attach_user_request_pdu |
 // X224 OUT DT_TPDU |
 // Socket RDP W2008 Target (3) sending 12 bytes |
@@ -14482,7 +14482,7 @@ const char indata[] =
 // Dump done on RDP W2008 Target (3) |
 // recv CC_TPDU LI=6 |
 // mod_rdp::recv_x224_connection_confirm_pdu done |
-// mod_rdp::send_mcs_connect_initial_pdu_with_gcc_conference_create_request |
+// mod_rdp::mcs_send_connect_initial |
 // X224 OUT DT_TPDU |
 // Sending Client Core Data to remote server |
 // core::header::length = 212 |
@@ -14536,10 +14536,10 @@ const char indata[] =
 // /* 0180 */ "\x00\x00"                                                         //.. |
 // Dump done RDP W2008 Target (3) sending 386 bytes |
 // Send done on RDP W2008 Target (3) |
-// mod_rdp::send_mcs_connect_initial_pdu_with_gcc_conference_create_request done |
+// mod_rdp::mcs_send_connect_initial done |
 // ============================== DRAW_EVENT 2 ================================= |
 // Channel Connection |
-// mod_rdp::recv_mcs_connect_response_pdu_with_gcc_conference_create_response |
+// mod_rdp::mcs_recv_connect_response |
 // Socket RDP W2008 Target (3) receiving 4 bytes |
 // Recv done on RDP W2008 Target (3) |
 /* 0000 */ "\x03\x00\x22\x89"                                                 //..". |
@@ -15127,7 +15127,7 @@ const char indata[] =
 // Certificate length is 1112 |
 // Server public key length=64 |
 // server_public_key_len=64, MODULUS_SIZE=64 MAX_MODULUS_SIZE=256 |
-// mod_rdp::recv_mcs_connect_response_pdu_with_gcc_conference_create_response done |
+// mod_rdp::mcs_recv_connect_response done |
 // mod_rdp::send_mcs_erect_domain_and_attach_user_request_pdu |
 // X224 OUT DT_TPDU |
 // Socket RDP W2008 Target (3) sending 12 bytes |

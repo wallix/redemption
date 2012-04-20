@@ -23,6 +23,7 @@
 
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
+#include "meta_wrm.hpp"
 
 class Capture : public RDPGraphicDevice
 {
@@ -38,7 +39,7 @@ class Capture : public RDPGraphicDevice
     public:
 
     TODO(" fat interface : ugly  find another way")
-    Capture(int width, int height, char * path, const char * codec_id, const char * video_quality) :
+    Capture(int width, int height, const char * path, const char * codec_id, const char * video_quality) :
         sc(width, height, path, codec_id, video_quality),
         nc(width, height, path)
     {
@@ -51,6 +52,16 @@ class Capture : public RDPGraphicDevice
     }
 
     ~Capture(){
+    }
+
+    void timestamp()
+    {
+        this->nc.recorder.timestamp();
+    }
+
+    void emit_meta(MetaWRM& meta)
+    {
+        meta.send(this->nc.recorder);
     }
 
     void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)
@@ -117,6 +128,11 @@ class Capture : public RDPGraphicDevice
     {
 //        this->sc.glyph_index(cmd, clip);
 //        this->nc.glyph_index(cmd, clip);
+    }
+
+    void breakpoint()
+    {
+        this->nc.breakpoint(this->sc.drawable.data, this->sc.drawable.pix_len);
     }
 
 };

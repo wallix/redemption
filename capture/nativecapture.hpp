@@ -63,22 +63,6 @@ class NativeCapture : public RDPGraphicDevice
     uint16_t basepath_len;
     uint32_t nb_file;
 
-private:
-    int next_filename()
-    {
-        return sprintf(this->basepath + this->basepath_len, "%u.wrm", this->nb_file++);
-    }
-
-    void open_file()
-    {
-        LOG(LOG_INFO, "Recording to file : %s", this->basepath);
-        this->trans.fd = open(this->basepath, O_WRONLY|O_CREAT, 0666);
-        if (this->trans.fd < 0){
-            LOG(LOG_ERR, "Error opening native capture file : %s", strerror(errno));
-            throw Error(ERR_RECORDER_NATIVE_CAPTURE_OPEN_FAILED);
-        }
-    }
-
 public:
     NativeCapture(int width, int height, const char * path)
     : width(width)
@@ -95,6 +79,21 @@ public:
 
     ~NativeCapture(){
         close(this->trans.fd);
+    }
+
+    int next_filename()
+    {
+        return sprintf(this->basepath + this->basepath_len, "%u.wrm", this->nb_file++);
+    }
+
+    void open_file()
+    {
+        LOG(LOG_INFO, "Recording to file : %s", this->basepath);
+        this->trans.fd = open(this->basepath, O_WRONLY|O_CREAT, 0666);
+        if (this->trans.fd < 0){
+            LOG(LOG_ERR, "Error opening native capture file : %s", strerror(errno));
+            throw Error(ERR_RECORDER_NATIVE_CAPTURE_OPEN_FAILED);
+        }
     }
 
     virtual void flush() {}
@@ -134,7 +133,8 @@ public:
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) {}
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
+    {}
 
 private:
     struct BitmapsSender {
@@ -248,8 +248,7 @@ private:
     }
 
 public:
-// protected:
-    void breakpoint()
+    void breakpoint(const uint8_t* data_drawable, uint32_t pix_len)
     {
         this->recorder.flush();
         this->recorder.chunk_type = WRMChunk::NEXT_FILE;
@@ -354,7 +353,11 @@ public:
         this->recorder.stream.out_uint32_le(this->recorder.bmp_cache.stamp);
         //std::cout << "breakpoint: " << this->recorder.bmp_cache.small_entries << ',' << this->recorder.bmp_cache.small_size << ',' << this->recorder.bmp_cache.medium_entries << ',' << this->recorder.bmp_cache.medium_size << ',' << this->recorder.bmp_cache.big_entries << ',' << this->recorder.bmp_cache.big_size << "";
 
+        this->recorder.stream.out_uint32_le(pix_len);
+
         this->recorder.send_order();
+
+        this->trans.send(data_drawable, pix_len);
 
         for (size_t cid = 0; cid < 3 ; ++cid){
             uint32_t* stamps = this->recorder.bmp_cache.stamps[cid];
@@ -372,8 +375,8 @@ public:
         //std::cout << "cid end\n";
 
         for (size_t cid = 0; cid < 3 ; ++cid){
-            BitmapsSender sender(this->recorder.bmp_cache.cache[cid]);
-            sender.send_in(this->trans, this->recorder.stream);
+            BitmapsSender(this->recorder.bmp_cache.cache[cid])
+            .send_in(this->trans, this->recorder.stream);
         }
 
         this->recorder.init();

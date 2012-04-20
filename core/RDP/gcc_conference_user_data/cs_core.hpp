@@ -262,7 +262,34 @@
 //   2.2.1.1.1) was sent to the server. If this field is present,
 //   then all of the preceding fields MUST also be present.
 
-TODO(" use official field names from MS-RDPBCGR")
+
+struct CSCoreGccUserData {
+    uint32_t header;
+    uint32_t version;
+    uint16_t desktopWidth;
+    uint16_t desktopHeight;
+    uint16_t colorDepth;
+    uint16_t SASSequence;
+    uint32_t keyboardLayout;
+    uint32_t clientBuild;
+    uint16_t clientName[32];
+    uint32_t keyboardType;
+    uint32_t keyboardSubType;
+    uint32_t keyboardFunctionKey;
+    uint16_t imeFileName[32];
+    uint16_t postBeta2ColorDepth;
+    uint32_t serialNumber;
+    uint16_t highColorDepth;
+    uint16_t supportedColorDepths;
+    uint16_t earlyCapabilityFlags;
+    uint8_t  clientDigProductId[64];
+    uint8_t  connectionType;
+    uint8_t  pad1octet;
+    uint32_t serverSelectedProtocol;
+};
+
+
+TODO(" use official field names from MS-RDPBCGR, see struct above")
 static inline void parse_mcs_data_cs_core(Stream & stream, ClientInfo * client_info)
 {
     LOG(LOG_INFO, "PARSE CS_CORE");
