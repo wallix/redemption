@@ -209,7 +209,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-//    BOOST_CHECK(t.status);
+    BOOST_CHECK(t.status);
 
     BOOST_CHECK_EQUAL(mod->front_width, 800);
     BOOST_CHECK_EQUAL(mod->front_height, 600);
@@ -218,7 +218,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     BackEvent_t res = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE){
         if (count++ >= 50) break;
-        printf("count=%d\n", count);
         res = mod->draw_event();
         BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
     }

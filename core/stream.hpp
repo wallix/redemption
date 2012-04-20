@@ -541,6 +541,16 @@ class Stream {
         }
     }
 
+    void set_out_per_length(uint16_t length, size_t offset)
+    {
+        if (length & 0xFF80){
+            this->set_out_uint16_be(length|0x8000, offset);
+        }
+        else {
+            this->set_out_uint8(length, offset);
+        }
+    }
+
     uint8_t in_per_choice()
     {
         return this->in_uint8();

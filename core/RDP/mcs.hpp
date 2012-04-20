@@ -27,6 +27,7 @@
 
 #include "client_info.hpp"
 #include "RDP/x224.hpp"
+#include "RDP/gcc.hpp"
 #include "RDP/gcc_conference_user_data/cs_core.hpp"
 #include "RDP/gcc_conference_user_data/cs_cluster.hpp"
 #include "RDP/gcc_conference_user_data/cs_sec.hpp"
@@ -234,47 +235,26 @@ static inline void mcs_send_connect_initial(
     stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
     /* Generic Conference Control (T.124) ConferenceCreateRequest */
-    // see : gcc_write_conference_create_request
 
-    // ConnectData
-    stream.out_per_choice(0); // From Key select object (0) of type OBJECT_IDENTIFIER
-    const uint8_t t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
-    stream.out_per_object_identifier(t124_02_98_oid); // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
+    size_t offset_gcc_conference_create_request_header_length = 0;
+    gcc_write_conference_create_request_header(stream, offset_gcc_conference_create_request_header_length);    
 
-    int length = 158 + 76 + 12 + 4;
+    size_t offset_user_data_length = stream.get_offset(0);
+    stream.out_per_length(256); // remaining length, reserve 16 bits
 
-    TODO(" another option could be to emit channel list even if number of channel is zero. It looks more logical to me than not passing any channel information (what happens in this case ?)")
-    if (channel_list.size() > 0){
-        length += channel_list.size() * 12 + 8;
-    }
-
-//  ConnectData::connectPDU (OCTET_STRING)
-    stream.out_per_length(length); // connectPDU length
-
-//  ConnectGCCPDU
-    stream.out_per_choice(0); // From ConnectGCCPDU select conferenceCreateRequest (0) of type ConferenceCreateRequest
-    stream.out_per_selection(0x08); // select optional userData from ConferenceCreateRequest
-
-//  ConferenceCreateRequest::conferenceName
-//	stream.out_per_numeric_string(s, (uint8*)"1", 1, 1); /* ConferenceName::numeric */
-    stream.out_uint16_be(16);
-    stream.out_per_padding(1); /* padding */
-
-//  UserData (SET OF SEQUENCE)
-    stream.out_per_number_of_sets(1); // one set of UserData
-    stream.out_per_choice(0xC0); // UserData::value present + select h221NonStandard (1)
-
-//  h221NonStandard
-    const uint8_t h221_cs_key[4] = {'D', 'u', 'c', 'a'};
-    stream.out_per_octet_string(h221_cs_key, 4, 4); // h221NonStandard, client-to-server H.221 key, "Duca"
-
-    stream.out_uint16_be(((length - 14) | 0x8000)); /* remaining length */
-
-    /* Client User Data */
+    // Client User Data
+    // ================
+    // 158 bytes
     mod_rdp_out_cs_core(stream, use_rdp5, front_width, front_height, front_bpp, keylayout, hostname);
+    // 76 bytes
     mod_rdp_out_cs_cluster(stream, console_session);
+    // 12 bytes
     mod_rdp_out_cs_sec(stream);
+    // 12 * nbchan + 8 bytes
     mod_rdp_out_cs_net(stream, channel_list);
+
+    stream.set_out_per_length(stream.get_offset(offset_user_data_length + 2), offset_user_data_length); // user data length
+    stream.set_out_per_length(stream.get_offset(offset_gcc_conference_create_request_header_length + 2), offset_gcc_conference_create_request_header_length); // length including header
 
     // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
     stream.set_out_ber_len_uint16(stream.get_offset(offset_data_len + 3), offset_data_len);

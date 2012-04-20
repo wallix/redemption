@@ -60,7 +60,7 @@
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 
-#include "RDP/orders/RDPOrdersNames.hpp"
+//#include "RDP/orders/RDPOrdersNames.hpp"
 #include "RDP/capabilities/capset.hpp"
 
 #include "RDP/gcc_conference_user_data/cs_core.hpp"
@@ -202,9 +202,9 @@ struct rdp_orders {
     /*****************************************************************************/
     int process_orders(uint8_t bpp, Stream & stream, int num_orders, client_mod * mod)
     {
-        if (this->verbose & 64){
-            LOG(LOG_INFO, "process_orders bpp=%u", bpp);
-        }
+//        if (this->verbose & 64){
+//            LOG(LOG_INFO, "process_orders bpp=%u", bpp);
+//        }
         using namespace RDP;
         int processed = 0;
         while (processed < num_orders) {
@@ -253,7 +253,7 @@ struct rdp_orders {
                 const Rect & cmd_clip = ((control & BOUNDS)
                                       ? this->common.clip
                                     : Rect(0, 0, mod->front_width, mod->front_height));
-                LOG(LOG_INFO, "/* order=%d ordername=%s */", this->common.order, ordernames[this->common.order]);
+//                LOG(LOG_INFO, "/* order=%d ordername=%s */", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
@@ -303,9 +303,9 @@ struct rdp_orders {
             }
             processed++;
         }
-        if (this->verbose & 64){
-            LOG(LOG_INFO, "process_orders done");
-        }
+//        if (this->verbose & 64){
+//            LOG(LOG_INFO, "process_orders done");
+//        }
         return 0;
     }
 };
@@ -1293,7 +1293,7 @@ struct mod_rdp : public client_mod {
 
         case MOD_RDP_CONNECTED:
         {
-            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED bpp=%u", this->bpp);
+//            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED bpp=%u", this->bpp);
             Stream stream(65536);
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
@@ -1402,7 +1402,7 @@ struct mod_rdp : public client_mod {
                         break;
                         case UP_AND_RUNNING:
                         {
-                            LOG(LOG_INFO, "Up and running bpp=%u", this->bpp);
+//                            LOG(LOG_INFO, "Up and running bpp=%u", this->bpp);
                             ShareDataIn share_data_in(stream);
 //                            LOG(LOG_INFO, "Up and running");
                             switch (share_data_in.pdutype2) {
@@ -2923,7 +2923,7 @@ struct mod_rdp : public client_mod {
 
     void process_bitmap_updates(Stream & stream, client_mod * mod)
     {
-        if (this->verbose){
+        if (this->verbose > 10){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
         }
         // RDP-BCGR: 2.2.9.1.1.3.1.2 Bitmap Update (TS_UPDATE_BITMAP)
@@ -3070,7 +3070,7 @@ struct mod_rdp : public client_mod {
             }
             mod->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
         }
-        if (this->verbose){
+        if (this->verbose > 10){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates done");
         }
     }
