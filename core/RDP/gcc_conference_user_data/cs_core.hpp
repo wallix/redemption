@@ -14,11 +14,10 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+   Copyright (C) Wallix 2012
+   Author(s): Christophe Grosjean
 
-   MCS Connect Initial PDU with GCC Conference User Data
+   GCC Conference User Data : Client to Server Core (CS_CORE)
 
 
 */
@@ -422,8 +421,9 @@ struct CSCoreGccUserData {
         stream.out_uint32_le(this->serverSelectedProtocol);
     }
 
-    void recv(Stream & stream)
+    void recv(Stream & stream, uint16_t length)
     {
+        this->length = length;
         this->version = stream.in_uint32_le();
         this->desktopWidth = stream.in_uint16_le();
         this->desktopHeight = stream.in_uint16_le();

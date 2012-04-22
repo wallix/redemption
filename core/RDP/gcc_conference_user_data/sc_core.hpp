@@ -14,12 +14,10 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+   Copyright (C) Wallix 2012
+   Author(s): Christophe Grosjean
 
-   MCS Connect Initial PDU with GCC Conference User Data
-
+   GCC Conference User Data : Server to Client Core (SC_CORE)
 
 */
 
@@ -54,41 +52,51 @@
 //  Negotiation Request was not received from the client, this field MUST be
 //  initialized to PROTOCOL_RDP (0).
 
-TODO("Create SCCoreIn and SCCoreOut classes (on the model of SecIn/SecOut for Sec layer), or an SCCore object with emit() and receive() following the model of RDPOrders primitives")
-
-static inline void parse_mcs_data_sc_core(Stream & stream, int & use_rdp5)
-{
-    LOG(LOG_INFO, "SC_CORE");
-    uint32_t rdp_version = stream.in_uint32_le();
-    LOG(LOG_DEBUG, "Remote RDP server supports version %s (was %s)",
-                ((rdp_version==0x0080001)?"RDP4":"RDP5"),
-                ((use_rdp5)?"RDP5":"RDP4"));
-    if (0x0080001 == rdp_version){ // can't use rdp5
-        use_rdp5 = 0;
-        TODO(" why caring of server_depth here ? Quite strange")
-        //        this->server_depth = 8;
-    }
-}
-
-//01 0c 0c 00 -> TS_UD_HEADER::type = SC_CORE (0x0c01), length = 12
-//bytes
-
-//04 00 08 00 -> TS_UD_SC_CORE::version = 0x0008004
+// Exemple:
+//01 0c 0c 00 -> TS_UD_HEADER::type = SC_CORE (0x0c01), length = 12 bytes
+//04 00 08 00 -> TS_UD_SC_CORE::version = 0x0080004
 //00 00 00 00 -> TS_UD_SC_CORE::clientRequestedProtocols = PROTOCOL_RDP
 
-static inline void out_mcs_data_sc_core(Stream & stream, const bool use_rdp5)
-{
-    LOG(LOG_INFO, "SC_CORE");
-    // length, including tag and length fields
-    stream.out_uint16_le(SC_CORE);
-    stream.out_uint16_le(12); /* len */
-    const uint32_t rdp_version = use_rdp5?0x0080004:0x0080001;
-    LOG(LOG_DEBUG, "RDP proxy server supports version %s (was %s)",
-            (rdp_version==0x0080001)?"RDP4":"RDP5",
-            ((use_rdp5)?"RDP5":"RDP4"));
-    stream.out_uint32_le(rdp_version);
-    const uint32_t clientRequestedProtocols = 0;
-    stream.out_uint32_le(clientRequestedProtocols);
-}
+struct SCCoreGccUserData {
+    uint16_t userDataType;
+    uint16_t length;
+    uint32_t version;
+    uint32_t clientRequestedProtocol;
+
+    SCCoreGccUserData()
+    : userDataType(SC_CORE)
+    , length(12) // default: everything except serverSelectedProtocol
+    , version(0x00080001)  // RDP version. 1 == RDP4, 4 == RDP5.
+    , clientRequestedProtocol(0)
+    {
+    }
+
+
+    void emit(Stream & stream)
+    {
+        stream.out_uint16_le(this->userDataType);
+        stream.out_uint16_le(this->length);
+        stream.out_uint32_le(this->version);
+        stream.out_uint32_le(this->clientRequestedProtocol);
+    }
+
+    void recv(Stream & stream, uint16_t length)
+    {
+        this->length = length;
+        this->version = stream.in_uint32_le();
+        this->clientRequestedProtocol = stream.in_uint32_le();
+    }
+
+    void log(const char * msg)
+    {
+        // --------------------- Base Fields ---------------------------------------
+        LOG(LOG_INFO, "%s GCC User Data SS_CORE (%u bytes)", msg, this->length);
+        LOG(LOG_INFO, "cs_core::header::version [%04x] %s", this->version,
+              (this->version==0x00080001) ? "RDP 4 client"
+             :(this->version==0x00080004) ? "RDP 5.0, 5.1, 5.2, and 6.0 clients)"
+                                          : "Unknown client");
+        LOG(LOG_INFO, "cs_core::clientRequestedProtocol  = %u", this->clientRequestedProtocol);
+    }
+};
 
 #endif

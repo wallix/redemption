@@ -380,7 +380,14 @@ static inline void mcs_recv_connect_response(
         uint8_t *next_tag = (cr_stream.p + length) - 4;
         switch (tag) {
         case SC_CORE:
-            parse_mcs_data_sc_core(cr_stream, use_rdp5);
+        {
+            SCCoreGccUserData sc_core;
+            sc_core.recv(cr_stream, length);
+            sc_core.log("Receiving SC_CORE from server");
+            if (0x0080001 == sc_core.version){ // can't use rdp5
+                use_rdp5 = 0;
+            }
+        }
         break;
         case SC_SECURITY:
             parse_mcs_data_sc_security(cr_stream, encrypt, decrypt,
@@ -559,8 +566,7 @@ static inline void mcs_recv_connect_initial(
             case CS_CORE:
             {
                 CSCoreGccUserData cs_core;
-                cs_core.length = length;
-                cs_core.recv(stream);
+                cs_core.recv(stream, length);
                 client_info->width = cs_core.desktopWidth;
                 client_info->height = cs_core.desktopHeight;
                 client_info->keylayout = cs_core.keyboardLayout;
@@ -1137,8 +1143,11 @@ static inline void mcs_send_connect_response(
     uint32_t offset_user_data_len = stream.get_offset(0);
     stream.out_uint16_be(0);
 
-    bool use_rdp5 = 1;
-    out_mcs_data_sc_core(stream, use_rdp5);
+    SCCoreGccUserData sc_core;
+    sc_core.version = 0x00080004; // RDP 5
+    sc_core.log("Sending SC_CORE to client");
+    sc_core.emit(stream);
+
     out_mcs_data_sc_net(stream, channel_list);
     front_out_gcc_conference_user_data_sc_sec1(stream, client_info->crypt_level, server_random, rc4_key_size, pub_mod, pri_exp, gen);
 
