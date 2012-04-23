@@ -253,8 +253,17 @@ static inline void mcs_send_connect_initial(
     cs_core.log("Sending to Server");
     cs_core.emit(stream);
 
-    // 76 bytes
-    mod_rdp_out_cs_cluster(stream, console_session);
+    CSClusterGccUserData cs_cluster;
+    TODO("values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?")
+    if (console_session){
+        cs_cluster.flags = CSClusterGccUserData::REDIRECTED_SESSIONID_FIELD_VALID | (3 << 2) ; // REDIRECTION V4
+    }
+    else {
+        cs_cluster.flags = CSClusterGccUserData::REDIRECTION_SUPPORTED            | (2 << 2) ; // REDIRECTION V3
+    }
+    cs_cluster.log("Sending to server");
+    cs_cluster.emit(stream);
+
     // 12 bytes
     mod_rdp_out_cs_sec(stream);
     // 12 * nbchan + 8 bytes
@@ -601,7 +610,13 @@ static inline void mcs_recv_connect_initial(
                 parse_mcs_data_cs_net(stream, client_info, channel_list);
             break;
             case CS_CLUSTER:
-                parse_mcs_data_cs_cluster(stream, client_info->console_session);
+            {
+                CSClusterGccUserData cs_cluster;
+                cs_cluster.recv(stream, length);
+                client_info->console_session =
+                    (0 != (cs_cluster.flags & CSClusterGccUserData::REDIRECTED_SESSIONID_FIELD_VALID));
+                cs_cluster.log("Receiving from Client");
+            }
             break;
             case CS_MONITOR:
                 parse_mcs_data_cs_monitor(stream);

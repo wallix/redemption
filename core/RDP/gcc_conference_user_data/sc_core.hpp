@@ -91,11 +91,11 @@ struct SCCoreGccUserData {
     {
         // --------------------- Base Fields ---------------------------------------
         LOG(LOG_INFO, "%s GCC User Data SC_CORE (%u bytes)", msg, this->length);
-        LOG(LOG_INFO, "cs_core::header::version [%04x] %s", this->version,
+        LOG(LOG_INFO, "sc_core::version [%04x] %s", this->version,
               (this->version==0x00080001) ? "RDP 4 client"
              :(this->version==0x00080004) ? "RDP 5.0, 5.1, 5.2, and 6.0 clients)"
                                           : "Unknown client");
-        LOG(LOG_INFO, "cs_core::clientRequestedProtocol  = %u", this->clientRequestedProtocol);
+        LOG(LOG_INFO, "sc_core::clientRequestedProtocol  = %u", this->clientRequestedProtocol);
     }
 };
 

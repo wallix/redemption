@@ -14,12 +14,10 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+   Copyright (C) Wallix 2012
+   Author(s): Christophe Grosjean
 
-   MCS Connect Initial PDU with GCC Conference User Data
-
+   Class for GCC Client Cluster Data
 
 */
 
@@ -82,6 +80,8 @@
 //                                     is supported by the client.
 // -------------------------------------------------------------------------
 
+// Note by CGR: encoding let imagine there should be a V1 an V2 redirection
+
 // The version values cannot be combined; only one value MUST be specified
 // if the REDIRECTED_SESSIONID_FIELD_VALID (0x00000002) flag is present in
 // the Flags field.
@@ -98,47 +98,57 @@ struct CSClusterGccUserData {
     uint16_t userDataType;
     uint16_t length;
 
+    enum {
+        REDIRECTION_SUPPORTED            = 0x00000001,
+        REDIRECTED_SESSIONID_FIELD_VALID = 0x00000002,
+        REDIRECTED_SMARTCARD             = 0x00000040,
+        ServerSessionRedirectionVersionMask = 0x0000003C,
+    };
+    uint32_t flags;
+    uint32_t redirectedSessionID;
+
     CSClusterGccUserData()
     : userDataType(CS_CLUSTER)
-    , length(12) // default: everything except serverSelectedProtocol
+    , length(12)
+    , flags(0)
+    , redirectedSessionID(0)
     {
     }
-
 
     void emit(Stream & stream)
     {
         stream.out_uint16_le(this->userDataType);
         stream.out_uint16_le(this->length);
+        stream.out_uint32_le(this->flags);
+        stream.out_uint32_le(this->redirectedSessionID);
     }
 
     void recv(Stream & stream, uint16_t length)
     {
         this->length = length;
+        this->flags = stream.in_uint32_le();
+        this->redirectedSessionID = stream.in_uint32_le();
     }
 
     void log(const char * msg)
     {
         // --------------------- Base Fields ---------------------------------------
         LOG(LOG_INFO, "%s GCC User Data CS_CLUSTER (%u bytes)", msg, this->length);
+        LOG(LOG_INFO, "cs_cluster::flags [%04x]", this->flags);
+        if (this->flags == REDIRECTION_SUPPORTED){
+            LOG(LOG_INFO, "cs_cluster::flags::REDIRECTION_SUPPORTED");
+            LOG(LOG_INFO, "cs_cluster::flags::redirectionVersion = %u",
+                (this->flags & ServerSessionRedirectionVersionMask) >> 2);
+        }
+        if (this->flags == REDIRECTED_SESSIONID_FIELD_VALID){
+            LOG(LOG_INFO, "cs_cluster::flags::REDIRECTED_SESSIONID_FIELD_VALID");
+        }
+        if (this->flags == REDIRECTED_SMARTCARD){
+            LOG(LOG_INFO, "cs_cluster::flags::REDIRECTED_SMARTCARD");
+        }
+        if (this->length < 12) { return; }
+        LOG(LOG_INFO, "cs_cluster::redirectedSessionID = %u", this->redirectedSessionID);
     }
 };
-
-// This is this header that contains the console flag (undocumented ?)
-static inline void parse_mcs_data_cs_cluster(Stream & stream, bool & console_session)
-{
-    LOG(LOG_INFO, "CS_CLUSTER\n");
-    uint32_t flags = stream.in_uint32_le();
-    LOG(LOG_INFO, "cluster_data: flags = %x\n", flags);
-    console_session = (flags & 0x2) != 0;
-}
-
-static inline void mod_rdp_out_cs_cluster(Stream & stream, int console_session)
-{
-    LOG(LOG_INFO, "Sending Client Cluster Settings to remote server [console=(%u)]", (unsigned)(console_session));
-    stream.out_uint16_le(CS_CLUSTER);
-    stream.out_uint16_le(12);
-    stream.out_uint32_le(console_session ? 0xb : 9);
-    stream.out_uint32_le(0);
-}
 
 #endif

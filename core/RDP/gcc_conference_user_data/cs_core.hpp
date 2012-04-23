@@ -472,7 +472,7 @@ struct CSCoreGccUserData {
             return;
         }
 
-        LOG(LOG_INFO, "cs_core::header::version [%04x] %s", this->version,
+        LOG(LOG_INFO, "cs_core::version [%04x] %s", this->version,
               (this->version==0x00080001) ? "RDP 4 client"
              :(this->version==0x00080004) ? "RDP 5.0, 5.1, 5.2, and 6.0 clients)"
                                           : "Unknown client");
