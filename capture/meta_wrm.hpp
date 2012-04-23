@@ -29,6 +29,8 @@ struct MetaWRM {
     uint16_t height;
     uint8_t bpp;
 
+    static const size_t size_for_stream = 7;
+
     MetaWRM()
     : version(0)
     , width(0)

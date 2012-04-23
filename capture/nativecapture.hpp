@@ -51,6 +51,8 @@
 
 #include "GraphicToFile.hpp"
 
+#include <iostream>
+
 class NativeCapture : public RDPGraphicDevice
 {
     public:
@@ -140,6 +142,76 @@ public:
 
 private:
     struct BitmapsSender {
+
+        uint16_t used;
+        struct Data {
+            uint16_t cidx;
+            const Bitmap* bmp;
+        };
+        Data datas[8192];
+
+        struct Compare
+        {
+            bool operator()(const Data a, const Data b)
+            {
+                return a.bmp->data() < b.bmp->data();
+            }
+        };
+
+        BitmapsSender(const Bitmap* bitmaps[])
+        : used(0)
+        {
+            for (uint16_t cidx = 0; cidx < 8192 ; ++cidx){
+                const Bitmap* bmp = bitmaps[cidx];
+                if (bmp){
+                    this->datas[this->used].cidx = cidx;
+                    this->datas[this->used].bmp = bmp;
+                    ++this->used;
+                }
+            }
+            std::sort<>(&this->datas[0], &this->datas[this->used], Compare());
+        }
+
+        size_t size() const
+        {
+            size_t ret = 2 + 8 * this->used;
+            const uint8_t *prev_data = 0;
+            for (uint16_t cidx = 0; cidx < this->used; ++cidx){
+                const Bitmap* bmp = this->datas[cidx].bmp;
+                if (prev_data != bmp->data()){
+                    ret += 1 + bmp->bmp_size;
+                }
+                prev_data = bmp->data();
+            }
+            return ret;
+        }
+
+        void send_in(Stream& stream)
+        {
+            stream.out_uint16_le(this->used);
+            const uint8_t *prev_data = 0;
+            for (uint16_t n = 0; n < this->used; ++n){
+                Data &data = this->datas[n];
+                const Bitmap* bmp = data.bmp;
+                if (prev_data == bmp->data())
+                {
+                    stream.out_uint16_le(~uint16_t(0));
+                }
+                else
+                {
+                    stream.out_uint16_le(data.cidx);
+                    stream.out_uint32_le(bmp->bmp_size);
+                    stream.out_copy_bytes(bmp->data(), bmp->bmp_size);
+                }
+                prev_data = bmp->data();
+                stream.out_uint8(bmp->original_bpp);
+                stream.out_uint16_le(bmp->cx);
+                stream.out_uint16_le(bmp->cy);
+            }
+        }
+    };
+
+    /*struct BitmapsSender {
         typedef std::list<uint16_t> list_type;
 
         struct Data{
@@ -163,7 +235,6 @@ private:
             for (uint16_t cidx = 0; cidx < 8192 ; ++cidx){
                 const Bitmap* bmp = bitmaps[cidx];
                 if (bmp){
-                    ////std::cout << "ptr[" << cidx << "]: " << ((void*)bmp->data()) << '\n';
                     Data& data = this->find(bmp->data());
                     if (!data.bmp){
                         data.bmp = bmp;
@@ -172,7 +243,6 @@ private:
                     ++data.count;
                 }
             }
-            ////std::cout << "ptr end\n";
         }
 
         Data& find(const uint8_t *p)
@@ -185,17 +255,26 @@ private:
             return this->datas[this->used++];
         }
 
+        size_t size() const
+        {
+            size_t ret = 2;
+            for (size_t i = 0; i < this->used; ++i){
+                Data &data = this->datas[i];
+                ret += 1 + 2 + 2 + 4 + 1 + data.bmp->bmp_size
+                + std::distance<>(data.list.begin(), data.list.end()) * 2;
+            };
+            return ret;
+        }
+
         void send_in(OutFileTransport& trans, Stream& stream)
         {
             stream.init(4096);
             stream.out_uint16_le(this->used);
             trans.send(stream.data, 2);
-            //std::cout << "breakpoint bmp used: " << this->used << '\n';
             for (size_t i = 0; i < this->used; ++i){
                 Data &data = this->datas[i];
                 {
                     const Bitmap* bmp = data.bmp;
-                    //std::cout << "breakpoint bmp: " << short(bmp->original_bpp) << ',' << bmp->cx << ',' << bmp->cy << ',' << bmp->bmp_size << ',' << short(data.count) << '\n';
                     stream.init(4096);
                     stream.out_uint8(bmp->original_bpp);
                     stream.out_uint16_le(bmp->cx);
@@ -206,18 +285,16 @@ private:
                     trans.send((const char*)bmp->data(), bmp->bmp_size);
                 }
                 stream.init(4096);
-                //std::cout << "send_in";
-                for (typename list_type::iterator it = data.list.begin(),
+                typedef typename list_type::iterator iterator;
+                for (iterator it = data.list.begin(),
                     last = data.list.end(); it != last; ++it)
                 {
                     stream.out_uint16_le(*it);
-                    //std::cout << *it << ',';
                 }
-                //std::cout << '\n';
                 trans.send(stream.data, sizeof(uint16_t) * data.count);
             }
         }
-    };
+    };*/
 
     void send_rect(const Rect& rect)
     {
@@ -264,7 +341,16 @@ public:
 
         close(this->trans.fd);
         this->open_file();
-        this->recorder.init();
+
+        BitmapsSender sender_cache1(this->recorder.bmp_cache.cache[0]);
+        BitmapsSender sender_cache2(this->recorder.bmp_cache.cache[1]);
+        BitmapsSender sender_cache3(this->recorder.bmp_cache.cache[2]);
+        {
+            size_t allocate = 8 + MetaWRM::size_for_stream + 9 + 12 + 9 + 28
+            + 13 + 17 + 20 + 47 + this->recorder.glyphindex.data_len + 2 + 16
+            + 4 + pix_len + sizeof(this->recorder.bmp_cache.stamps) + sender_cache1.size() + sender_cache2.size() + sender_cache3.size();
+            this->recorder.init(allocate);
+        }
 
         this->recorder.chunk_type = WRMChunk::BREAKPOINT;
         this->recorder.order_count = 1;
@@ -275,37 +361,27 @@ public:
             //std::cout << "breakpoint: meta" << this->width << ',' <<  this->height << ',' <<  this->bpp << '\n';
         }
 
-        //char texttest[10000];
+        TODO("use absolute order chunk");
 
         this->recorder.stream.out_uint8(this->recorder.common.order);
         this->send_rect(this->recorder.common.clip);
-        //this->recorder.common.str(texttest, 10000);
-        //std::cout << "breakpoint: " << texttest << '\n';
 
         this->recorder.stream.out_uint32_le(this->recorder.opaquerect.color);
         this->send_rect(this->recorder.opaquerect.rect);
-        //std::cout << "breakpoint: ";
-        //this->recorder.opaquerect.print(Rect(0,0,0,0));
 
         this->recorder.stream.out_uint8(this->recorder.destblt.rop);
         this->send_rect(this->recorder.destblt.rect);
-        //std::cout << "breakpoint: ";
-        //this->recorder.destblt.print(Rect(0,0,0,0));
 
         this->recorder.stream.out_uint8(this->recorder.patblt.rop);
         this->recorder.stream.out_uint32_le(this->recorder.patblt.back_color);
         this->recorder.stream.out_uint32_le(this->recorder.patblt.fore_color);
         this->send_brush(this->recorder.patblt.brush);
         this->send_rect(this->recorder.patblt.rect);
-        //std::cout << "breakpoint: ";
-        //this->recorder.patblt.print(Rect(0,0,0,0));
 
         this->recorder.stream.out_uint8(this->recorder.scrblt.rop);
         this->recorder.stream.out_uint16_le(this->recorder.scrblt.srcx);
         this->recorder.stream.out_uint16_le(this->recorder.scrblt.srcy);
         this->send_rect(this->recorder.scrblt.rect);
-        //std::cout << "breakpoint: ";
-        //this->recorder.scrblt.print(Rect(0,0,0,0));
 
         this->recorder.stream.out_uint8(this->recorder.memblt.rop);
         this->recorder.stream.out_uint16_le(this->recorder.memblt.srcx);
@@ -313,8 +389,6 @@ public:
         this->recorder.stream.out_uint16_le(this->recorder.memblt.cache_id);
         this->recorder.stream.out_uint16_le(this->recorder.memblt.cache_idx);
         this->send_rect(this->recorder.memblt.rect);
-        //std::cout << "breakpoint: ";
-        //this->recorder.memblt.print(Rect(0,0,0,0));
 
         this->recorder.stream.out_uint8(this->recorder.lineto.rop2);
         this->recorder.stream.out_uint16_le(this->recorder.lineto.startx);
@@ -324,8 +398,6 @@ public:
         this->recorder.stream.out_uint8(this->recorder.lineto.back_mode);
         this->recorder.stream.out_uint32_le(this->recorder.lineto.back_color);
         this->send_pen(this->recorder.lineto.pen);
-        //std::cout << "breakpoint: ";
-        //this->recorder.lineto.print(Rect(0,0,0,0));
 
         this->recorder.stream.out_uint32_le(this->recorder.glyphindex.back_color);
         this->recorder.stream.out_uint32_le(this->recorder.glyphindex.fore_color);
@@ -340,11 +412,8 @@ public:
         this->send_rect(this->recorder.glyphindex.op);
         this->send_brush(this->recorder.glyphindex.brush);
         this->recorder.stream.out_copy_bytes(this->recorder.glyphindex.data, this->recorder.glyphindex.data_len);
-        //std::cout << "breakpoint: ";
-        //this->recorder.glyphindex.print(Rect(0,0,0,0));
 
         this->recorder.stream.out_uint16_le(this->recorder.order_count);
-        //std::cout << "\nbreakpoint: " << this->recorder.order_count << '\n';
 
         this->recorder.stream.out_uint16_le(this->recorder.bmp_cache.small_entries);
         this->recorder.stream.out_uint16_le(this->recorder.bmp_cache.small_size);
@@ -353,34 +422,23 @@ public:
         this->recorder.stream.out_uint16_le(this->recorder.bmp_cache.big_entries);
         this->recorder.stream.out_uint16_le(this->recorder.bmp_cache.big_size);
         this->recorder.stream.out_uint32_le(this->recorder.bmp_cache.stamp);
-        //std::cout << "breakpoint: " << this->recorder.bmp_cache.small_entries << ',' << this->recorder.bmp_cache.small_size << ',' << this->recorder.bmp_cache.medium_entries << ',' << this->recorder.bmp_cache.medium_size << ',' << this->recorder.bmp_cache.big_entries << ',' << this->recorder.bmp_cache.big_size << "";
 
         this->recorder.stream.out_uint32_le(pix_len);
 
-        this->recorder.send_order();
+        this->recorder.stream.out_copy_bytes(data_drawable, pix_len);
 
-        this->trans.send(data_drawable, pix_len);
-
-        for (size_t cid = 0; cid < 3 ; ++cid){
-            uint32_t* stamps = this->recorder.bmp_cache.stamps[cid];
-            //std::cout << "\nbreakpoint: cid=" << cid << ": ";
-            for (uint8_t n = 0; n < 8; ++n, stamps += 1024){
-                this->recorder.stream.init(4096);
-                for (size_t cidx = 0; cidx < 1024; ++cidx){
-                    this->recorder.stream.out_uint32_le(stamps[cidx]);
-                    //if (stamps[cidx])
-                    //    std::cout << cidx << ':' << stamps[cidx] << ',';
-                }
-                this->trans.send(this->recorder.stream.data, 4096);
+        for (size_t cid = 0; cid != 3 ; ++cid){
+            const uint32_t (&stamps)[8192] = this->recorder.bmp_cache.stamps[cid];
+            for (uint16_t cidx = 0; cidx != 8192; ++cidx){
+                this->recorder.stream.out_uint32_le(stamps[cidx]);
             }
         }
-        //std::cout << "cid end\n";
 
-        for (size_t cid = 0; cid < 3 ; ++cid){
-            BitmapsSender sender(this->recorder.bmp_cache.cache[cid]);
-            sender.send_in(this->trans, this->recorder.stream);
-        }
+        sender_cache1.send_in(this->recorder.stream);
+        sender_cache2.send_in(this->recorder.stream);
+        sender_cache3.send_in(this->recorder.stream);
 
+        this->recorder.send_order();
         this->recorder.init();
         this->recorder.chunk_type = RDP_UPDATE_ORDERS;
     }
