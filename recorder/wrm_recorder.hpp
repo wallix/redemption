@@ -162,6 +162,8 @@ public:
 
                 //char texttest[10000];
 
+                TODO("use absolute order chunk");
+
                 this->reader.common.order = this->reader.stream.in_uint8();
                 this->recv_rect(this->reader.common.clip);
                 //this->reader.common.str(texttest, 10000);
@@ -252,24 +254,16 @@ public:
                         }
                     }
                     this->drawable->pix_len = pix_len;
-                    uint8_t *p = this->drawable->data;
-                    this->trans.recv(&p, pix_len);
+                    this->reader.stream.in_copy_bytes(this->drawable->data, pix_len);
                 }
 
-                for (size_t cid = 0; cid < 3 ; ++cid){
-                    uint32_t* stamps = this->reader.bmp_cache.stamps[cid];
-                    //std::cout << "\ninterpret_order: cid=" << cid << ": ";
-                    for (uint8_t n = 0; n < 8; ++n, stamps += 1024){
-                        this->reader.stream.init(4096);
-                        this->trans.recv(&this->reader.stream.end, 4096);
-                        for (size_t cidx = 0; cidx < 1024; ++cidx){
-                            stamps[cidx] = this->reader.stream.in_uint32_le();
-                            //if (stamps[cidx])
-                            //    std::cout << cidx << ':' << stamps[cidx] << ',';
-                        }
+
+                for (size_t cid = 0; cid != 3 ; ++cid){
+                    uint32_t (&stamps)[8192] = this->reader.bmp_cache.stamps[cid];
+                    for (uint8_t cidx = 0; cidx != 8192; ++cidx){
+                        stamps[cidx] = this->reader.stream.in_uint32_le();
                     }
                 }
-                //std::cout << "cid end\n";
 
                 {
                     uint8_t bpp;
@@ -279,44 +273,40 @@ public:
 
                     BGRPalette palette;
 
-                    char bmp_data[this->reader.bmp_cache.big_size];
+                    uint8_t bmp_data[this->reader.bmp_cache.big_size];
 
                     uint16_t used;
-                    uint8_t count;
                     uint16_t cidx;
-                    uint16_t fcidx;
+                    uint16_t prev_cidx;
 
                     for (size_t cid = 0; cid < 3 ; ++cid){
                         const Bitmap * (&cache)[8192] = this->reader.bmp_cache.cache[cid];
                         uint8_t (&sha1)[8192][20] = this->reader.bmp_cache.sha1[cid];
-                        bzero((void*)cache, 8192 * sizeof(Bitmap *));
-                        this->reader.stream.init(4096);
-                        this->trans.recv(&this->reader.stream.end, 2);
-                        used = this->reader.stream.in_uint16_le();
-                        //std::cout << "interpret_order bmp used: " << used << '\n';
-                        for (; used; --used){
-                            this->reader.stream.init(4096);
-                            this->trans.recv(&this->reader.stream.end, 10);
+
+                        for (cidx = 0; cidx != 8192; ++cidx){
+                            delete cache[cidx];
+                            cache[cidx] = 0;
+                        }
+
+                        prev_cidx = 0;
+                        for (used = this->reader.stream.in_uint16_le(); used; --used){
+                            cidx = this->reader.stream.in_uint16_le();
+                            if (cidx != ~uint16_t(0)){
+                                bmp_size = this->reader.stream.in_uint32_le();
+                                this->reader.stream.in_copy_bytes(bmp_data, bmp_size);
+                            }
                             bpp = this->reader.stream.in_uint8();
                             cx = this->reader.stream.in_uint16_le();
                             cy = this->reader.stream.in_uint16_le();
-                            bmp_size = this->reader.stream.in_uint32_le();
-                            count = this->reader.stream.in_uint8();
-                            //std::cout << "interpret_order bmp: " << short(bpp) << ',' << cx << ',' << cy << ',' << bmp_size << ',' << short(count) << '\n';
-                            char * p = (char*)bmp_data;
-                            this->trans.recv(&p, bmp_size);
-
-                            this->reader.stream.init(4096);
-                            this->trans.recv(&this->reader.stream.end, sizeof(uint16_t) * count);
-                            const Bitmap* bmp = new Bitmap(bpp, &palette, cx, cy, (uint8_t*)bmp_data, bmp_size);
-                            cidx = this->reader.stream.in_uint16_le();
-                            fcidx = cidx;
-                            cache[cidx] = bmp;
-                            bmp->compute_sha1(sha1[cidx]);
-                            while (--count){
-                                cidx = this->reader.stream.in_uint16_le();
-                                cache[cidx] = new Bitmap(bpp, *bmp);
-                                memcpy(sha1[cidx], sha1[fcidx], 20);
+                            if (cidx == ~uint16_t(0)){
+                                const Bitmap* bmp = new Bitmap(bpp, &palette, cx, cy, bmp_data, bmp_size);
+                                cache[cidx] = bmp;
+                                bmp->compute_sha1(sha1[cidx]);
+                                prev_cidx = cidx;
+                            }
+                            else{
+                                cache[cidx] = new Bitmap(bpp, *cache[prev_cidx]);
+                                memcpy(sha1[cidx], sha1[prev_cidx], 20);
                             }
                         }
                     }
