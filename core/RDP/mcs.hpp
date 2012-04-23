@@ -155,7 +155,7 @@ class McsIn
 
 static inline void mcs_send_connect_initial(
             Transport * trans,
-            const ChannelList & channel_list,
+            const ChannelDefArray & channel_list,
             const uint16_t front_width,
             const uint16_t front_height,
             const uint8_t front_bpp,
@@ -331,8 +331,8 @@ static inline void mcs_send_connect_initial(
 
 static inline void mcs_recv_connect_response(
                         Transport * trans,
-                        ChannelList & mod_channel_list,
-                        const ChannelList & front_channel_list,
+                        ChannelDefArray & mod_channel_list,
+                        const ChannelDefArray & front_channel_list,
                         CryptContext & encrypt, CryptContext & decrypt,
                         uint32_t & server_public_key_len,
                         uint8_t (& client_crypt_random)[512],
@@ -474,7 +474,7 @@ static inline void mcs_recv_connect_response(
 static inline void mcs_recv_connect_initial(
                 Transport * trans,
                 ClientInfo * client_info,
-                ChannelList & channel_list)
+                ChannelDefArray & channel_list)
 {
     Stream stream(32768);
     X224In(trans, stream);
@@ -912,7 +912,7 @@ static inline void mcs_recv_connect_initial(
 static inline void mcs_send_connect_response(
                         Transport * trans,
                         ClientInfo * client_info,
-                        const ChannelList & channel_list,
+                        const ChannelDefArray & channel_list,
                         uint8_t (&server_random)[32],
                         int rc4_key_size,
                         uint8_t (&pub_mod)[512],

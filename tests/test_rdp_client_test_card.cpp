@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
     class Front : public FrontAPI {
         public:
         const ClientInfo & info;
-        ChannelList cl;
+        ChannelDefArray cl;
 
         virtual void flush() {}
         virtual void draw(const RDPOpaqueRect& cmd, const Rect& clip)
@@ -85,8 +85,8 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
             cmd.log(LOG_INFO, clip);
         }
 
-        virtual const ChannelList & get_channel_list(void) const { return cl; }
-        virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags)
+        virtual const ChannelDefArray & get_channel_list(void) const { return cl; }
+        virtual void send_to_channel(const ChannelDef & channel, uint8_t* data, size_t length, size_t chunk_size, int flags)
         {
         }
 

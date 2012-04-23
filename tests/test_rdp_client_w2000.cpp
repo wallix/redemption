@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         public:
         uint32_t verbose;
         const ClientInfo & info;
-        ChannelList cl;
+        ChannelDefArray cl;
         uint8_t mod_bpp;
 
         virtual void flush()
@@ -138,8 +138,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
             exit(0);
         }
 
-        virtual const ChannelList & get_channel_list(void) const { return cl; }
-        virtual void send_to_channel(const McsChannelItem & channel, uint8_t* data, size_t length, size_t chunk_size, int flags)
+        virtual const ChannelDefArray & get_channel_list(void) const { return cl; }
+        virtual void send_to_channel(const ChannelDef & channel, uint8_t* data, size_t length, size_t chunk_size, int flags)
         {
         }
 

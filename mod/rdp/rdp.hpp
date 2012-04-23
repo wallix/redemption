@@ -311,7 +311,7 @@ struct mod_rdp : public client_mod {
     /* mod data */
     Stream in_stream;
     Transport *trans;
-    ChannelList mod_channel_list;
+    ChannelDefArray mod_channel_list;
 
     bool dev_redirection_enable;
     int use_rdp5;
@@ -491,7 +491,7 @@ struct mod_rdp : public client_mod {
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::send_to_mod_channel");
         }
-        const McsChannelItem * mod_channel = this->mod_channel_list.get(front_channel_name);
+        const ChannelDef * mod_channel = this->mod_channel_list.get(front_channel_name);
         // send it if module has a matching channel, if no matching channel is found just forget it
         if (mod_channel){
             this->send_to_channel(*mod_channel, data, length, chunk_size, flags);
@@ -502,7 +502,7 @@ struct mod_rdp : public client_mod {
     }
 
     void send_to_channel(
-                const McsChannelItem & channel,
+                const ChannelDef & channel,
                 uint8_t * data,
                 size_t length,
                 size_t chunk_size,
@@ -519,8 +519,8 @@ struct mod_rdp : public client_mod {
 
         stream.out_uint32_le(length);
         stream.out_uint32_le(flags);
-        if (channel.flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
-            flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
+        if (channel.flags & ChannelDef::CHANNEL_OPTION_SHOW_PROTOCOL) {
+            flags |= ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
         stream.out_copy_bytes(data, chunk_size);
         sec_out.end();
@@ -1335,7 +1335,7 @@ struct mod_rdp : public client_mod {
 //                LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:Channel");
                 size_t num_channel_src = this->mod_channel_list.size();
                 for (size_t index = 0; index < num_channel_src; index++){
-                    const McsChannelItem & mod_channel_item = this->mod_channel_list[index];
+                    const ChannelDef & mod_channel_item = this->mod_channel_list[index];
                     if (mcs_in.chan_id == mod_channel_item.chanid){
                         num_channel_src = index;
                         break;
@@ -1347,7 +1347,7 @@ struct mod_rdp : public client_mod {
                     throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                 }
 
-                const McsChannelItem & mod_channel = this->mod_channel_list[num_channel_src];
+                const ChannelDef & mod_channel = this->mod_channel_list[num_channel_src];
 
                 uint32_t length = stream.in_uint32_le();
                 int flags = stream.in_uint32_le();

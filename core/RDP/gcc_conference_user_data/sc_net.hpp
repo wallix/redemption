@@ -90,7 +90,7 @@ struct SCNetGccUserData {
 };
 
 
-static inline void parse_mcs_data_sc_net(Stream & stream, const ChannelList & front_channel_list, ChannelList & mod_channel_list)
+static inline void parse_mcs_data_sc_net(Stream & stream, const ChannelDefArray & front_channel_list, ChannelDefArray & mod_channel_list)
 {
     LOG(LOG_INFO, "SC_NET");
 
@@ -115,7 +115,7 @@ static inline void parse_mcs_data_sc_net(Stream & stream, const ChannelList & fr
 //00 00 -> padding
 
 
-static inline void out_mcs_data_sc_net(Stream & stream, const ChannelList & channel_list)
+static inline void out_mcs_data_sc_net(Stream & stream, const ChannelDefArray & channel_list)
 {
     uint16_t num_channels = channel_list.size();
     uint16_t padchan = num_channels & 1;

@@ -101,7 +101,7 @@ struct client_mod : public Callback {
 
     void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags)
     {
-        const McsChannelItem * front_channel = this->front.get_channel_list().get(mod_channel_name);
+        const ChannelDef * front_channel = this->front.get_channel_list().get(mod_channel_name);
         if (front_channel){
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
         }

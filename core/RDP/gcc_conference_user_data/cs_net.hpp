@@ -98,7 +98,7 @@
 //                              field (section 2.2.6.1.1).
 // -------------------------------------------------------------------------
 //REMOTE_CONTROL_PERSISTENT     Channel MUST be persistent across remote
-//                              control 0x00100000 transactions.
+//       0x00100000             control transactions.
 
 struct CSNetGccUserData {
     uint16_t userDataType;
@@ -131,7 +131,7 @@ struct CSNetGccUserData {
 
 // this adds the mcs channels in the list of channels to be used when
 // creating the server mcs data
-static inline void parse_mcs_data_cs_net(Stream & stream, const ClientInfo * client_info, ChannelList & channel_list)
+static inline void parse_mcs_data_cs_net(Stream & stream, const ClientInfo * client_info, ChannelDefArray & channel_list)
 {
     LOG(LOG_INFO, "CS_NET");
 //    // this is an option set in rdpproxy.ini
@@ -143,16 +143,16 @@ static inline void parse_mcs_data_cs_net(Stream & stream, const ClientInfo * cli
     LOG(LOG_INFO, "cs_net:channel_count %u [%u]", channelCount, channel_list.size());
 
     for (uint32_t index = 0; index < channelCount; index++) {
-        McsChannelItem channel_item;
+        ChannelDef channel_item;
         memcpy(channel_item.name, stream.in_uint8p(8), 8);
         channel_item.flags = stream.in_uint32_be();
         channel_item.chanid = MCS_GLOBAL_CHANNEL + (index + 1);
-        TODO(" push_back is not the best choice here as we have static space already available in channel_list we could even let ChannelList manage parsing")
+        TODO(" push_back is not the best choice here as we have static space already available in channel_list we could even let ChannelDefArray manage parsing")
         channel_list.push_back(channel_item);
     }
 }
 
-static inline void mod_rdp_out_cs_net(Stream & stream, const ChannelList & channel_list)
+static inline void mod_rdp_out_cs_net(Stream & stream, const ChannelDefArray & channel_list)
 {
     /* Here we need to put channel information in order to redirect channel data
     from client to server passing through the "proxy" */
@@ -167,7 +167,7 @@ static inline void mod_rdp_out_cs_net(Stream & stream, const ChannelList & chann
         LOG(LOG_INFO, "cs_net::nb_chan=%u", num_channels);
         stream.out_uint32_le(num_channels); /* number of virtual channels */
         for (size_t index = 0; index < num_channels; index++){
-            const McsChannelItem & channel_item = channel_list[index];
+            const ChannelDef & channel_item = channel_list[index];
             stream.out_copy_bytes(channel_item.name, 8);
             stream.out_uint32_be(channel_item.flags);
         }

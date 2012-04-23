@@ -164,7 +164,7 @@ public:
     Capture * capture;
     GraphicsUpdatePDU * orders;
     Keymap2 keymap;
-    ChannelList channel_list;
+    ChannelDefArray channel_list;
     int up_and_running;
     int share_id;
     struct ClientInfo client_info;
@@ -547,13 +547,13 @@ public:
         this->client_info.console_session = b;
     }
 
-    virtual const ChannelList & get_channel_list(void) const
+    virtual const ChannelDefArray & get_channel_list(void) const
     {
         return this->channel_list;
     }
 
     virtual void send_to_channel(
-        const McsChannelItem & channel,
+        const ChannelDef & channel,
         uint8_t* data,
         size_t length,
         size_t chunk_size,
@@ -569,8 +569,8 @@ public:
         SecOut sec_out(stream, sec_flags, this->encrypt);
 
         stream.out_uint32_le(length);
-        if (channel.flags & CHANNEL_OPTION_SHOW_PROTOCOL) {
-            flags |= CHANNEL_FLAG_SHOW_PROTOCOL;
+        if (channel.flags & ChannelDef::CHANNEL_OPTION_SHOW_PROTOCOL) {
+            flags |= ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
         stream.out_uint32_le(flags);
         stream.out_copy_bytes(data, chunk_size);
@@ -1736,7 +1736,7 @@ public:
         // connection management information and virtual channel messages (exchanged
         // between client-side plug-ins and server-side applications).
         {
-            ChannelList & channel_list = this->channel_list;
+            ChannelDefArray & channel_list = this->channel_list;
 
             Stream stream(65535);
 
@@ -1806,7 +1806,7 @@ public:
                     throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                 }
 
-                const McsChannelItem & channel = channel_list[num_channel_src];
+                const ChannelDef & channel = channel_list[num_channel_src];
 
                 int length = stream.in_uint32_le();
                 int flags = stream.in_uint32_le();
