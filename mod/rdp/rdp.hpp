@@ -340,6 +340,7 @@ struct mod_rdp : public client_mod {
     CryptContext encrypt, decrypt;
 
     enum {
+        MOD_RDP_NEGO,
         MOD_RDP_CONNECTING,
         MOD_RDP_CONNECTION_INITIATION,
         MOD_RDP_BASIC_SETTINGS_EXCHANGE,
@@ -366,6 +367,8 @@ struct mod_rdp : public client_mod {
     Random * gen;
     uint32_t verbose;
 
+    RdpNego nego;
+
     mod_rdp(Transport * trans,
             const char * target_user,
             const char * target_password,
@@ -390,12 +393,16 @@ struct mod_rdp : public client_mod {
                     crypt_level(0),
                     server_public_key_len(0),
                     connection_finalization_state(EARLY),
-                    state(MOD_RDP_CONNECTING),
+                    state(MOD_RDP_NEGO),
                     console_session(info.console_session),
                     brush_cache_code(info.brush_cache_code),
                     front_bpp(info.bpp),
                     gen(gen),
-                    verbose(verbose)
+                    verbose(verbose),
+                    nego(RdpNego::PROTOCOL_NLA
+                        |RdpNego::PROTOCOL_RDP
+                        |RdpNego::PROTOCOL_TLS,
+                        trans, target_user)
     {
         LOG(LOG_INFO, "Creation of new mod 'RDP'");
         // from rdp_sec
@@ -545,22 +552,15 @@ struct mod_rdp : public client_mod {
         char * hostname = this->hostname;
 
         switch (this->state){
-        case MOD_RDP_CONNECTING:
-            LOG(LOG_INFO, "mod_rdp::Connecting");
-            // Connection Initiation
-            // ---------------------
-
-            // The client initiates the connection by sending the server an X.224 Connection
-            //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
-            // PDU (class 0). From this point, all subsequent data sent between client and
-            // server is wrapped in an X.224 Data Protocol Data Unit (PDU).
-
-            // Client                                                     Server
-            //    |------------X224 Connection Request PDU----------------> |
-            //    | <----------X224 Connection Confirm PDU----------------- |
-
-            this->send_x224_connection_request_pdu(trans);
-            this->state = MOD_RDP_CONNECTION_INITIATION;
+        case MOD_RDP_NEGO:
+            switch (this->nego.state){
+                default:
+                    this->nego.server_event();
+                break;
+                case RdpNego::NEGO_STATE_FINAL:
+                    this->state = MOD_RDP_CONNECTION_INITIATION;
+                break;
+            }
         break;
 
         case MOD_RDP_CONNECTION_INITIATION:
@@ -1204,75 +1204,24 @@ struct mod_rdp : public client_mod {
 // Connection Finalization phases as described in section 1.3.1.1) but excluding
 // the Persistent Key List PDU.
 
-    // 2.2.1.1 Client X.224 Connection Request PDU
-    // ===========================================
 
-    // The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
-    // client to server during the Connection Initiation phase (see section 1.3.1.1).
+// 2.2.1.2 Server X.224 Connection Confirm PDU
+// ===========================================
 
-    // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+// The X.224 Connection Confirm PDU is an RDP Connection Sequence PDU sent from
+// server to client during the Connection Initiation phase (see section
+// 1.3.1.1). It is sent as a response to the X.224 Connection Request PDU
+// (section 2.2.1.1).
 
-    // x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
-    // data unit (TPDU), as specified in [X224] section 13.3.
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
 
-    // routingToken (variable): An optional and variable-length routing token
-    // (used for load balancing) terminated by a carriage-return (CR) and line-feed
-    // (LF) ANSI sequence. For more information about Terminal Server load balancing
-    // and the routing token format, see [MSFT-SDLBTS]. The length of the routing
-    // token and CR+LF sequence is included in the X.224 Connection Request Length
-    // Indicator field. If this field is present, then the cookie field MUST NOT be
-    //  present.
+// x224Ccf (7 bytes): An X.224 Class 0 Connection Confirm TPDU, as specified in
+// [X224] section 13.4.
 
-    //cookie (variable): An optional and variable-length ANSI text string terminated
-    // by a carriage-return (CR) and line-feed (LF) ANSI sequence. This text string
-    // MUST be "Cookie: mstshash=IDENTIFIER", where IDENTIFIER is an ANSI string
-    //(an example cookie string is shown in section 4.1.1). The length of the entire
-    // cookie string and CR+LF sequence is included in the X.224 Connection Request
-    // Length Indicator field. This field MUST NOT be present if the routingToken
-    // field is present.
-
-    // rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
-    // structure. The length of this negotiation structure is included in the X.224
-    // Connection Request Length Indicator field.
-
-    void send_x224_connection_request_pdu(Transport * trans)
-    {
-        if (this->verbose){
-            LOG(LOG_INFO, "mod_rdp::send_x224_connection_request_pdu");
-        }
-        Stream out;
-        X224Out crtpdu(X224Packet::CR_TPDU, out);
-        crtpdu.stream.out_concat("Cookie: mstshash=");
-        crtpdu.stream.out_concat(this->username);
-        crtpdu.stream.out_concat("\r\n");
-//        crtpdu.stream.out_uint8(0x01);
-//        crtpdu.stream.out_uint8(0x00);
-//        crtpdu.stream.out_uint32_le(0x00);
-        crtpdu.extend_tpdu_hdr();
-        crtpdu.end();
-        crtpdu.send(trans);
-        if (this->verbose){
-            LOG(LOG_INFO, "mod_rdp::send_x224_connection_request_pdu done");
-        }
-    }
-
-    // 2.2.1.2 Server X.224 Connection Confirm PDU
-    // ===========================================
-
-    // The X.224 Connection Confirm PDU is an RDP Connection Sequence PDU sent from
-    // server to client during the Connection Initiation phase (see section
-    // 1.3.1.1). It is sent as a response to the X.224 Connection Request PDU
-    // (section 2.2.1.1).
-
-    // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-    // x224Ccf (7 bytes): An X.224 Class 0 Connection Confirm TPDU, as specified in
-    // [X224] section 13.4.
-
-    // rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1)
-    // structure or an optional RDP Negotiation Failure (section 2.2.1.2.2)
-    // structure. The length of the negotiation structure is included in the X.224
-    // Connection Confirm Length Indicator field.
+// rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1)
+// structure or an optional RDP Negotiation Failure (section 2.2.1.2.2)
+// structure. The length of the negotiation structure is included in the X.224
+// Connection Confirm Length Indicator field.
 
 // 2.2.1.2.1 RDP Negotiation Response (RDP_NEG_RSP)
 // ================================================

@@ -24,15 +24,18 @@
 #ifndef __CORE_RDP_NEGO_HPP__
 #define __CORE_RDP_NEGO_HPP__
 
-struct rdp_nego
+struct RdpNego
 {
+    enum {
+        EXTENDED_CLIENT_DATA_SUPPORTED = 0x01,
+    };
 
     // Protocol Security Negotiation Protocols
     enum RDP_NEG_PROTOCOLS
     {
-        PROTOCOL_RDP = 0x00000000,
-        PROTOCOL_TLS = 0x00000001,
-        PROTOCOL_NLA = 0x00000002
+        PROTOCOL_RDP = 0x00000001,
+        PROTOCOL_TLS = 0x00000002,
+        PROTOCOL_NLA = 0x00000004
     };
 
 //    int port;
@@ -40,7 +43,7 @@ struct rdp_nego
 //    char* hostname;
 //    char* cookie;
 
-    enum _NEGO_STATE
+    enum
     {
         NEGO_STATE_INITIAL,
         NEGO_STATE_NLA,  // Network Level Authentication (TLS implicit)
@@ -56,17 +59,583 @@ struct rdp_nego
 //        void* data;
 //        int length;
 //    } * routing_token;
-//    uint32_t selected_protocol;
-    uint32_t requested_protocols;
-//    uint8_t enabled_protocols[3];
-//    Transport * transport;
+    uint32_t selected_protocol;
+    uint32_t requested_protocol;
+    uint32_t enabled_protocols;
+    char username[128];
+    Transport * trans;
 
-    rdp_nego()
+    RdpNego(uint32_t enabled_protocols, Transport * trans, const char * username)
     : flags(0)
     , state(NEGO_STATE_INITIAL)
-    , requested_protocols(PROTOCOL_RDP)
+    , selected_protocol(PROTOCOL_RDP)
+    , requested_protocol(PROTOCOL_RDP)
+    , enabled_protocols(enabled_protocols)
+    , trans(trans)
     {
+        strncpy(this->username, username, 127);
+        this->username[127] = 0;
     }
+
+    void server_event()
+    {
+        this->send_negotiation_request();
+        this->state = NEGO_STATE_FINAL;
+    }
+
+
+
+    void connect()
+    {
+//        if (nego->state == this->STATE_INITIAL)
+//        {
+//            if (nego->enabled_protocols[PROTOCOL_NLA] > 0)
+//                nego->state = this->STATE_NLA;
+//            else if (nego->enabled_protocols[PROTOCOL_TLS] > 0)
+//                nego->state = this->STATE_TLS;
+//            else if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
+//                nego->state = this->STATE_RDP;
+//            else
+//                nego->state = this->STATE_FAIL;
+//        }
+
+//        do
+//        {
+//            DEBUG_NEGO("state: %s", this->STATE_STRINGS[nego->state]);
+
+//            this->send(nego);
+
+//            if (nego->state == this->STATE_FAIL)
+//            {
+//                DEBUG_NEGO("Protocol Security Negotiation Failure");
+//                nego->state = this->STATE_FINAL;
+//                return false;
+//            }
+//        }
+//        while (nego->state != this->STATE_FINAL);
+
+//        DEBUG_NEGO("Negotiated %s security", PROTOCOL_SECURITY_STRINGS[nego->selected_protocol]);
+
+//        /* update settings with negotiated protocol security */
+//        nego->transport->settings->requested_protocols = nego->requested_protocols;
+//        nego->transport->settings->selected_protocol = nego->selected_protocol;
+//        nego->transport->settings->negotiationFlags = nego->flags;
+
+//        if(nego->selected_protocol == PROTOCOL_RDP)
+//        {
+//            nego->transport->settings->encryption = true;
+//            nego->transport->settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+//            nego->transport->settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+//        }
+
+//        return true;
+    }
+
+
+    void tcp_connect()
+    {
+//        if (nego->tcp_connected == 0)
+//        {
+//            if (transport_connect(nego->transport, nego->hostname, nego->port) == false)
+//            {
+//                nego->tcp_connected = 0;
+//                return false;
+//            }
+//            else
+//            {
+//                nego->tcp_connected = 1;
+//                return true;
+//            }
+//        }
+
+//        return true;
+    }
+
+
+    void tcp_disconnect()
+    {
+//        if (nego->tcp_connected)
+//            transport_disconnect(nego->transport);
+
+//        nego->tcp_connected = 0;
+//        return 1;
+    }
+
+    void attempt_nla()
+    {
+//        nego->requested_protocols = PROTOCOL_NLA | PROTOCOL_TLS;
+
+//        DEBUG_NEGO("Attempting NLA security");
+
+//        if (!this->tcp_connect(nego))
+//        {
+//            nego->state = this->STATE_FAIL;
+//            return;
+//        }
+
+//        if (!this->send_negotiation_request(nego))
+//        {
+//            nego->state = this->STATE_FAIL;
+//            return;
+//        }
+
+//        if (!this->recv_response(nego))
+//        {
+//            nego->state = this->STATE_FAIL;
+//            return;
+//        }
+
+//        DEBUG_NEGO("state: %s", this->STATE_STRINGS[nego->state]);
+//        if (nego->state != this->STATE_FINAL)
+//        {
+//            this->tcp_disconnect(nego);
+
+//            if (nego->enabled_protocols[PROTOCOL_TLS] > 0)
+//                nego->state = this->STATE_TLS;
+//            else if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
+//                nego->state = this->STATE_RDP;
+//            else
+//            nego->state = this->STATE_FAIL;
+//        }
+    }
+
+    void attempt_tls()
+    {
+//        nego->requested_protocols = PROTOCOL_TLS;
+
+//        DEBUG_NEGO("Attempting TLS security");
+
+//        if (!this->tcp_connect(nego))
+//        {
+//            nego->state = this->STATE_FAIL;
+//            return;
+//        }
+
+//        if (!this->send_negotiation_request(nego))
+//        {
+//            nego->state = this->STATE_FAIL;
+//            return;
+//        }
+
+//        if (!this->recv_response(nego))
+//        {
+//            nego->state = this->STATE_FAIL;
+//            return;
+//        }
+
+//        if (nego->state != this->STATE_FINAL)
+//        {
+//            this->tcp_disconnect(nego);
+
+//            if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
+//                nego->state = this->STATE_RDP;
+//            else
+//                nego->state = this->STATE_FAIL;
+//        }
+    }
+
+
+    void attempt_rdp()
+    {
+//        nego->requested_protocols = PROTOCOL_RDP;
+
+//        DEBUG_NEGO("Attempting RDP security");
+
+//        if (!this->tcp_connect(nego))
+//        {
+//            nego->state = this->STATE_FAIL;
+//            return;
+//        }
+
+//        if (!this->send_negotiation_request(nego))
+//        {
+//            nego->state = this->STATE_FAIL;
+//            return;
+//        }
+
+//        if (!this->recv_response(nego))
+//        {
+//            nego->state = this->STATE_FAIL;
+//            return;
+//        }
+    }
+
+    void recv_response()
+    {
+//        STREAM* s = transport_recv_stream_init(nego->transport, 1024);
+
+//        if (transport_read(nego->transport, s) < 0)
+//            return false;
+
+//        return this->recv(nego->transport, s, nego->transport->recv_extra);
+    }
+
+
+    void recv(Stream & stream, void* extra)
+    {
+//        uint8 li;
+//        uint8 type;
+//        rdpNego* nego = (rdpNego*) extra;
+
+//        if (tpkt_read_header(s) == 0)
+//            return false;
+
+//        li = tpdu_read_connection_confirm(s);
+
+//        if (li > 6)
+//        {
+//            /* rdpNegData (optional) */
+
+//            stream_read_uint8(s, type); /* Type */
+
+//            switch (type)
+//            {
+//                case TYPE_RDP_NEG_RSP:
+//                    this->process_negotiation_response(nego, s);
+
+//                    DEBUG_NEGO("selected_protocol: %d", nego->selected_protocol);
+
+//                    /* enhanced security selected ? */
+//                    if (nego->selected_protocol) {
+//                        if (nego->selected_protocol == PROTOCOL_NLA &&
+//                            !nego->enabled_protocols[PROTOCOL_NLA])
+//                            nego->state = this->STATE_FAIL;
+//                        if (nego->selected_protocol == PROTOCOL_TLS &&
+//                            !nego->enabled_protocols[PROTOCOL_TLS])
+//                            nego->state = this->STATE_FAIL;
+//                    } else if (!nego->enabled_protocols[PROTOCOL_RDP])
+//                        nego->state = this->STATE_FAIL;
+//                break;
+
+//                case TYPE_RDP_NEG_FAILURE:
+//                    this->process_negotiation_failure(nego, s);
+//                break;
+//            }
+//        }
+//        else
+//        {
+//            DEBUG_NEGO("no rdpNegData");
+//            if (!nego->enabled_protocols[PROTOCOL_RDP])
+//                nego->state = this->STATE_FAIL;
+//            else
+//                nego->state = this->STATE_FINAL;
+//        }
+
+//        return true;
+    }
+
+    void read_request(Stream & stream)
+    {
+//        uint8 li;
+//        uint8 c;
+//        uint8 type;
+
+//        tpkt_read_header(s);
+//        li = tpdu_read_connection_request(s);
+
+//        if (li != stream_get_left(s) + 6)
+//        {
+//            printf("Incorrect TPDU length indicator.\n");
+//            return false;
+//        }
+
+//        if (stream_get_left(s) > 8)
+//        {
+//            /* Optional routingToken or cookie, ending with CR+LF */
+//            while (stream_get_left(s) > 0)
+//            {
+//                stream_read_uint8(s, c);
+//                if (c != '\x0D')
+//                    continue;
+//                stream_peek_uint8(s, c);
+//                if (c != '\x0A')
+//                    continue;
+
+//                stream_seek_uint8(s);
+//                break;
+//            }
+//        }
+
+//        if (stream_get_left(s) >= 8)
+//        {
+//            /* rdpNegData (optional) */
+
+//            stream_read_uint8(s, type); /* Type */
+//            if (type != TYPE_RDP_NEG_REQ)
+//            {
+//                printf("Incorrect negotiation request type %d\n", type);
+//                return false;
+//            }
+
+//            this->process_negotiation_request(nego, s);
+//        }
+
+//        return true;
+    }
+
+
+    void send()
+    {
+//        if (nego->state == this->STATE_NLA)
+//            this->attempt_nla(nego);
+//        else if (nego->state == this->STATE_TLS)
+//            this->attempt_tls(nego);
+//        else if (nego->state == this->STATE_RDP)
+//            this->attempt_rdp(nego);
+//        else
+//            DEBUG_NEGO("invalid negotiation state for sending");
+    }
+
+    // 2.2.1.1 Client X.224 Connection Request PDU
+    // ===========================================
+
+    // The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
+    // client to server during the Connection Initiation phase (see section 1.3.1.1).
+
+    // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+    // x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
+    // data unit (TPDU), as specified in [X224] section 13.3.
+
+    // routingToken (variable): An optional and variable-length routing token
+    // (used for load balancing) terminated by a carriage-return (CR) and line-feed
+    // (LF) ANSI sequence. For more information about Terminal Server load balancing
+    // and the routing token format, see [MSFT-SDLBTS]. The length of the routing
+    // token and CR+LF sequence is included in the X.224 Connection Request Length
+    // Indicator field. If this field is present, then the cookie field MUST NOT be
+    //  present.
+
+    //cookie (variable): An optional and variable-length ANSI text string terminated
+    // by a carriage-return (CR) and line-feed (LF) ANSI sequence. This text string
+    // MUST be "Cookie: mstshash=IDENTIFIER", where IDENTIFIER is an ANSI string
+    //(an example cookie string is shown in section 4.1.1). The length of the entire
+    // cookie string and CR+LF sequence is included in the X.224 Connection Request
+    // Length Indicator field. This field MUST NOT be present if the routingToken
+    // field is present.
+
+    // rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
+    // structure. The length of this negotiation structure is included in the X.224
+    // Connection Request Length Indicator field.
+
+    void send_negotiation_request()
+    {
+        LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu");
+        Stream out;
+        X224Out crtpdu(X224Packet::CR_TPDU, out);
+        crtpdu.stream.out_concat("Cookie: mstshash=");
+        crtpdu.stream.out_concat(this->username);
+        crtpdu.stream.out_concat("\r\n");
+//        crtpdu.stream.out_uint8(0x01);
+//        crtpdu.stream.out_uint8(0x00);
+//        crtpdu.stream.out_uint32_le(0x00);
+        crtpdu.extend_tpdu_hdr();
+        crtpdu.end();
+        crtpdu.send(this->trans);
+        LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
+
+//        STREAM* s;
+//        int length;
+//        uint8 *bm, *em;
+
+//        s = transport_send_stream_init(nego->transport, 256);
+//        length = TPDU_CONNECTION_REQUEST_LENGTH;
+//        stream_get_mark(s, bm);
+//        stream_seek(s, length);
+
+//        if (nego->routing_token != NULL)
+//        {
+//            stream_write(s, nego->routing_token->data, nego->routing_token->length);
+//            length += nego->routing_token->length;
+//        }
+//        else if (nego->cookie != NULL)
+//        {
+//            int cookie_length = strlen(nego->cookie);
+//            stream_write(s, "Cookie: mstshash=", 17);
+//            stream_write(s, (uint8*) nego->cookie, cookie_length);
+//            stream_write_uint8(s, 0x0D); /* CR */
+//            stream_write_uint8(s, 0x0A); /* LF */
+//            length += cookie_length + 19;
+//        }
+
+//        DEBUG_NEGO("requested_protocols: %d", nego->requested_protocols);
+//        if (nego->requested_protocols > PROTOCOL_RDP)
+//        {
+//            /* RDP_NEG_DATA must be present for TLS and NLA */
+//            stream_write_uint8(s, TYPE_RDP_NEG_REQ);
+//            stream_write_uint8(s, 0); /* flags, must be set to zero */
+//            stream_write_uint16(s, 8); /* RDP_NEG_DATA length (8) */
+//            stream_write_uint32(s, nego->requested_protocols); /* requestedProtocols */
+//            length += 8;
+//        }
+
+//        stream_get_mark(s, em);
+//        stream_set_mark(s, bm);
+//        tpkt_write_header(s, length);
+//        tpdu_write_connection_request(s, length - 5);
+//        stream_set_mark(s, em);
+
+//        if (transport_write(nego->transport, s) < 0)
+//            return false;
+
+//        return true;
+    }
+
+
+    void process_negotiation_request(Stream & stream)
+    {
+//        uint8 flags;
+//        uint16 length;
+
+//        DEBUG_NEGO("RDP_NEG_REQ");
+
+//        stream_read_uint8(s, flags);
+//        stream_read_uint16(s, length);
+//        stream_read_uint32(s, nego->requested_protocols);
+
+//        nego->state = this->STATE_FINAL;
+    }
+
+
+    void process_negotiation_response(Stream & stream)
+    {
+//        uint16 length;
+
+//        DEBUG_NEGO("RDP_NEG_RSP");
+
+//        stream_read_uint8(s, nego->flags);
+//        stream_read_uint16(s, length);
+//        stream_read_uint32(s, nego->selected_protocol);
+
+//        nego->state = this->STATE_FINAL;
+    }
+
+    void process_negotiation_failure(Stream & stream)
+    {
+//        uint8 flags;
+//        uint16 length;
+//        uint32 failureCode;
+
+//        DEBUG_NEGO("RDP_NEG_FAILURE");
+
+//        stream_read_uint8(s, flags);
+//        stream_read_uint16(s, length);
+//        stream_read_uint32(s, failureCode);
+
+//        switch (failureCode)
+//        {
+//        case SSL_REQUIRED_BY_SERVER:
+//            DEBUG_NEGO("Error: SSL_REQUIRED_BY_SERVER");
+//        break;
+//        case SSL_NOT_ALLOWED_BY_SERVER:
+//            DEBUG_NEGO("Error: SSL_NOT_ALLOWED_BY_SERVER");
+//        break;
+//        case SSL_CERT_NOT_ON_SERVER:
+//            DEBUG_NEGO("Error: SSL_CERT_NOT_ON_SERVER");
+//        break;
+//        case INCONSISTENT_FLAGS:
+//            DEBUG_NEGO("Error: INCONSISTENT_FLAGS");
+//        break;
+//        case HYBRID_REQUIRED_BY_SERVER:
+//            DEBUG_NEGO("Error: HYBRID_REQUIRED_BY_SERVER");
+//        break;
+//        default:
+//            DEBUG_NEGO("Error: Unknown protocol security error %d", failureCode);
+//        break;
+//        }
+
+//        nego->state = this->STATE_FAIL;
+    }
+
+
+    void send_negotiation_response()
+    {
+//        STREAM* s;
+//        rdpSettings* settings;
+//        int length;
+//        uint8 *bm, *em;
+//        boolean ret;
+
+//        ret = true;
+//        settings = nego->transport->settings;
+
+//        s = transport_send_stream_init(nego->transport, 256);
+//        length = TPDU_CONNECTION_CONFIRM_LENGTH;
+//        stream_get_mark(s, bm);
+//        stream_seek(s, length);
+
+//        if (nego->selected_protocol > PROTOCOL_RDP)
+//        {
+//            /* RDP_NEG_DATA must be present for TLS and NLA */
+//            stream_write_uint8(s, TYPE_RDP_NEG_RSP);
+//            stream_write_uint8(s, EXTENDED_CLIENT_DATA_SUPPORTED); /* flags */
+//            stream_write_uint16(s, 8); /* RDP_NEG_DATA length (8) */
+//            stream_write_uint32(s, nego->selected_protocol); /* selectedProtocol */
+//            length += 8;
+//        }
+//        else if (!settings->rdp_security)
+//        {
+//            stream_write_uint8(s, TYPE_RDP_NEG_FAILURE);
+//            stream_write_uint8(s, 0); /* flags */
+//            stream_write_uint16(s, 8); /* RDP_NEG_DATA length (8) */
+//            /*
+//            * TODO: Check for other possibilities,
+//            *       like SSL_NOT_ALLOWED_BY_SERVER.
+//            */
+//            printf("this->send_negotiation_response: client supports only Standard RDP Security\n");
+//            stream_write_uint32(s, SSL_REQUIRED_BY_SERVER);
+//            length += 8;
+//            ret = false;
+//        }
+
+//        stream_get_mark(s, em);
+//        stream_set_mark(s, bm);
+//        tpkt_write_header(s, length);
+//        tpdu_write_connection_confirm(s, length - 5);
+//        stream_set_mark(s, em);
+
+//        if (transport_write(nego->transport, s) < 0){
+//            return false;
+//        }
+
+//        if (ret)
+//        {
+//            /* update settings with negotiated protocol security */
+//            settings->requested_protocols = nego->requested_protocols;
+//            settings->selected_protocol = nego->selected_protocol;
+
+//            if (settings->selected_protocol == PROTOCOL_RDP)
+//            {
+//                settings->tls_security = false;
+//                settings->nla_security = false;
+//                settings->rdp_security = true;
+//                settings->encryption = true;
+//                settings->encryption_method = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+//                settings->encryption_level = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+//            }
+//            else if (settings->selected_protocol == PROTOCOL_TLS)
+//            {
+//                settings->tls_security = true;
+//                settings->nla_security = false;
+//                settings->rdp_security = false;
+//                settings->encryption = false;
+//                settings->encryption_method = ENCRYPTION_METHOD_NONE;
+//                settings->encryption_level = ENCRYPTION_LEVEL_NONE;
+//            }
+//            else if (settings->selected_protocol == PROTOCOL_NLA)
+//            {
+//                settings->tls_security = true;
+//                settings->nla_security = true;
+//                settings->rdp_security = false;
+//                settings->encryption = false;
+//                settings->encryption_method = ENCRYPTION_METHOD_NONE;
+//                settings->encryption_level = ENCRYPTION_LEVEL_NONE;
+//            }
+//        }
+
+//        return ret;
+    }
+
+
 };
 
 
