@@ -412,6 +412,37 @@ class Stream {
         ::out_bytes_le(this->data+offset, nb, value);
     }
 
+    // =========================================================================
+    // xER encoding rules support methods
+    // =========================================================================
+
+    enum {
+        ER_CLASS_MASK = 0xC0,
+        ER_PC_MASK    = 0x20,
+        ER_TAG_MASK   = 0x1F,
+    };
+
+    enum {
+        // Tag - bits 5 to 1
+        ER_TAG_BOOLEAN          = 0x01,
+        ER_TAG_INTEGER          = 0x02,
+        ER_TAG_BIT_STRING       = 0x03,
+        ER_TAG_OCTET_STRING     = 0x04,
+        ER_TAG_OBJECT_IDENFIER  = 0x06,
+        ER_TAG_ENUMERATED       = 0x0A,
+        ER_TAG_SEQUENCE         = 0x10,
+        ER_TAG_SEQUENCE_OF      = 0x10,
+        ER_TAG_GENERAL_STRING   = 0x1B,
+        ER_TAG_GENERALIZED_TIME = 0x18,
+        // P/C - bit 6
+        ER_PRIMITIVE            = 0x00, // 0
+        ER_CONSTRUCT            = 0x20, // 1
+        // Class - bits 8 and 7
+        ER_CLASS_UNIV           = 0x00, // 0 0
+        ER_CLASS_APPL           = 0x40, // 0 1
+        ER_CLASS_CTXT           = 0x80, // 1 0
+        ER_CLASS_PRIV           = 0xC0, // 1 1
+    };
 
     // =========================================================================
     // BER encoding rules support methods
@@ -527,9 +558,32 @@ class Stream {
     // DER encoding rules support methods
     // =========================================================================
 
-    // =========================================================================
-    // BER encoding rules support methods
-    // =========================================================================
+    // return the number of bytes of der length
+    uint8_t out_der_length(uint16_t length){
+        if (length < 0x80){
+            this->out_uint8(length);
+            return 1;
+        }
+        else if (length < 0x100){
+            this->out_uint8(0x81);
+            this->out_uint8(length);
+            return 2;
+        }
+        else {
+            this->out_uint8(0x82);
+            this->out_uint8(length);
+            return 3;
+        }
+    }
+
+    void out_der_general_string(const char* str)
+    {
+        uint16_t length = strlen(str);
+        this->out_uint8(ER_CLASS_UNIV | ER_PRIMITIVE | ER_TAG_GENERAL_STRING);
+        this->out_der_length(length);
+        this->out_copy_bytes(str, length);
+    }
+
 
     // =========================================================================
     // PER encoding rules support methods
@@ -847,10 +901,6 @@ TODO("check if implementation below is conforming to obfuscated text above (I ha
             this->out_uint8((c1 << 4) | c2);
         }
     }
-
-    // =========================================================================
-    // ER encoding rules support methods
-    // =========================================================================
 
     // =========================================================================
     // Helper methods for RDP bitmap compression support
