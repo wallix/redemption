@@ -100,6 +100,34 @@
 //REMOTE_CONTROL_PERSISTENT     Channel MUST be persistent across remote
 //                              control 0x00100000 transactions.
 
+struct CSNetGccUserData {
+    uint16_t userDataType;
+    uint16_t length;
+
+    CSNetGccUserData()
+    : userDataType(CS_NET)
+    , length(12) // default: everything except serverSelectedProtocol
+    {
+    }
+
+
+    void emit(Stream & stream)
+    {
+        stream.out_uint16_le(this->userDataType);
+        stream.out_uint16_le(this->length);
+    }
+
+    void recv(Stream & stream, uint16_t length)
+    {
+        this->length = length;
+    }
+
+    void log(const char * msg)
+    {
+        // --------------------- Base Fields ---------------------------------------
+        LOG(LOG_INFO, "%s GCC User Data CS_NET (%u bytes)", msg, this->length);
+    }
+};
 
 // this adds the mcs channels in the list of channels to be used when
 // creating the server mcs data

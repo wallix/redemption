@@ -73,6 +73,35 @@
 //                               For non-French locale clients, this field
 //                               MUST be set to 0
 
+struct CSSecGccUserData {
+    uint16_t userDataType;
+    uint16_t length;
+
+    CSSecGccUserData()
+    : userDataType(CS_SECURITY)
+    , length(12) // default: everything except serverSelectedProtocol
+    {
+    }
+
+
+    void emit(Stream & stream)
+    {
+        stream.out_uint16_le(this->userDataType);
+        stream.out_uint16_le(this->length);
+    }
+
+    void recv(Stream & stream, uint16_t length)
+    {
+        this->length = length;
+    }
+
+    void log(const char * msg)
+    {
+        // --------------------- Base Fields ---------------------------------------
+        LOG(LOG_INFO, "%s GCC User Data CS_SECURITY (%u bytes)", msg, this->length);
+    }
+};
+
 static inline void parse_mcs_data_cs_security(Stream & stream)
 {
     LOG(LOG_INFO, "CS_SECURITY");

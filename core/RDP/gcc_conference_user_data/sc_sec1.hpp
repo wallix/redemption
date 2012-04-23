@@ -207,6 +207,71 @@ TODO(" ssl calls introduce some dependency on ssl system library  injecting it i
 //  The modulus field contains all (bitlen / 8) bytes of the public key modulus
 //  and 8 bytes of zero padding (which MUST follow after the modulus bytes).
 
+struct SCSecurityGccUserData {
+    uint16_t userDataType;
+    uint16_t length;
+
+    enum {
+        ENCRYPTION_METHOD_NONE   = 0x00000000,
+        ENCRYPTION_METHOD_40BIT  = 0x00000001,
+        ENCRYPTION_METHOD_128BIT = 0x00000002,
+        ENCRYPTION_METHOD_56BIT  = 0x00000008,
+        ENCRYPTION_METHOD_FIPS   = 0x00000010,
+    };
+    uint32_t encryptionMethod;
+
+    enum {
+        ENCRYPTION_LEVEL_NONE = 0x00000000,
+        ENCRYPTION_LEVEL_LOW  = 0x00000001,
+        ENCRYPTION_LEVEL_CLIENT_COMPATIBLE = 0x00000002,
+        ENCRYPTION_LEVEL_HIGH = 0x00000003,
+        ENCRYPTION_LEVEL_FIPS = 0x00000004,
+    };
+    uint32_t encryptionLevel;
+
+    uint32_t serverRandomLen;
+    uint32_t serverCertLen;
+    uint8_t * serverRandom;
+
+    uint8_t * serverCertificate;
+
+    uint32_t dwVersion;
+    enum {
+        CERT_CHAIN_VERSION_1 = 0x00000001,
+        CERT_CHAIN_VERSION_2 = 0x00000002,
+    };
+    uint32_t certChainVersion;
+    bool t;
+
+    SCSecurityGccUserData()
+    : userDataType(SC_SECURITY)
+    , length(12) // default: everything except serverSelectedProtocol
+    {
+    }
+
+
+    void emit(Stream & stream)
+    {
+        stream.out_uint16_le(this->userDataType);
+        stream.out_uint16_le(this->length);
+    }
+
+    void recv(Stream & stream, uint16_t length)
+    {
+        this->length = length;
+    }
+
+    void log(const char * msg)
+    {
+        // --------------------- Base Fields ---------------------------------------
+        LOG(LOG_INFO, "%s GCC User Data SC_SECURITY (%u bytes)", msg, this->length);
+        LOG(LOG_INFO, "sc_security::encryptionMethod = %u", this->encryptionMethod);
+        LOG(LOG_INFO, "sc_security::encryptionLevel  = %u", this->encryptionLevel);
+        LOG(LOG_INFO, "sc_security::serverRandomLen  = %u", this->serverRandomLen);
+        LOG(LOG_INFO, "sc_security::serverCertLen    = %u", this->serverCertLen);
+
+    }
+};
 
 TODO("Move crypto related utility methods to sec module (probably extract more sec generic code from parse_mcs_data_sc_security")
 

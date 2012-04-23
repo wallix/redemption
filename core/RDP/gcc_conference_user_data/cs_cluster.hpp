@@ -93,6 +93,36 @@
 //                                session identifier to which the client
 //                                requests to connect.
 
+
+struct CSClusterGccUserData {
+    uint16_t userDataType;
+    uint16_t length;
+
+    CSClusterGccUserData()
+    : userDataType(CS_CLUSTER)
+    , length(12) // default: everything except serverSelectedProtocol
+    {
+    }
+
+
+    void emit(Stream & stream)
+    {
+        stream.out_uint16_le(this->userDataType);
+        stream.out_uint16_le(this->length);
+    }
+
+    void recv(Stream & stream, uint16_t length)
+    {
+        this->length = length;
+    }
+
+    void log(const char * msg)
+    {
+        // --------------------- Base Fields ---------------------------------------
+        LOG(LOG_INFO, "%s GCC User Data CS_CLUSTER (%u bytes)", msg, this->length);
+    }
+};
+
 // This is this header that contains the console flag (undocumented ?)
 static inline void parse_mcs_data_cs_cluster(Stream & stream, bool & console_session)
 {

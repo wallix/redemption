@@ -60,6 +60,36 @@
 //  channelCount field contains an even value, then the Pad field is not
 //  required and MUST NOT be present.
 
+struct SCNetGccUserData {
+    uint16_t userDataType;
+    uint16_t length;
+
+    SCNetGccUserData()
+    : userDataType(SC_NET)
+    , length(12) // default: everything except serverSelectedProtocol
+    {
+    }
+
+
+    void emit(Stream & stream)
+    {
+        stream.out_uint16_le(this->userDataType);
+        stream.out_uint16_le(this->length);
+    }
+
+    void recv(Stream & stream, uint16_t length)
+    {
+        this->length = length;
+    }
+
+    void log(const char * msg)
+    {
+        // --------------------- Base Fields ---------------------------------------
+        LOG(LOG_INFO, "%s GCC User Data SC_NET (%u bytes)", msg, this->length);
+    }
+};
+
+
 static inline void parse_mcs_data_sc_net(Stream & stream, const ChannelList & front_channel_list, ChannelList & mod_channel_list)
 {
     LOG(LOG_INFO, "SC_NET");

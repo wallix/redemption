@@ -26,7 +26,6 @@
 #define __CORE_RDP_GCC_CONFERENCE_USER_DATA_CS_CORE_HPP__
 
 #include "stream.hpp"
-#include "client_info.hpp"
 
 // 2.2.1.3.2 Client Core Data (TS_UD_CS_CORE)
 // -------------------------------------
@@ -320,7 +319,6 @@ struct CSCoreGccUserData {
     // header
     uint16_t userDataType;
     uint16_t length;
-    // base payload
     uint32_t version;
     uint16_t desktopWidth;
     uint16_t desktopHeight;
@@ -333,7 +331,7 @@ struct CSCoreGccUserData {
     uint32_t keyboardSubType;
     uint32_t keyboardFunctionKey;
     uint16_t imeFileName[32];
-    // post beta 2 payload
+    // optional payload
     uint16_t postBeta2ColorDepth;
     uint16_t clientProductId;
     uint32_t serialNumber;
@@ -343,7 +341,6 @@ struct CSCoreGccUserData {
     uint8_t  clientDigProductId[64];
     uint8_t  connectionType;
     uint8_t  pad1octet;
-    // extended payload
     uint32_t serverSelectedProtocol;
 
     CSCoreGccUserData()
