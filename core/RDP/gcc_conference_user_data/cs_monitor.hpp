@@ -86,10 +86,24 @@
 struct CSMonitorGccUserData {
     uint16_t userDataType;
     uint16_t length;
+    uint32_t left;
+    uint32_t top;
+    uint32_t right;
+    uint32_t bottom;
+    enum {
+        TS_MONITOR_PRIMARY = 0x00000001,
+    };
+
+    uint32_t flags;
 
     CSMonitorGccUserData()
     : userDataType(CS_MONITOR)
     , length(12) // default: everything except serverSelectedProtocol
+    , left(0)
+    , top(0)
+    , right(0)
+    , bottom(0)
+    , flags(0)
     {
     }
 
@@ -98,23 +112,36 @@ struct CSMonitorGccUserData {
     {
         stream.out_uint16_le(this->userDataType);
         stream.out_uint16_le(this->length);
+        stream.out_uint32_le(this->left);
+        stream.out_uint32_le(this->top);
+        stream.out_uint32_le(this->right);
+        stream.out_uint32_le(this->bottom);
+        stream.out_uint32_le(this->flags);
     }
 
     void recv(Stream & stream, uint16_t length)
     {
         this->length = length;
+        this->left   = stream.in_uint32_le();
+        this->top    = stream.in_uint32_le();
+        this->right  = stream.in_uint32_le();
+        this->bottom = stream.in_uint32_le();
+        this->flags  = stream.in_uint32_le();
     }
 
     void log(const char * msg)
     {
         // --------------------- Base Fields ---------------------------------------
         LOG(LOG_INFO, "%s GCC User Data CS_MONITOR (%u bytes)", msg, this->length);
+        LOG(LOG_INFO, "cs_monitor::left   = %u", this->left);
+        LOG(LOG_INFO, "cs_monitor::top    = %u", this->top);
+        LOG(LOG_INFO, "cs_monitor::right  = %u", this->right);
+        LOG(LOG_INFO, "cs_monitor::bottom = %u", this->bottom);
+        LOG(LOG_INFO, "cs_monitor::flags [%04X]", this->flags);
+        if (this->flags & TS_MONITOR_PRIMARY){
+            LOG(LOG_INFO, "cs_monitor::flags::TS_MONITOR_PRIMARY");
+        }
     }
 };
-
-static inline void parse_mcs_data_cs_monitor(Stream & stream)
-{
-    LOG(LOG_INFO, "CS_MONITOR\n");
-}
 
 #endif

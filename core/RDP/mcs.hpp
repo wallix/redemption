@@ -619,10 +619,11 @@ static inline void mcs_recv_connect_initial(
             }
             break;
             case CS_MONITOR:
-                parse_mcs_data_cs_monitor(stream);
-            break;
-            case SC_SECURITY:
-//                parse_mcs_data_sc_security(stream);
+            {
+                CSMonitorGccUserData cs_monitor;
+                cs_monitor.recv(stream, length);
+                cs_monitor.log("Receiving from Client");
+            }
             break;
             default:
                 LOG(LOG_INFO, "Unexpected data block tag %x\n", tag);
