@@ -374,7 +374,7 @@ struct mod_rdp : public client_mod {
             const char * hostname,
             const ClientInfo & info,
             Random * gen,
-            uint32_t verbose = 1)
+            uint32_t verbose = 0)
             :
                 client_mod(front, info.width, info.height),
                     in_stream(65536),
@@ -1074,23 +1074,23 @@ struct mod_rdp : public client_mod {
                             }
                             break;
                             case PDUTYPE2_CONTROL:
-                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_CONTROL");
+//                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_CONTROL");
                             break;
                             case PDUTYPE2_SYNCHRONIZE:
-                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_SYNCHRONIZE");
+//                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_SYNCHRONIZE");
                             break;
                             case PDUTYPE2_POINTER:
-                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_POINTER");
+//                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_POINTER");
                                 this->process_pointer_pdu(stream, this);
                             break;
                             case PDUTYPE2_PLAY_SOUND:
-                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_PLAY_SOUND");
+//                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_PLAY_SOUND");
                             break;
                             case PDUTYPE2_SAVE_SESSION_INFO:
-                                LOG(LOG_INFO, "DATA PDU LOGON");
+//                                LOG(LOG_INFO, "DATA PDU LOGON");
                             break;
                             case PDUTYPE2_SET_ERROR_INFO_PDU:
-                                LOG(LOG_INFO, "DATA PDU DISCONNECT");
+//                                LOG(LOG_INFO, "DATA PDU DISCONNECT");
                                 this->process_disconnect_pdu(stream);
                             break;
                             default:

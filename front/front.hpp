@@ -507,7 +507,7 @@ public:
 
     virtual void begin_update()
     {
-        if (this->verbose & 4){
+        if (this->verbose & 8){
             LOG(LOG_INFO, "Front::begin_update()");
         }
         this->order_level++;
@@ -515,7 +515,7 @@ public:
 
     virtual void end_update()
     {
-        if (this->verbose & 4){
+        if (this->verbose & 8){
             LOG(LOG_INFO, "Front::end_update()");
         }
         this->order_level--;

@@ -30,13 +30,12 @@
 struct close_mod : public internal_mod {
     struct window * close_window;
     Widget* button_down;
-    Inifile * ini;
     bool closing;
 
     close_mod(
         wait_obj * event,
-        ModContext & context, FrontAPI & front, uint16_t width, uint16_t height, Inifile * ini)
-            : internal_mod(front, width, height), ini(ini), closing(false)
+        ModContext & context, FrontAPI & front, uint16_t width, uint16_t height)
+            : internal_mod(front, width, height), closing(false)
     {
         this->event = event;
         this->event->set();
@@ -78,7 +77,6 @@ struct close_mod : public internal_mod {
             &this->screen, // parent
             GREY,
             "Close",
-            this->ini,
             regular);
 
         this->screen.child_list.push_back(this->close_window);
@@ -97,7 +95,6 @@ struct close_mod : public internal_mod {
 
         this->close_window->focus(this->close_window->rect);
         this->close_window->has_focus = true;
-        this->screen.refresh(this->get_screen_rect().wh());
     }
 
     virtual ~close_mod()
@@ -268,6 +265,9 @@ struct close_mod : public internal_mod {
     // module got an internal event (like incoming data) and want to sent it outside
     virtual BackEvent_t draw_event()
     {
+        this->front.begin_update();
+        this->screen.refresh(this->get_screen_rect().wh());
+        this->front.end_update();
         this->event->reset();
         return signal;
     }
