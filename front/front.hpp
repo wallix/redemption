@@ -2395,7 +2395,6 @@ public:
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bitmap)
     {
-        LOG(LOG_INFO, "front::draw:RDPMemBlt");
         if (bitmap.cx < cmd.srcx || bitmap.cy < cmd.srcy){
             return;
         }
