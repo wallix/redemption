@@ -1368,19 +1368,19 @@ struct mod_rdp : public client_mod {
             }
             break;
             case RDP_POINTER_COLOR:
-//                LOG(LOG_INFO, "Process pointer color");
+                LOG(LOG_INFO, "Process pointer color");
                 this->process_color_pointer_pdu(stream, mod);
-//                LOG(LOG_INFO, "Process pointer color done");
+                LOG(LOG_INFO, "Process pointer color done");
                 break;
             case RDP_POINTER_CACHED:
-//                LOG(LOG_INFO, "Process pointer cached");
+                LOG(LOG_INFO, "Process pointer cached");
                 this->process_cached_pointer_pdu(stream, mod);
-//                LOG(LOG_INFO, "Process pointer cached done");
+                LOG(LOG_INFO, "Process pointer cached done");
                 break;
             case RDP_POINTER_SYSTEM:
-//                LOG(LOG_INFO, "Process pointer system");
+                LOG(LOG_INFO, "Process pointer system");
                 this->process_system_pointer_pdu(stream, mod);
-//                LOG(LOG_INFO, "Process pointer system done");
+                LOG(LOG_INFO, "Process pointer system done");
                 break;
             default:
                 break;

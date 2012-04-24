@@ -262,6 +262,10 @@ public:
     int server_resize(int width, int height, int bpp)
     {
         uint32_t res = 0;
+        if (bpp == 32){
+            LOG(LOG_ERR, "Unexpected bpp value in server_resize");
+            exit(0);
+        }
         this->mod_bpp = bpp;
         if (this->client_info.width != width
         || this->client_info.height != height
@@ -1708,7 +1712,7 @@ public:
                 BitmapCaps bitmap_caps;
                 bitmap_caps.recv(stream);
                 bitmap_caps.log("Receiving from client");
-                this->client_info.bpp = bitmap_caps.preferredBitsPerPixel;
+                this->client_info.bpp = (bitmap_caps.preferredBitsPerPixel >= 24)?24:bitmap_caps.preferredBitsPerPixel;
                 this->client_info.width = bitmap_caps.desktopWidth;
                 this->client_info.height = bitmap_caps.desktopHeight;
 

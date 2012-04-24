@@ -505,8 +505,7 @@ struct RDPSerializer : public RDPGraphicDevice
         this->common = newcommon;
         this->glyphindex = cmd;
         if (this->ini && this->ini->globals.debug.primary_orders){
-            LOG(LOG_INFO, "glyphIndex");
-//            cmd.log(LOG_INFO, common.clip);
+            cmd.log(LOG_INFO, common.clip);
         }
     }
 
