@@ -830,7 +830,7 @@ struct Session {
                     int sck = connect(this->context->get(STRAUTHID_TARGET_DEVICE),
                                     atoi(this->context->get(STRAUTHID_TARGET_PORT)),
                                     name,
-                                    4, 2500000);
+                                    4, 1000);
                     SocketTransport * t = new SocketTransport(name, sck, this->ini->globals.debug.mod_xup);
                     this->back_event = new wait_obj(t->sck);
                     this->front->init_mod();
