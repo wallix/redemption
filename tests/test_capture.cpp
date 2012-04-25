@@ -421,7 +421,6 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
     uint16_t height = 480;
-    uint8_t bpp = 24;
     Rect screen_rect(0, 0, width, height);
     BGRPalette palette;
     init_palette332(palette);

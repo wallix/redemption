@@ -845,26 +845,17 @@ class RDPBmpCache {
         stream.out_uint16_le(cbr2_flags | cbr2_bpp | (this->id & 7));
         stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED_REV2); // type
 
-        LOG(LOG_INFO, "cx=%u", align4(this->bmp->cx));
         stream.out_2BUE(align4(this->bmp->cx));
-        LOG(LOG_INFO, "cy=%u", align4(this->bmp->cy));
         stream.out_2BUE(this->bmp->cy);
         uint32_t offset_bitmapLength = stream.get_offset(0);
-         // place holder for image buffer size
-         // we want it to be actually 2 bytes to be able to write it afterward
-         // hence no out_4BUE here.
-        TODO("define out_4BUE in stream and find a way to predict compressed bitmap size. May be we can keep a compressed version of the bitmap instead of recompressing every time. The first time we would use a conservative encoding for length based on cx and cy.")
+        TODO("define out_4BUE in stream and find a way to predict compressed bitmap size (the problem is to write to it afterward). May be we can keep a compressed version of the bitmap instead of recompressing every time. The first time we would use a conservative encoding for length based on cx and cy.")
         stream.out_uint16_be(0);
         stream.out_2BUE(this->idx);
         uint32_t offset_startBitmap = stream.get_offset(0);
         this->bmp->compress(stream);
-        size_t bufsize = stream.get_offset(offset_startBitmap);
 
-        LOG(LOG_INFO, "orderLength=%u", stream.get_offset(offset_startBitmap+12));
-        LOG(LOG_INFO, "bitmapLength=%u", bufsize | 0x4000);
-
-        stream.set_out_uint16_be(bufsize | 0x4000, offset_bitmapLength); // set the actual size
-        stream.set_out_uint16_le(stream.get_offset(offset_startBitmap+12), offset_header); // length after type minus 7
+        stream.set_out_uint16_be(stream.get_offset(offset_startBitmap) | 0x4000, offset_bitmapLength); // set the actual size
+        stream.set_out_uint16_le(stream.get_offset(offset_header+12), offset_header); // length after type minus 7
     }
 
 
@@ -903,12 +894,12 @@ class RDPBmpCache {
         // bitmapWidth (variable): A Two-Byte Unsigned Encoding (section
         //                         2.2.2.2.1.2.1.2) structure. The width of the
         //                         bitmap in pixels.
-        stream.out_uint8(align4(this->bmp->cx));
+        stream.out_2BUE(align4(this->bmp->cx));
 
         // bitmapHeight (variable): A Two-Byte Unsigned Encoding (section
         //                          2.2.2.2.1.2.1.2) structure. The height of the
         //                          bitmap in pixels.
-        stream.out_uint8(this->bmp->cy);
+        stream.out_2BUE(this->bmp->cy);
 
         // bitmapLength (variable): A Four-Byte Unsigned Encoding (section
         //                          2.2.2.2.1.2.1.4) structure. The size in bytes
@@ -948,8 +939,7 @@ class RDPBmpCache {
         // for uncompressed bitmaps the format is quite simple
         stream.out_copy_bytes(this->bmp->data(), this->bmp->bmp_size);
 
-        uint16_t length = (uint16_t)(stream.get_offset(offset_header + 12));
-        stream.set_out_uint16_le(length, offset_header);
+        stream.set_out_uint16_le(stream.get_offset(offset_header + 12), offset_header);
 
     }
 
