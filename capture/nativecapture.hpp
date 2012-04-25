@@ -48,10 +48,11 @@
 #include "config.hpp"
 #include "bmpcache.hpp"
 #include "colors.hpp"
+#include "stream.hpp"
 
 #include "GraphicToFile.hpp"
 
-#include <iostream>
+// #include <iostream>
 
 class NativeCapture : public RDPGraphicDevice
 {
@@ -174,12 +175,12 @@ private:
 
         size_t size() const
         {
-            size_t ret = 2 + 8 * this->used;
+            size_t ret = 2 + 7 * this->used;
             const uint8_t *prev_data = 0;
             for (uint16_t cidx = 0; cidx < this->used; ++cidx){
                 const Bitmap* bmp = this->datas[cidx].bmp;
                 if (prev_data != bmp->data()){
-                    ret += 1 + bmp->bmp_size;
+                    ret += 4 + bmp->bmp_size;
                 }
                 prev_data = bmp->data();
             }
@@ -190,7 +191,7 @@ private:
         {
             stream.out_uint16_le(this->used);
             const uint8_t *prev_data = 0;
-            for (uint16_t n = 0; n < this->used; ++n){
+            for (uint16_t n = 0; n != this->used; ++n){
                 Data &data = this->datas[n];
                 const Bitmap* bmp = data.bmp;
                 if (prev_data == bmp->data())
@@ -327,7 +328,8 @@ private:
     }
 
 public:
-    void breakpoint(const uint8_t* data_drawable, uint32_t pix_len)
+    void breakpoint(const uint8_t* data_drawable, uint8_t bpp,
+                    uint16_t width, uint16_t height)
     {
         this->recorder.flush();
         this->recorder.chunk_type = WRMChunk::NEXT_FILE;
@@ -342,26 +344,69 @@ public:
         close(this->trans.fd);
         this->open_file();
 
-        BitmapsSender sender_cache1(this->recorder.bmp_cache.cache[0]);
-        BitmapsSender sender_cache2(this->recorder.bmp_cache.cache[1]);
-        BitmapsSender sender_cache3(this->recorder.bmp_cache.cache[2]);
-        {
-            size_t allocate = 8 + MetaWRM::size_for_stream + 9 + 12 + 9 + 28
-            + 13 + 17 + 20 + 47 + this->recorder.glyphindex.data_len + 2 + 16
-            + 4 + pix_len + sizeof(this->recorder.bmp_cache.stamps) + sender_cache1.size() + sender_cache2.size() + sender_cache3.size();
-            this->recorder.init(allocate);
-        }
-
+        this->recorder.init();
         this->recorder.chunk_type = WRMChunk::BREAKPOINT;
         this->recorder.order_count = 1;
-
         {
             MetaWRM meta(this->width, this->height, this->bpp);
             meta.out(this->recorder.stream);
-            //std::cout << "breakpoint: meta" << this->width << ',' <<  this->height << ',' <<  this->bpp << '\n';
+            //std::cout << "write meta " << meta << '\n';
         }
 
-        TODO("use absolute order chunk");
+        {
+            const uint16_t TILE_CX = 32;
+            const uint16_t TILE_CY = 32;
+
+            //uint nn = 0;
+
+            {
+                uint16_t nb_axe = width / TILE_CX;
+                if (nb_axe * TILE_CX != width)
+                    ++nb_axe;
+                std::cout << "write nb_axis " << nb_axe << ' ';
+                this->recorder.stream.out_uint16_le(nb_axe);
+                nb_axe = height / TILE_CY;
+                if (nb_axe * TILE_CY != height)
+                    ++nb_axe;
+                std::cout << nb_axe << '\n';
+                this->recorder.stream.out_uint16_le(nb_axe);
+            }
+            std::cout << "writer data size " << (this->recorder.stream.p - this->recorder.stream.data) << '\n';
+            this->recorder.send_order();
+
+            this->recorder.chunk_type = RDP_UPDATE_ORDERS;
+
+            uint8_t Bpp = nbbytes(bpp);
+            uint8_t data[32*32*3];
+            for (uint16_t y = 0; y < height; y += TILE_CY) {
+                uint16_t cy = std::min<uint16_t>(TILE_CY, height - y);
+
+                for (uint16_t x = 0; x < width; x += TILE_CX) {
+                    uint16_t cx = std::min<uint16_t>(TILE_CX, height - x);
+
+                    for (uint16_t n = 0; n != cy; ++n){
+                        memcpy(&data[TILE_CY * n * Bpp], data_drawable + width * (y + n) * Bpp, cx * Bpp);
+                    }
+                    const Bitmap tiled_bmp(bpp, 0, cx, cy, data, cx*cy*Bpp);
+                    this->recorder.init();
+                    this->recorder.order_count = 1;
+                    const RDPBmpCache cmdcache(&tiled_bmp, 0, 0, this->recorder.ini ? this->recorder.ini->globals.debug.primary_orders : 0);
+                    cmdcache.emit(this->recorder.stream,
+                                  this->recorder.bitmap_cache_version,
+                                  this->recorder.use_bitmap_comp,
+                                  /*false*/this->recorder.op2);
+                    std::cout << "write bmp (type: " << this->recorder.chunk_type << ", size:" << tiled_bmp.bmp_size << "): " << (this->recorder.stream.p - this->recorder.stream.data) << '\n';
+                    this->recorder.send_order();
+                    //++nn;
+                }
+            }
+
+            //std::cout << "write number img " << nn << '\n';
+        }
+
+        this->recorder.init();
+        this->recorder.order_count = 1;
+        this->recorder.chunk_type = WRMChunk::BREAKPOINT;
 
         this->recorder.stream.out_uint8(this->recorder.common.order);
         this->send_rect(this->recorder.common.clip);
@@ -423,22 +468,50 @@ public:
         this->recorder.stream.out_uint16_le(this->recorder.bmp_cache.big_size);
         this->recorder.stream.out_uint32_le(this->recorder.bmp_cache.stamp);
 
-        this->recorder.stream.out_uint32_le(pix_len);
+        {
+            uint16_t nb_img = 0;
+            for (size_t cid = 0; cid != 3 ; ++cid){
+                const Bitmap* (&bitmaps)[8192] = this->recorder.bmp_cache.cache[cid];
+                for (uint16_t cidx = 0; cidx < 8192 ; ++cidx){
+                    if (bitmaps[cidx]){
+                        ++nb_img;
+                    }
+                }
+            }
+            this->recorder.stream.out_uint16_le(nb_img);
+            //std::cout << "write nb_img " << nb_img << '\n';
+        }
 
-        this->recorder.stream.out_copy_bytes(data_drawable, pix_len);
+        this->recorder.send_order();
 
+        this->recorder.chunk_type = RDP_UPDATE_ORDERS;
         for (size_t cid = 0; cid != 3 ; ++cid){
-            const uint32_t (&stamps)[8192] = this->recorder.bmp_cache.stamps[cid];
-            for (uint16_t cidx = 0; cidx != 8192; ++cidx){
-                this->recorder.stream.out_uint32_le(stamps[cidx]);
+            const Bitmap* (&bitmaps)[8192] = this->recorder.bmp_cache.cache[cid];
+            for (uint16_t cidx = 0; cidx < 8192 ; ++cidx){
+                if (bitmaps[cidx]){
+                    this->recorder.init();
+                    this->recorder.order_count = 1;
+                    const RDPBmpCache cmdcache(bitmaps[cidx], cid, cidx);
+                    cmdcache.emit_v1_compressed_small_headers(this->recorder.stream);
+                    this->recorder.send_order();
+                }
             }
         }
 
-        sender_cache1.send_in(this->recorder.stream);
-        sender_cache2.send_in(this->recorder.stream);
-        sender_cache3.send_in(this->recorder.stream);
+        for (size_t cid = 0; cid != 3 ; ++cid){
+            const uint32_t (&stamps)[8192] = this->recorder.bmp_cache.stamps[cid];
+            uint16_t cidx = 0;
+            for (uint16_t n = 0; n != 9 ; ++n){
+                this->recorder.init();
+                this->recorder.order_count = 1;
+                for (uint16_t last = std::min<>(cidx + 8192 / 9, 8192); cidx != last; ++cidx){
+                    this->recorder.stream.out_uint32_le(stamps[cidx]);
+                }
+                this->recorder.send_order();
+            }
+            //std::cout << this->recorder.stream.capacity << " / " << (this->recorder.stream.p - this->recorder.stream.data) << std::endl;
+        }
 
-        this->recorder.send_order();
         this->recorder.init();
         this->recorder.chunk_type = RDP_UPDATE_ORDERS;
     }

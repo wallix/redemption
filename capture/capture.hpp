@@ -134,7 +134,10 @@ class Capture : public RDPGraphicDevice
     void breakpoint()
     {
         //this->sc.flush();
-        this->nc.breakpoint(this->sc.drawable.data, this->sc.drawable.pix_len);
+        this->nc.breakpoint(this->sc.drawable.data,
+                            24,
+                            this->sc.drawable.width,
+                            this->sc.drawable.height);
     }
 
 };

@@ -24,6 +24,8 @@
 #if !defined(__RDPORDERSSECONDARYBMPCACHE_HPP__)
 #define __RDPORDERSSECONDARYBMPCACHE_HPP__
 
+#include "log.hpp"
+
 TODO(" RDPBmpCache works with a given item (id, idx) inside a given Bitmap cache, hence we should not provide it with the bitmap itself  but with the cache containing the said bitmap. That said we should also have both lowlevel bitmaps (bpp independant) and curryed bitmap with a fixed given bpp. RDPBmpCache relates to a cache containing curryed bitmaps  as the actual id to use depends off the bitmap size in bytes  itself depending from bpp. Alternatively  this bpp could be attached to the cache itself as bpp is unique for a given cache.")
 class RDPBmpCache {
     // [MS-RDPGDI] 2.2.2.2.1.2.2 Cache Bitmap - Revision 1 (CACHE_BITMAP_ORDER)
@@ -586,7 +588,6 @@ class RDPBmpCache {
         stream.set_out_uint16_le(bufsize + 2, offset_header);
         stream.set_out_uint16_le(bufsize, offset);
     }
-
 
     void emit_v1_compressed(Stream & stream) const
     {
