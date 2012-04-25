@@ -332,7 +332,7 @@ struct mod_rdp : public client_mod {
     char domain[256];
     char program[256];
     char directory[256];
-    uint16_t bpp;
+    uint8_t bpp;
 
     int crypt_level;
     uint32_t server_public_key_len;
@@ -1276,14 +1276,23 @@ struct mod_rdp : public client_mod {
             bitmap_caps.desktopWidth = this->front_width;
             bitmap_caps.desktopHeight = this->front_height;
             bitmap_caps.bitmapCompressionFlag = this->bitmap_compression;
-            bitmap_caps.log("Sending to server");
+            bitmap_caps.log("Sending bitmap caps to server");
             bitmap_caps.emit(stream);
             capscount++;
 
             cs_out_order_caps(stream);
             capscount++;
 
-            out_bmpcache_caps(stream, this->bpp);
+//            out_bmpcache_caps(stream, this->bpp);
+            BmpCacheCaps bmpcache_caps;
+            bmpcache_caps.cache0Entries = 0x258;
+            bmpcache_caps.cache0MaximumCellSize = nbbytes(this->bpp) * 0x100;
+            bmpcache_caps.cache1Entries = 0x12c;
+            bmpcache_caps.cache1MaximumCellSize = nbbytes(this->bpp) * 0x400;
+            bmpcache_caps.cache2Entries = 0x106;
+            bmpcache_caps.cache2MaximumCellSize = nbbytes(this->bpp) * 0x1000;
+            bmpcache_caps.log("Sending bmpcache caps to server");
+            bmpcache_caps.emit(stream);
             capscount++;
 
 //            if(this->use_rdp5){
@@ -1300,7 +1309,11 @@ struct mod_rdp : public client_mod {
             out_control_caps(stream);
             capscount++;
 
-            out_pointer_caps(stream);
+//            out_pointer_caps(stream);
+            PointerCaps pointer_caps;
+            pointer_caps.len = 8;
+            pointer_caps.log("Sending pointer caps to server");
+            pointer_caps.emit(stream);
             capscount++;
 
             out_share_caps(stream);
