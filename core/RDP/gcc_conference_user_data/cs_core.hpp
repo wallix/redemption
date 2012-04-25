@@ -591,7 +591,7 @@ struct CSCoreGccUserData {
         if (this->length < 212) { return; }
         LOG(LOG_INFO, "cs_core::pad1octet  = %u", this->pad1octet);
         if (this->length < 216) { return; }
-        LOG(LOG_INFO, "cs_core::pad1octet  = %u", this->serverSelectedProtocol);
+        LOG(LOG_INFO, "cs_core::serverSelectedProtocol = %u", this->serverSelectedProtocol);
     }
 
 };

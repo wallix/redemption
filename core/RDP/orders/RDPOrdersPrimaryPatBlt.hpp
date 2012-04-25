@@ -1148,7 +1148,7 @@ class RDPPatBlt {
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
     {
-        size_t lg = common.str(buffer, sz);
+        size_t lg = common.str(buffer, sz, common.clip.contains(this->rect));
 
         if (this->brush.style == 0x3){
             lg += snprintf(

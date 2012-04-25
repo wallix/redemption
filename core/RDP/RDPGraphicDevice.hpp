@@ -396,7 +396,8 @@ struct RDPSerializer : public RDPGraphicDevice
         assert(asked_size < this->stream.capacity);
         size_t max_packet_size = std::min(this->stream.capacity, (size_t)4096);
         size_t used_size = this->stream.get_offset(0);
-        const size_t max_order_batch = 4096;
+//        const size_t max_order_batch = 4096;
+        const size_t max_order_batch = 1;
         if ((this->order_count >= max_order_batch)
         || (used_size + asked_size + 100) > max_packet_size) {
             this->flush();
@@ -462,6 +463,7 @@ struct RDPSerializer : public RDPGraphicDevice
         uint16_t cache_idx = res;
 
         const Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
+        LOG(LOG_INFO, "bitmap_color_depth=%u", bmp->original_bpp);
         if ((res >> 24) == BITMAP_ADDED_TO_CACHE){
             RDPBmpCache cmd_cache(bmp, cache_id, cache_idx, this->ini?this->ini->globals.debug.primary_orders:0);
             this->reserve_order(cmd_cache.bmp->bmp_size + 16);

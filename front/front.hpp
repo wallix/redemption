@@ -262,46 +262,33 @@ public:
     int server_resize(int width, int height, int bpp)
     {
         uint32_t res = 0;
-        if (bpp == 32){
-            LOG(LOG_ERR, "Unexpected bpp value in server_resize");
-            exit(0);
-        }
         this->mod_bpp = bpp;
+        if (bpp == 8){
+            this->mod_palette_setted = false;
+            this->palette_sent = false;
+            for (size_t i = 0; i < 6 ; i++){
+                this->palette_memblt_sent[i] = false;
+            }
+        }
+
         if (this->client_info.width != width
-        || this->client_info.height != height
-        || this->client_info.bpp != bpp) {
+        || this->client_info.height != height) {
             /* older client can't resize */
             if (client_info.build <= 419) {
                 LOG(LOG_ERR, "Resizing is not available on older RDP clients");
                 // resizing needed but not available
-
-                // if we only change bpp, this is acceptable even on older clients
-                // proxy will perform the color conversion work
                 res = -1;
-                if ((this->client_info.width == width)
-                && (this->client_info.height == height)
-                && this->client_info.bpp != bpp){
-                    res = 0;
-                }
             }
             else {
-                if (bpp == 8){
-                    this->mod_palette_setted = false;
-                    this->palette_sent = false;
-                    for (size_t i = 0; i < 6 ; i++){
-                        this->palette_memblt_sent[i] = false;
-                    }
-                }
-                LOG(LOG_INFO, "// Resizing client to : %d x %d x %d\n", width, height, bpp);
+                LOG(LOG_INFO, "Resizing client to : %d x %d x %d", width, height, this->client_info.bpp);
 
                 this->client_info.width = width;
                 this->client_info.height = height;
-                this->client_info.bpp = bpp;
 
                 // send buffered orders
                 this->orders->flush();
 
-                 // clear all pending orders, caches data, and so on and
+                // clear all pending orders, caches data, and so on and
                 // start a send_deactive, send_deman_active process with
                 // the new resolution setting
                 /* shut down the rdp client */
@@ -403,7 +390,7 @@ public:
             bgcolor, // bgcolor
             fgcolor, // fgcolor
             bk, // bk
-            Rect(), // op
+            bk, // op
             // brush
             RDPBrush(0, 0, 3, 0xaa,
                 (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
@@ -451,6 +438,10 @@ public:
     virtual void reset(){
         if (this->verbose){
             LOG(LOG_INFO, "Front::reset()");
+            LOG(LOG_INFO, "Front::reset::use_bitmap_comp=%u", this->client_info.use_bitmap_comp);
+            LOG(LOG_INFO, "Front::reset::use_compact_packets=%u", this->client_info.use_compact_packets);
+            LOG(LOG_INFO, "Front::reset::bitmap_cache_version=%u", this->client_info.bitmap_cache_version);
+
         }
 
         // reset outgoing orders and reset caches
@@ -1704,7 +1695,7 @@ public:
                 GeneralCaps general;
                 general.recv(stream);
                 general.log("Receiving from client");
-                this->client_info.use_compact_packets = 0!=(general.extraflags & NO_BITMAP_COMPRESSION_HDR);
+                this->client_info.use_compact_packets = (general.extraflags & NO_BITMAP_COMPRESSION_HDR)?1:0;
             }
             break;
             case RDP_CAPSET_BITMAP:
@@ -2191,10 +2182,11 @@ public:
                 this->send_fontmap();
                 this->send_data_update_sync();
 
-
-                BGRPalette palette;
-                init_palette332(palette);
-                this->color_cache(palette, 0);
+                if (this->client_info.bpp == 8){
+                    BGRPalette palette;
+                    init_palette332(palette);
+                    this->color_cache(palette, 0);
+                }
                 this->init_pointers();
 
                 if (this->verbose){
@@ -2218,6 +2210,7 @@ public:
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST");
             }
+            stream.in_skip_bytes(share_data_in.len);
         break;
         case PDUTYPE2_BITMAPCACHE_ERROR_PDU: // Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.1)
             if (this->verbose){

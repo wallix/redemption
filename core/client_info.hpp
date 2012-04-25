@@ -121,7 +121,7 @@ struct ClientInfo {
 //            this->use_bitmap_comp = 1;
 //        }
 
-        this->use_bitmap_comp = bitmap_compression?0:1;
+        this->use_bitmap_comp = bitmap_compression?1:0;
 
         /*crypt_level: 1, 2, 3 = low, medium, high */
         this->crypt_level = crypt_level + 1; // ini->globals.crypt_level + 1;

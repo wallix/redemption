@@ -595,18 +595,18 @@ public:
         return header;
     }
 
-    size_t str(char * buffer, size_t sz) const
+    size_t str(char * buffer, size_t sz, bool showclip = true) const
     {
-        size_t lg  = snprintf(
-            buffer,
-            sz,
-            "order(%d clip(%d,%d,%d,%d)):",
-            this->order,
-            this->clip.x, this->clip.y, this->clip.cx, this->clip.cy);
-        if (lg >= sz){
-            return sz;
+        size_t lg = sz;
+        if (showclip){
+            lg  = snprintf(buffer, sz, "order(%d clip(%d,%d,%d,%d)):",
+                this->order,
+                this->clip.x, this->clip.y, this->clip.cx, this->clip.cy);
         }
-        return lg;
+        else {
+            lg  = snprintf(buffer, sz, "order(%d):", this->order);
+        }
+        return (lg < sz)?lg:sz;
     }
 
 
