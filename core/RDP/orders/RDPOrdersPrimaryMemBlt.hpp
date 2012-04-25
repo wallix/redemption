@@ -213,7 +213,7 @@ class RDPMemBlt {
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
     {
-        size_t lg = common.str(buffer, sz);
+        size_t lg = common.str(buffer, sz, common.clip.contains(this->rect));
         lg  += snprintf(
             buffer+lg,
             sz-lg,

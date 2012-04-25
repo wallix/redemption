@@ -161,7 +161,8 @@ class RDPLineTo {
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
     {
-        size_t lg = common.str(buffer, sz);
+        size_t lg = common.str(buffer, sz, !(!(common.clip.contains_pt(this->startx, this->starty)
+           && common.clip.contains_pt(this->endx, this->endy))));
 
         lg += snprintf(
             buffer+lg,

@@ -37,7 +37,7 @@
 
 
 static inline int connect(const char* ip, int port, const char * name,
-             int nbretry = 2, int retry_delai_ms = 1000) throw (Error)
+             int nbretry = 3, int retry_delai_ms = 1000) throw (Error)
 {
     int sck = 0;
     LOG(LOG_INFO, "connecting to %s (%s:%d)\n", name, ip, port);
@@ -45,64 +45,79 @@ static inline int connect(const char* ip, int port, const char * name,
     // the trial process include socket opening, hostname resolution, etc
     // because some problems can come from the local endpoint,
     // not necessarily from the remote endpoint.
-    for (int trial = 0; ; trial++){
-        try {
-            sck = socket(PF_INET, SOCK_STREAM, 0);
+    sck = socket(PF_INET, SOCK_STREAM, 0);
 
-            /* set snd buffer to at least 32 Kbytes */
-            int snd_buffer_size;
-            unsigned int option_len = sizeof(snd_buffer_size);
-            if (0 == getsockopt(sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, &option_len)) {
-                if (snd_buffer_size < 32768) {
-                    snd_buffer_size = 32768;
-                    if (-1 == setsockopt(sck,
-                            SOL_SOCKET,
-                            SO_SNDBUF,
-                            &snd_buffer_size, sizeof(snd_buffer_size))){
-                        LOG(LOG_WARNING, "setsockopt failed with errno=%d", errno);
-                        throw Error(ERR_SOCKET_CONNECT_FAILED);
-                    }
-                }
-            }
-            else {
-                LOG(LOG_WARNING, "getsockopt failed with errno=%d", errno);
+    /* set snd buffer to at least 32 Kbytes */
+    int snd_buffer_size;
+    unsigned int option_len = sizeof(snd_buffer_size);
+    if (0 == getsockopt(sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, &option_len)) {
+        if (snd_buffer_size < 32768) {
+            snd_buffer_size = 32768;
+            if (-1 == setsockopt(sck,
+                    SOL_SOCKET,
+                    SO_SNDBUF,
+                    &snd_buffer_size, sizeof(snd_buffer_size))){
+                LOG(LOG_WARNING, "setsockopt failed with errno=%d", errno);
                 throw Error(ERR_SOCKET_CONNECT_FAILED);
             }
+        }
+    }
+    else {
+        LOG(LOG_WARNING, "getsockopt failed with errno=%d", errno);
+        throw Error(ERR_SOCKET_CONNECT_FAILED);
+    }
 
-            struct sockaddr_in s;
-            memset(&s, 0, sizeof(struct sockaddr_in));
-            s.sin_family = AF_INET;
-            s.sin_port = htons(port);
-            s.sin_addr.s_addr = inet_addr(ip);
-            if (s.sin_addr.s_addr == INADDR_NONE) {
-            TODO(" gethostbyname is obsolete use new function getnameinfo")
-                LOG(LOG_INFO, "Asking ip to DNS for %s\n", ip);
-                struct hostent *h = gethostbyname(ip);
-                if (!h) {
-                    LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n",
-                        ip, errno, strerror(errno));
-                    throw Error(ERR_SOCKET_GETHOSTBYNAME_FAILED);
-                }
-                s.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
-            }
-            TODO(" we should control and detect timeout instead of relying on default connect behavior. Maybe set O_NONBLOCK and use poll to manage timeouts ?")
-            if (-1 == ::connect(sck, (struct sockaddr*)&s, sizeof(s))){
-                LOG(LOG_INFO, "Connection to %s failed with errno = %d (%s)",
-                    ip, errno, strerror(errno));
-                throw Error(ERR_SOCKET_CONNECT_FAILED);
-            }
-            fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
+    struct sockaddr_in s;
+    memset(&s, 0, sizeof(struct sockaddr_in));
+    s.sin_family = AF_INET;
+    s.sin_port = htons(port);
+    s.sin_addr.s_addr = inet_addr(ip);
+    if (s.sin_addr.s_addr == INADDR_NONE) {
+    TODO(" gethostbyname is obsolete use new function getnameinfo")
+        LOG(LOG_INFO, "Asking ip to DNS for %s\n", ip);
+        struct hostent *h = gethostbyname(ip);
+        if (!h) {
+            LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n",
+                ip, errno, strerror(errno));
+            throw Error(ERR_SOCKET_GETHOSTBYNAME_FAILED);
+        }
+        s.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
+    }
+    fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
+
+    int trial = 0;
+    for (; trial < nbretry ; trial++){
+        int res = ::connect(sck, (struct sockaddr*)&s, sizeof(s));
+        if (-1 != res){
+            // connection suceeded
             break;
         }
-        catch (Error){
-            if (trial >= nbretry){
-                LOG(LOG_INFO, "All trials done connecting to %s\n", ip);
-                throw;
-            }
+        if (trial > 0){
+            LOG(LOG_INFO, "Connection to %s failed with errno = %d (%s)",
+                ip, errno, strerror(errno));
         }
-        LOG(LOG_INFO, "Will retry connecting to %s in %d ms (trial %d on %d)\n",
-            ip, retry_delai_ms, trial, nbretry);
-        usleep(retry_delai_ms);
+        if ((errno == EINPROGRESS) || (errno == EALREADY)){
+            // try again
+            fd_set fds;
+            FD_ZERO(&fds);
+            struct timeval timeout = {
+                retry_delai_ms / 1000,
+                1000 * (retry_delai_ms % 1000)
+            };
+            FD_SET(sck, &fds);
+            // exit select on timeout or connect or error
+            // connect will catch the actual error if any,
+            // no need to care of select result
+            select(sck+1, NULL, &fds, NULL, &timeout);
+        }
+        else {
+            // real failure
+           trial = nbretry;
+        }
+    }
+    if (trial >= nbretry){
+        LOG(LOG_INFO, "All trials done connecting to %s\n", ip);
+        throw Error(ERR_SOCKET_CONNECT_FAILED);
     }
     LOG(LOG_INFO, "connection to %s succeeded : socket %d\n", ip, sck);
     return sck;

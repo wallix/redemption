@@ -504,7 +504,7 @@ class SessionManager {
             TODO(" is there a way to make auth_event RAII ? (initialized in sesman constructor)")
             if (!this->auth_trans_t){
                 static const char * name = "Authentifier";
-                int sck = connect(auth_host, authport, name, 4, 1000000);
+                int sck = connect(auth_host, authport, name, 30, 1000);
                 this->auth_trans_t = new SocketTransport(name, sck, this->verbose);
                 TODO(" create a realloc method")
                 if (this->auth_event){

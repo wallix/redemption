@@ -340,8 +340,7 @@ struct mod_rdp : public client_mod {
     CryptContext encrypt, decrypt;
 
     enum {
-        MOD_RDP_CONNECTING,
-        MOD_RDP_CONNECTION_INITIATION,
+        MOD_RDP_NEGO,
         MOD_RDP_BASIC_SETTINGS_EXCHANGE,
         MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER,
         MOD_RDP_GET_LICENSE,
@@ -366,6 +365,8 @@ struct mod_rdp : public client_mod {
     Random * gen;
     uint32_t verbose;
 
+    RdpNego nego;
+
     mod_rdp(Transport * trans,
             const char * target_user,
             const char * target_password,
@@ -373,7 +374,7 @@ struct mod_rdp : public client_mod {
             const char * hostname,
             const ClientInfo & info,
             Random * gen,
-            uint32_t verbose = 1)
+            uint32_t verbose = 0)
             :
                 client_mod(front, info.width, info.height),
                     in_stream(65536),
@@ -390,12 +391,16 @@ struct mod_rdp : public client_mod {
                     crypt_level(0),
                     server_public_key_len(0),
                     connection_finalization_state(EARLY),
-                    state(MOD_RDP_CONNECTING),
+                    state(MOD_RDP_NEGO),
                     console_session(info.console_session),
                     brush_cache_code(info.brush_cache_code),
                     front_bpp(info.bpp),
                     gen(gen),
-                    verbose(verbose)
+                    verbose(verbose),
+                    nego(RdpNego::PROTOCOL_NLA
+                        |RdpNego::PROTOCOL_RDP
+                        |RdpNego::PROTOCOL_TLS,
+                        trans, target_user)
     {
         LOG(LOG_INFO, "Creation of new mod 'RDP'");
         // from rdp_sec
@@ -545,58 +550,44 @@ struct mod_rdp : public client_mod {
         char * hostname = this->hostname;
 
         switch (this->state){
-        case MOD_RDP_CONNECTING:
-            LOG(LOG_INFO, "mod_rdp::Connecting");
-            // Connection Initiation
-            // ---------------------
+        case MOD_RDP_NEGO:
+            switch (this->nego.state){
+                default:
+                    this->nego.server_event();
+                break;
+                case RdpNego::NEGO_STATE_FINAL:
+                    // Basic Settings Exchange
+                    // -----------------------
 
-            // The client initiates the connection by sending the server an X.224 Connection
-            //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
-            // PDU (class 0). From this point, all subsequent data sent between client and
-            // server is wrapped in an X.224 Data Protocol Data Unit (PDU).
+                    // Basic Settings Exchange: Basic settings are exchanged between the client and
+                    // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
+                    // Connect Initial PDU contains a GCC Conference Create Request, while the
+                    // Connect Response PDU contains a GCC Conference Create Response.
 
-            // Client                                                     Server
-            //    |------------X224 Connection Request PDU----------------> |
-            //    | <----------X224 Connection Confirm PDU----------------- |
-
-            this->send_x224_connection_request_pdu(trans);
-            this->state = MOD_RDP_CONNECTION_INITIATION;
-        break;
-
-        case MOD_RDP_CONNECTION_INITIATION:
-            LOG(LOG_INFO, "mod_rdp::Connection Initiation");
-            this->recv_x224_connection_confirm_pdu(this->trans);
-
-            // Basic Settings Exchange
-            // -----------------------
-
-            // Basic Settings Exchange: Basic settings are exchanged between the client and
-            // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
-            // Connect Initial PDU contains a GCC Conference Create Request, while the
-            // Connect Response PDU contains a GCC Conference Create Response.
-
-            // These two Generic Conference Control (GCC) packets contain concatenated
-            // blocks of settings data (such as core data, security data and network data)
-            // which are read by client and server
+                    // These two Generic Conference Control (GCC) packets contain concatenated
+                    // blocks of settings data (such as core data, security data and network data)
+                    // which are read by client and server
 
 
-            // Client                                                     Server
-            //    |--------------MCS Connect Initial PDU with-------------> |
-            //                   GCC Conference Create Request
-            //    | <------------MCS Connect Response PDU with------------- |
-            //                   GCC conference Create Response
+                    // Client                                                     Server
+                    //    |--------------MCS Connect Initial PDU with-------------> |
+                    //                   GCC Conference Create Request
+                    //    | <------------MCS Connect Response PDU with------------- |
+                    //                   GCC conference Create Response
 
-            mcs_send_connect_initial(
-                    this->trans,
-                    this->front.get_channel_list(),
-                    this->front_width,
-                    this->front_height,
-                    this->front_bpp,
-                    keylayout,
-                    hostname,
-                    this->use_rdp5,
-                    this->console_session);
-            this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
+                    mcs_send_connect_initial(
+                            this->trans,
+                            this->front.get_channel_list(),
+                            this->front_width,
+                            this->front_height,
+                            this->front_bpp,
+                            keylayout,
+                            hostname,
+                            this->use_rdp5,
+                            this->console_session);
+                    this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
+                break;
+            }
         break;
 
         case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
@@ -1083,23 +1074,23 @@ struct mod_rdp : public client_mod {
                             }
                             break;
                             case PDUTYPE2_CONTROL:
-                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_CONTROL");
+//                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_CONTROL");
                             break;
                             case PDUTYPE2_SYNCHRONIZE:
-                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_SYNCHRONIZE");
+//                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_SYNCHRONIZE");
                             break;
                             case PDUTYPE2_POINTER:
-                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_POINTER");
+//                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_POINTER");
                                 this->process_pointer_pdu(stream, this);
                             break;
                             case PDUTYPE2_PLAY_SOUND:
-                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_PLAY_SOUND");
+//                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_PLAY_SOUND");
                             break;
                             case PDUTYPE2_SAVE_SESSION_INFO:
-                                LOG(LOG_INFO, "DATA PDU LOGON");
+//                                LOG(LOG_INFO, "DATA PDU LOGON");
                             break;
                             case PDUTYPE2_SET_ERROR_INFO_PDU:
-                                LOG(LOG_INFO, "DATA PDU DISCONNECT");
+//                                LOG(LOG_INFO, "DATA PDU DISCONNECT");
                                 this->process_disconnect_pdu(stream);
                             break;
                             default:
@@ -1204,184 +1195,7 @@ struct mod_rdp : public client_mod {
 // Connection Finalization phases as described in section 1.3.1.1) but excluding
 // the Persistent Key List PDU.
 
-    // 2.2.1.1 Client X.224 Connection Request PDU
-    // ===========================================
 
-    // The X.224 Connection Request PDU is an RDP Connection Sequence PDU sent from
-    // client to server during the Connection Initiation phase (see section 1.3.1.1).
-
-    // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-    // x224Crq (7 bytes): An X.224 Class 0 Connection Request transport protocol
-    // data unit (TPDU), as specified in [X224] section 13.3.
-
-    // routingToken (variable): An optional and variable-length routing token
-    // (used for load balancing) terminated by a carriage-return (CR) and line-feed
-    // (LF) ANSI sequence. For more information about Terminal Server load balancing
-    // and the routing token format, see [MSFT-SDLBTS]. The length of the routing
-    // token and CR+LF sequence is included in the X.224 Connection Request Length
-    // Indicator field. If this field is present, then the cookie field MUST NOT be
-    //  present.
-
-    //cookie (variable): An optional and variable-length ANSI text string terminated
-    // by a carriage-return (CR) and line-feed (LF) ANSI sequence. This text string
-    // MUST be "Cookie: mstshash=IDENTIFIER", where IDENTIFIER is an ANSI string
-    //(an example cookie string is shown in section 4.1.1). The length of the entire
-    // cookie string and CR+LF sequence is included in the X.224 Connection Request
-    // Length Indicator field. This field MUST NOT be present if the routingToken
-    // field is present.
-
-    // rdpNegData (8 bytes): An optional RDP Negotiation Request (section 2.2.1.1.1)
-    // structure. The length of this negotiation structure is included in the X.224
-    // Connection Request Length Indicator field.
-
-    void send_x224_connection_request_pdu(Transport * trans)
-    {
-        if (this->verbose){
-            LOG(LOG_INFO, "mod_rdp::send_x224_connection_request_pdu");
-        }
-        Stream out;
-        X224Out crtpdu(X224Packet::CR_TPDU, out);
-        crtpdu.stream.out_concat("Cookie: mstshash=");
-        crtpdu.stream.out_concat(this->username);
-        crtpdu.stream.out_concat("\r\n");
-//        crtpdu.stream.out_uint8(0x01);
-//        crtpdu.stream.out_uint8(0x00);
-//        crtpdu.stream.out_uint32_le(0x00);
-        crtpdu.extend_tpdu_hdr();
-        crtpdu.end();
-        crtpdu.send(trans);
-        if (this->verbose){
-            LOG(LOG_INFO, "mod_rdp::send_x224_connection_request_pdu done");
-        }
-    }
-
-    // 2.2.1.2 Server X.224 Connection Confirm PDU
-    // ===========================================
-
-    // The X.224 Connection Confirm PDU is an RDP Connection Sequence PDU sent from
-    // server to client during the Connection Initiation phase (see section
-    // 1.3.1.1). It is sent as a response to the X.224 Connection Request PDU
-    // (section 2.2.1.1).
-
-    // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
-
-    // x224Ccf (7 bytes): An X.224 Class 0 Connection Confirm TPDU, as specified in
-    // [X224] section 13.4.
-
-    // rdpNegData (8 bytes): Optional RDP Negotiation Response (section 2.2.1.2.1)
-    // structure or an optional RDP Negotiation Failure (section 2.2.1.2.2)
-    // structure. The length of the negotiation structure is included in the X.224
-    // Connection Confirm Length Indicator field.
-
-// 2.2.1.2.1 RDP Negotiation Response (RDP_NEG_RSP)
-// ================================================
-
-// The RDP Negotiation Response structure is used by a server to inform the
-// client of the security protocol which it has selected to use for the
-// connection.
-
-// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
-// field MUST be set to 0x02 (TYPE_RDP_NEG_RSP) to indicate that the packet is
-// a Negotiation Response.
-
-// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags.
-
-// +-------------------------------------+-------------------------------------+
-// | 0x01 EXTENDED_CLIENT_DATA_SUPPORTED | The server supports Extended Client |
-// |                                     | Data Blocks in the GCC Conference   |
-// |                                     | Create Request user data (section   |
-// |                                     | 2.2.1.3).                           |
-// +-------------------------------------+-------------------------------------+
-
-// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This field MUST be set to 0x0008 (8 bytes)
-
-// selectedProtocol (4 bytes): A 32-bit, unsigned integer. Field indicating the selected security protocol.
-
-// +----------------------------+----------------------------------------------+
-// | 0x00000000 PROTOCOL_RDP    | Standard RDP Security (section 5.3)          |
-// +----------------------------+----------------------------------------------+
-// | 0x00000001 PROTOCOL_SSL    | TLS 1.0 (section 5.4.5.1)                    |
-// +----------------------------+----------------------------------------------+
-// | 0x00000002 PROTOCOL_HYBRID | CredSSP (section 5.4.5.2)                    |
-// +----------------------------+----------------------------------------------+
-
-
-// 2.2.1.2.2 RDP Negotiation Failure (RDP_NEG_FAILURE)
-// ===================================================
-
-// The RDP Negotiation Failure structure is used by a server to inform the
-// client of a failure that has occurred while preparing security for the
-// connection.
-
-// type (1 byte): An 8-bit, unsigned integer. Negotiation packet type. This
-// field MUST be set to 0x03 (TYPE_RDP_NEG_FAILURE) to indicate that the packet
-// is a Negotiation Failure.
-
-// flags (1 byte): An 8-bit, unsigned integer. Negotiation packet flags. There
-// are currently no defined flags so the field MUST be set to 0x00.
-
-// length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This
-// field MUST be set to 0x0008 (8 bytes).
-
-// failureCode (4 bytes): A 32-bit, unsigned integer. Field containing the
-// failure code.
-
-// +--------------------------------------+------------------------------------+
-// | 0x00000001 SSL_REQUIRED_BY_SERVER    | The server requires that the       |
-// |                                      | client support Enhanced RDP        |
-// |                                      | Security (section 5.4) with either |
-// |                                      | TLS 1.0 (section 5.4.5.1) or       |
-// |                                      | CredSSP (section 5.4.5.2). If only |
-// |                                      | CredSSP was requested then the     |
-// |                                      | server only supports TLS.          |
-// +--------------------------------------+------------------------------------+
-// | 0x00000002 SSL_NOT_ALLOWED_BY_SERVER | The server is configured to only   |
-// |                                      | use Standard RDP Security          |
-// |                                      | mechanisms (section 5.3) and does  |
-// |                                      | not support any External Security  |
-// |                                      | Protocols (section 5.4.5).         |
-// +--------------------------------------+------------------------------------+
-// | 0x00000003 SSL_CERT_NOT_ON_SERVER    | The server does not possess a valid|
-// |                                      | authentication certificate and     |
-// |                                      | cannot initialize the External     |
-// |                                      | Security Protocol Provider         |
-// |                                      | (section 5.4.5).                   |
-// +--------------------------------------+------------------------------------+
-// | 0x00000004 INCONSISTENT_FLAGS        | The list of requested security     |
-// |                                      | protocols is not consistent with   |
-// |                                      | the current security protocol in   |
-// |                                      | effect. This error is only possible|
-// |                                      | when the Direct Approach (see      |
-// |                                      | sections 5.4.2.2 and 1.3.1.2) is   |
-// |                                      | used and an External Security      |
-// |                                      | Protocol (section 5.4.5) is already|
-// |                                      | being used.                        |
-// +--------------------------------------+------------------------------------+
-// | 0x00000005 HYBRID_REQUIRED_BY_SERVER | The server requires that the client|
-// |                                      | support Enhanced RDP Security      |
-// |                                      | (section 5.4) with CredSSP (section|
-// |                                      | 5.4.5.2).                          |
-// +--------------------------------------+------------------------------------+
-
-
-    void recv_x224_connection_confirm_pdu(Transport * trans)
-    {
-        if (this->verbose){
-            LOG(LOG_INFO, "mod_rdp::recv_x224_connection_confirm_pdu");
-        }
-        Stream stream(8192);
-        X224In cctpdu(trans, stream);
-        if (cctpdu.tpkt.version != 3){
-            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
-        }
-        if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
-            throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
-        }
-        if (this->verbose){
-            LOG(LOG_INFO, "mod_rdp::recv_x224_connection_confirm_pdu done");
-        }
-    }
 
 
         // 2.2.1.13.1.1 Demand Active PDU Data (TS_DEMAND_ACTIVE_PDU)
@@ -1554,19 +1368,19 @@ struct mod_rdp : public client_mod {
             }
             break;
             case RDP_POINTER_COLOR:
-//                LOG(LOG_INFO, "Process pointer color");
+                LOG(LOG_INFO, "Process pointer color");
                 this->process_color_pointer_pdu(stream, mod);
-//                LOG(LOG_INFO, "Process pointer color done");
+                LOG(LOG_INFO, "Process pointer color done");
                 break;
             case RDP_POINTER_CACHED:
-//                LOG(LOG_INFO, "Process pointer cached");
+                LOG(LOG_INFO, "Process pointer cached");
                 this->process_cached_pointer_pdu(stream, mod);
-//                LOG(LOG_INFO, "Process pointer cached done");
+                LOG(LOG_INFO, "Process pointer cached done");
                 break;
             case RDP_POINTER_SYSTEM:
-//                LOG(LOG_INFO, "Process pointer system");
+                LOG(LOG_INFO, "Process pointer system");
                 this->process_system_pointer_pdu(stream, mod);
-//                LOG(LOG_INFO, "Process pointer system done");
+                LOG(LOG_INFO, "Process pointer system done");
                 break;
             default:
                 break;

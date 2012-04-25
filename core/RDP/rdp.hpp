@@ -310,6 +310,7 @@ class ShareDataIn
     void end(){
         if (stream.p != stream.end){
             LOG(LOG_INFO, "some data were not consumed len=%u compressedLen=%u remains=%u", this->len, this->compressedLen, stream.end - stream.p);
+            stream.p = stream.end;
         }
     }
 };

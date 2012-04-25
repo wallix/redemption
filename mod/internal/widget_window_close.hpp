@@ -33,12 +33,11 @@
 
 struct wab_close : public window
 {
-    Inifile * ini;
     widget_combo * combo;
     ModContext & context;
     window * help;
 
-    wab_close(internal_mod * mod, const Rect & r, ModContext & context, Widget * parent, int bg_color, const char * title, Inifile * ini, int regular)
+    wab_close(internal_mod * mod, const Rect & r, ModContext & context, Widget * parent, int bg_color, const char * title, int regular)
     : window(mod, r, parent, bg_color, title),
       context(context)
     {
