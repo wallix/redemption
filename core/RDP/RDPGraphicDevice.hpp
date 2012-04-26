@@ -461,8 +461,8 @@ struct RDPSerializer : public RDPGraphicDevice
         uint8_t cache_id = (res >> 16) & 0x3;
         uint16_t cache_idx = res;
 
-        const Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
         if ((res >> 24) == BITMAP_ADDED_TO_CACHE){
+            const Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
             RDPBmpCache cmd_cache(bmp, cache_id, cache_idx, this->ini?this->ini->globals.debug.primary_orders:0);
             this->reserve_order(cmd_cache.bmp->bmp_size + 16);
             cmd_cache.emit(this->stream, this->bitmap_cache_version, this->use_bitmap_comp, this->op2);

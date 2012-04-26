@@ -56,6 +56,23 @@ struct BmpCache {
             , big_entries(big_entries)
             , big_size(big_size)
         {
+            this->reset_values();
+        }
+        ~BmpCache(){
+            this->destroy_cache();
+        }
+
+    private:
+        void destroy_cache(){
+            for (uint8_t cid = 0; cid < 3; cid++){
+                for (uint16_t cidx = 0 ; cidx < 8192; cidx++){
+                    delete this->cache[cid][cidx];
+                }
+            }
+        }
+
+        void reset_values()
+        {
             this->stamp = 0;
             for (size_t cid = 0; cid < 3 ; cid++){
                 for (size_t cidx = 0; cidx < 8192 ; cidx++){
@@ -66,12 +83,12 @@ struct BmpCache {
                 }
             }
         }
-        ~BmpCache(){
-            for (uint8_t cid = 0; cid < 3; cid++){
-                for (uint16_t cidx = 0 ; cidx < 8192; cidx++){
-                    delete this->cache[cid][cidx];
-                }
-            }
+
+    public:
+        void reset()
+        {
+            this->destroy_cache();
+            this->reset_values();
         }
 
         void put(uint8_t id, uint16_t idx, const Bitmap * const bmp){

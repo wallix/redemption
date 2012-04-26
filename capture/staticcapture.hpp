@@ -54,9 +54,8 @@
 
 class StaticCapture : public RDPDrawable
 {
-    int framenb;
-
 public:
+    int framenb;
     char path[1024];
     char image_path[1024];
     uint16_t image_basepath_len;

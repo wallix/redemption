@@ -22,6 +22,7 @@
 #define __META_WRM_HPP__
 
 #include "RDP/RDPGraphicDevice.hpp"
+#include <iosfwd>
 
 struct MetaWRM {
     uint16_t version;
@@ -118,6 +119,16 @@ inline bool operator==(const MetaWRM& meta1, const MetaWRM& meta2)
 inline bool operator!=(const MetaWRM& meta1, const MetaWRM& meta2)
 {
     return !(meta1 == meta2);
+}
+
+template<typename _Char, typename _CharTraits>
+std::basic_ostream<_Char, _CharTraits>&
+operator<<(std::basic_ostream<_Char, _CharTraits>& os, const MetaWRM& meta)
+{
+    return os << "{version:" << meta.version
+    << ", width: " << meta.width
+    << ", height: " << meta.height
+    << ", bpp: " << short(meta.bpp) << '}';
 }
 
 #endif
