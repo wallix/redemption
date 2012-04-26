@@ -169,7 +169,8 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, bool realloc_consum
     BOOST_CHECK(1);
 
     recorder->consumer(consumer);
-    recorder->drawable_consumer(&consumer->drawable);
+    //recorder->drawable_consumer(&consumer->drawable);
+    recorder->redraw_consumer(consumer);
     bool is_chunk_time = true;
     BOOST_CHECK(1);
 
@@ -202,7 +203,8 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, bool realloc_consum
                                              0, 0);
             }
             recorder->consumer(consumer);
-            recorder->drawable_consumer(&consumer->drawable);
+            //recorder->drawable_consumer(&consumer->drawable);
+            recorder->redraw_consumer(consumer);
             BOOST_CHECK(1);
         } else {
             BOOST_CHECK(1);

@@ -354,6 +354,7 @@ public:
         }
 
         {
+            /* NOTE send Drawable (not use BmpCache)
             this->recorder.stream.out_uint16_le(width);
             this->recorder.stream.out_uint16_le(height);
             this->recorder.send_order();
@@ -376,10 +377,10 @@ public:
                     this->recorder.stream.out_uint8(*pdata);
                 }
                 this->recorder.send_order();
-            }
+            }*/
 
-
-            /*const uint16_t TILE_CX = 32;
+            /* NOTE implementation (bug) with BmpCache*/
+            const uint16_t TILE_CX = 32;
             const uint16_t TILE_CY = 32;
 
             //uint nn = 0;
@@ -401,20 +402,45 @@ public:
 
             this->recorder.chunk_type = RDP_UPDATE_ORDERS;
 
-            uint8_t Bpp = nbbytes(bpp);
-            uint8_t data[32*32*3];
+            Rect rect(0,0,width,height);
+
+            for (int y = 0; y < rect.cy ; y += TILE_CY) {
+                int cy = std::min(TILE_CY, (uint16_t)(rect.cy - y));
+
+                for (int x = 0; x < rect.cx ; x += TILE_CX) {
+                    int cx = std::min(TILE_CX, (uint16_t)(rect.cx - x));
+
+                    const Rect dst_tile(rect.x + x, rect.y + y, cx, cy);
+                    const Rect src_tile(x, y, cx, cy);
+
+                    const Bitmap tiled_bmp(data_drawable, rect.cx, rect.cy, bpp, src_tile);
+                    this->recorder.init();
+                    this->recorder.order_count = 1;
+                    const RDPBmpCache cmdcache(&tiled_bmp, 0, 0, this->recorder.ini ? this->recorder.ini->globals.debug.primary_orders : 0);
+                    cmdcache.emit(this->recorder.stream, this->recorder.bitmap_cache_version,
+                                  this->recorder.use_bitmap_comp, this->recorder.op2);
+                    this->recorder.send_order();
+                }
+            }
+
+
+            /*//uint8_t Bpp = nbbytes(bpp);
+            //uint8_t data[32*32*3];
             for (uint16_t y = 0; y < height; y += TILE_CY) {
                 uint16_t cy = std::min<uint16_t>(TILE_CY, height - y);
 
                 for (uint16_t x = 0; x < width; x += TILE_CX) {
                     uint16_t cx = std::min<uint16_t>(TILE_CX, height - x);
 
-                    for (uint16_t n = 0; n != cy; ++n){
-                        std::cout << ((width * ((y/TILE_CY) + n) + x) * Bpp) << '\n';
-                        memcpy(&data[cy * n * Bpp], data_drawable + (width * ((y/TILE_CY) + n) + x) * Bpp, cx * Bpp);
-                    }
+                    //uint8_t *pdata = data + cy * cy * Bpp;
+                    //for (uint16_t n = 0; n != cy; ++n){
+                    //    memcpy(&data[cy * (cy - 1 - n) * Bpp],
+                    //           data_drawable + (width * (y + n) + x) * Bpp,
+                    //           cx * Bpp);
+                    //}
 
-                    const Bitmap tiled_bmp(bpp, 0, cx, cy, data, cx*cy*Bpp);
+                    //const Bitmap tiled_bmp(bpp, 0, cx, cy, data, cx*cy*Bpp);
+                    const Bitmap tiled_bmp(data_drawable, cx, cy, bpp, Rect(y, x, cx, cy));
                     this->recorder.init();
                     this->recorder.order_count = 1;
                     const RDPBmpCache cmdcache(&tiled_bmp, 0, 0, this->recorder.ini ? this->recorder.ini->globals.debug.primary_orders : 0);
