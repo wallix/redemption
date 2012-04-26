@@ -35,15 +35,15 @@
 
 //inputFlags (2 bytes): A 16-bit, unsigned integer. Input support flags.
 
-//0x0001 INPUT_FLAG_SCANCODES Indicates support for using scancodes in the Keyboard Event notifications (see sections 2.2.8.1.1.3.1.1.1 and 2.2.8.1.2.2.1).
+//        0x0001 INPUT_FLAG_SCANCODES Indicates support for using scancodes in the Keyboard Event notifications (see sections 2.2.8.1.1.3.1.1.1 and 2.2.8.1.2.2.1).
 
-//0x0004 INPUT_FLAG_MOUSEX Indicates support for Extended Mouse Event notifications (see sections 2.2.8.1.1.3.1.1.4 and 2.2.8.1.2.2.4).
+//        0x0004 INPUT_FLAG_MOUSEX Indicates support for Extended Mouse Event notifications (see sections 2.2.8.1.1.3.1.1.4 and 2.2.8.1.2.2.4).
 
-//0x0008 INPUT_FLAG_FASTPATH_INPUT Advertised by RDP 5.0 and 5.1 servers. RDP 5.2, 6.0, 6.1, and 7.0 servers advertise the INPUT_FLAG_FASTPATH_INPUT2 flag to indicate support for fast-path input.
+//        0x0008 INPUT_FLAG_FASTPATH_INPUT Advertised by RDP 5.0 and 5.1 servers. RDP 5.2, 6.0, 6.1, and 7.0 servers advertise the INPUT_FLAG_FASTPATH_INPUT2 flag to indicate support for fast-path input.
 
-//0x0010 INPUT_FLAG_UNICODE Indicates support for Unicode Keyboard Event notifications (see sections 2.2.8.1.1.3.1.1.2 and 2.2.8.1.2.2.2).
+//        0x0010 INPUT_FLAG_UNICODE Indicates support for Unicode Keyboard Event notifications (see sections 2.2.8.1.1.3.1.1.2 and 2.2.8.1.2.2.2).
 
-//0x0020 INPUT_FLAG_FASTPATH_INPUT2 Advertised by RDP 5.2, 6.0, 6.1, and 7.0 servers. Clients that do not support this flag will not be able to use fast-path input when connecting to RDP 5.2, 6.0, 6.1, and 7.0 servers.
+//        0x0020 INPUT_FLAG_FASTPATH_INPUT2 Advertised by RDP 5.2, 6.0, 6.1, and 7.0 servers. Clients that do not support this flag will not be able to use fast-path input when connecting to RDP 5.2, 6.0, 6.1, and 7.0 servers.
 
 //The INPUT_FLAG_SCANCODES flag MUST be set and is required for a connection to proceed as RDP keyboard input is restricted to keyboard scancodes (unlike the code-point or virtual codes supported in [T128]).
 
@@ -118,29 +118,9 @@ struct InputCaps : public Capability {
         LOG(LOG_INFO, "Input caps::keyboardType %u", this->keyboardType);
         LOG(LOG_INFO, "Input caps::keyboardSubType %u", this->keyboardSubType);
         LOG(LOG_INFO, "Input caps::keyboardFunctionKey %u", this->keyboardFunctionKey);
-//        LOG(LOG_INFO, "Input caps::imeFileName %u", this->imeFileName);
+        LOG(LOG_INFO, "Input caps::imeFileName %u", this->imeFileName);
     }
 };
-
-//static inline void out_input_caps(Stream & stream)
-//{
-//    const char caps_input[] = {
-//    0x01, 0x00, 0x00, 0x00, 0x09, 0x04, 0x00, 0x00,
-//    0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-//    0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-//    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-//    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-//    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-//    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-//    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-//    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-//    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-//    0x00, 0x00, 0x00, 0x00
-//    };
-//    stream.out_uint16_le(0x0D);
-//    stream.out_uint16_le(0x58);
-//    stream.out_copy_bytes(caps_input, 0x54);
-//}
 
 static inline void front_out_input_caps(Stream & stream)
 {

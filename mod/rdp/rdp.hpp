@@ -1331,7 +1331,10 @@ struct mod_rdp : public client_mod {
             out_font_caps(stream);
             capscount++;
 
-            out_glyphcache_caps(stream);
+//            out_glyphcache_caps(stream);
+            GlyphSupportCaps glyphsupport_caps;
+            glyphsupport_caps.log("Sending glyphsupport caps to server");
+            glyphsupport_caps.emit(stream);
             capscount++;
 
             total_caplen = stream.get_offset(total_caplen);

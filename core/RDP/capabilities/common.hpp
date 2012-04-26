@@ -193,6 +193,7 @@ RDP_CAPLEN_BRUSHCACHE          = 0x08,
 
 // 16 CAPSTYPE_GLYPHCACHE Glyph Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.8)
 RDP_CAPSET_GLYPHCACHE          = 16,
+RDP_CAPLEN_GLYPHCACHE          = 0x34,
 
 // 17 CAPSTYPE_OFFSCREENCACHE Offscreen Bitmap Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.9)
 RDP_CAPSET_OFFSCREENCACHE      = 17,

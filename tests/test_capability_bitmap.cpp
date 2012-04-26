@@ -26,6 +26,8 @@
 #define BOOST_TEST_MODULE TestCapabilityBitmap
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGPRINT
+#include "log.hpp"
 #include "RDP/capabilities.hpp"
 
 
@@ -80,5 +82,36 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapEmit)
     BOOST_CHECK_EQUAL(bitmap_caps2.drawingFlags, (uint8_t)0);
     BOOST_CHECK_EQUAL(bitmap_caps2.multipleRectangleSupport, (uint16_t)1);
     BOOST_CHECK_EQUAL(bitmap_caps2.pad2octetsB, (uint16_t)0);
+
+}
+
+
+BOOST_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
+{
+
+    uint8_t glyphCache[40];
+    uint32_t fragCache;
+    uint16_t glyphSupportLevel;
+    uint16_t pad2octets;
+
+
+    GlyphSupportCaps glyphcache_caps;
+//    glyphcache_caps.glyphCache = 0;
+//    glyphcache_caps.fragCache = 0;
+//    glyphcache_caps.glyphSupportLevel = 0;
+//    glyphcache_caps.pad2octets = 0;
+
+
+    Stream stream(1024);
+    glyphcache_caps.emit(stream);
+//    stream.end = stream.p;
+//    stream.p = stream.data;
+
+    hexdump((const char *) stream.data, stream.p - stream.data);
+
+    Stream stream2(1024);
+    out_glyphcache_caps(stream2);
+
+    hexdump((const char *) stream2.data, stream2.p - stream2.data);
 
 }
