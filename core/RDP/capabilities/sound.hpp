@@ -24,12 +24,63 @@
 #if !defined(__RDP_CAPABILITIES_SOUND_HPP__)
 #define __RDP_CAPABILITIES_SOUND_HPP__
 
-static inline void out_sound_caps(Stream & stream)
-{
-    const char caps_sound[] = { 0x01, 0x00, 0x00, 0x00 };
-    stream.out_uint16_le(0x0C);
-    stream.out_uint16_le(8);
-    stream.out_copy_bytes(caps_sound, 4);
-}
+
+// 2.2.7.1.11   Sound Capability Set (TS_SOUND_CAPABILITYSET)
+
+// The TS_SOUND_CAPABILITYSET structure advertises the ability to play a "beep" sound. This
+// capability is sent only from client to server.
+
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the capability set. This
+//   field MUST be set to CAPSTYPE_SOUND (12).
+
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes of the capability
+//   data, including the size of the capabilitySetType and lengthCapability fields.
+
+// soundFlags (2 bytes): A 16-bit, unsigned integer. Support for sound options.
+
+//   0x0001 SOUND_BEEPS_FLAG    Playing a beep sound is supported.
+
+//   If the client advertises support for beeps, it MUST support the Play Sound PDU (section
+//   2.2.9.1.1.5).
+
+// pad2octetsA (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be
+//   ignored.
+
+
+enum {
+    SOUND_BEEPS_FLAG = 0x01
+};
+
+struct SoundCaps : public Capability {
+    uint16_t soundFlags;
+    uint16_t pad2octetsA;
+    SoundCaps()
+    : Capability(RDP_CAPSET_SOUND, RDP_CAPLEN_SOUND)
+    , soundFlags(SOUND_BEEPS_FLAG) //
+    , pad2octetsA(0) //
+    {
+    }
+
+    void emit(Stream & stream){
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_uint16_le(this->soundFlags);
+        stream.out_uint16_le(this->pad2octetsA);
+    }
+
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s SoundCaps caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "SoundCaps caps::soundFlags %u", this->soundFlags);
+        LOG(LOG_INFO, "SoundCaps caps::pad2octetsA %u", this->pad2octetsA);
+    }
+};
+
+//static inline void out_sound_caps(Stream & stream)
+//{
+//    const char caps_sound[] = { 0x01, 0x00, 0x00, 0x00 };
+//    stream.out_uint16_le(0x0C);
+//    stream.out_uint16_le(8);
+//    stream.out_copy_bytes(caps_sound, 4);
+//}
 
 #endif

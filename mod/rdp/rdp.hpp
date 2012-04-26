@@ -1321,7 +1321,9 @@ struct mod_rdp : public client_mod {
             input_caps.emit(stream);
             capscount++;
 
-            out_sound_caps(stream);
+            SoundCaps sound_caps;
+            sound_caps.log("Sending sound caps to server");
+            sound_caps.emit(stream);
             capscount++;
 
             out_font_caps(stream);

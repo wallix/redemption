@@ -178,6 +178,7 @@ RDP_CAPLEN_COLCACHE            = 0x08,
 
 // 12 CAPSTYPE_SOUND Sound Capability Set ([MS-RDPBCGR] section 2.2.7.1.11)
 RDP_CAPSET_SOUND               = 12,
+RDP_CAPLEN_SOUND               = 0x08,
 
 // 13 CAPSTYPE_INPUT Input Capability Set ([MS-RDPBCGR] section 2.2.7.1.6)
 RDP_CAPSET_INPUT               = 13,
