@@ -39,8 +39,8 @@ class Capture : public RDPGraphicDevice
     public:
 
     TODO(" fat interface : ugly  find another way")
-    Capture(int width, int height, const char * path, const char * codec_id, const char * video_quality) :
-        sc(width, height, path, codec_id, video_quality),
+    Capture(int width, int height, const char * path, const char * codec_id, const char * video_quality, bool bgr = true) :
+        sc(width, height, path, codec_id, video_quality, bgr),
         nc(width, height, path)
     {
         struct timeval now;

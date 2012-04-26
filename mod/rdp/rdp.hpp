@@ -1304,7 +1304,9 @@ struct mod_rdp : public client_mod {
             out_activate_caps(stream);
             capscount++;
 
-            out_control_caps(stream);
+            ControlCaps control_caps;
+            control_caps.log("Sending control caps to server");
+            control_caps.emit(stream);
             capscount++;
 
             PointerCaps pointer_caps;
@@ -1313,7 +1315,9 @@ struct mod_rdp : public client_mod {
             pointer_caps.emit(stream);
             capscount++;
 
-            out_share_caps(stream);
+            ShareCaps share_caps;
+            share_caps.log("Sending share caps to server");
+            share_caps.emit(stream);
             capscount++;
 
             InputCaps input_caps;
@@ -1321,7 +1325,9 @@ struct mod_rdp : public client_mod {
             input_caps.emit(stream);
             capscount++;
 
-            out_sound_caps(stream);
+            SoundCaps sound_caps;
+            sound_caps.log("Sending sound caps to server");
+            sound_caps.emit(stream);
             capscount++;
 
             out_font_caps(stream);

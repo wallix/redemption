@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 
     {
         Capture consumer(recorder.meta.width, recorder.meta.height,
-                        "/tmp/replay_part", 0, 0);
+                        "/tmp/replay_part", 0, 0, false);
 
         recorder.reader.consumer = &consumer;
 
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
     BOOST_CHECK(328 == n);
 }*/
 
-void TestMultiWRMToPng_random_file(uint nfile, uint numtest, bool realloc_consumer = false, uint totalframe = 328)
+void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, const uint8_t * sigdata = 0, bool realloc_consumer = false)
 {
     char filename[50];
     sprintf(filename, "/tmp/replay_part-%u-%u.wrm", getpid(), nfile);
@@ -169,7 +169,8 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, bool realloc_consum
     BOOST_CHECK(1);
 
     recorder->consumer(consumer);
-    recorder->drawable_consumer(&consumer->drawable);
+    //recorder->drawable_consumer(&consumer->drawable);
+    recorder->redraw_consumer(consumer);
     bool is_chunk_time = true;
     BOOST_CHECK(1);
 
@@ -202,7 +203,8 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, bool realloc_consum
                                              0, 0);
             }
             recorder->consumer(consumer);
-            recorder->drawable_consumer(&consumer->drawable);
+            //recorder->drawable_consumer(&consumer->drawable);
+            recorder->redraw_consumer(consumer);
             BOOST_CHECK(1);
         } else {
             BOOST_CHECK(1);
@@ -220,6 +222,34 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, bool realloc_consum
     BOOST_CHECK(1);
     consumer->flush();
 
+    SSL_SHA1 sha1;
+    ssllib ssl;
+    ssl.sha1_init(&sha1);
+    uint16_t rowsize = consumer->drawable.width;
+    for (size_t y = 0; y < consumer->drawable.height; y++){
+        ssl.sha1_update(&sha1, consumer->drawable.data + y * rowsize, rowsize);
+    }
+    uint8_t sig[20];
+    ssl.sha1_final(&sha1, sig);
+    if (!sigdata || memcmp(sig, sigdata, 20)){
+        char message[200];
+        sprintf(message, "Expected signature: \""
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
+        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
+        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
+        sig[ 8], sig[ 9], sig[10], sig[11],
+        sig[12], sig[13], sig[14], sig[15],
+        sig[16], sig[17], sig[18], sig[19]);
+        if (sigdata)
+            BOOST_CHECK_MESSAGE(false, message);
+        else
+            puts(message);
+    }
+
     BOOST_CHECK_EQUAL(n, totalframe);
     delete recorder;
     delete consumer;
@@ -228,15 +258,19 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, bool realloc_consum
 
 /*BOOST_AUTO_TEST_CASE(TestMultiWRMToPng2)
 {
-    TestMultiWRMToPng_random_file(0, 2);
+    TestMultiWRMToPng_random_file(0, 2, 328);
 }
 
 BOOST_AUTO_TEST_CASE(TestMultiWRMToPng3)
 {
-    TestMultiWRMToPng_random_file(0, 3, true);
+    TestMultiWRMToPng_random_file(0, 3, 328, true);
 }*/
 
 BOOST_AUTO_TEST_CASE(TestMultiWRMToPng4)
 {
-    TestMultiWRMToPng_random_file(31, 4, true, 318);
+    TestMultiWRMToPng_random_file(31, 4, 318,
+                                  (const uint8_t*)
+                                  "\xf3\x72\x33\x18\x5a\x8b\xd8\xf1\x46\xfd"
+                                  "\x69\x48\x48\x9c\xe7\x9b\x4e\x59\x1b\xa1",
+                                  true);
 }
