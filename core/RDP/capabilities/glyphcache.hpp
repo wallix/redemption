@@ -82,23 +82,55 @@
 // pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
 //   field MUST be ignored.
 
-static inline void out_glyphcache_caps(Stream & stream)
-{
-    stream.out_uint16_le(RDP_CAPSET_GLYPHCACHE);
-    uint16_t offset_length = stream.get_offset(0);
-    stream.out_uint16_le(0);
-    static const char glyphcache[] = {
-    0xFE, 0x00, 0x04, 0x00, 0xFE, 0x00, 0x04, 0x00,
-    0xFE, 0x00, 0x08, 0x00, 0xFE, 0x00, 0x08, 0x00,
-    0xFE, 0x00, 0x10, 0x00, 0xFE, 0x00, 0x20, 0x00,
-    0xFE, 0x00, 0x40, 0x00, 0xFE, 0x00, 0x80, 0x00,
-    0xFE, 0x00, 0x00, 0x01, 0x40, 0x00, 0x00, 0x08};
-    stream.out_copy_bytes(glyphcache, 40);
-    stream.out_uint32_le(0x01000100);
-    stream.out_uint16_le(0x0000);
-    stream.out_uint16_le(0);
-    stream.set_out_uint16_le(stream.get_offset(offset_length+2), offset_length);
+enum {
+    GLYPH_SUPPORT_NONE = 0x0,
+    GLYPH_SUPPORT_PARTIAL = 0x01,
+    GLYPH_SUPPORT_FULL = 0x02,
+    GLYPH_SUPPORT_ENCODE = 0x03
+};
 
-}
+struct GlyphSupportCaps : public Capability {
+    uint8_t glyphCache[40];
+    uint32_t fragCache;
+    uint16_t glyphSupportLevel;
+    uint16_t pad2octets;
+    GlyphSupportCaps()
+    : Capability(RDP_CAPSET_GLYPHCACHE, RDP_CAPLEN_GLYPHCACHE)
+//    , glyphCache = "";
+    , fragCache(0x01000100) // max number of entries in the cache = 256
+                            // largest allowed maximum size of an element in (bytes) = 256
+    , glyphSupportLevel(GLYPH_SUPPORT_NONE) // By default, no support
+    , pad2octets(0x0000)
+    {
+        const uint8_t init_glyphCache[] = {
+                            0xFE, 0x00, 0x04, 0x00, 0xFE, 0x00, 0x04, 0x00,
+                            0xFE, 0x00, 0x08, 0x00, 0xFE, 0x00, 0x08, 0x00,
+                            0xFE, 0x00, 0x10, 0x00, 0xFE, 0x00, 0x20, 0x00,
+                            0xFE, 0x00, 0x40, 0x00, 0xFE, 0x00, 0x80, 0x00,
+                            0xFE, 0x00, 0x00, 0x01, 0x40, 0x00, 0x00, 0x08};
+
+        for(size_t i; i < sizeof(init_glyphCache); i++) {
+            this->glyphCache[i] = init_glyphCache[i];
+        }
+    }
+
+
+    void emit(Stream & stream){
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_copy_bytes(this->glyphCache, 40);
+        stream.out_uint32_le(this->fragCache);
+        stream.out_uint16_le(this->glyphSupportLevel);
+        stream.out_uint16_le(this->pad2octets);
+    }
+
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s GlyphCache caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "GlyphCache caps::glyphCache %u", this->glyphCache);
+        LOG(LOG_INFO, "GlyphCache caps::fragCache %u", this->fragCache);
+        LOG(LOG_INFO, "GlyphCache caps::glyphSupportLevel %u", this->glyphSupportLevel);
+        LOG(LOG_INFO, "GlyphCache caps::pad2octets %u", this->pad2octets);
+    }
+};
 
 #endif

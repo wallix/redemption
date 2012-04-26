@@ -207,7 +207,7 @@ unit-test test_rdesktop_invalid_pdu : tests/test_rdesktop_invalid_pdu.cpp libboo
 # unit-test test_w2008_fail_licensing : tests/test_w2008_fail_licensing.cpp libboost_unit_test openssl crypto ini_config rsa_keys d3des libboost_program_options ;
 
 unit-test test_rdp_client_test_card : tests/test_rdp_client_test_card.cpp widget libboost_unit_test ini_config libboost_program_options ;
-unit-test test_rdp_client_simple : tests/test_rdp_client_simple.cpp libboost_unit_test ini_config openssl crypto rsa_keys d3des z dl libboost_program_options ;
+#unit-test test_rdp_client_simple : tests/test_rdp_client_simple.cpp libboost_unit_test ini_config openssl crypto rsa_keys d3des z dl libboost_program_options ;
 unit-test test_rdp_client_w2000 : tests/test_rdp_client_w2000.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
 unit-test test_rdp_client_w2008 : tests/test_rdp_client_w2008.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
 
@@ -222,6 +222,6 @@ unit-test test_meta : tests/test_meta.cpp libboost_unit_test ;
 unit-test test_file_to_png : tests/test_file_to_png.cpp libboost_unit_test png z d3des openssl crypto ;
 unit-test test_breakpoint : tests/test_breakpoint.cpp libboost_unit_test png z d3des openssl crypto ;
 
-#unit-test test_wrm_recorder : tests/test_wrm_recorder.cpp libboost_unit_test png z d3des openssl crypto ;
+unit-test test_wrm_recorder : tests/test_wrm_recorder.cpp libboost_unit_test png z d3des openssl crypto ;
 
 unit-test test_absolute_primary_order_opaque_rect : tests/test_absolute_primary_order_opaque_rect.cpp libboost_unit_test png d3des openssl z crypto ;
