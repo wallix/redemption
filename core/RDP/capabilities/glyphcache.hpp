@@ -109,7 +109,7 @@ struct GlyphSupportCaps : public Capability {
                             0xFE, 0x00, 0x40, 0x00, 0xFE, 0x00, 0x80, 0x00,
                             0xFE, 0x00, 0x00, 0x01, 0x40, 0x00, 0x00, 0x08};
 
-        for(size_t i; i < sizeof(init_glyphCache); i++) {
+        for(size_t i = 0; i < sizeof(init_glyphCache); i++) {
             this->glyphCache[i] = init_glyphCache[i];
         }
     }
