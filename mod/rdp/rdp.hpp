@@ -1315,7 +1315,9 @@ struct mod_rdp : public client_mod {
             pointer_caps.emit(stream);
             capscount++;
 
-            out_share_caps(stream);
+            ShareCaps share_caps;
+            share_caps.log("Sending share caps to server");
+            share_caps.emit(stream);
             capscount++;
 
             InputCaps input_caps;

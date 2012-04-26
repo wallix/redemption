@@ -45,15 +45,39 @@
 
 
 
-static inline void out_share_caps(Stream & stream)
-{
-    LOG(LOG_INFO, "Sending share caps to server");
 
-    stream.out_uint16_le(RDP_CAPSET_SHARE);
-    stream.out_uint16_le(RDP_CAPLEN_SHARE);
-    stream.out_uint16_le(0); /* userid */
-    stream.out_uint16_le(0); /* pad */
-}
+struct ShareCaps : public Capability {
+    uint16_t nodeId;
+    uint16_t pad2octets;
+    ShareCaps()
+    : Capability(RDP_CAPSET_SHARE, RDP_CAPLEN_SHARE)
+    , nodeId(0)
+    , pad2octets(0)
+    {
+    }
+
+    void emit(Stream & stream){
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_uint16_le(this->nodeId);
+        stream.out_uint16_le(this->pad2octets);
+
+    }
+
+    void recv(Stream & stream, uint16_t length){
+        this->len = length;
+        this->nodeId = stream.in_uint16_le();
+        this->pad2octets = stream.in_uint16_le();
+    }
+
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s Share caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "Share caps::nodeId %u", this->nodeId);
+        LOG(LOG_INFO, "Share caps::pad2octets %u", this->pad2octets);
+
+    }
+};
+
 
 static inline void front_out_share_caps(Stream & stream, uint16_t channel_id)
 {
