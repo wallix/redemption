@@ -1319,7 +1319,10 @@ struct mod_rdp : public client_mod {
             out_share_caps(stream);
             capscount++;
 
-            out_input_caps(stream);
+//            out_input_caps(stream);
+            InputCaps input_caps;
+            input_caps.log("Sending input caps to server");
+            input_caps.emit(stream);
             capscount++;
 
             out_sound_caps(stream);

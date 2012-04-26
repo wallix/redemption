@@ -69,25 +69,78 @@
 
 //imeFileName (64 bytes): A 64-byte field. Input Method Editor (IME) file name associated with the input locale. This field contains up to 31 Unicode characters plus a null terminator and is only specified in the client Input Capability Set and its contents SHOULD correspond with that sent in the Client Core Data.
 
-static inline void out_input_caps(Stream & stream)
-{
-    const char caps_input[] = {
-    0x01, 0x00, 0x00, 0x00, 0x09, 0x04, 0x00, 0x00,
-    0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00
-    };
-    stream.out_uint16_le(0x0D);
-    stream.out_uint16_le(0x58);
-    stream.out_copy_bytes(caps_input, 0x54);
-}
+enum {
+    INPUT_FLAG_SCANCODES = 0x01,
+    INPUT_FLAG_MOUSEX = 0x04,
+    INPUT_FLAG_FASTPATH_INPUT = 0x08,
+    INPUT_FLAG_UNICODE = 0x10,
+    INPUT_FLAG_FASTPATH_INPUT2 = 0x20
+};
+
+struct InputCaps : public Capability {
+    uint16_t inputFlags;
+    uint16_t pad2octetsA;
+    uint32_t keyboardLayout;
+    uint32_t keyboardType;
+    uint32_t keyboardSubType;
+    uint32_t keyboardFunctionKey;
+    uint16_t imeFileName[32];
+    InputCaps()
+    : Capability(RDP_CAPSET_INPUT, RDP_CAPLEN_INPUT)
+    , inputFlags(INPUT_FLAG_SCANCODES)
+    , pad2octetsA(0x0000)
+    , keyboardLayout(0x0409) // 0409 = English-US
+    , keyboardType(0x0004) // 04 = IBM enhanced (101- or 102-key) keyboard
+    , keyboardSubType(0x0000) // 00 = no OEM specific value
+    , keyboardFunctionKey(0x000C) // 0C = 12 function keys
+//    , imeFileName = ""
+    {
+        bzero(this->imeFileName, 64);
+    }
+
+    void emit(Stream & stream){
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_uint16_le(this->inputFlags);
+        stream.out_uint16_le(this->pad2octetsA);
+        stream.out_uint32_le(this->keyboardLayout);
+        stream.out_uint32_le(this->keyboardType);
+        stream.out_uint32_le(this->keyboardSubType);
+        stream.out_uint32_le(this->keyboardFunctionKey);
+        stream.out_utf16(this->imeFileName, 32);
+    }
+
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s Input caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "Input caps::inputFlags %u", this->inputFlags);
+        LOG(LOG_INFO, "Input caps::pad2octetsA %u", this->pad2octetsA);
+        LOG(LOG_INFO, "Input caps::keyboardLayout %u", this->keyboardLayout);
+        LOG(LOG_INFO, "Input caps::keyboardType %u", this->keyboardType);
+        LOG(LOG_INFO, "Input caps::keyboardSubType %u", this->keyboardSubType);
+        LOG(LOG_INFO, "Input caps::keyboardFunctionKey %u", this->keyboardFunctionKey);
+//        LOG(LOG_INFO, "Input caps::imeFileName %u", this->imeFileName);
+    }
+};
+
+//static inline void out_input_caps(Stream & stream)
+//{
+//    const char caps_input[] = {
+//    0x01, 0x00, 0x00, 0x00, 0x09, 0x04, 0x00, 0x00,
+//    0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//    0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//    0x00, 0x00, 0x00, 0x00
+//    };
+//    stream.out_uint16_le(0x0D);
+//    stream.out_uint16_le(0x58);
+//    stream.out_copy_bytes(caps_input, 0x54);
+//}
 
 static inline void front_out_input_caps(Stream & stream)
 {
