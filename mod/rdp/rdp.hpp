@@ -1270,7 +1270,6 @@ struct mod_rdp : public client_mod {
             general_caps.emit(stream);
             capscount++;
 
-//            out_bitmap_caps(stream, this->bpp, this->bitmap_compression);
             BitmapCaps bitmap_caps;
             bitmap_caps.preferredBitsPerPixel = this->bpp;
             bitmap_caps.desktopWidth = this->front_width;
@@ -1283,7 +1282,6 @@ struct mod_rdp : public client_mod {
             cs_out_order_caps(stream);
             capscount++;
 
-//            out_bmpcache_caps(stream, this->bpp);
             BmpCacheCaps bmpcache_caps;
             bmpcache_caps.cache0Entries = 0x258;
             bmpcache_caps.cache0MaximumCellSize = nbbytes(this->bpp) * 0x100;
@@ -1309,7 +1307,6 @@ struct mod_rdp : public client_mod {
             out_control_caps(stream);
             capscount++;
 
-//            out_pointer_caps(stream);
             PointerCaps pointer_caps;
             pointer_caps.len = 8;
             pointer_caps.log("Sending pointer caps to server");
@@ -1319,7 +1316,6 @@ struct mod_rdp : public client_mod {
             out_share_caps(stream);
             capscount++;
 
-//            out_input_caps(stream);
             InputCaps input_caps;
             input_caps.log("Sending input caps to server");
             input_caps.emit(stream);
@@ -1331,7 +1327,6 @@ struct mod_rdp : public client_mod {
             out_font_caps(stream);
             capscount++;
 
-//            out_glyphcache_caps(stream);
             GlyphSupportCaps glyphsupport_caps;
             glyphsupport_caps.log("Sending glyphsupport caps to server");
             glyphsupport_caps.emit(stream);

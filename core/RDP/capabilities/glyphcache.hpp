@@ -113,23 +113,7 @@ struct GlyphSupportCaps : public Capability {
             this->glyphCache[i] = init_glyphCache[i];
         }
     }
-//    stream.out_uint16_le(RDP_CAPSET_GLYPHCACHE);
 
-//    uint16_t offset_length = stream.get_offset(0);
-//    stream.out_uint16_le(0);
-
-//    static const char glyphcache[] = {
-//    0xFE, 0x00, 0x04, 0x00, 0xFE, 0x00, 0x04, 0x00,
-//    0xFE, 0x00, 0x08, 0x00, 0xFE, 0x00, 0x08, 0x00,
-//    0xFE, 0x00, 0x10, 0x00, 0xFE, 0x00, 0x20, 0x00,
-//    0xFE, 0x00, 0x40, 0x00, 0xFE, 0x00, 0x80, 0x00,
-//    0xFE, 0x00, 0x00, 0x01, 0x40, 0x00, 0x00, 0x08};
-//    stream.out_copy_bytes(glyphcache, 40);
-
-//    stream.out_uint32_le(0x01000100);
-//    stream.out_uint16_le(0x0000);
-//    stream.out_uint16_le(0);
-//    stream.set_out_uint16_le(stream.get_offset(offset_length+2), offset_length);
 
     void emit(Stream & stream){
         stream.out_uint16_le(this->capabilityType);
@@ -148,26 +132,5 @@ struct GlyphSupportCaps : public Capability {
         LOG(LOG_INFO, "GlyphCache caps::pad2octets %u", this->pad2octets);
     }
 };
-
-static inline void out_glyphcache_caps(Stream & stream)
-{
-    stream.out_uint16_le(RDP_CAPSET_GLYPHCACHE);
-
-    uint16_t offset_length = stream.get_offset(0);
-    stream.out_uint16_le(0);
-
-    static const char glyphcache[] = {
-    0xFE, 0x00, 0x04, 0x00, 0xFE, 0x00, 0x04, 0x00,
-    0xFE, 0x00, 0x08, 0x00, 0xFE, 0x00, 0x08, 0x00,
-    0xFE, 0x00, 0x10, 0x00, 0xFE, 0x00, 0x20, 0x00,
-    0xFE, 0x00, 0x40, 0x00, 0xFE, 0x00, 0x80, 0x00,
-    0xFE, 0x00, 0x00, 0x01, 0x40, 0x00, 0x00, 0x08};
-    stream.out_copy_bytes(glyphcache, 40);
-
-    stream.out_uint32_le(0x01000100);
-    stream.out_uint16_le(0x0000);
-    stream.out_uint16_le(0);
-    stream.set_out_uint16_le(stream.get_offset(offset_length+2), offset_length);
-}
 
 #endif

@@ -109,9 +109,4 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
 
     hexdump((const char *) stream.data, stream.p - stream.data);
 
-    Stream stream2(1024);
-    out_glyphcache_caps(stream2);
-
-    hexdump((const char *) stream2.data, stream2.p - stream2.data);
-
 }
