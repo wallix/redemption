@@ -24,20 +24,107 @@
 #if !defined(__RDP_CAPABILITIES_BMPCACHE_HPP__)
 #define __RDP_CAPABILITIES_BMPCACHE_HPP__
 
-static inline void out_bmpcache_caps(Stream & stream, uint16_t bpp)
-{
-    LOG(LOG_INFO, "Sending bmpcache caps to server");
-    TODO(" see details for bmpcache caps")
-    stream.out_uint16_le(RDP_CAPSET_BMPCACHE);
-    stream.out_uint16_le(RDP_CAPLEN_BMPCACHE);
-    int Bpp = nbbytes(bpp);
-    stream.out_clear_bytes(24); /* unused */
-    stream.out_uint16_le(0x258); /* entries */
-    stream.out_uint16_le(0x100 * Bpp); /* max cell size */
-    stream.out_uint16_le(0x12c); /* entries */
-    stream.out_uint16_le(0x400 * Bpp); /* max cell size */
-    stream.out_uint16_le(0x106); /* entries */
-    stream.out_uint16_le(0x1000 * Bpp); /* max cell size */
-}
+// 2.2.7.1.4 Bitmap Cache Capability Set
+
+// 2.2.7.1.4.1 Revision 1 (TS_BITMAPCACHE_CAPABILITYSET)
+
+// The TS_BITMAPCACHE_CAPABILITYSET structure is used to advertise support for Revision 1 bitmap
+// caches (see [MS-RDPEGDI] section 3.1.1.1.1). This capability is only sent from client to server.
+
+// In addition to specifying bitmap caching parameters in the Revision 1 Bitmap Cache Capability Set,
+// a client MUST also support the MemBlt and Mem3Blt Primary Drawing Orders (see [MS-RDPEGDI]
+// sections 2.2.2.2.1.1.2.9 and 2.2.2.2.1.1.2.10, respectively) in order to receive the Cache Bitmap
+// (Revision 1) Secondary Drawing Order (see [MS-RDPEGDI] section 2.2.2.2.1.2.2).
+
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the capability set. This
+//   field MUST be set to CAPSTYPE_BITMAPCACHE (4).
+
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes of the capability
+//   data, including the size of the capabilitySetType and lengthCapability fields.
+
+// pad1 (4 bytes): A 32-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+// pad2 (4 bytes): A 32-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+// pad3 (4 bytes): A 32-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+// pad4 (4 bytes): A 32-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+// pad5 (4 bytes): A 32-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+// pad6 (4 bytes): A 32-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+
+// Cache0Entries (2 bytes): A 16-bit, unsigned integer. The number of entries in Bitmap Cache 0
+//   (maximum allowed value is 200 entries).
+
+// Cache0MaximumCellSize (2 bytes): A 16-bit, unsigned integer. The maximum cell size in
+//   Bitmap Cache 0.
+
+// Cache1Entries (2 bytes): A 16-bit, unsigned integer. The number of entries in Bitmap Cache 1
+//   maximum allowed value is 600 entries).
+
+// Cache1MaximumCellSize (2 bytes): A 16-bit, unsigned integer. The maximum cell size in
+//   Bitmap Cache 1.
+
+// Cache2Entries (2 bytes): A 16-bit, unsigned integer. The number of entries in Bitmap Cache 2
+//   (maximum allowed value is 65535 entries).
+
+// Cache2MaximumCellSize (2 bytes): A 16-bit, unsigned integer. The maximum cell size in
+//   Bitmap Cache 2.
+
+
+
+struct BmpCacheCaps : public Capability {
+    uint32_t pad1;
+    uint32_t pad2;
+    uint32_t pad3;
+    uint32_t pad4;
+    uint32_t pad5;
+    uint32_t pad6;
+    uint16_t cache0Entries;
+    uint16_t cache0MaximumCellSize;
+    uint16_t cache1Entries;
+    uint16_t cache1MaximumCellSize;
+    uint16_t cache2Entries;
+    uint16_t cache2MaximumCellSize;
+    BmpCacheCaps()
+    : Capability(RDP_CAPSET_BMPCACHE, RDP_CAPLEN_BMPCACHE)
+    , pad1(0)
+    , pad2(0)
+    , pad3(0)
+    , pad4(0)
+    , pad5(0)
+    , pad6(0)
+    , cache0Entries(0xC8)
+    , cache0MaximumCellSize(0)
+    , cache1Entries(0x258)
+    , cache1MaximumCellSize(0)
+    , cache2Entries(0x3E8)
+    , cache2MaximumCellSize(0)
+    {
+    }
+
+    void emit(Stream & stream){
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_uint32_le(this->pad1);
+        stream.out_uint32_le(this->pad2);
+        stream.out_uint32_le(this->pad3);
+        stream.out_uint32_le(this->pad4);
+        stream.out_uint32_le(this->pad5);
+        stream.out_uint32_le(this->pad6);
+        stream.out_uint16_le(this->cache0Entries);
+        stream.out_uint16_le(this->cache0MaximumCellSize);
+        stream.out_uint16_le(this->cache1Entries);
+        stream.out_uint16_le(this->cache1MaximumCellSize);
+        stream.out_uint16_le(this->cache2Entries);
+        stream.out_uint16_le(this->cache2MaximumCellSize);
+    }
+
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s BitmapCache caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "BitmapCache caps::cache0Entries %u", this->cache0Entries);
+        LOG(LOG_INFO, "BitmapCache caps::cache0MaximumCellSize %u", this->cache0MaximumCellSize);
+        LOG(LOG_INFO, "BitmapCache caps::cache1Entries %u", this->cache1Entries);
+        LOG(LOG_INFO, "BitmapCache caps::cache1MaximumCellSize %u", this->cache1MaximumCellSize);
+        LOG(LOG_INFO, "BitmapCache caps::cache2Entries %u", this->cache2Entries);
+        LOG(LOG_INFO, "BitmapCache caps::cache2MaximumCellSize %u", this->cache2MaximumCellSize);
+    }
+};
 
 #endif

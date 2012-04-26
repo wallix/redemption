@@ -65,15 +65,44 @@
 // the New Pointer Update.
 
 
-static inline void out_pointer_caps(Stream & stream)
-{
-    LOG(LOG_INFO, "Sending Pointer caps to server");
 
-    stream.out_uint16_le(RDP_CAPSET_POINTER);
-    stream.out_uint16_le(8); // total length of caps
-    stream.out_uint16_le(1); /* colorPointerFlag */
-    stream.out_uint16_le(20); /* colorPointerCacheSize */
-}
+struct PointerCaps : public Capability {
+    uint16_t colorPointerFlag;
+    uint16_t colorPointerCacheSize;
+    uint16_t pointerCacheSize;
+    PointerCaps()
+    : Capability(RDP_CAPSET_POINTER, RDP_CAPLEN_POINTER)
+    , colorPointerFlag(1)
+    , colorPointerCacheSize(20)
+    , pointerCacheSize(0)
+    {
+    }
+
+    void emit(Stream & stream){
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_uint16_le(this->colorPointerFlag);
+        stream.out_uint16_le(this->colorPointerCacheSize);
+        if (this->len  < 10 ) return;
+        stream.out_uint16_le(this->pointerCacheSize);
+    }
+
+    void recv(Stream & stream, uint16_t length){
+        this->len = length;
+        this->colorPointerFlag = stream.in_uint16_le();
+        this->colorPointerCacheSize = stream.in_uint16_le();
+        this->pointerCacheSize = stream.in_uint16_le();
+    }
+
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s Pointer caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "Pointer caps::colorPointerFlag %u", this->colorPointerFlag);
+        LOG(LOG_INFO, "Pointer caps::colorPointerCacheSize %u", this->colorPointerCacheSize);
+        if (this->len  < 10 ) return;
+        LOG(LOG_INFO, "Pointer caps::pointerCacheSize %u", this->pointerCacheSize);
+    }
+};
+
 
 static inline void front_out_pointer_caps(Stream & stream)
 {
