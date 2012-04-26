@@ -115,10 +115,11 @@ public:
         } else {
             uint8_t * dest = this->data_bitmap.get();
             const uint8_t * src = data;
+            uint8_t data_width = this->cx * nbbytes(this->original_bpp);
             for (uint16_t i = 0 ; i < this->cy ; i++){
-                memcpy(dest, src, this->cx * nbbytes(this->original_bpp));
-                bzero(dest + this->cx * nbbytes(this->original_bpp), (this->bmp_size / this->cy) -  this->cx * nbbytes(this->original_bpp));
-                src += this->cx * nbbytes(this->original_bpp);
+                memcpy(dest, src, data_width);
+                bzero(dest + data_width, (this->bmp_size / this->cy) -  data_width);
+                src += data_width;
                 dest += (this->bmp_size / this->cy);
             }
         }

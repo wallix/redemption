@@ -354,7 +354,32 @@ public:
         }
 
         {
-            const uint16_t TILE_CX = 32;
+            this->recorder.stream.out_uint16_le(width);
+            this->recorder.stream.out_uint16_le(height);
+            this->recorder.send_order();
+
+            const uint8_t * pdata = data_drawable;
+            for (size_t n = 0, len = width * height * 3 / (4096 - 8); len--;){
+                this->recorder.init();
+                this->recorder.chunk_type = WRMChunk::BREAKPOINT;
+                this->recorder.order_count = 1;
+                for (size_t last = n + (4096 - 8); n != last; ++n, ++pdata){
+                    this->recorder.stream.out_uint8(*pdata);
+                }
+                this->recorder.send_order();
+            }
+            if (width * height * 3 % (4096 - 8)){
+                this->recorder.init();
+                this->recorder.chunk_type = WRMChunk::BREAKPOINT;
+                this->recorder.order_count = 1;
+                for (size_t last = width * height * 3 % (4096 - 8); last--; ++pdata){
+                    this->recorder.stream.out_uint8(*pdata);
+                }
+                this->recorder.send_order();
+            }
+
+
+            /*const uint16_t TILE_CX = 32;
             const uint16_t TILE_CY = 32;
 
             //uint nn = 0;
@@ -363,15 +388,15 @@ public:
                 uint16_t nb_axe = width / TILE_CX;
                 if (nb_axe * TILE_CX != width)
                     ++nb_axe;
-                std::cout << "write nb_axis " << nb_axe << ' ';
+                //std::cout << "write nb_axis " << nb_axe << ' ';
                 this->recorder.stream.out_uint16_le(nb_axe);
                 nb_axe = height / TILE_CY;
                 if (nb_axe * TILE_CY != height)
                     ++nb_axe;
-                std::cout << nb_axe << '\n';
+                //std::cout << nb_axe << '\n';
                 this->recorder.stream.out_uint16_le(nb_axe);
             }
-            std::cout << "writer data size " << (this->recorder.stream.p - this->recorder.stream.data) << '\n';
+            //std::cout << "writer data size " << (this->recorder.stream.p - this->recorder.stream.data) << '\n';
             this->recorder.send_order();
 
             this->recorder.chunk_type = RDP_UPDATE_ORDERS;
@@ -385,21 +410,21 @@ public:
                     uint16_t cx = std::min<uint16_t>(TILE_CX, height - x);
 
                     for (uint16_t n = 0; n != cy; ++n){
-                        memcpy(&data[TILE_CY * n * Bpp], data_drawable + width * (y + n) * Bpp, cx * Bpp);
+                        std::cout << ((width * ((y/TILE_CY) + n) + x) * Bpp) << '\n';
+                        memcpy(&data[cy * n * Bpp], data_drawable + (width * ((y/TILE_CY) + n) + x) * Bpp, cx * Bpp);
                     }
+
                     const Bitmap tiled_bmp(bpp, 0, cx, cy, data, cx*cy*Bpp);
                     this->recorder.init();
                     this->recorder.order_count = 1;
                     const RDPBmpCache cmdcache(&tiled_bmp, 0, 0, this->recorder.ini ? this->recorder.ini->globals.debug.primary_orders : 0);
-                    cmdcache.emit(this->recorder.stream,
-                                  this->recorder.bitmap_cache_version,
-                                  this->recorder.use_bitmap_comp,
-                                  /*false*/this->recorder.op2);
-                    std::cout << "write bmp (type: " << this->recorder.chunk_type << ", size:" << tiled_bmp.bmp_size << "): " << (this->recorder.stream.p - this->recorder.stream.data) << '\n';
+                    cmdcache.emit(this->recorder.stream, this->recorder.bitmap_cache_version,
+                                  this->recorder.use_bitmap_comp, this->recorder.op2);
+                    //std::cout << "write bmp (type: " << this->recorder.chunk_type << ", size:" << tiled_bmp.bmp_size << "): " << (this->recorder.stream.p - this->recorder.stream.data) << '\n';
                     this->recorder.send_order();
                     //++nn;
                 }
-            }
+            }*/
 
             //std::cout << "write number img " << nn << '\n';
         }

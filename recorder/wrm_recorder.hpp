@@ -41,7 +41,7 @@ public:
     MetaWRM meta;
 
 private:
-    RDPGraphicDevice * redrawable;
+    Drawable * drawable;
 
 
 private:
@@ -61,7 +61,7 @@ public:
     : trans(open(filename))
     , reader(&trans, 0, Rect())
     , meta(reader)
-    , redrawable(0)
+    , drawable(0)
     {
         this->reader.screen_rect.cx = this->meta.width;
         this->reader.screen_rect.cy = this->meta.height;
@@ -77,9 +77,9 @@ public:
         this->reader.consumer = consumer;
     }
 
-    void redraw_consumer(RDPGraphicDevice * consumer)
+    void drawable_consumer(Drawable* consumer)
     {
-        this->redrawable = consumer;
+        this->drawable = consumer;
     }
 
     RDPGraphicDevice * consumer()
@@ -87,9 +87,9 @@ public:
         return this->reader.consumer;
     }
 
-    RDPGraphicDevice * redraw_consumer()
+    Drawable * drawable_consumer()
     {
-        return this->redrawable;
+        return this->drawable;
     }
 
     bool selected_next_order()
@@ -177,37 +177,109 @@ public:
                 //char texttest[10000];
 
                 {
-                    uint16_t nx = this->reader.stream.in_uint16_le();
-                    std::cout << "read nb_axis " << nx << ' ';
-                    uint16_t ny = this->reader.stream.in_uint16_le();
-                    std::cout << ny << '\n';
+                    uint16_t width = this->reader.stream.in_uint16_le();
+                    uint16_t height = this->reader.stream.in_uint16_le();
+                    --this->reader.remaining_order_count;
 
-                    std::cout << "read data size " << (this->reader.stream.p - this->reader.stream.data) << '\n';
+                    if (this->drawable) {
+                        uint8_t * pdata = this->drawable->data;
+                        for (size_t n = 0, len = width * height * 3 / (4096 - 8); len--;){
+                            this->reader.selected_next_order();
+                            for (size_t last = n + (4096 - 8); n != last; ++n, ++pdata){
+                                *pdata = this->reader.stream.in_uint8();
+                            }
+                            --this->reader.remaining_order_count;
+                        }
+                        if (width * height * 3 % (4096 - 8)){
+                            this->reader.selected_next_order();
+                            for (size_t last = width * height * 3 % (4096 - 8); last--; ++pdata){
+                                *pdata = this->reader.stream.in_uint8();
+                            }
+                            --this->reader.remaining_order_count;
+                        }
+                    }
+                    else{
+                        for (size_t n = 0, len = width * height * 3 / (4096 - 8); n != len; ++n){
+                            this->reader.selected_next_order();
+                            --this->reader.remaining_order_count;
+                        }
+                        if (width * height * 3 % (4096 - 8)){
+                            this->reader.selected_next_order();
+                            --this->reader.remaining_order_count;
+                        }
+                    }
+
+
+                    /*uint16_t nx = this->reader.stream.in_uint16_le();
+                    //std::cout << "read nb_axis " << nx << ' ';
+                    uint16_t ny = this->reader.stream.in_uint16_le();
+                    //std::cout << ny << '\n';
+
+                    //std::cout << "read data size " << (this->reader.stream.p - this->reader.stream.data) << '\n';
 
 
                     --this->reader.remaining_order_count;
                     //uint nn = 0;
 
                     if (this->redrawable) {
+                        {
+                            ///NOTE set zero test
+                            Drawable& d = dynamic_cast<RDPDrawable*>(this->redrawable)->drawable;
+                            for (int i = 0; i != d.height; ++i){
+                                bzero(&d.data[i*d.rowsize], d.rowsize);
+                            }
+                        }
+
                         Rect clip(0,0, this->meta.width, this->meta.height);
                         RDPMemBlt memblt(0, Rect(0,0,32,32), 0xCC, 0, 0, 0);
                         RDPBmpCache cmdcache;
                         BGRPalette palette;
 
-                        for (uint16_t y = 0 ; y != ny; ++y, memblt.rect.cy += 32) {
-                            memblt.rect.cx = 0; for (uint16_t x = 0 ; x != nx;
-                                 ++x, memblt.rect.cx += 32) {
+                        for (uint16_t y = 0 ; y != ny; ++y, memblt.rect.y += 32) {
+                            memblt.rect.x = 0;
+                            for (uint16_t x = 0 ; x != nx;
+                                 ++x, memblt.rect.x += 32) {
                                 this->reader.selected_next_order();
-                                std::cout << "read bmp chunk (type: " << this->reader.chunk_type << ", n:" << this->reader.remaining_order_count << "): " << (RDP_UPDATE_ORDERS == this->reader.chunk_type) <<  ' ';
+                                //std::cout << "read bmp chunk (type: " << this->reader.chunk_type << ", n:" << this->reader.remaining_order_count << "): " << (RDP_UPDATE_ORDERS == this->reader.chunk_type) <<  ' ';
                                 uint8_t control = this->reader.stream.in_uint8();
                                 --this->reader.remaining_order_count;
                                 RDPSecondaryOrderHeader header(this->reader.stream);
                                 uint8_t *next_order = this->reader.stream.p + header.length + 7;
-                                std::cout  << (header.type == RDP::TS_CACHE_BITMAP_COMPRESSED) << ' ';
+                                //std::cout  << (header.type == RDP::TS_CACHE_BITMAP_COMPRESSED) << ' ';
                                 cmdcache.receive(this->reader.stream, control, header, palette);
                                 this->reader.stream.p = next_order;
-                                this->redrawable->draw(memblt, clip, *cmdcache.bmp);
-                                std::cout << "reader bmp (size:" << cmdcache.bmp->bmp_size << "): " << (this->reader.stream.p - this->reader.stream.data) << '\n';
+
+                                {
+                                    ///NOTE manuel draw()…
+                                    Drawable& d = dynamic_cast<RDPDrawable*>(this->redrawable)->drawable;
+
+                                    const Rect & trect = Rect(memblt.rect.x, memblt.rect.y,
+                                                              std::min<int16_t>(d.width - memblt.rect.x, memblt.rect.cx),
+                                                              std::min<int16_t>(d.height - memblt.rect.y, memblt.rect.cy));
+                                    uint8_t * target = d.first_pixel(trect);
+                                    const uint8_t * source = cmdcache.bmp->data() + (cmdcache.bmp->cy - 1) * (cmdcache.bmp->line_size);
+                                    int steptarget = (d.width - trect.cx) * 3;
+                                    int stepsource = (cmdcache.bmp->line_size) + trect.cx * 3;
+
+                                    for (int yy = 0; yy < trect.cy ; yy++, target += steptarget, source -= stepsource){
+                                        for (int xx = 0; xx < trect.cx ; xx++, target += 3, source += 3){
+                                            uint32_t px = source[3-1];
+                                            for (int b = 1 ; b < 3 ; b++){
+                                                px = (px << 8) + source[3-1-b];
+                                            }
+                                            uint32_t color = color_decode(px, cmdcache.bmp->original_bpp, cmdcache.bmp->original_palette);
+                                            //if (bgr){
+                                            //    color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
+                                            //}
+                                            target[0] = color;
+                                            target[1] = color >> 8;
+                                            target[2] = color >> 16;
+                                        }
+                                    }
+                                }
+                                //this->redrawable->draw(memblt, clip, *cmdcache.bmp);
+
+                                //std::cout << "reader bmp (size:" << cmdcache.bmp->bmp_size << "): " << (this->reader.stream.p - this->reader.stream.data) << '\n';
                                 delete cmdcache.bmp;
                                 //++nn;
                             }
@@ -222,8 +294,7 @@ public:
                             n -= this->reader.remaining_order_count;
                             this->reader.remaining_order_count = 0;
                         }
-                    }
-
+                    }*/
                     //std::cout << "read number img  " << nn << '\n';
                 }
 

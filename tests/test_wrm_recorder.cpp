@@ -23,7 +23,7 @@
 #define BOOST_TEST_MODULE TestWRMRecorde
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+// #define LOGPRINT
 
 #include <iostream>
 #include "wrm_recorder.hpp"
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 
         uint n = 0;
         uint ntime = 0;
-//         uint nb_break = 0;
+        //uint nb_break = 0;
         BOOST_CHECK(1);
 
         while (recorder.selected_next_order())
@@ -66,25 +66,25 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
                 BOOST_CHECK(1);
                 recorder.interpret_order();
                 BOOST_CHECK(1);
-                if (50 < ++n && recorder.remaining_order_count() == 0)
+                if (50 < ++n/* && recorder.remaining_order_count() == 0*/)
                 {
                     n = 0;
-                    std::cout << "breakpoint start\n";
+                    //std::cout << "breakpoint start\n";
                     consumer.breakpoint();
-                    std::cout << "breakpoint stop\n";
-//                     if (++nb_break == 3)
-//                        return ; ///WARNING
+                    //std::cout << "breakpoint stop\n";
+                    //if (++nb_break == 3)
+                    //return ; ///WARNING
                 }
                 BOOST_CHECK(1);
             }
         }
-        consumer.breakpoint();
+        //consumer.breakpoint();
         BOOST_CHECK(328 == ntime);
     }
     BOOST_CHECK(1);
 }
 
-BOOST_AUTO_TEST_CASE(TestMultiWRMToPng)
+/*BOOST_AUTO_TEST_CASE(TestMultiWRMToPng)
 {
     char filename[50];
     sprintf(filename, "/tmp/replay_part-%u-0.wrm", getpid());
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TestMultiWRMToPng)
     BOOST_CHECK(1);
 
     recorder.consumer(&consumer);
-    recorder.redraw_consumer(&consumer);
+    recorder.drawable_consumer(&consumer.drawable);
     bool is_chunk_time = true;
     BOOST_CHECK(1);
 
@@ -115,9 +115,9 @@ BOOST_AUTO_TEST_CASE(TestMultiWRMToPng)
             recorder.remaining_order_count() = 0;
             ++n;
         } else {
-            /*if (consumer.framenb == 39){
-                std::cout << recorder.chunk_type() << '\n';
-            }*/
+            //if (consumer.framenb == 39){
+            //    std::cout << recorder.chunk_type() << '\n';
+            //}
             BOOST_CHECK(1);
             if (is_chunk_time)
             {
@@ -127,9 +127,9 @@ BOOST_AUTO_TEST_CASE(TestMultiWRMToPng)
             }
             bool is_breakpoint = recorder.chunk_type() == WRMChunk::BREAKPOINT;
             bool is_nextfile = recorder.chunk_type() == WRMChunk::NEXT_FILE;
-            /*if (is_breakpoint){
-                bzero(consumer.drawable.data, consumer.drawable.pix_len);
-            }*/
+            //if (is_breakpoint){
+            //    bzero(consumer.drawable.data, consumer.drawable.pix_len);
+            //}
             if (is_nextfile)
                 std::cout << "NEXT_FILE" << std::endl;
             if (is_breakpoint)
@@ -147,9 +147,9 @@ BOOST_AUTO_TEST_CASE(TestMultiWRMToPng)
     consumer.flush();
 
     BOOST_CHECK(328 == n);
-}
+}*/
 
-/*void TestMultiWRMToPng_random_file(uint nfile, uint numtest, bool realloc_consumer = false, uint totalframe = 328)
+void TestMultiWRMToPng_random_file(uint nfile, uint numtest, bool realloc_consumer = false, uint totalframe = 328)
 {
     char filename[50];
     sprintf(filename, "/tmp/replay_part-%u-%u.wrm", getpid(), nfile);
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE(TestMultiWRMToPng)
     BOOST_CHECK(1);
 
     recorder->consumer(consumer);
-    recorder->redraw_consumer(consumer);
+    recorder->drawable_consumer(&consumer->drawable);
     bool is_chunk_time = true;
     BOOST_CHECK(1);
 
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(TestMultiWRMToPng)
                                              0, 0);
             }
             recorder->consumer(consumer);
-            recorder->redraw_consumer(consumer);
+            recorder->drawable_consumer(&consumer->drawable);
             BOOST_CHECK(1);
         } else {
             BOOST_CHECK(1);
@@ -226,7 +226,7 @@ BOOST_AUTO_TEST_CASE(TestMultiWRMToPng)
     //std::cout << n << '\n';
 }
 
-BOOST_AUTO_TEST_CASE(TestMultiWRMToPng2)
+/*BOOST_AUTO_TEST_CASE(TestMultiWRMToPng2)
 {
     TestMultiWRMToPng_random_file(0, 2);
 }
@@ -234,9 +234,9 @@ BOOST_AUTO_TEST_CASE(TestMultiWRMToPng2)
 BOOST_AUTO_TEST_CASE(TestMultiWRMToPng3)
 {
     TestMultiWRMToPng_random_file(0, 3, true);
-}
+}*/
 
 BOOST_AUTO_TEST_CASE(TestMultiWRMToPng4)
 {
-    TestMultiWRMToPng_random_file(31, 4, true, 311);
-}*/
+    TestMultiWRMToPng_random_file(31, 4, true, 318);
+}
