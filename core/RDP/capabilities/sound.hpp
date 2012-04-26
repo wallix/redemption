@@ -75,12 +75,5 @@ struct SoundCaps : public Capability {
     }
 };
 
-//static inline void out_sound_caps(Stream & stream)
-//{
-//    const char caps_sound[] = { 0x01, 0x00, 0x00, 0x00 };
-//    stream.out_uint16_le(0x0C);
-//    stream.out_uint16_le(8);
-//    stream.out_copy_bytes(caps_sound, 4);
-//}
 
 #endif

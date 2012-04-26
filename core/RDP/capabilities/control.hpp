@@ -24,15 +24,64 @@
 #if !defined(__RDP_CAPABILITIES_CONTROL_HPP__)
 #define __RDP_CAPABILITIES_CONTROL_HPP__
 
-static inline void out_control_caps(Stream & stream)
-{
-    LOG(LOG_INFO, "Sending control caps to server");
-    stream.out_uint16_le(RDP_CAPSET_CONTROL);
-    stream.out_uint16_le(RDP_CAPLEN_CONTROL);
-    stream.out_uint16_le(0); /* Control capabilities */
-    stream.out_uint16_le(0); /* Remote detach */
-    stream.out_uint16_le(2); /* Control interest */
-    stream.out_uint16_le(2); /* Detach interest */
-}
+// 2.2.7.2.2     Control Capability Set (TS_CONTROL_CAPABILITYSET)
+
+//  The TS_CONTROL_CAPABILITYSET structure is used by the client to advertise control capabilities
+//  and is fully described in [T128] section 8.2.10. This capability is only sent from client to server and
+//  the server ignores its contents.
+
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the capability set. This
+//    field MUST be set to CAPSTYPE_CONTROL (5).
+
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes of the capability
+//    data, including the size of the capabilitySetType and lengthCapability fields.
+
+// controlFlags (2 bytes): A 16-bit, unsigned integer. This field SHOULD be set to 0.
+
+// remoteDetachFlag (2 bytes): A 16-bit, unsigned integer. This field SHOULD be set to FALSE
+//    (0x0000).
+
+// controlInterest (2 bytes): A 16-bit, unsigned integer. This field SHOULD be set to
+//    CONTROLPRIORITY_NEVER (0x0002).
+
+// detachInterest (2 bytes): A 16-bit, unsigned integer. This field SHOULD be set to
+//    CONTROLPRIORITY_NEVER (0x0002).
+
+
+enum {
+    CONTROLPRIORITY_NEVER = 0x02
+};
+
+struct ControlCaps : public Capability {
+    uint16_t controlFlags;
+    uint16_t remoteDetachFlag;
+    uint16_t controlInterest;
+    uint16_t detachInterest;
+    ControlCaps()
+    : Capability(RDP_CAPSET_CONTROL, RDP_CAPLEN_CONTROL)
+    , controlFlags(0)
+    , remoteDetachFlag(0)
+    , controlInterest(CONTROLPRIORITY_NEVER)
+    , detachInterest(CONTROLPRIORITY_NEVER)
+    {
+    }
+
+    void emit(Stream & stream){
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_uint16_le(this->controlFlags);
+        stream.out_uint16_le(this->remoteDetachFlag);
+        stream.out_uint16_le(this->controlInterest);
+        stream.out_uint16_le(this->detachInterest);
+    }
+
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s ControlCaps caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "ControlCaps caps::soundFlags %u", this->controlFlags);
+        LOG(LOG_INFO, "ControlCaps caps::soundFlags %u", this->remoteDetachFlag);
+        LOG(LOG_INFO, "ControlCaps caps::soundFlags %u", this->controlInterest);
+        LOG(LOG_INFO, "ControlCaps caps::soundFlags %u", this->detachInterest);
+    }
+};
 
 #endif
