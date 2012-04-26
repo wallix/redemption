@@ -61,8 +61,8 @@ public:
     uint16_t image_basepath_len;
 
 public:
-    StaticCapture(int width, int height, const char * path, const char * codec_id, const char * video_quality)
-        : RDPDrawable(width, height, true),
+    StaticCapture(int width, int height, const char * path, const char * codec_id, const char * video_quality, bool bgr = true)
+        : RDPDrawable(width, height, bgr),
           framenb(0)
     {
         strcpy(this->path, path);

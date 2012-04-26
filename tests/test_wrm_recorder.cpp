@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 
     {
         Capture consumer(recorder.meta.width, recorder.meta.height,
-                        "/tmp/replay_part", 0, 0);
+                        "/tmp/replay_part", 0, 0, false);
 
         recorder.reader.consumer = &consumer;
 
