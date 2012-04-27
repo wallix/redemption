@@ -160,7 +160,7 @@ RDP_CAPLEN_CONTROL             = 0x0C,
 
 
 // 7 CAPSTYPE_ACTIVATION Window Activation Capability Set ([MS-RDPBCGR] section 2.2.7.2.3)
-RDP_CAPSET_ACTIVATE            = 7,
+CAPSTYPE_ACTIVATION            = 7,
 RDP_CAPLEN_ACTIVATE            = 0x0C,
 
 // 8 CAPSTYPE_POINTER Pointer Capability Set ([MS-RDPBCGR] section 2.2.7.1.5)

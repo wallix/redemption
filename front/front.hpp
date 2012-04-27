@@ -1717,7 +1717,7 @@ public:
                 break;
             case RDP_CAPSET_CONTROL: /* 5 */
                 break;
-            case RDP_CAPSET_ACTIVATE: /* 7 */
+            case CAPSTYPE_ACTIVATION: /* 7 */
                 break;
             case RDP_CAPSET_POINTER: /* 8 */
                 {
