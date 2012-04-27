@@ -83,16 +83,4 @@ struct ActivationCaps : public Capability {
 };
 
 
-//static inline void out_activate_caps(Stream & stream)
-//{
-//    LOG(LOG_INFO, "Sending Activate caps to server");
-
-//    stream.out_uint16_le(CAPSTYPE_ACTIVATION);
-//    stream.out_uint16_le(RDP_CAPLEN_ACTIVATION);
-//    stream.out_uint16_le(0); /* Help key */
-//    stream.out_uint16_le(0); /* Help index key */
-//    stream.out_uint16_le(0); /* Extended help key */
-//    stream.out_uint16_le(0); /* Window activate */
-//}
-
 #endif

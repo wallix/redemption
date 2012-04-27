@@ -158,7 +158,6 @@ RDP_CAPLEN_BITMAPCACHE              = 0x28,
 CAPSTYPE_CONTROL                    = 5,
 RDP_CAPLEN_CONTROL                  = 0x0C,
 
-
 // 7 CAPSTYPE_ACTIVATION Window Activation Capability Set ([MS-RDPBCGR] section 2.2.7.2.3)
 CAPSTYPE_ACTIVATION                 = 7,
 RDP_CAPLEN_ACTIVATION               = 0x0C,
