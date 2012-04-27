@@ -166,7 +166,7 @@ struct GeneralCaps : public Capability {
     uint16_t compressionLevel;
     uint16_t pad2;
     GeneralCaps()
-    : Capability(RDP_CAPSET_GENERAL, RDP_CAPLEN_GENERAL)
+    : Capability(CAPSTYPE_GENERAL, RDP_CAPLEN_GENERAL)
     , os_major(1)
     , os_minor(3)
     , protocolVersion(0x200)

@@ -259,7 +259,7 @@ static inline void cs_out_order_caps(Stream & stream)
 {
     LOG(LOG_INFO, "Sending order caps to server");
 
-    stream.out_uint16_le(RDP_CAPSET_ORDER);
+    stream.out_uint16_le(CAPSTYPE_ORDER);
     stream.out_uint16_le(RDP_CAPLEN_ORDER);
     stream.out_clear_bytes(20); /* Terminal desc, pad */
     stream.out_uint16_le(1); /* Cache X granularity */
@@ -308,7 +308,7 @@ static inline void sc_in_order_caps(Stream & stream, uint16_t length)
 
 static inline void sc_out_order_caps(Stream & stream)
 {
-        stream.out_uint16_le(RDP_CAPSET_ORDER); /* 3 */
+        stream.out_uint16_le(CAPSTYPE_ORDER); /* 3 */
         stream.out_uint16_le(RDP_CAPLEN_ORDER); /* 88(0x58) */
         stream.out_clear_bytes(16);
         stream.out_uint32_be(0x40420f00);

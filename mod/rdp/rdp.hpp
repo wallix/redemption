@@ -2120,14 +2120,14 @@ struct mod_rdp : public client_mod {
                 capset_length = stream.in_uint16_le();
                 next = (stream.p + capset_length) - 4;
                 switch (capset_type) {
-                case RDP_CAPSET_GENERAL:
+                case CAPSTYPE_GENERAL:
                 {
                     GeneralCaps general_caps;
                     general_caps.recv(stream);
                     general_caps.log("Received from server");
                 }
                 break;
-                case RDP_CAPSET_BITMAP:
+                case CAPSTYPE_BITMAP:
                 {
                     BitmapCaps bitmap_caps;
                     bitmap_caps.recv(stream);
@@ -2141,7 +2141,7 @@ struct mod_rdp : public client_mod {
                     this->front_height = bitmap_caps.desktopHeight;
                 }
                 break;
-                case RDP_CAPSET_ORDER:
+                case CAPSTYPE_ORDER:
                     sc_in_order_caps(stream, capset_length);
                     break;
                 default:

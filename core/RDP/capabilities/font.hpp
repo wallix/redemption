@@ -49,7 +49,7 @@ struct FontCaps : public Capability {
     uint16_t fontSupportFlags;
     uint16_t pad2octets;
     FontCaps()
-    : Capability(RDP_CAPSET_FONT, RDP_CAPLEN_FONT)
+    : Capability(CAPSTYPE_FONT, RDP_CAPLEN_FONT)
     , fontSupportFlags(FONTSUPPORT_FONTLIST)
     , pad2octets(0)
     {
@@ -78,7 +78,7 @@ struct FontCaps : public Capability {
 
 static inline void front_out_font_caps(Stream & stream)
 {
-        stream.out_uint16_le(RDP_CAPSET_FONT); /* 14 */
+        stream.out_uint16_le(CAPSTYPE_FONT); /* 14 */
 //        stream.out_uint16_le(RDP_CAPLEN_FONT); /* 4 */
         stream.out_uint16_le(4); // unless 8 is the rigth size, forced to 4 to comply with front current behaviour.
 }

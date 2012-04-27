@@ -113,8 +113,8 @@
 
 static inline void out_bmpcache2_caps(Stream & stream)
 {
-    stream.out_uint16_le(RDP_CAPSET_BMPCACHE2);
-    stream.out_uint16_le(RDP_CAPLEN_BMPCACHE2);
+    stream.out_uint16_le(CAPSTYPE_BITMAPCACHE_REV2);
+    stream.out_uint16_le(RDP_CAPLEN_BITMAPCACHE_REV2);
 
     /* version */
     stream.out_uint16_le(0); // persistant cache disabled

@@ -137,7 +137,7 @@ struct BitmapCaps : public Capability {
     uint16_t multipleRectangleSupport;
     uint16_t pad2octetsB;
     BitmapCaps()
-    : Capability(RDP_CAPSET_BITMAP, RDP_CAPLEN_BITMAP)
+    : Capability(CAPSTYPE_BITMAP, RDP_CAPLEN_BITMAP)
     , preferredBitsPerPixel(8)
     , receive1BitPerPixel(1)
     , receive4BitsPerPixel(1)

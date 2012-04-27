@@ -86,7 +86,7 @@ struct InputCaps : public Capability {
     uint32_t keyboardFunctionKey;
     uint16_t imeFileName[32];
     InputCaps()
-    : Capability(RDP_CAPSET_INPUT, RDP_CAPLEN_INPUT)
+    : Capability(CAPSTYPE_INPUT, RDP_CAPLEN_INPUT)
     , inputFlags(INPUT_FLAG_SCANCODES)
     , pad2octetsA(0x0000)
     , keyboardLayout(0x0409) // 0409 = English-US
@@ -124,7 +124,7 @@ struct InputCaps : public Capability {
 
 static inline void front_out_input_caps(Stream & stream)
 {
-    stream.out_uint16_le(RDP_CAPSET_INPUT); /* 13(0xd) */
+    stream.out_uint16_le(CAPSTYPE_INPUT); /* 13(0xd) */
     stream.out_uint16_le(RDP_CAPLEN_INPUT); /* 88(0x58) */
     stream.out_uint8(1);
     stream.out_clear_bytes(83);

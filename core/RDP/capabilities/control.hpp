@@ -58,7 +58,7 @@ struct ControlCaps : public Capability {
     uint16_t controlInterest;
     uint16_t detachInterest;
     ControlCaps()
-    : Capability(RDP_CAPSET_CONTROL, RDP_CAPLEN_CONTROL)
+    : Capability(CAPSTYPE_CONTROL, RDP_CAPLEN_CONTROL)
     , controlFlags(0)
     , remoteDetachFlag(0)
     , controlInterest(CONTROLPRIORITY_NEVER)

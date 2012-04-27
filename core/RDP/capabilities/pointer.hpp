@@ -71,7 +71,7 @@ struct PointerCaps : public Capability {
     uint16_t colorPointerCacheSize;
     uint16_t pointerCacheSize;
     PointerCaps()
-    : Capability(RDP_CAPSET_POINTER, RDP_CAPLEN_POINTER)
+    : Capability(CAPSTYPE_POINTER, RDP_CAPLEN_POINTER)
     , colorPointerFlag(1)
     , colorPointerCacheSize(20)
     , pointerCacheSize(0)
@@ -106,7 +106,7 @@ struct PointerCaps : public Capability {
 
 static inline void front_out_pointer_caps(Stream & stream)
 {
-    stream.out_uint16_le(RDP_CAPSET_POINTER);
+    stream.out_uint16_le(CAPSTYPE_POINTER);
     stream.out_uint16_le(RDP_CAPLEN_POINTER);
     stream.out_uint16_le(1); /* Colour pointer */
     stream.out_uint16_le(0x19); /* Cache size */

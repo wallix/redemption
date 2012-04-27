@@ -95,7 +95,7 @@ struct GlyphSupportCaps : public Capability {
     uint16_t glyphSupportLevel;
     uint16_t pad2octets;
     GlyphSupportCaps()
-    : Capability(RDP_CAPSET_GLYPHCACHE, RDP_CAPLEN_GLYPHCACHE)
+    : Capability(CAPSTYPE_GLYPHCACHE, RDP_CAPLEN_GLYPHCACHE)
 //    , glyphCache = "";
     , fragCache(0x01000100) // max number of entries in the cache = 256
                             // largest allowed maximum size of an element in (bytes) = 256

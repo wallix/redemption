@@ -83,7 +83,7 @@ struct BmpCacheCaps : public Capability {
     uint16_t cache2Entries;
     uint16_t cache2MaximumCellSize;
     BmpCacheCaps()
-    : Capability(RDP_CAPSET_BMPCACHE, RDP_CAPLEN_BMPCACHE)
+    : Capability(CAPSTYPE_BITMAPCACHE, RDP_CAPLEN_BITMAPCACHE)
     , pad1(0)
     , pad2(0)
     , pad3(0)

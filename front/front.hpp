@@ -1690,7 +1690,7 @@ public:
             int len = stream.in_uint16_le();
 
             switch (type) {
-            case RDP_CAPSET_GENERAL:
+            case CAPSTYPE_GENERAL:
             {
                 GeneralCaps general;
                 general.recv(stream);
@@ -1698,7 +1698,7 @@ public:
                 this->client_info.use_compact_packets = (general.extraflags & NO_BITMAP_COMPRESSION_HDR)?1:0;
             }
             break;
-            case RDP_CAPSET_BITMAP:
+            case CAPSTYPE_BITMAP:
             {
                 BitmapCaps bitmap_caps;
                 bitmap_caps.recv(stream);
@@ -1709,26 +1709,26 @@ public:
 
             }
             break;
-            case RDP_CAPSET_ORDER: /* 3 */
+            case CAPSTYPE_ORDER: /* 3 */
                 cs_in_order_caps(stream, len, this->client_info.desktop_cache);
                 break;
-            case RDP_CAPSET_BMPCACHE: /* 4 */
+            case CAPSTYPE_BITMAPCACHE: /* 4 */
                 this->capset_bmpcache(stream, len);
                 break;
-            case RDP_CAPSET_CONTROL: /* 5 */
+            case CAPSTYPE_CONTROL: /* 5 */
                 break;
             case CAPSTYPE_ACTIVATION: /* 7 */
                 break;
-            case RDP_CAPSET_POINTER: /* 8 */
+            case CAPSTYPE_POINTER: /* 8 */
                 {
                     stream.in_skip_bytes(2); /* color pointer */
                     int i = stream.in_uint16_le();
                     this->client_info.pointer_cache_entries = std::min(i, 32);
                 }
                 break;
-            case RDP_CAPSET_SHARE: /* 9 */
+            case CAPSTYPE_SHARE: /* 9 */
                 break;
-            case RDP_CAPSET_COLCACHE: /* 10 */
+            case CAPSTYPE_COLORCACHE: /* 10 */
                 break;
             case 12: /* 12 */
                 break;
@@ -1736,14 +1736,14 @@ public:
                 break;
             case 14: /* 14 */
                 break;
-            case RDP_CAPSET_BRUSHCACHE: /* 15 */
+            case CAPSTYPE_BRUSH: /* 15 */
                 this->client_info.brush_cache_code = stream.in_uint32_le();
                 break;
             case 16: /* 16 */
                 break;
             case 17: /* 17 */
                 break;
-            case RDP_CAPSET_BMPCACHE2: /* 19 */
+            case CAPSTYPE_BITMAPCACHE_REV2: /* 19 */
                 this->capset_bmpcache2(stream, len);
                 break;
             case 20: /* 20 */

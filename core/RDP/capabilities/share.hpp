@@ -50,7 +50,7 @@ struct ShareCaps : public Capability {
     uint16_t nodeId;
     uint16_t pad2octets;
     ShareCaps()
-    : Capability(RDP_CAPSET_SHARE, RDP_CAPLEN_SHARE)
+    : Capability(CAPSTYPE_SHARE, RDP_CAPLEN_SHARE)
     , nodeId(0)
     , pad2octets(0)
     {
@@ -81,7 +81,7 @@ struct ShareCaps : public Capability {
 
 static inline void front_out_share_caps(Stream & stream, uint16_t channel_id)
 {
-    stream.out_uint16_le(RDP_CAPSET_SHARE);
+    stream.out_uint16_le(CAPSTYPE_SHARE);
     stream.out_uint16_le(RDP_CAPLEN_SHARE);
     stream.out_uint16_le(channel_id);
     stream.out_uint16_be(0xb5e2); /* 0x73e1 */
