@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestFileToPng)
         NativeCapture cap(meta.width, meta.height,
                           "/tmp/test_file_to_png");
         BOOST_CHECK_EQUAL(cap.recorder.stream.p - cap.recorder.stream.data, 8);
-        meta.send(cap.recorder);
+        meta.emit(cap.recorder);
         Rect clip(0, 0, meta.width, meta.height);
         cap.draw(RDPOpaqueRect(Rect(10,844,500,42), RED), clip);
         cap.draw(RDPOpaqueRect(Rect(777,110,144,188), GREEN), clip);

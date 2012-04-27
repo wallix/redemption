@@ -282,8 +282,7 @@ struct RDPUnserializer
             break;
             case WRMChunk::TIMESTAMP:
             {
-                uint64_t micro_sec;
-                this->stream.in_copy_bytes((uint8_t*)&micro_sec, sizeof(micro_sec));
+                uint64_t micro_sec = this->stream.in_uint64_be();
                 this->wait_cap.wait(micro_sec);
                 --this->remaining_order_count;
             }

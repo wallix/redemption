@@ -133,7 +133,6 @@ BOOST_AUTO_TEST_CASE(TestStream_uint16)
     delete s;
 }
 
-
 BOOST_AUTO_TEST_CASE(TestStream_uint32)
 {
     // test reading of 32 bits unsigned data from Stream
@@ -157,6 +156,41 @@ BOOST_AUTO_TEST_CASE(TestStream_uint32)
 
     // empty is OK
     BOOST_CHECK(s->p == s->end);
+
+    delete s;
+}
+
+BOOST_AUTO_TEST_CASE(TestStream_uint64)
+{
+    // test reading of 64 bits unsigned data from Stream
+    // with any endiannessis working. The way functions are written
+    // target endianness is taken care of automagically.
+    // (the + operator does the job).
+
+    Stream * s = new Stream(100);
+    const char * data = "\1\0\0\0\0\0\0\0\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFE\0\0\0\0\0\0\0\1\xFC\xFF\xFF\xFF\xFF\xFF\xFF\xFF";
+    memcpy(s->data, (uint8_t*)data, 32);
+    s->end += 32;
+
+    uint8_t * oldp = s->p;
+
+    BOOST_CHECK_EQUAL(s->in_uint64_le(), 1LL);
+    BOOST_CHECK_EQUAL((unsigned long)oldp+8, ((unsigned long)s->p));
+
+    BOOST_CHECK_EQUAL(s->in_uint64_be(), 0xFFFFFFFFFFFFFFFELL);
+    BOOST_CHECK_EQUAL(s->in_uint64_be(), 1LL);
+    BOOST_CHECK_EQUAL(s->in_uint64_le(), 0xFFFFFFFFFFFFFFFCLL);
+
+    // empty is OK
+    BOOST_CHECK(s->p == s->end);
+
+    s->p = oldp;
+    s->out_uint64_be(1LL);
+    s->out_uint64_le(0xFFEECCLL);
+    s->p = oldp;
+    BOOST_CHECK_EQUAL(s->in_uint64_be(), 1LL);
+    BOOST_CHECK_EQUAL(s->in_uint64_le(), 0xFFEECCLL);
+    BOOST_CHECK(s->p == oldp + 16);
 
     delete s;
 }

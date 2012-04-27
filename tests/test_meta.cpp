@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TestMeta)
         OutFileTransport out_file(fd);
         Stream stream;
         BOOST_CHECK(1);
-        meta.send(stream, out_file);
+        meta.emit(stream, out_file);
         BOOST_CHECK(1);
         close(fd);
     }

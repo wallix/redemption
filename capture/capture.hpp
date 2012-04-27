@@ -61,7 +61,7 @@ class Capture : public RDPGraphicDevice
 
     void emit_meta(MetaWRM& meta)
     {
-        meta.send(this->nc.recorder);
+        meta.emit(this->nc.recorder);
     }
 
     void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)

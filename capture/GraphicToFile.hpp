@@ -180,7 +180,7 @@ struct GraphicsToFile : public RDPSerializer
         this->chunk_type = WRMChunk::TIMESTAMP;
         this->order_count = 1;
         uint64_t micro_sec = this->timer.elapsed(now);
-        this->stream.out_copy_bytes((uint8_t*)(&micro_sec), sizeof(micro_sec));
+        this->stream.out_uint64_be(micro_sec);
         this->flush();
     }
 

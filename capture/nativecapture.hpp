@@ -349,37 +349,11 @@ public:
         this->recorder.order_count = 1;
         {
             MetaWRM meta(this->width, this->height, this->bpp);
-            meta.out(this->recorder.stream);
+            meta.emit(this->recorder.stream);
             //std::cout << "write meta " << meta << '\n';
         }
 
         {
-            /* NOTE send Drawable (not use BmpCache)
-            this->recorder.stream.out_uint16_le(width);
-            this->recorder.stream.out_uint16_le(height);
-            this->recorder.send_order();
-
-            const uint8_t * pdata = data_drawable;
-            for (size_t n = 0, len = width * height * 3 / (4096 - 8); len--;){
-                this->recorder.init();
-                this->recorder.chunk_type = WRMChunk::BREAKPOINT;
-                this->recorder.order_count = 1;
-                for (size_t last = n + (4096 - 8); n != last; ++n, ++pdata){
-                    this->recorder.stream.out_uint8(*pdata);
-                }
-                this->recorder.send_order();
-            }
-            if (width * height * 3 % (4096 - 8)){
-                this->recorder.init();
-                this->recorder.chunk_type = WRMChunk::BREAKPOINT;
-                this->recorder.order_count = 1;
-                for (size_t last = width * height * 3 % (4096 - 8); last--; ++pdata){
-                    this->recorder.stream.out_uint8(*pdata);
-                }
-                this->recorder.send_order();
-            }*/
-
-            /* NOTE implementation (bug) with BmpCache*/
             const uint16_t TILE_CX = 32;
             const uint16_t TILE_CY = 32;
 
@@ -422,35 +396,6 @@ public:
                     this->recorder.send_order();
                 }
             }
-
-
-            /*//uint8_t Bpp = nbbytes(bpp);
-            //uint8_t data[32*32*3];
-            for (uint16_t y = 0; y < height; y += TILE_CY) {
-                uint16_t cy = std::min<uint16_t>(TILE_CY, height - y);
-
-                for (uint16_t x = 0; x < width; x += TILE_CX) {
-                    uint16_t cx = std::min<uint16_t>(TILE_CX, height - x);
-
-                    //uint8_t *pdata = data + cy * cy * Bpp;
-                    //for (uint16_t n = 0; n != cy; ++n){
-                    //    memcpy(&data[cy * (cy - 1 - n) * Bpp],
-                    //           data_drawable + (width * (y + n) + x) * Bpp,
-                    //           cx * Bpp);
-                    //}
-
-                    //const Bitmap tiled_bmp(bpp, 0, cx, cy, data, cx*cy*Bpp);
-                    const Bitmap tiled_bmp(data_drawable, cx, cy, bpp, Rect(y, x, cx, cy));
-                    this->recorder.init();
-                    this->recorder.order_count = 1;
-                    const RDPBmpCache cmdcache(&tiled_bmp, 0, 0, this->recorder.ini ? this->recorder.ini->globals.debug.primary_orders : 0);
-                    cmdcache.emit(this->recorder.stream, this->recorder.bitmap_cache_version,
-                                  this->recorder.use_bitmap_comp, this->recorder.op2);
-                    //std::cout << "write bmp (type: " << this->recorder.chunk_type << ", size:" << tiled_bmp.bmp_size << "): " << (this->recorder.stream.p - this->recorder.stream.data) << '\n';
-                    this->recorder.send_order();
-                    //++nn;
-                }
-            }*/
 
             //std::cout << "write number img " << nn << '\n';
         }

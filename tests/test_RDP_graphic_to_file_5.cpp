@@ -125,8 +125,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
         uint16_t pad = stream.in_uint16_le();
         BOOST_CHECK_EQUAL(pad, (uint16_t)0); // really we don't care
 
-        uint64_t micro_sec;
-        stream.in_copy_bytes((uint8_t*)&micro_sec, sizeof(micro_sec));
+        uint64_t micro_sec = stream.in_uint64_be();
         BOOST_CHECK_EQUAL(micro_sec, uint64_t(5ull * 1000000ull + 1100ull));
 
         BOOST_CHECK_EQUAL(stream.p, stream.end);

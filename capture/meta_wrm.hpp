@@ -51,7 +51,7 @@ struct MetaWRM {
     , bpp(bpp)
     {}
 
-    void in(Stream& stream)
+    void recv(Stream& stream)
     {
         this->version = stream.in_uint16_le();
         this->width = stream.in_uint16_le();
@@ -63,7 +63,7 @@ struct MetaWRM {
     {
         unserializer.selected_next_order();
         if (unserializer.chunk_type == WRMChunk::META_INFO) {
-            this->in(unserializer.stream);
+            this->recv(unserializer.stream);
             --unserializer.remaining_order_count;
         }
         else {
@@ -74,12 +74,12 @@ struct MetaWRM {
         }
     }
 
-    void send(RDPSerializer& serializer) const
+    void emit(RDPSerializer& serializer) const
     {
-        this->send(serializer.stream, *serializer.trans);
+        this->emit(serializer.stream, *serializer.trans);
     }
 
-    void send(Stream& stream, Transport& transport) const
+    void emit(Stream& stream, Transport& transport) const
     {
         if (stream.p == stream.data)
         {
@@ -94,13 +94,13 @@ struct MetaWRM {
             stream.set_out_uint16_le(7 + 8, 2);
             stream.set_out_uint16_le(1, 4);
         }
-        this->out(stream);
+        this->emit(stream);
         transport.send(stream.data, stream.p - stream.data);
         stream.p = stream.data + 8;
         stream.end = stream.p;
     }
 
-    void out(Stream& stream) const
+    void emit(Stream& stream) const
     {
         stream.out_uint16_le(this->version);
         stream.out_uint16_le(this->width);
