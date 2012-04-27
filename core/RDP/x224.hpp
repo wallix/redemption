@@ -607,11 +607,11 @@ struct X224In : public X224Packet
 struct X224Out : public X224Packet
 {
     Stream & stream;
-    uint8_t * bop;
+    uint16_t bop;
     uint32_t verbose;
 
     X224Out(uint8_t tpdutype, Stream & stream, uint32_t verbose = 0)
-        : stream(stream), bop(stream.p), verbose(verbose)
+        : stream(stream), bop(stream.get_offset(0)), verbose(verbose)
     // Prepare a X224 TPDU in buffer for writing
     {
         REDASSERT(stream.p == stream.data);
@@ -622,23 +622,16 @@ struct X224Out : public X224Packet
                 // tpkt
                 this->stream.out_uint8(0x03); // version 3
                 this->stream.out_uint8(0x00);
-                this->stream.out_uint8(0x00); // 11 bytes
-                this->stream.out_uint8(0x0B); //
-                // CR_TPDU
-                this->stream.out_uint8(0x06); // LI
+                this->stream.out_uint16_be(11); // 11 bytes tpkt length
+
+                this->stream.out_uint8(6); // LI = TPDU header length
+
                 this->stream.out_uint8(CR_TPDU); // CR_TPDU code
                 this->stream.out_uint8(0x00); // DST-REF
                 this->stream.out_uint8(0x00); //
                 this->stream.out_uint8(0x00); // SRC-REF
                 this->stream.out_uint8(0x00); //
                 this->stream.out_uint8(0x00); // CLASS OPTION
-                // Seems unecessary :
-                // see 2.2.1.1 Client X.224 Connection Request PDU
-                // USER DATA
-//                this->stream.out_concat("Cookie: mstshash=");
-//                this->stream.out_concat(this->username);
-//                this->stream.out_concat("\r\n");
-                // crtpdu.extend_tpdu_hdr();
 
             break;
             case CC_TPDU: // Connection Confirm 1101 xxxx
@@ -647,10 +640,10 @@ struct X224Out : public X224Packet
                 // tpkt
                 this->stream.out_uint8(0x03); // version 3
                 this->stream.out_uint8(0x00);
-                this->stream.out_uint8(0x00); // 11 bytes
-                this->stream.out_uint8(0x0B); //
-                // CC_TPDU
-                this->stream.out_uint8(0x06); // LI
+                this->stream.out_uint16_be(11); // 11 bytes tpkt length
+
+                this->stream.out_uint8(6); // LI = TPDU header length
+
                 this->stream.out_uint8(CC_TPDU); // CC_TPDU code
                 this->stream.out_uint8(0x00); // DST-REF
                 this->stream.out_uint8(0x00); //
@@ -664,10 +657,10 @@ struct X224Out : public X224Packet
                 // tpkt
                 this->stream.out_uint8(0x03); // version 3
                 this->stream.out_uint8(0x00);
-                this->stream.out_uint8(0x00); // 11 bytes
-                this->stream.out_uint8(0x0B); //
-                // DR_TPDU
-                this->stream.out_uint8(0x06); // LI
+                this->stream.out_uint16_be(11); // 11 bytes tpkt length
+
+                this->stream.out_uint8(6); // LI = TPDU header length
+
                 this->stream.out_uint8(DR_TPDU); // DR_TPDU code
                 this->stream.out_uint8(0x00); // DST-REF
                 this->stream.out_uint8(0x00); //
@@ -683,10 +676,10 @@ struct X224Out : public X224Packet
                 // tpkt
                 this->stream.out_uint8(0x03); // version 3
                 this->stream.out_uint8(0x00);
-                this->stream.out_uint8(0x00); // length still unknown
-                this->stream.out_uint8(0x00); //
-                // DT_TPDU
-                this->stream.out_uint8(0x02); // LI
+                this->stream.out_uint16_be(0); // tpkt length still unknown
+
+                this->stream.out_uint8(2); // LI = TPDU header length
+
                 this->stream.out_uint8(DT_TPDU); // DT_TPDU code
                 this->stream.out_uint8(0x80); // EOT
             break;
@@ -696,10 +689,10 @@ struct X224Out : public X224Packet
                 // tpkt
                 this->stream.out_uint8(0x03); // version 3
                 this->stream.out_uint8(0x00);
-                this->stream.out_uint8(0x00); // 11 bytes
-                this->stream.out_uint8(0x0B); //
-                // ER_TPDU
-                this->stream.out_uint8(0x06); // LI
+                this->stream.out_uint16_be(11); // 11 bytes tpkt length
+
+                this->stream.out_uint8(6); // LI = TPDU header length
+
                 this->stream.out_uint8(ER_TPDU); // ER_TPDU code
                 this->stream.out_uint8(0x00); // DST-REF
                 this->stream.out_uint8(0x00); //
@@ -719,8 +712,7 @@ struct X224Out : public X224Packet
     // and protocol negotiation appending a string "Cookie: mstshash=username\r\n"
     // to tpdu header.
     {
-        this->stream.set_out_uint8((uint8_t)(this->stream.p - this->bop - 5), 4); // LI
-        this->stream.set_out_uint16_le((uint16_t)(this->stream.p-this->bop), 2);   // tpkt.len
+        this->stream.set_out_uint8(this->stream.get_offset(this->bop) - 5, this->bop + 4); // LI
     }
 
     void end()
@@ -729,11 +721,9 @@ struct X224Out : public X224Packet
     {
 //        LOG(LOG_INFO, "X224 OUT TPDU end");
 
-        uint16_t len = (uint16_t)(this->stream.p - this->bop);
-        this->stream.set_out_uint8((uint8_t)(len >> 8), 2);
-        this->stream.set_out_uint8((uint8_t)(len & 0xFF), 3);
+        this->stream.set_out_uint16_be(stream.get_offset(this->bop), this->bop + 2);
 //        LOG(LOG_INFO, "2) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", this->stream.data[0], this->stream.data[1], this->stream.data[2], this->stream.data[3], this->stream.data[4], this->stream.data[5], this->stream.data[6], this->stream.data[7]);
-        uint8_t tpdutype = this->bop[5];
+        uint8_t tpdutype = stream.data[this->bop+5];
         switch (tpdutype){
             case CR_TPDU: // Connection Request 1110 xxxx
 //                LOG(LOG_INFO, "----> sent X224 OUT CR_TPDU");
@@ -762,7 +752,7 @@ struct X224Out : public X224Packet
         if (this->verbose){
             LOG(LOG_INFO, "iso X224 sending %u bytes", this->stream.p - this->bop);
         }
-        t->send(this->bop, (uint16_t)(this->stream.p - this->bop));
+        t->send(stream.data + this->bop, stream.get_offset(this->bop));
     }
 };
 

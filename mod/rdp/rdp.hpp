@@ -364,6 +364,7 @@ struct mod_rdp : public client_mod {
     const uint8_t front_bpp;
     Random * gen;
     uint32_t verbose;
+    bool tls;
 
     RdpNego nego;
 
@@ -372,6 +373,7 @@ struct mod_rdp : public client_mod {
             const char * target_password,
             struct FrontAPI & front,
             const char * hostname,
+            const bool tls,
             const ClientInfo & info,
             Random * gen,
             uint32_t verbose = 0)
@@ -397,7 +399,9 @@ struct mod_rdp : public client_mod {
                     front_bpp(info.bpp),
                     gen(gen),
                     verbose(verbose),
-                    nego(RdpNego::PROTOCOL_NLA
+                    tls(tls),
+                    nego(tls,
+                        RdpNego::PROTOCOL_NLA
                         |RdpNego::PROTOCOL_RDP
                         |RdpNego::PROTOCOL_TLS,
                         trans, target_user)

@@ -40,6 +40,7 @@ struct RdpNego
 
 //    int port;
     uint32_t flags;
+    const bool tls;
 //    char* hostname;
 //    char* cookie;
 
@@ -65,8 +66,9 @@ struct RdpNego
     char username[128];
     Transport * trans;
 
-    RdpNego(uint32_t enabled_protocols, Transport * trans, const char * username)
+    RdpNego(const bool tls, uint32_t enabled_protocols, Transport * trans, const char * username)
     : flags(0)
+    , tls(tls)
     , state(NEGO_STATE_INITIAL)
     , selected_protocol(PROTOCOL_RDP)
     , requested_protocol(PROTOCOL_RDP)
@@ -505,6 +507,21 @@ struct RdpNego
 //        crtpdu.stream.out_uint8(0x01);
 //        crtpdu.stream.out_uint8(0x00);
 //        crtpdu.stream.out_uint32_le(0x00);
+
+        if (this->tls)
+        {
+            enum {
+                TYPE_RDP_NEG_REQ = 0x01
+            };
+
+            /* RDP_NEG_DATA must be present for TLS and NLA */
+            crtpdu.stream.out_uint8(TYPE_RDP_NEG_REQ);
+            crtpdu.stream.out_uint8(0); /* flags, must be set to zero */
+            crtpdu.stream.out_uint16_le(8); /* RDP_NEG_DATA length (8) */
+            crtpdu.stream.out_uint32_le(1); /* requestedProtocols 1 = TLS */
+        }
+
+
         crtpdu.extend_tpdu_hdr();
         crtpdu.end();
         crtpdu.send(this->trans);
