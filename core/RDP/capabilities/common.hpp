@@ -186,7 +186,7 @@ RDP_CAPLEN_INPUT               = 0x58,
 
 // 14 CAPSTYPE_FONT Font Capability Set ([MS-RDPBCGR] section 2.2.7.2.5)
 RDP_CAPSET_FONT                = 14,
-RDP_CAPLEN_FONT                = 0x04,
+RDP_CAPLEN_FONT                = 0x08,
 
 // 15 CAPSTYPE_BRUSH Brush Capability Set ([MS-RDPBCGR] section 2.2.7.1.7)
 RDP_CAPSET_BRUSHCACHE          = 15,

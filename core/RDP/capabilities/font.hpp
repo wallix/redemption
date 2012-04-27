@@ -24,18 +24,63 @@
 #if !defined(__RDP_CAPABILITIES_FONT_HPP__)
 #define __RDP_CAPABILITIES_FONT_HPP__
 
-static inline void out_font_caps(Stream & stream)
-{
-    const char caps_font[] = { 0x01, 0x00, 0x00, 0x00 };
-    stream.out_uint16_le(0x0E);
-    stream.out_uint16_le(8);
-    stream.out_copy_bytes(caps_font, 4);
-}
+//  2.2.7.2.5 Font Capability Set (TS_FONT_CAPABILITYSET)
+
+//  The TS_FONT_CAPABILITYSET structure is used to advertise font support options. This capability is
+//  sent by both client and server.
+
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the capability set. This
+//    field MUST be set to CAPSTYPE_FONT (14).
+
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes of the capability
+//     data, including the size of the capabilitySetType and lengthCapability fields.
+
+// fontSupportFlags (2 bytes): A 16-bit, unsigned integer. The font support options. This field
+//     SHOULD be set to FONTSUPPORT_FONTLIST (0x0001).
+
+// pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be
+//    ignored.
+
+enum {
+    FONTSUPPORT_FONTLIST = 0x1
+};
+
+struct FontCaps : public Capability {
+    uint16_t fontSupportFlags;
+    uint16_t pad2octets;
+    FontCaps()
+    : Capability(RDP_CAPSET_FONT, RDP_CAPLEN_FONT)
+    , fontSupportFlags(FONTSUPPORT_FONTLIST)
+    , pad2octets(0)
+    {
+    }
+
+    void emit(Stream & stream){
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_uint16_le(this->fontSupportFlags);
+        stream.out_uint16_le(this->pad2octets);
+
+    }
+
+    void recv(Stream & stream, uint16_t length){
+        this->len = length;
+        this->fontSupportFlags = stream.in_uint16_le();
+        this->pad2octets = stream.in_uint16_le();
+    }
+
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s Font caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "Font caps::fontSupportFlags %u", this->fontSupportFlags);
+        LOG(LOG_INFO, "Font caps::pad2octets %u", this->pad2octets);
+    }
+};
 
 static inline void front_out_font_caps(Stream & stream)
 {
         stream.out_uint16_le(RDP_CAPSET_FONT); /* 14 */
-        stream.out_uint16_le(RDP_CAPLEN_FONT); /* 4 */
+//        stream.out_uint16_le(RDP_CAPLEN_FONT); /* 4 */
+        stream.out_uint16_le(4); // unless 8 is the rigth size, forced to 4 to comply with front current behaviour.
 }
 
 #endif
