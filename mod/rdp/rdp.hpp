@@ -1305,7 +1305,10 @@ struct mod_rdp : public client_mod {
             out_colcache_caps(stream);
             capscount++;
 
-            out_activate_caps(stream);
+//            out_activate_caps(stream);
+            ActivationCaps activation_caps;
+            activation_caps.log("Sending activation caps to server");
+            activation_caps.emit(stream);
             capscount++;
 
             ControlCaps control_caps;
