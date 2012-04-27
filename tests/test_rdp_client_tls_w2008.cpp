@@ -24,12 +24,12 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestRdpClientW2000
+#define BOOST_TEST_MODULE TestRdpClientTLSW2008
 #include <boost/test/auto_unit_test.hpp>
 #include <errno.h>
 #include <algorithm>
 
-//#define LOGPRINT
+#define LOGPRINT
 #include "./test_orders.hpp"
 
 #include "stream.hpp"
@@ -60,7 +60,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.bpp = 24;
     info.width = 800;
     info.height = 600;
-    int verbose = 256;
+    int verbose = 1;
+
 
     class Front : public FrontAPI {
         public:
@@ -68,69 +69,44 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         const ClientInfo & info;
         ChannelDefArray cl;
         uint8_t mod_bpp;
+        BGRPalette mod_palette;
 
         virtual void flush()
         {
-            if (verbose > 10){
-                 LOG(LOG_INFO, "--------- FRONT ------------------------");
-                 LOG(LOG_INFO, "flush()");
-                 LOG(LOG_INFO, "========================================\n");
-            }
         }
         virtual void draw(const RDPOpaqueRect& cmd, const Rect& clip)
         {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                cmd.log(LOG_INFO, clip);
-                LOG(LOG_INFO, "========================================\n");
-            }
-            this->gd.draw(cmd, clip);
+            RDPOpaqueRect new_cmd24 = cmd;
+            new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
+            this->gd.draw(new_cmd24, clip);
         }
         virtual void draw(const RDPScrBlt& cmd, const Rect& clip)
         {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                cmd.log(LOG_INFO, clip);
-                LOG(LOG_INFO, "========================================\n");
-            }
             this->gd.draw(cmd, clip);
         }
         virtual void draw(const RDPDestBlt& cmd, const Rect& clip)
         {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                cmd.log(LOG_INFO, clip);
-                LOG(LOG_INFO, "========================================\n");
-            }
             this->gd.draw(cmd, clip);
-
         }
         virtual void draw(const RDPPatBlt& cmd, const Rect& clip)
         {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                cmd.log(LOG_INFO, clip);
-                LOG(LOG_INFO, "========================================\n");
-            }
-            this->gd.draw(cmd, clip);
+            RDPPatBlt new_cmd24 = cmd;
+            new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+            new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+            this->gd.draw(new_cmd24, clip);
         }
-        virtual void draw(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bmp)
+
+        virtual void draw(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bitmap)
         {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                cmd.log(LOG_INFO, clip);
-                LOG(LOG_INFO, "========================================\n");
-            }
-            this->gd.draw(cmd, clip, bmp);
+            this->gd.draw(cmd, clip, bitmap);
         }
+
         virtual void draw(const RDPLineTo& cmd, const Rect& clip)
         {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                cmd.log(LOG_INFO, clip);
-                LOG(LOG_INFO, "========================================\n");
-            }
-            this->gd.draw(cmd, clip);
+            RDPLineTo new_cmd24 = cmd;
+            new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+            new_cmd24.pen.color = color_decode_opaquerect(cmd.pen.color, this->mod_bpp, this->mod_palette);
+            this->gd.draw(new_cmd24, clip);
 
         }
         virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip)
@@ -140,92 +116,37 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
         virtual const ChannelDefArray & get_channel_list(void) const { return cl; }
         virtual void send_to_channel(const ChannelDef & channel, uint8_t* data, size_t length, size_t chunk_size, int flags)
-        {
-        }
+        {}
 
         virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw (Error)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "send_pointer(cache_idx=%d, data=%p, mask=%p, x=%d, y=%d",
-                    cache_idx, data, mask, x, y);
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
+
         virtual void send_global_palette() throw (Error)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "send_global_palette()");
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
+
         virtual void set_pointer(int cache_idx) throw (Error)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "set_pointer");
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
+
         virtual void begin_update()
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "begin_update");
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
+
         virtual void end_update()
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "end_update");
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
+
         virtual void color_cache(const BGRPalette & palette, uint8_t cacheIndex)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "color_cache");
-                LOG(LOG_INFO, "========================================\n");
-            }
-//            exit(0);
-        }
+        {}
+
         virtual void set_mod_palette(const BGRPalette & palette)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "set_mod_palette");
-                LOG(LOG_INFO, "========================================\n");
-            }
-            exit(0);
-        }
+        {}
+
         virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "server_set_pointer");
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
+
         virtual void server_draw_text(uint16_t x, uint16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "server_draw_text %s", text);
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
         virtual void text_metrics(const char * text, int & width, int & height)
-        {
-            if (verbose > 10){
-                LOG(LOG_INFO, "--------- FRONT ------------------------");
-                LOG(LOG_INFO, "text_metrics");
-                LOG(LOG_INFO, "========================================\n");
-            }
-        }
+        {}
+
         virtual int server_resize(int width, int height, int bpp)
         {
             this->mod_bpp = bpp;
@@ -236,6 +157,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
             }
             return 0;
         }
+
         int mouse_x;
         int mouse_y;
         bool notimestamp;
@@ -269,12 +191,12 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     } front(info, verbose);
 
-//    const char * name = "RDP W2000 Target";
-//    int sck = connect("10.10.14.64", 3389, name);
+//    const char * name = "RDP W2008 TLS Target";
+//    int sck = connect("10.10.14.88", 3389, name);
 //    SocketTransport t(name, sck, verbose);
 
-    #include "./fixtures/dump_w2000.hpp"
-    TestTransport t("test_rdp_client_w2000", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    #include "./fixtures/dump_TLSw2008.hpp"
+    TestTransport t("test_rdp_client_w2008", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
@@ -282,7 +204,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
-    struct client_mod * mod = new mod_rdp(&t, "administrateur@qa", "S3cur3!1nux", front, "test", false, info, &gen);
+    const bool tls = true;
+    struct client_mod * mod = new mod_rdp(&t, "administrateur@qa", "S3cur3!1nux", front, "test", tls, info, &gen);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -295,11 +218,11 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE){
-        if (count++ >= 17) break;
+        if (count++ >= 50) break;
         res = mod->draw_event();
         BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
     }
 
-    front.dump_png("trace_w2000_");
+    front.dump_png("trace_w2008_");
 
 }

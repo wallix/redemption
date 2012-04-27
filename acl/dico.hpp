@@ -28,16 +28,19 @@
 
 */
 
-#if !defined(__DICO_HPP__)
-#define __DICO_HPP__
+#if !defined(__ACL_DICO_HPP__)
+#define __ACL_DICO_HPP__
 
-#include "config.hpp"
-#include "log.hpp"
-
+#include <stdio.h>
+#include <stdarg.h>
+#include <stdlib.h>
 #include <string>
 #include <string.h>
 #include <map>
 #include <set>
+
+#include "log.hpp"
+#include "config.hpp"
 
 #include "keywords.hpp"
 
