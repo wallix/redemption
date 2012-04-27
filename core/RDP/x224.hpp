@@ -278,159 +278,26 @@ struct X224Packet
 
 };
 
-struct X224In : public X224Packet
-{
-    struct Tpkt {
-        Tpkt(uint8_t version, uint16_t len) : version(version), len(len) {}
-        uint8_t version;
-        uint16_t len;
-    } tpkt;
-
-    struct TPDUHeader {
-        TPDUHeader(uint8_t LI, uint8_t code)
-            : LI(LI), code(code), reason(0), eot(0), reject_cause(0) {}
-        uint8_t LI;
-        uint8_t code;
-        uint8_t reason;
-        uint8_t eot;
-        uint8_t reject_cause;
-    } tpdu_hdr;
-
-    Stream & stream;
-
-
-    X224In(Transport * t, Stream & stream)
-        : tpkt(0,0), tpdu_hdr(0, 0), stream(stream)
-    // Receive a X224 TPDU from the wires
-    {
-        if (!stream.has_room(TPKT_HEADER_LEN)){
-            LOG(LOG_INFO, "ERR_STREAM_MEMORY_TOO_SMALL");
-            throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
-        }
-        t->recv((char**)(&(stream.end)), TPKT_HEADER_LEN);
-
-        this->tpkt.version = stream.in_uint8();
-
-        if ( this->tpkt.version != 3) {
-            LOG(LOG_INFO, "UNSUPPORTED FAST-PATH PDU (version = %u)", this->tpkt.version);
-            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
-        }
-        stream.in_skip_bytes(1);
-        this->tpkt.len = stream.in_uint16_be();
-
-        const uint16_t payload_len = (uint16_t)(this->tpkt.len - TPKT_HEADER_LEN);
-        if (!stream.has_room(payload_len)){
-            LOG(LOG_INFO, "ERR_STREAM_MEMORY_TOO_SMALL (asked for %u, has %u, used=%u)",
-                payload_len, stream.capacity, stream.end-stream.data);
-            throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
-        }
-
-        t->recv((char**)(&(stream.end)), payload_len);
-        this->tpdu_hdr.LI = stream.in_uint8();
-        this->tpdu_hdr.code = stream.in_uint8() & 0xF0;
-        switch (this->tpdu_hdr.code){
-            case DT_TPDU:
-//                LOG(LOG_INFO, "recv DT_TPDU");
-                this->tpdu_hdr.eot = stream.in_uint8();
-                stream.in_skip_bytes(this->tpdu_hdr.LI-2);
-            break;
-            case DR_TPDU:
-//                LOG(LOG_INFO, "recv DR_TPDU");
-                stream.in_skip_bytes(4);
-                this->tpdu_hdr.reason = stream.in_uint8();
-                stream.in_skip_bytes(this->tpdu_hdr.LI-6);
-            break;
-            case ER_TPDU:
-//                LOG(LOG_INFO, "recv ER_TPDU");
-                stream.in_skip_bytes(2);
-                this->tpdu_hdr.reject_cause = stream.in_uint8();
-                stream.in_skip_bytes(this->tpdu_hdr.LI-4);
-            break;
-            case CC_TPDU:
-                LOG(LOG_INFO, "recv CC_TPDU LI=%u",this->tpdu_hdr.LI);
-                stream.in_skip_bytes(5);
-                if (this->tpdu_hdr.LI == 13){
-
-                    enum {
-                        RDP_NEG_RESP = 2,
-                        RDP_NEG_FAILURE = 3
-                    };
-
-                    uint8_t type = stream.in_uint8();
-                    switch (type){
-                        case RDP_NEG_RESP:
-                        {
-                            uint8_t flags = stream.in_uint8();
-                            uint16_t length = stream.in_uint16_le();
-                            uint32_t code = stream.in_uint32_le();
-                            LOG(LOG_INFO, "RDP_NEG_RESP : flags=%x length=%u code=%u", flags, length, code);
-                        }
-                        break;
-                        case RDP_NEG_FAILURE:
-                        {
-                            uint8_t flags = stream.in_uint8();
-                            uint16_t length = stream.in_uint16_le();
-                            uint32_t code = stream.in_uint32_le();
-                            LOG(LOG_INFO, "RDP_NEG_FAILURE : flags=%x length=%u code=%u", flags, length, code);
-                        }
-                        break;
-                        default:
-                        break;
-                    }
-                }
-
-
-            break;
-            case CR_TPDU:
-            {
-//                LOG(LOG_INFO, "recv CR_TPDU");
-                // just skip remaining TPDU header content
-                uint8_t * end_of_header = stream.p + this->tpdu_hdr.LI-1;
-                if (this->tpdu_hdr.LI != 6){
-                    for (uint8_t * p = stream.p + 1 ; p < end_of_header ; p++){
-                        if (p[-1] == 0x0D && p[0] == 0x0A){
-                            p[-1] = 0;
-                            LOG(LOG_INFO, "cookie: %s", stream.p);
-                            p[-1] = 0x0D;
-                            p++;
-                            if (end_of_header - p == 8){
-                                LOG(LOG_INFO, "Found RDP Negotiation Request Structure");
-                                assert(p[0] == 1); // RDP_NEG_REQ
-                                assert(p[1] == 0); // flags
-                                assert(p[2] == 8 && p[3] == 0); // length = 8
-                                switch (p[4]){
-                                    case 0:
-                                        LOG(LOG_INFO, "PROTOCOL RDP");
-                                    break;
-                                    case 1:
-                                        LOG(LOG_INFO, "PROTOCOL TLS 1.0");
-                                    break;
-                                    case 2:
-                                        LOG(LOG_INFO, "PROTOCOL HYBRID");
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-                stream.in_skip_bytes(this->tpdu_hdr.LI-1);
-            }
-            break;
-            default:
-                LOG(LOG_INFO, "recv OTHER_TPDU %u", this->tpdu_hdr.code);
-                // just skip remaining TPDU header content
-                stream.in_skip_bytes(this->tpdu_hdr.LI-1);
-        }
-    }
-
-    void end(){
-        if (this->stream.p != this->stream.end) {
-            LOG(LOG_INFO, "%u bytes remaining in X224 TPDU", this->stream.end - this->stream.p);
-            throw Error(ERR_MCS_RECV_CJCF_ERROR_CHECKING_STREAM);
-        }
-    }
+enum {
+    RDP_NEG_REQ = 1,
+    RDP_NEG_RESP = 2,
+    RDP_NEG_FAILURE = 3
 };
 
+enum {
+    RDP_NEG_PROTOCOL_RDP    = 0,
+    RDP_NEG_PROTOCOL_TLS    = 1,
+    RDP_NEG_PROTOCOL_HYBRID = 2,
+};
+
+
+enum {
+    SSL_REQUIRED_BY_SERVER    = 0x00000001,
+    SSL_NOT_ALLOWED_BY_SERVER = 0x00000002,
+    SSL_CERT_NOT_ON_SERVER    = 0x00000003,
+    INCONSISTENT_FLAGS        = 0x00000004,
+    HYBRID_REQUIRED_BY_SERVER = 0x00000005,
+};
 
 // 2.2.1.1 Client X.224 Connection Request PDU
 // ===========================================
@@ -602,6 +469,180 @@ struct X224In : public X224Packet
 // |                                      | (section 5.4) with CredSSP (section|
 // |                                      | 5.4.5.2).                          |
 // +--------------------------------------+------------------------------------+
+
+
+struct X224In : public X224Packet
+{
+    struct Tpkt {
+        Tpkt(uint8_t version, uint16_t len) : version(version), len(len) {}
+        uint8_t version;
+        uint16_t len;
+    } tpkt;
+
+    struct TPDUHeader {
+        TPDUHeader(uint8_t LI, uint8_t code)
+            : LI(LI)
+            , code(code)
+            , reason(0)
+            , eot(0)
+            , reject_cause(0)
+            , rdp_neg_type(0)
+            , rdp_neg_flags(0)
+            , rdp_neg_length(0)
+            , rdp_neg_code(0)
+            {}
+        uint8_t LI;
+        uint8_t code;
+
+        TODO("Fields below should be an union as they are valid or invalid depending on code");
+        uint8_t reason;
+        uint8_t eot;
+        uint8_t reject_cause;
+
+        uint8_t rdp_neg_type;
+        uint8_t rdp_neg_flags;
+        uint16_t rdp_neg_length;
+        uint32_t rdp_neg_code;
+    } tpdu_hdr;
+
+    Stream & stream;
+
+
+    X224In(Transport * t, Stream & stream)
+        : tpkt(0,0), tpdu_hdr(0, 0), stream(stream)
+    // Receive a X224 TPDU from the wires
+    {
+        if (!stream.has_room(TPKT_HEADER_LEN)){
+            LOG(LOG_INFO, "ERR_STREAM_MEMORY_TOO_SMALL");
+            throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
+        }
+        t->recv((char**)(&(stream.end)), TPKT_HEADER_LEN);
+
+        this->tpkt.version = stream.in_uint8();
+
+        if ( this->tpkt.version != 3) {
+            LOG(LOG_INFO, "UNSUPPORTED FAST-PATH PDU (version = %u)", this->tpkt.version);
+            throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
+        }
+        stream.in_skip_bytes(1);
+        this->tpkt.len = stream.in_uint16_be();
+
+        const uint16_t payload_len = (uint16_t)(this->tpkt.len - TPKT_HEADER_LEN);
+        if (!stream.has_room(payload_len)){
+            LOG(LOG_INFO, "ERR_STREAM_MEMORY_TOO_SMALL (asked for %u, has %u, used=%u)",
+                payload_len, stream.capacity, stream.end-stream.data);
+            throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
+        }
+
+        t->recv((char**)(&(stream.end)), payload_len);
+        this->tpdu_hdr.LI = stream.in_uint8();
+        this->tpdu_hdr.code = stream.in_uint8() & 0xF0;
+        switch (this->tpdu_hdr.code){
+            case DT_TPDU:
+//                LOG(LOG_INFO, "recv DT_TPDU");
+                this->tpdu_hdr.eot = stream.in_uint8();
+                stream.in_skip_bytes(this->tpdu_hdr.LI-2);
+            break;
+            case DR_TPDU:
+//                LOG(LOG_INFO, "recv DR_TPDU");
+                stream.in_skip_bytes(4);
+                this->tpdu_hdr.reason = stream.in_uint8();
+                stream.in_skip_bytes(this->tpdu_hdr.LI-6);
+            break;
+            case ER_TPDU:
+//                LOG(LOG_INFO, "recv ER_TPDU");
+                stream.in_skip_bytes(2);
+                this->tpdu_hdr.reject_cause = stream.in_uint8();
+                stream.in_skip_bytes(this->tpdu_hdr.LI-4);
+            break;
+            case CC_TPDU:
+                LOG(LOG_INFO, "recv CC_TPDU LI=%u",this->tpdu_hdr.LI);
+                stream.in_skip_bytes(5);
+                if (this->tpdu_hdr.LI == 14){
+
+                    this->tpdu_hdr.rdp_neg_type = stream.in_uint8();
+                    switch (this->tpdu_hdr.rdp_neg_type){
+                        case RDP_NEG_RESP:
+                        {
+                            this->tpdu_hdr.rdp_neg_flags = stream.in_uint8();
+                            this->tpdu_hdr.rdp_neg_length = stream.in_uint16_le();
+                            this->tpdu_hdr.rdp_neg_code = stream.in_uint32_le();
+                            // plus 1 byte padding, not read
+                            LOG(LOG_INFO, "RDP_NEG_RESP : flags=%x length=%u code=%u",
+                                this->tpdu_hdr.rdp_neg_flags,
+                                this->tpdu_hdr.rdp_neg_length,
+                                this->tpdu_hdr.rdp_neg_code);
+                        }
+                        break;
+                        case RDP_NEG_FAILURE:
+                        {
+                            this->tpdu_hdr.rdp_neg_flags = stream.in_uint8();
+                            this->tpdu_hdr.rdp_neg_length = stream.in_uint16_le();
+                            this->tpdu_hdr.rdp_neg_code = stream.in_uint32_le();
+                            // plus 1 byte padding, not read
+                            LOG(LOG_INFO, "RDP_NEG_FAILURE : flags=%x length=%u code=%u",
+                                this->tpdu_hdr.rdp_neg_flags,
+                                this->tpdu_hdr.rdp_neg_length,
+                                this->tpdu_hdr.rdp_neg_code);
+                        }
+                        break;
+                        default:
+                        break;
+                    }
+                }
+
+
+            break;
+            case CR_TPDU:
+            {
+//                LOG(LOG_INFO, "recv CR_TPDU");
+                // just skip remaining TPDU header content
+                uint8_t * end_of_header = stream.p + this->tpdu_hdr.LI-1;
+                if (this->tpdu_hdr.LI != 6){
+                    for (uint8_t * p = stream.p + 1 ; p < end_of_header ; p++){
+                        if (p[-1] == 0x0D && p[0] == 0x0A){
+                            p[-1] = 0;
+                            LOG(LOG_INFO, "cookie: %s", stream.p);
+                            p[-1] = 0x0D;
+                            p++;
+                            if (end_of_header - p == 8){
+                                LOG(LOG_INFO, "Found RDP Negotiation Request Structure");
+                                assert(p[0] == RDP_NEG_REQ);
+                                assert(p[1] == 0); // flags
+                                assert(p[2] == 8 && p[3] == 0); // length = 8
+
+                                switch (p[4]){
+                                    case RDP_NEG_PROTOCOL_RDP:
+                                        LOG(LOG_INFO, "PROTOCOL RDP");
+                                    break;
+                                    case RDP_NEG_PROTOCOL_TLS:
+                                        LOG(LOG_INFO, "PROTOCOL TLS 1.0");
+                                    break;
+                                    case RDP_NEG_PROTOCOL_HYBRID:
+                                        LOG(LOG_INFO, "PROTOCOL HYBRID");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                stream.in_skip_bytes(this->tpdu_hdr.LI-1);
+            }
+            break;
+            default:
+                LOG(LOG_INFO, "recv OTHER_TPDU %u", this->tpdu_hdr.code);
+                // just skip remaining TPDU header content
+                stream.in_skip_bytes(this->tpdu_hdr.LI-1);
+        }
+    }
+
+    void end(){
+        if (this->stream.p != this->stream.end) {
+            LOG(LOG_INFO, "%u bytes remaining in X224 TPDU", this->stream.end - this->stream.p);
+            throw Error(ERR_MCS_RECV_CJCF_ERROR_CHECKING_STREAM);
+        }
+    }
+};
 
 
 struct X224Out : public X224Packet

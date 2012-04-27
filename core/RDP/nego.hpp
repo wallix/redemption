@@ -64,16 +64,18 @@ struct RdpNego
     uint32_t requested_protocol;
     uint32_t enabled_protocols;
     char username[128];
+    Transport * socket_trans;
     Transport * trans;
 
-    RdpNego(const bool tls, uint32_t enabled_protocols, Transport * trans, const char * username)
+    RdpNego(const bool tls, uint32_t enabled_protocols, Transport * socket_trans, const char * username)
     : flags(0)
     , tls(tls)
     , state(NEGO_STATE_INITIAL)
     , selected_protocol(PROTOCOL_RDP)
     , requested_protocol(PROTOCOL_RDP)
     , enabled_protocols(enabled_protocols)
-    , trans(trans)
+    , socket_trans(socket_trans)
+    , trans(NULL)
     {
         strncpy(this->username, username, 127);
         this->username[127] = 0;
@@ -83,13 +85,14 @@ struct RdpNego
     {
         switch (this->state){
         case NEGO_STATE_INITIAL:
+            LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
             this->send_negotiation_request();
             this->state = NEGO_STATE_RDP;
         break;
         default:
         case NEGO_STATE_RDP:
+            LOG(LOG_INFO, "RdpNego::NEGO_STATE_RDP");
             this->recv_connection_confirm();
-            this->state = NEGO_STATE_FINAL;
         break;
         }
     }
@@ -136,7 +139,9 @@ struct RdpNego
 //                DEBUG_NEGO("state: %s", this->STATE_STRINGS[nego->state]);
 //                if (nego->state != this->STATE_FINAL)
 //                {
-//                    this->tcp_disconnect(nego);
+//                      if (nego->tcp_connected)
+//                          tcp_disconnect(nego->transport);
+//                      nego->tcp_connected = 0;
 //                    if (nego->enabled_protocols[PROTOCOL_TLS] > 0)
 //                        nego->state = this->STATE_TLS;
 //                    else if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
@@ -150,7 +155,9 @@ struct RdpNego
 //                DEBUG_NEGO("Attempting TLS security");
 //                if (nego->state != this->STATE_FINAL)
 //                {
-//                    this->tcp_disconnect(nego);
+//                      if (nego->tcp_connected)
+//                          tcp_disconnect(nego->transport);
+//                      nego->tcp_connected = 0;
 
 //                    if (nego->enabled_protocols[PROTOCOL_RDP] > 0)
 //                        nego->state = this->STATE_RDP;
@@ -167,8 +174,13 @@ struct RdpNego
 //                nego->state = this->STATE_FINAL;
 //                return false;
 //            }
-//            if (this->tcp_connect(nego))
-//            {
+
+//            if (nego->tcp_connected == 0
+//            && !tcp_connect(nego->transport, nego->hostname, nego->port)){
+//                nego->state = this->STATE_FAIL;
+//            }
+//            else {
+//                nego->tcp_connected = 1;
 //                if (this->send_negotiation_request(nego))
 //                {
 //                    STREAM* s = transport_recv_stream_init(nego->transport, 1024);
@@ -180,12 +192,6 @@ struct RdpNego
 //                    nego->state = this->STATE_FAIL;
 //                }
 //            }
-//            else
-//            {
-//                nego->state = this->STATE_FAIL;
-//            }
-
-
 
 //            if (nego->state == this->STATE_FAIL)
 //            {
@@ -212,37 +218,6 @@ struct RdpNego
 
 //        return true;
     }
-
-
-    void tcp_connect()
-    {
-//        if (nego->tcp_connected == 0)
-//        {
-//            if (transport_connect(nego->transport, nego->hostname, nego->port) == false)
-//            {
-//                nego->tcp_connected = 0;
-//                return false;
-//            }
-//            else
-//            {
-//                nego->tcp_connected = 1;
-//                return true;
-//            }
-//        }
-
-//        return true;
-    }
-
-
-    void tcp_disconnect()
-    {
-//        if (nego->tcp_connected)
-//            transport_disconnect(nego->transport);
-
-//        nego->tcp_connected = 0;
-//        return 1;
-    }
-
 
 
 // 2.2.1.2 Server X.224 Connection Confirm PDU
@@ -355,14 +330,136 @@ struct RdpNego
 
     void recv_connection_confirm()
     {
+        LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
         Stream stream(8192);
-        X224In cctpdu(trans, stream);
+        X224In cctpdu(this->socket_trans, stream);
         if (cctpdu.tpkt.version != 3){
             throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
         }
         if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
             throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
         }
+
+        if (this->tls
+        && cctpdu.tpdu_hdr.rdp_neg_type == RDP_NEG_RESP
+        && cctpdu.tpdu_hdr.rdp_neg_code == RDP_NEG_PROTOCOL_TLS){
+            LOG(LOG_INFO, "RdpNego::enable_tls_transport TO BE IMPLEMENTED");
+            exit(0);
+
+//            transport::transport_connect_tls
+//            tls::tls_new
+
+//                SSL_load_error_strings();
+//                SSL_library_init();
+
+//            tls::tls_new done
+//            tls::tls_connect
+
+//                tls->ctx = SSL_CTX_new(TLSv1_client_method());
+//                SSL_CTX_set_options(tls->ctx, SSL_OP_ALL);
+//                tls->ssl = SSL_new(tls->ctx);
+//                SSL_set_fd(tls->ssl, tls->sockfd)
+//                connection_status = SSL_connect(tls->ssl);
+
+//            tls::tls_get_certificate
+
+//                server_cert = SSL_get_peer_certificate(tls->ssl);
+
+//            tls::tls_get_certificate done
+//            crypto::crypto_cert_get_public_key
+
+//                pkey = X509_get_pubkey(cert->px509);
+
+//            crypto::crypto_cert_get_public_key done
+//            tls::tls_verify_certificate
+//            crypto::x509_verify_certificate
+
+//                X509_STORE_CTX* csc;
+//                X509_STORE* cert_ctx = NULL;
+//                X509_LOOKUP* lookup = NULL;
+//                X509* xcert = cert->px509;
+//                cert_ctx = X509_STORE_new();
+//                OpenSSL_add_all_algorithms();
+//                lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
+//                lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_hash_dir());
+//                X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
+//                X509_LOOKUP_add_dir(lookup, certificate_store_path, X509_FILETYPE_ASN1);
+//                csc = X509_STORE_CTX_new();
+//                X509_STORE_set_flags(cert_ctx, 0);
+//                X509_STORE_CTX_init(csc, cert_ctx, xcert, 0);
+//                X509_verify_cert(csc);
+//                X509_STORE_CTX_free(csc);
+//                X509_STORE_free(cert_ctx);
+
+//            crypto::x509_verify_certificate done
+//            crypto::crypto_get_certificate_data
+//            crypto::crypto_cert_fingerprint
+
+//                X509_digest(xcert, EVP_sha1(), fp, &fp_len);
+
+//            crypto::crypto_cert_fingerprint done
+//            crypto::crypto_get_certificate_data done
+//            crypto::crypto_cert_subject_common_name
+
+//                subject_name = X509_get_subject_name(xcert);
+//                index = X509_NAME_get_index_by_NID(subject_name, NID_commonName, -1);
+//                entry = X509_NAME_get_entry(subject_name, index);
+//                entry_data = X509_NAME_ENTRY_get_data(entry);
+
+//            crypto::crypto_cert_subject_common_name done
+//            crypto::crypto_cert_subject_alt_name
+
+//                subject_alt_names = X509_get_ext_d2i(xcert, NID_subject_alt_name, 0, 0);
+
+//            crypto::crypto_cert_subject_alt_name (!subject_alt_names) done
+//            crypto::crypto_cert_issuer
+
+//                char * res = crypto_print_name(X509_get_issuer_name(xcert));
+
+//            crypto::crypto_print_name
+
+//                BIO* outBIO = BIO_new(BIO_s_mem());
+//                X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE)
+//                BIO_read(outBIO, buffer, size);
+//                BIO_free(outBIO);
+
+//            crypto::crypto_print_name done
+//            crypto::crypto_cert_issuer done
+//            crypto::crypto_cert_subject
+
+//                char * res = crypto_print_name(X509_get_subject_name(xcert));
+
+//            crypto::crypto_print_name
+
+//                BIO* outBIO = BIO_new(BIO_s_mem());
+//                X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE)
+//                BIO_read(outBIO, buffer, size);
+//                BIO_free(outBIO);
+
+//            crypto::crypto_print_name done
+//            crypto::crypto_cert_subject done
+//            crypto::crypto_cert_fingerprint
+
+
+//                X509_digest(xcert, EVP_sha1(), fp, &fp_len);
+
+//            crypto::crypto_cert_fingerprint done
+//            tls::tls_verify_certificate verification_status=1 done
+//            tls::tls_free_certificate
+
+//                X509_free(cert->px509);
+
+//            tls::tls_free_certificate done
+//            tls::tls_connect -> true done
+
+
+            this->state = NEGO_STATE_FINAL;
+        }
+        else {
+            this->trans = this->socket_trans;
+            this->state = NEGO_STATE_FINAL;
+        }
+        LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
 
 //        uint8 li;
 //        uint8 type;
@@ -382,9 +479,18 @@ struct RdpNego
 //            switch (type)
 //            {
 //                case TYPE_RDP_NEG_RSP:
-//                    this->process_negotiation_response(nego, s);
+//                  uint16 length;
 
-//                    DEBUG_NEGO("selected_protocol: %d", nego->selected_protocol);
+//                  DEBUG_NEGO("RDP_NEG_RSP");
+
+//                  /* process_negotiation_response */
+//                  stream_read_uint8(s, nego->flags);
+//                  stream_read_uint16(s, length);
+//                  stream_read_uint32(s, nego->selected_protocol);
+
+//                  nego->state = this->STATE_FINAL;
+
+//                  DEBUG_NEGO("selected_protocol: %d", nego->selected_protocol);
 
 //                    /* enhanced security selected ? */
 //                    if (nego->selected_protocol) {
@@ -399,7 +505,38 @@ struct RdpNego
 //                break;
 
 //                case TYPE_RDP_NEG_FAILURE:
-//                    this->process_negotiation_failure(nego, s);
+//                        uint8 flags;
+//                        uint16 length;
+//                        uint32 failureCode;
+
+//                        DEBUG_NEGO("RDP_NEG_FAILURE");
+
+//                        stream_read_uint8(s, flags);
+//                        stream_read_uint16(s, length);
+//                        stream_read_uint32(s, failureCode);
+
+//                        switch (failureCode)
+//                        {
+//                        case SSL_REQUIRED_BY_SERVER:
+//                            DEBUG_NEGO("Error: SSL_REQUIRED_BY_SERVER");
+//                        break;
+//                        case SSL_NOT_ALLOWED_BY_SERVER:
+//                            DEBUG_NEGO("Error: SSL_NOT_ALLOWED_BY_SERVER");
+//                        break;
+//                        case SSL_CERT_NOT_ON_SERVER:
+//                            DEBUG_NEGO("Error: SSL_CERT_NOT_ON_SERVER");
+//                        break;
+//                        case INCONSISTENT_FLAGS:
+//                            DEBUG_NEGO("Error: INCONSISTENT_FLAGS");
+//                        break;
+//                        case HYBRID_REQUIRED_BY_SERVER:
+//                            DEBUG_NEGO("Error: HYBRID_REQUIRED_BY_SERVER");
+//                        break;
+//                        default:
+//                            DEBUG_NEGO("Error: Unknown protocol security error %d", failureCode);
+//                        break;
+//                        }
+//                        nego->state = this->STATE_FAIL;
 //                break;
 //            }
 //        }
@@ -458,7 +595,17 @@ struct RdpNego
 //                return false;
 //            }
 
-//            this->process_negotiation_request(nego, s);
+//        /* process_negotiation_request(Stream & stream) */
+//           uint8 flags;
+//           uint16 length;
+
+//           DEBUG_NEGO("RDP_NEG_REQ");
+
+//           stream_read_uint8(s, flags);
+//           stream_read_uint16(s, length);
+//           stream_read_uint32(s, nego->requested_protocols);
+
+//           nego->state = this->STATE_FINAL;
 //        }
 
 //        return true;
@@ -510,21 +657,17 @@ struct RdpNego
 
         if (this->tls)
         {
-            enum {
-                TYPE_RDP_NEG_REQ = 0x01
-            };
-
             /* RDP_NEG_DATA must be present for TLS and NLA */
-            crtpdu.stream.out_uint8(TYPE_RDP_NEG_REQ);
+            crtpdu.stream.out_uint8(RDP_NEG_REQ);
             crtpdu.stream.out_uint8(0); /* flags, must be set to zero */
             crtpdu.stream.out_uint16_le(8); /* RDP_NEG_DATA length (8) */
-            crtpdu.stream.out_uint32_le(1); /* requestedProtocols 1 = TLS */
+            crtpdu.stream.out_uint32_le(RDP_NEG_PROTOCOL_TLS);
         }
 
-
         crtpdu.extend_tpdu_hdr();
+
         crtpdu.end();
-        crtpdu.send(this->trans);
+        crtpdu.send(this->socket_trans);
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
 
 //        STREAM* s;
@@ -575,70 +718,7 @@ struct RdpNego
     }
 
 
-    void process_negotiation_request(Stream & stream)
-    {
-//        uint8 flags;
-//        uint16 length;
 
-//        DEBUG_NEGO("RDP_NEG_REQ");
-
-//        stream_read_uint8(s, flags);
-//        stream_read_uint16(s, length);
-//        stream_read_uint32(s, nego->requested_protocols);
-
-//        nego->state = this->STATE_FINAL;
-    }
-
-
-    void process_negotiation_response(Stream & stream)
-    {
-//        uint16 length;
-
-//        DEBUG_NEGO("RDP_NEG_RSP");
-
-//        stream_read_uint8(s, nego->flags);
-//        stream_read_uint16(s, length);
-//        stream_read_uint32(s, nego->selected_protocol);
-
-//        nego->state = this->STATE_FINAL;
-    }
-
-    void process_negotiation_failure(Stream & stream)
-    {
-//        uint8 flags;
-//        uint16 length;
-//        uint32 failureCode;
-
-//        DEBUG_NEGO("RDP_NEG_FAILURE");
-
-//        stream_read_uint8(s, flags);
-//        stream_read_uint16(s, length);
-//        stream_read_uint32(s, failureCode);
-
-//        switch (failureCode)
-//        {
-//        case SSL_REQUIRED_BY_SERVER:
-//            DEBUG_NEGO("Error: SSL_REQUIRED_BY_SERVER");
-//        break;
-//        case SSL_NOT_ALLOWED_BY_SERVER:
-//            DEBUG_NEGO("Error: SSL_NOT_ALLOWED_BY_SERVER");
-//        break;
-//        case SSL_CERT_NOT_ON_SERVER:
-//            DEBUG_NEGO("Error: SSL_CERT_NOT_ON_SERVER");
-//        break;
-//        case INCONSISTENT_FLAGS:
-//            DEBUG_NEGO("Error: INCONSISTENT_FLAGS");
-//        break;
-//        case HYBRID_REQUIRED_BY_SERVER:
-//            DEBUG_NEGO("Error: HYBRID_REQUIRED_BY_SERVER");
-//        break;
-//        default:
-//            DEBUG_NEGO("Error: Unknown protocol security error %d", failureCode);
-//        break;
-//        }
-
-//        nego->state = this->STATE_FAIL;
-    }
 
 
     void send_negotiation_response()

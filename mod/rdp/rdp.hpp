@@ -312,7 +312,6 @@ struct mod_rdp : public client_mod {
 
     /* mod data */
     Stream in_stream;
-    Transport *trans;
     ChannelDefArray mod_channel_list;
 
     bool dev_redirection_enable;
@@ -380,7 +379,6 @@ struct mod_rdp : public client_mod {
             :
                 client_mod(front, info.width, info.height),
                     in_stream(65536),
-                    trans(trans),
                     use_rdp5(1),
                     keylayout(info.keylayout),
                     lic_layer(hostname),
@@ -448,7 +446,6 @@ struct mod_rdp : public client_mod {
     }
 
     virtual ~mod_rdp() {
-        delete this->trans;
     }
 
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long time, Keymap2 * keymap){
@@ -537,7 +534,7 @@ struct mod_rdp : public client_mod {
         sec_out.end();
         sdrq_out.end();
         tpdu.end();
-        tpdu.send(this->trans);
+        tpdu.send(this->nego.trans);
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::send_to_channel done");
         }
@@ -560,6 +557,9 @@ struct mod_rdp : public client_mod {
                     this->nego.server_event();
                 break;
                 case RdpNego::NEGO_STATE_FINAL:
+                    if (this->nego.tls){
+                        break;
+                    }
                     // Basic Settings Exchange
                     // -----------------------
 
@@ -580,7 +580,7 @@ struct mod_rdp : public client_mod {
                     //                   GCC conference Create Response
 
                     mcs_send_connect_initial(
-                            this->trans,
+                            this->nego.trans,
                             this->front.get_channel_list(),
                             this->front_width,
                             this->front_height,
@@ -599,7 +599,7 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
             }
             mcs_recv_connect_response(
-                    this->trans,
+                    this->nego.trans,
                     this->mod_channel_list,
                     this->front.get_channel_list(),
                     this->encrypt,
@@ -647,14 +647,14 @@ struct mod_rdp : public client_mod {
             //    |-------MCS Channel Join Request PDU--------------------> |
             //    | <-----MCS Channel Join Confirm PDU--------------------- |
 
-            mcs_send_erect_domain_and_attach_user_request_pdu(this->trans);
+            mcs_send_erect_domain_and_attach_user_request_pdu(this->nego.trans);
             this->state = MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER;
         break;
 
         case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
         LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User");
         {
-            mcs_recv_attach_user_confirm_pdu(this->trans, this->userid);
+            mcs_recv_attach_user_confirm_pdu(this->nego.trans, this->userid);
 
             {
                 TODO(" the array size below is arbitrary  it should be checked to avoid buffer overflow")
@@ -668,12 +668,12 @@ struct mod_rdp : public client_mod {
                 }
 
                 for (size_t index = 0; index < num_channels+2; index++){
-                    mcs_send_channel_join_request_pdu(trans, this->userid, channels_id[index]);
+                    mcs_send_channel_join_request_pdu(this->nego.trans, this->userid, channels_id[index]);
                     {
                         uint16_t tmp_userid;
                         uint16_t tmp_req_chanid;
                         uint16_t tmp_join_chanid;
-                        mcs_recv_channel_join_confirm_pdu(this->trans, tmp_userid, tmp_req_chanid, tmp_join_chanid);
+                        mcs_recv_channel_join_confirm_pdu(this->nego.trans, tmp_userid, tmp_req_chanid, tmp_join_chanid);
                     }
                 }
             }
@@ -709,7 +709,7 @@ struct mod_rdp : public client_mod {
             //    |------Security Exchange PDU ---------------------------> |
 
             LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
-            send_security_exchange_PDU(trans,
+            send_security_exchange_PDU(this->nego.trans,
                 this->userid,
                 this->server_public_key_len,
                 this->client_crypt_random);
@@ -729,7 +729,6 @@ struct mod_rdp : public client_mod {
             int rdp5_performanceflags = RDP5_NO_WALLPAPER;
 
             this->send_client_info_pdu(
-                                this->trans,
                                 this->userid,
                                 this->password,
                                 rdp5_performanceflags);
@@ -814,7 +813,6 @@ struct mod_rdp : public client_mod {
         // (Valid Client) PDU, as specified in section 2.2.1.12.1.
 
         {
-            Transport * trans = this->trans;
             const char * hostname = this->hostname;
             const char * username = this->username;
             const int userid = this->userid;
@@ -824,7 +822,7 @@ struct mod_rdp : public client_mod {
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
             LOG(LOG_INFO, "Reading TPDU");
-            X224In in_tpdu(trans, stream);
+            X224In in_tpdu(this->nego.trans, stream);
             LOG(LOG_INFO, "MCS layer");
             McsIn mcs_in(stream);
             if ((mcs_in.opcode >> 2) != MCS_SDIN) {
@@ -840,11 +838,11 @@ struct mod_rdp : public client_mod {
                 switch (tag) {
                 case LICENCE_TAG_DEMAND:
                     LOG(LOG_INFO, "LICENCE_TAG_DEMAND");
-                    this->lic_layer.rdp_lic_process_demand(trans, stream, hostname, username, userid, licence_issued, this->encrypt);
+                    this->lic_layer.rdp_lic_process_demand(this->nego.trans, stream, hostname, username, userid, licence_issued, this->encrypt);
                     break;
                 case LICENCE_TAG_AUTHREQ:
                     LOG(LOG_INFO, "LICENCE_TAG_AUTHREQ");
-                    this->lic_layer.rdp_lic_process_authreq(trans, stream, hostname, userid, licence_issued, this->encrypt);
+                    this->lic_layer.rdp_lic_process_authreq(this->nego.trans, stream, hostname, userid, licence_issued, this->encrypt);
                     break;
                 case LICENCE_TAG_ISSUE:
                     LOG(LOG_INFO, "LICENCE_TAG_ISSUE");
@@ -928,7 +926,7 @@ struct mod_rdp : public client_mod {
             Stream stream(65536);
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-            X224In(this->trans, stream);
+            X224In(this->nego.trans, stream);
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:X224In");
             McsIn mcs_in(stream);
             if ((mcs_in.opcode >> 2) != MCS_SDIN) {
@@ -1174,7 +1172,7 @@ struct mod_rdp : public client_mod {
                 Stream stream(11);
                 X224Out tpdu(X224Packet::DR_TPDU, stream);
                 tpdu.end();
-                tpdu.send(this->trans);
+                tpdu.send(this->nego.trans);
             }
             catch(Error e){
                 LOG(LOG_DEBUG, "catched error (2) =%u", e.id);
@@ -1359,7 +1357,7 @@ struct mod_rdp : public client_mod {
             sec_out.end();
             sdrq_out.end();
             tpdu.end();
-            tpdu.send(this->trans);
+            tpdu.send(this->nego.trans);
 
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_confirm_active done");
@@ -2176,7 +2174,7 @@ struct mod_rdp : public client_mod {
             sec_out.end();
             sdrq_out.end();
             tpdu.end();
-            tpdu.send(this->trans);
+            tpdu.send(this->nego.trans);
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_control done");
             }
@@ -2203,7 +2201,7 @@ struct mod_rdp : public client_mod {
             sec_out.end();
             sdrq_out.end();
             tpdu.end();
-            tpdu.send(this->trans);
+            tpdu.send(this->nego.trans);
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_synchronise done");
             }
@@ -2231,7 +2229,7 @@ struct mod_rdp : public client_mod {
             sec_out.end();
             sdrq_out.end();
             tpdu.end();
-            tpdu.send(this->trans);
+            tpdu.send(this->nego.trans);
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_fonts done");
             }
@@ -2279,7 +2277,7 @@ struct mod_rdp : public client_mod {
             sec_out.end();
             sdrq_out.end();
             tpdu.end();
-            tpdu.send(this->trans);
+            tpdu.send(this->nego.trans);
 
             if (this->verbose > 10){
                 LOG(LOG_INFO, "mod_rdp::send_input done");
@@ -2313,7 +2311,7 @@ struct mod_rdp : public client_mod {
                     sec_out.end();
                     sdrq_out.end();
                     tpdu.end();
-                    tpdu.send(this->trans);
+                    tpdu.send(this->nego.trans);
                 }
             }
             if (this->verbose){
@@ -2553,9 +2551,7 @@ struct mod_rdp : public client_mod {
 
 
 
-    TODO("Move send_client_info_pdu funcion to client_info.hpp")
-
-    void send_client_info_pdu(Transport * trans, int userid, const char * password, int rdp5_performanceflags)
+    void send_client_info_pdu(int userid, const char * password, int rdp5_performanceflags)
     {
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
@@ -2643,7 +2639,7 @@ struct mod_rdp : public client_mod {
         sec_out.end();
         sdrq_out2.end();
         tpdu.end();
-        tpdu.send(trans);
+        tpdu.send(this->nego.trans);
 
         LOG(LOG_INFO, "send login info ok");
         if (this->verbose){
