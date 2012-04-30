@@ -340,37 +340,19 @@ struct RdpNego
             throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
         }
 
+        LOG(LOG_INFO, "RdpNego::neg_type=%u neg_code=%u",
+            cctpdu.tpdu_hdr.rdp_neg_type,
+            cctpdu.tpdu_hdr.rdp_neg_code);
+
+
         if (this->tls
         && cctpdu.tpdu_hdr.rdp_neg_type == RDP_NEG_RESP
         && cctpdu.tpdu_hdr.rdp_neg_code == RDP_NEG_PROTOCOL_TLS){
-            LOG(LOG_INFO, "RdpNego::enable_tls_transport TO BE IMPLEMENTED");
-            exit(0);
+            LOG(LOG_INFO, "activating SSL");
+            this->socket_trans->enable_tls();
+            this->trans = this->socket_trans;
+            this->state = NEGO_STATE_FINAL;
 
-//            transport::transport_connect_tls
-//            tls::tls_new
-
-//                SSL_load_error_strings();
-//                SSL_library_init();
-
-//            tls::tls_new done
-//            tls::tls_connect
-
-//                tls->ctx = SSL_CTX_new(TLSv1_client_method());
-//                SSL_CTX_set_options(tls->ctx, SSL_OP_ALL);
-//                tls->ssl = SSL_new(tls->ctx);
-//                SSL_set_fd(tls->ssl, tls->sockfd)
-//                connection_status = SSL_connect(tls->ssl);
-
-//            tls::tls_get_certificate
-
-//                server_cert = SSL_get_peer_certificate(tls->ssl);
-
-//            tls::tls_get_certificate done
-//            crypto::crypto_cert_get_public_key
-
-//                pkey = X509_get_pubkey(cert->px509);
-
-//            crypto::crypto_cert_get_public_key done
 //            tls::tls_verify_certificate
 //            crypto::x509_verify_certificate
 

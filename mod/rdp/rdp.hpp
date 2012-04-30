@@ -557,9 +557,6 @@ struct mod_rdp : public client_mod {
                     this->nego.server_event();
                 break;
                 case RdpNego::NEGO_STATE_FINAL:
-                    if (this->nego.tls){
-                        break;
-                    }
                     // Basic Settings Exchange
                     // -----------------------
 

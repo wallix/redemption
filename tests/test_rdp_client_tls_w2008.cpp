@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.bpp = 24;
     info.width = 800;
     info.height = 600;
-    int verbose = 1;
+    int verbose = 256;
 
 
     class Front : public FrontAPI {

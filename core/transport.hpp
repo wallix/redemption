@@ -31,6 +31,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include </usr/include/openssl/ssl.h>
 
 #include "error.hpp"
 #include "log.hpp"
@@ -143,6 +144,11 @@ public:
         quantum_count++;
         last_quantum_received = 0;
         last_quantum_sent = 0;
+    }
+
+    virtual void enable_tls()
+    {
+        // default enable_tls do nothing
     }
 
     void recv(uint8_t ** pbuffer, size_t len) throw (Error) {
@@ -403,6 +409,7 @@ class LoopTransport : public Transport {
 };
 
 class SocketTransport : public Transport {
+        bool tls;
     public:
         int sck;
         int sck_closed;
@@ -412,6 +419,7 @@ class SocketTransport : public Transport {
     SocketTransport(const char * name, int sck, uint32_t verbose)
         : Transport(), name(name), verbose(verbose)
     {
+        this->tls = false;
         this->sck = sck;
         this->sck_closed = 0;
     }
@@ -421,6 +429,68 @@ class SocketTransport : public Transport {
             this->disconnect();
         }
     }
+
+
+    virtual void enable_tls() throw (Error)
+    {
+        LOG(LOG_INFO, "Transport::enable_tls()");
+        SSL_load_error_strings();
+        SSL_library_init();
+
+        LOG(LOG_INFO, "Transport::SSL_CTX_new()");
+        const SSL_METHOD *meth = TLSv1_client_method();
+        SSL_CTX* ctx = SSL_CTX_new(meth);
+
+        /*
+         * This is necessary, because the Microsoft TLS implementation is not perfect.
+         * SSL_OP_ALL enables a couple of workarounds for buggy TLS implementations,
+         * but the most important workaround being SSL_OP_TLS_BLOCK_PADDING_BUG.
+         * As the size of the encrypted payload may give hints about its contents,
+         * block padding is normally used, but the Microsoft TLS implementation
+         * won't recognize it and will disconnect you after sending a TLS alert.
+         */
+        LOG(LOG_INFO, "Transport::SSL_CTX_set_options()");
+        SSL_CTX_set_options(ctx, SSL_OP_ALL);
+        LOG(LOG_INFO, "Transport::SSL_new()");
+        SSL * ssl = SSL_new(ctx);
+        LOG(LOG_INFO, "Transport::SSL_set_fd()");
+        SSL_set_fd(ssl, this->sck);
+        LOG(LOG_INFO, "Transport::SSL_connect()");
+        int connection_status = SSL_connect(ssl);
+
+    	if (connection_status <= 0)
+	    {
+//		    if (tls_print_error("SSL_connect", tls->ssl, connection_status))
+//		    {
+//	            printf("tls::tls_connect (SSL_connect failed) done\n");
+//			    return false;
+//		    }
+            printf("tls::tls_connect (SSL_connect failed, tls_print_error failed) done\n");
+	    }
+
+        LOG(LOG_INFO, "Transport::SSL_get_peer_certificate()");
+        X509 * px509 = SSL_get_peer_certificate(ssl);
+        LOG(LOG_INFO, "Transport::X509_get_pubkey()");
+        EVP_PKEY* pkey = X509_get_pubkey(px509);
+        if (!pkey)
+        {
+            LOG(LOG_INFO, "Transport::crypto_cert_get_public_key: X509_get_pubkey() failed pkey=%u\n", pkey);
+            exit(0);
+        }
+
+        LOG(LOG_INFO, "Transport::i2d_PublicKey()");
+        int public_key_length = i2d_PublicKey(pkey, NULL);
+        LOG(LOG_INFO, "Transport::i2d_PublicKey() -> length = %u", public_key_length);
+        uint8_t * public_key_data = (uint8_t *)malloc(public_key_length);
+        LOG(LOG_INFO, "Transport::i2d_PublicKey()");
+        i2d_PublicKey(pkey, &public_key_data);
+        // verify_certificate -> ignore for now
+        this->tls = true;
+        LOG(LOG_INFO, "Transport::enable_tls() done");
+    }
+
+
+
     static bool try_again(int errnum){
         int res = false;
         switch (errno){
@@ -481,7 +551,24 @@ class SocketTransport : public Transport {
     }
 
     using Transport::recv;
-    virtual void recv(char ** input_buffer, size_t total_len) throw (Error)
+
+    virtual void recv(char ** pbuffer, size_t len) throw (Error)
+    {
+        if (this->tls){
+            this->recv_tls(pbuffer, len);
+        }
+        else {
+            this->recv_tcp(pbuffer, len);
+        }
+    }
+
+    void recv_tls(char ** pbuffer, size_t len) throw (Error)
+    {
+        LOG(LOG_INFO, "Transport::recv_tls()");
+        exit(0);
+    }
+
+    void recv_tcp(char ** input_buffer, size_t total_len) throw (Error)
     {
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Socket %s (%u) receiving %u bytes", this->name, this->sck, total_len);
@@ -528,9 +615,26 @@ class SocketTransport : public Transport {
     }
 
 
+
     using Transport::send;
 
     virtual void send(const char * const buffer, size_t len) throw (Error)
+    {
+        if (this->tls){
+            this->send_tls(buffer, len);
+        }
+        else {
+            this->send_tcp(buffer, len);
+        }
+    }
+
+    void send_tls(const char * const buffer, size_t len) throw (Error)
+    {
+        LOG(LOG_INFO, "Transport::send_tls()");
+        exit(0);
+    }
+
+    void send_tcp(const char * const buffer, size_t len) throw (Error)
     {
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "Socket %s (%u) sending %u bytes", this->name, this->sck, len);
