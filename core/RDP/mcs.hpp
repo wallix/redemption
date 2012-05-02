@@ -313,6 +313,30 @@ static inline void mcs_send_connect_initial(
 //   Conference Create Response data (contained in the gccCCrsp and subsequent
 //   fields).
 
+
+//Result ::= ENUMERATED
+//-- in Connect, response, confirm
+//{
+//    rt-successful                  (0),
+//    rt-domain-merging              (1),
+//    rt-domain-not-hierarchical     (2),
+//    rt-no-such-channel             (3),
+//    rt-no-such-domain              (4),
+//    rt-no-such-user                (5),
+//    rt-not-admitted                (6),
+//    rt-other-user-id               (7),
+//    rt-parameters-unacceptable     (8),
+//    rt-token-not-available         (9),
+//    rt-token-not-possessed         (10),
+//    rt-too-many-channels           (11),
+//    rt-too-many-tokens             (12),
+//    rt-too-many-users              (13),
+//    rt-unspecified-failure         (14),
+//    rt-user-rejected               (15)
+//}
+
+
+
 // gccCCrsp (variable): Variable-length PER-encoded GCC Connect Data structure
 //   which encapsulates a Connect GCC PDU that contains a GCC Conference Create
 //   Response structure as described in [T124] (the ASN.1 structure definitions
@@ -342,18 +366,20 @@ static inline void mcs_recv_connect_response(
 {
     Stream cr_stream(32768);
     X224In(trans, cr_stream);
+
     if (cr_stream.in_uint16_be() != BER_TAG_MCS_CONNECT_RESPONSE) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     int len = cr_stream.in_ber_len();
+    // ----------------------------------------------------------
 
     if (cr_stream.in_uint8() != BER_TAG_RESULT) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = cr_stream.in_ber_len();
-
+    // ----------------------------------------------------------
     int res = cr_stream.in_uint8();
-
+    
     if (res != 0) {
         throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
     }

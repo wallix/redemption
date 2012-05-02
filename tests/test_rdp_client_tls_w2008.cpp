@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     } front(info, verbose);
 
-//    const char * name = "RDP W2008 TLS Target";
+    const char * name = "RDP W2008 TLS Target";
 //    int sck = connect("10.10.14.88", 3389, name);
 //    SocketTransport t(name, sck, verbose);
 
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.status);
+//    BOOST_CHECK(t.status);
 
     BOOST_CHECK_EQUAL(mod->front_width, 800);
     BOOST_CHECK_EQUAL(mod->front_height, 600);
