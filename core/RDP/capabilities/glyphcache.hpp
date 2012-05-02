@@ -90,17 +90,17 @@ enum {
 };
 
 struct GlyphSupportCaps : public Capability {
-    uint8_t glyphCache[40];
-    uint32_t fragCache;
-    uint16_t glyphSupportLevel;
-    uint16_t pad2octets;
+            uint8_t glyphCache[40];
+            uint32_t fragCache;
+            uint16_t glyphSupportLevel;
+            uint16_t pad2octets;
     GlyphSupportCaps()
     : Capability(CAPSTYPE_GLYPHCACHE, RDP_CAPLEN_GLYPHCACHE)
-//    , glyphCache = "";
-    , fragCache(0x01000100) // max number of entries in the cache = 256
-                            // largest allowed maximum size of an element in (bytes) = 256
-    , glyphSupportLevel(GLYPH_SUPPORT_NONE) // By default, no support
-    , pad2octets(0x0000)
+//            , glyphCache = "";
+            , fragCache(0x01000100) // max number of entries in the cache = 256
+                                    // largest allowed maximum size of an element in (bytes) = 256
+            , glyphSupportLevel(GLYPH_SUPPORT_NONE) // By default, no support
+            , pad2octets(0x0000)
     {
         const uint8_t init_glyphCache[] = {
                             0xFE, 0x00, 0x04, 0x00, 0xFE, 0x00, 0x04, 0x00,

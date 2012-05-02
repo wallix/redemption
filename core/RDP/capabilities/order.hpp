@@ -255,6 +255,293 @@
 // pad2octetsE (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
 // field MUST be ignored.
 
+enum {
+      NB_ORDER_SUPPORT = 0x20
+};
+
+enum {
+      ORD_LEVEL_1_ORDERS = 0x01
+};
+
+enum {
+      NEGOTIATEORDERSUPPORT = 0x02
+    , ZEROBOUNDSDELTASSUPPORT = 0x08
+    , COLORINDEXSUPPORT = 0x20
+    , SOLIDPATTERNBRUSHONLY = 0x40
+    , ORDERFLAGS_EXTRA_FLAGS = 0x80
+};
+
+enum {
+      ORDERFLAGS_EX_CACHE_BITMAP_REV3_SUPPORT = 0x02
+    , ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT = 0x04
+};
+
+
+enum {
+      TS_NEG_DSTBLT_INDEX = 0x00
+    , TS_NEG_PATBLT_INDEX = 0x01
+    , TS_NEG_SCRBLT_INDEX = 0x02
+    , TS_NEG_MEMBLT_INDEX = 0x03
+    , TS_NEG_MEM3BLT_INDEX = 0x04
+    , UnusedIndex1 = 0x05
+    , UnusedIndex2 = 0x06
+    , TS_NEG_DRAWNINEGRID_INDEX = 0x07
+    , TS_NEG_LINETO_INDEX = 0x08
+    , TS_NEG_MULTI_DRAWNINEGRID_INDEX = 0x09
+    , UnusedIndex3 = 0x0A
+    , TS_NEG_SAVEBITMAP_INDEX = 0x0B
+    , UnusedIndex4 = 0x0C
+    , UnusedIndex5 = 0x0D
+    , UnusedIndex6 = 0x0E
+    , TS_NEG_MULTIDSTBLT_INDEX = 0x0F
+    , TS_NEG_MULTIPATBLT_INDEX = 0x10
+    , TS_NEG_MULTISCRBLT_INDEX = 0x11
+    , TS_NEG_MULTIOPAQUERECT_INDEX = 0x12
+    , TS_NEG_FAST_INDEX_INDEX = 0x13
+    , TS_NEG_POLYGON_SC_INDEX = 0x14
+    , TS_NEG_POLYGON_CB_INDEX = 0x15
+    , TS_NEG_POLYLINE_INDEX = 0x16
+    , UnusedIndex7 = 0x17
+    , TS_NEG_FAST_GLYPH_INDEX = 0x18
+    , TS_NEG_ELLIPSE_SC_INDEX = 0x19
+    , TS_NEG_ELLIPSE_CB_INDEX = 0x1A
+    , TS_NEG_INDEX_INDEX = 0x1B
+    , UnusedIndex8 = 0x1C
+    , UnusedIndex9 = 0x1D
+    , UnusedIndex10 = 0x1E
+    , UnusedIndex11 = 0x1F
+};
+
+
+struct OrderCaps : public Capability {
+
+    uint8_t terminalDescriptor[16];
+    uint32_t pad4octetsA;
+    uint16_t desktopSaveXGranularity;
+    uint16_t desktopSaveYGranularity;
+    uint16_t pad2octetsA;
+    uint16_t maximumOrderLevel;
+    uint16_t numberFonts;
+    uint16_t orderFlags;
+    uint8_t orderSupport[32];
+    uint16_t textFlags;
+    uint16_t orderSupportExFlags;
+    uint32_t pad4octetsB;
+    uint32_t desktopSaveSize;
+    uint16_t pad2octetsC;
+    uint16_t pad2octetsD;
+    uint16_t textANSICodePage;
+    uint16_t pad2octetsE ;
+
+    OrderCaps()
+    : Capability(CAPSTYPE_ORDER, RDP_CAPLEN_ORDER)
+//        , terminalDescriptor = "";
+        , pad4octetsA(0) //....................... MUST be ignored
+        , desktopSaveXGranularity(1) //            ignored and assumed to be 1
+        , desktopSaveYGranularity(20) //.......... ignored and assumed to be 20
+        , pad2octetsA(0) //                        MUST be ignored
+        , maximumOrderLevel(ORD_LEVEL_1_ORDERS) // is ignored and SHOULD be set to 1
+        , numberFonts(0) //                        is ignored and SHOULD be set to 0
+        , orderFlags(NEGOTIATEORDERSUPPORT) //.... from a "const list"
+        , textFlags(0) //................................................ MUST be ignored
+        , orderSupportExFlags(ORDERFLAGS_EX_CACHE_BITMAP_REV3_SUPPORT) // from a "const list"
+        , pad4octetsB(0) //.............................................. MUST be ignored
+        , desktopSaveSize(230400) //                                      ignored and assumed to be 230.400
+        , pad2octetsC(0) //.............................................. MUST be ignored
+        , pad2octetsD(0) //                                               MUST be ignored
+        , textANSICodePage(0) //......................................... is ignored and SHOULD be set to 0
+        , pad2octetsE (0) //                                              MUST be ignored
+    {
+        memset(this->terminalDescriptor, 0, 16); // 16 bits array ALWAYS filled with 0
+        memset(this->orderSupport, 0, 32); // 32 bits array filled with 0 BY DEFAULT
+    }
+
+//    void emit(Stream & stream){
+
+//        stream.out_uint16_le(this->capabilityType);
+//        stream.out_uint16_le(this->len);
+//        stream.out_copy_bytes(this->terminalDescriptor, 16);
+//        stream.out_uint32_le(this->pad4octetsA);
+//        stream.out_uint16_le(this->desktopSaveXGranularity);
+//        stream.out_uint16_le(this->desktopSaveYGranularity);
+//        stream.out_uint16_le(this->pad2octetsA);
+//        stream.out_uint16_le(this->maximumOrderLevel);
+//        stream.out_uint16_le(this->numberFonts);
+//        stream.out_uint16_le(this->orderFlags);
+
+//        for (size_t i = 0; i < NB_ORDER_SUPPORT; i++) {
+//            stream.out_uint8(this->orderSupport[i]);
+//        }
+//        stream.out_uint16_le(this->textFlags);
+//        stream.out_uint16_le(this->orderSupportExFlags);
+//        stream.out_uint32_le(this->pad4octetsB);
+//        stream.out_uint32_le(this->desktopSaveSize);
+//        stream.out_uint16_le(this->pad2octetsC);
+//        stream.out_uint16_le(this->pad2octetsD);
+//        stream.out_uint16_le(this->textANSICodePage);
+//        stream.out_uint16_le(this->pad2octetsE);
+//    }
+
+    void emit(Stream & stream){
+
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_copy_bytes(this->terminalDescriptor, 16);
+        stream.out_uint32_le(this->pad4octetsA);
+        stream.out_uint16_le(this->desktopSaveXGranularity);
+        stream.out_uint16_le(this->desktopSaveYGranularity);
+        stream.out_uint16_le(this->pad2octetsA);
+        stream.out_uint16_le(this->maximumOrderLevel);
+        stream.out_uint16_le(this->numberFonts);
+        stream.out_uint16_le(this->orderFlags);
+
+        char order_caps[32];
+//        for (size_t i = 0; i < 32; i++) {
+//            stream.out_uint8(this->orderSupport[i]);
+//        }
+//=============================================================
+//        char order_caps[32];
+
+//        memset(order_caps, 0, 32);
+        TODO(" use symbolic constants for order numerotation")
+        order_caps[RDP::DESTBLT] = 1; /* dest blt */
+        order_caps[RDP::PATBLT] = 1; /* pat blt */
+        order_caps[RDP::SCREENBLT] = 1; /* screen blt */
+        order_caps[3] = 1; /* memblt */
+        order_caps[4] = 0; /* todo triblt */
+        order_caps[8] = 1; /* line */
+        order_caps[9] = 1; /* line */
+        order_caps[10] = 1; /* rect */
+        order_caps[11] = 0; /* todo desksave */
+        order_caps[RDP::MEMBLT] = 1; /* memblt another above */
+        order_caps[RDP::TRIBLT] = 0; /* triblt another above */
+        order_caps[20] = 0; /* todo polygon */
+        order_caps[21] = 0; /* todo polygon2 */
+        order_caps[RDP::POLYLINE] = 0; /* todo polyline */
+        order_caps[25] = 0; /* todo ellipse */
+        order_caps[26] = 0; /* todo ellipse2 */
+        order_caps[RDP::GLYPHINDEX] = 1; /* text2 */
+        stream.out_copy_bytes(order_caps, 32); /* Orders supported */
+
+        stream.out_uint16_le(0x6a1); /* Text capability flags */
+        stream.out_clear_bytes(6); /* Pad */
+        stream.out_uint32_le(0 * 0x38400); /* Desktop cache size, for desktop_save */
+        stream.out_uint32_le(0); /* Unknown */
+        stream.out_uint32_le(0x4e4); /* Unknown */
+    }
+
+//    void recv(Stream & stream){
+//        this->capabilityType = stream.in_uint16_le();
+//        this->len = stream.in_uint16_le();
+//        stream.in_copy_bytes(this->terminalDescriptor, 16);
+//        this->pad4octetsA = stream.in_uint32_le();
+//        this->desktopSaveXGranularity = stream.in_uint16_le();
+//        this->desktopSaveYGranularity = stream.in_uint16_le();
+//        this->pad2octetsA = stream.in_uint16_le();
+//        this->maximumOrderLevel = stream.in_uint16_le();
+//        this->numberFonts = stream.in_uint16_le();
+//        this->orderFlags = stream.in_uint16_le();
+
+//        for (size_t i = 0; i < 32; i++) {
+//            this->orderSupport[i] = stream.in_uint8();
+//        }
+//        this->textFlags = stream.in_uint16_le();
+//        this->orderSupportExFlags = stream.in_uint16_le();
+//        this->pad4octetsB = stream.in_uint32_le();
+//        this->desktopSaveSize = stream.in_uint32_le();
+//        this->pad2octetsC = stream.in_uint16_le();
+//        this->pad2octetsD = stream.in_uint16_le();
+//        this->textANSICodePage = stream.in_uint16_le();
+//        this->pad2octetsE = stream.in_uint16_le();
+//    }
+
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s Order caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "Order caps::terminalDescriptor %u", this->terminalDescriptor);
+        LOG(LOG_INFO, "Order caps::pad4octetsA %u", this->pad4octetsA);
+        LOG(LOG_INFO, "Order caps::desktopSaveXGranularity %u", this->desktopSaveXGranularity);
+        LOG(LOG_INFO, "Order caps::desktopSaveYGranularity %u", this->desktopSaveYGranularity);
+        LOG(LOG_INFO, "Order caps::pad2octetsA %u", this->pad2octetsA);
+        LOG(LOG_INFO, "Order caps::maximumOrderLevel %u", this->maximumOrderLevel);
+        LOG(LOG_INFO, "Order caps::numberFonts %u", this->numberFonts);
+        LOG(LOG_INFO, "Order caps::orderFlags %u", this->orderFlags);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_DSTBLT_INDEX] %u"
+                        , this->orderSupport[TS_NEG_DSTBLT_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_PATBLT_INDEX] %u"
+                        , this->orderSupport[TS_NEG_PATBLT_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_SCRBLT_INDEX] %u"
+                        , this->orderSupport[TS_NEG_SCRBLT_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_MEMBLT_INDEX] %u"
+                        , this->orderSupport[TS_NEG_MEMBLT_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_MEM3BLT_INDEX] %u"
+                        , this->orderSupport[TS_NEG_MEM3BLT_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[UnusedIndex1] %u"
+                        , this->orderSupport[UnusedIndex1]);
+        LOG(LOG_INFO, "Order caps::orderSupport[UnusedIndex2] %u"
+                        , this->orderSupport[UnusedIndex2]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_DRAWNINEGRID_INDEX] %u"
+                        , this->orderSupport[TS_NEG_DRAWNINEGRID_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_LINETO_INDEX] %u"
+                        , this->orderSupport[TS_NEG_LINETO_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] %u"
+                        , this->orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[UnusedIndex3] %u"
+                        , this->orderSupport[UnusedIndex3]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_SAVEBITMAP_INDEX] %u"
+                        , this->orderSupport[TS_NEG_SAVEBITMAP_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[UnusedIndex4] %u"
+                        , this->orderSupport[UnusedIndex4]);
+        LOG(LOG_INFO, "Order caps::orderSupport[UnusedIndex5] %u"
+                        , this->orderSupport[UnusedIndex5]);
+        LOG(LOG_INFO, "Order caps::orderSupport[UnusedIndex6] %u"
+                        , this->orderSupport[UnusedIndex6]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_MULTIDSTBLT_INDEX] %u"
+                        , this->orderSupport[TS_NEG_MULTIDSTBLT_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_MULTIPATBLT_INDEX] %u"
+                        , this->orderSupport[TS_NEG_MULTIPATBLT_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_MULTISCRBLT_INDEX] %u"
+                        , this->orderSupport[TS_NEG_MULTISCRBLT_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX] %u"
+                        , this->orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_FAST_INDEX_INDEX] %u"
+                        , this->orderSupport[TS_NEG_FAST_INDEX_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_POLYGON_SC_INDEX] %u"
+                        , this->orderSupport[TS_NEG_POLYGON_SC_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_POLYGON_CB_INDEX] %u"
+                        , this->orderSupport[TS_NEG_POLYGON_CB_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_POLYLINE_INDEX] %u"
+                        , this->orderSupport[TS_NEG_POLYLINE_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[UnusedIndex7] %u"
+                        , this->orderSupport[UnusedIndex7]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_FAST_GLYPH_INDEX] %u"
+                        , this->orderSupport[TS_NEG_FAST_GLYPH_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_ELLIPSE_SC_INDEX] %u"
+                        , this->orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_ELLIPSE_CB_INDEX] %u"
+                        , this->orderSupport[TS_NEG_ELLIPSE_CB_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[TS_NEG_INDEX_INDEX] %u"
+                        , this->orderSupport[TS_NEG_INDEX_INDEX]);
+        LOG(LOG_INFO, "Order caps::orderSupport[UnusedIndex8] %u"
+                        , this->orderSupport[UnusedIndex8]);
+        LOG(LOG_INFO, "Order caps::orderSupport[UnusedIndex9] %u"
+                        , this->orderSupport[UnusedIndex9]);
+        LOG(LOG_INFO, "Order caps::orderSupport[UnusedIndex10] %u"
+                        , this->orderSupport[UnusedIndex10]);
+        LOG(LOG_INFO, "Order caps::orderSupport[UnusedIndex11] %u"
+                        , this->orderSupport[UnusedIndex11]);
+
+        LOG(LOG_INFO, "Order caps::textFlags %u", this->textFlags);
+        LOG(LOG_INFO, "Order caps::orderSupportExFlags %u", this->orderSupportExFlags);
+        LOG(LOG_INFO, "Order caps::pad4octetsB %u", this->pad4octetsB);
+        LOG(LOG_INFO, "Order caps::desktopSaveSize %u", this->desktopSaveSize);
+        LOG(LOG_INFO, "Order caps::pad2octetsC %u", this->pad2octetsC);
+        LOG(LOG_INFO, "Order caps::pad2octetsD %u", this->pad2octetsD);
+        LOG(LOG_INFO, "Order caps::textANSICodePage %u", this->textANSICodePage);
+        LOG(LOG_INFO, "Order caps::pad2octetsE %u", this->pad2octetsE);
+    }
+};
+
+
 static inline void cs_out_order_caps(Stream & stream)
 {
     LOG(LOG_INFO, "Sending order caps to server");
