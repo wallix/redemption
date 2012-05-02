@@ -64,7 +64,6 @@ struct RdpNego
     uint32_t requested_protocol;
     uint32_t enabled_protocols;
     char username[128];
-    Transport * socket_trans;
     Transport * trans;
 
     RdpNego(const bool tls, uint32_t enabled_protocols, Transport * socket_trans, const char * username)
@@ -73,10 +72,15 @@ struct RdpNego
     , state(NEGO_STATE_INITIAL)
     , selected_protocol(PROTOCOL_RDP)
     , requested_protocol(PROTOCOL_RDP)
-    , enabled_protocols(enabled_protocols)
-    , socket_trans(socket_trans)
-    , trans(NULL)
+    , trans(socket_trans)
     {
+        if (this->tls){
+            this->enabled_protocols = RdpNego::PROTOCOL_RDP
+                                    | RdpNego::PROTOCOL_TLS;
+        }
+        else {
+            this->enabled_protocols = RdpNego::PROTOCOL_RDP;
+        }
         strncpy(this->username, username, 127);
         this->username[127] = 0;
     }
@@ -332,7 +336,7 @@ struct RdpNego
     {
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
         Stream stream(8192);
-        X224In cctpdu(this->socket_trans, stream);
+        X224In cctpdu(this->trans, stream);
         if (cctpdu.tpkt.version != 3){
             throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
         }
@@ -349,96 +353,10 @@ struct RdpNego
         && cctpdu.tpdu_hdr.rdp_neg_type == RDP_NEG_RESP
         && cctpdu.tpdu_hdr.rdp_neg_code == RDP_NEG_PROTOCOL_TLS){
             LOG(LOG_INFO, "activating SSL");
-            this->socket_trans->enable_tls();
-            this->trans = this->socket_trans;
-            this->state = NEGO_STATE_FINAL;
-
-//            tls::tls_verify_certificate
-//            crypto::x509_verify_certificate
-
-//                X509_STORE_CTX* csc;
-//                X509_STORE* cert_ctx = NULL;
-//                X509_LOOKUP* lookup = NULL;
-//                X509* xcert = cert->px509;
-//                cert_ctx = X509_STORE_new();
-//                OpenSSL_add_all_algorithms();
-//                lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
-//                lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_hash_dir());
-//                X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
-//                X509_LOOKUP_add_dir(lookup, certificate_store_path, X509_FILETYPE_ASN1);
-//                csc = X509_STORE_CTX_new();
-//                X509_STORE_set_flags(cert_ctx, 0);
-//                X509_STORE_CTX_init(csc, cert_ctx, xcert, 0);
-//                X509_verify_cert(csc);
-//                X509_STORE_CTX_free(csc);
-//                X509_STORE_free(cert_ctx);
-
-//            crypto::x509_verify_certificate done
-//            crypto::crypto_get_certificate_data
-//            crypto::crypto_cert_fingerprint
-
-//                X509_digest(xcert, EVP_sha1(), fp, &fp_len);
-
-//            crypto::crypto_cert_fingerprint done
-//            crypto::crypto_get_certificate_data done
-//            crypto::crypto_cert_subject_common_name
-
-//                subject_name = X509_get_subject_name(xcert);
-//                index = X509_NAME_get_index_by_NID(subject_name, NID_commonName, -1);
-//                entry = X509_NAME_get_entry(subject_name, index);
-//                entry_data = X509_NAME_ENTRY_get_data(entry);
-
-//            crypto::crypto_cert_subject_common_name done
-//            crypto::crypto_cert_subject_alt_name
-
-//                subject_alt_names = X509_get_ext_d2i(xcert, NID_subject_alt_name, 0, 0);
-
-//            crypto::crypto_cert_subject_alt_name (!subject_alt_names) done
-//            crypto::crypto_cert_issuer
-
-//                char * res = crypto_print_name(X509_get_issuer_name(xcert));
-
-//            crypto::crypto_print_name
-
-//                BIO* outBIO = BIO_new(BIO_s_mem());
-//                X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE)
-//                BIO_read(outBIO, buffer, size);
-//                BIO_free(outBIO);
-
-//            crypto::crypto_print_name done
-//            crypto::crypto_cert_issuer done
-//            crypto::crypto_cert_subject
-
-//                char * res = crypto_print_name(X509_get_subject_name(xcert));
-
-//            crypto::crypto_print_name
-
-//                BIO* outBIO = BIO_new(BIO_s_mem());
-//                X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE)
-//                BIO_read(outBIO, buffer, size);
-//                BIO_free(outBIO);
-
-//            crypto::crypto_print_name done
-//            crypto::crypto_cert_subject done
-//            crypto::crypto_cert_fingerprint
-
-
-//                X509_digest(xcert, EVP_sha1(), fp, &fp_len);
-
-//            crypto::crypto_cert_fingerprint done
-//            tls::tls_verify_certificate verification_status=1 done
-//            tls::tls_free_certificate
-
-//                X509_free(cert->px509);
-
-//            tls::tls_free_certificate done
-//            tls::tls_connect -> true done
-
-
+            this->trans->enable_tls();
             this->state = NEGO_STATE_FINAL;
         }
         else {
-            this->trans = this->socket_trans;
             this->state = NEGO_STATE_FINAL;
         }
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
@@ -649,58 +567,15 @@ struct RdpNego
         crtpdu.extend_tpdu_hdr();
 
         crtpdu.end();
-        crtpdu.send(this->socket_trans);
+        crtpdu.send(this->trans);
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
-
-//        STREAM* s;
-//        int length;
-//        uint8 *bm, *em;
-
-//        s = transport_send_stream_init(nego->transport, 256);
-//        length = TPDU_CONNECTION_REQUEST_LENGTH;
-//        stream_get_mark(s, bm);
-//        stream_seek(s, length);
 
 //        if (nego->routing_token != NULL)
 //        {
 //            stream_write(s, nego->routing_token->data, nego->routing_token->length);
 //            length += nego->routing_token->length;
 //        }
-//        else if (nego->cookie != NULL)
-//        {
-//            int cookie_length = strlen(nego->cookie);
-//            stream_write(s, "Cookie: mstshash=", 17);
-//            stream_write(s, (uint8*) nego->cookie, cookie_length);
-//            stream_write_uint8(s, 0x0D); /* CR */
-//            stream_write_uint8(s, 0x0A); /* LF */
-//            length += cookie_length + 19;
-//        }
-
-//        DEBUG_NEGO("requested_protocols: %d", nego->requested_protocols);
-//        if (nego->requested_protocols > PROTOCOL_RDP)
-//        {
-//            /* RDP_NEG_DATA must be present for TLS and NLA */
-//            stream_write_uint8(s, TYPE_RDP_NEG_REQ);
-//            stream_write_uint8(s, 0); /* flags, must be set to zero */
-//            stream_write_uint16(s, 8); /* RDP_NEG_DATA length (8) */
-//            stream_write_uint32(s, nego->requested_protocols); /* requestedProtocols */
-//            length += 8;
-//        }
-
-//        stream_get_mark(s, em);
-//        stream_set_mark(s, bm);
-//        tpkt_write_header(s, length);
-//        tpdu_write_connection_request(s, length - 5);
-//        stream_set_mark(s, em);
-
-//        if (transport_write(nego->transport, s) < 0)
-//            return false;
-
-//        return true;
     }
-
-
-
 
 
     void send_negotiation_response()

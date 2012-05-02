@@ -398,11 +398,7 @@ struct mod_rdp : public client_mod {
                     gen(gen),
                     verbose(verbose),
                     tls(tls),
-                    nego(tls,
-                        RdpNego::PROTOCOL_NLA
-                        |RdpNego::PROTOCOL_RDP
-                        |RdpNego::PROTOCOL_TLS,
-                        trans, target_user)
+                    nego(tls, trans, target_user)
     {
         LOG(LOG_INFO, "Creation of new mod 'RDP'");
         // from rdp_sec
