@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.bpp = 24;
     info.width = 800;
     info.height = 600;
-    int verbose = 1;
+    int verbose = 256;
 
 
     class Front : public FrontAPI {
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     } front(info, verbose);
 
-//    const char * name = "RDP W2008 TLS Target";
+    const char * name = "RDP W2008 TLS Target";
 //    int sck = connect("10.10.14.88", 3389, name);
 //    SocketTransport t(name, sck, verbose);
 
@@ -205,12 +205,12 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
     const bool tls = true;
-    struct client_mod * mod = new mod_rdp(&t, "administrateur@qa", "S3cur3!1nux", front, "test", tls, info, &gen);
+    struct client_mod * mod = new mod_rdp(&t, "administrateur@qa", "S3cur3!1nux", front, "195-132-203-212", tls, info, &gen);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    BOOST_CHECK(t.status);
+//    BOOST_CHECK(t.status);
 
     BOOST_CHECK_EQUAL(mod->front_width, 800);
     BOOST_CHECK_EQUAL(mod->front_height, 600);

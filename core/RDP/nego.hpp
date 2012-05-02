@@ -64,7 +64,6 @@ struct RdpNego
     uint32_t requested_protocol;
     uint32_t enabled_protocols;
     char username[128];
-    Transport * socket_trans;
     Transport * trans;
 
     RdpNego(const bool tls, uint32_t enabled_protocols, Transport * socket_trans, const char * username)
@@ -74,8 +73,7 @@ struct RdpNego
     , selected_protocol(PROTOCOL_RDP)
     , requested_protocol(PROTOCOL_RDP)
     , enabled_protocols(enabled_protocols)
-    , socket_trans(socket_trans)
-    , trans(NULL)
+    , trans(socket_trans)
     {
         strncpy(this->username, username, 127);
         this->username[127] = 0;
@@ -332,7 +330,7 @@ struct RdpNego
     {
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
         Stream stream(8192);
-        X224In cctpdu(this->socket_trans, stream);
+        X224In cctpdu(this->trans, stream);
         if (cctpdu.tpkt.version != 3){
             throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
         }
@@ -340,37 +338,18 @@ struct RdpNego
             throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
         }
 
+        LOG(LOG_INFO, "RdpNego::neg_type=%u neg_code=%u",
+            cctpdu.tpdu_hdr.rdp_neg_type,
+            cctpdu.tpdu_hdr.rdp_neg_code);
+
+
         if (this->tls
         && cctpdu.tpdu_hdr.rdp_neg_type == RDP_NEG_RESP
         && cctpdu.tpdu_hdr.rdp_neg_code == RDP_NEG_PROTOCOL_TLS){
-            LOG(LOG_INFO, "RdpNego::enable_tls_transport TO BE IMPLEMENTED");
-            exit(0);
+            LOG(LOG_INFO, "activating SSL (tls=%s)",this->tls?"true":"false");
+            this->trans->enable_tls();
+            this->state = NEGO_STATE_FINAL;
 
-//            transport::transport_connect_tls
-//            tls::tls_new
-
-//                SSL_load_error_strings();
-//                SSL_library_init();
-
-//            tls::tls_new done
-//            tls::tls_connect
-
-//                tls->ctx = SSL_CTX_new(TLSv1_client_method());
-//                SSL_CTX_set_options(tls->ctx, SSL_OP_ALL);
-//                tls->ssl = SSL_new(tls->ctx);
-//                SSL_set_fd(tls->ssl, tls->sockfd)
-//                connection_status = SSL_connect(tls->ssl);
-
-//            tls::tls_get_certificate
-
-//                server_cert = SSL_get_peer_certificate(tls->ssl);
-
-//            tls::tls_get_certificate done
-//            crypto::crypto_cert_get_public_key
-
-//                pkey = X509_get_pubkey(cert->px509);
-
-//            crypto::crypto_cert_get_public_key done
 //            tls::tls_verify_certificate
 //            crypto::x509_verify_certificate
 
@@ -456,7 +435,6 @@ struct RdpNego
             this->state = NEGO_STATE_FINAL;
         }
         else {
-            this->trans = this->socket_trans;
             this->state = NEGO_STATE_FINAL;
         }
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
@@ -667,7 +645,7 @@ struct RdpNego
         crtpdu.extend_tpdu_hdr();
 
         crtpdu.end();
-        crtpdu.send(this->socket_trans);
+        crtpdu.send(this->trans);
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
 
 //        STREAM* s;
