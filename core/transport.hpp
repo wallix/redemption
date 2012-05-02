@@ -438,7 +438,7 @@ class SocketTransport : public Transport {
         SSL_library_init();
 
         LOG(LOG_INFO, "Transport::SSL_CTX_new()");
-        const SSL_METHOD *meth = TLSv1_client_method();
+        SSL_METHOD *meth = TLSv1_client_method();
         SSL_CTX* ctx = SSL_CTX_new(meth);
 
         /*

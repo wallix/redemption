@@ -75,16 +75,6 @@ struct ColorCacheCaps : public Capability {
     }
 };
 
-static inline void out_colcache_caps(Stream & stream)
-{
-    LOG(LOG_INFO, "Sending colcache caps to server");
-
-    stream.out_uint16_le(CAPSTYPE_COLORCACHE);
-    stream.out_uint16_le(RDP_CAPLEN_COLORCACHE);
-    stream.out_uint16_le(6); /* cache size */
-    stream.out_uint16_le(0); /* pad */
-}
-
 static inline void front_out_colcache_caps(Stream & stream)
 {
     stream.out_uint16_le(CAPSTYPE_COLORCACHE);
