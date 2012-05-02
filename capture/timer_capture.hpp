@@ -50,6 +50,21 @@ public:
         return *this;
     }
 
+    const timeval& time() const
+    {
+        return now;
+    }
+
+    time_t& sec()
+    {
+        return now.tv_sec;
+    }
+
+    suseconds_t& usec()
+    {
+        return now.tv_usec;
+    }
+
     static TimerCapture invalid_timer()
     {
         return TimerCapture(0);
@@ -107,18 +122,20 @@ public:
     }
 };
 
-class WaitCapture {
+struct WaitCapture {
     TimerCapture timer;
+
+private:
     uint64_t time_future;
 
-public:
+//public:
     uint64_t time_wait;
 
 public:
     WaitCapture()
     : timer(TimerCapture::invalid_timer())
-    {
-    }
+    , time_future(0)
+    {}
 
     void future(uint64_t micro_sec)
     {
@@ -157,10 +174,24 @@ public:
         }
     }
 
+    void fake_sleep()
+    {
+        if (this->time_wait)
+        {
+            this->timer += this->time_wait;
+        }
+    }
+
     void wait(uint64_t micro_sec)
     {
         this->future(micro_sec);
         this->sleep();
+    }
+
+    void fake_wait(uint64_t micro_sec)
+    {
+        this->future(micro_sec);
+        this->fake_sleep();
     }
 };
 

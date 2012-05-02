@@ -25,7 +25,7 @@
 
 // #define LOGPRINT
 
-#include <iostream>
+// #include <iostream>
 #include "wrm_recorder.hpp"
 #include "transport.hpp"
 #include "staticcapture.hpp"
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
         Capture consumer(recorder.meta.width, recorder.meta.height,
                         "/tmp/replay_part", 0, 0, false);
 
-        recorder.reader.consumer = &consumer;
+        recorder.consumer(&consumer);
 
         uint n = 0;
         uint ntime = 0;
@@ -99,19 +99,18 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
     BOOST_CHECK(1);
 
     recorder.consumer(&consumer);
-    recorder.drawable_consumer(&consumer.drawable);
     bool is_chunk_time = true;
     BOOST_CHECK(1);
 
     uint n = 0;
-    std::cout << "TestMultiWRMToPng start\n";
+    //std::cout << "TestMultiWRMToPng start\n";
 
     while (recorder.selected_next_order())
     {
         BOOST_CHECK(1);
         if (recorder.chunk_type() == WRMChunk::TIMESTAMP || recorder.chunk_type() == WRMChunk::OLD_TIMESTAMP){
             is_chunk_time = true;
-            std::cout << "timestamp\n";
+            //std::cout << "timestamp\n";
             recorder.remaining_order_count() = 0;
             ++n;
         } else {
@@ -125,20 +124,20 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
                 consumer.flush();
                 is_chunk_time = false;
             }
-            bool is_breakpoint = recorder.chunk_type() == WRMChunk::BREAKPOINT;
-            bool is_nextfile = recorder.chunk_type() == WRMChunk::NEXT_FILE;
+            //bool is_breakpoint = recorder.chunk_type() == WRMChunk::BREAKPOINT;
+            //bool is_nextfile = recorder.chunk_type() == WRMChunk::NEXT_FILE;
             //if (is_breakpoint){
             //    bzero(consumer.drawable.data, consumer.drawable.pix_len);
             //}
-            if (is_nextfile)
-                std::cout << "NEXT_FILE" << std::endl;
-            if (is_breakpoint)
-                std::cout << "BREAKPOINT" << std::endl;
+            //if (is_nextfile)
+            //    std::cout << "NEXT_FILE" << std::endl;
+            //if (is_breakpoint)
+            //    std::cout << "BREAKPOINT" << std::endl;
             recorder.interpret_order();
-            if (is_breakpoint)
-                std::cout << "BREAKPOINT DONE" << std::endl;
-            if (is_nextfile)
-                std::cout << "NEXT_FILE DONE" << std::endl;
+            //if (is_breakpoint)
+            //    std::cout << "BREAKPOINT DONE" << std::endl;
+            //if (is_nextfile)
+            //    std::cout << "NEXT_FILE DONE" << std::endl;
             BOOST_CHECK(1);
         }
         BOOST_CHECK(1);
@@ -169,7 +168,6 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
     BOOST_CHECK(1);
 
     recorder->consumer(consumer);
-    //recorder->drawable_consumer(&consumer->drawable);
     recorder->redraw_consumer(consumer);
     bool is_chunk_time = true;
     BOOST_CHECK(1);
@@ -203,7 +201,6 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
                                              0, 0);
             }
             recorder->consumer(consumer);
-            //recorder->drawable_consumer(&consumer->drawable);
             recorder->redraw_consumer(consumer);
             BOOST_CHECK(1);
         } else {
@@ -258,17 +255,21 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
 
 /*BOOST_AUTO_TEST_CASE(TestMultiWRMToPng2)
 {
-    TestMultiWRMToPng_random_file(0, 2, 328);
-}
+    TestMultiWRMToPng_random_file(0, 2, 328, 0);
+}*/
 
 BOOST_AUTO_TEST_CASE(TestMultiWRMToPng3)
 {
-    TestMultiWRMToPng_random_file(0, 3, 328, true);
-}*/
+    TestMultiWRMToPng_random_file(0, 3, 328,
+                                  (const uint8_t*)
+                                  "\xf3\x72\x33\x18\x5a\x8b\xd8\xf1\x46\xfd"
+                                  "\x69\x48\x48\x9c\xe7\x9b\x4e\x59\x1b\xa1",
+                                  true);
+}
 
 BOOST_AUTO_TEST_CASE(TestMultiWRMToPng4)
 {
-    TestMultiWRMToPng_random_file(31, 4, 318,
+    TestMultiWRMToPng_random_file(60, 4, 313,
                                   (const uint8_t*)
                                   "\xf3\x72\x33\x18\x5a\x8b\xd8\xf1\x46\xfd"
                                   "\x69\x48\x48\x9c\xe7\x9b\x4e\x59\x1b\xa1",
