@@ -1597,50 +1597,24 @@ public:
         order_caps.pad4octetsA = 0x40420f00;
         order_caps.numberFonts = 0x2f;
         order_caps.orderFlags = 0x22;
-
         order_caps.orderSupport[TS_NEG_DSTBLT_INDEX] = 1;
         order_caps.orderSupport[TS_NEG_PATBLT_INDEX] = 1;
         order_caps.orderSupport[TS_NEG_SCRBLT_INDEX] = 1;
         order_caps.orderSupport[TS_NEG_MEMBLT_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX] = 1;
-//            order_caps.orderSupport[UnusedIndex1] = 1;
-//            order_caps.orderSupport[UnusedIndex2] = 1;
-//            order_caps.orderSupport[TS_NEG_DRAWNINEGRID_INDEX] = 1;
         order_caps.orderSupport[TS_NEG_LINETO_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
         order_caps.orderSupport[UnusedIndex3] = 1;
-//            order_caps.orderSupport[TS_NEG_SAVEBITMAP_INDEX] = 0;
-//            order_caps.orderSupport[UnusedIndex4] = 1;
-//             order_caps.orderSupport[UnusedIndex5] = 1;
-//            order_caps.orderSupport[UnusedIndex6] = 1;
-//            order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_MULTIPATBLT_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_MULTISCRBLT_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_FAST_INDEX_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_POLYLINE_INDEX] = 1;
-//            order_caps.orderSupport[UnusedIndex7] = 1;
-//            order_caps.orderSupport[TS_NEG_FAST_GLYPH_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_INDEX_INDEX] = 1;
-//            order_caps.orderSupport[UnusedIndex8] = 1;
-//            order_caps.orderSupport[UnusedIndex9] = 1;
-//            order_caps.orderSupport[UnusedIndex10] = 1;
-//            order_caps.orderSupport[UnusedIndex11] = 1;
-
         order_caps.textFlags = 0x06a1;
         order_caps.pad4octetsB = 0x0f4240;
         order_caps.desktopSaveSize = 0x0f4240;
         order_caps.pad2octetsC = 1;
-
-        order_caps.log("Sending order caps to server");
+        order_caps.log("Sending order caps to client");
         order_caps.emit(stream);
         caps_count++;
 
-        front_out_colcache_caps(stream);
+//        front_out_colcache_caps(stream);
+        ColorCacheCaps colorcache_caps;
+        colorcache_caps.log("Sending colorcache caps to client");
+        colorcache_caps.emit(stream);
         caps_count++;
 
         front_out_pointer_caps(stream);

@@ -116,6 +116,23 @@ struct BmpCacheCaps : public Capability {
         stream.out_uint16_le(this->cache2MaximumCellSize);
     }
 
+    void recv(Stream & stream){
+        this->capabilityType = stream.in_uint16_le();
+        this->len = stream.in_uint16_le();
+        this->pad1 = stream.in_uint32_le();
+        this->pad2 = stream.in_uint32_le();
+        this->pad3 = stream.in_uint32_le();
+        this->pad4 = stream.in_uint32_le();
+        this->pad5 = stream.in_uint32_le();
+        this->pad6 = stream.in_uint32_le();
+        this->cache0Entries = stream.in_uint16_le();
+        this->cache0MaximumCellSize = stream.in_uint16_le();
+        this->cache1Entries = stream.in_uint16_le();
+        this->cache1MaximumCellSize = stream.in_uint16_le();
+        this->cache2Entries = stream.in_uint16_le();
+        this->cache2MaximumCellSize = stream.in_uint16_le();
+      }
+
     void log(const char * msg){
         LOG(LOG_INFO, "%s BitmapCache caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "BitmapCache caps::cache0Entries %u", this->cache0Entries);

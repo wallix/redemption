@@ -68,6 +68,13 @@ struct ColorCacheCaps : public Capability {
         stream.out_uint16_le(this->pad2octets);
    }
 
+    void recv(Stream & stream){
+        this->capabilityType = stream.in_uint16_le();
+        this->len = stream.in_uint16_le();
+        this->colorTableCacheSize = stream.in_uint16_le();
+        this->pad2octets = stream.in_uint16_le();
+      }
+
     void log(const char * msg){
         LOG(LOG_INFO, "%s ColorCache caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "ColorCache caps::colorTableCacheSize %u", this->colorTableCacheSize);
@@ -75,12 +82,12 @@ struct ColorCacheCaps : public Capability {
     }
 };
 
-static inline void front_out_colcache_caps(Stream & stream)
-{
-    stream.out_uint16_le(CAPSTYPE_COLORCACHE);
-    stream.out_uint16_le(RDP_CAPLEN_COLORCACHE);
-    stream.out_uint16_le(6); /* cache size */
-    stream.out_uint16_le(0); /* pad */
-}
+//static inline void front_out_colcache_caps(Stream & stream)
+//{
+//    stream.out_uint16_le(CAPSTYPE_COLORCACHE);
+//    stream.out_uint16_le(RDP_CAPLEN_COLORCACHE);
+//    stream.out_uint16_le(6); /* cache size */
+//    stream.out_uint16_le(0); /* pad */
+//}
 
 #endif

@@ -73,6 +73,15 @@ struct ActivationCaps : public Capability {
         stream.out_uint16_le(this->windowManagerKeyFlag);
     }
 
+    void recv(Stream & stream){
+        this->capabilityType = stream.in_uint16_le();
+        this->len = stream.in_uint16_le();
+        this->helpKeyFlag = stream.in_uint16_le();
+        this->helpKeyIndexFlag = stream.in_uint16_le();
+        this->helpExtendedKeyFlag = stream.in_uint16_le();
+        this->windowManagerKeyFlag = stream.in_uint16_le();
+    }
+
     void log(const char * msg){
         LOG(LOG_INFO, "%s Activation caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "Activation caps::helpKeyFlag %u", this->helpKeyFlag);
