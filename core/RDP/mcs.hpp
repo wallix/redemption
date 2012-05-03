@@ -170,10 +170,8 @@ static inline void mcs_send_connect_initial(
 //    int data_len = data.end - data.data;
 //    int len = 7 + 3 * 34 + 4 + data_len;
 
-    printf("mcs_send_connect_initial\n");
     Stream stream(32768);
     X224Out ci_tpdu(X224Packet::DT_TPDU, stream);
-    LOG(LOG_INFO, "tls is %s <===========================", tls?"true":"false");
 
     stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
     uint32_t offset_data_len_connect_initial = stream.get_offset(0);
@@ -1289,11 +1287,12 @@ static inline void mcs_send_connect_response(
 
 static inline void mcs_send_erect_domain_and_attach_user_request_pdu(Transport * trans)
 {
+    LOG(LOG_INFO, "mcs_send_erect_domain_and_attach_user_request_pdu");
     Stream edrq_stream(32768);
     X224Out edrq_tpdu(X224Packet::DT_TPDU, edrq_stream);
     edrq_stream.out_uint8((MCS_EDRQ << 2));
-    edrq_stream.out_uint16_be(1); /* height */
-    edrq_stream.out_uint16_be(1); /* interval */
+    edrq_stream.out_per_integer(0); /* subHeight (INTEGER) */
+    edrq_stream.out_per_integer(0); /* subInterval (INTEGER) */
     edrq_tpdu.end();
     edrq_tpdu.send(trans);
 

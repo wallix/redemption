@@ -757,7 +757,7 @@ class Stream {
     void out_per_integer(uint32_t integer)
     {
         uint8_t length = (integer & 0xFFFF0000)?4:(integer & 0xFF00)?2:1;
-        this->out_per_length(4);
+        this->out_per_length(length);
         switch (length){
         case 4:
             this->out_uint32_be(integer);
