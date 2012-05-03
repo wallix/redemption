@@ -369,10 +369,7 @@ struct OrderCaps : public Capability {
         stream.out_uint16_le(this->maximumOrderLevel);
         stream.out_uint16_le(this->numberFonts);
         stream.out_uint16_le(this->orderFlags);
-
-        for (size_t i = 0; i < NB_ORDER_SUPPORT; i++) {
-            stream.out_uint8(this->orderSupport[i]);
-        }
+        stream.out_copy_bytes(this->orderSupport, NB_ORDER_SUPPORT);
         stream.out_uint16_le(this->textFlags);
         stream.out_uint16_le(this->orderSupportExFlags);
         stream.out_uint32_le(this->pad4octetsB);
@@ -394,10 +391,7 @@ struct OrderCaps : public Capability {
         this->maximumOrderLevel = stream.in_uint16_le();
         this->numberFonts = stream.in_uint16_le();
         this->orderFlags = stream.in_uint16_le();
-
-        for (size_t i = 0; i < NB_ORDER_SUPPORT; i++) {
-            this->orderSupport[i] = stream.in_uint8();
-        }
+        stream.in_copy_bytes(this->orderSupport, NB_ORDER_SUPPORT);
         this->textFlags = stream.in_uint16_le();
         this->orderSupportExFlags = stream.in_uint16_le();
         this->pad4octetsB = stream.in_uint32_le();

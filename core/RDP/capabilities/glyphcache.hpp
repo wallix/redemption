@@ -124,6 +124,15 @@ struct GlyphSupportCaps : public Capability {
         stream.out_uint16_le(this->pad2octets);
     }
 
+    void recv(Stream & stream){
+        this->capabilityType = stream.in_uint16_le();
+        this->len = stream.in_uint16_le();
+        stream.in_copy_bytes(this->glyphCache, 40);
+        this->fragCache = stream.in_uint32_le();
+        this->glyphSupportLevel = stream.in_uint16_le();
+        this->pad2octets = stream.in_uint16_le();
+    }
+
     void log(const char * msg){
         LOG(LOG_INFO, "%s GlyphCache caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "GlyphCache caps::glyphCache %u", this->glyphCache);
