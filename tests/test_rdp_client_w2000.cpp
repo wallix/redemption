@@ -288,7 +288,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
     BOOST_CHECK(t.status);
-
     BOOST_CHECK_EQUAL(mod->front_width, 800);
     BOOST_CHECK_EQUAL(mod->front_height, 600);
 
