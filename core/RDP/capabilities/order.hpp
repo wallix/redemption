@@ -362,7 +362,7 @@ struct OrderCaps : public Capability {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
         stream.out_copy_bytes(this->terminalDescriptor, 16);
-        stream.out_uint32_le(this->pad4octetsA);
+        stream.out_uint32_be(this->pad4octetsA);
         stream.out_uint16_le(this->desktopSaveXGranularity);
         stream.out_uint16_le(this->desktopSaveYGranularity);
         stream.out_uint16_le(this->pad2octetsA);
@@ -382,32 +382,6 @@ struct OrderCaps : public Capability {
         stream.out_uint16_le(this->textANSICodePage);
         stream.out_uint16_le(this->pad2octetsE);
     }
-
-//    void emit(Stream & stream){
-
-//        stream.out_uint16_le(this->capabilityType);
-//        stream.out_uint16_le(this->len);
-//        stream.out_copy_bytes(this->terminalDescriptor, 16);
-//        stream.out_uint32_le(this->pad4octetsA);
-//        stream.out_uint16_le(this->desktopSaveXGranularity);
-//        stream.out_uint16_le(this->desktopSaveYGranularity);
-//        stream.out_uint16_le(this->pad2octetsA);
-//        stream.out_uint16_le(this->maximumOrderLevel);
-//        stream.out_uint16_le(this->numberFonts);
-//        stream.out_uint16_le(this->orderFlags);
-
-//        for (size_t i = 0; i < NB_ORDER_SUPPORT; i++) {
-//            stream.out_uint8(this->orderSupport[i]);
-//        }
-//        stream.out_uint16_le(this->textFlags);
-//        stream.out_uint16_le(this->orderSupportExFlags);
-//        stream.out_uint32_le(this->pad4octetsB);
-//        stream.out_uint32_le(this->desktopSaveSize);
-//        stream.out_uint16_le(this->pad2octetsC);
-//        stream.out_uint16_le(this->pad2octetsD);
-//        stream.out_uint16_le(this->textANSICodePage);
-//        stream.out_uint16_le(this->pad2octetsE);
-//    }
 
     void recv(Stream & stream){
         this->capabilityType = stream.in_uint16_le();
@@ -521,49 +495,49 @@ struct OrderCaps : public Capability {
 };
 
 
-static inline void cs_out_order_caps(Stream & stream)
-{
-    LOG(LOG_INFO, "Sending order caps to server");
+//static inline void cs_out_order_caps(Stream & stream)
+//{
+//    LOG(LOG_INFO, "Sending order caps to server");
 
-    stream.out_uint16_le(CAPSTYPE_ORDER);
-    stream.out_uint16_le(RDP_CAPLEN_ORDER);
-    stream.out_clear_bytes(20); /* Terminal desc, pad */
-    stream.out_uint16_le(1); /* Cache X granularity */
-    stream.out_uint16_le(20); /* Cache Y granularity */
-    stream.out_uint16_le(0); /* Pad */
-    stream.out_uint16_le(1); /* Max order level */
-    stream.out_uint16_le(0x147); /* Number of fonts */
-    stream.out_uint16_le(0x2a); /* Capability flags */
+//    stream.out_uint16_le(CAPSTYPE_ORDER);
+//    stream.out_uint16_le(RDP_CAPLEN_ORDER);
+//    stream.out_clear_bytes(20); /* Terminal desc, pad */
+//    stream.out_uint16_le(1); /* Cache X granularity */
+//    stream.out_uint16_le(20); /* Cache Y granularity */
+//    stream.out_uint16_le(0); /* Pad */
+//    stream.out_uint16_le(1); /* Max order level */
+//    stream.out_uint16_le(0x147); /* Number of fonts */
+//    stream.out_uint16_le(0x2a); /* Capability flags */
 
-    char order_caps[32];
+//    char order_caps[32];
 
-    memset(order_caps, 0, 32);
-    TODO(" use symbolic constants for order numerotation")
-    order_caps[RDP::DESTBLT] = 1; /* dest blt */
-    order_caps[RDP::PATBLT] = 1; /* pat blt */
-    order_caps[RDP::SCREENBLT] = 1; /* screen blt */
-    order_caps[3] = 1; /* memblt */
-    order_caps[4] = 0; /* todo triblt */
-    order_caps[8] = 1; /* line */
-    order_caps[9] = 1; /* line */
-    order_caps[10] = 1; /* rect */
-    order_caps[11] = 0; /* todo desksave */
-    order_caps[RDP::MEMBLT] = 1; /* memblt another above */
-    order_caps[RDP::TRIBLT] = 0; /* triblt another above */
-    order_caps[20] = 0; /* todo polygon */
-    order_caps[21] = 0; /* todo polygon2 */
-    order_caps[RDP::POLYLINE] = 0; /* todo polyline */
-    order_caps[25] = 0; /* todo ellipse */
-    order_caps[26] = 0; /* todo ellipse2 */
-    order_caps[RDP::GLYPHINDEX] = 1; /* text2 */
-    stream.out_copy_bytes(order_caps, 32); /* Orders supported */
+//    memset(order_caps, 0, 32);
+//    TODO(" use symbolic constants for order numerotation")
+//    order_caps[RDP::DESTBLT] = 1; /* dest blt */
+//    order_caps[RDP::PATBLT] = 1; /* pat blt */
+//    order_caps[RDP::SCREENBLT] = 1; /* screen blt */
+//    order_caps[3] = 1; /* memblt */
+//    order_caps[4] = 0; /* todo triblt */
+//    order_caps[8] = 1; /* line */
+//    order_caps[9] = 1; /* line */
+//    order_caps[10] = 1; /* rect */
+//    order_caps[11] = 0; /* todo desksave */
+//    order_caps[RDP::MEMBLT] = 1; /* memblt another above */
+//    order_caps[RDP::TRIBLT] = 0; /* triblt another above */
+//    order_caps[20] = 0; /* todo polygon */
+//    order_caps[21] = 0; /* todo polygon2 */
+//    order_caps[RDP::POLYLINE] = 0; /* todo polyline */
+//    order_caps[25] = 0; /* todo ellipse */
+//    order_caps[26] = 0; /* todo ellipse2 */
+//    order_caps[RDP::GLYPHINDEX] = 1; /* text2 */
+//    stream.out_copy_bytes(order_caps, 32); /* Orders supported */
 
-    stream.out_uint16_le(0x6a1); /* Text capability flags */
-    stream.out_clear_bytes(6); /* Pad */
-    stream.out_uint32_le(0 * 0x38400); /* Desktop cache size, for desktop_save */
-    stream.out_uint32_le(0); /* Unknown */
-    stream.out_uint32_le(0x4e4); /* Unknown */
-}
+//    stream.out_uint16_le(0x6a1); /* Text capability flags */
+//    stream.out_clear_bytes(6); /* Pad */
+//    stream.out_uint32_le(0 * 0x38400); /* Desktop cache size, for desktop_save */
+//    stream.out_uint32_le(0); /* Unknown */
+//    stream.out_uint32_le(0x4e4); /* Unknown */
+//}
 
     /*****************************************************************************/
 static inline void sc_in_order_caps(Stream & stream, uint16_t length)
