@@ -1247,33 +1247,33 @@ public:
                 LOG(LOG_INFO, "Front::WAITING_FOR_ANSWER_TO_LICENCE sec_flags=%x %u %u %u", sec.flags, tag, version, length);
 
                 switch (tag) {
-                case LICENCE_TAG_DEMAND:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_DEMAND");
+                case LICENSE_REQUEST:
+                    LOG(LOG_INFO, "Front::LICENSE_REQUEST");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
                     send_lic_response(this->trans, this->userid);
                     break;
-                case LICENCE_TAG_PRESENT:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_PRESENT");
+                case LICENSE_INFO:
+                    LOG(LOG_INFO, "Front::LICENSE_INFO");
                     break;
-                case LICENCE_TAG_AUTHREQ:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_AUTHREQ");
+                case PLATFORM_CHALLENGE:
+                    LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE");
                     break;
-                case LICENCE_TAG_ISSUE:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_ISSUE");
+                case NEW_LICENSE:
+                    LOG(LOG_INFO, "Front::NEW_LICENSE");
                     break;
-                case LICENCE_TAG_REISSUE:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_REISSUE");
+                case UPGRADE_LICENSE:
+                    LOG(LOG_INFO, "Front::UPGRADE_LICENSE");
                     break;
                 case LICENCE_TAG_RESULT:
                     LOG(LOG_INFO, "Front::LICENCE_TAG_RESULT");
                     break;
-                case LICENCE_TAG_REQUEST:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_REQUEST");
+                case NEW_LICENSE_REQUEST:
+                    LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
                     send_lic_response(this->trans, this->userid);
                     break;
-                case LICENCE_TAG_AUTHRESP:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_AUTHRESP");
+                case PLATFORM_CHALLENGE_RESPONSE:
+                    LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE_RESPONSE");
                     break;
                 default:
                     LOG(LOG_INFO, "Front::LICENCE_TAG_UNKNOWN %u", tag);

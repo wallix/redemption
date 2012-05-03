@@ -769,11 +769,17 @@ class SocketTransport : public Transport {
             switch (rcvd) {
                 case -1: /* error, maybe EAGAIN */
                     if (!this->try_again(errno)) {
-                        LOG(LOG_INFO, "Closing socket %s (%u) on recv", this->name, this->sck);
+                        LOG(LOG_INFO, "Closing socket %s (%u) on recv (%s)", this->name, this->sck, strerror(errno));
                         this->sck_closed = 1;
                         throw Error(ERR_SOCKET_ERROR, errno);
                     }
-                    this->wait_ready(RECV, 10);
+                    else {
+                        fd_set fds;
+                        struct timeval time = { 0, 100000 };
+                        FD_ZERO(&fds);
+                        FD_SET(this->sck, &fds);
+                        select(this->sck + 1, &fds, NULL, NULL, &time);
+                    }
                     break;
                 case 0: /* no data received, socket closed */
                     LOG(LOG_INFO, "No data received. Socket %s (%u) closed on recv", this->name, this->sck);
@@ -877,7 +883,13 @@ class SocketTransport : public Transport {
                     LOG(LOG_INFO, "Socket %s (%u) : %s", this->name, this->sck, strerror(errno));
                     throw Error(ERR_SOCKET_ERROR, errno);
                 }
-                this->wait_ready(SEND, 10);
+                else {
+                    fd_set fds;
+                    struct timeval time = { 0, 100000 };
+                    FD_ZERO(&fds);
+                    FD_SET(this->sck, &fds);
+                    select(this->sck + 1, NULL, &fds, NULL, &time);
+                }
                 break;
             case 0:
                 this->sck_closed = 1;
