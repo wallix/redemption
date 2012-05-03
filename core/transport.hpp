@@ -132,13 +132,15 @@ public:
     uint64_t total_sent;
     uint64_t last_quantum_sent;
     uint64_t quantum_count;
+    bool status;
 
     Transport() :
         total_received(0),
         last_quantum_received(0),
         total_sent(0),
         last_quantum_sent(0),
-        quantum_count(0)
+        quantum_count(0),
+        status(true)
     {}
 
     void tick() {
@@ -211,14 +213,13 @@ class GeneratorTransport : public Transport {
 class CheckTransport : public Transport {
 
     public:
-    bool status;
     size_t current;
     char * data;
     size_t len;
 
 
     CheckTransport(const char * data, size_t len)
-        : Transport(), status(true), current(0), data(0), len(len)
+        : Transport(), current(0), data(0), len(len)
     {
         this->data = (char *)malloc(len);
         memcpy(this->data, data, len);
@@ -275,12 +276,11 @@ class TestTransport : public Transport {
     GeneratorTransport out;
     CheckTransport in;
     public:
-    bool status;
     char name[256];
     uint32_t verbose;
 
     TestTransport(const char * name, const char * outdata, size_t outlen, const char * indata, size_t inlen, uint32_t verbose = 0)
-        : out(outdata, outlen), in(indata, inlen), status(true), verbose(verbose)
+        : out(outdata, outlen), in(indata, inlen), verbose(verbose)
     {
         strncpy(this->name, name, 254);
         this->name[255]=0;
@@ -330,14 +330,14 @@ class OutFileTransport : public Transport {
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
-        ssize_t status = 0;
+        ssize_t ret = 0;
         size_t remaining_len = len;
         size_t total_sent = 0;
         while (remaining_len) {
-            status = ::write(this->fd, buffer + total_sent, remaining_len);
-            if (status > 0){
-                remaining_len -= status;
-                total_sent += status;
+            ret = ::write(this->fd, buffer + total_sent, remaining_len);
+            if (ret > 0){
+                remaining_len -= ret;
+                total_sent += ret;
             }
             else {
                 if (errno == EINTR){
@@ -367,14 +367,14 @@ class InFileTransport : public Transport {
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        size_t status = 0;
+        size_t ret = 0;
         size_t remaining_len = len;
         char * buffer = *pbuffer;
         while (remaining_len) {
-            status = ::read(this->fd, buffer, remaining_len);
-            if (status > 0){
-                remaining_len -= status;
-                buffer += status;
+            ret = ::read(this->fd, buffer, remaining_len);
+            if (ret > 0){
+                remaining_len -= ret;
+                buffer += ret;
             }
             else {
                 if (errno == EINTR){
@@ -829,10 +829,10 @@ class SocketTransport : public Transport {
             throw Error(ERR_SOCKET_ALLREADY_CLOSED);
         }
 
-        int status = SSL_write(this->ssl, buffer, len);
+        int ret = SSL_write(this->ssl, buffer, len);
 
         unsigned long error;
-        switch (SSL_get_error(this->ssl, status))
+        switch (SSL_get_error(this->ssl, ret))
         {
             case SSL_ERROR_NONE:
                 LOG(LOG_INFO, "send_tls ERROR NONE");

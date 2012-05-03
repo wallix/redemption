@@ -579,7 +579,8 @@ struct mod_rdp : public client_mod {
                             keylayout,
                             hostname,
                             this->use_rdp5,
-                            this->console_session);
+                            this->console_session,
+                            this->nego.tls);
                     this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
                 break;
             }
