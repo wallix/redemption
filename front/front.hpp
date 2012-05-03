@@ -1593,7 +1593,6 @@ public:
         front_out_font_caps(stream);
         caps_count++;
 
-//        sc_out_order_caps(stream);
         OrderCaps order_caps;
         order_caps.pad4octetsA = 0x40420f00;
         order_caps.numberFonts = 0x2f;
@@ -1735,27 +1734,27 @@ public:
             int len = stream.in_uint16_le();
 
             switch (type) {
-            case CAPSTYPE_GENERAL:
-            {
-                GeneralCaps general;
-                general.recv(stream);
-                general.log("Receiving from client");
-                this->client_info.use_compact_packets = (general.extraflags & NO_BITMAP_COMPRESSION_HDR)?1:0;
-            }
-            break;
-            case CAPSTYPE_BITMAP:
-            {
-                BitmapCaps bitmap_caps;
-                bitmap_caps.recv(stream);
-                bitmap_caps.log("Receiving from client");
-                this->client_info.bpp = (bitmap_caps.preferredBitsPerPixel >= 24)?24:bitmap_caps.preferredBitsPerPixel;
-                this->client_info.width = bitmap_caps.desktopWidth;
-                this->client_info.height = bitmap_caps.desktopHeight;
-
-            }
-            break;
-            case CAPSTYPE_ORDER: /* 3 */
-                cs_in_order_caps(stream, len, this->client_info.desktop_cache);
+            case CAPSTYPE_GENERAL: {
+                    GeneralCaps general;
+                    general.recv(stream);
+                    general.log("Receiving from client");
+                    this->client_info.use_compact_packets = (general.extraflags & NO_BITMAP_COMPRESSION_HDR)?1:0;
+                }
+                break;
+            case CAPSTYPE_BITMAP: {
+                    BitmapCaps bitmap_caps;
+                    bitmap_caps.recv(stream);
+                    bitmap_caps.log("Receiving from client");
+                    this->client_info.bpp = (bitmap_caps.preferredBitsPerPixel >= 24)?24:bitmap_caps.preferredBitsPerPixel;
+                    this->client_info.width = bitmap_caps.desktopWidth;
+                    this->client_info.height = bitmap_caps.desktopHeight;
+                }
+                break;
+            case CAPSTYPE_ORDER: { /* 3 */
+                    OrderCaps order_caps;
+                    order_caps.log("Receiving from client");
+                    order_caps.recv(stream);
+                }
                 break;
             case CAPSTYPE_BITMAPCACHE: /* 4 */
                 this->capset_bmpcache(stream, len);
@@ -1764,8 +1763,7 @@ public:
                 break;
             case CAPSTYPE_ACTIVATION: /* 7 */
                 break;
-            case CAPSTYPE_POINTER: /* 8 */
-                {
+            case CAPSTYPE_POINTER: {  /* 8 */
                     stream.in_skip_bytes(2); /* color pointer */
                     int i = stream.in_uint16_le();
                     this->client_info.pointer_cache_entries = std::min(i, 32);

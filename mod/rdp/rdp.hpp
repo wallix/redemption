@@ -1394,7 +1394,6 @@ struct mod_rdp : public client_mod {
             bitmap_caps.emit(stream);
             capscount++;
 
-//            cs_out_order_caps(stream);
             OrderCaps order_caps;
             order_caps.numberFonts = 0x147;
             order_caps.orderFlags = 0x2a;
@@ -1439,9 +1438,6 @@ struct mod_rdp : public client_mod {
             order_caps.emit(stream);
             capscount++;
 
-
-
-
             BmpCacheCaps bmpcache_caps;
             bmpcache_caps.cache0Entries = 0x258;
             bmpcache_caps.cache0MaximumCellSize = nbbytes(this->bpp) * 0x100;
@@ -1449,7 +1445,7 @@ struct mod_rdp : public client_mod {
             bmpcache_caps.cache1MaximumCellSize = nbbytes(this->bpp) * 0x400;
             bmpcache_caps.cache2Entries = 0x106;
             bmpcache_caps.cache2MaximumCellSize = nbbytes(this->bpp) * 0x1000;
-//            bmpcache_caps.log("Sending bmpcache caps to server");
+            bmpcache_caps.log("Sending bmpcache caps to server");
             bmpcache_caps.emit(stream);
             capscount++;
 
@@ -2302,8 +2298,12 @@ struct mod_rdp : public client_mod {
                 }
                 break;
                 case CAPSTYPE_ORDER:
-                    sc_in_order_caps(stream, capset_length);
+                {
+                    OrderCaps order_caps;
+                    order_caps.log("Received from server");
+                    order_caps.recv(stream);
                     break;
+                }
                 default:
                     break;
                 }
