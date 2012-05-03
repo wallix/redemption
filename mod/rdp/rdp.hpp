@@ -363,7 +363,6 @@ struct mod_rdp : public client_mod {
     const uint8_t front_bpp;
     Random * gen;
     uint32_t verbose;
-    bool tls;
 
     RdpNego nego;
 
@@ -397,12 +396,7 @@ struct mod_rdp : public client_mod {
                     front_bpp(info.bpp),
                     gen(gen),
                     verbose(verbose),
-                    tls(tls),
-                    nego(tls,
-                        RdpNego::PROTOCOL_NLA
-                        |RdpNego::PROTOCOL_RDP
-                        |RdpNego::PROTOCOL_TLS,
-                        trans, target_user)
+                    nego(tls, trans, target_user)
     {
         LOG(LOG_INFO, "Creation of new mod 'RDP'");
         // from rdp_sec
@@ -830,28 +824,149 @@ struct mod_rdp : public client_mod {
             LOG(LOG_INFO, "Licence layer");
 
             if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
+
+            // 2.2.1.12.1 Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
+            // ================================================================
+
+
+            // validClientLicenseData (variable): The actual contents of the
+            // License Error (Valid Client) PDU, as specified in section 2.2.1.12.1.
+
+
+            // preamble (4 bytes): Licensing Preamble (section 2.2.1.12.1.1) structure containing header
+            // information. The bMsgType field of the preamble structure MUST be set to ERROR_ALERT (0xFF).
+
+
+            // 2.2.1.12.1.1 Licensing Preamble (LICENSE_PREAMBLE)
+            // --------------------------------------------------
+
+            // Note: Some of the information in this section is subject to
+            // change because it applies to a preliminary implementation of the
+            // protocol or structure. For information about specific differences
+            // between versions, see the behavior notes that are provided in the
+            // Product Behavior appendix.
+
+            // The LICENSE_PREAMBLE structure precedes every licensing packet
+            // sent on the wire.
+
+            // bMsgType (1 byte): An 8-bit, unsigned integer. A type of the
+            // licensing packet. For more details about the different licensing
+            // packets, see [MS-RDPELE] section 2.2.2.
+
+            // Sent by server:
+            // 0x01 LICENSE_REQUEST Indicates a License Request PDU ([MS-RDPELE] section 2.2.2.1).
+            // 0x02 PLATFORM_CHALLENGE Indicates a Platform Challenge PDU ([MS-RDPELE] section 2.2.2.4).
+            // 0x03 NEW_LICENSE Indicates a New License PDU ([MS-RDPELE] section 2.2.2.7).
+            // 0x04 UPGRADE_LICENSE Indicates an Upgrade License PDU ([MS-RDPELE] section 2.2.2.6).
+
+            // Sent by client:
+            // 0x12 LICENSE_INFO Indicates a License Information PDU ([MS-RDPELE] section 2.2.2.3).
+            // 0x13 NEW_LICENSE_REQUEST Indicates a New License Request PDU ([MS-RDPELE] section 2.2.2.2).
+            // 0x15 PLATFORM_CHALLENGE_RESPONSE Indicates a Platform Challenge Response PDU ([MS-RDPELE] section 2.2.2.5).
+
+            // Sent by either client or server:
+            // 0xFF ERROR_ALERT Indicates a Licensing Error Message PDU (section 2.2.1.12.1.3).
+
+            // flags (1 byte): An 8-bit unsigned integer. License preamble flags.
+
+            // +-----------------------------------+------------------------------------------------------+
+            // | 0x0F LicenseProtocolVersionMask   | The license protocol version. See the discussion     |
+            // |                                   | which follows this table for more information.       |
+            // +-----------------------------------+------------------------------------------------------+
+            // | 0x80 EXTENDED_ERROR_MSG_SUPPORTED | Indicates that extended error information using the  |
+            // |                                   | License Error Message (section 2.2.1.12.1.3) is      |
+            // |                                   | supported.                                           |
+            // +-----------------------------------+------------------------------------------------------+
+
+            // The LicenseProtocolVersionMask is a 4-bit value containing the supported license protocol version. The following are possible version values.
+            // +--------------------------+------------------------------------------------+
+            // | 0x2 PREAMBLE_VERSION_2_0 | RDP 4.0                                        |
+            // +--------------------------+------------------------------------------------+
+            // | 0x3 PREAMBLE_VERSION_3_0 | RDP 5.0, 5.1, 5.2, 6.0, 6.1, 7.0, 7.1, and 8.0 |
+            // +--------------------------+------------------------------------------------+
+
+
+            // wMsgSize (2 bytes): An 16-bit, unsigned integer. The size in
+            // bytes of the licensing packet (including the size of the preamble).
+            // --------------------------------------------------
+
+            // validClientMessage (variable): A Licensing Error Message (section
+            // 2.2.1.12.1.3) structure. The dwErrorCode field of the error message
+            // structure MUST be set to STATUS_VALID_CLIENT (0x00000007) and the
+            // dwStateTransition field MUST be set to ST_NO_TRANSITION (0x00000002).
+            // The bbErrorInfo field MUST contain an empty binary large object
+            // (BLOB) of type BB_ERROR_BLOB (0x0004).
+
+
+            // 2.2.1.12.1.3 Licensing Error Message (LICENSE_ERROR_MESSAGE)
+            // ============================================================
+
+
+            // The LICENSE_ERROR_MESSAGE structure is used to indicate that an
+            //  error occurred during the licensing protocol. Alternatively,
+            // it is also used to notify the peer of important status information.
+
+            // dwErrorCode (4 bytes): A 32-bit, unsigned integer. The error or
+            // status code.
+
+            // Sent by client:
+            // ERR_INVALID_SERVER_CERTIFICATE 0x00000001
+            // ERR_NO_LICENSE 0x00000002
+
+            // Sent by server
+            // ERR_INVALID_SCOPE 0x00000004
+            // ERR_NO_LICENSE_SERVER 0x00000006
+            // STATUS_VALID_CLIENT 0x00000007
+            // ERR_INVALID_CLIENT 0x00000008
+            // ERR_INVALID_PRODUCTID 0x0000000B
+            // ERR_INVALID_MESSAGE_LEN 0x0000000C
+
+            // Sent by client and server:
+            // ERR_INVALID_MAC 0x00000003
+
+            // dwStateTransition (4 bytes): A 32-bit, unsigned integer. The
+            // licensing state to transition into upon receipt of this message.
+            // For more details about how this field is used, see [MS-RDPELE]
+            // section 3.1.5.2.
+
+            // ST_TOTAL_ABORT 0x00000001
+            // ST_NO_TRANSITION 0x00000002
+            // ST_RESEND_LAST_MESSAGE 0x00000003
+            // ST_RESET_PHASE_TO_START 0x00000004
+
+            // bbErrorInfo (variable): A LICENSE_BINARY_BLOB (section
+            // 2.2.1.12.1.2) structure which MUST contain a BLOB of type
+            // BB_ERROR_BLOB (0x0004) that includes information relevant to
+            // the error code specified in dwErrorCode.
+
                 uint8_t tag = stream.in_uint8();
-                stream.in_skip_bytes(3); /* version, length */
+                uint8_t version = stream.in_uint8();
+                uint16_t length = stream.in_uint16_le();
                 switch (tag) {
-                case LICENCE_TAG_DEMAND:
-                    LOG(LOG_INFO, "LICENCE_TAG_DEMAND");
+                case LICENSE_REQUEST:
+                    LOG(LOG_INFO, "LICENSE_REQUEST");
                     this->lic_layer.rdp_lic_process_demand(this->nego.trans, stream, hostname, username, userid, licence_issued, this->encrypt);
                     break;
-                case LICENCE_TAG_AUTHREQ:
-                    LOG(LOG_INFO, "LICENCE_TAG_AUTHREQ");
+                case PLATFORM_CHALLENGE:
+                    LOG(LOG_INFO, "PLATFORM_CHALLENGE");
                     this->lic_layer.rdp_lic_process_authreq(this->nego.trans, stream, hostname, userid, licence_issued, this->encrypt);
                     break;
-                case LICENCE_TAG_ISSUE:
-                    LOG(LOG_INFO, "LICENCE_TAG_ISSUE");
+                case NEW_LICENSE:
+                    LOG(LOG_INFO, "NEW_LICENSE");
                     res = this->lic_layer.rdp_lic_process_issue(stream, hostname, licence_issued);
                     break;
-                case LICENCE_TAG_REISSUE:
-                    LOG(LOG_INFO, "LICENCE_TAG_REISSUE");
+                case UPGRADE_LICENSE:
+                    LOG(LOG_INFO, "UPGRADE_LICENSE");
                     break;
                 case LICENCE_TAG_RESULT:
-                    LOG(LOG_INFO, "LICENCE_TAG_RESULT");
+                {
+                    uint32_t dwErrorCode = stream.in_uint32_le();
+                    uint32_t dwStateTransition = stream.in_uint32_le();
+                    uint32_t bbErrorInfo = stream.in_uint32_le();
+                    LOG(LOG_INFO, "LICENCE_TAG_RESULT %u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u", version, length, dwErrorCode, dwStateTransition, bbErrorInfo);
                     res = 1;
-                    break;
+                }
+                break;
                 default:
                     LOG(LOG_INFO, "LICENCE_TAG_OTHER %x", tag);
                     break;

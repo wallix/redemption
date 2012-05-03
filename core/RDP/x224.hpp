@@ -539,18 +539,18 @@ struct X224In : public X224Packet
         this->tpdu_hdr.code = stream.in_uint8() & 0xF0;
         switch (this->tpdu_hdr.code){
             case DT_TPDU:
-//                LOG(LOG_INFO, "recv DT_TPDU");
+                LOG(LOG_INFO, "recv DT_TPDU");
                 this->tpdu_hdr.eot = stream.in_uint8();
                 stream.in_skip_bytes(this->tpdu_hdr.LI-2);
             break;
             case DR_TPDU:
-//                LOG(LOG_INFO, "recv DR_TPDU");
+                LOG(LOG_INFO, "recv DR_TPDU");
                 stream.in_skip_bytes(4);
                 this->tpdu_hdr.reason = stream.in_uint8();
                 stream.in_skip_bytes(this->tpdu_hdr.LI-6);
             break;
             case ER_TPDU:
-//                LOG(LOG_INFO, "recv ER_TPDU");
+                LOG(LOG_INFO, "recv ER_TPDU");
                 stream.in_skip_bytes(2);
                 this->tpdu_hdr.reject_cause = stream.in_uint8();
                 stream.in_skip_bytes(this->tpdu_hdr.LI-4);

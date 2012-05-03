@@ -894,7 +894,7 @@ struct Session {
                                     this->context->get(STRAUTHID_TARGET_PASSWORD),
                                     *this->front,
                                     hostname,
-                                    true,
+                                    false,
                                     info,
                                     &this->gen,
                                     this->ini->globals.debug.mod_rdp);

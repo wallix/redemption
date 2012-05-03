@@ -345,7 +345,7 @@ struct CSCoreGccUserData {
 
     CSCoreGccUserData()
     : userDataType(CS_CORE)
-    , length(212) // default: everything except serverSelectedProtocol
+    , length(216) // default: everything except serverSelectedProtocol
     , version(0x00080001)  // RDP version. 1 == RDP4, 4 == RDP5.
     , colorDepth(0xca01)
     , SASSequence(0xaa03)

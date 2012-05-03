@@ -210,7 +210,7 @@ unit-test test_rdp_client_test_card : tests/test_rdp_client_test_card.cpp widget
 unit-test test_rdp_client_w2000 : tests/test_rdp_client_w2000.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
 unit-test test_rdp_client_w2008 : tests/test_rdp_client_w2008.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
 
-#unit-test test_rdp_client_tls_w2008 : tests/test_rdp_client_tls_w2008.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
+# unit-test test_rdp_client_tls_w2008 : tests/test_rdp_client_tls_w2008.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
 
 unit-test test_vnc_client_simple : tests/test_vnc_client_simple.cpp libboost_unit_test ini_config openssl crypto rsa_keys d3des z dl libboost_program_options ;
 unit-test test_capability_bitmap : tests/test_capability_bitmap.cpp libboost_unit_test ini_config z dl libboost_program_options ;
