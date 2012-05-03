@@ -323,7 +323,7 @@ struct OrderCaps : public Capability {
     uint16_t maximumOrderLevel;
     uint16_t numberFonts;
     uint16_t orderFlags;
-    uint8_t orderSupport[32];
+    uint8_t orderSupport[NB_ORDER_SUPPORT];
     uint16_t textFlags;
     uint16_t orderSupportExFlags;
     uint32_t pad4octetsB;
@@ -331,7 +331,7 @@ struct OrderCaps : public Capability {
     uint16_t pad2octetsC;
     uint16_t pad2octetsD;
     uint16_t textANSICodePage;
-    uint16_t pad2octetsE;
+    uint16_t pad2octetsE ;
 
     OrderCaps()
     : Capability(CAPSTYPE_ORDER, RDP_CAPLEN_ORDER)
@@ -343,17 +343,44 @@ struct OrderCaps : public Capability {
         , maximumOrderLevel(ORD_LEVEL_1_ORDERS) // is ignored and SHOULD be set to 1
         , numberFonts(0) //                        is ignored and SHOULD be set to 0
         , orderFlags(NEGOTIATEORDERSUPPORT) //.... from a "const list"
-        , textFlags(0) //................................................ MUST be ignored
-        , orderSupportExFlags(ORDERFLAGS_EX_CACHE_BITMAP_REV3_SUPPORT) // from a "const list"
-        , pad4octetsB(0) //.............................................. MUST be ignored
-        , desktopSaveSize(230400) //                                      ignored and assumed to be 230.400
-        , pad2octetsC(0) //.............................................. MUST be ignored
-        , pad2octetsD(0) //                                               MUST be ignored
-        , textANSICodePage(0) //......................................... is ignored and SHOULD be set to 0
-        , pad2octetsE (0) //                                              MUST be ignored
+        , textFlags(0) //......................... MUST be ignored
+        , orderSupportExFlags(0) //                from a "const list"
+        , pad4octetsB(0) //....................... MUST be ignored
+        , desktopSaveSize(0) //                    ignored and assumed to be 230.400
+        , pad2octetsC(0) //....................... MUST be ignored
+        , pad2octetsD(0) //                        MUST be ignored
+        , textANSICodePage(0) //.................. CS : Code page of client
+                              //                   SC : is ignored by client and SHOULD be set to 0
+        , pad2octetsE (0) //                       MUST be ignored
     {
         memset(this->terminalDescriptor, 0, 16); // 16 bits array ALWAYS filled with 0
-        memset(this->orderSupport, 0, 32); // 32 bits array filled with 0 BY DEFAULT
+        memset(this->orderSupport, 0, NB_ORDER_SUPPORT); // 32 bits array filled with 0 BY DEFAULT
+    }
+
+    void emit(Stream & stream){
+
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_copy_bytes(this->terminalDescriptor, 16);
+        stream.out_uint32_le(this->pad4octetsA);
+        stream.out_uint16_le(this->desktopSaveXGranularity);
+        stream.out_uint16_le(this->desktopSaveYGranularity);
+        stream.out_uint16_le(this->pad2octetsA);
+        stream.out_uint16_le(this->maximumOrderLevel);
+        stream.out_uint16_le(this->numberFonts);
+        stream.out_uint16_le(this->orderFlags);
+
+        for (size_t i = 0; i < NB_ORDER_SUPPORT; i++) {
+            stream.out_uint8(this->orderSupport[i]);
+        }
+        stream.out_uint16_le(this->textFlags);
+        stream.out_uint16_le(this->orderSupportExFlags);
+        stream.out_uint32_le(this->pad4octetsB);
+        stream.out_uint32_le(this->desktopSaveSize);
+        stream.out_uint16_le(this->pad2octetsC);
+        stream.out_uint16_le(this->pad2octetsD);
+        stream.out_uint16_le(this->textANSICodePage);
+        stream.out_uint16_le(this->pad2octetsE);
     }
 
 //    void emit(Stream & stream){
@@ -382,78 +409,30 @@ struct OrderCaps : public Capability {
 //        stream.out_uint16_le(this->pad2octetsE);
 //    }
 
-    void emit(Stream & stream){
+    void recv(Stream & stream){
+        this->capabilityType = stream.in_uint16_le();
+        this->len = stream.in_uint16_le();
+        stream.in_copy_bytes(this->terminalDescriptor, 16);
+        this->pad4octetsA = stream.in_uint32_le();
+        this->desktopSaveXGranularity = stream.in_uint16_le();
+        this->desktopSaveYGranularity = stream.in_uint16_le();
+        this->pad2octetsA = stream.in_uint16_le();
+        this->maximumOrderLevel = stream.in_uint16_le();
+        this->numberFonts = stream.in_uint16_le();
+        this->orderFlags = stream.in_uint16_le();
 
-        stream.out_uint16_le(this->capabilityType);
-        stream.out_uint16_le(this->len);
-        stream.out_copy_bytes(this->terminalDescriptor, 16);
-        stream.out_uint32_le(this->pad4octetsA);
-        stream.out_uint16_le(this->desktopSaveXGranularity);
-        stream.out_uint16_le(this->desktopSaveYGranularity);
-        stream.out_uint16_le(this->pad2octetsA);
-        stream.out_uint16_le(this->maximumOrderLevel);
-        stream.out_uint16_le(this->numberFonts);
-        stream.out_uint16_le(this->orderFlags);
-
-        char order_caps[32];
-//        for (size_t i = 0; i < 32; i++) {
-//            stream.out_uint8(this->orderSupport[i]);
-//        }
-//=============================================================
-//        char order_caps[32];
-
-//        memset(order_caps, 0, 32);
-        TODO(" use symbolic constants for order numerotation")
-        order_caps[RDP::DESTBLT] = 1; /* dest blt */
-        order_caps[RDP::PATBLT] = 1; /* pat blt */
-        order_caps[RDP::SCREENBLT] = 1; /* screen blt */
-        order_caps[3] = 1; /* memblt */
-        order_caps[4] = 0; /* todo triblt */
-        order_caps[8] = 1; /* line */
-        order_caps[9] = 1; /* line */
-        order_caps[10] = 1; /* rect */
-        order_caps[11] = 0; /* todo desksave */
-        order_caps[RDP::MEMBLT] = 1; /* memblt another above */
-        order_caps[RDP::TRIBLT] = 0; /* triblt another above */
-        order_caps[20] = 0; /* todo polygon */
-        order_caps[21] = 0; /* todo polygon2 */
-        order_caps[RDP::POLYLINE] = 0; /* todo polyline */
-        order_caps[25] = 0; /* todo ellipse */
-        order_caps[26] = 0; /* todo ellipse2 */
-        order_caps[RDP::GLYPHINDEX] = 1; /* text2 */
-        stream.out_copy_bytes(order_caps, 32); /* Orders supported */
-
-        stream.out_uint16_le(0x6a1); /* Text capability flags */
-        stream.out_clear_bytes(6); /* Pad */
-        stream.out_uint32_le(0 * 0x38400); /* Desktop cache size, for desktop_save */
-        stream.out_uint32_le(0); /* Unknown */
-        stream.out_uint32_le(0x4e4); /* Unknown */
+        for (size_t i = 0; i < NB_ORDER_SUPPORT; i++) {
+            this->orderSupport[i] = stream.in_uint8();
+        }
+        this->textFlags = stream.in_uint16_le();
+        this->orderSupportExFlags = stream.in_uint16_le();
+        this->pad4octetsB = stream.in_uint32_le();
+        this->desktopSaveSize = stream.in_uint32_le();
+        this->pad2octetsC = stream.in_uint16_le();
+        this->pad2octetsD = stream.in_uint16_le();
+        this->textANSICodePage = stream.in_uint16_le();
+        this->pad2octetsE = stream.in_uint16_le();
     }
-
-//    void recv(Stream & stream){
-//        this->capabilityType = stream.in_uint16_le();
-//        this->len = stream.in_uint16_le();
-//        stream.in_copy_bytes(this->terminalDescriptor, 16);
-//        this->pad4octetsA = stream.in_uint32_le();
-//        this->desktopSaveXGranularity = stream.in_uint16_le();
-//        this->desktopSaveYGranularity = stream.in_uint16_le();
-//        this->pad2octetsA = stream.in_uint16_le();
-//        this->maximumOrderLevel = stream.in_uint16_le();
-//        this->numberFonts = stream.in_uint16_le();
-//        this->orderFlags = stream.in_uint16_le();
-
-//        for (size_t i = 0; i < 32; i++) {
-//            this->orderSupport[i] = stream.in_uint8();
-//        }
-//        this->textFlags = stream.in_uint16_le();
-//        this->orderSupportExFlags = stream.in_uint16_le();
-//        this->pad4octetsB = stream.in_uint32_le();
-//        this->desktopSaveSize = stream.in_uint32_le();
-//        this->pad2octetsC = stream.in_uint16_le();
-//        this->pad2octetsD = stream.in_uint16_le();
-//        this->textANSICodePage = stream.in_uint16_le();
-//        this->pad2octetsE = stream.in_uint16_le();
-//    }
 
     void log(const char * msg){
         LOG(LOG_INFO, "%s Order caps (%u bytes)", msg, this->len);
