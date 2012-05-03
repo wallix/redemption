@@ -1590,7 +1590,9 @@ public:
         bitmap_caps.emit(stream);
         caps_count++;
 
-        front_out_font_caps(stream);
+        FontCaps font_caps;
+        font_caps.log("Sending font caps to client");
+        font_caps.emit(stream);
         caps_count++;
 
         OrderCaps order_caps;
@@ -1611,7 +1613,6 @@ public:
         order_caps.emit(stream);
         caps_count++;
 
-//        front_out_colcache_caps(stream);
         ColorCacheCaps colorcache_caps;
         colorcache_caps.log("Sending colorcache caps to client");
         colorcache_caps.emit(stream);
