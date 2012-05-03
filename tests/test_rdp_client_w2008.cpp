@@ -192,6 +192,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     } front(info, verbose);
 
     const char * name = "RDP W2008 Target";
+
 //    int sck = connect("10.10.14.78", 3389, name);
 //    SocketTransport t(name, sck, verbose);
 
@@ -217,11 +218,12 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE){
-        if (count++ >= 50) break;
+        LOG(LOG_INFO, "===================> count = %u", count);
+        if (count++ >= 38) break;
         res = mod->draw_event();
         BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
     }
 
-//    front.dump_png("trace_w2008_");
+    front.dump_png("trace_w2008_");
 
 }

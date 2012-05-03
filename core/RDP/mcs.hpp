@@ -162,15 +162,18 @@ static inline void mcs_send_connect_initial(
             int keylayout,
             char * hostname,
             const int use_rdp5,
-            const bool console_session){
+            const bool console_session,
+            const uint32_t tls){
 
 //    Stream data(8192);
 
 //    int data_len = data.end - data.data;
 //    int len = 7 + 3 * 34 + 4 + data_len;
 
+    printf("mcs_send_connect_initial\n");
     Stream stream(32768);
     X224Out ci_tpdu(X224Packet::DT_TPDU, stream);
+    LOG(LOG_INFO, "tls is %s <===========================", tls?"true":"false");
 
     stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
     uint32_t offset_data_len_connect_initial = stream.get_offset(0);
@@ -188,40 +191,39 @@ static inline void mcs_send_connect_initial(
 
     // target params
     stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-    stream.out_ber_len(32);
-    stream.out_ber_int16(34);     // max_channels
-    stream.out_ber_int16(2);      // max_users
-    stream.out_ber_int16(0);      // max_tokens
-    stream.out_ber_int16(1);
-    stream.out_ber_int16(0);
-    stream.out_ber_int16(1);
-    stream.out_ber_int16(0xffff); // max_pdu_size
-    stream.out_ber_int16(2);
+    stream.out_ber_len(26);      // 26 = 0x1a
+    stream.out_ber_int8(34);     // max_channels
+    stream.out_ber_int8(2);      // max_users
+    stream.out_ber_int8(0);      // max_tokens
+    stream.out_ber_int8(1);
+    stream.out_ber_int8(0);
+    stream.out_ber_int8(1);
+    stream.out_ber_int24(0xffff); // max_pdu_size
+    stream.out_ber_int8(2);
 
     // min params
     stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-    stream.out_ber_len(32);
-    stream.out_ber_int16(1);     // max_channels
-    stream.out_ber_int16(1);     // max_users
-    stream.out_ber_int16(1);     // max_tokens
-    stream.out_ber_int16(1);
-    stream.out_ber_int16(0);
-    stream.out_ber_int16(1);
+    stream.out_ber_len(25);     // 25=0x19
+    stream.out_ber_int8(1);     // max_channels
+    stream.out_ber_int8(1);     // max_users
+    stream.out_ber_int8(1);     // max_tokens
+    stream.out_ber_int8(1);
+    stream.out_ber_int8(0);
+    stream.out_ber_int8(1);
     stream.out_ber_int16(0x420); // max_pdu_size
-    stream.out_ber_int16(2);
+    stream.out_ber_int8(2);
 
     // max params
     stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-    stream.out_ber_len(32);
-    stream.out_ber_int16(0xffff); // max_channels
+    stream.out_ber_len(31);
+    stream.out_ber_int24(0xffff); // max_channels
     stream.out_ber_int16(0xfc17); // max_users
-    stream.out_ber_int16(0xffff); // max_tokens
-    stream.out_ber_int16(1);
-    stream.out_ber_int16(0);
-    stream.out_ber_int16(1);
-    stream.out_ber_int16(0xffff); // max_pdu_size
-    stream.out_ber_int16(2);
-
+    stream.out_ber_int24(0xffff); // max_tokens
+    stream.out_ber_int8(1);
+    stream.out_ber_int8(0);
+    stream.out_ber_int8(1);
+    stream.out_ber_int24(0xffff); // max_pdu_size
+    stream.out_ber_int8(2);
 
     stream.out_uint8(BER_TAG_OCTET_STRING);
     uint32_t offset_data_len = stream.get_offset(0);
@@ -250,41 +252,58 @@ static inline void mcs_send_connect_initial(
         cs_core.clientName[i] = hostname[i];
     }
     bzero(&(cs_core.clientName[hostlen]), 16-hostlen);
+    if (tls){
+        cs_core.serverSelectedProtocol = 1;
+    }
     cs_core.log("Sending to Server");
+    if (tls){
+    }
     cs_core.emit(stream);
 
     CSClusterGccUserData cs_cluster;
     TODO("values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?")
-    if (console_session){
-        cs_cluster.flags = CSClusterGccUserData::REDIRECTED_SESSIONID_FIELD_VALID | (3 << 2) ; // REDIRECTION V4
+
+    if (!tls){
+         if (console_session){
+            cs_cluster.flags = CSClusterGccUserData::REDIRECTED_SESSIONID_FIELD_VALID | (3 << 2) ; // REDIRECTION V4
+        }
+        else {
+            cs_cluster.flags = CSClusterGccUserData::REDIRECTION_SUPPORTED            | (2 << 2) ; // REDIRECTION V3
+        }
     }
     else {
-        cs_cluster.flags = CSClusterGccUserData::REDIRECTION_SUPPORTED            | (2 << 2) ; // REDIRECTION V3
+        cs_cluster.flags = CSClusterGccUserData::REDIRECTION_SUPPORTED * ((3 << 2)|1);  // REDIRECTION V4
+        if (console_session){
+            cs_cluster.flags |= CSClusterGccUserData::REDIRECTED_SESSIONID_FIELD_VALID ;
+        }
     }
     cs_cluster.log("Sending to server");
     cs_cluster.emit(stream);
 
     // 12 bytes
-//    mod_rdp_out_cs_sec(stream);
     CSSecGccUserData cs_sec_gccuserdata;
-    cs_sec_gccuserdata.encryptionMethods = FORTY_BIT_ENCRYPTION_FLAG|HUNDRED_TWENTY_EIGHT_BIT_ENCRYPTION_FLAG;
+    cs_sec_gccuserdata.encryptionMethods = tls?0:FORTY_BIT_ENCRYPTION_FLAG|HUNDRED_TWENTY_EIGHT_BIT_ENCRYPTION_FLAG;
     cs_sec_gccuserdata.log("Sending cs_sec gccuserdata to server");
     cs_sec_gccuserdata.emit(stream);
-
 
     // 12 * nbchan + 8 bytes
     mod_rdp_out_cs_net(stream, channel_list);
 
     stream.set_out_per_length(stream.get_offset(offset_user_data_length + 2), offset_user_data_length); // user data length
+
     stream.set_out_per_length(stream.get_offset(offset_gcc_conference_create_request_header_length + 2), offset_gcc_conference_create_request_header_length); // length including header
 
     // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
+    LOG(LOG_INFO, "mcs_data_len = %u", stream.get_offset(offset_data_len + 3));
     stream.set_out_ber_len_uint16(stream.get_offset(offset_data_len + 3), offset_data_len);
 
     // set mcs_data len for BER_TAG_MCS_CONNECT_INITIAL
+
+    LOG(LOG_INFO, "offset_data_len_connect_initial = %u", stream.get_offset(offset_data_len_connect_initial + 3));
     stream.set_out_ber_len_uint16(stream.get_offset(offset_data_len_connect_initial + 3), offset_data_len_connect_initial);
 
     ci_tpdu.end();
+    if (tls) { stream.data[3] = 0x78; }
     ci_tpdu.send(trans);
 }
 
@@ -318,30 +337,6 @@ static inline void mcs_send_connect_initial(
 //   The userData field of the MCS Connect Response encapsulates the GCC
 //   Conference Create Response data (contained in the gccCCrsp and subsequent
 //   fields).
-
-
-//Result ::= ENUMERATED
-//-- in Connect, response, confirm
-//{
-//    rt-successful                  (0),
-//    rt-domain-merging              (1),
-//    rt-domain-not-hierarchical     (2),
-//    rt-no-such-channel             (3),
-//    rt-no-such-domain              (4),
-//    rt-no-such-user                (5),
-//    rt-not-admitted                (6),
-//    rt-other-user-id               (7),
-//    rt-parameters-unacceptable     (8),
-//    rt-token-not-available         (9),
-//    rt-token-not-possessed         (10),
-//    rt-too-many-channels           (11),
-//    rt-too-many-tokens             (12),
-//    rt-too-many-users              (13),
-//    rt-unspecified-failure         (14),
-//    rt-user-rejected               (15)
-//}
-
-
 
 // gccCCrsp (variable): Variable-length PER-encoded GCC Connect Data structure
 //   which encapsulates a Connect GCC PDU that contains a GCC Conference Create
@@ -385,7 +380,28 @@ static inline void mcs_recv_connect_response(
     len = cr_stream.in_ber_len();
     // ----------------------------------------------------------
     int res = cr_stream.in_uint8();
-    
+
+//Result ::= ENUMERATED
+//-- in Connect, response, confirm
+//{
+//    rt-successful                  (0),
+//    rt-domain-merging              (1),
+//    rt-domain-not-hierarchical     (2),
+//    rt-no-such-channel             (3),
+//    rt-no-such-domain              (4),
+//    rt-no-such-user                (5),
+//    rt-not-admitted                (6),
+//    rt-other-user-id               (7),
+//    rt-parameters-unacceptable     (8),
+//    rt-token-not-available         (9),
+//    rt-token-not-possessed         (10),
+//    rt-too-many-channels           (11),
+//    rt-too-many-tokens             (12),
+//    rt-too-many-users              (13),
+//    rt-unspecified-failure         (14),
+//    rt-user-rejected               (15)
+//}
+
     if (res != 0) {
         throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
     }

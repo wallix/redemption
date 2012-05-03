@@ -95,7 +95,7 @@ struct CSSecGccUserData {
     , length(12) // default: everything except serverSelectedProtocol
     , header(CS_SECURITY)  // MUST be set to CS_SECURITY
     , encryptionMethods(0)   // French locale : MUST be 0
-                                                                        // Other locale : MUST be from a closed list
+                                // Other locale : MUST be from a closed list
     , extEncryptionMethods(0)   // French locale : MUST be from a closed list
                                 // Other locale : MUST be 0
     {

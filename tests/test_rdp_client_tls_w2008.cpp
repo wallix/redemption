@@ -54,12 +54,12 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
 
     ClientInfo info(1, 1, true, true);
-    info.keylayout = 0x04C;
+    info.keylayout = 0x040C;
     info.console_session = 0;
     info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
+    info.bpp = 16;
+    info.width = 1024;
+    info.height = 768;
     int verbose = 256;
 
 
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 //    SocketTransport t(name, sck, verbose);
 
     #include "./fixtures/dump_TLSw2008.hpp"
-    TestTransport t("test_rdp_client_w2008", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
