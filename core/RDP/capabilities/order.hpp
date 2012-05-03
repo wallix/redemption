@@ -331,7 +331,7 @@ struct OrderCaps : public Capability {
     uint16_t pad2octetsC;
     uint16_t pad2octetsD;
     uint16_t textANSICodePage;
-    uint16_t pad2octetsE ;
+    uint16_t pad2octetsE;
 
     OrderCaps()
     : Capability(CAPSTYPE_ORDER, RDP_CAPLEN_ORDER)

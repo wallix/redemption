@@ -265,7 +265,13 @@ static inline void mcs_send_connect_initial(
     cs_cluster.emit(stream);
 
     // 12 bytes
-    mod_rdp_out_cs_sec(stream);
+//    mod_rdp_out_cs_sec(stream);
+    CSSecGccUserData cs_sec_gccuserdata;
+    cs_sec_gccuserdata.encryptionMethods = FORTY_BIT_ENCRYPTION_FLAG|HUNDRED_TWENTY_EIGHT_BIT_ENCRYPTION_FLAG;
+    cs_sec_gccuserdata.log("Sending cs_sec gccuserdata to server");
+    cs_sec_gccuserdata.emit(stream);
+
+
     // 12 * nbchan + 8 bytes
     mod_rdp_out_cs_net(stream, channel_list);
 
