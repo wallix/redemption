@@ -73,7 +73,7 @@ struct ColorCacheCaps : public Capability {
         this->len = stream.in_uint16_le();
         this->colorTableCacheSize = stream.in_uint16_le();
         this->pad2octets = stream.in_uint16_le();
-      }
+    }
 
     void log(const char * msg){
         LOG(LOG_INFO, "%s ColorCache caps (%u bytes)", msg, this->len);

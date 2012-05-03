@@ -75,6 +75,15 @@ struct ControlCaps : public Capability {
         stream.out_uint16_le(this->detachInterest);
     }
 
+    void recv(Stream & stream){
+        this->capabilityType = stream.in_uint16_le();
+        this->len = stream.in_uint16_le();
+        this->controlFlags = stream.in_uint16_le();
+        this->remoteDetachFlag = stream.in_uint16_le();
+        this->controlInterest = stream.in_uint16_le();
+        this->detachInterest = stream.in_uint16_le();
+    }
+
     void log(const char * msg){
         LOG(LOG_INFO, "%s ControlCaps caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "ControlCaps caps::controlFlags %u", this->controlFlags);
