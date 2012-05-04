@@ -1625,7 +1625,11 @@ public:
         pointer_caps.emit(stream);
          caps_count++;
 
-        front_out_share_caps(stream, this->userid + MCS_USERCHANNEL_BASE);
+        ShareCaps share_caps;
+        share_caps.nodeId = this->userid + MCS_USERCHANNEL_BASE;
+        share_caps.pad2octets = 0xb5e2; /* 0x73e1 */
+        share_caps.log("Sending share caps to client");
+        share_caps.emit(stream);
         caps_count++;
 
         InputCaps input_caps;
