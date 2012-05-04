@@ -681,7 +681,7 @@ const char outdata[] =
 // server_public_key_len=64, MODULUS_SIZE=64 MAX_MODULUS_SIZE=256 |
 // mod_rdp::Channel Connection |
 // Socket RDP W2008 Target (3) sending 12 bytes |
-/* 0000 */ "\x03\x00\x00\x0c\x02\xf0\x80\x04\x00\x01\x00\x01"                 //............ |
+/* 0000 */ "\x03\x00\x00\x0c\x02\xf0\x80\x04\x01\x00\x01\x00"                 //............ |
 // Dump done RDP W2008 Target (3) sending 12 bytes |
 // Send done on RDP W2008 Target (3) |
 // Socket RDP W2008 Target (3) sending 8 bytes |
@@ -16211,4 +16211,3 @@ const char indata[] =
 // ===================> count = 38 |
 // Socket RDP W2008 Target (3) : closing connection |
 } /* end indata */;
-

@@ -291,9 +291,9 @@ class TestTransport : public Transport {
         if (this->status){
             this->out.recv(pbuffer, len);
             if (this->verbose & 0x100){
-                LOG(LOG_INFO, "Recv done on %s (Test Data)", this->name);
+                LOG(LOG_INFO, "Recv done on %s (Test Data) %u bytes", this->name, len);
                 hexdump_c(*pbuffer - len, len);
-                LOG(LOG_INFO, "Dump done on %s (Test Data)", this->name);
+                LOG(LOG_INFO, "Dump done on %s (Test Data) %u bytes", this->name, len);
             }
         }
     }
@@ -650,32 +650,6 @@ class SocketTransport : public Transport {
         SEND = 2
     };
 
-    void wait_ready(direction_t d, int delay_ms) throw (Error)
-    {
-        fd_set fds;
-        struct timeval time;
-
-        time.tv_sec = delay_ms / 1000;
-        time.tv_usec = (delay_ms * 1000) % 1000000;
-        FD_ZERO(&fds);
-        FD_SET(((unsigned int)this->sck), &fds);
-        if (select(this->sck + 1,
-            (d & RECV)? &fds : 0,
-            (d & SEND)? &fds : 0,
-            0, &time) > 0) {
-            int opt = 0;
-            unsigned int opt_len = sizeof(opt);
-            getsockopt(this->sck, SOL_SOCKET, SO_ERROR, (char*)(&opt), &opt_len);
-            // Test if we got a socket error
-
-            if (opt) {
-                LOG(LOG_INFO, "Socket error detected on %s : %s", this->name, strerror(errno));
-                throw Error(ERR_SESSION_TERMINATED);
-            }
-
-        }
-    }
-
     using Transport::recv;
 
     virtual void recv(char ** pbuffer, size_t len) throw (Error)
@@ -741,9 +715,9 @@ class SocketTransport : public Transport {
         }
 
         if (this->verbose & 0x100){
-            LOG(LOG_INFO, "Recv done on %s (%u)", this->name, this->sck);
+            LOG(LOG_INFO, "Recv done on %s (%u) %u bytes", this->name, this->sck, total_len);
             hexdump_c(start, total_len);
-            LOG(LOG_INFO, "Dump done on %s (%u)", this->name, this->sck);
+            LOG(LOG_INFO, "Dump done on %s (%u) %u bytes", this->name, this->sck, total_len);
         }
         *input_buffer = pbuffer;
         total_received += total_len;
