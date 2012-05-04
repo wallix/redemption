@@ -517,7 +517,7 @@ struct mod_rdp : public client_mod {
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, this->userid, channel.chanid);
 
-        SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
+        SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
 
         stream.out_uint32_le(length);
         stream.out_uint32_le(flags);
@@ -700,12 +700,13 @@ struct mod_rdp : public client_mod {
             // Client                                                     Server
             //    |------Security Exchange PDU ---------------------------> |
 
-            LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
-            send_security_exchange_PDU(this->nego.trans,
-                this->userid,
-                this->server_public_key_len,
-                this->client_crypt_random);
-
+            if (this->crypt_level){
+                LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
+                send_security_exchange_PDU(this->nego.trans,
+                    this->userid,
+                    this->server_public_key_len,
+                    this->client_crypt_random);
+            }
             // Secure Settings Exchange
             // ------------------------
 
@@ -821,7 +822,7 @@ struct mod_rdp : public client_mod {
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
             LOG(LOG_INFO, "Sec layer");
-            SecIn sec(stream, this->decrypt);
+            SecIn sec(stream, this->decrypt, true);
             LOG(LOG_INFO, "Licence layer");
 
             if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
@@ -1047,7 +1048,7 @@ struct mod_rdp : public client_mod {
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");
-            SecIn sec(stream, this->decrypt);
+            SecIn sec(stream, this->decrypt, this->crypt_level);
             if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
                 LOG(LOG_ERR, "Error: unexpected licence negotiation sec packet");
                 throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
@@ -1345,7 +1346,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
 
         // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1) containing information about the packet. The type subfield of the pduType field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
 
@@ -2297,7 +2298,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
@@ -2325,7 +2326,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
@@ -2351,7 +2352,7 @@ struct mod_rdp : public client_mod {
             Stream stream(65536);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_FONTLIST, this->share_id, RDP::STREAM_MED);
 
@@ -2396,7 +2397,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_INPUT, this->share_id, RDP::STREAM_HI);
 
@@ -2431,7 +2432,7 @@ struct mod_rdp : public client_mod {
                     Stream stream(32768);
                     X224Out tpdu(X224Packet::DT_TPDU, stream);
                     McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-                    SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
+                    SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
                     ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
                     ShareDataOut rdp_data_out(stream, PDUTYPE2_REFRESH_RECT, this->share_id, RDP::STREAM_MED);
 
@@ -2702,7 +2703,7 @@ struct mod_rdp : public client_mod {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out2(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, SEC_LOGON_INFO | SEC_ENCRYPT, this->encrypt);
+        SecOut sec_out(stream, SEC_LOGON_INFO | SEC_ENCRYPT, this->encrypt, this->crypt_level);
 
         stream.out_uint32_le(0);
         stream.out_uint32_le(flags);

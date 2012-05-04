@@ -120,7 +120,7 @@ TODO(" ssl calls introduce some dependency on ssl system library  injecting it i
 // Data (section 2.2.1.4.3) conform.
 
 // dwVersion (4 bytes): A 32-bit, unsigned integer.
-// certChainVersion (31 bits): A 31-bit field. The certificate version.
+// dwVersion::certChainVersion (31 bits): A 31-bit field. The certificate version.
 
 // +---------------------------------+-----------------------------------------+
 // | 0x00000001 CERT_CHAIN_VERSION_1 | The certificate contained in the        |
@@ -132,11 +132,14 @@ TODO(" ssl calls introduce some dependency on ssl system library  injecting it i
 // |                                 | (see section 5.3.3.2).                  |
 // +---------------------------------+-----------------------------------------+
 
-// t (1 bit): A 1-bit field. Indicates whether the certificate contained in the
+// dwVersion::t (1 bit): A 1-bit field. Indicates whether the certificate contained in the
 //  certData field has been permanently or temporarily issued to the server.
 
-// 0 The certificate has been permanently issued to the server.
-// 1 The certificate has been temporarily issued to the server.
+// +---+----------------------------------------------------------------------+
+// | 0 | The certificate has been permanently issued to the server.           |
+// +---+----------------------------+-----------------------------------------+
+// | 1 | The certificate has been temporarily issued to the server.           |
+// +---+----------------------------+-----------------------------------------+
 
 // certData (variable): Certificate data. The format of this certificate data is
 //  determined by the dwVersion field.
@@ -221,31 +224,80 @@ struct SCSecurityGccUserData {
     uint32_t encryptionMethod;
 
     enum {
-        ENCRYPTION_LEVEL_NONE = 0x00000000,
-        ENCRYPTION_LEVEL_LOW  = 0x00000001,
+        ENCRYPTION_LEVEL_NONE              = 0x00000000,
+        ENCRYPTION_LEVEL_LOW               = 0x00000001,
         ENCRYPTION_LEVEL_CLIENT_COMPATIBLE = 0x00000002,
-        ENCRYPTION_LEVEL_HIGH = 0x00000003,
-        ENCRYPTION_LEVEL_FIPS = 0x00000004,
+        ENCRYPTION_LEVEL_HIGH              = 0x00000003,
+        ENCRYPTION_LEVEL_FIPS              = 0x00000004,
     };
     uint32_t encryptionLevel;
-
     uint32_t serverRandomLen;
     uint32_t serverCertLen;
     uint8_t * serverRandom;
 
-    uint8_t * serverCertificate;
-
-    uint32_t dwVersion;
     enum {
         CERT_CHAIN_VERSION_1 = 0x00000001,
         CERT_CHAIN_VERSION_2 = 0x00000002,
     };
-    uint32_t certChainVersion;
-    bool t;
+
+    struct {
+        uint32_t dwVersion;
+//        uint32_t certChainVersion;
+//        bool t;
+
+        union {
+            struct ServerProprietaryCertificate {
+                // dwSigAlgId (4 bytes): A 32-bit, unsigned integer. The signature algorithm
+                //  identifier. This field MUST be set to SIGNATURE_ALG_RSA (0x00000001).
+                uint32_t dwSigAlgId;
+
+                // dwKeyAlgId (4 bytes): A 32-bit, unsigned integer. The key algorithm
+                //  identifier. This field MUST be set to KEY_EXCHANGE_ALG_RSA (0x00000001).
+                uint32_t dwKeyAlgId;
+
+                // wPublicKeyBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
+                //  in the PublicKeyBlob field. This field MUST be set to BB_RSA_KEY_BLOB
+                //  (0x0006).
+                uint16_t wPublicKeyBlobType;
+
+                // wPublicKeyBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
+                //  of the PublicKeyBlob field.
+                uint16_t wPublicKeyBlobLen;
+
+                // PublicKeyBlob (variable): Variable-length server public key bytes, formatted
+                //  using the Rivest-Shamir-Adleman (RSA) Public Key structure (section
+                //  2.2.1.4.3.1.1.1). The length in bytes is given by the wPublicKeyBlobLen
+                //  field.
+                uint8_t * PublicKeyBlob;
+
+                // wSignatureBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
+                //  in the SignatureKeyBlob field. This field is set to BB_RSA_SIGNATURE_BLOB
+                //  (0x0008).
+                uint16_t wSignatureBlobType;
+
+                // wSignatureBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
+                //  of the SignatureKeyBlob field.
+                uint16_t wSignatureBlobLen;
+
+                // SignatureBlob (variable): Variable-length signature of the certificate
+                // created with the Terminal Services Signing Key (see sections 5.3.3.1.1 and
+                // 5.3.3.1.2). The length in bytes is given by the wSignatureBlobLen field.
+                uint8_t * wSignatureBlob;
+
+            } * proprietary;
+            struct X509Certificate {
+                uint8_t * blob;
+            } * x509;
+        } certData;
+    } * serverCertificate;
 
     SCSecurityGccUserData()
     : userDataType(SC_SECURITY)
-    , length(12) // default: everything except serverSelectedProtocol
+    , length(12)
+    , encryptionMethod(0)
+    , encryptionLevel(0)
+    , serverRandomLen(0)
+    , serverCertLen(0)
     {
     }
 
@@ -273,95 +325,61 @@ struct SCSecurityGccUserData {
     }
 };
 
-TODO("Move crypto related utility methods to sec module (probably extract more sec generic code from parse_mcs_data_sc_security")
-
-
-static inline void recv_sec_tag_sig(Stream & stream, uint16_t len)
-{
-    stream.in_skip_bytes(len);
-    /* Parse a public key structure */
-    TODO("is padding always 8 bytes long ? may signature length change ? Check in documentation")
-    TODO("we should check the signature is ok (using other provided parameters). This is not yet done today. Signature is just dropped")
-}
-
-
-static inline void recv_sec_tag_pubkey(Stream & stream, uint32_t & server_public_key_len, uint8_t* modulus, uint8_t* exponent)
-{
-    /* Parse a public key structure */
-    uint32_t magic = stream.in_uint32_le();
-    if (magic != SEC_RSA_MAGIC) {
-        LOG(LOG_WARNING, "RSA magic 0x%x", magic);
-        throw Error(ERR_SEC_PARSE_PUB_KEY_MAGIC_NOT_OK);
-    }
-    server_public_key_len = stream.in_uint32_le() - SEC_PADDING_SIZE;
-
-    if ((server_public_key_len < SEC_MODULUS_SIZE)
-    ||  (server_public_key_len > SEC_MAX_MODULUS_SIZE)) {
-        LOG(LOG_WARNING, "Bad server public key size (%u bits)", server_public_key_len * 8);
-        throw Error(ERR_SEC_PARSE_PUB_KEY_MODUL_NOT_OK);
-    }
-    stream.in_skip_bytes(8); /* modulus_bits, unknown */
-    memcpy(exponent, stream.in_uint8p(SEC_EXPONENT_SIZE), SEC_EXPONENT_SIZE);
-    memcpy(modulus, stream.in_uint8p(server_public_key_len), server_public_key_len);
-    stream.in_skip_bytes(SEC_PADDING_SIZE);
-
-    LOG(LOG_DEBUG, "Got Public key, RDP4-style");
-}
-
-
 static inline void parse_mcs_data_sc_security(Stream & cr_stream,
                                               CryptContext & encrypt,
                                               CryptContext & decrypt,
                                               uint32_t & server_public_key_len,
                                               uint8_t (& client_crypt_random)[512],
-                                              int & crypt_level,
+                                              int & encryptionLevel,
                                               Random * gen)
 {
     LOG(LOG_INFO, "SC_SECURITY");
 
-    uint8_t server_random[SEC_RANDOM_SIZE];
-    uint8_t client_random[SEC_RANDOM_SIZE];
+    uint32_t encryptionMethod = cr_stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
+    LOG(LOG_INFO, "encryptionMethod = %u", encryptionMethod);
+    encryptionLevel = cr_stream.in_uint32_le(); /* 1 = low, 2 = medium, 3 = high */
+    LOG(LOG_INFO, "encryptionLevel = %u", encryptionLevel);
+
+    if (encryptionLevel == 0 && encryptionMethod == 0) { /* no encryption */
+        LOG(LOG_INFO, "No encryption");
+        return;
+    }
+
     uint8_t modulus[SEC_MAX_MODULUS_SIZE];
     uint8_t exponent[SEC_EXPONENT_SIZE];
-    uint32_t rc4_key_size;
+    memset(modulus, 0, sizeof(modulus));
+    memset(exponent, 0, sizeof(exponent));
 
     ssllib ssl;
 
-    memset(modulus, 0, sizeof(modulus));
-    memset(exponent, 0, sizeof(exponent));
-    memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
-    memset(server_random, 0, SEC_RANDOM_SIZE);
+// serverRandomLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of
+// the serverRandom field. If the encryptionMethod and encryptionLevel fields
+// are both set to 0 then the contents of this field MUST be ignored and the
+// serverRandom field MUST NOT be present. Otherwise, this field MUST be set to
+// 32 bytes.
+    uint32_t serverRandomLen = cr_stream.in_uint32_le();
+    LOG(LOG_INFO, "serverRandomLen = %u", serverRandomLen);
 
-    uint16_t length;
-    uint8_t* end;
 
-    rc4_key_size = cr_stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
-    LOG(LOG_INFO, "rc4_key_size = %u", rc4_key_size);
-    crypt_level = cr_stream.in_uint32_le(); /* 1 = low, 2 = medium, 3 = high */
-    LOG(LOG_INFO, "crypt_level = %u", crypt_level);
-
-    if (crypt_level == 0) { /* no encryption */
-        LOG(LOG_INFO, "No encryption");
-        throw Error(ERR_SEC_PARSE_CRYPT_INFO_ENCRYPTION_REQUIRED);
-    }
-    uint32_t random_len = cr_stream.in_uint32_le();
-    uint32_t rsa_info_len = cr_stream.in_uint32_le();
-
-    LOG(LOG_INFO, "random_len = %u", random_len);
-    LOG(LOG_INFO, "rsa_info_len = %u", rsa_info_len);
+// serverCertLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of the
+//  serverCertificate field. If the encryptionMethod and encryptionLevel fields
+//  are both set to 0 then the contents of this field MUST be ignored and the
+// serverCertificate field MUST NOT be present.
+    uint32_t serverCertLen = cr_stream.in_uint32_le();
+    LOG(LOG_INFO, "serverCertLen = %u", serverCertLen);
 
 // serverRandom (variable): The variable-length server random value used to
 // derive session keys (see sections 5.3.4 and 5.3.5). The length in bytes is
 // given by the serverRandomLen field. If the encryptionMethod and
 // encryptionLevel fields are both set to 0 then this field MUST NOT be present.
 
-    if (random_len != SEC_RANDOM_SIZE) {
-        LOG(LOG_ERR,
-            "parse_crypt_info_error: random len %d, expected %d",
-            random_len, SEC_RANDOM_SIZE);
+    if (serverRandomLen != SEC_RANDOM_SIZE) {
+        LOG(LOG_ERR, "parse_crypt_info_error: serverRandomLen %d, expected %d", serverRandomLen, SEC_RANDOM_SIZE);
         throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RANDOM_LEN);
     }
-    memcpy(server_random, cr_stream.in_uint8p(random_len), random_len);
+    uint8_t serverRandom[SEC_RANDOM_SIZE];
+    memset(serverRandom, 0, SEC_RANDOM_SIZE);
+    cr_stream.in_copy_bytes(serverRandom, serverRandomLen);
 
 // serverCertificate (variable): The variable-length certificate containing the
 //  server's public key information. The length in bytes is given by the
@@ -369,44 +387,80 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
 // both set to 0 then this field MUST NOT be present.
 
     /* RSA info */
-    end = cr_stream.p + rsa_info_len;
+    uint8_t * end = cr_stream.p + serverCertLen;
     if (end > cr_stream.end) {
         LOG(LOG_ERR,
-            "rsa_info_len outside of buffer %u remains: %u", rsa_info_len, cr_stream.end - cr_stream.p);
+            "serverCertLen outside of buffer %u remains: %u", serverCertLen, cr_stream.end - cr_stream.p);
         throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RSA_LEN);
     }
 
-    uint32_t flags = cr_stream.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
-    LOG(LOG_INFO, "crypt flags %x", flags);
-    if (flags & 1) {
-
+    uint32_t dwVersion = cr_stream.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
+    LOG(LOG_INFO, "dwVersion %x", dwVersion);
+    if (dwVersion & SCSecurityGccUserData::CERT_CHAIN_VERSION_1) {
         LOG(LOG_DEBUG, "We're going for the RDP4-style encryption");
-        cr_stream.in_skip_bytes(8); /* unknown */
+        // dwSigAlgId (4 bytes): A 32-bit, unsigned integer. The signature algorithm
+        //  identifier. This field MUST be set to SIGNATURE_ALG_RSA (0x00000001).
+        uint32_t dwSigAlgId = cr_stream.in_uint16_le();
 
-        while (cr_stream.p < end) {
-            uint16_t tag = cr_stream.in_uint16_le();
-            length = cr_stream.in_uint16_le();
-            TODO(" this should not be necessary any more as received tag are fully decoded (but we should check length does not lead accessing data out of buffer)")
-            uint8_t * next_tag = cr_stream.p + length;
+        // dwKeyAlgId (4 bytes): A 32-bit, unsigned integer. The key algorithm
+        //  identifier. This field MUST be set to KEY_EXCHANGE_ALG_RSA (0x00000001).
+        uint32_t dwKeyAlgId = cr_stream.in_uint16_le();
 
-            switch (tag) {
-            case SEC_TAG_PUBKEY:
-                LOG(LOG_DEBUG, "ReceivingPublic key, RDP4-style");
-                recv_sec_tag_pubkey(cr_stream, server_public_key_len, modulus, exponent);
-                LOG(LOG_DEBUG, "Got Public key, RDP4-style");
-            break;
-            case SEC_TAG_KEYSIG:
-                LOG(LOG_DEBUG, "Receiving key sig RDP4-style");
-                recv_sec_tag_sig(cr_stream, length);
-                LOG(LOG_DEBUG, "Got key sig RDP4-style");
-                break;
-            default:
-                LOG(LOG_DEBUG, "unimplemented: crypt tag 0x%x", tag);
-                throw Error(ERR_SEC_PARSE_CRYPT_INFO_UNIMPLEMENTED_TAG);
-                break;
-            }
-            cr_stream.p = next_tag;
+
+        LOG(LOG_DEBUG, "ReceivingPublic key, RDP4-style");
+        // wPublicKeyBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
+        //  in the PublicKeyBlob field. This field MUST be set to BB_RSA_KEY_BLOB
+        //  (0x0006).
+        TODO("put assertion to check type and throw and error if not as expected");
+        uint16_t wPublicKeyBlobType = cr_stream.in_uint16_le();
+
+        // wPublicKeyBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
+        //  of the PublicKeyBlob field.
+        uint16_t wPublicKeyBlobLen = cr_stream.in_uint16_le();
+        uint8_t * next_tag = cr_stream.p + wPublicKeyBlobLen;
+
+        // PublicKeyBlob (variable): Variable-length server public key bytes, formatted
+        //  using the Rivest-Shamir-Adleman (RSA) Public Key structure (section
+        //  2.2.1.4.3.1.1.1). The length in bytes is given by the wPublicKeyBlobLen
+        //  field.
+        uint32_t magic = cr_stream.in_uint32_le();
+        if (magic != SEC_RSA_MAGIC) {
+            LOG(LOG_WARNING, "RSA magic 0x%x", magic);
+            throw Error(ERR_SEC_PARSE_PUB_KEY_MAGIC_NOT_OK);
         }
+        server_public_key_len = cr_stream.in_uint32_le() - SEC_PADDING_SIZE;
+
+        if ((server_public_key_len < SEC_MODULUS_SIZE)
+        ||  (server_public_key_len > SEC_MAX_MODULUS_SIZE)) {
+            LOG(LOG_WARNING, "Bad server public key size (%u bits)", server_public_key_len * 8);
+            throw Error(ERR_SEC_PARSE_PUB_KEY_MODUL_NOT_OK);
+        }
+        cr_stream.in_skip_bytes(8); /* modulus_bits, unknown */
+
+        cr_stream.in_copy_bytes(exponent, SEC_EXPONENT_SIZE);
+        cr_stream.in_copy_bytes(modulus, server_public_key_len);
+        cr_stream.in_skip_bytes(SEC_PADDING_SIZE);
+        LOG(LOG_DEBUG, "Got Public key, RDP4-style");
+
+        // This should not be necessary as previous field if fully decoded
+        cr_stream.p = next_tag;
+
+        LOG(LOG_DEBUG, "Receiving key sig RDP4-style");
+        // wSignatureBlobType (2 bytes): A 16-bit, unsigned integer. The type of data
+        //  in the SignatureKeyBlob field. This field is set to BB_RSA_SIGNATURE_BLOB
+        //  (0x0008).
+        TODO("put assertion to check type and throw and error if not as expected");
+        uint16_t wSignatureBlobType = cr_stream.in_uint16_le();
+
+        // wSignatureBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
+        //  of the SignatureKeyBlob field.
+        uint16_t wSignatureBlobLen = cr_stream.in_uint16_le();
+
+        // SignatureBlob (variable): Variable-length signature of the certificate
+        // created with the Terminal Services Signing Key (see sections 5.3.3.1.1 and
+        // 5.3.3.1.2). The length in bytes is given by the wSignatureBlobLen field.
+        cr_stream.in_skip_bytes(wSignatureBlobLen);
+        LOG(LOG_DEBUG, "Got key sig RDP4-style");
     }
     else {
         LOG(LOG_DEBUG, "We're going for the RDP5-style encryption");
@@ -482,7 +536,8 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         }
         ssl_cert_free(server_cert);
 
-        LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d", server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
+        LOG(LOG_INFO, "server_public_key_len=%d, MODULUS_SIZE=%d MAX_MODULUS_SIZE=%d",
+            server_public_key_len, SEC_MODULUS_SIZE, SEC_MAX_MODULUS_SIZE);
         if ((server_public_key_len < SEC_MODULUS_SIZE) ||
             (server_public_key_len > SEC_MAX_MODULUS_SIZE)){
             LOG(LOG_DEBUG, "Bad server public key size (%u bits)",
@@ -501,10 +556,14 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         /* There's some garbage here we don't care about */
     }
 
+    uint8_t client_random[SEC_RANDOM_SIZE];
+
+    memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
+
     /* Generate a client random, and determine encryption keys */
     gen->random(client_random, SEC_RANDOM_SIZE);
     ssl.rsa_encrypt(client_crypt_random, client_random, SEC_RANDOM_SIZE, server_public_key_len, modulus, exponent);
-    rdp_sec_generate_keys(encrypt, decrypt, encrypt.sign_key, client_random, server_random, rc4_key_size);
+    rdp_sec_generate_keys(encrypt, decrypt, encrypt.sign_key, client_random, serverRandom, encryptionMethod);
 }
 
 static inline void send_sec_tag_sig(Stream & stream, const uint8_t (&pub_sig)[512])
@@ -536,18 +595,17 @@ static inline void send_sec_tag_pubkey(Stream & stream, const uint8_t (&pub_exp)
 //b8 00 00 00 -> TS_UD_SC_SEC1::serverCertLen = 184 bytes
 
 static inline void front_out_gcc_conference_user_data_sc_sec1(Stream & stream,
-                                                int crypt_level,
-                                                uint8_t (&server_random)[32],
+                                                int encryptionLevel,
+                                                uint8_t (&serverRandom)[32],
                                                 int rc4_key_size,
                                                 uint8_t (&pub_mod)[512],
                                                 uint8_t (&pri_exp)[512],
                                                 Random * gen)
 {
 
-    TODO("Should we not keep rsa_keys somewhere. We just seem to forget them.")
     Rsakeys rsa_keys(CFG_PATH "/" RSAKEYS_INI);
 
-    gen->random(server_random, 32);
+    gen->random(serverRandom, 32);
 
     uint8_t pub_sig[512];
 
@@ -559,11 +617,11 @@ static inline void front_out_gcc_conference_user_data_sc_sec1(Stream & stream,
     stream.out_uint16_le(236); // length, including tag and length fields
     stream.out_uint32_le(rc4_key_size); // key len 1 = 40 bit 2 = 128 bit
     // crypt level 1 = low 2 = medium, 3 = high
-    stream.out_uint32_le(crypt_level);
+    stream.out_uint32_le(encryptionLevel);
 
     stream.out_uint32_le(32);  // random len
     stream.out_uint32_le(184); // len of rsa info(certificate)
-    stream.out_copy_bytes(server_random, 32);
+    stream.out_copy_bytes(serverRandom, 32);
     /* here to end is certificate */
     /* HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ */
     /* TermService\Parameters\Certificate */

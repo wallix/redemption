@@ -561,7 +561,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, channel.chanid);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
 
         stream.out_uint32_le(length);
         if (channel.flags & ChannelDef::CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -605,7 +605,7 @@ public:
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
             uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-            SecOut sec_out(stream, sec_flags, this->encrypt);
+            SecOut sec_out(stream, sec_flags, this->encrypt, true);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
@@ -752,7 +752,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
@@ -875,7 +875,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
@@ -1147,7 +1147,7 @@ public:
                 this->decrypt.dump();
             }
 
-            SecIn sec(stream, this->decrypt);
+            SecIn sec(stream, this->decrypt, true);
 
             if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
                 throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
@@ -1215,7 +1215,7 @@ public:
                 this->decrypt.dump();
             }
 
-            SecIn sec(stream, this->decrypt);
+            SecIn sec(stream, this->decrypt, true);
 
             // Licensing
             // ---------
@@ -1411,7 +1411,7 @@ public:
                 throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
 
-            SecIn sec(stream, this->decrypt);
+            SecIn sec(stream, this->decrypt, true);
 
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
@@ -1533,7 +1533,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
@@ -1559,7 +1559,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut rdp_out(stream, PDUTYPE_DEMANDACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
 
         size_t caps_count = 0;
@@ -1848,7 +1848,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
@@ -1894,7 +1894,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
@@ -1947,7 +1947,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_FONTMAP, this->share_id, RDP::STREAM_MED);
 
@@ -2136,7 +2136,7 @@ public:
                 X224Out tpdu(X224Packet::DT_TPDU, stream);
                 McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
                 uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-                SecOut sec_out(stream, sec_flags, this->encrypt);
+                SecOut sec_out(stream, sec_flags, this->encrypt, true);
                 ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
                 ShareDataOut rdp_data_out(stream, PDUTYPE2_SHUTDOWN_DENIED, this->share_id, RDP::STREAM_MED);
                 rdp_data_out.end();
@@ -2283,7 +2283,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + MCS_USERCHANNEL_BASE).end();
         sec_out.end();
         sdin_out.end();
