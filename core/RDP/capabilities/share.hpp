@@ -65,8 +65,7 @@ struct ShareCaps : public Capability {
 
     }
 
-    void recv(Stream & stream, uint16_t length){
-        this->len = length;
+    void recv(Stream & stream){
         this->nodeId = stream.in_uint16_le();
         this->pad2octets = stream.in_uint16_le();
     }
