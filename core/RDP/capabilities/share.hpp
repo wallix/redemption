@@ -51,8 +51,9 @@ struct ShareCaps : public Capability {
     uint16_t pad2octets;
     ShareCaps()
     : Capability(CAPSTYPE_SHARE, RDP_CAPLEN_SHARE)
-    , nodeId(0)
-    , pad2octets(0)
+    , nodeId(0)     // CS : SHOULD be set to 0
+                    // SC : SHOULD be set to the server channel ID
+    , pad2octets(0) // MUST be ignored
     {
     }
 
@@ -64,8 +65,7 @@ struct ShareCaps : public Capability {
 
     }
 
-    void recv(Stream & stream, uint16_t length){
-        this->len = length;
+    void recv(Stream & stream){
         this->nodeId = stream.in_uint16_le();
         this->pad2octets = stream.in_uint16_le();
     }
@@ -77,14 +77,5 @@ struct ShareCaps : public Capability {
 
     }
 };
-
-
-static inline void front_out_share_caps(Stream & stream, uint16_t channel_id)
-{
-    stream.out_uint16_le(CAPSTYPE_SHARE);
-    stream.out_uint16_le(RDP_CAPLEN_SHARE);
-    stream.out_uint16_le(channel_id);
-    stream.out_uint16_be(0xb5e2); /* 0x73e1 */
-}
 
 #endif

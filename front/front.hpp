@@ -1618,13 +1618,28 @@ public:
         colorcache_caps.emit(stream);
         caps_count++;
 
-        front_out_pointer_caps(stream);
+        PointerCaps pointer_caps;
+        pointer_caps.colorPointerCacheSize = 0x19;
+        pointer_caps.pointerCacheSize = 0x19;
+        pointer_caps.log("Sending pointer caps to client");
+        pointer_caps.emit(stream);
+         caps_count++;
+
+        ShareCaps share_caps;
+        share_caps.nodeId = this->userid + MCS_USERCHANNEL_BASE;
+        share_caps.pad2octets = 0xb5e2; /* 0x73e1 */
+        share_caps.log("Sending share caps to client");
+        share_caps.emit(stream);
         caps_count++;
 
-        front_out_share_caps(stream, this->userid + MCS_USERCHANNEL_BASE);
-        caps_count++;
-
-        front_out_input_caps(stream);
+        InputCaps input_caps;
+        input_caps.inputFlags = 1;
+        input_caps.keyboardLayout = 0;
+        input_caps.keyboardType = 0;
+        input_caps.keyboardSubType = 0;
+        input_caps.keyboardFunctionKey = 0;
+        input_caps.log("Sending input caps to client");
+        input_caps.emit(stream);
         caps_count++;
 
         TODO("Check if this padding is necessary and if so how it should actually be computed. Padding is usually here for memory alignment purpose but this one looks strange")

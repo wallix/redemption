@@ -29,7 +29,7 @@
 #include <errno.h>
 #include <algorithm>
 
-#define LOGPRINT
+//#define LOGPRINT
 #include "./test_orders.hpp"
 
 #include "stream.hpp"
