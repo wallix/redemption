@@ -59,13 +59,35 @@ void validate(boost::any& v,
     v = boost::any(time_point(s));
 }
 
-bool load_option(int argc, char** argv, po::variables_map options,
-                 range_time_point range,
-                 uint frame, time_point time,
-                 std::string wrm_filename,
-                 std::string png_filename,
-                 std::vector<std::string> wrm_files,
-                 bool synchronise
+enum __unless_enum_t {};
+
+enum RecorderFlag{
+    DEFAULT_FLAG = 0,
+    SYNCHRONISE_WITH_PNG_CAPTURE_FLAG = 1,
+
+    OUTPUT_FILE_IGNORE = (1 << (sizeof(__unless_enum_t)-1))
+};
+
+struct RecorderError{
+    enum {
+        SUCCESS = 0,
+        HELP = 1,
+        SYNCHRONISE_NAME_ERROR = 2,
+    };
+};
+
+/**
+ * TODO create class { po::options_description desc; [value...]; command_line_parser(int argc, char** argv):int}
+ */
+bool load_options(int argc, char** argv, po::variables_map& options,
+                  range_time_point& range,
+                  uint& frame,
+                  time_point& time,
+                  std::string& wrm_filename,
+                  std::string& png_filename,
+                  std::vector<std::string>& wrm_files,
+                  std::string& synchronise,
+                  int& flag
                 )
 {
     po::options_description desc("Options");
@@ -86,8 +108,8 @@ bool load_option(int argc, char** argv, po::variables_map options,
     )
     ("frame,f", po::value(&frame), "maximum frame for png capture option")
     ("time,t", po::value(&time), "time capture for 1 file, with wrm capture option. format: [+|-]time[h|m|s][...]")
-    ("synchronise,s", "")
-    ("input-file,i", po::value(wrm_files), "")
+    ("synchronise,s", po::value(&synchronise), "")
+    ("input-file,i", po::value(&wrm_files), "")
     ("output-file,o", po::value<std::string>(), "alias -w ... -p ... -s")
     ("1", "")
     ;
@@ -102,27 +124,34 @@ bool load_option(int argc, char** argv, po::variables_map options,
 
     if (options.count("help")) {
         std::cout << desc;
-        return 0;
+        return RecorderError::HELP;
     }
 
     po::variables_map::iterator it = options.find("output-file");
     bool png_option = options.count("png");
     bool wrm_option = options.count("wrm");
     if (it != options.end()){
-        std::string& filename = it->second.as<std::string>();
+        const std::string& filename = it->second.as<std::string>();
         if (!png_option){
             png_filename = filename;
         }
         if (!wrm_option){
             wrm_filename = filename;
         }
+        if (!png_option && !wrm_option)
+            flag |= OUTPUT_FILE_IGNORE;
     }
 
-    ///TODO right ?
-    synchronise = png_option && wrm_option && options.count("synchronise");
+    if (options.count("synchronise")){
+        if (synchronise.empty()){
+            if (!png_option){
+                return RecorderError::SYNCHRONISE_NAME_ERROR;
+            }
+            flag |= SYNCHRONISE_WITH_PNG_CAPTURE_FLAG;
+        }
+    }
 
-
-    return 1;
+    return RecorderError::SUCCESS;
 }
 
 int main(int argc, char** argv)
@@ -133,15 +162,19 @@ int main(int argc, char** argv)
     std::string wrm_filename;
     std::string png_filename;
     std::vector<std::string> wrm_files;
-    bool synchronise = false;
+    std::string synchronise;
+    int flag = 0;
 
     po::variables_map options;
-    if (!load_option(argc, argv, options,
-        range, frame, time,
-        wrm_filename, png_filename,
-        wrm_files,
-        synchronise))
-        return 1;
+    int error = load_options(argc, argv, options,
+                            range, frame, time,
+                            wrm_filename, png_filename,
+                            wrm_files,
+                            synchronise,
+                            flag
+                            );
+    if (!error)
+        return error; ///NOTE load_options_errors[error]: const char *
 
     po::variables_map::iterator it = options.find("wrm");
     if (it != options.end()){

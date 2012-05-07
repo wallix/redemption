@@ -153,6 +153,20 @@ exe xrdp-keygen
         <variant>debug
     ;
 
+exe wrm-recorder
+    :
+        main/recorder.cpp
+
+        openssl
+        crypto
+        z
+        dl
+
+        libboost_program_options
+    :
+        <link>static
+    ;
+
 #
 # Unit Tests
 #
@@ -226,3 +240,6 @@ unit-test test_breakpoint : tests/test_breakpoint.cpp libboost_unit_test png z d
 unit-test test_wrm_recorder : tests/test_wrm_recorder.cpp libboost_unit_test png z d3des openssl crypto ;
 
 unit-test test_absolute_primary_order_opaque_rect : tests/test_absolute_primary_order_opaque_rect.cpp libboost_unit_test png d3des openssl z crypto ;
+
+unit-test test_time_point : tests/test_time_point.cpp libboost_unit_test ;
+unit-test test_range_time_point : tests/test_range_time_point.cpp libboost_unit_test ;
