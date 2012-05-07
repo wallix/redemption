@@ -191,7 +191,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 LOG(LOG_INFO, "color_cache");
                 LOG(LOG_INFO, "========================================\n");
             }
-//            exit(0);
         }
         virtual void set_mod_palette(const BGRPalette & palette)
         {
@@ -200,7 +199,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 LOG(LOG_INFO, "set_mod_palette");
                 LOG(LOG_INFO, "========================================\n");
             }
-            exit(0);
         }
         virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
         {
@@ -269,12 +267,13 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     } front(info, verbose);
 
-//    const char * name = "RDP W2000 Target";
+    const char * name = "RDP W2000 Target";
+
 //    int sck = connect("10.10.14.64", 3389, name);
 //    SocketTransport t(name, sck, verbose);
 
     #include "./fixtures/dump_w2000.hpp"
-    TestTransport t("test_rdp_client_w2000", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
@@ -294,11 +293,12 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE){
+        LOG(LOG_INFO, "=======================> count=%u", count);
         if (count++ >= 17) break;
         res = mod->draw_event();
         BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
     }
 
-    front.dump_png("trace_w2000_");
+//    front.dump_png("trace_w2000_");
 
 }

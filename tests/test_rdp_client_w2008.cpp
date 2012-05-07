@@ -29,7 +29,7 @@
 #include <errno.h>
 #include <algorithm>
 
-#define LOGPRINT
+//#define LOGPRINT
 #include "./test_orders.hpp"
 
 #include "stream.hpp"
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     info.bpp = 24;
     info.width = 800;
     info.height = 600;
-    int verbose = 1;
+    int verbose = 256;
 
 
     class Front : public FrontAPI {
@@ -191,12 +191,13 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     } front(info, verbose);
 
-//    const char * name = "RDP W2008 Target";
+    const char * name = "RDP W2008 Target";
+
 //    int sck = connect("10.10.14.78", 3389, name);
 //    SocketTransport t(name, sck, verbose);
 
     #include "./fixtures/dump_w2008.hpp"
-    TestTransport t("test_rdp_client_w2008", indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+    TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
@@ -217,7 +218,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE){
-        if (count++ >= 50) break;
+        LOG(LOG_INFO, "===================> count = %u", count);
+        if (count++ >= 38) break;
         res = mod->draw_event();
         BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
     }

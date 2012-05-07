@@ -523,6 +523,34 @@ class Stream {
     // =========================================================================
     // BER encoding rules support methods
     // =========================================================================
+    unsigned int in_ber_len(void) {
+        uint8_t l = this->in_uint8();
+        if (l & 0x80) {
+            const uint8_t nbbytes = (uint8_t)(l & 0x7F);
+            unsigned int len = 0;
+            for (uint8_t i = 0 ; i < nbbytes ; i++) {
+                len = (len << 8) | this->in_uint8();
+            }
+            return len;
+        }
+        return l;
+    }
+
+    void out_ber_len(unsigned int v){
+        if (v >= 0x80) {
+            if (v >= 0x100){
+                this->out_uint8(0x82);
+                this->out_uint16_be(v);
+            }
+            else {
+                this->out_uint8(0x81);
+                this->out_uint8(v);
+            }
+        }
+        else {
+            this->out_uint8((uint8_t)v);
+        }
+    }
 
     void out_ber_int8(unsigned int v){
         this->out_uint8(BER_TAG_INTEGER);
@@ -547,7 +575,7 @@ class Stream {
     void set_out_ber_int16(unsigned int v, size_t offset){
         this->set_out_uint8(BER_TAG_INTEGER, offset);
         this->set_out_uint8(2,               offset+1);
-        this->set_out_uint8((uint8_t)(v >> 8),          offset+2);
+        this->set_out_uint8((uint8_t)(v >> 8),        offset+2);
         this->set_out_uint8((uint8_t)v,               offset+3);
     }
 
@@ -567,17 +595,6 @@ class Stream {
         this->set_out_uint8((uint8_t)(value >> 16),     offset+2);
         this->set_out_uint8((uint8_t)(value >> 8),      offset+3);
         this->set_out_uint8((uint8_t)value,           offset+4);
-    }
-
-    void out_ber_len(unsigned int v){
-        if (v >= 0x80) {
-            REDASSERT(v < 65536);
-            this->out_uint8(0x82);
-            this->out_uint16_be(v);
-        }
-        else {
-            this->out_uint8((uint8_t)v);
-        }
     }
 
     void set_out_ber_len_uint7(unsigned int v, size_t offset){
@@ -615,19 +632,6 @@ class Stream {
         else {
             this->data[offset+0] = (uint8_t)v;
         }
-    }
-
-    unsigned int in_ber_len(void) {
-        uint8_t l = this->in_uint8();
-        if (l & 0x80) {
-            const uint8_t nbbytes = (uint8_t)(l & ~0x80);
-            unsigned int len = 0;
-            for (uint8_t i = 0 ; i < nbbytes ; i++) {
-                len = (len << 8) | this->in_uint8();
-            }
-            return len;
-        }
-        return l;
     }
 
     // =========================================================================
@@ -753,7 +757,7 @@ class Stream {
     void out_per_integer(uint32_t integer)
     {
         uint8_t length = (integer & 0xFFFF0000)?4:(integer & 0xFF00)?2:1;
-        this->out_per_length(4);
+        this->out_per_length(length);
         switch (length){
         case 4:
             this->out_uint32_be(integer);

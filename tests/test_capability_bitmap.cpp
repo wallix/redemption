@@ -86,130 +86,127 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapEmit)
 }
 
 
-BOOST_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
-{
-    uint8_t glyphCache[40];
-    uint32_t fragCache;
-    uint16_t glyphSupportLevel;
-    uint16_t pad2octets;
+//BOOST_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
+//{
+////    uint8_t glyphCache[40];
+////    uint32_t fragCache;
+////    uint16_t glyphSupportLevel;
+////    uint16_t pad2octets;
 
 
-    GlyphSupportCaps glyphcache_caps;
-//    glyphcache_caps.glyphCache = 0;
-//    glyphcache_caps.fragCache = 0;
-//    glyphcache_caps.glyphSupportLevel = 0;
-//    glyphcache_caps.pad2octets = 0;
+//    GlyphSupportCaps glyphcache_caps;
+////    glyphcache_caps.glyphCache = 0;
+////    glyphcache_caps.fragCache = 0;
+////    glyphcache_caps.glyphSupportLevel = 0;
+////    glyphcache_caps.pad2octets = 0;
 
-    printf("\n\n__________GLYPHSUPPORT_NEW_________\n");
+//    printf("\n\n__________GLYPHSUPPORT_NEW_________\n");
 
-    Stream stream(1024);
-    glyphcache_caps.emit(stream);
-//    stream.end = stream.p;
-//    stream.p = stream.data;
+//    Stream stream(1024);
+//    glyphcache_caps.emit(stream);
+////    stream.end = stream.p;
+////    stream.p = stream.data;
 
-    hexdump((const char *) stream.data, stream.p - stream.data);
-}
+//    hexdump((const char *) stream.data, stream.p - stream.data);
+//}
 
 
-BOOST_AUTO_TEST_CASE(TestCapabilityOrderEmit)
-{
-    {
-        printf("\n\n__________ORDER_OLD__________\n");
+//BOOST_AUTO_TEST_CASE(TestCapabilityOrderEmit)
+//{
+////    {
+////        printf("\n\n__________ORDER_OLD__________\n");
 
-        Stream stream(1024);
-        stream.out_uint16_le(CAPSTYPE_ORDER);
-        stream.out_uint16_le(RDP_CAPLEN_ORDER);
-        stream.out_clear_bytes(20); /* Terminal desc, pad */
-        stream.out_uint16_le(1); /* Cache X granularity */
-        stream.out_uint16_le(20); /* Cache Y granularity */
-        stream.out_uint16_le(0); /* Pad */
-        stream.out_uint16_le(1); /* Max order level */
-        stream.out_uint16_le(0x147); /* Number of fonts */
-        stream.out_uint16_le(0x2a); /* Capability flags */
+////        Stream stream(1024);
+////        stream.out_uint16_le(CAPSTYPE_ORDER);
+////        stream.out_uint16_le(RDP_CAPLEN_ORDER);
+////        stream.out_clear_bytes(20); /* Terminal desc, pad */
+////        stream.out_uint16_le(1); /* Cache X granularity */
+////        stream.out_uint16_le(20); /* Cache Y granularity */
+////        stream.out_uint16_le(0); /* Pad */
+////        stream.out_uint16_le(1); /* Max order level */
+////        stream.out_uint16_le(0x147); /* Number of fonts */
+////        stream.out_uint16_le(0x2a); /* Capability flags */
 
-        char order_caps[32];
+////        char order_caps[32];
 
-        memset(order_caps, 0, 32);
-        TODO(" use symbolic constants for order numerotation")
-        order_caps[RDP::DESTBLT] = 1; /* dest blt */
-        order_caps[RDP::PATBLT] = 1; /* pat blt */
-        order_caps[RDP::SCREENBLT] = 1; /* screen blt */
-        order_caps[3] = 1; /* memblt */
-        order_caps[4] = 0; /* todo triblt */
-        order_caps[8] = 1; /* line */
-        order_caps[9] = 1; /* line */
-        order_caps[10] = 1; /* rect */
-        order_caps[11] = 0; /* todo desksave */
-        order_caps[RDP::MEMBLT] = 1; /* memblt another above */
-        order_caps[RDP::TRIBLT] = 0; /* triblt another above */
-        order_caps[20] = 0; /* todo polygon */
-        order_caps[21] = 0; /* todo polygon2 */
-        order_caps[RDP::POLYLINE] = 0; /* todo polyline */
-        order_caps[25] = 0; /* todo ellipse */
-        order_caps[26] = 0; /* todo ellipse2 */
-        order_caps[RDP::GLYPHINDEX] = 1; /* text2 */
-        stream.out_copy_bytes(order_caps, 32); /* Orders supported */
+////        memset(order_caps, 0, 32);
+////        TODO(" use symbolic constants for order numerotation")
+////        order_caps[RDP::DESTBLT] = 1; /* dest blt */
+////        order_caps[RDP::PATBLT] = 1; /* pat blt */
+////        order_caps[RDP::SCREENBLT] = 1; /* screen blt */
+////        order_caps[3] = 1; /* memblt */
+////        order_caps[4] = 0; /* todo triblt */
+////        order_caps[8] = 1; /* line */
+////        order_caps[9] = 1; /* line */
+////        order_caps[10] = 1; /* rect */
+////        order_caps[11] = 0; /* todo desksave */
+////        order_caps[RDP::MEMBLT] = 1; /* memblt another above */
+////        order_caps[RDP::TRIBLT] = 0; /* triblt another above */
+////        order_caps[20] = 0; /* todo polygon */
+////        order_caps[21] = 0; /* todo polygon2 */
+////        order_caps[RDP::POLYLINE] = 0; /* todo polyline */
+////        order_caps[25] = 0; /* todo ellipse */
+////        order_caps[26] = 0; /* todo ellipse2 */
+////        order_caps[RDP::GLYPHINDEX] = 1; /* text2 */
+////        stream.out_copy_bytes(order_caps, 32); /* Orders supported */
 
-        stream.out_uint16_le(0x6a1); /* Text capability flags */
-        stream.out_clear_bytes(6); /* Pad */
-        stream.out_uint32_le(0 * 0x38400); /* Desktop cache size, for desktop_save */
-        stream.out_uint32_le(0); /* Unknown */
-        stream.out_uint32_le(0x4e4); /* Unknown */
+////        stream.out_uint16_le(0x6a1); /* Text capability flags */
+////        stream.out_clear_bytes(6); /* Pad */
+////        stream.out_uint32_le(0 * 0x38400); /* Desktop cache size, for desktop_save */
+////        stream.out_uint32_le(0); /* Unknown */
+////        stream.out_uint32_le(0x4e4); /* Unknown */
 
-        hexdump((const char *) stream.data, stream.p - stream.data);
-    }
+////        hexdump((const char *) stream.data, stream.p - stream.data);
+////    }
 
-    {
-        printf("\n\n__________ORDER_NEW__________\n");
+//    {
+//        printf("\n\n__________ORDER_NEW__________\n");
 
-    // =====================================================================================================================
-        Stream stream(1024);
-        OrderCaps order_caps;
-        order_caps.numberFonts = 0x147;
-        order_caps.orderFlags = 0x2a;
+//    // =====================================================================================================================
+//        Stream stream(1024);
+//        OrderCaps order_caps;
+//        order_caps.numberFonts = 0x147;
+//        order_caps.orderFlags = 0x2a;
 
-        order_caps.orderSupport[TS_NEG_DSTBLT_INDEX] = 1;
-        order_caps.orderSupport[TS_NEG_PATBLT_INDEX] = 1;
-        order_caps.orderSupport[TS_NEG_SCRBLT_INDEX] = 1;
-        order_caps.orderSupport[TS_NEG_MEMBLT_INDEX] = 1;
-    //            order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX] = 1;
-    //            order_caps.orderSupport[UnusedIndex1] = 1;
-    //            order_caps.orderSupport[UnusedIndex2] = 1;
-    //            order_caps.orderSupport[TS_NEG_DRAWNINEGRID_INDEX] = 1;
-        order_caps.orderSupport[TS_NEG_LINETO_INDEX] = 1;
-    //            order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
-    //            order_caps.orderSupport[UnusedIndex3] = 1;
-    //            order_caps.orderSupport[TS_NEG_SAVEBITMAP_INDEX] = 0;
-    //            order_caps.orderSupport[UnusedIndex4] = 1;
-        order_caps.orderSupport[UnusedIndex5] = 1;
-    //            order_caps.orderSupport[UnusedIndex6] = 1;
-    //            order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX] = 1;
-    //            order_caps.orderSupport[TS_NEG_MULTIPATBLT_INDEX] = 1;
-    //            order_caps.orderSupport[TS_NEG_MULTISCRBLT_INDEX] = 1;
-    //            order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX] = 1;
-    //            order_caps.orderSupport[TS_NEG_FAST_INDEX_INDEX] = 1;
-    //            order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX] = 1;
-    //            order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX] = 1;
-    //            order_caps.orderSupport[TS_NEG_POLYLINE_INDEX] = 1;
-    //            order_caps.orderSupport[UnusedIndex7] = 1;
-        order_caps.orderSupport[TS_NEG_FAST_GLYPH_INDEX] = 1;
-    //            order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX] = 1;
-    //            order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX] = 1;
-    //            order_caps.orderSupport[TS_NEG_INDEX_INDEX] = 1;
-    //            order_caps.orderSupport[UnusedIndex8] = 1;
-    //            order_caps.orderSupport[UnusedIndex9] = 1;
-    //            order_caps.orderSupport[UnusedIndex10] = 1;
-    //            order_caps.orderSupport[UnusedIndex11] = 1;
+//        order_caps.orderSupport[TS_NEG_DSTBLT_INDEX] = 1;
+//        order_caps.orderSupport[TS_NEG_PATBLT_INDEX] = 1;
+//        order_caps.orderSupport[TS_NEG_SCRBLT_INDEX] = 1;
+//        order_caps.orderSupport[TS_NEG_MEMBLT_INDEX] = 1;
+////            order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX] = 1;
+////            order_caps.orderSupport[UnusedIndex1] = 1;
+////            order_caps.orderSupport[UnusedIndex2] = 1;
+////            order_caps.orderSupport[TS_NEG_DRAWNINEGRID_INDEX] = 1;
+//        order_caps.orderSupport[TS_NEG_LINETO_INDEX] = 1;
+//        order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
+//        order_caps.orderSupport[UnusedIndex3] = 1;
+////            order_caps.orderSupport[TS_NEG_SAVEBITMAP_INDEX] = 0;
+////            order_caps.orderSupport[UnusedIndex4] = 1;
+//        order_caps.orderSupport[UnusedIndex5] = 1;
+////            order_caps.orderSupport[UnusedIndex6] = 1;
+////            order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX] = 1;
+////            order_caps.orderSupport[TS_NEG_MULTIPATBLT_INDEX] = 1;
+////            order_caps.orderSupport[TS_NEG_MULTISCRBLT_INDEX] = 1;
+////            order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX] = 1;
+////            order_caps.orderSupport[TS_NEG_FAST_INDEX_INDEX] = 1;
+////            order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX] = 1;
+////            order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX] = 1;
+////            order_caps.orderSupport[TS_NEG_POLYLINE_INDEX] = 1;
+////            order_caps.orderSupport[UnusedIndex7] = 1;
+////            order_caps.orderSupport[TS_NEG_FAST_GLYPH_INDEX] = 1;
+////            order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX] = 1;
+////            order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX] = 1;
+//        order_caps.orderSupport[TS_NEG_INDEX_INDEX] = 1;
+////            order_caps.orderSupport[UnusedIndex8] = 1;
+////            order_caps.orderSupport[UnusedIndex9] = 1;
+////            order_caps.orderSupport[UnusedIndex10] = 1;
+////            order_caps.orderSupport[UnusedIndex11] = 1;
 
-        order_caps.textFlags = 0x6a1;
-        order_caps.textANSICodePage = 0x4;
-        order_caps.pad2octetsE = 0xe4;
+//        order_caps.textFlags = 0x6a1;
+//        order_caps.textANSICodePage = 0x4;
+//        order_caps.pad2octetsE = 0xe4;
 
-        order_caps.emit(stream);
+//        order_caps.emit(stream);
 
-//        stream.end = stream.p;
-//        stream.p = stream.data;
-
-        hexdump((const char *) stream.data, stream.p - stream.data);
-    }
-}
+//        hexdump((const char *) stream.data, stream.p - stream.data);
+//    }
+//}

@@ -68,6 +68,11 @@ struct SoundCaps : public Capability {
         stream.out_uint16_le(this->pad2octetsA);
     }
 
+    void recv(Stream & stream){
+        this->soundFlags = stream.in_uint16_le();
+        this->pad2octetsA = stream.in_uint16_le();
+    }
+
     void log(const char * msg){
         LOG(LOG_INFO, "%s SoundCaps caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "SoundCaps caps::soundFlags %u", this->soundFlags);

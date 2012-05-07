@@ -115,7 +115,7 @@ public:
         } else {
             uint8_t * dest = this->data_bitmap.get();
             const uint8_t * src = data;
-            uint8_t data_width = this->cx * nbbytes(this->original_bpp);
+            const size_t & data_width = this->line_size;
             for (uint16_t i = 0 ; i < this->cy ; i++){
                 memcpy(dest, src, data_width);
                 bzero(dest + data_width, (this->bmp_size / this->cy) -  data_width);

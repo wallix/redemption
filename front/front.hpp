@@ -561,7 +561,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, channel.chanid);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
 
         stream.out_uint32_le(length);
         if (channel.flags & ChannelDef::CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -605,7 +605,7 @@ public:
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
             uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-            SecOut sec_out(stream, sec_flags, this->encrypt);
+            SecOut sec_out(stream, sec_flags, this->encrypt, true);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
@@ -752,7 +752,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
@@ -875,7 +875,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
@@ -1147,7 +1147,7 @@ public:
                 this->decrypt.dump();
             }
 
-            SecIn sec(stream, this->decrypt);
+            SecIn sec(stream, this->decrypt, true);
 
             if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
                 throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
@@ -1215,7 +1215,7 @@ public:
                 this->decrypt.dump();
             }
 
-            SecIn sec(stream, this->decrypt);
+            SecIn sec(stream, this->decrypt, true);
 
             // Licensing
             // ---------
@@ -1247,33 +1247,33 @@ public:
                 LOG(LOG_INFO, "Front::WAITING_FOR_ANSWER_TO_LICENCE sec_flags=%x %u %u %u", sec.flags, tag, version, length);
 
                 switch (tag) {
-                case LICENCE_TAG_DEMAND:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_DEMAND");
+                case LICENSE_REQUEST:
+                    LOG(LOG_INFO, "Front::LICENSE_REQUEST");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
                     send_lic_response(this->trans, this->userid);
                     break;
-                case LICENCE_TAG_PRESENT:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_PRESENT");
+                case LICENSE_INFO:
+                    LOG(LOG_INFO, "Front::LICENSE_INFO");
                     break;
-                case LICENCE_TAG_AUTHREQ:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_AUTHREQ");
+                case PLATFORM_CHALLENGE:
+                    LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE");
                     break;
-                case LICENCE_TAG_ISSUE:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_ISSUE");
+                case NEW_LICENSE:
+                    LOG(LOG_INFO, "Front::NEW_LICENSE");
                     break;
-                case LICENCE_TAG_REISSUE:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_REISSUE");
+                case UPGRADE_LICENSE:
+                    LOG(LOG_INFO, "Front::UPGRADE_LICENSE");
                     break;
                 case LICENCE_TAG_RESULT:
                     LOG(LOG_INFO, "Front::LICENCE_TAG_RESULT");
                     break;
-                case LICENCE_TAG_REQUEST:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_REQUEST");
+                case NEW_LICENSE_REQUEST:
+                    LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_response");
                     send_lic_response(this->trans, this->userid);
                     break;
-                case LICENCE_TAG_AUTHRESP:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_AUTHRESP");
+                case PLATFORM_CHALLENGE_RESPONSE:
+                    LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE_RESPONSE");
                     break;
                 default:
                     LOG(LOG_INFO, "Front::LICENCE_TAG_UNKNOWN %u", tag);
@@ -1411,7 +1411,7 @@ public:
                 throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
 
-            SecIn sec(stream, this->decrypt);
+            SecIn sec(stream, this->decrypt, true);
 
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
@@ -1533,7 +1533,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
@@ -1559,7 +1559,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut rdp_out(stream, PDUTYPE_DEMANDACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
 
         size_t caps_count = 0;
@@ -1590,22 +1590,56 @@ public:
         bitmap_caps.emit(stream);
         caps_count++;
 
-        front_out_font_caps(stream);
+        FontCaps font_caps;
+        font_caps.log("Sending font caps to client");
+        font_caps.emit(stream);
         caps_count++;
 
-        sc_out_order_caps(stream);
+        OrderCaps order_caps;
+        order_caps.pad4octetsA = 0x40420f00;
+        order_caps.numberFonts = 0x2f;
+        order_caps.orderFlags = 0x22;
+        order_caps.orderSupport[TS_NEG_DSTBLT_INDEX] = 1;
+        order_caps.orderSupport[TS_NEG_PATBLT_INDEX] = 1;
+        order_caps.orderSupport[TS_NEG_SCRBLT_INDEX] = 1;
+        order_caps.orderSupport[TS_NEG_MEMBLT_INDEX] = 1;
+        order_caps.orderSupport[TS_NEG_LINETO_INDEX] = 1;
+        order_caps.orderSupport[UnusedIndex3] = 1;
+        order_caps.textFlags = 0x06a1;
+        order_caps.pad4octetsB = 0x0f4240;
+        order_caps.desktopSaveSize = 0x0f4240;
+        order_caps.pad2octetsC = 1;
+        order_caps.log("Sending order caps to client");
+        order_caps.emit(stream);
         caps_count++;
 
-        front_out_colcache_caps(stream);
+        ColorCacheCaps colorcache_caps;
+        colorcache_caps.log("Sending colorcache caps to client");
+        colorcache_caps.emit(stream);
         caps_count++;
 
-        front_out_pointer_caps(stream);
+        PointerCaps pointer_caps;
+        pointer_caps.colorPointerCacheSize = 0x19;
+        pointer_caps.pointerCacheSize = 0x19;
+        pointer_caps.log("Sending pointer caps to client");
+        pointer_caps.emit(stream);
+         caps_count++;
+
+        ShareCaps share_caps;
+        share_caps.nodeId = this->userid + MCS_USERCHANNEL_BASE;
+        share_caps.pad2octets = 0xb5e2; /* 0x73e1 */
+        share_caps.log("Sending share caps to client");
+        share_caps.emit(stream);
         caps_count++;
 
-        front_out_share_caps(stream, this->userid + MCS_USERCHANNEL_BASE);
-        caps_count++;
-
-        front_out_input_caps(stream);
+        InputCaps input_caps;
+        input_caps.inputFlags = 1;
+        input_caps.keyboardLayout = 0;
+        input_caps.keyboardType = 0;
+        input_caps.keyboardSubType = 0;
+        input_caps.keyboardFunctionKey = 0;
+        input_caps.log("Sending input caps to client");
+        input_caps.emit(stream);
         caps_count++;
 
         TODO("Check if this padding is necessary and if so how it should actually be computed. Padding is usually here for memory alignment purpose but this one looks strange")
@@ -1690,27 +1724,27 @@ public:
             int len = stream.in_uint16_le();
 
             switch (type) {
-            case CAPSTYPE_GENERAL:
-            {
-                GeneralCaps general;
-                general.recv(stream);
-                general.log("Receiving from client");
-                this->client_info.use_compact_packets = (general.extraflags & NO_BITMAP_COMPRESSION_HDR)?1:0;
-            }
-            break;
-            case CAPSTYPE_BITMAP:
-            {
-                BitmapCaps bitmap_caps;
-                bitmap_caps.recv(stream);
-                bitmap_caps.log("Receiving from client");
-                this->client_info.bpp = (bitmap_caps.preferredBitsPerPixel >= 24)?24:bitmap_caps.preferredBitsPerPixel;
-                this->client_info.width = bitmap_caps.desktopWidth;
-                this->client_info.height = bitmap_caps.desktopHeight;
-
-            }
-            break;
-            case CAPSTYPE_ORDER: /* 3 */
-                cs_in_order_caps(stream, len, this->client_info.desktop_cache);
+            case CAPSTYPE_GENERAL: {
+                    GeneralCaps general;
+                    general.recv(stream);
+                    general.log("Receiving from client");
+                    this->client_info.use_compact_packets = (general.extraflags & NO_BITMAP_COMPRESSION_HDR)?1:0;
+                }
+                break;
+            case CAPSTYPE_BITMAP: {
+                    BitmapCaps bitmap_caps;
+                    bitmap_caps.recv(stream);
+                    bitmap_caps.log("Receiving from client");
+                    this->client_info.bpp = (bitmap_caps.preferredBitsPerPixel >= 24)?24:bitmap_caps.preferredBitsPerPixel;
+                    this->client_info.width = bitmap_caps.desktopWidth;
+                    this->client_info.height = bitmap_caps.desktopHeight;
+                }
+                break;
+            case CAPSTYPE_ORDER: { /* 3 */
+                    OrderCaps order_caps;
+                    order_caps.log("Receiving from client");
+                    order_caps.recv(stream);
+                }
                 break;
             case CAPSTYPE_BITMAPCACHE: /* 4 */
                 this->capset_bmpcache(stream, len);
@@ -1719,8 +1753,7 @@ public:
                 break;
             case CAPSTYPE_ACTIVATION: /* 7 */
                 break;
-            case CAPSTYPE_POINTER: /* 8 */
-                {
+            case CAPSTYPE_POINTER: {  /* 8 */
                     stream.in_skip_bytes(2); /* color pointer */
                     int i = stream.in_uint16_le();
                     this->client_info.pointer_cache_entries = std::min(i, 32);
@@ -1830,7 +1863,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
@@ -1876,7 +1909,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
@@ -1929,7 +1962,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_FONTMAP, this->share_id, RDP::STREAM_MED);
 
@@ -2118,7 +2151,7 @@ public:
                 X224Out tpdu(X224Packet::DT_TPDU, stream);
                 McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
                 uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-                SecOut sec_out(stream, sec_flags, this->encrypt);
+                SecOut sec_out(stream, sec_flags, this->encrypt, true);
                 ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
                 ShareDataOut rdp_data_out(stream, PDUTYPE2_SHUTDOWN_DENIED, this->share_id, RDP::STREAM_MED);
                 rdp_data_out.end();
@@ -2265,7 +2298,7 @@ public:
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, MCS_SDIN, this->userid, MCS_GLOBAL_CHANNEL);
         uint32_t sec_flags = this->client_info.crypt_level?SEC_ENCRYPT:0;
-        SecOut sec_out(stream, sec_flags, this->encrypt);
+        SecOut sec_out(stream, sec_flags, this->encrypt, true);
         ShareControlOut(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + MCS_USERCHANNEL_BASE).end();
         sec_out.end();
         sdin_out.end();

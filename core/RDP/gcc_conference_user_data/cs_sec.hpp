@@ -73,32 +73,59 @@
 //                               For non-French locale clients, this field
 //                               MUST be set to 0
 
+
+enum {
+      FORTY_BIT_ENCRYPTION_FLAG = 0x01
+    , HUNDRED_TWENTY_EIGHT_BIT_ENCRYPTION_FLAG = 0x02
+    , FIFTY_SIX_BIT_ENCRYPTION_FLAG = 0x08
+    , FIPS_ENCRYPTION_FLAG = 0x10
+};
+
+
 struct CSSecGccUserData {
     uint16_t userDataType;
     uint16_t length;
 
+    uint32_t header;
+    uint32_t encryptionMethods;
+    uint32_t extEncryptionMethods;
+
     CSSecGccUserData()
     : userDataType(CS_SECURITY)
     , length(12) // default: everything except serverSelectedProtocol
+    , header(CS_SECURITY)  // MUST be set to CS_SECURITY
+    , encryptionMethods(0)   // French locale : MUST be 0
+                                // Other locale : MUST be from a closed list
+    , extEncryptionMethods(0)   // French locale : MUST be from a closed list
+                                // Other locale : MUST be 0
     {
     }
-
 
     void emit(Stream & stream)
     {
         stream.out_uint16_le(this->userDataType);
         stream.out_uint16_le(this->length);
+//        stream.out_uint32_le(this->header);
+        stream.out_uint32_le(this->encryptionMethods);
+        stream.out_uint32_le(this->extEncryptionMethods);
     }
 
-    void recv(Stream & stream, uint16_t length)
+    void recv(Stream & stream, uint16_t length, uint32_t header, uint32_t encryptionMethods, uint32_t extEncryptionMethods)
     {
         this->length = length;
+        this->header = header;
+        this->encryptionMethods = encryptionMethods;
+        this->extEncryptionMethods = extEncryptionMethods;
     }
 
     void log(const char * msg)
     {
         // --------------------- Base Fields ---------------------------------------
         LOG(LOG_INFO, "%s GCC User Data CS_SECURITY (%u bytes)", msg, this->length);
+        LOG(LOG_INFO, "CSSecGccUserData::header %u", this->header);
+        LOG(LOG_INFO, "CSSecGccUserData::encryptionMethods %u", this->encryptionMethods);
+        LOG(LOG_INFO, "CSSecGccUserData::extEncryptionMethods %u", this->extEncryptionMethods);
+
     }
 };
 

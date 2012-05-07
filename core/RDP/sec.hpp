@@ -627,16 +627,16 @@ class SecOut
     uint8_t * pdata;
     uint32_t flags;
     CryptContext & crypt;
+    bool enabled;
     uint32_t verbose;
     public:
-    SecOut(Stream & stream, uint32_t flags, CryptContext & crypt, uint32_t verbose = 0)
-        : stream(stream), pdata(stream.p+12), flags(flags), crypt(crypt), verbose(verbose)
+    SecOut(Stream & stream, uint32_t flags, CryptContext & crypt, bool enabled, uint32_t verbose = 0)
+        : stream(stream), pdata(stream.p+12), flags(flags), crypt(crypt), enabled(enabled), verbose(verbose)
     {
         if (this->verbose){
             LOG(LOG_INFO, "SecOut(flags=%u)", flags);
         }
-        TODO("check this. There is something strange here. When sec is read we always read flags, but when written it is only done when flags is not null ? How could that be working ?")
-        if (this->flags){
+        if (this->enabled && this->flags){
             this->stream.out_uint32_le(this->flags);
             if ((this->flags & SEC_ENCRYPT)||(this->flags & 0x0400)){
                 this->stream.out_skip_bytes(8); // skip crypt sign
@@ -645,14 +645,16 @@ class SecOut
     }
 
     void end(){
-        if ((this->flags & SEC_ENCRYPT)||(this->flags & 0x0400)){
-            int datalen = this->stream.p - this->pdata;
-            if (this->verbose >= 0x80){
-                LOG(LOG_INFO, "Encrypting %u bytes", datalen);
-                hexdump((char*)this->pdata, datalen);
+        if (this->enabled){
+            if ((this->flags & SEC_ENCRYPT)||(this->flags & 0x0400)){
+                int datalen = this->stream.p - this->pdata;
+                if (this->verbose >= 0x80){
+                    LOG(LOG_INFO, "Encrypting %u bytes", datalen);
+                    hexdump((char*)this->pdata, datalen);
+                }
+                this->crypt.sign(this->pdata - 8, 8, this->pdata, datalen);
+                this->crypt.encrypt(this->pdata, datalen);
             }
-            this->crypt.sign(this->pdata - 8, 8, this->pdata, datalen);
-            this->crypt.encrypt(this->pdata, datalen);
         }
     }
 };
@@ -662,29 +664,32 @@ class SecIn
 {
     public:
     uint32_t flags;
+    bool enabled;
     uint32_t verbose;
-    SecIn(Stream & stream, CryptContext & crypt, uint32_t verbose = 0)
-        : verbose(verbose)
+    SecIn(Stream & stream, CryptContext & crypt, bool enabled, uint32_t verbose = 0)
+        : enabled(enabled), verbose(verbose)
     {
-        this->flags = stream.in_uint32_le();
-        if ((this->flags & SEC_ENCRYPT)  || (this->flags & 0x0400)){
-            uint8_t * pdata = stream.p + 8;
-            uint16_t datalen = stream.end - pdata;
-            TODO(" shouldn't we check signature ?")
-            stream.in_skip_bytes(8); /* signature */
-            // decrypting to the end of tpdu
-            if (this->verbose >= 0x200){
-                LOG(LOG_DEBUG, "Receiving encrypted TPDU");
-                hexdump((char*)stream.data, stream.end - stream.data);
-            }
-            if (this->verbose >= 0x100){
-                LOG(LOG_DEBUG, "Crypt context is:");
-                crypt.dump();
-            }
-            crypt.decrypt(stream.p, stream.end - stream.p);
-            if (this->verbose >= 0x80){
-                LOG(LOG_DEBUG, "Decrypted %u bytes", datalen);
-                hexdump((char*)pdata, datalen);
+        if (this->enabled){
+            this->flags = stream.in_uint32_le();
+            if ((this->flags & SEC_ENCRYPT)  || (this->flags & 0x0400)){
+                uint8_t * pdata = stream.p + 8;
+                uint16_t datalen = stream.end - pdata;
+                TODO(" shouldn't we check signature ?")
+                stream.in_skip_bytes(8); /* signature */
+                // decrypting to the end of tpdu
+                if (this->verbose >= 0x200){
+                    LOG(LOG_DEBUG, "Receiving encrypted TPDU");
+                    hexdump((char*)stream.data, stream.end - stream.data);
+                }
+                if (this->verbose >= 0x100){
+                    LOG(LOG_DEBUG, "Crypt context is:");
+                    crypt.dump();
+                }
+                crypt.decrypt(stream.p, stream.end - stream.p);
+                if (this->verbose >= 0x80){
+                    LOG(LOG_DEBUG, "Decrypted %u bytes", datalen);
+                    hexdump((char*)pdata, datalen);
+                }
             }
         }
     }
@@ -714,7 +719,7 @@ static inline void recv_security_exchange_PDU(
         throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
     }
 
-    SecIn sec(stream, decrypt);
+    SecIn sec(stream, decrypt, true);
     if (!sec.flags & SEC_CLIENT_RANDOM) { /* 0x01 */
         throw Error(ERR_SEC_EXPECTING_CLIENT_RANDOM);
     }

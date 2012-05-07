@@ -363,7 +363,6 @@ struct mod_rdp : public client_mod {
     const uint8_t front_bpp;
     Random * gen;
     uint32_t verbose;
-    bool tls;
 
     RdpNego nego;
 
@@ -397,12 +396,7 @@ struct mod_rdp : public client_mod {
                     front_bpp(info.bpp),
                     gen(gen),
                     verbose(verbose),
-                    tls(tls),
-                    nego(tls,
-                        RdpNego::PROTOCOL_NLA
-                        |RdpNego::PROTOCOL_RDP
-                        |RdpNego::PROTOCOL_TLS,
-                        trans, target_user)
+                    nego(tls, trans, target_user)
     {
         LOG(LOG_INFO, "Creation of new mod 'RDP'");
         // from rdp_sec
@@ -523,7 +517,7 @@ struct mod_rdp : public client_mod {
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, this->userid, channel.chanid);
 
-        SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
+        SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
 
         stream.out_uint32_le(length);
         stream.out_uint32_le(flags);
@@ -585,7 +579,8 @@ struct mod_rdp : public client_mod {
                             keylayout,
                             hostname,
                             this->use_rdp5,
-                            this->console_session);
+                            this->console_session,
+                            this->nego.tls);
                     this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;
                 break;
             }
@@ -705,12 +700,13 @@ struct mod_rdp : public client_mod {
             // Client                                                     Server
             //    |------Security Exchange PDU ---------------------------> |
 
-            LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
-            send_security_exchange_PDU(this->nego.trans,
-                this->userid,
-                this->server_public_key_len,
-                this->client_crypt_random);
-
+            if (this->crypt_level){
+                LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
+                send_security_exchange_PDU(this->nego.trans,
+                    this->userid,
+                    this->server_public_key_len,
+                    this->client_crypt_random);
+            }
             // Secure Settings Exchange
             // ------------------------
 
@@ -826,32 +822,153 @@ struct mod_rdp : public client_mod {
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
             LOG(LOG_INFO, "Sec layer");
-            SecIn sec(stream, this->decrypt);
+            SecIn sec(stream, this->decrypt, true);
             LOG(LOG_INFO, "Licence layer");
 
             if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
+
+            // 2.2.1.12.1 Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
+            // ================================================================
+
+
+            // validClientLicenseData (variable): The actual contents of the
+            // License Error (Valid Client) PDU, as specified in section 2.2.1.12.1.
+
+
+            // preamble (4 bytes): Licensing Preamble (section 2.2.1.12.1.1) structure containing header
+            // information. The bMsgType field of the preamble structure MUST be set to ERROR_ALERT (0xFF).
+
+
+            // 2.2.1.12.1.1 Licensing Preamble (LICENSE_PREAMBLE)
+            // --------------------------------------------------
+
+            // Note: Some of the information in this section is subject to
+            // change because it applies to a preliminary implementation of the
+            // protocol or structure. For information about specific differences
+            // between versions, see the behavior notes that are provided in the
+            // Product Behavior appendix.
+
+            // The LICENSE_PREAMBLE structure precedes every licensing packet
+            // sent on the wire.
+
+            // bMsgType (1 byte): An 8-bit, unsigned integer. A type of the
+            // licensing packet. For more details about the different licensing
+            // packets, see [MS-RDPELE] section 2.2.2.
+
+            // Sent by server:
+            // 0x01 LICENSE_REQUEST Indicates a License Request PDU ([MS-RDPELE] section 2.2.2.1).
+            // 0x02 PLATFORM_CHALLENGE Indicates a Platform Challenge PDU ([MS-RDPELE] section 2.2.2.4).
+            // 0x03 NEW_LICENSE Indicates a New License PDU ([MS-RDPELE] section 2.2.2.7).
+            // 0x04 UPGRADE_LICENSE Indicates an Upgrade License PDU ([MS-RDPELE] section 2.2.2.6).
+
+            // Sent by client:
+            // 0x12 LICENSE_INFO Indicates a License Information PDU ([MS-RDPELE] section 2.2.2.3).
+            // 0x13 NEW_LICENSE_REQUEST Indicates a New License Request PDU ([MS-RDPELE] section 2.2.2.2).
+            // 0x15 PLATFORM_CHALLENGE_RESPONSE Indicates a Platform Challenge Response PDU ([MS-RDPELE] section 2.2.2.5).
+
+            // Sent by either client or server:
+            // 0xFF ERROR_ALERT Indicates a Licensing Error Message PDU (section 2.2.1.12.1.3).
+
+            // flags (1 byte): An 8-bit unsigned integer. License preamble flags.
+
+            // +-----------------------------------+------------------------------------------------------+
+            // | 0x0F LicenseProtocolVersionMask   | The license protocol version. See the discussion     |
+            // |                                   | which follows this table for more information.       |
+            // +-----------------------------------+------------------------------------------------------+
+            // | 0x80 EXTENDED_ERROR_MSG_SUPPORTED | Indicates that extended error information using the  |
+            // |                                   | License Error Message (section 2.2.1.12.1.3) is      |
+            // |                                   | supported.                                           |
+            // +-----------------------------------+------------------------------------------------------+
+
+            // The LicenseProtocolVersionMask is a 4-bit value containing the supported license protocol version. The following are possible version values.
+            // +--------------------------+------------------------------------------------+
+            // | 0x2 PREAMBLE_VERSION_2_0 | RDP 4.0                                        |
+            // +--------------------------+------------------------------------------------+
+            // | 0x3 PREAMBLE_VERSION_3_0 | RDP 5.0, 5.1, 5.2, 6.0, 6.1, 7.0, 7.1, and 8.0 |
+            // +--------------------------+------------------------------------------------+
+
+
+            // wMsgSize (2 bytes): An 16-bit, unsigned integer. The size in
+            // bytes of the licensing packet (including the size of the preamble).
+            // --------------------------------------------------
+
+            // validClientMessage (variable): A Licensing Error Message (section
+            // 2.2.1.12.1.3) structure. The dwErrorCode field of the error message
+            // structure MUST be set to STATUS_VALID_CLIENT (0x00000007) and the
+            // dwStateTransition field MUST be set to ST_NO_TRANSITION (0x00000002).
+            // The bbErrorInfo field MUST contain an empty binary large object
+            // (BLOB) of type BB_ERROR_BLOB (0x0004).
+
+
+            // 2.2.1.12.1.3 Licensing Error Message (LICENSE_ERROR_MESSAGE)
+            // ============================================================
+
+
+            // The LICENSE_ERROR_MESSAGE structure is used to indicate that an
+            //  error occurred during the licensing protocol. Alternatively,
+            // it is also used to notify the peer of important status information.
+
+            // dwErrorCode (4 bytes): A 32-bit, unsigned integer. The error or
+            // status code.
+
+            // Sent by client:
+            // ERR_INVALID_SERVER_CERTIFICATE 0x00000001
+            // ERR_NO_LICENSE 0x00000002
+
+            // Sent by server
+            // ERR_INVALID_SCOPE 0x00000004
+            // ERR_NO_LICENSE_SERVER 0x00000006
+            // STATUS_VALID_CLIENT 0x00000007
+            // ERR_INVALID_CLIENT 0x00000008
+            // ERR_INVALID_PRODUCTID 0x0000000B
+            // ERR_INVALID_MESSAGE_LEN 0x0000000C
+
+            // Sent by client and server:
+            // ERR_INVALID_MAC 0x00000003
+
+            // dwStateTransition (4 bytes): A 32-bit, unsigned integer. The
+            // licensing state to transition into upon receipt of this message.
+            // For more details about how this field is used, see [MS-RDPELE]
+            // section 3.1.5.2.
+
+            // ST_TOTAL_ABORT 0x00000001
+            // ST_NO_TRANSITION 0x00000002
+            // ST_RESEND_LAST_MESSAGE 0x00000003
+            // ST_RESET_PHASE_TO_START 0x00000004
+
+            // bbErrorInfo (variable): A LICENSE_BINARY_BLOB (section
+            // 2.2.1.12.1.2) structure which MUST contain a BLOB of type
+            // BB_ERROR_BLOB (0x0004) that includes information relevant to
+            // the error code specified in dwErrorCode.
+
                 uint8_t tag = stream.in_uint8();
-                stream.in_skip_bytes(3); /* version, length */
+                uint8_t version = stream.in_uint8();
+                uint16_t length = stream.in_uint16_le();
                 switch (tag) {
-                case LICENCE_TAG_DEMAND:
-                    LOG(LOG_INFO, "LICENCE_TAG_DEMAND");
+                case LICENSE_REQUEST:
+                    LOG(LOG_INFO, "LICENSE_REQUEST");
                     this->lic_layer.rdp_lic_process_demand(this->nego.trans, stream, hostname, username, userid, licence_issued, this->encrypt);
                     break;
-                case LICENCE_TAG_AUTHREQ:
-                    LOG(LOG_INFO, "LICENCE_TAG_AUTHREQ");
+                case PLATFORM_CHALLENGE:
+                    LOG(LOG_INFO, "PLATFORM_CHALLENGE");
                     this->lic_layer.rdp_lic_process_authreq(this->nego.trans, stream, hostname, userid, licence_issued, this->encrypt);
                     break;
-                case LICENCE_TAG_ISSUE:
-                    LOG(LOG_INFO, "LICENCE_TAG_ISSUE");
+                case NEW_LICENSE:
+                    LOG(LOG_INFO, "NEW_LICENSE");
                     res = this->lic_layer.rdp_lic_process_issue(stream, hostname, licence_issued);
                     break;
-                case LICENCE_TAG_REISSUE:
-                    LOG(LOG_INFO, "LICENCE_TAG_REISSUE");
+                case UPGRADE_LICENSE:
+                    LOG(LOG_INFO, "UPGRADE_LICENSE");
                     break;
                 case LICENCE_TAG_RESULT:
-                    LOG(LOG_INFO, "LICENCE_TAG_RESULT");
+                {
+                    uint32_t dwErrorCode = stream.in_uint32_le();
+                    uint32_t dwStateTransition = stream.in_uint32_le();
+                    uint32_t bbErrorInfo = stream.in_uint32_le();
+                    LOG(LOG_INFO, "LICENCE_TAG_RESULT %u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u", version, length, dwErrorCode, dwStateTransition, bbErrorInfo);
                     res = 1;
-                    break;
+                }
+                break;
                 default:
                     LOG(LOG_INFO, "LICENCE_TAG_OTHER %x", tag);
                     break;
@@ -931,7 +1048,7 @@ struct mod_rdp : public client_mod {
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");
-            SecIn sec(stream, this->decrypt);
+            SecIn sec(stream, this->decrypt, this->crypt_level);
             if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
                 LOG(LOG_ERR, "Error: unexpected licence negotiation sec packet");
                 throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
@@ -1229,7 +1346,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
 
         // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1) containing information about the packet. The type subfield of the pduType field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
 
@@ -1278,50 +1395,22 @@ struct mod_rdp : public client_mod {
             bitmap_caps.emit(stream);
             capscount++;
 
-            cs_out_order_caps(stream);
-//            OrderCaps order_caps;
-//            order_caps.numberFonts = 0x147;
-//            order_caps.orderFlags = 0x2a;
-
-//            order_caps.orderSupport[TS_NEG_DSTBLT_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_PATBLT_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_SCRBLT_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_MEMBLT_INDEX] = 1;
-////            order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX] = 1;
-////            order_caps.orderSupport[UnusedIndex1] = 1;
-////            order_caps.orderSupport[UnusedIndex2] = 1;
-////            order_caps.orderSupport[TS_NEG_DRAWNINEGRID_INDEX] = 1;
-//            order_caps.orderSupport[TS_NEG_LINETO_INDEX] = 1;
-////            order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
-////            order_caps.orderSupport[UnusedIndex3] = 1;
-////            order_caps.orderSupport[TS_NEG_SAVEBITMAP_INDEX] = 0;
-////            order_caps.orderSupport[UnusedIndex4] = 1;
-//            order_caps.orderSupport[UnusedIndex5] = 1;
-////            order_caps.orderSupport[UnusedIndex6] = 1;
-////            order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX] = 1;
-////            order_caps.orderSupport[TS_NEG_MULTIPATBLT_INDEX] = 1;
-////            order_caps.orderSupport[TS_NEG_MULTISCRBLT_INDEX] = 1;
-////            order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX] = 1;
-////            order_caps.orderSupport[TS_NEG_FAST_INDEX_INDEX] = 1;
-////            order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX] = 1;
-////            order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX] = 1;
-////            order_caps.orderSupport[TS_NEG_POLYLINE_INDEX] = 1;
-////            order_caps.orderSupport[UnusedIndex7] = 1;
-//            order_caps.orderSupport[TS_NEG_FAST_GLYPH_INDEX] = 1;
-////            order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX] = 1;
-////            order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX] = 1;
-////            order_caps.orderSupport[TS_NEG_INDEX_INDEX] = 1;
-////            order_caps.orderSupport[UnusedIndex8] = 1;
-////            order_caps.orderSupport[UnusedIndex9] = 1;
-////            order_caps.orderSupport[UnusedIndex10] = 1;
-////            order_caps.orderSupport[UnusedIndex11] = 1;
-
-//            order_caps.textFlags = 0x6a1;
-//            order_caps.textANSICodePage = 0x4;
-//            order_caps.pad2octetsE = 0xe4;
-
-//            order_caps.log("Sending order caps to server");
-//            order_caps.emit(stream);
+            OrderCaps order_caps;
+            order_caps.numberFonts = 0x147;
+            order_caps.orderFlags = 0x2a;
+            order_caps.orderSupport[TS_NEG_DSTBLT_INDEX] = 1;
+            order_caps.orderSupport[TS_NEG_PATBLT_INDEX] = 1;
+            order_caps.orderSupport[TS_NEG_SCRBLT_INDEX] = 1;
+            order_caps.orderSupport[TS_NEG_MEMBLT_INDEX] = 1;
+            order_caps.orderSupport[TS_NEG_LINETO_INDEX] = 1;
+            order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
+            order_caps.orderSupport[UnusedIndex3] = 1;
+            order_caps.orderSupport[UnusedIndex5] = 1;
+            order_caps.orderSupport[TS_NEG_INDEX_INDEX] = 1;
+            order_caps.textFlags = 0x06a1;
+            order_caps.textANSICodePage = 0x4e4; // Windows-1252 code"page is passed (latin-1)
+            order_caps.log("Sending order caps to server");
+            order_caps.emit(stream);
             capscount++;
 
             BmpCacheCaps bmpcache_caps;
@@ -1331,7 +1420,7 @@ struct mod_rdp : public client_mod {
             bmpcache_caps.cache1MaximumCellSize = nbbytes(this->bpp) * 0x400;
             bmpcache_caps.cache2Entries = 0x106;
             bmpcache_caps.cache2MaximumCellSize = nbbytes(this->bpp) * 0x1000;
-//            bmpcache_caps.log("Sending bmpcache caps to server");
+            bmpcache_caps.log("Sending bmpcache caps to server");
             bmpcache_caps.emit(stream);
             capscount++;
 
@@ -2184,8 +2273,12 @@ struct mod_rdp : public client_mod {
                 }
                 break;
                 case CAPSTYPE_ORDER:
-                    sc_in_order_caps(stream, capset_length);
+                {
+                    OrderCaps order_caps;
+                    order_caps.log("Received from server");
+                    order_caps.recv(stream);
                     break;
+                }
                 default:
                     break;
                 }
@@ -2205,7 +2298,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
@@ -2233,7 +2326,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
@@ -2259,7 +2352,7 @@ struct mod_rdp : public client_mod {
             Stream stream(65536);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_FONTLIST, this->share_id, RDP::STREAM_MED);
 
@@ -2304,7 +2397,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_INPUT, this->share_id, RDP::STREAM_HI);
 
@@ -2339,7 +2432,7 @@ struct mod_rdp : public client_mod {
                     Stream stream(32768);
                     X224Out tpdu(X224Packet::DT_TPDU, stream);
                     McsOut sdrq_out(stream, MCS_SDRQ, this->userid, MCS_GLOBAL_CHANNEL);
-                    SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt);
+                    SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
                     ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
                     ShareDataOut rdp_data_out(stream, PDUTYPE2_REFRESH_RECT, this->share_id, RDP::STREAM_MED);
 
@@ -2610,7 +2703,7 @@ struct mod_rdp : public client_mod {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out2(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, SEC_LOGON_INFO | SEC_ENCRYPT, this->encrypt);
+        SecOut sec_out(stream, SEC_LOGON_INFO | SEC_ENCRYPT, this->encrypt, this->crypt_level);
 
         stream.out_uint32_le(0);
         stream.out_uint32_le(flags);

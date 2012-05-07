@@ -110,6 +110,18 @@ struct InputCaps : public Capability {
         stream.out_utf16(this->imeFileName, 32);
     }
 
+    void recv(Stream & stream){
+        this->capabilityType = stream.in_uint16_le();
+        this->len = stream.in_uint16_le();
+        this->inputFlags = stream.in_uint16_le();
+        this->pad2octetsA = stream.in_uint16_le();
+        this->keyboardLayout = stream.in_uint32_le();
+        this->keyboardType = stream.in_uint32_le();
+        this->keyboardSubType = stream.in_uint32_le();
+        this->keyboardFunctionKey = stream.in_uint32_le();
+        stream.in_utf16(this->imeFileName, 32);
+    }
+
     void log(const char * msg){
         LOG(LOG_INFO, "%s Input caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "Input caps::inputFlags %u", this->inputFlags);
@@ -122,11 +134,4 @@ struct InputCaps : public Capability {
     }
 };
 
-static inline void front_out_input_caps(Stream & stream)
-{
-    stream.out_uint16_le(CAPSTYPE_INPUT); /* 13(0xd) */
-    stream.out_uint16_le(RDP_CAPLEN_INPUT); /* 88(0x58) */
-    stream.out_uint8(1);
-    stream.out_clear_bytes(83);
-}
 #endif
