@@ -620,6 +620,12 @@ TODO(" ssl calls introduce some dependency on ssl system library  injecting it i
 // packet formats and the structure of the Security Header in both of these
 // scenarios.
 
+enum {
+    SEC_CLIENT_RANDOM = 0x0001,
+    SEC_ENCRYPT       = 0x0008,
+    SEC_LOGON_INFO    = 0x0040,
+    SEC_LICENCE_NEG   = 0x0080,
+};
 
 class SecOut
 {
@@ -636,7 +642,7 @@ class SecOut
         if (this->verbose){
             LOG(LOG_INFO, "SecOut(flags=%u)", flags);
         }
-        if (this->enabled && this->flags){
+        if (this->enabled || (this->flags && SEC_LOGON_INFO)){
             this->stream.out_uint32_le(this->flags);
             if ((this->flags & SEC_ENCRYPT)||(this->flags & 0x0400)){
                 this->stream.out_skip_bytes(8); // skip crypt sign

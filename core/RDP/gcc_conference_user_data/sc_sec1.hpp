@@ -210,6 +210,15 @@ TODO(" ssl calls introduce some dependency on ssl system library  injecting it i
 //  The modulus field contains all (bitlen / 8) bytes of the public key modulus
 //  and 8 bytes of zero padding (which MUST follow after the modulus bytes).
 
+enum {
+
+    SEC_TAG_PUBKEY    = 0x0006,
+    SEC_TAG_KEYSIG    = 0x0008,
+
+    SEC_RSA_MAGIC     = 0x31415352, /* RSA1 */
+};
+
+
 struct SCSecurityGccUserData {
     uint16_t userDataType;
     uint16_t length;

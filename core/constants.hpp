@@ -109,18 +109,6 @@ enum {
     SEC_EXPONENT_SIZE =  4
 };
 
-enum {
-    SEC_CLIENT_RANDOM = 0x0001,
-    SEC_ENCRYPT       = 0x0008,
-    SEC_LOGON_INFO    = 0x0040,
-    SEC_LICENCE_NEG   = 0x0080,
-
-    SEC_TAG_PUBKEY    = 0x0006,
-    SEC_TAG_KEYSIG    = 0x0008,
-
-    SEC_RSA_MAGIC     = 0x31415352, /* RSA1 */
-};
-
 enum DATA_BLOCK_TYPE {
 //  The data block that follows contains Client Core Data (section 2.2.1.3.2).
 CS_CORE = 0xC001,
