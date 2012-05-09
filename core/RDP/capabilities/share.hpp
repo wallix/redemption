@@ -74,7 +74,6 @@ struct ShareCaps : public Capability {
         LOG(LOG_INFO, "%s Share caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "Share caps::nodeId %u", this->nodeId);
         LOG(LOG_INFO, "Share caps::pad2octets %u", this->pad2octets);
-
     }
 };
 
