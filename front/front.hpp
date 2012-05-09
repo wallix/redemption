@@ -1149,7 +1149,7 @@ public:
 
             SecIn sec(stream, this->decrypt, true);
 
-            if (!sec.flags & SEC_LOGON_INFO) { /* 0x01 */
+            if (!sec.flags & SEC_INFO_PKT) { /* 0x01 */
                 throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
             }
 
@@ -1238,7 +1238,7 @@ public:
 
             // Disconnect Provider Ultimatum datagram
 
-            if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
+            if (sec.flags & SEC_LICENSE_PKT) {
                 uint8_t tag = stream.in_uint8();
                 uint8_t version = stream.in_uint8();
                 uint16_t length = stream.in_uint16_le();

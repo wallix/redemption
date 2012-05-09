@@ -89,23 +89,6 @@ enum {
 
 
 
-/* RDP licensing constants */
-enum {
-    LICENCE_TOKEN_SIZE             = 10,
-    LICENCE_HWID_SIZE              = 20,
-    LICENCE_SIGNATURE_SIZE         = 16,
-};
-
-enum {
-    LICENSE_REQUEST             = 0x01,
-    PLATFORM_CHALLENGE          = 0x02,
-    NEW_LICENSE                 = 0x03,
-    UPGRADE_LICENSE             = 0x04,
-    LICENSE_INFO                = 0x12,
-    NEW_LICENSE_REQUEST         = 0x13,
-    PLATFORM_CHALLENGE_RESPONSE = 0x15,
-    ERROR_ALERT                 = 0xff
-};
 
 enum {
     LICENCE_TAG_USER               = 0x000f,
@@ -170,12 +153,6 @@ enum {
     KBD_FLAG_SCROLL                = 0x0001,
     KBD_FLAG_NUMLOCK               = 0x0002,
     KBD_FLAG_CAPITAL               = 0x0004,
-};
-
-/* See T.128 */
-enum {
-    RDP_KEYPRESS                   = 0,
-    RDP_KEYRELEASE                 = (KBD_FLAG_DOWN | KBD_FLAG_UP),
 };
 
 enum {
@@ -293,50 +270,11 @@ FILE_NON_DIRECTORY_FILE        = 0x00000040,
 FILE_OPEN_FOR_FREE_SPACE_QUERY = 0x00800000,
 };
 
-/* drawable types */
-enum {
-WND_TYPE_BITMAP  = 0,
-WND_TYPE_WND     = 1,
-WND_TYPE_SCREEN  = 2,
-WND_TYPE_BUTTON  = 3,
-WND_TYPE_IMAGE   = 4,
-WND_TYPE_EDIT    = 5,
-WND_TYPE_LABEL   = 6,
-WND_TYPE_COMBO   = 7,
-WND_TYPE_SPECIAL = 8,
-WND_TYPE_LISTBOX = 9,
-};
-
 /* button states */
 enum {
 BUTTON_STATE_UP   = 0,
 BUTTON_STATE_DOWN = 1,
 };
-
-/* messages */
-
-enum {
-WM_PAINT       = 3,
-WM_KEYDOWN     = 15,
-WM_KEYUP       = 16,
-WM_SYNCHRONIZE = 17,
-WM_MOUSEMOVE   = 100,
-WM_LBUTTONUP   = 101,
-WM_LBUTTONDOWN = 102,
-WM_RBUTTONUP   = 103,
-WM_RBUTTONDOWN = 104,
-WM_BUTTON3UP   = 105,
-WM_BUTTON3DOWN = 106,
-WM_BUTTON4UP   = 107,
-WM_BUTTON4DOWN = 108,
-WM_BUTTON5UP   = 109,
-WM_BUTTON5DOWN = 110,
-WM_BUTTON_OK = 300,
-WM_SCREENUPDATE = 0x4444,
-WM_CHANNELDATA = 0x5555,
-};
-
-
 
 enum {
 CB_ITEMCHANGE  = 300,

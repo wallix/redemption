@@ -109,6 +109,23 @@ TODO(" ssl calls introduce some dependency on ssl system library  injecting it i
 // |                                | ignored.                                 |
 // +--------------------------------+------------------------------------------+
 
+
+enum {
+
+SEC_EXCHANGE_PKT = 0x0001,
+SEC_ENCRYPT = 0x0008,
+SEC_RESET_SEQNO = 0x0010,
+SEC_IGNORE_SEQNO = 0x0020,
+SEC_INFO_PKT = 0x0040,
+SEC_LICENSE_PKT = 0x0080,
+SEC_LICENSE_ENCRYPT_CS = 0x0200,
+SEC_LICENSE_ENCRYPT_SC = 0x0200,
+SEC_REDIRECTION_PKT = 0x0400,
+SEC_SECURE_CHECKSUM = 0x0800,
+};
+
+
+
 // flagsHi (2 bytes): A 16-bit, unsigned integer. This field is reserved for
 // future RDP needs. It is currently unused and all values are ignored. This
 // field MUST contain valid data only if the SEC_FLAGSHI_VALID bit (0x8000) is
@@ -620,12 +637,6 @@ TODO(" ssl calls introduce some dependency on ssl system library  injecting it i
 // packet formats and the structure of the Security Header in both of these
 // scenarios.
 
-enum {
-    SEC_CLIENT_RANDOM = 0x0001,
-    SEC_ENCRYPT       = 0x0008,
-    SEC_LOGON_INFO    = 0x0040,
-    SEC_LICENCE_NEG   = 0x0080,
-};
 
 class SecOut
 {
@@ -642,7 +653,7 @@ class SecOut
         if (this->verbose){
             LOG(LOG_INFO, "SecOut(flags=%u)", flags);
         }
-        if (this->enabled || (this->flags && SEC_LOGON_INFO)){
+        if (this->enabled || (this->flags && SEC_INFO_PKT)){
             this->stream.out_uint32_le(this->flags);
             if ((this->flags & SEC_ENCRYPT)||(this->flags & 0x0400)){
                 this->stream.out_skip_bytes(8); // skip crypt sign
@@ -726,7 +737,7 @@ static inline void recv_security_exchange_PDU(
     }
 
     SecIn sec(stream, decrypt, true);
-    if (!sec.flags & SEC_CLIENT_RANDOM) { /* 0x01 */
+    if (!sec.flags & SEC_EXCHANGE_PKT) {
         throw Error(ERR_SEC_EXPECTING_CLIENT_RANDOM);
     }
     uint32_t len = stream.in_uint32_le() - SEC_PADDING_SIZE;
@@ -769,7 +780,7 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     X224Out sdrq_tpdu(X224Packet::DT_TPDU, sdrq_stream);
     McsOut sdrq_out(sdrq_stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
 
-    sdrq_stream.out_uint32_le(SEC_CLIENT_RANDOM);
+    sdrq_stream.out_uint32_le(SEC_EXCHANGE_PKT);
     sdrq_stream.out_uint32_le(server_public_key_len + SEC_PADDING_SIZE);
     LOG(LOG_INFO, "Server public key is %d bytes long", server_public_key_len);
     sdrq_stream.out_copy_bytes(client_crypt_random, server_public_key_len);

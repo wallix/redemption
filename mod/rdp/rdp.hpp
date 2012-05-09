@@ -825,7 +825,7 @@ struct mod_rdp : public client_mod {
             SecIn sec(stream, this->decrypt, true);
             LOG(LOG_INFO, "Licence layer");
 
-            if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
+            if (sec.flags & SEC_LICENSE_PKT) {
 
             // 2.2.1.12.1 Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
             // ================================================================
@@ -1049,7 +1049,7 @@ struct mod_rdp : public client_mod {
             }
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");
             SecIn sec(stream, this->decrypt, this->crypt_level);
-            if (sec.flags & SEC_LICENCE_NEG) { /* 0x80 */
+            if (sec.flags & SEC_LICENSE_PKT) { /* 0x80 */
                 LOG(LOG_ERR, "Error: unexpected licence negotiation sec packet");
                 throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
             }
@@ -3187,7 +3187,7 @@ struct mod_rdp : public client_mod {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out2(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, SEC_LOGON_INFO | (this->crypt_level?SEC_ENCRYPT:0), this->encrypt, true);
+        SecOut sec_out(stream, SEC_INFO_PKT | (this->crypt_level?SEC_ENCRYPT:0), this->encrypt, true);
 
         send_logon_info_packet(stream, this->domain, this->username, password, this->program, this->directory, this->use_rdp5, rdp5_performanceflags);
 

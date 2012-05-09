@@ -488,12 +488,11 @@ struct mod_vnc : public client_mod {
     }
 
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap){
-        int msg = (device_flags & KBD_FLAG_UP)?WM_KEYUP:WM_KEYDOWN;
         int key = keymap->top_char();
         if (key > 0) {
             Stream stream(32768);
             stream.out_uint8(4);
-            stream.out_uint8(msg == WM_KEYDOWN); /* down/up flag */
+            stream.out_uint8(!(device_flags & KBD_FLAG_UP)); /* down/up flag */
             stream.out_clear_bytes(2);
             stream.out_uint32_be(key);
             this->t->send(stream.data, 8);

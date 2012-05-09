@@ -32,6 +32,24 @@
 #include "sec_utils.hpp"
 #include "RDP/sec.hpp"
 
+enum {
+    LICENCE_TOKEN_SIZE             = 10,
+    LICENCE_HWID_SIZE              = 20,
+    LICENCE_SIGNATURE_SIZE         = 16,
+};
+
+enum {
+    LICENSE_REQUEST             = 0x01,
+    PLATFORM_CHALLENGE          = 0x02,
+    NEW_LICENSE                 = 0x03,
+    UPGRADE_LICENSE             = 0x04,
+    LICENSE_INFO                = 0x12,
+    NEW_LICENSE_REQUEST         = 0x13,
+    PLATFORM_CHALLENGE_RESPONSE = 0x15,
+    ERROR_ALERT                 = 0xff
+};
+
+
 // 2.2.1.12 Server License Error PDU - Valid Client
 // =============================================
 
@@ -119,8 +137,8 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
     Stream stream(32768);
     X224Out tpdu(X224Packet::DT_TPDU, stream);
     McsOut sdin_out(stream, MCS_SDIN, userid, MCS_GLOBAL_CHANNEL);
-    stream.out_uint32_le(SEC_LICENCE_NEG);
 
+    stream.out_uint32_le(SEC_LICENSE_PKT);
     stream.out_uint8(LICENSE_REQUEST);
     stream.out_uint8(2); // preamble flags : PREAMBLE_VERSION_2_0 (RDP 4.0)
     stream.out_uint16_le(318); // wMsgSize = 318 including preamble
@@ -303,7 +321,7 @@ struct RdpLicence {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, SEC_LICENCE_NEG, encrypt, true);
+        SecOut sec_out(stream, SEC_LICENSE_PKT, encrypt, true);
 
         stream.out_uint8(PLATFORM_CHALLENGE_RESPONSE);
 
@@ -468,7 +486,7 @@ struct RdpLicence {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, SEC_LICENCE_NEG, encrypt, true);
+        SecOut sec_out(stream, SEC_LICENSE_PKT, encrypt, true);
 
         stream.out_uint8(NEW_LICENSE_REQUEST);
         stream.out_uint8(2); /* version */
