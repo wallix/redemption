@@ -302,26 +302,6 @@ PDU_FLAG_LAST                  = 0x02,
 };
 
 
-/* Logon flags */
-enum {
-RDP_LOGON_AUTO                 = 0x0008,
-RDP_LOGON_NORMAL               = 0x0033,
-RDP_COMPRESSION                = 0x0080,
-RDP_LOGON_BLOB                 = 0x0100,
-RDP_COMPRESSION2               = 0x0200,
-RDP_LOGON_LEAVE_AUDIO          = 0x2000,
-};
-
-enum {
-RDP5_DISABLE_NOTHING           = 0x00,
-RDP5_NO_WALLPAPER              = 0x01,
-RDP5_NO_FULLWINDOWDRAG         = 0x02,
-RDP5_NO_MENUANIMATIONS         = 0x04,
-RDP5_NO_THEMING                = 0x08,
-RDP5_NO_CURSOR_SHADOW          = 0x20,
-RDP5_NO_CURSORSETTINGS         = 0x40 /* disables cursor blinking */,
-};
-
 /* compression types */
 enum {
 RDP_MPPC_BIG                   = 0x01,

@@ -719,8 +719,7 @@ struct mod_rdp : public client_mod {
             //    |------ Client Info PDU      ---------------------------> |
 
             LOG(LOG_INFO, "mod_rdp::Secure Settings Exchange");
-            TODO("We could use rdp5_performance flags sent from RDP clients to front and forward them")
-            int rdp5_performanceflags = RDP5_NO_WALLPAPER;
+            int rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
 
             this->send_client_info_pdu(
                                 this->userid,

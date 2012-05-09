@@ -586,7 +586,7 @@ static inline void send_logon_info_packet(Stream & stream, const char * domain, 
     stream.out_uint16_le(2 * strlen(directory));
     stream.out_unistr(domain);
     stream.out_unistr(username);
-    if (flags & RDP_LOGON_AUTO){
+    if (flags & INFO_AUTOLOGON){
         stream.out_unistr(password);
     }
     else{
@@ -661,7 +661,7 @@ static inline void recv_logon_info(Stream & stream, uint32_t & flags, uint32_t &
     stream.in_uni_to_ascii_str(username, len_user);
 
     // We have a password available
-    if (flags & RDP_LOGON_AUTO) {
+    if (flags & INFO_AUTOLOGON) {
         stream.in_uni_to_ascii_str(password, len_password);
     } else {
         stream.in_skip_bytes(len_password);
