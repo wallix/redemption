@@ -31,8 +31,27 @@
 #define __CORE_RDP_GCC_HPP__
 
 #include "stream.hpp"
-#include "gcc_conference_user_data/cs_core.hpp"
 
+enum DATA_BLOCK_TYPE {
+    //  The data block that follows contains Client Core Data (section 2.2.1.3.2).
+    CS_CORE = 0xC001,
+    // The data block that follows contains Client Security Data (section 2.2.1.3.3).
+    CS_SECURITY = 0xC002,
+    // The data block that follows contains Client Network Data (section 2.2.1.3.4).
+    CS_NET = 0xC003,
+    // The data block that follows contains Client Cluster Data (section 2.2.1.3.5).
+    CS_CLUSTER = 0xC004,
+    // The data block that follows contains Client Monitor Data (section 2.2.1.3.6).
+    CS_MONITOR = 0xC005,
+    // The data block that follows contains Server Core Data (section 2.2.1.4.2).
+    SC_CORE = 0x0C01,
+    // The data block that follows contains Server Security Data (section 2.2.1.4.3).
+    SC_SECURITY = 0x0C02,
+    // The data block that follows contains Server Network Data (section 2.2.1.4.4).
+    SC_NET = 0x0C03
+};
+
+#include "gcc_conference_user_data/cs_core.hpp"
 #include "gcc_conference_user_data/cs_cluster.hpp"
 #include "gcc_conference_user_data/cs_monitor.hpp"
 #include "gcc_conference_user_data/cs_net.hpp"

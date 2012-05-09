@@ -62,12 +62,6 @@
 #define RSAKEYS_INI "rsakeys.ini"
 #define RDPPROXY_INI "rdpproxy.ini"
 
-enum Capture_flags {
-    DONT_CAPTURE = 0,
-    VIDEO_RECORDING = 1,
-    VISU_REAL_TIME = 2
-};
-
 enum {
     POINTER_TO_SEND = 0,
     POINTER_ALLREADY_SENT
@@ -78,22 +72,6 @@ enum {
     BRUSH_ALLREADY_SENT
 };
 
-
-enum {
-    BER_TAG_MCS_CONNECT_INITIAL  = 0x7f65,
-    BER_TAG_MCS_CONNECT_RESPONSE = 0x7f66,
-};
-
-enum {
-    BER_TAG_BOOLEAN      =    1,
-    BER_TAG_INTEGER      =    2,
-    BER_TAG_OCTET_STRING =    4,
-    BER_TAG_RESULT       =   10,
-};
-
-enum {
-    BER_TAG_MCS_DOMAIN_PARAMS = 0x30
-};
 
 enum {
     MCS_GLOBAL_CHANNEL   = 1003,
@@ -109,142 +87,123 @@ enum {
     SEC_EXPONENT_SIZE =  4
 };
 
-enum DATA_BLOCK_TYPE {
-//  The data block that follows contains Client Core Data (section 2.2.1.3.2).
-CS_CORE = 0xC001,
-// The data block that follows contains Client Security Data (section 2.2.1.3.3).
-CS_SECURITY = 0xC002,
-// The data block that follows contains Client Network Data (section 2.2.1.3.4).
-CS_NET = 0xC003,
-// The data block that follows contains Client Cluster Data (section 2.2.1.3.5).
-CS_CLUSTER = 0xC004,
-// The data block that follows contains Client Monitor Data (section 2.2.1.3.6).
-CS_MONITOR = 0xC005,
-// The data block that follows contains Server Core Data (section 2.2.1.4.2).
-SC_CORE = 0x0C01,
-// The data block that follows contains Server Security Data (section 2.2.1.4.3).
-SC_SECURITY = 0x0C02,
-// The data block that follows contains Server Network Data (section 2.2.1.4.4).
-SC_NET = 0x0C03
-};
-
 
 
 /* RDP licensing constants */
 enum {
-LICENCE_TOKEN_SIZE             = 10,
-LICENCE_HWID_SIZE              = 20,
-LICENCE_SIGNATURE_SIZE         = 16,
+    LICENCE_TOKEN_SIZE             = 10,
+    LICENCE_HWID_SIZE              = 20,
+    LICENCE_SIGNATURE_SIZE         = 16,
 };
 
 enum {
-LICENSE_REQUEST             = 0x01, // LICENSE_REQUEST
-PLATFORM_CHALLENGE            = 0x02, // PLATFORM_CHALLENGE
-NEW_LICENSE              = 0x03, // NEW_LICENSE
-UPGRADE_LICENSE            = 0x04, // UPGRADE_LICENSE
+    LICENSE_REQUEST             = 0x01,
+    PLATFORM_CHALLENGE          = 0x02,
+    NEW_LICENSE                 = 0x03,
+    UPGRADE_LICENSE             = 0x04,
+    LICENSE_INFO                = 0x12,
+    NEW_LICENSE_REQUEST         = 0x13,
+    PLATFORM_CHALLENGE_RESPONSE = 0x15,
+    ERROR_ALERT                 = 0xff
+};
 
-LICENSE_INFO            = 0x12, // LICENSE_INFO
-NEW_LICENSE_REQUEST            = 0x13, // NEW_LICENSE_REQUEST
-PLATFORM_CHALLENGE_RESPONSE           = 0x15, // PLATFORM_CHALLENGE_RESPONSE
-
-LICENCE_TAG_RESULT             = 0xff, // ERROR_ALERT
-
-LICENCE_TAG_USER               = 0x000f,
-LICENCE_TAG_HOST               = 0x0010,
+enum {
+    LICENCE_TAG_USER               = 0x000f,
+    LICENCE_TAG_HOST               = 0x0010,
 };
 
 /* RDP PDU codes */
 enum {
-PDUTYPE_DEMANDACTIVEPDU        = 1,
-PDUTYPE_CONFIRMACTIVEPDU       = 3,
-RDP_PDU_REDIRECT               = 4, // This one is not documented...
-PDUTYPE_DEACTIVATEALLPDU       = 6,
-PDUTYPE_DATAPDU                = 7,
-PDUTYPE_SERVER_REDIR_PKT       = 10,
+    PDUTYPE_DEMANDACTIVEPDU        = 1,
+    PDUTYPE_CONFIRMACTIVEPDU       = 3,
+    RDP_PDU_REDIRECT               = 4, // This one is not documented...
+    PDUTYPE_DEACTIVATEALLPDU       = 6,
+    PDUTYPE_DATAPDU                = 7,
+    PDUTYPE_SERVER_REDIR_PKT       = 10,
 };
 
 enum {
-RDP_CTL_REQUEST_CONTROL        = 1,
-RDP_CTL_GRANT_CONTROL          = 2,
-RDP_CTL_DETACH                 = 3,
-RDP_CTL_COOPERATE              = 4,
+    RDP_CTL_REQUEST_CONTROL        = 1,
+    RDP_CTL_GRANT_CONTROL          = 2,
+    RDP_CTL_DETACH                 = 3,
+    RDP_CTL_COOPERATE              = 4,
 };
 
 enum {
-RDP_UPDATE_ORDERS              = 0,
-RDP_UPDATE_BITMAP              = 1,
-RDP_UPDATE_PALETTE             = 2,
-RDP_UPDATE_SYNCHRONIZE         = 3,
+    RDP_UPDATE_ORDERS              = 0,
+    RDP_UPDATE_BITMAP              = 1,
+    RDP_UPDATE_PALETTE             = 2,
+    RDP_UPDATE_SYNCHRONIZE         = 3,
 };
 
 enum {
-RDP_POINTER_SYSTEM             = 1,
-RDP_POINTER_MOVE               = 3,
-RDP_POINTER_COLOR              = 6,
-RDP_POINTER_CACHED             = 7,
+    RDP_POINTER_SYSTEM             = 1,
+    RDP_POINTER_MOVE               = 3,
+    RDP_POINTER_COLOR              = 6,
+    RDP_POINTER_CACHED             = 7,
 };
 
 enum {
-RDP_NULL_POINTER               = 0,
-RDP_DEFAULT_POINTER            = 0x7F00,
+    RDP_NULL_POINTER               = 0,
+    RDP_DEFAULT_POINTER            = 0x7F00,
 };
 
 enum {
-RDP_INPUT_SYNCHRONIZE          = 0,
-RDP_INPUT_CODEPOINT            = 1,
-RDP_INPUT_VIRTKEY              = 2,
-RDP_INPUT_SCANCODE             = 4,
-RDP_INPUT_MOUSE                = 0x8001,
+    RDP_INPUT_SYNCHRONIZE          = 0,
+    RDP_INPUT_CODEPOINT            = 1,
+    RDP_INPUT_VIRTKEY              = 2,
+    RDP_INPUT_SCANCODE             = 4,
+    RDP_INPUT_MOUSE                = 0x8001,
 };
 
 /* Device flags */
 enum {
-KBD_FLAG_RIGHT                 = 0x0001,
-KBD_FLAG_EXT                   = 0x0100,
-KBD_FLAG_QUIET                 = 0x1000,
-KBD_FLAG_DOWN                  = 0x4000,
-KBD_FLAG_UP                    = 0x8000,
+    KBD_FLAG_RIGHT                 = 0x0001,
+    KBD_FLAG_EXT                   = 0x0100,
+    KBD_FLAG_QUIET                 = 0x1000,
+    KBD_FLAG_DOWN                  = 0x4000,
+    KBD_FLAG_UP                    = 0x8000,
 };
 
 /* These are for synchronization; not for keystrokes */
 enum {
-KBD_FLAG_SCROLL                = 0x0001,
-KBD_FLAG_NUMLOCK               = 0x0002,
-KBD_FLAG_CAPITAL               = 0x0004,
+    KBD_FLAG_SCROLL                = 0x0001,
+    KBD_FLAG_NUMLOCK               = 0x0002,
+    KBD_FLAG_CAPITAL               = 0x0004,
 };
 
 /* See T.128 */
 enum {
-RDP_KEYPRESS                   = 0,
-RDP_KEYRELEASE                 = (KBD_FLAG_DOWN | KBD_FLAG_UP),
+    RDP_KEYPRESS                   = 0,
+    RDP_KEYRELEASE                 = (KBD_FLAG_DOWN | KBD_FLAG_UP),
 };
 
 enum {
-MOUSE_FLAG_MOVE                = 0x0800,
-MOUSE_FLAG_BUTTON1             = 0x1000,
-MOUSE_FLAG_BUTTON2             = 0x2000,
-MOUSE_FLAG_BUTTON3             = 0x4000,
-MOUSE_FLAG_BUTTON4             = 0x0280,
-MOUSE_FLAG_BUTTON5             = 0x0380,
-MOUSE_FLAG_DOWN                = 0x8000,
+    MOUSE_FLAG_MOVE                = 0x0800,
+    MOUSE_FLAG_BUTTON1             = 0x1000,
+    MOUSE_FLAG_BUTTON2             = 0x2000,
+    MOUSE_FLAG_BUTTON3             = 0x4000,
+    MOUSE_FLAG_BUTTON4             = 0x0280,
+    MOUSE_FLAG_BUTTON5             = 0x0380,
+    MOUSE_FLAG_DOWN                = 0x8000,
 };
 
 enum {
-TEXT2_VERTICAL                 = 0x04,
-TEXT2_IMPLICIT_X               = 0x20,
+    TEXT2_VERTICAL                 = 0x04,
+    TEXT2_IMPLICIT_X               = 0x20,
 };
 
 /* RDP bitmap cache (version 2) constants */
 enum {
-BMPCACHE2_C0_CELLS             = 0x78,
-BMPCACHE2_C1_CELLS             = 0x78,
-BMPCACHE2_C2_CELLS             = 0x150,
-BMPCACHE2_NUM_PSTCELLS         = 0x9f6,
+    BMPCACHE2_C0_CELLS             = 0x78,
+    BMPCACHE2_C1_CELLS             = 0x78,
+    BMPCACHE2_C2_CELLS             = 0x150,
+    BMPCACHE2_NUM_PSTCELLS         = 0x9f6,
 };
 
 enum {
-PDU_FLAG_FIRST                 = 0x01,
-PDU_FLAG_LAST                  = 0x02,
+    PDU_FLAG_FIRST                 = 0x01,
+    PDU_FLAG_LAST                  = 0x02,
 };
 
 

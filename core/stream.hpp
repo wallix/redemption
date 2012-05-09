@@ -523,6 +523,14 @@ class Stream {
     // =========================================================================
     // BER encoding rules support methods
     // =========================================================================
+
+    enum {
+        BER_TAG_BOOLEAN      =    1,
+        BER_TAG_INTEGER      =    2,
+        BER_TAG_OCTET_STRING =    4,
+        BER_TAG_RESULT       =   10,
+    };
+
     unsigned int in_ber_len(void) {
         uint8_t l = this->in_uint8();
         if (l & 0x80) {

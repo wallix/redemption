@@ -960,12 +960,12 @@ struct mod_rdp : public client_mod {
                 case UPGRADE_LICENSE:
                     LOG(LOG_INFO, "UPGRADE_LICENSE");
                     break;
-                case LICENCE_TAG_RESULT:
+                case ERROR_ALERT:
                 {
                     uint32_t dwErrorCode = stream.in_uint32_le();
                     uint32_t dwStateTransition = stream.in_uint32_le();
                     uint32_t bbErrorInfo = stream.in_uint32_le();
-                    LOG(LOG_INFO, "LICENCE_TAG_RESULT %u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u", version, length, dwErrorCode, dwStateTransition, bbErrorInfo);
+                    LOG(LOG_INFO, "ERROR_ALERT %u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u", version, length, dwErrorCode, dwStateTransition, bbErrorInfo);
                     res = 1;
                 }
                 break;

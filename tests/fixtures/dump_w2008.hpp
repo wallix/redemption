@@ -848,7 +848,7 @@ const char outdata[] =
 // MCS layer |
 // Sec layer |
 // Licence layer |
-// LICENCE_TAG_RESULT 3 16 dwErrorCode=7 dwStateTransition=2 bbErrorInfo=4 |
+// ERROR_ALERT 3 16 dwErrorCode=7 dwStateTransition=2 bbErrorInfo=4 |
 // Socket RDP W2008 Target (3) receiving 4 bytes |
 // Recv done on RDP W2008 Target (3) |
 // /* 0000 */ "\x03\x00\x01\x94"                                                 //.... |
@@ -8955,7 +8955,7 @@ const char indata[] =
 // MCS layer |
 // Sec layer |
 // Licence layer |
-// LICENCE_TAG_RESULT 3 16 dwErrorCode=7 dwStateTransition=2 bbErrorInfo=4 |
+// ERROR_ALERT 3 16 dwErrorCode=7 dwStateTransition=2 bbErrorInfo=4 |
 // Socket RDP W2008 Target (3) receiving 4 bytes |
 // Recv done on RDP W2008 Target (3) |
 /* 0000 */ "\x03\x00\x01\x94"                                                 //.... |

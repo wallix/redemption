@@ -1264,8 +1264,8 @@ public:
                 case UPGRADE_LICENSE:
                     LOG(LOG_INFO, "Front::UPGRADE_LICENSE");
                     break;
-                case LICENCE_TAG_RESULT:
-                    LOG(LOG_INFO, "Front::LICENCE_TAG_RESULT");
+                case ERROR_ALERT:
+                    LOG(LOG_INFO, "Front::ERROR_ALERT");
                     break;
                 case NEW_LICENSE_REQUEST:
                     LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");

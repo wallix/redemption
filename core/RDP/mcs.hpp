@@ -43,6 +43,17 @@ enum {
     MCS_SDIN = 26, /* Send Data Indication */
 };
 
+enum {
+    BER_TAG_MCS_CONNECT_INITIAL  = 0x7f65,
+    BER_TAG_MCS_CONNECT_RESPONSE = 0x7f66,
+};
+
+enum {
+    BER_TAG_MCS_DOMAIN_PARAMS = 0x30
+};
+
+
+
 class McsOut
 {
     Stream & stream;
@@ -177,13 +188,13 @@ static inline void mcs_send_connect_initial(
     uint32_t offset_data_len_connect_initial = stream.get_offset(0);
     stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
-    stream.out_uint8(BER_TAG_OCTET_STRING);
+    stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
     stream.out_ber_len(1); /* calling domain */
     stream.out_uint8(1);
-    stream.out_uint8(BER_TAG_OCTET_STRING);
+    stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
     stream.out_ber_len(1); /* called domain */
     stream.out_uint8(1);
-    stream.out_uint8(BER_TAG_BOOLEAN);
+    stream.out_uint8(Stream::BER_TAG_BOOLEAN);
     stream.out_ber_len(1);
     stream.out_uint8(0xff); /* upward flag */
 
@@ -223,7 +234,7 @@ static inline void mcs_send_connect_initial(
     stream.out_ber_int24(0xffff); // max_pdu_size
     stream.out_ber_int8(2);
 
-    stream.out_uint8(BER_TAG_OCTET_STRING);
+    stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
     uint32_t offset_data_len = stream.get_offset(0);
     stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
@@ -291,7 +302,7 @@ static inline void mcs_send_connect_initial(
 
     stream.set_out_per_length(stream.get_offset(offset_gcc_conference_create_request_header_length + 2), offset_gcc_conference_create_request_header_length); // length including header
 
-    // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
+    // set mcs_data len, Stream::BER_TAG_OCTET_STRING (some kind of BLOB)
     LOG(LOG_INFO, "mcs_data_len = %u", stream.get_offset(offset_data_len + 3));
     stream.set_out_ber_len_uint16(stream.get_offset(offset_data_len + 3), offset_data_len);
 
@@ -372,7 +383,7 @@ static inline void mcs_recv_connect_response(
     int len = cr_stream.in_ber_len();
     // ----------------------------------------------------------
 
-    if (cr_stream.in_uint8() != BER_TAG_RESULT) {
+    if (cr_stream.in_uint8() != Stream::BER_TAG_RESULT) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = cr_stream.in_ber_len();
@@ -403,7 +414,7 @@ static inline void mcs_recv_connect_response(
     if (res != 0) {
         throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
     }
-    if (cr_stream.in_uint8() != BER_TAG_INTEGER) {
+    if (cr_stream.in_uint8() != Stream::BER_TAG_INTEGER) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = cr_stream.in_ber_len();
@@ -415,7 +426,7 @@ static inline void mcs_recv_connect_response(
     len = cr_stream.in_ber_len();
     cr_stream.in_skip_bytes(len);
 
-    if (cr_stream.in_uint8() != BER_TAG_OCTET_STRING) {
+    if (cr_stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = cr_stream.in_ber_len();
@@ -529,24 +540,18 @@ static inline void mcs_recv_connect_initial(
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     int len = stream.in_ber_len();
-    if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+    if (stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = stream.in_ber_len();
     stream.in_skip_bytes(len);
 
-    if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+    if (stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = stream.in_ber_len();
     stream.in_skip_bytes(len);
-    if (stream.in_uint8() != BER_TAG_BOOLEAN) {
-        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-    }
-    len = stream.in_ber_len();
-    stream.in_skip_bytes(len);
-
-    if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+    if (stream.in_uint8() != Stream::BER_TAG_BOOLEAN) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = stream.in_ber_len();
@@ -564,7 +569,13 @@ static inline void mcs_recv_connect_initial(
     len = stream.in_ber_len();
     stream.in_skip_bytes(len);
 
-    if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+    if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+    }
+    len = stream.in_ber_len();
+    stream.in_skip_bytes(len);
+
+    if (stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = stream.in_ber_len();
@@ -982,12 +993,12 @@ static inline void mcs_send_connect_response(
     // The first byte (0x0a) is the ASN.1 BER encoded Enumerated type. The
     // length of the value is given by the second byte (1 byte), and the
     // actual value is 0 (rt-successful).
-    stream.out_uint8(BER_TAG_RESULT);
+    stream.out_uint8(Stream::BER_TAG_RESULT);
     stream.out_ber_len_uint7(1);
     stream.out_uint8(0);
 
     // Connect-Response::calledConnectId = 0
-    stream.out_uint8(BER_TAG_INTEGER);
+    stream.out_uint8(Stream::BER_TAG_INTEGER);
     stream.out_ber_len_uint7(1);
     stream.out_uint8(0);
 
@@ -1012,7 +1023,7 @@ static inline void mcs_send_connect_response(
     stream.out_ber_int8(2);
 
     // Connect-Response::userData (287 bytes)
-    stream.out_uint8(BER_TAG_OCTET_STRING);
+    stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
     uint32_t offset_len_mcs_data = stream.get_offset(0);
     stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
@@ -1217,7 +1228,7 @@ static inline void mcs_send_connect_response(
 
     // set user_data_len (TWO_BYTE_UNSIGNED_ENCODING)
     stream.set_out_uint16_be(0x8000 | (stream.get_offset(offset_user_data_len + 2)), offset_user_data_len);
-    // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
+    // set mcs_data len, Stream::BER_TAG_OCTET_STRING (some kind of BLOB)
     stream.set_out_ber_len_uint16(stream.get_offset(offset_len_mcs_data + 3), offset_len_mcs_data);
     // set BER_TAG_MCS_CONNECT_RESPONSE len
     stream.set_out_ber_len_uint16(stream.get_offset(offset_len_mcs_connect_response + 3), offset_len_mcs_connect_response);
