@@ -51,5 +51,6 @@
 #include "capabilities/multifragmentupdate.hpp"
 #include "capabilities/largepointer.hpp"
 #include "capabilities/surfacecommands.hpp"
+#include "capabilities/bitmapcodecs.hpp"
 
 #endif
