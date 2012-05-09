@@ -1149,12 +1149,15 @@ public:
 
             SecIn sec(stream, this->decrypt, true);
 
-            if (!sec.flags & SEC_INFO_PKT) { /* 0x01 */
+            if (!sec.flags & SEC_INFO_PKT) {
                 throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
             }
 
             /* this is the first test that the decrypt is working */
-            this->client_info.process_logon_info(stream);
+            this->client_info.process_logon_info(stream, (uint16_t)(stream.end - stream.p));
+            TODO("check all data are consumed as expected")
+            stream.end = stream.p;
+
             this->keymap.init_layout(this->client_info.keylayout);
 
             if (this->client_info.is_mce) {

@@ -14,9 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+   Copyright (C) Wallix 2012
+   Author(s): Christophe Grosjean
 
    Unit test to writing RDP orders to file and rereading them
 
@@ -224,6 +223,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
     }
 
-    front.dump_png("trace_w2008_");
+//    front.dump_png("trace_w2008_");
 
 }

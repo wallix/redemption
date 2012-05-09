@@ -131,12 +131,10 @@ struct ClientInfo {
         this->channel_code = channel_code; // ini->globals.channel_code;
     }
 
-    void process_logon_info(Stream & stream) throw (Error)
+    void process_logon_info(Stream & stream, uint32_t length) throw (Error)
     {
         uint32_t flags = 0;
-        recv_logon_info(stream, flags, this->rdp5_performanceflags, this->domain, this->username, this->password, this->program, this->directory);
-        // not all data are consumed, skip remaining for now
-        stream.p = stream.end;
+        recv_logon_info(stream, length, flags, this->rdp5_performanceflags, this->domain, this->username, this->password, this->program, this->directory);
 
         const uint32_t mandatory_flags = INFO_MOUSE
                                        | INFO_DISABLECTRLALTDEL

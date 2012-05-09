@@ -68,6 +68,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         const ClientInfo & info;
         ChannelDefArray cl;
         uint8_t mod_bpp;
+        BGRPalette mod_palette;
+
 
         virtual void flush()
         {
@@ -84,7 +86,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 cmd.log(LOG_INFO, clip);
                 LOG(LOG_INFO, "========================================\n");
             }
-            this->gd.draw(cmd, clip);
+            RDPOpaqueRect new_cmd24 = cmd;
+            new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
+            this->gd.draw(new_cmd24, clip);
         }
         virtual void draw(const RDPScrBlt& cmd, const Rect& clip)
         {
@@ -112,7 +116,12 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 cmd.log(LOG_INFO, clip);
                 LOG(LOG_INFO, "========================================\n");
             }
-            this->gd.draw(cmd, clip);
+            const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+            const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+            RDPPatBlt new_cmd24 = cmd;
+            new_cmd24.back_color = back_color24;
+            new_cmd24.fore_color = fore_color24;
+            this->gd.draw(new_cmd24, clip);
         }
         virtual void draw(const RDPMemBlt& cmd, const Rect& clip, const Bitmap& bmp)
         {
@@ -199,6 +208,11 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 LOG(LOG_INFO, "set_mod_palette");
                 LOG(LOG_INFO, "========================================\n");
             }
+//            this->mod_palette_setted = true;
+            for (unsigned i = 0; i < 256 ; i++){
+                this->mod_palette[i] = palette[i];
+            }
+//            this->palette_sent = false;
         }
         virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
         {
@@ -294,8 +308,15 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     BackEvent_t res = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE){
         LOG(LOG_INFO, "=======================> count=%u", count);
-        if (count++ >= 17) break;
-        res = mod->draw_event();
+
+        if (count++ >= 25) break;
+//        if (count == 10){
+//            front.dump_png("trace_w2000_10_");
+//        }
+//        if (count == 20){
+//            front.dump_png("trace_w2000_20_");
+//        }
+//        res = mod->draw_event();
         BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
     }
 

@@ -571,6 +571,9 @@ static inline void send_logon_info_packet(Stream & stream, const char * domain, 
                    | ((strlen(password) > 0) * INFO_AUTOLOGON)
                    | INFO_UNICODE
                    | INFO_MAXIMIZESHELL
+                   | INFO_ENABLEWINDOWSKEY
+                   | INFO_LOGONNOTIFY
+                   | (use_rdp5 != 0) * INFO_LOGONERRORS
                    ;
 
     time_t t = time(NULL);
@@ -647,7 +650,7 @@ static inline void send_logon_info_packet(Stream & stream, const char * domain, 
     }
 }
 
-static inline void recv_logon_info(Stream & stream, uint32_t & flags, uint32_t & rdp5_performanceflags, char * domain, char * username, char * password, char * program, char * directory)
+static inline void recv_logon_info(Stream & stream, uint16_t length, uint32_t & flags, uint32_t & rdp5_performanceflags, char * domain, char * username, char * password, char * program, char * directory)
 {
     uint32_t codepage = stream.in_uint32_le();
     flags = stream.in_uint32_le();
@@ -669,8 +672,7 @@ static inline void recv_logon_info(Stream & stream, uint32_t & flags, uint32_t &
     stream.in_uni_to_ascii_str(program, len_program);
     stream.in_uni_to_ascii_str(directory, len_directory);
 
-    TODO("we should rely on available data size instead of INFO_ENABLEWINDOWSKEY flag")
-    if (flags & INFO_ENABLEWINDOWSKEY) {
+    if (stream.p < stream.end) {
         LOG(LOG_DEBUG, "RDP-5 Style logon");
         stream.in_skip_bytes(2);
         unsigned len_ip = stream.in_uint16_le();
@@ -680,7 +682,7 @@ static inline void recv_logon_info(Stream & stream, uint32_t & flags, uint32_t &
         stream.in_uni_to_ascii_str(tmpdata, len_dll);
         stream.in_skip_bytes(172); /* skip time data */
         rdp5_performanceflags = stream.in_uint32_le();
-        // more data here
+        // more data here ?
         TODO("We should take care of remaining data if any")
     }
 }
