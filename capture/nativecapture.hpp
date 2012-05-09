@@ -142,161 +142,6 @@ public:
     {}
 
 private:
-    struct BitmapsSender {
-
-        uint16_t used;
-        struct Data {
-            uint16_t cidx;
-            const Bitmap* bmp;
-        };
-        Data datas[8192];
-
-        struct Compare
-        {
-            bool operator()(const Data a, const Data b)
-            {
-                return a.bmp->data() < b.bmp->data();
-            }
-        };
-
-        BitmapsSender(const Bitmap* bitmaps[])
-        : used(0)
-        {
-            for (uint16_t cidx = 0; cidx < 8192 ; ++cidx){
-                const Bitmap* bmp = bitmaps[cidx];
-                if (bmp){
-                    this->datas[this->used].cidx = cidx;
-                    this->datas[this->used].bmp = bmp;
-                    ++this->used;
-                }
-            }
-            std::sort<>(&this->datas[0], &this->datas[this->used], Compare());
-        }
-
-        size_t size() const
-        {
-            size_t ret = 2 + 7 * this->used;
-            const uint8_t *prev_data = 0;
-            for (uint16_t cidx = 0; cidx < this->used; ++cidx){
-                const Bitmap* bmp = this->datas[cidx].bmp;
-                if (prev_data != bmp->data()){
-                    ret += 4 + bmp->bmp_size;
-                }
-                prev_data = bmp->data();
-            }
-            return ret;
-        }
-
-        void send_in(Stream& stream)
-        {
-            stream.out_uint16_le(this->used);
-            const uint8_t *prev_data = 0;
-            for (uint16_t n = 0; n != this->used; ++n){
-                Data &data = this->datas[n];
-                const Bitmap* bmp = data.bmp;
-                if (prev_data == bmp->data())
-                {
-                    stream.out_uint16_le(~uint16_t(0));
-                }
-                else
-                {
-                    stream.out_uint16_le(data.cidx);
-                    stream.out_uint32_le(bmp->bmp_size);
-                    stream.out_copy_bytes(bmp->data(), bmp->bmp_size);
-                }
-                prev_data = bmp->data();
-                stream.out_uint8(bmp->original_bpp);
-                stream.out_uint16_le(bmp->cx);
-                stream.out_uint16_le(bmp->cy);
-            }
-        }
-    };
-
-    /*struct BitmapsSender {
-        typedef std::list<uint16_t> list_type;
-
-        struct Data{
-            uint8_t count;
-            const Bitmap* bmp;
-            list_type list;
-
-            Data()
-            : count(0)
-            , bmp(0)
-            , list()
-            {}
-        };
-
-        uint16_t used;
-        Data datas[8192];
-
-        BitmapsSender(const Bitmap* bitmaps[])
-        : used(0)
-        {
-            for (uint16_t cidx = 0; cidx < 8192 ; ++cidx){
-                const Bitmap* bmp = bitmaps[cidx];
-                if (bmp){
-                    Data& data = this->find(bmp->data());
-                    if (!data.bmp){
-                        data.bmp = bmp;
-                    }
-                    data.list.push_back(cidx);
-                    ++data.count;
-                }
-            }
-        }
-
-        Data& find(const uint8_t *p)
-        {
-            for (uint16_t i = 0; i < this->used; ++i){
-                if (this->datas[i].bmp->data() == p){
-                    return this->datas[i];
-                }
-            }
-            return this->datas[this->used++];
-        }
-
-        size_t size() const
-        {
-            size_t ret = 2;
-            for (size_t i = 0; i < this->used; ++i){
-                Data &data = this->datas[i];
-                ret += 1 + 2 + 2 + 4 + 1 + data.bmp->bmp_size
-                + std::distance<>(data.list.begin(), data.list.end()) * 2;
-            };
-            return ret;
-        }
-
-        void send_in(OutFileTransport& trans, Stream& stream)
-        {
-            stream.init(4096);
-            stream.out_uint16_le(this->used);
-            trans.send(stream.data, 2);
-            for (size_t i = 0; i < this->used; ++i){
-                Data &data = this->datas[i];
-                {
-                    const Bitmap* bmp = data.bmp;
-                    stream.init(4096);
-                    stream.out_uint8(bmp->original_bpp);
-                    stream.out_uint16_le(bmp->cx);
-                    stream.out_uint16_le(bmp->cy);
-                    stream.out_uint32_le(bmp->bmp_size);
-                    stream.out_uint8(data.count);
-                    trans.send(stream.data, 10);
-                    trans.send((const char*)bmp->data(), bmp->bmp_size);
-                }
-                stream.init(4096);
-                typedef typename list_type::iterator iterator;
-                for (iterator it = data.list.begin(),
-                    last = data.list.end(); it != last; ++it)
-                {
-                    stream.out_uint16_le(*it);
-                }
-                trans.send(stream.data, sizeof(uint16_t) * data.count);
-            }
-        }
-    };*/
-
     void send_rect(const Rect& rect)
     {
         this->recorder.stream.out_uint16_le(rect.x);
@@ -352,6 +197,8 @@ public:
             meta.emit(this->recorder.stream);
             //std::cout << "write meta " << meta << '\n';
         }
+        this->recorder.stream.out_uint64_le(this->recorder.timer.sec());
+        this->recorder.stream.out_uint64_le(this->recorder.timer.usec());
 
         {
             const uint16_t TILE_CX = 32;
@@ -494,6 +341,7 @@ public:
             }
         }
 
+        this->recorder.chunk_type = WRMChunk::BREAKPOINT;
         for (size_t cid = 0; cid != 3 ; ++cid){
             const uint32_t (&stamps)[8192] = this->recorder.bmp_cache.stamps[cid];
             uint16_t cidx = 0;

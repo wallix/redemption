@@ -28,7 +28,7 @@
 #include "bitmap.hpp"
 #include "stream.hpp"
 
-#include <iostream>
+// #include <iostream>
 
 class WRMRecorder
 {
@@ -168,6 +168,8 @@ public:
                     //}
                     //std::cout << "read meta " << meta << std::endl;
                 }
+                this->reader.wait_cap.timer.sec() = this->reader.stream.in_uint64_le();
+                this->reader.wait_cap.timer.usec() = this->reader.stream.in_uint64_le();
 
                 //char texttest[10000];
 
@@ -212,7 +214,7 @@ public:
                         }
                     }
                     else {
-                        std::cout << "read ignore cache\n";
+                        //std::cout << "read ignore cache\n";
                         uint n = nx * ny;
                         while (n)
                         {
@@ -324,9 +326,6 @@ public:
                         this->reader.remaining_order_count = 0;
                     }
                 }
-
-                //this->reader.stream.init(this->reader.stream.capacity);
-                //this->reader.remaining_order_count = 0;
             }
             break;
             default:
