@@ -47,6 +47,7 @@
 #include "RDP/nego.hpp"
 #include "RDP/connection.hpp"
 #include "RDP/lic.hpp"
+#include "RDP/logon.hpp"
 
 //#include "RDP/orders/RDPOrdersNames.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"
@@ -3184,86 +3185,12 @@ struct mod_rdp : public client_mod {
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
 
-        uint32_t flags = RDP_LOGON_NORMAL | ((strlen(password) > 0)?RDP_LOGON_AUTO:0);
-
-//            LOG(LOG_INFO, "send login info to server");
-        time_t t = time(NULL);
-        time_t tzone;
-
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out2(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, SEC_LOGON_INFO | (this->crypt_level?SEC_ENCRYPT:0), this->encrypt, true);
 
-        stream.out_uint32_le(0);
-        stream.out_uint32_le(flags);
-
-        stream.out_uint16_le(2 * strlen(this->domain));
-        stream.out_uint16_le(2 * strlen(this->username));
-        stream.out_uint16_le(2 * strlen(password));
-        stream.out_uint16_le(2 * strlen(this->program));
-        stream.out_uint16_le(2 * strlen(this->directory));
-        stream.out_unistr(this->domain);
-        stream.out_unistr(this->username);
-        if (flags & RDP_LOGON_AUTO){
-            stream.out_unistr(password);
-        }
-        else{
-            stream.out_uint16_le(0);
-        }
-        stream.out_unistr(this->program);
-        stream.out_unistr(this->directory);
-
-        if(!this->use_rdp5){
-            LOG(LOG_INFO, "send login info (RDP4-style) %s:%s",this->domain, this->username);
-        }
-        else {
-            LOG(LOG_INFO, "send extended login info (RDP5-style) %x %s:%s",flags,
-                this->domain,
-                this->username);
-        }
-        if (this->use_rdp5){
-            // The WAB does not send it's IP to server. Is it what we want ?
-            // rdesktop sends the faked IP below
-            const char * ip_source = "10.10.9.161";
-
-            stream.out_uint16_le(0x00002);
-            stream.out_uint16_le(2 * strlen(ip_source) + 2);
-            stream.out_unistr(ip_source);
-            const char path[] = "C:\\WINNT\\System32\\mstscax.dll";
-            stream.out_uint16_le(2 * sizeof(path));
-            stream.out_unistr(path);
-
-            tzone = (mktime(gmtime(&t)) - mktime(localtime(&t))) / 60;
-            stream.out_uint32_le(tzone);
-
-            stream.out_unistr("GTB, normaltid");
-            stream.out_clear_bytes(62 - 2 * strlen("GTB, normaltid"));
-
-            stream.out_uint32_le(0x0a0000);
-            stream.out_uint32_le(0x050000);
-            stream.out_uint32_le(3);
-            stream.out_uint32_le(0);
-            stream.out_uint32_le(0);
-
-            stream.out_unistr("GTB, sommartid");
-            stream.out_clear_bytes(62 - 2 * strlen("GTB, sommartid"));
-
-            stream.out_uint32_le(0x30000);
-            stream.out_uint32_le(0x050000);
-            stream.out_uint32_le(2);
-            stream.out_uint32_le(0);
-            stream.out_uint32_le(0xffffffc4);
-
-            stream.out_uint32_le(0xfffffffe); // session id
-
-            stream.out_uint32_le(rdp5_performanceflags);
-
-            stream.out_uint16_le(0);
-
-            stream.out_uint16_le(0);
-            stream.out_uint16_le(0);
-        }
+        send_logon_info_packet(stream, this->domain, this->username, password, this->program, this->directory, this->use_rdp5, rdp5_performanceflags);
 
         sec_out.end();
         sdrq_out2.end();
