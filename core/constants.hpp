@@ -266,23 +266,6 @@ MOUSE_FLAG_BUTTON5             = 0x0380,
 MOUSE_FLAG_DOWN                = 0x8000,
 };
 
-/* Raster operation masks */
-#define ROP2_S(rop3)  (rop3 & 0xf),
-#define ROP2_P(rop3)  ((rop3 & 0x3) | ((rop3 & 0x30) >> 2)),
-
-enum {
-ROP2_COPY                      = 0xc,
-ROP2_XOR                       = 0x6,
-ROP2_AND                       = 0x8,
-ROP2_NXOR                      = 0x9,
-ROP2_OR                        = 0xe,
-};
-
-enum {
-MIX_TRANSPARENT                = 0,
-MIX_OPAQUE                     = 1,
-};
-
 enum {
 TEXT2_VERTICAL                 = 0x04,
 TEXT2_IMPLICIT_X               = 0x20,
@@ -301,18 +284,6 @@ PDU_FLAG_FIRST                 = 0x01,
 PDU_FLAG_LAST                  = 0x02,
 };
 
-
-/* compression types */
-enum {
-RDP_MPPC_BIG                   = 0x01,
-RDP_MPPC_COMPRESSED            = 0x20,
-RDP_MPPC_RESET                 = 0x40,
-RDP_MPPC_FLUSH                 = 0x80,
-RDP_MPPC_DICT_SIZE             = 8192,
-
-RDP5_COMPRESSED                = 0x80
-
-};
 
 /* Clipboard constants, "borrowed" from GCC system headers in the w32 cross compiler */
 enum {
