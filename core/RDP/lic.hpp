@@ -50,6 +50,10 @@ enum {
 };
 
 
+enum {
+    KEY_EXCHANGE_ALG_RSA        = 0x01,
+};
+
 // 2.2.1.12 Server License Error PDU - Valid Client
 // =============================================
 
@@ -95,30 +99,32 @@ enum {
 // The dwErrorCode field of the error message structure MUST be set to STATUS_VALID_CLIENT (0x00000007) and the dwStateTransition field MUST be set to ST_NO_TRANSITION (0x00000002). The bbErrorInfo field MUST contain an empty binary large object (BLOB) of type BB_ERROR_BLOB (0x0004).
 
 // 2.2.1.12.1.1 Licensing Preamble (LICENSE_PREAMBLE)
+// ==================================================
 // The LICENSE_PREAMBLE structure precedes every licensing packet sent on the wire.
 
-// bMsgType (1 byte): An 8-bit, unsigned integer. A type of the licensing packet. For more details about the different licensing packets, see [MS-RDPELE] section 2.2.2.
+// bMsgType (1 byte): An 8-bit, unsigned integer. A type of the licensing
+// packet. For more details about the different licensing packets, see
+// [MS-RDPELE] section 2.2.2.
 
-//Sent by server:
-
+// Sent by server:
+// ---------------
 // 0x01 LICENSE_REQUEST Indicates a License Request PDU ([MS-RDPELE] section 2.2.2.1).
 // 0x02 PLATFORM_CHALLENGE Indicates a Platform Challenge PDU ([MS-RDPELE] section 2.2.2.4).
 // 0x03 NEW_LICENSE Indicates a New License PDU ([MS-RDPELE] section 2.2.2.7).
 // 0x04 UPGRADE_LICENSE Indicates an Upgrade License PDU ([MS-RDPELE] section 2.2.2.6).
 //
 // Sent by client:
-
+// ---------------
 // 0x12 LICENSE_INFO Indicates a License Information PDU ([MS-RDPELE] section 2.2.2.3).
 // 0x13 NEW_LICENSE_REQUEST Indicates a New License Request PDU ([MS-RDPELE] section 2.2.2.2).
 // 0x15 PLATFORM_CHALLENGE_RESPONSE Indicates a Platform Challenge Response PDU ([MS-RDPELE] section 2.2.2.5).
 
 // Sent by either client or server:
+// --------------------------------
 // 0xFF ERROR_ALERT Indicates a Licensing Error Message PDU (section 2.2.1.12.1.3).
 
 // flags (1 byte): An 8-bit unsigned integer. License preamble flags.
-
 // 0x0F LicenseProtocolVersionMask The license protocol version. See the discussion which follows this table for more information.
-
 // 0x80 EXTENDED_ERROR_MSG_SUPPORTED Indicates that extended error information using the License Error Message (section 2.2.1.12.1.3) is supported.
 
 // The LicenseProtocolVersionMask is a 4-bit value containing the supported license protocol version. The following are possible version values.
@@ -130,6 +136,53 @@ enum {
 
 // See MS-RDPELE for details
 
+
+
+// +------------------------------------+-------------------------------------+
+// | 0x0001 BB_DATA_BLOB                | Used by License Information PDU and |
+// |                                    | Platform Challenge Response PDU     |
+// |                                    | ([MS-RDPELE] sections 2.2.2.3 and   |
+// |                                    | 2.2.2.5).                           |
+// +------------------------------------+-------------------------------------+
+// | 0x0002 BB_RANDOM_BLOB              | Used by License Information PDU and |
+// |                                    | New License Request PDU ([MS-RDPELE]|
+// |                                    | sections 2.2.2.3 and 2.2.2.2).      |
+// +------------------------------------+-------------------------------------+
+// | 0x0003 BB_CERTIFICATE_BLOB         | Used by License Request PDU         |
+// |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+// +------------------------------------+-------------------------------------+
+// | 0x0004 BB_ERROR_BLOB               | Used by License Error PDU (section  |
+// |                                    | 2.2.1.12).                          |
+// +------------------------------------+-------------------------------------+
+// | 0x0009 BB_ENCRYPTED_DATA_BLOB      | Used by Platform Challenge Response |
+// |                                    | PDU and Upgrade License PDU         |
+// |                                    | ([MS-RDPELE] sections 2.2.2.5 and   |
+// |                                    | 2.2.2.6).                           |
+// +------------------------------------+-------------------------------------+
+// | 0x000D BB_KEY_EXCHG_ALG_BLOB       | Used by License Request PDU         |
+// |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+// +------------------------------------+-------------------------------------+
+// | 0x000E BB_SCOPE_BLOB               | Used by License Request PDU         |
+// |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+// +------------------------------------+-------------------------------------+
+// | 0x000F BB_CLIENT_USER_NAME_BLOB    | Used by New License Request PDU     |
+// |                                    | ([MS-RDPELE] section 2.2.2.2).      |
+// +------------------------------------+-------------------------------------+
+// | 0x0010 BB_CLIENT_MACHINE_NAME_BLOB | Used by New License Request PDU     |
+// |                                    | ([MS-RDPELE] section 2.2.2.2).      |
+// +------------------------------------+-------------------------------------+
+
+enum {
+    BB_DATA_BLOB                = 0x0001,
+    BB_RANDOM_BLOB              = 0x0002,
+    BB_CERTIFICATE_BLOB         = 0x0003,
+    BB_ERROR_BLOB               = 0x0004,
+    BB_ENCRYPTED_DATA_BLOB      = 0x0009,
+    BB_KEY_EXCHG_ALG_BLOB       = 0x000D,
+    BB_SCOPE_BLOB               = 0x000E,
+    BB_CLIENT_USER_NAME_BLOB    = 0x000F,
+    BB_CLIENT_MACHINE_NAME_BLOB = 0x0010,
+};
 
 static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
 {
@@ -268,7 +321,7 @@ struct RdpLicence {
         }
     }
 
-    void rdp_lic_process_authreq(Transport * trans, Stream & stream, const char * hostname, int userid, int licence_issued, CryptContext & encrypt)
+    void rdp_lic_process_authreq(Transport * trans, Stream & stream, const char * hostname, int userid, int licence_issued, CryptContext & encrypt, int use_rdp5)
     {
 
         ssllib ssl;
@@ -311,10 +364,88 @@ struct RdpLicence {
         memcpy(crypt_hwid, hwid, LICENCE_HWID_SIZE);
         ssl.rc4_crypt(crypt_key, crypt_hwid, crypt_hwid, LICENCE_HWID_SIZE);
 
-        rdp_lic_send_authresp(trans, out_token, crypt_hwid, out_sig, userid, licence_issued, encrypt);
+        rdp_lic_send_authresp(trans, out_token, crypt_hwid, out_sig, userid, licence_issued, encrypt, use_rdp5);
     }
 
-    void rdp_lic_send_authresp(Transport * trans, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature, int userid, int licence_issued, CryptContext & encrypt)
+    // 2.2.2.5 Client Platform Challenge Response (CLIENT_PLATFORM_CHALLENGE_RESPONSE)
+    // ===============================================================================
+
+    // The Client Platform Challenge Response packet is sent by the client in response
+    // to the Server Platform Challenge (section 2.2.2.4) message.
+
+    // EncryptedPlatformChallengeResponse (variable): A LICENSE_BINARY_BLOB<14>
+    // structure (as specified in [MS-RDPBCGR] section 2.2.1.12.1.2) of wBlobType
+    // BB_ENCRYPTED_DATA_BLOB (0x0009). This BLOB contains the encrypted Platform
+    // Challenge Response Data (section 2.2.2.5.1) generated by the client and is
+    // encrypted with the licensing encryption key (see section 5.1.3), using RC4
+    // (for instructions on how to perform the encryption, see section 5.1.4).
+
+    // 2.2.2.5.1 Platform Challenge Response Data (PLATFORM_CHALLENGE_RESPONSE_DATA)
+    // ------------------------------------------------------------------------------
+
+    // The Platform Challenge Response Data packet contains information pertaining
+    // to the client's license handling capabilities and the Client Platform Challenge
+    // data sent by the server in the Server Platform Challenge.
+
+    // wVersion (2 bytes): A 16-bit unsigned integer that contains the platform
+    // challenge version. This field MUST be set to 0x0100.
+
+    // wClientType (2 bytes): A 16-bit unsigned integer that represents the
+    // operating system type of the client and MAY contain one of following values.<15>
+
+    // +-------------------------------------+--------------------------------+
+    // | 0x0100 WIN32_PLATFORMCHALLENGE_TYPE | Win32 Platform Challenge Type. |
+    // +-------------------------------------+--------------------------------+
+    // | 0x0200 WIN16_PLATFORMCHALLENGE_TYPE | Win16 Platform Challenge Type. |
+    // +-------------------------------------+--------------------------------+
+    // | 0x0300 WINCE_PLATFORMCHALLENGE_TYPE | WinCE Platform Challenge Type. |
+    // +-------------------------------------+--------------------------------+
+    // | 0xFF00 OTHER_PLATFORMCHALLENGE_TYPE | Other Platform Challenge Type. |
+    // +-------------------------------------+--------------------------------+
+
+    // wLicenseDetailLevel (2 bytes): A 16-bit unsigned integer. This field
+    // represents the capability of the client to handle license data. RDP
+    // version 5.0 and later clients SHOULD advertise support for large (6.5 KB
+    // or higher) licenses by setting the detail level to LICENSE_DETAIL_DETAIL
+    // (0x0003). The following table lists valid values for this field.
+
+    // +--------------------------------+---------------------------------------+
+    // | 0x0001 LICENSE_DETAIL_SIMPLE   | License Detail Simple (client license |
+    // |                                | certificate and license server        |
+    // |                                | certificate without issuer details).  |
+    // +--------------------------------+---------------------------------------+
+    // | 0x0002 LICENSE_DETAIL_MODERATE | License Detail Moderate (client       |
+    // |                                | license certificate chain up to       |
+    // |                                | license server's certificate issuer). |
+    // +--------------------------------+---------------------------------------+
+    // | 0x0003 LICENSE_DETAIL_DETAIL   | License Detail Detail (client license |
+    // |                                | certificate chain up to root          |
+    // |                                | certificate).                         |
+    // +--------------------------------+---------------------------------------+
+
+    // cbChallenge (2 bytes): A 16-bit unsigned integer that indicates the number
+    // of bytes of binary data contained in the pbChallenge field.
+
+    // pbChallenge (variable): Contains the decrypted Client Platform Challenge
+    // data sent by the server in the Server Platform Challenge message.
+
+    // ---------------- End of Platform Challenge Data ------------------------
+
+    // EncryptedHWID (variable): A LICENSE_BINARY_BLOB structure (as specified in
+    // [MS-RDPBCGR] section 2.2.1.12.1.2) of wBlobType BB_ENCRYPTED_DATA_BLOB (0x0009).
+    // This BLOB contains the encrypted Client Hardware Identification (section 2.2.2.3.1)
+    // and is encrypted with the licensing encryption key (see section 5.1.3) using RC4
+    // (for instructions on how to perform the encryption, see section 5.1.4).
+
+    // MACData (16 bytes): An array of 16 bytes containing an MD5 digest (MAC)
+    // generated over the decrypted Client Hardware Identification and Platform
+    // Challenge Response Data. For instructions on how to generate this message
+    // digest, see section 5.1.6; for a description of how the server uses the
+    // MACData field to verify the integrity of the Client Hardware Identification
+    // and the Platform Challenge Response Data, see section 3.1.5.1.
+
+
+    void rdp_lic_send_authresp(Transport * trans, uint8_t* token, uint8_t* crypt_hwid, uint8_t* signature, int userid, int licence_issued, CryptContext & encrypt, int use_rdp5)
     {
         int length = 58;
 
@@ -324,10 +455,32 @@ struct RdpLicence {
         SecOut sec_out(stream, SEC_LICENSE_PKT, encrypt, true);
 
         stream.out_uint8(PLATFORM_CHALLENGE_RESPONSE);
-
-        stream.out_uint8(2); /* version */
+        stream.out_uint8(use_rdp5?3:2); /* version */
         stream.out_uint16_le(length);
-        stream.out_uint16_le(1);
+
+        // wVersion (2 bytes): A 16-bit unsigned integer that contains the platform
+        // challenge version. This field MUST be set to 0x0100.
+        stream.out_uint16_le(0X100);
+
+    // wClientType (2 bytes): A 16-bit unsigned integer that represents the
+    // operating system type of the client and MAY contain one of following values.<15>
+
+    // +-------------------------------------+--------------------------------+
+    // | 0x0100 WIN32_PLATFORMCHALLENGE_TYPE | Win32 Platform Challenge Type. |
+    // +-------------------------------------+--------------------------------+
+    // | 0x0200 WIN16_PLATFORMCHALLENGE_TYPE | Win16 Platform Challenge Type. |
+    // +-------------------------------------+--------------------------------+
+    // | 0x0300 WINCE_PLATFORMCHALLENGE_TYPE | WinCE Platform Challenge Type. |
+    // +-------------------------------------+--------------------------------+
+    // | 0xFF00 OTHER_PLATFORMCHALLENGE_TYPE | Other Platform Challenge Type. |
+    // +-------------------------------------+--------------------------------+
+
+    // wLicenseDetailLevel (2 bytes): A 16-bit unsigned integer. This field
+    // represents the capability of the client to handle license data. RDP
+    // version 5.0 and later clients SHOULD advertise support for large (6.5 KB
+    // or higher) licenses by setting the detail level to LICENSE_DETAIL_DETAIL
+    // (0x0003). The following table lists valid values for this field.
+
         stream.out_uint16_le(LICENCE_TOKEN_SIZE);
         stream.out_copy_bytes(token, LICENCE_TOKEN_SIZE);
         stream.out_uint16_le(1);
@@ -343,7 +496,7 @@ struct RdpLicence {
     }
 
 
-    void rdp_lic_process_demand(Transport * trans, Stream & stream, const char * hostname, const char * username, int userid, const int licence_issued, CryptContext & encrypt)
+    void rdp_lic_process_demand(Transport * trans, Stream & stream, const char * hostname, const char * username, int userid, const int licence_issued, CryptContext & encrypt, int crypt_level, int use_rdp5)
     {
         LOG(LOG_DEBUG, "rdp_lic_process_demand");
 
@@ -387,14 +540,14 @@ struct RdpLicence {
             this->rdp_lic_present(trans, null_data, null_data,
                                   this->licence_data,
                                   this->licence_size,
-                                  hwid, signature, userid, licence_issued);
+                                  hwid, signature, userid, licence_issued, use_rdp5);
         }
         else {
-            this->rdp_lic_send_request(trans, null_data, null_data, hostname, username, userid, licence_issued, encrypt);
+            this->rdp_lic_send_request(trans, null_data, null_data, hostname, username, userid, licence_issued, encrypt, crypt_level, use_rdp5);
         }
     }
 
-    int rdp_lic_process_issue(Stream & stream, const char * hostname, int & licence_issued)
+    int rdp_lic_process_issue(Stream & stream, const char * hostname, int & licence_issued, int use_rdp5)
     {
 
         stream.in_skip_bytes(2); /* 3d 45 - unknown */
@@ -475,7 +628,59 @@ struct RdpLicence {
         memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
     }
 
-    void rdp_lic_send_request(Transport * trans, uint8_t* client_random, uint8_t* rsa_data, const char * hostname, const char * username, int userid, int licence_issued, CryptContext & encrypt)
+
+    // 2.2.2.2 Client New License Request (CLIENT_NEW_LICENSE_REQUEST)
+    // ===============================================================
+    // The Client New License Request packet is sent to a server when the client
+    // cannot find a license matching the product information provided in the
+    // Server License Request message. This message is interpreted as a new
+    // license request by the server, and the server SHOULD attempt to issue
+    // a new license to the client on receipt of this message.
+
+    // PreferredKeyExchangeAlg (4 bytes): A 32-bit unsigned integer that
+    // indicates the key exchange algorithm chosen by the client. It MUST be set
+    // to KEY_EXCHANGE_ALG_RSA (0x00000001), which indicates an RSA-based key
+    // exchange with a 512-bit asymmetric key.<9>
+
+    // PlatformId (4 bytes): A 32-bit unsigned integer. This field is composed
+    // of two identifiers: the operating system identifier and the independent
+    // software vendor (ISV) identifier. The platform ID is composed of the
+    // logical OR of these two values.
+
+    // The most significant byte of the PlatformId field contains the operating
+    // system version of the client.<10>
+
+    // The second most significant byte of the PlatformId field identifies the
+    // ISV that provided the client image.<11>
+
+    // The remaining two bytes in the PlatformId field are used by the ISV to
+    // identify the build number of the operating system.<12>
+
+    // ClientRandom (32 bytes): A 32-byte random number generated by the client
+    // using a cryptographically secure pseudo-random number generator. The
+    // ClientRandom and ServerRandom (see section 2.2.2.1) values, along with
+    // the data in the EncryptedPreMasterSecret field, are used to generate
+    // licensing encryption keys (see section 5.1.3). These keys are used to
+    // encrypt licensing protocol messages (see sections 5.1.4 and 5.1.5).
+
+    // EncryptedPreMasterSecret (variable): A Licensing Binary BLOB structure
+    // (see [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_RANDOM_BLOB (0x0002).
+    // This BLOB contains an encrypted 48-byte random number. For instructions
+    // on how to encrypt this random number, see section 5.1.2.1.
+
+    // ClientUserName (variable): A Licensing Binary BLOB structure (see
+    // [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_CLIENT_USER_NAME_BLOB
+    // (0x000F). This BLOB contains the client user name string in
+    // null-terminated ANSI character set format and is used along with the
+    // ClientMachineName BLOB to keep track of licenses issued to clients.
+
+    // ClientMachineName (variable): A Licensing Binary BLOB structure (see
+    // [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_CLIENT_MACHINE_NAME_BLOB
+    // (0x0010). This BLOB contains the client machine name string in
+    // null-terminated ANSI character set format and is used along with the
+    // ClientUserName BLOB to keep track of licenses issued to clients.
+
+    void rdp_lic_send_request(Transport * trans, uint8_t* client_random, uint8_t* rsa_data, const char * hostname, const char * username, int userid, int licence_issued, CryptContext & encrypt, int crypt_level, int use_rdp5)
     {
         LOG(LOG_INFO, "rdp_lic_send_request");
 
@@ -486,23 +691,116 @@ struct RdpLicence {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, SEC_LICENSE_PKT, encrypt, true);
+        SecOut sec_out(stream, SEC_LICENSE_PKT, encrypt, crypt_level);
 
         stream.out_uint8(NEW_LICENSE_REQUEST);
-        stream.out_uint8(2); /* version */
+        stream.out_uint8(use_rdp5?3:2);
         stream.out_uint16_le(length);
-        stream.out_uint32_le(1);
-        stream.out_uint16_le(0);
-        stream.out_uint16_le(0xff01);
+
+        // PreferredKeyExchangeAlg (4 bytes): A 32-bit unsigned integer that
+        // indicates the key exchange algorithm chosen by the client. It MUST be set
+        // to KEY_EXCHANGE_ALG_RSA (0x00000001), which indicates an RSA-based key
+        // exchange with a 512-bit asymmetric key.<9>
+
+        stream.out_uint32_le(KEY_EXCHANGE_ALG_RSA);
+
+        // PlatformId (4 bytes): A 32-bit unsigned integer. This field is composed
+        // of two identifiers: the operating system identifier and the independent
+        // software vendor (ISV) identifier. The platform ID is composed of the
+        // logical OR of these two values.
+
+        // The most significant byte of the PlatformId field contains the operating
+        // system version of the client.<10>
+
+        // The second most significant byte of the PlatformId field identifies the
+        // ISV that provided the client image.<11>
+
+        // The remaining two bytes in the PlatformId field are used by the ISV to
+        // identify the build number of the operating system.<12>
+
+        stream.out_uint32_le(0);
+
+        // ClientRandom (32 bytes): A 32-byte random number generated by the client
+        // using a cryptographically secure pseudo-random number generator. The
+        // ClientRandom and ServerRandom (see section 2.2.2.1) values, along with
+        // the data in the EncryptedPreMasterSecret field, are used to generate
+        // licensing encryption keys (see section 5.1.3). These keys are used to
+        // encrypt licensing protocol messages (see sections 5.1.4 and 5.1.5).
+
         stream.out_copy_bytes(client_random, SEC_RANDOM_SIZE);
-        stream.out_uint16_le(0);
+
+        // EncryptedPreMasterSecret (variable): A Licensing Binary BLOB structure
+        // (see [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_RANDOM_BLOB (0x0002).
+        // This BLOB contains an encrypted 48-byte random number. For instructions
+        // on how to encrypt this random number, see section 5.1.2.1.
+
+        // 2.2.1.12.1.2 Licensing Binary Blob (LICENSE_BINARY_BLOB)
+        // --------------------------------------------------------
+        // The LICENSE_BINARY_BLOB structure is used to encapsulate arbitrary
+        // length binary licensing data.
+
+        // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
+        // the binary information. If wBlobLen is set to 0, then the contents
+        // of this field SHOULD be ignored.
+
+        // +------------------------------------+-------------------------------------+
+        // | 0x0001 BB_DATA_BLOB                | Used by License Information PDU and |
+        // |                                    | Platform Challenge Response PDU     |
+        // |                                    | ([MS-RDPELE] sections 2.2.2.3 and   |
+        // |                                    | 2.2.2.5).                           |
+        // +------------------------------------+-------------------------------------+
+        // | 0x0002 BB_RANDOM_BLOB              | Used by License Information PDU and |
+        // |                                    | New License Request PDU ([MS-RDPELE]|
+        // |                                    | sections 2.2.2.3 and 2.2.2.2).      |
+        // +------------------------------------+-------------------------------------+
+        // | 0x0003 BB_CERTIFICATE_BLOB         | Used by License Request PDU         |
+        // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+        // +------------------------------------+-------------------------------------+
+        // | 0x0004 BB_ERROR_BLOB               | Used by License Error PDU (section  |
+        // |                                    | 2.2.1.12).                          |
+        // +------------------------------------+-------------------------------------+
+        // | 0x0009 BB_ENCRYPTED_DATA_BLOB      | Used by Platform Challenge Response |
+        // |                                    | PDU and Upgrade License PDU         |
+        // |                                    | ([MS-RDPELE] sections 2.2.2.5 and   |
+        // |                                    | 2.2.2.6).                           |
+        // +------------------------------------+-------------------------------------+
+        // | 0x000D BB_KEY_EXCHG_ALG_BLOB       | Used by License Request PDU         |
+        // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+        // +------------------------------------+-------------------------------------+
+        // | 0x000E BB_SCOPE_BLOB               | Used by License Request PDU         |
+        // |                                    | ([MS-RDPELE] section 2.2.2.1).      |
+        // +------------------------------------+-------------------------------------+
+        // | 0x000F BB_CLIENT_USER_NAME_BLOB    | Used by New License Request PDU     |
+        // |                                    | ([MS-RDPELE] section 2.2.2.2).      |
+        // +------------------------------------+-------------------------------------+
+        // | 0x0010 BB_CLIENT_MACHINE_NAME_BLOB | Used by New License Request PDU     |
+        // |                                    | ([MS-RDPELE] section 2.2.2.2).      |
+        // +------------------------------------+-------------------------------------+
+
+        // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of the binary information in the blobData field. If wBlobLen is set to 0, then the blobData field is not included in the Licensing Binary BLOB structure and the contents of the wBlobType field SHOULD be ignored.
+
+        // blobData (variable): Variable-length binary data. The size of this data in bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field is not included in the Licensing Binary BLOB structure.
+
+        stream.out_uint16_le(BB_RANDOM_BLOB);
         stream.out_uint16_le((SEC_MODULUS_SIZE + SEC_PADDING_SIZE));
         stream.out_copy_bytes(rsa_data, SEC_MODULUS_SIZE);
         stream.out_clear_bytes(SEC_PADDING_SIZE);
 
+        // ClientUserName (variable): A Licensing Binary BLOB structure (see
+        // [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_CLIENT_USER_NAME_BLOB
+        // (0x000F). This BLOB contains the client user name string in
+        // null-terminated ANSI character set format and is used along with the
+        // ClientMachineName BLOB to keep track of licenses issued to clients.
+
         stream.out_uint16_le(LICENCE_TAG_USER);
         stream.out_uint16_le(userlen);
         stream.out_copy_bytes(username, userlen);
+
+        // ClientMachineName (variable): A Licensing Binary BLOB structure (see
+        // [MS-RDPBCGR] section 2.2.1.12.1.2) of type BB_CLIENT_MACHINE_NAME_BLOB
+        // (0x0010). This BLOB contains the client machine name string in
+        // null-terminated ANSI character set format and is used along with the
+        // ClientUserName BLOB to keep track of licenses issued to clients.
 
         stream.out_uint16_le(LICENCE_TAG_HOST);
         stream.out_uint16_le(hostlen);
@@ -516,7 +814,7 @@ struct RdpLicence {
 
     void rdp_lic_present(Transport * trans, uint8_t* client_random, uint8_t* rsa_data,
                 uint8_t* licence_data, int licence_size, uint8_t* hwid,
-                uint8_t* signature, int userid, const int licence_issued)
+                uint8_t* signature, int userid, const int licence_issued, int use_rdp5)
     {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
@@ -526,7 +824,7 @@ struct RdpLicence {
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
 
         stream.out_uint8(LICENSE_INFO);
-        stream.out_uint8(2); /* version */
+        stream.out_uint8(use_rdp5?3:2); /* version */
         stream.out_uint16_le(length);
         stream.out_uint32_le(1);
         stream.out_uint16_le(0);
@@ -550,25 +848,6 @@ struct RdpLicence {
     }
 
 };
-
-// 2.2.1.12.1.2 Licensing Binary Blob (LICENSE_BINARY_BLOB)
-// The LICENSE_BINARY_BLOB structure is used to encapsulate arbitrary length binary licensing data.
-
-// wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of the binary information. If wBlobLen is set to 0, then the contents of this field SHOULD be ignored.
-
-// 0x0001 BB_DATA_BLOB Used by License Information PDU and Platform Challenge Response PDU ([MS-RDPELE] sections 2.2.2.3 and 2.2.2.5).
-// 0x0002 BB_RANDOM_BLOB Used by License Information PDU and New License Request PDU ([MS-RDPELE] sections 2.2.2.3 and 2.2.2.2).
-// 0x0003 BB_CERTIFICATE_BLOB Used by License Request PDU ([MS-RDPELE] section 2.2.2.1).
-// 0x0004 BB_ERROR_BLOB Used by License Error PDU (section 2.2.1.12).
-// 0x0009 BB_ENCRYPTED_DATA_BLOB Used by Platform Challenge Response PDU and Upgrade License PDU ([MS-RDPELE] sections 2.2.2.5 and 2.2.2.6).
-// 0x000D BB_KEY_EXCHG_ALG_BLOB Used by License Request PDU ([MS-RDPELE] section 2.2.2.1).
-// 0x000E BB_SCOPE_BLOB Used by License Request PDU ([MS-RDPELE] section 2.2.2.1).
-// 0x000F BB_CLIENT_USER_NAME_BLOB Used by New License Request PDU ([MS-RDPELE] section 2.2.2.2).
-// 0x0010 BB_CLIENT_MACHINE_NAME_BLOB Used by New License Request PDU ([MS-RDPELE] section 2.2.2.2).
-
-// wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of the binary information in the blobData field. If wBlobLen is set to 0, then the blobData field is not included in the Licensing Binary BLOB structure and the contents of the wBlobType field SHOULD be ignored.
-
-// blobData (variable): Variable-length binary data. The size of this data in bytes is given by the wBlobLen field. If wBlobLen is set to 0, then this field is not included in the Licensing Binary BLOB structure.
 
 // GLOSSARY
 // ========

@@ -111,17 +111,16 @@ TODO(" ssl calls introduce some dependency on ssl system library  injecting it i
 
 
 enum {
-
-SEC_EXCHANGE_PKT = 0x0001,
-SEC_ENCRYPT = 0x0008,
-SEC_RESET_SEQNO = 0x0010,
-SEC_IGNORE_SEQNO = 0x0020,
-SEC_INFO_PKT = 0x0040,
-SEC_LICENSE_PKT = 0x0080,
-SEC_LICENSE_ENCRYPT_CS = 0x0200,
-SEC_LICENSE_ENCRYPT_SC = 0x0200,
-SEC_REDIRECTION_PKT = 0x0400,
-SEC_SECURE_CHECKSUM = 0x0800,
+    SEC_EXCHANGE_PKT       = 0x0001,
+    SEC_ENCRYPT            = 0x0008,
+    SEC_RESET_SEQNO        = 0x0010,
+    SEC_IGNORE_SEQNO       = 0x0020,
+    SEC_INFO_PKT           = 0x0040,
+    SEC_LICENSE_PKT        = 0x0080,
+    SEC_LICENSE_ENCRYPT_CS = 0x0200,
+    SEC_LICENSE_ENCRYPT_SC = 0x0200,
+    SEC_REDIRECTION_PKT    = 0x0400,
+    SEC_SECURE_CHECKSUM    = 0x0800,
 };
 
 
@@ -653,9 +652,9 @@ class SecOut
         if (this->verbose){
             LOG(LOG_INFO, "SecOut(flags=%u)", flags);
         }
-        if (this->enabled || (this->flags && SEC_INFO_PKT)){
+        if (this->enabled || (this->flags && (SEC_INFO_PKT|SEC_LICENSE_PKT))){
             this->stream.out_uint32_le(this->flags);
-            if ((this->flags & SEC_ENCRYPT)||(this->flags & 0x0400)){
+            if ((this->flags & SEC_ENCRYPT)||(this->flags & SEC_REDIRECTION_PKT)){
                 this->stream.out_skip_bytes(8); // skip crypt sign
             }
         }
@@ -663,7 +662,7 @@ class SecOut
 
     void end(){
         if (this->enabled){
-            if ((this->flags & SEC_ENCRYPT)||(this->flags & 0x0400)){
+            if ((this->flags & SEC_ENCRYPT)||(this->flags & SEC_REDIRECTION_PKT)){
                 int datalen = this->stream.p - this->pdata;
                 if (this->verbose >= 0x80){
                     LOG(LOG_INFO, "Encrypting %u bytes", datalen);

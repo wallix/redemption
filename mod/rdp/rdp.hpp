@@ -943,20 +943,21 @@ struct mod_rdp : public client_mod {
                 switch (tag) {
                 case LICENSE_REQUEST:
                     LOG(LOG_INFO, "LICENSE_REQUEST");
-                    this->lic_layer.rdp_lic_process_demand(this->nego.trans, stream, hostname, username, userid, licence_issued, this->encrypt);
+                    this->lic_layer.rdp_lic_process_demand(this->nego.trans, stream, hostname, username, userid, licence_issued, this->encrypt, this->crypt_level, this->use_rdp5);
                     break;
                 case PLATFORM_CHALLENGE:
                     LOG(LOG_INFO, "PLATFORM_CHALLENGE");
-                    this->lic_layer.rdp_lic_process_authreq(this->nego.trans, stream, hostname, userid, licence_issued, this->encrypt);
+                    this->lic_layer.rdp_lic_process_authreq(this->nego.trans, stream, hostname, userid, licence_issued, this->encrypt, this->use_rdp5);
                     break;
                 case NEW_LICENSE:
                     LOG(LOG_INFO, "NEW_LICENSE");
-                    res = this->lic_layer.rdp_lic_process_issue(stream, hostname, licence_issued);
+                    res = this->lic_layer.rdp_lic_process_issue(stream, hostname, licence_issued, this->use_rdp5);
                     break;
                 case UPGRADE_LICENSE:
                     LOG(LOG_INFO, "UPGRADE_LICENSE");
                     break;
                 case ERROR_ALERT:
+                TODO("This should be moved to RDP/lic.hpp (and probably the switch should also move there)")
                 {
                     uint32_t dwErrorCode = stream.in_uint32_le();
                     uint32_t dwStateTransition = stream.in_uint32_le();
