@@ -43,6 +43,41 @@
 #include "region.hpp"
 #include "keymap2.hpp"
 
+enum {
+    WM_PAINT       = 3,
+    WM_KEYDOWN     = 15,
+    WM_KEYUP       = 16,
+    WM_SYNCHRONIZE = 17,
+    WM_MOUSEMOVE   = 100,
+    WM_LBUTTONUP   = 101,
+    WM_LBUTTONDOWN = 102,
+    WM_RBUTTONUP   = 103,
+    WM_RBUTTONDOWN = 104,
+    WM_BUTTON3UP   = 105,
+    WM_BUTTON3DOWN = 106,
+    WM_BUTTON4UP   = 107,
+    WM_BUTTON4DOWN = 108,
+    WM_BUTTON5UP   = 109,
+    WM_BUTTON5DOWN = 110,
+    WM_BUTTON_OK = 300,
+    WM_SCREENUPDATE = 0x4444,
+    WM_CHANNELDATA = 0x5555,
+};
+
+/* drawable types */
+enum {
+    WND_TYPE_BITMAP  = 0,
+    WND_TYPE_WND     = 1,
+    WND_TYPE_SCREEN  = 2,
+    WND_TYPE_BUTTON  = 3,
+    WND_TYPE_IMAGE   = 4,
+    WND_TYPE_EDIT    = 5,
+    WND_TYPE_LABEL   = 6,
+    WND_TYPE_COMBO   = 7,
+    WND_TYPE_SPECIAL = 8,
+    WND_TYPE_LISTBOX = 9,
+};
+
 
 /*****************************************************************************/
 /* remove a ch at index position in text, index starts at 0 */

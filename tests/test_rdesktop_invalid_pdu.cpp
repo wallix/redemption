@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     BOOST_CHECK_EQUAL((uint8_t)X224Packet::DT_TPDU, (uint8_t)tpdu.tpdu_hdr.code);
 
     McsIn mcs_in(stream);
-    BOOST_CHECK_EQUAL((uint8_t)MCS_SDRQ, (uint8_t)mcs_in.opcode >> 2);
+    BOOST_CHECK_EQUAL((uint8_t)DomainMCSPDU_SendDataRequest, (uint8_t)mcs_in.opcode >> 2);
     BOOST_CHECK_EQUAL(0, mcs_in.user_id);
     BOOST_CHECK_EQUAL((uint16_t)MCS_GLOBAL_CHANNEL, (uint16_t)mcs_in.chan_id);
     BOOST_CHECK_EQUAL(0x70, mcs_in.magic_0x70);
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
     BOOST_CHECK_EQUAL((uint8_t)X224Packet::DT_TPDU, (uint8_t)tpdu.tpdu_hdr.code);
 
     McsIn mcs_in(stream);
-    BOOST_CHECK_EQUAL((uint8_t)MCS_SDRQ, mcs_in.opcode >> 2);
+    BOOST_CHECK_EQUAL((uint8_t)DomainMCSPDU_SendDataRequest, mcs_in.opcode >> 2);
     BOOST_CHECK_EQUAL(0, mcs_in.user_id);
     BOOST_CHECK_EQUAL((uint16_t)MCS_GLOBAL_CHANNEL, (uint16_t)mcs_in.chan_id);
     BOOST_CHECK_EQUAL(0x70, mcs_in.magic_0x70);
@@ -259,7 +259,7 @@ BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
     decrypt.rc4_key_size=1;
 
     SecIn sec(stream, decrypt, true);
-    BOOST_CHECK_EQUAL((uint32_t)(SEC_ENCRYPT|SEC_LOGON_INFO), (uint32_t)sec.flags);
+    BOOST_CHECK_EQUAL((uint32_t)(SEC_ENCRYPT|SEC_INFO_PKT), (uint32_t)sec.flags);
 
     uint8_t * start_of_logon_info = stream.p;
     uint32_t codepage = stream.in_uint32_le();

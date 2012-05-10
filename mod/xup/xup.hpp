@@ -35,6 +35,27 @@
 
 struct xup_mod : public client_mod {
 
+enum {
+    XUPWM_PAINT        = 3,
+    XUPWM_KEYDOWN      = 15,
+    XUPWM_KEYUP        = 16,
+    XUPWM_SYNCHRONIZE  = 17,
+    XUPWM_MOUSEMOVE    = 100,
+    XUPWM_LBUTTONUP    = 101,
+    XUPWM_LBUTTONDOWN  = 102,
+    XUPWM_RBUTTONUP    = 103,
+    XUPWM_RBUTTONDOWN  = 104,
+    XUPWM_BUTTON3UP    = 105,
+    XUPWM_BUTTON3DOWN  = 106,
+    XUPWM_BUTTON4UP    = 107,
+    XUPWM_BUTTON4DOWN  = 108,
+    XUPWM_BUTTON5UP    = 109,
+    XUPWM_BUTTON5DOWN  = 110,
+    XUPWM_BUTTON_OK    = 300,
+    XUPWM_SCREENUPDATE = 0x4444,
+    XUPWM_CHANNELDATA  = 0x5555,
+};
+
     /* mod data */
     int width;
     int height;
@@ -87,7 +108,7 @@ struct xup_mod : public client_mod {
     }
 
     enum {
-        WM_INVALIDATE = 200,
+        XUPWM_INVALIDATE = 200,
     };
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
@@ -95,30 +116,30 @@ struct xup_mod : public client_mod {
         LOG(LOG_INFO, "input mouse");
 
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
-            this->x_input_event(WM_MOUSEMOVE, x, y, 0, 0);
+            this->x_input_event(XUPWM_MOUSEMOVE, x, y, 0, 0);
         }
         if (device_flags & MOUSE_FLAG_BUTTON1) { /* 0x1000 */
             this->x_input_event(
-                WM_LBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
+                XUPWM_LBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
                 x, y, 0, 0);
         }
         if (device_flags & MOUSE_FLAG_BUTTON2) { /* 0x2000 */
             this->x_input_event(
-                WM_RBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
+                XUPWM_RBUTTONUP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
                 x, y, 0, 0);
         }
         if (device_flags & MOUSE_FLAG_BUTTON3) { /* 0x4000 */
             this->x_input_event(
-                WM_BUTTON3UP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
+                XUPWM_BUTTON3UP + ((device_flags & MOUSE_FLAG_DOWN) >> 15),
                 x, y, 0, 0);
         }
         if (device_flags == MOUSE_FLAG_BUTTON4 || /* 0x0280 */ device_flags == 0x0278) {
-            this->x_input_event(WM_BUTTON4DOWN, x, y, 0, 0);
-            this->x_input_event(WM_BUTTON4UP, x, y, 0, 0);
+            this->x_input_event(XUPWM_BUTTON4DOWN, x, y, 0, 0);
+            this->x_input_event(XUPWM_BUTTON4UP, x, y, 0, 0);
         }
         if (device_flags == MOUSE_FLAG_BUTTON5 || /* 0x0380 */ device_flags == 0x0388) {
-            this->x_input_event(WM_BUTTON5DOWN, x, y, 0, 0);
-            this->x_input_event(WM_BUTTON5UP, x, y, 0, 0);
+            this->x_input_event(XUPWM_BUTTON5DOWN, x, y, 0, 0);
+            this->x_input_event(XUPWM_BUTTON5UP, x, y, 0, 0);
         }
     }
 
@@ -126,7 +147,7 @@ struct xup_mod : public client_mod {
         LOG(LOG_INFO, "scan code");
         /*
         if (ki != 0) {
-            int msg = (device_flags & KBD_FLAG_UP)?WM_KEYUP:WM_KEYDOWN;
+            int msg = (device_flags & KBD_FLAG_UP)?XUPWM_KEYUP:XUPWM_KEYDOWN;
             this->x_input_event(msg, ki->chr, ki->sym, param1, device_flags);
         }
         */
@@ -143,7 +164,7 @@ struct xup_mod : public client_mod {
     {
         LOG(LOG_INFO, "rdp_input_invalidate");
         if (!r.isempty()) {
-            this->x_input_event(WM_INVALIDATE,
+            this->x_input_event(XUPWM_INVALIDATE,
                 ((r.x & 0xffff) << 16) | (r.y & 0xffff),
                 ((r.cx & 0xffff) << 16) | (r.cy & 0xffff),
                 0, 0);

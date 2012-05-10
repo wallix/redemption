@@ -32,16 +32,64 @@
 #include "channel_list.hpp"
 #include "genrandom.hpp"
 
-enum {
-    MCS_EDRQ =  1, /* Erect Domain Request */
-    MCS_DPUM =  8, /* Disconnect Provider Ultimatum */
-    MCS_AURQ = 10, /* Attach User Request */
-    MCS_AUCF = 11, /* Attach User Confirm */
-    MCS_CJRQ = 14, /* Channel Join Request */
-    MCS_CJCF = 15, /* Channel Join Confirm */
-    MCS_SDRQ = 25, /* Send Data Request */
-    MCS_SDIN = 26, /* Send Data Indication */
+enum DomainMCSPDU
+{
+    DomainMCSPDU_PlumbDomainIndication       = 0,
+    DomainMCSPDU_ErectDomainRequest          = 1,
+    DomainMCSPDU_MergeChannelsRequest        = 2,
+    DomainMCSPDU_MergeChannelsConfirm        = 3,
+    DomainMCSPDU_PurgeChannelsIndication     = 4,
+    DomainMCSPDU_MergeTokensRequest          = 5,
+    DomainMCSPDU_MergeTokensConfirm          = 6,
+    DomainMCSPDU_PurgeTokensIndication       = 7,
+    DomainMCSPDU_DisconnectProviderUltimatum = 8,
+    DomainMCSPDU_RejectMCSPDUUltimatum       = 9,
+    DomainMCSPDU_AttachUserRequest           = 10,
+    DomainMCSPDU_AttachUserConfirm           = 11,
+    DomainMCSPDU_DetachUserRequest           = 12,
+    DomainMCSPDU_DetachUserIndication        = 13,
+    DomainMCSPDU_ChannelJoinRequest          = 14,
+    DomainMCSPDU_ChannelJoinConfirm          = 15,
+    DomainMCSPDU_ChannelLeaveRequest         = 16,
+    DomainMCSPDU_ChannelConveneRequest       = 17,
+    DomainMCSPDU_ChannelConveneConfirm       = 18,
+    DomainMCSPDU_ChannelDisbandRequest       = 19,
+    DomainMCSPDU_ChannelDisbandIndication    = 20,
+    DomainMCSPDU_ChannelAdmitRequest         = 21,
+    DomainMCSPDU_ChannelAdmitIndication      = 22,
+    DomainMCSPDU_ChannelExpelRequest         = 23,
+    DomainMCSPDU_ChannelExpelIndication      = 24,
+    DomainMCSPDU_SendDataRequest             = 25,
+    DomainMCSPDU_SendDataIndication          = 26,
+    DomainMCSPDU_UniformSendDataRequest      = 27,
+    DomainMCSPDU_UniformSendDataIndication   = 28,
+    DomainMCSPDU_TokenGrabRequest            = 29,
+    DomainMCSPDU_TokenGrabConfirm            = 30,
+    DomainMCSPDU_TokenInhibitRequest         = 31,
+    DomainMCSPDU_TokenInhibitConfirm         = 32,
+    DomainMCSPDU_TokenGiveRequest            = 33,
+    DomainMCSPDU_TokenGiveIndication         = 34,
+    DomainMCSPDU_TokenGiveResponse           = 35,
+    DomainMCSPDU_TokenGiveConfirm            = 36,
+    DomainMCSPDU_TokenPleaseRequest          = 37,
+    DomainMCSPDU_TokenPleaseConfirm          = 38,
+    DomainMCSPDU_TokenReleaseRequest         = 39,
+    DomainMCSPDU_TokenReleaseConfirm         = 40,
+    DomainMCSPDU_TokenTestRequest            = 41,
+    DomainMCSPDU_TokenTestConfirm            = 42,
+    DomainMCSPDU_enum_length                 = 43
 };
+
+enum {
+    BER_TAG_MCS_CONNECT_INITIAL  = 0x7f65,
+    BER_TAG_MCS_CONNECT_RESPONSE = 0x7f66,
+};
+
+enum {
+    BER_TAG_MCS_DOMAIN_PARAMS = 0x30
+};
+
+
 
 class McsOut
 {
@@ -177,13 +225,13 @@ static inline void mcs_send_connect_initial(
     uint32_t offset_data_len_connect_initial = stream.get_offset(0);
     stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
-    stream.out_uint8(BER_TAG_OCTET_STRING);
+    stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
     stream.out_ber_len(1); /* calling domain */
     stream.out_uint8(1);
-    stream.out_uint8(BER_TAG_OCTET_STRING);
+    stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
     stream.out_ber_len(1); /* called domain */
     stream.out_uint8(1);
-    stream.out_uint8(BER_TAG_BOOLEAN);
+    stream.out_uint8(Stream::BER_TAG_BOOLEAN);
     stream.out_ber_len(1);
     stream.out_uint8(0xff); /* upward flag */
 
@@ -223,7 +271,7 @@ static inline void mcs_send_connect_initial(
     stream.out_ber_int24(0xffff); // max_pdu_size
     stream.out_ber_int8(2);
 
-    stream.out_uint8(BER_TAG_OCTET_STRING);
+    stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
     uint32_t offset_data_len = stream.get_offset(0);
     stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
@@ -291,7 +339,7 @@ static inline void mcs_send_connect_initial(
 
     stream.set_out_per_length(stream.get_offset(offset_gcc_conference_create_request_header_length + 2), offset_gcc_conference_create_request_header_length); // length including header
 
-    // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
+    // set mcs_data len, Stream::BER_TAG_OCTET_STRING (some kind of BLOB)
     LOG(LOG_INFO, "mcs_data_len = %u", stream.get_offset(offset_data_len + 3));
     stream.set_out_ber_len_uint16(stream.get_offset(offset_data_len + 3), offset_data_len);
 
@@ -372,7 +420,7 @@ static inline void mcs_recv_connect_response(
     int len = cr_stream.in_ber_len();
     // ----------------------------------------------------------
 
-    if (cr_stream.in_uint8() != BER_TAG_RESULT) {
+    if (cr_stream.in_uint8() != Stream::BER_TAG_RESULT) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = cr_stream.in_ber_len();
@@ -403,7 +451,7 @@ static inline void mcs_recv_connect_response(
     if (res != 0) {
         throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
     }
-    if (cr_stream.in_uint8() != BER_TAG_INTEGER) {
+    if (cr_stream.in_uint8() != Stream::BER_TAG_INTEGER) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = cr_stream.in_ber_len();
@@ -415,7 +463,7 @@ static inline void mcs_recv_connect_response(
     len = cr_stream.in_ber_len();
     cr_stream.in_skip_bytes(len);
 
-    if (cr_stream.in_uint8() != BER_TAG_OCTET_STRING) {
+    if (cr_stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = cr_stream.in_ber_len();
@@ -529,24 +577,18 @@ static inline void mcs_recv_connect_initial(
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     int len = stream.in_ber_len();
-    if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+    if (stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = stream.in_ber_len();
     stream.in_skip_bytes(len);
 
-    if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+    if (stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = stream.in_ber_len();
     stream.in_skip_bytes(len);
-    if (stream.in_uint8() != BER_TAG_BOOLEAN) {
-        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
-    }
-    len = stream.in_ber_len();
-    stream.in_skip_bytes(len);
-
-    if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+    if (stream.in_uint8() != Stream::BER_TAG_BOOLEAN) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = stream.in_ber_len();
@@ -564,7 +606,13 @@ static inline void mcs_recv_connect_initial(
     len = stream.in_ber_len();
     stream.in_skip_bytes(len);
 
-    if (stream.in_uint8() != BER_TAG_OCTET_STRING) {
+    if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+        throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
+    }
+    len = stream.in_ber_len();
+    stream.in_skip_bytes(len);
+
+    if (stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = stream.in_ber_len();
@@ -982,12 +1030,12 @@ static inline void mcs_send_connect_response(
     // The first byte (0x0a) is the ASN.1 BER encoded Enumerated type. The
     // length of the value is given by the second byte (1 byte), and the
     // actual value is 0 (rt-successful).
-    stream.out_uint8(BER_TAG_RESULT);
+    stream.out_uint8(Stream::BER_TAG_RESULT);
     stream.out_ber_len_uint7(1);
     stream.out_uint8(0);
 
     // Connect-Response::calledConnectId = 0
-    stream.out_uint8(BER_TAG_INTEGER);
+    stream.out_uint8(Stream::BER_TAG_INTEGER);
     stream.out_ber_len_uint7(1);
     stream.out_uint8(0);
 
@@ -1012,7 +1060,7 @@ static inline void mcs_send_connect_response(
     stream.out_ber_int8(2);
 
     // Connect-Response::userData (287 bytes)
-    stream.out_uint8(BER_TAG_OCTET_STRING);
+    stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
     uint32_t offset_len_mcs_data = stream.get_offset(0);
     stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
@@ -1217,7 +1265,7 @@ static inline void mcs_send_connect_response(
 
     // set user_data_len (TWO_BYTE_UNSIGNED_ENCODING)
     stream.set_out_uint16_be(0x8000 | (stream.get_offset(offset_user_data_len + 2)), offset_user_data_len);
-    // set mcs_data len, BER_TAG_OCTET_STRING (some kind of BLOB)
+    // set mcs_data len, Stream::BER_TAG_OCTET_STRING (some kind of BLOB)
     stream.set_out_ber_len_uint16(stream.get_offset(offset_len_mcs_data + 3), offset_len_mcs_data);
     // set BER_TAG_MCS_CONNECT_RESPONSE len
     stream.set_out_ber_len_uint16(stream.get_offset(offset_len_mcs_connect_response + 3), offset_len_mcs_connect_response);
@@ -1290,7 +1338,7 @@ static inline void mcs_send_erect_domain_and_attach_user_request_pdu(Transport *
     LOG(LOG_INFO, "mcs_send_erect_domain_and_attach_user_request_pdu");
     Stream edrq_stream(32768);
     X224Out edrq_tpdu(X224Packet::DT_TPDU, edrq_stream);
-    edrq_stream.out_uint8((MCS_EDRQ << 2));
+    edrq_stream.out_uint8((DomainMCSPDU_ErectDomainRequest << 2));
     edrq_stream.out_per_integer(0); /* subHeight (INTEGER) */
     edrq_stream.out_per_integer(0); /* subInterval (INTEGER) */
     edrq_tpdu.end();
@@ -1298,7 +1346,7 @@ static inline void mcs_send_erect_domain_and_attach_user_request_pdu(Transport *
 
     Stream aurq_stream(32768);
     X224Out aurq_tpdu(X224Packet::DT_TPDU, aurq_stream);
-    aurq_stream.out_uint8((MCS_AURQ << 2));
+    aurq_stream.out_uint8((DomainMCSPDU_AttachUserRequest << 2));
     aurq_tpdu.end();
     aurq_tpdu.send(trans);
 }
@@ -1391,7 +1439,7 @@ static inline void mcs_send_channel_join_request_pdu(Transport * trans, int user
 {
     Stream cjrq_stream(32768);
     X224Out cjrq_tpdu(X224Packet::DT_TPDU, cjrq_stream);
-    cjrq_stream.out_uint8((MCS_CJRQ << 2));
+    cjrq_stream.out_uint8((DomainMCSPDU_ChannelJoinRequest << 2));
     cjrq_stream.out_uint16_be(userid);
     cjrq_stream.out_uint16_be(chanid);
     cjrq_tpdu.end();
@@ -1476,7 +1524,7 @@ static inline void mcs_recv_channel_join_confirm_pdu(Transport * trans, uint16_t
     Stream cjcf_stream(32768);
     X224In cjcf_tpdu(trans, cjcf_stream);
     int opcode = cjcf_stream.in_uint8();
-    if ((opcode >> 2) != MCS_CJCF) {
+    if ((opcode >> 2) != DomainMCSPDU_ChannelJoinConfirm) {
         throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
     }
     uint8_t result = cjcf_stream.in_uint8();
@@ -1546,7 +1594,7 @@ static inline void mcs_recv_attach_user_confirm_pdu(Transport * trans, uint16_t 
     Stream aucf_stream(32768);
     X224In aucf_tpdu(trans, aucf_stream);
     int opcode = aucf_stream.in_uint8();
-    if ((opcode >> 2) != MCS_AUCF) {
+    if ((opcode >> 2) != DomainMCSPDU_AttachUserConfirm) {
         throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
     }
     int res = aucf_stream.in_uint8();
@@ -1622,7 +1670,7 @@ static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport *
         Stream stream(32768);
         X224In in(trans, stream);
         uint8_t opcode = stream.in_uint8();
-        if ((opcode >> 2) != MCS_EDRQ) {
+        if ((opcode >> 2) != DomainMCSPDU_ErectDomainRequest) {
             throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
         }
         stream.in_skip_bytes(2);
@@ -1637,7 +1685,7 @@ static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport *
         Stream stream(32768);
         X224In in(trans, stream);
         uint8_t opcode = stream.in_uint8();
-        if ((opcode >> 2) != MCS_AURQ) {
+        if ((opcode >> 2) != DomainMCSPDU_AttachUserRequest) {
             throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
         }
         if (opcode & 2) {
@@ -1701,7 +1749,7 @@ static inline void mcs_send_attach_user_confirm_pdu(Transport * trans, uint16_t 
 {
     Stream stream(32768);
     X224Out tpdu(X224Packet::DT_TPDU, stream);
-    stream.out_uint8(((MCS_AUCF << 2) | 2));
+    stream.out_uint8(((DomainMCSPDU_AttachUserConfirm << 2) | 2));
     stream.out_uint8(0);
     stream.out_uint16_be(userid);
     tpdu.end();
@@ -1785,7 +1833,7 @@ static inline void mcs_send_channel_join_confirm_pdu(Transport * trans, uint16_t
 {
     Stream stream(32768);
     X224Out tpdu(X224Packet::DT_TPDU, stream);
-    stream.out_uint8((MCS_CJCF << 2) | 2);
+    stream.out_uint8((DomainMCSPDU_ChannelJoinConfirm << 2) | 2);
     stream.out_uint8(0);
     stream.out_uint16_be(userid);
     stream.out_uint16_be(chanid);
@@ -1886,7 +1934,7 @@ static inline void mcs_recv_channel_join_request_pdu(Transport * trans, uint16_t
     X224In in(trans, stream);
 
     uint8_t opcode = stream.in_uint8();
-    if ((opcode >> 2) != MCS_CJRQ) {
+    if ((opcode >> 2) != DomainMCSPDU_ChannelJoinRequest) {
         LOG(LOG_INFO, "unexpected opcode = %u", opcode);
         throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
     }
