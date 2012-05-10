@@ -119,7 +119,6 @@ struct Keymap2 {
         this->last_chr_unicode = 0;
     }
 
-
     void synchronize(uint16_t param1){
         this->key_flags = param1 & 0x07;
         // non sticky keys are forced to be UP
@@ -172,7 +171,9 @@ struct Keymap2 {
 
     void event(const uint16_t keyboardFlags, const uint16_t keyCode)
     {
+        // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
         uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
+        // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
         this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
 
         switch (extendedKeyCode){
@@ -181,293 +182,371 @@ struct Keymap2 {
                     this->key_flags ^= CAPSLOCK;
                 }
             break;
-            case LEFT_SHIFT: // left shift
-            case RIGHT_SHIFT: // right shift
-            case LEFT_CTRL: // left ctrl
-            case RIGHT_CTRL: // right ctrl
-            case LEFT_ALT: // left alt
-            case RIGHT_ALT: // right alt
+            case 0x45: // numlock
+                if (this->keys_down[extendedKeyCode]){
+                    this->key_flags ^= NUMLOCK;
+                }
             break;
-            default:
+             case 0x46: // scrolllock
+                if (this->keys_down[extendedKeyCode]){
+                    this->key_flags ^= SCROLLLOCK;
+                }
+            break;
+           case LEFT_SHIFT:   // left shift
+            case RIGHT_SHIFT: // right shift
+            case LEFT_CTRL:   // left ctrl
+            case RIGHT_CTRL:  // right ctrl
+            case LEFT_ALT:    // left alt
+            case RIGHT_ALT:   // right alt
+            break;
+            default: // all other codes
 
                 // This table translates the RDP scanodes to X11 scandodes :
                 //  - the fist block (0-127) simply applies the +8 Windows to X11 translation and forces some 0 values
                 //  - the second block (128-255) give codes for the extended keys that have a meaningful one
                 uint8_t map[256] =  {
-                    0x00, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-                    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-                    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
-                    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
-                    0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
-                    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
-                    0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
-                    0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
-                    0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
-                    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
-                    0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f,
-                    0x60, 0x61, 0x62, 0x00, 0x00, 0x00, 0x66, 0x67,
-                    0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
-                    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77,
-                    0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, // 0x00 - 0x07
+                    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, // 0x08 - 0x0f
+                    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, // 0x10 - 0x17
+                    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, // 0x18 - 0x1f
+                    0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, // 0x20 - 0x27
+                    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, // 0x28 - 0x2f
+                    0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, // 0x30 - 0x37
+                    0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, // 0x38 - 0x3f
+                    0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, // 0x40 - 0x47
+                    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, // 0x48 - 0x4f
+                    0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, // 0x50 - 0x57
+                    0x60, 0x61, 0x62, 0x00, 0x00, 0x00, 0x66, 0x67, // 0x58 - 0x5f
+                    0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, // 0x60 - 0x67
+                    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, // 0x68 - 0x6f
+                    0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f, // 0x70 - 0x77
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x78 - 0x7f
 
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x6c, 0x6d, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x70, 0x00, 0x6f,
-                    0x71, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x61,
-                    0x62, 0x63, 0x00, 0x64, 0x00, 0x66, 0x00, 0x67,
-                    0x68, 0x69, 0x6a, 0x6b, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x73, 0x74, 0x75, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x80 - 0x87
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x88 - 0x8f
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x90 - 0x97
+                    0x00, 0x00, 0x00, 0x00, 0x6c, 0x6d, 0x00, 0x00, // 0x98 - 0x9f
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xa0 - 0xa7
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xa8 - 0xaf
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x70, 0x00, 0x6f, // 0xb0 - 0xb7
+                    0x71, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xb8 - 0xbf
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x61, // 0xc0 - 0xc7
+                    0x62, 0x63, 0x00, 0x64, 0x00, 0x66, 0x00, 0x67, // 0xc8 - 0xcf
+                    0x68, 0x69, 0x6a, 0x6b, 0x00, 0x00, 0x00, 0x00, // 0xd0 - 0xd7
+                    0x00, 0x00, 0x00, 0x73, 0x74, 0x75, 0x00, 0x00, // 0xd8 - 0xdf
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xe0 - 0xe7
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xe8 - 0xef
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xf0 - 0xf7
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  // 0xf8 - 0xff
                 } ;
 
-
+                // if scancode is meaningful (not 0)
                 if (this->keys_down[extendedKeyCode]){
+                        const KeyLayout_t * layout = &keylayout_WORK_noshift;
+                        this->last_char_key = extendedKeyCode;
 
-                    const KeyLayout_t * layout = &keylayout_WORK_noshift;
-                    this->last_char_key = extendedKeyCode;
-                    if (this->is_ctrl_pressed() && this->is_alt_pressed()){
-                        layout = &this->keylayout_WORK_altgr;
-                    }
-                    else if (this->is_shift_pressed() && this->is_caps_locked()){
-                        layout = &this->keylayout_WORK_shiftcapslock;
-                    }
-                    else if (this->is_shift_pressed()){
-                        layout = &this->keylayout_WORK_shift;
-                    }
-                    else if (this->is_caps_locked()) {
-                        layout = &this->keylayout_WORK_capslock;
-                    }
-                    uint8_t sym = map[extendedKeyCode];
-                    uint32_t uchar = (*layout)[sym];
-                    // > 0x20 is for ruling out NUL,
-                    // but also TAB, ESC and BACKSPACE
-                    // that has unicode values but are not actually
-                    // printable characters and that we don't want to track
-//                    LOG(LOG_INFO, "nbevent in buffer: %u %u\n", this->nbuf, this->nbuf_kevent);
-                    if (this->verbose){
-                        LOG(LOG_INFO, "extendedKeyCode=%x", extendedKeyCode);
-                    }
-
-                    if ((uchar >= 0x20) && (uchar != 0x7F) && (uchar != 0x5E)){
-                        if (this->verbose){
-                            LOG(LOG_INFO, "uchar=%x", uchar);
-                        }
-                        if (this->dead_key != DEADKEY_NONE){
-                            switch (dead_key){
-                            case DEADKEY_CIRC:
-                                switch (uchar){
-                                case 'a':
-                                    this->push(0xE2); // unicode for â (acirc)
-                                break;
-                                case 'A':
-                                    this->push(0xC2); // unicode for Â (Acirc)
-                                break;
-                                case 'e':
-                                    this->push(0xEA); // unicode for ê (ecirc)
-                                break;
-                                case 'E':
-                                    this->push(0xCA); // unicode for Ê (Ecirc)
-                                break;
-                                case 'i':
-                                    this->push(0xEE); // unicode for î (icirc)
-                                break;
-                                case 'I':
-                                    this->push(0xCE); // unicode for Î (Icirc)
-                                break;
-                                case 'o':
-                                    this->push(0xF4); // unicode for ô (ocirc)
-                                break;
-                                case 'O':
-                                    this->push(0xD4); // unicode for Ô (Ocirc)
-                                break;
-                                case 'u':
-                                    this->push(0xFB); // unicode for û (ucirc)
-                                break;
-                                case 'U':
-                                    this->push(0xDB); // unicode for Û (Ucirc)
-                                break;
-                                case ' ':
-                                    this->push(0x5E); // unicode for ^ (caret)
-                                break;
-                                default:
-                                    this->push(uchar); // unmodified unicode
-                                break;
-                                }
-                            break;
-                            case DEADKEY_UML:
-                                switch (uchar){
-                                case 'a':
-                                    this->push(0xE4); // unicode for ä (auml)
-                                break;
-                                case 'A':
-                                    this->push(0xC4); // unicode for Ä (Auml)
-                                break;
-                                case 'e':
-                                    this->push(0xEB); // unicode for ë (euml)
-                                break;
-                                case 'E':
-                                    this->push(0xCB); // unicode for Ë (Euml)
-                                break;
-                                case 'i':
-                                    this->push(0xEF); // unicode for ï (iuml)
-                                break;
-                                case 'I':
-                                    this->push(0xCF); // unicode for Ï (Iuml)
-                                break;
-                                case 'o':
-                                    this->push(0xF6); // unicode for ö (ouml)
-                                break;
-                                case 'O':
-                                    this->push(0xD6); // unicode for Ö (Ouml)
-                                break;
-                                case 'u':
-                                    this->push(0xFC); // unicode for ü (uuml)
-                                break;
-                                case 'U':
-                                    this->push(0xDC); // unicode for Ü (Uuml)
-                                break;
-                                case ' ':
-                                    this->push(0xA8); // unicode for " (umlaut)
-                                break;
-                                default:
-                                    this->push(uchar); // unmodified unicode
-                                break;
-                                }
-                            break;
-                            case DEADKEY_GRAVE:
-                                switch (uchar){
-                                case 'a':
-                                    this->push(0xE0); // unicode for à (agrave)
-                                break;
-                                case 'A':
-                                    this->push(0xC0); // unicode for À (Agrave)
-                                break;
-                                case 'e':
-                                    this->push(0xE8); // unicode for è (egrave)
-                                break;
-                                case 'E':
-                                    this->push(0xC8); // unicode for È (Egrave)
-                                break;
-                                case 'i':
-                                    this->push(0xEC); // unicode for ì (igrave)
-                                break;
-                                case 'I':
-                                    this->push(0xCC); // unicode for Ì (Igrave)
-                                break;
-                                case 'o':
-                                    this->push(0xF2); // unicode for ò (ograve)
-                                break;
-                                case 'O':
-                                    this->push(0xD2); // unicode for Ò (Ograve)
-                                break;
-                                case 'u':
-                                    this->push(0xF9); // unicode for ù (ugrave)
-                                break;
-                                case 'U':
-                                    this->push(0xD9); // unicode for Ù (Ugrave)
-                                break;
-                                case ' ':
-                                    this->push(0x60); // unicode for ` (backslash)
-                                break;
-                                default:
-                                    this->push(uchar); // unmodified unicode
-                                break;
-                                }
-                            break;
-                            default:
-//                              this->push(0x5E);
-                                this->push(uchar); // unmodified unicode
-                            break;
-                            }
-                            this->dead_key = DEADKEY_NONE;
-                        }
-                        else {
-                            if (this->verbose){
-                                LOG(LOG_INFO, "pushing char %02x", uchar);
-                            }
+                    //=================================================
+                    // KEYPAD : Keypad ambiguous keys are handled apart
+                    //=================================================
+                    if ( ( (extendedKeyCode >= 0x47) && (extendedKeyCode <= 0x49) )
+                      || ( (extendedKeyCode >= 0x4b) && (extendedKeyCode <= 0x4d) )
+                      || ( (extendedKeyCode >= 0x4f) && (extendedKeyCode <= 0x53) )
+                       ){
+                        // if numlock is activated, keys are printable characters (logical SHIFT mode)
+                        if ((this->key_flags & NUMLOCK)) {
+                            layout = &this->keylayout_WORK_shift;
+                            // Translate the scancode to an unicode char
+                            uint8_t sym = map[extendedKeyCode];
+                            uint32_t uchar = (*layout)[sym];
                             this->push(uchar);
                         }
-                    }
-                    else {
-                        if (this->verbose){
-                            LOG(LOG_INFO, "pushing event extendedKeyCode=%x", extendedKeyCode);
+                        // if numlock is not activated, keys are NOT printable characters (logical NO SHIFT mode)
+                        else {
+                            switch (extendedKeyCode){
+                               /* kEYPAD LEFT ARROW */
+                                case 0x4b:
+                                    this->push_kevent(KEVENT_LEFT_ARROW);
+                                break;
+                                /* kEYPAD UP ARROW */
+                                case 0x48:
+                                    this->push_kevent(KEVENT_UP_ARROW);
+                                break;
+                                /* kEYPAD RIGHT ARROW */
+                                case 0x4d:
+                                    this->push_kevent(KEVENT_RIGHT_ARROW);
+                                break;
+                                /* kEYPAD DOWN ARROW */
+                                case 0x50:
+                                    this->push_kevent(KEVENT_DOWN_ARROW);
+                                break;
+                                /* kEYPAD HOME */
+                                case 0x47:
+                                    this->push_kevent(KEVENT_HOME);
+                                break;
+                                /* kEYPAD PGUP */
+                                case 0x49:
+                                    this->push_kevent(KEVENT_PGUP);
+                                break;
+                                /* kEYPAD PGDOWN */
+                                case 0x51:
+                                    this->push_kevent(KEVENT_PGDOWN);
+                                break;
+                                /* kEYPAD END */
+                                case 0x4F:
+                                    this->push_kevent(KEVENT_END);
+                                break;
+                                /* kEYPAD DELETE */
+                                case 0x53:
+                                    this->push_kevent(KEVENT_DELETE);
+                                default:
+                                break;
+                            }
                         }
-                        switch (extendedKeyCode){
-                        case 0x1A:
-                            this->is_shift_pressed() ? this->dead_key = DEADKEY_UML : this->dead_key = DEADKEY_CIRC;
-                        break;
-                        case 0x08:
-                            this->dead_key = DEADKEY_GRAVE;
-                        break;
-                        /* LEFT ARROW */
-                        case 0xCB:
-                            this->push_kevent(KEVENT_LEFT_ARROW);
-                        break;
-                        /* UP ARROW */
-                        case 0xC8:
-                            this->push_kevent(KEVENT_UP_ARROW);
-                        break;
-                        /* RIGHT ARROW */
-                        case 0xCD:
-                            this->push_kevent(KEVENT_RIGHT_ARROW);
-                        break;
-                        /* DOWN ARROW */
-                        case 0xD0:
-                            this->push_kevent(KEVENT_DOWN_ARROW);
-                        break;
-                        /* HOME */
-                        case 0xC7:
-                            this->push_kevent(KEVENT_HOME);
-                        break;
-                        /* PGUP */
-                        case 0xC9:
-                            this->push_kevent(KEVENT_PGUP);
-                        break;
-                        /* PGDOWN */
-                        case 0xD1:
-                            this->push_kevent(KEVENT_PGDOWN);
-                        break;
-                        /* END */
-                        case 0xCF:
-                            this->push_kevent(KEVENT_END);
-                        break;
-                         /* TAB */
-                        case 0x0F:
-                            if (this->is_shift_pressed()){
-                                this->push_kevent(KEVENT_BACKTAB);
-                            }
-                            else {
-                                this->push_kevent(KEVENT_TAB);
-                            }
-                        break;
-                         /* backspace */
-                        case 0x0E:
-                            this->push_kevent(KEVENT_BACKSPACE);
-                        break;
-                        case 0xD3: // delete
-                            this->push_kevent(KEVENT_DELETE);
-                        break;
-                        case 0x53: // numpad delete
-                            this->push_kevent(KEVENT_DELETE);
-                        break;
-                        case 0x1C: // enter
-                            this->push_kevent(KEVENT_ENTER);
-                        break;
-                        case 0x9C: // numpad enter
-                            this->push_kevent(KEVENT_ENTER);
-                        break;
+                    }
 
-                        default:
-                        break;
+                    //========================================
+                    // NOT KEYPAD
+                    //========================================
+                    else {
+                        if (this->is_ctrl_pressed() && this->is_alt_pressed()){
+                            layout = &this->keylayout_WORK_altgr;
+                        }
+                        else if (this->is_shift_pressed() && this->is_caps_locked()){
+                            layout = &this->keylayout_WORK_shiftcapslock;
+                        }
+                        else if (this->is_shift_pressed()){
+                            layout = &this->keylayout_WORK_shift;
+                        }
+                        else if (this->is_caps_locked()) {
+                            layout = &this->keylayout_WORK_capslock;
+                        }
+                        // Translate the scancode to an unicode char
+                        uint8_t sym = map[extendedKeyCode];
+                        uint32_t uchar = (*layout)[sym];
+                        // > 0x20 is for ruling out NUL,
+                        // but also TAB, ESC and BACKSPACE
+                        // that has unicode values but are not actually
+                        // printable characters and that we don't want to track
+    //                    LOG(LOG_INFO, "nbevent in buffer: %u %u\n", this->nbuf, this->nbuf_kevent);
+                        if (this->verbose){
+                            LOG(LOG_INFO, "extendedKeyCode=%x", extendedKeyCode);
+                        }
+                        // char is in Printable unicode character range
+                        if ((uchar >= 0x20) && (uchar != 0x7F) && (uchar != 0x5E)){
+                            if (this->verbose){
+                                LOG(LOG_INFO, "uchar=%x", uchar);
+                            }
+                            // If previous key was a dead key, push a translated unicode char
+                            if (this->dead_key != DEADKEY_NONE){
+                                switch (dead_key){
+                                case DEADKEY_CIRC:
+                                    switch (uchar){
+                                    case 'a':
+                                        this->push(0xE2); // unicode for â (acirc)
+                                    break;
+                                    case 'A':
+                                        this->push(0xC2); // unicode for Â (Acirc)
+                                    break;
+                                    case 'e':
+                                        this->push(0xEA); // unicode for ê (ecirc)
+                                    break;
+                                    case 'E':
+                                        this->push(0xCA); // unicode for Ê (Ecirc)
+                                    break;
+                                    case 'i':
+                                        this->push(0xEE); // unicode for î (icirc)
+                                    break;
+                                    case 'I':
+                                        this->push(0xCE); // unicode for Î (Icirc)
+                                    break;
+                                    case 'o':
+                                        this->push(0xF4); // unicode for ô (ocirc)
+                                    break;
+                                    case 'O':
+                                        this->push(0xD4); // unicode for Ô (Ocirc)
+                                    break;
+                                    case 'u':
+                                        this->push(0xFB); // unicode for û (ucirc)
+                                    break;
+                                    case 'U':
+                                        this->push(0xDB); // unicode for Û (Ucirc)
+                                    break;
+                                    case ' ':
+                                        this->push(0x5E); // unicode for ^ (caret)
+                                    break;
+                                    default:
+                                        this->push(uchar); // unmodified unicode
+                                    break;
+                                    }
+                                break;
+                                case DEADKEY_UML:
+                                    switch (uchar){
+                                    case 'a':
+                                        this->push(0xE4); // unicode for ä (auml)
+                                    break;
+                                    case 'A':
+                                        this->push(0xC4); // unicode for Ä (Auml)
+                                    break;
+                                    case 'e':
+                                        this->push(0xEB); // unicode for ë (euml)
+                                    break;
+                                    case 'E':
+                                        this->push(0xCB); // unicode for Ë (Euml)
+                                    break;
+                                    case 'i':
+                                        this->push(0xEF); // unicode for ï (iuml)
+                                    break;
+                                    case 'I':
+                                        this->push(0xCF); // unicode for Ï (Iuml)
+                                    break;
+                                    case 'o':
+                                        this->push(0xF6); // unicode for ö (ouml)
+                                    break;
+                                    case 'O':
+                                        this->push(0xD6); // unicode for Ö (Ouml)
+                                    break;
+                                    case 'u':
+                                        this->push(0xFC); // unicode for ü (uuml)
+                                    break;
+                                    case 'U':
+                                        this->push(0xDC); // unicode for Ü (Uuml)
+                                    break;
+                                    case ' ':
+                                        this->push(0xA8); // unicode for " (umlaut)
+                                    break;
+                                    default:
+                                        this->push(uchar); // unmodified unicode
+                                    break;
+                                    }
+                                break;
+                                case DEADKEY_GRAVE:
+                                    switch (uchar){
+                                    case 'a':
+                                        this->push(0xE0); // unicode for à (agrave)
+                                    break;
+                                    case 'A':
+                                        this->push(0xC0); // unicode for À (Agrave)
+                                    break;
+                                    case 'e':
+                                        this->push(0xE8); // unicode for è (egrave)
+                                    break;
+                                    case 'E':
+                                        this->push(0xC8); // unicode for È (Egrave)
+                                    break;
+                                    case 'i':
+                                        this->push(0xEC); // unicode for ì (igrave)
+                                    break;
+                                    case 'I':
+                                        this->push(0xCC); // unicode for Ì (Igrave)
+                                    break;
+                                    case 'o':
+                                        this->push(0xF2); // unicode for ò (ograve)
+                                    break;
+                                    case 'O':
+                                        this->push(0xD2); // unicode for Ò (Ograve)
+                                    break;
+                                    case 'u':
+                                        this->push(0xF9); // unicode for ù (ugrave)
+                                    break;
+                                    case 'U':
+                                        this->push(0xD9); // unicode for Ù (Ugrave)
+                                    break;
+                                    case ' ':
+                                        this->push(0x60); // unicode for ` (backslash)
+                                    break;
+                                    default:
+                                        this->push(uchar); // unmodified unicode
+                                    break;
+                                    }
+                                break;
+                                default:
+    //                              this->push(0x5E);
+                                    this->push(uchar); // unmodified unicode
+                                break;
+                                }
+                                this->dead_key = DEADKEY_NONE;
+                            }
+                            // If previous key wasn't a dead key, simply push
+                            else {
+                                if (this->verbose){
+                                    LOG(LOG_INFO, "pushing char %02x", uchar);
+                                }
+                                this->push(uchar);
+                            }
+                        }
+                        // char is NOT in Printable unicode character range
+                        else {
+                            if (this->verbose){
+                                LOG(LOG_INFO, "pushing event extendedKeyCode=%x", extendedKeyCode);
+                            }
+                            switch (extendedKeyCode){
+                            case 0x1A:
+                                this->is_shift_pressed() ? this->dead_key = DEADKEY_UML : this->dead_key = DEADKEY_CIRC;
+                            break;
+                            case 0x08:
+                                this->dead_key = DEADKEY_GRAVE;
+                            break;
+                            /* LEFT ARROW */
+                            case 0xCB:
+                                this->push_kevent(KEVENT_LEFT_ARROW);
+                            break;
+                            /* UP ARROW */
+                            case 0xC8:
+                                this->push_kevent(KEVENT_UP_ARROW);
+                            break;
+                            /* RIGHT ARROW */
+                            case 0xCD:
+                                this->push_kevent(KEVENT_RIGHT_ARROW);
+                            break;
+                            /* DOWN ARROW */
+                            case 0xD0:
+                                this->push_kevent(KEVENT_DOWN_ARROW);
+                            break;
+                            /* HOME */
+                            case 0xC7:
+                                this->push_kevent(KEVENT_HOME);
+                            break;
+                            /* PGUP */
+                            case 0xC9:
+                                this->push_kevent(KEVENT_PGUP);
+                            break;
+                            /* PGDOWN */
+                            case 0xD1:
+                                this->push_kevent(KEVENT_PGDOWN);
+                            break;
+                            /* END */
+                            case 0xCF:
+                                this->push_kevent(KEVENT_END);
+                            break;
+                             /* TAB */
+                            case 0x0F:
+                                if (this->is_shift_pressed()){
+                                    this->push_kevent(KEVENT_BACKTAB);
+                                }
+                                else {
+                                    this->push_kevent(KEVENT_TAB);
+                                }
+                            break;
+                             /* backspace */
+                            case 0x0E:
+                                this->push_kevent(KEVENT_BACKSPACE);
+                            break;
+                            case 0xD3: // delete
+                                this->push_kevent(KEVENT_DELETE);
+                            break;
+                            case 0x53: // numpad delete
+                                this->push_kevent(KEVENT_DELETE);
+                            break;
+                            case 0x1C: // enter
+                                this->push_kevent(KEVENT_ENTER);
+                            break;
+                            case 0x9C: // numpad enter
+                                this->push_kevent(KEVENT_ENTER);
+                            break;
+
+                            default:
+                            break;
+                            }
                         }
                     }
                 }
@@ -902,18 +981,21 @@ struct Keymap2 {
             break;
             case 0x040c: // French
             {
-
-            // +----+----+----+----+----+----+----+----+----+----+----+----+----+-------+
-            // | 29 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 0A | 0B | 0C | 0D |   0E  |
-            // |------------------------------------------------------------------------|
-            // |  0F  | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 1A | 1B |  1C |
-            // |------------------------------------------------------------------++    |
-            // |  3A   | 1E | 1F | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 2B |    |
-            // |------------------------------------------------------------------------|
-            // |  2A | 56 | 2C | 2D | 2E | 2F | 30 | 31 | 32 | 33 | 34 | 35 |    36     |
-            // |------------------------------------------------------------------------|
-            // |  1D  |  9F  | 38 |           39           |  B8   |  A7  |  AF  |  9D  |
-            // +------------------------------------------------------------------------+
+            // +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
+            // | 01 |  | 3b | 3c | 3d | 3e |  | 3f | 40 | 41 | 42 |  | 43 | 44 | 57 | 58 |  | 37 | 46 | 1d+45 |
+            // +----+  +----+----+----+----+  +----+----+----+----+  +----+----+----+----+  +----+----+-------+
+            //                                     ***  keycodes suffixed by 'x' are extended ***
+            // +----+----+----+----+----+----+----+----+----+----+----+----+----+--------+  +----+----+----+  +-------------------+
+            // | 29 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 0a | 0b | 0c | 0d |   0e   |  | 52x| 47x| 49x|  | 45 | 35x| 37 | 4a |
+            // +-------------------------------------------------------------------------+  +----+----+----+  +----+----+----+----+
+            // |  0f  | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 1a | 1b |  1c  |  | 53x| 4fx| 51x|  | 47 | 48 | 49 |    |
+            // +------------------------------------------------------------------++     |  +----+----+----+  +----+----+----| 4e |
+            // |  3a   | 1e | 1f | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 2b |     |                    | 4b | 4c | 4d |    |
+            // +-------------------------------------------------------------------------+       +----+       +----+----+----+----+
+            // |  2a | 56 | 2C | 2D | 2E | 2F | 30 | 31 | 32 | 33 | 34 | 35 |    36      |       | 48x|       | 4f | 50 | 51 |    |
+            // +-------------------------------------------------------------------------+  +----+----+----+  +---------+----| 1cx|
+            // |  1D  |  5b  | 38 |           39           |  38x  |  5c  |  5d  |  1dx  |  | 4bx| 50x| 4dx|  |    52   | 53 |    |
+            // +------+------+----+------------------------+-------+------+------+-------+  +----+----+----+  +---------+----+----+
 
                 const KeyLayout_t x040c_noshift = {
                     /*   0 */     0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,    0x0,

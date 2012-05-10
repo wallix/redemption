@@ -443,3 +443,27 @@ BOOST_AUTO_TEST_CASE(TestKeymapBuffer)
 
 
 }
+
+
+
+BOOST_AUTO_TEST_CASE(TestKeyPad)
+{
+    Keymap2 keymap;
+    const int layout = 0x040C;
+    keymap.init_layout(layout);
+    // all lock keys are supposed to be inactive at this, point
+    BOOST_CHECK_EQUAL(0, keymap.key_flags);
+
+    keymap.event(0x0000, 0x45); // activate numlock
+    BOOST_CHECK_EQUAL(2, keymap.key_flags);
+    keymap.event(0x0000, 0x45); // desactivate numlock
+    BOOST_CHECK_EQUAL(0, keymap.key_flags);
+
+    keymap.event(0x0000, 0x45); // activate numlock
+    keymap.event(0, 0x47); // keypad '7' character
+    BOOST_CHECK_EQUAL('7', keymap.get_char());
+
+    keymap.event(0x0000, 0x45); // desactivate numlock
+    keymap.event(0, 0x47); // keypad home character
+    BOOST_CHECK_EQUAL(0, keymap.get_char());
+}
