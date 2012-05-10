@@ -156,9 +156,17 @@ BOOST_AUTO_TEST_CASE(TestCheckTransport)
     // inside Transport, the difference
     CheckTransport gt("input", 5);
     BOOST_CHECK_EQUAL(gt.status, true);
-    gt.send("in", 2);
+    try{
+        gt.send("in", 2);
+    } catch (const Error & e){
+        BOOST_CHECK(false);
+    };
     BOOST_CHECK_EQUAL(gt.status, true);
-    gt.send("pot", 3);
+    try{
+        gt.send("pot", 3);
+    } catch (const Error & e){
+        BOOST_CHECK_EQUAL((uint16_t)ERR_TRANSPORT_DIFFERS, (uint16_t)e.id);
+    };
     BOOST_CHECK_EQUAL(gt.status, false);
 }
 
@@ -206,6 +214,10 @@ BOOST_AUTO_TEST_CASE(TestTestTransport)
     sz = 3;
     gt.recv(&p, sz);
     BOOST_CHECK(0 == memcmp(p - sz, "PUT", sz));
-    gt.send("pot", 3);
+    try {
+        gt.send("pot", 3);
+    } catch (const Error & e){
+        BOOST_CHECK_EQUAL((uint16_t)ERR_TRANSPORT_DIFFERS, (uint16_t)e.id);
+    };
     BOOST_CHECK_EQUAL(gt.status, false);
 }

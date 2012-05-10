@@ -260,6 +260,7 @@ class CheckTransport : public Transport {
             hexdump((const char *)(&this->data[this->current]) + differs, available_len - differs);
             LOG(LOG_INFO, "=============== Got ===============");
             hexdump(buffer+differs, available_len - differs);
+            throw Error(ERR_TRANSPORT_DIFFERS, 0);
         }
         this->current += available_len;
         if (available_len != len){
@@ -289,7 +290,13 @@ class TestTransport : public Transport {
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
         if (this->status){
-            this->out.recv(pbuffer, len);
+            try {
+                this->out.recv(pbuffer, len);
+            } catch (const Error & e){
+                this->status = this->out.status;
+                throw;
+            }
+            this->status = this->out.status;
             if (this->verbose & 0x100){
                 LOG(LOG_INFO, "Recv done on %s (Test Data) %u bytes", this->name, len);
                 hexdump_c(*pbuffer - len, len);
@@ -306,8 +313,13 @@ class TestTransport : public Transport {
                 hexdump_c(buffer, len);
                 LOG(LOG_INFO, "Dump done %s (Test Data) sending %u bytes", this->name, len);
             }
-            this->in.send(buffer, len);
-            this->status = this->in.status;
+            try {
+                this->in.send(buffer, len);
+                this->status = this->in.status;
+            } catch (const Error & e){
+                this->status = this->in.status;
+                throw;
+            }
         }
     }
 };

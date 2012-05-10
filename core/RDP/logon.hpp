@@ -573,11 +573,12 @@ static inline void send_logon_info_packet(Stream & stream, const char * domain, 
                    | INFO_MAXIMIZESHELL
                    | INFO_ENABLEWINDOWSKEY
                    | INFO_LOGONNOTIFY
-                   | (use_rdp5 != 0) * INFO_LOGONERRORS
+                   | (use_rdp5 != 0) *
+                   (
+                     INFO_LOGONERRORS
+                   | INFO_NOAUDIOPLAYBACK
+                   )
                    ;
-
-    time_t t = time(NULL);
-    time_t tzone;
 
     stream.out_uint32_le(0);
     stream.out_uint32_le(flags);
@@ -601,12 +602,8 @@ static inline void send_logon_info_packet(Stream & stream, const char * domain, 
     if(!use_rdp5){
         LOG(LOG_INFO, "send login info (RDP4-style) %s:%s", domain, username);
     }
-    else {
-        LOG(LOG_INFO, "send extended login info (RDP5-style) %x %s:%s",flags,
-            domain,
-            username);
-    }
     if (use_rdp5){
+        LOG(LOG_INFO, "send extended login info (RDP5-style) %x %s:%s",flags, domain, username);
         // The WAB does not send it's IP to server. Is it what we want ?
         // rdesktop sends the faked IP below
         const char * ip_source = "10.10.9.161";
@@ -614,39 +611,58 @@ static inline void send_logon_info_packet(Stream & stream, const char * domain, 
         stream.out_uint16_le(0x00002);
         stream.out_uint16_le(2 * strlen(ip_source) + 2);
         stream.out_unistr(ip_source);
-        const char path[] = "C:\\WINNT\\System32\\mstscax.dll";
+        const char path[] = "C:\\Windows\\System32\\mstscax.dll";
         stream.out_uint16_le(2 * sizeof(path));
         stream.out_unistr(path);
 
-        tzone = (mktime(gmtime(&t)) - mktime(localtime(&t))) / 60;
-        stream.out_uint32_le(tzone);
+        // Client Time Zone (172 bytes)
+        // ----------------------------
+        time_t t = time(NULL);
+        uint32_t tzone_bias = (mktime(gmtime(&t)) - mktime(localtime(&t))) / 60;
+//        stream.out_uint32_le(tzone_bias);
+        // bias
+        stream.out_uint32_le(120);
+        // standard name
+        LOG(LOG_INFO, "size before date1=%04x", (size_t)(stream.p - stream.data));
+        stream.out_date_name("GMT Standard Time", 64);
+        LOG(LOG_INFO, "size date1=%04x", (size_t)(stream.p - stream.data));
 
-        stream.out_unistr("GTB, normaltid");
-        stream.out_clear_bytes(62 - 2 * strlen("GTB, normaltid"));
+        // standard date
+//        stream.out_uint32_le(0x0a0000);
+//        stream.out_uint32_le(0x050000);
+//        stream.out_uint32_le(3);
+//        stream.out_uint32_le(0);
+        stream.out_clear_bytes(16);
+        // standard bias
+//        stream.out_uint32_le(0);
+        stream.out_uint32_le(60);
 
-        stream.out_uint32_le(0x0a0000);
-        stream.out_uint32_le(0x050000);
-        stream.out_uint32_le(3);
-        stream.out_uint32_le(0);
-        stream.out_uint32_le(0);
+        // daylight name
+        LOG(LOG_INFO, "size before date2=%04x", (size_t)(stream.p - stream.data));
+        stream.out_date_name("GMT Daylight Time", 64);
+        LOG(LOG_INFO, "size after date2=%04x", (size_t)(stream.p - stream.data));
+        // daylight date
+//        stream.out_uint32_le(0x30000);
+//        stream.out_uint32_le(0x050000);
+//        stream.out_uint32_le(2);
+//        stream.out_uint32_le(0);
+        stream.out_clear_bytes(16);
+        // daylight bias
+//        stream.out_uint32_le(0xffffffc4);
+        stream.out_uint32_le(120);
+        // -------end of Timezone -----
 
-        stream.out_unistr("GTB, sommartid");
-        stream.out_clear_bytes(62 - 2 * strlen("GTB, sommartid"));
-
-        stream.out_uint32_le(0x30000);
-        stream.out_uint32_le(0x050000);
-        stream.out_uint32_le(2);
-        stream.out_uint32_le(0);
-        stream.out_uint32_le(0xffffffc4);
-
-        stream.out_uint32_le(0xfffffffe); // session id
-
+        stream.out_uint32_le(0); // session id
         stream.out_uint32_le(rdp5_performanceflags);
 
+        // autoreconnect length
         stream.out_uint16_le(0);
+        // autoreconnect Cookie
 
-        stream.out_uint16_le(0);
-        stream.out_uint16_le(0);
+        // reserved1
+//        stream.out_uint16_le(0);
+        // reserved2
+//        stream.out_uint16_le(0);
     }
 }
 
@@ -682,7 +698,7 @@ static inline void recv_logon_info(Stream & stream, uint16_t length, uint32_t & 
         stream.in_uni_to_ascii_str(tmpdata, len_dll);
         stream.in_skip_bytes(172); /* skip time data */
         rdp5_performanceflags = stream.in_uint32_le();
-        // more data here ?
+        // more data here : autoreconnect cookie and reserved.
         TODO("We should take care of remaining data if any")
     }
 }

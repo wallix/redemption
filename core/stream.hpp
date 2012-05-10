@@ -394,6 +394,7 @@ class Stream {
         this->out_uint8(0);
     }
 
+
     void set_out_unistr(const char* text, size_t offset)
     {
         int i=0;
@@ -403,6 +404,22 @@ class Stream {
         }
         this->set_out_uint8(0, offset+i*2);
         this->set_out_uint8(0, offset+i*2+1);
+    }
+
+    void out_date_name(const char* text, const size_t buflen)
+    {
+        int i = 0;
+        for (; i < (buflen/2) ; i++) {
+            if (!text[i]){
+                break;
+            }
+            this->out_uint8(text[i]);
+            this->out_uint8(0);
+        }
+        for (; i < (buflen/2) ; i++) {
+            this->out_uint8(0);
+            this->out_uint8(0);
+        }
     }
 
     void out_utf16(const uint16_t utf16[], size_t length)
