@@ -173,7 +173,7 @@ struct Keymap2 {
     {
         // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
         uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
-        // The state of that key is updated in then Keyboard status array (1=make ; 0=Break)
+        // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
         this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
 
         switch (extendedKeyCode){
