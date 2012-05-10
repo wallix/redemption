@@ -136,7 +136,7 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
 
     Stream stream(32768);
     X224Out tpdu(X224Packet::DT_TPDU, stream);
-    McsOut sdin_out(stream, MCS_SDIN, userid, MCS_GLOBAL_CHANNEL);
+    McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
 
     stream.out_uint32_le(SEC_LICENSE_PKT);
     stream.out_uint8(LICENSE_REQUEST);
@@ -193,7 +193,7 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
 
 //    Stream stream(32768);
 //    X224Out tpdu(X224Packet::DT_TPDU, stream);
-//    McsOut sdin_out(stream, MCS_SDIN, userid, MCS_GLOBAL_CHANNEL);
+//    McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
 //    stream.out_copy_bytes((char*)lic1, 322);
 
     sdin_out.end();
@@ -212,7 +212,7 @@ static inline void send_lic_response(Transport * trans, int userid) throw (Error
 
     Stream stream(32768);
     X224Out tpdu(X224Packet::DT_TPDU, stream);
-    McsOut sdin_out(stream, MCS_SDIN, userid, MCS_GLOBAL_CHANNEL);
+    McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic2, 20);
     sdin_out.end();
     tpdu.end();
@@ -230,7 +230,7 @@ static inline void send_media_lic_response(Transport * trans, int userid) throw 
 
     Stream stream(32768);
     X224Out tpdu(X224Packet::DT_TPDU, stream);
-    McsOut sdin_out(stream, MCS_SDIN, userid, MCS_GLOBAL_CHANNEL);
+    McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic3, 20);
     sdin_out.end();
     tpdu.end();
@@ -320,7 +320,7 @@ struct RdpLicence {
 
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, SEC_LICENSE_PKT, encrypt, true);
 
         stream.out_uint8(PLATFORM_CHALLENGE_RESPONSE);
@@ -485,7 +485,7 @@ struct RdpLicence {
 
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, SEC_LICENSE_PKT, encrypt, true);
 
         stream.out_uint8(NEW_LICENSE_REQUEST);
@@ -520,7 +520,7 @@ struct RdpLicence {
     {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
-        McsOut sdrq_out(stream, MCS_SDRQ, userid, MCS_GLOBAL_CHANNEL);
+        McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
 
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
