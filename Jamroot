@@ -221,7 +221,7 @@ unit-test test_rdesktop_invalid_pdu : tests/test_rdesktop_invalid_pdu.cpp libboo
 
 unit-test test_rdp_client_test_card : tests/test_rdp_client_test_card.cpp widget libboost_unit_test ini_config libboost_program_options ;
 unit-test test_rdp_client_w2000 : tests/test_rdp_client_w2000.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
-unit-test test_rdp_client_w2008 : tests/test_rdp_client_w2008.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
+#unit-test test_rdp_client_w2008 : tests/test_rdp_client_w2008.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
 
 unit-test test_rdp_client_tls_w2008 : tests/test_rdp_client_tls_w2008.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
 

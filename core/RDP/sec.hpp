@@ -683,7 +683,7 @@ class SecIn
     bool enabled;
     uint32_t verbose;
     SecIn(Stream & stream, CryptContext & crypt, bool enabled, uint32_t verbose = 0)
-        : enabled(enabled), verbose(verbose)
+        : flags(0), enabled(enabled), verbose(verbose)
     {
         if (this->enabled){
             this->flags = stream.in_uint32_le();

@@ -422,6 +422,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         //  (0x0006).
         TODO("put assertion to check type and throw and error if not as expected");
         uint16_t wPublicKeyBlobType = cr_stream.in_uint16_le();
+        LOG(LOG_DEBUG, "wPublicKeyBlobType = %u", wPublicKeyBlobType);
 
         // wPublicKeyBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
         //  of the PublicKeyBlob field.
@@ -460,6 +461,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         //  (0x0008).
         TODO("put assertion to check type and throw and error if not as expected");
         uint16_t wSignatureBlobType = cr_stream.in_uint16_le();
+        LOG(LOG_DEBUG, "wSignatureBlobType = %u", wSignatureBlobType);
 
         // wSignatureBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
         //  of the SignatureKeyBlob field.

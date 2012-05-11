@@ -518,7 +518,7 @@ struct mod_rdp : public client_mod {
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, this->userid, channel.chanid);
 
-        SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
+        SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, this->crypt_level);
 
         stream.out_uint32_le(length);
         stream.out_uint32_le(flags);
@@ -957,6 +957,7 @@ struct mod_rdp : public client_mod {
                     LOG(LOG_INFO, "UPGRADE_LICENSE");
                     break;
                 case ERROR_ALERT:
+                    LOG(LOG_INFO, "ERROR_ALERT");
                 TODO("This should be moved to RDP/lic.hpp (and probably the switch should also move there)")
                 {
                     uint32_t dwErrorCode = stream.in_uint32_le();
@@ -1047,7 +1048,7 @@ struct mod_rdp : public client_mod {
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");
             SecIn sec(stream, this->decrypt, this->crypt_level);
             if (sec.flags & SEC_LICENSE_PKT) { /* 0x80 */
-                LOG(LOG_ERR, "Error: unexpected licence negotiation sec packet");
+                LOG(LOG_ERR, "Error: unexpected license negotiation sec packet flags=%04x", sec.flags);
                 throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
             }
 
@@ -1343,7 +1344,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, this->crypt_level);
 
         // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1) containing information about the packet. The type subfield of the pduType field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
 
@@ -2295,7 +2296,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, this->crypt_level);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
@@ -2323,7 +2324,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, this->crypt_level);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
@@ -2349,7 +2350,7 @@ struct mod_rdp : public client_mod {
             Stream stream(65536);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, this->crypt_level);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_FONTLIST, this->share_id, RDP::STREAM_MED);
 
@@ -2394,7 +2395,7 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
+            SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, this->crypt_level);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_INPUT, this->share_id, RDP::STREAM_HI);
 
@@ -2429,7 +2430,7 @@ struct mod_rdp : public client_mod {
                     Stream stream(32768);
                     X224Out tpdu(X224Packet::DT_TPDU, stream);
                     McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
-                    SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, true);
+                    SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, this->crypt_level);
                     ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
                     ShareDataOut rdp_data_out(stream, PDUTYPE2_REFRESH_RECT, this->share_id, RDP::STREAM_MED);
 
@@ -2692,7 +2693,7 @@ struct mod_rdp : public client_mod {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out2(stream, DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, SEC_INFO_PKT | (this->crypt_level?SEC_ENCRYPT:0), this->encrypt, true);
+        SecOut sec_out(stream, SEC_INFO_PKT | (this->crypt_level?SEC_ENCRYPT:0), this->encrypt, this->crypt_level);
 
         send_logon_info_packet(stream,
                                this->domain,

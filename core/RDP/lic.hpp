@@ -323,7 +323,6 @@ struct RdpLicence {
 
     void rdp_lic_process_authreq(Transport * trans, Stream & stream, const char * hostname, int userid, int licence_issued, CryptContext & encrypt, int use_rdp5)
     {
-
         ssllib ssl;
 
         const uint8_t* in_token;
@@ -331,7 +330,6 @@ struct RdpLicence {
         uint8_t decrypt_token[LICENCE_TOKEN_SIZE];
         uint8_t hwid[LICENCE_HWID_SIZE];
         uint8_t crypt_hwid[LICENCE_HWID_SIZE];
-        uint8_t sealed_buffer[LICENCE_TOKEN_SIZE + LICENCE_HWID_SIZE];
         uint8_t out_sig[LICENCE_SIGNATURE_SIZE];
 
         in_token = 0;
@@ -354,11 +352,20 @@ struct RdpLicence {
         ssl.rc4_set_key(crypt_key, this->licence_key, 16);
         memcpy(decrypt_token, in_token, LICENCE_TOKEN_SIZE);
         ssl.rc4_crypt(crypt_key, decrypt_token, decrypt_token, LICENCE_TOKEN_SIZE);
+
+        hexdump((const char*)decrypt_token, LICENCE_TOKEN_SIZE);
         /* Generate a signature for a buffer of token and HWID */
-        this->rdp_lic_generate_hwid(hwid, hostname);
+        buf_out_uint32(hwid, 2);
+        memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
+        memcpy(hwid, "\x00\x00\x00\x00\x73\x19\x46\x88\x47\xd7\xb1\xae\xe4\x0d\xbf\x5d\xd9\x63\xc9\x99", LICENCE_HWID_SIZE);
+
+        hexdump((const char*)hwid, LICENCE_HWID_SIZE);
+
+        uint8_t sealed_buffer[LICENCE_TOKEN_SIZE + LICENCE_HWID_SIZE];
         memcpy(sealed_buffer, decrypt_token, LICENCE_TOKEN_SIZE);
         memcpy(sealed_buffer + LICENCE_TOKEN_SIZE, hwid, LICENCE_HWID_SIZE);
         sec_sign(out_sig, 16, this->licence_sign_key, 16, sealed_buffer, sizeof(sealed_buffer));
+
         /* Now encrypt the HWID */
         ssl.rc4_set_key(crypt_key, this->licence_key, 16);
         memcpy(crypt_hwid, hwid, LICENCE_HWID_SIZE);
@@ -458,34 +465,32 @@ struct RdpLicence {
         stream.out_uint8(use_rdp5?3:2); /* version */
         stream.out_uint16_le(length);
 
-        // wVersion (2 bytes): A 16-bit unsigned integer that contains the platform
-        // challenge version. This field MUST be set to 0x0100.
-        stream.out_uint16_le(0X100);
 
-    // wClientType (2 bytes): A 16-bit unsigned integer that represents the
-    // operating system type of the client and MAY contain one of following values.<15>
+        // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
+        // the binary information. If wBlobLen is set to 0, then the contents
+        // of this field SHOULD be ignored.
+        stream.out_uint16_le(BB_DATA_BLOB);
 
-    // +-------------------------------------+--------------------------------+
-    // | 0x0100 WIN32_PLATFORMCHALLENGE_TYPE | Win32 Platform Challenge Type. |
-    // +-------------------------------------+--------------------------------+
-    // | 0x0200 WIN16_PLATFORMCHALLENGE_TYPE | Win16 Platform Challenge Type. |
-    // +-------------------------------------+--------------------------------+
-    // | 0x0300 WINCE_PLATFORMCHALLENGE_TYPE | WinCE Platform Challenge Type. |
-    // +-------------------------------------+--------------------------------+
-    // | 0xFF00 OTHER_PLATFORMCHALLENGE_TYPE | Other Platform Challenge Type. |
-    // +-------------------------------------+--------------------------------+
-
-    // wLicenseDetailLevel (2 bytes): A 16-bit unsigned integer. This field
-    // represents the capability of the client to handle license data. RDP
-    // version 5.0 and later clients SHOULD advertise support for large (6.5 KB
-    // or higher) licenses by setting the detail level to LICENSE_DETAIL_DETAIL
-    // (0x0003). The following table lists valid values for this field.
-
+        // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+        // the binary information in the blobData field. If wBlobLen is set to 0,
+        // then the blobData field is not included in the Licensing Binary BLOB
+        // structure and the contents of the wBlobType field SHOULD be ignored.
         stream.out_uint16_le(LICENCE_TOKEN_SIZE);
         stream.out_copy_bytes(token, LICENCE_TOKEN_SIZE);
-        stream.out_uint16_le(1);
+
+        // wBlobType (2 bytes): A 16-bit, unsigned integer. The data type of
+        // the binary information. If wBlobLen is set to 0, then the contents
+        // of this field SHOULD be ignored.
+        stream.out_uint16_le(BB_DATA_BLOB);
+
+        // wBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+        // the binary information in the blobData field. If wBlobLen is set to 0,
+        // then the blobData field is not included in the Licensing Binary BLOB
+        // structure and the contents of the wBlobType field SHOULD be ignored.
         stream.out_uint16_le(LICENCE_HWID_SIZE);
         stream.out_copy_bytes(crypt_hwid, LICENCE_HWID_SIZE);
+
+
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
         sec_out.end();
@@ -527,8 +532,10 @@ struct RdpLicence {
         }
 
         if (this->licence_size > 0) {
+            buf_out_uint32(hwid, 2);
+            memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
+
             /* Generate a signature for the HWID buffer */
-            this->rdp_lic_generate_hwid(hwid, hostname);
             sec_sign(signature, 16, this->licence_sign_key, 16, hwid, sizeof(hwid));
             /* Now encrypt the HWID */
             ssllib ssl;
@@ -621,13 +628,6 @@ struct RdpLicence {
         }
         close(fd);
     }
-
-    void rdp_lic_generate_hwid(uint8_t* hwid, const char * hostname)
-    {
-        buf_out_uint32(hwid, 2);
-        memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
-    }
-
 
     // 2.2.2.2 Client New License Request (CLIENT_NEW_LICENSE_REQUEST)
     // ===============================================================
@@ -936,6 +936,28 @@ struct RdpLicence {
 // Case 5: A Client License Information message was received earlier by the server; the CAL (LicenseInfo BLOB) in the message required an upgrade; the license server can be contacted; and the old license is successfully upgraded. In this case, the terminal server returns the upgraded CAL in a Server Upgrade License message.
 
 // Case 6: A Client New License Request message was received earlier, the license server was contacted, and it issued a new license. In this case, the terminal server sends the new license to the client in a Server New License message.
+
+        // wVersion (2 bytes): A 16-bit unsigned integer that contains the platform
+        // challenge version. This field MUST be set to 0x0100.
+
+        // wClientType (2 bytes): A 16-bit unsigned integer that represents the
+        // operating system type of the client and MAY contain one of following values.<15>
+
+    // +-------------------------------------+--------------------------------+
+    // | 0x0100 WIN32_PLATFORMCHALLENGE_TYPE | Win32 Platform Challenge Type. |
+    // +-------------------------------------+--------------------------------+
+    // | 0x0200 WIN16_PLATFORMCHALLENGE_TYPE | Win16 Platform Challenge Type. |
+    // +-------------------------------------+--------------------------------+
+    // | 0x0300 WINCE_PLATFORMCHALLENGE_TYPE | WinCE Platform Challenge Type. |
+    // +-------------------------------------+--------------------------------+
+    // | 0xFF00 OTHER_PLATFORMCHALLENGE_TYPE | Other Platform Challenge Type. |
+    // +-------------------------------------+--------------------------------+
+
+    // wLicenseDetailLevel (2 bytes): A 16-bit unsigned integer. This field
+    // represents the capability of the client to handle license data. RDP
+    // version 5.0 and later clients SHOULD advertise support for large (6.5 KB
+    // or higher) licenses by setting the detail level to LICENSE_DETAIL_DETAIL
+    // (0x0003). The following table lists valid values for this field.
 
 
 #endif

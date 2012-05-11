@@ -691,38 +691,56 @@ class SocketTransport : public Transport {
 
         while (len > 0) {
             ssize_t rcvd = ::SSL_read(this->ssl, pbuffer, len);
-            switch (rcvd) {
-                case -1: /* error, maybe EAGAIN */
-                    switch (SSL_get_error(this->ssl, rcvd))
-                    {
-                        case SSL_ERROR_NONE:
-                            LOG(LOG_INFO, "send_tls ERROR NONE");
-                            break;
-
-                        case SSL_ERROR_WANT_READ:
-                            LOG(LOG_INFO, "send_tls WANT READ");
-                            break;
-
-                        case SSL_ERROR_WANT_WRITE:
-                            LOG(LOG_INFO, "send_tls WANT WRITE");
-                            break;
-
-                        default:
-                            LOG(LOG_INFO, "Failure in SSL library (protocol error?)");
-                            while ((error = ERR_get_error()) != 0)
-                                LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
-                            LOG(LOG_INFO, "Closing socket %s (%u) on recv", this->name, this->sck);
-                            this->sck_closed = 1;
-                            throw Error(ERR_SOCKET_ERROR, errno);
-                    }
+            switch (SSL_get_error(this->ssl, rcvd)) {
+                case SSL_ERROR_NONE:
+                    LOG(LOG_INFO, "recv_tls ERROR NONE");
+                    pbuffer += rcvd;
+                    len -= rcvd;
                     break;
-                case 0: /* no data received, socket closed */
+
+                case SSL_ERROR_WANT_READ:
+                    LOG(LOG_INFO, "recv_tls WANT READ");
+                    continue;
+
+                case SSL_ERROR_WANT_WRITE:
+                    LOG(LOG_INFO, "recv_tls WANT WRITE");
+                    continue;
+
+                case SSL_ERROR_WANT_CONNECT:
+                    LOG(LOG_INFO, "recv_tls WANT CONNECT");
+                    continue;
+
+                case SSL_ERROR_WANT_ACCEPT:
+                    LOG(LOG_INFO, "recv_tls WANT ACCEPT");
+                    continue;
+
+                case SSL_ERROR_WANT_X509_LOOKUP:
+                    LOG(LOG_INFO, "recv_tls WANT X509 LOOKUP");
+                    continue;
+
+                case SSL_ERROR_ZERO_RETURN:
+                    LOG(LOG_INFO, "recv_tls ZERO RETURN");
                     LOG(LOG_INFO, "No data received. TLS Socket %s (%u) closed on recv", this->name, this->sck);
                     this->sck_closed = 1;
                     throw Error(ERR_SOCKET_CLOSED);
-                default: /* some data received */
-                    pbuffer += rcvd;
-                    len -= rcvd;
+                    break;
+
+                default:
+                {
+                    LOG(LOG_INFO, "Failure in SSL library");
+                    uint32_t errcount = 0;
+                    while ((error = ERR_get_error()) != 0){
+                        errcount++;
+                        LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
+                    }
+                    if (!errcount && rcvd == -1){
+                        LOG(LOG_INFO, "%s [%u]", strerror(errno), errno);
+                    }
+                    LOG(LOG_INFO, "Closing socket %s (%u) on recv", this->name, this->sck);
+                    this->sck_closed = 1;
+                    throw Error(ERR_SOCKET_ERROR, errno);
+                }
+                break;
             }
         }
 
@@ -815,33 +833,49 @@ class SocketTransport : public Transport {
             throw Error(ERR_SOCKET_ALLREADY_CLOSED);
         }
 
-        int ret = SSL_write(this->ssl, buffer, len);
+        size_t offset = 0;
+        while (len > 0){
+            int ret = SSL_write(this->ssl, buffer + offset, len);
 
-        unsigned long error;
-        switch (SSL_get_error(this->ssl, ret))
-        {
-            case SSL_ERROR_NONE:
-                LOG(LOG_INFO, "send_tls ERROR NONE");
-                break;
+            unsigned long error;
+            switch (SSL_get_error(this->ssl, ret))
+            {
+                case SSL_ERROR_NONE:
+                    LOG(LOG_INFO, "send_tls ERROR NONE ret=%u", ret);
+                    total_sent += ret;
+                    last_quantum_sent += ret;
+                    len -= ret;
+                    offset += ret;
+                    break;
 
-            case SSL_ERROR_WANT_READ:
-                LOG(LOG_INFO, "send_tls WANT READ");
-                break;
+                case SSL_ERROR_WANT_READ:
+                    LOG(LOG_INFO, "send_tls WANT READ");
+                    continue;
+                    break;
 
-            case SSL_ERROR_WANT_WRITE:
-                LOG(LOG_INFO, "send_tls WANT WRITE");
-                break;
+                case SSL_ERROR_WANT_WRITE:
+                    LOG(LOG_INFO, "send_tls WANT WRITE");
+                    continue;
+                    break;
 
-            default:
-                LOG(LOG_INFO, "Failure in SSL library (protocol error?)");
-                while ((error = ERR_get_error()) != 0)
-                    LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
-                break;
+                default:
+                {
+                    LOG(LOG_INFO, "Failure in SSL library");
+                    uint32_t errcount = 0;
+                    while ((error = ERR_get_error()) != 0){
+                        errcount++;
+                        LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
+                    }
+                    if (!errcount && ret == -1){
+                        LOG(LOG_INFO, "%s [%u]", strerror(errno), errno);
+                    }
+                    LOG(LOG_INFO, "Closing socket %s (%u) on recv", this->name, this->sck);
+                    this->sck_closed = 1;
+                    throw Error(ERR_SOCKET_ERROR, errno);
+                    break;
+                }
+            }
         }
-
-        total_sent += len;
-        last_quantum_sent += len;
-
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "TLS Send done on %s (%u)", this->name, this->sck);
         }
