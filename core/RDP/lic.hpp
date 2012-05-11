@@ -357,7 +357,7 @@ struct RdpLicence {
         /* Generate a signature for a buffer of token and HWID */
         buf_out_uint32(hwid, 2);
         memcpy(hwid + 4, hostname, LICENCE_HWID_SIZE - 4);
-        memcpy(hwid, "\x00\x00\x00\x00\x73\x19\x46\x88\x47\xd7\xb1\xae\xe4\x0d\xbf\x5d\xd9\x63\xc9\x99", LICENCE_HWID_SIZE);
+//        memcpy(hwid, "\x00\x00\x00\x00\x73\x19\x46\x88\x47\xd7\xb1\xae\xe4\x0d\xbf\x5d\xd9\x63\xc9\x99", LICENCE_HWID_SIZE);
 
         hexdump((const char*)hwid, LICENCE_HWID_SIZE);
 
