@@ -647,12 +647,14 @@ class SecOut
     uint32_t verbose;
     public:
     SecOut(Stream & stream, uint32_t flags, CryptContext & crypt, bool enabled, uint32_t verbose = 0)
-        : stream(stream), pdata(stream.p+12), flags(flags), crypt(crypt), enabled(enabled), verbose(verbose)
+        : stream(stream), pdata(stream.p+12), flags(flags & (enabled?~SEC_ENCRYPT:0xFFFFFFFF)), crypt(crypt), enabled(enabled), verbose(verbose)
     {
         if (this->verbose){
             LOG(LOG_INFO, "SecOut(flags=%u)", flags);
         }
-        if (this->enabled || (this->flags && (SEC_INFO_PKT|SEC_LICENSE_PKT))){
+
+        if (this->enabled || (flags & (SEC_INFO_PKT|SEC_LICENSE_PKT))){
+            this->flags = flags;
             this->stream.out_uint32_le(this->flags);
             if ((this->flags & SEC_ENCRYPT)||(this->flags & SEC_REDIRECTION_PKT)){
                 this->stream.out_skip_bytes(8); // skip crypt sign

@@ -1344,11 +1344,19 @@ struct mod_rdp : public client_mod {
             Stream stream(32768);
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
+
+            uint8_t * prev = stream.p;
             SecOut sec_out(stream, SEC_ENCRYPT, this->encrypt, this->crypt_level);
+            LOG(LOG_INFO, "sec_out crypt_level=%u", this->crypt_level);
+            hexdump((const char*)prev, stream.p - prev);
+            prev = stream.p;
 
         // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1) containing information about the packet. The type subfield of the pduType field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
 
             ShareControlOut rdp_control_out(stream, PDUTYPE_CONFIRMACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
+            LOG(LOG_INFO, "ShareControlOut");
+            hexdump((const char*)prev, stream.p - prev);
+            prev = stream.p;
 
         // shareId (4 bytes): A 32-bit, unsigned integer. The share identifier for the packet (see [T128] section 8.4.2 for more information regarding share IDs).
 
@@ -1365,7 +1373,7 @@ struct mod_rdp : public client_mod {
             stream.out_uint16_le(0); // caplen
 
         // sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see [T128] section 8.4.1 for more information regarding source descriptors).
-            stream.out_copy_bytes("MSTSC", 5);
+            stream.out_copy_bytes("FREERDP", 7);
 
         // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the Demand Active PDU.
             uint16_t offset_capscount = stream.get_offset(0);
