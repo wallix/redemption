@@ -804,9 +804,9 @@ class SocketTransport : public Transport {
         }
 
         if (this->verbose & 0x100){
-            LOG(LOG_INFO, "Recv done on %s (%u)", this->name, this->sck);
+            LOG(LOG_INFO, "Recv done on %s (%u) %u bytes", this->name, this->sck, total_len);
             hexdump_c(start, total_len);
-            LOG(LOG_INFO, "Dump done on %s (%u)", this->name, this->sck);
+            LOG(LOG_INFO, "Dump done on %s (%u) %u bytes", this->name, this->sck, total_len);
         }
 
         *input_buffer = pbuffer;
