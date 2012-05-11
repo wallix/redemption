@@ -646,33 +646,31 @@ class SecOut
     bool enabled;
     uint32_t verbose;
     public:
-    SecOut(Stream & stream, uint32_t flags, CryptContext & crypt, bool enabled, uint32_t verbose = 0)
-        : stream(stream), pdata(stream.p+12), flags(flags & (enabled?~SEC_ENCRYPT:0xFFFFFFFF)), crypt(crypt), enabled(enabled), verbose(verbose)
+    SecOut(Stream & stream, uint32_t flags, CryptContext & crypt)
+        : stream(stream), pdata(stream.p+12), flags(flags), crypt(crypt), verbose(0)
     {
         if (this->verbose){
             LOG(LOG_INFO, "SecOut(flags=%u)", flags);
         }
 
-        if (this->enabled || (flags & (SEC_INFO_PKT|SEC_LICENSE_PKT))){
-            this->flags = flags;
+        if (this->flags){
             this->stream.out_uint32_le(this->flags);
-            if ((this->flags & SEC_ENCRYPT)||(this->flags & SEC_REDIRECTION_PKT)){
-                this->stream.out_skip_bytes(8); // skip crypt sign
+            if ((this->flags & SEC_ENCRYPT)
+            ||  (this->flags & SEC_REDIRECTION_PKT)){
+                this->stream.out_skip_bytes(8); // skip crypt signature, filled later
             }
         }
     }
 
     void end(){
-        if (this->enabled){
-            if ((this->flags & SEC_ENCRYPT)||(this->flags & SEC_REDIRECTION_PKT)){
-                int datalen = this->stream.p - this->pdata;
-                if (this->verbose >= 0x80){
-                    LOG(LOG_INFO, "Encrypting %u bytes", datalen);
-                    hexdump((char*)this->pdata, datalen);
-                }
-                this->crypt.sign(this->pdata - 8, 8, this->pdata, datalen);
-                this->crypt.encrypt(this->pdata, datalen);
+        if ((this->flags & SEC_ENCRYPT)||(this->flags & SEC_REDIRECTION_PKT)){
+            int datalen = this->stream.p - this->pdata;
+            if (this->verbose >= 0x80){
+                LOG(LOG_INFO, "Encrypting %u bytes", datalen);
+                hexdump((char*)this->pdata, datalen);
             }
+            this->crypt.sign(this->pdata - 8, 8, this->pdata, datalen);
+            this->crypt.encrypt(this->pdata, datalen);
         }
     }
 };

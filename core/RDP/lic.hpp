@@ -459,7 +459,7 @@ struct RdpLicence {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, SEC_LICENSE_PKT, encrypt, true);
+        SecOut sec_out(stream, SEC_LICENSE_PKT, encrypt);
 
         stream.out_uint8(PLATFORM_CHALLENGE_RESPONSE);
         stream.out_uint8(use_rdp5?3:2); /* version */
@@ -691,7 +691,7 @@ struct RdpLicence {
         Stream stream(32768);
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, SEC_LICENSE_PKT, encrypt, crypt_level);
+        SecOut sec_out(stream, SEC_LICENSE_PKT, encrypt);
 
         stream.out_uint8(NEW_LICENSE_REQUEST);
         stream.out_uint8(use_rdp5?3:2);
