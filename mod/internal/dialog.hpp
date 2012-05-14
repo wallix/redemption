@@ -56,7 +56,6 @@ struct dialog_mod : public internal_mod {
             log_width,
             log_height);
 
-        TODO(" valgrind say there is a memory leak here")
         this->close_window = new window_dialog(this,
             r, context,
             &this->screen, // parent
@@ -71,7 +70,10 @@ struct dialog_mod : public internal_mod {
 
         this->close_window->focus(this->close_window->rect);
         this->close_window->has_focus = true;
+        this->front.begin_update();
         this->screen.refresh(this->get_screen_rect().wh());
+        this->front.end_update();
+
     }
     ~dialog_mod() {
     }

@@ -111,9 +111,7 @@ class SessionManager {
         if (this->verbose & 0x40){
             LOG(LOG_INFO, "auth::in_items");
         }
-        for (stream.p = stream.data + 4
-            ; stream.p < stream.end
-            ; this->in_item(stream)){
+        for (; stream.p < stream.end ; this->in_item(stream)){
                     ;
         }
 
@@ -124,6 +122,7 @@ class SessionManager {
         enum { STATE_KEYWORD, STATE_VALUE } state = STATE_KEYWORD;
         uint8_t * value = stream.p;
         uint8_t * keyword = stream.p;
+        const uint8_t * start = stream.p;
         for ( ; stream.p < stream.end ; stream.p++){
             switch (state){
             case STATE_KEYWORD:
@@ -147,6 +146,7 @@ class SessionManager {
                         }
                         else {
                             this->context.cpy((char*)keyword, (char*)value+(value[0]=='!'?1:0));
+
                             if ((strncasecmp((char*)value, "ask", 3) != 0)
                             && ((strncasecmp("password", (char*)keyword, 8) == 0)
                             || (strncasecmp("target_password", (char*)keyword, 15) == 0))){
@@ -163,8 +163,9 @@ class SessionManager {
                 break;
             }
         }
-        TODO(" we should have stopped after fully getting the value  hence this case is an error  see how this exception should be qualified.")
-        throw 0;
+        LOG(LOG_WARNING, "Unexpected exit while parsing ACL message");
+        hexdump((char *)start, stream.p-start);
+        throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
     }
 
     bool close_on_timestamp(long & timestamp)
@@ -558,13 +559,18 @@ class SessionManager {
 
     void incoming()
     {
-        Stream stream;
+        Stream stream(4);
         this->auth_trans_t->recv((char**)&(stream.end), 4);
         size_t size = stream.in_uint32_be();
+        if (size > 65536){
+            LOG(LOG_WARNING, "Error: ACL message too big (got %u max 64 K)", size);
+            throw Error(ERR_ACL_MESSAGE_TOO_BIG);
+        }
         if (size > stream.capacity){
             stream.init(size);
         }
-        this->auth_trans_t->recv((char**)&(stream.end), size-4);
+        LOG(LOG_INFO, "capacity=%u", stream.capacity);
+        this->auth_trans_t->recv((char**)&(stream.end), size - 4);
         this->in_items(stream);
     }
 
