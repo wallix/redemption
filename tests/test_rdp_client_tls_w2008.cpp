@@ -29,7 +29,7 @@
 #include <errno.h>
 #include <algorithm>
 
-#define LOGPRINT
+//#define LOGPRINT
 #include "./test_orders.hpp"
 
 #include "stream.hpp"
@@ -213,8 +213,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     }
     BOOST_CHECK(t.status);
 
-    BOOST_CHECK_EQUAL(mod->front_width, 800);
-    BOOST_CHECK_EQUAL(mod->front_height, 600);
+    BOOST_CHECK_EQUAL(mod->front_width, 1024);
+    BOOST_CHECK_EQUAL(mod->front_height, 768);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;

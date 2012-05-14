@@ -21,11 +21,11 @@ sub dump_to_data
 
 
 print "const char outdata[] =\n{\n";
-dump_to_data  $ARGV[0], '^.*sending .* bytes.*$', '^Dump done' ;
+dump_to_data  $ARGV[0], '^.*sending .* bytes.*$', '^.*Dump done' ;
 print "} /* end outdata */;\n\n";
 
 print "const char indata[] =\n{\n";
-dump_to_data  $ARGV[0], '^.*Recv done on.* bytes.*$', '^Dump done' ;
+dump_to_data  $ARGV[0], '^.*Recv done on.* bytes.*$', '^.*Dump done' ;
 print "} /* end indata */;\n\n";
 
 1;

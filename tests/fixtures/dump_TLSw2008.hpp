@@ -108,7 +108,7 @@ const char outdata[] =
 // TLS Socket RDP W2008 TLS Target (4) receiving 4 bytes |
 // recv_tls ERROR NONE |
 // Recv done on RDP W2008 TLS Target (4) 4 bytes |
-/* 0000 */ "\x03\x00\x00\x64"                                                 //...d |
+// /* 0000 */ "\x03\x00\x00\x64"                                                 //...d |
 // Dump done on RDP W2008 TLS Target (4) 4 bytes |
 // TLS Socket RDP W2008 TLS Target (4) receiving 96 bytes |
 // recv_tls ERROR NONE |
@@ -145,7 +145,7 @@ const char outdata[] =
 // TLS Socket RDP W2008 TLS Target (4) receiving 4 bytes |
 // recv_tls ERROR NONE |
 // Recv done on RDP W2008 TLS Target (4) 4 bytes |
-/* 0000 */ "\x03\x00\x00\x0b"                                                 //.... |
+// /* 0000 */ "\x03\x00\x00\x0b"                                                 //.... |
 // Dump done on RDP W2008 TLS Target (4) 4 bytes |
 // TLS Socket RDP W2008 TLS Target (4) receiving 7 bytes |
 // recv_tls ERROR NONE |
@@ -161,7 +161,7 @@ const char outdata[] =
 // TLS Socket RDP W2008 TLS Target (4) receiving 4 bytes |
 // recv_tls ERROR NONE |
 // Recv done on RDP W2008 TLS Target (4) 4 bytes |
-/* 0000 */ "\x03\x00\x00\x0f"                                                 //.... |
+// /* 0000 */ "\x03\x00\x00\x0f"                                                 //.... |
 // Dump done on RDP W2008 TLS Target (4) 4 bytes |
 // TLS Socket RDP W2008 TLS Target (4) receiving 11 bytes |
 // recv_tls ERROR NONE |
@@ -177,7 +177,7 @@ const char outdata[] =
 // TLS Socket RDP W2008 TLS Target (4) receiving 4 bytes |
 // recv_tls ERROR NONE |
 // Recv done on RDP W2008 TLS Target (4) 4 bytes |
-/* 0000 */ "\x03\x00\x00\x0f"                                                 //.... |
+// /* 0000 */ "\x03\x00\x00\x0f"                                                 //.... |
 // Dump done on RDP W2008 TLS Target (4) 4 bytes |
 // TLS Socket RDP W2008 TLS Target (4) receiving 11 bytes |
 // recv_tls ERROR NONE |
@@ -225,7 +225,7 @@ const char outdata[] =
 // TLS Socket RDP W2008 TLS Target (4) receiving 4 bytes |
 // recv_tls ERROR NONE |
 // Recv done on RDP W2008 TLS Target (4) 4 bytes |
-/* 0000 */ "\x03\x00\x22\x9b"                                                 //..". |
+// /* 0000 */ "\x03\x00\x22\x9b"                                                 //..". |
 // Dump done on RDP W2008 TLS Target (4) 4 bytes |
 // TLS Socket RDP W2008 TLS Target (4) receiving 8855 bytes |
 // recv_tls ERROR NONE |
@@ -813,7 +813,7 @@ const char outdata[] =
 // TLS Socket RDP W2008 TLS Target (4) receiving 4 bytes |
 // recv_tls ERROR NONE |
 // Recv done on RDP W2008 TLS Target (4) 4 bytes |
-/* 0000 */ "\x03\x00\x00\x38"                                                 //...8 |
+// /* 0000 */ "\x03\x00\x00\x38"                                                 //...8 |
 // Dump done on RDP W2008 TLS Target (4) 4 bytes |
 // TLS Socket RDP W2008 TLS Target (4) receiving 52 bytes |
 // recv_tls ERROR NONE |
@@ -845,7 +845,7 @@ const char outdata[] =
 // TLS Socket RDP W2008 TLS Target (4) receiving 4 bytes |
 // recv_tls ERROR NONE |
 // Recv done on RDP W2008 TLS Target (4) 4 bytes |
-/* 0000 */ "\x03\x00\x00\x22"                                                 //..." |
+// /* 0000 */ "\x03\x00\x00\x22"                                                 //..." |
 // Dump done on RDP W2008 TLS Target (4) 4 bytes |
 // TLS Socket RDP W2008 TLS Target (4) receiving 30 bytes |
 // recv_tls ERROR NONE |
@@ -1186,7 +1186,7 @@ const char outdata[] =
 // TLS Socket RDP W2008 TLS Target (4) receiving 4 bytes |
 // recv_tls ERROR NONE |
 // Recv done on RDP W2008 TLS Target (4) 4 bytes |
-/* 0000 */ "\x03\x00\x00\x24"                                                 //...$ |
+// /* 0000 */ "\x03\x00\x00\x24"                                                 //...$ |
 // Dump done on RDP W2008 TLS Target (4) 4 bytes |
 // TLS Socket RDP W2008 TLS Target (4) receiving 32 bytes |
 // recv_tls ERROR NONE |
@@ -5256,7 +5256,7 @@ const char outdata[] =
 // TLS Socket RDP W2008 TLS Target (4) receiving 4 bytes |
 // recv_tls ERROR NONE |
 // Recv done on RDP W2008 TLS Target (4) 4 bytes |
-/* 0000 */ "\x03\x00\x00\x24"                                                 //...$ |
+// /* 0000 */ "\x03\x00\x00\x24"                                                 //...$ |
 // Dump done on RDP W2008 TLS Target (4) 4 bytes |
 // TLS Socket RDP W2008 TLS Target (4) receiving 32 bytes |
 // recv_tls ERROR NONE |
