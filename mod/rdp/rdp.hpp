@@ -603,7 +603,9 @@ struct mod_rdp : public client_mod {
                     this->use_rdp5,
                     this->gen);
 
-            LOG(LOG_INFO, "mod_rdp::Channel Connection");
+            if (this->verbose){
+                LOG(LOG_INFO, "mod_rdp::Channel Connection");
+            }
 
             // Channel Connection
             // ------------------
@@ -645,7 +647,9 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
-        LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User");
+        if (this->verbose){
+            LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User");
+        }
         {
             mcs_recv_attach_user_confirm_pdu(this->nego.trans, this->userid);
 
@@ -702,7 +706,9 @@ struct mod_rdp : public client_mod {
             //    |------Security Exchange PDU ---------------------------> |
 
             if (this->crypt_level){
-                LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
+                if (this->verbose){
+                    LOG(LOG_INFO, "mod_rdp::RDP Security Commencement");
+                }
                 send_security_exchange_PDU(this->nego.trans,
                     this->userid,
                     this->server_public_key_len,
@@ -718,7 +724,9 @@ struct mod_rdp : public client_mod {
             // Client                                                     Server
             //    |------ Client Info PDU      ---------------------------> |
 
-            LOG(LOG_INFO, "mod_rdp::Secure Settings Exchange");
+            if (this->verbose){
+                LOG(LOG_INFO, "mod_rdp::Secure Settings Exchange");
+            }
 
             this->send_client_info_pdu(this->userid, this->password);
 
@@ -727,7 +735,9 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_GET_LICENSE:
-        LOG(LOG_INFO, "mod_rdp::Licensing");
+        if (this->verbose){
+            LOG(LOG_INFO, "mod_rdp::Licensing");
+        }
             // Licensing
             // ---------
 
@@ -810,16 +820,12 @@ struct mod_rdp : public client_mod {
             Stream stream(65536);
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-            LOG(LOG_INFO, "Reading TPDU");
             X224In in_tpdu(this->nego.trans, stream);
-            LOG(LOG_INFO, "MCS layer");
             McsIn mcs_in(stream);
             if ((mcs_in.opcode >> 2) != DomainMCSPDU_SendDataIndication) {
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
-            LOG(LOG_INFO, "Sec layer");
             SecIn sec(stream, this->decrypt, true);
-            LOG(LOG_INFO, "Licence layer");
 
             if (sec.flags & SEC_LICENSE_PKT) {
 
@@ -942,33 +948,46 @@ struct mod_rdp : public client_mod {
                 uint16_t length = stream.in_uint16_le();
                 switch (tag) {
                 case LICENSE_REQUEST:
-                    LOG(LOG_INFO, "LICENSE_REQUEST");
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Rdp:: License Request");
+                    }
                     this->lic_layer.rdp_lic_process_demand(this->nego.trans, stream, hostname, username, userid, licence_issued, this->encrypt, this->crypt_level, this->use_rdp5);
                     break;
                 case PLATFORM_CHALLENGE:
-                    LOG(LOG_INFO, "PLATFORM_CHALLENGE");
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Rdp::Platform Challenge");
+                    }
                     this->lic_layer.rdp_lic_process_authreq(this->nego.trans, stream, hostname, userid, licence_issued, this->encrypt, this->use_rdp5);
                     break;
                 case NEW_LICENSE:
-                    LOG(LOG_INFO, "NEW_LICENSE");
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Rdp::New License");
+                    }
                     res = this->lic_layer.rdp_lic_process_issue(stream, hostname, licence_issued, this->use_rdp5);
                     break;
                 case UPGRADE_LICENSE:
-                    LOG(LOG_INFO, "UPGRADE_LICENSE");
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Rdp::Upgrade License");
+                    }
                     break;
                 case ERROR_ALERT:
-                    LOG(LOG_INFO, "ERROR_ALERT");
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Rdp::Get licence status");
+                    }
                 TODO("This should be moved to RDP/lic.hpp (and probably the switch should also move there)")
                 {
                     uint32_t dwErrorCode = stream.in_uint32_le();
                     uint32_t dwStateTransition = stream.in_uint32_le();
                     uint32_t bbErrorInfo = stream.in_uint32_le();
-                    LOG(LOG_INFO, "ERROR_ALERT %u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u", version, length, dwErrorCode, dwStateTransition, bbErrorInfo);
+                    if (this->verbose){
+                        LOG(LOG_INFO, "%u %u dwErrorCode=%u dwStateTransition=%u bbErrorInfo=%u",
+                            version, length, dwErrorCode, dwStateTransition, bbErrorInfo);
+                    }
                     res = 1;
                 }
                 break;
                 default:
-                    LOG(LOG_INFO, "LICENCE_TAG_OTHER %x", tag);
+                    LOG(LOG_WARNING, "Error: unexpected license tag %x", tag);
                     break;
                 }
             }
@@ -976,7 +995,7 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_INFO, "ERR_SEC_EXPECTED_LICENCE_NEGOTIATION_PDU");
                 throw Error(ERR_SEC_EXPECTED_LICENCE_NEGOTIATION_PDU);
             }
-            TODO(" we haven't actually read all the actual data available  hence we can't check end. Implement full decoding and activate it.")
+            TODO("check if moving end is still necessar all data should have been consumed")
             stream.p = stream.end;
             in_tpdu.end();
             if (res){
@@ -1089,7 +1108,7 @@ struct mod_rdp : public client_mod {
                 }
 
                 if (num_channel_src >= this->mod_channel_list.size()) {
-                    LOG(LOG_ERR, "mod::rdp::MOD_RDP_CONNECTED::Unknown Channel");
+                    LOG(LOG_WARNING, "mod::rdp::MOD_RDP_CONNECTED::Unknown Channel");
                     throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                 }
 
@@ -1118,7 +1137,7 @@ struct mod_rdp : public client_mod {
                     case PDUTYPE_DATAPDU:
                         switch (this->connection_finalization_state){
                         case EARLY:
-                            LOG(LOG_INFO, "EARLY");
+                            LOG(LOG_WARNING, "Rdp::finalization is early");
                         break;
                         case WAITING_SYNCHRONIZE:
                             LOG(LOG_INFO, "Receiving Synchronize");
@@ -1279,15 +1298,16 @@ struct mod_rdp : public client_mod {
         }
         }
         catch(Error e){
-            LOG(LOG_DEBUG, "catched error=%u", e.id);
+            LOG(LOG_DEBUG, "Closing connection (status=%u)", e.id);
             try {
                 Stream stream(11);
                 X224Out tpdu(X224Packet::DR_TPDU, stream);
                 tpdu.end();
                 tpdu.send(this->nego.trans);
+                LOG(LOG_DEBUG, "Connection closed (status=%u)", 0);
             }
             catch(Error e){
-                LOG(LOG_DEBUG, "catched error (2) =%u", e.id);
+                LOG(LOG_DEBUG, "Connection Already closed (status=%u)", e.id);
                 return (e.id == ERR_SOCKET_CLOSED)?BACK_EVENT_2:BACK_EVENT_1;
             };
             return BACK_EVENT_1;
@@ -1345,18 +1365,16 @@ struct mod_rdp : public client_mod {
             X224Out tpdu(X224Packet::DT_TPDU, stream);
             McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
 
-            uint8_t * prev = stream.p;
+//            uint8_t * prev = stream.p;
             SecOut sec_out(stream, this->crypt_level?SEC_ENCRYPT:0, this->encrypt);
-            LOG(LOG_INFO, "sec_out crypt_level=%u", this->crypt_level);
-            hexdump((const char*)prev, stream.p - prev);
-            prev = stream.p;
+//            hexdump((const char*)prev, stream.p - prev);
+//            prev = stream.p;
 
         // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1) containing information about the packet. The type subfield of the pduType field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
 
             ShareControlOut rdp_control_out(stream, PDUTYPE_CONFIRMACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
-            LOG(LOG_INFO, "ShareControlOut");
-            hexdump((const char*)prev, stream.p - prev);
-            prev = stream.p;
+//            hexdump((const char*)prev, stream.p - prev);
+//            prev = stream.p;
 
         // shareId (4 bytes): A 32-bit, unsigned integer. The share identifier for the packet (see [T128] section 8.4.2 for more information regarding share IDs).
 
@@ -1481,6 +1499,7 @@ struct mod_rdp : public client_mod {
             glyphsupport_caps.emit(stream);
             capscount++;
 
+            TODO("Check caplen here")
             total_caplen = stream.get_offset(total_caplen);
 
             // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
@@ -1489,7 +1508,7 @@ struct mod_rdp : public client_mod {
 //            stream.set_out_uint16_le(stream.get_offset(offset_caplen + 47), offset_caplen); // caplen
 //            stream.set_out_uint16_le(caplen, offset_caplen); // caplen
             stream.set_out_uint16_le(total_caplen + 4, offset_caplen); // caplen
-            LOG(LOG_INFO, "total_caplen = %u, caplen=%u computed caplen=%u offset_here = %u offset_caplen=%u", total_caplen, 388, stream.get_offset(offset_caplen), stream.get_offset(0), offset_caplen);
+//            LOG(LOG_INFO, "total_caplen = %u, caplen=%u computed caplen=%u offset_here = %u offset_caplen=%u", total_caplen, 388, stream.get_offset(offset_caplen), stream.get_offset(0), offset_caplen);
             stream.set_out_uint16_le(capscount, offset_capscount); // caplen
 
             rdp_control_out.end();
@@ -1531,19 +1550,31 @@ struct mod_rdp : public client_mod {
             }
             break;
             case RDP_POINTER_COLOR:
-                LOG(LOG_INFO, "Process pointer color");
+                if (this->verbose){
+                    LOG(LOG_INFO, "Process pointer color");
+                }
                 this->process_color_pointer_pdu(stream, mod);
-                LOG(LOG_INFO, "Process pointer color done");
+                if (this->verbose){
+                    LOG(LOG_INFO, "Process pointer color done");
+                }
                 break;
             case RDP_POINTER_CACHED:
-                LOG(LOG_INFO, "Process pointer cached");
+                if (this->verbose){
+                    LOG(LOG_INFO, "Process pointer cached");
+                }
                 this->process_cached_pointer_pdu(stream, mod);
-                LOG(LOG_INFO, "Process pointer cached done");
+                if (this->verbose){
+                    LOG(LOG_INFO, "Process pointer cached done");
+                }
                 break;
             case RDP_POINTER_SYSTEM:
-                LOG(LOG_INFO, "Process pointer system");
+                if (this->verbose){
+                    LOG(LOG_INFO, "Process pointer system");
+                }
                 this->process_system_pointer_pdu(stream, mod);
-                LOG(LOG_INFO, "Process pointer system done");
+                if (this->verbose){
+                    LOG(LOG_INFO, "Process pointer system done");
+                }
                 break;
             default:
                 break;
@@ -2269,10 +2300,6 @@ struct mod_rdp : public client_mod {
                     BitmapCaps bitmap_caps;
                     bitmap_caps.recv(stream);
                     bitmap_caps.log("Received from server");
-                    LOG(LOG_INFO, "Server bitmap caps (%dx%dx%d)",
-                        bitmap_caps.desktopWidth,
-                        bitmap_caps.desktopHeight,
-                        bitmap_caps.preferredBitsPerPixel);
                     this->bpp = bitmap_caps.preferredBitsPerPixel;
                     this->front_width = bitmap_caps.desktopWidth;
                     this->front_height = bitmap_caps.desktopHeight;

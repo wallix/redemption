@@ -225,6 +225,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
     }
 
-    front.dump_png("trace_w2008_tls_");
+//    front.dump_png("trace_w2008_tls_");
 
 }

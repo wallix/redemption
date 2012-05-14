@@ -486,7 +486,7 @@ class SocketTransport : public Transport {
                 case SSL_ERROR_ZERO_RETURN:
                     LOG(LOG_INFO, "Server closed TLS connection\n");
                     LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_ZERO_RETURN done\n");
-                    exit(0);
+                    throw Error(ERR_TRANSPORT_TLS_CONNECT_FAILED, 0);
                     break;
 
                 case SSL_ERROR_WANT_READ:
@@ -504,7 +504,7 @@ class SocketTransport : public Transport {
                     while ((error = ERR_get_error()) != 0)
                         LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
                     LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_SYSCLASS done\n");
-                    exit(0);
+                    throw Error(ERR_TRANSPORT_TLS_CONNECT_FAILED, 0);
                     break;
 
                 case SSL_ERROR_SSL:
@@ -512,7 +512,7 @@ class SocketTransport : public Transport {
                     while ((error = ERR_get_error()) != 0)
                         LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
                     LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_SSL done\n");
-                    exit(0);
+                    throw Error(ERR_TRANSPORT_TLS_CONNECT_FAILED, 0);
                     break;
 
                 default:
@@ -531,7 +531,7 @@ class SocketTransport : public Transport {
         if (!px509)
         {
             LOG(LOG_INFO, "Transport::crypto_cert_get_public_key: SSL_get_peer_certificate() failed");
-            exit(0);
+            throw Error(ERR_TRANSPORT_TLS_CONNECT_FAILED, 0);
         }
 
         LOG(LOG_INFO, "Transport::X509_get_pubkey()");
@@ -539,7 +539,7 @@ class SocketTransport : public Transport {
         if (!pkey)
         {
             LOG(LOG_INFO, "Transport::crypto_cert_get_public_key: X509_get_pubkey() failed");
-            exit(0);
+            throw Error(ERR_TRANSPORT_TLS_CONNECT_FAILED, 0);
         }
 
         LOG(LOG_INFO, "Transport::i2d_PublicKey()");
@@ -699,7 +699,7 @@ class SocketTransport : public Transport {
             ssize_t rcvd = ::SSL_read(this->ssl, pbuffer, len);
             switch (SSL_get_error(this->ssl, rcvd)) {
                 case SSL_ERROR_NONE:
-                    LOG(LOG_INFO, "recv_tls ERROR NONE");
+//                    LOG(LOG_INFO, "recv_tls ERROR NONE");
                     pbuffer += rcvd;
                     len -= rcvd;
                     break;
@@ -728,7 +728,6 @@ class SocketTransport : public Transport {
                     LOG(LOG_INFO, "recv_tls ZERO RETURN");
                     LOG(LOG_INFO, "No data received. TLS Socket %s (%u) closed on recv", this->name, this->sck);
                     this->sck_closed = 1;
-                    exit(0);
                     throw Error(ERR_SOCKET_CLOSED);
                     break;
 
@@ -745,7 +744,6 @@ class SocketTransport : public Transport {
                     }
                     LOG(LOG_INFO, "Closing socket %s (%u) on recv", this->name, this->sck);
                     this->sck_closed = 1;
-                    exit(0);
                     throw Error(ERR_SOCKET_ERROR, errno);
                 }
                 break;
@@ -849,7 +847,7 @@ class SocketTransport : public Transport {
             switch (SSL_get_error(this->ssl, ret))
             {
                 case SSL_ERROR_NONE:
-                    LOG(LOG_INFO, "send_tls ERROR NONE ret=%u", ret);
+//                    LOG(LOG_INFO, "send_tls ERROR NONE ret=%u", ret);
                     total_sent += ret;
                     last_quantum_sent += ret;
                     len -= ret;
@@ -876,7 +874,6 @@ class SocketTransport : public Transport {
                         LOG(LOG_INFO, "%s [%u]", strerror(errno), errno);
                     }
                     LOG(LOG_INFO, "Closing socket %s (%u) on recv", this->name, this->sck);
-                    exit(0);
                     this->sck_closed = 1;
                     throw Error(ERR_SOCKET_ERROR, errno);
                     break;

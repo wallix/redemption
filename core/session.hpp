@@ -412,7 +412,9 @@ struct Session {
         }
 
         if (this->sesman->event()){
-            LOG(LOG_INFO, "Session::Auth Event");
+            if (this->verbose){
+                LOG(LOG_INFO, "Session::Auth Event");
+            }
             this->sesman->receive_next_module();
             this->mod->refresh_context(*this->context);
             this->back_event->set();
@@ -474,7 +476,9 @@ struct Session {
 
         if (this->front->up_and_running
         && this->back_event->is_set()){ // data incoming from server module
-            LOG(LOG_INFO, "Session::back_event fired");
+            if (this->verbose){
+                LOG(LOG_INFO, "Session::back_event fired");
+            }
             BackEvent_t signal = this->mod->draw_event();
             switch (signal){
             case BACK_EVENT_NONE:
@@ -486,7 +490,9 @@ struct Session {
                 // the typical case (and only one used for now) is... we are coming from CLOSE_BOX
                 return SESSION_STATE_STOP;
             case BACK_EVENT_REFRESH:
-            LOG(LOG_INFO, "Session::back event refresh");
+            if (this->verbose){
+                LOG(LOG_INFO, "Session::back event refresh");
+            }
             {
                 bool record_video = false;
                 bool keep_alive = false;
@@ -513,7 +519,9 @@ struct Session {
             case BACK_EVENT_5:
             default:
             {
-               LOG(LOG_INFO, "Session::back event end module");
+                if (this->verbose){
+                   LOG(LOG_INFO, "Session::back event end module");
+                }
                // end the current module and switch to new one
                 if (this->mod != this->no_mod){
                     delete this->mod;
@@ -524,7 +532,9 @@ struct Session {
                 this->context->cpy(STRAUTHID_OPT_BPP, this->front->client_info.bpp);
                 bool record_video = false;
                 bool keep_alive = false;
-                LOG(LOG_INFO, "Session::asking next module");
+                if (this->verbose){
+                    LOG(LOG_INFO, "Session::asking next module");
+                }
                 int next_state = this->sesman->ask_next_module(
                                                     this->keep_alive_time,
                                                     this->ini->globals.authip,
