@@ -37,7 +37,9 @@ struct window_dialog : public window
                   ModContext & context,
                   Widget * parent, int bg_color,
                   const char * title, Inifile * ini, int regular,
-                  const char * message, const char * refuse)
+                  const char * message,
+                  size_t max_message_lines,
+                  const char * refuse)
     : window(mod, r, parent, bg_color, title)
     {
         struct Widget* but;
@@ -49,20 +51,24 @@ struct window_dialog : public window
         this->default_button = but;
 
         if (refuse) {
-            but = new widget_button(this->mod, Rect(300, 160, 60, 25), this, 2, 1, refuse);
+            but = new widget_button(this->mod, Rect(300, r.y - 20, 60, 25), this, 2, 1, refuse);
             this->child_list.push_back(but);
             this->esc_button = but;
             this->default_button = but;
         }
-        int count = 0;
+        size_t count = 0;
         bool done = false;
         while (!done) {
+            if (count >= max_message_lines){
+                break;
+            }
             const char * str = strstr(message, "<br>");
             char tmp[256];
             tmp[0] = 0;
             strncat(tmp, message, str?std::min((size_t)(str-message), (size_t)255):255);
             tmp[255] = 0;
-            but = new widget_label(this->mod, Rect(50, 60 + 16 * count, 500, 40), this, tmp);
+            LOG(LOG_INFO, "line=%s", tmp);
+            but = new widget_label(this->mod, Rect(50, 20 + 16 * count, 500, 40), this, tmp);
             this->child_list.push_back(but);
             count++;
             if (!str){

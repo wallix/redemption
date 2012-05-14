@@ -49,6 +49,23 @@ struct dialog_mod : public internal_mod {
 
         this->signal = BACK_EVENT_NONE;
 
+        size_t number_of_lines = 1;
+        uint32_t len = strlen(message);
+        for (size_t xx = 0; xx < len - 4 ; xx++) {
+            if ((message[xx] == '<')
+            && (message[xx+1] == 'b')
+            && (message[xx+2] == 'r')
+            && (message[xx+3] == '>')){
+                xx+=3;
+                number_of_lines++;
+            }
+        }
+
+        const size_t max_message_lines = this->get_screen_rect().cy / 16;
+        LOG(LOG_INFO, "=======================================> number_of_lines=%u max_message_lines=%u",
+            number_of_lines,
+            max_message_lines);
+
         /* draw login window */
         Rect r(
             this->get_screen_rect().cx / 2 - log_width / 2,
@@ -56,6 +73,15 @@ struct dialog_mod : public internal_mod {
             log_width,
             log_height);
 
+        if ((log_height - 48)/16 < number_of_lines + 3){
+            r = Rect(
+                this->get_screen_rect().cx / 2 - log_width / 2,
+                10,
+                log_width,
+                (this->get_screen_rect().cy - 10));
+        }
+
+        this->front.begin_update();
         this->close_window = new window_dialog(this,
             r, context,
             &this->screen, // parent
@@ -63,14 +89,15 @@ struct dialog_mod : public internal_mod {
             "Information",
             ini,
             regular,
-            message, refuse);
+            message,
+            std::min(number_of_lines, max_message_lines-3),
+            refuse);
 
         this->screen.child_list.push_back(this->close_window);
         assert(this->close_window->mod == this);
 
         this->close_window->focus(this->close_window->rect);
         this->close_window->has_focus = true;
-        this->front.begin_update();
         this->screen.refresh(this->get_screen_rect().wh());
         this->front.end_update();
 
