@@ -175,6 +175,7 @@ import testing ;
 
 unit-test test_widget : tests/test_widget.cpp libboost_unit_test ini_config rsa_keys widget mainloop d3des libboost_program_options openssl crypto png z dl ;
 unit-test test_bitmap : tests/test_bitmap.cpp libboost_unit_test ini_config libboost_program_options ;
+unit-test test_logon : tests/test_logon.cpp libboost_unit_test ini_config libboost_program_options ;
 unit-test test_bitmap_cache : tests/test_bitmap_cache.cpp libboost_unit_test ini_config libboost_program_options ;
 unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp libboost_unit_test ini_config libboost_program_options ;
 unit-test test_stream : tests/test_stream.cpp libboost_unit_test ;

@@ -25,7 +25,9 @@
 #if !defined(__CORE_RDP_LOGON_HPP__)
 #define __CORE_RDP_LOGON_HPP__
 
+#include <stdint.h>
 #include "log.hpp"
+#include "stream.hpp"
 
 // 2.2.1.11.1.1 Info Packet (TS_INFO_PACKET)
 // =========================================
@@ -564,6 +566,197 @@ enum {
 // updates the cookie at hourly intervals, sending the new cookie to the client
 // in the Save Session Info PDU.
 
+
+
+struct InfoPacket {
+
+    uint32_t CodePage;
+    uint32_t flags;
+    uint16_t cbDomain;
+    uint16_t cbUserName;
+    uint16_t cbPassword;
+    uint16_t cbAlternateShell;
+    uint16_t cbWorkingDir;
+    uint8_t Domain[257];
+    uint8_t UserName[129];
+    uint8_t Password[257];
+    uint8_t AlternateShell[257];
+    uint8_t WorkingDir[257];
+    uint16_t clientAddressFamily;    // optionals Extra attributes from TS_EXTENDED_INFO_PACKET:
+    uint16_t cbClientAddress;
+    uint8_t clientAddress[81];
+    uint16_t cbClientDir;
+    uint8_t clientDir[257];
+    uint32_t clientSessionId;
+    uint32_t performanceFlags;
+    uint16_t cbAutoReconnectLen;
+    uint8_t autoReconnectCookie[29];
+    uint16_t reserved1;
+    uint16_t reserved2;
+    uint32_t Bias;      // optionals Extra attributes from TS_EXTENDED_INFO_PACKET / TS_TIME_ZONE_INFORMATION:
+    uint8_t StandardName[65];
+    uint8_t StandardDate[17];
+    uint32_t StandardBias;
+    uint8_t DaylightName[65];
+    uint8_t DaylightDate[17];
+    uint32_t DaylightBias;
+
+    // constructor UNIQUE
+    InfoPacket()
+    : CodePage(0) //........... ANSI code page descriptor
+    , flags(0) //               bitmap
+    , cbDomain(0) //........... size in bytes of variable size Domain attribute
+    , cbUserName(0) //          size in bytes of variable size UserName attribute
+    , cbPassword(0) //......... size in bytes of variable size Password attribute
+    , cbAlternateShell(0) //    size in bytes of variable size AlternateShell attribute
+    , cbWorkingDir(0) //....... size in bytes of variable size WorkingDir attribute
+    , clientAddressFamily(0) // numeric socket descriptor
+    , cbClientAddress(0) //.... size in bytes of variable size clientAdress attribute
+    , cbClientDir(0) //         size in bytes of variable size clientDir attribute
+    , Bias(0) //............... bias value (in minutes)
+    , StandardBias(0) //....... MUST be ignored if a valid date and time is not specified in the StandardDate field or the wYear,
+					  //          wMonth, wDayOfWeek, wDay, wHour, wMinute, wSecond, and wMilliseconds fields
+	                  //          of the StandardDate field are all set to zero
+    , DaylightBias(0) //....... MUST be ignored if a valid date and time is not specified in the DaylightDate field or the wYear,
+				      //          wMonth, wDayOfWeek, wDay, wHour, wMinute, wSecond, and wMilliseconds fields
+					  //          of the DaylightDate field are all set to zero
+    , clientSessionId(0) //     was added in RDP 5.1 and is currently (from what version on ??) ignored by the server. It SHOULD be set to 0.
+    , performanceFlags(0) //... from a closed list of flags. It is used by RDP 5.1, 5.2, 6.0, 6.1, and 7.0 servers
+    , cbAutoReconnectLen(0) //  size in bytes of variable size autoReconnectCookie attribute. is only read by RDP 5.2, 6.0, 6.1, and 7.0 servers.
+    , reserved1(0) //.......... if this field is present, the reserved2 field MUST be present.
+    , reserved2(0) //           this field MUST be present if the reserved1 field is present.
+    {
+
+    	memset(Domain, 0, 256);
+        memset(UserName, 0, 128);
+        memset(Password, 0, 256);
+        memset(AlternateShell, 0, 256);
+        memset(WorkingDir, 0, 256);
+        memset(clientAddress, 0, 81);
+        memset(clientDir, 0, 256);
+        memset(StandardName, 0, 65);
+        memset(StandardDate, 0, 17);
+        memset(DaylightName, 0, 65);
+        memset(DaylightDate, 0, 17);
+
+        this->std_init();
+   }
+
+	void std_init(){
+
+		this->flags  = INFO_MOUSE;
+		this->flags |= INFO_DISABLECTRLALTDEL;
+		this->flags |= INFO_UNICODE;
+		this->flags |= INFO_MAXIMIZESHELL;
+		this->flags |= INFO_ENABLEWINDOWSKEY;
+		this->flags |= INFO_LOGONNOTIFY;
+
+        clientAddressFamily = 0x00002;
+        memcpy(this->clientAddress, "10.10.9.161", strlen("10.10.9.161"));
+        this->cbClientAddress = strlen((char *) this->clientAddress);
+
+        memcpy(this->clientDir, "C:\\Windows\\System32\\mstscax.dll", strlen("C:\\Windows\\System32\\mstscax.dll"));
+        this->cbClientDir = strlen((char *) this->clientDir);
+
+        // bias
+        this->Bias = 120;
+        // standard Name
+        memcpy(this->StandardName, "GMT Standard Time", strlen("GMT Standard Time"));
+        // standard date
+        ;
+        // standard bias
+        this->StandardBias = 60;
+        // daylight name
+        memcpy(this->DaylightName, "GMT Daylight Time", strlen("GMT Daylight Time"));
+        // daylight date
+        ;
+        // daylight bias
+        this->DaylightBias = 120;
+        //<<<<< FIN Client Time Zone (172 bytes)
+
+	    clientSessionId = 0;
+
+	}
+
+    void emit( Stream & stream
+             , int use_rdp5
+             ) {
+
+		flags |= ( (strlen((char *) this->Password) > 0) * INFO_AUTOLOGON );
+		flags |= ( use_rdp5 != 0 ) * ( INFO_LOGONERRORS | INFO_NOAUDIOPLAYBACK );
+
+		stream.out_uint32_le(this->CodePage);
+		stream.out_uint32_le(this->flags);
+
+		stream.out_uint16_le(this->cbDomain);
+		stream.out_uint16_le(this->cbUserName);
+		stream.out_uint16_le(this->cbPassword);
+		stream.out_uint16_le(this->cbAlternateShell);
+		stream.out_uint16_le(this->cbWorkingDir);
+
+        if (this->cbDomain > 0) {
+        	stream.out_unistr((const char *) this->Domain);
+        }
+        if (this->cbUserName > 0){
+				stream.out_unistr((const char *) this->UserName);
+        }
+		if (flags & INFO_AUTOLOGON){
+			stream.out_unistr((const char *) this->Password);
+		}
+		else{
+			stream.out_uint16_le(0);
+		}
+        if (this->cbAlternateShell > 0){
+        	stream.out_unistr((const char *) this->AlternateShell);
+        }
+        if (this->cbWorkingDir > 0){
+        	stream.out_unistr((const char *) this->WorkingDir);
+        }
+
+		if(!use_rdp5){
+			LOG(LOG_INFO, "send login info (RDP4-style) %s:%s", this->Domain, this->UserName);
+		}
+		// EXTRA INFORMATIONS
+        if (use_rdp5){
+            LOG(LOG_INFO, "send extended login info (RDP5-style) %x %s:%s", this->flags, this->Domain, this->UserName);
+
+            stream.out_uint16_le(this->clientAddressFamily);
+            stream.out_uint16_le(this->cbClientAddress);
+    		stream.out_unistr((const char *) this->clientAddress);
+            stream.out_uint16_le(this->cbClientDir);
+    		stream.out_unistr((const char *) this->clientDir);
+
+            // Client Time Zone (172 bytes)
+            stream.out_uint32_le(this->Bias);
+            stream.out_unistr((const char *) this->StandardName);
+            stream.out_unistr((const char *) this->StandardDate);
+            stream.out_uint32_le(this->StandardBias);
+            stream.out_unistr((const char *) this->DaylightName);
+            stream.out_unistr((const char *) this->DaylightDate);
+            stream.out_uint32_le(this->DaylightBias);
+            // FIN Client Time Zone (172 bytes)
+
+            stream.out_uint32_le(this->clientSessionId);
+            stream.out_uint32_le(this->performanceFlags);
+            stream.out_uint16_le(this->cbAutoReconnectLen);
+            if (this->cbAutoReconnectLen > 0){
+            	stream.out_unistr((const char *) this->autoReconnectCookie);
+            }
+
+        } // END IF (use_rdp5)
+
+    } // END FUNCT : emit()
+
+    void recv(Stream & stream){
+    }
+
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s InfoPacket (%u bytes)", msg, this->len);
+    }
+
+};
+
+
 static inline void send_logon_info_packet(Stream & stream, const char * domain, const char * username, const char * password, const char * program, const char * directory, int use_rdp5, int rdp5_performanceflags)
 {
     uint32_t flags = INFO_MOUSE
@@ -665,6 +858,8 @@ static inline void send_logon_info_packet(Stream & stream, const char * domain, 
 //        stream.out_uint16_le(0);
     }
 }
+
+
 
 static inline void recv_logon_info(Stream & stream, uint16_t length, uint32_t & flags, uint32_t & rdp5_performanceflags, char * domain, char * username, char * password, char * program, char * directory)
 {
