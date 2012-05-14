@@ -422,6 +422,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         //  (0x0006).
         TODO("put assertion to check type and throw and error if not as expected");
         uint16_t wPublicKeyBlobType = cr_stream.in_uint16_le();
+        LOG(LOG_DEBUG, "wPublicKeyBlobType = %u", wPublicKeyBlobType);
 
         // wPublicKeyBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
         //  of the PublicKeyBlob field.
@@ -460,6 +461,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         //  (0x0008).
         TODO("put assertion to check type and throw and error if not as expected");
         uint16_t wSignatureBlobType = cr_stream.in_uint16_le();
+        LOG(LOG_DEBUG, "wSignatureBlobType = %u", wSignatureBlobType);
 
         // wSignatureBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
         //  of the SignatureKeyBlob field.
@@ -575,26 +577,6 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
     rdp_sec_generate_keys(encrypt, decrypt, encrypt.sign_key, client_random, serverRandom, encryptionMethod);
 }
 
-static inline void send_sec_tag_sig(Stream & stream, const uint8_t (&pub_sig)[512])
-{
-    stream.out_uint16_le(SEC_TAG_KEYSIG);
-    stream.out_uint16_le(72); /* len */
-    stream.out_copy_bytes(pub_sig, 64); /* pub sig */
-    stream.out_clear_bytes(8); /* pad */
-}
-
-static inline void send_sec_tag_pubkey(Stream & stream, const uint8_t (&pub_exp)[4], const uint8_t (&pub_mod)[512])
-{
-    stream.out_uint16_le(SEC_TAG_PUBKEY);
-    stream.out_uint16_le(92); // length
-    stream.out_uint32_le(SEC_RSA_MAGIC);
-    stream.out_uint32_le(72); /* 72 bytes modulus len */
-    stream.out_uint32_be(0x00020000);
-    stream.out_uint32_be(0x3f000000);
-    stream.out_copy_bytes(pub_exp, 4); /* pub exp */
-    stream.out_copy_bytes(pub_mod, 64); /* pub mod */
-    stream.out_clear_bytes(8); /* pad */
-}
 
 //02 0c ec 00 -> TS_UD_HEADER::type = SC_SECURITY, length = 236
 
@@ -639,9 +621,21 @@ static inline void front_out_gcc_conference_user_data_sc_sec1(Stream & stream,
     stream.out_uint32_le(1);
 
     // 96 bytes long of sec_tag pubkey
-    send_sec_tag_pubkey(stream, rsa_keys.pub_exp, pub_mod);
+    stream.out_uint16_le(SEC_TAG_PUBKEY);
+    stream.out_uint16_le(92); // length
+    stream.out_uint32_le(SEC_RSA_MAGIC);
+    stream.out_uint32_le(72); /* 72 bytes modulus len */
+    stream.out_uint32_be(0x00020000);
+    stream.out_uint32_be(0x3f000000);
+    stream.out_copy_bytes(rsa_keys.pub_exp, 4); /* pub exp */
+    stream.out_copy_bytes(pub_mod, 64); /* pub mod */
+    stream.out_clear_bytes(8); /* pad */
+
     // 76 bytes long of sec_tag_pub_sig
-    send_sec_tag_sig(stream, pub_sig);
+    stream.out_uint16_le(SEC_TAG_KEYSIG);
+    stream.out_uint16_le(72); /* len */
+    stream.out_copy_bytes(pub_sig, 64); /* pub sig */
+    stream.out_clear_bytes(8); /* pad */
     /* end certificate */
 }
 

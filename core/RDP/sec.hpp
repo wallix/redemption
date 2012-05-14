@@ -111,17 +111,16 @@ TODO(" ssl calls introduce some dependency on ssl system library  injecting it i
 
 
 enum {
-
-SEC_EXCHANGE_PKT = 0x0001,
-SEC_ENCRYPT = 0x0008,
-SEC_RESET_SEQNO = 0x0010,
-SEC_IGNORE_SEQNO = 0x0020,
-SEC_INFO_PKT = 0x0040,
-SEC_LICENSE_PKT = 0x0080,
-SEC_LICENSE_ENCRYPT_CS = 0x0200,
-SEC_LICENSE_ENCRYPT_SC = 0x0200,
-SEC_REDIRECTION_PKT = 0x0400,
-SEC_SECURE_CHECKSUM = 0x0800,
+    SEC_EXCHANGE_PKT       = 0x0001,
+    SEC_ENCRYPT            = 0x0008,
+    SEC_RESET_SEQNO        = 0x0010,
+    SEC_IGNORE_SEQNO       = 0x0020,
+    SEC_INFO_PKT           = 0x0040,
+    SEC_LICENSE_PKT        = 0x0080,
+    SEC_LICENSE_ENCRYPT_CS = 0x0200,
+    SEC_LICENSE_ENCRYPT_SC = 0x0200,
+    SEC_REDIRECTION_PKT    = 0x0400,
+    SEC_SECURE_CHECKSUM    = 0x0800,
 };
 
 
@@ -647,31 +646,31 @@ class SecOut
     bool enabled;
     uint32_t verbose;
     public:
-    SecOut(Stream & stream, uint32_t flags, CryptContext & crypt, bool enabled, uint32_t verbose = 0)
-        : stream(stream), pdata(stream.p+12), flags(flags), crypt(crypt), enabled(enabled), verbose(verbose)
+    SecOut(Stream & stream, uint32_t flags, CryptContext & crypt)
+        : stream(stream), pdata(stream.p+12), flags(flags), crypt(crypt), verbose(0)
     {
         if (this->verbose){
             LOG(LOG_INFO, "SecOut(flags=%u)", flags);
         }
-        if (this->enabled || (this->flags && SEC_INFO_PKT)){
+
+        if (this->flags){
             this->stream.out_uint32_le(this->flags);
-            if ((this->flags & SEC_ENCRYPT)||(this->flags & 0x0400)){
-                this->stream.out_skip_bytes(8); // skip crypt sign
+            if ((this->flags & SEC_ENCRYPT)
+            ||  (this->flags & SEC_REDIRECTION_PKT)){
+                this->stream.out_skip_bytes(8); // skip crypt signature, filled later
             }
         }
     }
 
     void end(){
-        if (this->enabled){
-            if ((this->flags & SEC_ENCRYPT)||(this->flags & 0x0400)){
-                int datalen = this->stream.p - this->pdata;
-                if (this->verbose >= 0x80){
-                    LOG(LOG_INFO, "Encrypting %u bytes", datalen);
-                    hexdump((char*)this->pdata, datalen);
-                }
-                this->crypt.sign(this->pdata - 8, 8, this->pdata, datalen);
-                this->crypt.encrypt(this->pdata, datalen);
+        if ((this->flags & SEC_ENCRYPT)||(this->flags & SEC_REDIRECTION_PKT)){
+            int datalen = this->stream.p - this->pdata;
+            if (this->verbose >= 0x80){
+                LOG(LOG_INFO, "Encrypting %u bytes", datalen);
+                hexdump((char*)this->pdata, datalen);
             }
+            this->crypt.sign(this->pdata - 8, 8, this->pdata, datalen);
+            this->crypt.encrypt(this->pdata, datalen);
         }
     }
 };
@@ -684,7 +683,7 @@ class SecIn
     bool enabled;
     uint32_t verbose;
     SecIn(Stream & stream, CryptContext & crypt, bool enabled, uint32_t verbose = 0)
-        : enabled(enabled), verbose(verbose)
+        : flags(0), enabled(enabled), verbose(verbose)
     {
         if (this->enabled){
             this->flags = stream.in_uint32_le();

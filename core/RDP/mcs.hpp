@@ -328,7 +328,7 @@ static inline void mcs_send_connect_initial(
 
     // 12 bytes
     CSSecGccUserData cs_sec_gccuserdata;
-    cs_sec_gccuserdata.encryptionMethods = tls?0:FORTY_BIT_ENCRYPTION_FLAG|HUNDRED_TWENTY_EIGHT_BIT_ENCRYPTION_FLAG;
+    cs_sec_gccuserdata.encryptionMethods = FORTY_BIT_ENCRYPTION_FLAG|HUNDRED_TWENTY_EIGHT_BIT_ENCRYPTION_FLAG;
     cs_sec_gccuserdata.log("Sending cs_sec gccuserdata to server");
     cs_sec_gccuserdata.emit(stream);
 
@@ -349,7 +349,6 @@ static inline void mcs_send_connect_initial(
     stream.set_out_ber_len_uint16(stream.get_offset(offset_data_len_connect_initial + 3), offset_data_len_connect_initial);
 
     ci_tpdu.end();
-    if (tls) { stream.data[3] = 0x78; }
     ci_tpdu.send(trans);
 }
 

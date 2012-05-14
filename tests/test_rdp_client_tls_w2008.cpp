@@ -29,7 +29,7 @@
 #include <errno.h>
 #include <algorithm>
 
-#define LOGPRINT
+//#define LOGPRINT
 #include "./test_orders.hpp"
 
 #include "stream.hpp"
@@ -192,6 +192,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     } front(info, verbose);
 
     const char * name = "RDP W2008 TLS Target";
+
 //    int sck = connect("10.10.14.88", 3389, name);
 //    SocketTransport t(name, sck, verbose);
 
@@ -210,19 +211,20 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-//    BOOST_CHECK(t.status);
+    BOOST_CHECK(t.status);
 
-    BOOST_CHECK_EQUAL(mod->front_width, 800);
-    BOOST_CHECK_EQUAL(mod->front_height, 600);
+    BOOST_CHECK_EQUAL(mod->front_width, 1024);
+    BOOST_CHECK_EQUAL(mod->front_height, 768);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
     while (res == BACK_EVENT_NONE){
-        if (count++ >= 50) break;
+        LOG(LOG_INFO, "===================> count = %u", count);
+        if (count++ >= 40) break;
         res = mod->draw_event();
         BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
     }
 
-    front.dump_png("trace_w2008_");
+//    front.dump_png("trace_w2008_tls_");
 
 }

@@ -192,11 +192,11 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     const char * name = "RDP W2008 Target";
 
-//    int sck = connect("10.10.14.78", 3389, name);
-//    SocketTransport t(name, sck, verbose);
+    int sck = connect("10.10.14.78", 3389, name);
+    SocketTransport t(name, sck, verbose);
 
-    #include "./fixtures/dump_w2008.hpp"
-    TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
+//    #include "./fixtures/dump_w2008.hpp"
+//    TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
     // To always get the same client random, in tests
     LCGRandom gen(0);

@@ -448,7 +448,109 @@ class SocketTransport : public Transport {
 
     virtual void enable_tls() throw (Error)
     {
-            //            tls::tls_verify_certificate
+        LOG(LOG_INFO, "Transport::enable_tls()");
+        SSL_load_error_strings();
+        SSL_library_init();
+
+        LOG(LOG_INFO, "Transport::SSL_CTX_new()");
+        SSL_CTX* ctx = SSL_CTX_new(TLSv1_client_method());
+
+        /*
+         * This is necessary, because the Microsoft TLS implementation is not perfect.
+         * SSL_OP_ALL enables a couple of workarounds for buggy TLS implementations,
+         * but the most important workaround being SSL_OP_TLS_BLOCK_PADDING_BUG.
+         * As the size of the encrypted payload may give hints about its contents,
+         * block padding is normally used, but the Microsoft TLS implementation
+         * won't recognize it and will disconnect you after sending a TLS alert.
+         */
+        LOG(LOG_INFO, "Transport::SSL_CTX_set_options()");
+        SSL_CTX_set_options(ctx, SSL_OP_ALL);
+        LOG(LOG_INFO, "Transport::SSL_new()");
+        this->ssl = SSL_new(ctx);
+
+        int flags = fcntl(this->sck, F_GETFL);
+        fcntl(this->sck, F_SETFL, flags & ~(O_NONBLOCK));
+
+        LOG(LOG_INFO, "Transport::SSL_set_fd()");
+        SSL_set_fd(this->ssl, this->sck);
+        LOG(LOG_INFO, "Transport::SSL_connect()");
+    again:
+        int connection_status = SSL_connect(ssl);
+
+        if (connection_status <= 0)
+        {
+            unsigned long error;
+
+            switch (SSL_get_error(this->ssl, connection_status))
+            {
+                case SSL_ERROR_ZERO_RETURN:
+                    LOG(LOG_INFO, "Server closed TLS connection\n");
+                    LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_ZERO_RETURN done\n");
+                    throw Error(ERR_TRANSPORT_TLS_CONNECT_FAILED, 0);
+                    break;
+
+                case SSL_ERROR_WANT_READ:
+                    LOG(LOG_INFO, "SSL_ERROR_WANT_READ\n");
+                    LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_WANT_READ done\n");
+                    goto again;
+
+                case SSL_ERROR_WANT_WRITE:
+                    LOG(LOG_INFO, "SSL_ERROR_WANT_WRITE\n");
+                    LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_WANT_WRITE done\n");
+                    goto again;
+
+                case SSL_ERROR_SYSCALL:
+                    LOG(LOG_INFO, "I/O error\n");
+                    while ((error = ERR_get_error()) != 0)
+                        LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
+                    LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_SYSCLASS done\n");
+                    throw Error(ERR_TRANSPORT_TLS_CONNECT_FAILED, 0);
+                    break;
+
+                case SSL_ERROR_SSL:
+                    LOG(LOG_INFO, "Failure in SSL library (protocol error?)\n");
+                    while ((error = ERR_get_error()) != 0)
+                        LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
+                    LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_SSL done\n");
+                    throw Error(ERR_TRANSPORT_TLS_CONNECT_FAILED, 0);
+                    break;
+
+                default:
+                    LOG(LOG_INFO, "Unknown error\n");
+                    while ((error = ERR_get_error()) != 0){
+                        LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
+                    }
+                    LOG(LOG_INFO, "tls::tls_print_error %s [%u]", strerror(errno), errno);
+                    LOG(LOG_INFO, "tls::tls_print_error Unknown error done\n");
+                    break;
+            }
+        }
+
+        LOG(LOG_INFO, "Transport::SSL_get_peer_certificate()");
+        X509 * px509 = SSL_get_peer_certificate(ssl);
+        if (!px509)
+        {
+            LOG(LOG_INFO, "Transport::crypto_cert_get_public_key: SSL_get_peer_certificate() failed");
+            throw Error(ERR_TRANSPORT_TLS_CONNECT_FAILED, 0);
+        }
+
+        LOG(LOG_INFO, "Transport::X509_get_pubkey()");
+        EVP_PKEY* pkey = X509_get_pubkey(px509);
+        if (!pkey)
+        {
+            LOG(LOG_INFO, "Transport::crypto_cert_get_public_key: X509_get_pubkey() failed");
+            throw Error(ERR_TRANSPORT_TLS_CONNECT_FAILED, 0);
+        }
+
+        LOG(LOG_INFO, "Transport::i2d_PublicKey()");
+        int public_key_length = i2d_PublicKey(pkey, NULL);
+        LOG(LOG_INFO, "Transport::i2d_PublicKey() -> length = %u", public_key_length);
+        uint8_t * public_key_data = (uint8_t *)malloc(public_key_length);
+        LOG(LOG_INFO, "Transport::i2d_PublicKey()");
+        i2d_PublicKey(pkey, &public_key_data);
+        // verify_certificate -> ignore for now
+
+             //            tls::tls_verify_certificate
             //            crypto::x509_verify_certificate
 
             //                X509_STORE_CTX* csc;
@@ -529,102 +631,6 @@ class SocketTransport : public Transport {
             //            tls::tls_free_certificate done
             //            tls::tls_connect -> true done
 
-
-        LOG(LOG_INFO, "Transport::enable_tls()");
-        SSL_load_error_strings();
-        SSL_library_init();
-
-        LOG(LOG_INFO, "Transport::SSL_CTX_new()");
-        SSL_CTX* ctx = SSL_CTX_new(TLSv1_client_method());
-
-        /*
-         * This is necessary, because the Microsoft TLS implementation is not perfect.
-         * SSL_OP_ALL enables a couple of workarounds for buggy TLS implementations,
-         * but the most important workaround being SSL_OP_TLS_BLOCK_PADDING_BUG.
-         * As the size of the encrypted payload may give hints about its contents,
-         * block padding is normally used, but the Microsoft TLS implementation
-         * won't recognize it and will disconnect you after sending a TLS alert.
-         */
-        LOG(LOG_INFO, "Transport::SSL_CTX_set_options()");
-        SSL_CTX_set_options(ctx, SSL_OP_ALL);
-        LOG(LOG_INFO, "Transport::SSL_new()");
-        this->ssl = SSL_new(ctx);
-
-        int flags = fcntl(this->sck, F_GETFL);
-        fcntl(this->sck, F_SETFL, flags & ~(O_NONBLOCK));
-
-        LOG(LOG_INFO, "Transport::SSL_set_fd()");
-        SSL_set_fd(this->ssl, this->sck);
-        LOG(LOG_INFO, "Transport::SSL_connect()");
-        int connection_status = SSL_connect(ssl);
-
-        if (connection_status <= 0)
-        {
-            unsigned long error;
-
-            switch (SSL_get_error(this->ssl, connection_status))
-            {
-                case SSL_ERROR_ZERO_RETURN:
-                    LOG(LOG_INFO, "Server closed TLS connection\n");
-                    LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_ZERO_RETURN done\n");
-                    break;
-
-                case SSL_ERROR_WANT_READ:
-                    LOG(LOG_INFO, "SSL_ERROR_WANT_READ\n");
-                    LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_WANT_READ done\n");
-                    break;
-
-                case SSL_ERROR_WANT_WRITE:
-                    LOG(LOG_INFO, "SSL_ERROR_WANT_WRITE\n");
-                    LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_WANT_WRITE done\n");
-                    break;
-
-                case SSL_ERROR_SYSCALL:
-                    LOG(LOG_INFO, "I/O error\n");
-                    while ((error = ERR_get_error()) != 0)
-                        LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
-                    LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_SYSCLASS done\n");
-                    break;
-
-                case SSL_ERROR_SSL:
-                    LOG(LOG_INFO, "Failure in SSL library (protocol error?)\n");
-                    while ((error = ERR_get_error()) != 0)
-                        LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
-                    LOG(LOG_INFO, "tls::tls_print_error SSL_ERROR_SSL done\n");
-                    break;
-
-                default:
-                    LOG(LOG_INFO, "Unknown error\n");
-                    while ((error = ERR_get_error()) != 0)
-                        LOG(LOG_INFO, "%s\n", ERR_error_string(error, NULL));
-                    LOG(LOG_INFO, "tls::tls_print_error Unknown error done\n");
-                    break;
-            }
-        }
-
-        LOG(LOG_INFO, "Transport::SSL_get_peer_certificate()");
-        X509 * px509 = SSL_get_peer_certificate(ssl);
-        if (!px509)
-        {
-            LOG(LOG_INFO, "Transport::crypto_cert_get_public_key: SSL_get_peer_certificate() failed");
-            exit(0);
-        }
-
-        LOG(LOG_INFO, "Transport::X509_get_pubkey()");
-        EVP_PKEY* pkey = X509_get_pubkey(px509);
-        if (!pkey)
-        {
-            LOG(LOG_INFO, "Transport::crypto_cert_get_public_key: X509_get_pubkey() failed");
-            exit(0);
-        }
-
-        LOG(LOG_INFO, "Transport::i2d_PublicKey()");
-        int public_key_length = i2d_PublicKey(pkey, NULL);
-        LOG(LOG_INFO, "Transport::i2d_PublicKey() -> length = %u", public_key_length);
-        uint8_t * public_key_data = (uint8_t *)malloc(public_key_length);
-        LOG(LOG_INFO, "Transport::i2d_PublicKey()");
-        i2d_PublicKey(pkey, &public_key_data);
-        // verify_certificate -> ignore for now
         this->tls = true;
         LOG(LOG_INFO, "Transport::enable_tls() done");
     }
@@ -691,38 +697,56 @@ class SocketTransport : public Transport {
 
         while (len > 0) {
             ssize_t rcvd = ::SSL_read(this->ssl, pbuffer, len);
-            switch (rcvd) {
-                case -1: /* error, maybe EAGAIN */
-                    switch (SSL_get_error(this->ssl, rcvd))
-                    {
-                        case SSL_ERROR_NONE:
-                            LOG(LOG_INFO, "send_tls ERROR NONE");
-                            break;
-
-                        case SSL_ERROR_WANT_READ:
-                            LOG(LOG_INFO, "send_tls WANT READ");
-                            break;
-
-                        case SSL_ERROR_WANT_WRITE:
-                            LOG(LOG_INFO, "send_tls WANT WRITE");
-                            break;
-
-                        default:
-                            LOG(LOG_INFO, "Failure in SSL library (protocol error?)");
-                            while ((error = ERR_get_error()) != 0)
-                                LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
-                            LOG(LOG_INFO, "Closing socket %s (%u) on recv", this->name, this->sck);
-                            this->sck_closed = 1;
-                            throw Error(ERR_SOCKET_ERROR, errno);
-                    }
+            switch (SSL_get_error(this->ssl, rcvd)) {
+                case SSL_ERROR_NONE:
+//                    LOG(LOG_INFO, "recv_tls ERROR NONE");
+                    pbuffer += rcvd;
+                    len -= rcvd;
                     break;
-                case 0: /* no data received, socket closed */
+
+                case SSL_ERROR_WANT_READ:
+                    LOG(LOG_INFO, "recv_tls WANT READ");
+                    continue;
+
+                case SSL_ERROR_WANT_WRITE:
+                    LOG(LOG_INFO, "recv_tls WANT WRITE");
+                    continue;
+
+                case SSL_ERROR_WANT_CONNECT:
+                    LOG(LOG_INFO, "recv_tls WANT CONNECT");
+                    continue;
+
+                case SSL_ERROR_WANT_ACCEPT:
+                    LOG(LOG_INFO, "recv_tls WANT ACCEPT");
+                    continue;
+
+                case SSL_ERROR_WANT_X509_LOOKUP:
+                    LOG(LOG_INFO, "recv_tls WANT X509 LOOKUP");
+                    continue;
+
+                case SSL_ERROR_ZERO_RETURN:
+                    LOG(LOG_INFO, "recv_tls ZERO RETURN");
                     LOG(LOG_INFO, "No data received. TLS Socket %s (%u) closed on recv", this->name, this->sck);
                     this->sck_closed = 1;
                     throw Error(ERR_SOCKET_CLOSED);
-                default: /* some data received */
-                    pbuffer += rcvd;
-                    len -= rcvd;
+                    break;
+
+                default:
+                {
+                    LOG(LOG_INFO, "Failure in SSL library");
+                    uint32_t errcount = 0;
+                    while ((error = ERR_get_error()) != 0){
+                        errcount++;
+                        LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
+                    }
+                    if (!errcount && rcvd == -1){
+                        LOG(LOG_INFO, "%s [%u]", strerror(errno), errno);
+                    }
+                    LOG(LOG_INFO, "Closing socket %s (%u) on recv", this->name, this->sck);
+                    this->sck_closed = 1;
+                    throw Error(ERR_SOCKET_ERROR, errno);
+                }
+                break;
             }
         }
 
@@ -778,9 +802,9 @@ class SocketTransport : public Transport {
         }
 
         if (this->verbose & 0x100){
-            LOG(LOG_INFO, "Recv done on %s (%u)", this->name, this->sck);
+            LOG(LOG_INFO, "Recv done on %s (%u) %u bytes", this->name, this->sck, total_len);
             hexdump_c(start, total_len);
-            LOG(LOG_INFO, "Dump done on %s (%u)", this->name, this->sck);
+            LOG(LOG_INFO, "Dump done on %s (%u) %u bytes", this->name, this->sck, total_len);
         }
 
         *input_buffer = pbuffer;
@@ -815,33 +839,47 @@ class SocketTransport : public Transport {
             throw Error(ERR_SOCKET_ALLREADY_CLOSED);
         }
 
-        int ret = SSL_write(this->ssl, buffer, len);
+        size_t offset = 0;
+        while (len > 0){
+            int ret = SSL_write(this->ssl, buffer + offset, len);
 
-        unsigned long error;
-        switch (SSL_get_error(this->ssl, ret))
-        {
-            case SSL_ERROR_NONE:
-                LOG(LOG_INFO, "send_tls ERROR NONE");
-                break;
+            unsigned long error;
+            switch (SSL_get_error(this->ssl, ret))
+            {
+                case SSL_ERROR_NONE:
+//                    LOG(LOG_INFO, "send_tls ERROR NONE ret=%u", ret);
+                    total_sent += ret;
+                    last_quantum_sent += ret;
+                    len -= ret;
+                    offset += ret;
+                    break;
 
-            case SSL_ERROR_WANT_READ:
-                LOG(LOG_INFO, "send_tls WANT READ");
-                break;
+                case SSL_ERROR_WANT_READ:
+                    LOG(LOG_INFO, "send_tls WANT READ");
+                    continue;
 
-            case SSL_ERROR_WANT_WRITE:
-                LOG(LOG_INFO, "send_tls WANT WRITE");
-                break;
+                case SSL_ERROR_WANT_WRITE:
+                    LOG(LOG_INFO, "send_tls WANT WRITE");
+                    continue;
 
-            default:
-                LOG(LOG_INFO, "Failure in SSL library (protocol error?)");
-                while ((error = ERR_get_error()) != 0)
-                    LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
-                break;
+                default:
+                {
+                    LOG(LOG_INFO, "Failure in SSL library");
+                    uint32_t errcount = 0;
+                    while ((error = ERR_get_error()) != 0){
+                        errcount++;
+                        LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
+                    }
+                    if (!errcount && ret == -1){
+                        LOG(LOG_INFO, "%s [%u]", strerror(errno), errno);
+                    }
+                    LOG(LOG_INFO, "Closing socket %s (%u) on recv", this->name, this->sck);
+                    this->sck_closed = 1;
+                    throw Error(ERR_SOCKET_ERROR, errno);
+                    break;
+                }
+            }
         }
-
-        total_sent += len;
-        last_quantum_sent += len;
-
         if (this->verbose & 0x100){
             LOG(LOG_INFO, "TLS Send done on %s (%u)", this->name, this->sck);
         }
