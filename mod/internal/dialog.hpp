@@ -44,7 +44,8 @@ struct dialog_mod : public internal_mod {
         this->button_down = 0;
 
         int log_width = 600;
-        int log_height = 200;
+        int min_log_height = 200;
+        int max_log_height = this->get_screen_rect().cy - 40;
         int regular = 1;
 
         this->signal = BACK_EVENT_NONE;
@@ -61,10 +62,13 @@ struct dialog_mod : public internal_mod {
             }
         }
 
-        const size_t max_message_lines = this->get_screen_rect().cy / 16;
-        LOG(LOG_INFO, "=======================================> number_of_lines=%u max_message_lines=%u",
-            number_of_lines,
-            max_message_lines);
+        int log_height = number_of_lines * 16;
+        if (log_height > max_log_height){
+            log_height = max_log_height;
+        }
+        if (log_height < min_log_height){
+            log_height = min_log_height;
+        }
 
         /* draw login window */
         Rect r(
@@ -72,14 +76,6 @@ struct dialog_mod : public internal_mod {
             this->get_screen_rect().cy / 2 - log_height / 2,
             log_width,
             log_height);
-
-        if ((log_height - 48)/16 < number_of_lines + 3){
-            r = Rect(
-                this->get_screen_rect().cx / 2 - log_width / 2,
-                10,
-                log_width,
-                (this->get_screen_rect().cy - 10));
-        }
 
         this->front.begin_update();
         this->close_window = new window_dialog(this,
@@ -90,7 +86,6 @@ struct dialog_mod : public internal_mod {
             ini,
             regular,
             message,
-            std::min(number_of_lines, max_message_lines-3),
             refuse);
 
         this->screen.child_list.push_back(this->close_window);
