@@ -569,7 +569,6 @@ class SessionManager {
         if (size > stream.capacity){
             stream.init(size);
         }
-        LOG(LOG_INFO, "capacity=%u", stream.capacity);
         this->auth_trans_t->recv((char**)&(stream.end), size - 4);
         this->in_items(stream);
     }
