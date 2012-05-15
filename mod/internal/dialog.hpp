@@ -44,10 +44,31 @@ struct dialog_mod : public internal_mod {
         this->button_down = 0;
 
         int log_width = 600;
-        int log_height = 200;
+        int min_log_height = 200;
+        int max_log_height = this->get_screen_rect().cy - 40;
         int regular = 1;
 
         this->signal = BACK_EVENT_NONE;
+
+        size_t number_of_lines = 1;
+        uint32_t len = strlen(message);
+        for (size_t xx = 0; xx < len - 4 ; xx++) {
+            if ((message[xx] == '<')
+            && (message[xx+1] == 'b')
+            && (message[xx+2] == 'r')
+            && (message[xx+3] == '>')){
+                xx+=3;
+                number_of_lines++;
+            }
+        }
+
+        int log_height = number_of_lines * 16;
+        if (log_height > max_log_height){
+            log_height = max_log_height;
+        }
+        if (log_height < min_log_height){
+            log_height = min_log_height;
+        }
 
         /* draw login window */
         Rect r(
@@ -56,7 +77,7 @@ struct dialog_mod : public internal_mod {
             log_width,
             log_height);
 
-        TODO(" valgrind say there is a memory leak here")
+        this->front.begin_update();
         this->close_window = new window_dialog(this,
             r, context,
             &this->screen, // parent
@@ -64,7 +85,8 @@ struct dialog_mod : public internal_mod {
             "Information",
             ini,
             regular,
-            message, refuse);
+            message,
+            refuse);
 
         this->screen.child_list.push_back(this->close_window);
         assert(this->close_window->mod == this);
@@ -72,6 +94,8 @@ struct dialog_mod : public internal_mod {
         this->close_window->focus(this->close_window->rect);
         this->close_window->has_focus = true;
         this->screen.refresh(this->get_screen_rect().wh());
+        this->front.end_update();
+
     }
     ~dialog_mod() {
     }

@@ -44,6 +44,10 @@
 
 #include "keywords.hpp"
 
+enum {
+    DICOBUFSIZE = 8192,
+};
+
 enum t_ask {
     V_DEFAULT,
     V_UNDEFINED,
@@ -54,7 +58,7 @@ enum t_ask {
 
 struct KeywordValue {
     t_ask ask;
-    char value[1024];
+    char value[DICOBUFSIZE];
 };
 
 
@@ -124,7 +128,7 @@ class Dico {
         }
         const char * found = it->second->value;
 
-        return 0 == strncmp((*found=='!')?found+1:found, value, 1023);
+        return 0 == strncmp((*found=='!')?found+1:found, value, DICOBUFSIZE-1);
     }
 
     void cpy(const char * key, int value) {
@@ -140,14 +144,19 @@ class Dico {
     }
 
     void cpy(const char * key, const char * value) {
-        TODO(" may be raising an exception would be better")
         const t_kmap::iterator & it = this->map.find(key);
         if (it == this->map.end()){
             return;
         }
         char * found = it->second->value;
         found[0] = '!';
-        strncpy(found+1, value, 1023);
+        size_t len = strlen(value);
+        if (len >= DICOBUFSIZE-2){
+            len = DICOBUFSIZE-2;
+            found[DICOBUFSIZE-1] = 0;
+        }
+        strncpy(found+1, value, len);
+        found[len+1] = 0;
     }
 
     void ask(const char * key) {
@@ -166,7 +175,7 @@ class Dico {
         for (unsigned i = 0; i < nbkeywords; i++){
                 KeywordValue * item = new KeywordValue();
                 item->ask = V_DEFAULT;
-                strncpy(item->value, KeywordsDefinitions[i].default_value, 1023);
+                strncpy(item->value, KeywordsDefinitions[i].default_value, DICOBUFSIZE-1);
                 this->map[KeywordsDefinitions[i].keyword] = item;
 //                LOG(LOG_INFO, "adding keyword to context: %s at %p\n", KeywordsDefinitions[i].keyword, item);
         }
