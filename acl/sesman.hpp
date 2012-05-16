@@ -153,7 +153,7 @@ class SessionManager {
                                LOG(LOG_INFO, "receiving '%s'=<hidden>\n", keyword);
                             }
                             else{
-                                LOG(LOG_INFO, "receiving '%s'=%s\n", keyword, value+(!(0[value]=='!')?0:1));
+                                LOG(LOG_INFO, "receiving '%s'=%s\n", keyword, this->context.get(keyword));
                             }
                         }
                     }
@@ -480,6 +480,7 @@ class SessionManager {
                 }
                 stream.out_copy_bytes(key, strlen(key));
                 stream.out_uint8('\n');
+                stream.out_uint8('!');
                 stream.out_copy_bytes(tmp, strlen(tmp));
                 stream.out_uint8('\n');
             }
