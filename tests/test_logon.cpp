@@ -33,8 +33,8 @@
 
 BOOST_AUTO_TEST_CASE(TestLogon)
 {
-    InfoPacket info_packet;
-    printf("Coucou\n");
+    InfoPacket * info_packet = new InfoPacket();
+
 //    bitmap_caps.preferredBitsPerPixel = 24;
 //    bitmap_caps.desktopWidth = 800;
 //    bitmap_caps.desktopHeight = 600;
