@@ -150,6 +150,7 @@ class Dico {
         }
         char * found = it->second->value;
         found[0] = '!';
+//        LOG(LOG_INFO, "copying %s to %s", value, key);
         size_t len = strlen(value);
         if (len >= DICOBUFSIZE-2){
             len = DICOBUFSIZE-2;
