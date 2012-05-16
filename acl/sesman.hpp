@@ -150,10 +150,10 @@ class SessionManager {
                             if ((strncasecmp((char*)value, "ask", 3) != 0)
                             && ((strncasecmp("password", (char*)keyword, 8) == 0)
                             || (strncasecmp("target_password", (char*)keyword, 15) == 0))){
-                               LOG(LOG_INFO, "receiving '%s'=<hidden>\n", keyword);
+                               LOG(LOG_INFO, "receiving '%s'=<hidden>\n", (char*)keyword);
                             }
                             else{
-                                LOG(LOG_INFO, "receiving '%s'=%s\n", keyword, this->context.get(keyword));
+                                LOG(LOG_INFO, "receiving '%s'=%s\n", keyword, this->context.get((char*)keyword));
                             }
                         }
                     }
