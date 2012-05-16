@@ -2730,7 +2730,6 @@ struct mod_rdp : public client_mod {
         McsOut sdrq_out2(stream, DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, SEC_INFO_PKT | (this->crypt_level?SEC_ENCRYPT:0), this->encrypt);
 
-//>>>> DLA - Logon
         InfoPacket infoPacket;
         infoPacket.std_init();
         infoPacket.rdp5_support = this->use_rdp5;
@@ -2748,18 +2747,7 @@ struct mod_rdp : public client_mod {
                                                                                 | PERF_DISABLE_MENUANIMATIONS );
         infoPacket.log("Sending info_packet to server");
         infoPacket.emit( stream );
-//<<<< FIN DLA - Logon
 
-//        send_logon_info_packet( stream
-//                              , this->domain
-//                              , this->username
-//                              , password
-//                              , this->program
-//                              , this->directory
-//                              , this->use_rdp5
-//                              , PERF_DISABLE_WALLPAPER | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG
-//                                                                          | PERF_DISABLE_MENUANIMATIONS )
-//                              );
         sec_out.end();
         sdrq_out2.end();
         tpdu.end();
