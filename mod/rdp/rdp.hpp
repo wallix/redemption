@@ -2731,7 +2731,6 @@ struct mod_rdp : public client_mod {
         SecOut sec_out(stream, SEC_INFO_PKT | (this->crypt_level?SEC_ENCRYPT:0), this->encrypt);
 
         InfoPacket infoPacket;
-        infoPacket.std_init();
         infoPacket.rdp5_support = this->use_rdp5;
         infoPacket.cbDomain = 2 * strlen(this->domain);
         memcpy(infoPacket.Domain, this->domain, infoPacket.cbDomain);
@@ -2743,9 +2742,9 @@ struct mod_rdp : public client_mod {
         memcpy(infoPacket.AlternateShell, this->program, infoPacket.cbAlternateShell);
         infoPacket.cbWorkingDir = 2 * strlen(this->directory);
         memcpy(infoPacket.WorkingDir, this->directory, infoPacket.cbWorkingDir);
-        infoPacket.performanceFlags = PERF_DISABLE_WALLPAPER | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG
-                                                                                | PERF_DISABLE_MENUANIMATIONS );
-        infoPacket.log("Sending info_packet to server");
+        infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG
+                                                                                                   | PERF_DISABLE_MENUANIMATIONS );
+        infoPacket.log("Sending to server: ");
         infoPacket.emit( stream );
 
         sec_out.end();

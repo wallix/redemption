@@ -23,7 +23,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCapabilityBitmap
+#define BOOST_TEST_MODULE TestLogon
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
@@ -33,55 +33,43 @@
 
 BOOST_AUTO_TEST_CASE(TestLogon)
 {
-    InfoPacket * info_packet = new InfoPacket();
+    InfoPacket infoPacket;
 
-//    bitmap_caps.preferredBitsPerPixel = 24;
-//    bitmap_caps.desktopWidth = 800;
-//    bitmap_caps.desktopHeight = 600;
-//    bitmap_caps.bitmapCompressionFlag = 1;
+	infoPacket.rdp5_support = 1;
+    infoPacket.flags  = INFO_MOUSE;
+	infoPacket.flags |= INFO_DISABLECTRLALTDEL;
+	infoPacket.flags |= INFO_UNICODE;
+	infoPacket.flags |= INFO_MAXIMIZESHELL;
+	infoPacket.flags |= INFO_ENABLEWINDOWSKEY;
+	infoPacket.flags |= INFO_LOGONNOTIFY;;
+	infoPacket.flags |= ( (strlen((char *) infoPacket.Password ) > 0) * INFO_AUTOLOGON );
+	infoPacket.flags |= ( infoPacket.rdp5_support != 0 ) * ( INFO_LOGONERRORS | INFO_NOAUDIOPLAYBACK );
 
-//    BOOST_CHECK_EQUAL(bitmap_caps.capabilityType, (uint16_t)CAPSTYPE_BITMAP);
-//    BOOST_CHECK_EQUAL(bitmap_caps.len, (uint16_t)RDP_CAPLEN_BITMAP);
-//    BOOST_CHECK_EQUAL(bitmap_caps.preferredBitsPerPixel, (uint16_t)24);
-//    BOOST_CHECK_EQUAL(bitmap_caps.receive1BitPerPixel, (uint16_t)1);
-//    BOOST_CHECK_EQUAL(bitmap_caps.receive4BitsPerPixel, (uint16_t)1);
-//    BOOST_CHECK_EQUAL(bitmap_caps.receive8BitsPerPixel, (uint16_t)1);
-//    BOOST_CHECK_EQUAL(bitmap_caps.desktopWidth, (uint16_t)800);
-//    BOOST_CHECK_EQUAL(bitmap_caps.desktopHeight, (uint16_t)600);
-//    BOOST_CHECK_EQUAL(bitmap_caps.pad2octets, (uint16_t)0);
-//    BOOST_CHECK_EQUAL(bitmap_caps.desktopResizeFlag, (uint16_t)1);
-//    BOOST_CHECK_EQUAL(bitmap_caps.bitmapCompressionFlag, (uint16_t)1);
-//    BOOST_CHECK_EQUAL(bitmap_caps.highColorFlags, (uint8_t)0);
-//    BOOST_CHECK_EQUAL(bitmap_caps.drawingFlags, (uint8_t)0);
-//    BOOST_CHECK_EQUAL(bitmap_caps.multipleRectangleSupport, (uint16_t)1);
-//    BOOST_CHECK_EQUAL(bitmap_caps.pad2octetsB, (uint16_t)0);
+    memcpy(infoPacket.Domain, "Domain_Test", strlen("Domain_Test"));
+    infoPacket.cbDomain = strlen((char *) infoPacket.Domain);
+    memcpy(infoPacket.UserName, "UserName_Test", strlen("UserName_Test"));
+    infoPacket.cbUserName = strlen((char *) infoPacket.UserName);
+    memcpy(infoPacket.Password, "Password_Test", strlen("Password_Test"));
+    infoPacket.cbPassword = strlen((char *) infoPacket.Password);
+    memcpy(infoPacket.AlternateShell, "Program_Test", strlen("Program_Test"));
+    infoPacket.cbAlternateShell = strlen((char *) infoPacket.AlternateShell);
+    memcpy(infoPacket.WorkingDir, "Directory_Test", strlen("Directory_Test"));
+    infoPacket.cbWorkingDir = strlen((char *) infoPacket.WorkingDir);
 
-//    Stream stream(1024);
-//    bitmap_caps.emit(stream);
-//    stream.end = stream.p;
-//    stream.p = stream.data;
+    infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER | 1 * ( PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS);
 
-//    BitmapCaps bitmap_caps2;
-
-//    BOOST_CHECK_EQUAL(bitmap_caps2.capabilityType, (uint16_t)CAPSTYPE_BITMAP);
-//    BOOST_CHECK_EQUAL(bitmap_caps2.len, (uint16_t)RDP_CAPLEN_BITMAP);
-
-//    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_BITMAP, stream.in_uint16_le());
-//    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_BITMAP, stream.in_uint16_le());
-//    bitmap_caps2.recv(stream);
-
-//    BOOST_CHECK_EQUAL(bitmap_caps2.preferredBitsPerPixel, (uint16_t)24);
-//    BOOST_CHECK_EQUAL(bitmap_caps2.receive1BitPerPixel, (uint16_t)1);
-//    BOOST_CHECK_EQUAL(bitmap_caps2.receive4BitsPerPixel, (uint16_t)1);
-//    BOOST_CHECK_EQUAL(bitmap_caps2.receive8BitsPerPixel, (uint16_t)1);
-//    BOOST_CHECK_EQUAL(bitmap_caps2.desktopWidth, (uint16_t)800);
-//    BOOST_CHECK_EQUAL(bitmap_caps2.desktopHeight, (uint16_t)600);
-//    BOOST_CHECK_EQUAL(bitmap_caps2.pad2octets, (uint16_t)0);
-//    BOOST_CHECK_EQUAL(bitmap_caps2.desktopResizeFlag, (uint16_t)1);
-//    BOOST_CHECK_EQUAL(bitmap_caps2.bitmapCompressionFlag, (uint16_t)1);
-//    BOOST_CHECK_EQUAL(bitmap_caps2.highColorFlags, (uint8_t)0);
-//    BOOST_CHECK_EQUAL(bitmap_caps2.drawingFlags, (uint8_t)0);
-//    BOOST_CHECK_EQUAL(bitmap_caps2.multipleRectangleSupport, (uint16_t)1);
-//    BOOST_CHECK_EQUAL(bitmap_caps2.pad2octetsB, (uint16_t)0);
+    BOOST_CHECK_EQUAL(infoPacket.rdp5_support, (uint32_t)1);
+    BOOST_CHECK_EQUAL(infoPacket.flags, (uint32_t)590195);
+    BOOST_CHECK_EQUAL(std::string((char *) infoPacket.Domain), std::string("Domain_Test") );
+    BOOST_CHECK_EQUAL(infoPacket.cbDomain, (uint32_t)strlen((char *) infoPacket.Domain));
+    BOOST_CHECK_EQUAL(std::string((char *) infoPacket.UserName), std::string("UserName_Test") );
+    BOOST_CHECK_EQUAL(infoPacket.cbUserName, (uint32_t)strlen((char *) infoPacket.UserName));
+    BOOST_CHECK_EQUAL(std::string((char *) infoPacket.Password), std::string("Password_Test") );
+    BOOST_CHECK_EQUAL(infoPacket.cbPassword, (uint32_t)strlen((char *) infoPacket.Password));
+    BOOST_CHECK_EQUAL(std::string((char *) infoPacket.AlternateShell), std::string("Program_Test") );
+    BOOST_CHECK_EQUAL(infoPacket.cbAlternateShell, (uint32_t)strlen((char *) infoPacket.AlternateShell));
+    BOOST_CHECK_EQUAL(std::string((char *) infoPacket.WorkingDir), std::string("Directory_Test") );
+    BOOST_CHECK_EQUAL(infoPacket.cbWorkingDir, (uint32_t)strlen((char *) infoPacket.WorkingDir));
+    BOOST_CHECK_EQUAL(infoPacket.extendedInfoPacket.performanceFlags, (uint32_t)7);
 
 }
