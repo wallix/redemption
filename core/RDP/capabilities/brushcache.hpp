@@ -24,4 +24,69 @@
 #if !defined(__RDP_CAPABILITIES_BRUSHCACHE_HPP__)
 #define __RDP_CAPABILITIES_BRUSHCACHE_HPP__
 
+// 2.2.7.1.7 Brush Capability Set (TS_BRUSH_CAPABILITYSET)
+// ======================================================
+// The TS_BRUSH_CAPABILITYSET advertises client brush support. This capability is only sent from
+// client to server.
+
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the capability set. This
+//    field MUST be set to CAPSTYPE_BRUSH (15).
+
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes of the capability
+//    data, including the size of the capabilitySetType and lengthCapability fields.
+
+// brushSupportLevel (4 bytes): A 32-bit, unsigned integer. The maximum brush level
+//    supported by the client.
+//    +-------------------+--------------------------------------------------------------------------------+
+//    | BRUSH_DEFAULT     | Support for solid-color and monochrome pattern brushes with no caching.        |
+//    | 0x00000000        | This is an RDP 4.0 implementation.                                             |
+//    +-------------------+--------------------------------------------------------------------------------+
+//    | BRUSH_COLOR_8x8   | Ability to handle color brushes (4-bit or 8-bit in RDP 5.0; RDP 5.1, 5.2, 6.0, |
+//    | 0x00000001        | 6.1, 7.0, 7.1, and 8.0 also support 16-bit and 24-bit) and caching. Brushes    |
+//    |                   | are limited to 8-by-8 pixels.                                                  |
+//    +-------------------+--------------------------------------------------------------------------------+
+//    | BRUSH_COLOR_FULL  | Ability to handle color brushes (4-bit or 8-bit in RDP 5.0; RDP 5.1, 5.2, 6.0, |
+//    | 0x00000002        | 6.1, 7.0, 7.1, and 8.0 also support 16-bit and 24-bit) and caching. Brushes    |
+//    |                   | can have arbitrary dimensions.                                                 |
+//    +-------------------+--------------------------------------------------------------------------------+
+
+
+enum {
+      BRUSH_DEFAULT
+    , BRUSH_COLOR_EIGHTXEIGHT
+    , BRUSH_COLOR_FULL
+};
+
+struct BrushCacheCaps : public Capability {
+    uint32_t brushSupportLevel;
+
+    BrushCacheCaps()
+    : Capability(CAPSTYPE_BRUSHCACHE, RDP_CAPLEN_BRUSHCACHE)
+    , brushSupportLevel(BRUSH_DEFAULT) // By default, minimal
+    {
+    }
+
+
+    void emit(Stream & stream){
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_uint32_le(this->brushSupportLevel);
+    }
+
+    void recv(Stream & stream){
+        this->capabilityType = stream.in_uint16_le();
+        this->len = stream.in_uint16_le();
+        this->brushSupportLevel = stream.in_uint32_le();
+    }
+
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s BrushCache caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "BrushCacheCaps caps::brushSupportLevel %u", this->brushSupportLevel);
+    }
+};
+
+
+
+
+
 #endif

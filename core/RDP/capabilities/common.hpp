@@ -188,8 +188,8 @@ CAPSTYPE_FONT                       = 14,
 RDP_CAPLEN_FONT                     = 0x08,
 
 // 15 CAPSTYPE_BRUSH Brush Capability Set ([MS-RDPBCGR] section 2.2.7.1.7)
-CAPSTYPE_BRUSH                      = 15,
-RDP_CAPLEN_BRUSH                    = 0x08,
+CAPSTYPE_BRUSHCACHE                 = 15,
+RDP_CAPLEN_BRUSHCACHE               = 0x08,
 
 // 16 CAPSTYPE_GLYPHCACHE Glyph Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.8)
 CAPSTYPE_GLYPHCACHE                 = 16,

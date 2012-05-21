@@ -1766,8 +1766,12 @@ public:
                 break;
             case 14: /* 14 */
                 break;
-            case CAPSTYPE_BRUSH: /* 15 */
-                this->client_info.brush_cache_code = stream.in_uint32_le();
+            case CAPSTYPE_BRUSHCACHE: { /* 15 */
+                    BrushCacheCaps brushcache_caps;
+                    brushcache_caps.log("Receiving from client");
+                    brushcache_caps.recv(stream);
+                    this->client_info.brush_cache_code = brushcache_caps.brushSupportLevel;
+                }
                 break;
             case 16: /* 16 */
                 break;
