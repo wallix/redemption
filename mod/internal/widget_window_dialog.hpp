@@ -58,7 +58,7 @@ struct window_dialog : public window
         size_t count = 0;
         bool done = false;
         while (!done) {
-            if (25 + count * 16 >= r.cy - 50){
+            if (75 + count * 16 >= r.cy){
                 break;
             }
             const char * str = strstr(message, "<br>");

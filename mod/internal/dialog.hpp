@@ -45,7 +45,7 @@ struct dialog_mod : public internal_mod {
 
         int log_width = 600;
         int min_log_height = 200;
-        int max_log_height = this->get_screen_rect().cx - 40;
+        int max_log_height = this->get_screen_rect().cy - 40;
         int regular = 1;
 
         this->signal = BACK_EVENT_NONE;
@@ -63,7 +63,7 @@ struct dialog_mod : public internal_mod {
         }
 
         int log_height = number_of_lines * 16;
-        if (log_height > max_log_height){
+        if (log_height > min_log_height){
             log_height = max_log_height;
         }
         if (log_height < min_log_height){
