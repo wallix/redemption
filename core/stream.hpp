@@ -408,7 +408,7 @@ class Stream {
 
     void out_date_name(const char* text, const size_t buflen)
     {
-        int i = 0;
+        size_t i = 0;
         for (; i < (buflen/2) ; i++) {
             if (!text[i]){
                 break;

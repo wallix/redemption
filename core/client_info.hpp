@@ -134,7 +134,10 @@ struct ClientInfo {
     void process_logon_info(Stream & stream, uint32_t length) throw (Error)
     {
         uint32_t flags = 0;
-        recv_logon_info(stream, length, flags, this->rdp5_performanceflags, this->domain, this->username, this->password, this->program, this->directory);
+
+        InfoPacket infoPacket;
+        infoPacket.recv( stream );
+        infoPacket.log("Receiving from client");
 
         const uint32_t mandatory_flags = INFO_MOUSE
                                        | INFO_DISABLECTRLALTDEL
@@ -142,17 +145,17 @@ struct ClientInfo {
                                        | INFO_MAXIMIZESHELL
                                        ;
 
-        if ((flags & mandatory_flags) != mandatory_flags){
+        if ((infoPacket.flags & mandatory_flags) != mandatory_flags){
             throw Error(ERR_SEC_PROCESS_LOGON_UNKNOWN_FLAGS);
         }
-        if (flags & INFO_REMOTECONSOLEAUDIO) {
+        if (infoPacket.flags & INFO_REMOTECONSOLEAUDIO) {
             this->sound_code = 1;
         }
         TODO("for now not allowing both autologon and mce")
-        if ((flags & INFO_AUTOLOGON) && (!this->is_mce)){
+        if ((infoPacket.flags & INFO_AUTOLOGON) && (!this->is_mce)){
             this->rdp_autologin = 1;
         }
-        if (flags & INFO_COMPRESSION){
+        if (infoPacket.flags & INFO_COMPRESSION){
             this->rdp_compression = 1;
         }
     }

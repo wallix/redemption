@@ -2730,20 +2730,22 @@ struct mod_rdp : public client_mod {
         McsOut sdrq_out2(stream, DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, SEC_INFO_PKT | (this->crypt_level?SEC_ENCRYPT:0), this->encrypt);
 
-        send_logon_info_packet(stream,
-                               this->domain,
-                               this->username,
-                               password,
-                               this->program,
-                               this->directory,
-                               this->use_rdp5,
-                                     PERF_DISABLE_WALLPAPER
-                                   | this->nego.tls *
-                                   (
-                                     PERF_DISABLE_FULLWINDOWDRAG
-                                   | PERF_DISABLE_MENUANIMATIONS
-                                   )
-                               );
+        InfoPacket infoPacket;
+        infoPacket.rdp5_support = this->use_rdp5;
+        infoPacket.cbDomain = 2 * strlen(this->domain);
+        memcpy(infoPacket.Domain, this->domain, infoPacket.cbDomain);
+        infoPacket.cbUserName = 2 * strlen(this->username);
+        memcpy(infoPacket.UserName, this->username, infoPacket.cbUserName);
+        infoPacket.cbPassword = 2 * strlen(password);
+        memcpy(infoPacket.Password, password, infoPacket.cbPassword);
+        infoPacket.cbAlternateShell = 2 * strlen(this->program);
+        memcpy(infoPacket.AlternateShell, this->program, infoPacket.cbAlternateShell);
+        infoPacket.cbWorkingDir = 2 * strlen(this->directory);
+        memcpy(infoPacket.WorkingDir, this->directory, infoPacket.cbWorkingDir);
+        infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER | this->nego.tls * ( PERF_DISABLE_FULLWINDOWDRAG
+                                                                                                   | PERF_DISABLE_MENUANIMATIONS );
+        infoPacket.log("Sending to server: ");
+        infoPacket.emit( stream );
 
         sec_out.end();
         sdrq_out2.end();

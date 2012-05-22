@@ -28,3 +28,13 @@ Two consecutive FILL on the same line inject a magic background colored pixel
 | E0: BICOLOR       SI+16  CC1 CC2     |                                       |
 | E-: BICOLOR       -      CC1 CC2     |                                       |
 +--------------------------------------+---------------------------------------+
+
+Symbols:
+========
+SI      = a one bytes value
+SISI    = a two bytes value
+X …     = sequence of bytes
+-       = value of opcode digit
+M …     = multibytes mask
+CCC     = Color (one to three bytes depending on color mode)
+CC1 CC2 = Color 1, Color 2 (for bicolor commands.)

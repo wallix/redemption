@@ -25,7 +25,9 @@
 #if !defined(__CORE_RDP_LOGON_HPP__)
 #define __CORE_RDP_LOGON_HPP__
 
+#include <stdint.h>
 #include "log.hpp"
+#include "stream.hpp"
 
 // 2.2.1.11.1.1 Info Packet (TS_INFO_PACKET)
 // =========================================
@@ -564,144 +566,380 @@ enum {
 // updates the cookie at hourly intervals, sending the new cookie to the client
 // in the Save Session Info PDU.
 
-static inline void send_logon_info_packet(Stream & stream, const char * domain, const char * username, const char * password, const char * program, const char * directory, int use_rdp5, int rdp5_performanceflags)
-{
-    uint32_t flags = INFO_MOUSE
-                   | INFO_DISABLECTRLALTDEL
-                   | ((strlen(password) > 0) * INFO_AUTOLOGON)
-                   | INFO_UNICODE
-                   | INFO_MAXIMIZESHELL
-                   | INFO_ENABLEWINDOWSKEY
-                   | INFO_LOGONNOTIFY
-                   | (use_rdp5 != 0) *
-                   (
-                     INFO_LOGONERRORS
-                   | INFO_NOAUDIOPLAYBACK
-                   )
-                   ;
 
-    stream.out_uint32_le(0);
-    stream.out_uint32_le(flags);
+struct SystemTime {
 
-    stream.out_uint16_le(2 * strlen(domain));
-    stream.out_uint16_le(2 * strlen(username));
-    stream.out_uint16_le(2 * strlen(password));
-    stream.out_uint16_le(2 * strlen(program));
-    stream.out_uint16_le(2 * strlen(directory));
-    stream.out_unistr(domain);
-    stream.out_unistr(username);
-    if (flags & INFO_AUTOLOGON){
-        stream.out_unistr(password);
-    }
-    else{
-        stream.out_uint16_le(0);
-    }
-    stream.out_unistr(program);
-    stream.out_unistr(directory);
+    uint16_t wYear;
+    uint16_t wMonth;
+    uint16_t wDayOfWeek;
+    uint16_t wDay;
+    uint16_t wHour;
+    uint16_t wMinute;
+    uint16_t wSecond;
+    uint16_t wMilliseconds;
 
-    if(!use_rdp5){
-        LOG(LOG_INFO, "send login info (RDP4-style) %s:%s", domain, username);
-    }
-    if (use_rdp5){
-        LOG(LOG_INFO, "send extended login info (RDP5-style) %x %s:%s",flags, domain, username);
-        // The WAB does not send it's IP to server. Is it what we want ?
-        // rdesktop sends the faked IP below
-        const char * ip_source = "10.10.9.161";
+    SystemTime()
+        : wYear(0)
+        , wMonth(0)
+        , wDayOfWeek(0)
+        , wDay(0)
+		, wHour(0)
+		, wMinute(0)
+		, wSecond(0)
+		, wMilliseconds(0)
+    {
+    	;
+    } // END CONSTRUCTOR
 
-        stream.out_uint16_le(0x00002);
-        stream.out_uint16_le(2 * strlen(ip_source) + 2);
-        stream.out_unistr(ip_source);
-        const char path[] = "C:\\Windows\\System32\\mstscax.dll";
-        stream.out_uint16_le(2 * sizeof(path));
-        stream.out_unistr(path);
+}; // END STRUCT : SystemTime
 
-        // Client Time Zone (172 bytes)
-        // ----------------------------
-        time_t t = time(NULL);
-        uint32_t tzone_bias = (mktime(gmtime(&t)) - mktime(localtime(&t))) / 60;
-//        stream.out_uint32_le(tzone_bias);
-        // bias
-        stream.out_uint32_le(120);
-        // standard name
-        LOG(LOG_INFO, "size before date1=%04x", (size_t)(stream.p - stream.data));
-        stream.out_date_name("GMT Standard Time", 64);
-        LOG(LOG_INFO, "size date1=%04x", (size_t)(stream.p - stream.data));
 
+struct ClientTimeZone {
+
+    uint32_t Bias;
+    uint8_t StandardName[65];
+//    SystemTime StandardDate;
+    uint8_t StandardDate[17];
+    uint32_t StandardBias;
+    uint8_t DaylightName[65];
+//    SystemTime DaylightDate;
+    uint8_t DaylightDate[17];
+    uint32_t DaylightBias;
+
+    ClientTimeZone()
+        : Bias(0) //......... bias value (in minutes)
+        , StandardBias(0) //  MUST be ignored if a valid date and time is not specified in the StandardDate field or the wYear,
+    					  //    wMonth, wDayOfWeek, wDay, wHour, wMinute, wSecond, and wMilliseconds fields
+    	                  //    of the StandardDate field are all set to zero
+        , DaylightBias(0) //  MUST be ignored if a valid date and time is not specified in the DaylightDate field or the wYear,
+    				      //    wMonth, wDayOfWeek, wDay, wHour, wMinute, wSecond, and wMilliseconds fields
+    					  //    of the DaylightDate field are all set to zero
+    {
+        memset(StandardName, 0, 65);
+        memset(DaylightName, 0, 65);
+        memset(StandardDate, 0, 17);
+        memset(DaylightDate, 0, 17);
+
+        this->std_init();
+
+    } // END CONSTRUCTOR
+
+    void std_init() {
+
+    	// bias
+        this->Bias = 120;
+        // standard Name
+        memcpy(this->StandardName, "GMT Standard Time", strlen("GMT Standard Time")+1);
         // standard date
-//        stream.out_uint32_le(0x0a0000);
-//        stream.out_uint32_le(0x050000);
-//        stream.out_uint32_le(3);
-//        stream.out_uint32_le(0);
-        stream.out_clear_bytes(16);
+        ;
         // standard bias
-//        stream.out_uint32_le(0);
-        stream.out_uint32_le(60);
-
+        this->StandardBias = 60;
         // daylight name
-        LOG(LOG_INFO, "size before date2=%04x", (size_t)(stream.p - stream.data));
-        stream.out_date_name("GMT Daylight Time", 64);
-        LOG(LOG_INFO, "size after date2=%04x", (size_t)(stream.p - stream.data));
+        memcpy(this->DaylightName, "GMT Daylight Time", strlen("GMT Daylight Time")+1);
         // daylight date
-//        stream.out_uint32_le(0x30000);
-//        stream.out_uint32_le(0x050000);
-//        stream.out_uint32_le(2);
-//        stream.out_uint32_le(0);
-        stream.out_clear_bytes(16);
+        ;
         // daylight bias
-//        stream.out_uint32_le(0xffffffc4);
-        stream.out_uint32_le(120);
-        // -------end of Timezone -----
+        this->DaylightBias = 120;
 
-        stream.out_uint32_le(0); // session id
-        stream.out_uint32_le(rdp5_performanceflags);
+    } // END FUNCT : std_init()
 
-        // autoreconnect length
-        stream.out_uint16_le(0);
-        // autoreconnect Cookie
+}; // END STRUCT : ClientTimeZone
 
-        // reserved1
-//        stream.out_uint16_le(0);
-        // reserved2
-//        stream.out_uint16_le(0);
-    }
-}
 
-static inline void recv_logon_info(Stream & stream, uint16_t length, uint32_t & flags, uint32_t & rdp5_performanceflags, char * domain, char * username, char * password, char * program, char * directory)
-{
-    uint32_t codepage = stream.in_uint32_le();
-    flags = stream.in_uint32_le();
+struct ExtendedInfoPacket {
 
-    unsigned len_domain = stream.in_uint16_le() + 2;
-    unsigned len_user = stream.in_uint16_le() + 2;
-    unsigned len_password = stream.in_uint16_le() + 2;
-    unsigned len_program = stream.in_uint16_le() + 2;
-    unsigned len_directory = stream.in_uint16_le() + 2;
-    stream.in_uni_to_ascii_str(domain, len_domain);
-    stream.in_uni_to_ascii_str(username, len_user);
+    uint16_t clientAddressFamily;
+    uint16_t cbClientAddress;
+    uint8_t clientAddress[81];
+    uint16_t cbClientDir;
+    uint8_t clientDir[257];
+    uint32_t clientSessionId;
+    uint32_t performanceFlags;
+    uint16_t cbAutoReconnectLen;
+    uint8_t autoReconnectCookie[29];
+    uint16_t reserved1;
+    uint16_t reserved2;
+    ClientTimeZone clientTimeZone;      // optionals Extra attributes from TS_TIME_ZONE_INFORMATION
 
-    // We have a password available
-    if (flags & INFO_AUTOLOGON) {
-        stream.in_uni_to_ascii_str(password, len_password);
-    } else {
-        stream.in_skip_bytes(len_password);
-    }
-    stream.in_uni_to_ascii_str(program, len_program);
-    stream.in_uni_to_ascii_str(directory, len_directory);
+    ExtendedInfoPacket()
+    : clientAddressFamily(0) // numeric socket descriptor
+    , cbClientAddress(0) //.... size in bytes of variable size clientAdress attribute
+    , cbClientDir(0) //         size in bytes of variable size clientDir attribute
+    , clientSessionId(0) //.... was added in RDP 5.1 and is currently (from what version on ??) ignored by the server. It SHOULD be set to 0.
+    , performanceFlags(0) //    from a closed list of flags. It is used by RDP 5.1, 5.2, 6.0, 6.1, and 7.0 servers
+    , cbAutoReconnectLen(0) //. size in bytes of variable size autoReconnectCookie attribute. is only read by RDP 5.2, 6.0, 6.1, and 7.0 servers.
+    , reserved1(0) //           if this field is present, the reserved2 field MUST be present.
+    , reserved2(0) //.......... this field MUST be present if the reserved1 field is present.
+    {
+        memset(clientAddress, 0, 81);
+        memset(clientDir, 0, 256);
+        memset(autoReconnectCookie, 0, 29);
 
-    if (stream.p < stream.end) {
-        LOG(LOG_DEBUG, "RDP-5 Style logon");
-        stream.in_skip_bytes(2);
-        unsigned len_ip = stream.in_uint16_le();
-        char tmpdata[256];
-        stream.in_uni_to_ascii_str(tmpdata, len_ip);
-        unsigned len_dll = stream.in_uint16_le();
-        stream.in_uni_to_ascii_str(tmpdata, len_dll);
-        stream.in_skip_bytes(172); /* skip time data */
-        rdp5_performanceflags = stream.in_uint32_le();
-        // more data here : autoreconnect cookie and reserved.
-        TODO("We should take care of remaining data if any")
-    }
-}
+        this->std_init();
+
+    } // END CONSTRUCTOR
+
+    void std_init() {
+
+		clientAddressFamily = 2;
+		memcpy(this->clientAddress, "10.10.9.161", strlen("10.10.9.161")+1);
+		this->cbClientAddress = 2 * strlen((char *) this->clientAddress) + 2;
+
+		memcpy(this->clientDir, "C:\\Windows\\System32\\mstscax.dll", strlen("C:\\Windows\\System32\\mstscax.dll")+1);
+		this->cbClientDir = 2 * strlen((char *) this->clientDir) + 2;
+
+		clientSessionId = 0;
+
+	} // END FUNCT : std_init()
+
+}; // END STRUCT : ExtendedInfoPacket
+
+
+struct InfoPacket {
+
+    uint32_t CodePage;
+    uint32_t flags;
+    uint16_t cbDomain;
+    uint16_t cbUserName;
+    uint16_t cbPassword;
+    uint16_t cbAlternateShell;
+    uint16_t cbWorkingDir;
+    uint8_t Domain[257];
+    uint8_t UserName[129];
+    uint8_t Password[257];
+    uint8_t AlternateShell[257];
+    uint8_t WorkingDir[257];
+    uint8_t rdp5_support;
+    ExtendedInfoPacket extendedInfoPacket;  // optionals Extra attributes from TS_EXTENDED_INFO_PACKET:
+
+    InfoPacket()
+    : CodePage(0) //........... ANSI code page descriptor
+    , flags(0) //               bitmap
+    , cbDomain(0) //........... size in bytes of variable size Domain attribute
+    , cbUserName(0) //          size in bytes of variable size UserName attribute
+    , cbPassword(0) //......... size in bytes of variable size Password attribute
+    , cbAlternateShell(0) //    size in bytes of variable size AlternateShell attribute
+    , cbWorkingDir(0) //....... size in bytes of variable size WorkingDir attribute
+    , rdp5_support(0)
+    , extendedInfoPacket()
+    {
+    	memset(Domain, 0, 256);
+        memset(UserName, 0, 128);
+        memset(Password, 0, 256);
+        memset(AlternateShell, 0, 256);
+        memset(WorkingDir, 0, 256);
+
+        this->std_init();
+
+   } // END CONSTRUCTOR
+
+
+	void std_init(){
+
+		this->flags  = INFO_MOUSE;
+		this->flags |= INFO_DISABLECTRLALTDEL;
+		this->flags |= INFO_UNICODE;
+		this->flags |= INFO_MAXIMIZESHELL;
+		this->flags |= INFO_ENABLEWINDOWSKEY;
+		this->flags |= INFO_LOGONNOTIFY;
+
+	} // END FUNCT : std_init()
+
+
+	void conclude_flags(){
+
+		this->flags |= ( (strlen((char *) this->Password ) > 0) * INFO_AUTOLOGON );
+		this->flags |= ( this->rdp5_support != 0 ) * ( INFO_LOGONERRORS | INFO_NOAUDIOPLAYBACK );
+
+	}  // END FUNCT : conclude_flags()
+
+
+    void emit( Stream & stream) {
+
+    	conclude_flags();
+
+		stream.out_uint32_le(this->CodePage);
+		stream.out_uint32_le(this->flags);
+
+		stream.out_uint16_le(this->cbDomain);
+		stream.out_uint16_le(this->cbUserName);
+		stream.out_uint16_le(this->cbPassword);
+		stream.out_uint16_le(this->cbAlternateShell);
+		stream.out_uint16_le(this->cbWorkingDir);
+
+       	stream.out_unistr((const char *) this->Domain);
+    	stream.out_unistr((const char *) this->UserName);
+		if (flags & INFO_AUTOLOGON){
+			stream.out_unistr((const char *) this->Password);
+		}
+		else{
+			stream.out_uint16_le(0);
+		}
+      	stream.out_unistr((const char *) this->AlternateShell);
+       	stream.out_unistr((const char *) this->WorkingDir);
+
+		if(!this->rdp5_support){
+			LOG(LOG_INFO, "send login info (RDP4-style) %s:%s", this->Domain, this->UserName);
+		}
+		// EXTRA INFORMATIONS
+        if (this->rdp5_support){
+            LOG(LOG_INFO, "send extended login info (RDP5-style) %x %s:%s", this->flags, this->Domain, this->UserName);
+
+            stream.out_uint16_le(this->extendedInfoPacket.clientAddressFamily);
+            stream.out_uint16_le(this->extendedInfoPacket.cbClientAddress);
+    		stream.out_unistr((const char *) this->extendedInfoPacket.clientAddress);
+            stream.out_uint16_le(this->extendedInfoPacket.cbClientDir);
+    		stream.out_unistr((const char *) this->extendedInfoPacket.clientDir);
+
+            // Client Time Zone (172 bytes)
+            stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.Bias);
+            stream.out_date_name((const char *) this->extendedInfoPacket.clientTimeZone.StandardName, 64);
+
+            stream.out_date_name((const char *) this->extendedInfoPacket.clientTimeZone.StandardDate, 16);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wYear);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wMonth);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wDayOfWeek);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wDay);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wHour);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wMinute);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wSecond);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wMilliseconds);
+
+            stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.StandardBias);
+
+            stream.out_date_name((const char *) this->extendedInfoPacket.clientTimeZone.DaylightName, 64);
+
+            stream.out_date_name((const char *) this->extendedInfoPacket.clientTimeZone.DaylightDate, 16);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wYear);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wMonth);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wDayOfWeek);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wDay);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wHour);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wMinute);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wSecond);
+//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wMilliseconds);
+
+            stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.DaylightBias);
+            // FIN Client Time Zone (172 bytes)
+
+            stream.out_uint32_le(this->extendedInfoPacket.clientSessionId);
+            stream.out_uint32_le(this->extendedInfoPacket.performanceFlags);
+
+            stream.out_uint16_le(2 * this->extendedInfoPacket.cbAutoReconnectLen);
+//           	stream.out_unistr((const char *) this->extendedInfoPacket.autoReconnectCookie);
+//           	stream.out_unistr((const char *) this->extendedInfoPacket.reserved1);
+//           	stream.out_unistr((const char *) this->extendedInfoPacket.reserved2);
+
+        } // END IF (this->rdp5_support)
+
+    } // END FUNCT : emit()
+
+    void recv(Stream & stream){
+    	this->CodePage = stream.in_uint32_le();
+    	this->flags = stream.in_uint32_le();
+
+    	this->cbDomain = stream.in_uint16_le() + 2;
+    	this->cbUserName = stream.in_uint16_le() + 2;
+    	this->cbPassword = stream.in_uint16_le() + 2;
+    	this->cbAlternateShell = stream.in_uint16_le() + 2;
+    	this->cbWorkingDir = stream.in_uint16_le() + 2;
+
+    	stream.in_uni_to_ascii_str((char *) this->Domain, this->cbDomain);
+        stream.in_uni_to_ascii_str((char *) this->UserName, this->cbUserName);
+
+        // Whether we have a password available or not
+        if (flags & INFO_AUTOLOGON) {
+            stream.in_uni_to_ascii_str((char *) this->Password, this->cbPassword);
+        }
+        else {
+            stream.in_skip_bytes(this->cbPassword);
+        }
+        stream.in_uni_to_ascii_str((char *) this->AlternateShell, this->cbAlternateShell);
+        stream.in_uni_to_ascii_str((char *) this->WorkingDir, this->cbWorkingDir);
+
+        // Get extended data only if RDP is version 5 or above
+        if (stream.p < stream.end) {
+            LOG(LOG_DEBUG, "RDP-5 Style logon");
+            // clientAddressFamily (skipped)
+            stream.in_skip_bytes(2);
+            this->extendedInfoPacket.cbClientAddress = stream.in_uint16_le();
+//            char tmpdata[256];
+            stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.clientAddress, this->extendedInfoPacket.cbClientAddress);
+			// cbClientDir
+            this->extendedInfoPacket.cbClientDir = stream.in_uint16_le();
+            stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.clientDir, this->extendedInfoPacket.cbClientDir);
+
+            // Client Time Zone data (skipped)
+            stream.in_skip_bytes(172);
+
+            this->extendedInfoPacket.performanceFlags = stream.in_uint32_le();
+
+            this->extendedInfoPacket.cbAutoReconnectLen = stream.in_uint16_le();
+            stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.autoReconnectCookie, this->extendedInfoPacket.cbAutoReconnectLen);
+            this->extendedInfoPacket.reserved1 = stream.in_uint16_le();
+            this->extendedInfoPacket.reserved2 = stream.in_uint16_le();
+         }
+    } // END FUNCT : recv()
+
+    void log(const char * msg){
+
+    	conclude_flags();
+
+    	LOG(LOG_INFO, "%s InfoPacket", msg);
+        LOG(LOG_INFO, "InfoPacket::CodePage %u", this->CodePage);
+        LOG(LOG_INFO, "InfoPacket::flags %#x", this->flags);
+        LOG(LOG_INFO, "InfoPacket::cbDomain %u", this->cbDomain);
+        LOG(LOG_INFO, "InfoPacket::cbUserName %u", this->cbUserName);
+        LOG(LOG_INFO, "InfoPacket::cbPassword %u", this->cbPassword);
+        LOG(LOG_INFO, "InfoPacket::cbAlternateShell %u", this->cbAlternateShell);
+        LOG(LOG_INFO, "InfoPacket::cbWorkingDir %u", this->cbWorkingDir);
+        LOG(LOG_INFO, "InfoPacket::Domain %s", this->Domain);
+        LOG(LOG_INFO, "InfoPacket::UserName %s", this->UserName);
+        LOG(LOG_INFO, "InfoPacket::Password %s", this->Password);
+        LOG(LOG_INFO, "InfoPacket::AlternateShell %s", this->AlternateShell);
+        LOG(LOG_INFO, "InfoPacket::WorkingDir %s", this->WorkingDir);
+        // Extended
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientAddressFamily %u", this->extendedInfoPacket.clientAddressFamily);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientAddress %u", this->extendedInfoPacket.cbClientAddress);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientAddress %s", this->extendedInfoPacket.clientAddress);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientDir %u", this->extendedInfoPacket.cbClientDir);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientDir %s", this->extendedInfoPacket.clientDir);
+        // Extended - Client Time Zone
+		LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::Bias %u", this->extendedInfoPacket.clientTimeZone.Bias);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardName %s", this->extendedInfoPacket.clientTimeZone.StandardName);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate %s", this->extendedInfoPacket.clientTimeZone.StandardDate);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wYear %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wYear);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wMonth %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wMonth);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wDayOfWeek %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wDayOfWeek);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wDay %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wDay);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wHour %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wHour);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wMinute %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wMinute);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wSecond %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wSecond);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wMilliseconds %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wMilliseconds);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardBias %u", this->extendedInfoPacket.clientTimeZone.StandardBias);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightName %s", this->extendedInfoPacket.clientTimeZone.DaylightName);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate %s", this->extendedInfoPacket.clientTimeZone.DaylightDate);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wYear %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wYear);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMonth %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wMonth);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wDayOfWeek %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wDayOfWeek);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wDay %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wDay);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wHour %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wHour);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMinute %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wMinute);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wSecond %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wSecond);
+//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMilliseconds %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wMilliseconds);
+
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientSessionId %u", this->extendedInfoPacket.clientSessionId);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::performanceFlags %u", this->extendedInfoPacket.performanceFlags);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbAutoReconnectLen %u", this->extendedInfoPacket.cbAutoReconnectLen);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::autoReconnectCookie %s", this->extendedInfoPacket.autoReconnectCookie);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::reserved1 %u", this->extendedInfoPacket.reserved1);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::reserved2 %u", this->extendedInfoPacket.reserved2);
+
+    } // END FUNCT : log()
+
+}; // END STRUCT : InfoPacket
+
+
 
 
 #endif
