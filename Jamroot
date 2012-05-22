@@ -238,6 +238,7 @@ unit-test test_capability_font : tests/test_capability_font.cpp libboost_unit_te
 unit-test test_capability_general : tests/test_capability_general.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_glyphcache : tests/test_capability_glyphcache.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_input : tests/test_capability_input.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_order : tests/test_capability_order.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 
 unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test : ;
 unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test ;
