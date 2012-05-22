@@ -255,11 +255,11 @@
 
 
 enum {
-	   CLW_VERSION_ONE_ZERO = 0x0100
+	   CLW_VERSION_1_0 = 0x0100
      };
 
 enum {
-	   CT_TILE_SIXTYFOUR_X_SIXTYFOUR = 0x40
+	   CT_TILE_64X64 = 0x40
      };
 
 enum {
@@ -271,12 +271,12 @@ enum {
      };
 
 enum {
-	   CLW_XFORM_DWT_FIFTYTREE_A = 0x01
+	   CLW_XFORM_DWT_53_A = 0x01
      };
 
 enum {
-	   CLW_ENTROPY_RLGR_ONE = 0x01
-	 , CLW_ENTROPY_RLGR_THREE = 0x04
+	   CLW_ENTROPY_RLGR1 = 0x01
+	 , CLW_ENTROPY_RLGR3 = 0x04
      };
 
 enum {
@@ -349,12 +349,12 @@ struct RFXICap {
 //    RFXICap * icapsData;
 
     RFXICap()
-    : version(CLW_VERSION_ONE_ZERO)				// MUST be set to 0x0100 CLW_VERSION_1_0
-    , tileSize(CT_TILE_SIXTYFOUR_X_SIXTYFOUR)	// MUST be set to CT_TILE_64x64 (0x0040
+    : version(CLW_VERSION_1_0)				// MUST be set to 0x0100 CLW_VERSION_1_0
+    , tileSize(CT_TILE_64X64)	// MUST be set to CT_TILE_64x64 (0x0040
     , flags(0)					 				// flag from enum
     , colConvBits(CLW_COL_CONV_ICT)				// MUST be set to CLW_COL_CONV_ICT (0x1)
-    , transformBits(CLW_XFORM_DWT_FIFTYTREE_A)	// MUST be set to CLW_COL_CONV_ICT (0x1)
-    , entropyBits(CLW_ENTROPY_RLGR_ONE)			// MUST be set to one of the following values :
+    , transformBits(CLW_XFORM_DWT_53_A)	// MUST be set to CLW_COL_CONV_ICT (0x1)
+    , entropyBits(CLW_ENTROPY_RLGR1)			// MUST be set to one of the following values :
 												//   - CLW_ENTROPY_RLGR1
 												//   - CLW_ENTROPY_RLGR3
     {
