@@ -410,11 +410,12 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         // dwSigAlgId (4 bytes): A 32-bit, unsigned integer. The signature algorithm
         //  identifier. This field MUST be set to SIGNATURE_ALG_RSA (0x00000001).
         uint32_t dwSigAlgId = cr_stream.in_uint16_le();
+        LOG(LOG_DEBUG, "dwSigAlgId = %u", dwSigAlgId);
 
         // dwKeyAlgId (4 bytes): A 32-bit, unsigned integer. The key algorithm
         //  identifier. This field MUST be set to KEY_EXCHANGE_ALG_RSA (0x00000001).
         uint32_t dwKeyAlgId = cr_stream.in_uint16_le();
-
+        LOG(LOG_DEBUG, "dwKeyAlgId = %u", dwKeyAlgId);
 
         LOG(LOG_DEBUG, "ReceivingPublic key, RDP4-style");
         // wPublicKeyBlobType (2 bytes): A 16-bit, unsigned integer. The type of data

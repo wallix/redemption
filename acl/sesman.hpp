@@ -48,7 +48,7 @@ class SessionManager {
     int tick_count;
     public:
 
-    struct SocketTransport * auth_trans_t;
+    struct ClientSocketTransport * auth_trans_t;
     wait_obj * auth_event;
     uint32_t verbose;
 
@@ -506,8 +506,8 @@ class SessionManager {
             TODO(" is there a way to make auth_event RAII ? (initialized in sesman constructor)")
             if (!this->auth_trans_t){
                 static const char * name = "Authentifier";
-                int sck = connect(auth_host, authport, name, 30, 1000);
-                this->auth_trans_t = new SocketTransport(name, sck, this->verbose);
+                this->auth_trans_t = new ClientSocketTransport(name, auth_host, authport, 30, 1000, this->verbose);
+                this->auth_trans_t->connect();
                 TODO(" create a realloc method")
                 if (this->auth_event){
                     delete this->auth_event;
