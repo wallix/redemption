@@ -865,7 +865,7 @@ struct InfoPacket {
             this->extendedInfoPacket.cbClientAddress = stream.in_uint16_le();
 //            char tmpdata[256];
             stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.clientAddress, this->extendedInfoPacket.cbClientAddress);
-			// cbClientDir
+            // cbClientDir
             this->extendedInfoPacket.cbClientDir = stream.in_uint16_le();
             stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.clientDir, this->extendedInfoPacket.cbClientDir);
 
@@ -895,7 +895,7 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::cbWorkingDir %u", this->cbWorkingDir);
         LOG(LOG_INFO, "InfoPacket::Domain %s", this->Domain);
         LOG(LOG_INFO, "InfoPacket::UserName %s", this->UserName);
-        LOG(LOG_INFO, "InfoPacket::Password %s", this->Password);
+        LOG(LOG_INFO, "InfoPacket::Password <hidden>");
         LOG(LOG_INFO, "InfoPacket::AlternateShell %s", this->AlternateShell);
         LOG(LOG_INFO, "InfoPacket::WorkingDir %s", this->WorkingDir);
         // Extended
