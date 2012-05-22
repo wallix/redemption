@@ -230,6 +230,7 @@ unit-test test_vnc_client_simple : tests/test_vnc_client_simple.cpp libboost_uni
 unit-test test_capability_bitmap : tests/test_capability_bitmap.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_brushcache : tests/test_capability_brushcache.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_compdesk : tests/test_capability_compdesk.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_activate : tests/test_capability_activate.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 
 
 unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test : ;
