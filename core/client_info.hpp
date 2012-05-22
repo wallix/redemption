@@ -133,11 +133,15 @@ struct ClientInfo {
 
     void process_logon_info(Stream & stream, uint32_t length) throw (Error)
     {
-        uint32_t flags = 0;
-
         InfoPacket infoPacket;
         infoPacket.recv( stream );
         infoPacket.log("Receiving from client");
+
+        memcpy(this->domain, infoPacket.Domain, sizeof(infoPacket.Domain));
+        memcpy(this->username, infoPacket.UserName, sizeof(infoPacket.UserName));
+        memcpy(this->password, infoPacket.Password, sizeof(infoPacket.Password));
+        memcpy(this->program, infoPacket.AlternateShell, sizeof(infoPacket.AlternateShell));
+        memcpy(this->directory, infoPacket.WorkingDir, sizeof(infoPacket.WorkingDir));
 
         const uint32_t mandatory_flags = INFO_MOUSE
                                        | INFO_DISABLECTRLALTDEL
