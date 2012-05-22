@@ -40,7 +40,7 @@ struct RdpNego
 
 //    int port;
     uint32_t flags;
-    const bool tls;
+    bool tls;
 //    char* hostname;
 //    char* cookie;
 
@@ -91,9 +91,18 @@ struct RdpNego
         case NEGO_STATE_INITIAL:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
             this->send_negotiation_request();
-            this->state = NEGO_STATE_RDP;
+            if (this->tls){
+                this->state = NEGO_STATE_TLS;
+            }
+            else {
+                this->state = NEGO_STATE_RDP;
+            }
         break;
         default:
+        case NEGO_STATE_TLS:
+            LOG(LOG_INFO, "RdpNego::NEGO_STATE_RDP");
+            this->recv_connection_confirm();
+        break;
         case NEGO_STATE_RDP:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_RDP");
             this->recv_connection_confirm();
@@ -348,17 +357,31 @@ struct RdpNego
             cctpdu.tpdu_hdr.rdp_neg_type,
             cctpdu.tpdu_hdr.rdp_neg_code);
 
-
-        if (this->tls
-        && cctpdu.tpdu_hdr.rdp_neg_type == RDP_NEG_RESP
-        && cctpdu.tpdu_hdr.rdp_neg_code == RDP_NEG_PROTOCOL_TLS){
-
-            LOG(LOG_INFO, "activating SSL");
-            this->trans->enable_tls();
-            this->state = NEGO_STATE_FINAL;
+        if (this->tls){
+            if (cctpdu.tpdu_hdr.rdp_neg_type == RDP_NEG_RESP
+            && cctpdu.tpdu_hdr.rdp_neg_code == RDP_NEG_PROTOCOL_TLS){
+                LOG(LOG_INFO, "activating SSL");
+                this->trans->enable_tls();
+                this->state = NEGO_STATE_FINAL;
+            }
+            else if (cctpdu.tpdu_hdr.rdp_neg_type == RDP_NEG_FAILURE
+            && cctpdu.tpdu_hdr.rdp_neg_code == SSL_NOT_ALLOWED_BY_SERVER){
+                LOG(LOG_INFO, "Can't activate SSL, falling back to RDP legacy encryption");
+                this->tls = false;
+                this->trans->disconnect();
+                this->trans->connect();
+                this->send_negotiation_request();
+                this->state = NEGO_STATE_RDP;
+            }
+            TODO("Other cases are errors, set an appropriate error message");
         }
         else {
+            if (cctpdu.tpdu_hdr.rdp_neg_type == RDP_NEG_RESP && cctpdu.tpdu_hdr.rdp_neg_code == RDP_NEG_PROTOCOL_RDP){
+                this->state = NEGO_STATE_FINAL;
+            }
+            TODO("Check tpdu has no embedded negotiation code")
             this->state = NEGO_STATE_FINAL;
+            TODO("Other cases are errors, set an appropriate error message");
         }
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
 
@@ -452,6 +475,7 @@ struct RdpNego
 
 //        return true;
     }
+
 
     void read_request(Stream & stream)
     {

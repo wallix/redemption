@@ -509,7 +509,7 @@ struct X224In : public X224Packet
     Stream & stream;
 
 
-    X224In(Transport * t, Stream & stream, uint32_t verbose = 0)
+    X224In(Transport * t, Stream & stream, uint32_t verbose = 1)
         : verbose(verbose), tpkt(0,0), tpdu_hdr(0, 0), stream(stream)
     // Receive a X224 TPDU from the wires
     {
