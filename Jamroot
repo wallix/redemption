@@ -234,6 +234,7 @@ unit-test test_capability_bmpcache : tests/test_capability_bmpcache.cpp libboost
 unit-test test_capability_brushcache : tests/test_capability_brushcache.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_compdesk : tests/test_capability_compdesk.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_control : tests/test_capability_control.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_font : tests/test_capability_font.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 
 unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test : ;
 unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test ;
