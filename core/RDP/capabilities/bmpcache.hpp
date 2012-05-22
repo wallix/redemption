@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean
 
-   RDP Capabilities :
+   RDP Capabilities : BMPCACHE
 
 */
 
@@ -135,6 +135,12 @@ struct BmpCacheCaps : public Capability {
 
     void log(const char * msg){
         LOG(LOG_INFO, "%s BitmapCache caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "BitmapCache caps::pad1 %u", this->pad1);
+        LOG(LOG_INFO, "BitmapCache caps::pad2 %u", this->pad2);
+        LOG(LOG_INFO, "BitmapCache caps::pad3 %u", this->pad3);
+        LOG(LOG_INFO, "BitmapCache caps::pad4 %u", this->pad4);
+        LOG(LOG_INFO, "BitmapCache caps::pad5 %u", this->pad5);
+        LOG(LOG_INFO, "BitmapCache caps::pad6 %u", this->pad6);
         LOG(LOG_INFO, "BitmapCache caps::cache0Entries %u", this->cache0Entries);
         LOG(LOG_INFO, "BitmapCache caps::cache0MaximumCellSize %u", this->cache0MaximumCellSize);
         LOG(LOG_INFO, "BitmapCache caps::cache1Entries %u", this->cache1Entries);
