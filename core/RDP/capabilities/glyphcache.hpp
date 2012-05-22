@@ -36,84 +36,81 @@
 // capability set. This field MUST be set to CAPSTYPE_GLYPHCACHE (16).
 
 // lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
-// of the capability data, including the size of the capabilitySetType and
-// lengthCapability fields.
+//    of the capability data, including the size of the capabilitySetType and
+//    lengthCapability fields.
 
 // GlyphCache (40 bytes): An array of 10 TS_CACHE_DEFINITION structures. An
-// ordered specification of the layout of each of the glyph caches with IDs 0
-// through to 9 ([MS-RDPEGDI] section 3.1.1.1.2).
+//    ordered specification of the layout of each of the glyph caches with IDs 0
+//    through to 9 ([MS-RDPEGDI] section 3.1.1.1.2).
 
 // FragCache (4 bytes): Fragment cache data. The maximum number of entries
-// allowed in the cache is 256, and the largest allowed maximum size of an
-// element is 256 bytes.
+//    allowed in the cache is 256, and the largest allowed maximum size of an
+//    element is 256 bytes.
 
 // GlyphSupportLevel (2 bytes): A 16-bit, unsigned integer. The level of glyph
-// support.
+//    support.
+//    +-------------------------------+-------------------------------------------+
+//    | 0x0000 GLYPH_SUPPORT_NONE     | The client does not support glyph caching.|
+//    |                               | All text output will be sent to the client|
+//    |                               | as expensive Bitmap Updates (see sections |
+//    |                               | 2.2.9.1.1.3.1.2 and 2.2.9.1.2.1.2).       |
+//    +-------------------------------+-------------------------------------------+
+//    | 0x0001 GLYPH_SUPPORT_PARTIAL  | Indicates support for Revision 1 Cache    |
+//    |                               | Glyph Secondary Drawing Orders (see       |
+//    |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.5).      |
+//    +-------------------------------+-------------------------------------------+
+//    | 0x0002 GLYPH_SUPPORT_FULL     | Indicates support for Revision 1 Cache    |
+//    |                               | Glyph Secondary Drawing Orders (see       |
+//    |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.5).      |
+//    +-------------------------------+-------------------------------------------+
+//    | 0x0003 GLYPH_SUPPORT_ENCODE   | Indicates support for Revision 2 Cache    |
+//    |                               | Glyph Secondary Drawing Orders (see       |
+//    |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.6).      |
+//    +-------------------------------+-------------------------------------------+
 
-// +-------------------------------+-------------------------------------------+
-// |         Value                 |                    Meaning                |
-// +-------------------------------+-------------------------------------------+
-// | 0x0000 GLYPH_SUPPORT_NONE     | The client does not support glyph caching.|
-// |                               | All text output will be sent to the client|
-// |                               | as expensive Bitmap Updates (see sections |
-// |                               | 2.2.9.1.1.3.1.2 and 2.2.9.1.2.1.2).       |
-// +-------------------------------+-------------------------------------------+
-// | 0x0001 GLYPH_SUPPORT_PARTIAL  | Indicates support for Revision 1 Cache    |
-// |                               | Glyph Secondary Drawing Orders (see       |
-// |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.5).      |
-// +-------------------------------+-------------------------------------------+
-// | 0x0002 GLYPH_SUPPORT_FULL     | Indicates support for Revision 1 Cache    |
-// |                               | Glyph Secondary Drawing Orders (see       |
-// |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.5).      |
-// +-------------------------------+-------------------------------------------+
-// | 0x0003 GLYPH_SUPPORT_ENCODE   | Indicates support for Revision 2 Cache    |
-// |                               | Glyph Secondary Drawing Orders (see       |
-// |                               | [MS-RDPEGDI] section 2.2.2.2.1.2.6).      |
-// +-------------------------------+-------------------------------------------+
-
-//If the GlyphSupportLevel is greater than GLYPH_SUPPORT_NONE (0), the client
-//  MUST support the GlyphIndex Primary Drawing Order (see [MS-RDPEGDI] section
-//  2.2.2.2.1.1.2.13) or the FastIndex Primary Drawing Order (see [MS-RDPEGDI]
-//  section 2.2.2.2.1.1.2.14). If the FastIndex Primary Drawing Order is not
-//  supported, then support for the GlyphIndex Primary Drawing Order is assumed
-//  by the server (order support is specified in the Order Capability Set, as
-//  described in section 2.2.7.1.3).
+//    If the GlyphSupportLevel is greater than GLYPH_SUPPORT_NONE (0), the client
+//    MUST support the GlyphIndex Primary Drawing Order (see [MS-RDPEGDI] section
+//    2.2.2.2.1.1.2.13) or the FastIndex Primary Drawing Order (see [MS-RDPEGDI]
+//    section 2.2.2.2.1.1.2.14). If the FastIndex Primary Drawing Order is not
+//    supported, then support for the GlyphIndex Primary Drawing Order is assumed
+//    by the server (order support is specified in the Order Capability Set, as
+//    described in section 2.2.7.1.3).
 
 // pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
-//   field MUST be ignored.
+//    field MUST be ignored.
 
 enum {
-    GLYPH_SUPPORT_NONE = 0x0,
-    GLYPH_SUPPORT_PARTIAL = 0x01,
-    GLYPH_SUPPORT_FULL = 0x02,
-    GLYPH_SUPPORT_ENCODE = 0x03
+       GLYPH_SUPPORT_NONE
+     , GLYPH_SUPPORT_PARTIAL
+     , GLYPH_SUPPORT_FULL
+     , GLYPH_SUPPORT_ENCODE
 };
 
 struct GlyphSupportCaps : public Capability {
-            uint8_t glyphCache[40];
-            uint32_t fragCache;
-            uint16_t glyphSupportLevel;
-            uint16_t pad2octets;
+    uint8_t glyphCache[40];
+    uint32_t fragCache;
+    uint16_t glyphSupportLevel;
+    uint16_t pad2octets;
+
     GlyphSupportCaps()
     : Capability(CAPSTYPE_GLYPHCACHE, RDP_CAPLEN_GLYPHCACHE)
-//            , glyphCache = "";
-            , fragCache(0x01000100) // max number of entries in the cache = 256
-                                    // largest allowed maximum size of an element in (bytes) = 256
-            , glyphSupportLevel(GLYPH_SUPPORT_NONE) // By default, no support
-            , pad2octets(0x0000)
+    , fragCache(0x01000100) // max number of entries in the cache = 256
+                            // largest allowed maximum size of an element in (bytes) = 256
+    , glyphSupportLevel(GLYPH_SUPPORT_NONE) // By default, no support
+    , pad2octets(0x0000)
     {
         const uint8_t init_glyphCache[] = {
-                            0xFE, 0x00, 0x04, 0x00, 0xFE, 0x00, 0x04, 0x00,
-                            0xFE, 0x00, 0x08, 0x00, 0xFE, 0x00, 0x08, 0x00,
-                            0xFE, 0x00, 0x10, 0x00, 0xFE, 0x00, 0x20, 0x00,
-                            0xFE, 0x00, 0x40, 0x00, 0xFE, 0x00, 0x80, 0x00,
-                            0xFE, 0x00, 0x00, 0x01, 0x40, 0x00, 0x00, 0x08};
+                                            0xFE, 0x00, 0x04, 0x00, 0xFE, 0x00, 0x04, 0x00,
+                                            0xFE, 0x00, 0x08, 0x00, 0xFE, 0x00, 0x08, 0x00,
+                                            0xFE, 0x00, 0x10, 0x00, 0xFE, 0x00, 0x20, 0x00,
+                                            0xFE, 0x00, 0x40, 0x00, 0xFE, 0x00, 0x80, 0x00,
+                                            0xFE, 0x00, 0x00, 0x01, 0x40, 0x00, 0x00, 0x08
+                                          };
 
         for(size_t i = 0; i < sizeof(init_glyphCache); i++) {
             this->glyphCache[i] = init_glyphCache[i];
         }
     }
-
 
     void emit(Stream & stream){
         stream.out_uint16_le(this->capabilityType);
