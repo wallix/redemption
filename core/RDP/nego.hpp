@@ -353,6 +353,12 @@ struct RdpNego
             throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
         }
 
+        if (cctpdu.tpdu_hdr.LI == 6){
+            this->tls = false;
+            this->state = NEGO_STATE_FINAL;
+            return;
+        }
+
         LOG(LOG_INFO, "RdpNego::neg_type=%u neg_code=%u",
             cctpdu.tpdu_hdr.rdp_neg_type,
             cctpdu.tpdu_hdr.rdp_neg_code);
