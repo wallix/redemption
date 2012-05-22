@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
 {
     GlyphSupportCaps glyphsupport_caps;
 
-    for (size_t i = 0; i< 40; i++){
+    for (uint8_t i = 0; i< 40; i++){
         glyphsupport_caps.glyphCache[i] = i;
     }
     glyphsupport_caps.fragCache = 16777216;
