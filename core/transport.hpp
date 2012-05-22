@@ -38,93 +38,6 @@
 #include "log.hpp"
 
 
-static inline int connect(const char* ip, int port, const char * name,
-             int nbretry = 3, int retry_delai_ms = 1000) throw (Error)
-{
-    int sck = 0;
-    LOG(LOG_INFO, "connecting to %s (%s:%d)\n", name, ip, port);
-    // we will try connection several time
-    // the trial process include socket opening, hostname resolution, etc
-    // because some problems can come from the local endpoint,
-    // not necessarily from the remote endpoint.
-    sck = socket(PF_INET, SOCK_STREAM, 0);
-
-    /* set snd buffer to at least 32 Kbytes */
-    int snd_buffer_size;
-    unsigned int option_len = sizeof(snd_buffer_size);
-    if (0 == getsockopt(sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, &option_len)) {
-        if (snd_buffer_size < 32768) {
-            snd_buffer_size = 32768;
-            if (-1 == setsockopt(sck,
-                    SOL_SOCKET,
-                    SO_SNDBUF,
-                    &snd_buffer_size, sizeof(snd_buffer_size))){
-                LOG(LOG_WARNING, "setsockopt failed with errno=%d", errno);
-                throw Error(ERR_SOCKET_CONNECT_FAILED);
-            }
-        }
-    }
-    else {
-        LOG(LOG_WARNING, "getsockopt failed with errno=%d", errno);
-        throw Error(ERR_SOCKET_CONNECT_FAILED);
-    }
-
-    struct sockaddr_in s;
-    memset(&s, 0, sizeof(struct sockaddr_in));
-    s.sin_family = AF_INET;
-    s.sin_port = htons(port);
-    s.sin_addr.s_addr = inet_addr(ip);
-    if (s.sin_addr.s_addr == INADDR_NONE) {
-    TODO(" gethostbyname is obsolete use new function getnameinfo")
-        LOG(LOG_INFO, "Asking ip to DNS for %s\n", ip);
-        struct hostent *h = gethostbyname(ip);
-        if (!h) {
-            LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n",
-                ip, errno, strerror(errno));
-            throw Error(ERR_SOCKET_GETHOSTBYNAME_FAILED);
-        }
-        s.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
-    }
-    fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
-
-    int trial = 0;
-    for (; trial < nbretry ; trial++){
-        int res = ::connect(sck, (struct sockaddr*)&s, sizeof(s));
-        if (-1 != res){
-            // connection suceeded
-            break;
-        }
-        if (trial > 0){
-            LOG(LOG_INFO, "Connection to %s failed with errno = %d (%s)",
-                ip, errno, strerror(errno));
-        }
-        if ((errno == EINPROGRESS) || (errno == EALREADY)){
-            // try again
-            fd_set fds;
-            FD_ZERO(&fds);
-            struct timeval timeout = {
-                retry_delai_ms / 1000,
-                1000 * (retry_delai_ms % 1000)
-            };
-            FD_SET(sck, &fds);
-            // exit select on timeout or connect or error
-            // connect will catch the actual error if any,
-            // no need to care of select result
-            select(sck+1, NULL, &fds, NULL, &timeout);
-        }
-        else {
-            // real failure
-           trial = nbretry;
-        }
-    }
-    if (trial >= nbretry){
-        LOG(LOG_INFO, "All trials done connecting to %s\n", ip);
-        throw Error(ERR_SOCKET_CONNECT_FAILED);
-    }
-    LOG(LOG_INFO, "connection to %s succeeded : socket %d\n", ip, sck);
-    return sck;
-}
-
 class Transport {
 public:
     uint64_t total_received;
@@ -162,6 +75,9 @@ public:
     void send(const uint8_t * const buffer, size_t len) throw (Error) {
         this->send(reinterpret_cast<const char * const>(buffer), len);
     }
+    virtual void disconnect(){}
+    virtual void connect(){}
+
 };
 
 class GeneratorTransport : public Transport {
@@ -420,6 +336,7 @@ class LoopTransport : public Transport {
     virtual void send(const char * const buffer, size_t len) throw (Error) {
     }
 };
+
 
 class SocketTransport : public Transport {
         bool tls;
@@ -933,5 +850,169 @@ class SocketTransport : public Transport {
     private:
 
 };
+
+
+class ClientSocketTransport : public Transport {
+        const char * name;
+        SocketTransport * st;
+        char ip[256];
+        int port;
+        int nbretry;
+        int retry_delai_ms;
+        uint32_t verbose;
+
+    public:
+        int sck;
+
+    ClientSocketTransport(const char * name, const char* ip, int port, 
+                          int nbretry = 3, int retry_delai_ms = 1000, 
+                          uint32_t verbose = 0)
+        : Transport(), name(name), 
+          st(NULL), 
+          port(port), 
+          nbretry(nbretry), 
+          retry_delai_ms(retry_delai_ms),
+          verbose(verbose),
+          sck(0)
+    {
+        strcpy(this->ip, ip);
+    }
+
+    ~ClientSocketTransport(){
+        delete this->st;
+    }
+
+    using Transport::send;
+    virtual void send(const char * const buffer, size_t len) throw (Error)
+    {
+        if (!this->st){
+            LOG(LOG_INFO, "send failed : not connected to %s (%s:%d)\n", this->name, this->ip, this->port);
+            return;
+        }
+        this->st->send(buffer, len);
+    }
+
+
+    using Transport::recv;
+
+    virtual void recv(char ** pbuffer, size_t len) throw (Error)
+    {
+        if (!this->st){
+            LOG(LOG_INFO, "recv failed : not connected to %s (%s:%d)\n", this->name, this->ip, this->port);
+            return;
+        }
+        this->st->recv(pbuffer, len);
+    }
+
+    virtual void enable_tls() throw (Error)
+    {
+        if (!this->st){
+            LOG(LOG_INFO, "enable_tls failed : not connected to %s (%s:%d)\n", this->name, this->ip, this->port);
+            return;
+        }
+        this->st->enable_tls();
+    }
+
+    void disconnect()
+    {
+        delete this->st;
+        this->st = NULL;
+        this->sck = 0;
+    }
+
+    void connect()
+    {
+        if (this->st){
+            LOG(LOG_INFO, "Already connected to %s (%s:%d)\n", this->name, this->ip, this->port);
+            return;
+        }
+        LOG(LOG_INFO, "connecting to %s (%s:%d)\n", this->name, this->ip, this->port);
+        // we will try connection several time
+        // the trial process include socket opening, hostname resolution, etc
+        // because some problems can come from the local endpoint,
+        // not necessarily from the remote endpoint.
+        int sck = socket(PF_INET, SOCK_STREAM, 0);
+
+        /* set snd buffer to at least 32 Kbytes */
+        int snd_buffer_size = 32768;
+        unsigned int option_len = sizeof(snd_buffer_size);
+        if (0 == getsockopt(sck, SOL_SOCKET, SO_SNDBUF, &snd_buffer_size, &option_len)) {
+            if (snd_buffer_size < 32768) {
+                snd_buffer_size = 32768;
+                if (-1 == setsockopt(sck,
+                        SOL_SOCKET,
+                        SO_SNDBUF,
+                        &snd_buffer_size, sizeof(snd_buffer_size))){
+                    LOG(LOG_WARNING, "setsockopt failed with errno=%d", errno);
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
+            }
+        }
+        else {
+            LOG(LOG_WARNING, "getsockopt failed with errno=%d", errno);
+            throw Error(ERR_SOCKET_CONNECT_FAILED);
+        }
+
+        TODO("DNS resolution should probably be done only once in constructor, even if we try several connections with TLS")
+        struct sockaddr_in s;
+        memset(&s, 0, sizeof(struct sockaddr_in));
+        s.sin_family = AF_INET;
+        s.sin_port = htons(this->port);
+        s.sin_addr.s_addr = inet_addr(this->ip);
+        if (s.sin_addr.s_addr == INADDR_NONE) {
+        TODO(" gethostbyname is obsolete use new function getnameinfo")
+            LOG(LOG_INFO, "Asking ip to DNS for %s\n", this->ip);
+            struct hostent *h = gethostbyname(this->ip);
+            if (!h) {
+                LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n",
+                    this->ip, errno, strerror(errno));
+                throw Error(ERR_SOCKET_GETHOSTBYNAME_FAILED);
+            }
+            s.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
+        }
+
+        fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);
+
+        int trial = 0;
+        for (; trial < this->nbretry ; trial++){
+            int res = ::connect(sck, (struct sockaddr*)&s, sizeof(s));
+            if (-1 != res){
+                // connection suceeded
+                break;
+            }
+            if (trial > 0){
+                LOG(LOG_INFO, "Connection to %s failed with errno = %d (%s)",
+                    this->ip, errno, strerror(errno));
+            }
+            if ((errno == EINPROGRESS) || (errno == EALREADY)){
+                // try again
+                fd_set fds;
+                FD_ZERO(&fds);
+                struct timeval timeout = {
+                    this->retry_delai_ms / 1000,
+                    1000 * (this->retry_delai_ms % 1000)
+                };
+                FD_SET(sck, &fds);
+                // exit select on timeout or connect or error
+                // connect will catch the actual error if any,
+                // no need to care of select result
+                select(sck+1, NULL, &fds, NULL, &timeout);
+            }
+            else {
+                // real failure
+               trial = this->nbretry;
+            }
+        }
+        if (trial >= this->nbretry){
+            LOG(LOG_INFO, "All trials done connecting to %s\n", this->ip);
+            throw Error(ERR_SOCKET_CONNECT_FAILED);
+        }
+        LOG(LOG_INFO, "connection to %s succeeded : socket %d\n", this->ip, sck);
+
+        this->st = new SocketTransport(this->name, sck, this->verbose);
+        this->sck = sck;
+    }
+};
+
 
 #endif

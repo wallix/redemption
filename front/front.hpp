@@ -200,7 +200,7 @@ public:
 
     Random * gen;
 
-    Front(SocketTransport * trans, Random * gen, Inifile * ini) :
+    Front(Transport * trans, Random * gen, Inifile * ini) :
         FrontAPI(ini->globals.notimestamp, ini->globals.nomouse),
         capture(NULL),
         orders(NULL),

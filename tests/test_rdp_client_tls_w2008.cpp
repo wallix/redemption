@@ -193,8 +193,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     const char * name = "RDP W2008 TLS Target";
 
-//    int sck = connect("10.10.14.88", 3389, name);
-//    SocketTransport t(name, sck, verbose);
+//    ClientSocketTransport t(name, "10.10.14.88", 3389, 3, 1000, verbose);
+//    t.connect();
 
     #include "./fixtures/dump_TLSw2008.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);

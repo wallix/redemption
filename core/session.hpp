@@ -853,11 +853,12 @@ struct Session {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'XUP'\n");
                 }
-                int sck = connect(this->context->get(STRAUTHID_TARGET_DEVICE),
+                ClientSocketTransport * t = new ClientSocketTransport(name, 
+                                this->context->get(STRAUTHID_TARGET_DEVICE),
                                 atoi(this->context->get(STRAUTHID_TARGET_PORT)),
-                                name,
-                                4, 1000);
-                SocketTransport * t = new SocketTransport(name, sck, this->ini->globals.debug.mod_xup);
+                                4, 1000, 
+                                this->ini->globals.debug.mod_xup);
+                t->connect();
                 this->back_event = new wait_obj(t->sck);
                 this->front->init_mod();
                 this->mod = new xup_mod(t, *this->context, *(this->front),
@@ -885,11 +886,14 @@ struct Session {
                     hostname[31] = 0;
                 }
                 static const char * name = "RDP Target";
-                int sck = connect(
-                    this->context->get(STRAUTHID_TARGET_DEVICE),
-                    atoi(this->context->get(STRAUTHID_TARGET_PORT)),
-                    name);
-                SocketTransport * t = new SocketTransport(name, sck, this->ini->globals.debug.mod_rdp);
+                ClientSocketTransport * t = new ClientSocketTransport(
+                                        name, 
+                                        this->context->get(STRAUTHID_TARGET_DEVICE),
+                                        atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                                        3, 1000,
+                                        this->ini->globals.debug.mod_rdp);
+                t->connect();
+                TODO("Wait obj should work with transport object, not directly with socket")
                 this->back_event = new wait_obj(t->sck);
                 // enable or disable clipboard
                 // this->context->get_bool(STRAUTHID_OPT_CLIPBOARD)
@@ -923,10 +927,13 @@ struct Session {
                     LOG(LOG_INFO, "Session::Creation of new mod 'VNC'\n");
                 }
                 static const char * name = "VNC Target";
-                int sck = connect(this->context->get(STRAUTHID_TARGET_DEVICE),
-                            atoi(this->context->get(STRAUTHID_TARGET_PORT)),
-                            name);
-                SocketTransport *t = new SocketTransport(name, sck, this->ini->globals.debug.mod_vnc);
+                ClientSocketTransport *t = new ClientSocketTransport(
+                                                name, 
+                                                this->context->get(STRAUTHID_TARGET_DEVICE),
+                                                atoi(this->context->get(STRAUTHID_TARGET_PORT)),
+                                                3, 1000,
+                                                this->ini->globals.debug.mod_vnc);
+                t->connect();
                 this->back_event = new wait_obj(t->sck);
                 this->front->init_mod();
                 this->mod = new mod_vnc(t,
