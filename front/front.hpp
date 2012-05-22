@@ -1766,7 +1766,7 @@ public:
                 break;
             case 14: /* 14 */
                 break;
-            case CAPSTYPE_BRUSHCACHE: { /* 15 */
+            case CAPSTYPE_BRUSH: { /* 15 */
                     BrushCacheCaps brushcache_caps;
                     brushcache_caps.log("Receiving from client");
                     brushcache_caps.recv(stream);
@@ -1785,6 +1785,12 @@ public:
             case 21: /* 21 */
                 break;
             case 22: /* 22 */
+                break;
+            case CAPSETTYPE_TYPE_COMPDESK: { /* 25 */
+                    CompDeskCaps compdesk_caps;
+                    compdesk_caps.log("Receiving from client");
+                    compdesk_caps.recv(stream);
+                }
                 break;
             case 26: /* 26 */
                 break;

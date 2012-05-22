@@ -188,8 +188,8 @@ CAPSTYPE_FONT                       = 14,
 RDP_CAPLEN_FONT                     = 0x08,
 
 // 15 CAPSTYPE_BRUSH Brush Capability Set ([MS-RDPBCGR] section 2.2.7.1.7)
-CAPSTYPE_BRUSHCACHE                 = 15,
-RDP_CAPLEN_BRUSHCACHE               = 0x08,
+CAPSTYPE_BRUSH                 = 15,
+RDP_CAPLEN_BRUSH               = 0x08,
 
 // 16 CAPSTYPE_GLYPHCACHE Glyph Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.8)
 CAPSTYPE_GLYPHCACHE                 = 16,
@@ -224,6 +224,7 @@ CAPSTYPE_WINDOW                     = 24,
 
 // 25 CAPSETTYPE_COMPDESK Desktop Composition Extension Capability Set ([MS-RDPBCGR] section 2.2.7.2.8)
 CAPSETTYPE_TYPE_COMPDESK            = 25,
+RDP_CAPLEN_COMPDESK                 = 0x08,
 
 // 26 CAPSETTYPE_MULTIFRAGMENTUPDATE Multifragment Update Capability Set ([MS-RDPBCGR] section 2.2.7.2.6)
 CAPSETTYPE_TYPE_MULTIFRAGMENTUPDATE = 26,

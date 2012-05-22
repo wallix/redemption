@@ -1494,15 +1494,20 @@ struct mod_rdp : public client_mod {
             font_caps.emit(stream);
             capscount++;
 
+            GlyphSupportCaps glyphsupport_caps;
+            glyphsupport_caps.log("Sending glyphsupport caps to server");
+            glyphsupport_caps.emit(stream);
+            capscount++;
+
 //            BrushCacheCaps brushcache_caps;
 //            brushcache_caps.log("Sending brushcache caps to server");
 //            brushcache_caps.emit(stream);
 //            capscount++;
 
-            GlyphSupportCaps glyphsupport_caps;
-            glyphsupport_caps.log("Sending glyphsupport caps to server");
-            glyphsupport_caps.emit(stream);
-            capscount++;
+//            CompDeskCaps compdesk_caps;
+//            compdesk_caps.log("Sending compdesk caps to server");
+//            compdesk_caps.emit(stream);
+//            capscount++;
 
             TODO("Check caplen here")
             total_caplen = stream.get_offset(total_caplen);

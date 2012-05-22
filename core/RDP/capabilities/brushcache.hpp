@@ -53,7 +53,7 @@
 
 enum {
       BRUSH_DEFAULT
-    , BRUSH_COLOR_EIGHTXEIGHT
+    , BRUSH_COLOR_8X8
     , BRUSH_COLOR_FULL
 };
 
@@ -61,11 +61,10 @@ struct BrushCacheCaps : public Capability {
     uint32_t brushSupportLevel;
 
     BrushCacheCaps()
-    : Capability(CAPSTYPE_BRUSHCACHE, RDP_CAPLEN_BRUSHCACHE)
+    : Capability(CAPSTYPE_BRUSH, RDP_CAPLEN_BRUSH)
     , brushSupportLevel(BRUSH_DEFAULT) // By default, minimal
     {
     }
-
 
     void emit(Stream & stream){
         stream.out_uint16_le(this->capabilityType);
@@ -84,9 +83,5 @@ struct BrushCacheCaps : public Capability {
         LOG(LOG_INFO, "BrushCacheCaps caps::brushSupportLevel %u", this->brushSupportLevel);
     }
 };
-
-
-
-
 
 #endif

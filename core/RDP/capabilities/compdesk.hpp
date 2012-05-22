@@ -24,4 +24,52 @@
 #if !defined(__RDP_CAPABILITIES_COMPDESK_HPP__)
 #define __RDP_CAPABILITIES_COMPDESK_HPP__
 
+// 2.2.7.2.8 Desktop Composition Capability Set (TS_COMPDESK_CAPABILITYSET)
+// ========================================================================
+// The TS_COMPDESK_CAPABILITYSET structure is used to support desktop composition. This
+// capability is sent by both client and server.
+
+// CompDeskSupportLevel (2 bytes): A 16-bit, unsigned integer. The desktop composition
+//    support level.
+//  +-------------------------+-------------------------------------------------+
+//  | COMPDESK_NOT_SUPPORTED  | Desktop composition services are not supported. |
+//  | 0x0000                  |                                                 |
+//  +-------------------------+-------------------------------------------------+
+//  | COMPDESK_SUPPORTED      | Desktop composition services are supported.     |
+//  | 0x0001                  |                                                 |
+//  +-------------------------+-------------------------------------------------+
+
+enum {
+      COMPDESK_NOT_SUPPORTED
+    , COMPDESK_SUPPORTED
+};
+
+
+struct CompDeskCaps : public Capability {
+    uint16_t CompDeskSupportLevel;
+
+    CompDeskCaps()
+    : Capability(CAPSETTYPE_TYPE_COMPDESK, RDP_CAPLEN_COMPDESK)
+    , CompDeskSupportLevel(COMPDESK_NOT_SUPPORTED) // By default, minimal
+    {
+    }
+
+    void emit(Stream & stream){
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_uint16_le(this->CompDeskSupportLevel);
+    }
+
+    void recv(Stream & stream){
+        this->capabilityType = stream.in_uint16_le();
+        this->len = stream.in_uint16_le();
+        this->CompDeskSupportLevel = stream.in_uint16_le();
+    }
+
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s CompDesk caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "CompDeskCaps caps::CompDeskSupportLevel %u", this->CompDeskSupportLevel);
+    }
+};
+
 #endif
