@@ -369,6 +369,10 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
     uint32_t serverRandomLen = cr_stream.in_uint32_le();
     LOG(LOG_INFO, "serverRandomLen = %u", serverRandomLen);
 
+    if (serverRandomLen != SEC_RANDOM_SIZE) {
+        LOG(LOG_ERR, "parse_crypt_info_error: serverRandomLen %d, expected %d", serverRandomLen, SEC_RANDOM_SIZE);
+        throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RANDOM_LEN);
+    }
 
 // serverCertLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of the
 //  serverCertificate field. If the encryptionMethod and encryptionLevel fields
@@ -382,12 +386,7 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
 // given by the serverRandomLen field. If the encryptionMethod and
 // encryptionLevel fields are both set to 0 then this field MUST NOT be present.
 
-    if (serverRandomLen != SEC_RANDOM_SIZE) {
-        LOG(LOG_ERR, "parse_crypt_info_error: serverRandomLen %d, expected %d", serverRandomLen, SEC_RANDOM_SIZE);
-        throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RANDOM_LEN);
-    }
-    uint8_t serverRandom[SEC_RANDOM_SIZE];
-    memset(serverRandom, 0, SEC_RANDOM_SIZE);
+    uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
     cr_stream.in_copy_bytes(serverRandom, serverRandomLen);
 
 // serverCertificate (variable): The variable-length certificate containing the
@@ -399,22 +398,22 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
     uint8_t * end = cr_stream.p + serverCertLen;
     if (end > cr_stream.end) {
         LOG(LOG_ERR,
-            "serverCertLen outside of buffer %u remains: %u", serverCertLen, cr_stream.end - cr_stream.p);
+            "serverCertLen outside of buffer (%u bytes, remains: %u)", serverCertLen, cr_stream.end - cr_stream.p);
         throw Error(ERR_SEC_PARSE_CRYPT_INFO_BAD_RSA_LEN);
     }
 
     uint32_t dwVersion = cr_stream.in_uint32_le(); /* 1 = RDP4-style, 0x80000002 = X.509 */
-    LOG(LOG_INFO, "dwVersion %x", dwVersion);
+    LOG(LOG_INFO, "dwVersion = %x", dwVersion);
     if (dwVersion & SCSecurityGccUserData::CERT_CHAIN_VERSION_1) {
         LOG(LOG_DEBUG, "We're going for the RDP4-style encryption");
         // dwSigAlgId (4 bytes): A 32-bit, unsigned integer. The signature algorithm
         //  identifier. This field MUST be set to SIGNATURE_ALG_RSA (0x00000001).
-        uint32_t dwSigAlgId = cr_stream.in_uint16_le();
+        uint32_t dwSigAlgId = cr_stream.in_uint32_le();
         LOG(LOG_DEBUG, "dwSigAlgId = %u", dwSigAlgId);
 
         // dwKeyAlgId (4 bytes): A 32-bit, unsigned integer. The key algorithm
         //  identifier. This field MUST be set to KEY_EXCHANGE_ALG_RSA (0x00000001).
-        uint32_t dwKeyAlgId = cr_stream.in_uint16_le();
+        uint32_t dwKeyAlgId = cr_stream.in_uint32_le();
         LOG(LOG_DEBUG, "dwKeyAlgId = %u", dwKeyAlgId);
 
         LOG(LOG_DEBUG, "ReceivingPublic key, RDP4-style");
@@ -428,12 +427,16 @@ static inline void parse_mcs_data_sc_security(Stream & cr_stream,
         // wPublicKeyBlobLen (2 bytes): A 16-bit, unsigned integer. The size in bytes
         //  of the PublicKeyBlob field.
         uint16_t wPublicKeyBlobLen = cr_stream.in_uint16_le();
+        LOG(LOG_DEBUG, "wPublicKeyBlobLen = %u", wPublicKeyBlobLen);
+
         uint8_t * next_tag = cr_stream.p + wPublicKeyBlobLen;
 
         // PublicKeyBlob (variable): Variable-length server public key bytes, formatted
         //  using the Rivest-Shamir-Adleman (RSA) Public Key structure (section
         //  2.2.1.4.3.1.1.1). The length in bytes is given by the wPublicKeyBlobLen
         //  field.
+
+
         uint32_t magic = cr_stream.in_uint32_le();
         if (magic != SEC_RSA_MAGIC) {
             LOG(LOG_WARNING, "RSA magic 0x%x", magic);
