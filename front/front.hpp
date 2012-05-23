@@ -1588,7 +1588,7 @@ public:
         caps_count++;
 
         FontCaps font_caps;
-        font_caps.log("Sending font caps to client");
+        font_caps.log("Sending to client");
         font_caps.emit(stream);
         caps_count++;
 
@@ -1606,26 +1606,26 @@ public:
         order_caps.pad4octetsB = 0x0f4240;
         order_caps.desktopSaveSize = 0x0f4240;
         order_caps.pad2octetsC = 1;
-        order_caps.log("Sending order caps to client");
+        order_caps.log("Sending to client");
         order_caps.emit(stream);
         caps_count++;
 
         ColorCacheCaps colorcache_caps;
-        colorcache_caps.log("Sending colorcache caps to client");
+        colorcache_caps.log("Sending to client");
         colorcache_caps.emit(stream);
         caps_count++;
 
         PointerCaps pointer_caps;
         pointer_caps.colorPointerCacheSize = 0x19;
         pointer_caps.pointerCacheSize = 0x19;
-        pointer_caps.log("Sending pointer caps to client");
+        pointer_caps.log("Sending to client");
         pointer_caps.emit(stream);
          caps_count++;
 
         ShareCaps share_caps;
         share_caps.nodeId = this->userid + MCS_USERCHANNEL_BASE;
         share_caps.pad2octets = 0xb5e2; /* 0x73e1 */
-        share_caps.log("Sending share caps to client");
+        share_caps.log("Sending to client");
         share_caps.emit(stream);
         caps_count++;
 
@@ -1635,7 +1635,7 @@ public:
         input_caps.keyboardType = 0;
         input_caps.keyboardSubType = 0;
         input_caps.keyboardFunctionKey = 0;
-        input_caps.log("Sending input caps to client");
+        input_caps.log("Sending to client");
         input_caps.emit(stream);
         caps_count++;
 

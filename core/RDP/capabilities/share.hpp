@@ -31,17 +31,17 @@
 // is sent by both client and server.
 
 // capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
-// capability set. This field MUST be set to CAPSTYPE_SHARE (9).
+//    capability set. This field MUST be set to CAPSTYPE_SHARE (9).
 
 // lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
-// of the capability data, including the size of the capabilitySetType and
-// lengthCapability fields.
+//    of the capability data, including the size of the capabilitySetType and
+//    lengthCapability fields.
 
 // nodeId (2 bytes): A 16-bit, unsigned integer. This field SHOULD be set to 0
-// by the client and to the server channel ID by the server (0x03EA).
+//    by the client and to the server channel ID by the server (0x03EA).
 
 // pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
-// field MUST be ignored.
+//    field MUST be ignored.
 
 
 
@@ -66,6 +66,8 @@ struct ShareCaps : public Capability {
     }
 
     void recv(Stream & stream){
+        this->capabilityType = stream.in_uint16_le();
+        this->len = stream.in_uint16_le();
         this->nodeId = stream.in_uint16_le();
         this->pad2octets = stream.in_uint16_le();
     }

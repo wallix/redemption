@@ -31,38 +31,35 @@
 // This capability is sent by both client and server.
 
 // capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
-// capability set. This field MUST be set to CAPSTYPE_POINTER (8).
+//    capability set. This field MUST be set to CAPSTYPE_POINTER (8).
 
 // lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
-// of the capability data, including the size of the capabilitySetType and
-// lengthCapability fields.
+//    of the capability data, including the size of the capabilitySetType and
+//    lengthCapability fields.
 
 // colorPointerFlag (2 bytes): A 16-bit, unsigned integer. Indicates support for
-// color pointers. Since RDP supports monochrome cursors by using Color Pointer
-// Updates and New Pointer Updates (sections 2.2.9.1.1.4.4 and 2.2.9.1.1.4.5
-// respectively), the value of this field is ignored and is always assumed to be
-// TRUE (at a minimum the Color Pointer Update MUST be supported by an RDP
-// client).
-
-// +---------------+-----------------------------------------+
-// |   Value       |            Meaning                      |
-// +---------------+-----------------------------------------+
-// | 0x0000 FALSE  | Monochrome mouse cursors are supported. |
-// +---------------+-----------------------------------------+
-// | 0x0001 TRUE   | Color mouse cursors are supported.      |
-// +---------------+-----------------------------------------+
+//    color pointers. Since RDP supports monochrome cursors by using Color Pointer
+//    Updates and New Pointer Updates (sections 2.2.9.1.1.4.4 and 2.2.9.1.1.4.5
+//    respectively), the value of this field is ignored and is always assumed to be
+//    TRUE (at a minimum the Color Pointer Update MUST be supported by an RDP
+//    client).
+//    +---------------+-----------------------------------------+
+//    | 0x0000 FALSE  | Monochrome mouse cursors are supported. |
+//    +---------------+-----------------------------------------+
+//    | 0x0001 TRUE   | Color mouse cursors are supported.      |
+//    +---------------+-----------------------------------------+
 
 // colorPointerCacheSize (2 bytes): A 16-bit, unsigned integer. The number of
-// available slots in the 24 bpp color pointer cache used to store data received
-// in the Color Pointer Update (section 2.2.9.1.1.4.4).
+//    available slots in the 24 bpp color pointer cache used to store data received
+//    in the Color Pointer Update (section 2.2.9.1.1.4.4).
 
 // pointerCacheSize (2 bytes): A 16-bit, unsigned integer. The number of
-// available slots in the pointer cache used to store pointer data of arbitrary
-// bit depth received in the New Pointer Update (section 2.2.9.1.1.4.5).
+//    available slots in the pointer cache used to store pointer data of arbitrary
+//    bit depth received in the New Pointer Update (section 2.2.9.1.1.4.5).
 
-// If the value contained in this field is zero or the Pointer Capability Set
-// sent from the client does not include this field, the server will not use
-// the New Pointer Update.
+//    If the value contained in this field is zero or the Pointer Capability Set
+//    sent from the client does not include this field, the server will not use
+//    the New Pointer Update.
 
 
 
@@ -87,8 +84,9 @@ struct PointerCaps : public Capability {
         stream.out_uint16_le(this->pointerCacheSize);
     }
 
-    void recv(Stream & stream, uint16_t length){
-        this->len = length;
+    void recv(Stream & stream){
+        this->capabilityType = stream.in_uint16_le();
+        this->len = stream.in_uint16_le();
         this->colorPointerFlag = stream.in_uint16_le();
         this->colorPointerCacheSize = stream.in_uint16_le();
         this->pointerCacheSize = stream.in_uint16_le();
