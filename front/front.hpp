@@ -408,11 +408,16 @@ public:
     }
 
     void start_capture(int width, int height, bool flag, char * path,
-                const char * codec_id, const char * quality)
+                const char * codec_id, const char * quality,
+                const char * user, const char * ip_source, const char * target_user, const char * target_device)
     {
         if (flag){
             this->stop_capture();
+            char buffer[256];
+            snprintf(buffer, 256, "%s@%s %s@%s", user, ip_source, target_user, target_device);
+            buffer[255] = 0;
             this->capture = new Capture(width, height, path, codec_id, quality);
+            this->capture->set_prefix(buffer, strlen(buffer));
         }
     }
 
