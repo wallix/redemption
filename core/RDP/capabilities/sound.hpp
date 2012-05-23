@@ -31,20 +31,18 @@
 // capability is sent only from client to server.
 
 // capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the capability set. This
-//   field MUST be set to CAPSTYPE_SOUND (12).
+//    field MUST be set to CAPSTYPE_SOUND (12).
 
 // lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes of the capability
-//   data, including the size of the capabilitySetType and lengthCapability fields.
+//    data, including the size of the capabilitySetType and lengthCapability fields.
 
 // soundFlags (2 bytes): A 16-bit, unsigned integer. Support for sound options.
-
 //   0x0001 SOUND_BEEPS_FLAG    Playing a beep sound is supported.
-
 //   If the client advertises support for beeps, it MUST support the Play Sound PDU (section
 //   2.2.9.1.1.5).
 
 // pad2octetsA (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be
-//   ignored.
+//    ignored.
 
 
 enum {
@@ -56,8 +54,8 @@ struct SoundCaps : public Capability {
     uint16_t pad2octetsA;
     SoundCaps()
     : Capability(CAPSTYPE_SOUND, RDP_CAPLEN_SOUND)
-    , soundFlags(SOUND_BEEPS_FLAG) //
-    , pad2octetsA(0) //
+    , soundFlags(SOUND_BEEPS_FLAG)  // True by default
+    , pad2octetsA(0)                // MUST be ignored
     {
     }
 
@@ -69,6 +67,8 @@ struct SoundCaps : public Capability {
     }
 
     void recv(Stream & stream){
+        this->capabilityType = stream.in_uint16_le();
+        this->len = stream.in_uint16_le();
         this->soundFlags = stream.in_uint16_le();
         this->pad2octetsA = stream.in_uint16_le();
     }

@@ -343,15 +343,15 @@ struct OrderCaps : public Capability {
         , maximumOrderLevel(ORD_LEVEL_1_ORDERS) // is ignored and SHOULD be set to 1
         , numberFonts(0) //                        is ignored and SHOULD be set to 0
         , orderFlags(NEGOTIATEORDERSUPPORT) //.... from a "const list"
-        , textFlags(0) //......................... MUST be ignored
-        , orderSupportExFlags(0) //                from a "const list"
-        , pad4octetsB(0) //....................... MUST be ignored
-        , desktopSaveSize(0) //                    ignored and assumed to be 230.400
-        , pad2octetsC(0) //....................... MUST be ignored
-        , pad2octetsD(0) //                        MUST be ignored
-        , textANSICodePage(0) //.................. CS : Code page of client
+        , textFlags(0) //                          MUST be ignored
+        , orderSupportExFlags(0) //............... from a "const list"
+        , pad4octetsB(0) //                        MUST be ignored
+        , desktopSaveSize(0) //................... ignored and assumed to be 230.400
+        , pad2octetsC(0) //                        MUST be ignored
+        , pad2octetsD(0) //....................... MUST be ignored
+        , textANSICodePage(0) //                   CS : Code page of client
                               //                   SC : is ignored by client and SHOULD be set to 0
-        , pad2octetsE (0) //                       MUST be ignored
+        , pad2octetsE (0) //...................... MUST be ignored
     {
         memset(this->terminalDescriptor, 0, 16); // 16 bits array ALWAYS filled with 0
         memset(this->orderSupport, 0, NB_ORDER_SUPPORT); // 32 bits array filled with 0 BY DEFAULT
