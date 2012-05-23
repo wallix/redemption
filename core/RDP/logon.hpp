@@ -598,12 +598,10 @@ struct ClientTimeZone {
 
     uint32_t Bias;
     uint8_t StandardName[65];
-//    SystemTime StandardDate;
-    uint8_t StandardDate[17];
+    SystemTime StandardDate;
     uint32_t StandardBias;
     uint8_t DaylightName[65];
-//    SystemTime DaylightDate;
-    uint8_t DaylightDate[17];
+    SystemTime DaylightDate;
     uint32_t DaylightBias;
 
     ClientTimeZone()
@@ -617,8 +615,6 @@ struct ClientTimeZone {
     {
         memset(StandardName, 0, 65);
         memset(DaylightName, 0, 65);
-        memset(StandardDate, 0, 17);
-        memset(DaylightDate, 0, 17);
 
         this->std_init();
 
@@ -795,29 +791,29 @@ struct InfoPacket {
             stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.Bias);
             stream.out_date_name((const char *) this->extendedInfoPacket.clientTimeZone.StandardName, 64);
 
-            stream.out_date_name((const char *) this->extendedInfoPacket.clientTimeZone.StandardDate, 16);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wYear);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wMonth);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wDayOfWeek);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wDay);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wHour);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wMinute);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wSecond);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wMilliseconds);
+//            stream.out_date_name((const char *) this->extendedInfoPacket.clientTimeZone.StandardDate, 16);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wYear);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wMonth);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wDayOfWeek);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wDay);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wHour);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wMinute);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wSecond);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.StandardDate.wMilliseconds);
 
             stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.StandardBias);
 
             stream.out_date_name((const char *) this->extendedInfoPacket.clientTimeZone.DaylightName, 64);
 
-            stream.out_date_name((const char *) this->extendedInfoPacket.clientTimeZone.DaylightDate, 16);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wYear);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wMonth);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wDayOfWeek);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wDay);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wHour);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wMinute);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wSecond);
-//            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wMilliseconds);
+//            stream.out_date_name((const char *) this->extendedInfoPacket.clientTimeZone.DaylightDate, 16);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wYear);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wMonth);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wDayOfWeek);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wDay);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wHour);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wMinute);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wSecond);
+            stream.out_uint16_le(this->extendedInfoPacket.clientTimeZone.DaylightDate.wMilliseconds);
 
             stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.DaylightBias);
             // FIN Client Time Zone (172 bytes)
@@ -888,6 +884,25 @@ struct InfoPacket {
     	LOG(LOG_INFO, "%s InfoPacket", msg);
         LOG(LOG_INFO, "InfoPacket::CodePage %u", this->CodePage);
         LOG(LOG_INFO, "InfoPacket::flags %#x", this->flags);
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_MOUSE %s",              (flags & INFO_MOUSE)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_DISABLECTRLALTDEL %s",  (flags & INFO_DISABLECTRLALTDEL)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_AUTOLOGON %s",          (flags & INFO_AUTOLOGON)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_UNICODE %s",            (flags & INFO_UNICODE)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_MAXIMIZESHELL  %s",     (flags & INFO_MAXIMIZESHELL )?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_LOGONNOTIFY %s",        (flags & INFO_LOGONNOTIFY)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_COMPRESSION %s",        (flags & INFO_COMPRESSION)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:CompressionTypeMask %s",     (flags & CompressionTypeMask)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_ENABLEWINDOWSKEY  %s",  (flags & INFO_ENABLEWINDOWSKEY )?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_REMOTECONSOLEAUDIO %s", (flags & INFO_REMOTECONSOLEAUDIO)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:FORCE_ENCRYPTED_CS_PDU %s",  (flags & FORCE_ENCRYPTED_CS_PDU)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_RAIL %s",               (flags & INFO_RAIL)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_LOGONERRORS %s",        (flags & INFO_LOGONERRORS)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_MOUSE_HAS_WHEEL %s",    (flags & INFO_MOUSE_HAS_WHEEL)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_PASSWORD_IS_SC_PIN %s", (flags & INFO_PASSWORD_IS_SC_PIN)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_NOAUDIOPLAYBACK %s",    (flags & INFO_NOAUDIOPLAYBACK)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_USING_SAVED_CREDS %s",  (flags & INFO_USING_SAVED_CREDS)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:RNS_INFO_AUDIOCAPTURE %s",   (flags & RNS_INFO_AUDIOCAPTURE)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:RNS_INFO_VIDEO_DISABLE %s",  (flags & RNS_INFO_VIDEO_DISABLE)?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::cbDomain %u", this->cbDomain);
         LOG(LOG_INFO, "InfoPacket::cbUserName %u", this->cbUserName);
         LOG(LOG_INFO, "InfoPacket::cbPassword %u", this->cbPassword);
@@ -904,36 +919,34 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientAddress %s", this->extendedInfoPacket.clientAddress);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbClientDir %u", this->extendedInfoPacket.cbClientDir);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientDir %s", this->extendedInfoPacket.clientDir);
-        // Extended - Client Time Zone
-		LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::Bias %u", this->extendedInfoPacket.clientTimeZone.Bias);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardName %s", this->extendedInfoPacket.clientTimeZone.StandardName);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate %s", this->extendedInfoPacket.clientTimeZone.StandardDate);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wYear %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wYear);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wMonth %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wMonth);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wDayOfWeek %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wDayOfWeek);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wDay %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wDay);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wHour %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wHour);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wMinute %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wMinute);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wSecond %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wSecond);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wMilliseconds %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wMilliseconds);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardBias %u", this->extendedInfoPacket.clientTimeZone.StandardBias);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightName %s", this->extendedInfoPacket.clientTimeZone.DaylightName);
-        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate %s", this->extendedInfoPacket.clientTimeZone.DaylightDate);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wYear %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wYear);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMonth %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wMonth);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wDayOfWeek %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wDayOfWeek);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wDay %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wDay);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wHour %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wHour);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMinute %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wMinute);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wSecond %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wSecond);
-//        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMilliseconds %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wMilliseconds);
-
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::clientSessionId %u", this->extendedInfoPacket.clientSessionId);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::performanceFlags %u", this->extendedInfoPacket.performanceFlags);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::cbAutoReconnectLen %u", this->extendedInfoPacket.cbAutoReconnectLen);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::autoReconnectCookie %s", this->extendedInfoPacket.autoReconnectCookie);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::reserved1 %u", this->extendedInfoPacket.reserved1);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::reserved2 %u", this->extendedInfoPacket.reserved2);
+        // Extended - Client Time Zone
+		LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::Bias %u", this->extendedInfoPacket.clientTimeZone.Bias);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardName %s", this->extendedInfoPacket.clientTimeZone.StandardName);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wYear %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wYear);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wMonth %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wMonth);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wDayOfWeek %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wDayOfWeek);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wDay %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wDay);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wHour %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wHour);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wMinute %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wMinute);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wSecond %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wSecond);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wMilliseconds %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wMilliseconds);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardBias %u", this->extendedInfoPacket.clientTimeZone.StandardBias);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightName %s", this->extendedInfoPacket.clientTimeZone.DaylightName);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wYear %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wYear);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMonth %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wMonth);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wDayOfWeek %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wDayOfWeek);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wDay %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wDay);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wHour %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wHour);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMinute %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wMinute);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wSecond %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wSecond);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMilliseconds %u", this->extendedInfoPacket.clientTimeZone.DaylightDate.wMilliseconds);
+
 
     } // END FUNCT : log()
 

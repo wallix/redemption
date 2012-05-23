@@ -227,8 +227,15 @@ unit-test test_rdp_client_w2008 : tests/test_rdp_client_w2008.cpp libboost_unit_
 unit-test test_rdp_client_tls_w2008 : tests/test_rdp_client_tls_w2008.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
 
 unit-test test_vnc_client_simple : tests/test_vnc_client_simple.cpp libboost_unit_test ini_config openssl crypto rsa_keys d3des z dl libboost_program_options ;
-unit-test test_capability_bitmap : tests/test_capability_bitmap.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 
+unit-test test_capability_activate : tests/test_capability_activate.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_bitmap : tests/test_capability_bitmap.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_bmpcache : tests/test_capability_bmpcache.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_brushcache : tests/test_capability_brushcache.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_compdesk : tests/test_capability_compdesk.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_control : tests/test_capability_control.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_font : tests/test_capability_font.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_general : tests/test_capability_general.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 
 unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test : ;
 unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test ;

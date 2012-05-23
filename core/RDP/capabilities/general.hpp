@@ -32,11 +32,11 @@
 // section 8.2.3. This capability is sent by both client and server.
 
 // capabilitySetType (2 bytes): A 16-bit, unsigned integer. The type of the
-//  capability set. This field MUST be set to CAPSTYPE_GENERAL (1).
+//    capability set. This field MUST be set to CAPSTYPE_GENERAL (1).
 
 // lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes
-//  of the capability data, including the size of the capabilitySetType and
-//  lengthCapability fields.
+//    of the capability data, including the size of the capabilitySetType and
+//    lengthCapability fields.
 
 // osMajorType (2 bytes): A 16-bit, unsigned integer. The type of platform.
 
@@ -52,8 +52,17 @@
 // | 0x0004 OSMAJORTYPE_UNIX        | UNIX platform        |
 // +--------------------------------+----------------------+
 
+enum {
+       OSMAJORTYPE_UNSPECIFIED
+     , OSMAJORTYPE_WINDOWS
+     , OSMAJORTYPE_OS2
+     , OSMAJORTYPE_MACINTOSH
+     , OSMAJORTYPE_UNIX
+};
+
+
 // osMinorType (2 bytes): A 16-bit, unsigned integer. The version of the
-// platform specified in the osMajorType field.
+//    platform specified in the osMajorType field.
 
 // +--------------------------------------+----------------------+
 // | 0x0000 OSMINORTYPE_UNSPECIFIED       | Unspecified version  |
@@ -75,17 +84,29 @@
 // | 0x0008 TS_OSMINORTYPE_PSEUDO_XSERVER | Pseudo X Server      |
 // +--------------------------------------+----------------------+
 
+enum {
+       OSMINORTYPE_UNSPECIFIED
+     , OSMINORTYPE_WINDOWS_31X
+     , TS_OSMINORTYPE_WINDOWS_95
+     , TS_OSMINORTYPE_WINDOWS_NT
+     , TS_OSMINORTYPE_OS2_V21
+     , TS_OSMINORTYPE_POWER_PC
+     , TS_OSMINORTYPE_MACINTOSH
+     , TS_OSMINORTYPE_NATIVE_XSERVER
+     , TS_OSMINORTYPE_PSEUDO_XSERVER
+};
+
 // protocolVersion (2 bytes): A 16-bit, unsigned integer. The protocol version.
-// This field MUST be set to TS_CAPS_PROTOCOLVERSION (0x0200).
+//    This field MUST be set to TS_CAPS_PROTOCOLVERSION (0x0200).
 
 // pad2octetsA (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
-// field MUST be ignored.
+//    field MUST be ignored.
 
 // generalCompressionTypes (2 bytes): A 16-bit, unsigned integer. General
-// compression types. This field MUST be set to 0.
+//    compression types. This field MUST be set to 0.
 
 // extraFlags (2 bytes): A 16-bit, unsigned integer. General capability
-// information. Supported flags depends on RDP version.
+//    information. Supported flags depends on RDP version.
 
 // +----------------------------------+-------------------------------+------+
 // | 0x0001 FASTPATH_OUTPUT_SUPPORTED | Advertiser supports fast-path | 5.0+ |
@@ -118,6 +139,14 @@
 // |                                  | section 5.3.6.1.1).           |      |
 // +----------------------------------+-------------------------------+------+
 
+enum {
+    FASTPATH_OUTPUT_SUPPORTED = 0x0001,
+    LONG_CREDENTIALS_SUPPORTED = 0x0004,
+    AUTORECONNECT_SUPPORTED = 0x0008,
+    ENC_SALTED_CHECKSUM = 0x0010,
+    NO_BITMAP_COMPRESSION_HDR = 0x0400,
+};
+
 // updateCapabilityFlag (2 bytes): A 16-bit, unsigned integer. Support for
 //  update capability. This field MUST be set to 0.
 
@@ -146,13 +175,7 @@
 // | 0x01 TRUE  | Server supports Suppress Output PDU.         |
 // +------------+----------------------------------------------+
 
-enum {
-    FASTPATH_OUTPUT_SUPPORTED = 0x0001,
-    LONG_CREDENTIALS_SUPPORTED = 0x0004,
-    AUTORECONNECT_SUPPORTED = 0x0008,
-    ENC_SALTED_CHECKSUM = 0x0010,
-    NO_BITMAP_COMPRESSION_HDR = 0x0400,
-};
+
 
 struct GeneralCaps : public Capability {
     uint16_t os_major;
@@ -167,8 +190,8 @@ struct GeneralCaps : public Capability {
     uint16_t pad2;
     GeneralCaps()
     : Capability(CAPSTYPE_GENERAL, RDP_CAPLEN_GENERAL)
-    , os_major(1)
-    , os_minor(3)
+    , os_major(OSMAJORTYPE_WINDOWS)
+    , os_minor(TS_OSMINORTYPE_WINDOWS_NT)
     , protocolVersion(0x200)
     , pad1(0)
     , compressionType(0)
@@ -197,6 +220,8 @@ struct GeneralCaps : public Capability {
     }
 
     void recv(Stream & stream){
+        this->capabilityType = stream.in_uint16_le();
+        this->len = stream.in_uint16_le();
         this->os_major = stream.in_uint16_le();
         this->os_minor = stream.in_uint16_le();
         this->protocolVersion = stream.in_uint16_le();
