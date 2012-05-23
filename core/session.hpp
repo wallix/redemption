@@ -551,7 +551,12 @@ struct Session {
                                 this->context->get_bool(STRAUTHID_OPT_MOVIE),
                                 this->context->get(STRAUTHID_OPT_MOVIE_PATH),
                                 this->context->get(STRAUTHID_OPT_CODEC_ID),
-                                this->context->get(STRAUTHID_VIDEO_QUALITY));
+                                this->context->get(STRAUTHID_VIDEO_QUALITY),
+                                this->context->get(STRAUTHID_AUTH_USER),
+                                this->context->get(STRAUTHID_HOST),
+                                this->context->get(STRAUTHID_TARGET_USER),
+                                this->context->get(STRAUTHID_TARGET_DEVICE)
+                                );
                         }
                         else {
                             this->front->stop_capture();
@@ -853,10 +858,10 @@ struct Session {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'XUP'\n");
                 }
-                ClientSocketTransport * t = new ClientSocketTransport(name, 
+                ClientSocketTransport * t = new ClientSocketTransport(name,
                                 this->context->get(STRAUTHID_TARGET_DEVICE),
                                 atoi(this->context->get(STRAUTHID_TARGET_PORT)),
-                                4, 1000, 
+                                4, 1000,
                                 this->ini->globals.debug.mod_xup);
                 t->connect();
                 this->back_event = new wait_obj(t->sck);
@@ -887,7 +892,7 @@ struct Session {
                 }
                 static const char * name = "RDP Target";
                 ClientSocketTransport * t = new ClientSocketTransport(
-                                        name, 
+                                        name,
                                         this->context->get(STRAUTHID_TARGET_DEVICE),
                                         atoi(this->context->get(STRAUTHID_TARGET_PORT)),
                                         3, 1000,
@@ -928,7 +933,7 @@ struct Session {
                 }
                 static const char * name = "VNC Target";
                 ClientSocketTransport *t = new ClientSocketTransport(
-                                                name, 
+                                                name,
                                                 this->context->get(STRAUTHID_TARGET_DEVICE),
                                                 atoi(this->context->get(STRAUTHID_TARGET_PORT)),
                                                 3, 1000,
