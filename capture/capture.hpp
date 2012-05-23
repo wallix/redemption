@@ -27,6 +27,8 @@
 
 class Capture : public RDPGraphicDevice
 {
+    char log_prefix[256];
+
     struct timeval start_static_capture;
     uint64_t inter_frame_interval_static_capture;
 
@@ -43,6 +45,7 @@ class Capture : public RDPGraphicDevice
         sc(width, height, path, codec_id, video_quality, bgr),
         nc(width, height, path)
     {
+        this->log_prefix[0] = 0;
         struct timeval now;
         gettimeofday(&now, NULL);
         this->start_static_capture = now;
@@ -59,6 +62,14 @@ class Capture : public RDPGraphicDevice
         this->nc.recorder.timestamp();
     }
 
+    void set_prefix(const char * prefix, size_t len_prefix)
+    {
+        size_t len = (len_prefix < sizeof(log_prefix))?len_prefix:(sizeof(log_prefix)-1);
+        memcpy(this->log_prefix, prefix, len);
+        this->log_prefix[len] = 0;
+    }
+
+    TODO("looks better to have some function in capture returning native recorder if any and perform meta.emit outside this class. Or some other strategy not implying capture having a dependance on MetaWRM. Logicaly dependence should be between MetaWRM and native recorder")
     void emit_meta(MetaWRM& meta)
     {
         meta.emit(this->nc.recorder);
