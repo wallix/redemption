@@ -583,12 +583,12 @@ struct SystemTime {
         , wMonth(0)
         , wDayOfWeek(0)
         , wDay(0)
-		, wHour(0)
-		, wMinute(0)
-		, wSecond(0)
-		, wMilliseconds(0)
+        , wHour(0)
+        , wMinute(0)
+        , wSecond(0)
+        , wMilliseconds(0)
     {
-    	;
+        ;
     } // END CONSTRUCTOR
 
 }; // END STRUCT : SystemTime
@@ -607,11 +607,11 @@ struct ClientTimeZone {
     ClientTimeZone()
         : Bias(0) //......... bias value (in minutes)
         , StandardBias(0) //  MUST be ignored if a valid date and time is not specified in the StandardDate field or the wYear,
-    					  //    wMonth, wDayOfWeek, wDay, wHour, wMinute, wSecond, and wMilliseconds fields
-    	                  //    of the StandardDate field are all set to zero
+                          //    wMonth, wDayOfWeek, wDay, wHour, wMinute, wSecond, and wMilliseconds fields
+                          //    of the StandardDate field are all set to zero
         , DaylightBias(0) //  MUST be ignored if a valid date and time is not specified in the DaylightDate field or the wYear,
-    				      //    wMonth, wDayOfWeek, wDay, wHour, wMinute, wSecond, and wMilliseconds fields
-    					  //    of the DaylightDate field are all set to zero
+                          //    wMonth, wDayOfWeek, wDay, wHour, wMinute, wSecond, and wMilliseconds fields
+                          //    of the DaylightDate field are all set to zero
     {
         memset(StandardName, 0, 65);
         memset(DaylightName, 0, 65);
@@ -622,7 +622,7 @@ struct ClientTimeZone {
 
     void std_init() {
 
-    	// bias
+        // bias
         this->Bias = 120;
         // standard Name
         memcpy(this->StandardName, "GMT Standard Time", strlen("GMT Standard Time")+1);
@@ -677,16 +677,16 @@ struct ExtendedInfoPacket {
 
     void std_init() {
 
-		clientAddressFamily = 2;
-		memcpy(this->clientAddress, "10.10.9.161", strlen("10.10.9.161")+1);
-		this->cbClientAddress = 2 * strlen((char *) this->clientAddress) + 2;
+        clientAddressFamily = 2;
+        memcpy(this->clientAddress, "10.10.9.161", strlen("10.10.9.161")+1);
+        this->cbClientAddress = 2 * strlen((char *) this->clientAddress) + 2;
 
-		memcpy(this->clientDir, "C:\\Windows\\System32\\mstscax.dll", strlen("C:\\Windows\\System32\\mstscax.dll")+1);
-		this->cbClientDir = 2 * strlen((char *) this->clientDir) + 2;
+        memcpy(this->clientDir, "C:\\Windows\\System32\\mstscax.dll", strlen("C:\\Windows\\System32\\mstscax.dll")+1);
+        this->cbClientDir = 2 * strlen((char *) this->clientDir) + 2;
 
-		clientSessionId = 0;
+        clientSessionId = 0;
 
-	} // END FUNCT : std_init()
+    } // END FUNCT : std_init()
 
 }; // END STRUCT : ExtendedInfoPacket
 
@@ -719,7 +719,7 @@ struct InfoPacket {
     , rdp5_support(0)
     , extendedInfoPacket()
     {
-    	memset(Domain, 0, 256);
+        memset(Domain, 0, 256);
         memset(UserName, 0, 128);
         memset(Password, 0, 256);
         memset(AlternateShell, 0, 256);
@@ -730,62 +730,62 @@ struct InfoPacket {
    } // END CONSTRUCTOR
 
 
-	void std_init(){
+    void std_init(){
 
-		this->flags  = INFO_MOUSE;
-		this->flags |= INFO_DISABLECTRLALTDEL;
-		this->flags |= INFO_UNICODE;
-		this->flags |= INFO_MAXIMIZESHELL;
-		this->flags |= INFO_ENABLEWINDOWSKEY;
-		this->flags |= INFO_LOGONNOTIFY;
+        this->flags  = INFO_MOUSE;
+        this->flags |= INFO_DISABLECTRLALTDEL;
+        this->flags |= INFO_UNICODE;
+        this->flags |= INFO_MAXIMIZESHELL;
+        this->flags |= INFO_ENABLEWINDOWSKEY;
+        this->flags |= INFO_LOGONNOTIFY;
 
-	} // END FUNCT : std_init()
+    } // END FUNCT : std_init()
 
 
-	void conclude_flags(){
+    void conclude_flags(){
 
-		this->flags |= ( (strlen((char *) this->Password ) > 0) * INFO_AUTOLOGON );
-		this->flags |= ( this->rdp5_support != 0 ) * ( INFO_LOGONERRORS | INFO_NOAUDIOPLAYBACK );
+        this->flags |= ( (strlen((char *) this->Password ) > 0) * INFO_AUTOLOGON );
+        this->flags |= ( this->rdp5_support != 0 ) * ( INFO_LOGONERRORS | INFO_NOAUDIOPLAYBACK );
 
-	}  // END FUNCT : conclude_flags()
+    }  // END FUNCT : conclude_flags()
 
 
     void emit( Stream & stream) {
 
-    	conclude_flags();
+        conclude_flags();
 
-		stream.out_uint32_le(this->CodePage);
-		stream.out_uint32_le(this->flags);
+        stream.out_uint32_le(this->CodePage);
+        stream.out_uint32_le(this->flags);
 
-		stream.out_uint16_le(this->cbDomain);
-		stream.out_uint16_le(this->cbUserName);
-		stream.out_uint16_le(this->cbPassword);
-		stream.out_uint16_le(this->cbAlternateShell);
-		stream.out_uint16_le(this->cbWorkingDir);
+        stream.out_uint16_le(this->cbDomain);
+        stream.out_uint16_le(this->cbUserName);
+        stream.out_uint16_le(this->cbPassword);
+        stream.out_uint16_le(this->cbAlternateShell);
+        stream.out_uint16_le(this->cbWorkingDir);
 
-       	stream.out_unistr((const char *) this->Domain);
-    	stream.out_unistr((const char *) this->UserName);
-		if (flags & INFO_AUTOLOGON){
-			stream.out_unistr((const char *) this->Password);
-		}
-		else{
-			stream.out_uint16_le(0);
-		}
-      	stream.out_unistr((const char *) this->AlternateShell);
-       	stream.out_unistr((const char *) this->WorkingDir);
+           stream.out_unistr((const char *) this->Domain);
+        stream.out_unistr((const char *) this->UserName);
+        if (flags & INFO_AUTOLOGON){
+            stream.out_unistr((const char *) this->Password);
+        }
+        else{
+            stream.out_uint16_le(0);
+        }
+          stream.out_unistr((const char *) this->AlternateShell);
+           stream.out_unistr((const char *) this->WorkingDir);
 
-		if(!this->rdp5_support){
-			LOG(LOG_INFO, "send login info (RDP4-style) %s:%s", this->Domain, this->UserName);
-		}
-		// EXTRA INFORMATIONS
+        if(!this->rdp5_support){
+            LOG(LOG_INFO, "send login info (RDP4-style) %s:%s", this->Domain, this->UserName);
+        }
+        // EXTRA INFORMATIONS
         if (this->rdp5_support){
             LOG(LOG_INFO, "send extended login info (RDP5-style) %x %s:%s", this->flags, this->Domain, this->UserName);
 
             stream.out_uint16_le(this->extendedInfoPacket.clientAddressFamily);
             stream.out_uint16_le(this->extendedInfoPacket.cbClientAddress);
-    		stream.out_unistr((const char *) this->extendedInfoPacket.clientAddress);
+            stream.out_unistr((const char *) this->extendedInfoPacket.clientAddress);
             stream.out_uint16_le(this->extendedInfoPacket.cbClientDir);
-    		stream.out_unistr((const char *) this->extendedInfoPacket.clientDir);
+            stream.out_unistr((const char *) this->extendedInfoPacket.clientDir);
 
             // Client Time Zone (172 bytes)
             stream.out_uint32_le(this->extendedInfoPacket.clientTimeZone.Bias);
@@ -822,25 +822,25 @@ struct InfoPacket {
             stream.out_uint32_le(this->extendedInfoPacket.performanceFlags);
 
             stream.out_uint16_le(2 * this->extendedInfoPacket.cbAutoReconnectLen);
-//           	stream.out_unistr((const char *) this->extendedInfoPacket.autoReconnectCookie);
-//           	stream.out_unistr((const char *) this->extendedInfoPacket.reserved1);
-//           	stream.out_unistr((const char *) this->extendedInfoPacket.reserved2);
+//               stream.out_unistr((const char *) this->extendedInfoPacket.autoReconnectCookie);
+//               stream.out_unistr((const char *) this->extendedInfoPacket.reserved1);
+//               stream.out_unistr((const char *) this->extendedInfoPacket.reserved2);
 
         } // END IF (this->rdp5_support)
 
     } // END FUNCT : emit()
 
     void recv(Stream & stream){
-    	this->CodePage = stream.in_uint32_le();
-    	this->flags = stream.in_uint32_le();
+        this->CodePage = stream.in_uint32_le();
+        this->flags = stream.in_uint32_le();
 
-    	this->cbDomain = stream.in_uint16_le() + 2;
-    	this->cbUserName = stream.in_uint16_le() + 2;
-    	this->cbPassword = stream.in_uint16_le() + 2;
-    	this->cbAlternateShell = stream.in_uint16_le() + 2;
-    	this->cbWorkingDir = stream.in_uint16_le() + 2;
+        this->cbDomain = stream.in_uint16_le() + 2;
+        this->cbUserName = stream.in_uint16_le() + 2;
+        this->cbPassword = stream.in_uint16_le() + 2;
+        this->cbAlternateShell = stream.in_uint16_le() + 2;
+        this->cbWorkingDir = stream.in_uint16_le() + 2;
 
-    	stream.in_uni_to_ascii_str((char *) this->Domain, this->cbDomain);
+        stream.in_uni_to_ascii_str((char *) this->Domain, this->cbDomain);
         stream.in_uni_to_ascii_str((char *) this->UserName, this->cbUserName);
 
         // Whether we have a password available or not
@@ -879,9 +879,9 @@ struct InfoPacket {
 
     void log(const char * msg){
 
-    	conclude_flags();
+        conclude_flags();
 
-    	LOG(LOG_INFO, "%s InfoPacket", msg);
+        LOG(LOG_INFO, "%s InfoPacket", msg);
         LOG(LOG_INFO, "InfoPacket::CodePage %u", this->CodePage);
         LOG(LOG_INFO, "InfoPacket::flags %#x", this->flags);
         LOG(LOG_INFO, "InfoPacket::flags:INFO_MOUSE %s",              (flags & INFO_MOUSE)?"yes":"no");
@@ -926,7 +926,7 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::reserved1 %u", this->extendedInfoPacket.reserved1);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::reserved2 %u", this->extendedInfoPacket.reserved2);
         // Extended - Client Time Zone
-		LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::Bias %u", this->extendedInfoPacket.clientTimeZone.Bias);
+        LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::Bias %u", this->extendedInfoPacket.clientTimeZone.Bias);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardName %s", this->extendedInfoPacket.clientTimeZone.StandardName);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wYear %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wYear);
         LOG(LOG_INFO, "InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wMonth %u", this->extendedInfoPacket.clientTimeZone.StandardDate.wMonth);
