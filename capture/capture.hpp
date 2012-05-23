@@ -64,7 +64,7 @@ class Capture : public RDPGraphicDevice
 
     void set_prefix(const char * prefix, size_t len_prefix)
     {
-        size_t len = (len_prefix < (sizeof(log_prefix)?len_prefix:(sizeof(log_prefix)-1);
+        size_t len = (len_prefix < sizeof(log_prefix))?len_prefix:(sizeof(log_prefix)-1);
         memcpy(this->log_prefix, prefix, len);
         this->log_prefix[len] = 0;
     }
