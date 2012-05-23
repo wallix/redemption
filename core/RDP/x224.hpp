@@ -23,8 +23,8 @@
 
 */
 
-#if !defined(__X224_HPP__)
-#define __X224_HPP__
+#if !defined(__CORE_RDP_X224_HPP__)
+#define __CORE_RDP_X224_HPP__
 
 #include <stdint.h>
 #include "transport.hpp"
@@ -509,7 +509,7 @@ struct X224In : public X224Packet
     Stream & stream;
 
 
-    X224In(Transport * t, Stream & stream, uint32_t verbose = 1)
+    X224In(Transport * t, Stream & stream, uint32_t verbose = 0)
         : verbose(verbose), tpkt(0,0), tpdu_hdr(0, 0), stream(stream)
     // Receive a X224 TPDU from the wires
     {
@@ -521,7 +521,7 @@ struct X224In : public X224Packet
 
         this->tpkt.version = stream.in_uint8();
 
-        if ( this->tpkt.version != 3) {
+        if (this->tpkt.version != 3) {
             LOG(LOG_INFO, "UNSUPPORTED FAST-PATH PDU (version = %u)", this->tpkt.version);
             throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
         }
