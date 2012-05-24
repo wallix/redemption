@@ -377,7 +377,9 @@ struct Session {
 
         if (this->sesman->event()){
             this->sesman->receive_next_module();
+            this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Failed to connect to remote server");
             this->session_setup_mod(MCTX_STATUS_TRANSITORY, this->context);
+            this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed");
             this->internal_state = SESSION_STATE_RUNNING;
         }
         return this->internal_state;
@@ -864,7 +866,13 @@ struct Session {
                                 atoi(this->context->get(STRAUTHID_TARGET_PORT)),
                                 4, 1000,
                                 this->ini->globals.debug.mod_xup);
-                t->connect();
+                if (!t->connect()){
+                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed to connect to remote TCP host");
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
+                else {
+                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote X host");
+                }
                 this->back_event = new wait_obj(t->sck);
                 this->front->init_mod();
                 this->mod = new xup_mod(t, *this->context, *(this->front),
@@ -872,6 +880,7 @@ struct Session {
                                         this->front->client_info.height);
                 this->mod->draw_event();
 //                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
+                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "");
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'XUP' suceeded\n");
                 }
@@ -898,7 +907,13 @@ struct Session {
                                         atoi(this->context->get(STRAUTHID_TARGET_PORT)),
                                         3, 1000,
                                         this->ini->globals.debug.mod_rdp);
-                t->connect();
+                if (!t->connect()){
+                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed to connect to remote TCP host");
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
+                else {
+                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote RDP host");
+                }
                 TODO("Wait obj should work with transport object, not directly with socket")
                 this->back_event = new wait_obj(t->sck);
                 // enable or disable clipboard
@@ -924,6 +939,7 @@ struct Session {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'RDP' suceeded\n");
                 }
+                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "");
             }
             break;
 
@@ -939,7 +955,13 @@ struct Session {
                                                 atoi(this->context->get(STRAUTHID_TARGET_PORT)),
                                                 3, 1000,
                                                 this->ini->globals.debug.mod_vnc);
-                t->connect();
+                if (!t->connect()){
+                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed to connect to remote TCP host");
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
+                else {
+                    this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "failed authentification on remote VNC host");
+                }
                 this->back_event = new wait_obj(t->sck);
                 this->front->init_mod();
                 this->mod = new mod_vnc(t,
@@ -954,6 +976,7 @@ struct Session {
                 if (this->verbose){
                     LOG(LOG_INFO, "Session::Creation of new mod 'VNC' suceeded\n");
                 }
+                this->context->cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "");
             }
             break;
 

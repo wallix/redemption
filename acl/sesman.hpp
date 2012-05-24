@@ -199,9 +199,9 @@ class SessionManager {
                 }
                 catch (...){
                     if (this->verbose & 0x10){
-                        LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager");
+                        LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (ACL closed)");
                     }
-                    this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (socket closed)");
+                    this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (ACL closed)");
                     return false;
                 }
             }
@@ -209,7 +209,7 @@ class SessionManager {
                 if (this->verbose & 0x10){
                     LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
                 }
-                this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager");
+                this->context.cpy(STRAUTHID_AUTH_ERROR_MESSAGE, "Connection closed by manager (timeout)");
                 return false;
             }
             else if (keepalive_time && (now > keepalive_time)){
@@ -507,7 +507,9 @@ class SessionManager {
             if (!this->auth_trans_t){
                 static const char * name = "Authentifier";
                 this->auth_trans_t = new ClientSocketTransport(name, auth_host, authport, 30, 1000, this->verbose);
-                this->auth_trans_t->connect();
+                if (!this->auth_trans_t->connect()){
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
                 TODO(" create a realloc method")
                 if (this->auth_event){
                     delete this->auth_event;

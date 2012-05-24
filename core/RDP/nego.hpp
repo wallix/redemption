@@ -375,7 +375,9 @@ struct RdpNego
                 LOG(LOG_INFO, "Can't activate SSL, falling back to RDP legacy encryption");
                 this->tls = false;
                 this->trans->disconnect();
-                this->trans->connect();
+                if (!this->trans->connect()){
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
                 this->send_negotiation_request();
                 this->state = NEGO_STATE_RDP;
             }
