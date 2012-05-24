@@ -67,7 +67,11 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGeneralEmit)
 
     BOOST_CHECK_EQUAL(general_caps2.capabilityType, (uint16_t)CAPSTYPE_GENERAL);
     BOOST_CHECK_EQUAL(general_caps2.len, (uint16_t)RDP_CAPLEN_GENERAL);
-    general_caps2.recv(stream);
+
+    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_GENERAL, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_GENERAL, stream.in_uint16_le());
+
+    general_caps2.recv(stream, RDP_CAPLEN_GENERAL);
 
     BOOST_CHECK_EQUAL(general_caps2.os_major, (uint16_t) 0);
     BOOST_CHECK_EQUAL(general_caps2.os_minor, (uint16_t) 1);

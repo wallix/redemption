@@ -66,9 +66,8 @@ struct SoundCaps : public Capability {
         stream.out_uint16_le(this->pad2octetsA);
     }
 
-    void recv(Stream & stream){
-        this->capabilityType = stream.in_uint16_le();
-        this->len = stream.in_uint16_le();
+    void recv(Stream & stream, uint16_t len){
+        this->len = len;
         this->soundFlags = stream.in_uint16_le();
         this->pad2octetsA = stream.in_uint16_le();
     }

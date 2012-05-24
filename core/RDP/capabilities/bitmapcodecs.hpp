@@ -473,7 +473,7 @@ struct BitmapCodecCaps : public Capability {
         LOG(LOG_INFO, "BitmapCodec caps emit not implemented");
     }
 
-    void recv(Stream & stream){
+    void recv(Stream & stream, uint16_t len){
         LOG(LOG_INFO, "BitmapCodec caps recv not implemented");
     }
 

@@ -380,9 +380,8 @@ struct OrderCaps : public Capability {
         stream.out_uint16_le(this->pad2octetsE);
     }
 
-    void recv(Stream & stream){
-        this->capabilityType = stream.in_uint16_le();
-        this->len = stream.in_uint16_le();
+    void recv(Stream & stream, uint16_t len){
+        this->len = len;
         stream.in_copy_bytes(this->terminalDescriptor, 16);
         this->pad4octetsA = stream.in_uint32_le();
         this->desktopSaveXGranularity = stream.in_uint16_le();

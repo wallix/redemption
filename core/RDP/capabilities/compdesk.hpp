@@ -60,9 +60,8 @@ struct CompDeskCaps : public Capability {
         stream.out_uint16_le(this->CompDeskSupportLevel);
     }
 
-    void recv(Stream & stream){
-        this->capabilityType = stream.in_uint16_le();
-        this->len = stream.in_uint16_le();
+    void recv(Stream & stream, uint16_t len){
+        this->len = len;
         this->CompDeskSupportLevel = stream.in_uint16_le();
     }
 

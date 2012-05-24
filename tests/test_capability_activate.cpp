@@ -55,7 +55,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityActivationEmit)
 
     BOOST_CHECK_EQUAL(activation_caps2.capabilityType, (uint16_t)CAPSTYPE_ACTIVATION);
     BOOST_CHECK_EQUAL(activation_caps2.len, (uint16_t)RDP_CAPLEN_ACTIVATION);
-    activation_caps2.recv(stream);
+
+    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_ACTIVATION, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_ACTIVATION, stream.in_uint16_le());
+    activation_caps2.recv(stream, RDP_CAPLEN_ACTIVATION);
 
     BOOST_CHECK_EQUAL(activation_caps2.helpKeyFlag, (uint16_t) 0);
     BOOST_CHECK_EQUAL(activation_caps2.helpKeyIndexFlag, (uint16_t) 1);

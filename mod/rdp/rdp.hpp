@@ -2275,40 +2275,34 @@ struct mod_rdp : public client_mod {
         }
 
 
+        TODO("this can probably be unified with process_confir_active in front");
         void process_server_caps(Stream & stream, int len)
         {
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::process_server_caps");
             }
-            int n;
-            int ncapsets;
-            int capset_type;
-            int capset_length;
-            uint8_t* next;
-            uint8_t* start;
-
-            start = stream.p;
-            ncapsets = stream.in_uint16_le();
+            uint8_t* start = stream.p;
+            int ncapsets = stream.in_uint16_le();
             stream.in_skip_bytes(2); /* pad */
-            for (n = 0; n < ncapsets; n++) {
-                if (stream.p > start + len) {
+            for (int n = 0; n < ncapsets; n++) {
+                if (stream.p + 4 > start + len) {
                     return;
                 }
-                capset_type = stream.in_uint16_le();
-                capset_length = stream.in_uint16_le();
-                next = (stream.p + capset_length) - 4;
+                uint16_t capset_type = stream.in_uint16_le();
+                uint16_t capset_length = stream.in_uint16_le();
+                uint8_t * next = (stream.p + capset_length) - 4;
                 switch (capset_type) {
                 case CAPSTYPE_GENERAL:
                 {
                     GeneralCaps general_caps;
-                    general_caps.recv(stream);
+                    general_caps.recv(stream, capset_length);
                     general_caps.log("Received from server");
                 }
                 break;
                 case CAPSTYPE_BITMAP:
                 {
                     BitmapCaps bitmap_caps;
-                    bitmap_caps.recv(stream);
+                    bitmap_caps.recv(stream, capset_length);
                     bitmap_caps.log("Received from server");
                     this->bpp = bitmap_caps.preferredBitsPerPixel;
                     this->front_width = bitmap_caps.desktopWidth;
@@ -2319,7 +2313,7 @@ struct mod_rdp : public client_mod {
                 {
                     OrderCaps order_caps;
                     order_caps.log("Received from server");
-                    order_caps.recv(stream);
+                    order_caps.recv(stream, capset_length);
                     break;
                 }
                 default:

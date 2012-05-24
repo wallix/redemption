@@ -269,8 +269,9 @@ struct Capability {
             this->capabilityType, this->len);
     }
 
-    void recv(Stream & stream)
+    void recv(Stream & stream, uint16_t len)
     {
+        this->len = len;
         LOG(LOG_ERR, "Capability::recv [%u, %u] Implemented by subclass",
             this->capabilityType, this->len);
     }

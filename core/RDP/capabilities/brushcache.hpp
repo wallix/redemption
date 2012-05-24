@@ -72,9 +72,8 @@ struct BrushCacheCaps : public Capability {
         stream.out_uint32_le(this->brushSupportLevel);
     }
 
-    void recv(Stream & stream){
-        this->capabilityType = stream.in_uint16_le();
-        this->len = stream.in_uint16_le();
+    void recv(Stream & stream, uint16_t len){
+        this->len = len;
         this->brushSupportLevel = stream.in_uint32_le();
     }
 

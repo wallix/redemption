@@ -51,7 +51,9 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFontEmit)
 
     BOOST_CHECK_EQUAL(font_caps2.capabilityType, (uint16_t)CAPSTYPE_FONT);
     BOOST_CHECK_EQUAL(font_caps2.len, (uint16_t)RDP_CAPLEN_FONT);
-    font_caps2.recv(stream);
+    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_FONT, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_FONT, stream.in_uint16_le());
+    font_caps2.recv(stream, RDP_CAPLEN_FONT);
 
     BOOST_CHECK_EQUAL(font_caps2.fontSupportFlags, (uint16_t) 32769);
     BOOST_CHECK_EQUAL(font_caps2.pad2octets, (uint16_t) 65535);

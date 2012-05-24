@@ -98,7 +98,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityOrderEmit)
 
     BOOST_CHECK_EQUAL(order_caps2.capabilityType, (uint16_t)CAPSTYPE_ORDER);
     BOOST_CHECK_EQUAL(order_caps2.len, (uint16_t)RDP_CAPLEN_ORDER);
-    order_caps2.recv(stream);
+
+    BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_ORDER, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_ORDER, stream.in_uint16_le());
+    order_caps2.recv(stream, RDP_CAPLEN_ORDER);
 
     for (size_t i = 0; i< 16; i++){
         BOOST_CHECK_EQUAL(order_caps2.terminalDescriptor[i], test_order_td[i]);

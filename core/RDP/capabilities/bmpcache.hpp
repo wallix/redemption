@@ -116,9 +116,8 @@ struct BmpCacheCaps : public Capability {
         stream.out_uint16_le(this->cache2MaximumCellSize);
     }
 
-    void recv(Stream & stream){
-        this->capabilityType = stream.in_uint16_le();
-        this->len = stream.in_uint16_le();
+    void recv(Stream & stream, uint16_t len){
+        this->len = len;
         this->pad1 = stream.in_uint32_le();
         this->pad2 = stream.in_uint32_le();
         this->pad3 = stream.in_uint32_le();

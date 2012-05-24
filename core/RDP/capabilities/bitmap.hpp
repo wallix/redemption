@@ -172,7 +172,8 @@ struct BitmapCaps : public Capability {
         stream.out_uint16_le(this->pad2octetsB);
     }
 
-    void recv(Stream & stream){
+    void recv(Stream & stream, uint16_t len){
+        this->len = len;
         this->preferredBitsPerPixel = stream.in_uint16_le();
         this->receive1BitPerPixel = stream.in_uint16_le();
         this->receive4BitsPerPixel = stream.in_uint16_le();

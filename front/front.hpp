@@ -1728,14 +1728,14 @@ public:
             switch (type) {
             case CAPSTYPE_GENERAL: {
                     GeneralCaps general;
-                    general.recv(stream);
+                    general.recv(stream, len);
                     general.log("Receiving from client");
                     this->client_info.use_compact_packets = (general.extraflags & NO_BITMAP_COMPRESSION_HDR)?1:0;
                 }
                 break;
             case CAPSTYPE_BITMAP: {
                     BitmapCaps bitmap_caps;
-                    bitmap_caps.recv(stream);
+                    bitmap_caps.recv(stream, len);
                     bitmap_caps.log("Receiving from client");
                     this->client_info.bpp = (bitmap_caps.preferredBitsPerPixel >= 24)?24:bitmap_caps.preferredBitsPerPixel;
                     this->client_info.width = bitmap_caps.desktopWidth;
@@ -1745,7 +1745,7 @@ public:
             case CAPSTYPE_ORDER: { /* 3 */
                     OrderCaps order_caps;
                     order_caps.log("Receiving from client");
-                    order_caps.recv(stream);
+                    order_caps.recv(stream, len);
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE: /* 4 */
@@ -1774,7 +1774,7 @@ public:
             case CAPSTYPE_BRUSH: { /* 15 */
                     BrushCacheCaps brushcache_caps;
                     brushcache_caps.log("Receiving from client");
-                    brushcache_caps.recv(stream);
+                    brushcache_caps.recv(stream, len);
                     this->client_info.brush_cache_code = brushcache_caps.brushSupportLevel;
                 }
                 break;
@@ -1794,7 +1794,7 @@ public:
             case CAPSETTYPE_TYPE_COMPDESK: { /* 25 */
                     CompDeskCaps compdesk_caps;
                     compdesk_caps.log("Receiving from client");
-                    compdesk_caps.recv(stream);
+                    compdesk_caps.recv(stream, len);
                 }
                 break;
             case 26: /* 26 */

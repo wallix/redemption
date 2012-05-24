@@ -110,9 +110,8 @@ struct InputCaps : public Capability {
         stream.out_utf16(this->imeFileName, 32);
     }
 
-    void recv(Stream & stream){
-        this->capabilityType = stream.in_uint16_le();
-        this->len = stream.in_uint16_le();
+    void recv(Stream & stream, uint16_t len){
+        this->len = len;
         this->inputFlags = stream.in_uint16_le();
         this->pad2octetsA = stream.in_uint16_le();
         this->keyboardLayout = stream.in_uint32_le();

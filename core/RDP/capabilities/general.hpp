@@ -219,9 +219,8 @@ struct GeneralCaps : public Capability {
         TODO("Add support for server only flags refreshRectSupport and suppressOutputSupport")
     }
 
-    void recv(Stream & stream){
-        this->capabilityType = stream.in_uint16_le();
-        this->len = stream.in_uint16_le();
+    void recv(Stream & stream, uint16_t len){
+        this->len = len;
         this->os_major = stream.in_uint16_le();
         this->os_minor = stream.in_uint16_le();
         this->protocolVersion = stream.in_uint16_le();

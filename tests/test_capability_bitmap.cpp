@@ -67,7 +67,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapEmit)
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_BITMAP, stream.in_uint16_le());
     BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_BITMAP, stream.in_uint16_le());
-    bitmap_caps2.recv(stream);
+
+    bitmap_caps2.recv(stream, RDP_CAPLEN_BITMAP);
 
     BOOST_CHECK_EQUAL(bitmap_caps2.preferredBitsPerPixel, (uint16_t)24);
     BOOST_CHECK_EQUAL(bitmap_caps2.receive1BitPerPixel, (uint16_t)1);
