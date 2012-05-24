@@ -474,8 +474,9 @@ struct Session {
             this->front->stop_capture();
         }
 
-        if (this->front->up_and_running
-        && this->back_event->is_set()){ // data incoming from server module
+        // data incoming from server module
+        if (this->front->up_and_running && this->back_event->is_set()){
+            this->back_event->reset();
             if (this->verbose){
                 LOG(LOG_INFO, "Session::back_event fired");
             }
@@ -917,7 +918,7 @@ struct Session {
                                     info,
                                     &this->gen,
                                     this->ini->globals.debug.mod_rdp);
-//                    this->back_event->set();
+                this->back_event->set();
 
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front->client_info.width, this->front->client_info.height));
                 if (this->verbose){
