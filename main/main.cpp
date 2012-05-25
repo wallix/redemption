@@ -288,7 +288,7 @@ int main(int argc, char** argv)
     }
 
     setuid(uid);
-    setuid(gid);
+    setgid(gid);
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
     redemption_main_loop();

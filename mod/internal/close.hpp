@@ -43,8 +43,7 @@ struct close_mod : public internal_mod {
 
         int win_width = 600;
         bool done = false;
-        const char * message;
-        message = context.get(STRAUTHID_AUTH_ERROR_MESSAGE);
+        const char * message = context.get(STRAUTHID_AUTH_ERROR_MESSAGE);
         int line = 0;
         while (!done) {
             const char * str = strstr(message, "<br>");
@@ -65,12 +64,10 @@ struct close_mod : public internal_mod {
             regular = 0;
         }
 
-        /* draw login window */
-        Rect r(
-            this->get_screen_rect().cx / 2 - win_width / 2,
-            this->get_screen_rect().cy / 2 - win_height / 2,
-            win_width,
-            win_height);
+        Rect r(this->get_screen_rect().cx / 2 - win_width / 2,
+               this->get_screen_rect().cy / 2 - win_height / 2,
+               win_width,
+               win_height);
 
         this->close_window = new wab_close(this,
             r, context,

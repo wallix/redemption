@@ -76,7 +76,10 @@ public:
         this->send(reinterpret_cast<const char * const>(buffer), len);
     }
     virtual void disconnect(){}
-    virtual void connect(){}
+    virtual bool connect()
+    {
+        return true;
+    }
 
 };
 
@@ -864,13 +867,13 @@ class ClientSocketTransport : public Transport {
     public:
         int sck;
 
-    ClientSocketTransport(const char * name, const char* ip, int port, 
-                          int nbretry = 3, int retry_delai_ms = 1000, 
+    ClientSocketTransport(const char * name, const char* ip, int port,
+                          int nbretry = 3, int retry_delai_ms = 1000,
                           uint32_t verbose = 0)
-        : Transport(), name(name), 
-          st(NULL), 
-          port(port), 
-          nbretry(nbretry), 
+        : Transport(), name(name),
+          st(NULL),
+          port(port),
+          nbretry(nbretry),
           retry_delai_ms(retry_delai_ms),
           verbose(verbose),
           sck(0)
@@ -920,11 +923,11 @@ class ClientSocketTransport : public Transport {
         this->sck = 0;
     }
 
-    void connect()
+    bool connect()
     {
         if (this->st){
             LOG(LOG_INFO, "Already connected to %s (%s:%d)\n", this->name, this->ip, this->port);
-            return;
+            return true;
         }
         LOG(LOG_INFO, "connecting to %s (%s:%d)\n", this->name, this->ip, this->port);
         // we will try connection several time
@@ -944,13 +947,13 @@ class ClientSocketTransport : public Transport {
                         SO_SNDBUF,
                         &snd_buffer_size, sizeof(snd_buffer_size))){
                     LOG(LOG_WARNING, "setsockopt failed with errno=%d", errno);
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                    return false;
                 }
             }
         }
         else {
             LOG(LOG_WARNING, "getsockopt failed with errno=%d", errno);
-            throw Error(ERR_SOCKET_CONNECT_FAILED);
+            return false;
         }
 
         TODO("DNS resolution should probably be done only once in constructor, even if we try several connections with TLS")
@@ -966,7 +969,7 @@ class ClientSocketTransport : public Transport {
             if (!h) {
                 LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n",
                     this->ip, errno, strerror(errno));
-                throw Error(ERR_SOCKET_GETHOSTBYNAME_FAILED);
+                return false;
             }
             s.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
         }
@@ -1005,12 +1008,13 @@ class ClientSocketTransport : public Transport {
         }
         if (trial >= this->nbretry){
             LOG(LOG_INFO, "All trials done connecting to %s\n", this->ip);
-            throw Error(ERR_SOCKET_CONNECT_FAILED);
+            return false;
         }
         LOG(LOG_INFO, "connection to %s succeeded : socket %d\n", this->ip, sck);
 
         this->st = new SocketTransport(this->name, sck, this->verbose);
         this->sck = sck;
+        return true;
     }
 };
 
