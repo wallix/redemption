@@ -35,6 +35,7 @@
 #include "stream.hpp"
 #include "d3des.hpp"
 #include "keymap2.hpp"
+#include "keymapSym.hpp"
 #include "client_mod.hpp"
 
 // got extracts of VNC documentation from
@@ -67,8 +68,11 @@ struct mod_vnc : public client_mod {
     uint8_t blue_shift;
     BGRPalette palette332;
     uint32_t verbose;
+    KeymapSym keymapSym;
 
-    mod_vnc(Transport * t, const char * username, const char * password, struct FrontAPI & front, uint16_t front_width, uint16_t front_height, uint32_t verbose)
+    mod_vnc(Transport * t, const char * username, const char * password, struct FrontAPI & front, uint16_t front_width, uint16_t front_height
+    , int keylayout
+    , uint32_t verbose)
         :
         client_mod(front, front_width, front_height),
         verbose(verbose)
@@ -76,6 +80,8 @@ struct mod_vnc : public client_mod {
         LOG(LOG_INFO, "Connecting to VNC Server");
         init_palette332(this->palette332);
         this->t = t;
+
+        keymapSym.init_layout_sym(keylayout);
 
         memset(this->mod_name, 0, 256);
         this->mod_mouse_state = 0;
@@ -488,7 +494,8 @@ struct mod_vnc : public client_mod {
     }
 
     virtual void rdp_input_scancode(long param1, long param2, long device_flags, long param4, Keymap2 * keymap){
-        int key = keymap->top_char();
+        keymapSym.event(device_flags, param1);
+        int key = keymapSym.get_sym();
         if (key > 0) {
             Stream stream(32768);
             stream.out_uint8(4);

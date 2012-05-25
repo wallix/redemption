@@ -176,6 +176,9 @@ struct Keymap2 {
         // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
         this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
         switch (extendedKeyCode){
+        //================
+        // Lock keys
+        //================
             case 0x3A: // capslock
                 if (this->keys_down[extendedKeyCode]){
                     this->key_flags ^= CAPSLOCK;
@@ -191,6 +194,9 @@ struct Keymap2 {
                     this->key_flags ^= SCROLLLOCK;
                 }
                 break;
+        //================
+        // Modifier keys
+        //================
             case LEFT_SHIFT:   // left shift
             case RIGHT_SHIFT: // right shift
             case LEFT_CTRL:   // left ctrl
@@ -198,6 +204,9 @@ struct Keymap2 {
             case LEFT_ALT:    // left alt
             case RIGHT_ALT:   // right alt
                 break;
+        //================
+        // All other keys
+        //================
             default: // all other codes
                 // This table translates the RDP scanodes to X11 scandodes :
                 //  - the fist block (0-127) simply applies the +8 Windows to X11 translation and forces some 0 values
@@ -238,7 +247,7 @@ struct Keymap2 {
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  // 0xf8 - 0xff
                 } ;
 
-                // if scancode is meaningful (not 0)
+                // if event is a Make
                 if (this->keys_down[extendedKeyCode]){
                     if (this->verbose){
                         LOG(LOG_INFO, "Event is Make for key: %#x", extendedKeyCode);

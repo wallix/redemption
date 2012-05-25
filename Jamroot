@@ -244,6 +244,7 @@ unit-test test_capability_share : tests/test_capability_share.cpp libboost_unit_
 unit-test test_capability_sound : tests/test_capability_sound.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 
 unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test : ;
+unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test : ;
 unit-test test_genrandom : tests/test_genrandom.cpp libboost_unit_test ;
 
 unit-test test_meta : tests/test_meta.cpp libboost_unit_test ;
