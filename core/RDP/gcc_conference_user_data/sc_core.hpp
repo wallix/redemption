@@ -65,7 +65,7 @@ struct SCCoreGccUserData {
 
     SCCoreGccUserData()
     : userDataType(SC_CORE)
-    , length(12) // default: everything except serverSelectedProtocol
+    , length(8) // default: everything except serverSelectedProtocol
     , version(0x00080001)  // RDP version. 1 == RDP4, 4 == RDP5.
     , clientRequestedProtocol(0)
     {
@@ -77,6 +77,7 @@ struct SCCoreGccUserData {
         stream.out_uint16_le(this->userDataType);
         stream.out_uint16_le(this->length);
         stream.out_uint32_le(this->version);
+        if (this->length < 12) { return; }
         stream.out_uint32_le(this->clientRequestedProtocol);
     }
 
@@ -84,6 +85,7 @@ struct SCCoreGccUserData {
     {
         this->length = length;
         this->version = stream.in_uint32_le();
+        if (this->length < 12) { return; }
         this->clientRequestedProtocol = stream.in_uint32_le();
     }
 
@@ -95,6 +97,7 @@ struct SCCoreGccUserData {
               (this->version==0x00080001) ? "RDP 4 client"
              :(this->version==0x00080004) ? "RDP 5.0, 5.1, 5.2, and 6.0 clients)"
                                           : "Unknown client");
+        if (this->length < 12) { return; }
         LOG(LOG_INFO, "sc_core::clientRequestedProtocol  = %u", this->clientRequestedProtocol);
     }
 };
