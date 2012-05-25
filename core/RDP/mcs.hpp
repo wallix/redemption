@@ -414,12 +414,14 @@ static inline void mcs_recv_connect_response(
     X224In(trans, cr_stream);
 
     if (cr_stream.in_uint16_be() != BER_TAG_MCS_CONNECT_RESPONSE) {
+        LOG(LOG_ERR, "recv connect response expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     int len = cr_stream.in_ber_len();
     // ----------------------------------------------------------
 
     if (cr_stream.in_uint8() != Stream::BER_TAG_RESULT) {
+        LOG(LOG_ERR, "recv connect response result expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = cr_stream.in_ber_len();
@@ -448,21 +450,25 @@ static inline void mcs_recv_connect_response(
 //}
 
     if (res != 0) {
+        LOG(LOG_ERR, "recv connect response result OK expected");
         throw Error(ERR_MCS_RECV_CONNECTION_REP_RES_NOT_0);
     }
     if (cr_stream.in_uint8() != Stream::BER_TAG_INTEGER) {
+        LOG(LOG_ERR, "recv connect response result OK integer expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = cr_stream.in_ber_len();
     cr_stream.in_skip_bytes(len); /* connect id */
 
     if (cr_stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+        LOG(LOG_ERR, "recv connect response Domain param expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = cr_stream.in_ber_len();
     cr_stream.in_skip_bytes(len);
 
     if (cr_stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
+        LOG(LOG_ERR, "recv connect response Domain param string value expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = cr_stream.in_ber_len();
@@ -477,6 +483,7 @@ static inline void mcs_recv_connect_response(
         uint16_t tag = cr_stream.in_uint16_le();
         uint16_t length = cr_stream.in_uint16_le();
         if (length <= 4) {
+            LOG(LOG_ERR, "recv connect response parsing gcc data : short header");
             throw Error(ERR_MCS_DATA_SHORT_HEADER);
         }
         uint8_t *next_tag = (cr_stream.p + length) - 4;
@@ -492,12 +499,14 @@ static inline void mcs_recv_connect_response(
         }
         break;
         case SC_SECURITY:
+            LOG(LOG_ERR, "Receiving SC_Security from server");
             parse_mcs_data_sc_security(cr_stream, encrypt, decrypt,
                                        server_public_key_len, client_crypt_random,
                                        crypt_level,
                                        gen);
         break;
         case SC_NET:
+            LOG(LOG_ERR, "Receiving SC_Net from server");
             parse_mcs_data_sc_net(cr_stream, front_channel_list, mod_channel_list);
             break;
         default:
@@ -573,45 +582,53 @@ static inline void mcs_recv_connect_initial(
     X224In(trans, stream);
 
     if (stream.in_uint16_be() != BER_TAG_MCS_CONNECT_INITIAL) {
+        LOG(LOG_ERR, "Recv connect initial expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     int len = stream.in_ber_len();
     if (stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
+        LOG(LOG_ERR, "Recv connect initial string expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = stream.in_ber_len();
     stream.in_skip_bytes(len);
 
     if (stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
+        LOG(LOG_ERR, "Recv connect initial string 2 expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = stream.in_ber_len();
     stream.in_skip_bytes(len);
     if (stream.in_uint8() != Stream::BER_TAG_BOOLEAN) {
+        LOG(LOG_ERR, "Recv connect initial boolean expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = stream.in_ber_len();
     stream.in_skip_bytes(len);
 
     if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+        LOG(LOG_ERR, "Recv connect initial Domain Params expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = stream.in_ber_len();
     stream.in_skip_bytes(len);
 
     if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+        LOG(LOG_ERR, "Recv connect initial Domain Params 2 expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = stream.in_ber_len();
     stream.in_skip_bytes(len);
 
     if (stream.in_uint8() != BER_TAG_MCS_DOMAIN_PARAMS) {
+        LOG(LOG_ERR, "Recv connect initial Domain Params 3 expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = stream.in_ber_len();
     stream.in_skip_bytes(len);
 
     if (stream.in_uint8() != Stream::BER_TAG_OCTET_STRING) {
+        LOG(LOG_ERR, "Recv connect initial Domain Params 4 expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
     len = stream.in_ber_len();
@@ -1524,6 +1541,7 @@ static inline void mcs_recv_channel_join_confirm_pdu(Transport * trans, uint16_t
     X224In cjcf_tpdu(trans, cjcf_stream);
     int opcode = cjcf_stream.in_uint8();
     if ((opcode >> 2) != DomainMCSPDU_ChannelJoinConfirm) {
+        LOG(LOG_ERR, "Recv channel join confirm pdu expected");
         throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
     }
     uint8_t result = cjcf_stream.in_uint8();
@@ -1594,10 +1612,12 @@ static inline void mcs_recv_attach_user_confirm_pdu(Transport * trans, uint16_t 
     X224In aucf_tpdu(trans, aucf_stream);
     int opcode = aucf_stream.in_uint8();
     if ((opcode >> 2) != DomainMCSPDU_AttachUserConfirm) {
+        LOG(LOG_ERR, "Attach user confirm pdu expected");
         throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
     }
     int res = aucf_stream.in_uint8();
     if (res != 0) {
+        LOG(LOG_ERR, "Attach user confirm pdu OK expected");
         throw Error(ERR_MCS_RECV_AUCF_RES_NOT_0);
     }
     if (opcode & 2) {
@@ -1670,6 +1690,7 @@ static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport *
         X224In in(trans, stream);
         uint8_t opcode = stream.in_uint8();
         if ((opcode >> 2) != DomainMCSPDU_ErectDomainRequest) {
+            LOG(LOG_ERR, "Erect Domain Request expected");
             throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
         }
         stream.in_skip_bytes(2);
@@ -1685,6 +1706,7 @@ static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport *
         X224In in(trans, stream);
         uint8_t opcode = stream.in_uint8();
         if ((opcode >> 2) != DomainMCSPDU_AttachUserRequest) {
+            LOG(LOG_ERR, "Attach User Request expected");
             throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
         }
         if (opcode & 2) {
