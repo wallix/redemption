@@ -348,11 +348,12 @@ struct Keymap2 {
                         // That is :
                         //  * > 0x20 is for ruling out NUL, but also TAB, ESC and BACKSPACE that has unicode values but
                         //           are not actually printable characters and that we don't want to track
-                        //  * And not delete (0x7f) nor a dead key (0x5e, 0xa8, 0xe8)
+                        //  * And not delete (0x7f) nor a dead key (0x5e, 0xa8, 0x60)
                         if (this->verbose){
                             LOG(LOG_INFO, "nbevent in buffer: %u %u\n", this->nbuf, this->nbuf_kevent);
                         }
-                        if ((uchar >= 0x20) && (uchar != 0x7F) && (uchar != 0x5E) && (uchar != 0xA8) && (uchar != 0x60)){
+
+                        if ((uchar >= 0x20) && (uchar != 0x7F) && (uchar != 0x5E || extendedKeyCode != 0x1A) && (uchar != 0xA8) && (uchar != 0x60) ){
                             if (this->verbose){
                                 LOG(LOG_INFO, "Printable key : uchar=%x", uchar);
                             }
