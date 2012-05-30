@@ -258,20 +258,20 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
     TestMultiWRMToPng_random_file(0, 2, 328, 0);
 }*/
 
-BOOST_AUTO_TEST_CASE(TestMultiWRMToPng3)
-{
-    TestMultiWRMToPng_random_file(0, 3, 328,
-                                  (const uint8_t*)
-                                  "\xf3\x72\x33\x18\x5a\x8b\xd8\xf1\x46\xfd"
-                                  "\x69\x48\x48\x9c\xe7\x9b\x4e\x59\x1b\xa1",
-                                  true);
-}
+//BOOST_AUTO_TEST_CASE(TestMultiWRMToPng3)
+//{
+//    TestMultiWRMToPng_random_file(0, 3, 328,
+//                                  (const uint8_t*)
+//                                  "\xf3\x72\x33\x18\x5a\x8b\xd8\xf1\x46\xfd"
+//                                  "\x69\x48\x48\x9c\xe7\x9b\x4e\x59\x1b\xa1",
+//                                  true);
+//}
 
-BOOST_AUTO_TEST_CASE(TestMultiWRMToPng4)
-{
-    TestMultiWRMToPng_random_file(60, 4, 313,
-                                  (const uint8_t*)
-                                  "\xf3\x72\x33\x18\x5a\x8b\xd8\xf1\x46\xfd"
-                                  "\x69\x48\x48\x9c\xe7\x9b\x4e\x59\x1b\xa1",
-                                  true);
-}
+//BOOST_AUTO_TEST_CASE(TestMultiWRMToPng4)
+//{
+//    TestMultiWRMToPng_random_file(60, 4, 313,
+//                                  (const uint8_t*)
+//                                  "\xf3\x72\x33\x18\x5a\x8b\xd8\xf1\x46\xfd"
+//                                  "\x69\x48\x48\x9c\xe7\x9b\x4e\x59\x1b\xa1",
+//                                  true);
+//}

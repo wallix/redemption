@@ -99,63 +99,27 @@ class RDPBmpCache {
     //  TS_CACHE_BITMAP_COMPRESSED (0x02) flag is present in the header field,
     //  but the NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not.
 
+    // The TS_CD_HEADER structure is used to describe compressed bitmap data.
+
+    // bitmapComprHdr::cbCompFirstRowSize (2 bytes): A 16-bit, unsigned integer. The field
+    //  MUST be set to 0x0000.
+
+    // bitmapComprHdr::cbCompMainBodySize (2 bytes): A 16-bit, unsigned integer. The size in
+    //  bytes of the compressed bitmap data (which follows this header).
+
+    // bitmapComprHdr::cbScanWidth (2 bytes): A 16-bit, unsigned integer. The width of the
+    //  bitmap (which follows this header) in pixels (this value MUST be
+    //  divisible by 4).
+
+    // bitmapComprHdr::cbUncompressedSize (2 bytes): A 16-bit, unsigned integer. The size in
+    //  bytes of the bitmap data (which follows this header) after it has been
+    //  decompressed.
+
     // bitmapDataStream (variable): A variable-length byte array containing
     //  bitmap data (the format of this data is defined in [MS-RDPBCGR] section
     //  2.2.9.1.1.3.1.2.2).
 
-    // MS-RDPBCGR: 2.2.9.1.1.3.1.2.2 Bitmap Data (TS_BITMAP_DATA)
-    // ----------------------------------------------------------
-    //  The TS_BITMAP_DATA structure wraps the bitmap data bytestream for a
-    //  screen area rectangle containing a clipping taken from the server-side
-    //  screen frame buffer.
-
-    // destLeft (2 bytes): A 16-bit, unsigned integer. Left bound of the
-    //  rectangle.
-
-    // destTop (2 bytes): A 16-bit, unsigned integer. Top bound of the
-    //  rectangle.
-
-    // destRight (2 bytes): A 16-bit, unsigned integer. Right bound of the
-    //  rectangle.
-
-    // destBottom (2 bytes): A 16-bit, unsigned integer. Bottom bound of the
-    //  rectangle.
-
-    // width (2 bytes): A 16-bit, unsigned integer. The width of the rectangle.
-
-    // height (2 bytes): A 16-bit, unsigned integer. The height of the
-    //  rectangle.
-
-    // bitsPerPixel (2 bytes): A 16-bit, unsigned integer. The color depth of
-    //  the rectangle data in bits-per-pixel.
-
-    // Flags (2 bytes): A 16-bit, unsigned integer. The flags describing the
-    //  format of the bitmap data in the bitmapDataStream field.
-
-    // +----------------------------------+------------------------------------+
-    // | 0x0001 BITMAP_COMPRESSION        | Indicates that the bitmap data is  |
-    // |                                  | compressed.This implies that the   |
-    // |                                  | bitmapComprHdr field is present if |
-    // |                                  | the NO_BITMAP_COMPRESSION_HDR      |
-    // |                                  | (0x0400) flag is not set.          |
-    // +----------------------------------+------------------------------------+
-    // | 0x0400 NO_BITMAP_COMPRESSION_HDR | Indicates that the bitmapComprHdr  |
-    // |                                  | field is not present (removed for  |
-    // |                                  | bandwidth efficiency to save 8     |
-    // |                                  | bytes).                            |
-    // +----------------------------------+------------------------------------+
-
-    // bitmapLength (2 bytes): A 16-bit, unsigned integer. The size in bytes of
-    //  the data in the bitmapComprHdr and bitmapDataStream fields.
-
-    // bitmapComprHdr (8 bytes): Optional Compressed Data Header structure
-    //  (see Compressed Data Header (TS_CD_HEADER) (section 2.2.9.1.1.3.1.2.3))
-    //  specifying the bitmap data in the bitmapDataStream. This field MUST be
-    //  present if the BITMAP_COMPRESSION (0x0001) flag is present in the Flags
-    //  field, but the NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not.
-
-    // bitmapDataStream (variable): A variable-sized array of bytes.
-    //  Uncompressed bitmap data represents a bitmap as a bottom-up,
+    // Uncompressed bitmap data represents a bitmap as a bottom-up,
     //  left-to-right series of pixels. Each pixel is a whole
     //  number of bytes. Each row contains a multiple of four bytes
     // (including up to three bytes of padding, as necessary).
@@ -166,25 +130,6 @@ class RDPBmpCache {
     // of 32 bpp is compressed using RDP 6.0 Bitmap Compression and stored
     // inside an RDP 6.0 Bitmap Compressed Stream structure (see section
     // 2.2.2.5.1 in [MS-RDPEGDI]).
-
-    // MS-RDPBCGR: 2.2.9.1.1.3.1.2.3 Compressed Data Header (TS_CD_HEADER)
-    // -------------------------------------------------------------------
-
-    // The TS_CD_HEADER structure is used to describe compressed bitmap data.
-
-    // cbCompFirstRowSize (2 bytes): A 16-bit, unsigned integer. The field
-    //  MUST be set to 0x0000.
-
-    // cbCompMainBodySize (2 bytes): A 16-bit, unsigned integer. The size in
-    //  bytes of the compressed bitmap data (which follows this header).
-
-    // cbScanWidth (2 bytes): A 16-bit, unsigned integer. The width of the
-    //  bitmap (which follows this header) in pixels (this value MUST be
-    //  divisible by 4).
-
-    // cbUncompressedSize (2 bytes): A 16-bit, unsigned integer. The size in
-    //  bytes of the bitmap data (which follows this header) after it has been
-    //  decompressed.
 
     // MS-RDPBCGR: 2.2.9.1.1.3.1.2.4 RLE Compressed Bitmap Stream
     // ----------------------------------------------------------
@@ -524,18 +469,10 @@ class RDPBmpCache {
         case 0:
         case 1:
             if (use_bitmap_comp){
-                if (use_compact_packets){
-                    if (this->verbose){
-                        LOG(LOG_INFO, "/* BMP Cache compressed V1 Small Headers */");
-                    }
-                    this->emit_v1_compressed_small_headers(stream);
+                if (this->verbose){
+                    LOG(LOG_INFO, "/* BMP Cache compressed V1*/");
                 }
-                else {
-                    if (this->verbose){
-                        LOG(LOG_INFO, "/* BMP Cache compressed V1*/");
-                    }
-                    this->emit_v1_compressed(stream);
-                }
+                this->emit_v1_compressed(stream, use_compact_packets);
             }
             else {
                 if (this->verbose){
@@ -560,8 +497,7 @@ class RDPBmpCache {
         }
     }
 
-    void emit_v1_compressed_small_headers(Stream & stream) const
-    {
+    void emit_v1_compressed(Stream & stream, const int use_compact_packets) const {
         using namespace RDP;
 
         int order_flags = STANDARD | SECONDARY;
@@ -569,7 +505,9 @@ class RDPBmpCache {
         /* length after type minus 7 */
         uint32_t offset_header = stream.get_offset(0);
         stream.out_uint16_le(0); // placeholder for size after type - 7
-        stream.out_uint16_le(NO_BITMAP_COMPRESSION_HDR); // flags
+
+         // flags : why do we put 8 ? Any value should be ok except NO_BITMAP_COMPRESSION_HDR
+        stream.out_uint16_le(use_compact_packets?NO_BITMAP_COMPRESSION_HDR:8); // flags
         stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); // type
 
         stream.out_uint8(this->id);
@@ -582,46 +520,27 @@ class RDPBmpCache {
         stream.out_uint16_le(0); // placeholder for bufsize
         stream.out_uint16_le(this->idx);
 
-        uint32_t offset_buf_start = stream.get_offset(0);
-        this->bmp->compress(stream);
-        uint32_t bufsize = stream.get_offset(offset_buf_start);
-        stream.set_out_uint16_le(bufsize + 2, offset_header);
-        stream.set_out_uint16_le(bufsize, offset);
-    }
-
-    void emit_v1_compressed(Stream & stream) const
-    {
-        using namespace RDP;
-
-        int order_flags = STANDARD | SECONDARY;
-        stream.out_uint8(order_flags);
-        /* length after type minus 7 */
-        uint32_t offset_header = stream.get_offset(0);
-        stream.out_uint16_le(0); // placeholder for size after type - 7
-        stream.out_uint16_le(8); // flags : why do we put 8 ? Any value should be ok except NO_BITMAP_COMPRESSION_HDR
-        stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); // type
-
-        stream.out_uint8(this->id);
-        stream.out_clear_bytes(1); /* pad */
-
-        stream.out_uint8(align4(this->bmp->cx));
-        stream.out_uint8(this->bmp->cy);
-        stream.out_uint8(this->bmp->original_bpp);
-        uint32_t offset = stream.get_offset(0);
-        stream.out_uint16_le(0); // placeholder for bufsize
-        stream.out_uint16_le(this->idx);
-
-        stream.out_clear_bytes(2); /* pad */
         uint32_t offset_compression_header = stream.get_offset(0);
-        stream.out_uint16_le(0); // placeholder for bufsize
-        stream.out_uint16_le(this->bmp->bmp_size / this->bmp->cy);
-        stream.out_uint16_le(this->bmp->bmp_size); // final size
+        if (!use_compact_packets){
+            if (this->verbose){
+                LOG(LOG_INFO, "/* Use compression headers */");
+            }
+            stream.out_clear_bytes(2); /* pad */
+            stream.out_uint16_le(0); // placeholder for bufsize
+            stream.out_uint16_le(this->bmp->bmp_size / this->bmp->cy);
+            stream.out_uint16_le(this->bmp->bmp_size); // final size
+        }
+
         uint32_t offset_buf_start = stream.get_offset(0);
         this->bmp->compress(stream);
         uint32_t bufsize = stream.get_offset(offset_buf_start);
-        stream.set_out_uint16_le(bufsize, offset_compression_header);
-        stream.set_out_uint16_le(bufsize + 8, offset);
-        stream.set_out_uint16_le(bufsize + 10, offset_header);
+
+        if (!use_compact_packets){
+            stream.set_out_uint16_le(bufsize, offset_compression_header + 2);
+        }
+
+        stream.set_out_uint16_le(bufsize + use_compact_packets?2:10, offset);
+        stream.set_out_uint16_le(bufsize + use_compact_packets?0:8, offset_header);
     }
 
     void emit_raw_v1(Stream & stream) const

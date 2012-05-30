@@ -335,7 +335,7 @@ public:
                     this->recorder.init();
                     this->recorder.order_count = 1;
                     const RDPBmpCache cmdcache(bitmaps[cidx], cid, cidx);
-                    cmdcache.emit_v1_compressed_small_headers(this->recorder.stream);
+                    cmdcache.emit_v1_compressed(this->recorder.stream, true);
                     this->recorder.send_order();
                 }
             }
