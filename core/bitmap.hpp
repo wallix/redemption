@@ -95,8 +95,8 @@ public:
         : original_bpp(bpp)
         , cx(cx)
         , cy(cy)
-        , line_size(this->cx * nbbytes(this->original_bpp))
-        , bmp_size(row_size(align4(this->cx), bpp) * cy)
+        , line_size(align4(this->cx * nbbytes(this->original_bpp)))
+        , bmp_size(this->line_size * cy)
         , data_bitmap()
     {
         this->data_bitmap.alloc(this->bmp_size);
@@ -131,10 +131,10 @@ public:
 
     Bitmap(const Bitmap & src_bmp, const Rect & r)
         : original_bpp(src_bmp.original_bpp)
-        , cx(align4(r.cx))
+        , cx(r.cx)
         , cy((uint16_t)r.cy)
-        , line_size(this->cx * nbbytes(src_bmp.original_bpp))
-        , bmp_size(row_size(align4(this->cx), src_bmp.original_bpp) * this->cy)
+        , line_size(align4(this->cx * nbbytes(src_bmp.original_bpp)))
+        , bmp_size(this->line_size * this->cy)
         , data_bitmap()
     {
         this->data_bitmap.alloc(this->bmp_size);
@@ -169,10 +169,10 @@ public:
     TODO("add palette support");
     Bitmap(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t vnc_cy, uint8_t vnc_bpp, const Rect & tile)
         : original_bpp(vnc_bpp)
-        , cx(align4(tile.cx))
+        , cx(tile.cx)
         , cy(tile.cy)
-        , line_size(this->cx * nbbytes(this->original_bpp))
-        , bmp_size(row_size(this->cx, this->original_bpp) * this->cy)
+        , line_size(align4(this->cx * nbbytes(this->original_bpp)))
+        , bmp_size(this->line_size * this->cy)
         , data_bitmap()
     {
 //        LOG(LOG_ERR, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
@@ -373,13 +373,12 @@ public:
 
         this->cx = (uint16_t)(header.image_width);
         this->cy = (uint16_t)header.image_height;
-        this->line_size = this->cx * nbbytes(this->original_bpp);
-        this->bmp_size = row_size(align4(this->cx), this->original_bpp) * this->cy;
+        this->line_size = align4(this->cx * nbbytes(this->original_bpp));
+        this->bmp_size = this->line_size * this->cy;
 
         this->data_bitmap.alloc(this->bmp_size);
         uint8_t * dest = this->data_bitmap.get();
         const uint8_t nbbytes_dest = ::nbbytes(this->original_bpp);
-        const uint16_t padded_line_size = (uint16_t)(this->bmp_size / this->cy);
 
         int k = 0;
         for (unsigned y = 0; y < this->cy ; y++) {
@@ -415,24 +414,25 @@ public:
                 {
                 default:
                 case 24:
-                    ::out_bytes_le(dest + y * padded_line_size + x * nbbytes_dest, nbbytes_dest, px);
+                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest, px);
                 break;
                 case 16:
-                    ::out_bytes_le(dest + y * padded_line_size + x * nbbytes_dest, nbbytes_dest,
+                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest,
                         color_encode(RGBtoBGR(px), 16));
                 break;
                 case 15:
-                    ::out_bytes_le(dest + y * padded_line_size + x * nbbytes_dest, nbbytes_dest,
+                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest,
                         color_encode(px, 15));
                 break;
                 case 8:
-                    ::out_bytes_le(dest + y * padded_line_size + x * nbbytes_dest, nbbytes_dest,
+                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest,
                         color_encode(px, 8));
                 break;
                 }
             }
-            if (padded_line_size > this->line_size){
-                bzero(dest + y * padded_line_size + this->line_size, padded_line_size - this->line_size);
+            if (this->line_size > (size_t)(this->cx * this->cy * nbbytes_dest)){
+                bzero(dest + y * this->line_size + this->cx * this->cy * nbbytes_dest,
+                      this->line_size - (this->cx * this->cy * nbbytes_dest));
             }
         }
     }
@@ -1185,15 +1185,38 @@ public:
     : original_bpp(out_bpp)
     , cx(bmp.cx)
     , cy(bmp.cy)
-    , line_size(nbbytes(out_bpp)*bmp.cx)
-    , bmp_size(row_size(align4(this->cx), out_bpp) * cy)
+    , line_size(align4(nbbytes(out_bpp) * bmp.cx))
+    , bmp_size(this->line_size * cy)
     , data_bitmap()
     {
 //        LOG(LOG_ERR, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
 
         if (out_bpp != bmp.original_bpp){
             this->data_bitmap.alloc(this->bmp_size);
-            bmp.convert_data_bitmap(out_bpp, this->data_bitmap.get());
+            uint8_t * dest = this->data_bitmap.get();
+            const uint8_t * src = bmp.data_bitmap.get();
+            const uint8_t src_nbbytes = nbbytes(bmp.original_bpp);
+            const uint8_t dest_nbbytes = nbbytes(out_bpp);
+
+            for (size_t j = 0; j < bmp.cy ; j++) {
+                for (size_t i = 0; i < bmp.cx ; i++) {
+                    uint32_t pixel = in_bytes_le(src_nbbytes, src);
+
+                    pixel = color_decode(pixel, bmp.original_bpp, bmp.original_palette);
+                    if (out_bpp == 16 || out_bpp == 15 || out_bpp == 8){
+                        pixel = RGBtoBGR(pixel);
+                    }
+                    pixel = color_encode(pixel, out_bpp);
+
+                    out_bytes_le(dest, dest_nbbytes, pixel);
+                    src += src_nbbytes;
+                    dest += dest_nbbytes;
+                }
+                unsigned padding = this->line_size - this->cx * nbbytes(this->original_bpp);
+                bzero(dest, padding);
+                dest += padding;
+                src += bmp.line_size - bmp.cx * nbbytes(bmp.original_bpp);
+            }
         }
         else {
             this->data_bitmap.use(bmp.data_bitmap);
@@ -1205,35 +1228,6 @@ public:
             }
             else {
                 init_palette332(this->original_palette);
-            }
-        }
-    }
-
-    private:
-    void convert_data_bitmap(uint8_t out_bpp, uint8_t * dest) const {
-
-        const uint8_t * src = this->data_bitmap.get();
-        const uint8_t src_nbbytes = nbbytes(this->original_bpp);
-        const uint8_t dest_nbbytes = nbbytes(out_bpp);
-
-        for (size_t j = 0; j < this->cy ; j++) {
-            for (size_t i = 0; i < this->cx ; i++) {
-                uint32_t pixel = in_bytes_le(src_nbbytes, src);
-
-                pixel = color_decode(pixel, this->original_bpp, this->original_palette);
-                if (out_bpp == 16 || out_bpp == 15 || out_bpp == 8){
-                    pixel = RGBtoBGR(pixel);
-                }
-                pixel = color_encode(pixel, out_bpp);
-
-                out_bytes_le(dest, dest_nbbytes, pixel);
-                src += src_nbbytes;
-                dest += dest_nbbytes;
-            }
-            for (size_t i = this->cx; i < align4(this->cx) ; i++) {
-                out_bytes_le(dest, dest_nbbytes, 0);
-                src += src_nbbytes;
-                dest += dest_nbbytes;
             }
         }
     }

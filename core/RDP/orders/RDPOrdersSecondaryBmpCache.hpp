@@ -510,12 +510,14 @@ class RDPBmpCache {
         stream.out_uint16_le(use_compact_packets?NO_BITMAP_COMPRESSION_HDR:8); // flags
         stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED); // type
 
+        uint32_t offset_after_type = stream.get_offset(0);
         stream.out_uint8(this->id);
         stream.out_clear_bytes(1); /* pad */
 
         stream.out_uint8(align4(this->bmp->cx));
         stream.out_uint8(this->bmp->cy);
         stream.out_uint8(this->bmp->original_bpp);
+
         uint32_t offset = stream.get_offset(0);
         stream.out_uint16_le(0); // placeholder for bufsize
         stream.out_uint16_le(this->idx);
@@ -539,8 +541,8 @@ class RDPBmpCache {
             stream.set_out_uint16_le(bufsize, offset_compression_header + 2);
         }
 
-        stream.set_out_uint16_le(bufsize + use_compact_packets?2:10, offset);
-        stream.set_out_uint16_le(bufsize + use_compact_packets?0:8, offset_header);
+        stream.set_out_uint16_le(stream.get_offset(offset_compression_header), offset);
+        stream.set_out_uint16_le(stream.get_offset(offset_after_type) - 7, offset_header);
     }
 
     void emit_raw_v1(Stream & stream) const

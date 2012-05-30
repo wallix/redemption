@@ -2458,7 +2458,7 @@ public:
 
         // check if target bitmap can be fully stored inside one front cache entry
         // if so no need to tile it.
-        uint32_t front_bitmap_size = ::nbbytes(this->client_info.bpp) * align4(dst_cx) * dst_cy;
+        uint32_t front_bitmap_size = align4(::nbbytes(this->client_info.bpp) * dst_cx) * dst_cy;
         // even if cache seems to be large enough, cache entries cant be used
         // for values whose width is larger or equal to 256 after alignment
         // hence, we check for this case. There does not seem to exist any
@@ -2470,7 +2470,7 @@ public:
 //            this->client_info.cache3_size,
 //            front_bitmap_size);
         if (front_bitmap_size <= this->client_info.cache3_size
-            && align4(dst_cx) < 256 && dst_cy < 256){
+            && align4(dst_cx) < 128 && dst_cy < 128){
             // clip dst as it can be larger than source bitmap
             const Rect dst_tile(dst_x, dst_y, dst_cx, dst_cy);
             const Rect src_tile(cmd.srcx, cmd.srcy, dst_cx, dst_cy);
