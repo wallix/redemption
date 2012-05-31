@@ -476,7 +476,7 @@ struct Keymap2 {
                                         this->push(0xD9); // unicode for Ù (Ugrave)
                                         break;
                                     case ' ':
-                                        this->push(0x60); // unicode for ` (backslash)
+                                        this->push(0x60); // unicode for ` (backcote)
                                         break;
                                     default:
                                         this->push(uchar); // unmodified unicode
