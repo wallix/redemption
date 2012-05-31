@@ -266,6 +266,7 @@ printf("\n======\nENTREE - keycode = %#x - extendedKeyCode = %#x\n", keyCode, ex
                 {
 printf("        MAKE- extendedKeyCode = %#x\n",extendedKeyCode);
                     const KeyLayout_t * layout = &keylayout_WORK_noshift_sym;
+printf("            LAYOUT IS NOSHIFT >>> BY DEFAULT\n");
 //                        this->last_char_key = extendedKeyCode;
 
                     //=========================================================================
@@ -280,6 +281,7 @@ printf("            IS KEYPAD SPECIAL (KEY_FLAGS=%u)\n", key_flags);
                         if ((this->key_flags & NUMLOCK)) {
 printf("                NUMLOCK ON = (%#x)\n",extendedKeyCode);
                             layout = &this->keylayout_WORK_shift_sym;
+printf("                LAYOUT IS SHIFT\n");
                             // Translate the scancode to an unicode char
                             uint8_t sym = map[extendedKeyCode];
 //                            uint32_t uchar = (*layout)[sym];
@@ -343,15 +345,19 @@ printf("            NOT KEYPAD SPEC. = (%#x)\n", extendedKeyCode);
                         }
                         if (this->is_ctrl_pressed() && this->is_alt_pressed()){
                             layout = &this->keylayout_WORK_altgr_sym;
+printf("                LAYOUT IS ALTGR\n");
                         }
                         else if (this->is_shift_pressed() && this->is_caps_locked()){
                             layout = &this->keylayout_WORK_shiftcapslock_sym;
+printf("                LAYOUT IS SHIFTCAPSLOCK\n");
                         }
                         else if (this->is_shift_pressed()){
                             layout = &this->keylayout_WORK_shift_sym;
+printf("                LAYOUT IS SHIFT\n");
                         }
                         else if (this->is_caps_locked()) {
                             layout = &this->keylayout_WORK_capslock_sym;
+printf("                LAYOUT IS CAPSLOCK\n");
                         }
                         // Translate the scancode to an unicode char
                         uint8_t sym = map[extendedKeyCode];
@@ -363,9 +369,9 @@ printf("            NOT KEYPAD SPEC. = (%#x)\n", extendedKeyCode);
                         // ksym is in Printable character range.
                         //==============================================
                         // That is :
-                        //  * Not a dead key (0xxFE52, 0xFE57, 0xE8, 0xE9 )
+                        //  * Not a dead key (0xxFE52 (^), 0xFE57 ("), 0x60 (`), 0x7E (~) )
 printf("            KSYM= %#x)\n", ksym);
-                        if ((ksym != 0xFE52) && (ksym != 0xFE57) && (ksym != 0xE8) && (ksym != 0xE9) ){
+                        if ((ksym != 0xFE52) && (ksym != 0xFE57) && (ksym != 0x60) && (ksym != 0x7E)){
 printf("                PRINTABLE (KSYM= %#x)\n", ksym);
 
                             // If previous key was a dead key, push a translated unicode char
@@ -509,8 +515,6 @@ printf("                    DEAD KEY ACTIVE (KSYM= %#x) DEAD_KEY=%u\n", ksym, de
                                                 break;
                                         }
                                         break;
-
-
                                     default:
                                         this->push_sym(ksym); // unmodified unicode
                                         break;
