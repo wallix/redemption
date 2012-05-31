@@ -98,10 +98,7 @@ struct KeymapSym {
 
 
     uint32_t verbose;
-//    uint32_t last_char_key;
-//    uint32_t last_char_key_sym;
 
-//    int last_chr_unicode;
     int last_sym;
 
     typedef int KeyLayout_t[128];
@@ -187,8 +184,6 @@ struct KeymapSym {
         // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
         this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
 
-printf("\n======\nENTREE - keycode = %#x - extendedKeyCode = %#x\n", keyCode, extendedKeyCode);
-
         switch (extendedKeyCode){
         //================
         // Lock keys
@@ -264,11 +259,8 @@ printf("\n======\nENTREE - keycode = %#x - extendedKeyCode = %#x\n", keyCode, ex
                 // if event is a Make
                 if (this->keys_down[extendedKeyCode])
                 {
-printf("        MAKE- extendedKeyCode = %#x\n",extendedKeyCode);
                     const KeyLayout_t * layout = &keylayout_WORK_noshift_sym;
-printf("            LAYOUT IS NOSHIFT >>> BY DEFAULT\n");
 //                        this->last_char_key = extendedKeyCode;
-
                     //=========================================================================
                     // KEYPAD : Keypad keys whose meanings depends on Numlock are handled apart
                     //=========================================================================
@@ -276,12 +268,9 @@ printf("            LAYOUT IS NOSHIFT >>> BY DEFAULT\n");
                       || ( (extendedKeyCode >= 0x4b) && (extendedKeyCode <= 0x4d) )
                       || ( (extendedKeyCode >= 0x4f) && (extendedKeyCode <= 0x53) )
                        ){
-printf("            IS KEYPAD SPECIAL (KEY_FLAGS=%u)\n", key_flags);
                         // if numlock is activated, keys are printable characters (logical SHIFT mode)
                         if ((this->key_flags & NUMLOCK)) {
-printf("                NUMLOCK ON = (%#x)\n",extendedKeyCode);
                             layout = &this->keylayout_WORK_shift_sym;
-printf("                LAYOUT IS SHIFT\n");
                             // Translate the scancode to an unicode char
                             uint8_t sym = map[extendedKeyCode];
 //                            uint32_t uchar = (*layout)[sym];
@@ -291,7 +280,6 @@ printf("                LAYOUT IS SHIFT\n");
                         } // if numlock ON
                         // if numlock is not activated, keys are NOT printable characters (logical NO SHIFT mode)
                         else {
-printf("                NUMLOCK OFF = (%#x)\n",extendedKeyCode);
                             ;
                             switch (extendedKeyCode){
                                /* kEYPAD LEFT ARROW */
@@ -339,25 +327,20 @@ printf("                NUMLOCK OFF = (%#x)\n",extendedKeyCode);
                     //========================================
                     // NOT KEYPAD Specific
                     //========================================
-printf("            NOT KEYPAD SPEC. = (%#x)\n", extendedKeyCode);
                         if (this->verbose){
                             LOG(LOG_INFO, "Key not from keypad: %#x", extendedKeyCode);
                         }
                         if (this->is_ctrl_pressed() && this->is_alt_pressed()){
                             layout = &this->keylayout_WORK_altgr_sym;
-printf("                LAYOUT IS ALTGR\n");
                         }
                         else if (this->is_shift_pressed() && this->is_caps_locked()){
                             layout = &this->keylayout_WORK_shiftcapslock_sym;
-printf("                LAYOUT IS SHIFTCAPSLOCK\n");
                         }
                         else if (this->is_shift_pressed()){
                             layout = &this->keylayout_WORK_shift_sym;
-printf("                LAYOUT IS SHIFT\n");
                         }
                         else if (this->is_caps_locked()) {
                             layout = &this->keylayout_WORK_capslock_sym;
-printf("                LAYOUT IS CAPSLOCK\n");
                         }
                         // Translate the scancode to an unicode char
                         uint8_t sym = map[extendedKeyCode];
@@ -370,13 +353,10 @@ printf("                LAYOUT IS CAPSLOCK\n");
                         //==============================================
                         // That is :
                         //  * Not a dead key (0xxFE52 (^), 0xFE57 ("), 0x60 (`), 0x7E (~) )
-printf("            KSYM= %#x)\n", ksym);
                         if ((ksym != 0xFE52) && (ksym != 0xFE57) && (ksym != 0x60) && (ksym != 0x7E)){
-printf("                PRINTABLE (KSYM= %#x)\n", ksym);
 
                             // If previous key was a dead key, push a translated unicode char
                             if (this->dead_key != DEADKEY_NONE){
-printf("                    DEAD KEY ACTIVE (KSYM= %#x) DEAD_KEY=%u\n", ksym, dead_key);
                                 switch (dead_key){
                                     case DEADKEY_CIRC:
                                         switch (ksym){
@@ -530,7 +510,6 @@ printf("                    DEAD KEY ACTIVE (KSYM= %#x) DEAD_KEY=%u\n", ksym, de
                             //=================================================
                             // ksym is NOT in Printable unicode character range
                             //=================================================
-printf("                NOT PRINTABLE (%#x)\n", extendedKeyCode);
                             switch (extendedKeyCode){
                                 case 0x1A:
                                     this->is_shift_pressed() ? this->dead_key = DEADKEY_UML : this->dead_key = DEADKEY_CIRC;
@@ -548,12 +527,9 @@ printf("                NOT PRINTABLE (%#x)\n", extendedKeyCode);
                     } // END if KEYPAD specific / else
                 } // END if Keydown
                 else {
-printf("        BREAK- extendedKeyCode = %#x\n", extendedKeyCode);
                 }
-//====================================================================
             break;
         } // END SWITCH : ExtendedKeyCode
-printf("======\nSORTIE KEY_FLAGS = %#x\n", key_flags);
 
     } // END FUNCT : event
 
