@@ -82,7 +82,7 @@ struct test_card_mod : public internal_mod {
         Rect winrect = this->get_screen_rect().shrink(30);
         this->front.draw(RDPOpaqueRect(winrect, WINBLUE), clip);
 
-        Bitmap bitmap(24, SHARE_PATH "/" "Philips_PM5544_640.bmp");
+        Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.bmp");
         this->front.draw(RDPMemBlt(0,
             Rect(winrect.x + (winrect.cx - bitmap.cx)/2,
                  winrect.y + (winrect.cy - bitmap.cy)/2,
@@ -129,7 +129,7 @@ struct test_card_mod : public internal_mod {
         this->front.server_draw_text(30, 90, "Blue ", BLACK, BLUE, clip);
         this->front.server_draw_text(30, 110, "Black", WHITE, BLACK, clip);
 
-        Bitmap card(24, SHARE_PATH "/" REDEMPTION_LOGO24);
+        Bitmap card(SHARE_PATH "/" REDEMPTION_LOGO24);
         this->front.draw(RDPMemBlt(0,
             Rect(this->get_screen_rect().cx - card.cx - 30,
                  this->get_screen_rect().cy - card.cy - 30, card.cx, card.cy),
@@ -147,7 +147,7 @@ struct test_card_mod : public internal_mod {
             Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx, bloc64x64.cy), 0xCC,
              32, 32, 0), clip, bloc64x64);
 
-        Bitmap logo(24, SHARE_PATH "/ad8b.bmp");
+        Bitmap logo(SHARE_PATH "/ad8b.bmp");
         this->front.draw(RDPMemBlt(0,
             Rect(100, 100, 26, 32),
             0xCC,

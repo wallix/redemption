@@ -2412,6 +2412,13 @@ public:
 //             dst_tile.x, dst_tile.y, dst_tile.cx, dst_tile.cy,
 //             src_tile.x, src_tile.y, src_tile.cx, src_tile.cy);
         // No need to resize bitmap
+
+//        if (dst_tile.x + dst_tile.cx == this->client_info.width
+//        && dst_tile.y + dst_tile.cy == this->client_info.height){
+//            return;
+//        }
+
+
         if (src_tile == Rect(0, 0, bitmap.cx, bitmap.cy)){
             const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
             this->orders->draw(cmd2, clip, bitmap);
@@ -2420,7 +2427,6 @@ public:
             }
         }
         else {
-            TODO("if we immediately create tiled_bitmap at the target bpp value, we would avoid a data copy. Drawback need one more parameter to tiling bitmap constructor")
             const Bitmap tiled_bmp(bitmap, src_tile);
             const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
             this->orders->draw(cmd2, clip, tiled_bmp);

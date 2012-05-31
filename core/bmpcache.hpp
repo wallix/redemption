@@ -138,7 +138,9 @@ struct BmpCache {
                 id = 2;
             }
             else {
-                LOG(LOG_ERR, "bitmap size too big %d", bmp_size);
+                LOG(LOG_ERR, "bitmap size too big %d small=%u medium=%u big=%u",
+                    bmp_size,  this->small_size,  this->medium_size,  this->big_size);
+                    REDASSERT(0);
                 throw Error(ERR_BITMAP_CACHE_TOO_BIG);
             }
 
