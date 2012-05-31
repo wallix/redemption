@@ -869,11 +869,15 @@ struct InfoPacket {
             stream.in_skip_bytes(172);
 
             this->extendedInfoPacket.performanceFlags = stream.in_uint32_le();
-
             this->extendedInfoPacket.cbAutoReconnectLen = stream.in_uint16_le();
+            if (stream.end - stream.p < this->extendedInfoPacket.cbAutoReconnectLen) {
+                this->extendedInfoPacket.cbAutoReconnectLen = stream.end - stream.p;
+            }
             stream.in_uni_to_ascii_str((char *) this->extendedInfoPacket.autoReconnectCookie, this->extendedInfoPacket.cbAutoReconnectLen);
-            this->extendedInfoPacket.reserved1 = stream.in_uint16_le();
-            this->extendedInfoPacket.reserved2 = stream.in_uint16_le();
+            if (stream.p + 4 <= stream.end){
+                this->extendedInfoPacket.reserved1 = stream.in_uint16_le();
+                this->extendedInfoPacket.reserved2 = stream.in_uint16_le();
+            }
          }
     } // END FUNCT : recv()
 

@@ -626,9 +626,13 @@ struct X224In : public X224Packet
                                 if (this->verbose){
                                     LOG(LOG_INFO, "Found RDP Negotiation Request Structure");
                                 }
-                                assert(p[0] == RDP_NEG_REQ);
-                                assert(p[1] == 0); // flags
-                                assert(p[2] == 8 && p[3] == 0); // length = 8
+                                if (p[0] != RDP_NEG_REQ){
+                                    LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
+                                        this->tpdu_hdr.LI, p[0], p[1], p[2], p[3]);
+                                }
+//                                assert(p[0] == RDP_NEG_REQ);
+//                                assert(p[1] == 0); // flags
+//                                assert(p[2] == 8 && p[3] == 0); // length = 8
 
                                 switch (p[4]){
                                     case RDP_NEG_PROTOCOL_RDP:

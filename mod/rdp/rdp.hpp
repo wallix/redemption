@@ -382,7 +382,7 @@ struct mod_rdp : public client_mod {
                     use_rdp5(1),
                     keylayout(info.keylayout),
                     lic_layer(hostname),
-                    orders(255),
+                    orders(0),
                     share_id(0),
                     bitmap_compression(1),
                     version(0),

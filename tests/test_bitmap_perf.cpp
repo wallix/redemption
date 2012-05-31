@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 {
     {
         BOOST_CHECK(true);
-        Bitmap bigbmp(24, FIXTURES_PATH "/color_image.bmp");
+        Bitmap bigbmp(FIXTURES_PATH "/color_image.bmp");
 
         BOOST_CHECK(true);
         // make it large enough to hold any image
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 
     {
         int bpp = 24;
-        Bitmap bigbmp(bpp, FIXTURES_PATH "/logo-redemption.bmp");
+        Bitmap bigbmp(FIXTURES_PATH "/logo-redemption.bmp");
         // make it large enough to hold any image
         Stream out(2*bigbmp.bmp_size);
         unsigned long long usec = ustime();

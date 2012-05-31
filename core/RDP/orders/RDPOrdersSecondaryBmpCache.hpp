@@ -514,7 +514,7 @@ class RDPBmpCache {
         stream.out_uint8(this->id);
         stream.out_clear_bytes(1); /* pad */
 
-        stream.out_uint8(align4(this->bmp->cx));
+        stream.out_uint8(this->bmp->cx);
         stream.out_uint8(this->bmp->cy);
         stream.out_uint8(this->bmp->original_bpp);
 
@@ -548,7 +548,6 @@ class RDPBmpCache {
     void emit_raw_v1(Stream & stream) const
     {
         using namespace RDP;
-        unsigned int padded_line_size = this->bmp->bmp_size / this->bmp->cy;
 
         TODO(" this should become some kind of emit header")
         uint8_t control = STANDARD | SECONDARY;
@@ -569,7 +568,8 @@ class RDPBmpCache {
 
         // bitmapWidth (1 byte): An 8-bit, unsigned integer. The width of the
         // bitmap in pixels.
-        stream.out_uint8(align4(this->bmp->cx));
+        assert(this->bmp->cx == align4(this->bmp->cx));
+        stream.out_uint8(this->bmp->cx);
 
         // bitmapHeight (1 byte): An 8-bit, unsigned integer. The height of the
         //  bitmap in pixels.
@@ -606,9 +606,8 @@ class RDPBmpCache {
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
-        for (size_t y = 0 ; y < this->bmp->cy; y++) {
-            stream.out_copy_bytes(this->bmp->data() + y * padded_line_size, padded_line_size);
-        }
+        // Note: we ensure bitmap with is multiple of 4, thus there won't be any padding ever
+        stream.out_copy_bytes(this->bmp->data(), this->bmp->bmp_size);
     }
 
     enum {
@@ -767,7 +766,7 @@ class RDPBmpCache {
         stream.out_uint16_le(cbr2_flags | cbr2_bpp | (this->id & 7));
         stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED_REV2); // type
 
-        stream.out_2BUE(align4(this->bmp->cx));
+        stream.out_2BUE(this->bmp->cx);
         stream.out_2BUE(this->bmp->cy);
         uint32_t offset_bitmapLength = stream.get_offset(0);
         TODO("define out_4BUE in stream and find a way to predict compressed bitmap size (the problem is to write to it afterward). May be we can keep a compressed version of the bitmap instead of recompressing every time. The first time we would use a conservative encoding for length based on cx and cy.")
@@ -816,7 +815,7 @@ class RDPBmpCache {
         // bitmapWidth (variable): A Two-Byte Unsigned Encoding (section
         //                         2.2.2.2.1.2.1.2) structure. The width of the
         //                         bitmap in pixels.
-        stream.out_2BUE(align4(this->bmp->cx));
+        stream.out_2BUE(this->bmp->cx);
 
         // bitmapHeight (variable): A Two-Byte Unsigned Encoding (section
         //                          2.2.2.2.1.2.1.2) structure. The height of the
@@ -857,6 +856,11 @@ class RDPBmpCache {
         //                              bitmap data (the format of this data is
         //                              defined in [MS-RDPBCGR] section
         //                              2.2.9.1.1.3.1.2.2).
+
+        // Uncompressed bitmap data represents a bitmap as a bottom-up,
+        //  left-to-right series of pixels. Each pixel is a whole
+        //  number of bytes. Each row contains a multiple of four bytes
+        // (including up to three bytes of padding, as necessary).
 
         // for uncompressed bitmaps the format is quite simple
         stream.out_copy_bytes(this->bmp->data(), this->bmp->bmp_size);
@@ -1001,7 +1005,7 @@ class RDPBmpCache {
         size_t lg = snprintf(buffer, sz,
             "RDPBmpCache(id=%u idx=%u bpp=%u cx=%u cy=%u)",
             this->id, this->idx,
-            this->bmp->original_bpp, align4(this->bmp->cx), this->bmp->cy);
+            this->bmp->original_bpp, this->bmp->cx, this->bmp->cy);
         if (lg >= sz){
             return sz;
         }

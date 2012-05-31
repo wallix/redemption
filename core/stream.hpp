@@ -439,15 +439,14 @@ class Stream {
     // sz utf16 bytes are translated to ascci, 00 terminated
     void in_uni_to_ascii_str(char* text, size_t sz)
     {
-        size_t i = 0;
+        size_t i = 1;
         size_t max = (sz>>1);
-        while (i < max) {
-            text[i++] = this->in_uint8();
+        while (i <= max) {
+            text[i-1] = this->in_uint8();
             this->in_skip_bytes(1);
+            i++;
         }
-        if (i > 0){
-            text[i-1] = 0;
-        }
+        text[i-1] = 0;
     }
 
     void mark_end() {

@@ -93,9 +93,9 @@ public:
 
     Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size, bool compressed=false)
         : original_bpp(bpp)
-        , cx(cx)
+        , cx(align4(cx))
         , cy(cy)
-        , line_size(align4(this->cx * nbbytes(this->original_bpp)))
+        , line_size(this->cx * nbbytes(this->original_bpp))
         , bmp_size(this->line_size * cy)
         , data_bitmap()
     {
@@ -111,16 +111,16 @@ public:
         }
 
         if (compressed) {
-            this->decompress(data, size);
+            this->decompress(data, cx, cy, size);
         } else {
             uint8_t * dest = this->data_bitmap.get();
             const uint8_t * src = data;
-            const size_t & data_width = this->line_size;
+            const size_t & data_width = cx * nbbytes(bpp);
             for (uint16_t i = 0 ; i < this->cy ; i++){
                 memcpy(dest, src, data_width);
-                bzero(dest + data_width, (this->bmp_size / this->cy) -  data_width);
+                bzero(dest + this->line_size, this->line_size - data_width);
                 src += data_width;
-                dest += (this->bmp_size / this->cy);
+                dest += this->line_size;
             }
         }
         if (this->cx <= 0 || this->cy <= 0){
@@ -131,16 +131,18 @@ public:
 
     Bitmap(const Bitmap & src_bmp, const Rect & r)
         : original_bpp(src_bmp.original_bpp)
-        , cx(r.cx)
-        , cy((uint16_t)r.cy)
-        , line_size(align4(this->cx * nbbytes(src_bmp.original_bpp)))
+        , cx(align4(r.cx))
+        , cy(r.cy)
+        , line_size(this->cx * nbbytes(this->original_bpp))
         , bmp_size(this->line_size * this->cy)
         , data_bitmap()
     {
         this->data_bitmap.alloc(this->bmp_size);
 
 //        LOG(LOG_ERR, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
-        memcpy(this->original_palette, src_bmp.original_palette, sizeof(BGRPalette));
+        if (this->original_bpp == 8){
+            memcpy(this->original_palette, src_bmp.original_palette, sizeof(BGRPalette));
+        }
 
         // bitmapDataStream (variable): A variable-sized array of bytes.
         //  Uncompressed bitmap data represents a bitmap as a bottom-up,
@@ -148,20 +150,21 @@ public:
         //  number of bytes. Each row contains a multiple of four bytes
         // (including up to three bytes of padding, as necessary).
 
+        // In redemption we ensure a more constraint restriction to avoid padding
+        // bitmap width must always be a multiple of 4
+
         const uint8_t Bpp = nbbytes(this->original_bpp);
-        const unsigned src_row_size = src_bmp.bmp_size / src_bmp.cy;
-        const unsigned dest_row_size = this->bmp_size / this->cy;
         uint8_t *dest = this->data_bitmap.get();
-        const uint8_t *src = src_bmp.data_bitmap.get() + src_row_size * (src_bmp.cy - r.y - this->cy) + r.x * Bpp;
+        const uint8_t *src = src_bmp.data_bitmap.get() + src_bmp.line_size * (src_bmp.cy - r.y - this->cy) + r.x * Bpp;
         const unsigned line_to_copy = r.cx * nbbytes(src_bmp.original_bpp);
 
         for (unsigned i = 0; i < this->cy; i++) {
             memcpy(dest, src, line_to_copy);
-            if (line_to_copy < dest_row_size){
-                bzero(dest + line_to_copy, dest_row_size - line_to_copy);
+            if (line_to_copy < this->line_size){
+                bzero(dest + line_to_copy, this->line_size - line_to_copy);
             }
-            src += src_row_size;
-            dest += dest_row_size;
+            src += src_bmp.line_size;
+            dest += this->line_size;
         }
     }
 
@@ -169,7 +172,7 @@ public:
     TODO("add palette support");
     Bitmap(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t vnc_cy, uint8_t vnc_bpp, const Rect & tile)
         : original_bpp(vnc_bpp)
-        , cx(tile.cx)
+        , cx(align4(tile.cx))
         , cy(tile.cy)
         , line_size(align4(this->cx * nbbytes(this->original_bpp)))
         , bmp_size(this->line_size * this->cy)
@@ -190,24 +193,24 @@ public:
 
         const uint8_t Bpp = nbbytes(this->original_bpp);
         const unsigned src_row_size = vnc_cx * Bpp;
-        const unsigned dest_row_size = this->bmp_size / this->cy;
         uint8_t *dest = this->data_bitmap.get();
         const uint8_t *src = vnc_raw + src_row_size * (tile.y + tile.cy - 1) + tile.x * Bpp;
+        const uint16_t line_to_copy_size = tile.cx * Bpp;
 
         for (unsigned i = 0; i < this->cy; i++) {
-            memcpy(dest, src, dest_row_size);
-            if (src_row_size < dest_row_size){
-                bzero(dest + src_row_size, dest_row_size - src_row_size);
+            memcpy(dest, src, line_to_copy_size);
+            if (line_to_copy_size < this->line_size){
+                bzero(dest + line_to_copy_size, this->line_size - line_to_copy_size);
             }
             src -= src_row_size;
-            dest += dest_row_size;
+            dest += this->line_size;
         }
     }
 
 
 
-    Bitmap(uint8_t bpp, const char* filename)
-        : original_bpp(bpp)
+    Bitmap(const char* filename)
+        : original_bpp(24)
         , cx(0)
         , cy(0)
         , line_size(0)
@@ -220,9 +223,9 @@ public:
 
         /* header for bmp file */
         struct bmp_header {
-            int size;
-            int image_width;
-            int image_height;
+            size_t size;
+            unsigned image_width;
+            unsigned image_height;
             short planes;
             short bit_count;
             int compression;
@@ -359,7 +362,7 @@ public:
             stream.init(size);
             int row_size = (header.image_width * file_Qpp) / 2;
             int padding = align4(row_size) - row_size;
-            for (int y = 0; y < header.image_height; y++) {
+            for (unsigned y = 0; y < header.image_height; y++) {
                 int k = read(fd, stream.data + y * row_size, row_size + padding);
                 if (k != (row_size + padding)) {
                     LOG(LOG_ERR, "Widget_load: read error reading bitmap file [%s] read\n", filename);
@@ -371,18 +374,18 @@ public:
             stream.end = stream.data + size;
         }
 
-        this->cx = (uint16_t)(header.image_width);
+        const uint8_t Bpp = 3;
+        this->cx = align4((uint16_t)(header.image_width));
         this->cy = (uint16_t)header.image_height;
-        this->line_size = align4(this->cx * nbbytes(this->original_bpp));
+        this->line_size = this->cx * Bpp;
         this->bmp_size = this->line_size * this->cy;
 
         this->data_bitmap.alloc(this->bmp_size);
         uint8_t * dest = this->data_bitmap.get();
-        const uint8_t nbbytes_dest = ::nbbytes(this->original_bpp);
 
         int k = 0;
         for (unsigned y = 0; y < this->cy ; y++) {
-            for (unsigned x = 0 ; x < this->cx; x++) {
+            for (unsigned x = 0 ; x < header.image_width; x++) {
                 uint32_t pixel = 0;
                 switch (header.bit_count){
                 case 24:
@@ -409,30 +412,11 @@ public:
                 }
 
                 uint32_t px = color_decode(pixel, (uint8_t)header.bit_count, palette1);
-
-                switch (this->original_bpp)
-                {
-                default:
-                case 24:
-                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest, px);
-                break;
-                case 16:
-                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest,
-                        color_encode(RGBtoBGR(px), 16));
-                break;
-                case 15:
-                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest,
-                        color_encode(px, 15));
-                break;
-                case 8:
-                    ::out_bytes_le(dest + y * this->line_size + x * nbbytes_dest, nbbytes_dest,
-                        color_encode(px, 8));
-                break;
-                }
+                ::out_bytes_le(dest + y * this->line_size + x * Bpp, Bpp, px);
             }
-            if (this->line_size > (size_t)(this->cx * this->cy * nbbytes_dest)){
-                bzero(dest + y * this->line_size + this->cx * this->cy * nbbytes_dest,
-                      this->line_size - (this->cx * this->cy * nbbytes_dest));
+            if (this->line_size > header.image_width * Bpp){
+                bzero(dest + y * this->line_size + header.image_width * Bpp,
+                      this->line_size - header.image_width * Bpp);
             }
         }
     }
@@ -482,7 +466,7 @@ public:
 
 private:
     TODO("move that function to external definition")
-    void decompress(const uint8_t* input, size_t size)
+    void decompress(const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size)
     {
 //        printf("============================================\n");
 //        printf("Compressed bitmap data\n");
@@ -493,8 +477,10 @@ private:
 //        printf("============================================\n");
 
         const uint8_t Bpp = nbbytes(this->original_bpp);
+        uint16_t & dst_cx = this->cx;
         uint8_t* pmin = this->data_bitmap.get();
         uint8_t* pmax = pmin + this->bmp_size;
+        uint16_t out_x_count = 0;
         unsigned yprev = 0;
         uint8_t* out = pmin;
         const uint8_t* end = input + size;
@@ -659,15 +645,15 @@ private:
             if ((opcode == FILL)
             && (opcode == lastopcode)
             && (out != pmin + this->line_size)){
-                if (out - this->cx * Bpp < pmin){
-                    yprev = 0;
-                }
-                else {
-                     yprev = in_bytes_le(Bpp, out - this->cx * Bpp);
-                }
+                yprev = (out - this->line_size < pmin) ? 0 : in_bytes_le(Bpp, out - this->line_size);
                 out_bytes_le(out, Bpp, yprev ^ mix);
                 count--;
-                out+= Bpp;
+                out += Bpp;
+                out_x_count += 1;
+                if (out_x_count == dst_cx){
+                    bzero(out, (dst_cx - src_cx) * Bpp);
+                    out_x_count = 0;
+                }
             }
             lastopcode = opcode;
 
@@ -677,12 +663,8 @@ private:
                     LOG(LOG_WARNING, "Decompressed bitmap too large. Dying.");
                     throw Error(ERR_BITMAP_DECOMPRESSED_DATA_TOO_LARGE);
                 }
-                if (out - this->cx * Bpp < pmin){
-                    yprev = 0;
-                }
-                else {
-                    yprev = in_bytes_le(Bpp, out - this->cx * Bpp);
-                }
+                yprev = (out - this->line_size < pmin) ? 0 : in_bytes_le(Bpp, out - this->line_size);
+
                 switch (opcode) {
                 case FILL:
                     out_bytes_le(out, Bpp, yprev);
@@ -736,6 +718,11 @@ private:
                 }
                 count--;
                 out += Bpp;
+                out_x_count += 1;
+                if (out_x_count == dst_cx){
+                    bzero(out, (dst_cx - src_cx) * Bpp);
+                    out_x_count = 0;
+                }
             }
         }
         return;
@@ -1183,9 +1170,9 @@ public:
 
     Bitmap(uint8_t out_bpp, const Bitmap& bmp)
     : original_bpp(out_bpp)
-    , cx(bmp.cx)
+    , cx(align4(bmp.cx))
     , cy(bmp.cy)
-    , line_size(align4(nbbytes(out_bpp) * bmp.cx))
+    , line_size(this->cx * nbbytes(this->original_bpp))
     , bmp_size(this->line_size * cy)
     , data_bitmap()
     {
@@ -1196,10 +1183,10 @@ public:
             uint8_t * dest = this->data_bitmap.get();
             const uint8_t * src = bmp.data_bitmap.get();
             const uint8_t src_nbbytes = nbbytes(bmp.original_bpp);
-            const uint8_t dest_nbbytes = nbbytes(out_bpp);
+            const uint8_t Bpp = nbbytes(out_bpp);
 
-            for (size_t j = 0; j < bmp.cy ; j++) {
-                for (size_t i = 0; i < bmp.cx ; i++) {
+            for (size_t y = 0; y < bmp.cy ; y++) {
+                for (size_t x = 0; x < bmp.cx ; x++) {
                     uint32_t pixel = in_bytes_le(src_nbbytes, src);
 
                     pixel = color_decode(pixel, bmp.original_bpp, bmp.original_palette);
@@ -1208,13 +1195,17 @@ public:
                     }
                     pixel = color_encode(pixel, out_bpp);
 
-                    out_bytes_le(dest, dest_nbbytes, pixel);
+                    out_bytes_le(dest, Bpp, pixel);
                     src += src_nbbytes;
-                    dest += dest_nbbytes;
+                    dest += Bpp;
                 }
-                unsigned padding = this->line_size - this->cx * nbbytes(this->original_bpp);
-                bzero(dest, padding);
-                dest += padding;
+                TODO("padding code should not be necessary as source bmp width is already aligned")
+                if (this->line_size < bmp.cx * Bpp){
+                    uint16_t padding = this->line_size - bmp.cx * Bpp;
+                    bzero(dest, padding);
+                    dest += padding;
+                }
+                TODO("padding code should not be necessary for source either as source bmp width is already aligned")
                 src += bmp.line_size - bmp.cx * nbbytes(bmp.original_bpp);
             }
         }
