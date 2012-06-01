@@ -356,6 +356,10 @@ public:
         int distance_from_previous_fragment = 0;
         for (int index = 0; index < len; index++) {
             FontChar* font_item = this->font.font_items[wstr[index]];
+
+            if (!font_item){
+                font_item = this->font.font_items['?'];
+            }
             TODO(" avoid passing parameters by reference to get results")
             switch (this->cache.add_glyph(font_item, f, c))
             {

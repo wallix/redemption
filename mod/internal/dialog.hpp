@@ -62,9 +62,9 @@ struct dialog_mod : public internal_mod {
             }
         }
 
-        int log_height = number_of_lines * 16;
+        int log_height = number_of_lines * 16 + 75;
         if (log_height > min_log_height){
-            log_height = max_log_height;
+            log_height = std::min(max_log_height, log_height);
         }
         if (log_height < min_log_height){
             log_height = min_log_height;
