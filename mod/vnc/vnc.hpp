@@ -490,7 +490,7 @@ struct mod_vnc : public client_mod {
             stream.out_clear_bytes(2);
             stream.out_uint32_be(key);
             this->t->send(stream.data, 8);
-            this->event->set(10000);
+            this->event->set(1000);
         }
     }
 
@@ -551,7 +551,7 @@ struct mod_vnc : public client_mod {
                 LOG(LOG_INFO, "exception raised");
                 rv = BACK_EVENT_1;
             }
-            this->event->set(10000);
+            this->event->set(1000);
         }
         else {
             this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
