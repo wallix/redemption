@@ -113,12 +113,12 @@ struct KeymapSym {
     // constructor
 // ################################################################
     KeymapSym(int verbose = 0)
-    : ibuf(0)
-    , nbuf(0)
-    , ibuf_kevent(0)
-    , nbuf_kevent(0)
-    , dead_key(DEADKEY_NONE)
-    , verbose(verbose)
+            : ibuf(0)
+            , nbuf(0)
+            , ibuf_kevent(0)
+            , nbuf_kevent(0)
+            , dead_key(DEADKEY_NONE)
+            , verbose(verbose)
     {
 // ################################################################
         memset(this->keys_down, 0, 256 * sizeof(int));

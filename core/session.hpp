@@ -973,6 +973,7 @@ struct Session {
                     this->front->client_info.width,
                     this->front->client_info.height,
                     this->front->client_info.keylayout,
+                    this->front->keymap.key_flags,
                     this->ini->globals.debug.mod_vnc);
                 this->mod->draw_event();
 //                    this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
