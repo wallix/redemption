@@ -113,12 +113,12 @@ struct KeymapSym {
     // constructor
 // ################################################################
     KeymapSym(int verbose = 0)
-    : ibuf(0)
-    , nbuf(0)
-    , ibuf_kevent(0)
-    , nbuf_kevent(0)
-    , dead_key(DEADKEY_NONE)
-    , verbose(verbose)
+            : ibuf(0)
+            , nbuf(0)
+            , ibuf_kevent(0)
+            , nbuf_kevent(0)
+            , dead_key(DEADKEY_NONE)
+            , verbose(verbose)
     {
 // ################################################################
         memset(this->keys_down, 0, 256 * sizeof(int));
@@ -130,7 +130,6 @@ struct KeymapSym {
         memset(&this->keylayout_WORK_shiftcapslock_sym, 0, 128 * sizeof(int));
 
         this->key_flags = 0;
-//        this->last_chr_unicode = 0;
         this->last_sym = 0;
     }
 
@@ -206,18 +205,18 @@ struct KeymapSym {
         //================
         // Modifier keys
         //================
-            case LEFT_SHIFT:   // left shift
-            case RIGHT_SHIFT: // right shift
-            case LEFT_CTRL:   // left ctrl
-            case RIGHT_CTRL:  // right ctrl
-            case LEFT_ALT:    // left alt
-            case RIGHT_ALT:   // right alt
+//            case LEFT_SHIFT:   // left shift
+//            case RIGHT_SHIFT: // right shift
+//            case LEFT_CTRL:   // left ctrl
+//            case RIGHT_CTRL:  // right ctrl
+//            case LEFT_ALT:    // left alt
+//            case RIGHT_ALT:   // right alt
+
                 break;
         //================
         // All other keys
         //================
             default: // all other codes
-//====================================================================
                 // This table translates the RDP scanodes to X11 scandodes :
                 //  - the fist block (0-127) simply applies the +8 Windows to X11 translation and forces some 0 values
                 //  - the second block (128-255) give codes for the extended keys that have a meaningful one
@@ -256,278 +255,274 @@ struct KeymapSym {
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0xf0 - 0xf7
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  // 0xf8 - 0xff
                 } ;
-                // if event is a Make
-                if (this->keys_down[extendedKeyCode])
-                {
-                    const KeyLayout_t * layout = &keylayout_WORK_noshift_sym;
+                const KeyLayout_t * layout = &keylayout_WORK_noshift_sym;
 //                        this->last_char_key = extendedKeyCode;
+                if ( ( (extendedKeyCode >= 0x47) && (extendedKeyCode <= 0x49) )
+                  || ( (extendedKeyCode >= 0x4b) && (extendedKeyCode <= 0x4d) )
+                  || ( (extendedKeyCode >= 0x4f) && (extendedKeyCode <= 0x53) )
+                   ){
                     //=========================================================================
                     // KEYPAD : Keypad keys whose meanings depends on Numlock are handled apart
                     //=========================================================================
-                    if ( ( (extendedKeyCode >= 0x47) && (extendedKeyCode <= 0x49) )
-                      || ( (extendedKeyCode >= 0x4b) && (extendedKeyCode <= 0x4d) )
-                      || ( (extendedKeyCode >= 0x4f) && (extendedKeyCode <= 0x53) )
-                       ){
+                    if ((this->key_flags & NUMLOCK)) {
                         // if numlock is activated, keys are printable characters (logical SHIFT mode)
-                        if ((this->key_flags & NUMLOCK)) {
-                            layout = &this->keylayout_WORK_shift_sym;
-                            // Translate the scancode to an unicode char
-                            uint8_t sym = map[extendedKeyCode];
-//                            uint32_t uchar = (*layout)[sym];
-//                           this->push(uchar);
-                            uint32_t ksym = (*layout)[sym];
-                            this->push_sym(ksym);
-                        } // if numlock ON
-                        // if numlock is not activated, keys are NOT printable characters (logical NO SHIFT mode)
-                        else {
-                            ;
-                            switch (extendedKeyCode){
-                               /* kEYPAD LEFT ARROW */
-                                case 0x4b:
-                                     this->push_sym(0xFF51);
-                                    break;
-                                /* kEYPAD UP ARROW */
-                                case 0x48:
-                                    this->push_sym(0xFF52);
-                                    break;
-                                /* kEYPAD RIGHT ARROW */
-                                case 0x4d:
-                                    this->push_sym(0xFF53);
-                                    break;
-                                /* kEYPAD DOWN ARROW */
-                                case 0x50:
-                                    this->push_sym(0xFF54);
-                                    break;
-                                /* kEYPAD HOME */
-                                case 0x47:
-                                    this->push_sym(0xFF50);
-                                    break;
-                                /* kEYPAD PGUP */
-                                case 0x49:
-                                    this->push_sym(0xFF55);
-                                    break;
-                                /* kEYPAD PGDOWN */
-                                case 0x51:
-                                    this->push_sym(0xFF56);
-                                    break;
-                                /* kEYPAD END */
-                                case 0x4F:
-                                    this->push_sym(0xFF57);
-                                    break;
-                                /* kEYPAD DELETE */
-                                case 0x53:
-                                    this->push_sym(0xFFFF);
-                                default:
-                                    break;
-                            }
-
-                        } // if numlock ON
-                    }
-                    else {
-                    //========================================
-                    // NOT KEYPAD Specific
-                    //========================================
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Key not from keypad: %#x", extendedKeyCode);
-                        }
-                        if (this->is_ctrl_pressed() && this->is_alt_pressed()){
-                            layout = &this->keylayout_WORK_altgr_sym;
-                        }
-                        else if (this->is_shift_pressed() && this->is_caps_locked()){
-                            layout = &this->keylayout_WORK_shiftcapslock_sym;
-                        }
-                        else if (this->is_shift_pressed()){
-                            layout = &this->keylayout_WORK_shift_sym;
-                        }
-                        else if (this->is_caps_locked()) {
-                            layout = &this->keylayout_WORK_capslock_sym;
-                        }
+                        layout = &this->keylayout_WORK_shift_sym;
                         // Translate the scancode to an unicode char
                         uint8_t sym = map[extendedKeyCode];
                         uint32_t ksym = (*layout)[sym];
-                        if (this->verbose){
-                            LOG(LOG_INFO, "ksym=%x", ksym);
+                        this->push_sym(ksym);
+                    } // if numlock ON
+                    else {
+                        // if numlock is not activated, keys are NOT printable characters (logical NO SHIFT mode)
+                        switch (extendedKeyCode){
+                           /* kEYPAD LEFT ARROW */
+                            case 0x4b:
+                                 this->push_sym(0xFF51);
+                                break;
+                            /* kEYPAD UP ARROW */
+                            case 0x48:
+                                this->push_sym(0xFF52);
+                                break;
+                            /* kEYPAD RIGHT ARROW */
+                            case 0x4d:
+                                this->push_sym(0xFF53);
+                                break;
+                            /* kEYPAD DOWN ARROW */
+                            case 0x50:
+                                this->push_sym(0xFF54);
+                                break;
+                            /* kEYPAD HOME */
+                            case 0x47:
+                                this->push_sym(0xFF50);
+                                break;
+                            /* kEYPAD PGUP */
+                            case 0x49:
+                                this->push_sym(0xFF55);
+                                break;
+                            /* kEYPAD PGDOWN */
+                            case 0x51:
+                                this->push_sym(0xFF56);
+                                break;
+                            /* kEYPAD END */
+                            case 0x4F:
+                                this->push_sym(0xFF57);
+                                break;
+                            /* kEYPAD DELETE */
+                            case 0x53:
+                                this->push_sym(0xFFFF);
+                            default:
+                                break;
                         }
+
+                    } // if numlock ON
+                }
+                else {
+                    //========================================
+                    // NOT KEYPAD Specific
+                    //========================================
+                    if (this->verbose){
+                        LOG(LOG_INFO, "Key not from keypad: %#x", extendedKeyCode);
+                    }
+                    // SET Pointer on LAYOUT
+                    //----------------------------------------
+                    if (this->is_ctrl_pressed() && this->is_alt_pressed()){
+                        layout = &this->keylayout_WORK_altgr_sym;
+                    }
+                    else if (this->is_shift_pressed() && this->is_caps_locked()){
+                        layout = &this->keylayout_WORK_shiftcapslock_sym;
+                    }
+                    else if (this->is_shift_pressed()){
+                        layout = &this->keylayout_WORK_shift_sym;
+                    }
+                    else if (this->is_caps_locked()) {
+                        layout = &this->keylayout_WORK_capslock_sym;
+                    }
+                    // Translate the scancode to a KeySym
+                    //----------------------------------------
+                    uint8_t sym = map[extendedKeyCode];
+                    uint32_t ksym = (*layout)[sym];
+                    if (this->verbose){
+                        LOG(LOG_INFO, "ksym=%x", ksym);
+                    }
+                    if ((ksym == 0xFE52 ) || (ksym == 0xFE57) || (ksym == 0x60) || (ksym == 0x7E)) {
+                        //=================================================
+                        // ksym is NOT in Printable unicode character range
+                        //=================================================
+                        // That is, A dead key (0xFE52 (^), 0xFE57 ("), 0x60 (`), 0x7E (~) )
+                        // The flag is set accordingly
+                        switch (extendedKeyCode){
+                            case 0x1A:
+                                this->is_shift_pressed() ? this->dead_key = DEADKEY_UML : this->dead_key = DEADKEY_CIRC;
+                                break;
+                            case 0x08:
+                                this->dead_key = DEADKEY_GRAVE;
+                                break;
+                            case 0x03:
+                                this->dead_key = DEADKEY_TILDE;
+                                break;
+                            default:
+                                break;
+                        } // Switch extendedKeyCode
+                    }
+                    else {
                         //==============================================
                         // ksym is in Printable character range.
                         //==============================================
-                        // That is :
-                        //  * Not a dead key (0xxFE52 (^), 0xFE57 ("), 0x60 (`), 0x7E (~) )
-                        if ((ksym != 0xFE52) && (ksym != 0xFE57) && (ksym != 0x60) && (ksym != 0x7E)){
-
-                            // If previous key was a dead key, push a translated unicode char
-                            if (this->dead_key != DEADKEY_NONE){
-                                switch (dead_key){
-                                    case DEADKEY_CIRC:
-                                        switch (ksym){
-                                            case 'a':
-                                                this->push_sym(0xE2); // unicode for â (acirc)
-                                                break;
-                                            case 'A':
-                                                this->push_sym(0xC2); // unicode for Â (Acirc)
-                                                break;
-                                            case 'e':
-                                                this->push_sym(0xEA); // unicode for ê (ecirc)
-                                                break;
-                                            case 'E':
-                                                this->push_sym(0xCA); // unicode for Ê (Ecirc)
-                                                break;
-                                            case 'i':
-                                                this->push_sym(0xEE); // unicode for î (icirc)
-                                                break;
-                                            case 'I':
-                                                this->push_sym(0xCE); // unicode for Î (Icirc)
-                                                break;
-                                            case 'o':
-                                                this->push_sym(0xF4); // unicode for ô (ocirc)
-                                                break;
-                                            case 'O':
-                                                this->push_sym(0xD4); // unicode for Ô (Ocirc)
-                                                break;
-                                            case 'u':
-                                                this->push_sym(0xFB); // unicode for û (ucirc)
-                                                break;
-                                            case 'U':
-                                                this->push_sym(0xDB); // unicode for Û (Ucirc)
-                                                break;
-                                            case ' ':
-                                                this->push_sym(0x5E); // unicode for ^ (caret)
-                                                break;
-                                            default:
-                                                this->push_sym(ksym); // unmodified unicode
-                                                break;
-                                        }
-                                        break;
-
-                                    case DEADKEY_UML:
-                                        switch (ksym){
-                                            case 'a':
-                                                this->push_sym(0xE4); // unicode for ä (auml)
-                                                break;
-                                            case 'A':
-                                                this->push_sym(0xC4); // unicode for Ä (Auml)
-                                                break;
-                                            case 'e':
-                                                this->push_sym(0xEB); // unicode for ë (euml)
-                                                break;
-                                            case 'E':
-                                                this->push_sym(0xCB); // unicode for Ë (Euml)
-                                                break;
-                                            case 'i':
-                                                this->push_sym(0xEF); // unicode for ï (iuml)
-                                                break;
-                                            case 'I':
-                                                this->push_sym(0xCF); // unicode for Ï (Iuml)
-                                                break;
-                                            case 'o':
-                                                this->push_sym(0xF6); // unicode for ö (ouml)
-                                                break;
-                                            case 'O':
-                                                this->push_sym(0xD6); // unicode for Ö (Ouml)
-                                                break;
-                                            case 'u':
-                                                this->push_sym(0xFC); // unicode for ü (uuml)
-                                                break;
-                                            case 'U':
-                                                this->push_sym(0xDC); // unicode for Ü (Uuml)
-                                                break;
-                                            case ' ':
-                                                this->push_sym(0xA8); // unicode for " (umlaut)
-                                                break;
-                                            default:
-                                                this->push_sym(ksym); // unmodified unicode
-                                                break;
-                                        }
-                                        break;
-                                    case DEADKEY_GRAVE:
-                                        switch (ksym){
-                                            case 'a':
-                                                this->push_sym(0xE0); // unicode for à (agrave)
-                                                break;
-                                            case 'A':
-                                                this->push_sym(0xC0); // unicode for À (Agrave)
-                                                break;
-                                            case 'e':
-                                                this->push_sym(0xE8); // unicode for è (egrave)
-                                                break;
-                                            case 'E':
-                                                this->push_sym(0xC8); // unicode for È (Egrave)
-                                                break;
-                                            case 'i':
-                                                this->push_sym(0xEC); // unicode for ì (igrave)
-                                                break;
-                                            case 'I':
-                                                this->push_sym(0xCC); // unicode for Ì (Igrave)
-                                                break;
-                                            case 'o':
-                                                this->push_sym(0xF2); // unicode for ò (ograve)
-                                                break;
-                                            case 'O':
-                                                this->push_sym(0xD2); // unicode for Ò (Ograve)
-                                                break;
-                                            case 'u':
-                                                this->push_sym(0xF9); // unicode for ù (ugrave)
-                                                break;
-                                            case 'U':
-                                                this->push_sym(0xD9); // unicode for Ù (Ugrave)
-                                                break;
-                                            case ' ':
-                                                this->push_sym(0x60); // unicode for ` (backcote)
-                                                break;
-                                            default:
-                                                this->push_sym(ksym); // unmodified unicode
-                                                break;
-                                        }
-                                        break;
-                                    case DEADKEY_TILDE:
-                                        switch (ksym){
-                                            case 'n':
-                                                this->push_sym(0xF1); // unicode for ~n (ntilde)
-                                                break;
-                                            case 'N':
-                                                this->push_sym(0xD1); // unicode for ~N (Ntilde)
-                                                break;
-                                            case ' ':
-                                                this->push_sym(0x7E); // unicode for ~ (tilde)
-                                                break;
-                                            default:
-                                                this->push_sym(ksym); // unmodified unicode
-                                                break;
-                                        }
-                                        break;
-                                    default:
-                                        this->push_sym(ksym); // unmodified unicode
-                                        break;
-                                } // Switch DEAD_KEY
-                                this->dead_key = DEADKEY_NONE;
-                            } // Is a dead Key
-                            else {
-                                // If previous key wasn't a dead key, simply push
-                                this->push_sym(ksym);
-                            }
-                        }
-                        else {
-                            //=================================================
-                            // ksym is NOT in Printable unicode character range
-                            //=================================================
-                            switch (extendedKeyCode){
-                                case 0x1A:
-                                    this->is_shift_pressed() ? this->dead_key = DEADKEY_UML : this->dead_key = DEADKEY_CIRC;
+                        if (this->dead_key != DEADKEY_NONE){
+                            switch (dead_key){
+                                case DEADKEY_CIRC:
+                                    switch (ksym){
+                                        case 'a':
+                                            this->push_sym(0xE2); // unicode for â (acirc)
+                                            break;
+                                        case 'A':
+                                            this->push_sym(0xC2); // unicode for Â (Acirc)
+                                            break;
+                                        case 'e':
+                                            this->push_sym(0xEA); // unicode for ê (ecirc)
+                                            break;
+                                        case 'E':
+                                            this->push_sym(0xCA); // unicode for Ê (Ecirc)
+                                            break;
+                                        case 'i':
+                                            this->push_sym(0xEE); // unicode for î (icirc)
+                                            break;
+                                        case 'I':
+                                            this->push_sym(0xCE); // unicode for Î (Icirc)
+                                            break;
+                                        case 'o':
+                                            this->push_sym(0xF4); // unicode for ô (ocirc)
+                                            break;
+                                        case 'O':
+                                            this->push_sym(0xD4); // unicode for Ô (Ocirc)
+                                            break;
+                                        case 'u':
+                                            this->push_sym(0xFB); // unicode for û (ucirc)
+                                            break;
+                                        case 'U':
+                                            this->push_sym(0xDB); // unicode for Û (Ucirc)
+                                            break;
+                                        case ' ':
+                                            this->push_sym(0x5E); // unicode for ^ (caret)
+                                            break;
+                                        default:
+                                            this->push_sym(ksym); // unmodified unicode
+                                            break;
+                                    }
                                     break;
-                                case 0x08:
-                                    this->dead_key = DEADKEY_GRAVE;
+
+                                case DEADKEY_UML:
+                                    switch (ksym){
+                                        case 'a':
+                                            this->push_sym(0xE4); // unicode for ä (auml)
+                                            break;
+                                        case 'A':
+                                            this->push_sym(0xC4); // unicode for Ä (Auml)
+                                            break;
+                                        case 'e':
+                                            this->push_sym(0xEB); // unicode for ë (euml)
+                                            break;
+                                        case 'E':
+                                            this->push_sym(0xCB); // unicode for Ë (Euml)
+                                            break;
+                                        case 'i':
+                                            this->push_sym(0xEF); // unicode for ï (iuml)
+                                            break;
+                                        case 'I':
+                                            this->push_sym(0xCF); // unicode for Ï (Iuml)
+                                            break;
+                                        case 'o':
+                                            this->push_sym(0xF6); // unicode for ö (ouml)
+                                            break;
+                                        case 'O':
+                                            this->push_sym(0xD6); // unicode for Ö (Ouml)
+                                            break;
+                                        case 'u':
+                                            this->push_sym(0xFC); // unicode for ü (uuml)
+                                            break;
+                                        case 'U':
+                                            this->push_sym(0xDC); // unicode for Ü (Uuml)
+                                            break;
+                                        case ' ':
+                                            this->push_sym(0xA8); // unicode for " (umlaut)
+                                            break;
+                                        default:
+                                            this->push_sym(ksym); // unmodified unicode
+                                            break;
+                                    }
                                     break;
-                                case 0x03:
-                                    this->dead_key = DEADKEY_TILDE;
+                                case DEADKEY_GRAVE:
+                                    switch (ksym){
+                                        case 'a':
+                                            this->push_sym(0xE0); // unicode for à (agrave)
+                                            break;
+                                        case 'A':
+                                            this->push_sym(0xC0); // unicode for À (Agrave)
+                                            break;
+                                        case 'e':
+                                            this->push_sym(0xE8); // unicode for è (egrave)
+                                            break;
+                                        case 'E':
+                                            this->push_sym(0xC8); // unicode for È (Egrave)
+                                            break;
+                                        case 'i':
+                                            this->push_sym(0xEC); // unicode for ì (igrave)
+                                            break;
+                                        case 'I':
+                                            this->push_sym(0xCC); // unicode for Ì (Igrave)
+                                            break;
+                                        case 'o':
+                                            this->push_sym(0xF2); // unicode for ò (ograve)
+                                            break;
+                                        case 'O':
+                                            this->push_sym(0xD2); // unicode for Ò (Ograve)
+                                            break;
+                                        case 'u':
+                                            this->push_sym(0xF9); // unicode for ù (ugrave)
+                                            break;
+                                        case 'U':
+                                            this->push_sym(0xD9); // unicode for Ù (Ugrave)
+                                            break;
+                                        case ' ':
+                                            this->push_sym(0x60); // unicode for ` (backcote)
+                                            break;
+                                        default:
+                                            this->push_sym(ksym); // unmodified unicode
+                                            break;
+                                    }
+                                    break;
+                                case DEADKEY_TILDE:
+                                    switch (ksym){
+                                        case 'n':
+                                            this->push_sym(0xF1); // unicode for ~n (ntilde)
+                                            break;
+                                        case 'N':
+                                            this->push_sym(0xD1); // unicode for ~N (Ntilde)
+                                            break;
+                                        case ' ':
+                                            this->push_sym(0x7E); // unicode for ~ (tilde)
+                                            break;
+                                        default:
+                                            this->push_sym(ksym); // unmodified unicode
+                                            break;
+                                    }
                                     break;
                                 default:
+                                    this->push_sym(ksym); // unmodified unicode
                                     break;
-                            } // Switch extendedKeyCode
-                        } // END if PRINTABLE / else
-                    } // END if KEYPAD specific / else
-                } // END if Keydown
-                else {
-                }
+                            } // Switch DEAD_KEY
+                            // if event is a Make (mandatory because a BREAK on a modifier key would also reset this flag)
+                            if (this->keys_down[extendedKeyCode])
+                            {
+                                this->dead_key = DEADKEY_NONE;
+                            }
+                        } // Is a dead Key
+                        else {
+                            // If previous key wasn't a dead key, simply push
+                            this->push_sym(ksym);
+                        }
+                    } // END if PRINTABLE / else
+                } // END if KEYPAD specific / else
             break;
         } // END SWITCH : ExtendedKeyCode
 
@@ -763,7 +758,6 @@ struct KeymapSym {
                                   0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61, // 68 - 6F
                                   0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0, // 70 - 77
                                      0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0, // 78 - 7F
-//                                     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, // 80 - 87
                     };
                     const KeyLayout_t x0407_shift_sym = {
                                      0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, // 00 - 07
@@ -782,7 +776,6 @@ struct KeymapSym {
                                   0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61, // 68 - 6F
                                   0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0, // 70 - 77
                                      0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb, // 78 - 7F
-//                                  0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, // 80 - 87
                     };
                     const KeyLayout_t x0407_altgr_sym = {
                                      0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, // 00 - 07
@@ -801,7 +794,6 @@ struct KeymapSym {
                                   0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0, // 68 - 6F
                                   0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0, // 70 - 77
                                      0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0, // 78 - 7F
-//                                     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, // 80 - 87
                     };
                     const KeyLayout_t x0407_capslock_sym = {
                                      0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, // 00 - 07
@@ -820,7 +812,6 @@ struct KeymapSym {
                                   0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61, // 68 - 6F
                                   0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0, // 70 - 77
                                      0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0, // 78 - 7F
-//                                     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, // 80 - 87
                     };
                     const KeyLayout_t x0407_shiftcapslock_sym = {
                                      0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, // 00 - 07
@@ -839,7 +830,6 @@ struct KeymapSym {
                                   0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61, // 68 - 6F
                                   0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0, // 70 - 77
                                      0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb, // 78 - 7F
-//                                  0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0, // 80 - 87
                     };
 
                     for(size_t i = 0 ; i < 128 ; i++) {
@@ -881,7 +871,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0409_shift_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -900,7 +889,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xffe8,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0409_altgr_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -919,7 +907,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
                               0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0409_capslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -938,7 +925,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0409_shiftcapslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -957,7 +943,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xffe8,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
 
                     for(size_t i = 0 ; i < 128 ; i++) {
@@ -1128,7 +1113,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0410_shift_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1147,7 +1131,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0410_altgr_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1166,7 +1149,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0410_capslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1185,7 +1167,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0410_shiftcapslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1204,7 +1185,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
 
                     for(size_t i = 0 ; i < 128 ; i++) {
@@ -1246,7 +1226,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0419_shift_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1265,7 +1244,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xffe8,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0419_altgr_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1284,7 +1262,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
                               0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0419_capslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1303,7 +1280,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0419_shiftcapslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1322,7 +1298,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xffe8,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
 
                     for(size_t i = 0 ; i < 128 ; i++) {
@@ -1364,7 +1339,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x041d_shift_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1383,7 +1357,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x041d_altgr_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1402,7 +1375,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x041d_capslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1421,7 +1393,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x041d_shiftcapslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1440,7 +1411,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
 
                     for(size_t i = 0 ; i < 128 ; i++) {
@@ -1482,7 +1452,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x046e_shift_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1501,7 +1470,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x046e_altgr_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1520,7 +1488,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x046e_capslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1539,7 +1506,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x046e_shiftcapslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1558,7 +1524,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
 
                     for(size_t i = 0 ; i < 128 ; i++) {
@@ -1600,7 +1565,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0807_shift_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1619,7 +1583,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0807_altgr_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1638,7 +1601,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0807_capslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1657,7 +1619,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0807_shiftcapslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1676,7 +1637,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
 
                     for(size_t i = 0 ; i < 128 ; i++) {
@@ -1718,7 +1678,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0809_shift_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1737,7 +1696,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xffe8,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0809_altgr_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1756,7 +1714,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
                               0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0809_capslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1775,7 +1732,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xffea,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0809_shiftcapslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1794,7 +1750,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xffe8,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
 
                     for(size_t i = 0 ; i < 128 ; i++) {
@@ -1836,7 +1791,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x080c_shift_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1855,7 +1809,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x080c_altgr_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1874,7 +1827,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x080c_capslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1893,7 +1845,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x080c_shiftcapslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1912,7 +1863,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
 
                     for(size_t i = 0 ; i < 128 ; i++) {
@@ -1954,7 +1904,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0813_shift_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1973,7 +1922,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0813_altgr_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -1992,7 +1940,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0813_capslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -2011,7 +1958,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x0813_shiftcapslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -2030,7 +1976,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
 
                     for(size_t i = 0 ; i < 128 ; i++) {
@@ -2072,7 +2017,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x100c_shift_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -2091,7 +2035,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x100c_altgr_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -2110,7 +2053,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,     0x0,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x100c_capslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -2129,7 +2071,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,     0x0,  0xffbd,     0x0,
-//                                 0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
                     const KeyLayout_t x100c_shiftcapslock_sym = {
                                  0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
@@ -2148,7 +2089,6 @@ struct KeymapSym {
                               0xff54,  0xff56,  0xff63,  0xffff,  0xff8d,  0xffe4,  0xff13,  0xff61,
                               0xffaf,  0xfe03,     0x0,  0xffeb,  0xffec,  0xff67,     0x0,     0x0,
                                  0x0,     0x0,     0x0,     0x0,  0xfe03,  0xffe9,  0xffbd,  0xffeb,
-//                              0xffed,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,     0x0,
                     };
 
                     for(size_t i = 0 ; i < 128 ; i++) {

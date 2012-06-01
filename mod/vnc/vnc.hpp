@@ -72,7 +72,17 @@ struct mod_vnc : public client_mod {
     int incr;
     wait_obj * event;
 
-    mod_vnc(Transport * t, wait_obj * event, const char * username, const char * password, struct FrontAPI & front, uint16_t front_width, uint16_t front_height, int keylayout, uint32_t verbose)
+    mod_vnc ( Transport * t
+            , wait_obj * event
+            , const char * username
+            , const char * password
+            , struct FrontAPI & front
+            , uint16_t front_width
+            , uint16_t front_height
+            , int keylayout
+            , int key_flags
+            , uint32_t verbose
+            )
         : client_mod(front, front_width, front_height)
         , verbose(verbose)
         , incr(0)
@@ -83,6 +93,7 @@ struct mod_vnc : public client_mod {
         this->t = t;
 
         keymapSym.init_layout_sym(keylayout);
+        keymapSym.key_flags = key_flags;
 
         memset(this->mod_name, 0, 256);
         this->mod_mouse_state = 0;
@@ -490,13 +501,13 @@ struct mod_vnc : public client_mod {
             stream.out_clear_bytes(2);
             stream.out_uint32_be(key);
             this->t->send(stream.data, 8);
-            this->event->set(10000);
+            this->event->set(1000);
         }
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     {
-        return;
+        this->keymapSym.synchronize(param1);
     }
 
     virtual void rdp_input_invalidate(const Rect & r)
@@ -551,7 +562,7 @@ struct mod_vnc : public client_mod {
                 LOG(LOG_INFO, "exception raised");
                 rv = BACK_EVENT_1;
             }
-            this->event->set(10000);
+            this->event->set(1000);
         }
         else {
             this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
