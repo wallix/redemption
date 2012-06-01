@@ -69,13 +69,15 @@ struct mod_vnc : public client_mod {
     BGRPalette palette332;
     uint32_t verbose;
     KeymapSym keymapSym;
+    int incr;
 
     mod_vnc(Transport * t, const char * username, const char * password, struct FrontAPI & front, uint16_t front_width, uint16_t front_height
     , int keylayout
     , uint32_t verbose)
         :
         client_mod(front, front_width, front_height),
-        verbose(verbose)
+        verbose(verbose),
+        incr(0)
     {
         LOG(LOG_INFO, "Connecting to VNC Server");
         init_palette332(this->palette332);
@@ -246,7 +248,7 @@ struct mod_vnc : public client_mod {
             this->blue_shift = stream.in_uint8();
             stream.in_skip_bytes(3); // skip padding
 
-            LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
+//            LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
 
             int lg = stream.in_uint32_be();
 
@@ -407,21 +409,6 @@ struct mod_vnc : public client_mod {
             break;
         }
 
-        {
-            /* FrambufferUpdateRequest */
-            Stream stream(32768);
-            stream.out_uint8(3);
-            stream.out_uint8(0);
-            TODO(" we could create some out_rect primitive at stream level")
-            stream.out_uint16_be(0);
-            stream.out_uint16_be(0);
-            stream.out_uint16_be(width);
-            stream.out_uint16_be(height);
-
-            // sending framebuffer update request
-            this->t->send(stream.data, 10);
-        }
-
         TODO(" define some constants  not need to use dynamic data")
         /* set almost null cursor, this is the little dot cursor */
         uint8_t rdp_cursor_data[32 * (32 * 3)];
@@ -443,8 +430,23 @@ struct mod_vnc : public client_mod {
         TODO("Clearing the front screen could be done in session")
         this->front.begin_update();
         RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), 0);
-
         this->front.draw(orect, Rect(0, 0, this->width, this->height));
+        {
+            /* FrambufferUpdateRequest */
+            Stream stream(32768);
+            stream.out_uint8(3);
+            stream.out_uint8(0);
+            TODO(" we could create some out_rect primitive at stream level")
+            stream.out_uint16_be(0);
+            stream.out_uint16_be(0);
+            stream.out_uint16_be(this->width);
+            stream.out_uint16_be(this->height);
+
+            // sending framebuffer update request
+            this->t->send(stream.data, 10);
+        }
+
+
         this->front.end_update();
     }
 
@@ -503,6 +505,7 @@ struct mod_vnc : public client_mod {
             stream.out_clear_bytes(2);
             stream.out_uint32_be(key);
             this->t->send(stream.data, 8);
+            this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
         }
     }
 
@@ -513,12 +516,12 @@ struct mod_vnc : public client_mod {
 
     virtual void rdp_input_invalidate(const Rect & r)
     {
-        LOG(LOG_INFO, "rdp_input_invalidate");
+//        LOG(LOG_INFO, "rdp_input_invalidate");
         if (!r.isempty()) {
             Stream stream(32768);
             /* FrambufferUpdateRequest */
             stream.out_uint8(3);
-            stream.out_uint8(0);
+            stream.out_uint8(this->incr);
             stream.out_uint16_be(r.x);
             stream.out_uint16_be(r.y);
             stream.out_uint16_be(r.cx);
@@ -572,8 +575,8 @@ struct mod_vnc : public client_mod {
             uint16_t type = stream.in_uint16_le();
             uint16_t status = stream.in_uint16_le();
             uint32_t length = stream.in_uint32_le();
-            LOG(LOG_DEBUG, "lib_process_channel_data: type=%u status=%u length=%u",
-                (unsigned)type, (unsigned)status, (unsigned)length);
+//            LOG(LOG_DEBUG, "lib_process_channel_data: type=%u status=%u length=%u",
+//                (unsigned)type, (unsigned)status, (unsigned)length);
             switch (type) {
             case 2:
             { /* CLIPRDR_FORMAT_ANNOUNCE */
@@ -672,7 +675,7 @@ struct mod_vnc : public client_mod {
                 this->t->recv((char**)&stream.end, 4);
                 const int srcx = stream.in_uint16_be();
                 const int srcy = stream.in_uint16_be();
-                    LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
+//                LOG(LOG_INFO, "copy rect: x=%d y=%d cx=%d cy=%d encoding=%d src_x=%d, src_y=%d", x, y, cx, cy, encoding, srcx, srcy);
                 const RDPScrBlt scrblt(Rect(x, y, cx, cy), 0xCC, srcx, srcy);
                 this->front.begin_update();
                 this->front.draw(scrblt, Rect(0, 0, this->front_width, this->front_height));
@@ -728,6 +731,7 @@ struct mod_vnc : public client_mod {
                     }
                 }
 
+                TODO("The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask use is 1 bit per pixel arrays")
                 // copy vnc pointer and mask to rdp pointer and mask
                 uint8_t rdp_cursor_data[32 * (32 * 3)] = {};
                 for (int yy = 0; yy < cy; yy++) {
@@ -739,9 +743,10 @@ struct mod_vnc : public client_mod {
                                 for (int tt = 0 ; tt < Bpp; tt++){
                                     pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
                                 }
-                                rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 0] = pixel >> 16;
-                                rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 1] = pixel >> 8;
-                                rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 2] = pixel;
+                                TODO("temporary: force black cursor")
+                                rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 0] = 0;
+                                rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 1] = 0;
+                                rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 2] = 0;
                             }
                         }
                     }
