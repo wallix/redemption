@@ -70,14 +70,13 @@ struct mod_vnc : public client_mod {
     uint32_t verbose;
     KeymapSym keymapSym;
     int incr;
+    wait_obj * event;
 
-    mod_vnc(Transport * t, const char * username, const char * password, struct FrontAPI & front, uint16_t front_width, uint16_t front_height
-    , int keylayout
-    , uint32_t verbose)
-        :
-        client_mod(front, front_width, front_height),
-        verbose(verbose),
-        incr(0)
+    mod_vnc(Transport * t, wait_obj * event, const char * username, const char * password, struct FrontAPI & front, uint16_t front_width, uint16_t front_height, int keylayout, uint32_t verbose)
+        : client_mod(front, front_width, front_height)
+        , verbose(verbose)
+        , incr(0)
+        , event(event)
     {
         LOG(LOG_INFO, "Connecting to VNC Server");
         init_palette332(this->palette332);
@@ -431,23 +430,9 @@ struct mod_vnc : public client_mod {
         this->front.begin_update();
         RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), 0);
         this->front.draw(orect, Rect(0, 0, this->width, this->height));
-        {
-            /* FrambufferUpdateRequest */
-            Stream stream(32768);
-            stream.out_uint8(3);
-            stream.out_uint8(0);
-            TODO(" we could create some out_rect primitive at stream level")
-            stream.out_uint16_be(0);
-            stream.out_uint16_be(0);
-            stream.out_uint16_be(this->width);
-            stream.out_uint16_be(this->height);
-
-            // sending framebuffer update request
-            this->t->send(stream.data, 10);
-        }
-
-
         this->front.end_update();
+
+        this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
     }
 
     virtual ~mod_vnc(){}
@@ -505,7 +490,7 @@ struct mod_vnc : public client_mod {
             stream.out_clear_bytes(2);
             stream.out_uint32_be(key);
             this->t->send(stream.data, 8);
-            this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
+            this->event->set(10000);
         }
     }
 
@@ -527,6 +512,7 @@ struct mod_vnc : public client_mod {
             stream.out_uint16_be(r.cx);
             stream.out_uint16_be(r.cy);
             this->t->send(stream.data, 10);
+            this->incr = 1;
         }
     }
 
@@ -535,34 +521,40 @@ struct mod_vnc : public client_mod {
         if (this->verbose){
             LOG(LOG_INFO, "vnc::draw_event");
         }
-        Stream stream(1);
         BackEvent_t rv = BACK_EVENT_NONE;
 
-        try {
-            this->t->recv((char**)&stream.end, 1);
-            char type = stream.in_uint8();
-            switch (type)
-            {
-                case 0: /* framebuffer update */
-                    this->lib_framebuffer_update();
-                break;
-                case 1: /* palette */
-                    this->lib_palette_update();
-                break;
-                case 3: /* clipboard */
-                    this->lib_clip_data();
-                break;
-                default:
-                    LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", type);
+        if (this->event->can_recv()){
+            Stream stream(1);
+            try {
+                this->t->recv((char**)&stream.end, 1);
+                char type = stream.in_uint8();
+                switch (type)
+                {
+                    case 0: /* framebuffer update */
+                        this->lib_framebuffer_update();
+                    break;
+                    case 1: /* palette */
+                        this->lib_palette_update();
+                    break;
+                    case 3: /* clipboard */
+                        this->lib_clip_data();
+                    break;
+                    default:
+                        LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", type);
+                }
             }
+            catch(const Error & e) {
+                LOG(LOG_INFO, "VNC Stopped id=%u", e.id);
+                rv = BACK_EVENT_1;
+            }
+            catch(...) {
+                LOG(LOG_INFO, "exception raised");
+                rv = BACK_EVENT_1;
+            }
+            this->event->set(10000);
         }
-        catch(const Error & e) {
-            LOG(LOG_INFO, "VNC Stopped id=%u", e.id);
-            rv = BACK_EVENT_1;
-        }
-        catch(...) {
-            LOG(LOG_INFO, "exception raised");
-            rv = BACK_EVENT_1;
+        else {
+            this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
         }
         return rv;
     }
@@ -571,63 +563,63 @@ struct mod_vnc : public client_mod {
     TODO(" use it for copy/paste  it is not called now")
     int lib_process_channel_data(int chanid, int flags, int size, Stream & stream, int total_size)
     {
-        if (chanid == this->clip_chanid) {
-            uint16_t type = stream.in_uint16_le();
-            uint16_t status = stream.in_uint16_le();
-            uint32_t length = stream.in_uint32_le();
-//            LOG(LOG_DEBUG, "lib_process_channel_data: type=%u status=%u length=%u",
-//                (unsigned)type, (unsigned)status, (unsigned)length);
-            switch (type) {
-            case 2:
-            { /* CLIPRDR_FORMAT_ANNOUNCE */
-                Stream out_s(8192);
-                out_s.out_uint16_le(3);
-                out_s.out_uint16_le(1);
-                out_s.out_uint32_le(0);
-                out_s.out_clear_bytes(4); /* pad */
-                // this->send_to_front_channel(
-            }
-            break;
-            case 3: /* CLIPRDR_FORMAT_ACK */
-                break;
-            case 4:
-            { /* CLIPRDR_DATA_REQUEST */
-                uint32_t format = 0;
-                if (length >= 4) {
-                    format = stream.in_uint32_le();
-                }
-                /* only support CF_TEXT and CF_UNICODETEXT */
-                if ((format != 1) && (format != 13)) {
-                    break;
-                }
-                Stream out_s(8192);
-                out_s.out_uint16_le(5);
-                out_s.out_uint16_le(1);
-                if (format == 13) { /* CF_UNICODETEXT */
-                    out_s.out_uint32_le(this->clip_data_size * 2 + 2);
-                    for (size_t index = 0; index < this->clip_data_size; index++) {
-                        out_s.out_uint8(this->clip_data.data[index]);
-                        out_s.out_uint8(0);
-                    }
-                    out_s.out_clear_bytes(2);
-                }
-                else if (format == 1) { /* CF_TEXT */
-                    out_s.out_uint32_le(this->clip_data_size + 1);
-                    for (size_t index = 0; index < this->clip_data_size; index++) {
-                        out_s.out_uint8(this->clip_data.data[index]);
-                    }
-                    out_s.out_clear_bytes(1);
-                }
-                out_s.out_clear_bytes(4); /* pad */
-                // this->send_to_front_channel(
-            }
-            break;
-            }
-        } else {
-            LOG(LOG_INFO, "lib_process_channel_data: unknown chanid %d"
-                   " this->clip_chanid %d\n",
-                      chanid, this->clip_chanid);
-        }
+//        if (chanid == this->clip_chanid) {
+//            uint16_t type = stream.in_uint16_le();
+//            uint16_t status = stream.in_uint16_le();
+//            uint32_t length = stream.in_uint32_le();
+////            LOG(LOG_DEBUG, "lib_process_channel_data: type=%u status=%u length=%u",
+////                (unsigned)type, (unsigned)status, (unsigned)length);
+//            switch (type) {
+//            case 2:
+//            { /* CLIPRDR_FORMAT_ANNOUNCE */
+//                Stream out_s(8192);
+//                out_s.out_uint16_le(3);
+//                out_s.out_uint16_le(1);
+//                out_s.out_uint32_le(0);
+//                out_s.out_clear_bytes(4); /* pad */
+//                // this->send_to_front_channel(
+//            }
+//            break;
+//            case 3: /* CLIPRDR_FORMAT_ACK */
+//                break;
+//            case 4:
+//            { /* CLIPRDR_DATA_REQUEST */
+//                uint32_t format = 0;
+//                if (length >= 4) {
+//                    format = stream.in_uint32_le();
+//                }
+//                /* only support CF_TEXT and CF_UNICODETEXT */
+//                if ((format != 1) && (format != 13)) {
+//                    break;
+//                }
+//                Stream out_s(8192);
+//                out_s.out_uint16_le(5);
+//                out_s.out_uint16_le(1);
+//                if (format == 13) { /* CF_UNICODETEXT */
+//                    out_s.out_uint32_le(this->clip_data_size * 2 + 2);
+//                    for (size_t index = 0; index < this->clip_data_size; index++) {
+//                        out_s.out_uint8(this->clip_data.data[index]);
+//                        out_s.out_uint8(0);
+//                    }
+//                    out_s.out_clear_bytes(2);
+//                }
+//                else if (format == 1) { /* CF_TEXT */
+//                    out_s.out_uint32_le(this->clip_data_size + 1);
+//                    for (size_t index = 0; index < this->clip_data_size; index++) {
+//                        out_s.out_uint8(this->clip_data.data[index]);
+//                    }
+//                    out_s.out_clear_bytes(1);
+//                }
+//                out_s.out_clear_bytes(4); /* pad */
+//                // this->send_to_front_channel(
+//            }
+//            break;
+//            }
+//        } else {
+//            LOG(LOG_INFO, "lib_process_channel_data: unknown chanid %d"
+//                   " this->clip_chanid %d\n",
+//                      chanid, this->clip_chanid);
+//        }
         return 0;
     }
 
@@ -769,18 +761,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             }
         }
 
-        {
-            /* FrambufferUpdateRequest */
-            Stream stream(10);
-            stream.out_uint8(3);
-            stream.out_uint8(1);
-            stream.out_uint16_be(0);
-            stream.out_uint16_be(0);
-
-            stream.out_uint16_be(this->front_width);
-            stream.out_uint16_be(this->front_height);
-            this->t->send(stream.data, 10);
-        }
+        this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
     }
 
     void lib_clip_data(void)

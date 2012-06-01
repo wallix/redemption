@@ -326,6 +326,7 @@ struct Session {
 
         this->front_event->add_to_fd_set(rfds, max);
         select(max + 1, &rfds, &wfds, 0, &timeout);
+
         if (this->verbose){
             LOG(LOG_INFO, "Session::step_STATE_ENTRY::timeout=%u.%0.6u", timeout.tv_sec, timeout.tv_usec);
         }
@@ -965,6 +966,7 @@ struct Session {
                 this->back_event = new wait_obj(t->sck);
                 this->front->init_mod();
                 this->mod = new mod_vnc(t,
+                    this->back_event,
                     this->context->get(STRAUTHID_TARGET_USER),
                     this->context->get(STRAUTHID_TARGET_PASSWORD),
                     *this->front,

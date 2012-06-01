@@ -88,7 +88,6 @@ class wait_obj
         this->trigger_time = now + idle_time;
     }
 
-    private:
     bool can_recv()
     {
         fd_set rfds;
