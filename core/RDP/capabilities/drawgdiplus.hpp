@@ -208,10 +208,10 @@ struct DrawGdiPlusCaps : public Capability {
 
     DrawGdiPlusCaps()
     : Capability(CAPSTYPE_DRAWGDIPLUS, RDP_CAPLEN_DRAWGDIPLUS)
-    , drawGDIPlusSupportLevel(0) // from a specific list of values (see enum)
-    , GdipVersion(0)             // CS : MUST be a valid version number
-                                 // SC : whatever (not used)
-    , drawGdiplusCacheLevel(0)   // from a specific list of values (see enum)
+    , drawGDIPlusSupportLevel(TS_DRAW_GDIPLUS_DEFAULT) // from a specific list of values (see enum)
+    , GdipVersion(0) // CS : MUST be a valid version number
+                     // SC : whatever (not used)
+    , drawGdiplusCacheLevel(TS_DRAW_GDIPLUS_CACHE_LEVEL_DEFAULT) // from a specific list of values (see enum)
     {
         this->gdiPCacheEntries = new GdiPCacheEntries;
         this->gdiPCacheChunkSize = new GdiPCacheChunkSize;
@@ -267,9 +267,9 @@ struct DrawGdiPlusCaps : public Capability {
     void log(const char * msg){
         LOG(LOG_INFO, "%s DrawGdiPlus caps (%u bytes)", msg, this->len);
 
-        LOG(LOG_INFO, "Share caps::drawGDIPlusSupportLevel %u", this->drawGDIPlusSupportLevel);
-        LOG(LOG_INFO, "Share caps::GdipVersion %u", this->GdipVersion);
-        LOG(LOG_INFO, "Share caps::drawGdiplusCacheLevel %u", this->drawGdiplusCacheLevel);
+        LOG(LOG_INFO, "DrawGdiPlus caps::drawGDIPlusSupportLevel %u", this->drawGDIPlusSupportLevel);
+        LOG(LOG_INFO, "DrawGdiPlus caps::GdipVersion %u", this->GdipVersion);
+        LOG(LOG_INFO, "DrawGdiPlus caps::drawGdiplusCacheLevel %u", this->drawGdiplusCacheLevel);
 
         LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries->GdipGraphicsCacheEntries %u", this->gdiPCacheEntries->GdipGraphicsCacheEntries);
         LOG(LOG_INFO, "DrawGdiPlus caps::gdiPCacheEntries->GdipBrushCacheEntries %u", this->gdiPCacheEntries->GdipBrushCacheEntries);
