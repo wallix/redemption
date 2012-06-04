@@ -242,6 +242,7 @@ unit-test test_capability_order : tests/test_capability_order.cpp libboost_unit_
 unit-test test_capability_pointer : tests/test_capability_pointer.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_share : tests/test_capability_share.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_sound : tests/test_capability_sound.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_drawgdiplus : tests/test_capability_drawgdiplus.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 
 unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test : ;
 unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test : ;
