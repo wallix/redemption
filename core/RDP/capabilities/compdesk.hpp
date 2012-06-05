@@ -49,7 +49,7 @@ struct CompDeskCaps : public Capability {
     uint16_t CompDeskSupportLevel;
 
     CompDeskCaps()
-    : Capability(CAPSETTYPE_TYPE_COMPDESK, RDP_CAPLEN_COMPDESK)
+    : Capability(CAPSETTYPE_COMPDESK, RDP_CAPLEN_COMPDESK)
     , CompDeskSupportLevel(COMPDESK_NOT_SUPPORTED) // By default, minimal
     {
     }

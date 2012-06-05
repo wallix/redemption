@@ -1795,7 +1795,7 @@ public:
                 break;
             case 22: /* 22 */
                 break;
-            case CAPSETTYPE_TYPE_COMPDESK: { /* 25 */
+            case CAPSETTYPE_COMPDESK: { /* 25 */
                     CompDeskCaps compdesk_caps;
                     compdesk_caps.log("Receiving from client");
                     compdesk_caps.recv(stream, len);

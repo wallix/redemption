@@ -17,13 +17,12 @@
    Copyright (C) Wallix 2010
    Author(s): Christophe Grosjean
 
-   Unit test to RDP CompDesk object
+   Unit test to RDP LargePointer object
    Using lib boost functions for testing
 */
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestCapabilityCompDesk
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
@@ -31,28 +30,28 @@
 #include "RDP/capabilities.hpp"
 
 
-BOOST_AUTO_TEST_CASE(TestCapabilityCompDeskEmit)
+BOOST_AUTO_TEST_CASE(TestCapabilityLargePointerEmit)
 {
-    CompDeskCaps compdesk_caps;
-    compdesk_caps.CompDeskSupportLevel = COMPDESK_SUPPORTED;
+    LargePointerCaps largepointer_caps;
+    largepointer_caps.largePointerSupportFlags = LARGE_POINTER_FLAG_96x96;
 
-    BOOST_CHECK_EQUAL(compdesk_caps.capabilityType, (uint16_t)CAPSETTYPE_COMPDESK);
-    BOOST_CHECK_EQUAL(compdesk_caps.len, (uint16_t)RDP_CAPLEN_COMPDESK);
-    BOOST_CHECK_EQUAL(compdesk_caps.CompDeskSupportLevel, (uint16_t)COMPDESK_SUPPORTED);
+    BOOST_CHECK_EQUAL(largepointer_caps.capabilityType, (uint16_t)CAPSETTYPE_LARGE_POINTER);
+    BOOST_CHECK_EQUAL(largepointer_caps.len, (uint16_t)RDP_CAPLEN_LARGE_POINTER);
+    BOOST_CHECK_EQUAL(largepointer_caps.largePointerSupportFlags, (uint16_t) 1);
 
     Stream stream(1024);
-    compdesk_caps.emit(stream);
+    largepointer_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;
 
-    CompDeskCaps compdesk_caps2;
+    LargePointerCaps largepointer_caps2;
 
-    BOOST_CHECK_EQUAL(compdesk_caps2.capabilityType, (uint16_t)CAPSETTYPE_COMPDESK);
-    BOOST_CHECK_EQUAL(compdesk_caps2.len, (uint16_t)RDP_CAPLEN_COMPDESK);
+    BOOST_CHECK_EQUAL(largepointer_caps2.capabilityType, (uint16_t)CAPSETTYPE_LARGE_POINTER);
+    BOOST_CHECK_EQUAL(largepointer_caps2.len, (uint16_t)RDP_CAPLEN_LARGE_POINTER);
 
-    BOOST_CHECK_EQUAL((uint16_t)CAPSETTYPE_COMPDESK, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_COMPDESK, stream.in_uint16_le());
-    compdesk_caps2.recv(stream, RDP_CAPLEN_COMPDESK);
+    BOOST_CHECK_EQUAL((uint16_t)CAPSETTYPE_LARGE_POINTER, stream.in_uint16_le());
+    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_LARGE_POINTER, stream.in_uint16_le());
+    largepointer_caps2.recv(stream, RDP_CAPLEN_LARGE_POINTER);
 
-    BOOST_CHECK_EQUAL(compdesk_caps2.CompDeskSupportLevel, (uint16_t)COMPDESK_SUPPORTED);
+    BOOST_CHECK_EQUAL(largepointer_caps2.largePointerSupportFlags, (uint16_t) 1);
 }

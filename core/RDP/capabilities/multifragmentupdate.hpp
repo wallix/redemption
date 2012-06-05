@@ -24,4 +24,49 @@
 #if !defined(__RDP_CAPABILITIES_MULTIFRAGMENTUPDATE_HPP__)
 #define __RDP_CAPABILITIES_MULTIFRAGMENTUPDATE_HPP__
 
+// 2.2.7.2.6 Multifragment Update Capability Set (TS_MULTIFRAGMENTUPDATE_CAPABILITYSET)
+// ====================================================================================
+// The TS_MULTIFRAGMENTUPDATE_CAPABILITYSET structure is used to specify capabilities related to
+// the fragmentation and reassembly of Fast-Path Updates (see section 2.2.9.1.2.1). This capability is
+// sent by both client and server.
+
+// capabilitySetType (2 bytes): A 16-bit, unsigned integer. Type of the capability set. This field
+//    MUST be set to CAPSETTYPE_MULTIFRAGMENTUPDATE (26).
+
+// lengthCapability (2 bytes): A 16-bit, unsigned integer. The length in bytes of the capability
+//    data, including the size of the capabilitySetType and lengthCapability fields.
+
+//  MaxRequestSize (4 bytes): A 32-bit, unsigned integer. The size of the buffer used to
+//    reassemble the fragments of a Fast-Path Update (see section 2.2.9.1.2.1). The size of this
+//    buffer places a cap on the size of the largest Fast-Path Update that can be fragmented (there
+//    MUST always be enough buffer space to hold all of the related Fast-Path Update fragments for
+//    reassembly).
+
+
+
+struct MultiFragmentUpdateCaps : public Capability {
+    uint32_t MaxRequestSize;
+
+    MultiFragmentUpdateCaps()
+    : Capability(CAPSETTYPE_MULTIFRAGMENTUPDATE, RDP_CAPLEN_MULTIFRAGMENTUPDATE)
+    , MaxRequestSize(0) // 0 by default
+    {
+    }
+
+    void emit(Stream & stream){
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_uint32_le(this->MaxRequestSize);
+    }
+
+    void recv(Stream & stream, uint16_t len){
+        this->len = len;
+        this->MaxRequestSize = stream.in_uint32_le();
+    }
+
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s MultifragmentUpdate caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "MultifragmentUpdate caps::MaxRequestSize %u", this->MaxRequestSize);
+    }
+};
 #endif

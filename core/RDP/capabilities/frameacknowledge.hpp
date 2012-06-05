@@ -34,6 +34,12 @@
 // Active PDU ([MS-RDPBCGR] section 2.2.1.13.1) or a client-to-server Confirm Active PDU ([MS-
 // RDPBCGR] section 2.2.1.13.2).
 
+// capabilitySetType (2 bytes): A 16-bit unsigned integer. The type of capability set. This field
+//    MUST be set to CAPSETTYPE_FRAME_ACKNOWLEDGE (0x001E).
+
+// lengthCapability (2 bytes): A 16-bit unsigned integer. The length, in bytes, of the capability
+//    data.
+
 // maxUnacknowledgedFrameCount (4 bytes): A 32-bit unsigned integer. When sent by the
 //    server, it MAY be set to 0, in which case it simply advertises the server's ability to receive and
 //    process the TS_FRAME_ACKNOWLEDGE_PDU (section 2.2.3.1). If it is not set to 0, it can be
