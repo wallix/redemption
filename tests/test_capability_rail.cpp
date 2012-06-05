@@ -52,5 +52,5 @@ BOOST_AUTO_TEST_CASE(TestCapabilityRailEmit)
     BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_RAIL, stream.in_uint16_le());
     rail_caps2.recv(stream, RDP_CAPLEN_RAIL);
 
-    BOOST_CHECK_EQUAL(rail_caps2.RailSupportLevel, (uint16_t) 1);
+    BOOST_CHECK_EQUAL(rail_caps2.RailSupportLevel, (uint32_t) 1);
 }
