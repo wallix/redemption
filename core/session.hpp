@@ -167,8 +167,6 @@ struct Session {
     struct client_mod * no_mod;
 
     struct Front* front;
-    int mouse_x;
-    int mouse_y;
 
     SessionManager * sesman;
     UdevRandom gen;

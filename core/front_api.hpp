@@ -53,11 +53,12 @@ class FrontAPI : public RDPGraphicDevice {
     bool notimestamp;
     bool nomouse;
 
-    FrontAPI(bool notimestamp, bool nomouse) :
-          notimestamp(notimestamp)
+    FrontAPI(bool notimestamp, bool nomouse)
+        : mouse_x(0)
+        , mouse_y(0)
+        , notimestamp(notimestamp)
         , nomouse(nomouse)
         {}
-
 };
 
 #endif
