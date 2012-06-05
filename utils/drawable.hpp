@@ -21,6 +21,7 @@
 #if !defined(__CORE_DRAWABLE_HPP__)
 #define __CORE_DRAWABLE_HPP__
 
+#include <algorithm>
 #include "bitmap.hpp"
 
 #include "colors.hpp"
@@ -1072,7 +1073,7 @@ struct Drawable
     void trace_mouse(uint16_t x, uint16_t y)
     {
         uint8_t * psave = this->save_mouse;
-        size_t nblines = std::max(0, std::min(this->contiguous_mouse_pixels, this->height - y));
+        size_t nblines = std::max<uint16_t>(0, std::min<uint16_t>(this->contiguous_mouse_pixels, this->height - y));
         for (size_t i = 0 ; i < nblines ; i++){
             char * pixel_start = this->pixel_start_data(x, y, i);
             unsigned lg = this->line_of_mouse(i).lg;
@@ -1089,7 +1090,7 @@ struct Drawable
         uint8_t * psave = this->save_mouse;
         uint16_t x = this->save_mouse_x;
         uint16_t y = this->save_mouse_y;
-        size_t nblines = std::max(0, std::min(this->contiguous_mouse_pixels, this->height - y));
+        size_t nblines = std::max<uint16_t>(0, std::min<uint16_t>(this->contiguous_mouse_pixels, this->height - y));
         for (size_t i = 0 ; i < nblines ; i++){
             char * pixel_start = this->pixel_start_data(x,y, i);
             unsigned lg = this->line_of_mouse(i).lg;
