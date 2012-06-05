@@ -1072,8 +1072,9 @@ struct Drawable
     void trace_mouse(uint16_t x, uint16_t y)
     {
         uint8_t * psave = this->save_mouse;
-        for (size_t i = 0 ; i < this->contiguous_mouse_pixels ; i++){
-            char * pixel_start = this->pixel_start_data(x,y, i);
+        size_t nblines = std::max(0, std::min(this->contiguous_mouse_pixels, this->height - y));
+        for (size_t i = 0 ; i < nblines ; i++){
+            char * pixel_start = this->pixel_start_data(x, y, i);
             unsigned lg = this->line_of_mouse(i).lg;
             memcpy(psave, pixel_start, lg);
             psave += lg;
@@ -1088,7 +1089,8 @@ struct Drawable
         uint8_t * psave = this->save_mouse;
         uint16_t x = this->save_mouse_x;
         uint16_t y = this->save_mouse_y;
-        for (size_t i = 0 ; i < this->contiguous_mouse_pixels ; i++){
+        size_t nblines = std::max(0, std::min(this->contiguous_mouse_pixels, this->height - y));
+        for (size_t i = 0 ; i < nblines ; i++){
             char * pixel_start = this->pixel_start_data(x,y, i);
             unsigned lg = this->line_of_mouse(i).lg;
             memcpy(pixel_start, psave, lg);
