@@ -221,6 +221,7 @@ RDP_CAPLEN_DRAWGDIPLUS              = 0x28,
 
 // 23 CAPSTYPE_RAIL Remote Programs Capability Set ([MS-RDPERP] section 2.2.1.1.1)
 CAPSTYPE_RAIL                       = 23,
+RDP_CAPLEN_RAIL                     = 0x08,
 
 // 24 CAPSTYPE_WINDOW Window List Capability Set ([MS-RDPERP] section 2.2.1.1.2)
 CAPSTYPE_WINDOW                     = 24,

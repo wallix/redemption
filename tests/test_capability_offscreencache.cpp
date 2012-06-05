@@ -29,7 +29,7 @@
 #include "log.hpp"
 #include "RDP/capabilities.hpp"
 
-BOOST_AUTO_TEST_CASE(TestCapabilityOffScreenCacherEmit)
+BOOST_AUTO_TEST_CASE(TestCapabilityOffScreenCacheEmit)
 {
     OffScreenCacheCaps offscreencache_caps;
     offscreencache_caps.offscreenSupportLevel = true;
