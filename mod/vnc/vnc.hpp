@@ -87,6 +87,7 @@ struct mod_vnc : public client_mod {
         , verbose(verbose)
         , incr(0)
         , event(event)
+        , keymapSym(verbose)
     {
         LOG(LOG_INFO, "Connecting to VNC Server");
         init_palette332(this->palette332);
@@ -507,6 +508,9 @@ struct mod_vnc : public client_mod {
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     {
+        if (this->verbose){
+            LOG(LOG_INFO, "KeymapSym::synchronize(time=%u, device_flags=%08x, param1=%04x, param1=%04x", time, device_flags, param1, param2);
+        }
         this->keymapSym.synchronize(param1);
     }
 
