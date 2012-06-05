@@ -469,6 +469,10 @@ struct BitmapCodecCaps : public Capability {
         this->supportedBitmapCodecs = new BitmapCodecs;
     }
 
+    ~BitmapCodecCaps() {
+        delete this->supportedBitmapCodecs;
+    }
+
     void emit(Stream & stream){
         LOG(LOG_INFO, "BitmapCodec caps emit not implemented");
     }
