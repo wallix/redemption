@@ -197,6 +197,7 @@ RDP_CAPLEN_GLYPHCACHE               = 0x34,
 
 // 17 CAPSTYPE_OFFSCREENCACHE Offscreen Bitmap Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.9)
 CAPSTYPE_OFFSCREENCACHE             = 17,
+RDP_CAPLEN_OFFSCREENCACHE           = 0x0C,
 
 // 18 CAPSTYPE_BITMAPCACHE_HOSTSUPPORT Bitmap Cache Host Support Capability Set ([MS-RDPBCGR] section 2.2.7.2.1)
 CAPSTYPE_BITMAPCACHE_HOSTSUPPORT    = 18,

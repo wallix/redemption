@@ -243,6 +243,7 @@ unit-test test_capability_glyphcache : tests/test_capability_glyphcache.cpp libb
 unit-test test_capability_input : tests/test_capability_input.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_largepointer : tests/test_capability_largepointer.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_multifragmentupdate : tests/test_capability_multifragmentupdate.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_offscreencache : tests/test_capability_offscreencache.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_order : tests/test_capability_order.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_pointer : tests/test_capability_pointer.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_share : tests/test_capability_share.cpp libboost_unit_test ini_config z dl libboost_program_options ;
