@@ -94,6 +94,7 @@ struct mod_vnc : public client_mod {
         this->t = t;
 
         keymapSym.init_layout_sym(keylayout);
+        // Initial state of keys (at least lock keys) is copied from Keymap2
         keymapSym.key_flags = key_flags;
 
         memset(this->mod_name, 0, 256);

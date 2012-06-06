@@ -188,8 +188,8 @@ CAPSTYPE_FONT                       = 14,
 RDP_CAPLEN_FONT                     = 0x08,
 
 // 15 CAPSTYPE_BRUSH Brush Capability Set ([MS-RDPBCGR] section 2.2.7.1.7)
-CAPSTYPE_BRUSH                 = 15,
-RDP_CAPLEN_BRUSH               = 0x08,
+CAPSTYPE_BRUSH                      = 15,
+RDP_CAPLEN_BRUSH                    = 0x08,
 
 // 16 CAPSTYPE_GLYPHCACHE Glyph Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.8)
 CAPSTYPE_GLYPHCACHE                 = 16,
@@ -212,9 +212,11 @@ RDP_CAPLEN_VIRTUALCHANNEL           = 0x08,
 
 // 21 CAPSTYPE_DRAWNINEGRIDCACHE DrawNineGrid Cache Capability Set ([MS-RDPEGDI] section 2.2.1.2)
 CAPSTYPE_DRAWNINEGRIDCACHE          = 21,
+RDP_CAPLEN_DRAWNINEGRIDCACHE        = 0x0C,
 
 // 22 CAPSTYPE_DRAWGDIPLUS Draw GDI+ Cache Capability Set ([MS-RDPEGDI] section 2.2.1.3)
 CAPSTYPE_DRAWGDIPLUS                = 22,
+RDP_CAPLEN_DRAWGDIPLUS              = 0x28,
 
 // 23 CAPSTYPE_RAIL Remote Programs Capability Set ([MS-RDPERP] section 2.2.1.1.1)
 CAPSTYPE_RAIL                       = 23,
