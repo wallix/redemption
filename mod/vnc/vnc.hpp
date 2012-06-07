@@ -85,9 +85,9 @@ struct mod_vnc : public client_mod {
             )
         : client_mod(front, front_width, front_height)
         , verbose(verbose)
+        , keymapSym(verbose)
         , incr(0)
         , event(event)
-        , keymapSym(verbose)
     {
         LOG(LOG_INFO, "Connecting to VNC Server");
         init_palette332(this->palette332);
