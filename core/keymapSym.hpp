@@ -178,6 +178,11 @@ struct KeymapSym {
 
     void event(const uint16_t keyboardFlags, const uint16_t keyCode)
     {
+
+        if (this->verbose){
+            LOG(LOG_INFO, "KeymapSym::event(keyboardFlags=%04x, keyCode=%04x flags=%04x)", keyboardFlags, keyCode,  this->key_flags);
+        }
+
         // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
         uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
         // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
@@ -532,6 +537,9 @@ struct KeymapSym {
     // Push only sym
     void push_sym(uint32_t sym)
     {
+        if (this->verbose & 2){
+            LOG(LOG_INFO, "KeymapSym::push_sym(sym=%08x) nbuf_sym=%u", sym, this->nbuf_sym);
+        }
         if (this->nbuf_sym < SIZE_KEYBUF_SYM){
             this->buffer_sym[this->ibuf_sym] = sym;
             this->ibuf_sym++;
@@ -544,11 +552,17 @@ struct KeymapSym {
 
     uint32_t get_sym()
     {
+        if (this->verbose & 2){
+            LOG(LOG_INFO, "KeymapSym::get_sym() nbuf_sym=%u", this->nbuf_sym);
+        }
         if (this->nbuf_sym > 0){
             uint32_t res = this->buffer_sym[(SIZE_KEYBUF_SYM + this->ibuf_sym - this->nbuf_sym) % SIZE_KEYBUF_SYM];
 
             if (this->nbuf_sym > 0){
                 this->nbuf_sym--;
+            }
+            if (this->verbose & 2){
+                LOG(LOG_INFO, "KeymapSym::get_sym() nbuf_sym=%u -> %08x", this->nbuf_sym, res);
             }
             return res;
         }
@@ -558,7 +572,11 @@ struct KeymapSym {
     // head of keyboard buffer (or keyboard buffer of size 1)
     uint32_t top_sym() const
     {
-        return this->buffer_sym[this->ibuf_sym?this->ibuf_sym-1:SIZE_KEYBUF_SYM-1];
+        uint32_t res = this->buffer_sym[this->ibuf_sym?this->ibuf_sym-1:SIZE_KEYBUF_SYM-1];
+        if (this->verbose & 2){
+            LOG(LOG_INFO, "KeymapSym::top_sym() -> %08x nbuf_sym=%u", res, this->nbuf_sym);
+        }
+        return res;
     }
 
     uint32_t nb_sym_available() const
