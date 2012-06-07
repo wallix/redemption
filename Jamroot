@@ -250,6 +250,7 @@ unit-test test_capability_rail : tests/test_capability_rail.cpp libboost_unit_te
 unit-test test_capability_share : tests/test_capability_share.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_sound : tests/test_capability_sound.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_virtualchannel : tests/test_capability_virtualchannel.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_window : tests/test_capability_window.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 
 unit-test test_keymap2 : tests/test_keymap2.cpp libboost_unit_test : ;
 unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test : ;

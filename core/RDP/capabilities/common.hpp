@@ -225,6 +225,7 @@ RDP_CAPLEN_RAIL                     = 0x08,
 
 // 24 CAPSTYPE_WINDOW Window List Capability Set ([MS-RDPERP] section 2.2.1.1.2)
 CAPSTYPE_WINDOW                     = 24,
+RDP_CAPLEN_WINDOW                   = 0x0B,
 
 // 25 CAPSETTYPE_COMPDESK Desktop Composition Extension Capability Set ([MS-RDPBCGR] section 2.2.7.2.8)
 CAPSETTYPE_COMPDESK                 = 25,
