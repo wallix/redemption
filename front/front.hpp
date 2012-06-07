@@ -1715,31 +1715,36 @@ public:
     void process_confirm_active(Stream & stream)
     {
         LOG(LOG_INFO, "process_confirm_active");
-        stream.in_skip_bytes(4); /* rdp_shareid */
-        stream.in_skip_bytes(2); /* userid */
-        int source_len = stream.in_uint16_le(); /* sizeof RDP_SOURCE */
-        // int cap_len = stream.in_uint16_le();
-        stream.in_skip_bytes(2); // skip cap_len
-        stream.in_skip_bytes(source_len);
-        int num_caps = stream.in_uint16_le();
+        uint32_t share_id = stream.in_uint32_le();
+        uint16_t originatorId = stream.in_uint16_le();
+        uint16_t lengthSourceDescriptor = stream.in_uint16_le(); /* sizeof RDP_SOURCE */
+        uint16_t lengthCombinedCapabilities = stream.in_uint16_le();
+        stream.in_skip_bytes(lengthSourceDescriptor);
+
+        uint8_t* start = stream.p;
+        int numberCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(2); /* pad */
 
-        for (int index = 0; index < num_caps; index++) {
-            uint8_t *p = stream.p;
-            int type = stream.in_uint16_le();
-            int len = stream.in_uint16_le();
+        for (int n = 0; n < numberCapabilities; n++) {
+            if (stream.p + 4 > start + lengthCombinedCapabilities) {
+                return;
+            }
 
-            switch (type) {
+            uint16_t capset_type = stream.in_uint16_le();
+            uint16_t capset_length = stream.in_uint16_le();
+            uint8_t * next = (stream.p + capset_length) - 4;
+
+            switch (capset_type) {
             case CAPSTYPE_GENERAL: {
                     GeneralCaps general;
-                    general.recv(stream, len);
+                    general.recv(stream, capset_length);
                     general.log("Receiving from client");
                     this->client_info.use_compact_packets = (general.extraflags & NO_BITMAP_COMPRESSION_HDR)?1:0;
                 }
                 break;
             case CAPSTYPE_BITMAP: {
                     BitmapCaps bitmap_caps;
-                    bitmap_caps.recv(stream, len);
+                    bitmap_caps.recv(stream, capset_length);
                     bitmap_caps.log("Receiving from client");
                     this->client_info.bpp = (bitmap_caps.preferredBitsPerPixel >= 24)?24:bitmap_caps.preferredBitsPerPixel;
                     this->client_info.width = bitmap_caps.desktopWidth;
@@ -1749,11 +1754,11 @@ public:
             case CAPSTYPE_ORDER: { /* 3 */
                     OrderCaps order_caps;
                     order_caps.log("Receiving from client");
-                    order_caps.recv(stream, len);
+                    order_caps.recv(stream, capset_length);
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE: /* 4 */
-                this->capset_bmpcache(stream, len);
+                this->capset_bmpcache(stream, capset_length);
                 break;
             case CAPSTYPE_CONTROL: /* 5 */
                 break;
@@ -1769,44 +1774,58 @@ public:
                 break;
             case CAPSTYPE_COLORCACHE: /* 10 */
                 break;
-            case 12: /* 12 */
+            case CAPSTYPE_SOUND:
                 break;
-            case 13: /* 13 */
+            case CAPSTYPE_INPUT: /* 13 */
                 break;
-            case 14: /* 14 */
+            case CAPSTYPE_FONT: /* 14 */
                 break;
             case CAPSTYPE_BRUSH: { /* 15 */
                     BrushCacheCaps brushcache_caps;
                     brushcache_caps.log("Receiving from client");
-                    brushcache_caps.recv(stream, len);
+                    brushcache_caps.recv(stream, capset_length);
                     this->client_info.brush_cache_code = brushcache_caps.brushSupportLevel;
                 }
                 break;
-            case 16: /* 16 */
+            case CAPSTYPE_GLYPHCACHE: /* 16 */
                 break;
-            case 17: /* 17 */
+            case CAPSTYPE_OFFSCREENCACHE: /* 17 */
+                break;
+            case CAPSTYPE_BITMAPCACHE_HOSTSUPPORT: /* 18 */
                 break;
             case CAPSTYPE_BITMAPCACHE_REV2: /* 19 */
-                this->capset_bmpcache2(stream, len);
+                this->capset_bmpcache2(stream, capset_length);
                 break;
-            case 20: /* 20 */
+            case CAPSTYPE_VIRTUALCHANNEL: /* 20 */
                 break;
-            case 21: /* 21 */
+            case CAPSTYPE_DRAWNINEGRIDCACHE: /* 21 */
                 break;
-            case 22: /* 22 */
+            case CAPSTYPE_DRAWGDIPLUS: /* 22 */
+                break;
+            case CAPSTYPE_RAIL: /* 23 */
+                break;
+            case CAPSTYPE_WINDOW: /* 24 */
                 break;
             case CAPSETTYPE_COMPDESK: { /* 25 */
                     CompDeskCaps compdesk_caps;
                     compdesk_caps.log("Receiving from client");
-                    compdesk_caps.recv(stream, len);
+                    compdesk_caps.recv(stream, capset_length);
                 }
                 break;
-            case 26: /* 26 */
+            case CAPSETTYPE_MULTIFRAGMENTUPDATE: /* 26 */
+                break;
+            case CAPSETTYPE_LARGE_POINTER: /* 27 */
+                break;
+            case CAPSETTYPE_SURFACE_COMMANDS: /* 28 */
+                break;
+            case CAPSETTYPE_BITMAP_CODECS: /* 29 */
+                break;
+            case CAPSETTYPE_FRAME_ACKNOWLEDGE: /* 30 */
                 break;
             default:
                 break;
             }
-            stream.p = p + len;
+            stream.p = next;
         }
     }
 

@@ -1238,14 +1238,12 @@ struct mod_rdp : public client_mod {
                         LOG(LOG_INFO, "Received demand active PDU");
                         {
                             client_mod * mod = this;
-                            int len_src_descriptor;
-                            int len_combined_caps;
-
                             this->share_id = stream.in_uint32_le();
-                            len_src_descriptor = stream.in_uint16_le();
-                            len_combined_caps = stream.in_uint16_le();
-                            stream.in_skip_bytes(len_src_descriptor);
-                            this->process_server_caps(stream, len_combined_caps);
+                            uint16_t lengthSourceDescriptor = stream.in_uint16_le();
+                            uint16_t lengthCombinedCapabilities = stream.in_uint16_le();
+                            stream.in_skip_bytes(lengthSourceDescriptor);
+                            this->process_server_caps(stream, lengthCombinedCapabilities);
+                            uint32_t sessionId = stream.in_uint32_le();
                             TODO(" we should be able to pack all the following sends to the same X224 TPDU  instead of creating a different one for each send")
                             LOG(LOG_INFO, "Sending confirm active PDU");
                             this->send_confirm_active(mod);
@@ -2275,8 +2273,8 @@ struct mod_rdp : public client_mod {
         }
 
 
-        TODO("this can probably be unified with process_confir_active in front");
-        void process_server_caps(Stream & stream, int len)
+        TODO("this can probably be unified with process_confirm_active in front");
+        void process_server_caps(Stream & stream, uint16_t len)
         {
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::process_server_caps");
@@ -2408,8 +2406,6 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_INFO, "mod_rdp::send_fonts done");
             }
         }
-
-    #define RDP5_FLAG 0x0030
 
     public:
 
