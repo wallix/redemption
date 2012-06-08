@@ -111,6 +111,68 @@
 //  cache. If this bit is set, 64-bit keys MUST be sent by the server.
 
 
+struct BmpCache2Caps : public Capability {
+    uint16_t cacheFlags;
+    uint8_t pad1;
+    uint8_t numCellCaches;
+    uint32_t bitmapCache0CellInfo;
+    uint32_t bitmapCache1CellInfo;
+    uint32_t bitmapCache2CellInfo;
+    uint32_t bitmapCache3CellInfo;
+    uint32_t bitmapCache4CellInfo;
+    BmpCache2Caps()
+    : Capability(CAPSTYPE_BITMAPCACHE_REV2, RDP_CAPLEN_BITMAPCACHE_REV2)
+    , cacheFlags(0)
+    , pad1(0)
+    , bitmapCache0CellInfo(0)
+    , bitmapCache1CellInfo(0)
+    , bitmapCache2CellInfo(0)
+    , bitmapCache3CellInfo(0)
+    , bitmapCache4CellInfo(0)
+    {
+    }
+
+    void emit(Stream & stream){
+        stream.out_uint16_le(this->capabilityType);
+        stream.out_uint16_le(this->len);
+        stream.out_uint16_le(this->cacheFlags);
+        stream.out_uint8(this->pad1);
+        stream.out_uint8(this->numCellCaches);
+        stream.out_uint32_le(this->bitmapCache0CellInfo);
+        stream.out_uint32_le(this->bitmapCache1CellInfo);
+        stream.out_uint32_le(this->bitmapCache2CellInfo);
+        stream.out_uint32_le(this->bitmapCache3CellInfo);
+        stream.out_uint32_le(this->bitmapCache4CellInfo);
+    }
+
+    void recv(Stream & stream, uint16_t len){
+        this->len = len;
+        this->cacheFlags    = stream.in_uint16_le();
+        this->pad1          = stream.in_uint8();
+        this->numCellCaches = stream.in_uint8();
+        TODO("Check NumCellCaches to know if we must read CellInfo or not ? Check actual windows servers behaviors")
+        this->bitmapCache0CellInfo = stream.in_uint32_le();
+        this->bitmapCache1CellInfo = stream.in_uint32_le();
+        this->bitmapCache2CellInfo = stream.in_uint32_le();
+        this->bitmapCache3CellInfo = stream.in_uint32_le();
+        this->bitmapCache4CellInfo = stream.in_uint32_le();
+      }
+
+    void log(const char * msg){
+        LOG(LOG_INFO, "%s BitmapCache2 caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "BitmapCache2 caps::cacheFlags %u", this->cacheFlags);
+        LOG(LOG_INFO, "BitmapCache2 caps::pad1 %u", this->pad1);
+        LOG(LOG_INFO, "BitmapCache2 caps::numCellCache %u", this->numCellCaches);
+        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache0CellInfo %u", this->bitmapCache0CellInfo);
+        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache1CellInfo %u", this->bitmapCache1CellInfo);
+        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache2CellInfo %u", this->bitmapCache2CellInfo);
+        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache3CellInfo %u", this->bitmapCache3CellInfo);
+        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache4CellInfo %u", this->bitmapCache4CellInfo);
+    }
+};
+
+
+
 static inline void out_bmpcache2_caps(Stream & stream)
 {
     stream.out_uint16_le(CAPSTYPE_BITMAPCACHE_REV2);
