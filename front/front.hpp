@@ -1670,41 +1670,6 @@ public:
     }
 
 
-    /* store the bitmap cache size in client_info */
-    void capset_bmpcache(Stream & stream, int len)
-    {
-        LOG(LOG_INFO, "capset_bmpcache");
-        stream.in_skip_bytes(24);
-        this->client_info.cache1_entries = stream.in_uint16_le();
-        this->client_info.cache1_size = stream.in_uint16_le();
-        this->client_info.cache2_entries = stream.in_uint16_le();
-        this->client_info.cache2_size = stream.in_uint16_le();
-        this->client_info.cache3_entries = stream.in_uint16_le();
-        this->client_info.cache3_size = stream.in_uint16_le();
-        LOG(LOG_INFO, "cache1_entries=%d cache1_size=%d "
-                      "cache2_entries=%d cache2_size=%d "
-                      "cache3_entries=%d cache3_size=%d\n",
-            this->client_info.cache1_entries, this->client_info.cache1_size,
-            this->client_info.cache2_entries, this->client_info.cache2_size,
-            this->client_info.cache3_entries, this->client_info.cache3_size);
-    }
-
-    /* store the bitmap cache size in client_info */
-    void capset_bmpcache2(Stream & stream, int len)
-    {
-        LOG(LOG_INFO, "capset_bmpcache2");
-        this->client_info.bitmap_cache_version = 2;
-        int Bpp = nbbytes(this->client_info.bpp);
-        this->client_info.bitmap_cache_persist_enable = stream.in_uint16_le();
-        stream.in_skip_bytes(2); /* number of caches in set, 3 */
-        this->client_info.cache1_entries = stream.in_uint32_le();
-        this->client_info.cache1_size = 256 * Bpp;
-        this->client_info.cache2_entries = stream.in_uint32_le();
-        this->client_info.cache2_size = 1024 * Bpp;
-        this->client_info.cache3_entries = (stream.in_uint32_le() & 0x7fffffff);
-        this->client_info.cache3_size = 4096 * Bpp;
-    }
-
     /* store the number of client cursor cache in client_info */
     void capset_pointercache(Stream & stream, int len)
     {
@@ -1757,8 +1722,17 @@ public:
                     order_caps.recv(stream, capset_length);
                 }
                 break;
-            case CAPSTYPE_BITMAPCACHE: /* 4 */
-                this->capset_bmpcache(stream, capset_length);
+            case CAPSTYPE_BITMAPCACHE: {
+                    BmpCacheCaps bmpcache_caps;
+                    bmpcache_caps.recv(stream, capset_length);
+                    bmpcache_caps.log("Receiving from client");
+                    this->client_info.cache1_entries = bmpcache_caps.cache0Entries;
+                    this->client_info.cache1_size = bmpcache_caps.cache0MaximumCellSize;
+                    this->client_info.cache2_entries = bmpcache_caps.cache1Entries;
+                    this->client_info.cache2_size = bmpcache_caps.cache1MaximumCellSize;
+                    this->client_info.cache3_entries = bmpcache_caps.cache2Entries;
+                    this->client_info.cache3_size = bmpcache_caps.cache2MaximumCellSize;
+                }
                 break;
             case CAPSTYPE_CONTROL: /* 5 */
                 break;
@@ -1793,8 +1767,23 @@ public:
                 break;
             case CAPSTYPE_BITMAPCACHE_HOSTSUPPORT: /* 18 */
                 break;
-            case CAPSTYPE_BITMAPCACHE_REV2: /* 19 */
-                this->capset_bmpcache2(stream, capset_length);
+            case CAPSTYPE_BITMAPCACHE_REV2: {
+//                    BmpCache2Caps bmpcache2_caps;
+//                    bmpcache2_caps.recv(stream, capset_length);
+//                    bmpcache2_caps.log("Receiving from client");
+
+                    LOG(LOG_INFO, "capset_bmpcache2");
+                    this->client_info.bitmap_cache_version = 2;
+                    int Bpp = nbbytes(this->client_info.bpp);
+                    this->client_info.bitmap_cache_persist_enable = stream.in_uint16_le();
+                    stream.in_skip_bytes(2); /* number of caches in set, 3 */
+                    this->client_info.cache1_entries = stream.in_uint32_le();
+                    this->client_info.cache1_size = 256 * Bpp;
+                    this->client_info.cache2_entries = stream.in_uint32_le();
+                    this->client_info.cache2_size = 1024 * Bpp;
+                    this->client_info.cache3_entries = (stream.in_uint32_le() & 0x7fffffff);
+                    this->client_info.cache3_size = 4096 * Bpp;
+                }
                 break;
             case CAPSTYPE_VIRTUALCHANNEL: /* 20 */
                 break;
@@ -1895,9 +1884,11 @@ public:
         LOG(LOG_INFO, "send_synchronize");
 
         Stream stream(32768);
+
         X224Out tpdu(X224Packet::DT_TPDU, stream);
         McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
+
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
@@ -1906,9 +1897,11 @@ public:
 
         rdp_data_out.end();
         rdp_control_out.end();
+
         sec_out.end();
         sdin_out.end();
         tpdu.end();
+
         tpdu.send(this->trans);
 
     }
