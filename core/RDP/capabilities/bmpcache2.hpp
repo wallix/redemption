@@ -187,7 +187,7 @@ static inline void out_bmpcache2_caps(Stream & stream)
     stream.out_uint32_le(2000);
     stream.out_uint32_le(2000);
 
-    stream.out_clear_bytes(20);	/* other bitmap caches not used */
+    stream.out_clear_bytes(8);	/* other bitmap caches not used */
 }
 
 #endif
