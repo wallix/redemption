@@ -42,13 +42,15 @@
 //    MUST always be enough buffer space to hold all of the related Fast-Path Update fragments for
 //    reassembly).
 
-
+enum {
+    CAPLEN_MULTIFRAGMENTUPDATE = 6
+};
 
 struct MultiFragmentUpdateCaps : public Capability {
     uint32_t MaxRequestSize;
 
     MultiFragmentUpdateCaps()
-    : Capability(CAPSETTYPE_MULTIFRAGMENTUPDATE, RDP_CAPLEN_MULTIFRAGMENTUPDATE)
+    : Capability(CAPSETTYPE_MULTIFRAGMENTUPDATE, CAPLEN_MULTIFRAGMENTUPDATE)
     , MaxRequestSize(0) // 0 by default
     {
     }

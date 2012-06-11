@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBmpCachepEmit)
     bmpcache_caps.cache2MaximumCellSize = 32769;
 
     BOOST_CHECK_EQUAL(bmpcache_caps.capabilityType, (uint16_t)CAPSTYPE_BITMAPCACHE);
-    BOOST_CHECK_EQUAL(bmpcache_caps.len, (uint16_t)RDP_CAPLEN_BITMAPCACHE);
+    BOOST_CHECK_EQUAL(bmpcache_caps.len, (uint16_t)CAPLEN_BITMAPCACHE);
     BOOST_CHECK_EQUAL(bmpcache_caps.pad1, (uint32_t) 1);
     BOOST_CHECK_EQUAL(bmpcache_caps.pad2, (uint32_t) 2);
     BOOST_CHECK_EQUAL(bmpcache_caps.pad3, (uint32_t) 3);
@@ -70,11 +70,11 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBmpCachepEmit)
     BmpCacheCaps bmpcache_caps2;
 
     BOOST_CHECK_EQUAL(bmpcache_caps2.capabilityType, (uint16_t)CAPSTYPE_BITMAPCACHE);
-    BOOST_CHECK_EQUAL(bmpcache_caps2.len, (uint16_t)RDP_CAPLEN_BITMAPCACHE);
+    BOOST_CHECK_EQUAL(bmpcache_caps2.len, (uint16_t)CAPLEN_BITMAPCACHE);
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_BITMAPCACHE, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_BITMAPCACHE, stream.in_uint16_le());
-    bmpcache_caps2.recv(stream, RDP_CAPLEN_BITMAPCACHE);
+    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_BITMAPCACHE, stream.in_uint16_le());
+    bmpcache_caps2.recv(stream, CAPLEN_BITMAPCACHE);
 
     BOOST_CHECK_EQUAL(bmpcache_caps2.pad1, (uint32_t) 1);
     BOOST_CHECK_EQUAL(bmpcache_caps2.pad2, (uint32_t) 2);

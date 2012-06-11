@@ -43,14 +43,16 @@
 // pad2octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this
 //    field MUST be ignored.
 
-
+enum {
+    CAPLEN_SHARE = 8
+};
 
 
 struct ShareCaps : public Capability {
     uint16_t nodeId;
     uint16_t pad2octets;
     ShareCaps()
-    : Capability(CAPSTYPE_SHARE, RDP_CAPLEN_SHARE)
+    : Capability(CAPSTYPE_SHARE, CAPLEN_SHARE)
     , nodeId(0)     // CS : SHOULD be set to 0
                     // SC : SHOULD be set to the server channel ID
     , pad2octets(0) // MUST be ignored

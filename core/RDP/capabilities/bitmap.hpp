@@ -121,6 +121,9 @@ enum {
     DRAW_ALLOW_SKIP_ALPHA = 0x08,
 };
 
+enum {
+    CAPLEN_BITMAP = 28
+};
 
 struct BitmapCaps : public Capability {
     uint16_t preferredBitsPerPixel;
@@ -137,7 +140,7 @@ struct BitmapCaps : public Capability {
     uint16_t multipleRectangleSupport;
     uint16_t pad2octetsB;
     BitmapCaps()
-    : Capability(CAPSTYPE_BITMAP, RDP_CAPLEN_BITMAP)
+    : Capability(CAPSTYPE_BITMAP, CAPLEN_BITMAP)
     , preferredBitsPerPixel(8)
     , receive1BitPerPixel(1)
     , receive4BitsPerPixel(1)

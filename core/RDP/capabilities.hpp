@@ -45,6 +45,7 @@
 #include "capabilities/largepointer.hpp"
 #include "capabilities/multifragmentupdate.hpp"
 #include "capabilities/offscreencache.hpp"
+#include "capabilities/bitmapcachehostsupport.hpp"
 #include "capabilities/order.hpp"
 #include "capabilities/pointer.hpp"
 #include "capabilities/rail.hpp"

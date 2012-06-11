@@ -70,13 +70,17 @@ enum  {
       , TS_WINDOW_LEVEL_SUPPORTED_EX
       };
 
+enum {
+    CAPLEN_WINDOW = 11
+};
+
 struct WindowsListCaps : public Capability {
     uint32_t WndSupportLevel;
     uint8_t NumIconCaches;
     uint16_t NumIconCacheEntries;
 
     WindowsListCaps()
-    : Capability(CAPSTYPE_WINDOW, RDP_CAPLEN_WINDOW)
+    : Capability(CAPSTYPE_WINDOW, CAPLEN_WINDOW)
     , WndSupportLevel(VCCAPS_NO_COMPR) // from a specific list of values (see enum)
     , NumIconCaches(0)
     , NumIconCacheEntries(0)

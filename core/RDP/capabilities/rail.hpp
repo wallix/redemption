@@ -52,11 +52,15 @@
 //    |                                        | 0.                                           |
 //    +----------------------------------------+----------------------------------------------+
 
+enum {
+    CAPLEN_RAIL = 8
+};
+
 struct RailCaps : public Capability {
     uint32_t RailSupportLevel;
 
     RailCaps()
-    : Capability(CAPSTYPE_RAIL, RDP_CAPLEN_RAIL)
+    : Capability(CAPSTYPE_RAIL, CAPLEN_RAIL)
     , RailSupportLevel(0) // Only the two less significant bit are used (as flags.)
     {
     }

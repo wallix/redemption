@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFrameAcknowledgeEmit)
     frameacknowledge_caps.maxUnacknowledgedFrameCount = 65536;
 
     BOOST_CHECK_EQUAL(frameacknowledge_caps.capabilityType, (uint16_t)CAPSETTYPE_FRAME_ACKNOWLEDGE);
-    BOOST_CHECK_EQUAL(frameacknowledge_caps.len, (uint16_t)RDP_CAPLEN_FRAME_ACKNOWLEDGE);
+    BOOST_CHECK_EQUAL(frameacknowledge_caps.len, (uint16_t)CAPLEN_FRAME_ACKNOWLEDGE);
     BOOST_CHECK_EQUAL(frameacknowledge_caps.maxUnacknowledgedFrameCount, (uint32_t) 65536);
 
     Stream stream(1024);
@@ -47,11 +47,11 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFrameAcknowledgeEmit)
     FrameAcknowledgeCaps frameacknowledge_caps2;
 
     BOOST_CHECK_EQUAL(frameacknowledge_caps2.capabilityType, (uint16_t)CAPSETTYPE_FRAME_ACKNOWLEDGE);
-    BOOST_CHECK_EQUAL(frameacknowledge_caps2.len, (uint16_t)RDP_CAPLEN_FRAME_ACKNOWLEDGE);
+    BOOST_CHECK_EQUAL(frameacknowledge_caps2.len, (uint16_t)CAPLEN_FRAME_ACKNOWLEDGE);
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSETTYPE_FRAME_ACKNOWLEDGE, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_FRAME_ACKNOWLEDGE, stream.in_uint16_le());
-    frameacknowledge_caps2.recv(stream, RDP_CAPLEN_FRAME_ACKNOWLEDGE);
+    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_FRAME_ACKNOWLEDGE, stream.in_uint16_le());
+    frameacknowledge_caps2.recv(stream, CAPLEN_FRAME_ACKNOWLEDGE);
 
     BOOST_CHECK_EQUAL(frameacknowledge_caps2.maxUnacknowledgedFrameCount, (uint32_t) 65536);
 }

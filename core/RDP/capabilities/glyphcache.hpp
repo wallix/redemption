@@ -86,6 +86,10 @@ enum {
      , GLYPH_SUPPORT_ENCODE
 };
 
+enum {
+    CAPLEN_GLYPHCACHE = 52
+};
+
 struct GlyphSupportCaps : public Capability {
     uint8_t glyphCache[40];
     uint32_t fragCache;
@@ -93,7 +97,7 @@ struct GlyphSupportCaps : public Capability {
     uint16_t pad2octets;
 
     GlyphSupportCaps()
-    : Capability(CAPSTYPE_GLYPHCACHE, RDP_CAPLEN_GLYPHCACHE)
+    : Capability(CAPSTYPE_GLYPHCACHE, CAPLEN_GLYPHCACHE)
     , fragCache(0x01000100) // max number of entries in the cache = 256
                             // largest allowed maximum size of an element in (bytes) = 256
     , glyphSupportLevel(GLYPH_SUPPORT_NONE) // By default, no support

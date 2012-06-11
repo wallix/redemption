@@ -195,6 +195,10 @@ struct GdiPImageCacheProperties {
     }
 };
 
+enum {
+    CAPLEN_DRAWGDIPLUS = 40
+};
+
 struct DrawGdiPlusCaps : public Capability {
 
     uint32_t drawGDIPlusSupportLevel;
@@ -207,7 +211,7 @@ struct DrawGdiPlusCaps : public Capability {
 
 
     DrawGdiPlusCaps()
-    : Capability(CAPSTYPE_DRAWGDIPLUS, RDP_CAPLEN_DRAWGDIPLUS)
+    : Capability(CAPSTYPE_DRAWGDIPLUS, CAPLEN_DRAWGDIPLUS)
     , drawGDIPlusSupportLevel(TS_DRAW_GDIPLUS_DEFAULT) // from a specific list of values (see enum)
     , GdipVersion(0) // CS : MUST be a valid version number
                      // SC : whatever (not used)

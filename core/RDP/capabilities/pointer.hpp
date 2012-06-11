@@ -61,14 +61,17 @@
 //    sent from the client does not include this field, the server will not use
 //    the New Pointer Update.
 
-
+enum {
+    CAPLEN_POINTER = 10,
+    CAPLEN_POINTER_MONO = 8
+};
 
 struct PointerCaps : public Capability {
     uint16_t colorPointerFlag;
     uint16_t colorPointerCacheSize;
     uint16_t pointerCacheSize;
     PointerCaps()
-    : Capability(CAPSTYPE_POINTER, RDP_CAPLEN_POINTER)
+    : Capability(CAPSTYPE_POINTER, CAPLEN_POINTER)
     , colorPointerFlag(1)       // True = color supported ; False = only mono supported
     , colorPointerCacheSize(20) // Number of available slots in color pointer cache
     , pointerCacheSize(0)       // Optionnal ; Number of available slots in new update pointer cache

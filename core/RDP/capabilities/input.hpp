@@ -77,6 +77,10 @@ enum {
     INPUT_FLAG_FASTPATH_INPUT2 = 0x20
 };
 
+enum {
+    CAPLEN_INPUT = 88
+};
+
 struct InputCaps : public Capability {
     uint16_t inputFlags;
     uint16_t pad2octetsA;
@@ -86,7 +90,7 @@ struct InputCaps : public Capability {
     uint32_t keyboardFunctionKey;
     uint16_t imeFileName[32];
     InputCaps()
-    : Capability(CAPSTYPE_INPUT, RDP_CAPLEN_INPUT)
+    : Capability(CAPSTYPE_INPUT, CAPLEN_INPUT)
     , inputFlags(INPUT_FLAG_SCANCODES)
     , pad2octetsA(0x0000)
     , keyboardLayout(0x0409) // 0409 = English-US

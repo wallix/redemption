@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
         test_glyphCache[i] = i;
     }
     BOOST_CHECK_EQUAL(glyphsupport_caps.capabilityType, (uint16_t)CAPSTYPE_GLYPHCACHE);
-    BOOST_CHECK_EQUAL(glyphsupport_caps.len, (uint16_t)RDP_CAPLEN_GLYPHCACHE);
+    BOOST_CHECK_EQUAL(glyphsupport_caps.len, (uint16_t)CAPLEN_GLYPHCACHE);
     for (size_t i = 0; i< 40; i++){
         BOOST_CHECK_EQUAL(glyphsupport_caps.glyphCache[i], test_glyphCache[i]);
     }
@@ -63,11 +63,11 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
     GlyphSupportCaps glyphsupport_caps2;
 
     BOOST_CHECK_EQUAL(glyphsupport_caps2.capabilityType, (uint16_t)CAPSTYPE_GLYPHCACHE);
-    BOOST_CHECK_EQUAL(glyphsupport_caps2.len, (uint16_t)RDP_CAPLEN_GLYPHCACHE);
+    BOOST_CHECK_EQUAL(glyphsupport_caps2.len, (uint16_t)CAPLEN_GLYPHCACHE);
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_GLYPHCACHE, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_GLYPHCACHE, stream.in_uint16_le());
-    glyphsupport_caps2.recv(stream, RDP_CAPLEN_GLYPHCACHE);
+    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_GLYPHCACHE, stream.in_uint16_le());
+    glyphsupport_caps2.recv(stream, CAPLEN_GLYPHCACHE);
 
     for (size_t i = 0; i< 40; i++){
         BOOST_CHECK_EQUAL(glyphsupport_caps2.glyphCache[i], test_glyphCache[i]);

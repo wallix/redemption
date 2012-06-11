@@ -175,6 +175,9 @@ enum {
 // | 0x01 TRUE  | Server supports Suppress Output PDU.         |
 // +------------+----------------------------------------------+
 
+enum {
+    CAPLEN_GENERAL = 24
+};
 
 
 struct GeneralCaps : public Capability {
@@ -189,7 +192,7 @@ struct GeneralCaps : public Capability {
     uint16_t compressionLevel;
     uint16_t pad2;
     GeneralCaps()
-    : Capability(CAPSTYPE_GENERAL, RDP_CAPLEN_GENERAL)
+    : Capability(CAPSTYPE_GENERAL, CAPLEN_GENERAL)
     , os_major(OSMAJORTYPE_WINDOWS)
     , os_minor(TS_OSMINORTYPE_WINDOWS_NT)
     , protocolVersion(0x200)

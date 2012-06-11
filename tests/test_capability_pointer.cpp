@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityPointerEmit)
     pointer_caps.pointerCacheSize = 2;
 
     BOOST_CHECK_EQUAL(pointer_caps.capabilityType, (uint16_t)CAPSTYPE_POINTER);
-    BOOST_CHECK_EQUAL(pointer_caps.len, (uint16_t)RDP_CAPLEN_POINTER);
+    BOOST_CHECK_EQUAL(pointer_caps.len, (uint16_t)CAPLEN_POINTER);
     BOOST_CHECK_EQUAL(pointer_caps.colorPointerFlag, (uint16_t) 0);
     BOOST_CHECK_EQUAL(pointer_caps.colorPointerCacheSize, (uint16_t) 1);
     BOOST_CHECK_EQUAL(pointer_caps.pointerCacheSize, (uint16_t) 2);
@@ -52,11 +52,11 @@ BOOST_AUTO_TEST_CASE(TestCapabilityPointerEmit)
     PointerCaps pointer_caps2;
 
     BOOST_CHECK_EQUAL(pointer_caps2.capabilityType, (uint16_t)CAPSTYPE_POINTER);
-    BOOST_CHECK_EQUAL(pointer_caps2.len, (uint16_t)RDP_CAPLEN_POINTER);
+    BOOST_CHECK_EQUAL(pointer_caps2.len, (uint16_t)CAPLEN_POINTER);
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_POINTER, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_POINTER, stream.in_uint16_le());
-    pointer_caps2.recv(stream, RDP_CAPLEN_POINTER);
+    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_POINTER, stream.in_uint16_le());
+    pointer_caps2.recv(stream, CAPLEN_POINTER);
 
     BOOST_CHECK_EQUAL(pointer_caps2.colorPointerFlag, (uint16_t) 0);
     BOOST_CHECK_EQUAL(pointer_caps2.colorPointerCacheSize, (uint16_t) 1);

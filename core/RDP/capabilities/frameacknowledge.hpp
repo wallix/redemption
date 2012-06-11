@@ -51,11 +51,15 @@
 //    but this behavior SHOULD be avoided because it provides very little information to the server
 //    other than that the client acknowledges frames.
 
+enum {
+    CAPLEN_FRAME_ACKNOWLEDGE = 8
+};
+
 struct FrameAcknowledgeCaps : public Capability {
     uint32_t maxUnacknowledgedFrameCount;
 
     FrameAcknowledgeCaps()
-    : Capability(CAPSETTYPE_FRAME_ACKNOWLEDGE, RDP_CAPLEN_FRAME_ACKNOWLEDGE)
+    : Capability(CAPSETTYPE_FRAME_ACKNOWLEDGE, CAPLEN_FRAME_ACKNOWLEDGE)
     , maxUnacknowledgedFrameCount(0) // SC: MAY be 0
                                      // CS: MAY be 0 but SHOULD be avoided because it provides too few information
     {

@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityVirtualChannelEmit)
     virtualchannel_caps.VCChunkSize = 56897;
 
     BOOST_CHECK_EQUAL(virtualchannel_caps.capabilityType, (uint16_t)CAPSTYPE_VIRTUALCHANNEL);
-    BOOST_CHECK_EQUAL(virtualchannel_caps.len, (uint16_t)RDP_CAPLEN_VIRTUALCHANNEL);
+    BOOST_CHECK_EQUAL(virtualchannel_caps.len, (uint16_t)CAPLEN_VIRTUALCHANNEL);
     BOOST_CHECK_EQUAL(virtualchannel_caps.flags, (uint32_t) 2);
     BOOST_CHECK_EQUAL(virtualchannel_caps.VCChunkSize, (uint32_t) 56897);
 
@@ -48,11 +48,11 @@ BOOST_AUTO_TEST_CASE(TestCapabilityVirtualChannelEmit)
     VirtualChannelCaps virtualchannel_caps2;
 
     BOOST_CHECK_EQUAL(virtualchannel_caps2.capabilityType, (uint16_t)CAPSTYPE_VIRTUALCHANNEL);
-    BOOST_CHECK_EQUAL(virtualchannel_caps2.len, (uint16_t)RDP_CAPLEN_VIRTUALCHANNEL);
+    BOOST_CHECK_EQUAL(virtualchannel_caps2.len, (uint16_t)CAPLEN_VIRTUALCHANNEL);
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_VIRTUALCHANNEL, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_VIRTUALCHANNEL, stream.in_uint16_le());
-    virtualchannel_caps2.recv(stream, RDP_CAPLEN_VIRTUALCHANNEL);
+    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_VIRTUALCHANNEL, stream.in_uint16_le());
+    virtualchannel_caps2.recv(stream, CAPLEN_VIRTUALCHANNEL);
 
     BOOST_CHECK_EQUAL(virtualchannel_caps2.flags, (uint32_t) 2);
     BOOST_CHECK_EQUAL(virtualchannel_caps2.VCChunkSize, (uint32_t) 56897);

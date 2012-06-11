@@ -57,11 +57,15 @@ enum  {
         LARGE_POINTER_FLAG_96x96 = 0x00000001
       };
 
+enum {
+    CAPLEN_LARGE_POINTER = 6
+};
+
 struct LargePointerCaps : public Capability {
     uint16_t largePointerSupportFlags;
 
     LargePointerCaps()
-    : Capability(CAPSETTYPE_LARGE_POINTER, RDP_CAPLEN_LARGE_POINTER)
+    : Capability(CAPSETTYPE_LARGE_POINTER, CAPLEN_LARGE_POINTER)
     , largePointerSupportFlags(0) // from a specific list of values (see enum)
     {
     }

@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityShareEmit)
     share_caps.pad2octets = 1;
 
     BOOST_CHECK_EQUAL(share_caps.capabilityType, (uint16_t)CAPSTYPE_SHARE);
-    BOOST_CHECK_EQUAL(share_caps.len, (uint16_t)RDP_CAPLEN_SHARE);
+    BOOST_CHECK_EQUAL(share_caps.len, (uint16_t)CAPLEN_SHARE);
     BOOST_CHECK_EQUAL(share_caps.nodeId, (uint16_t) 0);
     BOOST_CHECK_EQUAL(share_caps.pad2octets, (uint16_t) 1);
 
@@ -50,11 +50,11 @@ BOOST_AUTO_TEST_CASE(TestCapabilityShareEmit)
     ShareCaps share_caps2;
 
     BOOST_CHECK_EQUAL(share_caps2.capabilityType, (uint16_t)CAPSTYPE_SHARE);
-    BOOST_CHECK_EQUAL(share_caps2.len, (uint16_t)RDP_CAPLEN_SHARE);
+    BOOST_CHECK_EQUAL(share_caps2.len, (uint16_t)CAPLEN_SHARE);
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_SHARE, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_SHARE, stream.in_uint16_le());
-    share_caps2.recv(stream, RDP_CAPLEN_SHARE);
+    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_SHARE, stream.in_uint16_le());
+    share_caps2.recv(stream, CAPLEN_SHARE);
 
     BOOST_CHECK_EQUAL(share_caps2.nodeId, (uint16_t) 0);
     BOOST_CHECK_EQUAL(share_caps2.pad2octets, (uint16_t) 1);

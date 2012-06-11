@@ -110,6 +110,9 @@
 //  [MS-RDPEGDI] section 2.2.2.2.1.2.3) for every bitmap inserted into this
 //  cache. If this bit is set, 64-bit keys MUST be sent by the server.
 
+enum {
+    CAPLEN_BITMAPCACHE_REV2 = 28
+};
 
 struct BmpCache2Caps : public Capability {
     uint16_t cacheFlags;
@@ -121,7 +124,7 @@ struct BmpCache2Caps : public Capability {
     uint32_t bitmapCache3CellInfo;
     uint32_t bitmapCache4CellInfo;
     BmpCache2Caps()
-    : Capability(CAPSTYPE_BITMAPCACHE_REV2, 28)
+    : Capability(CAPSTYPE_BITMAPCACHE_REV2, CAPLEN_BITMAPCACHE_REV2)
     , cacheFlags(0)
     , pad1(0)
     , bitmapCache0CellInfo(0)

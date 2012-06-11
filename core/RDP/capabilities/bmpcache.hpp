@@ -67,7 +67,9 @@
 // Cache2MaximumCellSize (2 bytes): A 16-bit, unsigned integer. The maximum cell size in
 //   Bitmap Cache 2.
 
-
+enum {
+    CAPLEN_BITMAPCACHE = 40
+};
 
 struct BmpCacheCaps : public Capability {
     uint32_t pad1;
@@ -83,7 +85,7 @@ struct BmpCacheCaps : public Capability {
     uint16_t cache2Entries;
     uint16_t cache2MaximumCellSize;
     BmpCacheCaps()
-    : Capability(CAPSTYPE_BITMAPCACHE, RDP_CAPLEN_BITMAPCACHE)
+    : Capability(CAPSTYPE_BITMAPCACHE, CAPLEN_BITMAPCACHE)
     , pad1(0)
     , pad2(0)
     , pad3(0)

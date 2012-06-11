@@ -57,12 +57,16 @@ enum  {
       , VCCAPS_COMPR_CS_8K
       };
 
+enum {
+    CAPLEN_VIRTUALCHANNEL = 12
+};
+
 struct VirtualChannelCaps : public Capability {
     uint32_t flags;
     uint32_t VCChunkSize;
 
     VirtualChannelCaps()
-    : Capability(CAPSTYPE_VIRTUALCHANNEL, RDP_CAPLEN_VIRTUALCHANNEL)
+    : Capability(CAPSTYPE_VIRTUALCHANNEL, CAPLEN_VIRTUALCHANNEL)
     , flags(VCCAPS_NO_COMPR) // from a specific list of values (see enum)
     , VCChunkSize(0)
     {

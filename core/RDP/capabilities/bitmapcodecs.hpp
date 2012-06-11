@@ -459,12 +459,16 @@ struct BitmapCodecs {
 
 };
 
+enum {
+    CAPLEN_BITMAP_CODECS = 1
+};
+
 struct BitmapCodecCaps : public Capability {
 
     BitmapCodecs * supportedBitmapCodecs;
 
     BitmapCodecCaps()
-    : Capability(CAPSTYPE_SHARE, RDP_CAPLEN_SHARE)
+    : Capability(CAPSTYPE_SHARE, CAPLEN_BITMAP_CODECS)
     {
         this->supportedBitmapCodecs = new BitmapCodecs;
     }

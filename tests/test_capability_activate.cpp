@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityActivationEmit)
     activation_caps.windowManagerKeyFlag = 3;
 
     BOOST_CHECK_EQUAL(activation_caps.capabilityType, (uint16_t)CAPSTYPE_ACTIVATION);
-    BOOST_CHECK_EQUAL(activation_caps.len, (uint16_t)RDP_CAPLEN_ACTIVATION);
+    BOOST_CHECK_EQUAL(activation_caps.len, (uint16_t)CAPLEN_ACTIVATION);
     BOOST_CHECK_EQUAL(activation_caps.helpKeyFlag, (uint16_t) 0);
     BOOST_CHECK_EQUAL(activation_caps.helpKeyIndexFlag, (uint16_t) 1);
     BOOST_CHECK_EQUAL(activation_caps.helpExtendedKeyFlag, (uint16_t) 2);
@@ -54,11 +54,11 @@ BOOST_AUTO_TEST_CASE(TestCapabilityActivationEmit)
     ActivationCaps activation_caps2;
 
     BOOST_CHECK_EQUAL(activation_caps2.capabilityType, (uint16_t)CAPSTYPE_ACTIVATION);
-    BOOST_CHECK_EQUAL(activation_caps2.len, (uint16_t)RDP_CAPLEN_ACTIVATION);
+    BOOST_CHECK_EQUAL(activation_caps2.len, (uint16_t)CAPLEN_ACTIVATION);
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_ACTIVATION, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_ACTIVATION, stream.in_uint16_le());
-    activation_caps2.recv(stream, RDP_CAPLEN_ACTIVATION);
+    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_ACTIVATION, stream.in_uint16_le());
+    activation_caps2.recv(stream, CAPLEN_ACTIVATION);
 
     BOOST_CHECK_EQUAL(activation_caps2.helpKeyFlag, (uint16_t) 0);
     BOOST_CHECK_EQUAL(activation_caps2.helpKeyIndexFlag, (uint16_t) 1);

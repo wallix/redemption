@@ -57,11 +57,15 @@ enum {
     , BRUSH_COLOR_FULL
 };
 
+enum {
+    CAPLEN_BRUSH = 8
+};
+
 struct BrushCacheCaps : public Capability {
     uint32_t brushSupportLevel;
 
     BrushCacheCaps()
-    : Capability(CAPSTYPE_BRUSH, RDP_CAPLEN_BRUSH)
+    : Capability(CAPSTYPE_BRUSH, CAPLEN_BRUSH)
     , brushSupportLevel(BRUSH_DEFAULT) // By default, minimal
     {
     }

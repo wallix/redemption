@@ -44,12 +44,16 @@ enum {
     , COMPDESK_SUPPORTED
 };
 
+enum {
+    CAPLEN_COMPDESK = 8
+};
+
 
 struct CompDeskCaps : public Capability {
     uint16_t CompDeskSupportLevel;
 
     CompDeskCaps()
-    : Capability(CAPSETTYPE_COMPDESK, RDP_CAPLEN_COMPDESK)
+    : Capability(CAPSETTYPE_COMPDESK, CAPLEN_COMPDESK)
     , CompDeskSupportLevel(COMPDESK_NOT_SUPPORTED) // By default, minimal
     {
     }

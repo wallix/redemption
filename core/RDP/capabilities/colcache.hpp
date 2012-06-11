@@ -49,13 +49,16 @@
 //     pad2octets (2 bytes): A 16-bit, unsigned integer used as padding. Values in this field are
 //       arbitrary and MUST be ignored.
 
+enum {
+    CAPLEN_COLORCACHE = 8
+};
 
 
 struct ColorCacheCaps : public Capability {
     uint16_t colorTableCacheSize;
     uint16_t pad2octets;
     ColorCacheCaps()
-    : Capability(CAPSTYPE_COLORCACHE, RDP_CAPLEN_COLORCACHE)
+    : Capability(CAPSTYPE_COLORCACHE, CAPLEN_COLORCACHE)
     , colorTableCacheSize(0x0006)
     , pad2octets(0)
     {
@@ -80,13 +83,5 @@ struct ColorCacheCaps : public Capability {
         LOG(LOG_INFO, "ColorCache caps::pad2octets %u", this->pad2octets);
     }
 };
-
-//static inline void front_out_colcache_caps(Stream & stream)
-//{
-//    stream.out_uint16_le(CAPSTYPE_COLORCACHE);
-//    stream.out_uint16_le(RDP_CAPLEN_COLORCACHE);
-//    stream.out_uint16_le(6); /* cache size */
-//    stream.out_uint16_le(0); /* pad */
-//}
 
 #endif

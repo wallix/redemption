@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityDrawGdiPlusEmit)
     drawgdiplus_caps.gdiPImageCacheProperties->GdipObjectImageCacheMaxSize = 128;
 
     BOOST_CHECK_EQUAL(drawgdiplus_caps.capabilityType, (uint16_t)CAPSTYPE_DRAWGDIPLUS);
-    BOOST_CHECK_EQUAL(drawgdiplus_caps.len, (uint16_t)RDP_CAPLEN_DRAWGDIPLUS);
+    BOOST_CHECK_EQUAL(drawgdiplus_caps.len, (uint16_t)CAPLEN_DRAWGDIPLUS);
     BOOST_CHECK_EQUAL(drawgdiplus_caps.drawGDIPlusSupportLevel, (uint32_t) 5);
     BOOST_CHECK_EQUAL(drawgdiplus_caps.GdipVersion, (uint32_t) 42);
     BOOST_CHECK_EQUAL(drawgdiplus_caps.drawGdiplusCacheLevel, (uint32_t) 2);
@@ -82,11 +82,11 @@ BOOST_AUTO_TEST_CASE(TestCapabilityDrawGdiPlusEmit)
     DrawGdiPlusCaps drawgdiplus_caps2;
 
     BOOST_CHECK_EQUAL(drawgdiplus_caps2.capabilityType, (uint16_t)CAPSTYPE_DRAWGDIPLUS);
-    BOOST_CHECK_EQUAL(drawgdiplus_caps2.len, (uint16_t)RDP_CAPLEN_DRAWGDIPLUS);
+    BOOST_CHECK_EQUAL(drawgdiplus_caps2.len, (uint16_t)CAPLEN_DRAWGDIPLUS);
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_DRAWGDIPLUS, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_DRAWGDIPLUS, stream.in_uint16_le());
-    drawgdiplus_caps2.recv(stream, RDP_CAPLEN_DRAWGDIPLUS);
+    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_DRAWGDIPLUS, stream.in_uint16_le());
+    drawgdiplus_caps2.recv(stream, CAPLEN_DRAWGDIPLUS);
 
     BOOST_CHECK_EQUAL(drawgdiplus_caps2.drawGDIPlusSupportLevel, (uint32_t) 5);
     BOOST_CHECK_EQUAL(drawgdiplus_caps2.GdipVersion, (uint32_t) 42);

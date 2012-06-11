@@ -49,6 +49,10 @@
 // windowManagerKeyFlag (2 bytes): A 16-bit, unsigned integer. This field SHOULD be set to
 //   FALSE (0x0000).
 
+enum {
+    CAPLEN_ACTIVATION = 12
+};
+
 
 struct ActivationCaps : public Capability {
     uint16_t helpKeyFlag;
@@ -56,7 +60,7 @@ struct ActivationCaps : public Capability {
     uint16_t helpExtendedKeyFlag;
     uint16_t windowManagerKeyFlag;
     ActivationCaps()
-    : Capability(CAPSTYPE_ACTIVATION, RDP_CAPLEN_ACTIVATION)
+    : Capability(CAPSTYPE_ACTIVATION, CAPLEN_ACTIVATION)
     , helpKeyFlag(0)
     , helpKeyIndexFlag(0)
     , helpExtendedKeyFlag(0)

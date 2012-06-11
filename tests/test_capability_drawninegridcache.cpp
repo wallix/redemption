@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityDrawNineGridCacheEmit)
     drawninegridcache_caps.drawNineGridCacheEntries = 256;
 
     BOOST_CHECK_EQUAL(drawninegridcache_caps.capabilityType, (uint16_t)CAPSTYPE_DRAWNINEGRIDCACHE);
-    BOOST_CHECK_EQUAL(drawninegridcache_caps.len, (uint16_t)RDP_CAPLEN_DRAWNINEGRIDCACHE);
+    BOOST_CHECK_EQUAL(drawninegridcache_caps.len, (uint16_t)CAPLEN_DRAWNINEGRIDCACHE);
     BOOST_CHECK_EQUAL(drawninegridcache_caps.drawNineGridSupportLevel, (uint32_t) 0);
     BOOST_CHECK_EQUAL(drawninegridcache_caps.drawNineGridCacheSize, (uint16_t) 2560);
     BOOST_CHECK_EQUAL(drawninegridcache_caps.drawNineGridCacheEntries, (uint16_t) 256);
@@ -51,11 +51,11 @@ BOOST_AUTO_TEST_CASE(TestCapabilityDrawNineGridCacheEmit)
     DrawNineGridCacheCaps drawninegridcache_caps2;
 
     BOOST_CHECK_EQUAL(drawninegridcache_caps2.capabilityType, (uint16_t)CAPSTYPE_DRAWNINEGRIDCACHE);
-    BOOST_CHECK_EQUAL(drawninegridcache_caps2.len, (uint16_t)RDP_CAPLEN_DRAWNINEGRIDCACHE);
+    BOOST_CHECK_EQUAL(drawninegridcache_caps2.len, (uint16_t)CAPLEN_DRAWNINEGRIDCACHE);
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_DRAWNINEGRIDCACHE, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_DRAWNINEGRIDCACHE, stream.in_uint16_le());
-    drawninegridcache_caps2.recv(stream, RDP_CAPLEN_DRAWNINEGRIDCACHE);
+    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_DRAWNINEGRIDCACHE, stream.in_uint16_le());
+    drawninegridcache_caps2.recv(stream, CAPLEN_DRAWNINEGRIDCACHE);
 
     BOOST_CHECK_EQUAL(drawninegridcache_caps2.drawNineGridSupportLevel, (uint32_t) 0);
     BOOST_CHECK_EQUAL(drawninegridcache_caps2.drawNineGridCacheSize, (uint16_t) 2560);

@@ -138,116 +138,62 @@
 /* Maps to generalCapabilitySet in T.128 page 138 */
 
 enum {
-// 1 CAPSTYPE_GENERAL General Capability Set ([MS-RDPBCGR] section 2.2.7.1.1)
+// General Capability Set ([MS-RDPBCGR] section 2.2.7.1.1)
 CAPSTYPE_GENERAL                    = 1,
-RDP_CAPLEN_GENERAL                  = 0x18,
-
-// 2 CAPSTYPE_BITMAP Bitmap Capability Set ([MS-RDPBCGR] section 2.2.7.1.2)
+// Bitmap Capability Set ([MS-RDPBCGR] section 2.2.7.1.2)
 CAPSTYPE_BITMAP                     = 2,
-RDP_CAPLEN_BITMAP                   = 0x1C,
-
-// 3 CAPSTYPE_ORDER Order Capability Set ([MS-RDPBCGR] section 2.2.7.1.3)
+// Order Capability Set ([MS-RDPBCGR] section 2.2.7.1.3)
 CAPSTYPE_ORDER                      = 3,
-RDP_CAPLEN_ORDER                    = 0x58,
-
-// 4 CAPSTYPE_BITMAPCACHE Revision 1 Bitmap Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.4.1)
+// Revision 1 Bitmap Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.4.1)
 CAPSTYPE_BITMAPCACHE                = 4,
-RDP_CAPLEN_BITMAPCACHE              = 0x28,
-
-// 5 CAPSTYPE_CONTROL Control Capability Set ([MS-RDPBCGR] section 2.2.7.2.2)
+// Control Capability Set ([MS-RDPBCGR] section 2.2.7.2.2)
 CAPSTYPE_CONTROL                    = 5,
-RDP_CAPLEN_CONTROL                  = 0x0C,
-
-// 7 CAPSTYPE_ACTIVATION Window Activation Capability Set ([MS-RDPBCGR] section 2.2.7.2.3)
+// Window Activation Capability Set ([MS-RDPBCGR] section 2.2.7.2.3)
 CAPSTYPE_ACTIVATION                 = 7,
-RDP_CAPLEN_ACTIVATION               = 0x0C,
-
-// 8 CAPSTYPE_POINTER Pointer Capability Set ([MS-RDPBCGR] section 2.2.7.1.5)
+// Pointer Capability Set ([MS-RDPBCGR] section 2.2.7.1.5)
 CAPSTYPE_POINTER                    = 8,
-RDP_CAPLEN_POINTER                  = 0x0a,
-RDP_CAPLEN_POINTER_MONO             = 0x08,
-
-// 9 CAPSTYPE_SHARE Share Capability Set ([MS-RDPBCGR] section 2.2.7.2.4)
+// Share Capability Set ([MS-RDPBCGR] section 2.2.7.2.4)
 CAPSTYPE_SHARE                      = 9,
-RDP_CAPLEN_SHARE                    = 0x08,
-
-// 10 CAPSTYPE_COLORCACHE Color Table Cache Capability Set (see [MS-RDPEGDI] section 2.2.1.1)
+// Color Table Cache Capability Set (see [MS-RDPEGDI] section 2.2.1.1)
 CAPSTYPE_COLORCACHE                 = 10,
-RDP_CAPLEN_COLORCACHE               = 0x08,
-
-// 12 CAPSTYPE_SOUND Sound Capability Set ([MS-RDPBCGR] section 2.2.7.1.11)
+// Sound Capability Set ([MS-RDPBCGR] section 2.2.7.1.11)
 CAPSTYPE_SOUND                      = 12,
-RDP_CAPLEN_SOUND                    = 0x08,
-
-// 13 CAPSTYPE_INPUT Input Capability Set ([MS-RDPBCGR] section 2.2.7.1.6)
+// Input Capability Set ([MS-RDPBCGR] section 2.2.7.1.6)
 CAPSTYPE_INPUT                      = 13,
-RDP_CAPLEN_INPUT                    = 0x58,
-
-// 14 CAPSTYPE_FONT Font Capability Set ([MS-RDPBCGR] section 2.2.7.2.5)
+// Font Capability Set ([MS-RDPBCGR] section 2.2.7.2.5)
 CAPSTYPE_FONT                       = 14,
-RDP_CAPLEN_FONT                     = 0x08,
-
-// 15 CAPSTYPE_BRUSH Brush Capability Set ([MS-RDPBCGR] section 2.2.7.1.7)
+// Brush Capability Set ([MS-RDPBCGR] section 2.2.7.1.7)
 CAPSTYPE_BRUSH                      = 15,
-RDP_CAPLEN_BRUSH                    = 0x08,
-
-// 16 CAPSTYPE_GLYPHCACHE Glyph Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.8)
+// Glyph Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.8)
 CAPSTYPE_GLYPHCACHE                 = 16,
-RDP_CAPLEN_GLYPHCACHE               = 0x34,
-
-// 17 CAPSTYPE_OFFSCREENCACHE Offscreen Bitmap Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.9)
+// Offscreen Bitmap Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.9)
 CAPSTYPE_OFFSCREENCACHE             = 17,
-RDP_CAPLEN_OFFSCREENCACHE           = 0x0C,
-
-// 18 CAPSTYPE_BITMAPCACHE_HOSTSUPPORT Bitmap Cache Host Support Capability Set ([MS-RDPBCGR] section 2.2.7.2.1)
+// Bitmap Cache Host Support Capability Set ([MS-RDPBCGR] section 2.2.7.2.1)
 CAPSTYPE_BITMAPCACHE_HOSTSUPPORT    = 18,
-RDP_CAPLEN_BITMAPCACHE_HOSTSUPPORT  = 0x08,
-
-// 19 CAPSTYPE_BITMAPCACHE_REV2 Revision 2 Bitmap Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.4.2)
+// Revision 2 Bitmap Cache Capability Set ([MS-RDPBCGR] section 2.2.7.1.4.2)
 CAPSTYPE_BITMAPCACHE_REV2           = 19,
-
-// 20 CAPSTYPE_VIRTUALCHANNEL Virtual Channel Capability Set ([MS-RDPBCGR] section 2.2.7.1.10)
+// Virtual Channel Capability Set ([MS-RDPBCGR] section 2.2.7.1.10)
 CAPSTYPE_VIRTUALCHANNEL             = 20,
-RDP_CAPLEN_VIRTUALCHANNEL           = 0x0C,
-
-// 21 CAPSTYPE_DRAWNINEGRIDCACHE DrawNineGrid Cache Capability Set ([MS-RDPEGDI] section 2.2.1.2)
+// DrawNineGrid Cache Capability Set ([MS-RDPEGDI] section 2.2.1.2)
 CAPSTYPE_DRAWNINEGRIDCACHE          = 21,
-RDP_CAPLEN_DRAWNINEGRIDCACHE        = 0x0C,
-
-// 22 CAPSTYPE_DRAWGDIPLUS Draw GDI+ Cache Capability Set ([MS-RDPEGDI] section 2.2.1.3)
+// Draw GDI+ Cache Capability Set ([MS-RDPEGDI] section 2.2.1.3)
 CAPSTYPE_DRAWGDIPLUS                = 22,
-RDP_CAPLEN_DRAWGDIPLUS              = 0x28,
-
-// 23 CAPSTYPE_RAIL Remote Programs Capability Set ([MS-RDPERP] section 2.2.1.1.1)
+// Remote Programs Capability Set ([MS-RDPERP] section 2.2.1.1.1)
 CAPSTYPE_RAIL                       = 23,
-RDP_CAPLEN_RAIL                     = 0x08,
-
-// 24 CAPSTYPE_WINDOW Window List Capability Set ([MS-RDPERP] section 2.2.1.1.2)
+// Window List Capability Set ([MS-RDPERP] section 2.2.1.1.2)
 CAPSTYPE_WINDOW                     = 24,
-RDP_CAPLEN_WINDOW                   = 0x0B,
-
-// 25 CAPSETTYPE_COMPDESK Desktop Composition Extension Capability Set ([MS-RDPBCGR] section 2.2.7.2.8)
+// Desktop Composition Extension Capability Set ([MS-RDPBCGR] section 2.2.7.2.8)
 CAPSETTYPE_COMPDESK                 = 25,
-RDP_CAPLEN_COMPDESK                 = 0x08,
-
-// 26 CAPSETTYPE_MULTIFRAGMENTUPDATE Multifragment Update Capability Set ([MS-RDPBCGR] section 2.2.7.2.6)
+// Multifragment Update Capability Set ([MS-RDPBCGR] section 2.2.7.2.6)
 CAPSETTYPE_MULTIFRAGMENTUPDATE      = 26,
-RDP_CAPLEN_MULTIFRAGMENTUPDATE      = 0x06,
-
-// 27 CAPSETTYPE_LARGE_POINTER Large Pointer Capability Set ([MS-RDPBCGR] section 2.2.7.2.7)
+// Large Pointer Capability Set ([MS-RDPBCGR] section 2.2.7.2.7)
 CAPSETTYPE_LARGE_POINTER            = 27,
-RDP_CAPLEN_LARGE_POINTER            = 0x06,
-
-// 28 CAPSETTYPE_SURFACE_COMMANDS Surface Commands Capability Set ([MS-RDPBCGR] section 2.2.7.2.9)
+// Surface Commands Capability Set ([MS-RDPBCGR] section 2.2.7.2.9)
 CAPSETTYPE_SURFACE_COMMANDS         = 28,
-
-// 29 CAPSETTYPE_BITMAP_CODECS Bitmap Codecs Capability Set ([MS-RDPBCGR] section 2.2.7.2.10)
+// Bitmap Codecs Capability Set ([MS-RDPBCGR] section 2.2.7.2.10)
 CAPSETTYPE_BITMAP_CODECS            = 29,
-
-// 30 CAPSSETTYPE_FRAME_ACKNOWLEDGE Frame Acknowledge Capability Set (([MS-RDPRFX] section 2.2.1.3))
+// Frame Acknowledge Capability Set (([MS-RDPRFX] section 2.2.1.3))
 CAPSETTYPE_FRAME_ACKNOWLEDGE        = 30,
-RDP_CAPLEN_FRAME_ACKNOWLEDGE        = 0x08,
-
 };
 
 enum {

@@ -68,13 +68,17 @@ enum {
      , DRAW_NINEGRID_SUPPORTED_REV2
 };
 
+enum {
+    CAPLEN_DRAWNINEGRIDCACHE = 12
+};
+
 struct DrawNineGridCacheCaps : public Capability {
     uint32_t drawNineGridSupportLevel;
     uint16_t drawNineGridCacheSize;
     uint16_t drawNineGridCacheEntries;
 
     DrawNineGridCacheCaps()
-    : Capability(CAPSTYPE_DRAWNINEGRIDCACHE, RDP_CAPLEN_DRAWNINEGRIDCACHE)
+    : Capability(CAPSTYPE_DRAWNINEGRIDCACHE, CAPLEN_DRAWNINEGRIDCACHE)
     , drawNineGridSupportLevel(DRAW_NINEGRID_NO_SUPPORT) // from a specific list of value (see enum)
     , drawNineGridCacheSize(0)    // 0 by default (max = 2560 Kilobytes)
     , drawNineGridCacheEntries(0) // 0 by default (max = 256 entries)

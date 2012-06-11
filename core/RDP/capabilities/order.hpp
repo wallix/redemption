@@ -312,6 +312,10 @@ enum {
     , UnusedIndex11 = 0x1F
 };
 
+enum {
+    CAPLEN_ORDER = 88
+};
+
 
 struct OrderCaps : public Capability {
 
@@ -334,7 +338,7 @@ struct OrderCaps : public Capability {
     uint16_t pad2octetsE ;
 
     OrderCaps()
-    : Capability(CAPSTYPE_ORDER, RDP_CAPLEN_ORDER)
+    : Capability(CAPSTYPE_ORDER, CAPLEN_ORDER)
 //        , terminalDescriptor = "";
         , pad4octetsA(0) //....................... MUST be ignored
         , desktopSaveXGranularity(1) //            ignored and assumed to be 1

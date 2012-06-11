@@ -46,13 +46,18 @@
 // offscreenCacheEntries (2 bytes): A 16-bit, unsigned integer. The maximum number of cache
 //    entries (largest allowed value is 500 entries).
 
+enum {
+    CAPLEN_OFFSCREENCACHE = 12
+};
+
+
 struct OffScreenCacheCaps : public Capability {
     uint32_t offscreenSupportLevel;
     uint16_t offscreenCacheSize;
     uint16_t offscreenCacheEntries;
 
     OffScreenCacheCaps()
-    : Capability(CAPSTYPE_OFFSCREENCACHE, RDP_CAPLEN_OFFSCREENCACHE)
+    : Capability(CAPSTYPE_OFFSCREENCACHE, CAPLEN_OFFSCREENCACHE)
     , offscreenSupportLevel(false) // true/false
     , offscreenCacheSize(0)        // 0 by default (max = 7680 KB)
     , offscreenCacheEntries(0)     // 0 by default (max = 500 entries)

@@ -52,13 +52,17 @@ enum {
     CONTROLPRIORITY_NEVER = 0x02
 };
 
+enum {
+    CAPLEN_CONTROL = 12
+};
+
 struct ControlCaps : public Capability {
     uint16_t controlFlags;
     uint16_t remoteDetachFlag;
     uint16_t controlInterest;
     uint16_t detachInterest;
     ControlCaps()
-    : Capability(CAPSTYPE_CONTROL, RDP_CAPLEN_CONTROL)
+    : Capability(CAPSTYPE_CONTROL, CAPLEN_CONTROL)
     , controlFlags(0)
     , remoteDetachFlag(0)
     , controlInterest(CONTROLPRIORITY_NEVER)

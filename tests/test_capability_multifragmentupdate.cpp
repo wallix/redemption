@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityMultiFragmentUpdateEmit)
     multifragmentupdate_caps.MaxRequestSize = 65536;
 
     BOOST_CHECK_EQUAL(multifragmentupdate_caps.capabilityType, (uint16_t)CAPSETTYPE_MULTIFRAGMENTUPDATE);
-    BOOST_CHECK_EQUAL(multifragmentupdate_caps.len, (uint16_t)RDP_CAPLEN_MULTIFRAGMENTUPDATE);
+    BOOST_CHECK_EQUAL(multifragmentupdate_caps.len, (uint16_t)CAPLEN_MULTIFRAGMENTUPDATE);
     BOOST_CHECK_EQUAL(multifragmentupdate_caps.MaxRequestSize, (uint32_t) 65536);
 
     Stream stream(1024);
@@ -47,11 +47,11 @@ BOOST_AUTO_TEST_CASE(TestCapabilityMultiFragmentUpdateEmit)
     MultiFragmentUpdateCaps multifragmentupdate_caps2;
 
     BOOST_CHECK_EQUAL(multifragmentupdate_caps2.capabilityType, (uint16_t)CAPSETTYPE_MULTIFRAGMENTUPDATE);
-    BOOST_CHECK_EQUAL(multifragmentupdate_caps2.len, (uint16_t)RDP_CAPLEN_MULTIFRAGMENTUPDATE);
+    BOOST_CHECK_EQUAL(multifragmentupdate_caps2.len, (uint16_t)CAPLEN_MULTIFRAGMENTUPDATE);
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSETTYPE_MULTIFRAGMENTUPDATE, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_MULTIFRAGMENTUPDATE, stream.in_uint16_le());
-    multifragmentupdate_caps2.recv(stream, RDP_CAPLEN_MULTIFRAGMENTUPDATE);
+    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_MULTIFRAGMENTUPDATE, stream.in_uint16_le());
+    multifragmentupdate_caps2.recv(stream, CAPLEN_MULTIFRAGMENTUPDATE);
 
     BOOST_CHECK_EQUAL(multifragmentupdate_caps2.MaxRequestSize, (uint32_t) 65536);
 }

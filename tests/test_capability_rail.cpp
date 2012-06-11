@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityRailEmit)
     rail_caps.RailSupportLevel = true;
 
     BOOST_CHECK_EQUAL(rail_caps.capabilityType, (uint16_t)CAPSTYPE_RAIL);
-    BOOST_CHECK_EQUAL(rail_caps.len, (uint16_t)RDP_CAPLEN_RAIL);
+    BOOST_CHECK_EQUAL(rail_caps.len, (uint16_t)CAPLEN_RAIL);
     BOOST_CHECK_EQUAL(rail_caps.RailSupportLevel, (uint32_t) 1);
 
     Stream stream(1024);
@@ -46,11 +46,11 @@ BOOST_AUTO_TEST_CASE(TestCapabilityRailEmit)
     RailCaps rail_caps2;
 
     BOOST_CHECK_EQUAL(rail_caps2.capabilityType, (uint16_t)CAPSTYPE_RAIL);
-    BOOST_CHECK_EQUAL(rail_caps2.len, (uint16_t)RDP_CAPLEN_RAIL);
+    BOOST_CHECK_EQUAL(rail_caps2.len, (uint16_t)CAPLEN_RAIL);
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_RAIL, stream.in_uint16_le());
-    BOOST_CHECK_EQUAL((uint16_t)RDP_CAPLEN_RAIL, stream.in_uint16_le());
-    rail_caps2.recv(stream, RDP_CAPLEN_RAIL);
+    BOOST_CHECK_EQUAL((uint16_t)CAPLEN_RAIL, stream.in_uint16_le());
+    rail_caps2.recv(stream, CAPLEN_RAIL);
 
     BOOST_CHECK_EQUAL(rail_caps2.RailSupportLevel, (uint32_t) 1);
 }
