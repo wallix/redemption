@@ -1447,7 +1447,12 @@ struct mod_rdp : public client_mod {
             capscount++;
 
 //            if(this->use_rdp5){
-//                out_bmpcache2_caps(stream);
+//                BmpCache2Caps bmpcache2_caps;
+//                bmpcache2_caps.numCellCaches = 3;
+//                bmpcache2_caps.bitmapCache0CellInfo = 2000;
+//                bmpcache2_caps.bitmapCache1CellInfo = 2000;
+//                bmpcache2_caps.bitmapCache2CellInfo = 2000;
+//                bmpcache2_caps.emit(stream);
 //                capscount++;
 //            }
 

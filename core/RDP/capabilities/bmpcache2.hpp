@@ -121,7 +121,7 @@ struct BmpCache2Caps : public Capability {
     uint32_t bitmapCache3CellInfo;
     uint32_t bitmapCache4CellInfo;
     BmpCache2Caps()
-    : Capability(CAPSTYPE_BITMAPCACHE_REV2, RDP_CAPLEN_BITMAPCACHE_REV2)
+    : Capability(CAPSTYPE_BITMAPCACHE_REV2, 28)
     , cacheFlags(0)
     , pad1(0)
     , bitmapCache0CellInfo(0)
@@ -170,24 +170,5 @@ struct BmpCache2Caps : public Capability {
         LOG(LOG_INFO, "BitmapCache2 caps::bitampCache4CellInfo %u", this->bitmapCache4CellInfo);
     }
 };
-
-
-
-static inline void out_bmpcache2_caps(Stream & stream)
-{
-    stream.out_uint16_le(CAPSTYPE_BITMAPCACHE_REV2);
-    stream.out_uint16_le(RDP_CAPLEN_BITMAPCACHE_REV2);
-
-    /* version */
-    stream.out_uint16_le(0); // persistant cache disabled
-    stream.out_uint16_be(3);	/* number of caches in this set */
-
-    /* Sending bitmap capabilities version 2 */
-    stream.out_uint32_le(2000);
-    stream.out_uint32_le(2000);
-    stream.out_uint32_le(2000);
-
-    stream.out_clear_bytes(8);	/* other bitmap caches not used */
-}
 
 #endif
