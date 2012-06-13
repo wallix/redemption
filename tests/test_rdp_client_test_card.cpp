@@ -32,7 +32,6 @@
 #define SHARE_PATH FIXTURES_PATH
 #include "RDP/RDPGraphicDevice.hpp"
 #include "channel_list.hpp"
-#include "RDP/caches/cache.hpp"
 #include "front_api.hpp"
 #include "wait_obj.hpp"
 

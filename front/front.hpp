@@ -44,7 +44,9 @@
 #include "font.hpp"
 #include "bitmap.hpp"
 #include "RDP/caches/bmpcache.hpp"
-#include "RDP/caches/cache.hpp"
+#include "RDP/caches/fontcache.hpp"
+#include "RDP/caches/pointercache.hpp"
+#include "RDP/caches/brushcache.hpp"
 #include "client_info.hpp"
 #include "config.hpp"
 #include "error.hpp"
@@ -82,7 +84,9 @@ public:
     uint32_t verbose;
 
     struct Font font;
-    Cache cache;
+    BrushCache brush_cache;
+    PointerCache pointer_cache;
+    GlyphCache glyph_cache;
 
     bool palette_sent;
     bool palette_memblt_sent[6];
@@ -101,23 +105,25 @@ public:
 
     Random * gen;
 
-    Front(Transport * trans, Random * gen, Inifile * ini) :
-        FrontAPI(ini->globals.notimestamp, ini->globals.nomouse),
-        capture(NULL),
-        orders(NULL),
-        up_and_running(0),
-        share_id(65538),
-        client_info(ini->globals.crypt_level, ini->globals.channel_code, ini->globals.bitmap_compression, ini->globals.bitmap_cache),
-        packet_number(1),
-        trans(trans),
-        userid(0),
-        order_level(0),
-        ini(ini),
-        verbose(this->ini?this->ini->globals.debug.front:0),
-        font(SHARE_PATH "/" DEFAULT_FONT_NAME),
-        cache(),
-        state(CONNECTION_INITIATION),
-        gen(gen)
+    Front(Transport * trans, Random * gen, Inifile * ini)
+        : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
+        , capture(NULL)
+        , orders(NULL)
+        , up_and_running(0)
+        , share_id(65538)
+        , client_info(ini->globals.crypt_level, ini->globals.channel_code, ini->globals.bitmap_compression, ini->globals.bitmap_cache)
+        , packet_number(1)
+        , trans(trans)
+        , userid(0)
+        , order_level(0)
+        , ini(ini)
+        , verbose(this->ini?this->ini->globals.debug.front:0)
+        , font(SHARE_PATH "/" DEFAULT_FONT_NAME)
+        , brush_cache()
+        , pointer_cache()
+        , glyph_cache()
+        , state(CONNECTION_INITIATION)
+        , gen(gen)
     {
         init_palette332(this->palette332);
         this->mod_palette_setted = false;
@@ -210,7 +216,7 @@ public:
     void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
     {
         int cache_idx = 0;
-        switch (this->cache.add_pointer(data, mask, x, y, cache_idx)){
+        switch (this->pointer_cache.add_pointer(data, mask, x, y, cache_idx)){
         case POINTER_TO_SEND:
             this->send_pointer(cache_idx, data, mask, x, y);
         break;
@@ -262,9 +268,9 @@ public:
                 font_item = this->font.font_items['?'];
             }
             TODO(" avoid passing parameters by reference to get results")
-            switch (this->cache.add_glyph(font_item, f, c))
+            switch (this->glyph_cache.add_glyph(font_item, f, c))
             {
-                case Cache::GLYPH_ADDED_TO_CACHE:
+                case GlyphCache::GLYPH_ADDED_TO_CACHE:
                 {
                     RDPGlyphCache cmd(f, 1, c,
                         font_item->offset,
@@ -373,13 +379,15 @@ public:
                         this->client_info.use_bitmap_comp,
                         this->client_info.use_compact_packets);
 
-        this->cache.reset(this->client_info);
+        this->pointer_cache.reset(this->client_info);
+        this->brush_cache.reset(this->client_info);
+        this->glyph_cache.reset(this->client_info);
     }
 
     void init_pointers()
     {
         pointer_item pointer0(POINTER_CURSOR0);
-        this->cache.add_pointer_static(&pointer0, 0);
+        this->pointer_cache.add_pointer_static(&pointer0, 0);
         this->send_pointer(0,
                          pointer0.data,
                          pointer0.mask,
@@ -387,7 +395,7 @@ public:
                          pointer0.y);
 
         pointer_item pointer1(POINTER_CURSOR1);
-        this->cache.add_pointer_static(&pointer1, 1);
+        this->pointer_cache.add_pointer_static(&pointer1, 1);
         this->send_pointer(1,
                  pointer1.data,
                  pointer1.mask,
@@ -2469,10 +2477,10 @@ public:
             pattern[0] = brush.hatch;
             memcpy(pattern+1, brush.extra, 7);
             int cache_idx = 0;
-            if (BRUSH_TO_SEND == this->cache.add_brush(pattern, cache_idx)){
+            if (BRUSH_TO_SEND == this->brush_cache.add_brush(pattern, cache_idx)){
                 RDPBrushCache cmd(cache_idx, 1, 8, 8, 0x81,
-                    sizeof(this->cache.brush_items[cache_idx].pattern),
-                    this->cache.brush_items[cache_idx].pattern);
+                    sizeof(this->brush_cache.brush_items[cache_idx].pattern),
+                    this->brush_cache.brush_items[cache_idx].pattern);
                 this->orders->draw(cmd);
             }
             brush.hatch = cache_idx;

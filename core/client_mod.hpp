@@ -32,7 +32,6 @@
 
 #include "client_info.hpp"
 #include "font.hpp"
-#include "RDP/caches/cache.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include "front.hpp"
 #include "mainloop.hpp"

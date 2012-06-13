@@ -18,8 +18,8 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-#if !defined(__BMPCACHE_HPP__)
-#define __BMPCACHE_HPP__
+#if !defined(__RDP_CACHES_BMPCACHE_HPP__)
+#define __RDP_CACHES_BMPCACHE_HPP__
 
 enum {
     BITMAP_FOUND_IN_CACHE,
