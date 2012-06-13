@@ -32,7 +32,7 @@
 #include <string>
 #include <stdint.h>
 #include "bitmap.hpp"
-#include "bmpcache.hpp"
+#include "RDP/caches/bmpcache.hpp"
 #include "colors.hpp"
 #include "config.hpp"
 #include <sys/time.h>

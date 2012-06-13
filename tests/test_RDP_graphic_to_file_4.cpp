@@ -31,7 +31,7 @@
 #include "RDP/RDPDrawable.hpp"
 #include "GraphicToFile.hpp"
 #include "constants.hpp"
-#include "bmpcache.hpp"
+#include "RDP/caches/bmpcache.hpp"
 #include "ssl_calls.hpp"
 #include "png.hpp"
 

@@ -22,7 +22,7 @@
 #define __CORE_RDP_RDPDRAWABLE_HPP__
 
 #include "drawable.hpp"
-#include "bmpcache.hpp"
+#include "RDP/caches/bmpcache.hpp"
 
 #include "RDP/RDPGraphicDevice.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"

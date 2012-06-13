@@ -30,7 +30,7 @@
 
 #include "GraphicToFile.hpp"
 #include "constants.hpp"
-#include "bmpcache.hpp"
+#include "RDP/caches/bmpcache.hpp"
 #include <png.h>
 
 class TestConsumer : public RDPGraphicDevice {

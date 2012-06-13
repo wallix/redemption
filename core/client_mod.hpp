@@ -32,10 +32,10 @@
 
 #include "client_info.hpp"
 #include "font.hpp"
-#include "cache.hpp"
+#include "RDP/caches/cache.hpp"
+#include "RDP/caches/bmpcache.hpp"
 #include "front.hpp"
 #include "mainloop.hpp"
-#include "bmpcache.hpp"
 #include "wait_obj.hpp"
 #include "keymap2.hpp"
 #include "callback.hpp"

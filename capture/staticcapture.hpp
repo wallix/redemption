@@ -46,7 +46,7 @@
 #include "png.hpp"
 #include "error.hpp"
 #include "config.hpp"
-#include "bmpcache.hpp"
+#include "RDP/caches/bmpcache.hpp"
 #include "colors.hpp"
 
 #include "RDP/RDPDrawable.hpp"

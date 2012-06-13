@@ -47,7 +47,7 @@
 #include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "transport.hpp"
 
-#include "bmpcache.hpp"
+#include "RDP/caches/bmpcache.hpp"
 #include "timer_capture.hpp"
 #include "stream.hpp"
 #include "rect.hpp"
