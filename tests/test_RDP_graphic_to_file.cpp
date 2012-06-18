@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         BOOST_CHECK_EQUAL(stream.end - stream.p, 0);
         ::close(fd);
     }
-//    ::unlink(tmpname);
+   ::unlink(tmpname);
 
 }
 

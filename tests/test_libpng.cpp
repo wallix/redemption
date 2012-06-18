@@ -151,6 +151,8 @@ BOOST_AUTO_TEST_CASE(TestCreateFrenchFlagPngFile)
         png_read_end(ppng, pinfo);
         png_destroy_read_struct(&ppng, &pinfo, NULL);
         fclose(fp);
+
+        unlink("/tmp/fflag.png");
     }
     // ----------------------------------------------------------------------
 

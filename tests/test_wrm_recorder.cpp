@@ -23,6 +23,8 @@
 #define BOOST_TEST_MODULE TestWRMRecorde
 #include <boost/test/auto_unit_test.hpp>
 
+#include <unistd.h>
+
 // #define LOGPRINT
 
 // #include <iostream>
@@ -33,6 +35,8 @@
 #include "capture.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 
+#include "unlink.hpp"
+
 BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 {
     BOOST_CHECK(1);
@@ -41,6 +45,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
     BOOST_CHECK_EQUAL(600, recorder.meta.height);
     BOOST_CHECK_EQUAL(24, recorder.meta.bpp);
 
+    uint breakpoint = 0;
     {
         Capture consumer(recorder.meta.width, recorder.meta.height,
                         "/tmp/replay_part", 0, 0, false);
@@ -70,6 +75,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
                 {
                     n = 0;
                     //std::cout << "breakpoint start\n";
+                    ++breakpoint;
                     consumer.breakpoint();
                     //std::cout << "breakpoint stop\n";
                     //if (++nb_break == 3)
@@ -82,6 +88,9 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
         BOOST_CHECK(328 == ntime);
     }
     BOOST_CHECK(1);
+
+    TODO("if boost::unit_test::error_count() == 0")
+    unlink_wrm("/tmp/replay_part", breakpoint+1);
 }
 
 /*BOOST_AUTO_TEST_CASE(TestMultiWRMToPng)

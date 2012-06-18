@@ -62,4 +62,7 @@ BOOST_AUTO_TEST_CASE(TestMeta)
         BOOST_CHECK_EQUAL(16, meta.bpp);
         close(fd);
     }
+
+    TODO("if boost::unit_test::error_count() == 0");
+    unlink("/tmp/test_meta.mwrm");
 }

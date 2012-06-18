@@ -26,6 +26,8 @@
 #include "capture.hpp"
 #include "transport.hpp"
 
+#include "unlink.hpp"
+
 BOOST_AUTO_TEST_CASE(TestBreakpoint)
 {
     //MetaWRM meta(800, 600, 24);
@@ -43,4 +45,7 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     cap.draw(RDPOpaqueRect(Rect(200,400,60,60), BLUE), clip);
     cap.timestamp();
     BOOST_CHECK(1);
+
+    TODO("if boost::unit_test::error_count() == 0")
+    unlink_wrm("/tmp/test_breakpoint", 3);
 }

@@ -28,6 +28,8 @@
 #include "transport.hpp"
 #include "meta_wrm.hpp"
 
+#include "unlink.hpp"
+
 bool check_sig(Drawable & data, char * message, const char * shasig)
 {
     SSL_SHA1 sha1;
@@ -90,6 +92,10 @@ void file_to_png(const char* filename, uint16_t w, uint16_t h, uint16_t bpp, con
         BOOST_CHECK_MESSAGE(false, message);
     }
     ::close(fd);
+
+    TODO("if boost::unit_test::error_count() == 0");
+    unlink_wrm(filename, 1);
+    unlink_png("/tmp/test_file_to_png.png", 1);
 }
 
 BOOST_AUTO_TEST_CASE(TestFileToPng)
@@ -154,6 +160,7 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
                            "/tmp/test_replay_to_png", 0, 0);
 
     bool is_chunk_time = false;
+    uint count_img = 1;
 
     reader.consumer = &consumer;
     while (reader.selected_next_order())
@@ -166,8 +173,11 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
             if (is_chunk_time)
             {
                 consumer.flush();
+                ++count_img;
                 is_chunk_time = false;
             }
         }
     }
+    TODO("if boost::unit_test::error_count() == 0");
+    unlink_png("/tmp/test_replay_to_png", count_img);
 }
