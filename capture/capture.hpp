@@ -35,6 +35,9 @@ class Capture : public RDPGraphicDevice
     struct timeval start_native_capture;
     uint64_t inter_frame_interval_native_capture;
 
+    struct timeval start_break_capture;
+    uint64_t inter_frame_interval_start_break_capture;
+
     StaticCapture sc;
     NativeCapture nc;
 
@@ -50,8 +53,10 @@ class Capture : public RDPGraphicDevice
         gettimeofday(&now, NULL);
         this->start_static_capture = now;
         this->start_native_capture = now;
+        this->start_break_capture = now;
         this->inter_frame_interval_static_capture = 5000000; // 1 000 000 us is 1 sec (default)
         this->inter_frame_interval_native_capture =   40000; // 1 000 000 us is 1 sec (default)
+        this->inter_frame_interval_start_break_capture  = 1000000 * 10 * 1; // 1 000 000 us is 1 sec (default)
     }
 
     ~Capture(){
@@ -97,6 +102,10 @@ class Capture : public RDPGraphicDevice
         if (difftimeval(now, this->start_native_capture) >= this->inter_frame_interval_native_capture){
             this->nc.recorder.timestamp(now);
             this->start_native_capture = now;
+            if (difftimeval(now, this->start_break_capture) >= this->inter_frame_interval_start_break_capture){
+                this->breakpoint();
+                this->start_break_capture = now;
+            }
         }
         this->nc.recorder.flush();
     }

@@ -57,7 +57,7 @@ alias instexe : install-bin install-test ;
 alias install : install-bin install-etc install-share ;
 
 install install-bin
-    : rdpproxy
+    : rdpproxy redrec
     : <install-type>EXE <install-dependencies>on
     : <location>/usr/local/bin
     ;
@@ -153,7 +153,7 @@ exe xrdp-keygen
         <variant>debug
     ;
 
-exe wrm-recorder
+exe redrec
     :
         main/recorder.cpp
 
