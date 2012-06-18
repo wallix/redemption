@@ -159,6 +159,7 @@ exe wrm-recorder
 
         openssl
         crypto
+        png
         z
         dl
 

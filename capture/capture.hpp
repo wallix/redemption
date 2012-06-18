@@ -70,6 +70,11 @@ class Capture : public RDPGraphicDevice
     }
 
     TODO("looks better to have some function in capture returning native recorder if any and perform meta.emit outside this class. Or some other strategy not implying capture having a dependance on MetaWRM. Logicaly dependence should be between MetaWRM and native recorder")
+    void timestamp(uint64_t usecond)
+    {
+        this->nc.recorder.timestamp(usecond);
+    }
+
     void emit_meta(MetaWRM& meta)
     {
         meta.emit(this->nc.recorder);
@@ -149,6 +154,16 @@ class Capture : public RDPGraphicDevice
                             24,
                             this->sc.drawable.width,
                             this->sc.drawable.height);
+    }
+
+    void dump_png()
+    {
+        this->sc.dump_png();
+    }
+
+    Stream& stream()
+    {
+        return this->nc.recorder.stream;
     }
 
 };

@@ -63,6 +63,10 @@ struct range_time_point
         return *this;
     }*/
 
+    /**
+     * @example "+30m"
+     * @example "1h,-20m"
+     */
     void parse(const std::string& s)
     {
         std::string::size_type p = s.find_first_of(',');
@@ -76,19 +80,24 @@ struct range_time_point
         } else if (s.length() == p+1) {
             this->left.parse(s.substr(0, p));
             this->right = std::numeric_limits<std::size_t>::max();
-        }
-        else {
-            this->right.parse(s.substr(('+' == s[p+1] && s.length() != p+2) ? p+2 : p+1));
-            if ('-' == s[0] && ',' != s[1]){
+        } else {
+            this->right.parse(s.substr((('+' == s[p+1] || '-' == s[p+1]) && s.length() != p+2) ? p+2 : p+1));
+            if ('-' == s[0]){
                 this->left.parse(s.substr(1, p-1));
             } else {
                 this->left.parse(s.substr(0, p));
             }
-            if ('-' == s[0] && ',' != s[1]){
+            if ('-' == s[0]){
                 if (this->left > this->right){
                     throw std::runtime_error("left time_point greater to right time_point");
                 }
                 this->left = this->right.time - this->left.time;
+            }
+            if ('-' == s[p+1]){
+                if (this->left < this->right){
+                    throw std::runtime_error("left time_point greater to right time_point");
+                }
+                this->right = this->left.time - this->right.time;
             }
             if ('+' == s[p+1]){
                 this->right += this->left;

@@ -27,10 +27,13 @@
 #include <boost/program_options.hpp>
 
 #include "range_time_point.hpp"
-// #include "wrm_recorder.hpp"
+#include "nativecapture.hpp"
+#include "staticcapture.hpp"
+#include "capture.hpp"
+#include "wrm_recorder.hpp"
 
-class NativeCapture;
-class StaticCapture;
+// class NativeCapture;
+// class StaticCapture;
 
 namespace po = boost::program_options;
 
@@ -59,153 +62,394 @@ void validate(boost::any& v,
     v = boost::any(time_point(s));
 }
 
-enum __unless_enum_t {};
-
-enum RecorderFlag{
-    DEFAULT_FLAG = 0,
-    SYNCHRONISE_WITH_PNG_CAPTURE_FLAG = 1,
-
-    OUTPUT_FILE_IGNORE = (1 << (sizeof(__unless_enum_t)-1))
-};
-
 struct RecorderError{
     enum {
         SUCCESS = 0,
         HELP = 1,
-        SYNCHRONISE_NAME_ERROR = 2,
+        SYNCHRONISE_ERROR = 2,
+        NOT_OUTPUT_FILE = 3,
     };
 };
 
-/**
- * TODO create class { po::options_description desc; [value...]; command_line_parser(int argc, char** argv):int}
- */
-bool load_options(int argc, char** argv, po::variables_map& options,
-                  range_time_point& range,
-                  uint& frame,
-                  time_point& time,
-                  std::string& wrm_filename,
-                  std::string& png_filename,
-                  std::vector<std::string>& wrm_files,
-                  std::string& synchronise,
-                  int& flag
-                )
+const char * recorder_string_errors[] = {
+    "SUCCESS",
+    "HELP",
+    "SYNCHRONISE_ERROR",
+    "NOT_OUTPUT_FILE"
+};
+
+struct WrmRecoderOption {
+    po::options_description desc;
+    po::variables_map options;
+
+    range_time_point range;
+    uint frame;
+    time_point time;
+    std::string out_filename;
+    std::string wrm_in_filename;
+    bool synchronise_screen;
+
+    WrmRecoderOption()
+    : desc("Options")
+    , options()
+    , range()
+    , frame(std::numeric_limits<uint>::max())
+    , time(60*2)
+    , out_filename()
+    , wrm_in_filename()
+    , synchronise_screen(false)
+    {
+    }
+
+    ///TODO add -s: wrm-recorder --screenshot time […]
+    void add_default_options()
+    {
+        this->desc.add_options()
+        // --help, -h
+        ("help,h", "produce help message")
+        // --version, -v
+        ("version,v", "show software version")
+        ("range,r", po::value(&this->range),
+        "range capture\n"
+        "range format:\n"
+        "[[[+|-]time[h|m|s][...]][,][[+]time[h|m|s][[+|-]time[h|m|s][...]]]]\n"
+        "example:\n"
+        "1h30,+10m -> from 1h30 to 1h40\n"
+        "20m+2h-50s,3h -> from 2h19m10s to 3h"
+        )
+        ("frame,f", po::value(&this->frame), "maximum frame for png capture option")
+        ("time,t", po::value(&this->time), "time capture for 1 file, with wrm capture option. format: [+|-]time[h|m|s][...]")
+        //("synchronise,s", "")
+        ("input-file,i", po::value(&this->wrm_in_filename), "wrm filename")
+        ("output-file,o", po::value(&this->out_filename), "png or wrm filename")
+        ("screenshot,s", "screenshot when one wrm file is create")
+        ("1", "")
+        ;
+    }
+
+    void parse_command_line(int argc, char** argv)
+    {
+        po::positional_options_description p;
+        p.add("input-file", -1);
+        po::store(
+            po::command_line_parser(argc, argv).options(
+                this->desc
+            ).positional(p).run(),
+            this->options
+        );
+    }
+
+    uint notify_options()
+    {
+        po::notify(this->options);
+
+        /*if (this->options.count("synchronise")){
+            this->synchronise = true;
+        }*/
+
+        if (!this->range.valid()){
+            std::swap<>(this->range.left, this->range.right);
+        }
+
+        po::variables_map::iterator it = this->options.find("screenshot");
+        po::variables_map::iterator end = this->options.end();
+        if (it != end)
+            this->synchronise_screen = true;
+
+        return RecorderError::SUCCESS;
+    }
+
+    const char * version() const
+    {
+        return "0.1";
+    }
+};
+
+uint app_parse_command_line(int argc, char** argv, WrmRecoderOption& app)
 {
-    po::options_description desc("Options");
-    desc.add_options()
-    // --help, -h
-    ("help,h", "produce help message")
-    // --version, -v
-    ("version,v", "show software version")
-    ("png,p", po::value(&png_filename), "wrm to png")
-    ("wrm,w", po::value(&wrm_filename), "wrm to wrm (cut file)")
-    ("range,r", po::value(&range),
-     "range capture\n"
-     "range format:\n"
-     "[[[+|-]time[h|m|s][...]][,][[+]time[h|m|s][[+|-]time[h|m|s][...]]]]\n"
-     "example:\n"
-     "1h30,+10m -> from 1h30 to 1h40\n"
-     "20m+2h-50s,3h -> from 2h19m10s to 3h"
-    )
-    ("frame,f", po::value(&frame), "maximum frame for png capture option")
-    ("time,t", po::value(&time), "time capture for 1 file, with wrm capture option. format: [+|-]time[h|m|s][...]")
-    ("synchronise,s", po::value(&synchronise), "")
-    ("input-file,i", po::value(&wrm_files), "")
-    ("output-file,o", po::value<std::string>(), "alias -w ... -p ... -s")
-    ("1", "")
-    ;
+    app.parse_command_line(argc, argv);
 
-    po::positional_options_description p;
-    p.add("input-file", -1);
-    po::store(
-        po::command_line_parser(argc, argv).
-        options(desc).positional(p).run(), options
-    );
-    po::notify(options);
+    if (app.options.count("version")) {
+        std::cout << "wrm-recorder version " << app.version() << '\n';
+    }
 
-    if (options.count("help")) {
-        std::cout << desc;
+    if (app.options.count("help")) {
         return RecorderError::HELP;
     }
-
-    po::variables_map::iterator it = options.find("output-file");
-    bool png_option = options.count("png");
-    bool wrm_option = options.count("wrm");
-    if (it != options.end()){
-        const std::string& filename = it->second.as<std::string>();
-        if (!png_option){
-            png_filename = filename;
-        }
-        if (!wrm_option){
-            wrm_filename = filename;
-        }
-        if (!png_option && !wrm_option)
-            flag |= OUTPUT_FILE_IGNORE;
-    }
-
-    if (options.count("synchronise")){
-        if (synchronise.empty()){
-            if (!png_option){
-                return RecorderError::SYNCHRONISE_NAME_ERROR;
-            }
-            flag |= SYNCHRONISE_WITH_PNG_CAPTURE_FLAG;
-        }
-    }
-
-    return RecorderError::SUCCESS;
+    return app.notify_options();
 }
+
+
+struct OutputType {
+    enum enum_t {
+        NOT_FOUND,
+        PNG_TYPE,
+        WRM_TYPE
+    };
+
+    static OutputType::enum_t get_output_type(const std::string& filename)
+    {
+        std::size_t p = filename.find_last_of('.');
+        return (p == std::string::npos || p + 4 != filename.length())
+        ? NOT_FOUND
+        : (
+            !filename.compare(p+1, 3, "png")
+            ? PNG_TYPE
+            : (
+                !filename.compare(p+1, 3, "wrm")
+                ? WRM_TYPE
+                : NOT_FOUND
+            )
+        );
+    }
+};
+
+
+class WrmRecorderApp
+{
+    WrmRecoderOption& opt;
+
+public:
+    WrmRecorderApp(WrmRecoderOption& opt)
+    : opt(opt)
+    {
+    }
+
+    OutputType::enum_t get_output_type() const
+    {
+        return OutputType::get_output_type(this->opt.out_filename);
+    }
+
+    std::string get_out_filename() const
+    {
+        return opt.out_filename.erase(opt.out_filename.length() - 4);
+    }
+
+    void run()
+    {
+        this->run(this->get_out_filename().c_str(), this->get_output_type());
+    }
+
+    void run(OutputType::enum_t type)
+    {
+        this->run(this->get_out_filename().c_str(), type);
+    }
+
+    void run(const char* outfile)
+    {
+        this->run(outfile, this->get_output_type());
+    }
+
+    void run(const char* outfile, OutputType::enum_t type)
+    {
+        WRMRecorder recorder(opt.wrm_in_filename.c_str());
+        switch (type) {
+            case OutputType::PNG_TYPE:
+                this->png_run(recorder, outfile);
+                break;
+            default:
+                this->wrm_run(recorder, outfile);
+                break;
+        }
+    }
+
+private:
+    class TimerCompute {
+        uint64_t micro_sec;
+
+    public:
+        static const uint64_t coeff_sec_to_usec = 1000000l;
+
+    public:
+        WRMRecorder& recorder;
+
+        TimerCompute(WRMRecorder& recorder)
+        : micro_sec(0)
+        , recorder(recorder)
+        {}
+
+        void reset()
+        {
+            this->micro_sec = 0;
+        }
+
+        uint64_t& usec()
+        { return this->micro_sec; }
+
+        uint64_t sec()
+        { return this->micro_sec / coeff_sec_to_usec; }
+
+        void interpret_time()
+        {
+            this->micro_sec += this->recorder.chunk_type() == WRMChunk::TIMESTAMP
+            ? (this->recorder.reader.stream.in_uint64_be() / 1000000000000l) % coeff_sec_to_usec
+            : 40000000l;
+            --this->recorder.remaining_order_count();
+        }
+
+        bool interpret_is_time_chunk()
+        {
+            if (recorder.chunk_type() == WRMChunk::TIMESTAMP ||
+                recorder.chunk_type() == WRMChunk::OLD_TIMESTAMP)
+            {
+                this->interpret_time();
+                return true;
+            }
+            return false;
+        }
+
+        bool advance_usecond(uint msec)
+        {
+            while (this->recorder.selected_next_order())
+            {
+                if (this->interpret_is_time_chunk()){
+                    if (this->micro_sec >= msec) {
+                        this->reset();
+                        return true;
+                    }
+                }
+                else {
+                    recorder.interpret_order();
+                }
+            }
+            return false;
+        }
+
+        bool advance_second(uint second)
+        {
+            return this->advance_usecond(coeff_sec_to_usec * second);
+        }
+        int& msec();
+    };
+
+    uint png_run(WRMRecorder& recorder, const char* outfile)
+    {
+        StaticCapture capture(
+            recorder.meta.width,
+            recorder.meta.height,
+            outfile,
+            0, 0
+        );
+        recorder.consumer(&capture);
+        TimerCompute timercompute(recorder);
+        if (!timercompute.advance_second(this->opt.range.left))
+            return 0;
+
+        uint frame = 0;
+        uint64_t mtime = TimerCompute::coeff_sec_to_usec * this->opt.time;
+        uint64_t msecond = TimerCompute::coeff_sec_to_usec * (this->opt.range.right.time - this->opt.range.left.time);
+        while (recorder.selected_next_order() && frame != this->opt.frame)
+        {
+            if (timercompute.interpret_is_time_chunk()){
+                if (timercompute.usec() >= mtime){
+                    timercompute.reset();
+                    capture.dump_png();
+                    ++frame;
+                }
+                if (msecond <= timercompute.usec()){
+                    msecond = 0;
+                    break;
+                } else {
+                    msecond -= timercompute.usec();
+                }
+            } else {
+                recorder.interpret_order();
+            }
+        }
+        if (msecond && frame != this->opt.frame){
+            capture.dump_png();
+            ++frame;
+        }
+        return frame;
+    }
+
+    uint wrm_run(WRMRecorder& recorder, const char* outfile)
+    {
+        Capture capture(
+            recorder.meta.width,
+            recorder.meta.height,
+            outfile,
+            0,0
+        );
+        recorder.consumer(&capture);
+        TimerCompute timercompute(recorder);
+        if (!timercompute.advance_second(this->opt.range.left))
+            return 0;
+
+        uint frame = 0;
+        uint64_t mtime = TimerCompute::coeff_sec_to_usec * this->opt.time;
+        uint64_t msecond = TimerCompute::coeff_sec_to_usec * (this->opt.range.right.time - this->opt.range.left.time);
+        while (recorder.selected_next_order() && frame != this->opt.frame)
+        {
+            if (timercompute.interpret_is_time_chunk()){
+                if (timercompute.usec() >= mtime){
+                    if (timercompute.usec()){
+                        capture.timestamp(timercompute.usec());
+                    }
+                    timercompute.reset();
+                    capture.breakpoint();
+                    if (this->opt.synchronise_screen)
+                        capture.dump_png();
+                    ++frame;
+                }
+                if (msecond <= timercompute.usec()){
+                    msecond = 0;
+                    break;
+                } else {
+                    msecond -= timercompute.usec();
+                }
+            } else {
+                recorder.interpret_order();
+            }
+        }
+        return frame;
+    }
+};
 
 int main(int argc, char** argv)
 {
-    range_time_point range;
-    uint frame = std::numeric_limits<uint>::max();
-    time_point time(3600);
-    std::string wrm_filename;
-    std::string png_filename;
-    std::vector<std::string> wrm_files;
-    std::string synchronise;
-    int flag = 0;
+    WrmRecoderOption opt;
+    opt.add_default_options();
 
-    po::variables_map options;
-    int error = load_options(argc, argv, options,
-                            range, frame, time,
-                            wrm_filename, png_filename,
-                            wrm_files,
-                            synchronise,
-                            flag
-                            );
-    if (!error)
-        return error; ///NOTE load_options_errors[error]: const char *
+    uint error = app_parse_command_line(argc, argv, opt);
+    if (error){
+        std::cout << "error (" << error << "): " << recorder_string_errors[error] << '\n'
+        << opt.desc;
+        return error;
+    }
 
-    po::variables_map::iterator it = options.find("wrm");
-    if (it != options.end()){
-        std::cout << "wrm: " << it->second.as<std::string>() << '\n';
+    if (!opt.out_filename.empty()){
+        std::cout << "output-file: " << opt.out_filename << '\n';
     }
-    it = options.find("png");
-    if (it != options.end()){
-        std::cout << "png: " << it->second.as<std::string>() << '\n';
+    if (!opt.wrm_in_filename.empty()){
+        std::cout << "input-file: " << opt.wrm_in_filename << '\n';
     }
-    it = options.find("input-file");
-    if (it != options.end()){
-        std::vector<std::string>& v = it->second.as<std::vector<std::string> >();
-        for (std::size_t i = 0, last = v.size(); i != last; ++i)
-            std::cout << "input-file (" << i << "): " << v[i] << '\n';
-    }
+
     std::cout
-    << "frame: " << frame << '\n'
-    << "time: " << time << '\n'
-    << "range: " << range << '\n'
+    << "frame: " << opt.frame << '\n'
+    << "time: " << opt.time << '\n'
+    << "range: " << opt.range << '\n'
     ;
-    if (!range.valid()){
-        std::swap<>(range.left, range.right);
-        std::cout << "revalide range: " << range << '\n';
+
+    if (opt.out_filename.empty()){
+        std::cerr << "not output-file\n";
+        return 80;
+    }
+    if (opt.wrm_in_filename.empty()){
+        std::cerr << "not input-file\n";
+        return 90;
     }
 
+    OutputType::enum_t type = OutputType::get_output_type(opt.out_filename);
+    if (type == OutputType::NOT_FOUND){
+        std::cerr << "incorect output extension, accept png or wrm.\n";
+        return 100;
+    }
 
-    //     NativeCapture *native_capture = 0;
-    //     StaticCapture *static_capture = 0;
-    //WRMRecorder recorder(filename);
+    std::cout << "type: " << type << '\n';
 
-
+    WrmRecorderApp app(opt);
+    app.run();
 
     return 0;
 }
