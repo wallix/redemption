@@ -59,6 +59,11 @@ class Capture : public RDPGraphicDevice
         this->nc.recorder.timestamp();
     }
 
+    void timestamp(uint64_t usecond)
+    {
+        this->nc.recorder.timestamp(usecond);
+    }
+
     void emit_meta(MetaWRM& meta)
     {
         meta.emit(this->nc.recorder);
@@ -138,6 +143,16 @@ class Capture : public RDPGraphicDevice
                             24,
                             this->sc.drawable.width,
                             this->sc.drawable.height);
+    }
+
+    void dump_png()
+    {
+        this->sc.dump_png();
+    }
+
+    Stream& stream()
+    {
+        return this->nc.recorder.stream;
     }
 
 };

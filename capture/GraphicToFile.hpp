@@ -170,17 +170,20 @@ struct GraphicsToFile : public RDPSerializer
     {
         struct timeval t;
         gettimeofday(&t, 0);
-        this->timestamp(t);
+        this->timestamp(this->timer.elapsed(t));
     }
 
     virtual void timestamp(const timeval& now)
     {
-        LOG(LOG_INFO, "GraphicsToFile::timestamp()");
+        this->timestamp(this->timer.elapsed(now));
+    }
+
+    virtual void timestamp(uint64_t usec)
+    {
         this->flush();
         this->chunk_type = WRMChunk::TIMESTAMP;
         this->order_count = 1;
-        uint64_t micro_sec = this->timer.elapsed(now);
-        this->stream.out_uint64_be(micro_sec);
+        this->stream.out_uint64_be(usec);
         this->flush();
     }
 

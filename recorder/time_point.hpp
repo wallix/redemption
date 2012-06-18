@@ -157,9 +157,19 @@ public:
     {
         this->time = to_impl_time_point(s);
     }
+
+    operator std::size_t&()
+    {
+        return this->time;
+    }
+
+    operator const std::size_t&() const
+    {
+        return this->time;
+    }
 };
 
-bool operator==(const time_point& t, const time_point& other)
+/*bool operator==(const time_point& t, const time_point& other)
 {
     return t.time == other.time;
 }
@@ -182,7 +192,7 @@ bool operator>=(const time_point& t, const time_point& other)
 bool operator!=(const time_point& t, const time_point& other)
 {
     return t.time != other.time;
-}
+}*/
 
 time_point& operator+=(time_point& t, std::size_t n)
 {
