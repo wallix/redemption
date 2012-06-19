@@ -170,10 +170,10 @@ class Capture : public RDPGraphicDevice
         this->sc.dump_png();
     }
 
-    Stream& stream()
+    /*Stream& stream()
     {
         return this->nc.recorder.stream;
-    }
+    }*/
 
 };
 

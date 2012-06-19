@@ -26,6 +26,9 @@
 
 #include <boost/program_options.hpp>
 
+#define PRINT_LOG
+#define LOG_PRINT
+
 #include "range_time_point.hpp"
 #include "nativecapture.hpp"
 #include "staticcapture.hpp"
@@ -101,7 +104,6 @@ struct WrmRecoderOption {
     {
     }
 
-    ///TODO add -s: wrm-recorder --screenshot time […]
     void add_default_options()
     {
         this->desc.add_options()
@@ -118,7 +120,7 @@ struct WrmRecoderOption {
         "20m+2h-50s,3h -> from 2h19m10s to 3h"
         )
         ("frame,f", po::value(&this->frame), "maximum frame for png capture option")
-        ("time,t", po::value(&this->time), "time capture for 1 file, with wrm capture option. format: [+|-]time[h|m|s][...]")
+        ("time,t", po::value(&this->time), "time capture for 1 file. format: [+|-]time[h|m|s][...]")
         //("synchronise,s", "")
         ("input-file,i", po::value(&this->wrm_in_filename), "wrm filename")
         ("output-file,o", po::value(&this->out_filename), "png or wrm filename")
@@ -258,14 +260,17 @@ private:
         uint64_t micro_sec;
 
     public:
-        static const uint64_t coeff_sec_to_usec = 1000000l;
+        static const uint64_t coeff_sec_to_usec = 1000000;
 
     public:
         WRMRecorder& recorder;
+        uint64_t chunk_time_value;
 
+    public:
         TimerCompute(WRMRecorder& recorder)
         : micro_sec(0)
         , recorder(recorder)
+        , chunk_time_value(0)
         {}
 
         void reset()
@@ -281,9 +286,12 @@ private:
 
         void interpret_time()
         {
+            this->chunk_time_value = this->recorder.reader.stream.in_uint64_be();
+            //std::cout << "m: " << m;
             this->micro_sec += this->recorder.chunk_type() == WRMChunk::TIMESTAMP
-            ? (this->recorder.reader.stream.in_uint64_be() / 1000000000000l) % coeff_sec_to_usec
-            : 40000000l;
+            ? (this->chunk_time_value / (100000000000000l))
+            : 40000l;
+            //std::cout << ", micro_sec: " << this->micro_sec << '\n';
             --this->recorder.remaining_order_count();
         }
 
@@ -298,28 +306,46 @@ private:
             return false;
         }
 
-        bool advance_usecond(uint msec)
+        uint64_t start()
+        {
+            uint64_t time_start = 0;
+            if (this->recorder.selected_next_order())
+            {
+                if (recorder.chunk_type() == WRMChunk::TIMESTAMP ||
+                    recorder.chunk_type() == WRMChunk::OLD_TIMESTAMP)
+                {
+                    time_start = this->recorder.reader.stream.in_uint64_be();
+                }
+            }
+            else
+            {
+                recorder.interpret_order();
+            }
+            return time_start;
+        }
+
+        uint64_t advance_usecond(uint msec)
         {
             while (this->recorder.selected_next_order())
             {
-                if (this->interpret_is_time_chunk()){
+                if (this->interpret_is_time_chunk() && this->micro_sec){
                     if (this->micro_sec >= msec) {
+                        uint64_t tmp = this->micro_sec;
                         this->reset();
-                        return true;
+                        return tmp;
                     }
                 }
                 else {
                     recorder.interpret_order();
                 }
             }
-            return false;
+            return 0;
         }
 
-        bool advance_second(uint second)
+        uint64_t advance_second(uint second)
         {
             return this->advance_usecond(coeff_sec_to_usec * second);
         }
-        int& msec();
     };
 
     uint png_run(WRMRecorder& recorder, const char* outfile)
@@ -342,8 +368,8 @@ private:
         {
             if (timercompute.interpret_is_time_chunk()){
                 if (timercompute.usec() >= mtime){
-                    timercompute.reset();
                     capture.dump_png();
+                    timercompute.reset();
                     ++frame;
                 }
                 if (msecond <= timercompute.usec()){
@@ -369,39 +395,49 @@ private:
             recorder.meta.width,
             recorder.meta.height,
             outfile,
-            0,0
+            0, 0
         );
         recorder.consumer(&capture);
         TimerCompute timercompute(recorder);
-        if (!timercompute.advance_second(this->opt.range.left))
+        uint64_t msecond = timercompute.start();
+        std::cout << "start: " << msecond << '\n';
+        uint64_t mtime = timercompute.advance_second(this->opt.range.left);
+        std::cout << "mtime: " << mtime << '\n';
+        if (!mtime)
             return 0;
+        if (msecond)
+            capture.timestamp(msecond);
+        timercompute.usec() = mtime - this->opt.range.left;
 
         uint frame = 0;
-        uint64_t mtime = TimerCompute::coeff_sec_to_usec * this->opt.time;
-        uint64_t msecond = TimerCompute::coeff_sec_to_usec * (this->opt.range.right.time - this->opt.range.left.time);
+        mtime = TimerCompute::coeff_sec_to_usec * this->opt.time;
+        msecond = TimerCompute::coeff_sec_to_usec * (this->opt.range.right.time - this->opt.range.left.time);
         while (recorder.selected_next_order() && frame != this->opt.frame)
         {
             if (timercompute.interpret_is_time_chunk()){
-                if (timercompute.usec() >= mtime){
-                    if (timercompute.usec()){
-                        capture.timestamp(timercompute.usec());
-                    }
-                    timercompute.reset();
+                //std::cout << "timercompute.usec(): " << timercompute.usec()  << ' ' << "mtime: " << mtime << '\n';
+                uint64_t usec = timercompute.usec();
+                if (timercompute.chunk_time_value)
+                    capture.timestamp(timercompute.chunk_time_value);
+                if (usec >= mtime){
+                    std::cout << "usec: " << usec << ", mtime: " << mtime << std::endl;
                     capture.breakpoint();
                     if (this->opt.synchronise_screen)
                         capture.dump_png();
+                    timercompute.reset();
                     ++frame;
                 }
-                if (msecond <= timercompute.usec()){
+                if (msecond <= usec){
                     msecond = 0;
                     break;
                 } else {
-                    msecond -= timercompute.usec();
+                    msecond -= usec;
                 }
             } else {
                 recorder.interpret_order();
             }
         }
+        std::cout << "msecond: " << msecond << '\n';
         return frame;
     }
 };

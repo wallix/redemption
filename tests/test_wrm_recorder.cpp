@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
         uint n = 0;
         uint ntime = 0;
         //uint nb_break = 0;
-        BOOST_CHECK(1);
+        BOOST_REQUIRE(1);
 
         while (recorder.selected_next_order())
         {
@@ -68,9 +68,9 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
             }
             else
             {
-                BOOST_CHECK(1);
+                BOOST_REQUIRE(1);
                 recorder.interpret_order();
-                BOOST_CHECK(1);
+                BOOST_REQUIRE(1);
                 if (50 < ++n/* && recorder.remaining_order_count() == 0*/)
                 {
                     n = 0;
@@ -81,15 +81,14 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
                     //if (++nb_break == 3)
                     //return ; ///WARNING
                 }
-                BOOST_CHECK(1);
+                BOOST_REQUIRE(1);
             }
         }
         //consumer.breakpoint();
         BOOST_CHECK(328 == ntime);
     }
-    BOOST_CHECK(1);
+    BOOST_REQUIRE(1);
 
-    TODO("if boost::unit_test::error_count() == 0")
     unlink_wrm("/tmp/replay_part", breakpoint+1);
 }
 
