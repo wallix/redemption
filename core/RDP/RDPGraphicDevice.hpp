@@ -82,7 +82,7 @@ public:
 };
 
 struct WRMChunk {
-    static const uint16_t OLD_TIMESTAMP = 1000;
+    //static const uint16_t OLD_TIMESTAMP = 1000;
     static const uint16_t TIMESTAMP = 1001;
     static const uint16_t META_INFO = 1002;
     static const uint16_t NEXT_FILE = 1003;
@@ -309,20 +309,22 @@ struct RDPUnserializer
             }*/
             break;
             default:
-                TODO("This is a naive way to replay native movies at the recording speed. As we recorded at 25 frames per second (snapshots), we inserted timestamp chunks more or less every 1/25 seconds. Naive idea is just to wait 1/25 second every time we get a timestamp frame when replaying. This is naive because sending data in between frames is not timeless. In the worst case it can often be larger than inter frame time. Hence we have to find a better way, probably based on timestamp difference between recording and replay.")
+                LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
+                this->remaining_order_count = 0;
+                /*TODO("This is a naive way to replay native movies at the recording speed. As we recorded at 25 frames per second (snapshots), we inserted timestamp chunks more or less every 1/25 seconds. Naive idea is just to wait 1/25 second every time we get a timestamp frame when replaying. This is naive because sending data in between frames is not timeless. In the worst case it can often be larger than inter frame time. Hence we have to find a better way, probably based on timestamp difference between recording and replay.")
                 struct timespec wtime = { 0, 40000000 };
                 nanosleep(&wtime,NULL);
-                this->remaining_order_count = 0;
+                this->remaining_order_count = 0;*/
             break;
         }
     }
 
-    uint8_t next(){
+    bool next(){
         if (selected_next_order()) {
             interpret_order();
-            return 1;
+            return true;
         }
-        return 0;
+        return false;
     }
 };
 

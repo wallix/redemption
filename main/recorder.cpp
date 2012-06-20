@@ -288,17 +288,14 @@ private:
         {
             this->chunk_time_value = this->recorder.reader.stream.in_uint64_be();
             //std::cout << "m: " << m;
-            this->micro_sec += this->recorder.chunk_type() == WRMChunk::TIMESTAMP
-            ? (this->chunk_time_value / (100000000000000l))
-            : 40000l;
+            this->micro_sec += this->chunk_time_value / (100000000000000l);
             //std::cout << ", micro_sec: " << this->micro_sec << '\n';
             --this->recorder.remaining_order_count();
         }
 
         bool interpret_is_time_chunk()
         {
-            if (recorder.chunk_type() == WRMChunk::TIMESTAMP ||
-                recorder.chunk_type() == WRMChunk::OLD_TIMESTAMP)
+            if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
             {
                 this->interpret_time();
                 return true;
@@ -311,8 +308,7 @@ private:
             uint64_t time_start = 0;
             if (this->recorder.selected_next_order())
             {
-                if (recorder.chunk_type() == WRMChunk::TIMESTAMP ||
-                    recorder.chunk_type() == WRMChunk::OLD_TIMESTAMP)
+                if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
                 {
                     time_start = this->recorder.reader.stream.in_uint64_be();
                 }

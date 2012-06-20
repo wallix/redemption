@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
         while (recorder.selected_next_order())
         {
             BOOST_CHECK(recorder.chunk_type() != WRMChunk::BREAKPOINT);
-            if (recorder.chunk_type() == WRMChunk::TIMESTAMP || recorder.chunk_type() == WRMChunk::OLD_TIMESTAMP)
+            if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
             {
                 ++ntime;
                 consumer.timestamp();
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
     while (recorder.selected_next_order())
     {
         BOOST_CHECK(1);
-        if (recorder.chunk_type() == WRMChunk::TIMESTAMP || recorder.chunk_type() == WRMChunk::OLD_TIMESTAMP){
+        if (recorder.chunk_type() == WRMChunk::TIMESTAMP){
             is_chunk_time = true;
             //std::cout << "timestamp\n";
             recorder.remaining_order_count() = 0;
@@ -185,7 +185,7 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
     while (recorder->selected_next_order())
     {
         BOOST_CHECK(1);
-        if (recorder->chunk_type() == WRMChunk::TIMESTAMP || recorder->chunk_type() == WRMChunk::OLD_TIMESTAMP){
+        if (recorder->chunk_type() == WRMChunk::TIMESTAMP){
             is_chunk_time = true;
             recorder->remaining_order_count() = 0;
             ++n;
