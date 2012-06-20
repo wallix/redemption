@@ -57,7 +57,7 @@ alias instexe : install-bin install-test ;
 alias install : install-bin install-etc install-share ;
 
 install install-bin
-    : rdpproxy redrec
+    : rdpproxy redrec drawtest
     : <install-type>EXE <install-dependencies>on
     : <location>/usr/local/bin
     ;
@@ -129,28 +129,13 @@ exe rdpproxy
         <link>static
     ;
 
-exe xrdp-genkeymap
+exe drawtest
     :
-        utils/genkeymap/genkeymap.cpp X11
-    :
-        <link>static
-        <variant>debug
-    ;
-
-exe xrdp-keygen
-    :
-        utils/keygen/keygen.cpp
-        rsa_keys
-
-        openssl
-        crypto
-        z
-        dl
+        main/drawtest.cpp
 
         libboost_program_options
     :
         <link>static
-        <variant>debug
     ;
 
 exe redrec
@@ -221,13 +206,13 @@ unit-test test_countdown_ptr : tests/test_countdown_ptr.cpp libboost_unit_test ;
 
 unit-test test_rdesktop_invalid_pdu : tests/test_rdesktop_invalid_pdu.cpp libboost_unit_test openssl crypto ini_config rsa_keys d3des libboost_program_options ;
 
-unit-test test_rdp_client_test_card : tests/test_rdp_client_test_card.cpp widget libboost_unit_test ini_config libboost_program_options ;
-unit-test test_rdp_client_w2000 : tests/test_rdp_client_w2000.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
-unit-test test_rdp_client_w2008 : tests/test_rdp_client_w2008.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
+unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp widget libboost_unit_test ini_config libboost_program_options ;
+unit-test test_rdp_client_w2000 : tests/client_mods/test_rdp_client_w2000.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
+unit-test test_rdp_client_w2008 : tests/client_mods/test_rdp_client_w2008.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
 
-unit-test test_rdp_client_tls_w2008 : tests/test_rdp_client_tls_w2008.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
+unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp libboost_unit_test ini_config png openssl crypto rsa_keys d3des z dl libboost_program_options ;
 
-unit-test test_vnc_client_simple : tests/test_vnc_client_simple.cpp libboost_unit_test ini_config openssl crypto rsa_keys d3des z dl libboost_program_options ;
+unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp libboost_unit_test ini_config openssl crypto rsa_keys d3des z dl libboost_program_options ;
 
 unit-test test_capability_activate : tests/capabilities/activate.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_bitmap : tests/capabilities/bitmap.cpp libboost_unit_test ini_config z dl libboost_program_options ;
