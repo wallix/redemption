@@ -219,6 +219,7 @@ unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp 
 unit-test test_capability_activate : tests/capabilities/activate.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_bitmap : tests/capabilities/bitmap.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_bmpcache : tests/capabilities/bmpcache.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_bitmapcachehostsupport : tests/capabilities/bitmapcachehostsupport.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_brushcache : tests/capabilities/brushcache.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_compdesk : tests/capabilities/compdesk.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_control : tests/capabilities/control.cpp libboost_unit_test ini_config z dl libboost_program_options ;
