@@ -23,8 +23,8 @@
 
 */
 
-#if !defined(___STREAM_HPP__)
-#define ___STREAM_HPP__
+#if !defined(___UTILS_STREAM_HPP__)
+#define ___UTILS_STREAM_HPP__
 
 #include "log.hpp"
 
@@ -1007,7 +1007,7 @@ TODO("check if implementation below is conforming to obfuscated text above (I ha
     }
 
     // =========================================================================
-    // Helper methods for RDP bitmap compression support
+    // Helper methods for RDP RLE bitmap compression support
     // =========================================================================
     void out_count(const int in_count, const int mask){
         if (in_count < 32) {

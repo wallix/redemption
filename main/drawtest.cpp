@@ -25,6 +25,8 @@
 #include <boost/program_options.hpp>
 
 #include "version.hpp"
+#include "drawable.hpp"
+#include "png.hpp"
 
 namespace po = boost::program_options;
 
@@ -69,6 +71,20 @@ int main(int argc, char** argv)
     openlog("drawtest", LOG_CONS | LOG_PERROR, LOG_USER);
 
     LOG(LOG_INFO, "ReDemPtion Drawing Test " VERSION " starting");
+
+    uint32_t width = 800;
+    uint32_t height = 600;
+    Drawable drawable(width, height);
+
+    drawable.opaquerect(Rect(0,0,800,600), BLACK);
+    drawable.opaquerect(Rect(50,50,100,100), BLUE);
+
+    char tmpname[128];
+    sprintf(tmpname, "drawtest_XXXXXX.png");
+    int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
+    FILE * f = fdopen(fd, "wb");
+    ::dump_png24(f, drawable.data, drawable.width, drawable.height, drawable.rowsize);
+    ::fclose(f);
 
     return 0;
 }
