@@ -21,8 +21,8 @@
 
 */
 
-#ifndef ALTOCO__HPP
-#define ALTOCO__HPP
+#ifndef __UTILS_ALTOCO__HPP
+#define __UTILS_ALTOCO__HPP
 
 #include <stdint.h>
 #include <assert.h>

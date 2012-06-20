@@ -28,8 +28,8 @@
 
 
 
-#if !defined(__BITMAP_HPP__)
-#define __BITMAP_HPP__
+#if !defined(__UTILS_BITMAP_HPP__)
+#define __UTILS_BITMAP_HPP__
 
 #include <unistd.h>
 #include <stdio.h>
@@ -39,16 +39,13 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <algorithm>
+#include <inttypes.h>
 
 #include "log.hpp"
 #include "altoco.hpp"
-#include "client_info.hpp"
-#include "stream.hpp"
 #include "colors.hpp"
-#include <inttypes.h>
-
+#include "stream.hpp"
 #include "ssl_calls.hpp"
-
 #include "rect.hpp"
 
 
@@ -77,10 +74,10 @@ public:
             }
         }
         uint8_t * get() const {
-            return this->ptr + 16;
+            return this->ptr + 128;
         }
         void alloc(uint32_t size) {
-            this->ptr = (uint8_t*)malloc(size+16);
+            this->ptr = (uint8_t*)malloc(size+128);
             this->ptr[0] = 1;
         }
         void use(const CountdownData & other)
