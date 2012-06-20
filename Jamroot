@@ -134,6 +134,8 @@ exe drawtest
         main/drawtest.cpp
 
         libboost_program_options
+        z
+        png
     :
         <link>static
     ;
