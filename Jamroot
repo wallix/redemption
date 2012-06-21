@@ -219,6 +219,7 @@ unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp 
 unit-test test_capability_activate : tests/capabilities/activate.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_bitmap : tests/capabilities/bitmap.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_bmpcache : tests/capabilities/bmpcache.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_bitmapcachehostsupport : tests/capabilities/bitmapcachehostsupport.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_brushcache : tests/capabilities/brushcache.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_compdesk : tests/capabilities/compdesk.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_control : tests/capabilities/control.cpp libboost_unit_test ini_config z dl libboost_program_options ;
@@ -237,6 +238,7 @@ unit-test test_capability_pointer : tests/capabilities/pointer.cpp libboost_unit
 unit-test test_capability_rail : tests/capabilities/rail.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_share : tests/capabilities/share.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_sound : tests/capabilities/sound.cpp libboost_unit_test ini_config z dl libboost_program_options ;
+unit-test test_capability_surfacecommands : tests/capabilities/surfacecommands.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_virtualchannel : tests/capabilities/virtualchannel.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 unit-test test_capability_window : tests/capabilities/window.cpp libboost_unit_test ini_config z dl libboost_program_options ;
 

@@ -29,7 +29,6 @@
 
 // The TS_FRAME_ACKNOWLEDGE_CAPABILITYSET structure advertises support for frame
 // acknowledgment using the TS_FRAME_ACKNOWLEDGE_PDU (section 2.2.3.1) structure. This
-
 // capability is sent by both the client and the server and is encapsulated in a server-to-client Demand
 // Active PDU ([MS-RDPBCGR] section 2.2.1.13.1) or a client-to-server Confirm Active PDU ([MS-
 // RDPBCGR] section 2.2.1.13.2).
