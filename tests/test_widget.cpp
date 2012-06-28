@@ -30,10 +30,6 @@
 #include "internal/internal_mod.hpp"
 #include "internal/widget.hpp"
 #include "colors.hpp"
-#include <sstream>
-#include <iostream>
-#include <string>
-#include <string.h>
 
 #include "front.hpp"
 

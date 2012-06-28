@@ -26,7 +26,11 @@
 
 class TimerCapture
 {
-    struct timeval now;
+public:
+    typedef struct timeval time_type;
+
+private:
+    time_type now;
 
     TimerCapture(int)
     {
@@ -64,6 +68,9 @@ public:
     {
         return now.tv_usec;
     }
+
+    timeval& impl()
+    { return this->now; }
 
     static TimerCapture invalid_timer()
     {
@@ -109,15 +116,18 @@ public:
         return elapsed_if_wait(now ,elapsed);
     }
 
-    TimerCapture& operator += (uint64_t elapsed)
+    TimerCapture& operator += (uint64_t useconds)
     {
-        this->now.tv_sec += elapsed / 1000000;
-        this->now.tv_usec += elapsed % 1000000;
+        useconds += this->usec();
+        this->sec() += useconds / 1000000;
+        this->usec() = useconds % 1000000;
+        /*this->now.tv_sec += useconds / 1000000;
+        this->now.tv_usec += useconds % 1000000;
         if (this->now.tv_usec >= 1000000)
         {
             this->now.tv_sec += this->now.tv_usec / 1000000;
             this->now.tv_usec %= 1000000;
-        }
+        }*/
         return *this;
     }
 };

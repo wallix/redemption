@@ -21,9 +21,7 @@
 #if !defined(__CAPTURE_STATICCAPTURE_HPP__)
 #define __CAPTURE_STATICCAPTURE_HPP__
 
-#include <iostream>
 #include <stdio.h>
-#include <sstream>
 #include <sys/time.h>
 #include <time.h>
 #include <png.h>

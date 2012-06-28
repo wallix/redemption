@@ -31,13 +31,11 @@
 #if !defined(__ACL_DICO_HPP__)
 #define __ACL_DICO_HPP__
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string>
+// #include <stdio.h>
+//#include <stdarg.h>
+// #include <stdlib.h>
 #include <string.h>
 #include <map>
-#include <set>
 
 #include "log.hpp"
 #include "config.hpp"
@@ -75,11 +73,12 @@ class Dico {
     TODO(" get should return a non modifiable string (const char * const) and return "" if ASK to avoid showing it")
     char * get(const char * key) {
         TODO(" be be raising an exception would be better")
-        if (this->map.find(key) == this->map.end()){
+        const t_kmap::iterator & it = this->map.find(key);
+        if (it == this->map.end()){
             LOG(LOG_DEBUG, "'%s' Not found in context\n", key);
             return NULL;
         }
-        char * v = this->map[key]->value;
+        char * v = it->second->value;
         if (v[0] == '!'){
             return v + 1;
         }

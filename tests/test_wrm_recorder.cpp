@@ -40,14 +40,15 @@
 BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 {
     BOOST_CHECK(1);
-    WRMRecorder recorder(FIXTURES_PATH "/replay2.wrm");
-    BOOST_CHECK_EQUAL(800, recorder.meta.width);
-    BOOST_CHECK_EQUAL(600, recorder.meta.height);
-    BOOST_CHECK_EQUAL(24, recorder.meta.bpp);
+    WRMRecorder recorder(FIXTURES_PATH "/test_w2008_2-5446.mwrm", FIXTURES_PATH);
+
+    BOOST_CHECK_EQUAL(800, recorder.meta().width);
+    BOOST_CHECK_EQUAL(600, recorder.meta().height);
+    /*BOOST_CHECK_EQUAL(24, recorder.meta.bpp);*/
 
     uint breakpoint = 0;
     {
-        Capture consumer(recorder.meta.width, recorder.meta.height,
+        Capture consumer(recorder.meta().width, recorder.meta().height,
                         "/tmp/replay_part", 0, 0, false);
 
         recorder.consumer(&consumer);
@@ -59,12 +60,13 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 
         while (recorder.selected_next_order())
         {
-            BOOST_CHECK(recorder.chunk_type() != WRMChunk::BREAKPOINT);
+            //std::cout << recorder.chunk_type() << std::endl;
+            //BOOST_CHECK(recorder.chunk_type() != WRMChunk::BREAKPOINT);
             if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
             {
                 ++ntime;
-                consumer.timestamp();
-                recorder.remaining_order_count() = 0;
+                consumer.timestamp(recorder.reader.stream.in_uint64_be());
+                --recorder.reader.remaining_order_count;
             }
             else
             {
@@ -85,7 +87,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
             }
         }
         //consumer.breakpoint();
-        BOOST_CHECK(328 == ntime);
+        BOOST_CHECK_EQUAL(333, ntime);
     }
     BOOST_REQUIRE(1);
 
@@ -162,15 +164,15 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
     sprintf(filename, "/tmp/replay_part-%u-%u.wrm", getpid(), nfile);
     BOOST_CHECK(1);
     WRMRecorder* recorder = new WRMRecorder(filename);
-    BOOST_CHECK_EQUAL(800, recorder->meta.width);
-    BOOST_CHECK_EQUAL(600, recorder->meta.height);
-    BOOST_CHECK_EQUAL(24, recorder->meta.bpp);
+    BOOST_CHECK_EQUAL(800, recorder->meta().width);
+    BOOST_CHECK_EQUAL(600, recorder->meta().height);
+    /*BOOST_CHECK_EQUAL(24, recorder->meta.bpp);*/
 
     char filename_consumer[50];
     int nframe = 0;
     sprintf(filename_consumer, "/tmp/test_wrm_recorder_to_png%u-%d", numtest, nframe);
-    StaticCapture *consumer = new StaticCapture(recorder->meta.width,
-                                                recorder->meta.height,
+    StaticCapture *consumer = new StaticCapture(recorder->meta().width,
+                                                recorder->meta().height,
                                                 filename_consumer,
                                                 0, 0);
     BOOST_CHECK(1);
@@ -203,8 +205,8 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
             {
                 delete consumer;
                 sprintf(filename_consumer, "/tmp/test_wrm_recorder_to_png%u-%d", numtest, ++nframe);
-                consumer = new StaticCapture(recorder->meta.width,
-                                             recorder->meta.height,
+                consumer = new StaticCapture(recorder->meta().width,
+                                             recorder->meta().height,
                                              filename_consumer,
                                              0, 0);
             }

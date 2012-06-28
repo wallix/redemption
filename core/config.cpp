@@ -398,7 +398,7 @@ TODO(" find a more generic way to read this struct with any number of account li
 
             keyport[4] = '1' + account_num;
             int int_port;
-            if (istringstream(vm[keyport].as<string>()) >> int_port){
+            if (std::istringstream(vm[keyport].as<string>()) >> int_port){
                 this->account[account_num].port = int_port;
             }
             else {

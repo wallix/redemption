@@ -28,13 +28,9 @@
 #define BOOST_TEST_MODULE TestConvertBitmap
 #include <boost/test/auto_unit_test.hpp>
 #include <boost/test/unit_test.hpp>
-#include <iostream>
-#include <sstream>
-#include <string>
 
 #include "bitmap.hpp"
 #include "colors.hpp"
-#include <algorithm>
 #include "ssl_calls.hpp"
 #include "png.hpp"
 

@@ -25,24 +25,20 @@
 #if !defined(__REGION_HPP__)
 #define __REGION_HPP__
 
-#include <iostream>
 #include <vector>
-using namespace std;
-
-
-#include "rect.hpp"
 #include <stdio.h>
+#include "rect.hpp"
 
 /* region */
 struct Region {
-    struct vector<struct Rect> rects;
+    struct std::vector<Rect> rects;
 
     Region() {}
     ~Region() {}
 
-    void subtract_rect(struct Rect rect)
+    void subtract_rect(const Rect& rect)
     {
-        struct vector<struct Rect> new_rects;
+        struct std::vector<Rect> new_rects;
 
         int count = this->rects.size();
         for (int i = 0; i < count; i++) {
@@ -50,7 +46,7 @@ struct Region {
             if (!rect.contains(rect1))
             {
                 const Rect & sect = rect.intersect(rect1);
-                
+
                 if (sect.isempty()){
                     new_rects.push_back(rect1);
                 }

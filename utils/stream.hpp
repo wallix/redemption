@@ -344,7 +344,7 @@ class Stream {
         this->p[4] = (v >> 32) & 0xFF;
         this->p[5] = (v >> 40) & 0xFF;
         this->p[6] = (v >> 48) & 0xFF;
-        this->p[7] = (uint8_t)(v >> 54) & 0xFF;
+        this->p[7] = (uint8_t)(v >> 56) & 0xFF;
         this->p+=8;
     }
 
@@ -356,12 +356,12 @@ class Stream {
         this->data[offset+4] = (v >> 32) & 0xFF;
         this->data[offset+5] = (v >> 40) & 0xFF;
         this->data[offset+6] = (v >> 48) & 0xFF;
-        this->data[offset+7] = (uint8_t)(v >> 54) & 0xFF;
+        this->data[offset+7] = (uint8_t)(v >> 56) & 0xFF;
     }
 
     void out_uint64_be(uint64_t v) {
         REDASSERT(has_room(8));
-        this->p[0] = (uint8_t)(v >> 54) & 0xFF;
+        this->p[0] = (uint8_t)(v >> 56) & 0xFF;
         this->p[1] = (v >> 48) & 0xFF;
         this->p[2] = (v >> 40) & 0xFF;
         this->p[3] = (v >> 32) & 0xFF;
@@ -373,7 +373,7 @@ class Stream {
     }
 
     void set_out_uint64_be(uint64_t v, size_t offset) {
-        this->data[offset+0] = (uint8_t)(v >> 54) & 0xFF;
+        this->data[offset+0] = (uint8_t)(v >> 56) & 0xFF;
         this->data[offset+1] = (v >> 48) & 0xFF;
         this->data[offset+2] = (v >> 40) & 0xFF;
         this->data[offset+3] = (v >> 32) & 0xFF;

@@ -55,7 +55,7 @@ class Capture : public RDPGraphicDevice
         this->start_native_capture = now;
         this->start_break_capture = now;
         this->inter_frame_interval_static_capture       = 5000000; // 1 000 000 us is 1 sec (default)
-        this->inter_frame_interval_native_capture       =   40000; // 1 000 000 us is 1 sec (default)
+        this->inter_frame_interval_native_capture       =  400000; // 1 000 000 us is 1 sec (default)
         this->inter_frame_interval_start_break_capture  = 1000000 * 60 * 10; // 1 000 000 us is 1 sec (default)
     }
 
@@ -168,6 +168,11 @@ class Capture : public RDPGraphicDevice
     void dump_png()
     {
         this->sc.dump_png();
+    }
+
+    TimerCapture& timer()
+    {
+        return this->nc.recorder.timer;
     }
 
     /*Stream& stream()

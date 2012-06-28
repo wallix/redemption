@@ -1,12 +1,11 @@
 #if !defined(__KEYMAPSYM__)
 #define __KEYMAPSYM__
 
-#include <stdio.h>
 #include "constants.hpp"
+#include "log.hpp"
 #include <string.h>
-#include <string>
 
-using namespace std;
+// using namespace std;
 
 struct KeymapSym {
 

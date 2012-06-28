@@ -25,17 +25,16 @@
 #define __CLIENT_MOD_HPP__
 
 #include <string.h>
-#include <stdio.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
-#include <locale.h>
+//#include <locale.h>
 
 #include "client_info.hpp"
 #include "font.hpp"
-#include "RDP/caches/bmpcache.hpp"
+//#include "RDP/caches/bmpcache.hpp"
 #include "front.hpp"
 #include "mainloop.hpp"
-#include "wait_obj.hpp"
+//#include "wait_obj.hpp"
 #include "keymap2.hpp"
 #include "callback.hpp"
 #include "modcontext.hpp"

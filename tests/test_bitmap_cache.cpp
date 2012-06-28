@@ -27,9 +27,8 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestBitmapCache
 #include <boost/test/auto_unit_test.hpp>
-#include <iostream>
-#include <sstream>
-#include <string>
+
+// #include <string>
 #include <stdint.h>
 #include "bitmap.hpp"
 #include "RDP/caches/bmpcache.hpp"

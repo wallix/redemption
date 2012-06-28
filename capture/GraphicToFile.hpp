@@ -111,18 +111,18 @@ struct GraphicsToFile : public RDPSerializer
     TimerCapture timer;
 
     GraphicsToFile(Transport * trans, const Inifile * ini,
-          const uint8_t  bpp,
-          uint32_t small_entries, uint32_t small_size,
-          uint32_t medium_entries, uint32_t medium_size,
-          uint32_t big_entries, uint32_t big_size, const timeval& now)
-        : RDPSerializer(trans, ini,
-            bpp,
-            small_entries, small_size,
-            medium_entries, medium_size,
-            big_entries, big_size,
-            0, 1, 1)
-        , chunk_type(RDP_UPDATE_ORDERS)
-        , timer(now)
+                   const uint8_t  bpp,
+                   uint32_t small_entries, uint32_t small_size,
+                   uint32_t medium_entries, uint32_t medium_size,
+                   uint32_t big_entries, uint32_t big_size,
+                   const timeval& now)
+    : RDPSerializer(trans, ini, bpp,
+                    small_entries, small_size,
+                    medium_entries, medium_size,
+                    big_entries, big_size,
+                    0, 1, 1)
+    , chunk_type(RDP_UPDATE_ORDERS)
+    , timer(now)
     {
         this->init();
     }

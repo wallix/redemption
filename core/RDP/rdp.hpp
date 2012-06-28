@@ -27,7 +27,6 @@
 #define CORE_RDP_RDP_HPP__
 
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "channel_list.hpp"
 #include "log.hpp"

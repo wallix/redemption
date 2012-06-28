@@ -23,16 +23,16 @@
 #if !defined(__WIDGET__)
 #define __WIDGET__
 
-#include <unistd.h>
-#include <stdio.h>
+// #include <unistd.h>
+// #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <iostream>
-#include <list>
+// #include <assert.h>
+// #include <string.h>
+// #include <sys/types.h>
+// #include <sys/stat.h>
+// #include <fcntl.h>
+//#include <iostream>
+//#include <list>
 
 #include "log.hpp"
 #include "constants.hpp"

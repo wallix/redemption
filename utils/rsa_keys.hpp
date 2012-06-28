@@ -25,7 +25,7 @@
 #if !defined(__RSA_KEYS__)
 #define __RSA_KEYS__
 
-#include <fstream>
+#include <istream>
 #include <string.h>
 #include <stdint.h>
 
