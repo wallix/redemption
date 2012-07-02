@@ -895,7 +895,6 @@ class ClientSocketTransport : public Transport {
         this->st->send(buffer, len);
     }
 
-
     using Transport::recv;
 
     virtual void recv(char ** pbuffer, size_t len) throw (Error)

@@ -59,6 +59,7 @@ struct ActivationCaps : public Capability {
     uint16_t helpKeyIndexFlag;
     uint16_t helpExtendedKeyFlag;
     uint16_t windowManagerKeyFlag;
+
     ActivationCaps()
     : Capability(CAPSTYPE_ACTIVATION, CAPLEN_ACTIVATION)
     , helpKeyFlag(0)

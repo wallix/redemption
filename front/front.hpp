@@ -428,13 +428,14 @@ public:
             LOG(LOG_INFO, "Front::disconnect()");
         }
         Stream stream(32768);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        X224 x224(stream);
+        x224.emit_start(X224Packet::DT_TPDU);
 
         stream.out_uint8((DomainMCSPDU_DisconnectProviderUltimatum << 2) | 1);
         stream.out_uint8(0x80);
 
-        tpdu.end();
-        tpdu.send(this->trans);
+        x224.emit_end();
+        this->trans->send(x224.header(), x224.size());
     }
 
     void set_console_session(bool b)
@@ -460,8 +461,11 @@ public:
         if (this->verbose){
             LOG(LOG_INFO, "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)", data, length, chunk_size, flags);
         }
+
         Stream stream(65536);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        X224 x224(stream);
+        x224.emit_start(X224Packet::DT_TPDU);
+
         McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, this->userid, channel.chanid);
         SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
 
@@ -474,8 +478,10 @@ public:
 
         sec_out.end();
         sdin_out.end();
-        tpdu.end();
-        tpdu.send(this->trans);
+
+        x224.emit_end();
+        this->trans->send(x224.header(), x224.size());
+
         if (this->verbose){
             LOG(LOG_INFO, "Front::send_to_channel done");
         }
@@ -504,7 +510,8 @@ public:
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
             Stream stream(32768);
-            X224Out tpdu(X224Packet::DT_TPDU, stream);
+            X224 x224(stream);
+            x224.emit_start(X224Packet::DT_TPDU);
             McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
             SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
@@ -527,8 +534,8 @@ public:
             rdp_control_out.end();
             sec_out.end();
             sdin_out.end();
-            tpdu.end();
-            tpdu.send(this->trans);
+            x224.emit_end();
+            this->trans->send(x224.header(), x224.size());
 
             this->palette_sent = true;
         }
@@ -650,7 +657,8 @@ public:
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
         }
         Stream stream(32768);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        X224 x224(stream);
+        x224.emit_start(X224Packet::DT_TPDU);
         McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
@@ -726,8 +734,8 @@ public:
         rdp_control_out.end();
         sec_out.end();
         sdin_out.end();
-        tpdu.end();
-        tpdu.send(this->trans);
+        x224.emit_end();
+        this->trans->send(x224.header(), x224.size());
 
         if (this->verbose){
             LOG(LOG_INFO, "Front::send_pointer done");
@@ -772,7 +780,8 @@ public:
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
         }
         Stream stream(32768);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        X224 x224(stream);
+        x224.emit_start(X224Packet::DT_TPDU);
         McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
@@ -786,8 +795,8 @@ public:
         rdp_control_out.end();
         sec_out.end();
         sdin_out.end();
-        tpdu.end();
-        tpdu.send(this->trans);
+        x224.emit_end();
+        this->trans->send(x224.header(), x224.size());
         if (this->verbose){
             LOG(LOG_INFO, "Front::set_pointer done");
         }
@@ -824,12 +833,14 @@ public:
 
             {
                 Stream in(8192);
-                X224In crtpdu(this->trans, in);
-                if (crtpdu.tpdu_hdr.code != X224Packet::CR_TPDU) {
-                    LOG(LOG_INFO, "recv x224 connection request PDU failed code=%u", crtpdu.tpdu_hdr.code);
+                X224 x224(in);
+                x224.recv_start(this->trans);
+
+                if (x224.tpdu_hdr.code != X224Packet::CR_TPDU) {
+                    LOG(LOG_INFO, "recv x224 connection request PDU failed code=%u", x224.tpdu_hdr.code);
                     throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
                 }
-                crtpdu.end();
+                x224.recv_end();
             }
 
             if (this->verbose){
@@ -837,9 +848,10 @@ public:
             }
             {
                 Stream out(128);
-                X224Out cctpdu(X224Packet::CC_TPDU, out);
-                cctpdu.end();
-                cctpdu.send(this->trans);
+                X224 x224(out);
+                x224.emit_start(X224Packet::CC_TPDU);
+                x224.emit_end();
+                this->trans->send(x224.header(), x224.size());
             }
             // Basic Settings Exchange
             // -----------------------
@@ -1034,7 +1046,8 @@ public:
         }
         {
             Stream stream(65535);
-            X224In tpdu(this->trans, stream);
+            X224 x224(stream);
+            x224.recv_start(this->trans);
             McsIn mcs_in(stream);
             if ((mcs_in.opcode >> 2) != DomainMCSPDU_SendDataRequest) {
                 TODO("We should make a special case for DomainMCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
@@ -1085,7 +1098,7 @@ public:
                 this->state = ACTIVATE_AND_PROCESS_DATA;
                 sec.end();
                 mcs_in.end();
-                tpdu.end();
+                x224.recv_end();
             }
             else {
                 LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
@@ -1105,7 +1118,8 @@ public:
         }
         {
             Stream stream(65535);
-            X224In tpdu(this->trans, stream);
+            X224 x224(stream);
+            x224.recv_start(this->trans);
             McsIn mcs_in(stream);
             if ((mcs_in.opcode >> 2) != DomainMCSPDU_SendDataRequest) {
                 TODO("We should make a special case for DomainMCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
@@ -1246,7 +1260,7 @@ public:
             }
             sec.end();
             mcs_in.end();
-            tpdu.end();
+            x224.recv_end();
         }
         break;
 
@@ -1294,11 +1308,13 @@ public:
 
             Stream stream(65535);
 
-            X224In tpdu(this->trans, stream);
+//            X224In tpdu(this->trans, stream);
+            X224 x224(stream);
+            x224.recv_start(this->trans);
 
-            if (tpdu.tpdu_hdr.code != X224Packet::DT_TPDU){
+            if (x224.tpdu_hdr.code != X224Packet::DT_TPDU){
                 TODO("we can also get a DR (Disconnect Request), this a normal case that should be managed")
-                LOG(LOG_INFO, "Front::Unexpected non data PDU (got %u)", tpdu.tpdu_hdr.code);
+                LOG(LOG_INFO, "Front::Unexpected non data PDU (got %u)", x224.tpdu_hdr.code);
                 throw Error(ERR_X224_EXPECTED_DATA_PDU);
             }
 
@@ -1432,7 +1448,8 @@ public:
             LOG(LOG_INFO, "send_data_update_sync");
         }
         Stream stream(32768);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        X224 x224(stream);
+        x224.emit_start(X224Packet::DT_TPDU);
         McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
@@ -1445,8 +1462,8 @@ public:
         rdp_control_out.end();
         sec_out.end();
         sdin_out.end();
-        tpdu.end();
-        tpdu.send(this->trans);
+        x224.emit_end();
+        this->trans->send(x224.header(), x224.size());
     }
 
 
@@ -1457,7 +1474,8 @@ public:
         LOG(LOG_INFO, "Front::send_demand_active");
 
         Stream stream(32768);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        X224 x224(stream);
+        x224.emit_start(X224Packet::DT_TPDU);
         McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
         ShareControlOut rdp_out(stream, PDUTYPE_DEMANDACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
@@ -1559,8 +1577,8 @@ public:
         rdp_out.end();
         sec_out.end();
         sdin_out.end();
-        tpdu.end();
-        tpdu.send(this->trans);
+        x224.emit_end();
+        this->trans->send(x224.header(), x224.size());
     }
 
 
@@ -1574,8 +1592,8 @@ public:
     void process_confirm_active(Stream & stream)
     {
         LOG(LOG_INFO, "process_confirm_active");
-        uint32_t share_id = stream.in_uint32_le();
-        uint16_t originatorId = stream.in_uint16_le();
+//        uint32_t share_id = stream.in_uint32_le();
+//        uint16_t originatorId = stream.in_uint16_le();
         uint16_t lengthSourceDescriptor = stream.in_uint16_le(); /* sizeof RDP_SOURCE */
         uint16_t lengthCombinedCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(lengthSourceDescriptor);
@@ -1779,7 +1797,8 @@ public:
 
         Stream stream(32768);
 
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        X224 x224(stream);
+        x224.emit_start(X224Packet::DT_TPDU);
         McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
 
@@ -1794,10 +1813,8 @@ public:
 
         sec_out.end();
         sdin_out.end();
-        tpdu.end();
-
-        tpdu.send(this->trans);
-
+        x224.emit_end();
+        this->trans->send(x224.header(), x224.size());
     }
 
 // 2.2.1.15.1 Control PDU Data (TS_CONTROL_PDU)
@@ -1827,7 +1844,8 @@ public:
         LOG(LOG_INFO, "send_control action=%u", action);
 
         Stream stream(32768);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        X224 x224(stream);
+        x224.emit_start(X224Packet::DT_TPDU);
         McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
@@ -1841,9 +1859,8 @@ public:
         rdp_control_out.end();
         sec_out.end();
         sdin_out.end();
-        tpdu.end();
-        tpdu.send(this->trans);
-
+        x224.emit_end();
+        this->trans->send(x224.header(), x224.size());
     }
 
 
@@ -1879,7 +1896,8 @@ public:
 
         TODO(" we should create some RDPStream object created on init and sent before destruction")
         Stream stream(32768);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        X224 x224(stream);
+        x224.emit_start(X224Packet::DT_TPDU);
         McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
@@ -1891,8 +1909,8 @@ public:
         rdp_control_out.end();
         sec_out.end();
         sdin_out.end();
-        tpdu.end();
-        tpdu.send(this->trans);
+        x224.emit_end();
+        this->trans->send(x224.header(), x224.size());
     }
 
     /* PDUTYPE_DATAPDU */
@@ -2067,7 +2085,8 @@ public:
                 // so the client is sure the connection is alive and it can ask
                 // if user really wants to disconnect */
                 Stream stream(32768);
-                X224Out tpdu(X224Packet::DT_TPDU, stream);
+                X224 x224(stream);
+                x224.emit_start(X224Packet::DT_TPDU);
                 McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
                 SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
                 ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
@@ -2076,8 +2095,8 @@ public:
                 rdp_control_out.end();
                 sec_out.end();
                 sdin_out.end();
-                tpdu.end();
-                tpdu.send(this->trans);
+                x224.emit_end();
+                this->trans->send(x224.header(), x224.size());
             }
         break;
         case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
@@ -2213,14 +2232,15 @@ public:
     {
         LOG(LOG_INFO, "send_deactive");
         Stream stream(32768);
-        X224Out tpdu(X224Packet::DT_TPDU, stream);
+        X224 x224(stream);
+        x224.emit_start(X224Packet::DT_TPDU);
         McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
         ShareControlOut(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + MCS_USERCHANNEL_BASE).end();
         sec_out.end();
         sdin_out.end();
-        tpdu.end();
-        tpdu.send(this->trans);
+        x224.emit_end();
+        this->trans->send(x224.header(), x224.size());
     }
 
 
