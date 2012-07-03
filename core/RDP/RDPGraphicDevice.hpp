@@ -117,7 +117,6 @@ struct RDPUnserializer
     BmpCache bmp_cache;
 
     // variables used to read batch of orders "chunks"
-    uint16_t chunk_num;
     uint16_t chunk_size;
     uint16_t chunk_type;
     uint16_t remaining_order_count;
@@ -142,7 +141,6 @@ struct RDPUnserializer
     bmp_cache(24),
 
     // variables used to read batch of orders "chunks"
-    chunk_num(0),
     chunk_size(0),
     chunk_type(0),
     remaining_order_count(0),
@@ -160,7 +158,7 @@ struct RDPUnserializer
             LOG(LOG_ERR, "Incomplete order batch at chunk %u "
                          "order [%u/%u] "
                          "remaining [%u/%u]",
-                         this->chunk_num,
+                         this->chunk_type,
                          (this->order_count-this->remaining_order_count), this->order_count,
                          (this->stream.end - this->stream.p), this->chunk_size);
         }

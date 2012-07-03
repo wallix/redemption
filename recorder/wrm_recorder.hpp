@@ -109,20 +109,24 @@ public:
             && pos < filename.size()
             && filename[pos] == 'm'
         ) {
-            if (!this->open_meta(filename.c_str()))
-                throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
-            if (this->meta().files.empty())
-                throw Error(ERR_RECORDER_META_REFERENCE_WRM);
-            this->open_wrm_only(this->get_cpath(this->meta().files[0].c_str()));
-            ++this->idx_file;
-            this->selected_next_order();
-            if (this->is_meta_chunk())
-                this->ignore_chunks();
+            this->open_meta_followed_wrm(filename.c_str());
         }
         else {
-            if (!this->open_wrm_with_meta(filename.c_str()))
+            if (!this->open_wrm_followed_meta(filename.c_str()))
                 throw Error(ERR_RECORDER_META_REFERENCE_WRM, errno);
         }
+    }
+
+    void open_meta_followed_wrm(const char * filename)
+    {
+        if (!this->open_meta(filename))
+            throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
+        if (this->meta().files.empty())
+            throw Error(ERR_RECORDER_META_REFERENCE_WRM);
+        this->open_wrm_only(this->get_cpath(this->meta().files[0].c_str()));
+        ++this->idx_file;
+        if (this->selected_next_order() && this->is_meta_chunk())
+            this->ignore_chunks();
     }
 
     ~WRMRecorder()
@@ -182,7 +186,7 @@ public:
 public:
     void open_wrm_only(const char* filename)
     {
-        this->trans.fd = open(filename);
+        this->trans.fd = WRMRecorder::open(filename);
     }
 
     void ignore_chunks()
@@ -205,20 +209,24 @@ public:
         return this->open_meta_with_path(filename);
     }
 
-    bool open_wrm_with_meta(const char* filename)
+    bool open_wrm_followed_meta(const char* filename)
     {
         this->open_wrm_only(filename);
-        this->selected_next_order();
+        if (!this->selected_next_order()){
+            return false;
+        }
         if (this->is_meta_chunk()) {
             return this->interpret_meta_chunk();
         }
         return true;
     }
 
-    bool open_wrm_with_meta(const char* filename, const char* filename_meta)
+    bool open_wrm_followed_meta(const char* filename, const char* filename_meta)
     {
         this->open_wrm_only(filename);
-        this->selected_next_order();
+        if (!this->selected_next_order()){
+            return false;
+        }
         if (this->is_meta_chunk()) {
             return this->interpret_meta_chunk_and_force_meta(filename_meta);
         }
@@ -249,7 +257,7 @@ private:
         this->trans.total_sent = 0;
         this->trans.last_quantum_sent = 0;
         this->trans.quantum_count = 0;
-        this->reader.remaining_order_count = 0;
+        this->ignore_chunks();
     }
 
 public:
@@ -346,14 +354,15 @@ public:
         switch (this->reader.chunk_type) {
             case WRMChunk::META_FILE:
             {
-                this->reader.stream.p += this->reader.stream.in_uint32_le();
-                --this->reader.remaining_order_count;
+                this->ignore_chunks();
+                //this->reader.stream.p += this->reader.stream.in_uint32_le();
+                //--this->reader.remaining_order_count;
             }
             break;
             case WRMChunk::NEXT_FILE_ID:
             {
-                this->reader.stream.p += 4;
-                this->check_idx_wrm(++this->idx_file);
+                this->idx_file = this->reader.stream.in_uint32_le();
+                this->check_idx_wrm(this->idx_file);
                 this->next_file(this->meta().files[this->idx_file].c_str());
             }
             break;
@@ -420,7 +429,7 @@ public:
                         {
                             this->selected_next_order();
                             n -= this->reader.remaining_order_count;
-                            this->reader.remaining_order_count = 0;
+                            this->ignore_chunks();
                         }
                     }
                     //std::cout << "read number img  " << nn << '\n';
@@ -526,6 +535,8 @@ public:
                         this->reader.remaining_order_count = 0;
                     }
                 }
+
+                //this->ignore_chunks();
             }
             break;
             default:

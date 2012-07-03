@@ -79,7 +79,7 @@ private:
 
     void open_file()
     {
-        LOG(LOG_INFO, "Recording to file : %s", this->filename);
+        LOG(LOG_INFO, "Open to file : %s", this->filename);
         this->trans.fd = open(this->filename, O_WRONLY|O_CREAT, 0666);
         if (this->trans.fd < 0){
             LOG(LOG_ERR, "Error opening native capture file : %s", strerror(errno));
@@ -144,6 +144,7 @@ public:
     }
 
     ~NativeCapture(){
+        //this->recorder.flush();
         close(this->trans.fd);
         fclose(this->meta_file);
         free(this->meta_name);

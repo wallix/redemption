@@ -15,12 +15,12 @@
  *
  * Product name: redemption, a FLOSS RDP proxy
  * Copyright (C) Wallix 2010-2012
- * Author(s): Christophe Grosjean, Jonathan Poelen
+ * Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWRMRecorde
+#define BOOST_TEST_MODULE TestWRMRecorder
 #include <boost/test/auto_unit_test.hpp>
 
 #include <unistd.h>

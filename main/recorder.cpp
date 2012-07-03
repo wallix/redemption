@@ -26,8 +26,7 @@
 
 #include <boost/program_options.hpp>
 
-#define PRINT_LOG
-#define LOG_PRINT
+#define LOGPRINT
 
 #include "range_time_point.hpp"
 #include "nativecapture.hpp"
@@ -92,11 +91,13 @@ struct WrmRecoderOption {
     std::string in_filename;
     std::string idx_start;
     std::string base_path;
+    std::string metaname;
     bool screenshot_wrm;
     bool screenshot_start;
     bool no_screenshot_stop;
-    bool force_meta;
     bool ignore_dir_for_meta_in_wrm;
+    std::string output_type;
+    std::string input_type;
 
     WrmRecoderOption()
     : desc("Options")
@@ -111,7 +112,6 @@ struct WrmRecoderOption {
     , screenshot_wrm(false)
     , screenshot_start(false)
     , no_screenshot_stop(false)
-    , force_meta(false)
     , ignore_dir_for_meta_in_wrm(false)
     {
     }
@@ -136,13 +136,15 @@ struct WrmRecoderOption {
         ("input-file,i", po::value(&this->in_filename), "wrm filename")
         ("output-file,o", po::value(&this->out_filename), "png or wrm filename")
         ("index-start,x", po::value(&this->idx_start), "index file in the meta")
-        ("force-meta,m", "")
         ("screenshot-wrm,s", "capture the screen when a file wrm is create")
         ("screenshot-start,0", "")
         ("no-screenshot-stop,N", "")
         ("path,p", po::value(&this->base_path), "base path for the files presents in the meta")
         ("ignore-dir,n", "ignore directory for meta in the file wrm")
         ("deduce-dir,d", "use --ignore-dir and set --path with the directory of --input-file")
+        ("output-meta-name,m", po::value(&this->metaname), "specified name of meta file")
+        ("input-type", po::value(&this->input_type), "accept 'mwrm' or 'wrm'")
+        ("output-type", po::value(&this->output_type), "accept 'png' or 'wrm'")
         ;
     }
 
@@ -174,7 +176,6 @@ struct WrmRecoderOption {
                 pair_type("screenshot-wrm", this->screenshot_wrm),
                 pair_type("screenshot-start", this->screenshot_start),
                 pair_type("no-screenshot-stop", this->no_screenshot_stop),
-                pair_type("force-meta", this->force_meta),
                 pair_type("ignore-dir", this->ignore_dir_for_meta_in_wrm),
             };
             for (std::size_t n = 0; n < sizeof(p)/sizeof(p[0]); ++n) {
@@ -237,6 +238,15 @@ struct OutputType {
             )
         );
     }
+
+    static OutputType::enum_t string_type_to_enum(const std::string& filename)
+    {
+        if (filename == "png")
+            return PNG_TYPE;
+        if (filename == "wrm")
+            return WRM_TYPE;
+        return NOT_FOUND;
+    }
 };
 
 
@@ -250,17 +260,26 @@ struct InputType {
     static InputType::enum_t get_input_type(const std::string& filename)
     {
         std::size_t p = filename.find_last_of('.');
-        return (p == std::string::npos || p + 4 != filename.length())
-        ? NOT_FOUND
+        if (p == std::string::npos)
+            return NOT_FOUND;
+        ++p;
+        return (p + 4 == filename.length()
+        && !filename.compare(p, 4, "mwrm"))
+        ? META_TYPE
         : (
-            !filename.compare(p+1, 4, "mwrm")
-            ? META_TYPE
-            : (
-                !filename.compare(p+1, 3, "wrm")
-                ? WRM_TYPE
-                : NOT_FOUND
-            )
+            (p + 3 == filename.length() && !filename.compare(p, 3, "wrm"))
+            ? WRM_TYPE
+            : NOT_FOUND
         );
+    }
+
+    static InputType::enum_t string_type_to_enum(const std::string& filename)
+    {
+        if (filename == "mwrm")
+            return META_TYPE;
+        if (filename == "wrm")
+            return WRM_TYPE;
+        return NOT_FOUND;
     }
 };
 
@@ -277,17 +296,24 @@ public:
 
     OutputType::enum_t get_output_type() const
     {
+        if (!this->opt.output_type.empty()){
+            return OutputType::string_type_to_enum(this->opt.output_type);
+        }
         return OutputType::get_output_type(this->opt.out_filename);
     }
 
     InputType::enum_t get_input_type() const
     {
+        if (!this->opt.input_type.empty()){
+            return InputType::string_type_to_enum(this->opt.input_type);
+        }
         return InputType::get_input_type(this->opt.in_filename);
     }
 
     std::string get_out_filename() const
     {
-        return this->opt.out_filename.erase(opt.out_filename.length() - 4);
+        const std::size_t pos = opt.out_filename.find_last_of('.');
+        return this->opt.out_filename.substr(0, pos);
     }
 
     const std::string& get_in_filename() const
@@ -297,12 +323,32 @@ public:
 
     void run()
     {
-        this->run(this->get_out_filename().c_str(), this->get_output_type());
+        this->run(this->get_out_filename().c_str());
     }
 
-    void run(OutputType::enum_t type)
+    void run(OutputType::enum_t otype)
     {
-        this->run(this->get_out_filename().c_str(), type);
+        this->run(otype, this->get_input_type());
+    }
+
+    void run(InputType::enum_t itype)
+    {
+        this->run(this->get_output_type(), itype);
+    }
+
+    void run(OutputType::enum_t otype, InputType::enum_t itype)
+    {
+        this->run(this->get_out_filename().c_str(), otype, itype);
+    }
+
+    void run(const char* outfile, OutputType::enum_t otype)
+    {
+        this->run(outfile, otype, this->get_input_type());
+    }
+
+    void run(const char* outfile, InputType::enum_t itype)
+    {
+        this->run(outfile, this->get_output_type(), itype);
     }
 
     void run(const char* outfile)
@@ -310,27 +356,36 @@ public:
         this->run(outfile, this->get_output_type());
     }
 
-    void run(const char* outfile, OutputType::enum_t type)
+    void run(const char* outfile, OutputType::enum_t otype, InputType::enum_t itype)
     {
         //WRMRecorder recorder(opt.in_filename, opt.base_path);
         WRMRecorder recorder;
         recorder.set_basepath(opt.base_path);
-        recorder.open_wrm_only(opt.in_filename.c_str());
-        if (!recorder.selected_next_order())
-            throw std::runtime_error("not next order");
-        if (!recorder.is_meta_chunk())
-            throw std::runtime_error("not meta chunk");
-        recorder.only_filename = true;
-        if (!recorder.interpret_meta_chunk())
-            throw Error(0, errno);
+        recorder.only_filename = opt.ignore_dir_for_meta_in_wrm;
 
-        switch (type) {
+        switch (itype) {
+            case InputType::WRM_TYPE:
+                recorder.open_wrm_followed_meta(opt.in_filename.c_str());
+                break;
+            case InputType::META_TYPE:
+                recorder.open_meta_followed_wrm(opt.in_filename.c_str());
+                break;
+            default:
+                throw std::runtime_error("input type not found");
+        }
+
+        if (!recorder.is_meta_chunk())
+           throw std::runtime_error("chunk meta not found in output file");
+
+        switch (otype) {
             case OutputType::PNG_TYPE:
                 this->png_run(recorder, outfile);
                 break;
-            default:
+            case OutputType::WRM_TYPE:
                 this->wrm_run(recorder, outfile);
                 break;
+            default:
+                throw std::runtime_error("output type not found");
         }
     }
 
@@ -367,7 +422,7 @@ private:
         {
             this->chunk_time_value = this->recorder.reader.stream.in_uint64_be();
             this->micro_sec += this->chunk_time_value;
-            this->recorder.remaining_order_count() = 0;
+            --this->recorder.remaining_order_count();
         }
 
         bool interpret_is_time_chunk()
@@ -387,32 +442,36 @@ private:
             uint64_t time_start = 0;
             if (this->recorder.selected_next_order())
             {
-                if (recorder.chunk_type() == WRMChunk::TIMESTAMP)
+                if (this->recorder.chunk_type() == WRMChunk::TIMESTAMP)
                 {
-                    time_start = this->recorder.reader.stream.in_uint64_be();
+                    this->interpret_time();
                 }
-            }
-            else
-            {
-                recorder.interpret_order();
+                else
+                {
+                    this->recorder.interpret_order();
+                }
             }
             return time_start;
         }
 
         uint64_t advance_usecond(uint msec)
         {
+            if (!msec)
+                return 0;
+
             while (this->recorder.selected_next_order())
             {
-                if (this->interpret_is_time_chunk() && this->micro_sec){
-                    if (this->micro_sec >= msec) {
+                if (this->interpret_is_time_chunk())
+                {
+                    if (this->micro_sec >= msec)
+                    {
                         uint64_t tmp = this->micro_sec;
                         this->reset();
                         return tmp;
                     }
                 }
-                else {
-                    recorder.interpret_order();
-                }
+                else
+                    this->recorder.interpret_order();
             }
             return 0;
         }
@@ -433,7 +492,7 @@ private:
         );
         recorder.consumer(&capture);
         TimerCompute timercompute(recorder);
-        if (!timercompute.advance_second(this->opt.range.left))
+        if (this->opt.range.left && !timercompute.advance_second(this->opt.range.left))
             return 0;
 
         if (this->opt.screenshot_start)
@@ -475,15 +534,18 @@ private:
             recorder.meta().width,
             recorder.meta().height,
             outfile,
-            0, 0
+            opt.metaname.empty() ? 0 : opt.metaname.c_str(),
+            0, 0, true
         );
         recorder.consumer(&capture);
         TimerCompute timercompute(recorder);
         uint64_t msecond = timercompute.start();
+
         std::cout << "start: " << msecond << '\n';
         uint64_t mtime = timercompute.advance_second(this->opt.range.left);
+
         std::cout << "mtime: " << mtime << '\n';
-        if (!mtime)
+        if (this->opt.range.left && !mtime)
             return 0;
         if (msecond){
             capture.timestamp(msecond);
@@ -495,44 +557,66 @@ private:
         if (this->opt.screenshot_wrm && this->opt.screenshot_start)
             capture.dump_png();
 
+        //uint64_t chunk_time = 0;
         timercompute.usec() = mtime - this->opt.range.left;
         uint frame = 0;
         mtime = TimerCompute::coeff_sec_to_usec * this->opt.time;
         msecond = TimerCompute::coeff_sec_to_usec * (this->opt.range.right.time - this->opt.range.left.time);
         TimerCapture::time_type tmptime;
+
         while (recorder.selected_next_order() && frame != this->opt.frame)
         {
-            if (timercompute.interpret_is_time_chunk()){
-                //std::cout << "timercompute.usec(): " << timercompute.usec()  << ' ' << "mtime: " << mtime << '\n';
+            if (timercompute.interpret_is_time_chunk()) {
                 uint64_t usec = timercompute.usec();
-                if (timercompute.chunk_time_value){
+                if (timercompute.chunk_time_value) {
+                    //chunk_time += timercompute.chunk_time_value;
+                    //std::cout << "chunk_time: " << chunk_time << '\n';
                     capture.timestamp(timercompute.chunk_time_value);
                     capture.timer() += timercompute.chunk_time_value;
                 }
-                if (usec >= mtime){
-                    std::cout << "usec: " << usec << ", mtime: " << mtime << std::endl;
+
+                if (usec >= mtime) {
+                    /*if (chunk_time) {
+                        std::cout << "timestamp + breakpoint chunk_time: " << chunk_time  << '\n';
+                        capture.timestamp(chunk_time);
+                        chunk_time = 0;
+                    }*/
                     capture.breakpoint();
                     if (this->opt.screenshot_wrm)
                         capture.dump_png();
                     timercompute.reset();
                     ++frame;
                 }
+
                 if (msecond <= usec){
                     msecond = 0;
                     break;
                 } else {
                     msecond -= usec;
                 }
-            } else if (recorder.chunk_type() == WRMChunk::NEXT_FILE) {
-                tmptime = capture.timer().impl();
-                recorder.interpret_order();
-                capture.timer().impl() = tmptime;
             }
             else {
-                recorder.interpret_order();
+                /*if (chunk_time) {
+                    std::cout << "timestamp chunk_time: " << chunk_time  << '\n';
+                    capture.timestamp(chunk_time);
+                    chunk_time = 0;
+                }*/
+
+                if (recorder.chunk_type() == WRMChunk::NEXT_FILE) {
+                    tmptime = capture.timer().impl();
+                    recorder.interpret_order();
+                    capture.timer().impl() = tmptime;
+                }
+                else {
+                    recorder.interpret_order();
+                }
             }
         }
-        std::cout << "msecond: " << msecond << '\n';
+
+        /*if (chunk_time) {
+            capture.timestamp(chunk_time);
+        }*/
+
         return frame;
     }
 };
@@ -571,17 +655,25 @@ int main(int argc, char** argv)
         return 90;
     }
 
-    OutputType::enum_t type = OutputType::get_output_type(opt.out_filename);
-    if (type == OutputType::NOT_FOUND){
-        std::cerr << "incorect output extension, accept png or wrm.\n";
+    WrmRecorderApp app(opt);
+
+    OutputType::enum_t otype = app.get_output_type();
+    if (otype == OutputType::NOT_FOUND){
+        std::cerr << "incorrect output-type: "
+        << opt.desc.find("output-type", false).description() << '\n';
         return 100;
     }
 
-    std::cout << "type: " << type << '\n';
+    InputType::enum_t itype = app.get_input_type();
+    if (itype == InputType::NOT_FOUND){
+        std::cerr << "incorrect input-type: "
+        << opt.desc.find("input-type", false).description() << '\n';
+        return 110;
+    }
 
-    WrmRecorderApp app(opt);
     try {
-        app.run();
+        //app.run();
+        app.run(otype, itype);
     } catch (Error e) {
         std::cerr
         << "id: " << e.id

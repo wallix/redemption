@@ -41,12 +41,8 @@ class Capture : public RDPGraphicDevice
     StaticCapture sc;
     NativeCapture nc;
 
-    public:
-
-    TODO(" fat interface : ugly  find another way")
-    Capture(int width, int height, const char * path, const char * codec_id, const char * video_quality, bool bgr = true) :
-        sc(width, height, path, codec_id, video_quality, bgr),
-        nc(width, height, path)
+private:
+    void _init()
     {
         this->log_prefix[0] = 0;
         struct timeval now;
@@ -57,6 +53,22 @@ class Capture : public RDPGraphicDevice
         this->inter_frame_interval_static_capture       = 5000000; // 1 000 000 us is 1 sec (default)
         this->inter_frame_interval_native_capture       =  400000; // 1 000 000 us is 1 sec (default)
         this->inter_frame_interval_start_break_capture  = 1000000 * 60 * 10; // 1 000 000 us is 1 sec (default)
+    }
+
+public:
+    TODO(" fat interface : ugly  find another way")
+    Capture(int width, int height, const char * path, const char * codec_id, const char * video_quality, bool bgr = true) :
+        sc(width, height, path, codec_id, video_quality, bgr),
+        nc(width, height, path)
+    {
+        this->_init();
+    }
+
+    Capture(int width, int height, const char * path, const char * path_meta, const char * codec_id, const char * video_quality, bool bgr = true) :
+    sc(width, height, path, codec_id, video_quality, bgr),
+    nc(width, height, path, path_meta)
+    {
+        this->_init();
     }
 
     ~Capture(){
@@ -158,7 +170,6 @@ class Capture : public RDPGraphicDevice
 
     void breakpoint()
     {
-        //this->sc.flush();
         this->nc.breakpoint(this->sc.drawable.data,
                             24,
                             this->sc.drawable.width,
