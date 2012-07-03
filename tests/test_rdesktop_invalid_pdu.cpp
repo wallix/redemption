@@ -47,11 +47,13 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         "\x7b\xfa\x9a\x3b\x15\x9f\x89\x32\xd4"
         , 61);
 
-    X224In tpdu(&t, stream);
-    BOOST_CHECK_EQUAL(3, tpdu.tpkt.version);
-    BOOST_CHECK_EQUAL(61, tpdu.tpkt.len);
-    BOOST_CHECK_EQUAL(2, tpdu.tpdu_hdr.LI);
-    BOOST_CHECK_EQUAL((uint8_t)X224Packet::DT_TPDU, (uint8_t)tpdu.tpdu_hdr.code);
+//    X224In tpdu(&t, stream);
+    X224 x224(stream);
+    x224.recv_start(&t);
+    BOOST_CHECK_EQUAL(3, x224.tpkt.version);
+    BOOST_CHECK_EQUAL(61, x224.tpkt.len);
+    BOOST_CHECK_EQUAL(2, x224.tpdu_hdr.LI);
+    BOOST_CHECK_EQUAL((uint8_t)X224Packet::DT_TPDU, (uint8_t)x224.tpdu_hdr.code);
 
     McsIn mcs_in(stream);
     BOOST_CHECK_EQUAL((uint8_t)DomainMCSPDU_SendDataRequest, (uint8_t)mcs_in.opcode >> 2);
@@ -177,11 +179,13 @@ BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
 /* 0140 */"\x39\x1b\xac\xe8\xf9\x4d\x67\x70\x44"                             //9....MgpD
         , 333);
 
-    X224In tpdu(&t, stream);
-    BOOST_CHECK_EQUAL(3, tpdu.tpkt.version);
-    BOOST_CHECK_EQUAL(333, tpdu.tpkt.len);
-    BOOST_CHECK_EQUAL(2, tpdu.tpdu_hdr.LI);
-    BOOST_CHECK_EQUAL((uint8_t)X224Packet::DT_TPDU, (uint8_t)tpdu.tpdu_hdr.code);
+//    X224In tpdu(&t, stream);
+    X224 x224(stream);
+    x224.recv_start(&t);
+    BOOST_CHECK_EQUAL(3, x224.tpkt.version);
+    BOOST_CHECK_EQUAL(333, x224.tpkt.len);
+    BOOST_CHECK_EQUAL(2, x224.tpdu_hdr.LI);
+    BOOST_CHECK_EQUAL((uint8_t)X224Packet::DT_TPDU, (uint8_t)x224.tpdu_hdr.code);
 
     McsIn mcs_in(stream);
     BOOST_CHECK_EQUAL((uint8_t)DomainMCSPDU_SendDataRequest, mcs_in.opcode >> 2);
