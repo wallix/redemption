@@ -886,20 +886,9 @@ struct X224 : public X224Packet
         }
     } // END METHOD emit_end
 
-// >>>>>>>> Suppressed because direct call of send() method of Transport class is a better practice.
-//    void send(Transport * t)
-//    {
-////        LOG(LOG_INFO, "3) [%.2X %.2X %.2X %.2X] [%.2X %.2X %.2X]", this->stream.data[0], this->stream.data[1], this->stream.data[2], this->stream.data[3], this->stream.data[4], this->stream.data[5], this->stream.data[6], this->stream.data[7]);
-
-//        if (this->verbose){
-//            LOG(LOG_INFO, "iso X224 sending %u bytes", this->stream.p - this->bop);
-//        }
-//        t->send(this->stream.data + this->bop, this->stream.get_offset(this->bop));
-//    }
-
 };
 
-
+/*
 struct X224In : public X224Packet
 {
     uint32_t verbose;
@@ -1254,6 +1243,6 @@ struct X224Out : public X224Packet
         t->send(stream.data + this->bop, stream.get_offset(this->bop));
     }
 };
-
+*/
 
 #endif
