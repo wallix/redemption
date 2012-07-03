@@ -90,32 +90,12 @@ enum {
 };
 
 
-
-class McsOut
+//##############################################################################
+struct Mcs
+//##############################################################################
 {
     Stream & stream;
     uint8_t offlen;
-    public:
-    McsOut(Stream & stream, uint8_t command, uint8_t user_id, uint16_t chan_id)
-        : stream(stream), offlen(stream.get_offset(-6))
-    {
-        stream.out_uint8(command << 2);
-        stream.out_uint16_be(user_id);
-        stream.out_uint16_be(chan_id);
-        stream.out_uint8(0x70);
-        stream.out_uint16_be(0); // skip len
-    }
-
-    void end(){
-        int len = stream.get_offset(offlen + 2);
-        stream.set_out_uint16_be(0x8000|len, this->offlen);
-    }
-};
-
-
-class McsIn
-{
-    Stream & stream;
     public:
     uint8_t opcode;
     uint16_t user_id;
@@ -123,9 +103,45 @@ class McsIn
     uint8_t magic_0x70; // some ber header ?
     uint16_t len;
 
-    McsIn(Stream & stream)
-        : stream(stream), opcode(0), user_id(0), chan_id(0), len(0)
+    // CONSTRUCTOR
+    //==============================================================================
+    Mcs ( Stream & stream )
+    //==============================================================================
+    : stream(stream)
+    , offlen(stream.get_offset(-6))
+    , opcode(0)
+    , user_id(0)
+    , chan_id(0)
+    , len(0)
     {
+    } // END CONSTRUCTOR
+
+    //==============================================================================
+    void emit_start( uint8_t command
+                   , uint8_t user_id
+                   , uint16_t chan_id
+                   )
+    //==============================================================================
+    {
+        stream.out_uint8(command << 2);
+        stream.out_uint16_be(user_id);
+        stream.out_uint16_be(chan_id);
+        stream.out_uint8(0x70);
+        stream.out_uint16_be(0); // skip len
+
+    } // END METHOD emit_start
+
+    //==============================================================================
+    void emit_end(){
+    //==============================================================================
+        int len = stream.get_offset(offlen + 2);
+        stream.set_out_uint16_be(0x8000|len, this->offlen);
+
+    } // END METHOD emit_end
+
+    //==============================================================================
+    void recv_start() {
+    //==============================================================================
         this->opcode = stream.in_uint8();
         this->user_id = stream.in_uint16_be();
         this->chan_id = stream.in_uint16_be();
@@ -134,15 +150,19 @@ class McsIn
         if (this->len & 0x80){
             this->len = ((this->len & 0x7F) << 8) + stream.in_uint8();
         }
-    }
+    } // END METHOD recv_start
 
-    void end(){
+    //==============================================================================
+    void recv_end(){
+    //==============================================================================
         if (this->stream.p != this->stream.end){
             LOG(LOG_ERR, "all data should have been consumed : remains %d", stream.end - stream.p);
         }
-    }
+    } // END METHOD recv_end
 
-};
+
+}; // END CLASS Mcs
+
 
 
 // 2.2.1.3 Client MCS Connect Initial PDU with GCC Conference Create Request
@@ -501,14 +521,14 @@ static inline void mcs_recv_connect_response(
         }
         break;
         case SC_SECURITY:
-            LOG(LOG_ERR, "Receiving SC_Security from server");
+            LOG(LOG_INFO, "Receiving SC_Security from server");
             parse_mcs_data_sc_security(cr_stream, encrypt, decrypt,
                                        server_public_key_len, client_crypt_random,
                                        crypt_level,
                                        gen);
         break;
         case SC_NET:
-            LOG(LOG_ERR, "Receiving SC_Net from server");
+            LOG(LOG_INFO, "Receiving SC_Net from server");
             parse_mcs_data_sc_net(cr_stream, front_channel_list, mod_channel_list);
             break;
         default:

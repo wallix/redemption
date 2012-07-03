@@ -731,9 +731,10 @@ static inline void recv_security_exchange_PDU(
     X224 x224(stream);
     x224.recv_start(trans);
 
-    McsIn mcs_in(stream);
+    Mcs mcs(stream);
+    mcs.recv_start();
 
-    if ((mcs_in.opcode >> 2) != DomainMCSPDU_SendDataRequest) {
+    if ((mcs.opcode >> 2) != DomainMCSPDU_SendDataRequest) {
         throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
     }
 
@@ -750,7 +751,7 @@ static inline void recv_security_exchange_PDU(
     memcpy(client_crypt_random, stream.in_uint8p(len), len);
     stream.in_skip_bytes(SEC_PADDING_SIZE);
 
-    mcs_in.end();
+    mcs.recv_end();
     x224.recv_end();
 
     uint8_t client_random[64];
@@ -781,7 +782,8 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     X224 x224(sdrq_stream);
     x224.emit_start(X224Packet::DT_TPDU);
 
-    McsOut sdrq_out(sdrq_stream, DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
+    Mcs mcs(sdrq_stream);
+    mcs.emit_start(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
 
     sdrq_stream.out_uint32_le(SEC_EXCHANGE_PKT);
     sdrq_stream.out_uint32_le(server_public_key_len + SEC_PADDING_SIZE);
@@ -789,7 +791,7 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     sdrq_stream.out_copy_bytes(client_crypt_random, server_public_key_len);
     sdrq_stream.out_clear_bytes(SEC_PADDING_SIZE);
 
-    sdrq_out.end();
+      mcs.emit_end();
 
     x224.emit_end();
     trans->send(x224.header(), x224.size());

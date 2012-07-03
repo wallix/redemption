@@ -101,7 +101,7 @@
 struct GraphicsUpdatePDU : public RDPSerializer
 {
     X224 * x224;
-    McsOut * mcs_sdin;
+    Mcs * mcs;
     SecOut * sec_out;
     ShareControlOut * out_control;
     ShareDataOut * out_data;
@@ -130,7 +130,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
             big_entries, big_size,
             bitmap_cache_version, use_bitmap_comp, op2),
         x224(NULL),
-        mcs_sdin(NULL),
+        mcs(NULL),
         sec_out(NULL),
         out_control(NULL),
         out_data(NULL),
@@ -144,7 +144,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
 
     ~GraphicsUpdatePDU(){
         if (this->x224){ delete this->x224; }
-        if (this->mcs_sdin){ delete this->mcs_sdin; }
+        if (this->mcs){ delete this->mcs; }
         if (this->sec_out){ delete this->sec_out; }
         if (this->out_control){ delete this->out_control; }
         if (this->out_data){ delete this->out_data; }
@@ -152,7 +152,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
 
     void init(){
         if (this->x224){ delete this->x224; }
-        if (this->mcs_sdin){ delete this->mcs_sdin; }
+        if (this->mcs){ delete this->mcs; }
         if (this->sec_out){ delete this->sec_out; }
         if (this->out_control){ delete this->out_control; }
         if (this->out_data){ delete this->out_data; }
@@ -163,7 +163,8 @@ struct GraphicsUpdatePDU : public RDPSerializer
         this->stream.init(32768);
         this->x224 = new X224(this->stream);
         this->x224->emit_start(X224Packet::DT_TPDU);
-        this->mcs_sdin = new McsOut(this->stream, DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
+        this->mcs = new Mcs(this->stream);
+        this->mcs->emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         this->sec_out = new SecOut(this->stream, this->crypt_level?SEC_ENCRYPT:0, this->encrypt);
         this->out_control = new ShareControlOut(this->stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         this->out_data = new ShareDataOut(this->stream, PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
@@ -187,7 +188,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
             this->out_data->end();
             this->out_control->end();
             this->sec_out->end();
-            this->mcs_sdin->end();
+            this->mcs->emit_end();
             this->x224->emit_end();
             this->trans->send(this->x224->header(), this->x224->size());
             this->init();

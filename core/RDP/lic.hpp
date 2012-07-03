@@ -190,7 +190,8 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
     Stream stream(32768);
     X224 x224(stream);
     x224.emit_start(X224Packet::DT_TPDU);
-    McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
+    Mcs mcs(stream);
+    mcs.emit_start(DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
 
     stream.out_uint32_le(SEC_LICENSE_PKT);
     stream.out_uint8(LICENSE_REQUEST);
@@ -250,7 +251,7 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
 //    McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
 //    stream.out_copy_bytes((char*)lic1, 322);
 
-    sdin_out.end();
+    mcs.emit_end();
     x224.emit_end();
     trans->send(x224.header(), x224.size());
 }
@@ -267,9 +268,10 @@ static inline void send_lic_response(Transport * trans, int userid) throw (Error
     Stream stream(32768);
     X224 x224(stream);
     x224.emit_start(X224Packet::DT_TPDU);
-    McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
+    Mcs mcs(stream);
+    mcs.emit_start(DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic2, 20);
-    sdin_out.end();
+    mcs.emit_end();
     x224.emit_end();
     trans->send(x224.header(), x224.size());
 }
@@ -286,9 +288,10 @@ static inline void send_media_lic_response(Transport * trans, int userid) throw 
     Stream stream(32768);
     X224 x224(stream);
     x224.emit_start(X224Packet::DT_TPDU);
-    McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
+    Mcs mcs(stream);
+    mcs.emit_start(DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic3, 20);
-    sdin_out.end();
+    mcs.emit_end();
     x224.emit_end();
     trans->send(x224.header(), x224.size());
 }
@@ -462,7 +465,8 @@ struct RdpLicence {
         Stream stream(32768);
         X224 x224(stream);
         x224.emit_start(X224Packet::DT_TPDU);
-        McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
+        Mcs mcs(stream);
+        mcs.emit_start(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, SEC_LICENSE_PKT, encrypt);
 
         stream.out_uint8(PLATFORM_CHALLENGE_RESPONSE);
@@ -498,7 +502,7 @@ struct RdpLicence {
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
         sec_out.end();
-        sdrq_out.end();
+        mcs.emit_end();
         x224.emit_end();
         trans->send(x224.header(), x224.size());
     }
@@ -694,7 +698,8 @@ struct RdpLicence {
         Stream stream(32768);
         X224 x224(stream);
         x224.emit_start(X224Packet::DT_TPDU);
-        McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
+        Mcs mcs(stream);
+        mcs.emit_start(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         SecOut sec_out(stream, SEC_LICENSE_PKT, encrypt);
 
         stream.out_uint8(NEW_LICENSE_REQUEST);
@@ -811,7 +816,7 @@ struct RdpLicence {
         stream.out_copy_bytes(hostname, hostlen);
 
         sec_out.end();
-        sdrq_out.end();
+        mcs.emit_end();
         x224.emit_end();
         trans->send(x224.header(), x224.size());
     }
@@ -823,7 +828,8 @@ struct RdpLicence {
         Stream stream(32768);
         X224 x224(stream);
         x224.emit_start(X224Packet::DT_TPDU);
-        McsOut sdrq_out(stream, DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
+        Mcs mcs(stream);
+        mcs.emit_start(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
 
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;
@@ -847,7 +853,7 @@ struct RdpLicence {
         stream.out_copy_bytes(hwid, LICENCE_HWID_SIZE);
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
-        sdrq_out.end();
+        mcs.emit_end();
         x224.emit_end();
         trans->send(x224.header(), x224.size());
     }
