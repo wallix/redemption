@@ -28,14 +28,11 @@
 #define BOOST_TEST_MODULE TestBitmap
 #include <boost/test/auto_unit_test.hpp>
 #include <boost/test/unit_test.hpp>
-#include <iostream>
-#include <sstream>
-#include <string>
 
 #include "bitmap.hpp"
 #include "colors.hpp"
 #include "config.hpp"
-#include <sys/time.h>
+//#include <sys/time.h>
 
 BOOST_AUTO_TEST_CASE(TestBitmapCompressHardenned)
 {

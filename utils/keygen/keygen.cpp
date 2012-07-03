@@ -29,8 +29,6 @@
 
 */
 
-#include <iostream>
-
 using namespace std;
 
 #include <stdlib.h>
@@ -45,7 +43,6 @@ using namespace std;
 #include <fcntl.h>
 
 
-#include <iostream>
 #include <inttypes.h>
 #include "rsa_keys.hpp"
 

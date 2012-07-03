@@ -23,15 +23,14 @@
 */
 
 #include <unistd.h>
-#include <locale.h>
-#include <stdio.h>
+//#include <locale.h>
 #include <signal.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <sys/socket.h>
 
 #include "mainloop.hpp"

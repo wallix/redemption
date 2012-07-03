@@ -25,6 +25,7 @@
 #include "internal/widget.hpp"
 #include "modcontext.hpp"
 #include "client_mod.hpp"
+#include "wait_obj.hpp"
 
 struct internal_mod : public client_mod {
     public:

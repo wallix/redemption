@@ -79,7 +79,7 @@ struct URT
         local.tv.tv_usec = (this->tv.tv_usec + other.tv.tv_usec) % 1000000;
         local.tv.tv_sec  = this->tv.tv_sec   + other.tv.tv_sec + (this->tv.tv_usec + other.tv.tv_usec) / 1000000;
 
-        return local; 
+        return local;
     }
 
     private:

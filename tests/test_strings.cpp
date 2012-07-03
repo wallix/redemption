@@ -29,8 +29,6 @@
 #define BOOST_TEST_MODULE TestStrings
 #include <boost/test/auto_unit_test.hpp>
 
-#include <sstream>
-#include <iostream>
 #include <string>
 
 BOOST_AUTO_TEST_CASE(TestString)

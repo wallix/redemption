@@ -28,11 +28,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #include "altoco.hpp"
-#include <sstream>
-#include <iostream>
-#include <string>
-#include <string.h>
-#include <memory.h>
 
 
 BOOST_AUTO_TEST_CASE(TestCompactToAlignedSizeComputing)

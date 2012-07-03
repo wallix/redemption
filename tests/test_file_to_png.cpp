@@ -23,6 +23,8 @@
 #define BOOST_TEST_MODULE TestFileToPng
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGPRINT
+
 #include "nativecapture.hpp"
 #include "staticcapture.hpp"
 #include "transport.hpp"
@@ -73,19 +75,19 @@ void file_to_png(const char* filename, uint16_t w, uint16_t h, uint16_t bpp, con
     }
     InFileTransport in_trans(fd);
     RDPUnserializer reader(&in_trans, 0, Rect());
+    reader.selected_next_order();
+    BOOST_REQUIRE(reader.chunk_type == WRMChunk::META_FILE);
+    reader.interpret_order();
     BOOST_CHECK(1);
-    MetaWRM meta(reader);
+    DataMetaFile& meta = reader.data_meta;
     BOOST_CHECK_EQUAL(w, meta.width);
     BOOST_CHECK_EQUAL(h, meta.height);
-    BOOST_CHECK_EQUAL(bpp, meta.bpp);
-    reader.screen_rect.cx = meta.width;
-    reader.screen_rect.cy = meta.height;
     StaticCapture consumer(meta.width, meta.height,
                            "/tmp/test_file_to_png.png", 0, 0);
     reader.consumer = &consumer;
     while (reader.next())
         ;
-    consumer.flush();
+    //consumer.flush();
 
     char message[1024];
     if (!check_sig(consumer.drawable, message, shasig)){
@@ -95,35 +97,12 @@ void file_to_png(const char* filename, uint16_t w, uint16_t h, uint16_t bpp, con
 
     TODO("if boost::unit_test::error_count() == 0");
     unlink_wrm(filename, 1);
-    unlink_png("/tmp/test_file_to_png.png", 1);
-}
-
-BOOST_AUTO_TEST_CASE(TestFileToPng)
-{
-    {
-        //MetaWRM meta(800, 600, 24);
-        MetaWRM meta(1024, 912, 16);
-        NativeCapture cap(meta.width, meta.height,
-                          "/tmp/test_file_to_png");
-        BOOST_CHECK_EQUAL(cap.recorder.stream.p - cap.recorder.stream.data, 8);
-        meta.emit(cap.recorder);
-        Rect clip(0, 0, meta.width, meta.height);
-        cap.draw(RDPOpaqueRect(Rect(10,844,500,42), RED), clip);
-        cap.draw(RDPOpaqueRect(Rect(777,110,144,188), GREEN), clip);
-        cap.draw(RDPOpaqueRect(Rect(200,400,60,60), BLUE), clip);
-        struct timeval now;
-        gettimeofday(&now, NULL);
-        cap.recorder.timestamp(now);
-    }
-    file_to_png("/tmp/test_file_to_png", 1024, 912, 16,
-                     "\x10\xa4\xc3\xe2\x18\x1e\x00\x51\xcc\x9b"
-                     "\x09\xaf\xf3\x20\xb5\xb2\xba\xb7\x38\x21");
 }
 
 BOOST_AUTO_TEST_CASE(TestFileWithoutMetaToPng)
 {
+    Rect clip(0, 0, 800, 600);
     {
-        Rect clip(0, 0, 800, 600);
         NativeCapture cap(clip.cx, clip.cy,
                           "/tmp/test_file_without_meta_to_png");
         cap.draw(RDPOpaqueRect(Rect(10,500,500,42), RED), clip);
@@ -133,28 +112,26 @@ BOOST_AUTO_TEST_CASE(TestFileWithoutMetaToPng)
         gettimeofday(&now, NULL);
         cap.recorder.timestamp(now);
     }
-    file_to_png("/tmp/test_file_without_meta_to_png", 800, 600, 24,
-                     "\x1c\xf2\xcc\xf1\x37\x2d\x51\xde\x41\x9e"
-                     "\xee\x36\xa3\xa2\x20\x99\x04\x1e\xb7\xba");
+    file_to_png("/tmp/test_file_without_meta_to_png", clip.cx, clip.cy, 24,
+                "\x1c\xf2\xcc\xf1\x37\x2d\x51\xde\x41\x9e"
+                "\xee\x36\xa3\xa2\x20\x99\x04\x1e\xb7\xba");
 }
 
 BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
 {
     int fd = ::open(FIXTURES_PATH "/replay2.wrm", O_RDONLY);
-    if (fd == -1)
-    {
-        BOOST_CHECK_MESSAGE(false, "fd == -1");
-        return ;
-    }
+    BOOST_REQUIRE(fd != -1);
     InFileTransport in_trans(fd);
     RDPUnserializer reader(&in_trans, 0, Rect());
+    reader.selected_next_order();
+    BOOST_REQUIRE(reader.chunk_type == WRMChunk::META_FILE);
+    //reader.interpret_order();
+    BOOST_REQUIRE(reader.load_data(FIXTURES_PATH "/test_w2008_2-5446.mwrm") == true);
+    reader.stream.p = reader.stream.end;
     BOOST_CHECK(1);
-    MetaWRM meta(reader);
-    reader.screen_rect.cx = meta.width;
-    reader.screen_rect.cy = meta.height;
+    DataMetaFile& meta = reader.data_meta;
     BOOST_CHECK_EQUAL(800, meta.width);
     BOOST_CHECK_EQUAL(600, meta.height);
-    BOOST_CHECK_EQUAL(24, meta.bpp);
 
     StaticCapture consumer(meta.width, meta.height,
                            "/tmp/test_replay_to_png", 0, 0);
@@ -165,9 +142,10 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     reader.consumer = &consumer;
     while (reader.selected_next_order())
     {
-        if (reader.chunk_type == WRMChunk::TIMESTAMP || reader.chunk_type == WRMChunk::OLD_TIMESTAMP){
+        if (reader.chunk_type == WRMChunk::TIMESTAMP){
             is_chunk_time = true;
             reader.remaining_order_count = 0;
+            reader.stream.p = reader.stream.end;
         } else {
             reader.interpret_order();
             if (is_chunk_time)

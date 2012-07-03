@@ -26,9 +26,6 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestBitmapPerf
 #include <boost/test/auto_unit_test.hpp>
-#include <iostream>
-#include <sstream>
-#include <string>
 
 #include "bitmap.hpp"
 #include "colors.hpp"

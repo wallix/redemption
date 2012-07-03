@@ -25,10 +25,7 @@
 #if !defined(__CHECK_FILES_HPP__)
 #define __CHECK_FILES_HPP__
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <string.h>
 #include <sys/types.h>

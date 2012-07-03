@@ -31,10 +31,6 @@
 #define LOGPRINT
 
 #include "font.hpp"
-#include <sstream>
-#include <iostream>
-#include <string>
-#include <string.h>
 
 #include "constants.hpp"
 

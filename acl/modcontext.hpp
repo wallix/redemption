@@ -26,12 +26,6 @@
 #include "log.hpp"
 #include "dico.hpp"
 
-#include <string>
-#include <string.h>
-
-#include <map>
-#include <set>
-
 enum {
     MCTX_STATUS_EXIT,
     MCTX_STATUS_WAITING,

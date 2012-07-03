@@ -31,11 +31,7 @@
 
 #include "rect.hpp"
 #include "region.hpp"
-#include <sstream>
-#include <iostream>
-#include <string>
-#include <string.h>
-#include <boost/foreach.hpp>
+//#include <boost/foreach.hpp>
 
 
 BOOST_AUTO_TEST_CASE(TestRegion)

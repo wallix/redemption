@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
-   Author(s): Martin Potier 
+   Author(s): Martin Potier
 
    Unit test to URT object
    URT = µsecond Redemption Time
@@ -28,12 +28,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #include "urt.hpp"
-#include <time.h>
-#include <sstream>
-#include <iostream>
-#include <string>
-#include <string.h>
-#include <stdio.h>
 
 BOOST_AUTO_TEST_CASE(TestURT_test_instances)
 {
@@ -62,14 +56,14 @@ BOOST_AUTO_TEST_CASE(TestURT_test_instances)
 
         BOOST_CHECK_EQUAL(t.tv.tv_sec, 0);
         BOOST_CHECK_EQUAL(t.tv.tv_usec, 544544);
-    }    
+    }
 
     {
         URT t(1000042);
 
         BOOST_CHECK_EQUAL(t.tv.tv_sec, 1);
         BOOST_CHECK_EQUAL(t.tv.tv_usec, 42);
-    }    
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestURT_test_equal)

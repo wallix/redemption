@@ -28,8 +28,8 @@
 #ifndef __CONFIG_HPP__
 #define __CONFIG_HPP__
 
+#include <istream>
 #include <string>
-#include <string.h>
 #include <stdint.h>
 
 typedef enum{
@@ -154,8 +154,6 @@ typedef enum{
 idlib_t idlib_from_string(std::string str);
 bool bool_from_string(std::string str);
 
-#include <fstream>
-
 
 struct IniAccounts {
     char accountname[255];
@@ -244,7 +242,7 @@ struct Inifile {
         int h_height;
         int h_width;
         int h_qscale;
-        
+
         struct {
             uint32_t x224;
             uint32_t mcs;
@@ -264,7 +262,7 @@ struct Inifile {
             uint32_t widget;
             uint32_t input;
         } debug;
-        
+
     } globals;
 
     struct IniAccounts account[6];

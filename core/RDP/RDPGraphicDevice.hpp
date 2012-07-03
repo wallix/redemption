@@ -53,6 +53,7 @@
 #include "rect.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "colors.hpp"
+#include "meta_file.hpp"
 
 struct RDPGraphicDevice
 {
@@ -82,12 +83,13 @@ public:
 };
 
 struct WRMChunk {
-    static const uint16_t OLD_TIMESTAMP = 1000;
     static const uint16_t TIMESTAMP = 1001;
     static const uint16_t META_INFO = 1002;
     static const uint16_t NEXT_FILE = 1003;
     static const uint16_t PREV_FILE = 1004;
     static const uint16_t BREAKPOINT = 1005;
+    static const uint16_t META_FILE = 1006;
+    static const uint16_t NEXT_FILE_ID = 1007;
 };
 
 struct RDPUnserializer
@@ -115,13 +117,14 @@ struct RDPUnserializer
     BmpCache bmp_cache;
 
     // variables used to read batch of orders "chunks"
-    uint16_t chunk_num;
     uint16_t chunk_size;
     uint16_t chunk_type;
     uint16_t remaining_order_count;
     uint16_t order_count;
 
     WaitCapture wait_cap;
+
+    DataMetaFile data_meta;
 
     RDPUnserializer(Transport * trans, RDPGraphicDevice * consumer, const Rect screen_rect)
      : stream(4096), consumer(consumer), trans(trans), screen_rect(screen_rect),
@@ -138,12 +141,13 @@ struct RDPUnserializer
     bmp_cache(24),
 
     // variables used to read batch of orders "chunks"
-    chunk_num(0),
     chunk_size(0),
     chunk_type(0),
     remaining_order_count(0),
     order_count(0),
-    wait_cap()
+    wait_cap(),
+
+    data_meta()
     {
     }
 
@@ -154,7 +158,7 @@ struct RDPUnserializer
             LOG(LOG_ERR, "Incomplete order batch at chunk %u "
                          "order [%u/%u] "
                          "remaining [%u/%u]",
-                         this->chunk_num,
+                         this->chunk_type,
                          (this->order_count-this->remaining_order_count), this->order_count,
                          (this->stream.end - this->stream.p), this->chunk_size);
         }
@@ -287,7 +291,7 @@ struct RDPUnserializer
                 --this->remaining_order_count;
             }
             break;
-            /*case 1002: //BPP
+            /*case WRMChunk::BPP:
             {
                 uint8_t bpp;
                 this->stream.in_skip_bytes(this->remaining_order_count - 1);
@@ -297,7 +301,7 @@ struct RDPUnserializer
                 this->consumer.set_bpp(bpp);
             }
             break;
-            case 1003: //SIZE
+            case WRMChunk::RESIZE:
             {
                 uint16_t width;
                 uint16_t height;
@@ -306,23 +310,52 @@ struct RDPUnserializer
                 this->stream.in_copy_bytes((uint8_t*)&width, sizeof(width));
                 this->stream.in_copy_bytes((uint8_t*)&height, sizeof(height));
                 this->consumer.resize(width, height);
-            }*/
+            }
+            break;*/
+            case WRMChunk::META_FILE:
+            {
+                if (this->data_meta.loaded)
+                {
+                    LOG(LOG_INFO, "ignore chunk type META_FILE");
+                }
+                else
+                {
+                    uint32_t len = this->stream.in_uint32_le();
+                    this->stream.p[len] = 0;
+                    if (!this->load_data(reinterpret_cast<const char*>(this->stream.p)))
+                    {
+                        throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
+                    }
+                }
+                this->stream.p = this->stream.end;
+                this->remaining_order_count = 0;
+            }
             break;
             default:
-                TODO("This is a naive way to replay native movies at the recording speed. As we recorded at 25 frames per second (snapshots), we inserted timestamp chunks more or less every 1/25 seconds. Naive idea is just to wait 1/25 second every time we get a timestamp frame when replaying. This is naive because sending data in between frames is not timeless. In the worst case it can often be larger than inter frame time. Hence we have to find a better way, probably based on timestamp difference between recording and replay.")
-                struct timespec wtime = { 0, 40000000 };
-                nanosleep(&wtime,NULL);
+                LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
                 this->remaining_order_count = 0;
             break;
         }
     }
 
-    uint8_t next(){
+    bool load_data(const char * filename)
+    {
+        if (!read_meta_file(this->data_meta, filename))
+        {
+            LOG(LOG_ERR, "meta %s: %s", this->stream.p, strerror(errno));
+            return false;
+        }
+        this->screen_rect.cx = this->data_meta.width;
+        this->screen_rect.cy = this->data_meta.height;
+        return true;
+    }
+
+    bool next(){
         if (selected_next_order()) {
             interpret_order();
-            return 1;
+            return true;
         }
-        return 0;
+        return false;
     }
 };
 

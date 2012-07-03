@@ -21,14 +21,14 @@
 #if !defined(__WRM_RECORDER_HPP__)
 #define __WRM_RECORDER_HPP__
 
+#include <errno.h>
 #include "transport.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
-#include "meta_wrm.hpp"
+#include "meta_file.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "bitmap.hpp"
 #include "stream.hpp"
 
-// #include <iostream>
 
 class WRMRecorder
 {
@@ -37,12 +37,18 @@ class WRMRecorder
 public:
     RDPUnserializer reader;
 
-public:
-    MetaWRM meta;
-
 private:
     RDPGraphicDevice * redrawable;
 
+public:
+    std::size_t idx_file;
+
+private:
+    std::string path;
+    std::size_t base_path_len;
+
+public:
+    bool only_filename;
 
 private:
     static int open(const char * filename)
@@ -56,20 +62,224 @@ private:
         return fd;
     }
 
-public:
-    WRMRecorder(const char *filename)
-    : trans(open(filename))
-    , reader(&trans, 0, Rect())
-    , meta(reader)
-    , redrawable(0)
+    void check_idx_wrm(std::size_t idx_wrm)
     {
-        this->reader.screen_rect.cx = this->meta.width;
-        this->reader.screen_rect.cy = this->meta.height;
+        if (this->meta().files.size() <= idx_wrm)
+        {
+            LOG(LOG_ERR, "WRMRecorder : idx(%d) not found in meta", (int)idx_wrm);
+            throw Error(ERR_RECORDER_META_REFERENCE_WRM);
+        }
+    }
+
+public:
+    WRMRecorder()
+    : trans(0)
+    , reader(&trans, 0, Rect())
+    , redrawable(0)
+    , idx_file(0)
+    , path()
+    , base_path_len(0)
+    , only_filename(false)
+    {}
+
+    WRMRecorder(int fd, const std::string basepath = "")
+    : trans(fd)
+    , reader(&trans, 0, Rect())
+    , redrawable(0)
+    , idx_file(0)
+    , path(basepath)
+    , base_path_len(basepath.length())
+    , only_filename(false)
+    {
+        this->normalize_path();
+    }
+
+    WRMRecorder(const std::string& filename, const std::string basepath = "")
+    : trans(0)
+    , reader(&trans, 0, Rect())
+    , redrawable(0)
+    , idx_file(0)
+    , path(basepath)
+    , base_path_len(basepath.length())
+    , only_filename(false)
+    {
+        this->normalize_path();
+        std::size_t pos = filename.find_last_not_of('.');
+        if (pos != std::string::npos
+            && pos < filename.size()
+            && filename[pos] == 'm'
+        ) {
+            this->open_meta_followed_wrm(filename.c_str());
+        }
+        else {
+            if (!this->open_wrm_followed_meta(filename.c_str()))
+                throw Error(ERR_RECORDER_META_REFERENCE_WRM, errno);
+        }
+    }
+
+    void open_meta_followed_wrm(const char * filename)
+    {
+        if (!this->open_meta(filename))
+            throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
+        if (this->meta().files.empty())
+            throw Error(ERR_RECORDER_META_REFERENCE_WRM);
+        this->open_wrm_only(this->get_cpath(this->meta().files[0].c_str()));
+        ++this->idx_file;
+        if (this->selected_next_order() && this->is_meta_chunk())
+            this->ignore_chunks();
     }
 
     ~WRMRecorder()
     {
         ::close(this->trans.fd);
+    }
+
+private:
+    void normalize_path()
+    {
+        if (this->base_path_len && this->path[this->base_path_len - 1] != '/')
+        {
+            this->path += '/';
+            ++this->base_path_len;
+        }
+    }
+
+public:
+    void set_basepath(const std::string basepath)
+    {
+        this->base_path_len = basepath.length();
+        this->path = basepath;
+        this->normalize_path();
+    }
+
+    bool open_meta(const char* filename)
+    {
+        return this->reader.load_data(filename);
+    }
+
+    bool open_meta_with_path(const char* filename)
+    {
+        return this->open_meta(this->get_cpath(filename));
+    }
+
+    const char * get_cpath(const char * filename)
+    {
+        if (this->only_filename)
+        {
+            const char * tmp = filename;
+            while (1)
+            {
+                while (*tmp && *tmp != '/')
+                    ++tmp;
+                if (!*tmp)
+                    break;
+                filename = ++tmp;
+            }
+        }
+        if (!this->base_path_len)
+            return filename;
+        this->path.erase(this->base_path_len);
+        this->path += filename;
+        return this->path.c_str();
+    }
+
+public:
+    void open_wrm_only(const char* filename)
+    {
+        this->trans.fd = WRMRecorder::open(filename);
+    }
+
+    void ignore_chunks()
+    {
+        this->reader.stream.p = this->reader.stream.end;
+        this->reader.remaining_order_count = 0;
+    }
+
+    bool interpret_meta_chunk()
+    {
+        char filename[1024];
+        this->get_order_file(filename);
+        --this->reader.remaining_order_count;
+        return this->open_meta_with_path(filename);
+    }
+
+    bool interpret_meta_chunk_and_force_meta(const char* filename)
+    {
+        this->ignore_chunks();
+        return this->open_meta_with_path(filename);
+    }
+
+    bool open_wrm_followed_meta(const char* filename)
+    {
+        this->open_wrm_only(filename);
+        if (!this->selected_next_order()){
+            return false;
+        }
+        if (this->is_meta_chunk()) {
+            return this->interpret_meta_chunk();
+        }
+        return true;
+    }
+
+    bool open_wrm_followed_meta(const char* filename, const char* filename_meta)
+    {
+        this->open_wrm_only(filename);
+        if (!this->selected_next_order()){
+            return false;
+        }
+        if (this->is_meta_chunk()) {
+            return this->interpret_meta_chunk_and_force_meta(filename_meta);
+        }
+        return true;
+    }
+
+    bool is_meta_chunk() const
+    { return this->reader.chunk_type == WRMChunk::META_FILE; }
+
+    const DataMetaFile& meta() const
+    {
+        return this->reader.data_meta;
+    }
+
+    DataMetaFile& meta()
+    {
+        return this->reader.data_meta;
+    }
+
+private:
+    void next_file(const char * filename)
+    {
+        ::close(this->trans.fd);
+        this->trans.fd = -1;
+        this->trans.fd = open(this->get_cpath(filename)); //can throw exception
+        this->trans.total_received = 0;
+        this->trans.last_quantum_received = 0;
+        this->trans.total_sent = 0;
+        this->trans.last_quantum_sent = 0;
+        this->trans.quantum_count = 0;
+        this->ignore_chunks();
+    }
+
+public:
+    void get_order_file(char * filename)
+    {
+        size_t len = this->reader.stream.in_uint32_le();
+        this->reader.stream.in_copy_bytes((uint8_t*)filename, len);
+        filename[len] = 0;
+    }
+
+    std::size_t reference_wrm_size() const
+    {
+        return this->meta().files.size();
+    }
+
+    std::size_t get_idx_file(const char* wrm_name) const
+    {
+        std::size_t i = 0;
+        while (i < this->meta().files.size() && this->meta().files[i] != wrm_name){
+            ++i;
+        }
+        return i;
     }
 
     void consumer(RDPGraphicDevice * consumer)
@@ -142,37 +352,32 @@ public:
     void interpret_order()
     {
         switch (this->reader.chunk_type) {
+            case WRMChunk::META_FILE:
+            {
+                this->ignore_chunks();
+                //this->reader.stream.p += this->reader.stream.in_uint32_le();
+                //--this->reader.remaining_order_count;
+            }
+            break;
+            case WRMChunk::NEXT_FILE_ID:
+            {
+                this->idx_file = this->reader.stream.in_uint32_le();
+                this->check_idx_wrm(this->idx_file);
+                this->next_file(this->meta().files[this->idx_file].c_str());
+            }
+            break;
             case WRMChunk::NEXT_FILE:
             {
                 char filename[1024];
-                size_t len = this->reader.stream.in_uint32_le();
-                this->reader.stream.in_copy_bytes((uint8_t*)filename, len);
-
-                filename[len] = 0;
-                ::close(this->trans.fd);
-                this->trans.fd = -1;
-                this->trans.fd = open(filename); //can throw exception
-                this->trans.total_received = 0;
-                this->trans.last_quantum_received = 0;
-                this->trans.total_sent = 0;
-                this->trans.last_quantum_sent = 0;
-                this->trans.quantum_count = 0;
-                this->reader.remaining_order_count = 0;
+                this->get_order_file(filename);
+                this->next_file(filename);
             }
             break;
             case WRMChunk::BREAKPOINT:
             {
-                //std::cout << "size stream " << short(this->reader.stream.end - this->reader.stream.data) << ' ' << short(this->reader.stream.end - this->reader.stream.p) << '\n';
-                {
-                    this->meta.recv(this->reader.stream);
-                    //MetaWRM meta;
-                    //meta.in(this->reader.stream);
-                    //if (this->meta != meta){
-                    //            this->reader.consumer->resize(meta.width, meta.height, meta.bpp);
-                    //            this->meta = meta;
-                    //}
-                    //std::cout << "read meta " << meta << std::endl;
-                }
+                uint16_t width = this->reader.stream.in_uint16_le();
+                uint16_t height = this->reader.stream.in_uint16_le();
+                /*uint8_t bpp = */this->reader.stream.in_uint8();
                 this->reader.wait_cap.timer.sec() = this->reader.stream.in_uint64_le();
                 this->reader.wait_cap.timer.usec() = this->reader.stream.in_uint64_le();
 
@@ -186,12 +391,11 @@ public:
 
                     //std::cout << "read data size " << (this->reader.stream.p - this->reader.stream.data) << '\n';
 
-
                     --this->reader.remaining_order_count;
                     //uint nn = 0;
 
                     if (this->redrawable) {
-                        Rect clip(0,0, this->meta.width, this->meta.height);
+                        Rect clip(0,0, width, height);
                         RDPMemBlt memblt(0, Rect(0,0,32,32), 0xCC, 0, 0, 0);
                         RDPBmpCache cmdcache;
                         BGRPalette palette;
@@ -200,7 +404,7 @@ public:
                             memblt.rect.x = 0;
                             for (uint16_t x = 0 ; x != nx;
                                  ++x, memblt.rect.x += 32) {
-                                this->reader.selected_next_order();
+                                this->selected_next_order();
                                 //std::cout << "read bmp chunk (type: " << this->reader.chunk_type << ", n:" << this->reader.remaining_order_count << "): " << (RDP_UPDATE_ORDERS == this->reader.chunk_type) <<  ' ';
                                 uint8_t control = this->reader.stream.in_uint8();
                                 --this->reader.remaining_order_count;
@@ -223,15 +427,15 @@ public:
                         uint n = nx * ny;
                         while (n)
                         {
-                            this->reader.selected_next_order();
+                            this->selected_next_order();
                             n -= this->reader.remaining_order_count;
-                            this->reader.remaining_order_count = 0;
+                            this->ignore_chunks();
                         }
                     }
                     //std::cout << "read number img  " << nn << '\n';
                 }
 
-                this->reader.selected_next_order();
+                this->selected_next_order();
 
                 this->reader.common.order = this->reader.stream.in_uint8();
                 this->recv_rect(this->reader.common.clip);
@@ -324,13 +528,15 @@ public:
                     uint32_t (&stamps)[8192] = this->reader.bmp_cache.stamps[cid];
                     uint16_t cidx = 0;
                     for (uint16_t n = 0; n != 9 ; ++n){
-                        this->reader.selected_next_order();
+                        this->selected_next_order();
                         for (uint16_t last = std::min<>(cidx + 8192 / 9, 8192); cidx != last; ++cidx){
                             stamps[cidx] = this->reader.stream.in_uint32_le();
                         }
                         this->reader.remaining_order_count = 0;
                     }
                 }
+
+                //this->ignore_chunks();
             }
             break;
             default:

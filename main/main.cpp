@@ -23,24 +23,21 @@
 
 */
 
-#include <unistd.h>
-#include <locale.h>
-#include <stdio.h>
+// #include <unistd.h>
+// #include <locale.h>
+// #include <stdio.h>
 #include <signal.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
-#include <sys/stat.h>
+// #include <sys/stat.h>
 #include <fcntl.h>
 
-#include <iostream>
 #include "version.hpp"
 
 #include "constants.hpp"
-
-#include <fstream>
 
 #include "check_files.hpp"
 #include "mainloop.hpp"
