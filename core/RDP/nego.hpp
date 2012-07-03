@@ -345,33 +345,34 @@ struct RdpNego
     {
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
         Stream stream(8192);
-        X224In cctpdu(this->trans, stream);
-        if (cctpdu.tpkt.version != 3){
+        X224 x224(stream);
+        x224.recv_start(this->trans);
+        if (x224.tpkt.version != 3){
             throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
         }
-        if (cctpdu.tpdu_hdr.code != X224Packet::CC_TPDU){
+        if (x224.tpdu_hdr.code != X224Packet::CC_TPDU){
             throw Error(ERR_X224_EXPECTED_CONNECTION_CONFIRM);
         }
 
-        if (cctpdu.tpdu_hdr.LI == 6){
+        if (x224.tpdu_hdr.LI == 6){
             this->tls = false;
             this->state = NEGO_STATE_FINAL;
             return;
         }
 
         LOG(LOG_INFO, "RdpNego::neg_type=%u neg_code=%u",
-            cctpdu.tpdu_hdr.rdp_neg_type,
-            cctpdu.tpdu_hdr.rdp_neg_code);
+            x224.tpdu_hdr.rdp_neg_type,
+            x224.tpdu_hdr.rdp_neg_code);
 
         if (this->tls){
-            if (cctpdu.tpdu_hdr.rdp_neg_type == RDP_NEG_RESP
-            && cctpdu.tpdu_hdr.rdp_neg_code == RDP_NEG_PROTOCOL_TLS){
+            if (x224.tpdu_hdr.rdp_neg_type == RDP_NEG_RESP
+            && x224.tpdu_hdr.rdp_neg_code == RDP_NEG_PROTOCOL_TLS){
                 LOG(LOG_INFO, "activating SSL");
                 this->trans->enable_tls();
                 this->state = NEGO_STATE_FINAL;
             }
-            else if (cctpdu.tpdu_hdr.rdp_neg_type == RDP_NEG_FAILURE
-            && cctpdu.tpdu_hdr.rdp_neg_code == SSL_NOT_ALLOWED_BY_SERVER){
+            else if (x224.tpdu_hdr.rdp_neg_type == RDP_NEG_FAILURE
+            && x224.tpdu_hdr.rdp_neg_code == SSL_NOT_ALLOWED_BY_SERVER){
                 LOG(LOG_INFO, "Can't activate SSL, falling back to RDP legacy encryption");
                 this->tls = false;
                 this->trans->disconnect();
@@ -384,7 +385,7 @@ struct RdpNego
             TODO("Other cases are errors, set an appropriate error message");
         }
         else {
-            if (cctpdu.tpdu_hdr.rdp_neg_type == RDP_NEG_RESP && cctpdu.tpdu_hdr.rdp_neg_code == RDP_NEG_PROTOCOL_RDP){
+            if (x224.tpdu_hdr.rdp_neg_type == RDP_NEG_RESP && x224.tpdu_hdr.rdp_neg_code == RDP_NEG_PROTOCOL_RDP){
                 this->state = NEGO_STATE_FINAL;
             }
             TODO("Check tpdu has no embedded negotiation code")
@@ -580,27 +581,28 @@ struct RdpNego
     {
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu");
         Stream out;
-        X224Out crtpdu(X224Packet::CR_TPDU, out);
-        crtpdu.stream.out_concat("Cookie: mstshash=");
-        crtpdu.stream.out_concat(this->username);
-        crtpdu.stream.out_concat("\r\n");
-//        crtpdu.stream.out_uint8(0x01);
-//        crtpdu.stream.out_uint8(0x00);
-//        crtpdu.stream.out_uint32_le(0x00);
+        X224 x224(out);
+        x224.emit_start(X224Packet::CR_TPDU);
+        x224.stream.out_concat("Cookie: mstshash=");
+        x224.stream.out_concat(this->username);
+        x224.stream.out_concat("\r\n");
+//        x224.stream.out_uint8(0x01);
+//        x224.stream.out_uint8(0x00);
+//        x224.stream.out_uint32_le(0x00);
 
         if (this->tls)
         {
             /* RDP_NEG_DATA must be present for TLS and NLA */
-            crtpdu.stream.out_uint8(RDP_NEG_REQ);
-            crtpdu.stream.out_uint8(0); /* flags, must be set to zero */
-            crtpdu.stream.out_uint16_le(8); /* RDP_NEG_DATA length (8) */
-            crtpdu.stream.out_uint32_le(RDP_NEG_PROTOCOL_TLS);
+            x224.stream.out_uint8(RDP_NEG_REQ);
+            x224.stream.out_uint8(0); /* flags, must be set to zero */
+            x224.stream.out_uint16_le(8); /* RDP_NEG_DATA length (8) */
+            x224.stream.out_uint32_le(RDP_NEG_PROTOCOL_TLS);
         }
 
-        crtpdu.extend_tpdu_hdr();
+        x224.extend_tpdu_hdr();
 
-        crtpdu.end();
-        crtpdu.send(this->trans);
+        x224.emit_end();
+        this->trans->send(x224.header(), x224.size());
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
 
 //        if (nego->routing_token != NULL)

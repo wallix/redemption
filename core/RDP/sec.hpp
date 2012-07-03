@@ -726,7 +726,9 @@ static inline void recv_security_exchange_PDU(
     memset(client_crypt_random, 0, 512);
 
     Stream stream(32768);
-    X224In tpdu(trans, stream);
+    X224 x224(stream);
+    x224.recv_start(trans);
+
     McsIn mcs_in(stream);
 
     if ((mcs_in.opcode >> 2) != DomainMCSPDU_SendDataRequest) {
@@ -747,7 +749,7 @@ static inline void recv_security_exchange_PDU(
     stream.in_skip_bytes(SEC_PADDING_SIZE);
 
     mcs_in.end();
-    tpdu.end();
+    x224.recv_end();
 
     uint8_t client_random[64];
     memset(client_random, 0, 64);
@@ -774,7 +776,9 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     /* Send the client random to the server */
     //      if (this->encryption)
     Stream sdrq_stream(32768);
-    X224Out sdrq_tpdu(X224Packet::DT_TPDU, sdrq_stream);
+    X224 x224(sdrq_stream);
+    x224.emit_start(X224Packet::DT_TPDU);
+
     McsOut sdrq_out(sdrq_stream, DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
 
     sdrq_stream.out_uint32_le(SEC_EXCHANGE_PKT);
@@ -784,8 +788,9 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     sdrq_stream.out_clear_bytes(SEC_PADDING_SIZE);
 
     sdrq_out.end();
-    sdrq_tpdu.end();
-    sdrq_tpdu.send(trans);
+
+    x224.emit_end();
+    trans->send(x224.header(), x224.size());
 }
 
 
