@@ -36,6 +36,7 @@
 #include "RDP/RDPGraphicDevice.hpp"
 
 #include "unlink.hpp"
+#include "check_sig.hpp"
 
 BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
 {
@@ -91,7 +92,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
     }
     BOOST_REQUIRE(1);
 
-    unlink_wrm("/tmp/replay_part", breakpoint+1);
+    unlink_mwrm_and_wrm("/tmp/replay_part", breakpoint+1);
 }
 
 /*BOOST_AUTO_TEST_CASE(TestMultiWRMToPng)
@@ -158,7 +159,7 @@ BOOST_AUTO_TEST_CASE(TestWrmToMultiWRM)
     BOOST_CHECK(328 == n);
 }*/
 
-void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, const uint8_t * sigdata = 0, bool realloc_consumer = false)
+void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, const char * sigdata = 0, bool realloc_consumer = false)
 {
     char filename[50];
     sprintf(filename, "/tmp/replay_part-%u-%u.wrm", getpid(), nfile);
@@ -191,16 +192,14 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
             is_chunk_time = true;
             recorder->remaining_order_count() = 0;
             ++n;
-        } else if (recorder->chunk_type() == WRMChunk::NEXT_FILE) {
+        } else if (recorder->chunk_type() == WRMChunk::NEXT_FILE_ID) {
             BOOST_CHECK(1);
-            size_t len = recorder->reader.stream.in_uint32_le();
-            recorder->reader.stream.in_copy_bytes((uint8_t*)filename, len);
-            BOOST_CHECK(1);
-            filename[len] = 0;
+            std::size_t n = recorder->reader.stream.in_uint32_le();
+            std::string wrm_filename = recorder->meta().files[n];
             BOOST_CHECK(1);
             delete recorder;
             BOOST_CHECK(1);
-            recorder = new WRMRecorder(filename);
+            recorder = new WRMRecorder(wrm_filename);
             if (realloc_consumer)
             {
                 delete consumer;
@@ -229,32 +228,12 @@ void TestMultiWRMToPng_random_file(uint nfile, uint numtest, uint totalframe, co
     BOOST_CHECK(1);
     consumer->flush();
 
-    SSL_SHA1 sha1;
-    ssllib ssl;
-    ssl.sha1_init(&sha1);
-    uint16_t rowsize = consumer->drawable.width;
-    for (size_t y = 0; y < consumer->drawable.height; y++){
-        ssl.sha1_update(&sha1, consumer->drawable.data + y * rowsize, rowsize);
-    }
-    uint8_t sig[20];
-    ssl.sha1_final(&sha1, sig);
-    if (!sigdata || memcmp(sig, sigdata, 20)){
-        char message[200];
-        sprintf(message, "Expected signature: \""
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
-        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
-        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
-        sig[ 8], sig[ 9], sig[10], sig[11],
-        sig[12], sig[13], sig[14], sig[15],
-        sig[16], sig[17], sig[18], sig[19]);
-        if (sigdata)
+    if (sigdata)
+    {
+        char message[1024];
+        if (!check_sig(consumer->drawable, message, sigdata)){
             BOOST_CHECK_MESSAGE(false, message);
-        else
-            puts(message);
+        }
     }
 
     BOOST_CHECK_EQUAL(n, totalframe);

@@ -22,11 +22,8 @@
  */
 
 #include <iostream>
-#include <vector>
 
-#include <boost/program_options.hpp>
-
-#define LOGPRINT
+//#define LOGPRINT
 
 #include "range_time_point.hpp"
 #include "nativecapture.hpp"
@@ -34,255 +31,9 @@
 #include "capture.hpp"
 #include "wrm_recorder.hpp"
 
-// class NativeCapture;
-// class StaticCapture;
-
-namespace po = boost::program_options;
-
-
-void validate(boost::any& v,
-              const std::vector<std::string>& values,
-              range_time_point* range, int)
-{
-    // Make sure no previous assignment to 'a' was made.
-    po::validators::check_first_occurrence(v);
-    // Extract the first string from 'values'. If there is more than
-    // one string, it's an error, and exception will be thrown.
-    const std::string& s = po::validators::get_single_string(values);
-    v = boost::any(range_time_point(s));
-}
-
-void validate(boost::any& v,
-              const std::vector<std::string>& values,
-              time_point* time, int)
-{
-    // Make sure no previous assignment to 'a' was made.
-    po::validators::check_first_occurrence(v);
-    // Extract the first string from 'values'. If there is more than
-    // one string, it's an error, and exception will be thrown.
-    const std::string& s = po::validators::get_single_string(values);
-    v = boost::any(time_point(s));
-}
-
-struct RecorderError{
-    enum {
-        SUCCESS = 0,
-        HELP = 1,
-        SYNCHRONISE_ERROR = 2,
-        NOT_OUTPUT_FILE = 3,
-    };
-};
-
-const char * recorder_string_errors[] = {
-    "SUCCESS",
-    "HELP",
-    "SYNCHRONISE_ERROR",
-    "NOT_OUTPUT_FILE"
-};
-
-struct WrmRecoderOption {
-    po::options_description desc;
-    po::variables_map options;
-
-    range_time_point range;
-    uint frame;
-    time_point time;
-    std::string out_filename;
-    std::string in_filename;
-    std::string idx_start;
-    std::string base_path;
-    std::string metaname;
-    bool screenshot_wrm;
-    bool screenshot_start;
-    bool no_screenshot_stop;
-    bool ignore_dir_for_meta_in_wrm;
-    std::string output_type;
-    std::string input_type;
-
-    WrmRecoderOption()
-    : desc("Options")
-    , options()
-    , range()
-    , frame(std::numeric_limits<uint>::max())
-    , time(60*2)
-    , out_filename()
-    , in_filename()
-    , idx_start("0")
-    , base_path()
-    , screenshot_wrm(false)
-    , screenshot_start(false)
-    , no_screenshot_stop(false)
-    , ignore_dir_for_meta_in_wrm(false)
-    {
-    }
-
-    void add_default_options()
-    {
-        this->desc.add_options()
-        // --help, -h
-        ("help,h", "produce help message")
-        // --version, -v
-        ("version,v", "show software version")
-        ("range,r", po::value(&this->range),
-        "interval of capture"
-        "\n\nformat:"
-        "\n[[[+|-]time[h|m|s][...]][,][[+]time[h|m|s][[+|-]time[h|m|s][...]]]]"
-        "\n\nexamples:"
-        "\n1h30,+10m -> from 1h30 to 1h40"
-        "\n20m+2h-50s,3h -> from 2h19m10s to 3h")
-        ("frame,f", po::value(&this->frame), "maximum number of frames in the interval")
-        ("time,t", po::value(&this->time), "duration between each capture"
-        "\nformat: [+|-]time[h|m|s][...]")
-        ("input-file,i", po::value(&this->in_filename), "wrm filename")
-        ("output-file,o", po::value(&this->out_filename), "png or wrm filename")
-        ("index-start,x", po::value(&this->idx_start), "index file in the meta")
-        ("screenshot-wrm,s", "capture the screen when a file wrm is create")
-        ("screenshot-start,0", "")
-        ("no-screenshot-stop,N", "")
-        ("path,p", po::value(&this->base_path), "base path for the files presents in the meta")
-        ("ignore-dir,n", "ignore directory for meta in the file wrm")
-        ("deduce-dir,d", "use --ignore-dir and set --path with the directory of --input-file")
-        ("output-meta-name,m", po::value(&this->metaname), "specified name of meta file")
-        ("input-type", po::value(&this->input_type), "accept 'mwrm' or 'wrm'")
-        ("output-type", po::value(&this->output_type), "accept 'png' or 'wrm'")
-        ;
-    }
-
-    void parse_command_line(int argc, char** argv)
-    {
-        po::positional_options_description p;
-        p.add("input-file", -1);
-        po::store(
-            po::command_line_parser(argc, argv).options(
-                this->desc
-            ).positional(p).run(),
-            this->options
-        );
-    }
-
-    uint notify_options()
-    {
-        po::notify(this->options);
-
-        if (!this->range.valid()){
-            std::swap<>(this->range.left, this->range.right);
-        }
-
-        po::variables_map::iterator end = this->options.end();
-
-        {
-            typedef std::pair<const char *, bool&> pair_type;
-            pair_type p[] = {
-                pair_type("screenshot-wrm", this->screenshot_wrm),
-                pair_type("screenshot-start", this->screenshot_start),
-                pair_type("no-screenshot-stop", this->no_screenshot_stop),
-                pair_type("ignore-dir", this->ignore_dir_for_meta_in_wrm),
-            };
-            for (std::size_t n = 0; n < sizeof(p)/sizeof(p[0]); ++n) {
-                if (this->options.find(p[n].first) != end)
-                    p[n].second = true;
-            }
-        }
-
-        if (this->options.find("deduce-dir") != end)
-        {
-            this->ignore_dir_for_meta_in_wrm = true;
-            std::size_t pos = this->in_filename.find_last_of('/');
-            if (std::string::npos != pos)
-                this->base_path = this->in_filename.substr(0, pos+1);
-        }
-
-        return RecorderError::SUCCESS;
-    }
-
-    const char * version() const
-    {
-        return "0.1";
-    }
-};
-
-uint app_parse_command_line(int argc, char** argv, WrmRecoderOption& app)
-{
-    app.parse_command_line(argc, argv);
-
-    if (app.options.count("version")) {
-        std::cout << argv[0] << ' ' << app.version() << '\n';
-    }
-
-    if (app.options.count("help")) {
-        return RecorderError::HELP;
-    }
-    return app.notify_options();
-}
-
-
-struct OutputType {
-    enum enum_t {
-        NOT_FOUND,
-        PNG_TYPE,
-        WRM_TYPE
-    };
-
-    static OutputType::enum_t get_output_type(const std::string& filename)
-    {
-        std::size_t p = filename.find_last_of('.');
-        return (p == std::string::npos || p + 4 != filename.length())
-        ? NOT_FOUND
-        : (
-            !filename.compare(p+1, 3, "png")
-            ? PNG_TYPE
-            : (
-                !filename.compare(p+1, 3, "wrm")
-                ? WRM_TYPE
-                : NOT_FOUND
-            )
-        );
-    }
-
-    static OutputType::enum_t string_type_to_enum(const std::string& filename)
-    {
-        if (filename == "png")
-            return PNG_TYPE;
-        if (filename == "wrm")
-            return WRM_TYPE;
-        return NOT_FOUND;
-    }
-};
-
-
-struct InputType {
-    enum enum_t {
-        NOT_FOUND,
-        META_TYPE,
-        WRM_TYPE
-    };
-
-    static InputType::enum_t get_input_type(const std::string& filename)
-    {
-        std::size_t p = filename.find_last_of('.');
-        if (p == std::string::npos)
-            return NOT_FOUND;
-        ++p;
-        return (p + 4 == filename.length()
-        && !filename.compare(p, 4, "mwrm"))
-        ? META_TYPE
-        : (
-            (p + 3 == filename.length() && !filename.compare(p, 3, "wrm"))
-            ? WRM_TYPE
-            : NOT_FOUND
-        );
-    }
-
-    static InputType::enum_t string_type_to_enum(const std::string& filename)
-    {
-        if (filename == "mwrm")
-            return META_TYPE;
-        if (filename == "wrm")
-            return WRM_TYPE;
-        return NOT_FOUND;
-    }
-};
-
+#include "recorder/wrm_recorder_option.hpp"
+#include "recorder/option_errors.hpp"
+#include "recorder/get_type.hpp"
 
 class WrmRecorderApp
 {
@@ -292,22 +43,6 @@ public:
     WrmRecorderApp(WrmRecoderOption& opt)
     : opt(opt)
     {
-    }
-
-    OutputType::enum_t get_output_type() const
-    {
-        if (!this->opt.output_type.empty()){
-            return OutputType::string_type_to_enum(this->opt.output_type);
-        }
-        return OutputType::get_output_type(this->opt.out_filename);
-    }
-
-    InputType::enum_t get_input_type() const
-    {
-        if (!this->opt.input_type.empty()){
-            return InputType::string_type_to_enum(this->opt.input_type);
-        }
-        return InputType::get_input_type(this->opt.in_filename);
     }
 
     std::string get_out_filename() const
@@ -321,39 +56,9 @@ public:
         return this->opt.in_filename;
     }
 
-    void run()
-    {
-        this->run(this->get_out_filename().c_str());
-    }
-
-    void run(OutputType::enum_t otype)
-    {
-        this->run(otype, this->get_input_type());
-    }
-
-    void run(InputType::enum_t itype)
-    {
-        this->run(this->get_output_type(), itype);
-    }
-
     void run(OutputType::enum_t otype, InputType::enum_t itype)
     {
         this->run(this->get_out_filename().c_str(), otype, itype);
-    }
-
-    void run(const char* outfile, OutputType::enum_t otype)
-    {
-        this->run(outfile, otype, this->get_input_type());
-    }
-
-    void run(const char* outfile, InputType::enum_t itype)
-    {
-        this->run(outfile, this->get_output_type(), itype);
-    }
-
-    void run(const char* outfile)
-    {
-        this->run(outfile, this->get_output_type());
     }
 
     void run(const char* outfile, OutputType::enum_t otype, InputType::enum_t itype)
@@ -562,7 +267,6 @@ private:
         uint frame = 0;
         mtime = TimerCompute::coeff_sec_to_usec * this->opt.time;
         msecond = TimerCompute::coeff_sec_to_usec * (this->opt.range.right.time - this->opt.range.left.time);
-        TimerCapture::time_type tmptime;
 
         while (recorder.selected_next_order() && frame != this->opt.frame)
         {
@@ -602,14 +306,7 @@ private:
                     chunk_time = 0;
                 }*/
 
-                if (recorder.chunk_type() == WRMChunk::NEXT_FILE) {
-                    tmptime = capture.timer().impl();
-                    recorder.interpret_order();
-                    capture.timer().impl() = tmptime;
-                }
-                else {
-                    recorder.interpret_order();
-                }
+                recorder.interpret_order();
             }
         }
 
@@ -624,55 +321,65 @@ private:
 int main(int argc, char** argv)
 {
     WrmRecoderOption opt;
-    opt.add_default_options();
 
-    uint error = app_parse_command_line(argc, argv, opt);
-    if (error){
-        std::cout << "error (" << error << "): " << recorder_string_errors[error] << '\n'
-        << opt.desc;
-        return error;
+    opt.parse_command_line(argc, argv);
+
+    if (opt.options.count("version")) {
+        std::cout << argv[0] << ' ' << opt.version() << '\n';
     }
 
-    if (!opt.out_filename.empty()){
-        std::cout << "output-file: " << opt.out_filename << '\n';
+    if (opt.options.count("help")) {
+        std::cout << opt.desc << std::endl;
+        return 30;
     }
-    if (!opt.in_filename.empty()){
-        std::cout << "input-file: " << opt.in_filename << '\n';
+
+    {
+        uint error = opt.notify_options();
+        if (error){
+            std::cout
+            << RecorderOptionError::get_cstr(error) << '\n'
+            << opt.desc << std::endl
+            ;
+            return 30 + error;
+        }
     }
 
     std::cout
+    << "output-file: " << opt.out_filename << '\n'
+    << "input-file: " << opt.in_filename << '\n'
     << "frame: " << opt.frame << '\n'
     << "time: " << opt.time << '\n'
     << "range: " << opt.range << '\n'
     ;
 
-    if (opt.out_filename.empty()){
-        std::cerr << "not output-file\n";
-        return 80;
-    }
-    if (opt.in_filename.empty()){
-        std::cerr << "not input-file\n";
-        return 90;
-    }
-
     WrmRecorderApp app(opt);
 
-    OutputType::enum_t otype = app.get_output_type();
+    OutputType::enum_t otype = get_output_type(opt);
     if (otype == OutputType::NOT_FOUND){
         std::cerr << "incorrect output-type: "
         << opt.desc.find("output-type", false).description() << '\n';
         return 100;
     }
 
-    InputType::enum_t itype = app.get_input_type();
+    InputType::enum_t itype = get_input_type(opt);
     if (itype == InputType::NOT_FOUND){
         std::cerr << "incorrect input-type: "
         << opt.desc.find("input-type", false).description() << '\n';
         return 110;
     }
 
+    {
+        uint error = opt.normalize_options();
+        if (error){
+            std::cout
+            << RecorderOptionError::get_cstr(error) << '\n'
+            << opt.desc << std::endl
+            ;
+            return 150 + error;
+        }
+    }
+
     try {
-        //app.run();
         app.run(otype, itype);
     } catch (Error e) {
         std::cerr

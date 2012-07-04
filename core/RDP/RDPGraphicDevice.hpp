@@ -85,7 +85,6 @@ public:
 struct WRMChunk {
     static const uint16_t TIMESTAMP = 1001;
     static const uint16_t META_INFO = 1002;
-    static const uint16_t NEXT_FILE = 1003;
     static const uint16_t PREV_FILE = 1004;
     static const uint16_t BREAKPOINT = 1005;
     static const uint16_t META_FILE = 1006;

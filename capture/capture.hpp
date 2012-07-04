@@ -23,7 +23,6 @@
 
 #include "staticcapture.hpp"
 #include "nativecapture.hpp"
-#include "meta_wrm.hpp"
 
 class Capture : public RDPGraphicDevice
 {
@@ -90,11 +89,6 @@ public:
     void timestamp(uint64_t usecond)
     {
         this->nc.recorder.timestamp(usecond);
-    }
-
-    void emit_meta(MetaWRM& meta)
-    {
-        meta.emit(this->nc.recorder);
     }
 
     void snapshot(int x, int y, bool pointer_already_displayed, bool no_timestamp)

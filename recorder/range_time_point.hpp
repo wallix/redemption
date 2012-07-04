@@ -112,17 +112,17 @@ struct range_time_point
     { return this->left.time == this->right.time; }
 };
 
-bool operator==(const range_time_point& r, const range_time_point& other)
+inline bool operator==(const range_time_point& r, const range_time_point& other)
 {
     return r.left == other.left && r.right == other.right;
 }
-bool operator!=(const range_time_point& r, const range_time_point& other)
+inline bool operator!=(const range_time_point& r, const range_time_point& other)
 {
     return !(r == other);
 }
 
 template<typename _CharT, typename _TypeTraits>
-std::basic_ostream<_CharT, _TypeTraits>&
+inline std::basic_ostream<_CharT, _TypeTraits>&
 operator<<(std::basic_ostream<_CharT, _TypeTraits>& os,
            const range_time_point& r)
 {

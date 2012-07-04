@@ -29,6 +29,7 @@
 #include "wrm_recorder.hpp"
 
 #include "unlink.hpp"
+#include "check_sig.hpp"
 
 BOOST_AUTO_TEST_CASE(TestBreakpoint)
 {
@@ -70,7 +71,6 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     BOOST_REQUIRE(recorder.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), 0);
     recorder.interpret_order();
-    consumer.dump_png();
     BOOST_REQUIRE(recorder.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), next_file_id);
     recorder.interpret_order();
@@ -84,7 +84,6 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     BOOST_REQUIRE(recorder.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), 0);
     recorder.interpret_order();
-    consumer.dump_png();
     BOOST_REQUIRE(recorder.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), next_file_id);
     recorder.interpret_order();
@@ -98,12 +97,19 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     BOOST_REQUIRE(recorder.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), 0);
     recorder.interpret_order();
-    consumer.dump_png();
     BOOST_REQUIRE(recorder.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), timestamp);
     recorder.interpret_order();
 
     BOOST_REQUIRE(false == recorder.selected_next_order());
+
+
+    char message[1024];
+    if (!check_sig(consumer.drawable, message,
+        "\x10\xa4\xc3\xe2\x18\x1e\x00\x51\xcc\x9b"
+        "\x09\xaf\xf3\x20\xb5\xb2\xba\xb7\x38\x21")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 
     TODO("if boost::unit_test::error_count() == 0")
     unlink_wrm("/tmp/test_breakpoint", 3);

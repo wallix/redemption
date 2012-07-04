@@ -33,7 +33,6 @@
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "nativecapture.hpp"
 #include "staticcapture.hpp"
-#include "meta_wrm.hpp"
 #include "transport.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 
