@@ -135,7 +135,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     }
     decrypt.rc4_key_size=1;
 
-    SecIn sec(stream, decrypt, true);
+    Sec sec(stream, decrypt);
+    sec.recv_start(true);
     BOOST_CHECK_EQUAL((uint32_t)SEC_ENCRYPT, (uint32_t)sec.flags);
 
     uint16_t length = stream.in_uint16_le();
@@ -260,7 +261,9 @@ BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
     }
     decrypt.rc4_key_size=1;
 
-    SecIn sec(stream, decrypt, true);
+    Sec sec(stream, decrypt);
+    sec.recv_start(true);
+
     BOOST_CHECK_EQUAL((uint32_t)(SEC_ENCRYPT|SEC_INFO_PKT), (uint32_t)sec.flags);
 
     uint8_t * start_of_logon_info = stream.p;

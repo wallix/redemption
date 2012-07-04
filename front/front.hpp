@@ -463,12 +463,13 @@ public:
         }
 
         Stream stream(65536);
+
         X224 x224(stream);
         x224.emit_start(X224Packet::DT_TPDU);
-
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, channel.chanid);
-        SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
+        Sec sec(stream, this->encrypt);
+        sec.emit_start(this->client_info.crypt_level?SEC_ENCRYPT:0);
 
         stream.out_uint32_le(length);
         if (channel.flags & ChannelDef::CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -477,10 +478,10 @@ public:
         stream.out_uint32_le(flags);
         stream.out_copy_bytes(data, chunk_size);
 
-        sec_out.end();
+        sec.emit_end();
         mcs.emit_end();
-
         x224.emit_end();
+
         this->trans->send(x224.header(), x224.size());
 
         if (this->verbose){
@@ -511,11 +512,14 @@ public:
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
             Stream stream(32768);
+
             X224 x224(stream);
             x224.emit_start(X224Packet::DT_TPDU);
             Mcs mcs(stream);
             mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
+            Sec sec(stream, this->encrypt);
+            sec.emit_start(this->client_info.crypt_level?SEC_ENCRYPT:0);
+
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
@@ -534,9 +538,11 @@ public:
 
             rdp_data_out.end();
             rdp_control_out.end();
-            sec_out.end();
+
+            sec.emit_end();
             mcs.emit_end();
             x224.emit_end();
+
             this->trans->send(x224.header(), x224.size());
 
             this->palette_sent = true;
@@ -659,11 +665,14 @@ public:
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
         }
         Stream stream(32768);
+
         X224 x224(stream);
         x224.emit_start(X224Packet::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
+        Sec sec(stream, this->encrypt);
+        sec.emit_start(this->client_info.crypt_level?SEC_ENCRYPT:0);
+
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
@@ -735,9 +744,11 @@ public:
 
         rdp_data_out.end();
         rdp_control_out.end();
-        sec_out.end();
+
+        sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
+
         this->trans->send(x224.header(), x224.size());
 
         if (this->verbose){
@@ -783,11 +794,14 @@ public:
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
         }
         Stream stream(32768);
+
         X224 x224(stream);
         x224.emit_start(X224Packet::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
+        Sec sec(stream, this->encrypt);
+        sec.emit_start(this->client_info.crypt_level?SEC_ENCRYPT:0);
+
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
@@ -797,10 +811,13 @@ public:
 
         rdp_data_out.end();
         rdp_control_out.end();
-        sec_out.end();
+
+        sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
+
         this->trans->send(x224.header(), x224.size());
+
         if (this->verbose){
             LOG(LOG_INFO, "Front::set_pointer done");
         }
@@ -1064,7 +1081,8 @@ public:
                 this->decrypt.dump();
             }
 
-            SecIn sec(stream, this->decrypt, true);
+            Sec sec(stream, this->decrypt);
+            sec.recv_start(true);
 
             if (!sec.flags & SEC_INFO_PKT) {
                 throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
@@ -1101,7 +1119,7 @@ public:
                 this->send_demand_active();
 
                 this->state = ACTIVATE_AND_PROCESS_DATA;
-                sec.end();
+                sec.recv_end();
                 mcs.recv_end();
                 x224.recv_end();
             }
@@ -1137,7 +1155,8 @@ public:
                 this->decrypt.dump();
             }
 
-            SecIn sec(stream, this->decrypt, true);
+            Sec sec(stream, this->decrypt);
+            sec.recv_start(true);
 
             // Licensing
             // ---------
@@ -1264,7 +1283,7 @@ public:
                     break;
                 }
             }
-            sec.end();
+            sec.recv_end();
             mcs.recv_end();
             x224.recv_end();
         }
@@ -1335,7 +1354,8 @@ public:
                 throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
 
-            SecIn sec(stream, this->decrypt, true);
+            Sec sec(stream, this->decrypt);
+            sec.recv_start(true);
 
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
@@ -1454,11 +1474,14 @@ public:
             LOG(LOG_INFO, "send_data_update_sync");
         }
         Stream stream(32768);
+
         X224 x224(stream);
         x224.emit_start(X224Packet::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
+        Sec sec(stream, this->encrypt);
+        sec.emit_start(this->client_info.crypt_level?SEC_ENCRYPT:0);
+
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
@@ -1467,9 +1490,11 @@ public:
 
         rdp_data_out.end();
         rdp_control_out.end();
-        sec_out.end();
+
+        sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
+
         this->trans->send(x224.header(), x224.size());
     }
 
@@ -1481,11 +1506,14 @@ public:
         LOG(LOG_INFO, "Front::send_demand_active");
 
         Stream stream(32768);
+
         X224 x224(stream);
         x224.emit_start(X224Packet::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
+        Sec sec(stream, this->encrypt);
+        sec.emit_start(this->client_info.crypt_level?SEC_ENCRYPT:0);
+
         ShareControlOut rdp_out(stream, PDUTYPE_DEMANDACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
 
         size_t caps_count = 0;
@@ -1583,9 +1611,11 @@ public:
         caps_count_ptr[3] = caps_count >> 24;
 
         rdp_out.end();
-        sec_out.end();
+
+        sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
+
         this->trans->send(x224.header(), x224.size());
     }
 
@@ -1809,7 +1839,8 @@ public:
         x224.emit_start(X224Packet::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
+        Sec sec(stream, this->encrypt);
+        sec.emit_start(this->client_info.crypt_level?SEC_ENCRYPT:0);
 
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
@@ -1820,9 +1851,10 @@ public:
         rdp_data_out.end();
         rdp_control_out.end();
 
-        sec_out.end();
+        sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
+
         this->trans->send(x224.header(), x224.size());
     }
 
@@ -1853,11 +1885,14 @@ public:
         LOG(LOG_INFO, "send_control action=%u", action);
 
         Stream stream(32768);
+
         X224 x224(stream);
         x224.emit_start(X224Packet::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
+        Sec sec(stream, this->encrypt);
+        sec.emit_start(this->client_info.crypt_level?SEC_ENCRYPT:0);
+
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
@@ -1867,9 +1902,11 @@ public:
 
         rdp_data_out.end();
         rdp_control_out.end();
-        sec_out.end();
+
+        sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
+
         this->trans->send(x224.header(), x224.size());
     }
 
@@ -1905,12 +1942,16 @@ public:
                               };
 
         TODO(" we should create some RDPStream object created on init and sent before destruction")
+
         Stream stream(32768);
+
         X224 x224(stream);
         x224.emit_start(X224Packet::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
+        Sec sec(stream, this->encrypt);
+        sec.emit_start(this->client_info.crypt_level?SEC_ENCRYPT:0);
+
         ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
         ShareDataOut rdp_data_out(stream, PDUTYPE2_FONTMAP, this->share_id, RDP::STREAM_MED);
 
@@ -1918,9 +1959,11 @@ public:
 
         rdp_data_out.end();
         rdp_control_out.end();
-        sec_out.end();
+
+        sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
+
         this->trans->send(x224.header(), x224.size());
     }
 
@@ -2095,19 +2138,25 @@ public:
                 // when this message comes, send a PDUTYPE2_SHUTDOWN_DENIED back
                 // so the client is sure the connection is alive and it can ask
                 // if user really wants to disconnect */
+
                 Stream stream(32768);
+
                 X224 x224(stream);
                 x224.emit_start(X224Packet::DT_TPDU);
                 Mcs mcs(stream);
                 mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-                SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
+                Sec sec(stream, this->encrypt);
+                sec.emit_start(this->client_info.crypt_level?SEC_ENCRYPT:0);
+
                 ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
                 ShareDataOut rdp_data_out(stream, PDUTYPE2_SHUTDOWN_DENIED, this->share_id, RDP::STREAM_MED);
                 rdp_data_out.end();
                 rdp_control_out.end();
-                sec_out.end();
+
+                sec.emit_end();
                 mcs.emit_end();
                 x224.emit_end();
+
                 this->trans->send(x224.header(), x224.size());
             }
         break;
@@ -2243,16 +2292,22 @@ public:
     void send_deactive() throw (Error)
     {
         LOG(LOG_INFO, "send_deactive");
+
         Stream stream(32768);
+
         X224 x224(stream);
         x224.emit_start(X224Packet::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, this->client_info.crypt_level?SEC_ENCRYPT:0, this->encrypt);
+        Sec sec(stream, this->encrypt);
+        sec.emit_start(this->client_info.crypt_level?SEC_ENCRYPT:0);
+
         ShareControlOut(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + MCS_USERCHANNEL_BASE).end();
-        sec_out.end();
+
+        sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
+
         this->trans->send(x224.header(), x224.size());
     }
 
