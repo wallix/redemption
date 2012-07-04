@@ -194,29 +194,29 @@ bool operator!=(const time_point& t, const time_point& other)
     return t.time != other.time;
 }*/
 
-time_point& operator+=(time_point& t, std::size_t n)
+inline time_point& operator+=(time_point& t, std::size_t n)
 {
     t.time += n;
     return t;
 }
-time_point& operator-=(time_point& t, std::size_t n)
+inline time_point& operator-=(time_point& t, std::size_t n)
 {
     t.time -= n;
     return t;
 }
-time_point& operator+=(time_point& t, time_point& other)
+inline time_point& operator+=(time_point& t, time_point& other)
 {
     t.time += other.time;
     return t;
 }
-time_point& operator-=(time_point& t, time_point& other)
+inline time_point& operator-=(time_point& t, time_point& other)
 {
     t.time -= other.time;
     return t;
 }
 
 template<typename _CharT, typename _TypeTraits>
-std::basic_ostream<_CharT, _TypeTraits>&
+inline std::basic_ostream<_CharT, _TypeTraits>&
 operator<<(std::basic_ostream<_CharT, _TypeTraits>& os,
            const time_point& t)
 {
@@ -224,7 +224,7 @@ operator<<(std::basic_ostream<_CharT, _TypeTraits>& os,
 }
 
 namespace std {
-    void swap(time_point& t1, time_point& t2)
+    inline void swap(time_point& t1, time_point& t2)
     {
         std::size_t t = t1.time;
         t1.time = t2.time;

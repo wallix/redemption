@@ -366,13 +366,6 @@ public:
                 this->next_file(this->meta().files[this->idx_file].c_str());
             }
             break;
-            case WRMChunk::NEXT_FILE:
-            {
-                char filename[1024];
-                this->get_order_file(filename);
-                this->next_file(filename);
-            }
-            break;
             case WRMChunk::BREAKPOINT:
             {
                 uint16_t width = this->reader.stream.in_uint16_le();

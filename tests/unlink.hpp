@@ -46,6 +46,34 @@ inline void unlink_wrm(const char * path_base, uint count)
     unlink_wrm(path_base, getpid(), 0, count);
 }
 
+inline void unlink_mwrm(const char * path_base, pid_t pid)
+{
+    char filename[50];
+    std::sprintf(filename, "%s-%u.mwrm", path_base, pid);
+    unlink(filename);
+}
+
+inline void unlink_mwrm(const char * path_base)
+{
+    unlink_mwrm(path_base, getpid());
+}
+
+inline void unlink_mwrm_and_wrm(const char * path_base, pid_t pid, uint start, uint count)
+{
+    unlink_mwrm(path_base, pid);
+    unlink_wrm(path_base, pid, start, count);
+}
+
+inline void unlink_mwrm_and_wrm(const char * path_base, pid_t pid, uint count)
+{
+    unlink_mwrm_and_wrm(path_base, pid, 0, count);
+}
+
+inline void unlink_mwrm_and_wrm(const char * path_base, uint count)
+{
+    unlink_mwrm_and_wrm(path_base, getpid(), 0, count);
+}
+
 inline void unlink_png(const char * path_base, pid_t pid, uint start, uint count)
 {
     char filename[50];
