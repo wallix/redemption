@@ -21,39 +21,8 @@
 #if !defined(__MAIN_RECORDER_OUTPUT_TYPE_HPP__)
 #define __MAIN_RECORDER_OUTPUT_TYPE_HPP__
 
-#include <string>
+#include "iotype/basic_output_type.hpp"
 
-struct OutputType {
-    enum enum_t {
-        NOT_FOUND,
-        PNG_TYPE,
-        WRM_TYPE
-    };
-
-    static OutputType::enum_t get_output_type(const std::string& filename)
-    {
-        std::size_t p = filename.find_last_of('.');
-        return (p == std::string::npos || p + 4 != filename.length())
-        ? NOT_FOUND
-        : (
-            !filename.compare(p+1, 3, "png")
-            ? PNG_TYPE
-            : (
-                !filename.compare(p+1, 3, "wrm")
-                ? WRM_TYPE
-                : NOT_FOUND
-            )
-        );
-    }
-
-    static OutputType::enum_t string_type_to_enum(const std::string& filename)
-    {
-        if (filename == "png")
-            return PNG_TYPE;
-        if (filename == "wrm")
-            return WRM_TYPE;
-        return NOT_FOUND;
-    }
-};
+typedef BasicOutputType OutputType;
 
 #endif

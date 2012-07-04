@@ -21,39 +21,8 @@
 #if !defined(__MAIN_RECORDER_INPUT_TYPE_HPP__)
 #define __MAIN_RECORDER_INPUT_TYPE_HPP__
 
-#include <string>
+#include "iotype/basic_input_type.hpp"
 
-struct InputType {
-    enum enum_t {
-        NOT_FOUND,
-        META_TYPE,
-        WRM_TYPE
-    };
-
-    static InputType::enum_t get_input_type(const std::string& filename)
-    {
-        std::size_t p = filename.find_last_of('.');
-        if (p == std::string::npos)
-            return NOT_FOUND;
-        ++p;
-        return (p + 4 == filename.length()
-        && !filename.compare(p, 4, "mwrm"))
-        ? META_TYPE
-        : (
-            (p + 3 == filename.length() && !filename.compare(p, 3, "wrm"))
-            ? WRM_TYPE
-            : NOT_FOUND
-        );
-    }
-
-    static InputType::enum_t string_type_to_enum(const std::string& filename)
-    {
-        if (filename == "mwrm")
-            return META_TYPE;
-        if (filename == "wrm")
-            return WRM_TYPE;
-        return NOT_FOUND;
-    }
-};
+typedef BasicInputType InputType;
 
 #endif

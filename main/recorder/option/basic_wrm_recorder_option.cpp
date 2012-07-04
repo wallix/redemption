@@ -1,12 +1,11 @@
 #include <boost/program_options/parsers.hpp>
 
-#include "wrm_recorder_option.hpp"
+#include "basic_wrm_recorder_option.hpp"
 #include "validate.hpp"
-#include "option_errors.hpp"
 
 namespace po = boost::program_options;
 
-WrmRecoderOption::WrmRecoderOption()
+BasicWrmRecoderOption::BasicWrmRecoderOption()
 : desc("Options")
 , options()
 , range()
@@ -24,7 +23,7 @@ WrmRecoderOption::WrmRecoderOption()
     this->add_default_options();
 }
 
-void WrmRecoderOption::add_default_options()
+void BasicWrmRecoderOption::add_default_options()
 {
     this->desc.add_options()
     // --help, -h
@@ -56,7 +55,7 @@ void WrmRecoderOption::add_default_options()
     ;
 }
 
-void WrmRecoderOption::parse_command_line(int argc, char** argv)
+void BasicWrmRecoderOption::parse_command_line(int argc, char** argv)
 {
     po::positional_options_description p;
     p.add("input-file", -1);
@@ -68,25 +67,25 @@ void WrmRecoderOption::parse_command_line(int argc, char** argv)
     );
 }
 
-uint WrmRecoderOption::notify_options()
+BasicRecorderOptionError::enum_t BasicWrmRecoderOption::notify_options()
 {
     po::notify(this->options);
 
     if (this->out_filename.empty()){
-        return RecorderOptionError::OUT_FILENAME_IS_EMPTY;
+        return BasicRecorderOptionError::OUT_FILENAME_IS_EMPTY;
     }
     if (this->in_filename.empty()){
-        return RecorderOptionError::IN_FILENAME_IS_EMPTY;
+        return BasicRecorderOptionError::IN_FILENAME_IS_EMPTY;
     }
 
     if (!this->range.valid()){
         std::swap<>(this->range.left, this->range.right);
     }
 
-    return RecorderOptionError::SUCCESS;
+    return BasicRecorderOptionError::SUCCESS;
 }
 
-uint WrmRecoderOption::normalize_options()
+BasicRecorderOptionError::enum_t BasicWrmRecoderOption::normalize_options()
 {
     po::variables_map::iterator end = this->options.end();
 
@@ -112,5 +111,5 @@ uint WrmRecoderOption::normalize_options()
             this->base_path = this->in_filename.substr(0, pos+1);
     }
 
-    return RecorderOptionError::SUCCESS;
+    return BasicRecorderOptionError::SUCCESS;
 }

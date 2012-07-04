@@ -18,23 +18,27 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__MAIN_RECORDER_OPTION_ERRORS__)
-#define __MAIN_RECORDER_OPTION_ERRORS__
+#if !defined(__MAIN_RECORDER_INIT__)
+#define __MAIN_RECORDER_INIT__
 
-struct RecorderOptionError
-{
-    static const uint SUCCESS = 0;
-    static const uint OUT_FILENAME_IS_EMPTY = 1;
-    static const uint IN_FILENAME_IS_EMPTY = 2;
+#include <iostream>
 
-    static const char * get_cstr(uint error)
-    {
-        if (error == 1)
-            return "Not output-file";
-        if (error == 2)
-            return "Not input-file";
-        return "Success";
-    }
-};
+#include "wrm_recorder_option.hpp"
+#include "output_type.hpp"
+#include "input_type.hpp"
+
+/**
+ * \brief Init opt, otype and itype and display error.
+ * Return 0 if success
+ * @{
+ */
+int parse_command_line(WrmRecoderOption& opt, int argc, char** argv);
+
+int set_iotype(WrmRecoderOption& opt,
+               InputType::enum_t& itype, OutputType::enum_t& otype);
+
+int init_opt_and_iotype(WrmRecoderOption& opt, int argc, char** argv,
+                        InputType::enum_t& itype, OutputType::enum_t& otype);
+//@}
 
 #endif
