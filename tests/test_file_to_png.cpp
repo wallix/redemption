@@ -33,7 +33,7 @@
 
 #include "check_sig.hpp"
 
-void file_to_png(const char* filename, uint16_t w, uint16_t h, uint16_t bpp, const char * shasig)
+/*void file_to_png(const char* filename, uint16_t w, uint16_t h, uint16_t bpp, const char * shasig)
 {
     int fd;
     {
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(TestFileWithoutMetaToPng)
                 "\x1c\xf2\xcc\xf1\x37\x2d\x51\xde\x41\x9e"
                 "\xee\x36\xa3\xa2\x20\x99\x04\x1e\xb7\xba");
     unlink_mwrm_and_wrm("/tmp/test_file_without_meta_to_png", 1);
-}
+}*/
 
 BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
 {
