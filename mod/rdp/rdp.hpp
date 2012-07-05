@@ -515,13 +515,13 @@ struct mod_rdp : public client_mod {
             LOG(LOG_INFO, "mod_rdp::send_to_channel");
         }
         Stream stream(65536);
+
         X224 x224(stream);
         x224.emit_start(X224Packet::DT_TPDU);
-
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
-
-        SecOut sec_out(stream, this->crypt_level?SEC_ENCRYPT:0, this->encrypt);
+        Sec sec(stream, this->encrypt);
+        sec.emit_start( this->crypt_level?SEC_ENCRYPT:0 );
 
         stream.out_uint32_le(length);
         stream.out_uint32_le(flags);
@@ -529,10 +529,11 @@ struct mod_rdp : public client_mod {
             flags |= ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
         stream.out_copy_bytes(data, chunk_size);
-        sec_out.end();
-        mcs.emit_end();
 
+        sec.emit_end();
+        mcs.emit_end();
         x224.emit_end();
+
         this->nego.trans->send(x224.header(), x224.size());
 
         if (this->verbose){
@@ -832,7 +833,9 @@ struct mod_rdp : public client_mod {
             if ((mcs.opcode >> 2) != DomainMCSPDU_SendDataIndication) {
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
-            SecIn sec(stream, this->decrypt, true);
+//            SecIn sec(stream, this->decrypt, true);
+            Sec sec(stream, this->decrypt);
+            sec.recv_start(true);
 
             if (sec.flags & SEC_LICENSE_PKT) {
 
@@ -1074,7 +1077,9 @@ struct mod_rdp : public client_mod {
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");
-            SecIn sec(stream, this->decrypt, this->crypt_level);
+//            SecIn sec(stream, this->decrypt, this->crypt_level);
+            Sec sec(stream, this->decrypt);
+            sec.recv_start(this->crypt_level);
             if (sec.flags & SEC_LICENSE_PKT) { /* 0x80 */
                 LOG(LOG_ERR, "Error: unexpected license negotiation sec packet flags=%04x", sec.flags);
                 throw Error(ERR_SEC_UNEXPECTED_LICENCE_NEGOTIATION_PDU);
@@ -1370,14 +1375,14 @@ struct mod_rdp : public client_mod {
             }
 
             Stream stream(32768);
+
             X224 x224(stream);
             x224.emit_start(X224Packet::DT_TPDU);
-
             Mcs mcs(stream);
             mcs.emit_start(DomainMCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
-
 //            uint8_t * prev = stream.p;
-            SecOut sec_out(stream, this->crypt_level?SEC_ENCRYPT:0, this->encrypt);
+            Sec sec(stream, this->encrypt);
+            sec.emit_start( this->crypt_level?SEC_ENCRYPT:0 );
 //            hexdump((const char*)prev, stream.p - prev);
 //            prev = stream.p;
 
@@ -1538,10 +1543,10 @@ struct mod_rdp : public client_mod {
             stream.set_out_uint16_le(capscount, offset_capscount); // caplen
 
             rdp_control_out.end();
-            sec_out.end();
+            sec.emit_end();
             mcs.emit_end();
-
             x224.emit_end();
+
             this->nego.trans->send(x224.header(), x224.size());
 
             if (this->verbose){
@@ -2350,11 +2355,14 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_INFO, "mod_rdp::send_control");
             }
             Stream stream(32768);
+
             X224 x224(stream);
             x224.emit_start(X224Packet::DT_TPDU);
             Mcs mcs(stream);
             mcs.emit_start(DomainMCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, this->crypt_level?SEC_ENCRYPT:0, this->encrypt);
+            Sec sec(stream, this->encrypt);
+            sec.emit_start( this->crypt_level?SEC_ENCRYPT:0 );
+
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
@@ -2364,11 +2372,13 @@ struct mod_rdp : public client_mod {
 
             rdp_data_out.end();
             rdp_control_out.end();
-            sec_out.end();
-            mcs.emit_end();
 
+            sec.emit_end();
+            mcs.emit_end();
             x224.emit_end();
+
             this->nego.trans->send(x224.header(), x224.size());
+
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_control done");
             }
@@ -2381,11 +2391,14 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_INFO, "mod_rdp::send_synchronise");
             }
             Stream stream(32768);
+
             X224 x224(stream);
             x224.emit_start(X224Packet::DT_TPDU);
             Mcs mcs(stream);
             mcs.emit_start(DomainMCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, this->crypt_level?SEC_ENCRYPT:0, this->encrypt);
+            Sec sec(stream, this->encrypt);
+            sec.emit_start( this->crypt_level?SEC_ENCRYPT:0 ) ;
+
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
@@ -2394,10 +2407,13 @@ struct mod_rdp : public client_mod {
 
             rdp_data_out.end();
             rdp_control_out.end();
-            sec_out.end();
+
+            sec.emit_end();
             mcs.emit_end();
             x224.emit_end();
+
             this->nego.trans->send(x224.header(), x224.size());
+
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_synchronise done");
             }
@@ -2409,11 +2425,14 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_INFO, "mod_rdp::send_fonts");
             }
             Stream stream(65536);
+
             X224 x224(stream);
             x224.emit_start(X224Packet::DT_TPDU);
             Mcs mcs(stream);
             mcs.emit_start(DomainMCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, this->crypt_level?SEC_ENCRYPT:0, this->encrypt);
+            Sec sec(stream, this->encrypt);
+            sec.emit_start( this->crypt_level?SEC_ENCRYPT:0 );
+
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_FONTLIST, this->share_id, RDP::STREAM_MED);
 
@@ -2424,10 +2443,13 @@ struct mod_rdp : public client_mod {
 
             rdp_data_out.end();
             rdp_control_out.end();
-            sec_out.end();
+
+            sec.emit_end();
             mcs.emit_end();
             x224.emit_end();
+
             this->nego.trans->send(x224.header(), x224.size());
+
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_fonts done");
             }
@@ -2452,13 +2474,15 @@ struct mod_rdp : public client_mod {
             if (this->verbose > 10){
                 LOG(LOG_INFO, "mod_rdp::send_input");
             }
-
             Stream stream(32768);
+
             X224 x224(stream);
             x224.emit_start(X224Packet::DT_TPDU);
             Mcs mcs(stream);
             mcs.emit_start(DomainMCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
-            SecOut sec_out(stream, this->crypt_level?SEC_ENCRYPT:0, this->encrypt);
+            Sec sec(stream, this->encrypt);
+            sec.emit_start( this->crypt_level?SEC_ENCRYPT:0 );
+
             ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
             ShareDataOut rdp_data_out(stream, PDUTYPE2_INPUT, this->share_id, RDP::STREAM_HI);
 
@@ -2472,9 +2496,11 @@ struct mod_rdp : public client_mod {
 
             rdp_data_out.end();
             rdp_control_out.end();
-            sec_out.end();
+
+            sec.emit_end();
             mcs.emit_end();
             x224.emit_end();
+
             this->nego.trans->send(x224.header(), x224.size());
 
             if (this->verbose > 10){
@@ -2491,11 +2517,14 @@ struct mod_rdp : public client_mod {
 //                LOG(LOG_INFO, "rdp_input_invalidate");
                 if (!r.isempty()){
                     Stream stream(32768);
+
                     X224 x224(stream);
                     x224.emit_start(X224Packet::DT_TPDU);
                     Mcs mcs(stream);
                     mcs.emit_start(DomainMCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
-                    SecOut sec_out(stream, this->crypt_level?SEC_ENCRYPT:0, this->encrypt);
+                    Sec sec(stream, this->encrypt);
+                    sec.emit_start( this->crypt_level?SEC_ENCRYPT:0 );
+
                     ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
                     ShareDataOut rdp_data_out(stream, PDUTYPE2_REFRESH_RECT, this->share_id, RDP::STREAM_MED);
 
@@ -2508,9 +2537,11 @@ struct mod_rdp : public client_mod {
 
                     rdp_data_out.end();
                     rdp_control_out.end();
-                    sec_out.end();
+
+                    sec.emit_end();
                     mcs.emit_end();
                     x224.emit_end();
+
                     this->nego.trans->send(x224.header(), x224.size());
                 }
             }
@@ -2760,7 +2791,8 @@ struct mod_rdp : public client_mod {
         x224.emit_start(X224Packet::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, SEC_INFO_PKT | (this->crypt_level?SEC_ENCRYPT:0), this->encrypt);
+        Sec sec(stream, this->encrypt);
+        sec.emit_start( SEC_INFO_PKT | (this->crypt_level?SEC_ENCRYPT:0) );
 
         InfoPacket infoPacket;
         infoPacket.rdp5_support = this->use_rdp5;
@@ -2779,9 +2811,10 @@ struct mod_rdp : public client_mod {
         infoPacket.log("Sending to server: ");
         infoPacket.emit( stream );
 
-        sec_out.end();
+        sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
+
         this->nego.trans->send(x224.header(), x224.size());
 
         LOG(LOG_INFO, "send login info ok");

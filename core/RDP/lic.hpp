@@ -467,7 +467,8 @@ struct RdpLicence {
         x224.emit_start(X224Packet::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, SEC_LICENSE_PKT, encrypt);
+        Sec sec(stream, encrypt);
+        sec.emit_start( SEC_LICENSE_PKT );
 
         stream.out_uint8(PLATFORM_CHALLENGE_RESPONSE);
         stream.out_uint8(use_rdp5?3:2); /* version */
@@ -498,12 +499,12 @@ struct RdpLicence {
         stream.out_uint16_le(LICENCE_HWID_SIZE);
         stream.out_copy_bytes(crypt_hwid, LICENCE_HWID_SIZE);
 
-
         stream.out_copy_bytes(signature, LICENCE_SIGNATURE_SIZE);
 
-        sec_out.end();
+        sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
+
         trans->send(x224.header(), x224.size());
     }
 
@@ -700,7 +701,8 @@ struct RdpLicence {
         x224.emit_start(X224Packet::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
-        SecOut sec_out(stream, SEC_LICENSE_PKT, encrypt);
+        Sec sec(stream, encrypt);
+        sec.emit_start( SEC_LICENSE_PKT );
 
         stream.out_uint8(NEW_LICENSE_REQUEST);
         stream.out_uint8(use_rdp5?3:2);
@@ -815,9 +817,10 @@ struct RdpLicence {
         stream.out_uint16_le(hostlen);
         stream.out_copy_bytes(hostname, hostlen);
 
-        sec_out.end();
+        sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
+
         trans->send(x224.header(), x224.size());
     }
 
