@@ -18,27 +18,12 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__MAIN_RECORDER_INIT__)
-#define __MAIN_RECORDER_INIT__
-
-#include <iostream>
+#if !defined(__MAIN_RECORDER_TO_PNG__)
+#define __MAIN_RECORDER_TO_PNG__
 
 #include "wrm_recorder_option.hpp"
-#include "output_type.hpp"
-#include "input_type.hpp"
+#include "wrm_recorder.hpp"
 
-/**
- * \brief Init opt, otype and itype and display error.
- * Return 0 if success
- * @{
- */
-int parse_command_line(WrmRecoderOption& opt, int argc, char** argv);
-
-int set_iotype(WrmRecoderOption& opt,
-               InputType::enum_t& itype, OutputType::enum_t& otype);
-
-int init_opt_and_iotype(WrmRecoderOption& opt, int argc, char** argv,
-                        InputType::enum_t& itype, OutputType::enum_t& otype);
-//@}
+void to_png(WRMRecorder& recorder, WrmRecorderOption& opt, const char* outfile);
 
 #endif

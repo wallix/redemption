@@ -18,11 +18,12 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__MAIN_RECORDER_OUTPUT_TYPE_HPP__)
-#define __MAIN_RECORDER_OUTPUT_TYPE_HPP__
+#if !defined(__MAIN_RECORDER_TO_WRM__)
+#define __MAIN_RECORDER_TO_WRM__
 
-#include "iotype/basic_output_type.hpp"
+#include "wrm_recorder_option.hpp"
+#include "wrm_recorder.hpp"
 
-typedef BasicOutputType OutputType;
+void to_wrm(WRMRecorder& recorder, WrmRecorderOption& opt, const char* outfile);
 
 #endif

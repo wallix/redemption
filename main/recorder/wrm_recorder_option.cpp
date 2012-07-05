@@ -1,11 +1,34 @@
 #include <boost/program_options/parsers.hpp>
 
-#include "basic_wrm_recorder_option.hpp"
-#include "validate.hpp"
+#include "wrm_recorder_option.hpp"
 
 namespace po = boost::program_options;
 
-BasicWrmRecoderOption::BasicWrmRecoderOption()
+void validate(boost::any& v,
+              const std::vector<std::string>& values,
+              range_time_point* range, int)
+{
+    // Make sure no previous assignment to 'a' was made.
+    po::validators::check_first_occurrence(v);
+    // Extract the first string from 'values'. If there is more than
+    // one string, it's an error, and exception will be thrown.
+    const std::string& s = boost::program_options::validators::get_single_string(values);
+    v = boost::any(range_time_point(s));
+}
+
+void validate(boost::any& v,
+              const std::vector<std::string>& values,
+              time_point* time, int)
+{
+    // Make sure no previous assignment to 'a' was made.
+    po::validators::check_first_occurrence(v);
+    // Extract the first string from 'values'. If there is more than
+    // one string, it's an error, and exception will be thrown.
+    const std::string& s = po::validators::get_single_string(values);
+    v = boost::any(time_point(s));
+}
+
+WrmRecorderOption::WrmRecorderOption()
 : desc("Options")
 , options()
 , range()
@@ -23,7 +46,7 @@ BasicWrmRecoderOption::BasicWrmRecoderOption()
     this->add_default_options();
 }
 
-void BasicWrmRecoderOption::add_default_options()
+void WrmRecorderOption::add_default_options()
 {
     this->desc.add_options()
     // --help, -h
@@ -55,7 +78,7 @@ void BasicWrmRecoderOption::add_default_options()
     ;
 }
 
-void BasicWrmRecoderOption::parse_command_line(int argc, char** argv)
+void WrmRecorderOption::parse_command_line(int argc, char** argv)
 {
     po::positional_options_description p;
     p.add("input-file", -1);
@@ -67,25 +90,25 @@ void BasicWrmRecoderOption::parse_command_line(int argc, char** argv)
     );
 }
 
-BasicRecorderOptionError::enum_t BasicWrmRecoderOption::notify_options()
+int WrmRecorderOption::notify_options()
 {
     po::notify(this->options);
 
     if (this->out_filename.empty()){
-        return BasicRecorderOptionError::OUT_FILENAME_IS_EMPTY;
+        return OUT_FILENAME_IS_EMPTY;
     }
     if (this->in_filename.empty()){
-        return BasicRecorderOptionError::IN_FILENAME_IS_EMPTY;
+        return IN_FILENAME_IS_EMPTY;
     }
 
     if (!this->range.valid()){
         std::swap<>(this->range.left, this->range.right);
     }
 
-    return BasicRecorderOptionError::SUCCESS;
+    return SUCCESS;
 }
 
-BasicRecorderOptionError::enum_t BasicWrmRecoderOption::normalize_options()
+int WrmRecorderOption::normalize_options()
 {
     po::variables_map::iterator end = this->options.end();
 
@@ -111,5 +134,5 @@ BasicRecorderOptionError::enum_t BasicWrmRecoderOption::normalize_options()
             this->base_path = this->in_filename.substr(0, pos+1);
     }
 
-    return BasicRecorderOptionError::SUCCESS;
+    return SUCCESS;
 }

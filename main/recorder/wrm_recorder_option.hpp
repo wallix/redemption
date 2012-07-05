@@ -21,9 +21,65 @@
 #if !defined(__MAIN_RECORDER_WRM_RECORDER_OPTION__)
 #define __MAIN_RECORDER_WRM_RECORDER_OPTION__
 
-#include "option/basic_wrm_recorder_option.hpp"
+#include <boost/program_options/options_description.hpp>
+#include <boost/program_options/variables_map.hpp>
 
-typedef BasicWrmRecoderOption WrmRecoderOption;
-typedef BasicRecorderOptionError RecorderOptionError;
+#include "range_time_point.hpp"
+
+struct WrmRecorderOption {
+    boost::program_options::options_description desc;
+    boost::program_options::variables_map options;
+
+    range_time_point range;
+    uint frame;
+    time_point time;
+    std::string out_filename;
+    std::string in_filename;
+    std::string idx_start;
+    std::string base_path;
+    std::string metaname;
+    bool screenshot_wrm;
+    bool screenshot_start;
+    bool no_screenshot_stop;
+    bool ignore_dir_for_meta_in_wrm;
+    std::string output_type;
+    std::string input_type;
+
+    WrmRecorderOption();
+
+    void parse_command_line(int argc, char** argv);
+
+    /**
+     * Return 0 if success.
+     */
+    int notify_options();
+    int normalize_options();
+
+    const char * version() const
+    {
+        return "0.1";
+    };
+
+    enum Error {
+        SUCCESS,
+        OUT_FILENAME_IS_EMPTY,
+        IN_FILENAME_IS_EMPTY
+    };
+
+    static const char * get_cerror(int error)
+    {
+        if (error == OUT_FILENAME_IS_EMPTY)
+            return "Not output-file";
+        if (error == IN_FILENAME_IS_EMPTY)
+            return "Not input-file";
+        if (error == SUCCESS)
+            return "Success";
+        return "Unknow";
+    }
+
+
+private:
+    void add_default_options();
+};
 
 #endif

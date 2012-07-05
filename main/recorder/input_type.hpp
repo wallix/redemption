@@ -21,8 +21,25 @@
 #if !defined(__MAIN_RECORDER_INPUT_TYPE_HPP__)
 #define __MAIN_RECORDER_INPUT_TYPE_HPP__
 
-#include "iotype/basic_input_type.hpp"
+#include <string>
 
-typedef BasicInputType InputType;
+struct InputType {
+    enum enum_t {
+        NOT_FOUND,
+        META_TYPE,
+        WRM_TYPE
+    };
+
+    typedef enum_t format_type;
+
+    static InputType::enum_t string_to_type(const std::string& s)
+    {
+        if (s == "mwrm")
+            return META_TYPE;
+        if (s == "wrm")
+            return WRM_TYPE;
+        return NOT_FOUND;
+    }
+};
 
 #endif

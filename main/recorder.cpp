@@ -23,42 +23,65 @@
 
 #include <iostream>
 
-//#define LOGPRINT
+// #define LOGPRINT
 
-#include "recorder/wrm_recorder_app.hpp"
-#include "recorder/init.hpp"
+// #include "recorder/wrm_recorder_app.hpp"
+// #include "recorder/init.hpp"
+
+
+// #include "recorder/get_recorder_action.hpp"
+// #include "recorder/wrm_recorder_option.hpp"
+
+#include "recorder/wrm_recorder_option.hpp"
+#include "recorder/recorder_run.hpp"
+#include "recorder/get_type.hpp"
+#include "recorder/to_png.hpp"
+#include "recorder/to_wrm.hpp"
 
 int main(int argc, char** argv)
 {
-    WrmRecoderOption opt;
-    InputType::enum_t itype;
-    OutputType::enum_t otype;
+    WrmRecorderOption opt;
+    opt.parse_command_line(argc, argv);
 
-    {
-        int error = init_opt_and_iotype(opt, argc, argv, itype, otype);
-        if (error)
-            return error;
+    if (opt.options.count("version")) {
+        std::cout << argv[0] << ' ' << opt.version() << '\n';
+        return 0;
     }
 
-    std::cout
-    << "output-file: " << opt.out_filename << '\n'
-    << "input-file: " << opt.in_filename << '\n'
-    << "frame limit: " << opt.frame << '\n'
-    << "time: " << opt.time << '\n'
-    << "range: " << opt.range << '\n'
-    ;
+    if (opt.options.count("help")) {
+        std::cout << opt.desc << std::endl;
+        return 0;
+    }
 
-    WrmRecorderApp app(opt);
-
-    try {
-        app.run(otype, itype);
-    } catch (Error e) {
+    int error = opt.notify_options();
+    if (error){
         std::cerr
-        << "id: " << e.id
-        << ", errnum: " << e.errnum
-        << ", strerror: " << strerror(e.errnum)
-        << std::endl;
+        << WrmRecorderOption::get_cerror(error) << '\n'
+        << opt.desc << std::endl
+        ;
+        return error;
     }
 
-    return 0;
+    InputType::enum_t itype = get_input_type(opt);
+    if (itype == InputType::NOT_FOUND){
+        std::cerr
+        << "Incorrect input-type, "
+        << opt.desc.find("input-type", false).description() << '\n';
+        return 1000;
+    }
+
+    error = opt.normalize_options();
+    if (error){
+        std::cerr << WrmRecorderOption::get_cerror(error) << std::endl;
+        return error;
+    }
+
+    typedef recorder_item_traits<WrmRecorderOption> item_traits;
+    typedef typename item_traits::recorder_item recorder_item;
+    recorder_item recorder_actions[] = {
+        recorder_item("png", &to_png),
+        recorder_item("wrm", &to_wrm),
+    };
+
+    return recorder_run<>(opt, recorder_actions, itype);
 }

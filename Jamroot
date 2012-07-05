@@ -143,8 +143,9 @@ exe drawtest
 exe redrec
     :
         main/recorder.cpp
-        main/recorder/option/basic_wrm_recorder_option.cpp
-        main/recorder/init.cpp
+        main/recorder/wrm_recorder_option.cpp
+        main/recorder/to_png.cpp
+        main/recorder/to_wrm.cpp
 
         openssl
         crypto
