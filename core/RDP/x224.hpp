@@ -578,7 +578,7 @@ struct X224
 
     // Receive a X224 TPDU from the wires - Open stream
     //==============================================================================
-    void recv_start(Transport * t)
+    void recv_begin(Transport * t)
     //==============================================================================
     {
         t->recv((char**)(&(stream.end)), TPKT_HEADER_LEN);
@@ -720,7 +720,7 @@ struct X224
                 // just skip remaining TPDU header content
                 stream.in_skip_bytes(this->tpdu_hdr.LI-1);
         }
-    } // END METHOD recv_start
+    } // END METHOD recv_begin
 
 
     // Receive a X224 TPDU from the wires - Close stream
@@ -736,7 +736,7 @@ struct X224
 
     // Prepare a X224 TPDU in buffer for writing
     //==============================================================================
-    void emit_start(uint8_t tpdutype)
+    void emit_begin(uint8_t tpdutype)
     //==============================================================================
     {
         REDASSERT(stream.p == stream.data);
@@ -837,7 +837,7 @@ struct X224
                 LOG(LOG_WARNING, "Error: trying to send unknown TPDU Type %u", tpdutype);
                 throw Error(ERR_X224_SENDING_UNKNOWN_PDU_TYPE, tpdutype);
         }
-    } // EN METHOD emit_start
+    } // EN METHOD emit_begin
 
     // include user data from end of tpdu header to stream.p inside tpdu header.
     // Not really part of x224, but RDP uses it to transmit username

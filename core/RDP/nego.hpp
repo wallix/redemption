@@ -346,7 +346,7 @@ struct RdpNego
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
         Stream stream(8192);
         X224 x224(stream);
-        x224.recv_start(this->trans);
+        x224.recv_begin(this->trans);
         if (x224.tpkt.version != 3){
             throw Error(ERR_T123_EXPECTED_TPKT_VERSION_3);
         }
@@ -583,7 +583,7 @@ struct RdpNego
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu");
         Stream out;
         X224 x224(out);
-        x224.emit_start(X224::CR_TPDU);
+        x224.emit_begin(X224::CR_TPDU);
         x224.stream.out_concat("Cookie: mstshash=");
         x224.stream.out_concat(this->username);
         x224.stream.out_concat("\r\n");

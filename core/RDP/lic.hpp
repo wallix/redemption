@@ -189,9 +189,9 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
 
     Stream stream(32768);
     X224 x224(stream);
-    x224.emit_start(X224::DT_TPDU);
+    x224.emit_begin(X224::DT_TPDU);
     Mcs mcs(stream);
-    mcs.emit_start(DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
+    mcs.emit_begin(DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
 
     stream.out_uint32_le(SEC_LICENSE_PKT);
     stream.out_uint8(LICENSE_REQUEST);
@@ -267,9 +267,9 @@ static inline void send_lic_response(Transport * trans, int userid) throw (Error
 
     Stream stream(32768);
     X224 x224(stream);
-    x224.emit_start(X224::DT_TPDU);
+    x224.emit_begin(X224::DT_TPDU);
     Mcs mcs(stream);
-    mcs.emit_start(DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
+    mcs.emit_begin(DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic2, 20);
     mcs.emit_end();
     x224.emit_end();
@@ -287,9 +287,9 @@ static inline void send_media_lic_response(Transport * trans, int userid) throw 
 
     Stream stream(32768);
     X224 x224(stream);
-    x224.emit_start(X224::DT_TPDU);
+    x224.emit_begin(X224::DT_TPDU);
     Mcs mcs(stream);
-    mcs.emit_start(DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
+    mcs.emit_begin(DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic3, 20);
     mcs.emit_end();
     x224.emit_end();
@@ -464,11 +464,11 @@ struct RdpLicence {
 
         Stream stream(32768);
         X224 x224(stream);
-        x224.emit_start(X224::DT_TPDU);
+        x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
-        mcs.emit_start(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
+        mcs.emit_begin(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, encrypt);
-        sec.emit_start( SEC_LICENSE_PKT );
+        sec.emit_begin( SEC_LICENSE_PKT );
 
         stream.out_uint8(PLATFORM_CHALLENGE_RESPONSE);
         stream.out_uint8(use_rdp5?3:2); /* version */
@@ -698,11 +698,11 @@ struct RdpLicence {
 
         Stream stream(32768);
         X224 x224(stream);
-        x224.emit_start(X224::DT_TPDU);
+        x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
-        mcs.emit_start(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
+        mcs.emit_begin(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, encrypt);
-        sec.emit_start( SEC_LICENSE_PKT );
+        sec.emit_begin( SEC_LICENSE_PKT );
 
         stream.out_uint8(NEW_LICENSE_REQUEST);
         stream.out_uint8(use_rdp5?3:2);
@@ -830,9 +830,9 @@ struct RdpLicence {
     {
         Stream stream(32768);
         X224 x224(stream);
-        x224.emit_start(X224::DT_TPDU);
+        x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
-        mcs.emit_start(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
+        mcs.emit_begin(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
 
         int length = 16 + SEC_RANDOM_SIZE + SEC_MODULUS_SIZE + SEC_PADDING_SIZE +
                  licence_size + LICENCE_HWID_SIZE + LICENCE_SIGNATURE_SIZE;

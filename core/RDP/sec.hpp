@@ -666,7 +666,7 @@ class Sec
 
 
     //==============================================================================
-    void emit_start( uint32_t flags )
+    void emit_begin( uint32_t flags )
     //==============================================================================
     {
         if (this->verbose) {
@@ -683,7 +683,7 @@ class Sec
                 this->stream.out_skip_bytes(8); // skip crypt signature, filled later
             }
         }
-    } // END METHOD emit_start
+    } // END METHOD emit_begin
 
 
     //==============================================================================
@@ -704,7 +704,7 @@ class Sec
 
 
     //==============================================================================
-    void recv_start( bool enabled )
+    void recv_begin( bool enabled )
     //==============================================================================
     {
         this->enabled = enabled;
@@ -731,7 +731,7 @@ class Sec
                 }
             }
         }
-    } // END METHOD recv_start
+    } // END METHOD recv_begin
 
 
     //==============================================================================
@@ -837,10 +837,10 @@ static inline void recv_security_exchange_PDU(
 
     Stream stream(32768);
     X224 x224(stream);
-    x224.recv_start(trans);
+    x224.recv_begin(trans);
 
     Mcs mcs(stream);
-    mcs.recv_start();
+    mcs.recv_begin();
 
     if ((mcs.opcode >> 2) != DomainMCSPDU_SendDataRequest) {
         throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
@@ -888,10 +888,10 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     //      if (this->encryption)
     Stream sdrq_stream(32768);
     X224 x224(sdrq_stream);
-    x224.emit_start(X224::DT_TPDU);
+    x224.emit_begin(X224::DT_TPDU);
 
     Mcs mcs(sdrq_stream);
-    mcs.emit_start(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
+    mcs.emit_begin(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
 
     sdrq_stream.out_uint32_le(SEC_EXCHANGE_PKT);
     sdrq_stream.out_uint32_le(server_public_key_len + SEC_PADDING_SIZE);

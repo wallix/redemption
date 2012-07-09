@@ -47,13 +47,13 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         "\x7b\xfa\x9a\x3b\x15\x9f\x89\x32\xd4"
         , 61);
     X224 x224(stream);
-    x224.recv_start(&t);
+    x224.recv_begin(&t);
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(61, x224.tpkt.len);
     BOOST_CHECK_EQUAL(2, x224.tpdu_hdr.LI);
     BOOST_CHECK_EQUAL((uint8_t)X224::DT_TPDU, (uint8_t)x224.tpdu_hdr.code);
     Mcs mcs(stream);
-    mcs.recv_start();
+    mcs.recv_begin();
     BOOST_CHECK_EQUAL((uint8_t)DomainMCSPDU_SendDataRequest, (uint8_t)mcs.opcode >> 2);
     BOOST_CHECK_EQUAL(0, mcs.user_id);
     BOOST_CHECK_EQUAL((uint16_t)MCS_GLOBAL_CHANNEL, (uint16_t)mcs.chan_id);
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     decrypt.rc4_key_size=1;
 
     Sec sec(stream, decrypt);
-    sec.recv_start(true);
+    sec.recv_begin(true);
     BOOST_CHECK_EQUAL((uint32_t)SEC_ENCRYPT, (uint32_t)sec.flags);
 
     uint16_t length = stream.in_uint16_le();
@@ -179,14 +179,14 @@ BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
         , 333);
 
     X224 x224(stream);
-    x224.recv_start(&t);
+    x224.recv_begin(&t);
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(333, x224.tpkt.len);
     BOOST_CHECK_EQUAL(2, x224.tpdu_hdr.LI);
     BOOST_CHECK_EQUAL((uint8_t)X224::DT_TPDU, (uint8_t)x224.tpdu_hdr.code);
 
     Mcs mcs(stream);
-    mcs.recv_start();
+    mcs.recv_begin();
     BOOST_CHECK_EQUAL((uint8_t)DomainMCSPDU_SendDataRequest, mcs.opcode >> 2);
     BOOST_CHECK_EQUAL(0, mcs.user_id);
     BOOST_CHECK_EQUAL((uint16_t)MCS_GLOBAL_CHANNEL, (uint16_t)mcs.chan_id);
@@ -262,7 +262,7 @@ BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
     decrypt.rc4_key_size=1;
 
     Sec sec(stream, decrypt);
-    sec.recv_start(true);
+    sec.recv_begin(true);
 
     BOOST_CHECK_EQUAL((uint32_t)(SEC_ENCRYPT|SEC_INFO_PKT), (uint32_t)sec.flags);
 

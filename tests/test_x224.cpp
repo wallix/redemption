@@ -20,11 +20,13 @@
    Unit test to RDP Orders coder/decoder
    Using lib boost functions for testing
 */
-
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestX224
 #include <boost/test/auto_unit_test.hpp>
+
+#define LOGPRINT
+#include "log.hpp"
 
 #include "stream.hpp"
 #include "transport.hpp"
@@ -35,9 +37,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU)
 {
     Stream stream;
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
-//    X224In tpdu(&t, stream);
     X224 x224(stream);
-    x224.recv_start(&t);
+    x224.recv_begin(&t);
+    x224.recv_end();
+
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
     BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
@@ -51,9 +54,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU)
 {
     Stream stream;
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xD0\x00\x00\x00\x00\x00", 11);
-//    X224In tpdu(&t, stream);
     X224 x224(stream);
-    x224.recv_start(&t);
+    x224.recv_begin(&t);
+    x224.recv_end();
+
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
     BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, x224.tpdu_hdr.code);
@@ -68,9 +72,10 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU)
 {
     Stream stream;
     GeneratorTransport t("\x03\x00\x00\x0B\x06\x80\x00\x00\x00\x00\x01", 11);
-//    X224In tpdu(&t, stream);
     X224 x224(stream);
-    x224.recv_start(&t);
+    x224.recv_begin(&t);
+    x224.recv_end();
+
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
     BOOST_CHECK_EQUAL((uint8_t)X224::DR_TPDU, x224.tpdu_hdr.code);
@@ -78,6 +83,8 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU)
     BOOST_CHECK_EQUAL(1, x224.tpdu_hdr.code_part.DR_TPDU.reason);
     BOOST_CHECK_EQUAL(stream.p, stream.data+11);
     BOOST_CHECK_EQUAL(stream.end, stream.data+x224.tpkt.len);
+
+    BOOST_CHECK(1);
 }
 
 
@@ -85,9 +92,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU)
 {
     Stream stream;
     GeneratorTransport t("\x03\x00\x00\x0B\x02\xF0\x80\x12\x34\x56\x78", 11);
-//    X224In tpdu(&t, stream);
     X224 x224(stream);
-    x224.recv_start(&t);
+    x224.recv_begin(&t);
+
     // tpkt header is OK
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
@@ -104,15 +111,20 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU)
     BOOST_CHECK_EQUAL(0x78, stream.p[3]);
     BOOST_CHECK_EQUAL(stream.p, stream.data+7);
     BOOST_CHECK_EQUAL(stream.end, stream.data+x224.tpkt.len);
+
+    // read payload
+    stream.in_skip_bytes(4);
+    x224.recv_end();
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU)
 {
     Stream stream;
     GeneratorTransport t("\x03\x00\x00\x0D\x08\x70\x00\x00\x02\xC1\x02\x06\x22", 13);
-//    X224In tpdu(&t, stream);
     X224 x224(stream);
-    x224.recv_start(&t);
+    x224.recv_begin(&t);
+    x224.recv_end();
+
     // tpkt header is OK
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(13, x224.tpkt.len);
@@ -134,11 +146,10 @@ BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU)
     memset(stream.data, 0, 65536);
 
     GeneratorTransport t("", 0); // used as /dev/null
-//    X224Out tpdu(X224::CR_TPDU, stream);
     X224 x224(stream);
-    x224.emit_start(X224::CR_TPDU);
-//    tpdu.end();
+    x224.emit_begin(X224::CR_TPDU);
     x224.emit_end();
+
     BOOST_CHECK_EQUAL(stream.get_offset(0), stream.data[2]*256+stream.data[3]);
     // tpkt header
     BOOST_CHECK_EQUAL(0x03, stream.data[0]); // version 3
@@ -154,7 +165,6 @@ BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU)
     BOOST_CHECK_EQUAL(0x00, stream.data[8]); // SRC-REF
     BOOST_CHECK_EQUAL(0x00, stream.data[9]); //
     BOOST_CHECK_EQUAL(0x00, stream.data[10]);  // CLASS OPTION
-//    tpdu.send(&t);
     t.send(x224.header(), x224.size());
 }
 
@@ -164,11 +174,11 @@ BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU)
     memset(stream.data, 0, 65536);
 
     GeneratorTransport t("", 0); // used as /dev/null
-//    X224Out tpdu(X224::CC_TPDU, stream);
+
     X224 x224(stream);
-    x224.emit_start(X224::CC_TPDU);
-//    tpdu.end();
+    x224.emit_begin(X224::CC_TPDU);
     x224.emit_end();
+
     BOOST_CHECK_EQUAL(stream.get_offset(0), stream.data[2]*256+stream.data[3]);
     // tpkt header
     BOOST_CHECK_EQUAL(0x03, stream.data[0]); // version 3
@@ -184,7 +194,7 @@ BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU)
     BOOST_CHECK_EQUAL(0x00, stream.data[8]); // SRC-REF
     BOOST_CHECK_EQUAL(0x00, stream.data[9]); //
     BOOST_CHECK_EQUAL(0x00, stream.data[10]);  // CLASS OPTION
-//    tpdu.send(&t);
+
     t.send(x224.header(), x224.size());
 }
 
@@ -194,11 +204,11 @@ BOOST_AUTO_TEST_CASE(TestSend_DR_TPDU)
     memset(stream.data, 0, 65536);
 
     GeneratorTransport t("", 0); // used as /dev/null
-//    X224Out tpdu(X224::DR_TPDU, stream);
+
     X224 x224(stream);
-    x224.emit_start(X224::DR_TPDU);
-//    tpdu.end();
+    x224.emit_begin(X224::DR_TPDU);
     x224.emit_end();
+
     BOOST_CHECK_EQUAL(stream.get_offset(0), stream.data[2]*256+stream.data[3]);
     // tpkt header
     BOOST_CHECK_EQUAL(0x03, stream.data[0]); // version 3
@@ -214,7 +224,7 @@ BOOST_AUTO_TEST_CASE(TestSend_DR_TPDU)
     BOOST_CHECK_EQUAL(0x00, stream.data[8]); // SRC-REF
     BOOST_CHECK_EQUAL(0x00, stream.data[9]); //
     BOOST_CHECK_EQUAL(0x00, stream.data[10]);  // REASON (0 = Not specified)
-//    tpdu.send(&t);
+
     t.send(x224.header(), x224.size());
 }
 
@@ -224,9 +234,10 @@ BOOST_AUTO_TEST_CASE(TestSend_ER_TPDU)
     memset(stream.data, 0, 65536);
 
     GeneratorTransport t("", 0); // used as /dev/null
-//    X224Out tpdu(X224::ER_TPDU, stream);
     X224 x224(stream);
-    x224.emit_start(X224::ER_TPDU);
+    x224.emit_begin(X224::ER_TPDU);
+    x224.emit_end();
+
     BOOST_CHECK_EQUAL(stream.get_offset(0), stream.data[2]*256+stream.data[3]);
     // tpkt header
     BOOST_CHECK_EQUAL(0x03, stream.data[0]); // version 3
@@ -242,7 +253,7 @@ BOOST_AUTO_TEST_CASE(TestSend_ER_TPDU)
     BOOST_CHECK_EQUAL(0x00, stream.data[8]); // Reject Cause : Unspecified
     BOOST_CHECK_EQUAL(0xC1, stream.data[9]); // Invalid TPDU Code
     BOOST_CHECK_EQUAL(0x00, stream.data[10]);  // Parameter Length 0
-//    tpdu.send(&t);
+
     t.send(x224.header(), x224.size());
 }
 
@@ -251,16 +262,16 @@ BOOST_AUTO_TEST_CASE(TestSend_DT_TPDU)
     Stream stream(65536);
     memset(stream.data, 0, 65536);
     GeneratorTransport t("", 0); // used as /dev/null
-//    X224Out tpdu(X224::DT_TPDU, stream);
+
     X224 x224(stream);
-    x224.emit_start(X224::DT_TPDU);
-    //------------ Here stream points to where user must write it's data if any
+    x224.emit_begin(X224::DT_TPDU);
+    //------------ Here stream points to where user must write his data if any
     stream.out_uint8(0x12);
     stream.out_uint8(0x34);
     stream.out_uint8(0x56);
     stream.out_uint8(0x78);
-//    tpdu.end();
     x224.emit_end();
+
     BOOST_CHECK_EQUAL(stream.get_offset(0), stream.data[2]*256+stream.data[3]);
     // tpkt header
     BOOST_CHECK_EQUAL(0x03, stream.data[0]); // version 3
@@ -279,6 +290,5 @@ BOOST_AUTO_TEST_CASE(TestSend_DT_TPDU)
     BOOST_CHECK_EQUAL(0x56, stream.data[9]);
     BOOST_CHECK_EQUAL(0x78, stream.data[10]);
 
-//    tpdu.send(&t);
     t.send(x224.header(), x224.size());
 }
