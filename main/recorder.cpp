@@ -77,7 +77,7 @@ int main(int argc, char** argv)
     }
 
     typedef recorder_item_traits<WrmRecorderOption> item_traits;
-    typedef typename item_traits::recorder_item recorder_item;
+    typedef item_traits::recorder_item recorder_item;
     recorder_item recorder_actions[] = {
         recorder_item("png", &to_png),
         recorder_item("wrm", &to_wrm),

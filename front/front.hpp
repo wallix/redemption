@@ -1067,6 +1067,7 @@ public:
         }
         {
             Stream stream(65535);
+
             X224 x224(stream);
             x224.recv_start(this->trans);
             Mcs mcs(stream);
@@ -1080,7 +1081,6 @@ public:
             if (this->verbose >= 256){
                 this->decrypt.dump();
             }
-
             Sec sec(stream, this->decrypt);
             sec.recv_start(true);
 

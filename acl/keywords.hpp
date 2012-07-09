@@ -16,15 +16,8 @@
    Product name: redemption, a FLOSS RDP proxy
    Author(s): Christophe Grosjean
 
-   Module: authhook.cpp
-   Description : sample post-login authentication data processing
-
-   This code is not actually used in production code, it's just a
-   minimal tcp server sample whose purpose is to test the protocol.
-   It shows how the post-processing of authentication data works.
-
-   If no such hook is provided redemption is supposed to works seamlessly
-   on it's own with consistant behavior.
+   Module: keywords.hpp
+   Description : -
 
 */
 
