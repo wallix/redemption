@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU)
     x224.recv_start(&t);
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
-    BOOST_CHECK_EQUAL((uint8_t)X224Packet::CR_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, x224.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
 
     BOOST_CHECK_EQUAL(11, stream.get_offset(0));
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU)
     x224.recv_start(&t);
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
-    BOOST_CHECK_EQUAL((uint8_t)X224Packet::CC_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL((uint8_t)X224::CC_TPDU, x224.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
 
     BOOST_CHECK_EQUAL(stream.p, stream.data+11);
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU)
     x224.recv_start(&t);
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
-    BOOST_CHECK_EQUAL((uint8_t)X224Packet::DR_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL((uint8_t)X224::DR_TPDU, x224.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(6, x224.tpdu_hdr.LI);
     BOOST_CHECK_EQUAL(1, x224.tpdu_hdr.code_part.DR_TPDU.reason);
     BOOST_CHECK_EQUAL(stream.p, stream.data+11);
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU)
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
 
     // X224 header is OK
-    BOOST_CHECK_EQUAL((uint8_t)X224Packet::DT_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL((uint8_t)X224::DT_TPDU, x224.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(2, x224.tpdu_hdr.LI);
     BOOST_CHECK_EQUAL(0x80, x224.tpdu_hdr.code_part.DT_TPDU.eot);
 
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU)
     BOOST_CHECK_EQUAL(13, x224.tpkt.len);
 
     // X224 header is OK
-    BOOST_CHECK_EQUAL((uint8_t)X224Packet::ER_TPDU, x224.tpdu_hdr.code);
+    BOOST_CHECK_EQUAL((uint8_t)X224::ER_TPDU, x224.tpdu_hdr.code);
     BOOST_CHECK_EQUAL(8, x224.tpdu_hdr.LI);
     BOOST_CHECK_EQUAL(2, x224.tpdu_hdr.code_part.ER_TPDU.reject_cause);
 
@@ -134,9 +134,9 @@ BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU)
     memset(stream.data, 0, 65536);
 
     GeneratorTransport t("", 0); // used as /dev/null
-//    X224Out tpdu(X224Packet::CR_TPDU, stream);
+//    X224Out tpdu(X224::CR_TPDU, stream);
     X224 x224(stream);
-    x224.emit_start(X224Packet::CR_TPDU);
+    x224.emit_start(X224::CR_TPDU);
 //    tpdu.end();
     x224.emit_end();
     BOOST_CHECK_EQUAL(stream.get_offset(0), stream.data[2]*256+stream.data[3]);
@@ -164,9 +164,9 @@ BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU)
     memset(stream.data, 0, 65536);
 
     GeneratorTransport t("", 0); // used as /dev/null
-//    X224Out tpdu(X224Packet::CC_TPDU, stream);
+//    X224Out tpdu(X224::CC_TPDU, stream);
     X224 x224(stream);
-    x224.emit_start(X224Packet::CC_TPDU);
+    x224.emit_start(X224::CC_TPDU);
 //    tpdu.end();
     x224.emit_end();
     BOOST_CHECK_EQUAL(stream.get_offset(0), stream.data[2]*256+stream.data[3]);
@@ -194,9 +194,9 @@ BOOST_AUTO_TEST_CASE(TestSend_DR_TPDU)
     memset(stream.data, 0, 65536);
 
     GeneratorTransport t("", 0); // used as /dev/null
-//    X224Out tpdu(X224Packet::DR_TPDU, stream);
+//    X224Out tpdu(X224::DR_TPDU, stream);
     X224 x224(stream);
-    x224.emit_start(X224Packet::DR_TPDU);
+    x224.emit_start(X224::DR_TPDU);
 //    tpdu.end();
     x224.emit_end();
     BOOST_CHECK_EQUAL(stream.get_offset(0), stream.data[2]*256+stream.data[3]);
@@ -224,9 +224,9 @@ BOOST_AUTO_TEST_CASE(TestSend_ER_TPDU)
     memset(stream.data, 0, 65536);
 
     GeneratorTransport t("", 0); // used as /dev/null
-//    X224Out tpdu(X224Packet::ER_TPDU, stream);
+//    X224Out tpdu(X224::ER_TPDU, stream);
     X224 x224(stream);
-    x224.emit_start(X224Packet::ER_TPDU);
+    x224.emit_start(X224::ER_TPDU);
     BOOST_CHECK_EQUAL(stream.get_offset(0), stream.data[2]*256+stream.data[3]);
     // tpkt header
     BOOST_CHECK_EQUAL(0x03, stream.data[0]); // version 3
@@ -251,9 +251,9 @@ BOOST_AUTO_TEST_CASE(TestSend_DT_TPDU)
     Stream stream(65536);
     memset(stream.data, 0, 65536);
     GeneratorTransport t("", 0); // used as /dev/null
-//    X224Out tpdu(X224Packet::DT_TPDU, stream);
+//    X224Out tpdu(X224::DT_TPDU, stream);
     X224 x224(stream);
-    x224.emit_start(X224Packet::DT_TPDU);
+    x224.emit_start(X224::DT_TPDU);
     //------------ Here stream points to where user must write it's data if any
     stream.out_uint8(0x12);
     stream.out_uint8(0x34);

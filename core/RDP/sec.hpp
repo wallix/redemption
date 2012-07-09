@@ -888,7 +888,7 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     //      if (this->encryption)
     Stream sdrq_stream(32768);
     X224 x224(sdrq_stream);
-    x224.emit_start(X224Packet::DT_TPDU);
+    x224.emit_start(X224::DT_TPDU);
 
     Mcs mcs(sdrq_stream);
     mcs.emit_start(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);

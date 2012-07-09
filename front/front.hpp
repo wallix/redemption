@@ -429,7 +429,7 @@ public:
         }
         Stream stream(32768);
         X224 x224(stream);
-        x224.emit_start(X224Packet::DT_TPDU);
+        x224.emit_start(X224::DT_TPDU);
 
         stream.out_uint8((DomainMCSPDU_DisconnectProviderUltimatum << 2) | 1);
         stream.out_uint8(0x80);
@@ -465,7 +465,7 @@ public:
         Stream stream(65536);
 
         X224 x224(stream);
-        x224.emit_start(X224Packet::DT_TPDU);
+        x224.emit_start(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, channel.chanid);
         Sec sec(stream, this->encrypt);
@@ -514,7 +514,7 @@ public:
             Stream stream(32768);
 
             X224 x224(stream);
-            x224.emit_start(X224Packet::DT_TPDU);
+            x224.emit_start(X224::DT_TPDU);
             Mcs mcs(stream);
             mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
             Sec sec(stream, this->encrypt);
@@ -667,7 +667,7 @@ public:
         Stream stream(32768);
 
         X224 x224(stream);
-        x224.emit_start(X224Packet::DT_TPDU);
+        x224.emit_start(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
@@ -796,7 +796,7 @@ public:
         Stream stream(32768);
 
         X224 x224(stream);
-        x224.emit_start(X224Packet::DT_TPDU);
+        x224.emit_start(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
@@ -857,7 +857,7 @@ public:
                 X224 x224(in);
                 x224.recv_start(this->trans);
 
-                if (x224.tpdu_hdr.code != X224Packet::CR_TPDU) {
+                if (x224.tpdu_hdr.code != X224::CR_TPDU) {
                     LOG(LOG_INFO, "recv x224 connection request PDU failed code=%u", x224.tpdu_hdr.code);
                     throw Error(ERR_ISO_INCOMING_CODE_NOT_PDU_CR);
                 }
@@ -870,7 +870,7 @@ public:
             {
                 Stream out(128);
                 X224 x224(out);
-                x224.emit_start(X224Packet::CC_TPDU);
+                x224.emit_start(X224::CC_TPDU);
                 x224.emit_end();
                 this->trans->send(x224.header(), x224.size());
             }
@@ -1336,7 +1336,7 @@ public:
             X224 x224(stream);
             x224.recv_start(this->trans);
 
-            if (x224.tpdu_hdr.code != X224Packet::DT_TPDU){
+            if (x224.tpdu_hdr.code != X224::DT_TPDU){
                 TODO("we can also get a DR (Disconnect Request), this a normal case that should be managed")
                 LOG(LOG_INFO, "Front::Unexpected non data PDU (got %u)", x224.tpdu_hdr.code);
                 throw Error(ERR_X224_EXPECTED_DATA_PDU);
@@ -1476,7 +1476,7 @@ public:
         Stream stream(32768);
 
         X224 x224(stream);
-        x224.emit_start(X224Packet::DT_TPDU);
+        x224.emit_start(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
@@ -1508,7 +1508,7 @@ public:
         Stream stream(32768);
 
         X224 x224(stream);
-        x224.emit_start(X224Packet::DT_TPDU);
+        x224.emit_start(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
@@ -1836,7 +1836,7 @@ public:
         Stream stream(32768);
 
         X224 x224(stream);
-        x224.emit_start(X224Packet::DT_TPDU);
+        x224.emit_start(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
@@ -1887,7 +1887,7 @@ public:
         Stream stream(32768);
 
         X224 x224(stream);
-        x224.emit_start(X224Packet::DT_TPDU);
+        x224.emit_start(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
@@ -1946,7 +1946,7 @@ public:
         Stream stream(32768);
 
         X224 x224(stream);
-        x224.emit_start(X224Packet::DT_TPDU);
+        x224.emit_start(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
@@ -2142,7 +2142,7 @@ public:
                 Stream stream(32768);
 
                 X224 x224(stream);
-                x224.emit_start(X224Packet::DT_TPDU);
+                x224.emit_start(X224::DT_TPDU);
                 Mcs mcs(stream);
                 mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
                 Sec sec(stream, this->encrypt);
@@ -2296,7 +2296,7 @@ public:
         Stream stream(32768);
 
         X224 x224(stream);
-        x224.emit_start(X224Packet::DT_TPDU);
+        x224.emit_start(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);

@@ -33,7 +33,7 @@
 #include "error.hpp"
 
 //##############################################################################
-struct X224Packet
+struct X224
 //##############################################################################
 {
     // tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
@@ -278,29 +278,26 @@ struct X224Packet
         TPKT_HEADER_LEN = 4
     };
 
-}; // END STRUCT X224Packet
+    enum {
+        RDP_NEG_REQ = 1,
+        RDP_NEG_RESP = 2,
+        RDP_NEG_FAILURE = 3
+    };
+
+    enum {
+        RDP_NEG_PROTOCOL_RDP    = 0,
+        RDP_NEG_PROTOCOL_TLS    = 1,
+        RDP_NEG_PROTOCOL_HYBRID = 2,
+    };
 
 
-enum {
-    RDP_NEG_REQ = 1,
-    RDP_NEG_RESP = 2,
-    RDP_NEG_FAILURE = 3
-};
-
-enum {
-    RDP_NEG_PROTOCOL_RDP    = 0,
-    RDP_NEG_PROTOCOL_TLS    = 1,
-    RDP_NEG_PROTOCOL_HYBRID = 2,
-};
-
-
-enum {
-    SSL_REQUIRED_BY_SERVER    = 0x00000001,
-    SSL_NOT_ALLOWED_BY_SERVER = 0x00000002,
-    SSL_CERT_NOT_ON_SERVER    = 0x00000003,
-    INCONSISTENT_FLAGS        = 0x00000004,
-    HYBRID_REQUIRED_BY_SERVER = 0x00000005,
-};
+    enum {
+        SSL_REQUIRED_BY_SERVER    = 0x00000001,
+        SSL_NOT_ALLOWED_BY_SERVER = 0x00000002,
+        SSL_CERT_NOT_ON_SERVER    = 0x00000003,
+        INCONSISTENT_FLAGS        = 0x00000004,
+        HYBRID_REQUIRED_BY_SERVER = 0x00000005,
+    };
 
 // 2.2.1.1 Client X.224 Connection Request PDU
 // ===========================================
@@ -473,10 +470,6 @@ enum {
 // |                                      | 5.4.5.2).                          |
 // +--------------------------------------+------------------------------------+
 
-//##############################################################################
-struct X224 : public X224Packet
-//##############################################################################
-{
     Stream & stream;
     uint16_t bop;
     uint32_t verbose;
@@ -553,7 +546,7 @@ struct X224 : public X224Packet
 
     // CONSTRUCTOR
     //==============================================================================
-    X224 (Stream & stream, uint32_t verbose = 0)
+    X224(Stream & stream, uint32_t verbose = 0)
     //==============================================================================
     : stream(stream)
     , bop(stream.get_offset(0))

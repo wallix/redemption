@@ -240,7 +240,7 @@ static inline void mcs_send_connect_initial(
 
     Stream stream(32768);
     X224 x224(stream);
-    x224.emit_start(X224Packet::DT_TPDU);
+    x224.emit_start(X224::DT_TPDU);
 
     stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
     uint32_t offset_data_len_connect_initial = stream.get_offset(0);
@@ -1058,7 +1058,7 @@ static inline void mcs_send_connect_response(
     // TPKT Header (length = 337 bytes)
     // X.224 Data TPDU
     X224 x224(stream);
-    x224.emit_start(X224Packet::DT_TPDU);
+    x224.emit_start(X224::DT_TPDU);
 
     // BER: Application-Defined Type = APPLICATION 102 = Connect-Response
     stream.out_uint16_be(BER_TAG_MCS_CONNECT_RESPONSE);
@@ -1380,7 +1380,7 @@ static inline void mcs_send_erect_domain_and_attach_user_request_pdu(Transport *
     LOG(LOG_INFO, "mcs_send_erect_domain_and_attach_user_request_pdu");
     Stream edrq_stream(32768);
     X224 edrq_x224(edrq_stream);
-    edrq_x224.emit_start(X224Packet::DT_TPDU);
+    edrq_x224.emit_start(X224::DT_TPDU);
     edrq_stream.out_uint8((DomainMCSPDU_ErectDomainRequest << 2));
     edrq_stream.out_per_integer(0); /* subHeight (INTEGER) */
     edrq_stream.out_per_integer(0); /* subInterval (INTEGER) */
@@ -1389,7 +1389,7 @@ static inline void mcs_send_erect_domain_and_attach_user_request_pdu(Transport *
 
     Stream aurq_stream(32768);
     X224 aurq_x224(aurq_stream);
-    aurq_x224.emit_start(X224Packet::DT_TPDU);
+    aurq_x224.emit_start(X224::DT_TPDU);
     aurq_stream.out_uint8((DomainMCSPDU_AttachUserRequest << 2));
     aurq_x224.emit_end();
     trans->send(aurq_x224.header(), aurq_x224.size());
@@ -1483,7 +1483,7 @@ static inline void mcs_send_channel_join_request_pdu(Transport * trans, int user
 {
     Stream cjrq_stream(32768);
     X224 x224(cjrq_stream);
-    x224.emit_start(X224Packet::DT_TPDU);
+    x224.emit_start(X224::DT_TPDU);
     cjrq_stream.out_uint8((DomainMCSPDU_ChannelJoinRequest << 2));
     cjrq_stream.out_uint16_be(userid);
     cjrq_stream.out_uint16_be(chanid);
@@ -1804,7 +1804,7 @@ static inline void mcs_send_attach_user_confirm_pdu(Transport * trans, uint16_t 
 {
     Stream stream(32768);
     X224 x224(stream);
-    x224.emit_start(X224Packet::DT_TPDU);
+    x224.emit_start(X224::DT_TPDU);
     stream.out_uint8(((DomainMCSPDU_AttachUserConfirm << 2) | 2));
     stream.out_uint8(0);
     stream.out_uint16_be(userid);
@@ -1889,7 +1889,7 @@ static inline void mcs_send_channel_join_confirm_pdu(Transport * trans, uint16_t
 {
     Stream stream(32768);
     X224 x224(stream);
-    x224.emit_start(X224Packet::DT_TPDU);
+    x224.emit_start(X224::DT_TPDU);
     stream.out_uint8((DomainMCSPDU_ChannelJoinConfirm << 2) | 2);
     stream.out_uint8(0);
     stream.out_uint16_be(userid);

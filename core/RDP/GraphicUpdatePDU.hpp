@@ -166,7 +166,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
         }
         this->stream.init(32768);
         this->x224 = new X224(this->stream);
-        this->x224->emit_start(X224Packet::DT_TPDU);
+        this->x224->emit_start(X224::DT_TPDU);
         this->mcs = new Mcs(this->stream);
         this->mcs->emit_start(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
 //        this->sec_out = new SecOut(this->stream, this->crypt_level?SEC_ENCRYPT:0, this->encrypt);

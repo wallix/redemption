@@ -189,7 +189,7 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
 
     Stream stream(32768);
     X224 x224(stream);
-    x224.emit_start(X224Packet::DT_TPDU);
+    x224.emit_start(X224::DT_TPDU);
     Mcs mcs(stream);
     mcs.emit_start(DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
 
@@ -247,7 +247,7 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
     stream.out_copy_bytes((char*)lic1, 314);
 
 //    Stream stream(32768);
-//    X224Out tpdu(X224Packet::DT_TPDU, stream);
+//    X224Out tpdu(X224::DT_TPDU, stream);
 //    McsOut sdin_out(stream, DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
 //    stream.out_copy_bytes((char*)lic1, 322);
 
@@ -267,7 +267,7 @@ static inline void send_lic_response(Transport * trans, int userid) throw (Error
 
     Stream stream(32768);
     X224 x224(stream);
-    x224.emit_start(X224Packet::DT_TPDU);
+    x224.emit_start(X224::DT_TPDU);
     Mcs mcs(stream);
     mcs.emit_start(DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic2, 20);
@@ -287,7 +287,7 @@ static inline void send_media_lic_response(Transport * trans, int userid) throw 
 
     Stream stream(32768);
     X224 x224(stream);
-    x224.emit_start(X224Packet::DT_TPDU);
+    x224.emit_start(X224::DT_TPDU);
     Mcs mcs(stream);
     mcs.emit_start(DomainMCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
     stream.out_copy_bytes((char*)lic3, 20);
@@ -464,7 +464,7 @@ struct RdpLicence {
 
         Stream stream(32768);
         X224 x224(stream);
-        x224.emit_start(X224Packet::DT_TPDU);
+        x224.emit_start(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, encrypt);
@@ -698,7 +698,7 @@ struct RdpLicence {
 
         Stream stream(32768);
         X224 x224(stream);
-        x224.emit_start(X224Packet::DT_TPDU);
+        x224.emit_start(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, encrypt);
@@ -830,7 +830,7 @@ struct RdpLicence {
     {
         Stream stream(32768);
         X224 x224(stream);
-        x224.emit_start(X224Packet::DT_TPDU);
+        x224.emit_start(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_start(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
 
