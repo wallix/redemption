@@ -666,44 +666,6 @@ class Sec
 
 
     //==============================================================================
-    void emit_begin( uint32_t flags )
-    //==============================================================================
-    {
-        if (this->verbose) {
-            LOG(LOG_INFO, "Sec Emit Start(flags=%u)", flags);
-        }
-        this->flags = flags;
-        pdata = stream.p + 12;
-        if (flags) {
-            this->stream.out_uint32_le(flags);
-
-            if ((flags & SEC_ENCRYPT)
-            ||  (flags & SEC_REDIRECTION_PKT))
-            {
-                this->stream.out_skip_bytes(8); // skip crypt signature, filled later
-            }
-        }
-    } // END METHOD emit_begin
-
-
-    //==============================================================================
-    void emit_end()
-    //==============================================================================
-    {
-        if ( (this->flags & SEC_ENCRYPT)||(this->flags & SEC_REDIRECTION_PKT) )
-        {
-            int datalen = this->stream.p - this->pdata;
-            if (this->verbose >= 0x80){
-                LOG(LOG_INFO, "Encrypting %u bytes", datalen);
-                hexdump((char*)this->pdata, datalen);
-            }
-            this->crypt.sign(this->pdata - 8, 8, this->pdata, datalen);
-            this->crypt.encrypt(this->pdata, datalen);
-        }
-    } // END METHOD emit_end
-
-
-    //==============================================================================
     void recv_begin( bool enabled )
     //==============================================================================
     {
@@ -742,36 +704,33 @@ class Sec
     } // END METHOD recv_end
 
 
-}; // END CLASS Sec
-
-
-class SecOut
-{
-    Stream & stream;
-    uint8_t * pdata;
-    uint32_t flags;
-    CryptContext & crypt;
-    bool enabled;
-    uint32_t verbose;
-    public:
-    SecOut(Stream & stream, uint32_t flags, CryptContext & crypt)
-        : stream(stream), pdata(stream.p+12), flags(flags), crypt(crypt), verbose(0)
+    //==============================================================================
+    void emit_begin( uint32_t flags )
+    //==============================================================================
     {
-        if (this->verbose){
-            LOG(LOG_INFO, "SecOut(flags=%u)", flags);
+        if (this->verbose) {
+            LOG(LOG_INFO, "Sec Emit Start(flags=%u)", flags);
         }
+        this->flags = flags;
+        pdata = stream.p + 12;
+        if (flags) {
+            this->stream.out_uint32_le(flags);
 
-        if (this->flags){
-            this->stream.out_uint32_le(this->flags);
-            if ((this->flags & SEC_ENCRYPT)
-            ||  (this->flags & SEC_REDIRECTION_PKT)){
+            if ((flags & SEC_ENCRYPT)
+            ||  (flags & SEC_REDIRECTION_PKT))
+            {
                 this->stream.out_skip_bytes(8); // skip crypt signature, filled later
             }
         }
-    }
+    } // END METHOD emit_start
 
-    void end(){
-        if ((this->flags & SEC_ENCRYPT)||(this->flags & SEC_REDIRECTION_PKT)){
+
+    //==============================================================================
+    void emit_end()
+    //==============================================================================
+    {
+        if ( (this->flags & SEC_ENCRYPT)||(this->flags & SEC_REDIRECTION_PKT) )
+        {
             int datalen = this->stream.p - this->pdata;
             if (this->verbose >= 0x80){
                 LOG(LOG_INFO, "Encrypting %u bytes", datalen);
@@ -780,49 +739,11 @@ class SecOut
             this->crypt.sign(this->pdata - 8, 8, this->pdata, datalen);
             this->crypt.encrypt(this->pdata, datalen);
         }
-    }
-};
+    } // END METHOD emit_end
 
 
-class SecIn
-{
-    public:
-    uint32_t flags;
-    bool enabled;
-    uint32_t verbose;
-    SecIn(Stream & stream, CryptContext & crypt, bool enabled, uint32_t verbose = 0)
-        : flags(0), enabled(enabled), verbose(verbose)
-    {
-        if (this->enabled){
-            this->flags = stream.in_uint32_le();
-            if ((this->flags & SEC_ENCRYPT)  || (this->flags & 0x0400)){
-                uint8_t * pdata = stream.p + 8;
-                uint16_t datalen = stream.end - pdata;
-                TODO(" shouldn't we check signature ?")
-                stream.in_skip_bytes(8); /* signature */
-                // decrypting to the end of tpdu
-                if (this->verbose >= 0x200){
-                    LOG(LOG_DEBUG, "Receiving encrypted TPDU");
-                    hexdump((char*)stream.data, stream.end - stream.data);
-                }
-                if (this->verbose >= 0x100){
-                    LOG(LOG_DEBUG, "Crypt context is:");
-                    crypt.dump();
-                }
-                crypt.decrypt(stream.p, stream.end - stream.p);
-                if (this->verbose >= 0x80){
-                    LOG(LOG_DEBUG, "Decrypted %u bytes", datalen);
-                    hexdump((char*)pdata, datalen);
-                }
-            }
-        }
-    }
+}; // END CLASS Sec
 
-    void end(){
-        TODO(" put some assertion here to ensure all data has been consumed")
-    }
-
-};
 
 static inline void recv_security_exchange_PDU(
                         Transport * trans,
@@ -846,7 +767,8 @@ static inline void recv_security_exchange_PDU(
         throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
     }
 
-    SecIn sec(stream, decrypt, true);
+    Sec sec(stream, decrypt);
+    sec.emit_begin(true);
     if (!sec.flags & SEC_EXCHANGE_PKT) {
         throw Error(ERR_SEC_EXPECTING_CLIENT_RANDOM);
     }
@@ -887,9 +809,9 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     /* Send the client random to the server */
     //      if (this->encryption)
     Stream sdrq_stream(32768);
+
     X224 x224(sdrq_stream);
     x224.emit_begin(X224::DT_TPDU);
-
     Mcs mcs(sdrq_stream);
     mcs.emit_begin(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
 
@@ -899,12 +821,11 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     sdrq_stream.out_copy_bytes(client_crypt_random, server_public_key_len);
     sdrq_stream.out_clear_bytes(SEC_PADDING_SIZE);
 
-      mcs.emit_end();
-
+    mcs.emit_end();
     x224.emit_end();
+
     trans->send(x224.header(), x224.size());
 }
-
 
 
 #endif

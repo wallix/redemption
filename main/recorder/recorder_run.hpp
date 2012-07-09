@@ -23,25 +23,24 @@
 
 #include <iostream>
 
-#include "get_recorder_action.hpp"
+#include <boost/program_options/options_description.hpp>
+
+#include "adaptator.hpp"
+#include "wrm_recorder_option.hpp"
 #include "input_type.hpp"
 #include "wrm_recorder.hpp"
 #include "error.hpp"
 
-template<typename _WrmRecorderOption, std::size_t _N>
-int recorder_run(_WrmRecorderOption& opt,
-                 typename recorder_item_traits<
-                    _WrmRecorderOption
-                 >::recorder_item (&actions)[_N],
+int recorder_run(WrmRecorderOption& opt,
+                 RecorderAction* actions, std::size_t n,
                  InputType::enum_t itype)
 {
     const std::size_t pos = opt.out_filename.find_last_of('.');
-    std::string extension = opt.out_filename.substr(pos + 1);
+    std::string extension = opt.output_type.empty() ? opt.out_filename.substr(pos + 1) : opt.output_type;
 
-    typedef recorder_item_traits<_WrmRecorderOption> item_traits;
-    typedef typename item_traits::action_type recorder_action;
-    recorder_action action = get_recorder_action<recorder_action>(actions, actions + _N, extension);
-    if (!action){
+    RecorderAdaptator* adaptator = get_recorder_adaptator(actions, actions + n,
+                                                          extension);
+    if (!adaptator){
         std::cerr
         << "Incorrect output-type, "
         << opt.desc.find("output-type", false).description() << '\n';
@@ -80,7 +79,7 @@ int recorder_run(_WrmRecorderOption& opt,
         ;
 
         opt.out_filename.erase(pos);
-        action(recorder, opt, opt.out_filename.c_str());
+        (*adaptator)(recorder, opt.out_filename.c_str());
     }
     catch (Error& error)
     {

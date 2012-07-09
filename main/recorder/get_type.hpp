@@ -24,22 +24,6 @@
 #include "wrm_recorder_option.hpp"
 #include "input_type.hpp"
 
-/*template<typename _Converter, typename _Format = typename _Converter::format_type>
-_Format filename_to_type(const std::string& filename)
-{
-    const std::size_t pos = filename.find_last_of('.');
-    return _Converter::string_to_type(filename.substr(pos + 1));
-}
-
-template<typename _Converter, typename _Format = typename _Converter::format_type>
-_Format get_output_type(const WrmRecoderOption& opt)
-{
-    if (!opt.output_type.empty()){
-        return _Converter::string_to_type(opt.output_type);
-    }
-    return filename_to_type<_Converter, _Format>(opt.out_filename);
-}*/
-
 inline InputType::enum_t get_input_type(const WrmRecorderOption& opt)
 {
     if (!opt.input_type.empty()){

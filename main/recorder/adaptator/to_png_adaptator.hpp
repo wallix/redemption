@@ -18,14 +18,34 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__MAIN_RECORDER_TO_PNG__)
-#define __MAIN_RECORDER_TO_PNG__
+#if !defined(__MAIN_RECORDER_ADAPTATOR_TO_PNG_ADAPTATOR_HPP__)
+#define __MAIN_RECORDER_ADAPTATOR_TO_PNG_ADAPTATOR_HPP__
 
-#include "wrm_recorder.hpp"
+#include "recorder/adaptator.hpp"
+#include "recorder/wrm_recorder_option.hpp"
+#include "recorder/to_png.hpp"
 
-void to_png(WRMRecorder& recorder, const char* outfile,
-            std::size_t start, std::size_t stop, std::size_t interval,
-            uint frame_limit = -1,
-            bool screenshot_start = true, bool no_screenshot_stop = false);
+class ToPngAdaptator
+: public RecorderAdaptator
+{
+    WrmRecorderOption& _option;
+
+public:
+    ToPngAdaptator(WrmRecorderOption& option)
+    : _option(option)
+    {}
+
+    virtual void operator()(WRMRecorder& recorder, const char* outfile)
+    {
+        to_png(recorder, outfile,
+               this->_option.range.left.time,
+               this->_option.range.right.time,
+               this->_option.time.time,
+               this->_option.frame,
+               this->_option.screenshot_start,
+               this->_option.no_screenshot_stop
+        );
+    };
+};
 
 #endif

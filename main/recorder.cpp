@@ -21,67 +21,23 @@
  *
  */
 
-#include <iostream>
-
 // #define LOGPRINT
 
-// #include "recorder/wrm_recorder_app.hpp"
-// #include "recorder/init.hpp"
-
-
-// #include "recorder/get_recorder_action.hpp"
-// #include "recorder/wrm_recorder_option.hpp"
-
+#include "recorder/recorder_app.hpp"
 #include "recorder/wrm_recorder_option.hpp"
-#include "recorder/recorder_run.hpp"
-#include "recorder/get_type.hpp"
-#include "recorder/to_png.hpp"
-#include "recorder/to_wrm.hpp"
+#include "recorder/adaptator/to_png_adaptator.hpp"
+#include "recorder/adaptator/to_wrm_adaptator.hpp"
 
 int main(int argc, char** argv)
 {
     WrmRecorderOption opt;
-    opt.parse_command_line(argc, argv);
-
-    if (opt.options.count("version")) {
-        std::cout << argv[0] << ' ' << opt.version() << '\n';
-        return 0;
-    }
-
-    if (opt.options.count("help")) {
-        std::cout << opt.desc << std::endl;
-        return 0;
-    }
-
-    int error = opt.notify_options();
-    if (error){
-        std::cerr
-        << WrmRecorderOption::get_cerror(error) << '\n'
-        << opt.desc << std::endl
-        ;
-        return error;
-    }
-
-    InputType::enum_t itype = get_input_type(opt);
-    if (itype == InputType::NOT_FOUND){
-        std::cerr
-        << "Incorrect input-type, "
-        << opt.desc.find("input-type", false).description() << '\n';
-        return 1000;
-    }
-
-    error = opt.normalize_options();
-    if (error){
-        std::cerr << WrmRecorderOption::get_cerror(error) << std::endl;
-        return error;
-    }
-
-    typedef recorder_item_traits<WrmRecorderOption> item_traits;
-    typedef typename item_traits::recorder_item recorder_item;
-    recorder_item recorder_actions[] = {
-        recorder_item("png", &to_png),
-        recorder_item("wrm", &to_wrm),
+    ToPngAdaptator to_png(opt);
+    ToWrmAdaptator to_wrm(opt);
+    RecorderAction recorder_actions[] = {
+        RecorderAction("png", &to_png),
+        RecorderAction("wrm", &to_wrm),
     };
 
-    return recorder_run<>(opt, recorder_actions, itype);
+    return recorder_app(opt, argc, argv, recorder_actions,
+                        sizeof(recorder_actions) / sizeof(recorder_actions[0]));
 }

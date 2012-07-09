@@ -744,24 +744,24 @@ struct mod_rdp : public client_mod {
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::Licensing");
         }
-            // Licensing
-            // ---------
+        // Licensing
+        // ---------
 
-            // Licensing: The goal of the licensing exchange is to transfer a
-            // license from the server to the client.
+        // Licensing: The goal of the licensing exchange is to transfer a
+        // license from the server to the client.
 
-            // The client should store this license and on subsequent
-            // connections send the license to the server for validation.
-            // However, in some situations the client may not be issued a
-            // license to store. In effect, the packets exchanged during this
-            // phase of the protocol depend on the licensing mechanisms
-            // employed by the server. Within the context of this document
-            // we will assume that the client will not be issued a license to
-            // store. For details regarding more advanced licensing scenarios
-            // that take place during the Licensing Phase, see [MS-RDPELE].
+        // The client should store this license and on subsequent
+        // connections send the license to the server for validation.
+        // However, in some situations the client may not be issued a
+        // license to store. In effect, the packets exchanged during this
+        // phase of the protocol depend on the licensing mechanisms
+        // employed by the server. Within the context of this document
+        // we will assume that the client will not be issued a license to
+        // store. For details regarding more advanced licensing scenarios
+        // that take place during the Licensing Phase, see [MS-RDPELE].
 
-            // Client                                                     Server
-            //    | <------ Licence Error PDU Valid Client ---------------- |
+        // Client                                                     Server
+        //    | <------ Licence Error PDU Valid Client ---------------- |
 
         // 2.2.1.12 Server License Error PDU - Valid Client
         // ================================================
@@ -833,125 +833,124 @@ struct mod_rdp : public client_mod {
             if ((mcs.opcode >> 2) != DomainMCSPDU_SendDataIndication) {
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
-//            SecIn sec(stream, this->decrypt, true);
             Sec sec(stream, this->decrypt);
             sec.recv_begin(true);
 
             if (sec.flags & SEC_LICENSE_PKT) {
 
-            // 2.2.1.12.1 Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
-            // ================================================================
+                // 2.2.1.12.1 Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
+                // ================================================================
 
 
-            // validClientLicenseData (variable): The actual contents of the
-            // License Error (Valid Client) PDU, as specified in section 2.2.1.12.1.
+                // validClientLicenseData (variable): The actual contents of the
+                // License Error (Valid Client) PDU, as specified in section 2.2.1.12.1.
 
 
-            // preamble (4 bytes): Licensing Preamble (section 2.2.1.12.1.1) structure containing header
-            // information. The bMsgType field of the preamble structure MUST be set to ERROR_ALERT (0xFF).
+                // preamble (4 bytes): Licensing Preamble (section 2.2.1.12.1.1) structure containing header
+                // information. The bMsgType field of the preamble structure MUST be set to ERROR_ALERT (0xFF).
 
 
-            // 2.2.1.12.1.1 Licensing Preamble (LICENSE_PREAMBLE)
-            // --------------------------------------------------
+                // 2.2.1.12.1.1 Licensing Preamble (LICENSE_PREAMBLE)
+                // --------------------------------------------------
 
-            // Note: Some of the information in this section is subject to
-            // change because it applies to a preliminary implementation of the
-            // protocol or structure. For information about specific differences
-            // between versions, see the behavior notes that are provided in the
-            // Product Behavior appendix.
+                // Note: Some of the information in this section is subject to
+                // change because it applies to a preliminary implementation of the
+                // protocol or structure. For information about specific differences
+                // between versions, see the behavior notes that are provided in the
+                // Product Behavior appendix.
 
-            // The LICENSE_PREAMBLE structure precedes every licensing packet
-            // sent on the wire.
+                // The LICENSE_PREAMBLE structure precedes every licensing packet
+                // sent on the wire.
 
-            // bMsgType (1 byte): An 8-bit, unsigned integer. A type of the
-            // licensing packet. For more details about the different licensing
-            // packets, see [MS-RDPELE] section 2.2.2.
+                // bMsgType (1 byte): An 8-bit, unsigned integer. A type of the
+                // licensing packet. For more details about the different licensing
+                // packets, see [MS-RDPELE] section 2.2.2.
 
-            // Sent by server:
-            // 0x01 LICENSE_REQUEST Indicates a License Request PDU ([MS-RDPELE] section 2.2.2.1).
-            // 0x02 PLATFORM_CHALLENGE Indicates a Platform Challenge PDU ([MS-RDPELE] section 2.2.2.4).
-            // 0x03 NEW_LICENSE Indicates a New License PDU ([MS-RDPELE] section 2.2.2.7).
-            // 0x04 UPGRADE_LICENSE Indicates an Upgrade License PDU ([MS-RDPELE] section 2.2.2.6).
+                // Sent by server:
+                // 0x01 LICENSE_REQUEST Indicates a License Request PDU ([MS-RDPELE] section 2.2.2.1).
+                // 0x02 PLATFORM_CHALLENGE Indicates a Platform Challenge PDU ([MS-RDPELE] section 2.2.2.4).
+                // 0x03 NEW_LICENSE Indicates a New License PDU ([MS-RDPELE] section 2.2.2.7).
+                // 0x04 UPGRADE_LICENSE Indicates an Upgrade License PDU ([MS-RDPELE] section 2.2.2.6).
 
-            // Sent by client:
-            // 0x12 LICENSE_INFO Indicates a License Information PDU ([MS-RDPELE] section 2.2.2.3).
-            // 0x13 NEW_LICENSE_REQUEST Indicates a New License Request PDU ([MS-RDPELE] section 2.2.2.2).
-            // 0x15 PLATFORM_CHALLENGE_RESPONSE Indicates a Platform Challenge Response PDU ([MS-RDPELE] section 2.2.2.5).
+                // Sent by client:
+                // 0x12 LICENSE_INFO Indicates a License Information PDU ([MS-RDPELE] section 2.2.2.3).
+                // 0x13 NEW_LICENSE_REQUEST Indicates a New License Request PDU ([MS-RDPELE] section 2.2.2.2).
+                // 0x15 PLATFORM_CHALLENGE_RESPONSE Indicates a Platform Challenge Response PDU ([MS-RDPELE] section 2.2.2.5).
 
-            // Sent by either client or server:
-            // 0xFF ERROR_ALERT Indicates a Licensing Error Message PDU (section 2.2.1.12.1.3).
+                // Sent by either client or server:
+                // 0xFF ERROR_ALERT Indicates a Licensing Error Message PDU (section 2.2.1.12.1.3).
 
-            // flags (1 byte): An 8-bit unsigned integer. License preamble flags.
+                // flags (1 byte): An 8-bit unsigned integer. License preamble flags.
 
-            // +-----------------------------------+------------------------------------------------------+
-            // | 0x0F LicenseProtocolVersionMask   | The license protocol version. See the discussion     |
-            // |                                   | which follows this table for more information.       |
-            // +-----------------------------------+------------------------------------------------------+
-            // | 0x80 EXTENDED_ERROR_MSG_SUPPORTED | Indicates that extended error information using the  |
-            // |                                   | License Error Message (section 2.2.1.12.1.3) is      |
-            // |                                   | supported.                                           |
-            // +-----------------------------------+------------------------------------------------------+
+                // +-----------------------------------+------------------------------------------------------+
+                // | 0x0F LicenseProtocolVersionMask   | The license protocol version. See the discussion     |
+                // |                                   | which follows this table for more information.       |
+                // +-----------------------------------+------------------------------------------------------+
+                // | 0x80 EXTENDED_ERROR_MSG_SUPPORTED | Indicates that extended error information using the  |
+                // |                                   | License Error Message (section 2.2.1.12.1.3) is      |
+                // |                                   | supported.                                           |
+                // +-----------------------------------+------------------------------------------------------+
 
-            // The LicenseProtocolVersionMask is a 4-bit value containing the supported license protocol version. The following are possible version values.
-            // +--------------------------+------------------------------------------------+
-            // | 0x2 PREAMBLE_VERSION_2_0 | RDP 4.0                                        |
-            // +--------------------------+------------------------------------------------+
-            // | 0x3 PREAMBLE_VERSION_3_0 | RDP 5.0, 5.1, 5.2, 6.0, 6.1, 7.0, 7.1, and 8.0 |
-            // +--------------------------+------------------------------------------------+
-
-
-            // wMsgSize (2 bytes): An 16-bit, unsigned integer. The size in
-            // bytes of the licensing packet (including the size of the preamble).
-            // --------------------------------------------------
-
-            // validClientMessage (variable): A Licensing Error Message (section
-            // 2.2.1.12.1.3) structure. The dwErrorCode field of the error message
-            // structure MUST be set to STATUS_VALID_CLIENT (0x00000007) and the
-            // dwStateTransition field MUST be set to ST_NO_TRANSITION (0x00000002).
-            // The bbErrorInfo field MUST contain an empty binary large object
-            // (BLOB) of type BB_ERROR_BLOB (0x0004).
+                // The LicenseProtocolVersionMask is a 4-bit value containing the supported license protocol version. The following are possible version values.
+                // +--------------------------+------------------------------------------------+
+                // | 0x2 PREAMBLE_VERSION_2_0 | RDP 4.0                                        |
+                // +--------------------------+------------------------------------------------+
+                // | 0x3 PREAMBLE_VERSION_3_0 | RDP 5.0, 5.1, 5.2, 6.0, 6.1, 7.0, 7.1, and 8.0 |
+                // +--------------------------+------------------------------------------------+
 
 
-            // 2.2.1.12.1.3 Licensing Error Message (LICENSE_ERROR_MESSAGE)
-            // ============================================================
+                // wMsgSize (2 bytes): An 16-bit, unsigned integer. The size in
+                // bytes of the licensing packet (including the size of the preamble).
+                // --------------------------------------------------
+
+                // validClientMessage (variable): A Licensing Error Message (section
+                // 2.2.1.12.1.3) structure. The dwErrorCode field of the error message
+                // structure MUST be set to STATUS_VALID_CLIENT (0x00000007) and the
+                // dwStateTransition field MUST be set to ST_NO_TRANSITION (0x00000002).
+                // The bbErrorInfo field MUST contain an empty binary large object
+                // (BLOB) of type BB_ERROR_BLOB (0x0004).
 
 
-            // The LICENSE_ERROR_MESSAGE structure is used to indicate that an
-            //  error occurred during the licensing protocol. Alternatively,
-            // it is also used to notify the peer of important status information.
+                // 2.2.1.12.1.3 Licensing Error Message (LICENSE_ERROR_MESSAGE)
+                // ============================================================
 
-            // dwErrorCode (4 bytes): A 32-bit, unsigned integer. The error or
-            // status code.
 
-            // Sent by client:
-            // ERR_INVALID_SERVER_CERTIFICATE 0x00000001
-            // ERR_NO_LICENSE 0x00000002
+                // The LICENSE_ERROR_MESSAGE structure is used to indicate that an
+                //  error occurred during the licensing protocol. Alternatively,
+                // it is also used to notify the peer of important status information.
 
-            // Sent by server
-            // ERR_INVALID_SCOPE 0x00000004
-            // ERR_NO_LICENSE_SERVER 0x00000006
-            // STATUS_VALID_CLIENT 0x00000007
-            // ERR_INVALID_CLIENT 0x00000008
-            // ERR_INVALID_PRODUCTID 0x0000000B
-            // ERR_INVALID_MESSAGE_LEN 0x0000000C
+                // dwErrorCode (4 bytes): A 32-bit, unsigned integer. The error or
+                // status code.
 
-            // Sent by client and server:
-            // ERR_INVALID_MAC 0x00000003
+                // Sent by client:
+                // ERR_INVALID_SERVER_CERTIFICATE 0x00000001
+                // ERR_NO_LICENSE 0x00000002
 
-            // dwStateTransition (4 bytes): A 32-bit, unsigned integer. The
-            // licensing state to transition into upon receipt of this message.
-            // For more details about how this field is used, see [MS-RDPELE]
-            // section 3.1.5.2.
+                // Sent by server
+                // ERR_INVALID_SCOPE 0x00000004
+                // ERR_NO_LICENSE_SERVER 0x00000006
+                // STATUS_VALID_CLIENT 0x00000007
+                // ERR_INVALID_CLIENT 0x00000008
+                // ERR_INVALID_PRODUCTID 0x0000000B
+                // ERR_INVALID_MESSAGE_LEN 0x0000000C
 
-            // ST_TOTAL_ABORT 0x00000001
-            // ST_NO_TRANSITION 0x00000002
-            // ST_RESEND_LAST_MESSAGE 0x00000003
-            // ST_RESET_PHASE_TO_START 0x00000004
+                // Sent by client and server:
+                // ERR_INVALID_MAC 0x00000003
 
-            // bbErrorInfo (variable): A LICENSE_BINARY_BLOB (section
-            // 2.2.1.12.1.2) structure which MUST contain a BLOB of type
-            // BB_ERROR_BLOB (0x0004) that includes information relevant to
-            // the error code specified in dwErrorCode.
+                // dwStateTransition (4 bytes): A 32-bit, unsigned integer. The
+                // licensing state to transition into upon receipt of this message.
+                // For more details about how this field is used, see [MS-RDPELE]
+                // section 3.1.5.2.
+
+                // ST_TOTAL_ABORT 0x00000001
+                // ST_NO_TRANSITION 0x00000002
+                // ST_RESEND_LAST_MESSAGE 0x00000003
+                // ST_RESET_PHASE_TO_START 0x00000004
+
+                // bbErrorInfo (variable): A LICENSE_BINARY_BLOB (section
+                // 2.2.1.12.1.2) structure which MUST contain a BLOB of type
+                // BB_ERROR_BLOB (0x0004) that includes information relevant to
+                // the error code specified in dwErrorCode.
 
                 uint8_t tag = stream.in_uint8();
                 uint8_t version = stream.in_uint8();
@@ -1077,7 +1076,6 @@ struct mod_rdp : public client_mod {
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");
-//            SecIn sec(stream, this->decrypt, this->crypt_level);
             Sec sec(stream, this->decrypt);
             sec.recv_begin(this->crypt_level);
             if (sec.flags & SEC_LICENSE_PKT) { /* 0x80 */
@@ -1182,13 +1180,13 @@ struct mod_rdp : public client_mod {
                             switch (share_data_in.pdutype2) {
                             case PDUTYPE2_UPDATE:
                             {
-    // MS-RDPBCGR: 1.3.6
-    // -----------------
-    // The most fundamental output that a server can send to a connected client
-    // is bitmap images of the remote session using the Update Bitmap PDU. This
-    // allows the client to render the working space and enables a user to
-    // interact with the session running on the server. The global palette
-    // information for a session is sent to the client in the Update Palette PDU.
+                                // MS-RDPBCGR: 1.3.6
+                                // -----------------
+                                // The most fundamental output that a server can send to a connected client
+                                // is bitmap images of the remote session using the Update Bitmap PDU. This
+                                // allows the client to render the working space and enables a user to
+                                // interact with the session running on the server. The global palette
+                                // information for a session is sent to the client in the Update Palette PDU.
 
                                 int update_type = stream.in_uint16_le();
 //                                LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:update_type = %u", update_type);
