@@ -1076,7 +1076,6 @@ struct mod_rdp : public client_mod {
                 throw Error(ERR_MCS_RECV_ID_NOT_MCS_SDIN);
             }
 //            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:SecIn");
-//            SecIn sec(stream, this->decrypt, this->crypt_level);
             Sec sec(stream, this->decrypt);
             sec.recv_start(this->crypt_level);
             if (sec.flags & SEC_LICENSE_PKT) { /* 0x80 */

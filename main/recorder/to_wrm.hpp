@@ -21,9 +21,12 @@
 #if !defined(__MAIN_RECORDER_TO_WRM__)
 #define __MAIN_RECORDER_TO_WRM__
 
-#include "wrm_recorder_option.hpp"
 #include "wrm_recorder.hpp"
 
-void to_wrm(WRMRecorder& recorder, WrmRecorderOption& opt, const char* outfile);
+void to_wrm(WRMRecorder& recorder, const char* outfile,
+            std::size_t start, std::size_t stop, std::size_t interval,
+            uint frame_limit = -1,
+            bool screenshot_start = false, bool screenshot_wrm = false,
+            const char* metaname = 0);
 
 #endif
