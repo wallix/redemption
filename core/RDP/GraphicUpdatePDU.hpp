@@ -103,9 +103,8 @@ struct GraphicsUpdatePDU : public RDPSerializer
     X224 * x224;
     Mcs * mcs;
     Sec * sec;
-//    SecOut * sec_out;
-    ShareControlOut * out_control;
-    ShareDataOut * out_data;
+    ShareControl * sctrl;
+    ShareData * sdata;
     uint16_t & userid;
     int & shareid;
     int & crypt_level;
@@ -133,9 +132,8 @@ struct GraphicsUpdatePDU : public RDPSerializer
         x224(NULL),
         mcs(NULL),
         sec(NULL),
-//        sec_out(NULL),
-        out_control(NULL),
-        out_data(NULL),
+        sctrl(NULL),
+        sdata(NULL),
         userid(userid),
         shareid(shareid),
         crypt_level(crypt_level),
@@ -147,19 +145,17 @@ struct GraphicsUpdatePDU : public RDPSerializer
     ~GraphicsUpdatePDU(){
         if (this->x224){ delete this->x224; }
         if (this->mcs){ delete this->mcs; }
-//        if (this->sec_out){ delete this->sec_out; }
         if (this->sec){ delete this->sec; }
-        if (this->out_control){ delete this->out_control; }
-        if (this->out_data){ delete this->out_data; }
+        if (this->sctrl){ delete this->sctrl; }
+        if (this->sdata){ delete this->sdata; }
     }
 
     void init(){
         if (this->x224){ delete this->x224; }
         if (this->mcs){ delete this->mcs; }
-//        if (this->sec_out){ delete this->sec_out; }
         if (this->sec){ delete this->sec; }
-        if (this->out_control){ delete this->out_control; }
-        if (this->out_data){ delete this->out_data; }
+        if (this->sctrl){ delete this->sctrl; }
+        if (this->sdata){ delete this->sdata; }
 
         if (this->ini->globals.debug.primary_orders > 63){
             LOG(LOG_INFO, "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%u", this->userid, this->shareid);
@@ -169,11 +165,12 @@ struct GraphicsUpdatePDU : public RDPSerializer
         this->x224->emit_begin(X224::DT_TPDU);
         this->mcs = new Mcs(this->stream);
         this->mcs->emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
-//        this->sec_out = new SecOut(this->stream, this->crypt_level?SEC_ENCRYPT:0, this->encrypt);
         this->sec = new Sec(this->stream, this->encrypt);
         this->sec->emit_begin( this->crypt_level?SEC_ENCRYPT:0 );
-        this->out_control = new ShareControlOut(this->stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        this->out_data = new ShareDataOut(this->stream, PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
+        this->sctrl = new ShareControl(this->stream);
+        this->sctrl->emit_begin( PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE );
+        this->sdata = new ShareData(this->stream);
+        this->sdata->emit_begin( PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED );
 
         this->stream.out_uint16_le(RDP_UPDATE_ORDERS);
         this->stream.out_clear_bytes(2); /* pad */
@@ -191,10 +188,8 @@ struct GraphicsUpdatePDU : public RDPSerializer
             this->stream.set_out_uint16_le(this->order_count, this->offset_order_count);
             this->order_count = 0;
 
-            this->out_data->end();
-            this->out_control->end();
-
-//            this->sec_out->end();
+            this->sdata->emit_end();
+            this->sctrl->emit_end();
             this->sec->emit_end();
             this->mcs->emit_end();
             this->x224->emit_end();

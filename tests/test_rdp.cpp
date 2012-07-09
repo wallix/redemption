@@ -36,10 +36,12 @@ BOOST_AUTO_TEST_CASE(TestSendShareControlAndData)
     Stream stream(65536);
     memset(stream.data, 0, 65536);
 
-    ShareControlOut out_control(stream, PDUTYPE_DATAPDU, 1);
-    ShareDataOut out_data(stream, PDUTYPE2_UPDATE, 0x12345678, RDP::STREAM_MED);
-    out_data.end();
-    out_control.end();
+    ShareControl sctrl(stream);
+    sctrl.emit_begin(PDUTYPE_DATAPDU, 1);
+    ShareData sdata(stream);
+    sdata.emit_begin(PDUTYPE2_UPDATE, 0x12345678, RDP::STREAM_MED);
+    sdata.emit_end();
+    sctrl.emit_end();
 
     uint8_t * data = stream.data;
     BOOST_CHECK_EQUAL(0x12, data[0] + data[1]*256);
@@ -61,14 +63,14 @@ BOOST_AUTO_TEST_CASE(TestX224SendShareControlAndData)
     Stream stream(65536);
     memset(stream.data, 0, 65536);
 
-//    X224Out tpdu(X224::DT_TPDU, stream);
     X224 x224(stream);
     x224.emit_begin(X224::DT_TPDU);
-    ShareControlOut out_control(stream, PDUTYPE_DATAPDU, 1);
-    ShareDataOut out_data(stream, PDUTYPE2_UPDATE, 0x12345678, RDP::STREAM_MED);
-    out_data.end();
-    out_control.end();
-//    tpdu.end();
+    ShareControl sctrl(stream);
+    sctrl.emit_begin(PDUTYPE_DATAPDU, 1);
+    ShareData sdata(stream);
+    sdata.emit_begin(PDUTYPE2_UPDATE, 0x12345678, RDP::STREAM_MED);
+    sdata.emit_end();
+    sctrl.emit_end();
     x224.emit_end();
 
     uint8_t * data = stream.data + 7;

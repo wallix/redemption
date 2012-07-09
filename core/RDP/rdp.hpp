@@ -70,6 +70,84 @@
 //   transmission source of the PDU.
 
 
+//##############################################################################
+struct ShareControl
+//##############################################################################
+{
+    Stream & stream;
+    uint8_t offlen;
+    public:
+    uint16_t len;
+    uint8_t pdu_type1;
+    uint16_t mcs_channel;
+
+    // CONSTRUCTOR
+    //==============================================================================
+    ShareControl ( Stream & stream )
+    //==============================================================================
+    : stream(stream)
+    , offlen(stream.get_offset(0))
+    , len(0)
+    , pdu_type1(0)
+    , mcs_channel(0)
+    {
+    } // END CONSTRUCTOR
+
+    //==============================================================================
+    void emit_begin( uint8_t pdu_type1
+                   , uint16_t mcs_channel
+                   )
+    //==============================================================================
+    {
+        enum {
+            versionLow = 0x10,
+            versionHigh = 0
+        };
+        stream.out_uint16_le(0); // skip len
+        stream.out_uint16_le(versionHigh | versionLow | pdu_type1);
+        stream.out_uint16_le(mcs_channel);
+
+    } // END METHOD emit_begin
+
+    //==============================================================================
+    void emit_end()
+    //==============================================================================
+    {
+        stream.set_out_uint16_le(stream.get_offset(this->offlen), this->offlen);
+
+    } // END METHOD emit_end
+
+    //==============================================================================
+    void recv_begin()
+    //==============================================================================
+    {
+        this->len = stream.in_uint16_le();
+        this->pdu_type1 = stream.in_uint16_le() & 0xF;
+        if (this->pdu_type1 == PDUTYPE_DEACTIVATEALLPDU && len == 4){
+            // should not happen
+            // but DEACTIVATEALLPDU seems to be broken on windows 2000
+            return;
+        }
+        this->mcs_channel = stream.in_uint16_le();
+
+    } // END METHOD recv_begin
+
+    //==============================================================================
+    void recv_end()
+    //==============================================================================
+    {
+        if (this->stream.p != this->stream.end){
+            LOG(LOG_ERR, "all data should have been consumed : remains %d", stream.end - stream.p);
+        }
+    } // END METHOD recv_end
+
+
+}; // END CLASS ShareControl
+
+
+
+
+/*
 class ShareControlOut
 {
     Stream & stream;
@@ -114,7 +192,7 @@ class ShareControlIn
         TODO(" put some assertion here to ensure all data has been consumed")
     }
 };
-
+*/
 // [MS-RDPBCGR] 2.2.8.1.1.1.2 Share Data Header (TS_SHAREDATAHEADER)
 // =================================================================
 // The TS_SHAREDATAHEADER header is a T.128 legacy mode header (see [T128]
@@ -297,6 +375,88 @@ enum {
 
 
 
+//##############################################################################
+struct ShareData
+//##############################################################################
+{
+    Stream & stream;
+    uint8_t offlen;
+    public:
+    uint32_t share_id;
+    uint8_t streamid;
+    uint16_t len;
+    uint8_t pdutype2;
+    uint8_t compressedType;
+    uint16_t compressedLen;
+
+    // CONSTRUCTOR
+    //==============================================================================
+    ShareData ( Stream & stream )
+    //==============================================================================
+    : stream(stream)
+    , offlen(stream.get_offset(0))
+    , share_id(0)
+    , streamid(0)
+    , len(0)
+    , pdutype2(0)
+    , compressedType(0)
+    , compressedLen(0)
+    {
+    } // END CONSTRUCTOR
+
+    //==============================================================================
+    void emit_begin( uint8_t pdu_type2
+                   , uint32_t share_id
+                   , uint8_t streamid
+                   )
+    //==============================================================================
+    {
+        stream.out_uint32_le(share_id);
+        stream.out_uint8(0); // pad1
+        stream.out_uint8(streamid); // streamid
+        stream.out_uint16_le(2); // skip len
+        stream.out_uint8(pdu_type2); // pdutype2
+        stream.out_uint8(0); // compressedType
+        stream.out_uint16_le(0); // compressedLen
+
+    } // END METHOD emit_begin
+
+    //==============================================================================
+    void emit_end()
+    //==============================================================================
+    {
+        stream.set_out_uint16_le(stream.get_offset(this->offlen + 8), this->offlen + 6);
+
+    } // END METHOD emit_end
+
+    //==============================================================================
+    void recv_begin()
+    //==============================================================================
+    {
+        this->share_id = stream.in_uint32_le();
+        stream.in_uint8();
+        this->streamid = stream.in_uint8();
+        this->len = stream.in_uint16_le();
+        this->pdutype2 = stream.in_uint8();
+        this->compressedType = stream.in_uint8();
+        this->compressedLen = stream.in_uint16_le();
+
+    } // END METHOD recv_begin
+
+    //==============================================================================
+    void recv_end()
+    //==============================================================================
+    {
+        if (stream.p != stream.end){
+            LOG(LOG_INFO, "some data were not consumed len=%u compressedLen=%u remains=%u", this->len, this->compressedLen, stream.end - stream.p);
+            stream.p = stream.end;
+        }
+    } // END METHOD recv_end
+
+
+}; // END CLASS ShareData
+
+/*
 class ShareDataOut
 {
     Stream & stream;
@@ -349,6 +509,6 @@ class ShareDataIn
         }
     }
 };
-
+*/
 
 #endif

@@ -513,16 +513,19 @@ public:
             }
             Stream stream(32768);
 
+            // Packet header
             X224 x224(stream);
             x224.emit_begin(X224::DT_TPDU);
             Mcs mcs(stream);
             mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
             Sec sec(stream, this->encrypt);
             sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+            ShareControl sctrl(stream);
+            sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
+            ShareData sdata(stream);
+            sdata.emit_begin(PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
-            ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-            ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
-
+            // Payload
             stream.out_uint16_le(RDP_UPDATE_PALETTE);
             stream.out_uint16_le(0);
             stream.out_uint32_le(256); /* # of colors */
@@ -536,9 +539,9 @@ public:
                 stream.out_uint8(r);
             }
 
-            rdp_data_out.end();
-            rdp_control_out.end();
-
+            // Packet trailer
+            sdata.emit_end();
+            sctrl.emit_end();
             sec.emit_end();
             mcs.emit_end();
             x224.emit_end();
@@ -666,16 +669,19 @@ public:
         }
         Stream stream(32768);
 
+        // Packet header
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        ShareControl sctrl(stream);
+        sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
+        ShareData sdata(stream);
+        sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
-        ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
-
+        // Payload
         stream.out_uint16_le(RDP_POINTER_COLOR);
         stream.out_uint16_le(0); /* pad */
 
@@ -742,9 +748,9 @@ public:
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
 
-        rdp_data_out.end();
-        rdp_control_out.end();
-
+        // Packet trailer
+        sdata.emit_end();
+        sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
@@ -795,23 +801,26 @@ public:
         }
         Stream stream(32768);
 
+        // Packet header
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        ShareControl sctrl(stream);
+        sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
+        ShareData sdata(stream);
+        sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
-        ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
-
+        // Payload
         stream.out_uint16_le(RDP_POINTER_CACHED);
         stream.out_uint16_le(0); /* pad */
         stream.out_uint16_le(cache_idx);
 
-        rdp_data_out.end();
-        rdp_control_out.end();
-
+        // Packet trailer
+        sdata.emit_end();
+        sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
@@ -1244,8 +1253,10 @@ public:
                 if (this->verbose){
                     LOG(LOG_INFO, "non licence packet: still waiting for licence");
                 }
-                ShareControlIn sci(stream);
-                switch (sci.pdu_type1) {
+                ShareControl sctrl(stream);
+                sctrl.recv_begin();
+
+                switch (sctrl.pdu_type1) {
                 case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
                     if (this->verbose){
                         LOG(LOG_INFO, "unexpected DEMANDACTIVE PDU while in licence negociation");
@@ -1279,9 +1290,10 @@ public:
                     }
                     break;
                 default:
-                    LOG(LOG_WARNING, "unknown PDU type received while in licence negociation (%d)\n", sci.pdu_type1);
+                    LOG(LOG_WARNING, "unknown PDU type received while in licence negociation (%d)\n", sctrl.pdu_type1);
                     break;
                 }
+                sctrl.recv_end();
             }
             sec.recv_end();
             mcs.recv_end();
@@ -1416,9 +1428,10 @@ public:
             }
             else {
                 while (stream.p < stream.end) {
-                    ShareControlIn sci(stream);
+                    ShareControl sctrl(stream);
+                    sctrl.recv_begin();
 
-                    switch (sci.pdu_type1) {
+                    switch (sctrl.pdu_type1) {
                     case PDUTYPE_DEMANDACTIVEPDU:
                         if (this->verbose){
                             LOG(LOG_INFO, "Front received DEMANDACTIVEPDU");
@@ -1457,11 +1470,15 @@ public:
                         }
                         break;
                     default:
-                        LOG(LOG_WARNING, "Front received unknown PDU type in session_data (%d)\n", sci.pdu_type1);
+                        LOG(LOG_WARNING, "Front received unknown PDU type in session_data (%d)\n", sctrl.pdu_type1);
                         break;
                     }
+                    sctrl.recv_end();
                 }
             }
+            sec.recv_end();
+            mcs.recv_end();
+            x224.recv_end();
         }
         break;
         }
@@ -1475,22 +1492,25 @@ public:
         }
         Stream stream(32768);
 
+        // Packet header
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        ShareControl sctrl(stream);
+        sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
+        ShareData sdata(stream);
+        sdata.emit_begin(PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
-        ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
-
+        // Payload
         stream.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
         stream.out_clear_bytes(2);
 
-        rdp_data_out.end();
-        rdp_control_out.end();
-
+        // Packet trailer
+        sdata.emit_end();
+        sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
@@ -1507,15 +1527,17 @@ public:
 
         Stream stream(32768);
 
+        // Packet header
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        ShareControl sctrl(stream);
+        sctrl.emit_begin(PDUTYPE_DEMANDACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
 
-        ShareControlOut rdp_out(stream, PDUTYPE_DEMANDACTIVEPDU, this->userid + MCS_USERCHANNEL_BASE);
-
+        // Payload
         size_t caps_count = 0;
         stream.out_uint32_le(this->share_id);
         stream.out_uint16_le(4); /* 4 chars for RDP\0 */
@@ -1610,8 +1632,8 @@ public:
         caps_count_ptr[2] = caps_count >> 16;
         caps_count_ptr[3] = caps_count >> 24;
 
-        rdp_out.end();
-
+        // Packet trailer
+        sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
@@ -1835,22 +1857,25 @@ public:
 
         Stream stream(32768);
 
+        // Packet header
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        ShareControl sctrl(stream);
+        sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
+        ShareData sdata(stream);
+        sdata.emit_begin(PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
-        ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
-
+        // Payload
         stream.out_uint16_le(1); /* messageType */
         stream.out_uint16_le(1002); /* control id */
 
-        rdp_data_out.end();
-        rdp_control_out.end();
-
+        // Packet trailer
+        sdata.emit_end();
+        sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
@@ -1886,23 +1911,26 @@ public:
 
         Stream stream(32768);
 
+        // Packet header
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        ShareControl sctrl(stream);
+        sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
+        ShareData sdata(stream);
+        sdata.emit_begin(PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
 
-        ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
-
+        // Payload
         stream.out_uint16_le(action);
         stream.out_uint16_le(0); /* userid */
         stream.out_uint32_le(1002); /* control id */
 
-        rdp_data_out.end();
-        rdp_control_out.end();
-
+        // Packet trailer
+        sdata.emit_end();
+        sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
@@ -1945,21 +1973,24 @@ public:
 
         Stream stream(32768);
 
+        // Packet header
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        ShareControl sctrl(stream);
+        sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
+        ShareData sdata(stream);
+        sdata.emit_begin(PDUTYPE2_FONTMAP, this->share_id, RDP::STREAM_MED);
 
-        ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-        ShareDataOut rdp_data_out(stream, PDUTYPE2_FONTMAP, this->share_id, RDP::STREAM_MED);
-
+        // Payload
         stream.out_copy_bytes((char*)g_fontmap, 172);
 
-        rdp_data_out.end();
-        rdp_control_out.end();
-
+        // Packet trailer
+        sdata.emit_end();
+        sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
@@ -1973,20 +2004,21 @@ public:
         if (this->verbose & 4){
             LOG(LOG_INFO, "Front::process_data(...)");
         }
-        ShareDataIn share_data_in(stream);
+        ShareData sdata_in(stream);
+        sdata_in.recv_begin();
         if (this->verbose > 0x80){
-            LOG(LOG_INFO, "share_data_in.pdutype2=%u"
-                          " share_data_in.len=%u"
-                          " share_data_in.compressedLen=%u"
+            LOG(LOG_INFO, "sdata_in.pdutype2=%u"
+                          " sdata_in.len=%u"
+                          " sdata_in.compressedLen=%u"
                           " remains=%u",
-                (unsigned)share_data_in.pdutype2,
-                (unsigned)share_data_in.len,
-                (unsigned)share_data_in.compressedLen,
+                (unsigned)sdata_in.pdutype2,
+                (unsigned)sdata_in.len,
+                (unsigned)sdata_in.compressedLen,
                 (unsigned)(stream.end - stream.p)
             );
         }
 
-        switch (share_data_in.pdutype2) {
+        switch (sdata_in.pdutype2) {
         case PDUTYPE2_UPDATE:  // Update PDU (section 2.2.9.1.1.3)
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_UPDATE");
@@ -2141,18 +2173,21 @@ public:
 
                 Stream stream(32768);
 
+                // Packet header
                 X224 x224(stream);
                 x224.emit_begin(X224::DT_TPDU);
                 Mcs mcs(stream);
                 mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
                 Sec sec(stream, this->encrypt);
                 sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+                ShareControl sctrl(stream);
+                sctrl.emit_begin(PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
+                ShareData sdata_out(stream);
+                sdata_out.emit_begin(PDUTYPE2_SHUTDOWN_DENIED, this->share_id, RDP::STREAM_MED);
 
-                ShareControlOut rdp_control_out(stream, PDUTYPE_DATAPDU, this->userid + MCS_USERCHANNEL_BASE);
-                ShareDataOut rdp_data_out(stream, PDUTYPE2_SHUTDOWN_DENIED, this->share_id, RDP::STREAM_MED);
-                rdp_data_out.end();
-                rdp_control_out.end();
-
+                // Packet trailer
+                sdata_out.emit_end();
+                sctrl.emit_end();
                 sec.emit_end();
                 mcs.emit_end();
                 x224.emit_end();
@@ -2241,7 +2276,7 @@ public:
             if (this->verbose){
                 LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST");
             }
-            stream.in_skip_bytes(share_data_in.len);
+            stream.in_skip_bytes(sdata_in.len);
         break;
         case PDUTYPE2_BITMAPCACHE_ERROR_PDU: // Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.1)
             if (this->verbose){
@@ -2280,10 +2315,12 @@ public:
         break;
 
         default:
-            LOG(LOG_WARNING, "unsupported PDUTYPE in process_data %d\n", share_data_in.pdutype2);
+            LOG(LOG_WARNING, "unsupported PDUTYPE in process_data %d\n", sdata_in.pdutype2);
             break;
         }
-        share_data_in.end();
+
+        sdata_in.recv_end();
+
         if (this->verbose & 4){
             LOG(LOG_INFO, "process_data done");
         }
@@ -2295,15 +2332,18 @@ public:
 
         Stream stream(32768);
 
+        // Packet header
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
         mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
+        ShareControl sctrl(stream);
+        sctrl.emit_begin(PDUTYPE_DEACTIVATEALLPDU, this->userid + MCS_USERCHANNEL_BASE);
 
-        ShareControlOut(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + MCS_USERCHANNEL_BASE).end();
-
+        // Packet trailer
+        sctrl.emit_end();
         sec.emit_end();
         mcs.emit_end();
         x224.emit_end();
