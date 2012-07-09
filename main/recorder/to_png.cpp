@@ -18,16 +18,16 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__MAIN_RECORDER_TO_PNG__)
-#define __MAIN_RECORDER_TO_PNG__
-
 #include "to_png.hpp"
 #include "wrm_recorder_option.hpp"
 #include "wrm_recorder.hpp"
 #include "timer_compute.hpp"
 #include "staticcapture.hpp"
 
-void to_png(WRMRecorder& recorder, WrmRecorderOption& opt, const char* outfile)
+void to_png(WRMRecorder& recorder, const char* outfile,
+            std::size_t start, std::size_t stop, std::size_t interval,
+            uint frame_limit,
+            bool screenshot_start, bool no_screenshot_stop)
 {
     StaticCapture capture(recorder.meta().width,
                           recorder.meta().height,
@@ -35,23 +35,24 @@ void to_png(WRMRecorder& recorder, WrmRecorderOption& opt, const char* outfile)
                           0, 0);
     recorder.consumer(&capture);
     TimerCompute timercompute(recorder);
-    if (opt.range.left && !timercompute.advance_second(opt.range.left))
+    if (start && !timercompute.advance_second(start))
         return /*0*/;
 
-    if (opt.screenshot_start)
+    if (screenshot_start)
         capture.dump_png();
 
     uint frame = 0;
-    uint64_t mtime = TimerCompute::coeff_sec_to_usec * opt.time;
-    uint64_t msecond = TimerCompute::coeff_sec_to_usec * (opt.range.right.time - opt.range.left.time);
-    while (recorder.selected_next_order() && frame != opt.frame)
+    uint64_t mtime = TimerCompute::coeff_sec_to_usec * interval;
+    uint64_t msecond = TimerCompute::coeff_sec_to_usec * (stop - start);
+    while (recorder.selected_next_order())
     {
         if (timercompute.interpret_is_time_chunk()){
             uint64_t usec = timercompute.usec();
             if (usec >= mtime){
                 capture.dump_png();
                 timercompute.reset();
-                ++frame;
+                if (++frame == frame_limit)
+                    break;
             }
             if (msecond <= usec){
                 msecond = 0;
@@ -63,11 +64,9 @@ void to_png(WRMRecorder& recorder, WrmRecorderOption& opt, const char* outfile)
             recorder.interpret_order();
         }
     }
-    if (!opt.no_screenshot_stop && msecond && frame != opt.frame){
+    if (!no_screenshot_stop && msecond && frame != frame_limit){
         capture.dump_png();
         //++frame;
     }
     //return frame;
 }
-
-#endif

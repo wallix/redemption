@@ -47,15 +47,15 @@ struct WrmRecorderOption {
 
     WrmRecorderOption();
 
-    void parse_command_line(int argc, char** argv);
+    virtual void parse_command_line(int argc, char** argv);
 
     /**
      * Return 0 if success.
      */
-    int notify_options();
-    int normalize_options();
+    virtual int notify_options();
+    virtual int normalize_options();
 
-    const char * version() const
+    virtual const char * version() const
     {
         return "0.1";
     };
@@ -66,7 +66,7 @@ struct WrmRecorderOption {
         IN_FILENAME_IS_EMPTY
     };
 
-    static const char * get_cerror(int error)
+    virtual const char * get_cerror(int error)
     {
         if (error == OUT_FILENAME_IS_EMPTY)
             return "Not output-file";
@@ -76,7 +76,6 @@ struct WrmRecorderOption {
             return "Success";
         return "Unknow";
     }
-
 
 private:
     void add_default_options();

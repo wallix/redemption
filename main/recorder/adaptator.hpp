@@ -18,24 +18,24 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__MAIN_RECORDER_GET_RECORDER_ACTION__)
-#define __MAIN_RECORDER_GET_RECORDER_ACTION__
+#if !defined(__MAIN_RECORDER_ADAPTATOR_HPP__)
+#define __MAIN_RECORDER_ADAPTATOR_HPP__
 
 #include <utility>
 #include <string>
+
 #include "wrm_recorder.hpp"
 
-template<typename _WrmRecorderOption>
-struct recorder_item_traits
+struct RecorderAdaptator
 {
-    typedef void(*action_type)(WRMRecorder&, _WrmRecorderOption&, const char *);
-    typedef std::pair<std::string, action_type> recorder_item;
+    virtual void operator()(WRMRecorder& recorder, const char* outfile) = 0;
 };
 
-template<typename _RecorderAction, typename _ForwardIterator>
-_RecorderAction get_recorder_action(_ForwardIterator first,
-                                    _ForwardIterator last,
-                                    const std::string& extension)
+typedef std::pair<std::string, RecorderAdaptator*> RecorderAction;
+
+RecorderAdaptator* get_recorder_adaptator(RecorderAction* first,
+                                          RecorderAction* last,
+                                          const std::string& extension)
 {
     for (; first != last; ++first)
     {
@@ -44,17 +44,5 @@ _RecorderAction get_recorder_action(_ForwardIterator first,
     }
     return 0;
 }
-
-/*template<typename _WrmRecorderOption, std::size_t _N>
-typename recorder_item_traits<_WrmRecorderOption>::action_type
-get_recorder_action(typename recorder_item_traits<
-                        _WrmRecorderOption
-                    >::recorder_item (&actions)[_N],
-                    const std::string& extension)
-{
-    return get_recorder_action<
-        typename recorder_item_traits<_WrmRecorderOption>::action_type
-    >(actions + 0, actions + _N, extension);
-}*/
 
 #endif
