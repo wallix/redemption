@@ -431,7 +431,7 @@ public:
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
 
-        stream.out_uint8((DomainMCSPDU_DisconnectProviderUltimatum << 2) | 1);
+        stream.out_uint8((MCSPDU_DisconnectProviderUltimatum << 2) | 1);
         stream.out_uint8(0x80);
 
         x224.emit_end();
@@ -467,7 +467,7 @@ public:
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
-        mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, channel.chanid);
+        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, channel.chanid);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
 
@@ -517,7 +517,7 @@ public:
             X224 x224(stream);
             x224.emit_begin(X224::DT_TPDU);
             Mcs mcs(stream);
-            mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
+            mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
             Sec sec(stream, this->encrypt);
             sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
             ShareControl sctrl(stream);
@@ -673,7 +673,7 @@ public:
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
-        mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
+        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
@@ -805,7 +805,7 @@ public:
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
-        mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
+        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
@@ -1081,9 +1081,9 @@ public:
             x224.recv_begin(this->trans);
             Mcs mcs(stream);
             mcs.recv_begin();
-            if ((mcs.opcode >> 2) != DomainMCSPDU_SendDataRequest) {
-                TODO("We should make a special case for DomainMCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
-                // mcs.opcode >> 2) == DomainMCSPDU_DisconnectProviderUltimatum
+            if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
+                TODO("We should make a special case for MCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
+                // mcs.opcode >> 2) == MCSPDU_DisconnectProviderUltimatum
                 throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
 
@@ -1154,9 +1154,9 @@ public:
             x224.recv_begin(this->trans);
             Mcs mcs(stream);
             mcs.recv_begin();
-            if ((mcs.opcode >> 2) != DomainMCSPDU_SendDataRequest) {
-                TODO("We should make a special case for DomainMCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
-                // mcs.opcode >> 2) == DomainMCSPDU_DisconnectProviderUltimatum
+            if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
+                TODO("We should make a special case for MCSPDU_DisconnectProviderUltimatum, as this one is a demand to end connection");
+                // mcs.opcode >> 2) == MCSPDU_DisconnectProviderUltimatum
                 throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
 
@@ -1358,11 +1358,11 @@ public:
             mcs.recv_begin();
 
             // Disconnect Provider Ultimatum datagram
-            if ((mcs.opcode >> 2) == DomainMCSPDU_DisconnectProviderUltimatum) {
+            if ((mcs.opcode >> 2) == MCSPDU_DisconnectProviderUltimatum) {
                 throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
             }
 
-            if ((mcs.opcode >> 2) != DomainMCSPDU_SendDataRequest) {
+            if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
                 throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
             }
 
@@ -1496,7 +1496,7 @@ public:
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
-        mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
+        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
@@ -1531,7 +1531,7 @@ public:
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
-        mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
+        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
@@ -1861,7 +1861,7 @@ public:
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
-        mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
+        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
@@ -1915,7 +1915,7 @@ public:
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
-        mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
+        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
@@ -1977,7 +1977,7 @@ public:
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
-        mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
+        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);
@@ -2177,7 +2177,7 @@ public:
                 X224 x224(stream);
                 x224.emit_begin(X224::DT_TPDU);
                 Mcs mcs(stream);
-                mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
+                mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
                 Sec sec(stream, this->encrypt);
                 sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
                 ShareControl sctrl(stream);
@@ -2336,7 +2336,7 @@ public:
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
-        mcs.emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
+        mcs.emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         Sec sec(stream, this->encrypt);
         sec.emit_begin(this->client_info.crypt_level?SEC_ENCRYPT:0);
         ShareControl sctrl(stream);

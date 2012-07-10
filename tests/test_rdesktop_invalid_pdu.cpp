@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     BOOST_CHECK_EQUAL((uint8_t)X224::DT_TPDU, (uint8_t)x224.tpdu_hdr.code);
     Mcs mcs(stream);
     mcs.recv_begin();
-    BOOST_CHECK_EQUAL((uint8_t)DomainMCSPDU_SendDataRequest, (uint8_t)mcs.opcode >> 2);
+    BOOST_CHECK_EQUAL((uint8_t)MCSPDU_SendDataRequest, (uint8_t)mcs.opcode >> 2);
     BOOST_CHECK_EQUAL(0, mcs.user_id);
     BOOST_CHECK_EQUAL((uint16_t)MCS_GLOBAL_CHANNEL, (uint16_t)mcs.chan_id);
     BOOST_CHECK_EQUAL(0x70, mcs.magic_0x70);
@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
 
     Mcs mcs(stream);
     mcs.recv_begin();
-    BOOST_CHECK_EQUAL((uint8_t)DomainMCSPDU_SendDataRequest, mcs.opcode >> 2);
+    BOOST_CHECK_EQUAL((uint8_t)MCSPDU_SendDataRequest, mcs.opcode >> 2);
     BOOST_CHECK_EQUAL(0, mcs.user_id);
     BOOST_CHECK_EQUAL((uint16_t)MCS_GLOBAL_CHANNEL, (uint16_t)mcs.chan_id);
     BOOST_CHECK_EQUAL(0x70, mcs.magic_0x70);

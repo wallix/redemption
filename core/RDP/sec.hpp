@@ -763,7 +763,7 @@ static inline void recv_security_exchange_PDU(
     Mcs mcs(stream);
     mcs.recv_begin();
 
-    if ((mcs.opcode >> 2) != DomainMCSPDU_SendDataRequest) {
+    if ((mcs.opcode >> 2) != MCSPDU_SendDataRequest) {
         throw Error(ERR_MCS_APPID_NOT_MCS_SDRQ);
     }
 
@@ -813,7 +813,7 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     X224 x224(sdrq_stream);
     x224.emit_begin(X224::DT_TPDU);
     Mcs mcs(sdrq_stream);
-    mcs.emit_begin(DomainMCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
+    mcs.emit_begin(MCSPDU_SendDataRequest, userid, MCS_GLOBAL_CHANNEL);
 
     sdrq_stream.out_uint32_le(SEC_EXCHANGE_PKT);
     sdrq_stream.out_uint32_le(server_public_key_len + SEC_PADDING_SIZE);
