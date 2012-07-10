@@ -34,55 +34,109 @@
 
 enum DomainMCSPDU
 {
-    DomainMCSPDU_PlumbDomainIndication       = 0,
-    DomainMCSPDU_ErectDomainRequest          = 1,
-    DomainMCSPDU_MergeChannelsRequest        = 2,
-    DomainMCSPDU_MergeChannelsConfirm        = 3,
-    DomainMCSPDU_PurgeChannelsIndication     = 4,
-    DomainMCSPDU_MergeTokensRequest          = 5,
-    DomainMCSPDU_MergeTokensConfirm          = 6,
-    DomainMCSPDU_PurgeTokensIndication       = 7,
-    DomainMCSPDU_DisconnectProviderUltimatum = 8,
-    DomainMCSPDU_RejectMCSPDUUltimatum       = 9,
-    DomainMCSPDU_AttachUserRequest           = 10,
-    DomainMCSPDU_AttachUserConfirm           = 11,
-    DomainMCSPDU_DetachUserRequest           = 12,
-    DomainMCSPDU_DetachUserIndication        = 13,
-    DomainMCSPDU_ChannelJoinRequest          = 14,
-    DomainMCSPDU_ChannelJoinConfirm          = 15,
-    DomainMCSPDU_ChannelLeaveRequest         = 16,
-    DomainMCSPDU_ChannelConveneRequest       = 17,
-    DomainMCSPDU_ChannelConveneConfirm       = 18,
-    DomainMCSPDU_ChannelDisbandRequest       = 19,
-    DomainMCSPDU_ChannelDisbandIndication    = 20,
-    DomainMCSPDU_ChannelAdmitRequest         = 21,
-    DomainMCSPDU_ChannelAdmitIndication      = 22,
-    DomainMCSPDU_ChannelExpelRequest         = 23,
-    DomainMCSPDU_ChannelExpelIndication      = 24,
-    DomainMCSPDU_SendDataRequest             = 25,
-    DomainMCSPDU_SendDataIndication          = 26,
-    DomainMCSPDU_UniformSendDataRequest      = 27,
-    DomainMCSPDU_UniformSendDataIndication   = 28,
-    DomainMCSPDU_TokenGrabRequest            = 29,
-    DomainMCSPDU_TokenGrabConfirm            = 30,
-    DomainMCSPDU_TokenInhibitRequest         = 31,
-    DomainMCSPDU_TokenInhibitConfirm         = 32,
-    DomainMCSPDU_TokenGiveRequest            = 33,
-    DomainMCSPDU_TokenGiveIndication         = 34,
-    DomainMCSPDU_TokenGiveResponse           = 35,
-    DomainMCSPDU_TokenGiveConfirm            = 36,
-    DomainMCSPDU_TokenPleaseRequest          = 37,
-    DomainMCSPDU_TokenPleaseConfirm          = 38,
-    DomainMCSPDU_TokenReleaseRequest         = 39,
-    DomainMCSPDU_TokenReleaseConfirm         = 40,
-    DomainMCSPDU_TokenTestRequest            = 41,
-    DomainMCSPDU_TokenTestConfirm            = 42,
-    DomainMCSPDU_enum_length                 = 43
+    MCSPDU_PlumbDomainIndication       = 0x00,
+    MCSPDU_ErectDomainRequest          = 0x01,
+    MCSPDU_MergeChannelsRequest        = 0x02,
+    MCSPDU_MergeChannelsConfirm        = 0x03,
+    MCSPDU_PurgeChannelsIndication     = 0x04,
+    MCSPDU_MergeTokensRequest          = 0x05,
+    MCSPDU_MergeTokensConfirm          = 0x06,
+    MCSPDU_PurgeTokensIndication       = 0x07,
+    MCSPDU_DisconnectProviderUltimatum = 0x08,
+    MCSPDU_RejectMCSPDUUltimatum       = 0x09,
+    MCSPDU_AttachUserRequest           = 0x0A,
+    MCSPDU_AttachUserConfirm           = 0x0B,
+    MCSPDU_DetachUserRequest           = 0x0C,
+    MCSPDU_DetachUserIndication        = 0x0D,
+    MCSPDU_ChannelJoinRequest          = 0x0E,
+    MCSPDU_ChannelJoinConfirm          = 0x0F,
+    MCSPDU_ChannelLeaveRequest         = 0x10,
+    MCSPDU_ChannelConveneRequest       = 0x11,
+    MCSPDU_ChannelConveneConfirm       = 0x12,
+    MCSPDU_ChannelDisbandRequest       = 0x13,
+    MCSPDU_ChannelDisbandIndication    = 0x14,
+    MCSPDU_ChannelAdmitRequest         = 0x15,
+    MCSPDU_ChannelAdmitIndication      = 0x16,
+    MCSPDU_ChannelExpelRequest         = 0x17,
+    MCSPDU_ChannelExpelIndication      = 0x18,
+    MCSPDU_SendDataRequest             = 0x19,
+    MCSPDU_SendDataIndication          = 0x1A,
+    MCSPDU_UniformSendDataRequest      = 0x1B,
+    MCSPDU_UniformSendDataIndication   = 0x1C,
+    MCSPDU_TokenGrabRequest            = 0x1D,
+    MCSPDU_TokenGrabConfirm            = 0x1E,
+    MCSPDU_TokenInhibitRequest         = 0x1F,
+    MCSPDU_TokenInhibitConfirm         = 0x20,
+    MCSPDU_TokenGiveRequest            = 0x21,
+    MCSPDU_TokenGiveIndication         = 0x22,
+    MCSPDU_TokenGiveResponse           = 0x23,
+    MCSPDU_TokenGiveConfirm            = 0x24,
+    MCSPDU_TokenPleaseRequest          = 0x25,
+    MCSPDU_TokenPleaseIndication       = 0x26,
+    MCSPDU_TokenReleaseRequest         = 0x27,
+    MCSPDU_TokenReleaseConfirm         = 0x28,
+    MCSPDU_TokenTestRequest            = 0x29,
+    MCSPDU_TokenTestConfirm            = 0x2A,
+};
+
+enum ConnectMCSPDU {
+    MCSPDU_CONNECT_INITIAL             = 101,
+    MCSPDU_CONNECT_RESPONSE            = 102,
+    MCSPDU_CONNECT_ADDITIONAL          = 103,
+    MCSPDU_CONNECT_RESULT              = 104,
 };
 
 enum {
-    BER_TAG_MCS_CONNECT_INITIAL  = 0x7f65,
-    BER_TAG_MCS_CONNECT_RESPONSE = 0x7f66,
+    PER_DomainMCSPDU_CHOICE_PlumbDomainIndication       =  0,
+    PER_DomainMCSPDU_CHOICE_ErectDomainRequest          =  4,
+    PER_DomainMCSPDU_CHOICE_MergeChannelsRequest        =  8,
+    PER_DomainMCSPDU_CHOICE_MergeChannelsConfirm        = 12,
+    PER_DomainMCSPDU_CHOICE_PurgeChannelsIndication     = 16,
+    PER_DomainMCSPDU_CHOICE_MergeTokensRequest          = 20,
+    PER_DomainMCSPDU_CHOICE_MergeTokensConfirm          = 24,
+    PER_DomainMCSPDU_CHOICE_PurgeTokensIndication       = 28,
+    PER_DomainMCSPDU_CHOICE_DisconnectProviderUltimatum = 32,
+    PER_DomainMCSPDU_CHOICE_RejectMCSPDUUltimatum       = 36,
+    PER_DomainMCSPDU_CHOICE_AttachUserRequest           = 40,
+    PER_DomainMCSPDU_CHOICE_AttachUserConfirm           = 44,
+    PER_DomainMCSPDU_CHOICE_DetachUserRequest           = 48,
+    PER_DomainMCSPDU_CHOICE_DetachUserIndication        = 52,
+    PER_DomainMCSPDU_CHOICE_ChannelJoinRequest          = 56,
+    PER_DomainMCSPDU_CHOICE_ChannelJoinConfirm          = 60,
+    PER_DomainMCSPDU_CHOICE_ChannelLeaveRequest         = 64,
+    PER_DomainMCSPDU_CHOICE_ChannelConveneRequest       = 68,
+    PER_DomainMCSPDU_CHOICE_ChannelConveneConfirm       = 72,
+    PER_DomainMCSPDU_CHOICE_ChannelDisbandRequest       = 76,
+    PER_DomainMCSPDU_CHOICE_ChannelDisbandIndication    = 80,
+    PER_DomainMCSPDU_CHOICE_ChannelAdmitRequest         = 84,
+    PER_DomainMCSPDU_CHOICE_ChannelAdmitIndication      = 88,
+    PER_DomainMCSPDU_CHOICE_ChannelExpelRequest         = 92,
+    PER_DomainMCSPDU_CHOICE_ChannelExpelIndication      = 96,
+    PER_DomainMCSPDU_CHOICE_SendDataRequest             = 100,
+    PER_DomainMCSPDU_CHOICE_SendDataIndication          = 104,
+    PER_DomainMCSPDU_CHOICE_UniformSendDataRequest      = 108,
+    PER_DomainMCSPDU_CHOICE_UniformSendDataIndication   = 112,
+    PER_DomainMCSPDU_CHOICE_TokenGrabRequest            = 116,
+    PER_DomainMCSPDU_CHOICE_TokenGrabConfirm            = 120,
+    PER_DomainMCSPDU_CHOICE_TokenInhibitRequest         = 124,
+    PER_DomainMCSPDU_CHOICE_TokenInhibitConfirm         = 128,
+    PER_DomainMCSPDU_CHOICE_TokenGiveRequest            = 132,
+    PER_DomainMCSPDU_CHOICE_TokenGiveIndication         = 136,
+    PER_DomainMCSPDU_CHOICE_TokenGiveResponse           = 140,
+    PER_DomainMCSPDU_CHOICE_TokenGiveConfirm            = 144,
+    PER_DomainMCSPDU_CHOICE_TokenPleaseRequest          = 148,
+    PER_DomainMCSPDU_CHOICE_TokenPleaseIndication       = 152,
+    PER_DomainMCSPDU_CHOICE_TokenReleaseRequest         = 156,
+    PER_DomainMCSPDU_CHOICE_TokenReleaseConfirm         = 160,
+    PER_DomainMCSPDU_CHOICE_TokenTestRequest            = 164,
+    PER_DomainMCSPDU_CHOICE_TokenTestConfirm            = 168,
+};
+
+enum {
+    BER_TAG_ConnectMCSPDU_CONNECT_INITIAL    = 0x7f65,
+    BER_TAG_ConnectMCSPDU_CONNECT_RESPONSE   = 0x7f66,
+    BER_TAG_ConnectMCSPDU_CONNECT_ADDITIONAL = 0x7f67,
+    BER_TAG_ConnectMCSPDU_CONNECT_RESULT     = 0x7f68,
 };
 
 enum {
@@ -242,7 +296,7 @@ static inline void mcs_send_connect_initial(
     X224 x224(stream);
     x224.emit_begin(X224::DT_TPDU);
 
-    stream.out_uint16_be(BER_TAG_MCS_CONNECT_INITIAL);
+    stream.out_uint16_be(BER_TAG_ConnectMCSPDU_CONNECT_INITIAL);
     uint32_t offset_data_len_connect_initial = stream.get_offset(0);
     stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
@@ -364,7 +418,7 @@ static inline void mcs_send_connect_initial(
     LOG(LOG_INFO, "mcs_data_len = %u", stream.get_offset(offset_data_len + 3));
     stream.set_out_ber_len_uint16(stream.get_offset(offset_data_len + 3), offset_data_len);
 
-    // set mcs_data len for BER_TAG_MCS_CONNECT_INITIAL
+    // set mcs_data len for BER_TAG_ConnectMCSPDU_CONNECT_INITIAL
 
     LOG(LOG_INFO, "offset_data_len_connect_initial = %u", stream.get_offset(offset_data_len_connect_initial + 3));
     stream.set_out_ber_len_uint16(stream.get_offset(offset_data_len_connect_initial + 3), offset_data_len_connect_initial);
@@ -435,7 +489,7 @@ static inline void mcs_recv_connect_response(
     X224 x224(cr_stream);
     x224.recv_begin(trans);
 
-    if (cr_stream.in_uint16_be() != BER_TAG_MCS_CONNECT_RESPONSE) {
+    if (cr_stream.in_uint16_be() != BER_TAG_ConnectMCSPDU_CONNECT_RESPONSE) {
         LOG(LOG_ERR, "recv connect response expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
@@ -604,7 +658,7 @@ static inline void mcs_recv_connect_initial(
     X224 x224(stream);
     x224.recv_begin(trans);
 
-    if (stream.in_uint16_be() != BER_TAG_MCS_CONNECT_INITIAL) {
+    if (stream.in_uint16_be() != BER_TAG_ConnectMCSPDU_CONNECT_INITIAL) {
         LOG(LOG_ERR, "Recv connect initial expected");
         throw Error(ERR_MCS_BER_HEADER_UNEXPECTED_TAG);
     }
@@ -1061,7 +1115,7 @@ static inline void mcs_send_connect_response(
     x224.emit_begin(X224::DT_TPDU);
 
     // BER: Application-Defined Type = APPLICATION 102 = Connect-Response
-    stream.out_uint16_be(BER_TAG_MCS_CONNECT_RESPONSE);
+    stream.out_uint16_be(BER_TAG_ConnectMCSPDU_CONNECT_RESPONSE);
     uint32_t offset_len_mcs_connect_response = stream.get_offset(0);
     // BER: Type Length
     stream.out_ber_len_uint16(0); // filled later, 3 bytes
@@ -1307,7 +1361,7 @@ static inline void mcs_send_connect_response(
     stream.set_out_uint16_be(0x8000 | (stream.get_offset(offset_user_data_len + 2)), offset_user_data_len);
     // set mcs_data len, Stream::BER_TAG_OCTET_STRING (some kind of BLOB)
     stream.set_out_ber_len_uint16(stream.get_offset(offset_len_mcs_data + 3), offset_len_mcs_data);
-    // set BER_TAG_MCS_CONNECT_RESPONSE len
+    // set BER_TAG_ConnectMCSPDU_CONNECT_RESPONSE len
     stream.set_out_ber_len_uint16(stream.get_offset(offset_len_mcs_connect_response + 3), offset_len_mcs_connect_response);
 
 //    tpdu.end();
@@ -1381,7 +1435,7 @@ static inline void mcs_send_erect_domain_and_attach_user_request_pdu(Transport *
     Stream edrq_stream(32768);
     X224 edrq_x224(edrq_stream);
     edrq_x224.emit_begin(X224::DT_TPDU);
-    edrq_stream.out_uint8((DomainMCSPDU_ErectDomainRequest << 2));
+    edrq_stream.out_uint8((MCSPDU_ErectDomainRequest << 2));
     edrq_stream.out_per_integer(0); /* subHeight (INTEGER) */
     edrq_stream.out_per_integer(0); /* subInterval (INTEGER) */
     edrq_x224.emit_end();
@@ -1390,7 +1444,7 @@ static inline void mcs_send_erect_domain_and_attach_user_request_pdu(Transport *
     Stream aurq_stream(32768);
     X224 aurq_x224(aurq_stream);
     aurq_x224.emit_begin(X224::DT_TPDU);
-    aurq_stream.out_uint8((DomainMCSPDU_AttachUserRequest << 2));
+    aurq_stream.out_uint8((MCSPDU_AttachUserRequest << 2));
     aurq_x224.emit_end();
     trans->send(aurq_x224.header(), aurq_x224.size());
 }
@@ -1484,7 +1538,7 @@ static inline void mcs_send_channel_join_request_pdu(Transport * trans, int user
     Stream cjrq_stream(32768);
     X224 x224(cjrq_stream);
     x224.emit_begin(X224::DT_TPDU);
-    cjrq_stream.out_uint8((DomainMCSPDU_ChannelJoinRequest << 2));
+    cjrq_stream.out_uint8((MCSPDU_ChannelJoinRequest << 2));
     cjrq_stream.out_uint16_be(userid);
     cjrq_stream.out_uint16_be(chanid);
     x224.emit_end();
@@ -1570,7 +1624,7 @@ static inline void mcs_recv_channel_join_confirm_pdu(Transport * trans, uint16_t
     X224 x224(cjcf_stream);
     x224.recv_begin(trans);
     int opcode = cjcf_stream.in_uint8();
-    if ((opcode >> 2) != DomainMCSPDU_ChannelJoinConfirm) {
+    if ((opcode >> 2) != MCSPDU_ChannelJoinConfirm) {
         LOG(LOG_ERR, "Recv channel join confirm pdu expected");
         throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
     }
@@ -1643,7 +1697,7 @@ static inline void mcs_recv_attach_user_confirm_pdu(Transport * trans, uint16_t 
     X224 x224(aucf_stream);
     x224.recv_begin(trans);
     int opcode = aucf_stream.in_uint8();
-    if ((opcode >> 2) != DomainMCSPDU_AttachUserConfirm) {
+    if ((opcode >> 2) != MCSPDU_AttachUserConfirm) {
         LOG(LOG_ERR, "Attach user confirm pdu expected");
         throw Error(ERR_MCS_RECV_AUCF_OPCODE_NOT_OK);
     }
@@ -1722,7 +1776,7 @@ static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport *
         X224 x224(stream);
         x224.recv_begin(trans);
         uint8_t opcode = stream.in_uint8();
-        if ((opcode >> 2) != DomainMCSPDU_ErectDomainRequest) {
+        if ((opcode >> 2) != MCSPDU_ErectDomainRequest) {
             LOG(LOG_ERR, "Erect Domain Request expected");
             throw Error(ERR_MCS_RECV_EDQR_APPID_NOT_EDRQ);
         }
@@ -1739,7 +1793,7 @@ static inline void mcs_recv_erect_domain_and_attach_user_request_pdu(Transport *
         X224 x224(stream);
         x224.recv_begin(trans);
         uint8_t opcode = stream.in_uint8();
-        if ((opcode >> 2) != DomainMCSPDU_AttachUserRequest) {
+        if ((opcode >> 2) != MCSPDU_AttachUserRequest) {
             LOG(LOG_ERR, "Attach User Request expected");
             throw Error(ERR_MCS_RECV_AURQ_APPID_NOT_AURQ);
         }
@@ -1805,7 +1859,7 @@ static inline void mcs_send_attach_user_confirm_pdu(Transport * trans, uint16_t 
     Stream stream(32768);
     X224 x224(stream);
     x224.emit_begin(X224::DT_TPDU);
-    stream.out_uint8(((DomainMCSPDU_AttachUserConfirm << 2) | 2));
+    stream.out_uint8(((MCSPDU_AttachUserConfirm << 2) | 2));
     stream.out_uint8(0);
     stream.out_uint16_be(userid);
     x224.emit_end();
@@ -1890,12 +1944,12 @@ static inline void mcs_send_channel_join_confirm_pdu(Transport * trans, uint16_t
     Stream stream(32768);
     X224 x224(stream);
     x224.emit_begin(X224::DT_TPDU);
-    stream.out_uint8((DomainMCSPDU_ChannelJoinConfirm << 2) | 2);
-    stream.out_uint8(0);
-    stream.out_uint16_be(userid);
-    stream.out_uint16_be(chanid);
+    stream.out_uint8((MCSPDU_ChannelJoinConfirm << 2) | 2);
+    stream.out_uint8(0);                // Result
+    stream.out_uint16_be(userid);       // initiator
+    stream.out_uint16_be(chanid);       // requested channelid
     TODO("this should be sent only if different from requested chan_id")
-    stream.out_uint16_be(chanid);
+    stream.out_uint16_be(chanid);       // optional answer channelid
     x224.emit_end();
     trans->send(x224.header(), x224.size());
 }
@@ -1992,7 +2046,7 @@ static inline void mcs_recv_channel_join_request_pdu(Transport * trans, uint16_t
     x224.recv_begin(trans);
 
     uint8_t opcode = stream.in_uint8();
-    if ((opcode >> 2) != DomainMCSPDU_ChannelJoinRequest) {
+    if ((opcode >> 2) != MCSPDU_ChannelJoinRequest) {
         LOG(LOG_INFO, "unexpected opcode = %u", opcode);
         throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
     }

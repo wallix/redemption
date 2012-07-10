@@ -164,7 +164,7 @@ struct GraphicsUpdatePDU : public RDPSerializer
         this->x224 = new X224(this->stream);
         this->x224->emit_begin(X224::DT_TPDU);
         this->mcs = new Mcs(this->stream);
-        this->mcs->emit_begin(DomainMCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
+        this->mcs->emit_begin(MCSPDU_SendDataIndication, this->userid, MCS_GLOBAL_CHANNEL);
         this->sec = new Sec(this->stream, this->encrypt);
         this->sec->emit_begin( this->crypt_level?SEC_ENCRYPT:0 );
         this->sctrl = new ShareControl(this->stream);
