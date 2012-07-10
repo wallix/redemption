@@ -29,6 +29,8 @@
 int recorder_app(WrmRecorderOption& opt, int argc, char** argv,
                  RecorderAction* actions, std::size_t n)
 {
+    opt.accept_output_type<>(RecorderActionStringIterator(actions),
+                             RecorderActionStringIterator(actions + n));
     opt.parse_command_line(argc, argv);
 
     if (opt.options.count("version")) {

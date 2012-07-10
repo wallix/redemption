@@ -19,8 +19,6 @@
  */
 
 #include "to_png.hpp"
-#include "wrm_recorder_option.hpp"
-#include "wrm_recorder.hpp"
 #include "timer_compute.hpp"
 #include "staticcapture.hpp"
 

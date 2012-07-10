@@ -66,7 +66,9 @@ int recorder_run(WrmRecorderOption& opt,
         }
 
         if (!recorder.is_meta_chunk()){
-            std::cerr << "Chunk meta not found in output file" << std::endl;
+            std::cerr << recorder.chunk_type() << '\n';
+            std::cerr << recorder.meta() << '\n';
+            std::cerr << "Chunk META not found in " << opt.in_filename << std::endl;
             return 2001;
         }
 

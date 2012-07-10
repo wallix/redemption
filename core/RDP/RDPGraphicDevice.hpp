@@ -89,6 +89,7 @@ struct WRMChunk {
     static const uint16_t BREAKPOINT = 1005;
     static const uint16_t META_FILE = 1006;
     static const uint16_t NEXT_FILE_ID = 1007;
+    static const uint16_t TIME_START = 1008;
 };
 
 struct RDPUnserializer
@@ -287,6 +288,12 @@ struct RDPUnserializer
             {
                 uint64_t micro_sec = this->stream.in_uint64_be();
                 this->wait_cap.wait(micro_sec);
+                --this->remaining_order_count;
+            }
+            break;
+            case WRMChunk::TIME_START:
+            {
+                this->stream.p = this->stream.end;
                 --this->remaining_order_count;
             }
             break;

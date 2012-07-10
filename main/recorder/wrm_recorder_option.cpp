@@ -74,7 +74,13 @@ void WrmRecorderOption::add_default_options()
     ("deduce-dir,d", "use --ignore-dir and set --path with the directory of --input-file")
     ("output-meta-name,m", po::value(&this->metaname), "specified name of meta file")
     ("input-type", po::value(&this->input_type), "accept 'mwrm' or 'wrm'")
-    ("output-type", po::value(&this->output_type), "accept 'png' or 'wrm'")
+    ;
+}
+
+void WrmRecorderOption::add_output_type(const std::string& desc)
+{
+    this->desc.add_options()
+    ("output-type", po::value(&this->output_type), desc.c_str())
     ;
 }
 

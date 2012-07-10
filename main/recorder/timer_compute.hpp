@@ -70,27 +70,37 @@ public:
         return false;
     }
 
-    uint64_t start()
+    timeval start()
     {
-        uint64_t time_start = 0;
-        if (this->recorder.selected_next_order())
+        while (this->recorder.selected_next_order())
         {
+            if (this->recorder.chunk_type() == WRMChunk::TIME_START)
+            {
+                return this->recorder.get_start_time_order();
+            }
             if (this->recorder.chunk_type() == WRMChunk::TIMESTAMP)
             {
                 this->interpret_time();
+                timeval ret = {0,0};
+                return ret;
             }
-            else
-            {
-                this->recorder.interpret_order();
-            }
+            this->recorder.interpret_order();
         }
-        return time_start;
+        timeval ret = {0,0};
+        return ret;
     }
 
     uint64_t advance_usecond(uint msec)
     {
         if (!msec)
             return 0;
+
+        if (this->micro_sec >= msec)
+        {
+            uint64_t tmp = this->micro_sec;
+            this->reset();
+            return tmp;
+        }
 
         while (this->recorder.selected_next_order())
         {
