@@ -1019,7 +1019,7 @@ struct Mcs
     void recv_end(){
     //==============================================================================
         if (this->stream.p != this->stream.end){
-            LOG(LOG_ERR, "all data should have been consumed : remains %d", stream.end - stream.p);
+            LOG(LOG_ERR, "MCS: all data should have been consumed : remains %d, opcode=%u", stream.end - stream.p, this->opcode);
             exit(0);
         }
     } // END METHOD recv_end

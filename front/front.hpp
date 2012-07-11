@@ -1266,7 +1266,11 @@ public:
                     if (this->verbose){
                         LOG(LOG_INFO, "Unexpected CONFIRMACTIVE PDU");
                     }
-                    this->process_confirm_active(stream);
+                    {
+                        uint32_t share_id = stream.in_uint32_le();
+                        uint16_t originatorId = stream.in_uint16_le();
+                        this->process_confirm_active(stream);
+                    }
 
                     break;
                 case PDUTYPE_DATAPDU: /* 7 */
@@ -1441,7 +1445,11 @@ public:
                         if (this->verbose){
                             LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU");
                         }
-                        this->process_confirm_active(stream);
+                        {
+                            uint32_t share_id = stream.in_uint32_le();
+                            uint16_t originatorId = stream.in_uint16_le();
+                            this->process_confirm_active(stream);
+                        }
                         // reset caches, etc.
                         this->reset();
                         // resizing done
@@ -1652,8 +1660,6 @@ public:
     void process_confirm_active(Stream & stream)
     {
         LOG(LOG_INFO, "process_confirm_active");
-//        uint32_t share_id = stream.in_uint32_le();
-//        uint16_t originatorId = stream.in_uint16_le();
         uint16_t lengthSourceDescriptor = stream.in_uint16_le(); /* sizeof RDP_SOURCE */
         uint16_t lengthCombinedCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(lengthSourceDescriptor);
