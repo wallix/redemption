@@ -35,6 +35,7 @@ private:
     TimerCapture(int)
     {
         this->now.tv_sec = 0;
+        this->now.tv_usec = 0;
     }
 
 public:

@@ -47,6 +47,27 @@ struct WrmRecorderOption {
 
     WrmRecorderOption();
 
+    template<typename _ForwardIterator>
+    void accept_output_type(_ForwardIterator first, _ForwardIterator last)
+    {
+        if (first == last){
+            throw std::runtime_error("output type is empty");
+        }
+        std::string output_type_desc = "accept ";
+        for (; first != last; ++first){
+            output_type_desc += '\'';
+            output_type_desc += *first;
+            output_type_desc += "', ";
+        }
+        output_type_desc.erase(output_type_desc.size() - 2);
+        std::size_t pos = output_type_desc.find_last_of(',');
+        if (pos != std::string::npos){
+            output_type_desc[pos] = ' ';
+            output_type_desc.insert(pos + 1, "or");
+        }
+        this->add_output_type(output_type_desc);
+    }
+
     virtual void parse_command_line(int argc, char** argv);
 
     /**
@@ -79,6 +100,7 @@ struct WrmRecorderOption {
 
 private:
     void add_default_options();
+    void add_output_type(const std::string& desc);
 };
 
 #endif

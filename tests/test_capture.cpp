@@ -32,6 +32,7 @@
 #include "png.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "staticcapture.hpp"
+#include "check_sig.hpp"
 
 // to see last result file, remove unlink
 // and do something like:
@@ -46,34 +47,6 @@ void dump_png(const char * prefix, const Drawable & data)
     FILE * f = fdopen(fd, "wb");
     ::dump_png24(f, data.data, data.width, data.height, data.rowsize);
     ::fclose(f);
-}
-
-bool check_sig(Drawable & data, char * message, const char * shasig)
-{
-    SSL_SHA1 sha1;
-    uint8_t sig[20];
-    ssllib ssl;
-    ssl.sha1_init(&sha1);
-    for (size_t y = 0; y < (size_t)data.height; y++){
-        ssl.sha1_update(&sha1, data.data + y * data.rowsize, data.rowsize);
-    }
-    ssl.sha1_final(&sha1, sig);
-
-    if (memcmp(shasig, sig, 20)){
-        sprintf(message, "Expected signature: \""
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
-        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
-        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
-        sig[ 8], sig[ 9], sig[10], sig[11],
-        sig[12], sig[13], sig[14], sig[15],
-        sig[16], sig[17], sig[18], sig[19]);
-        return false;
-    }
-    return true;
 }
 
 BOOST_AUTO_TEST_CASE(TestLineTo)

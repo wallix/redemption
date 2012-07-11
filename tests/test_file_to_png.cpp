@@ -102,6 +102,7 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
     //reader.interpret_order();
     BOOST_REQUIRE(reader.load_data(FIXTURES_PATH "/test_w2008_2-5446.mwrm") == true);
     reader.stream.p = reader.stream.end;
+    reader.remaining_order_count = 0;
     BOOST_CHECK(1);
     DataMetaFile& meta = reader.data_meta;
     BOOST_CHECK_EQUAL(800, meta.width);
@@ -111,7 +112,7 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
                            "/tmp/test_replay_to_png", 0, 0);
 
     bool is_chunk_time = false;
-    uint count_img = 1;
+    uint count_img = 0;
 
     reader.consumer = &consumer;
     while (reader.selected_next_order())
@@ -129,6 +130,16 @@ BOOST_AUTO_TEST_CASE(TestWrmFileToPng)
                 is_chunk_time = false;
             }
         }
+    }
+    consumer.flush();
+    ++count_img;
+    BOOST_CHECK_EQUAL(count_img, 74);
+    char mess[1024];
+    if (!check_sig(consumer.drawable, mess,
+        "\xab\x4f\x76\x3c\x60\xa2\xe0\xd7\x50\xcd"
+        "\x5c\x90\x68\x26\x59\xe4\x4f\x3b\xea\xd2"))
+    {
+        BOOST_CHECK_MESSAGE(false, mess);
     }
     TODO("if boost::unit_test::error_count() == 0");
     unlink_png("/tmp/test_replay_to_png", count_img);

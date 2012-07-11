@@ -45,4 +45,36 @@ RecorderAdaptator* get_recorder_adaptator(RecorderAction* first,
     return 0;
 }
 
+struct RecorderActionStringIterator
+{
+private:
+    RecorderAction* _base;
+
+public:
+    RecorderActionStringIterator(RecorderAction* it)
+    : _base(it)
+    {}
+
+    RecorderActionStringIterator& operator++()
+    {
+        ++this->_base;
+        return *this;
+    }
+
+    const std::string& operator*() const
+    {
+        return this->_base->first;
+    }
+
+    bool operator==(const RecorderActionStringIterator& other)
+    {
+        return this->_base == other._base;
+    }
+
+    bool operator!=(const RecorderActionStringIterator& other)
+    {
+        return !(*this == other);
+    }
+};
+
 #endif

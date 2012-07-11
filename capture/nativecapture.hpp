@@ -223,8 +223,18 @@ private:
     }
 
 public:
+    void send_time_start(const timeval& now)
+    {
+        this->recorder.chunk_type = WRMChunk::TIME_START;
+        this->recorder.order_count = 1;
+        this->recorder.stream.out_uint64_be(now.tv_sec);
+        this->recorder.stream.out_uint64_be(now.tv_usec);
+        this->recorder.flush();
+    }
+
     void breakpoint(const uint8_t* data_drawable, uint8_t bpp,
-                    uint16_t width, uint16_t height)
+                    uint16_t width, uint16_t height,
+                    const timeval& now)
     {
         this->recorder.flush();
 
@@ -407,6 +417,7 @@ public:
         }
 
         this->recorder.init();
+        this->send_time_start(now);
         this->recorder.chunk_type = RDP_UPDATE_ORDERS;
     }
 };

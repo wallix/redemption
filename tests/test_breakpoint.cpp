@@ -38,6 +38,7 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     {
         int w = 1024, h = 912;
         Capture cap(w, h, filename_base, 0, 0);
+        cap.start();
         Rect clip(0, 0, w, h);
         cap.draw(RDPOpaqueRect(Rect(10,844,500,42), RED), clip);
         BOOST_CHECK(1);
@@ -67,9 +68,16 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     uint16_t meta_file      = WRMChunk::META_FILE;
     uint16_t breakpoint     = WRMChunk::BREAKPOINT;
     uint16_t timestamp      = WRMChunk::TIMESTAMP;
+    uint16_t time_start     = WRMChunk::TIME_START;
 
     BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE_EQUAL(recorder.chunk_type(), time_start);
+    recorder.interpret_order();
+    BOOST_REQUIRE(recorder.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), 0);
+    recorder.interpret_order();
+    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE_EQUAL(recorder.chunk_type(), timestamp);
     recorder.interpret_order();
     BOOST_REQUIRE(recorder.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), next_file_id);
@@ -82,7 +90,13 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     recorder.interpret_order();
 
     BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE_EQUAL(recorder.chunk_type(), time_start);
+    recorder.interpret_order();
+    BOOST_REQUIRE(recorder.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), 0);
+    recorder.interpret_order();
+    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE_EQUAL(recorder.chunk_type(), timestamp);
     recorder.interpret_order();
     BOOST_REQUIRE(recorder.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), next_file_id);
@@ -94,6 +108,9 @@ BOOST_AUTO_TEST_CASE(TestBreakpoint)
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), breakpoint);
     recorder.interpret_order();
 
+    BOOST_REQUIRE(recorder.selected_next_order());
+    BOOST_REQUIRE_EQUAL(recorder.chunk_type(), time_start);
+    recorder.interpret_order();
     BOOST_REQUIRE(recorder.selected_next_order());
     BOOST_REQUIRE_EQUAL(recorder.chunk_type(), 0);
     recorder.interpret_order();

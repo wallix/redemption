@@ -73,6 +73,18 @@ public:
     ~Capture(){
     }
 
+    void start(const timeval& now)
+    {
+        this->nc.send_time_start(now);
+    }
+
+    void start()
+    {
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        this->start(now);
+    }
+
     void timestamp()
     {
         this->nc.recorder.timestamp();
@@ -162,12 +174,21 @@ public:
 //        this->nc.glyph_index(cmd, clip);
     }
 
-    void breakpoint()
+    void breakpoint(const timeval& now)
     {
+        this->nc.recorder.timestamp(now);
         this->nc.breakpoint(this->sc.drawable.data,
                             24,
                             this->sc.drawable.width,
-                            this->sc.drawable.height);
+                            this->sc.drawable.height,
+                            now);
+    }
+
+    void breakpoint()
+    {
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        this->breakpoint(now);
     }
 
     void dump_png()

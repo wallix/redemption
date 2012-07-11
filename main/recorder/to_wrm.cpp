@@ -18,9 +18,9 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
+#include <iostream>
+
 #include "to_wrm.hpp"
-#include "wrm_recorder_option.hpp"
-#include "wrm_recorder.hpp"
 #include "timer_compute.hpp"
 #include "capture.hpp"
 
@@ -37,19 +37,20 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
                     0, 0, true);
     recorder.consumer(&capture);
     TimerCompute timercompute(recorder);
-    uint64_t msecond = timercompute.start();
-
-    //std::cout << "start: " << msecond << '\n';
+    timeval mstart = timercompute.start();
     uint64_t mtime = timercompute.advance_second(start);
 
-    //std::cout << "mtime: " << mtime << '\n';
     if (start && !mtime)
         return /*0*/;
-    if (msecond){
-        capture.timestamp(msecond);
-        msecond += mtime;
-        capture.timer().sec()  = msecond / TimerCompute::coeff_sec_to_usec;
-        capture.timer().usec() = msecond % TimerCompute::coeff_sec_to_usec;
+    if (mstart.tv_sec != 0){
+        //mstart.tv_usec += mtime % TimerCompute::coeff_sec_to_usec;
+        //mstart.tv_sec += mtime / TimerCompute::coeff_sec_to_usec + mstart.tv_usec / TimerCompute::coeff_sec_to_usec;
+        //mstart.tv_usec %= TimerCompute::coeff_sec_to_usec;
+        capture.start(mstart);
+    }
+    if (mtime){
+        capture.timestamp(mtime);
+        capture.timer() += mtime;
     }
 
     if (screenshot_wrm && screenshot_start)
@@ -58,8 +59,8 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
     //uint64_t chunk_time = 0;
     timercompute.usec() = mtime - start;
     uint frame = 0;
+    uint64_t msecond = TimerCompute::coeff_sec_to_usec * (stop - start);
     mtime = TimerCompute::coeff_sec_to_usec * interval;
-    msecond = TimerCompute::coeff_sec_to_usec * (stop - start);
 
     while (recorder.selected_next_order())
     {
@@ -78,7 +79,7 @@ void to_wrm(WRMRecorder& recorder, const char* outfile,
                     *                   capture.timestamp(chunk_time);
                     *                   chunk_time = 0;
                 }*/
-                capture.breakpoint();
+                capture.breakpoint(capture.timer().time());
                 if (screenshot_wrm)
                     capture.dump_png();
                 timercompute.reset();
