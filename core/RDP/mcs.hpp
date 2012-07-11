@@ -152,6 +152,7 @@ struct Mcs
     uint8_t offlen;
     public:
     uint8_t opcode;
+    uint8_t result;
     uint16_t user_id;
     uint16_t chan_id;
     uint8_t magic_0x70; // some ber header ?
@@ -162,8 +163,9 @@ struct Mcs
     Mcs ( Stream & stream )
     //==============================================================================
     : stream(stream)
-    , offlen(stream.get_offset(-6))
+    , offlen(0)
     , opcode(0)
+    , result(0)
     , user_id(0)
     , chan_id(0)
     , len(0)
@@ -177,32 +179,839 @@ struct Mcs
                    )
     //==============================================================================
     {
-        stream.out_uint8(command << 2);
-        stream.out_uint16_be(user_id);
-        stream.out_uint16_be(chan_id);
-        stream.out_uint8(0x70);
-        stream.out_uint16_be(0); // skip len
+        this->opcode = command << 2;
+        switch (this->opcode){
+        case PER_DomainMCSPDU_CHOICE_PlumbDomainIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU PlumbDomainIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ErectDomainRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ErectDomainRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_MergeChannelsRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU MergeChannelsRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_MergeChannelsConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU MergeChannelsConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_PurgeChannelsIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU PurgeChannelsIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_MergeTokensRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU MergeTokensRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_MergeTokensConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU MergeTokensConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_PurgeTokensIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU PurgeTokensIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_DisconnectProviderUltimatum:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU DisconnectProviderUltimatum");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_RejectMCSPDUUltimatum:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU RejectMCSPDUUltimatum");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_AttachUserRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU AttachUserRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_AttachUserConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU AttachUserConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_DetachUserRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU DetachUserRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_DetachUserIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU DetachUserIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelJoinRequest:
+        {
+//        ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+//        {
+//            initiator       UserId,
+//            channelId       ChannelId
+//                            -- may be zero
+//        }
+            stream.out_uint8(PER_DomainMCSPDU_CHOICE_ChannelJoinRequest);
+            stream.out_uint16_be(user_id);
+            stream.out_uint16_be(chan_id);
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelJoinConfirm:
+        {
+//        ChannelJoinConfirm ::= [APPLICATION 15] IMPLICIT SEQUENCE
+//        {
+//            result          Result,
+//            initiator       UserId,
+//            requested       ChannelId,
+//                            -- may be zero
+//            channelId       ChannelId OPTIONAL
+//        }
+
+            stream.out_uint8(PER_DomainMCSPDU_CHOICE_ChannelJoinConfirm);
+            stream.out_uint8(0); // Result = rt_successfull            
+            stream.out_uint16_be(user_id);
+            stream.out_uint16_be(chan_id);
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelLeaveRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelLeaveRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelConveneRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelConveneRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelConveneConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelConveneConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelDisbandRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelDisbandRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelDisbandIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelDisbandIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelAdmitRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelAdmitRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelAdmitIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelAdmitIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelExpelRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelExpelRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelExpelIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelExpelIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_SendDataRequest:
+        {
+
+//        SendDataRequest ::= [APPLICATION 25] IMPLICIT SEQUENCE
+//        {
+//            initiator       UserId,
+//            channelId       ChannelId,
+//            dataPriority    DataPriority, ENUMERATED { top = 00, high = 01, medium = 10, low = 11 }
+//            segmentation    Segmentation, BIT STRING { begin = 00, end = 11 }
+//            userData        OCTET STRING
+//        }
+
+            stream.out_uint8(PER_DomainMCSPDU_CHOICE_SendDataRequest);
+            stream.out_uint16_be(user_id);
+            stream.out_uint16_be(chan_id);
+            stream.out_uint8(0x70);  // dataPriority = high, segmentation = end
+            this->offlen = stream.get_offset(0);
+            stream.out_uint16_be(0); // skip len
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_SendDataIndication:
+        {
+
+//        SendDataIndication ::= [APPLICATION 26] IMPLICIT SEQUENCE
+//        {
+//            initiator       UserId,
+//            channelId       ChannelId,
+//            dataPriority    DataPriority,
+//            segmentation    Segmentation,
+//            userData        OCTET STRING
+//        }
+
+            stream.out_uint8(PER_DomainMCSPDU_CHOICE_SendDataIndication);
+            stream.out_uint16_be(user_id);
+            stream.out_uint16_be(chan_id);
+            stream.out_uint8(0x70);  // dataPriority = high, segmentation = end
+            this->offlen = stream.get_offset(0);
+            stream.out_uint16_be(0); // skip len
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_UniformSendDataRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU UniformSendDataRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_UniformSendDataIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU UniformSendDataIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGrabRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGrabRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGrabConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGrabConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenInhibitRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenInhibitRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenInhibitConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenInhibitConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGiveRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGiveIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGiveResponse:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveResponse");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGiveConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenPleaseRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenPleaseRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenPleaseIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenPleaseIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenReleaseRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenReleaseRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenReleaseConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenReleaseConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenTestRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenTestRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenTestConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenTestConfirm");
+        }
+        break;
+        default:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU %u", this->opcode);
+        }
+        break;
+        }
 
     } // END METHOD emit_begin
 
     //==============================================================================
     void emit_end(){
     //==============================================================================
-        int len = stream.get_offset(offlen + 2);
-        stream.set_out_uint16_be(0x8000|len, this->offlen);
+        switch (this->opcode){
+        case PER_DomainMCSPDU_CHOICE_PlumbDomainIndication:
+        {
+//        PlumbDomainIndication ::= [APPLICATION 0] IMPLICIT SEQUENCE
+//        {
+//            heightLimit     INTEGER (0..MAX)
+//                            -- a restriction on the MCSPDU receiver
+//        }
 
+            LOG(LOG_WARNING, "Unsupported DomainPDU PlumbDomainIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ErectDomainRequest:
+        {
+//        ErectDomainRequest ::= [APPLICATION 1] IMPLICIT SEQUENCE
+//        {
+//            subHeight   INTEGER (0..MAX),
+//                        -- height in domain of the MCSPDU transmitter
+//            subInterval INTEGER (0..MAX)
+//                        -- its throughput enforcement interval in milliseconds
+//        }
+            LOG(LOG_WARNING, "Unsupported DomainPDU ErectDomainRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_MergeChannelsRequest:
+        {
+//        MergeChannelsRequest ::= [APPLICATION 2] IMPLICIT SEQUENCE
+//        {
+//            mergeChannels   SET OF ChannelAttributes,
+//            purgeChannelIds SET OF ChannelId
+//        }
+            LOG(LOG_WARNING, "Unsupported DomainPDU MergeChannelsRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_MergeChannelsConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU MergeChannelsConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_PurgeChannelsIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU PurgeChannelsIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_MergeTokensRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU MergeTokensRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_MergeTokensConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU MergeTokensConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_PurgeTokensIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU PurgeTokensIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_DisconnectProviderUltimatum:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU DisconnectProviderUltimatum");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_RejectMCSPDUUltimatum:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU RejectMCSPDUUltimatum");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_AttachUserRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU AttachUserRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_AttachUserConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU AttachUserConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_DetachUserRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU DetachUserRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_DetachUserIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU DetachUserIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelJoinRequest:
+        {
+//        ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+//        {
+//            initiator       UserId,
+//            channelId       ChannelId
+//                            -- may be zero
+//        }
+        }
+        // Nothing to do
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelJoinConfirm:
+        {
+//        ChannelJoinConfirm ::= [APPLICATION 15] IMPLICIT SEQUENCE
+//        {
+//            result          Result,
+//            initiator       UserId,
+//            requested       ChannelId,
+//                            -- may be zero
+//            channelId       ChannelId OPTIONAL
+//        }
+        // Nothing to do
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelLeaveRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelLeaveRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelConveneRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelConveneRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelConveneConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelConveneConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelDisbandRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelDisbandRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelDisbandIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelDisbandIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelAdmitRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelAdmitRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelAdmitIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelAdmitIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelExpelRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelExpelRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelExpelIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelExpelIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_SendDataRequest:
+        {
+//        SendDataRequest ::= [APPLICATION 25] IMPLICIT SEQUENCE
+//        {
+//            initiator       UserId,
+//            channelId       ChannelId,
+//            dataPriority    DataPriority, ENUMERATED { top = 00, high = 01, medium = 10, low = 11 }
+//            segmentation    Segmentation, BIT STRING { begin = 00, end = 11 }
+//            userData        OCTET STRING
+//        }
+            int len = stream.get_offset(this->offlen + 2);
+            stream.set_out_uint16_be(0x8000|len, this->offlen); // userData header
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_SendDataIndication:
+        {
+
+//        SendDataIndication ::= [APPLICATION 26] IMPLICIT SEQUENCE
+//        {
+//            initiator       UserId,
+//            channelId       ChannelId,
+//            dataPriority    DataPriority,
+//            segmentation    Segmentation,
+//            userData        OCTET STRING
+//        }
+
+            int len = stream.get_offset(this->offlen + 2);
+            stream.set_out_uint16_be(0x8000|len, this->offlen); // userData header
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_UniformSendDataRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU UniformSendDataRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_UniformSendDataIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU UniformSendDataIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGrabRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGrabRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGrabConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGrabConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenInhibitRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenInhibitRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenInhibitConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenInhibitConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGiveRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGiveIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGiveResponse:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveResponse");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGiveConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenPleaseRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenPleaseRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenPleaseIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenPleaseIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenReleaseRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenReleaseRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenReleaseConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenReleaseConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenTestRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenTestRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenTestConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenTestConfirm");
+        }
+        break;
+        default:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU %u", this->opcode);
+        }
+        break;
+        }
     } // END METHOD emit_end
 
     //==============================================================================
     void recv_begin() {
     //==============================================================================
         this->opcode = stream.in_uint8();
-        this->user_id = stream.in_uint16_be();
-        this->chan_id = stream.in_uint16_be();
-        this->magic_0x70 = stream.in_uint8();
-        this->len = stream.in_uint8();
-        if (this->len & 0x80){
-            this->len = ((this->len & 0x7F) << 8) + stream.in_uint8();
+        switch (this->opcode & 0xFC){
+        case PER_DomainMCSPDU_CHOICE_PlumbDomainIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU PlumbDomainIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ErectDomainRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ErectDomainRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_MergeChannelsRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU MergeChannelsRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_MergeChannelsConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU MergeChannelsConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_PurgeChannelsIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU PurgeChannelsIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_MergeTokensRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU MergeTokensRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_MergeTokensConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU MergeTokensConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_PurgeTokensIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU PurgeTokensIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_DisconnectProviderUltimatum:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU DisconnectProviderUltimatum");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_RejectMCSPDUUltimatum:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU RejectMCSPDUUltimatum");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_AttachUserRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU AttachUserRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_AttachUserConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU AttachUserConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_DetachUserRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU DetachUserRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_DetachUserIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU DetachUserIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelJoinRequest:
+        {
+//        ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+//        {
+//            initiator       UserId,
+//            channelId       ChannelId
+//                            -- may be zero
+//        }
+            this->user_id = stream.in_uint16_be();
+            this->chan_id = stream.in_uint16_be();
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelJoinConfirm:
+        {
+//        ChannelJoinConfirm ::= [APPLICATION 15] IMPLICIT SEQUENCE
+//        {
+//            result          Result,
+//            initiator       UserId,
+//            requested       ChannelId,
+//                            -- may be zero
+//            channelId       ChannelId OPTIONAL
+//        }
+            // TODO: the actual result should be checked
+            this->result  = stream.in_uint8();
+            this->user_id = stream.in_uint16_be();
+            this->chan_id = stream.in_uint16_be();
+            if (this->opcode & 2){
+                this->chan_id = stream.in_uint16_be();
+            }
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelLeaveRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelLeaveRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelConveneRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelConveneRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelConveneConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelConveneConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelDisbandRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelDisbandRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelDisbandIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelDisbandIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelAdmitRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelAdmitRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelAdmitIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelAdmitIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelExpelRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelExpelRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_ChannelExpelIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU ChannelExpelIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_SendDataRequest:
+        {
+
+//        SendDataRequest ::= [APPLICATION 25] IMPLICIT SEQUENCE
+//        {
+//            initiator       UserId,
+//            channelId       ChannelId,
+//            dataPriority    DataPriority, ENUMERATED { top = 00, high = 01, medium = 10, low = 11 }
+//            segmentation    Segmentation, BIT STRING { begin = 00, end = 11 }
+//            userData        OCTET STRING
+//        }
+
+            this->user_id = stream.in_uint16_be();
+            this->chan_id = stream.in_uint16_be();
+            this->magic_0x70 = stream.in_uint8(); // dataPriority = high 2 bits, segmentation = end 2 bits, padding 4 bits
+            this->len = stream.in_uint8();
+            if (this->len & 0x80){
+                this->len = ((this->len & 0x7F) << 8) + stream.in_uint8();
+            }
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_SendDataIndication:
+        {
+
+//        SendDataIndication ::= [APPLICATION 26] IMPLICIT SEQUENCE
+//        {
+//            initiator       UserId,
+//            channelId       ChannelId,
+//            dataPriority    DataPriority,
+//            segmentation    Segmentation,
+//            userData        OCTET STRING
+//        }
+
+            this->user_id = stream.in_uint16_be();
+            this->chan_id = stream.in_uint16_be();
+            this->magic_0x70 = stream.in_uint8(); // dataPriority = high 2 bits, segmentation = end 2 bits, padding 4 bits
+            this->len = stream.in_uint8();
+            if (this->len & 0x80){
+                this->len = ((this->len & 0x7F) << 8) + stream.in_uint8();
+            }
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_UniformSendDataRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU UniformSendDataRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_UniformSendDataIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU UniformSendDataIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGrabRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGrabRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGrabConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGrabConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenInhibitRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenInhibitRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenInhibitConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenInhibitConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGiveRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGiveIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGiveResponse:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveResponse");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenGiveConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenGiveConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenPleaseRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenPleaseRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenPleaseIndication:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenPleaseIndication");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenReleaseRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenReleaseRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenReleaseConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenReleaseConfirm");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenTestRequest:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenTestRequest");
+        }
+        break;
+        case PER_DomainMCSPDU_CHOICE_TokenTestConfirm:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU TokenTestConfirm");
+        }
+        break;
+        default:
+        {
+            LOG(LOG_WARNING, "Unsupported DomainPDU %u ", this->opcode);
+        }
+        break;
         }
     } // END METHOD recv_begin
 
@@ -211,6 +1020,7 @@ struct Mcs
     //==============================================================================
         if (this->stream.p != this->stream.end){
             LOG(LOG_ERR, "all data should have been consumed : remains %d", stream.end - stream.p);
+            exit(0);
         }
     } // END METHOD recv_end
 
@@ -1620,26 +2430,23 @@ static inline void mcs_send_channel_join_request_pdu(Transport * trans, int user
 
 static inline void mcs_recv_channel_join_confirm_pdu(Transport * trans, uint16_t & mcs_userid, uint16_t & req_chanid, uint16_t & join_chanid)
 {
-    Stream cjcf_stream(32768);
-    X224 x224(cjcf_stream);
+    Stream stream(32768);
+    X224 x224(stream);
     x224.recv_begin(trans);
-    int opcode = cjcf_stream.in_uint8();
-    if ((opcode >> 2) != MCSPDU_ChannelJoinConfirm) {
+    Mcs mcs(stream);
+    mcs.recv_begin();
+
+    if ((mcs.opcode >> 2) != MCSPDU_ChannelJoinConfirm) {
         LOG(LOG_ERR, "Recv channel join confirm pdu expected");
         throw Error(ERR_MCS_RECV_CJCF_OPCODE_NOT_CJCF);
     }
-    uint8_t result = cjcf_stream.in_uint8();
-    if (0 != result) {
-        LOG(LOG_INFO, "mcs_recv_channel_join_confirm_pdu exception, expected 0, got %u", result);
+    if (0 != mcs.result) {
+        LOG(LOG_INFO, "mcs_recv_channel_join_confirm_pdu exception, expected 0, got %u", mcs.result);
         throw Error(ERR_MCS_RECV_CJCF_EMPTY);
     }
-    mcs_userid = cjcf_stream.in_uint16_be();
-    req_chanid = join_chanid = cjcf_stream.in_uint16_be();
-    if (opcode & 2) {
-        join_chanid = cjcf_stream.in_uint16_be();
-    }
-    x224.recv_end()
-;
+    mcs_userid = mcs.user_id;
+    join_chanid = mcs.chan_id;
+    x224.recv_end();
 }
 
 // 2.2.1.7 Server MCS Attach User Confirm PDU
@@ -1944,12 +2751,8 @@ static inline void mcs_send_channel_join_confirm_pdu(Transport * trans, uint16_t
     Stream stream(32768);
     X224 x224(stream);
     x224.emit_begin(X224::DT_TPDU);
-    stream.out_uint8((MCSPDU_ChannelJoinConfirm << 2) | 2);
-    stream.out_uint8(0);                // Result
-    stream.out_uint16_be(userid);       // initiator
-    stream.out_uint16_be(chanid);       // requested channelid
-    TODO("this should be sent only if different from requested chan_id")
-    stream.out_uint16_be(chanid);       // optional answer channelid
+    Mcs mcs(stream);
+    mcs.emit_begin(MCSPDU_ChannelJoinConfirm, userid, chanid);
     x224.emit_end();
     trans->send(x224.header(), x224.size());
 }
@@ -2044,19 +2847,15 @@ static inline void mcs_recv_channel_join_request_pdu(Transport * trans, uint16_t
     // TPDU class 0    (3 bytes = LI F0 PDU_DT)
     X224 x224(stream);
     x224.recv_begin(trans);
-
-    uint8_t opcode = stream.in_uint8();
-    if ((opcode >> 2) != MCSPDU_ChannelJoinRequest) {
-        LOG(LOG_INFO, "unexpected opcode = %u", opcode);
+    Mcs mcs(stream);
+    mcs.recv_begin();
+    if ((mcs.opcode >> 2) != MCSPDU_ChannelJoinRequest) {
+        LOG(LOG_INFO, "unexpected opcode = %u", mcs.opcode);
         throw Error(ERR_MCS_RECV_CJRQ_APPID_NOT_CJRQ);
     }
-    userid = stream.in_uint16_be();
-    chanid = stream.in_uint16_be();
-
-    if (opcode & 2) {
-        stream.in_skip_bytes(2);
-    }
-
+    userid = mcs.user_id;
+    chanid = mcs.chan_id;
+    mcs.recv_end();
     x224.recv_end();
 }
 

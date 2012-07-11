@@ -83,7 +83,7 @@ struct ShareControl
 
     // CONSTRUCTOR
     //==============================================================================
-    ShareControl ( Stream & stream )
+    ShareControl (Stream & stream )
     //==============================================================================
     : stream(stream)
     , offlen(stream.get_offset(0))
@@ -138,6 +138,8 @@ struct ShareControl
     {
         if (this->stream.p != this->stream.end){
             LOG(LOG_ERR, "all data should have been consumed : remains %d", stream.end - stream.p);
+            stream.p = stream.end;
+//            exit(0);
         }
     } // END METHOD recv_end
 

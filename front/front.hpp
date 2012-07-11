@@ -1658,12 +1658,30 @@ public:
         uint16_t lengthCombinedCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(lengthSourceDescriptor);
 
-        uint8_t* start = stream.p;
+        LOG(LOG_INFO, "lengthSourceDescriptor = %u", lengthSourceDescriptor);
+        LOG(LOG_INFO, "lengthCombinedCapabilities = %u", lengthCombinedCapabilities);
+
+
+        uint8_t * start = stream.p;
+        uint8_t* theoricCapabilitiesEnd = start + lengthCombinedCapabilities;
+        uint8_t* actualCapabilitiesEnd = stream.end;
+
         int numberCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(2); /* pad */
 
         for (int n = 0; n < numberCapabilities; n++) {
-            if (stream.p + 4 > start + lengthCombinedCapabilities) {
+            LOG(LOG_INFO, "capability %u", n);
+            if (stream.p + 4 > theoricCapabilitiesEnd) {
+                LOG(LOG_ERR, "Incomplete capabilities received (bad length): expected length=%d need=%d available=%d", 
+                    lengthCombinedCapabilities, 
+                    stream.p-start, 
+                    stream.end-stream.p);
+            }
+            if (stream.p + 4 > actualCapabilitiesEnd) {
+                LOG(LOG_ERR, "Incomplete capabilities received (need more data): expected length=%d need=%d available=%d", 
+                    lengthCombinedCapabilities, 
+                    stream.p-start, 
+                    stream.end-stream.p);
                 return;
             }
 
@@ -1785,6 +1803,9 @@ public:
                 break;
             default:
                 break;
+            }
+            if (stream.p > next){
+                LOG(LOG_ERR, "read out of bound detected");
             }
             stream.p = next;
         }
