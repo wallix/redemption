@@ -24,42 +24,20 @@
 #include <iostream>
 
 #include "recorder_run.hpp"
-#include "get_type.hpp"
+#include "parse_command_line.hpp"
 
-int recorder_app(WrmRecorderOption& opt, int argc, char** argv,
+int recorder_app(RecorderOption& opt, int argc, char** argv,
                  RecorderAction* actions, std::size_t n)
 {
     opt.accept_output_type<>(RecorderActionStringIterator(actions),
                              RecorderActionStringIterator(actions + n));
-    opt.parse_command_line(argc, argv);
 
-    if (opt.options.count("version")) {
-        std::cout << argv[0] << ' ' << opt.version() << std::endl;
+    if (!parse_command_line(opt, argc, argv)){
         return 0;
     }
 
-    if (opt.options.count("help")) {
-        std::cout << opt.desc;
-        return 0;
-    }
-
-    int error = opt.notify_options();
-    if (error){
-        std::cerr << opt.get_cerror(error) << '\n'<< opt.desc;
-        return error;
-    }
-
-    InputType::enum_t itype = get_input_type(opt);
-    if (itype == InputType::NOT_FOUND){
-        std::cerr
-        << "Incorrect input-type, "
-        << opt.desc.find("input-type", false).description() << '\n';
-        return 1000;
-    }
-
-    error = opt.normalize_options();
-    if (error){
-        std::cerr << opt.get_cerror(error) << std::endl;
+    InputType::enum_t itype;
+    if (int error = opt.prepare(itype)){
         return error;
     }
 

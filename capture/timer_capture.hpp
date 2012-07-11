@@ -23,73 +23,54 @@
 
 #include <sys/time.h>
 #include "difftimeval.hpp"
+#include "urt.hpp"
 
 class TimerCapture
+: public URT
 {
 public:
     typedef struct timeval time_type;
 
 private:
-    time_type now;
-
     TimerCapture(int)
-    {
-        this->now.tv_sec = 0;
-        this->now.tv_usec = 0;
-    }
+    : URT(0,0)
+    {}
 
 public:
     TimerCapture()
-    {
-        reset();
-    }
+    : URT()
+    {}
 
-    TimerCapture(const timeval now)
-    : now(now)
-    {
-    }
+    TimerCapture(const timeval& now)
+    : URT(now)
+    {}
 
-    TimerCapture& operator=(const timeval ref)
+    TimerCapture& operator=(const timeval& other)
     {
-        now = ref;
+        this->tv = other;
         return *this;
     }
 
     const timeval& time() const
     {
-        return now;
-    }
-
-    time_t& sec()
-    {
-        return now.tv_sec;
-    }
-
-    suseconds_t& usec()
-    {
-        return now.tv_usec;
+        return this->tv;
     }
 
     timeval& impl()
-    { return this->now; }
+    { return this->tv; }
 
     static TimerCapture invalid_timer()
     {
         return TimerCapture(0);
     }
 
-    void reset()
-    {
-        gettimeofday(&this->now, 0);
-    }
-
     bool valid() const
-    { return this->now.tv_sec != 0; }
+    { return this->sec() != 0; }
 
     uint64_t elapsed(const struct timeval& now)
     {
-        uint64_t diff = difftimeval(now, this->now);
-        this->now = now;
+        uint64_t diff = difftimeval(now, this->tv);
+        this->tv = now;
         return diff;
     }
 
@@ -102,9 +83,9 @@ public:
 
     bool elapsed_if_wait(const struct timeval& now, uint64_t elapsed)
     {
-        if (difftimeval(now, this->now) > elapsed)
+        if (difftimeval(now, this->tv) > elapsed)
         {
-            this->now = now;
+            this->tv = now;
             return true;
         }
         return false;
@@ -131,6 +112,8 @@ public:
         }*/
         return *this;
     }
+
+    using URT::reset;
 };
 
 struct WaitCapture {

@@ -22,16 +22,16 @@
 #define __MAIN_RECORDER_ADAPTATOR_TO_WRM_ADAPTATOR_HPP__
 
 #include "recorder/adaptator.hpp"
-#include "recorder/wrm_recorder_option.hpp"
+#include "recorder/recorder_option.hpp"
 #include "recorder/to_wrm.hpp"
 
 class ToWrmAdaptator
 : public RecorderAdaptator
 {
-    WrmRecorderOption& _option;
+    RecorderOption& _option;
 
 public:
-    ToWrmAdaptator(WrmRecorderOption& option)
+    ToWrmAdaptator(RecorderOption& option)
     : _option(option)
     {}
 

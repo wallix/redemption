@@ -144,8 +144,25 @@ exe redrec
     :
         main/recorder.cpp
         main/recorder/wrm_recorder_option.cpp
+        main/recorder/recorder_option.cpp
         main/recorder/to_png.cpp
         main/recorder/to_wrm.cpp
+
+        openssl
+        crypto
+        png
+        z
+        dl
+
+        libboost_program_options
+    :
+        <link>static
+    ;
+
+exe wrminfo
+    :
+        main/extract_info.cpp
+        main/recorder/wrm_recorder_option.cpp
 
         openssl
         crypto

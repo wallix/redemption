@@ -60,20 +60,14 @@ private:
 
 public:
     CountdownPtr()
-    : count(new std::size_t)
+    : count(new std::size_t(0))
     , ptr(0)
-    {
-        *this->count = 0;
-    }
+    {}
 
     CountdownPtr(pointer ptr)
-    : count(new std::size_t)
+    : count(new std::size_t(ptr ? 1 : 0))
     , ptr(ptr)
-    {
-        *this->count = 0;
-        if (this->ptr)
-            ++*this->count;
-    }
+    {}
 
     CountdownPtr(const CountdownPtr<_T>& other)
     : count(other.count)
@@ -89,8 +83,8 @@ public:
         {
             if (*this->count && !--*this->count)
                 this->destroy();
-            this->ptr = other.ptr;
             this->count = other.count;
+            this->ptr = other.ptr;
             if (this->ptr)
                 ++*this->count;
         }
