@@ -24,13 +24,13 @@
 // #define LOGPRINT
 
 #include "recorder/recorder_app.hpp"
-#include "recorder/wrm_recorder_option.hpp"
+#include "recorder/recorder_option.hpp"
 #include "recorder/adaptator/to_png_adaptator.hpp"
 #include "recorder/adaptator/to_wrm_adaptator.hpp"
 
 int main(int argc, char** argv)
 {
-    WrmRecorderOption opt;
+    RecorderOption opt;
     ToPngAdaptator to_png(opt);
     ToWrmAdaptator to_wrm(opt);
     RecorderAction recorder_actions[] = {

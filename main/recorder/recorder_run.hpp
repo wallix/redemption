@@ -26,12 +26,10 @@
 #include <boost/program_options/options_description.hpp>
 
 #include "adaptator.hpp"
-#include "wrm_recorder_option.hpp"
-#include "input_type.hpp"
-#include "wrm_recorder.hpp"
-#include "error.hpp"
+#include "recorder_option.hpp"
+#include "wrm_recorder_init.hpp"
 
-int recorder_run(WrmRecorderOption& opt,
+int recorder_run(RecorderOption& opt,
                  RecorderAction* actions, std::size_t n,
                  InputType::enum_t itype)
 {
@@ -48,38 +46,12 @@ int recorder_run(WrmRecorderOption& opt,
     }
 
     WRMRecorder recorder;
-    recorder.set_basepath(opt.base_path);
-    recorder.only_filename = opt.ignore_dir_for_meta_in_wrm;
+    if (int error = wrm_recorder_init(recorder, opt, itype)){
+        return error;
+    }
 
     try
     {
-        switch (itype) {
-            case InputType::WRM_TYPE:
-                recorder.open_wrm_followed_meta(opt.in_filename.c_str());
-                break;
-            case InputType::META_TYPE:
-                recorder.open_meta_followed_wrm(opt.in_filename.c_str());
-                break;
-            default:
-                std::cerr << "Input type not found" << std::endl;
-                return 2000;
-        }
-
-        if (!recorder.is_meta_chunk()){
-            std::cerr << recorder.chunk_type() << '\n';
-            std::cerr << recorder.meta() << '\n';
-            std::cerr << "Chunk META not found in " << opt.in_filename << std::endl;
-            return 2001;
-        }
-
-        std::cout
-        << "output-file: " << opt.out_filename << '\n'
-        << "input-file: " << opt.in_filename << '\n'
-        << "frame limit: " << opt.frame << '\n'
-        << "time: " << opt.time << '\n'
-        << "range: " << opt.range << '\n'
-        ;
-
         opt.out_filename.erase(pos);
         (*adaptator)(recorder, opt.out_filename.c_str());
     }

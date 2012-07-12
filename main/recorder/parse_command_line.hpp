@@ -18,34 +18,29 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(__MAIN_RECORDER_ADAPTATOR_TO_PNG_ADAPTATOR_HPP__)
-#define __MAIN_RECORDER_ADAPTATOR_TO_PNG_ADAPTATOR_HPP__
+#if !defined(__MAIN_RECORDER_PARSE_COMMAND_LINE_HPP__)
+#define __MAIN_RECORDER_PARSE_COMMAND_LINE_HPP__
 
-#include "recorder/adaptator.hpp"
-#include "recorder/recorder_option.hpp"
-#include "recorder/to_png.hpp"
+#include "wrm_recorder_option.hpp"
+#include "input_type.hpp"
+#include "get_type.hpp"
 
-class ToPngAdaptator
-: public RecorderAdaptator
+bool parse_command_line(WrmRecorderOption& opt,
+                       int argc, char** argv)
 {
-    RecorderOption& _option;
+    opt.parse_command_line(argc, argv);
 
-public:
-    ToPngAdaptator(RecorderOption& option)
-    : _option(option)
-    {}
+    if (opt.options.count("version")) {
+        std::cout << argv[0] << ' ' << opt.version() << std::endl;
+        return false;
+    }
 
-    virtual void operator()(WRMRecorder& recorder, const char* outfile)
-    {
-        to_png(recorder, outfile,
-               this->_option.range.left.time,
-               this->_option.range.right.time,
-               this->_option.time.time,
-               this->_option.frame,
-               this->_option.screenshot_start,
-               this->_option.no_screenshot_stop
-        );
-    };
-};
+    if (opt.options.count("help")) {
+        std::cout << opt.desc;
+        return false;
+    }
+
+    return true;
+}
 
 #endif

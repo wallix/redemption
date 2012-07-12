@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
-   Author(s): Martin Potier
+   Author(s): Martin Potier, Jonathan Poelen
 
    Usecond Real (redemption) Time
    wrapper for timeval
@@ -34,12 +34,18 @@
  */
 struct URT
 {
+    typedef time_t sec_type;
+    typedef suseconds_t usec_type;
+
     timeval tv;
-    URT(timeval tv) : tv(tv) {}
+
+    URT(const timeval& tv)
+    : tv(tv)
+    {}
 
     URT(uint64_t usec) {
-        this->tv.tv_sec  = usec / 1000000; // usec to sec
-        this->tv.tv_usec = usec % 1000000; // rest of usec
+        this->sec()  = usec / 1000000; // usec to sec
+        this->usec() = usec % 1000000; // rest of usec
     }
 
     // Default constructor sets to time of the day
@@ -47,44 +53,95 @@ struct URT
         this->getTimeOfDay();
     }
 
+    URT(const URT& other)
+    : tv(other.tv)
+    {}
+
+    URT(sec_type __sec, usec_type __usec)
+    {
+        this->sec()  = __sec;
+        this->usec() = __usec;
+    }
+
+    URT& operator=(const URT& other)
+    {
+        this->tv = other.tv;
+        return *this;
+    }
+
+    URT& operator=(const timeval& other)
+    {
+        this->tv = other;
+        return *this;
+    }
+
     ~URT(){}
 
+    sec_type& sec()
+    {
+        return tv.tv_sec;
+    }
+
+    const sec_type& sec() const
+    {
+        return tv.tv_sec;
+    }
+
+    usec_type& usec()
+    {
+        return tv.tv_usec;
+    }
+
+    const usec_type& usec() const
+    {
+        return tv.tv_usec;
+    }
+
     bool operator==(const URT & other) const {
-        return (this->tv.tv_sec == other.tv.tv_sec) && (this->tv.tv_usec == other.tv.tv_usec);
+        return (this->sec() == other.sec()) && (this->usec() == other.usec());
     }
 
     bool operator!=(const URT & other) const {
-        return !(this->operator==(other));
+        return !(*this == other);
     }
 
     bool operator>(const URT & other) const {
-        return (this->tv.tv_sec > other.tv.tv_sec) ||
-              ((this->tv.tv_sec == other.tv.tv_sec) && (this->tv.tv_usec > other.tv.tv_usec));
+        return (this->sec() > other.sec()) ||
+               ((this->sec() == other.sec()) && (this->usec() > other.usec()));
     }
     bool operator<=(const URT & other) const {
-        return !(this->operator>(other));
+        return !(*this > other);
     }
 
     bool operator<(const URT & other) const {
-        return (this->tv.tv_sec <  other.tv.tv_sec) ||
-              ((this->tv.tv_sec == other.tv.tv_sec) && (this->tv.tv_usec < other.tv.tv_usec));
+        return (this->sec() <  other.sec()) ||
+               ((this->sec() == other.sec()) && (this->usec() < other.usec()));
     }
     bool operator>=(const URT & other) const {
-        return !(this->operator<(other));
+        return !(*this < other);
+    }
+
+    URT& operator+=(const URT & other) {
+        this->sec()  = (this->usec() + other.usec()) / 1000000 + this->sec()   + other.sec();
+        this->usec() = (this->usec() + other.usec()) % 1000000;
+        return *this;
     }
 
     URT operator+(const URT & other) const {
-        URT local;
-
-        local.tv.tv_usec = (this->tv.tv_usec + other.tv.tv_usec) % 1000000;
-        local.tv.tv_sec  = this->tv.tv_sec   + other.tv.tv_sec + (this->tv.tv_usec + other.tv.tv_usec) / 1000000;
-
+        URT local(*this);
+        local += other;
         return local;
     }
 
-    private:
+private:
     void getTimeOfDay() {
         gettimeofday(&(this->tv), NULL);
+    }
+
+protected:
+    void reset()
+    {
+        this->getTimeOfDay();
     }
 
 };
