@@ -3633,6 +3633,7 @@ static inline void mcs_send_channel_join_confirm_pdu(Transport * trans, uint16_t
     x224.emit_begin(X224::DT_TPDU);
     Mcs mcs(stream);
     mcs.emit_begin(MCSPDU_ChannelJoinConfirm, userid, chanid);
+    mcs.emit_end();
     x224.emit_end();
     trans->send(x224.header(), x224.size());
 }

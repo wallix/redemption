@@ -969,6 +969,9 @@ public:
                 uint16_t tmp_userid;
                 uint16_t tmp_chanid;
                 mcs_recv_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
+                if (this->verbose){
+                    LOG(LOG_INFO, "Front::incoming::mcs_recv_channel_join_request (G): user_id=%u chanid=%u", tmp_userid, tmp_chanid);
+                }
                 if (tmp_userid != this->userid){
                     LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
                     throw Error(ERR_MCS_BAD_USERID);
@@ -987,6 +990,9 @@ public:
                 uint16_t tmp_userid;
                 uint16_t tmp_chanid;
                 mcs_recv_channel_join_request_pdu(this->trans, tmp_userid, tmp_chanid);
+                if (this->verbose){
+                    LOG(LOG_INFO, "Front::incoming::mcs_recv_channel_join_request (IO): user_id=%u chanid=%u", tmp_userid, tmp_chanid);
+                }
                 if (tmp_userid != this->userid){
                     LOG(LOG_INFO, "MCS error bad userid, expecting %u got %u", this->userid, tmp_userid);
                     throw Error(ERR_MCS_BAD_USERID);
