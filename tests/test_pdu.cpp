@@ -17,10 +17,6 @@
    Copyright (C) Wallix 2012
    Author(s): Christophe Grosjean
 
-   T.124 Generic Conference Control (GCC) Unit Test
-
-   Shamelessly adapted of test_gcc.c from FreedRDP (C) Marc-Andre Moreau
-
 */
 
 #define BOOST_AUTO_TEST_MAIN

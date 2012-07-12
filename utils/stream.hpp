@@ -42,53 +42,16 @@ enum {
      AUTOSIZE = 8192
 };
 
-/* parser state */
-class Stream {
+class AbstractStream {
     public:
     uint8_t* p;
     uint8_t* end;
     uint8_t* data;
     size_t capacity;
-    uint8_t autobuffer[AUTOSIZE];
 
-    Stream(size_t size = AUTOSIZE) {
-        this->capacity = 0;
-        this->init(size);
-    }
-    ~Stream() {
-        if (this->capacity > AUTOSIZE) {
-//            LOG(LOG_DEBUG, "Stream buffer freed : size=%d @%p\n", this->capacity, this->data);
-            delete [] this->data;
-        }
-    }
+    virtual ~AbstractStream() {}
 
-    // a default buffer of 8192 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
-    void init(size_t v) {
-        if (v != this->capacity) {
-            try {
-                if (this->capacity > AUTOSIZE){
-//                    LOG(LOG_DEBUG, "Stream buffer freed : size=%d @%p\n", this->capacity, this->data);
-                    delete [] this->data;
-                }
-                if (v > AUTOSIZE){
-//                    LOG(LOG_DEBUG, "Stream buffer allocation succeeded : size=%d @%p\n", v, this->data);
-                    this->data = new uint8_t[v];
-                }
-                else {
-                    this->data = &(this->autobuffer[0]);
-                }
-                this->capacity = v;
-            }
-            catch (...){
-                this->data = 0;
-                this->capacity = 0;
-                LOG(LOG_ERR, "failed to allocate buffer : size asked = %d\n", (int)v);
-                throw Error(ERR_STREAM_MEMORY_ALLOCATION_ERROR);
-            }
-        }
-        this->p = this->data;
-        this->end = this->data;
-    }
+    virtual void init(size_t capacity) = 0;
 
     bool has_room(unsigned n) {
         return (this->end - this->data + n) <= this->capacity;
@@ -455,6 +418,18 @@ class Stream {
 
     void goto_end() {
         this->p = this->end;
+    }
+
+    // Output zero terminated string, including trailing 0
+    void out_sz(const char * v) {
+        size_t len = strlen(v);
+        this->out_copy_bytes((uint8_t*)v, len+1);
+    }
+
+    // Output zero terminated string, non including trailing 0
+    void out_string(const char * v) {
+        size_t len = strlen(v);
+        this->out_copy_bytes((uint8_t*)v, len);
     }
 
     void out_copy_bytes(const uint8_t * v, size_t n) {
@@ -1373,6 +1348,70 @@ TODO("check if implementation below is conforming to obfuscated text above (I ha
             this->out_uint16_le(in_count / 2);
         }
     }
+
+};
+
+class Stream : public AbstractStream {
+    private:
+    uint8_t autobuffer[AUTOSIZE];
+
+    public:
+
+    Stream(size_t size = AUTOSIZE) {
+        this->capacity = 0;
+        this->init(size);
+    }
+    ~Stream() {
+        if (this->capacity > AUTOSIZE) {
+//            LOG(LOG_DEBUG, "Stream buffer freed : size=%d @%p\n", this->capacity, this->data);
+            delete [] this->data;
+        }
+    }
+
+    // a default buffer of 8192 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
+    void init(size_t v) {
+        if (v != this->capacity) {
+            try {
+                if (this->capacity > AUTOSIZE){
+//                    LOG(LOG_DEBUG, "Stream buffer freed : size=%d @%p\n", this->capacity, this->data);
+                    delete [] this->data;
+                }
+                if (v > AUTOSIZE){
+//                    LOG(LOG_DEBUG, "Stream buffer allocation succeeded : size=%d @%p\n", v, this->data);
+                    this->data = new uint8_t[v];
+                }
+                else {
+                    this->data = &(this->autobuffer[0]);
+                }
+                this->capacity = v;
+            }
+            catch (...){
+                this->data = 0;
+                this->capacity = 0;
+                LOG(LOG_ERR, "failed to allocate buffer : size asked = %d\n", (int)v);
+                throw Error(ERR_STREAM_MEMORY_ALLOCATION_ERROR);
+            }
+        }
+        this->p = this->data;
+        this->end = this->data;
+    }
+};
+
+class SubStream : public AbstractStream {
+    public:
+
+    SubStream(const AbstractStream & stream, size_t offset = 0)
+    {
+        this->data = stream.data + offset;
+        this->capacity = capacity - offset;
+        this->p = this->data;
+        this->end = stream.end;
+    } 
+
+    ~SubStream() {}
+
+    // Not allowed on SubStreams
+    void init(size_t v) {}
 
 };
 

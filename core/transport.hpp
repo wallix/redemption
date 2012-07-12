@@ -189,6 +189,11 @@ class CheckTransport : public Transport {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
     }
+
+    size_t remaining(){
+        return this->len - this->current;
+    }
+
 };
 
 class TestTransport : public Transport {
