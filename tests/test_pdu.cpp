@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(Test_pdu_connection_request)
     rdp_pdu.recv_begin(&t);
     rdp_pdu.recv_end();
 
-    BOOST_CHECK_EQUAL(RDP::PDU::CONNECTION_REQUEST, rdp_pdu.pduType); 
+    BOOST_CHECK_EQUAL((uint8_t)RDP::PDU::CONNECTION_REQUEST, (uint8_t)rdp_pdu.pduType); 
 }
 
 BOOST_AUTO_TEST_CASE(Test_pdu_connection_confirm)
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(Test_pdu_connection_confirm)
     rdp_pdu.recv_begin(&t);
     rdp_pdu.recv_end();
 
-    BOOST_CHECK_EQUAL(RDP::PDU::CONNECTION_CONFIRM, rdp_pdu.pduType); 
+    BOOST_CHECK_EQUAL((uint8_t)RDP::PDU::CONNECTION_CONFIRM, (uint8_t)rdp_pdu.pduType); 
 }
 
 BOOST_AUTO_TEST_CASE(Test_pdu_disconnect_request)
@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(Test_pdu_disconnect_request)
     rdp_pdu.recv_begin(&t);
     rdp_pdu.recv_end();
 
-    BOOST_CHECK_EQUAL(RDP::PDU::DISCONNECT_REQUEST, rdp_pdu.pduType); 
+    BOOST_CHECK_EQUAL((uint8_t)RDP::PDU::DISCONNECT_REQUEST, (uint8_t)rdp_pdu.pduType); 
 }
 
 BOOST_AUTO_TEST_CASE(Test_pdu_error_tpdu)
@@ -79,5 +79,5 @@ BOOST_AUTO_TEST_CASE(Test_pdu_error_tpdu)
     rdp_pdu.recv_begin(&t);
     rdp_pdu.recv_end();
 
-    BOOST_CHECK_EQUAL(RDP::PDU::ERROR_TPDU, rdp_pdu.pduType); 
+    BOOST_CHECK_EQUAL((uint8_t)RDP::PDU::ERROR_TPDU, (uint8_t)rdp_pdu.pduType); 
 }
