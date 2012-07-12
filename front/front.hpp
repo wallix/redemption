@@ -1266,7 +1266,11 @@ public:
                     if (this->verbose){
                         LOG(LOG_INFO, "Unexpected CONFIRMACTIVE PDU");
                     }
-                    this->process_confirm_active(stream);
+                    {
+                        uint32_t share_id = stream.in_uint32_le();
+                        uint16_t originatorId = stream.in_uint16_le();
+                        this->process_confirm_active(stream);
+                    }
 
                     break;
                 case PDUTYPE_DATAPDU: /* 7 */
@@ -1441,7 +1445,11 @@ public:
                         if (this->verbose){
                             LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU");
                         }
-                        this->process_confirm_active(stream);
+                        {
+                            uint32_t share_id = stream.in_uint32_le();
+                            uint16_t originatorId = stream.in_uint16_le();
+                            this->process_confirm_active(stream);
+                        }
                         // reset caches, etc.
                         this->reset();
                         // resizing done
@@ -1652,18 +1660,34 @@ public:
     void process_confirm_active(Stream & stream)
     {
         LOG(LOG_INFO, "process_confirm_active");
-//        uint32_t share_id = stream.in_uint32_le();
-//        uint16_t originatorId = stream.in_uint16_le();
         uint16_t lengthSourceDescriptor = stream.in_uint16_le(); /* sizeof RDP_SOURCE */
         uint16_t lengthCombinedCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(lengthSourceDescriptor);
 
-        uint8_t* start = stream.p;
+        LOG(LOG_INFO, "lengthSourceDescriptor = %u", lengthSourceDescriptor);
+        LOG(LOG_INFO, "lengthCombinedCapabilities = %u", lengthCombinedCapabilities);
+
+
+        uint8_t * start = stream.p;
+        uint8_t* theoricCapabilitiesEnd = start + lengthCombinedCapabilities;
+        uint8_t* actualCapabilitiesEnd = stream.end;
+
         int numberCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(2); /* pad */
 
         for (int n = 0; n < numberCapabilities; n++) {
-            if (stream.p + 4 > start + lengthCombinedCapabilities) {
+            LOG(LOG_INFO, "capability %u", n);
+            if (stream.p + 4 > theoricCapabilitiesEnd) {
+                LOG(LOG_ERR, "Incomplete capabilities received (bad length): expected length=%d need=%d available=%d", 
+                    lengthCombinedCapabilities, 
+                    stream.p-start, 
+                    stream.end-stream.p);
+            }
+            if (stream.p + 4 > actualCapabilitiesEnd) {
+                LOG(LOG_ERR, "Incomplete capabilities received (need more data): expected length=%d need=%d available=%d", 
+                    lengthCombinedCapabilities, 
+                    stream.p-start, 
+                    stream.end-stream.p);
                 return;
             }
 
@@ -1785,6 +1809,9 @@ public:
                 break;
             default:
                 break;
+            }
+            if (stream.p > next){
+                LOG(LOG_ERR, "read out of bound detected");
             }
             stream.p = next;
         }

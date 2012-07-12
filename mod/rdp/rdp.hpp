@@ -519,7 +519,7 @@ struct mod_rdp : public client_mod {
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
-        mcs.emit_begin(MCSPDU_SendDataRequest, this->userid, MCS_GLOBAL_CHANNEL);
+        mcs.emit_begin(MCSPDU_SendDataRequest, this->userid, channel.chanid);
         Sec sec(stream, this->encrypt);
         sec.emit_begin( this->crypt_level?SEC_ENCRYPT:0 );
 
@@ -544,8 +544,8 @@ struct mod_rdp : public client_mod {
 
     virtual BackEvent_t draw_event(void)
     {
-//        static uint32_t count = 0;
-//        LOG(LOG_INFO, "============================== DRAW_EVENT %u =================================", count++);
+        static uint32_t count = 0;
+        LOG(LOG_INFO, "============================== mod_rdp::DRAW_EVENT %u =================================", count++);
 
         try{
 
@@ -553,6 +553,7 @@ struct mod_rdp : public client_mod {
 
         switch (this->state){
         case MOD_RDP_NEGO:
+            LOG(LOG_INFO, "draw_event::MOD_RDP_NEGO");
             switch (this->nego.state){
                 default:
                     this->nego.server_event();
@@ -594,6 +595,7 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
+            LOG(LOG_INFO, "draw_event::MOD_RDP_BASIC_SETTINGS_EXCHANGE");
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::Basic Settings Exchange");
             }
@@ -653,6 +655,7 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
+        LOG(LOG_INFO, "draw_event::MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER");
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::Channel Connection Attach User");
         }
@@ -741,6 +744,7 @@ struct mod_rdp : public client_mod {
         break;
 
         case MOD_RDP_GET_LICENSE:
+        LOG(LOG_INFO, "draw_event::MOD_RDP_GET_LICENSE");
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::Licensing");
         }
@@ -1062,7 +1066,7 @@ struct mod_rdp : public client_mod {
 
         case MOD_RDP_CONNECTED:
         {
-//            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED bpp=%u", this->bpp);
+            LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED bpp=%u", this->bpp);
             Stream stream(65536);
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
@@ -1191,10 +1195,11 @@ struct mod_rdp : public client_mod {
                                 // information for a session is sent to the client in the Update Palette PDU.
 
                                 int update_type = stream.in_uint16_le();
-//                                LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:update_type = %u", update_type);
+                                LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:update_type = %u", update_type);
                                 switch (update_type) {
                                 case RDP_UPDATE_ORDERS:
                                     {
+                                        LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_ORDERS");
                                         stream.in_skip_bytes(2); /* pad */
                                         int count = stream.in_uint16_le();
                                         stream.in_skip_bytes(2); /* pad */
@@ -1204,43 +1209,46 @@ struct mod_rdp : public client_mod {
                                     }
                                     break;
                                 case RDP_UPDATE_BITMAP:
+                                    LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_BITMAP");
                                     this->front.begin_update();
                                     this->process_bitmap_updates(stream, this);
                                     this->front.end_update();
                                     break;
                                 case RDP_UPDATE_PALETTE:
+                                    LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_PALETTE");
                                     this->front.begin_update();
                                     this->process_palette(stream, this);
                                     this->front.end_update();
                                     break;
                                 case RDP_UPDATE_SYNCHRONIZE:
+                                    LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_SYNCHRONIZE");
+                                    TODO("Replace moving end pointer by actual parsing of update synchronize");
                                     break;
                                 default:
+                                    LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED:RDP_UPDATE_UNKNOWN");
                                     break;
                                 }
                             }
-
                             sdata.recv_end();
-
                             break;
                             case PDUTYPE2_CONTROL:
-//                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_CONTROL");
+                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_CONTROL");
                             break;
                             case PDUTYPE2_SYNCHRONIZE:
-//                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_SYNCHRONIZE");
+                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_SYNCHRONIZE");
                             break;
                             case PDUTYPE2_POINTER:
-//                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_POINTER");
+                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_POINTER");
                                 this->process_pointer_pdu(stream, this);
                             break;
                             case PDUTYPE2_PLAY_SOUND:
-//                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_PLAY_SOUND");
+                                LOG(LOG_INFO, "mod_rdp::PDUTYPE2_PLAY_SOUND");
                             break;
                             case PDUTYPE2_SAVE_SESSION_INFO:
-//                                LOG(LOG_INFO, "DATA PDU LOGON");
+                                LOG(LOG_INFO, "DATA PDU LOGON");
                             break;
                             case PDUTYPE2_SET_ERROR_INFO_PDU:
-//                                LOG(LOG_INFO, "DATA PDU DISCONNECT");
+                                LOG(LOG_INFO, "DATA PDU DISCONNECT");
                                 this->process_disconnect_pdu(stream);
                             break;
                             default:
@@ -1314,7 +1322,7 @@ struct mod_rdp : public client_mod {
         }
         }
         catch(Error e){
-            LOG(LOG_DEBUG, "Closing connection (status=%u)", e.id);
+            LOG(LOG_DEBUG, "mod_rdp::draw_event::Exception!!!Closing connection (status=%u)", e.id);
             try {
                 Stream stream(11);
                 X224 x224(stream);
@@ -2678,7 +2686,7 @@ struct mod_rdp : public client_mod {
         // numberRectangles (2 bytes): A 16-bit, unsigned integer.
         // The number of screen rectangles present in the rectangles field.
         size_t numberRectangles = stream.in_uint16_le();
-//        LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */", numberRectangles);
+        LOG(LOG_INFO, "/* ---------------- Sending %d rectangles ----------------- */", numberRectangles);
         for (size_t i = 0; i < numberRectangles; i++) {
             // rectangles (variable): Variable-length array of TS_BITMAP_DATA
             // (section 2.2.9.1.1.3.1.2.2) structures, each of which contains a
@@ -2751,7 +2759,7 @@ struct mod_rdp : public client_mod {
             // that the bitmapComprHdr field is present if the
             // NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not set.
 
-//            LOG(LOG_INFO, "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */", i, bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
+            LOG(LOG_INFO, "/* Rect [%d] bpp=%d width=%d height=%d b(%d, %d, %d, %d) */", i, bpp, width, height, boundary.x, boundary.y, boundary.cx, boundary.cy);
 
             bool compressed = false;
             uint16_t line_size = 0;
