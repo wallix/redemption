@@ -448,9 +448,10 @@ struct Mcs
 //            channelId       ChannelId OPTIONAL
 //        }
 
-            stream.out_uint8(PER_DomainMCSPDU_CHOICE_ChannelJoinConfirm);
+            stream.out_uint8(PER_DomainMCSPDU_CHOICE_ChannelJoinConfirm | 2);
             stream.out_uint8(0); // Result = rt_successfull            
             stream.out_uint16_be(user_id);
+            stream.out_uint16_be(chan_id);
             stream.out_uint16_be(chan_id);
         }
         break;
