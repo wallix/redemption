@@ -143,6 +143,33 @@ enum {
     BER_TAG_MCS_DOMAIN_PARAMS = 0x30
 };
 
+//        ChannelJoinRequest ::= [APPLICATION 14] IMPLICIT SEQUENCE
+//        {
+//            initiator       UserId,
+//            channelId       ChannelId
+//                            -- may be zero
+//        }
+
+// Not yet used: idea for mapping Mcs to actual data sructures
+//struct ChannelJoinRequest
+//{
+//    uint16_t user_id;
+//    uint16_t chan_id;
+
+//    ChannelJoinRequest(uint16_t user_id, uint16_t chan_id)
+//    : user_id(user_id)
+//    , chan_id(chan_id)
+//    {
+//    }
+//    void per_emit(){
+//        stream.out_uint16_be(this->user_id);
+//        stream.out_uint16_be(this->chan_id);
+//    }
+//    void per_recv(){
+//        this->user_id = stream.in_uint16_be();
+//        this->chan_id = stream.in_uint16_be();
+//    }
+//};
 
 //##############################################################################
 struct Mcs
@@ -372,6 +399,9 @@ struct Mcs
 //            result          Result,
 //            initiator       UserId OPTIONAL
 //        }
+            stream.out_uint8(PER_DomainMCSPDU_CHOICE_AttachUserConfirm | 2);
+            stream.out_uint8(0); // result OK
+            stream.out_uint16_be(user_id);
             LOG(LOG_WARNING, "Unsupported DomainPDU AttachUserConfirm");
         }
         break;
@@ -3517,9 +3547,9 @@ static inline void mcs_send_attach_user_confirm_pdu(Transport * trans, uint16_t 
     Stream stream(32768);
     X224 x224(stream);
     x224.emit_begin(X224::DT_TPDU);
-    stream.out_uint8(((MCSPDU_AttachUserConfirm << 2) | 2));
-    stream.out_uint8(0);
-    stream.out_uint16_be(userid);
+    Mcs mcs(stream);
+    mcs.emit_begin(MCSPDU_AttachUserConfirm, userid, 0);
+    mcs.emit_end();
     x224.emit_end();
     trans->send(x224.header(), x224.size());
 }
