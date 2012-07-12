@@ -402,7 +402,6 @@ struct Mcs
             stream.out_uint8(PER_DomainMCSPDU_CHOICE_AttachUserConfirm | 2);
             stream.out_uint8(0); // result OK
             stream.out_uint16_be(user_id);
-            LOG(LOG_WARNING, "Unsupported DomainPDU AttachUserConfirm");
         }
         break;
         case PER_DomainMCSPDU_CHOICE_DetachUserRequest:
@@ -970,7 +969,7 @@ struct Mcs
 //            result          Result,
 //            initiator       UserId OPTIONAL
 //        }
-            LOG(LOG_WARNING, "Unsupported DomainPDU AttachUserConfirm");
+            // Nothing to do
         }
         break;
         case PER_DomainMCSPDU_CHOICE_DetachUserRequest:
