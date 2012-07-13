@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapEmit)
     BOOST_CHECK_EQUAL(bitmap_caps.multipleRectangleSupport, (uint16_t)1);
     BOOST_CHECK_EQUAL(bitmap_caps.pad2octetsB, (uint16_t)0);
 
-    Stream stream(1024);
+    BStream stream(1024);
     bitmap_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

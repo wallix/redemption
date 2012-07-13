@@ -344,7 +344,7 @@ struct RdpNego
     void recv_connection_confirm()
     {
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
-        Stream stream(8192);
+        BStream stream(8192);
         X224 x224(stream);
         x224.recv_begin(this->trans);
         if (x224.tpkt.version != 3){
@@ -581,7 +581,7 @@ struct RdpNego
     void send_negotiation_request()
     {
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu");
-        Stream out;
+        BStream out;
         X224 x224(out);
         x224.emit_begin(X224::CR_TPDU);
         x224.stream.out_concat("Cookie: mstshash=");

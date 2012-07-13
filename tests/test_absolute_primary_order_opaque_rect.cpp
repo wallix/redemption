@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestAbsoluteOpaqueRect)
     using namespace RDP;
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
         RDPOrderCommon state_common(RECT, Rect(700, 200, 100, 200));
         //RDPOpaqueRect state_orect(Rect(0, 0, 800, 600), 0);
 
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(TestAbsoluteOpaqueRect)
     /*
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         //RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), 0xFFFFFF);
 
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(TestAbsoluteOpaqueRect)
 
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         //RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), 0xFFFFFF);
 
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(TestAbsoluteOpaqueRect)
     }
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         //RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), 0xFFFFFF);
 
@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_CASE(TestAbsoluteOpaqueRect)
 
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         //RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), 0xFFFFFF);
 
@@ -227,7 +227,7 @@ BOOST_AUTO_TEST_CASE(TestAbsoluteOpaqueRect)
     }
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         //RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), 0xFFFFFF);
 
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(TestAbsoluteOpaqueRect)
     }
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         //RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), 0xFFFFFF);
 
@@ -296,7 +296,7 @@ BOOST_AUTO_TEST_CASE(TestAbsoluteOpaqueRect)
     }
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         //RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), 0xFFFFFF);
 
@@ -332,7 +332,7 @@ BOOST_AUTO_TEST_CASE(TestAbsoluteOpaqueRect)
     }
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         //RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), 0xFFFFFF);
 
@@ -373,7 +373,7 @@ BOOST_AUTO_TEST_CASE(TestAbsoluteOpaqueRect)
 
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         //RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), 0xFFFFFF);
 
@@ -414,7 +414,7 @@ BOOST_AUTO_TEST_CASE(TestAbsoluteOpaqueRect)
 
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
         RDPOrderCommon state_common(RECT, Rect(0, 0, 800, 600));
         //RDPOpaqueRect state_orect(Rect(0, 0, 10, 10), 0xFFFFFF);
 

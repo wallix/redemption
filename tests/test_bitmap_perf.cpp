@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 
         BOOST_CHECK(true);
         // make it large enough to hold any image
-        Stream out(2*bigbmp.bmp_size);
+        BStream out(2*bigbmp.bmp_size);
         BOOST_CHECK(true);
         unsigned long long usec = ustime();
         unsigned long long cycles = rdtsc();
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
         int bpp = 24;
         Bitmap bigbmp(FIXTURES_PATH "/logo-redemption.bmp");
         // make it large enough to hold any image
-        Stream out(2*bigbmp.bmp_size);
+        BStream out(2*bigbmp.bmp_size);
         unsigned long long usec = ustime();
         unsigned long long cycles = rdtsc();
         bigbmp.compress(out);
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
 //        int bpp = 24;
 //        Bitmap bigbmp(FIXTURES_PATH "/apply_active.bmp");
 //        // make it large enough to hold any image
-//        Stream out(2*bigbmp.bmp_size(bpp));
+//        BStream out(2*bigbmp.bmp_size(bpp));
 //        unsigned long long usec = ustime();
 //        unsigned long long cycles = rdtsc();
 //        bigbmp.compress(bpp, out);

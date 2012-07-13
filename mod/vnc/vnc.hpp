@@ -52,7 +52,7 @@ struct mod_vnc : public client_mod {
     public:
     Transport *t;
     int clip_chanid;
-    Stream clip_data;
+    BStream clip_data;
     size_t clip_data_size;
     uint16_t width;
     uint16_t height;
@@ -113,7 +113,7 @@ struct mod_vnc : public client_mod {
         int error = 0;
 
         /* protocol version */
-        Stream stream(32768);
+        BStream stream(32768);
         this->t->recv((char**)&stream.end, 12);
         this->t->send("RFB 003.003\n", 12);
 
@@ -244,7 +244,7 @@ struct mod_vnc : public client_mod {
         // message is extended with an interaction capabilities section.
 
         {
-            Stream stream(32768);
+            BStream stream(32768);
             this->t->recv((char**)&stream.end, 24); /* server init */
             this->width = stream.in_uint16_be();
             this->height = stream.in_uint16_be();
@@ -298,7 +298,7 @@ struct mod_vnc : public client_mod {
         // FramebufferUpdate is using the new or the previous pixel
         // format.
 
-            Stream stream(32768);
+            BStream stream(32768);
             // Set Pixel format
             stream.out_uint8(0);
 
@@ -392,7 +392,7 @@ struct mod_vnc : public client_mod {
         // -specific confirmation from the server.
         {
             /* SetEncodings */
-            Stream stream(32768);
+            BStream stream(32768);
             stream.out_uint8(2);
             stream.out_uint8(0);
             stream.out_uint16_be(3);
@@ -452,7 +452,7 @@ struct mod_vnc : public client_mod {
 
     void change_mouse_state(uint16_t x, uint16_t y, uint8_t button, bool set)
     {
-        Stream stream(6);
+        BStream stream(6);
         this->mod_mouse_state = set?(this->mod_mouse_state|button):(this->mod_mouse_state&~button); // set or clear bit
         stream.out_uint8(5);
         stream.out_uint8(this->mod_mouse_state);
@@ -465,7 +465,7 @@ struct mod_vnc : public client_mod {
     TODO("It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?")
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
-        Stream stream(32768);
+        BStream stream(32768);
 
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
             this->change_mouse_state(x, y, 0, true);
@@ -497,7 +497,7 @@ struct mod_vnc : public client_mod {
         keymapSym.event(device_flags, param1);
         int key = keymapSym.get_sym();
         if (key > 0) {
-            Stream stream(32768);
+            BStream stream(32768);
             stream.out_uint8(4);
             stream.out_uint8(!(device_flags & KBD_FLAG_UP)); /* down/up flag */
             stream.out_clear_bytes(2);
@@ -519,7 +519,7 @@ struct mod_vnc : public client_mod {
     {
 //        LOG(LOG_INFO, "rdp_input_invalidate");
         if (!r.isempty()) {
-            Stream stream(32768);
+            BStream stream(32768);
             /* FrambufferUpdateRequest */
             stream.out_uint8(3);
             stream.out_uint8(this->incr);
@@ -540,7 +540,7 @@ struct mod_vnc : public client_mod {
         BackEvent_t rv = BACK_EVENT_NONE;
 
         if (this->event->can_recv()){
-            Stream stream(1);
+            BStream stream(1);
             try {
                 this->t->recv((char**)&stream.end, 1);
                 char type = stream.in_uint8();
@@ -641,7 +641,7 @@ struct mod_vnc : public client_mod {
 
     void lib_framebuffer_update() throw (Error)
     {
-        Stream stream(256);
+        BStream stream(256);
         this->t->recv((char**)&stream.end, 3);
         stream.in_skip_bytes(1);
         size_t num_recs = stream.in_uint16_be();
@@ -679,7 +679,7 @@ struct mod_vnc : public client_mod {
             break;
             case 1: /* copy rect */
             {
-                Stream stream(4);
+                BStream stream(4);
                 this->t->recv((char**)&stream.end, 4);
                 const int srcx = stream.in_uint16_be();
                 const int srcy = stream.in_uint16_be();
@@ -724,7 +724,7 @@ struct mod_vnc : public client_mod {
 
                 const int sz_pixel_array = cx * cy * Bpp;
                 const int sz_bitmask = nbbytes(cx) * cy;
-                Stream stream(sz_pixel_array + sz_bitmask);
+                BStream stream(sz_pixel_array + sz_bitmask);
                 this->t->recv((char**)&stream.end, sz_pixel_array + sz_bitmask);
 
                 const uint8_t *vnc_pointer_data = stream.in_uint8p(sz_pixel_array);
@@ -782,7 +782,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
     void lib_clip_data(void)
     {
-        Stream stream(32768);
+        BStream stream(32768);
         this->t->recv((char**)&stream.end, 7);
         stream.in_skip_bytes(3);
         int size = stream.in_uint32_be();
@@ -791,7 +791,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         this->clip_data_size = size;
         this->t->recv((char**)&this->clip_data.end, size);
 
-        Stream out_s(8192);
+        BStream out_s(8192);
         out_s.out_uint16_le(2);
         out_s.out_uint16_le(0);
         out_s.out_uint32_le(0x90);
@@ -812,13 +812,13 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
     /******************************************************************************/
     void lib_palette_update(void)
     {
-        Stream stream(32768);
+        BStream stream(32768);
         this->t->recv((char**)&stream.end, 5);
         stream.in_skip_bytes(1);
         int first_color = stream.in_uint16_be();
         int num_colors = stream.in_uint16_be();
 
-        Stream stream2(8192);
+        BStream stream2(8192);
         this->t->recv((char**)&stream2.end, num_colors * 6);
 
         if (num_colors <= 256){

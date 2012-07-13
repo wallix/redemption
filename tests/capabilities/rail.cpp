@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityRailEmit)
     BOOST_CHECK_EQUAL(rail_caps.len, (uint16_t)CAPLEN_RAIL);
     BOOST_CHECK_EQUAL(rail_caps.RailSupportLevel, (uint32_t) 1);
 
-    Stream stream(1024);
+    BStream stream(1024);
     rail_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

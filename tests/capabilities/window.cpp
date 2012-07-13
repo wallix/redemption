@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityWindowsListEmit)
     BOOST_CHECK_EQUAL(windowslist_caps.NumIconCaches, (uint8_t) 255);
     BOOST_CHECK_EQUAL(windowslist_caps.NumIconCacheEntries, (uint16_t) 65535);
 
-    Stream stream(1024);
+    BStream stream(1024);
     windowslist_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

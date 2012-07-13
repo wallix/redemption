@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityActivationEmit)
     BOOST_CHECK_EQUAL(activation_caps.helpExtendedKeyFlag, (uint16_t) 2);
     BOOST_CHECK_EQUAL(activation_caps.windowManagerKeyFlag, (uint16_t) 3);
 
-    Stream stream(1024);
+    BStream stream(1024);
     activation_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

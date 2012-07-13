@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(Test_send_payload)
 {
     struct Buffer : public Payload
     {
-        Stream stream;
+        BStream stream;
         Buffer() : stream(64) {
             stream.out_sz("ABCDEF");
         }
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(Test_send_header_payload)
 {
     struct Buffer : public Payload
     {
-        Stream stream;
+        BStream stream;
         Buffer() : stream(64) 
         {
             stream.out_string("BODY.");
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(Test_send_header_payload)
 
     struct Wrapper : public Payload
     {
-        Stream stream;
+        BStream stream;
         Payload & payload;
         Wrapper(Payload & payload) 
         : stream(64) 
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(Test_send_header_payload)
 
 //    struct MyWrapper : public Wrapper
 //    {
-//        Stream stream;
+//        BStream stream;
 //        MyWrapper() : stream(64) {
 //            stream.out_string("HEADER:BODY.");
 //        }

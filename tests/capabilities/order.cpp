@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityOrderEmit)
     BOOST_CHECK_EQUAL(order_caps.textANSICodePage, (uint16_t) 13);
     BOOST_CHECK_EQUAL(order_caps.pad2octetsE, (uint16_t) 14);
 
-    Stream stream(1024);
+    BStream stream(1024);
     order_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

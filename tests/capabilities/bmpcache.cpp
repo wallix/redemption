@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBmpCachepEmit)
     BOOST_CHECK_EQUAL(bmpcache_caps.cache2Entries, (uint16_t) 65535);
     BOOST_CHECK_EQUAL(bmpcache_caps.cache2MaximumCellSize, (uint16_t) 32769);
 
-    Stream stream(1024);
+    BStream stream(1024);
     bmpcache_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
 
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
 
         RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));
         RDPLineTo state_lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0));

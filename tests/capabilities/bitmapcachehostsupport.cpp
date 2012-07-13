@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapCacheHostSupportsEmit)
     BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps.pad1, (uint8_t) 255);
     BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps.pad2, (uint16_t) 65535);
 
-    Stream stream(1024);
+    BStream stream(1024);
     bitmapcachehostsupport_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
         256);
 
     size_t offset_length = 0;
-    Stream stream(sizeof(gcc_conference_create_request_expected)-1);
+    BStream stream(sizeof(gcc_conference_create_request_expected)-1);
 
     gcc_write_conference_create_request_header(stream, offset_length);
 

@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityDrawGdiPlusEmit)
     BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPImageCacheProperties->GdipObjectImageCacheTotalSize, (uint16_t) 256);
     BOOST_CHECK_EQUAL(drawgdiplus_caps.gdiPImageCacheProperties->GdipObjectImageCacheMaxSize, (uint16_t) 128);
 
-    Stream stream(1024);
+    BStream stream(1024);
     drawgdiplus_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

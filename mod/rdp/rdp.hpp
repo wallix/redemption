@@ -312,7 +312,7 @@ struct rdp_orders {
 struct mod_rdp : public client_mod {
 
     /* mod data */
-    Stream in_stream;
+    BStream in_stream;
     ChannelDefArray mod_channel_list;
 
     bool dev_redirection_enable;
@@ -514,7 +514,7 @@ struct mod_rdp : public client_mod {
         if (this->verbose){
             LOG(LOG_INFO, "mod_rdp::send_to_channel");
         }
-        Stream stream(65536);
+        BStream stream(65536);
 
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
@@ -827,7 +827,7 @@ struct mod_rdp : public client_mod {
             const int userid = this->userid;
             int & licence_issued = this->lic_layer.licence_issued;
             int res = 0;
-            Stream stream(65536);
+            BStream stream(65536);
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
             X224 x224(stream);
@@ -1067,7 +1067,7 @@ struct mod_rdp : public client_mod {
         case MOD_RDP_CONNECTED:
         {
             LOG(LOG_INFO, "mod_rdp::MOD_RDP_CONNECTED bpp=%u", this->bpp);
-            Stream stream(65536);
+            BStream stream(65536);
             // read tpktHeader (4 bytes = 3 0 len)
             // TPDU class 0    (3 bytes = LI F0 PDU_DT)
             X224 x224(stream);
@@ -1324,7 +1324,7 @@ struct mod_rdp : public client_mod {
         catch(Error e){
             LOG(LOG_DEBUG, "mod_rdp::draw_event::Exception!!!Closing connection (status=%u)", e.id);
             try {
-                Stream stream(11);
+                BStream stream(11);
                 X224 x224(stream);
                 x224.emit_begin(X224::DR_TPDU);
                 x224.emit_end();
@@ -1386,7 +1386,7 @@ struct mod_rdp : public client_mod {
                 LOG(LOG_INFO, "mod_rdp::send_confirm_active");
             }
 
-            Stream stream(32768);
+            BStream stream(32768);
 
             // Packet header
             X224 x224(stream);
@@ -2368,7 +2368,7 @@ struct mod_rdp : public client_mod {
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_control");
             }
-            Stream stream(32768);
+            BStream stream(32768);
 
             // Packet header
             X224 x224(stream);
@@ -2407,7 +2407,7 @@ struct mod_rdp : public client_mod {
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_synchronise");
             }
-            Stream stream(32768);
+            BStream stream(32768);
 
             // Packet header
             X224 x224(stream);
@@ -2444,7 +2444,7 @@ struct mod_rdp : public client_mod {
             if (this->verbose){
                 LOG(LOG_INFO, "mod_rdp::send_fonts");
             }
-            Stream stream(65536);
+            BStream stream(65536);
 
             // Packet header
             X224 x224(stream);
@@ -2497,7 +2497,7 @@ struct mod_rdp : public client_mod {
             if (this->verbose > 10){
                 LOG(LOG_INFO, "mod_rdp::send_input");
             }
-            Stream stream(32768);
+            BStream stream(32768);
 
             // Packet header
             X224 x224(stream);
@@ -2542,7 +2542,7 @@ struct mod_rdp : public client_mod {
             if (UP_AND_RUNNING == this->connection_finalization_state) {
 //                LOG(LOG_INFO, "rdp_input_invalidate");
                 if (!r.isempty()){
-                    Stream stream(32768);
+                    BStream stream(32768);
 
                     // Packet header
                     X224 x224(stream);
@@ -2815,7 +2815,7 @@ struct mod_rdp : public client_mod {
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
 
-        Stream stream(32768);
+        BStream stream(32768);
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);

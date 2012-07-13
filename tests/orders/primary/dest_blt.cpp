@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
     using namespace RDP;
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
 
         // DESTBLT = 0, hence we won't have order change
         RDPOrderCommon state_common(0, Rect(311, 0, 800, 600));

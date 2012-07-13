@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
     using namespace RDP;
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
      TODO(" actual data is much more complex  than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer includes cache management primitives")
 
         RDPOrderCommon state_common(0, Rect(0, 0, 0, 0));

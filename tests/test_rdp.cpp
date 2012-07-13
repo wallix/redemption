@@ -33,7 +33,7 @@
 
 BOOST_AUTO_TEST_CASE(TestSendShareControlAndData)
 {
-    Stream stream(65536);
+    BStream stream(65536);
     memset(stream.data, 0, 65536);
 
     ShareControl sctrl(stream);
@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(TestSendShareControlAndData)
 
 BOOST_AUTO_TEST_CASE(TestX224SendShareControlAndData)
 {
-    Stream stream(65536);
+    BStream stream(65536);
     memset(stream.data, 0, 65536);
 
     X224 x224(stream);

@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilitySoundEmit)
     BOOST_CHECK_EQUAL(sound_caps.soundFlags, (uint16_t) 0);
     BOOST_CHECK_EQUAL(sound_caps.pad2octetsA, (uint16_t) 1);
 
-    Stream stream(1024);
+    BStream stream(1024);
     sound_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

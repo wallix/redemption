@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         // 0x0200: Brush style (1 byte)
         // 0x0400: Brush Hatch (1 byte) + Extra if style == 0x3
 
-        Stream stream(1000);
+        BStream stream(1000);
 
         // DESTBLT = 0, hence we won't have order change
         RDPOrderCommon state_common(0, Rect(311, 0, 800, 600));
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
     }
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
 
         // DESTBLT = 0, hence we won't have order change
         RDPOrderCommon state_common(0, Rect(311, 0, 800, 600));
@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
     }
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
 
         RDPOrderCommon state_common(0, Rect(311, 0, 800, 600));
         RDPPatBlt state_patblt(Rect(), 0, 0, 0, RDPBrush(0, 0, 0x03, 0xDD));

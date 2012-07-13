@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFrameAcknowledgeEmit)
     BOOST_CHECK_EQUAL(frameacknowledge_caps.len, (uint16_t)CAPLEN_FRAME_ACKNOWLEDGE);
     BOOST_CHECK_EQUAL(frameacknowledge_caps.maxUnacknowledgedFrameCount, (uint32_t) 65536);
 
-    Stream stream(1024);
+    BStream stream(1024);
     frameacknowledge_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

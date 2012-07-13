@@ -42,14 +42,12 @@ enum {
      AUTOSIZE = 8192
 };
 
-class AbstractStream {
+class Stream {
     public:
     uint8_t* p;
     uint8_t* end;
     uint8_t* data;
     size_t capacity;
-
-    virtual ~AbstractStream() {}
 
     virtual void init(size_t capacity) = 0;
 
@@ -1351,17 +1349,18 @@ TODO("check if implementation below is conforming to obfuscated text above (I ha
 
 };
 
-class Stream : public AbstractStream {
+// BStream is for "buffering stream", as this stream allocate a work buffer.
+class BStream : public Stream {
     private:
     uint8_t autobuffer[AUTOSIZE];
 
     public:
 
-    Stream(size_t size = AUTOSIZE) {
+    BStream(size_t size = AUTOSIZE) {
         this->capacity = 0;
         this->init(size);
     }
-    ~Stream() {
+    ~BStream() {
         if (this->capacity > AUTOSIZE) {
 //            LOG(LOG_DEBUG, "Stream buffer freed : size=%d @%p\n", this->capacity, this->data);
             delete [] this->data;
@@ -1397,10 +1396,15 @@ class Stream : public AbstractStream {
     }
 };
 
-class SubStream : public AbstractStream {
+
+// SubStream does not allocate any buffer
+// (and the buffer pointed to should probably not be modifiable,
+// but I'm not yet doing any distinction between stream that can or can't be modified
+// many at some future time)
+class SubStream : public Stream {
     public:
 
-    SubStream(const AbstractStream & stream, size_t offset = 0)
+    SubStream(const Stream & stream, size_t offset = 0)
     {
         this->data = stream.data + offset;
         this->capacity = capacity - offset;

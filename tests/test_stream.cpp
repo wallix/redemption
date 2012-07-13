@@ -32,7 +32,7 @@
 BOOST_AUTO_TEST_CASE(TestStreamInitWithSize)
 {
     // test we can create a Stream object
-    Stream * s = new Stream(1000);
+    Stream * s = new BStream(1000);
     BOOST_CHECK(s);
 
     BOOST_CHECK(s->capacity == 1000);
@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TestStreamInitWithSize)
 BOOST_AUTO_TEST_CASE(TestStream)
 {
     // test we can create a Stream object
-    Stream * s = new Stream();
+    Stream * s = new BStream();
     BOOST_CHECK(s);
 
     BOOST_CHECK(s->capacity == AUTOSIZE);
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint8)
 {
     // test reading of 8 bits data from Stream signed or unsigned is working
 
-    Stream * s = new Stream(10);
+    Stream * s = new BStream(10);
     memcpy(s->data, (uint8_t*)"\1\xFE\xFD\4\5", 5);
     s->end += 5;
     // 5 characters are availables
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint16)
     // target endianness is care of automagically.
     // (the + operator does the job).
 
-    Stream * s = new Stream(100);
+    Stream * s = new BStream(100);
     const char * data = "\1\0\xFE\xFF\xFF\xFD\xFF\xFC\xFB\xFF\0\1";
     memcpy(s->data, (uint8_t*)data, 12);
     s->end += 12;
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint32)
     // target endianness is taken care of automagically.
     // (the + operator does the job).
 
-    Stream * s = new Stream(100);
+    Stream * s = new BStream(100);
     const char * data = "\1\0\0\0\xFF\xFF\xFF\xFE\0\0\0\1\xFC\xFF\xFF\xFF";
     memcpy(s->data, (uint8_t*)data, 16);
     s->end += 16;
@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint64)
     // target endianness is taken care of automagically.
     // (the + operator does the job).
 
-    Stream * s = new Stream(100);
+    Stream * s = new BStream(100);
     const char * data = "\1\0\0\0\0\0\0\0\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFE\0\0\0\0\0\0\0\1\xFC\xFF\xFF\xFF\xFF\xFF\xFF\xFF";
     memcpy(s->data, (uint8_t*)data, 32);
     s->end += 32;
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE(TestStream_in_uint8p)
     // in_uint8p returns a pointer to current beginning of buffer
     // and advance by some given amount of characters.
 
-    Stream * s = new Stream(100);
+    Stream * s = new BStream(100);
     const char * data = "\1\0\0\0\xFF\xFF\xFF\xFE\0\0\0\1\xFC\xFF\xFF\xFF";
     memcpy(s->data, (uint8_t*)data, 16);
     s->end += 16;
@@ -224,7 +224,7 @@ BOOST_AUTO_TEST_CASE(TestStream_in_skip_bytes)
 {
     // test use of skip_bytes that skip a given number of bytes
 
-    Stream s(100);
+    BStream s(100);
     const char * data = "\0\1\2\3\4\5\6\7\x8\x9\xA\xB\xC\xD";
     memcpy(s.data, (uint8_t*)data, 14);
     s.end += 14;
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(TestStream_out_Stream)
 {
     // use output primitives to write to a Stream
 
-    Stream * s = new Stream(100);
+    Stream * s = new BStream(100);
 
     uint8_t * oldp = s->p;
 

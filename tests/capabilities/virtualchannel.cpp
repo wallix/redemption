@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityVirtualChannelEmit)
     BOOST_CHECK_EQUAL(virtualchannel_caps.flags, (uint32_t) 2);
     BOOST_CHECK_EQUAL(virtualchannel_caps.VCChunkSize, (uint32_t) 56897);
 
-    Stream stream(1024);
+    BStream stream(1024);
     virtualchannel_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

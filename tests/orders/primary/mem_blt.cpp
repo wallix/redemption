@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
     using namespace RDP;
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
 
         uint16_t cache_id = 1;
         uint16_t cache_idx = 15;
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
     }
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
 
         uint16_t cache_id = 1;
         uint16_t cache_idx = 15;

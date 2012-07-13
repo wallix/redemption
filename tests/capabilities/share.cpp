@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityShareEmit)
     BOOST_CHECK_EQUAL(share_caps.nodeId, (uint16_t) 0);
     BOOST_CHECK_EQUAL(share_caps.pad2octets, (uint16_t) 1);
 
-    Stream stream(1024);
+    BStream stream(1024);
     share_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;
