@@ -24,14 +24,10 @@
 #if !defined(__UTILS_PAYLOAD_HPP__)
 #define __UTILS_PAYLOAD_HPP__
 
-struct DataChunk {
-    size_t length;
-    void * buffer;
-};
-
-class Payload
+struct Payload
 {
-    int datas() = 0;
+    virtual size_t len(void) = 0;
+    virtual void send(Transport & trans) = 0;
 };
 
 #endif

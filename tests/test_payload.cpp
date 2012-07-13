@@ -31,12 +31,7 @@
 
 #include "stream.hpp"
 #include "transport.hpp"
-
-struct Payload
-{
-    virtual size_t len(void) = 0;
-    virtual void send(Transport & trans) = 0;
-};
+#include "payload.hpp"
 
 BOOST_AUTO_TEST_CASE(Test_send_payload)
 {
@@ -118,31 +113,27 @@ BOOST_AUTO_TEST_CASE(Test_send_header_payload)
 }
 
 
-//BOOST_AUTO_TEST_CASE(Test_recv_payload)
-//{
-//    struct Wrapper 
-//    {
-//        virtual SubStream & payload() = 0;
-//    };
+BOOST_AUTO_TEST_CASE(Test_recv_payload)
+{
+    struct Wrapper
+    {
+        BStream stream;
+        SubStream payload;
+        Wrapper() : stream(64), payload(stream, 7) {
+            stream.out_string("HEADER:BODY.");
+        }
+    } wrapper;
 
-//    struct MyWrapper : public Wrapper
-//    {
-//        BStream stream;
-//        MyWrapper() : stream(64) {
-//            stream.out_string("HEADER:BODY.");
-//        }
-//        using Wrapper::payload;
-//        virtual const SubStream & payload() {
-//            return SubStream(stream, 7);
-//        }
-//    } wrapper;
+    struct Buffer
+    {
+        SubStream & stream;
+        Buffer(SubStream & stream) 
+        : stream(stream) 
+        {
+        }
+    } buffer(wrapper.payload);
 
-//    struct Buffer
-//    {
-//        SubStream & stream;
-//        Buffer(SubStream & stream) : stream(stream) {}
-//    } buffer(wrapper.payload());
-
-//    BOOST_CHECK_EQUAL(5, buffer.len());
-//}
+    BOOST_CHECK_EQUAL(0, memcmp("HEADER:BODY.",wrapper.stream.data, 12));
+    BOOST_CHECK_EQUAL(0, memcmp("BODY.",buffer.stream.data, 5));
+}
 
