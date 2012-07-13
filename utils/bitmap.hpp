@@ -272,7 +272,7 @@ public:
 
         /* read file size */
         TODO("define some stream aware function to read data from file (to update stream.end by itself). It should probably not be inside stream itself because read primitives are OS dependant, and there is not need to make stream OS dependant.")
-        Stream stream(8192);
+        BStream stream(8192);
         if (read(fd, stream.data, 4) < 4){
             LOG(LOG_ERR, "Widget_load: error read file size\n");
             close(fd);

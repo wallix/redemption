@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     } front(info, verbose);
 
-//    Stream stream(65536);
+//    BStream stream(65536);
 //    const char * name = "VNC Target";
 //    ClientSocketTransport t(name, "10.10.3.103", 5900, 3, 1000, verbose);
 //    t.connect();

@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityOffScreenCacheEmit)
     BOOST_CHECK_EQUAL(offscreencache_caps.offscreenCacheSize, (uint16_t) 7680);
     BOOST_CHECK_EQUAL(offscreencache_caps.offscreenCacheEntries, (uint16_t) 500);
 
-    Stream stream(1024);
+    BStream stream(1024);
     offscreencache_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

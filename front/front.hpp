@@ -427,7 +427,7 @@ public:
         if (this->verbose){
             LOG(LOG_INFO, "Front::disconnect()");
         }
-        Stream stream(32768);
+        BStream stream(32768);
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
 
@@ -462,7 +462,7 @@ public:
             LOG(LOG_INFO, "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)", data, length, chunk_size, flags);
         }
 
-        Stream stream(65536);
+        BStream stream(65536);
 
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
@@ -511,7 +511,7 @@ public:
             if (this->verbose > 4){
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
-            Stream stream(32768);
+            BStream stream(32768);
 
             // Packet header
             X224 x224(stream);
@@ -667,7 +667,7 @@ public:
         if (this->verbose){
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
         }
-        Stream stream(32768);
+        BStream stream(32768);
 
         // Packet header
         X224 x224(stream);
@@ -799,7 +799,7 @@ public:
         if (this->verbose){
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
         }
-        Stream stream(32768);
+        BStream stream(32768);
 
         // Packet header
         X224 x224(stream);
@@ -862,7 +862,7 @@ public:
             }
 
             {
-                Stream in(8192);
+                BStream in(8192);
                 X224 x224(in);
                 x224.recv_begin(this->trans);
 
@@ -877,7 +877,7 @@ public:
                 LOG(LOG_INFO, "Front::incoming::sending x224 connection confirm PDU");
             }
             {
-                Stream out(128);
+                BStream out(128);
                 X224 x224(out);
                 x224.emit_begin(X224::CC_TPDU);
                 x224.emit_end();
@@ -1081,7 +1081,7 @@ public:
             LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
         }
         {
-            Stream stream(65535);
+            BStream stream(65535);
 
             X224 x224(stream);
             x224.recv_begin(this->trans);
@@ -1155,7 +1155,7 @@ public:
             LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE");
         }
         {
-            Stream stream(65535);
+            BStream stream(65535);
             X224 x224(stream);
             x224.recv_begin(this->trans);
             Mcs mcs(stream);
@@ -1353,7 +1353,7 @@ public:
         {
             ChannelDefArray & channel_list = this->channel_list;
 
-            Stream stream(65535);
+            BStream stream(65535);
 
             X224 x224(stream);
             x224.recv_begin(this->trans);
@@ -1504,7 +1504,7 @@ public:
         if (this->verbose){
             LOG(LOG_INFO, "send_data_update_sync");
         }
-        Stream stream(32768);
+        BStream stream(32768);
 
         // Packet header
         X224 x224(stream);
@@ -1539,7 +1539,7 @@ public:
     {
         LOG(LOG_INFO, "Front::send_demand_active");
 
-        Stream stream(32768);
+        BStream stream(32768);
 
         // Packet header
         X224 x224(stream);
@@ -1888,7 +1888,7 @@ public:
     {
         LOG(LOG_INFO, "send_synchronize");
 
-        Stream stream(32768);
+        BStream stream(32768);
 
         // Packet header
         X224 x224(stream);
@@ -1942,7 +1942,7 @@ public:
     {
         LOG(LOG_INFO, "send_control action=%u", action);
 
-        Stream stream(32768);
+        BStream stream(32768);
 
         // Packet header
         X224 x224(stream);
@@ -2004,7 +2004,7 @@ public:
 
         TODO(" we should create some RDPStream object created on init and sent before destruction")
 
-        Stream stream(32768);
+        BStream stream(32768);
 
         // Packet header
         X224 x224(stream);
@@ -2204,7 +2204,7 @@ public:
                 // so the client is sure the connection is alive and it can ask
                 // if user really wants to disconnect */
 
-                Stream stream(32768);
+                BStream stream(32768);
 
                 // Packet header
                 X224 x224(stream);
@@ -2363,7 +2363,7 @@ public:
     {
         LOG(LOG_INFO, "send_deactive");
 
-        Stream stream(32768);
+        BStream stream(32768);
 
         // Packet header
         X224 x224(stream);

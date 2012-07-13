@@ -360,7 +360,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
 
-        Stream out(256);
+        BStream out(256);
         bmp.compress(out);
         uint8_t expected[] = {
             0x84, 0x01, 0x02, 0x03, 0x04,
@@ -409,7 +409,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        printf("\n");
 
         Bitmap bmp(bpp, NULL, 4, 4, data, sizeof(data));
-        Stream out(256);
+        BStream out(256);
         bmp.compress(out);
         uint8_t expected[] = {
             0x84, 0x01, 0x00, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00,
@@ -455,7 +455,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
             0x01, 0x01, 0x01, 0x01};
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
-        Stream out(256);
+        BStream out(256);
         bmp.compress(out);
         uint8_t expected[] = {
             0x84, 0x01, 0x02, 0x03, 0x04, // 4 COPY
@@ -489,7 +489,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
             0x01, 0x01, 0x01, 0x0F};
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
-        Stream out(256);
+        BStream out(256);
         bmp.compress(out);
 
 //        printf("------- Compressed ---------\n");
@@ -525,7 +525,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
             0x01, 0x01, 0x01, 0x01};
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
-        Stream out(256);
+        BStream out(256);
         bmp.compress(out);
 
 //        printf("------- Compressed ---------\n");
@@ -579,7 +579,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        printf("\n");
 
         Bitmap bmp(bpp, &palette332, 24, 1, data, sizeof(data));
-        Stream out(256);
+        BStream out(256);
         bmp.compress(out);
         uint8_t expected[] = {
             0xeC, 0x01, 0x02 // BICOLOR
@@ -618,7 +618,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
             0x02, 0x03, 0x04, 0x05};
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
-        Stream out(256);
+        BStream out(256);
         bmp.compress(out);
 
 //        printf("------- Compressed ---------\n");
@@ -651,7 +651,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
             0xFD, 0xFC, 0xFB, 0xFA};
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
-        Stream out(256);
+        BStream out(256);
         bmp.compress(out);
         uint8_t expected[] = {
             0x84, 0x02, 0x03, 0x04, 0x05, // 4 COPY
@@ -693,7 +693,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        printf("\n");
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
-        Stream out(256);
+        BStream out(256);
         bmp.compress(out);
         uint8_t expected[] = {
             0x84, 0x02, 0x03, 0x04, 0x05,
@@ -743,7 +743,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        printf("\n");
 
         Bitmap bmp(bpp, &palette332, 4, 4, data, sizeof(data));
-        Stream out(256);
+        BStream out(256);
         bmp.compress(out);
         uint8_t expected[] = {
             0x84, 0x02, 0x03, 0x04, 0x05, // 4 COPY
@@ -1070,7 +1070,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
 
         Bitmap bmp(bpp, &palette332, 16, 2, raw, sizeof(raw));
-        Stream out(256);
+        BStream out(256);
         bmp.compress(out);
 
         uint8_t expected[] = {
@@ -1950,7 +1950,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp(bpp, &palette332, 64, 64, uncompressed, sizeof(uncompressed));
 
-        Stream out(8192);
+        BStream out(8192);
         bmp.compress(out);
 
 //        printf("------- Compressed ---------\n");
@@ -3151,7 +3151,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        printf("\n");
 
         Bitmap bmp(bpp, NULL, 64, 64, data, sizeof(data));
-        Stream out(12288);
+        BStream out(12288);
         bmp.compress(out);
         // 64x64 24 bits RED Block
         uint8_t expected[] = {

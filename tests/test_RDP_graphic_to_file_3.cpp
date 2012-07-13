@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         // reread data from file
         int fd = ::open(tmpname, O_RDONLY);
         BOOST_CHECK(fd > 0);
-        Stream stream(4096);
+        BStream stream(4096);
         InFileTransport in_trans(fd);
         class Consumer : public TestConsumer {
         public:

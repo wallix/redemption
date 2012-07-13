@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityLargePointerEmit)
     BOOST_CHECK_EQUAL(largepointer_caps.len, (uint16_t)CAPLEN_LARGE_POINTER);
     BOOST_CHECK_EQUAL(largepointer_caps.largePointerSupportFlags, (uint16_t) 1);
 
-    Stream stream(1024);
+    BStream stream(1024);
     largepointer_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

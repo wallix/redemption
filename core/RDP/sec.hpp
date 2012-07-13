@@ -756,7 +756,7 @@ static inline void recv_security_exchange_PDU(
     uint8_t client_crypt_random[512];
     memset(client_crypt_random, 0, 512);
 
-    Stream stream(32768);
+    BStream stream(32768);
     X224 x224(stream);
     x224.recv_begin(trans);
 
@@ -808,7 +808,7 @@ static inline void send_security_exchange_PDU(Transport * trans, int userid, uin
     LOG(LOG_INFO, "Iso Layer : setting encryption");
     /* Send the client random to the server */
     //      if (this->encryption)
-    Stream sdrq_stream(32768);
+    BStream sdrq_stream(32768);
 
     X224 x224(sdrq_stream);
     x224.emit_begin(X224::DT_TPDU);

@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
     RDPScrBlt scrblt_ref(Rect(0, 0, 10, 10), 0, 0, 0);
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         RDPScrBlt state_scrblt(Rect(0, 0, 10, 10), 0, 0, 0);
 
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
     }
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         RDPScrBlt state_scrblt(Rect(0, 0, 10, 10), 0, 0, 0);
 
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
     }
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
         RDPScrBlt state_scrblt(Rect(310, 390, 10, 10), 0xFF, 110, 140);
 
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
     }
 
     {
-        Stream stream(1000);
+        BStream stream(1000);
         RDPOrderCommon state_common(SCREENBLT, Rect(311, 0, 800, 600));
         RDPScrBlt state_scrblt(Rect(310, 390, 10, 10), 0xFF, 110, 140);
 

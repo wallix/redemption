@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityPointerEmit)
     BOOST_CHECK_EQUAL(pointer_caps.colorPointerCacheSize, (uint16_t) 1);
     BOOST_CHECK_EQUAL(pointer_caps.pointerCacheSize, (uint16_t) 2);
 
-    Stream stream(1024);
+    BStream stream(1024);
     pointer_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

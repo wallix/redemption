@@ -35,7 +35,7 @@
 
 BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU)
 {
-    Stream stream;
+    BStream stream;
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
     X224 x224(stream);
     x224.recv_begin(&t);
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU)
 {
-    Stream stream;
+    BStream stream;
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xD0\x00\x00\x00\x00\x00", 11);
     X224 x224(stream);
     x224.recv_begin(&t);
@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU)
 {
-    Stream stream;
+    BStream stream;
     GeneratorTransport t("\x03\x00\x00\x0B\x06\x80\x00\x00\x00\x00\x01", 11);
     X224 x224(stream);
     x224.recv_begin(&t);
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DR_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU)
 {
-    Stream stream;
+    BStream stream;
     GeneratorTransport t("\x03\x00\x00\x0B\x02\xF0\x80\x12\x34\x56\x78", 11);
     X224 x224(stream);
     x224.recv_begin(&t);
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_DT_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU)
 {
-    Stream stream;
+    BStream stream;
     GeneratorTransport t("\x03\x00\x00\x0D\x08\x70\x00\x00\x02\xC1\x02\x06\x22", 13);
     X224 x224(stream);
     x224.recv_begin(&t);
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_ER_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU)
 {
-    Stream stream(65536);
+    BStream stream(65536);
     memset(stream.data, 0, 65536);
 
     GeneratorTransport t("", 0); // used as /dev/null
@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU)
 {
-    Stream stream(65536);
+    BStream stream(65536);
     memset(stream.data, 0, 65536);
 
     GeneratorTransport t("", 0); // used as /dev/null
@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(TestSend_CC_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestSend_DR_TPDU)
 {
-    Stream stream(65536);
+    BStream stream(65536);
     memset(stream.data, 0, 65536);
 
     GeneratorTransport t("", 0); // used as /dev/null
@@ -230,7 +230,7 @@ BOOST_AUTO_TEST_CASE(TestSend_DR_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestSend_ER_TPDU)
 {
-    Stream stream(65536);
+    BStream stream(65536);
     memset(stream.data, 0, 65536);
 
     GeneratorTransport t("", 0); // used as /dev/null
@@ -259,7 +259,7 @@ BOOST_AUTO_TEST_CASE(TestSend_ER_TPDU)
 
 BOOST_AUTO_TEST_CASE(TestSend_DT_TPDU)
 {
-    Stream stream(65536);
+    BStream stream(65536);
     memset(stream.data, 0, 65536);
     GeneratorTransport t("", 0); // used as /dev/null
 

@@ -142,7 +142,7 @@ struct Font {
             }
             file_size = st.st_size;
             TODO(" stream allocated stream here is much too large  we could (should) read fonton the fly without storing whole file in buffer. Doinf that is quite insane.")
-            Stream stream(file_size + 1024);
+            BStream stream(file_size + 1024);
             if (-1 == (fd = open(file_path, O_RDONLY))){
                 LOG(LOG_ERR,
                     "create: "

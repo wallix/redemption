@@ -94,7 +94,7 @@ struct WRMChunk {
 
 struct RDPUnserializer
 {
-    Stream stream;
+    BStream stream;
 
 //    uint8_t padding[65536];
 
@@ -367,7 +367,7 @@ struct RDPUnserializer
 
 struct RDPSerializer : public RDPGraphicDevice
 {
-    Stream stream;
+    BStream stream;
 
 //    uint8_t padding[65536];
 

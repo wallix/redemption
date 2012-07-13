@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFontEmit)
     BOOST_CHECK_EQUAL(font_caps.fontSupportFlags, (uint16_t) 32769);
     BOOST_CHECK_EQUAL(font_caps.pad2octets, (uint16_t) 65535);
 
-    Stream stream(1024);
+    BStream stream(1024);
     font_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

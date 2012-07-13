@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(TestMeta)
         BOOST_CHECK(fd > 0);
         MetaWRM meta(1024, 800, 16);
         OutFileTransport out_file(fd);
-        Stream stream;
+        BStream stream;
         BOOST_CHECK(1);
         meta.emit(stream, out_file);
         BOOST_CHECK(1);

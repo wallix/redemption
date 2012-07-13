@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk)
         // reread data from file
         int fd = ::open(tmpname, O_RDONLY);
         BOOST_CHECK(fd > 0);
-        Stream stream(4096);
+        BStream stream(4096);
         InFileTransport in_trans(fd);
         in_trans.recv(&stream.end, 8);
         BOOST_CHECK_EQUAL(stream.end - stream.p, 8);
@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_one_simple_chunk_reading_with_unserializ
         // reread data from file
         int fd = ::open(tmpname, O_RDONLY);
         BOOST_CHECK(fd > 0);
-        Stream stream(4096);
+        BStream stream(4096);
         InFileTransport in_trans(fd);
         class Consumer : public TestConsumer {
         public:
@@ -251,7 +251,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_several_chunks)
         // reread data from file
         int fd = ::open(tmpname, O_RDONLY);
         BOOST_CHECK(fd > 0);
-        Stream stream(4096);
+        BStream stream(4096);
         InFileTransport in_trans(fd);
 
         RDPUnserializer reader(&in_trans, &consumer, screen_rect);
@@ -300,7 +300,7 @@ BOOST_AUTO_TEST_CASE(TestGraphicsToFile_ActuallyDrawAnImage)
         // reread data from file
         int fd = ::open(tmpname, O_RDONLY);
         BOOST_CHECK(fd > 0);
-        Stream stream(4096);
+        BStream stream(4096);
         InFileTransport in_trans(fd);
         class Consumer : public TestConsumer {
             int width;

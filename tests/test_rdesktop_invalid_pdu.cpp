@@ -38,7 +38,7 @@
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
-    Stream stream(65536);
+    BStream stream(65536);
     GeneratorTransport t(
         "\x03\x00\x00\x3d"
         "\x02\xf0\x80\x64\x00\x00\x03\xeb\x70\x80\x2e\x08\x00\x00\x00\x05"
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
 BOOST_AUTO_TEST_CASE(TestDecodeProcessLogonInfoPacket)
 {
-    Stream stream(65536);
+    BStream stream(65536);
     GeneratorTransport t(
 /* 0000 */"\x03\x00\x01\x4d"                                                 //...M
 // Socket RDP Client (5) receiving 329 bytes

@@ -91,7 +91,7 @@ class SessionManager {
         }
         this->tick_count = 1;
         if (this->auth_trans_t){
-            Stream stream(8192);
+            BStream stream(8192);
 
             stream.out_uint32_be(0); // skip length
             this->context.ask(STRAUTHID_KEEPALIVE);
@@ -232,7 +232,7 @@ class SessionManager {
                 trans->tick();
 
                 keepalive_time = now + 30;
-                Stream stream(8192);
+                BStream stream(8192);
                 stream.out_uint32_be(0); // skip length
                 // set data
                 this->context.ask(STRAUTHID_KEEPALIVE);
@@ -500,7 +500,7 @@ class SessionManager {
     {
         // if anything happen, like authentification socked closing, stop current connection
         try {
-            Stream stream(8192);
+            BStream stream(8192);
 
             stream.out_uint32_be(0);
             TODO(" is there a way to make auth_event RAII ? (initialized in sesman constructor)")
@@ -562,7 +562,7 @@ class SessionManager {
 
     void incoming()
     {
-        Stream stream(4);
+        BStream stream(4);
         this->auth_trans_t->recv((char**)&(stream.end), 4);
         size_t size = stream.in_uint32_be();
         if (size > 65536){

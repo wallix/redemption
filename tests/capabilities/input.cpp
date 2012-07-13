@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityInputEmit)
         BOOST_CHECK_EQUAL(input_caps.imeFileName[i], test_input[i]);
     }
 
-    Stream stream(1024);
+    BStream stream(1024);
     input_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

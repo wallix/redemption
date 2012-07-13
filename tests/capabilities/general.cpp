@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGeneralEmit)
     BOOST_CHECK_EQUAL(general_caps.compressionLevel, (uint16_t) 8);
     BOOST_CHECK_EQUAL(general_caps.pad2, (uint16_t) 9);
 
-    Stream stream(1024);
+    BStream stream(1024);
     general_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

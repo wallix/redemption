@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityCompDeskEmit)
     BOOST_CHECK_EQUAL(compdesk_caps.len, (uint16_t)CAPLEN_COMPDESK);
     BOOST_CHECK_EQUAL(compdesk_caps.CompDeskSupportLevel, (uint16_t)COMPDESK_SUPPORTED);
 
-    Stream stream(1024);
+    BStream stream(1024);
     compdesk_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;

@@ -17,10 +17,6 @@
    Copyright (C) Wallix 2012
    Author(s): Christophe Grosjean
 
-   T.124 Generic Conference Control (GCC) Unit Test
-
-   Shamelessly adapted of test_gcc.c from FreedRDP (C) Marc-Andre Moreau
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -36,7 +32,7 @@
 
 BOOST_AUTO_TEST_CASE(Test_pdu_connection_request)
 {
-    Stream stream;
+    BStream stream;
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
 
     RDP::PDU rdp_pdu(stream);
@@ -48,7 +44,7 @@ BOOST_AUTO_TEST_CASE(Test_pdu_connection_request)
 
 BOOST_AUTO_TEST_CASE(Test_pdu_connection_confirm)
 {
-    Stream stream;
+    BStream stream;
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xD0\x00\x00\x00\x00\x00", 11);
 
     RDP::PDU rdp_pdu(stream);
@@ -60,7 +56,7 @@ BOOST_AUTO_TEST_CASE(Test_pdu_connection_confirm)
 
 BOOST_AUTO_TEST_CASE(Test_pdu_disconnect_request)
 {
-    Stream stream;
+    BStream stream;
     GeneratorTransport t("\x03\x00\x00\x0B\x06\x80\x00\x00\x00\x00\x01", 11);
 
     RDP::PDU rdp_pdu(stream);
@@ -72,7 +68,7 @@ BOOST_AUTO_TEST_CASE(Test_pdu_disconnect_request)
 
 BOOST_AUTO_TEST_CASE(Test_pdu_error_tpdu)
 {
-    Stream stream;
+    BStream stream;
     GeneratorTransport t("\x03\x00\x00\x0D\x08\x70\x00\x00\x02\xC1\x02\x06\x22", 13);
 
     RDP::PDU rdp_pdu(stream);

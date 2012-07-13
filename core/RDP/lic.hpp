@@ -187,7 +187,7 @@ enum {
 static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
 {
 
-    Stream stream(32768);
+    BStream stream(32768);
     X224 x224(stream);
     x224.emit_begin(X224::DT_TPDU);
     Mcs mcs(stream);
@@ -246,7 +246,7 @@ static inline void send_lic_initial(Transport * trans, int userid) throw (Error)
 
     stream.out_copy_bytes((char*)lic1, 314);
 
-//    Stream stream(32768);
+//    BStream stream(32768);
 //    X224Out tpdu(X224::DT_TPDU, stream);
 //    McsOut sdin_out(stream, MCSPDU_SendDataIndication, userid, MCS_GLOBAL_CHANNEL);
 //    stream.out_copy_bytes((char*)lic1, 322);
@@ -265,7 +265,7 @@ static inline void send_lic_response(Transport * trans, int userid) throw (Error
                              0x28, 0x14, 0x00, 0x00
                            };
 
-    Stream stream(32768);
+    BStream stream(32768);
     X224 x224(stream);
     x224.emit_begin(X224::DT_TPDU);
     Mcs mcs(stream);
@@ -285,7 +285,7 @@ static inline void send_media_lic_response(Transport * trans, int userid) throw 
                              0xf3, 0x99, 0x00, 0x00
                              };
 
-    Stream stream(32768);
+    BStream stream(32768);
     X224 x224(stream);
     x224.emit_begin(X224::DT_TPDU);
     Mcs mcs(stream);
@@ -462,7 +462,7 @@ struct RdpLicence {
     {
         int length = 58;
 
-        Stream stream(32768);
+        BStream stream(32768);
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
@@ -696,7 +696,7 @@ struct RdpLicence {
         int hostlen = strlen(hostname) + 1;
         int length = 128 + userlen + hostlen;
 
-        Stream stream(32768);
+        BStream stream(32768);
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);
@@ -828,7 +828,7 @@ struct RdpLicence {
                 uint8_t* licence_data, int licence_size, uint8_t* hwid,
                 uint8_t* signature, int userid, const int licence_issued, int use_rdp5)
     {
-        Stream stream(32768);
+        BStream stream(32768);
         X224 x224(stream);
         x224.emit_begin(X224::DT_TPDU);
         Mcs mcs(stream);

@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
     BOOST_CHECK_EQUAL(glyphsupport_caps.glyphSupportLevel, (uint16_t) GLYPH_SUPPORT_FULL);
     BOOST_CHECK_EQUAL(glyphsupport_caps.pad2octets, (uint16_t) 3);
 
-    Stream stream(1024);
+    BStream stream(1024);
     glyphsupport_caps.emit(stream);
     stream.end = stream.p;
     stream.p = stream.data;
